@@ -115,62 +115,10 @@ export const listConversations = async (
     .orderBy(desc(conversationModel.lastActivityAt))
     .limit(pagination.limit)
 
-  // Fetch contact relations (tags, customFields, notes, sequences) for each conversation
-  const contactIds = conversations
-    .map((c) => c.Contact?.id)
-    .filter((id): id is string => !!id)
-
-  // Fetch all contacts with their relations in parallel
-  const contactsWithRelations =
-    contactIds.length > 0
-      ? await Promise.all(
-          contactIds.map((contactId) =>
-            db.query.contactModel.findFirst({
-              where: { id: contactId },
-              with: {
-                contactCustomFields: true,
-                contactNotes: {
-                  with: {
-                    createdBy: true,
-                  },
-                },
-                tags: true,
-                contactsOnSequences: {
-                  with: {
-                    sequence: true,
-                  },
-                  orderBy: (contactsOnSequence, { desc }) => [
-                    desc(contactsOnSequence.enrolledAt),
-                  ],
-                },
-              },
-            }),
-          ),
-        )
-      : []
-
-  const contactsMap = new Map(
-    contactsWithRelations
-      .filter((contact) => contact !== undefined)
-      .map((contact) => {
-        // Map contactsOnSequences to sequences array for easier access
-        const sequences = contact.contactsOnSequences?.map(
-          (cos) => cos.sequence,
-        )
-        return [
-          contact.id,
-          {
-            ...contact,
-            sequences,
-          },
-        ]
-      }),
-  )
-
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
-      contact: c.Contact ? contactsMap.get(c.Contact.id) || c.Contact : null,
+      contact: c.Contact,
       inbox: c.Inbox,
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
@@ -188,25 +136,7 @@ export const findConversation = async (
 
   const conversation = await db.query.conversationModel.findFirst({
     with: {
-      contact: {
-        with: {
-          contactCustomFields: true,
-          contactNotes: {
-            with: {
-              createdBy: true,
-            },
-          },
-          tags: true,
-          contactsOnSequences: {
-            with: {
-              sequence: true,
-            },
-            orderBy: (contactsOnSequence, { desc }) => [
-              desc(contactsOnSequence.enrolledAt),
-            ],
-          },
-        },
-      },
+      contact: true,
       inbox: true,
       messages: true,
       assignedUser: true,
@@ -228,20 +158,9 @@ export const findConversation = async (
     orderBy: { createdAt: "desc" },
   })
 
-  // Map contactsOnSequences to sequences array for easier access
-  const contactWithSequences = conversation.contact
-    ? {
-        ...conversation.contact,
-        sequences: conversation.contact.contactsOnSequences?.map(
-          (cos) => cos.sequence,
-        ),
-      }
-    : null
-
   return {
     data: {
       ...conversation,
-      contact: contactWithSequences,
       messages: lastMessage ? [lastMessage] : [],
     },
   }

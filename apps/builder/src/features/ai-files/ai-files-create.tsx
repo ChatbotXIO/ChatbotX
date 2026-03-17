@@ -37,6 +37,7 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
     <DirectUploadButton
       accept={getAIFileExtensionsAccept()}
       disabled={isPending}
+      label={t("actions.uploadFile")}
       maxSize={26_214_400} // 25MB
       multiple={false}
       onUploadError={(error, file) => {

@@ -165,64 +165,9 @@ export const privateAPIs = {
       return await deleteContactCustomFields({
         chatbotId,
         contactIds: [contactId],
-        fieldId: customFieldId,
+        customFieldId,
       })
     }),
-
-  // privateSendTextMessageAPI: authorizedAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/text",
-  //     summary: "Send text message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendTextMessageRequest.and(withChatbotIdSchema))
-  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-  //   .handler(async ({ input }) => {
-  //     const { chatbotId, contactId, text, channel } = input
-  //     await sendTextMessage({
-  //       chatbotId,
-  //       contactId,
-  //       text,
-  //       channel,
-  //     })
-  //   }),
-  // privateSendFileMessageAPI: authorizedAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/file",
-  //     summary: "Send file message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendFileMessageRequest.and(withChatbotIdSchema))
-  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-  //   .handler(async ({ input }) => {
-  //     const { chatbotId, contactId, channel, file } = input
-  //     await sendFileMessage({
-  //       chatbotId,
-  //       contactId,
-  //       channel,
-  //       file,
-  //     })
-  //   }),
-  // privateSendFlowMessageAPI: authorizedAPI
-  //   .route({
-  //     method: "POST",
-  //     path: "/chatbots/{chatbotId}/contacts/{contactId}/messages/flow",
-  //     summary: "Send flow message to contact",
-  //     tags: ["Contacts"],
-  //   })
-  //   .input(sendFlowMessageRequest.and(withChatbotIdSchema))
-  //   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-  //   .handler(async ({ input }) => {
-  //     const { chatbotId, contactId, channel, flowId } = input
-  //     await sendFlowMessage({
-  //       chatbotId,
-  //       contactId,
-  //       channel,
-  //       flowId,
-  //     })
-  //   }),
 }
 
 export default privateAPIs

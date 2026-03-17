@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import AIFilesTable from "@/features/ai-files/ai-files-table"
 import { listAIFiles } from "@/features/ai-files/queries"
-import { AIHubBreadcrumb } from "@/features/ai-hub/ai-hub-breadcrumb"
+import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 
 type AIFilesPageProps = {
   params: Promise<{
@@ -20,7 +20,7 @@ export default async function AIFilesPage({ params }: AIFilesPageProps) {
 
   return (
     <div className="space-y-6">
-      <AIHubBreadcrumb />
+      <AITab />
 
       <Suspense>
         <AIFilesTable promises={promises} />

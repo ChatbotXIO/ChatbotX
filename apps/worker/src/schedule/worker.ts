@@ -8,6 +8,10 @@ import {
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import {
+  cleanupTriggerExecutions,
+  scanDateTimeTriggers,
+} from "../trigger/datetime-trigger-scanner"
 import { registerSchedules } from "./handlers/register-schedules"
 import { sendBroadcast } from "./handlers/send-broadcast"
 

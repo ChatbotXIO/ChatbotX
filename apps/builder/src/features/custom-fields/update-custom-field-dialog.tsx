@@ -1,6 +1,6 @@
 "use client"
 
-import type { FieldModel } from "@aha.chat/database/types"
+import type { CustomFieldModel } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -31,7 +31,7 @@ export function UpdateCustomFieldDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
   chatbotId: string
-  customField: FieldModel | null
+  customField: CustomFieldModel | null
 }) {
   const t = useTranslations()
   const router = useRouter()

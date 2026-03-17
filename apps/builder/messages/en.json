@@ -198,7 +198,8 @@
       "label": "AI Agents"
     },
     "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
-    "title": "AI Agents"
+    "title": "AI Agents",
+    "name": "Agents"
   },
   "aiFiles": {
     "description": "Give Your Agents Access to PDFs, Docs, and More",
@@ -2123,9 +2124,6 @@
   "customFields": {
     "title": "Custom Fields"
   },
-  "aiHub": {
-    "title": "AI Hub"
-  },
   "keywords": {
     "title": "Keywords"
   },
@@ -2140,6 +2138,9 @@
   },
   "subscriptions": {
     "title": "Subscriptions"
+  },
+  "aiHub": {
+    "title": "AI Hub"
   },
   "sequences": {
     "heading": {

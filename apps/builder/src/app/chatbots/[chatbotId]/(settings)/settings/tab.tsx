@@ -1,10 +1,9 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger } from "@aha.chat/ui/components/ui/tabs"
-import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import { AppTab } from "@/components/app-tab"
 
 export function SettingsTab() {
   const t = useTranslations()
@@ -48,16 +47,12 @@ export function SettingsTab() {
   }, [pathname])
 
   return (
-    <Tabs defaultValue={activeTab}>
-      <TabsList>
-        {tabs.map((tab) => (
-          <TabsTrigger asChild key={tab.value} value={tab.value}>
-            <Link href={`/chatbots/${chatbotId}/settings/${tab.value}`}>
-              {tab.label}
-            </Link>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+    <AppTab
+      tabs={tabs.map((tab) => ({
+        label: tab.label,
+        href: `/chatbots/${chatbotId}/settings/${tab.value}`,
+        isActive: activeTab === tab.value,
+      }))}
+    />
   )
 }

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aha.chat/database": "workspace:*",
+    "@chatbotx/events": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
     "@aha.chat/integration-chatbotx": "workspace:*",
@@ -24,9 +25,7 @@
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/mail": "workspace:*",
     "@aha.chat/partysocket-config": "workspace:*",
-    "@aha.chat/scheduler": "workspace:*",
     "@aha.chat/sdk": "workspace:*",
-    "@aha.chat/sequence-scheduler": "workspace:*",
     "@aha.chat/ui": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
     "@ai-sdk/mcp": "^1.0.30",
@@ -34,7 +33,6 @@
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
-    "@chatbotx/events": "workspace:*",
     "@floating-ui/dom": "^1.7.6",
     "@giphy/js-types": "^5.1.0",
     "@giphy/react-components": "^10.1.1",
@@ -98,7 +96,9 @@
     "use-debounce": "^10.1.0",
     "usehooks-ts": "^3.1.1",
     "zod": "^4.3.6",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.11",
+    "@aha.chat/scheduler": "workspace:*",
+    "@aha.chat/sequence-scheduler": "workspace:*"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

@@ -8,7 +8,7 @@
     "chatbotx": "./dist/index.cjs"
   },
   "scripts": {
-    "dev": "dotenv -e .env -- tsx src/index.ts",
+    "dev:cli": "dotenv -e .env -- tsx src/index.ts",
     "build": "tsdown",
     "start": "node ./dist/index.cjs",
     "publish": "pnpm build && pnpm publish --access public --no-git-checks"

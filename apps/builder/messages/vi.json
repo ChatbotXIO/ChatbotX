@@ -198,7 +198,8 @@
       "label": "AI Agents"
     },
     "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng chatbot của bạn.",
-    "title": "AI Agents"
+    "title": "AI Agents",
+    "name": "Agents"
   },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
@@ -1977,9 +1978,6 @@
   "customFields": {
     "title": "Trường tùy chỉnh"
   },
-  "aiHub": {
-    "title": "AI Hub"
-  },
   "keywords": {
     "title": "Từ khóa"
   },
@@ -2037,6 +2035,9 @@
   "reflinks": {
     "title": "Liên kết giới thiệu",
     "description": "Chia sẻ bot của bạn trên trang web, mạng xã hội hoặc ứng dụng nhắn tin khác làm điểm vào để người dùng bắt đầu cuộc trò chuyện với bot."
+  },
+  "aiHub": {
+    "title": "AI Hub"
   },
   "sequences": {
     "heading": {

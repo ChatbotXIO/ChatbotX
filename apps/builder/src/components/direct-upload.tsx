@@ -90,6 +90,7 @@ export function DirectUploadOrInsertLink({
           <DirectUploadButton
             accept={fileConfigs.mimeType}
             className="hidden"
+            label={t("actions.uploadFile")}
             maxSize={10_485_760} // 10MB
             multiple={false}
             onUploadError={(error, file) => {

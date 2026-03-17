@@ -15,11 +15,22 @@ import { WorksheetColumnSelect } from "../worksheet-column-select"
 //   parentName: string
 // }
 
-export const SpreadsheetColumnFilter = () => {
+export const SpreadsheetColumnFilter = ({
+  parentName,
+}: {
+  parentName?: string
+}) => {
   const { control } = useFormContext()
+  const getFieldName = (field: string) => {
+    if (!parentName) {
+      return field
+    }
+    return `${parentName}.${field}`
+  }
+
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "lookup.conditions",
+    name: getFieldName("lookup.conditions"),
   })
 
   // const mode = useWatch({
@@ -34,7 +45,7 @@ export const SpreadsheetColumnFilter = () => {
         <span className="flex-1 text-nowrap">Lookup Columns:</span>
         <SelectField
           defaultValue={FilterMode.AND}
-          name="lookup.mode"
+          name={getFieldName("lookup.mode")}
           options={[
             { label: "AND", value: FilterMode.AND },
             { label: "OR", value: FilterMode.OR },
@@ -48,13 +59,14 @@ export const SpreadsheetColumnFilter = () => {
           <WorksheetColumnSelect
             label=""
             name={`lookup.conditions.${idx}.column`}
+            parentName={parentName}
           />
           <SpreadsheetOperatorSelect
             label=""
-            name={`lookup.conditions.${idx}.operator`}
+            name={getFieldName(`lookup.conditions.${idx}.operator`)}
           />
           <InputField
-            name={`lookup.conditions.${idx}.value`}
+            name={getFieldName(`lookup.conditions.${idx}.value`)}
             placeholder="Value"
           />
           <Button onClick={() => remove(idx)} type="button" variant="ghost">

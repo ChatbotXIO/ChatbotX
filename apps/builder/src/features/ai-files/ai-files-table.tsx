@@ -19,6 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -158,7 +163,19 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Badge variant="secondary">{row.original.mimeType}</Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                className="block max-w-[120px] truncate"
+                variant="secondary"
+              >
+                {row.original.mimeType}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.mimeType}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: true,
         enableHiding: true,
