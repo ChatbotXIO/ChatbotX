@@ -38,4 +38,4 @@ COPY --from=deps /app/apps/mcp-server/dist /app/apps/mcp-server/dist
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-EXPOSE 3000
+EXPOSE 3333

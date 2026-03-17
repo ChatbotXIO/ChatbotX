@@ -12,7 +12,7 @@ services:
     platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env.dev
+      - ./.env
     environment:
       - HOSTNAME=0.0.0.0
     ports:
@@ -38,7 +38,7 @@ services:
     platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env.dev
+      - ./.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -63,9 +63,9 @@ services:
     platform: linux/amd64
     restart: unless-stopped
     env_file:
-      - ./.env.dev
+      - ./.env
     ports:
-      - "3125:3000"
+      - "3333:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
