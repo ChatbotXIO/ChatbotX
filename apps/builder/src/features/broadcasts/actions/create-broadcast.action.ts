@@ -6,7 +6,6 @@ import {
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
 import type { BroadcastModel } from "@aha.chat/database/types"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -53,9 +52,6 @@ export const createBroadcastAction = chatbotActionClient
         schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
         id: createId(),
       }
-      if (data.schedulesType === "now" || data.schedulesAt <= new Date()) {
-        data.status = "sent"
-      }
 
       // Calculate contacts to send broadcast
       const contacts = await db.query.contactModel.findMany({
@@ -67,7 +63,7 @@ export const createBroadcastAction = chatbotActionClient
         },
       })
 
-      const newBroadcast = await db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         const newBroadcast = await tx
           .insert(broadcastModel)
           .values(data)
@@ -82,15 +78,6 @@ export const createBroadcastAction = chatbotActionClient
         )
         return newBroadcast
       })
-
-      if (newBroadcast.status === "sent") {
-        await integrationQueue.add(IntegrationJobAction.sendBroadcast, {
-          type: IntegrationJobAction.sendBroadcast,
-          data: {
-            broadcastId: newBroadcast.id,
-          },
-        })
-      }
 
       revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
     },

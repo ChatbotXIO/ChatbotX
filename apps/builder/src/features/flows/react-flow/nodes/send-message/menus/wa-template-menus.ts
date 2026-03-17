@@ -1,6 +1,6 @@
 import { StepType } from "@aha.chat/flow-config"
 import { MessageSquareIcon } from "lucide-react"
-import type { NodeMenuData } from "../../../contexts/menu-data-context"
+import type { FlowActionState } from "../../../stores/flow-action-store"
 import type { MenuItem, TranslationFn } from "../../types"
 
 type Template = {
@@ -11,7 +11,7 @@ type Template = {
 
 export const waTemplateMenus = (
   t: TranslationFn,
-  menuData?: NodeMenuData,
+  menuData?: FlowActionState,
 ): MenuItem[] => {
   const templates = menuData?.data?.["wa.templates"] as Template[] | undefined
 

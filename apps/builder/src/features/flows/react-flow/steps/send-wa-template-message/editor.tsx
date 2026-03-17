@@ -13,7 +13,7 @@ import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { getTemplatesForFlow } from "@/features/integration-whatsapp/message-templates/actions/get-templates-for-flow"
-import { useMenuData } from "../../contexts/menu-data-context"
+import { useFlowAction } from "../../stores/flow-action-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
 type TemplateComponent = {
@@ -202,7 +202,7 @@ const renderPreview = (
             }
             return (
               <div
-                className="rounded border px-2 py-1 text-center text-blue-600 text-xs"
+                className="rounded border bg-gray-300 px-2 py-1 text-center text-blue-600 text-xs"
                 key={`button-${btnIdx}-${button.text}`}
               >
                 {button.text} {url && `→ ${url}`}
@@ -226,7 +226,7 @@ function SendWaTemplateMessageStepEditor(
   const { parentName } = props
   const t = useTranslations()
   const { setValue, watch, register } = useFormContext()
-  const { chatbotId } = useMenuData()
+  const chatbotId = useFlowAction((s) => s.chatbotId)
 
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(

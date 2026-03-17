@@ -13,14 +13,14 @@ import {
   Volume2Icon,
   ZapIcon,
 } from "lucide-react"
-import type { NodeMenuData } from "../../contexts/menu-data-context"
+import type { FlowActionState } from "../../stores/flow-action-store"
 import { performActionMenus } from "../perform-action/menu"
 import type { MenuItem, TranslationFn } from "../types"
 import { waTemplateMenus } from "./menus/wa-template-menus"
 
 const ALL_MENU_ITEMS = (
   t: TranslationFn,
-  menuData?: NodeMenuData,
+  menuData?: FlowActionState,
 ): Record<string, MenuItem> => ({
   sendText: {
     label: t("flows.actions.sendText"),
@@ -126,7 +126,7 @@ const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
 
 export const sendMessageEditorMenus = (
   t: TranslationFn,
-  menuData?: NodeMenuData,
+  menuData?: FlowActionState,
 ): MenuItem[] => {
   const channel = menuData?.beforeStep?.channel
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)

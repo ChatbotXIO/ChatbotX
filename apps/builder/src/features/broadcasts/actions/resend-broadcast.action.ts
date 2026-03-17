@@ -6,7 +6,6 @@ import {
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
 import type { BroadcastModel } from "@aha.chat/database/types"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -24,7 +23,7 @@ export const resendBroadcastAction = chatbotActionClient
       throw new ChatbotXException("Broadcast is not sent")
     }
 
-    const newBroadcast = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       const newBroadcast = await tx
         .insert(broadcastModel)
         .values({
@@ -32,7 +31,7 @@ export const resendBroadcastAction = chatbotActionClient
           flowId: broadcast.flowId,
           inboxType: broadcast.inboxType,
           subaction: broadcast.subaction,
-          status: "sent",
+          status: "scheduled",
           schedulesType: "now",
           schedulesAt: new Date(),
           contactFilter: broadcast.contactFilter,
@@ -59,13 +58,6 @@ export const resendBroadcastAction = chatbotActionClient
       )
 
       return newBroadcast
-    })
-
-    await integrationQueue.add(IntegrationJobAction.sendBroadcast, {
-      type: IntegrationJobAction.sendBroadcast,
-      data: {
-        broadcastId: newBroadcast.id,
-      },
     })
 
     revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)

@@ -33,10 +33,10 @@ import {
 } from "react-hook-form"
 import { funnel } from "remeda"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
-import { useMenuData } from "../contexts/menu-data-context"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
+import { useFlowAction } from "../stores/flow-action-store-provider"
 import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
 import type { MenuItem } from "./types"
@@ -106,7 +106,7 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const menuData = useMenuData()
+    const menuData = useFlowAction((s) => s)
     const beforeStep = useWatch({ name: "beforeStep" })
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
