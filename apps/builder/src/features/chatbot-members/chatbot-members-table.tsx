@@ -15,6 +15,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -58,7 +63,16 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
               </AvatarFallback>
             </Avatar>
 
-            <span>{row.original.user?.name}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[200px] truncate">
+                  {row.original.user?.name}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.original.user?.name}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
         enableHiding: false,
@@ -174,7 +188,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   })
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <InviteChatbotMemberDialog />
@@ -192,6 +206,6 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "update"}
       />
-    </div>
+    </>
   )
 }

@@ -276,9 +276,7 @@ export const sendChatMessage = async (
 
     const contact = await findOrFail<ContactModel>(
       contactModel,
-      {
-        where: { id: conversation.contactId },
-      },
+      { id: conversation.contactId },
       `Contact not found for conversationId: ${conversation.id}`,
     )
 

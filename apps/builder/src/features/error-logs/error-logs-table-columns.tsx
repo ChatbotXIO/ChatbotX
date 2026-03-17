@@ -10,6 +10,11 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -64,7 +69,6 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="Type" />
       ),
       cell: ({ row }) => <div>{row.original.action}</div>,
-      size: 50,
       meta: {
         label: t("fields.type.label"),
         placeholder: t("fields.type.placeholder"),
@@ -79,11 +83,19 @@ export function getColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Description" />
       ),
-      cell: ({ row }) => <div>{row.original.detail}</div>,
+      cell: ({ row }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[400px] truncate">{row.original.detail}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.detail}</p>
+          </TooltipContent>
+        </Tooltip>
+      ),
       meta: {
         label: t("fields.description.label"),
       },
-      size: 400,
       enableSorting: true,
       enableHiding: false,
     },
@@ -99,7 +111,7 @@ export function getColumns({
       meta: {
         label: t("fields.contact.label"),
       },
-      size: 50,
+      size: 20,
       enableSorting: false,
       enableHiding: false,
     },
@@ -109,7 +121,6 @@ export function getColumns({
         <DataTableColumnHeader column={column} title="Date" />
       ),
       cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd HH:mm"),
-      size: 100,
       meta: {
         label: t("fields.date.label"),
       },

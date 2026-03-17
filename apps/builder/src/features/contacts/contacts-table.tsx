@@ -10,6 +10,11 @@ import {
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
@@ -73,13 +78,22 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <Link
-            className="text-blue-500"
-            href={`/chatbots/${chatbotId}/inbox?conversationId=${row.original.conversation?.id}`}
-            target="_blank"
-          >
-            {getFullName(row.original)}
-          </Link>
+          <div className="max-w-[200px] truncate">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  className="max-w-[200px] truncate text-blue-500"
+                  href={`/chatbots/${chatbotId}/inbox?conversationId=${row.original.conversation?.id}`}
+                  target="_blank"
+                >
+                  {getFullName(row.original)}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getFullName(row.original)}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         ),
         meta: {
           label: t("fields.name.label"),
@@ -118,12 +132,22 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div>
-            {getUserName(
-              row.original.conversation?.assignedUser,
-              t("assignAdmin.unAssigned"),
-            )}
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">
+                {getUserName(
+                  row.original.conversation?.assignedUser,
+                  t("assignAdmin.unAssigned"),
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {getUserName(
+                row.original.conversation?.assignedUser,
+                t("assignAdmin.unAssigned"),
+              )}
+            </TooltipContent>
+          </Tooltip>
         ),
         meta: {
           label: t("fields.assignee.label"),

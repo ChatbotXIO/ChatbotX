@@ -25,7 +25,7 @@ export const updateInboxTeamAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateInboxTeamRequest
     }) => {
-      await findOrFail<InboxTeamModel>(
+      const inboxTeam = await findOrFail<InboxTeamModel>(
         inboxTeamModel,
         {
           id,
@@ -37,7 +37,7 @@ export const updateInboxTeamAction = chatbotActionClient
       await db
         .update(inboxTeamModel)
         .set(parsedInput)
-        .where(eq(inboxTeamModel.id, id))
+        .where(eq(inboxTeamModel.id, inboxTeam.id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
     },

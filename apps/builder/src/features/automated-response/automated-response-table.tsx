@@ -103,11 +103,15 @@ export function AutomatedResponsesTable({
         cell: ({ row }) => {
           const { id, userMessages } = row.original
           return (
-            <Link
-              href={`/chatbots/${chatbotId}/automated-responses/${id}/edit?${searchParams.toString()}`}
-            >
-              {userMessages.join(",")}
-            </Link>
+            <div className="max-w-[200px] truncate">
+              <Link
+                className="truncate"
+                href={`/chatbots/${chatbotId}/automated-responses/${id}/edit?${searchParams.toString()}`}
+                title={userMessages.join(",")}
+              >
+                {userMessages.join(",")}
+              </Link>
+            </div>
           )
         },
         meta: {
@@ -142,14 +146,18 @@ export function AutomatedResponsesTable({
           }
 
           return (
-            <ul className="list-disc">
-              {displayData.map((reply, idx) => {
-                return (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                  <li key={idx}>{reply}</li>
-                )
-              })}
-            </ul>
+            <div className="max-w-[200px]">
+              <ul className="list-disc">
+                {displayData.map((reply, idx) => {
+                  return (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: wip
+                    <li className="truncate" key={idx}>
+                      {reply}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
           )
         },
         enableSorting: false,
@@ -219,7 +227,7 @@ export function AutomatedResponsesTable({
                   href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}/edit`}
                 >
                   <PencilIcon />
-                  {t("actions.update")}
+                  {t("actions.edit")}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem

@@ -12,7 +12,7 @@ export const updateAIFunctionAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateAIFunctionRequest)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id], parsedInput }) => {
-    await findOrFail<AIFunctionModel>(
+    const aiFunction = await findOrFail<AIFunctionModel>(
       aiFunctionModel,
       {
         id,
@@ -24,7 +24,7 @@ export const updateAIFunctionAction = chatbotActionClient
     await db
       .update(aiFunctionModel)
       .set(parsedInput)
-      .where(eq(aiFunctionModel.id, id))
+      .where(eq(aiFunctionModel.id, aiFunction.id))
 
     revalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
   })

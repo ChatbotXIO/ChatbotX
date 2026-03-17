@@ -18,6 +18,11 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Separator } from "@aha.chat/ui/components/ui/separator"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -92,10 +97,14 @@ export function BotFieldsTable({
           <DataTableColumnHeader column={column} title="Name" />
         ),
         cell: ({ row }) => (
-          <>
-            <div>{row.original.name}</div>
-            <div className="text-gray-400">{row.original.description}</div>
-          </>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">{row.original.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: true,
         enableHiding: false,
@@ -105,6 +114,27 @@ export function BotFieldsTable({
           icon: TextIcon,
         },
         enableColumnFilter: true,
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Description" />
+        ),
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">
+                {row.original.description}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        ),
+        enableSorting: false,
+        enableHiding: false,
       },
       {
         accessorKey: "type",
@@ -119,7 +149,16 @@ export function BotFieldsTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Value" />
         ),
-        cell: ({ row }) => <div>{row.original.value}</div>,
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">{row.original.value}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.value}</p>
+            </TooltipContent>
+          </Tooltip>
+        ),
         enableHiding: false,
         enableSorting: false,
       },
@@ -139,7 +178,7 @@ export function BotFieldsTable({
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
                 <PencilIcon />
-                {t("actions.update")}
+                {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => copyToClipboard(row.original.id)}

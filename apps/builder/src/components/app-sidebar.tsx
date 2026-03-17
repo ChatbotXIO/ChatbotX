@@ -15,6 +15,7 @@ import {
   RadioIcon,
   SlidersHorizontalIcon,
   UsersIcon,
+  WebhookIcon,
   WorkflowIcon,
   WrenchIcon,
 } from "lucide-react"
@@ -91,7 +92,7 @@ export function AppSidebar({
       {
         title: t("webhooks.title"),
         url: `/chatbots/${chatbotId}/webhooks`,
-        icon: UsersIcon,
+        icon: WebhookIcon,
       },
       {
         title: t("tools.title"),

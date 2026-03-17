@@ -141,7 +141,14 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <span className="font-medium">{row.original.name}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[300px] truncate">{row.original.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: true,
         enableHiding: false,

@@ -10,6 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
@@ -74,9 +79,21 @@ export function getColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <Link href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}>
-          {row.original.name}
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[300px] truncate">
+              <Link
+                className="truncate"
+                href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}
+              >
+                {row.original.name}
+              </Link>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.name}</p>
+          </TooltipContent>
+        </Tooltip>
       ),
       size: 400,
       meta: {
@@ -144,7 +161,7 @@ export function getColumns({
                 href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}
               >
                 <PencilIcon />
-                {t("actions.update")}
+                {t("actions.edit")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem

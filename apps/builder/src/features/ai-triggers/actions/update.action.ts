@@ -26,7 +26,7 @@ export const updateAITriggerAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAITriggerRequest
     }) => {
-      await findOrFail<AITriggerModel>(
+      const aiTrigger = await findOrFail<AITriggerModel>(
         aiTriggerModel,
         {
           id,
@@ -38,7 +38,7 @@ export const updateAITriggerAction = chatbotActionClient
       await db
         .update(aiTriggerModel)
         .set(parsedInput)
-        .where(eq(aiTriggerModel.id, id))
+        .where(eq(aiTriggerModel.id, aiTrigger.id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
     },

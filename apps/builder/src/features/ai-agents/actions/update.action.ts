@@ -1,7 +1,8 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiAgentModel } from "@aha.chat/database/schema"
+import type { AIAgentModel } from "@aha.chat/database/types"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
@@ -24,6 +25,14 @@ export const updateAIAgentAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAIAgentRequest
     }) => {
+      const aiAgent = await findOrFail<AIAgentModel>(
+        aiAgentModel,
+        {
+          id: agentId,
+          chatbotId,
+        },
+        "AI agent not found",
+      )
       await db.transaction(async (tx) => {
         // make all other agents not default
         if (parsedInput.isDefault) {
@@ -36,7 +45,7 @@ export const updateAIAgentAction = chatbotActionClient
         await tx
           .update(aiAgentModel)
           .set(parsedInput)
-          .where(eq(aiAgentModel.id, agentId))
+          .where(eq(aiAgentModel.id, aiAgent.id))
       })
 
       revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)

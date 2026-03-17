@@ -55,6 +55,8 @@ export function ScanQRCodeDiaglog({
             <Link
               className="block max-w-[300px] truncate text-sky-600 no-underline hover:underline dark:text-sky-400"
               href={link}
+              rel="noopener noreferrer"
+              target="_blank"
             >
               {link}
             </Link>

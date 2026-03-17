@@ -559,7 +559,7 @@
       "label": "Keywords"
     },
     "reflink": {
-      "label": "Reflink"
+      "label": "Entry Point Link"
     },
     "learnMore": {
       "label": "Learn more"
@@ -1753,7 +1753,7 @@
     "description": "Notify your system when some events occur inside your bot. You can use webhooks to transfer data to your system."
   },
   "reflinks": {
-    "title": "Entry Points Links",
+    "title": "Entry Point Links",
     "description": "Share your bot on websites, social media platforms, or other messaging apps as an entry point for users to start a conversation with the bot."
   },
   "errorLog": {

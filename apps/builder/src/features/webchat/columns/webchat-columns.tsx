@@ -9,6 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
@@ -36,7 +41,16 @@ export function getWebchatColumns({
       ),
       cell: ({ row }) => {
         const webchat = row.original
-        return <span className="font-medium">{webchat.name}</span>
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[300px] truncate">{webchat.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{webchat.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        )
       },
       enableHiding: false,
     },

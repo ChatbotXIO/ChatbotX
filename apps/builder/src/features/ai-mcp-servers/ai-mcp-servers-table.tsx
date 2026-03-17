@@ -19,9 +19,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { EyeIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
@@ -80,9 +85,14 @@ export default function AIMcpServersTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[300px] truncate">{row.original.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: true,
         enableHiding: false,
@@ -97,9 +107,14 @@ export default function AIMcpServersTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 truncate">
-            <span className="font-medium">{row.original.url}</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[400px] truncate">{row.original.url}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.url}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: false,
         enableHiding: false,
@@ -121,8 +136,8 @@ export default function AIMcpServersTable({
                   toast.info(t("messages.updateFileComingSoon"))
                 }}
               >
-                <EyeIcon className="mr-2 h-4 w-4" />
-                {t("actions.update")}
+                <PencilIcon className="mr-2 h-4 w-4" />
+                {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"

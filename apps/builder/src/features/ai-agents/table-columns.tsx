@@ -11,6 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
@@ -79,7 +84,14 @@ export function getAIAgentsColumns({
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">{row.original.name}</div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[400px] truncate">{row.original.name}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.name}</p>
+          </TooltipContent>
+        </Tooltip>
       ),
       size: 300,
       enableSorting: true,

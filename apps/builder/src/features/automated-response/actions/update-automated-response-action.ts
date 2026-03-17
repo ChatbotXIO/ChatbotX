@@ -1,6 +1,6 @@
 "use server"
 
-import { db, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { automatedResponseModel } from "@aha.chat/database/schema"
 import type { AutomatedResponseModel } from "@aha.chat/database/types"
 import {
@@ -26,7 +26,7 @@ export const updateAutomatedResponseAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAutomatedResponseRequest
     }) => {
-      await findOrFail<AutomatedResponseModel>(
+      const automatedResponse = await findOrFail<AutomatedResponseModel>(
         automatedResponseModel,
         {
           chatbotId,
@@ -46,10 +46,13 @@ export const updateAutomatedResponseAction = chatbotActionClient
         await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
       }
 
-      await db.update(automatedResponseModel).set({
-        ...parsedInput,
-        userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
-      })
+      await db
+        .update(automatedResponseModel)
+        .set({
+          ...parsedInput,
+          userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
+        })
+        .where(eq(automatedResponseModel.id, automatedResponse.id))
 
       revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)
     },

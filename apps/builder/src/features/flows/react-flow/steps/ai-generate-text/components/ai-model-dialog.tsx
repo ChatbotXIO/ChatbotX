@@ -46,7 +46,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         <Button size="sm" type="button" variant="outline">
-          {t("actions.update")}
+          {t("actions.edit")}
         </Button>
       </DialogTrigger>
       <DialogContent aria-describedby={undefined} className="max-w-lg">

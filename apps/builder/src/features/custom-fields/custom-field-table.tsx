@@ -19,6 +19,11 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -104,8 +109,16 @@ export function CustomFieldsTable({
         ),
         cell: ({ row }) => (
           <div>
-            <div>{row.original.name}</div>
-            <div className="text-gray-400">{row.original.description}</div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[200px] truncate">
+                  {row.original.name}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.original.name}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
         meta: {
@@ -115,6 +128,32 @@ export function CustomFieldsTable({
         },
         enableColumnFilter: true,
         enableSorting: true,
+        enableHiding: false,
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.description.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[200px] truncate">
+                  {row.original.description}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.original.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        ),
+        enableSorting: false,
         enableHiding: false,
       },
       {

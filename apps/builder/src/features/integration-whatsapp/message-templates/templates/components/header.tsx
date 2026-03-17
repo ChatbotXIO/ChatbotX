@@ -63,7 +63,7 @@ const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
   }, [getValues, handleChange, localHeader, parentName, setValue])
 
   const displayText = useMemo(
-    () => getValues(`${parentName}.text`) || `---- ${t("actions.update")} ----`,
+    () => getValues(`${parentName}.text`) || `---- ${t("actions.edit")} ----`,
     [getValues, parentName, t],
   )
 

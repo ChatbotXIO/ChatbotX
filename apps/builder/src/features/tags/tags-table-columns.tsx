@@ -11,6 +11,11 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
@@ -72,7 +77,16 @@ export function getTagColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
-      cell: ({ row }) => <div>{row.original.name}</div>,
+      cell: ({ row }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[300px] truncate">{row.original.name}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      ),
       size: 300,
       meta: {
         label: t("fields.name.label"),
@@ -117,7 +131,7 @@ export function getTagColumns({
               onSelect={() => setRowAction({ row, variant: "update" })}
             >
               <PencilIcon />
-              {t("actions.update")}
+              {t("actions.edit")}
               <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem

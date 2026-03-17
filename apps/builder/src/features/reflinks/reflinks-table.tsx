@@ -17,6 +17,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -73,14 +78,13 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
         ),
-        size: 50,
+        size: 20,
         enableSorting: false,
         enableHiding: false,
       },
       {
         id: "keyword",
         accessorKey: "keyword",
-        size: 100,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -88,7 +92,18 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
           />
         ),
         cell: ({ row }) => {
-          return <span>{row.original.name}</span>
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[200px] truncate">
+                  {row.original.name}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.original.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
         },
         meta: {
           label: t("fields.keyword.label"),
@@ -106,7 +121,18 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
             title={t("fields.botResponse.label")}
           />
         ),
-        cell: ({ row }) => row.original.flow.name,
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">
+                {row.original.flow.name}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.flow.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        ),
         enableSorting: false,
         meta: {
           label: t("fields.botResponse.label"),
@@ -138,7 +164,7 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
                 <PencilIcon />
-                {t("actions.update")}
+                {t("actions.edit")}
               </DropdownMenuItem>
 
               <DropdownMenuItem

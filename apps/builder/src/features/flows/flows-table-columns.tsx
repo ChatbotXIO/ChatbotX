@@ -10,6 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
 import { Switch } from "@aha.chat/ui/components/ui/switch"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -72,11 +77,21 @@ export function getFlowColumns({
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
       cell: ({ row }) => (
-        <Link
-          href={`/chatbots/${row.original.chatbotId}/flows/${row.original.id}`}
-        >
-          {row.original.name}
-        </Link>
+        <div className="max-w-[300px] truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                className="max-w-[300px] truncate"
+                href={`/chatbots/${row.original.chatbotId}/flows/${row.original.id}`}
+              >
+                {row.original.name}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       ),
       meta: {
         label: t("fields.name.label"),

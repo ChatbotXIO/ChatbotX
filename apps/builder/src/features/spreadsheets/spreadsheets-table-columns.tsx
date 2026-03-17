@@ -8,6 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@aha.chat/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
@@ -33,7 +38,16 @@ export function getSpreadsheetColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t("fields.name.label")} />
       ),
-      cell: ({ row }) => row.original.name,
+      cell: ({ row }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[300px] truncate">{row.original.name}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      ),
       size: 300,
       enableSorting: false,
       enableHiding: false,
@@ -44,9 +58,22 @@ export function getSpreadsheetColumns({
         <DataTableColumnHeader column={column} title={t("fields.url.label")} />
       ),
       cell: ({ row }) => (
-        <Link className="truncate" href={row.original.url} target="_black">
-          {row.original.url}
-        </Link>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[300px] truncate">
+              <Link
+                className="truncate"
+                href={row.original.url}
+                target="_black"
+              >
+                {row.original.url}
+              </Link>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.url}</p>
+          </TooltipContent>
+        </Tooltip>
       ),
       size: 300,
       enableSorting: false,

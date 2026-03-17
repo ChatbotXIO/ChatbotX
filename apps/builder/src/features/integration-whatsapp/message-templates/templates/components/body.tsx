@@ -71,7 +71,7 @@ const TemplateBodyComponent = ({ parentName }: { parentName: string }) => {
   }, [getValues, handleChange, localBody, parentName, setValue])
 
   const displayText = useMemo(
-    () => getValues(`${parentName}.text`) || `---- ${t("actions.update")} ----`,
+    () => getValues(`${parentName}.text`) || `---- ${t("actions.edit")} ----`,
     [getValues, parentName, t],
   )
 

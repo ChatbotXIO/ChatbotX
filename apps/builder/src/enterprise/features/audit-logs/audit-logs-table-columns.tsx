@@ -6,6 +6,11 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@aha.chat/ui/components/ui/avatar"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import type { AuditLogResource } from "./schemas"
@@ -28,7 +33,16 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
                 />
                 <AvatarFallback>{row.original.user.name?.[0]}</AvatarFallback>
               </Avatar>
-              {row.original.user.name}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="max-w-[200px] truncate">
+                    {row.original.user.name}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{row.original.user.name}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           ) : null}
         </div>
@@ -52,7 +66,16 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Data" />
       ),
-      cell: ({ row }) => <div>{row.original.detail}</div>,
+      cell: ({ row }) => (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="max-w-[300px] truncate">{row.original.detail}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{row.original.detail}</p>
+          </TooltipContent>
+        </Tooltip>
+      ),
       size: 400,
       enableSorting: false,
       enableHiding: false,

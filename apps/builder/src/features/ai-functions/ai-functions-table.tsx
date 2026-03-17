@@ -12,6 +12,11 @@ import {
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
 import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@aha.chat/ui/components/ui/tooltip"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { formatDate } from "@aha.chat/ui/lib/format"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -67,9 +72,14 @@ export default function AIFunctionsTable({ promises }: AIFunctionsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[400px] truncate">{row.original.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
         ),
         enableSorting: true,
         enableHiding: false,
