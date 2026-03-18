@@ -1,6 +1,8 @@
 import {
+  contactsOnSequenceModel,
   conversationModel,
   createSelectSchema,
+  sequenceModel,
 } from "@aha.chat/database/schema"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema"
@@ -11,11 +13,21 @@ import { userResource } from "@/features/users/schemas/resource"
 
 export const conversationResource = createSelectSchema(conversationModel)
 export type ConversationResource = z.infer<typeof conversationResource>
+const contactsOnSequenceResource = createSelectSchema(contactsOnSequenceModel)
+const sequenceResourceSchema = createSelectSchema(sequenceModel)
 
 export const listConversationsItemResource = conversationResource.and(
   z.object({
     messages: z.array(messageResource),
-    contact: contactResource.nullable(),
+    contact: contactResource
+      .extend({
+        contactsOnSequences: z.array(
+          contactsOnSequenceResource.extend({
+            sequence: sequenceResourceSchema,
+          }),
+        ),
+      })
+      .nullable(),
     inbox: inboxResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),
