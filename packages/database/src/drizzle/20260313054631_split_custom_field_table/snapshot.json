@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "2ddb7d25-bc60-4ae9-98a8-541f60ccdc52",
-  "prevIds": ["02584ab5-c99c-488e-b01a-62d3cac76de8"],
+  "id": "6af6abe6-140a-4c99-835d-3ff443ca7304",
+  "prevIds": ["3f969f89-4397-43f0-aa85-ca0d047168d0"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -44,12 +44,6 @@
         "longText"
       ],
       "name": "CustomFieldType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["botField", "customField"],
-      "name": "FieldType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -6872,50 +6866,6 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "type",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "name",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "BotField_chatbotId_fieldType_name_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "BotField"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
             "name": "text_ops",
             "default": false
           }
@@ -7268,50 +7218,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "ConversationParticipant"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "type",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "name",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "CustomField_chatbotId_fieldType_name_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "CustomField"
     },
     {
       "nameExplicit": true,
@@ -9949,7 +9855,6 @@
   ],
   "renames": [
     "public.Field->public.CustomField",
-    "public.CustomField.customFieldType->public.CustomField.type",
-    "public.CustomField.Field_chatbotId_fieldType_name_key->public.CustomField.CustomField_chatbotId_fieldType_name_key"
+    "public.CustomField.customFieldType->public.CustomField.type"
   ]
 }

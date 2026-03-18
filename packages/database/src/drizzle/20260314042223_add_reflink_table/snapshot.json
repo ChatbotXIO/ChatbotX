@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "563454e8-79f5-4be8-a26d-ae42f35f4f6f",
-  "prevIds": ["e963e252-fa54-4a08-bf27-8181cfef163d"],
+  "id": "64a4fdd9-ab09-4e06-94d8-9a3619d3745e",
+  "prevIds": ["d9638420-1258-4209-b522-2413353365cd"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -6963,7 +6963,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         },
@@ -6983,7 +6983,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         }
@@ -7369,7 +7369,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         },
@@ -7389,7 +7389,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         }

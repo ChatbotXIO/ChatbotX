@@ -1,14 +1,5 @@
-ALTER TYPE "FolderType" ADD VALUE IF NOT EXISTS 'trigger';
-ALTER TYPE "FolderType" ADD VALUE IF NOT EXISTS 'webhook';
-ALTER TYPE "SenderType" ADD VALUE IF NOT EXISTS 'api';
-
-DROP TABLE IF EXISTS "Condition";
-DROP TABLE IF EXISTS "TriggerContactHistory";
-DROP TABLE IF EXISTS "TriggerExecution";
-DROP TABLE IF EXISTS "TriggerStats";
-DROP TABLE IF EXISTS "Trigger";
-DROP TABLE IF EXISTS "Webhook";
-
+ALTER TYPE "FolderType" ADD VALUE 'trigger';--> statement-breakpoint
+ALTER TYPE "FolderType" ADD VALUE 'webhook';--> statement-breakpoint
 CREATE TABLE "Condition" (
 	"id" text PRIMARY KEY,
 	"createdAt" timestamp(3) DEFAULT now() NOT NULL,

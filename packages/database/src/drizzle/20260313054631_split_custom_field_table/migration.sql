@@ -11,11 +11,107 @@ CREATE TABLE "BotField" (
 );
 --> statement-breakpoint
 ALTER TABLE "Field" RENAME TO "CustomField";--> statement-breakpoint
+ALTER TABLE "InboxTeamMember" DROP CONSTRAINT "InboxTeamMember_chatbotId_fkey";--> statement-breakpoint
+DROP TABLE "ActivityLog";--> statement-breakpoint
 ALTER TABLE "CustomField" RENAME COLUMN "customFieldType" TO "type";--> statement-breakpoint
 DROP INDEX IF EXISTS "Field_chatbotId_fieldType_name_key";--> statement-breakpoint
 ALTER TABLE "CustomField" DROP COLUMN "fieldType";--> statement-breakpoint
 ALTER TABLE "CustomField" DROP COLUMN "value";--> statement-breakpoint
--- CREATE UNIQUE INDEX IF NOT EXISTS "CustomField_chatbotId_fieldType_name_key" ON "CustomField" ("chatbotId" enum_ops,"type" text_ops,"name" enum_ops);--> statement-breakpoint
--- CREATE UNIQUE INDEX IF NOT EXISTS "BotField_chatbotId_fieldType_name_key" ON "BotField" ("chatbotId" enum_ops,"type" text_ops,"name" enum_ops);--> statement-breakpoint
+ALTER TABLE "InboxTeamMember" DROP COLUMN "chatbotId";--> statement-breakpoint
+ALTER TABLE "Account" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Account" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIAgent" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIAgent" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIAssistant" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIAssistant" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIEmbedding" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIEmbedding" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIFile" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIFile" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIFunction" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIFunction" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIMCPServer" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AIMCPServer" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AITrigger" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AITrigger" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Attachment" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Attachment" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AutomatedResponse" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "AutomatedResponse" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Broadcast" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Broadcast" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ChatbotMember" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ChatbotMember" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Chatbot" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Chatbot" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ChatbotUsage" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ChatbotUsage" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ContactCustomField" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ContactCustomField" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Contact" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Contact" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ContactNote" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ContactNote" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Conversation" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Conversation" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ConversationParticipant" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ConversationParticipant" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ErrorLog" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "ErrorLog" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "CustomField" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "CustomField" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Flow" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Flow" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "FlowRun" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "FlowRun" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "FlowVersion" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "FlowVersion" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Folder" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Folder" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Inbox" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Inbox" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "InboxTeamMember" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "InboxTeamMember" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "InboxTeam" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "InboxTeam" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationGemini" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationGemini" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationGoogleSheets" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationGoogleSheets" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationMessenger" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationMessenger" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Integration" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Integration" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationOpenAI" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationOpenAI" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationWebchat" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationWebchat" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationWhatsapp" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationWhatsapp" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationZalo" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "IntegrationZalo" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Invitation" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Invitation" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Message" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Message" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "OrganizationMember" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "OrganizationMember" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Organization" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Organization" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Session" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Session" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Spreadsheet" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Spreadsheet" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Tag" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Tag" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "User" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "User" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Verification" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "Verification" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "WhatsappFlow" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "WhatsappFlow" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "WhatsappMessageTemplate" ALTER COLUMN "createdAt" SET DATA TYPE timestamp(6) with time zone USING "createdAt"::timestamp(6) with time zone;--> statement-breakpoint
+ALTER TABLE "WhatsappMessageTemplate" ALTER COLUMN "updatedAt" SET DATA TYPE timestamp(6) with time zone USING "updatedAt"::timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "BotField" ADD CONSTRAINT "BotField_folderId_fkey" FOREIGN KEY ("folderId") REFERENCES "Folder"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "BotField" ADD CONSTRAINT "BotField_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "BotField" ADD CONSTRAINT "BotField_chatbotId_fkey" FOREIGN KEY ("chatbotId") REFERENCES "Chatbot"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+DROP TYPE "FieldType";

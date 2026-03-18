@@ -744,9 +744,9 @@ export const customFieldModel = pgTable(
   (table) => [
     uniqueIndex("CustomField_chatbotId_fieldType_name_key").using(
       "btree",
-      table.chatbotId.asc().nullsLast().op("enum_ops"),
-      table.type.asc().nullsLast().op("text_ops"),
-      table.name.asc().nullsLast().op("enum_ops"),
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.type.asc().nullsLast().op("enum_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
     ),
   ],
 )
@@ -775,9 +775,9 @@ export const botFieldModel = pgTable(
   (table) => [
     uniqueIndex("BotField_chatbotId_fieldType_name_key").using(
       "btree",
-      table.chatbotId.asc().nullsLast().op("enum_ops"),
-      table.type.asc().nullsLast().op("text_ops"),
-      table.name.asc().nullsLast().op("enum_ops"),
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+      table.type.asc().nullsLast().op("enum_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
     ),
   ],
 )
