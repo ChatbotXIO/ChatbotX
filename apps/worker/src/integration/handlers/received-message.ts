@@ -1,4 +1,3 @@
-import { contactTrackingService } from "@aha.chat/analytics"
 import { db, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -36,6 +35,7 @@ import {
   emitContactCreated,
   setWebhookExecutionContext,
 } from "@chatbotx/events"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"

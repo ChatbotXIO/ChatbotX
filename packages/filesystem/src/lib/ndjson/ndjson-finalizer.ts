@@ -8,8 +8,8 @@ const rename = promisify(fs.rename)
 const stat = promisify(fs.stat)
 
 export interface NdjsonFinalizerConfig {
-  rootPath: string
   parseFilename: (filename: string) => { timestamp: number } | null
+  rootPath: string
 }
 
 export class NdjsonFinalizer {

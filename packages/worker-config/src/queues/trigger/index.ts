@@ -38,9 +38,9 @@ export type TriggerJobEvaluate = {
 export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 
 export const triggerQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<TriggerJobData>(queueName.trigger, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<TriggerJobData>(queueName.trigger, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

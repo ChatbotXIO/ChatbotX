@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -77,7 +77,7 @@ services:
       retries: 5
 
   clickhouse:
-    image: clickhouse/clickhouse-server:24-alpine
+    image: clickhouse/clickhouse-server:26.2-alpine
     ports:
       - "8124:8123"
       - "9081:9000"
@@ -86,8 +86,8 @@ services:
       - clickhouse-backups:/var/backups/clickhouse
       - ./packages/analytics/clickhouse/init:/docker-entrypoint-initdb.d
     environment:
-      - CLICKHOUSE_DB=${CLICKHOUSE_DB:-chatbot_analytics}
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-ahachat}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB:-chatbotx_analytics}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-chatbotx}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
     ulimits:
@@ -95,7 +95,7 @@ services:
         soft: 262144
         hard: 262144
     healthcheck:
-      test: [ "CMD", "clickhouse-client", "--query", "SELECT 1" ]
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 30s
       timeout: 10s
       retries: 5

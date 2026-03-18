@@ -37,7 +37,7 @@ export async function listFlows(
           ilike: `%${input.name.toLowerCase()}%`,
         }
       : undefined,
-    active: input.active !== null ? input.active : undefined,
+    active: input.active === null ? undefined : input.active,
   }
 
   const pagination = parsePagination(input)

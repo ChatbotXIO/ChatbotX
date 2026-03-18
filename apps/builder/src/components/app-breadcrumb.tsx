@@ -36,6 +36,7 @@ export const AppBreadcrumb = ({ items }: BreadcrumbsProps) => {
       <BreadcrumbList>
         {items.map((item, idx) => {
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: safe index
             <Fragment key={`${item.label}-${idx}`}>
               <BreadcrumbItem>{renderLink(item)}</BreadcrumbItem>
               {idx < items.length - 1 && <BreadcrumbSeparator />}

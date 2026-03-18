@@ -1,4 +1,5 @@
-import { prisma } from "@aha.chat/database"
+import { db, eq } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
 export async function getTotalContacts(
@@ -6,11 +7,10 @@ export async function getTotalContacts(
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
-  const total = await prisma.contact.count({
-    where: {
-      chatbotId,
-    },
-  })
+  const total = await db.$count(
+    contactModel,
+    eq(contactModel.chatbotId, chatbotId),
+  )
 
   return { total }
 }

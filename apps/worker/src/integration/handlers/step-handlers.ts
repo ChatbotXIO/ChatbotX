@@ -1,4 +1,3 @@
-import { conversationTrackingService } from "@aha.chat/analytics"
 import {
   and,
   db,
@@ -36,6 +35,7 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx/events"
+import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { subHours } from "date-fns"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"

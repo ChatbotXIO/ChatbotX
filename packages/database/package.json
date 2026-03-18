@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@clickhouse/client": "^1.11.0",
+    "@clickhouse/client": "^1.18.2",
     "@t3-oss/env-nextjs": "^0.13.10",
     "drizzle-cuid2": "^2.2.0",
     "drizzle-orm": "1.0.0-beta.15-859cf75",
-    "pg": "^8.19.0",
+    "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

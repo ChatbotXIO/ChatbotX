@@ -167,9 +167,9 @@ export type IntegrationJobData =
   | IntegrationJobCreateMessage
 
 export const integrationQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<IntegrationJobData>(queueName.integration, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<IntegrationJobData>(queueName.integration, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

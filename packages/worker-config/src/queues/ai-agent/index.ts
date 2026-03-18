@@ -7,12 +7,12 @@ import {
 import { queueName } from "../../lib/types"
 
 export const aiAgentQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue(queueName.aiAgent, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue(queueName.aiAgent, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue
 
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200

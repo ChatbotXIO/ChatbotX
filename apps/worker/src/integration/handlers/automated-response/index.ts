@@ -140,7 +140,6 @@ export async function triggerAutomatedResponse(
       aiProvider: "openai",
       startTime,
     })
-    await trackBotMessageOutAsContactEvent(message)
     return
   }
   if (

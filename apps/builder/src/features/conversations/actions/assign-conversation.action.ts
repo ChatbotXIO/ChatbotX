@@ -1,11 +1,11 @@
 "use server"
 
-import { conversationTrackingService } from "@aha.chat/analytics"
 import { db, inArray } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { emitConversationAssigned } from "@chatbotx/events"
+import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -126,7 +126,7 @@ export const assignConversationAction = chatbotActionClient
               eventType: "conversation_assigned",
               toAssignee,
               occurredAt: new Date(),
-              channel: conv.inbox?.inboxType as string,
+              channel: conv.inboxType,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",
@@ -146,7 +146,7 @@ export const assignConversationAction = chatbotActionClient
               conversationId: conv.id,
               eventType: "conversation_unassigned",
               occurredAt: new Date(),
-              channel: conv.inbox?.inboxType as string,
+              channel: conv.inboxType,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",

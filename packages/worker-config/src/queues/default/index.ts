@@ -7,12 +7,12 @@ import {
 import { queueName } from "../../lib/types"
 
 export const defaultQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<DefaultJobData>(queueName.default, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<DefaultJobData>(queueName.default, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",

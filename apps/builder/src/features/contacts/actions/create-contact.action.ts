@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail, sql } from "@aha.chat/database/client"
 import {
   chatbotUsageModel,
@@ -10,6 +9,7 @@ import {
 } from "@aha.chat/database/schema"
 import type { ChatbotUsageModel, InboxModel } from "@aha.chat/database/types"
 import { emitContactCreated } from "@chatbotx/events"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {

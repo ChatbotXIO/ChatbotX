@@ -1,4 +1,3 @@
-import { clickhouseClient } from "@aha.chat/analytics"
 import { db, sql } from "@aha.chat/database/client"
 import {
   ClickhouseIngester,
@@ -6,6 +5,7 @@ import {
 } from "@aha.chat/filesystem/server"
 import type { AnalyticsJobData } from "@aha.chat/worker-config"
 import { S3Client } from "@aws-sdk/client-s3"
+import { clickhouseClient } from "@chatbotx.io/analytics"
 import { logger } from "../../lib/logger"
 import {
   getClickhouseConfig,

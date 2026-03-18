@@ -7,9 +7,9 @@
     "./context": "./src/context.ts"
   },
   "dependencies": {
-    "@aha.chat/worker-config": "workspace:*",
     "@aha.chat/database": "workspace:*",
-    "lru-cache": "^11.0.2"
+    "@aha.chat/worker-config": "workspace:*",
+    "lru-cache": "^11.2.7"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

@@ -1,3 +1,4 @@
+import type { DailyTotalContacts } from "@chatbotx.io/analytics"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 
@@ -61,7 +62,7 @@ export const createAnalysisStore = () =>
         to: to.toString(),
       })
       const { data } = await ky
-        .get(
+        .get<{ data: DailyTotalContacts[] }>(
           `/api/chatbots/${chatbotId}/total-contacts?${searchParams.toString()}`,
         )
         .json()

@@ -31,9 +31,9 @@ export type AnalyticsJob = {
 export type AnalyticsJobData = AnalyticsJob
 
 export const analyticsQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<AnalyticsJobData>(queueName.analytics, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<AnalyticsJobData>(queueName.analytics, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

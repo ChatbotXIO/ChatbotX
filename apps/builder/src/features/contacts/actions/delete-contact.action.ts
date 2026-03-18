@@ -1,8 +1,8 @@
 "use server"
 
-import { contactTrackingService } from "@aha.chat/analytics"
 import { and, db, inArray } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

@@ -32,8 +32,8 @@
     "@aha.chat/typescript-config": "workspace:*",
     "@types/yargs": "^17.0.35",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "0.21.0-beta.2",
+    "tsdown": "0.21.4",
     "tsup": "^8.5.1",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   }
 }

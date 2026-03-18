@@ -7,19 +7,11 @@ import { NDJSON_EXT } from "./ndjson-constants"
 const fsp = fs.promises
 
 export interface NdjsonSpoolerConfig {
-  rootPath: string
-  eventType: string
-
   /**
    * A single .tmp file should only accept logs for this window.
    * After this window, next write will open a NEW .tmp (without renaming old one).
    */
   acceptWindowSeconds: number // e.g. 10
-
-  /**
-   * Optional overrides
-   */
-  instanceId?: string
 
   /**
    * Function to build tmp filename
@@ -30,6 +22,13 @@ export interface NdjsonSpoolerConfig {
     timestamp: number
     seq: number
   }) => string
+  eventType: string
+
+  /**
+   * Optional overrides
+   */
+  instanceId?: string
+  rootPath: string
 }
 
 function safeNumber(n: unknown, fallback: number): number {

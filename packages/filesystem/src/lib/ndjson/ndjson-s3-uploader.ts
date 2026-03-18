@@ -9,8 +9,6 @@ const mkdir = promisify(fs.mkdir)
 const rename = promisify(fs.rename)
 
 export interface NdjsonS3UploaderConfig {
-  rootPath: string
-  s3Prefix: string
   concurrency: number
   onFileUploaded?: (info: {
     localPath: string
@@ -18,6 +16,8 @@ export interface NdjsonS3UploaderConfig {
     dtPart: string
     hourPart: string
   }) => Promise<void> | void
+  rootPath: string
+  s3Prefix: string
 }
 
 export class NdjsonS3Uploader {

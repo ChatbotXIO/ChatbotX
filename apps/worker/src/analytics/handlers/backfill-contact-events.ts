@@ -1,5 +1,5 @@
-import { contactTrackingService } from "@aha.chat/analytics"
 import { db } from "@aha.chat/database/client"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000

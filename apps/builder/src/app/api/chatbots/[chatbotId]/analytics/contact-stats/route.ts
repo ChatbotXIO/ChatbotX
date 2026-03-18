@@ -2,7 +2,7 @@ import {
   type ContactEventType,
   contactAnalyticsService,
   shouldUseMonthlyGranularity,
-} from "@aha.chat/analytics"
+} from "@chatbotx.io/analytics"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"

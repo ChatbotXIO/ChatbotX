@@ -28,7 +28,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "")
+    (typeof window === "undefined" ? "" : window.location.origin)
 
   const embedCode = `<!-- Aha Chat Widget -->
 <script src="${baseUrl}/chat-widget/plugin.js" crossorigin="anonymous" async

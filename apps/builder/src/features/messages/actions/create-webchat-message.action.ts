@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail, type Transaction } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -25,6 +24,7 @@ import {
 } from "@aha.chat/partysocket-config"
 import type { OutgoingMessage } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"

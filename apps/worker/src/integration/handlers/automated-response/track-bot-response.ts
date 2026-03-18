@@ -1,3 +1,4 @@
+import type { BotResponseTrackingContext } from "@aha.chat/worker-config"
 import {
   type BotMessageAIProvider,
   type BotMessageFallbackReason,
@@ -6,24 +7,23 @@ import {
   type BotMessageRouteType,
   botMessageTrackingService,
   type TriggerContext,
-} from "@aha.chat/analytics"
-import type { BotResponseTrackingContext } from "@aha.chat/worker-config"
+} from "@chatbotx.io/analytics"
 
 interface TrackBotResponseParams {
+  aiProvider: BotMessageAIProvider
   chatbotId: string
   conversationId: string
-  messageId: string
   hasResponse: boolean
-  responseType: BotMessageResponseType
-  routeType?: BotMessageRouteType
-  result?: BotMessageResult
-  aiProvider: BotMessageAIProvider
+  messageId: string
   metadata?: {
     flowId?: string
     intentId?: string
     intentConfidence?: number
     fallbackReason?: BotMessageFallbackReason
   }
+  responseType: BotMessageResponseType
+  result?: BotMessageResult
+  routeType?: BotMessageRouteType
   startTime: number
   triggerContext?: TriggerContext
 }

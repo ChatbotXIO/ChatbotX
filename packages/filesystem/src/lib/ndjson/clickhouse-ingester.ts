@@ -1,10 +1,10 @@
 import { ListObjectsV2Command, type S3Client } from "@aws-sdk/client-s3"
 
 export interface NdjsonIngestManifestStore {
-  filterNotIngested(objectKeys: string[]): Promise<string[]>
   claimForProcessing(objectKey: string): Promise<number | null>
-  markIngested(objectKey: string): Promise<void>
+  filterNotIngested(objectKeys: string[]): Promise<string[]>
   markFailed(objectKey: string, errorMessage: string): Promise<void>
+  markIngested(objectKey: string): Promise<void>
 }
 
 export interface ClickhouseClient {
@@ -17,18 +17,18 @@ export interface ClickhouseClient {
 }
 
 export interface ClickhouseIngesterConfig {
-  s3Client: S3Client
-  s3Endpoint: string
-  s3Bucket: string
-  s3Prefix: string
-  s3AccessKey: string
-  s3SecretKey: string
-  manifestStore: NdjsonIngestManifestStore
+  batchSize: number
   clickhouseClient: ClickhouseClient
   clickhouseDatabase: string
   clickhouseTable: string
-  batchSize: number
+  manifestStore: NdjsonIngestManifestStore
   maxRetries: number
+  s3AccessKey: string
+  s3Bucket: string
+  s3Client: S3Client
+  s3Endpoint: string
+  s3Prefix: string
+  s3SecretKey: string
 }
 
 export class ClickhouseIngester {

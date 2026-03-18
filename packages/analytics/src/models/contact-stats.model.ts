@@ -7,15 +7,15 @@ export interface TimeRange {
 
 export interface ContactStats {
   chatbotId: string
-  timestamp: Date
-  eventType: ContactEventType
   count: number
+  eventType: ContactEventType
+  timestamp: Date
   uniqueContacts: number
 }
 
 export interface ContactsByDimension {
-  dimension: string
   count: number
+  dimension: string
   uniqueContacts: number
 }
 
@@ -25,9 +25,9 @@ export interface DailyTotalContacts {
 }
 
 export interface MessagesBySenderStats {
-  chatbotId: string
-  timestamp: Date
   channel: string
-  senderType: "bot" | "human"
+  chatbotId: string
   count: number
+  senderType: "bot" | "human"
+  timestamp: Date
 }

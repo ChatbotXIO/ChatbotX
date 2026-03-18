@@ -257,7 +257,10 @@ export const chatbotTokenAPIs = {
         },
       )
 
-      await createMessage(conversation, input)
+      await createMessage({
+        conversation,
+        parsedInput: input,
+      })
     }),
 }
 

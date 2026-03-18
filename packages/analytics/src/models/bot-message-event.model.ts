@@ -22,20 +22,15 @@ export type BotMessageFallbackReason =
   | "UNSUPPORTED_MESSAGE_TYPE"
 
 export interface BotMessageEvent {
-  eventId: string
-  chatbotId: string
-  messageId: string
-  conversationId: string
-  occurredAt: Date
-
-  hasResponse: boolean
-  responseType: BotMessageResponseType
-  routeType?: BotMessageRouteType
-  result?: BotMessageResult
   aiProvider: BotMessageAIProvider
 
   channel?: string
-  source?: string
+  chatbotId: string
+  conversationId: string
+  eventId: string
+
+  hasResponse: boolean
+  messageId: string
   metadata?: {
     flowId?: string
     automatedResponseId?: string
@@ -49,19 +44,24 @@ export interface BotMessageEvent {
       triggerType: string
     }
   }
+  occurredAt: Date
+  responseType: BotMessageResponseType
+  result?: BotMessageResult
+  routeType?: BotMessageRouteType
+  source?: string
 }
 
 export type CreateBotMessageEvent = Omit<BotMessageEvent, "eventId">
 
 export interface BotMessageStats {
+  aiProvider: BotMessageAIProvider
   chatbotId: string
-  timestamp: Date
+  count: number
   hasResponse: boolean
   responseType: BotMessageResponseType
-  routeType?: BotMessageRouteType
   result?: BotMessageResult
-  aiProvider: BotMessageAIProvider
-  count: number
+  routeType?: BotMessageRouteType
+  timestamp: Date
 }
 
 export interface BotMessageAIProviderStats {

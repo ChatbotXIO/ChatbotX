@@ -24,7 +24,6 @@ const config: IntegrationDefinition<
   channels: {
     channel: {
       message: {
-        receiveMessage,
         sendMessage,
         receiveMessage,
       },

@@ -1,4 +1,4 @@
-import { conversationAnalyticsService } from "@aha.chat/analytics"
+import { conversationAnalyticsService } from "@chatbotx.io/analytics"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"

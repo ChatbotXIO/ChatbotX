@@ -14,7 +14,7 @@ declare global {
 }
 
 const link = new RPCLink({
-  url: `${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/rpc`,
+  url: `${typeof window === "undefined" ? "http://localhost:3000" : window.location.origin}/rpc`,
   plugins: [
     new BatchLinkPlugin({
       exclude: ({ path }) => path[0] === "sse",

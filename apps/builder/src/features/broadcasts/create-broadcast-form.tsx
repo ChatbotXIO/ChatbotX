@@ -209,10 +209,10 @@ function CreateBroadcastChooseChannel() {
   const handleChooseChannel = useCallback(
     (inboxType: InboxType) => {
       setValue("inboxType", inboxType)
-      if (inboxType !== "messenger") {
-        setValue("subaction", BroadcastSubaction.allContacts)
-      } else {
+      if (inboxType === "messenger") {
         setValue("subaction", null)
+      } else {
+        setValue("subaction", BroadcastSubaction.allContacts)
       }
     },
     [setValue],

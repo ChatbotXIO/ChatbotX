@@ -35,9 +35,9 @@ export type ScheduleJobData =
   | ScheduleJobCleanupTriggers
 
 export const scheduleQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<ScheduleJobData>(queueName.schedule, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<ScheduleJobData>(queueName.schedule, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

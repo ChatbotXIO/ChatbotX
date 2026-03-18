@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@aha.chat/analytics"
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
@@ -28,6 +27,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@aha.chat/worker-config"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
@@ -63,15 +63,21 @@ export const createMessageAction = chatbotActionClient
         },
       )
 
-      return createMessage(conversation, parsedInput, ctx.user)
+      return createMessage({
+        conversation,
+        parsedInput,
+        user: ctx.user,
+      })
     },
   )
 
-export const createMessage = async (
-  conversation: ConversationModel,
-  parsedInput: CreateMessageRequest,
-  user: UserModel,
-) => {
+export const createMessage = async (props: {
+  conversation: ConversationModel
+  parsedInput: CreateMessageRequest
+  user?: UserModel
+}) => {
+  const { conversation, parsedInput, user } = props
+
   // Handle send flow
   if ("flowId" in parsedInput) {
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -109,7 +115,7 @@ export const createMessage = async (
         messageType: "outgoing",
         chatbotId: conversation.chatbotId,
         conversationId: conversation.id,
-        senderType: "user",
+        senderType: user ? "user" : "api",
         senderId: user?.id,
         inboxId: conversation.inboxId,
         contentType: "text",
@@ -232,7 +238,7 @@ export const createMessage = async (
         metadata: {
           messageId: message.id,
           conversationId: message.conversationId,
-          adminId: user.id,
+          adminId: user?.id ?? "",
         },
       }),
     )

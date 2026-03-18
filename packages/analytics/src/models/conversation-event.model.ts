@@ -4,15 +4,15 @@ export type ConversationEventType =
   | "conversation_unassigned"
 
 export interface ConversationEvent {
-  eventId: string
+  channel?: string
   chatbotId: string
   conversationId: string
+  eventId: string
   eventType: ConversationEventType
-  occurredAt: Date
   fromAssignee?: string
-  toAssignee?: string
-  channel?: string
   metadata?: Record<string, unknown>
+  occurredAt: Date
+  toAssignee?: string
 }
 
 export interface CreateConversationEvent
@@ -20,7 +20,7 @@ export interface CreateConversationEvent
 
 export interface ConversationHandoffStats {
   chatbotId: string
-  timestamp: Date
-  direction: "to_human" | "to_bot"
   count: number
+  direction: "to_human" | "to_bot"
+  timestamp: Date
 }

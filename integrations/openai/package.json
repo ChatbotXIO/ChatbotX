@@ -6,8 +6,8 @@
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@aha.chat/sdk": "workspace:*",
-    "@ai-sdk/openai": "^3.0.37",
-    "ai": "^6.0.105"
+    "@ai-sdk/openai": "^3.0.41",
+    "ai": "^6.0.116"
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",

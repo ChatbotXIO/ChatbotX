@@ -1,14 +1,14 @@
 export interface S3StorageConfig {
-  endpoint: string
-  bucket: string
   accessKey: string
-  secretKey: string
+  bucket: string
+  endpoint: string
   region: string
+  secretKey: string
 }
 
 export interface ClickhouseConfig {
-  database: string
   batchSize: number
+  database: string
   maxRetries: number
 }
 
@@ -23,12 +23,12 @@ export function getS3StorageConfig(): S3StorageConfig {
       process.env.S3_BUCKET ||
       process.env.AWS_BUCKET ||
       process.env.MINIO_BUCKET ||
-      "ahachat",
+      "chatbotx",
     accessKey:
       process.env.S3_ACCESS_KEY ||
       process.env.AWS_ACCESS_KEY_ID ||
       process.env.MINIO_ACCESS_KEY ||
-      "ahachat",
+      "chatbotx",
     secretKey:
       process.env.S3_SECRET_KEY ||
       process.env.AWS_SECRET_ACCESS_KEY ||

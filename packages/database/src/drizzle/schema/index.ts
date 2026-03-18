@@ -75,6 +75,11 @@ export const aiEmbeddingStatus = pgEnum("AIEmbeddingStatus", [
   "error",
   "processing",
 ])
+export const analyticsManifestStatusEnum = pgEnum("AnalyticsManifestStatus", [
+  "processing",
+  "ingested",
+  "failed",
+])
 
 export const aiTriggerToIntegrationOpenAIModel = pgTable(
   "_AITriggerToIntegrationOpenAI",

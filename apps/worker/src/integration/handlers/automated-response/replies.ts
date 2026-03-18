@@ -136,7 +136,6 @@ export async function replyByAutomatedResponse(
                 data: {
                   conversationId: message.conversationId,
                   flowId: flow.id,
-                  messageId,
                   trackingContext,
                 },
               })

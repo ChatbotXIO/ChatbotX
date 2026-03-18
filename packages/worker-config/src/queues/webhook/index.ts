@@ -24,9 +24,9 @@ export type WebhookJobEvaluate = {
 export type WebhookJobData = WebhookJobEvaluate
 
 export const webhookQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<WebhookJobData>(queueName.webhook, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<WebhookJobData>(queueName.webhook, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

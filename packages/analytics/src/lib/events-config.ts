@@ -7,8 +7,8 @@ export const BOT_MESSAGE_EVENTS_EVENT_TYPE = "bot_message_events"
 export interface NdjsonTmpFilename {
   eventType: string
   instanceId: string
-  timestamp: number
   seq: number
+  timestamp: number
 }
 
 export function buildTmpFilename(params: NdjsonTmpFilename): string {

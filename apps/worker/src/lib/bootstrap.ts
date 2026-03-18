@@ -1,7 +1,7 @@
 import {
   bootstrapAnalytics,
   setupAnalyticsServer,
-} from "@aha.chat/analytics/server"
+} from "@chatbotx.io/analytics/server"
 
 export async function bootstrapApp() {
   setupAnalyticsServer()

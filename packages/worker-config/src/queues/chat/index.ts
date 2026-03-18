@@ -98,9 +98,9 @@ export type ChatJobData =
   | ChatJobNotifyExportResult
 
 export const chatQueue =
-  process.env.NEXT_PHASE !== "phase-production-build"
-    ? new Queue<ChatJobData>(queueName.chat, {
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? fakeQueue
+    : new Queue<ChatJobData>(queueName.chat, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
-    : fakeQueue

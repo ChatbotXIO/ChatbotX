@@ -1,7 +1,7 @@
 import type {
   BotMessageAIProvider,
   BotMessageResponseType,
-} from "@aha.chat/analytics"
+} from "@chatbotx.io/analytics"
 
 export interface BotResponseTrackingContext {
   aiProvider: BotMessageAIProvider
