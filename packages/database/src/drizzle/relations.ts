@@ -245,6 +245,7 @@ export const relations = defineRelations(schema, (r) => ({
     integrationMessengers: r.many.integrationMessengerModel(),
     integrationWebchats: r.many.integrationWebchatModel(),
     integrationZalos: r.many.integrationZaloModel(),
+    reflinks: r.many.reflinkModel(),
     sequenceSteps: r.many.sequenceStepModel(),
   },
   aiMCPServerModel: {
@@ -337,6 +338,7 @@ export const relations = defineRelations(schema, (r) => ({
   },
   customFieldModel: {
     contacts: r.many.contactModel(),
+    reflinks: r.many.reflinkModel(),
   },
   broadcastModel: {
     contactsOnBroadcasts: r.many.contactsOnBroadcastsModel(),
@@ -645,6 +647,17 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.contactsToTagsModel.tagId,
       to: r.tagModel.id,
       optional: false,
+    }),
+  },
+  reflinkModel: {
+    flow: r.one.flowModel({
+      from: r.reflinkModel.flowId,
+      to: r.flowModel.id,
+      optional: false,
+    }),
+    customField: r.one.customFieldModel({
+      from: r.reflinkModel.customFieldId,
+      to: r.customFieldModel.id,
     }),
   },
   sequenceModel: {
