@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
-import { MenuIcon, ShoppingCartIcon, WorkflowIcon } from "lucide-react"
+import { MenuIcon, WorkflowIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { SelectFlowDialog } from "@/features/flows/components/select-flow-dialog"
@@ -45,14 +45,6 @@ export const InputMenu = ({
               {t("actions.sendFlow")}
             </Button>
           </SelectFlowDialog>
-          <Button
-            className="justify-start rounded-none"
-            type="button"
-            variant="ghost"
-          >
-            <ShoppingCartIcon size={20} />
-            {t("actions.sendProduct")}
-          </Button>
           <EmojiPicker
             label={t("actions.insertEmoji")}
             onSelectEmoji={onSelectEmoji}

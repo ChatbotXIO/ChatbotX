@@ -293,6 +293,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
                           <PencilIcon />
                         </Button>
                         <Button
+                          className="text-destructive"
                           disabled={isDeletingSavedReply}
                           onClick={(event) => {
                             event.stopPropagation()
