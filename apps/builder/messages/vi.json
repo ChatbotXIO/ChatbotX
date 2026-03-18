@@ -167,13 +167,7 @@
     "addNotes": "Thêm ghi chú",
     "generate": "Tạo",
     "regenerate": "Tạo lại",
-    "qrCode": "Mã QR",
-    "addSequence": "Thêm chăm sóc",
-    "removeSequence": "Xóa chăm sóc",
-    "activate": "Kích hoạt",
-    "deactivate": "Tắt",
-    "saving": "Đang lưu...",
-    "creating": "Đang tạo..."
+    "qrCode": "Mã QR"
   },
   "states": {
     "success": "Thành công",
@@ -203,7 +197,7 @@
   },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
-    "title": "AI Files"
+    "title": "Knowledge"
   },
   "aiFunctions": {
     "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn",
@@ -211,7 +205,7 @@
   },
   "aiMcpServers": {
     "description": "Kết nối AI với các hệ thống bên ngoài qua MCP",
-    "title": "AI MCP Servers",
+    "title": "MCP Servers",
     "tools": {
       "label": "Công cụ có sẵn"
     }
@@ -1375,6 +1369,9 @@
     },
     "savedReplies": {
       "label": "Phản hồi đã lưu"
+    },
+    "sequence": {
+      "label": "Chăm sóc"
     }
   },
   "flows": {
@@ -1459,10 +1456,7 @@
       "emailSpacing": "Khoảng cách",
       "emailCode": "Mã",
       "emailHeader": "Tiêu đề",
-      "typing": "Đang gõ",
-      "sequenceActions": "Hành động chăm sóc",
-      "subscribeSequence": "Đăng ký chăm sóc",
-      "unsubscribeSequence": "Hủy đăng ký chăm sóc"
+      "typing": "Đang gõ"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1653,10 +1647,7 @@
     "enableFeatureDescription": "Bạn có chắc chắn muốn bật {feature}?",
     "enableSuccess": "Đã bật {feature} thành công",
     "exportedSuccess": "{feature} đã được xuất thành công",
-    "syncedSuccessfully": "Đã đồng bộ thành công",
-    "selectedCount": "Đã chọn {count}",
-    "deleteMultipleItems": "Bạn có chắc chắn muốn xóa {count} {feature}?",
-    "deleteFeatureDescription": "Bạn có chắc chắn muốn xóa {feature} này?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi."
+    "syncedSuccessfully": "Đã đồng bộ thành công"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -1779,9 +1770,7 @@
     "minValue": "Giá trị tối thiểu là {min}",
     "passwordMismatch": "Mật khẩu không khớp",
     "required": "Trường này là bắt buộc",
-    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot",
-    "minOneContactRequired": "Cần ít nhất một liên hệ",
-    "minOneSequenceRequired": "Cần ít nhất một chuỗi chăm sóc"
+    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot"
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
@@ -2035,9 +2024,6 @@
   "reflinks": {
     "title": "Liên kết giới thiệu",
     "description": "Chia sẻ bot của bạn trên trang web, mạng xã hội hoặc ứng dụng nhắn tin khác làm điểm vào để người dùng bắt đầu cuộc trò chuyện với bot."
-  },
-  "aiHub": {
-    "title": "AI Hub"
   },
   "sequences": {
     "heading": {

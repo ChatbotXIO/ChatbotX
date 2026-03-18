@@ -167,13 +167,7 @@
     "addNotes": "Add Notes",
     "generate": "Generate",
     "regenerate": "Regenerate",
-    "qrCode": "QR Code",
-    "addSequence": "Add Sequence",
-    "removeSequence": "Remove Sequence",
-    "activate": "Activate",
-    "deactivate": "Deactivate",
-    "saving": "Saving...",
-    "creating": "Creating..."
+    "qrCode": "QR Code"
   },
   "states": {
     "success": "Success",
@@ -203,7 +197,7 @@
   },
   "aiFiles": {
     "description": "Give Your Agents Access to PDFs, Docs, and More",
-    "title": "AI Files"
+    "title": "Knowledge"
   },
   "aiFunctions": {
     "description": "Configure LLM functions to make your AI agent more intelligent",
@@ -211,7 +205,7 @@
   },
   "aiMcpServers": {
     "description": "Connect AI to External Systems via MCP",
-    "title": "AI MCP Servers",
+    "title": "MCP Servers",
     "tools": {
       "label": "Available Tools"
     }
@@ -1527,10 +1521,7 @@
       "emailSpacing": "Spacing",
       "emailCode": "Code",
       "emailHeader": "Header",
-      "typing": "Typing",
-      "sequenceActions": "Sequence Actions",
-      "subscribeSequence": "Subscribe Sequence",
-      "unsubscribeSequence": "Unsubscribe Sequence"
+      "typing": "Typing"
     },
     "additionalSteps": "Additional steps",
     "button": {
@@ -1721,10 +1712,7 @@
     "enableFeature": "Enable {feature}",
     "enableFeatureDescription": "Are you sure you want to enable the {feature}?",
     "enableSuccess": "{feature} enabled successfully",
-    "exportedSuccess": "{feature} exported successfully",
-    "selectedCount": "{count} selected",
-    "deleteMultipleItems": "Are you sure you want to delete {count} {feature}?",
-    "deleteFeatureDescription": "Are you sure you want to delete this {feature}?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers."
+    "exportedSuccess": "{feature} exported successfully"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1791,31 +1779,7 @@
     "orContinueWith": "Or continue with",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
-    "signUp": "Sign up",
-    "acceptTermsAndPolicy": "By clicking continue, you agree to our",
-    "and": "and",
-    "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service",
-    "signInTitle": "Sign in to {name}",
-    "forgotPasswordTitle": "Forgot your password?",
-    "forgotPasswordDescription": "No worries! We'll send you a link with instructions on how to reset your password.",
-    "checkYourEmail": "Check your email",
-    "magicLinkSent": "We sent verification URL to your email",
-    "magicLinkSentDescription": "Click the link in your email to continue.",
-    "backToSignIn": "Back to sign in",
-    "didNotReceiveEmail": "Didn't receive the email? Check your spam folder.",
-    "trySigningInAgain": "You can also try signing in again with a different email.",
-    "sentMagicLink": "We sent a magic link to your email. Please check your email and click the link to continue.",
-    "signIn": "Sign in",
-    "signUpSuccess": "Signed up successfully. Please check your email for verification.",
-    "forgotPassword": "Forgot password?",
-    "rememberedPassword": "Remembered your password?",
-    "forgotPasswordEmailSent": "We've sent you an email with instructions to reset your password.",
-    "magicLinkSentTitle": "Magic link sent",
-    "passwordResetSuccess": "Password reset successfully",
-    "resetPasswordTitle": "Reset your password",
-    "resetPasswordDescription": "Enter your new password below.",
-    "signUpTitle": "Sign up to {name}"
+    "signUp": "Sign up"
   },
   "tools": {
     "title": "Tools"
@@ -1873,9 +1837,7 @@
     "minValue": "Minimum value is {min}",
     "passwordMismatch": "Passwords do not match",
     "required": "This field is required",
-    "maxItemsReached": "Maximum {max} {feature} allowed per chatbot",
-    "minOneContactRequired": "At least one contact is required",
-    "minOneSequenceRequired": "At least one sequence is required"
+    "maxItemsReached": "Maximum {max} {feature} allowed per chatbot"
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",
