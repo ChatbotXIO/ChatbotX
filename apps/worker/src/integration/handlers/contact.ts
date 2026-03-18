@@ -3,6 +3,7 @@ import {
   contactCustomFieldModel,
   contactModel,
   contactNoteModel,
+  contactsOnSequenceModel,
   contactsToTagsModel,
   conversationModel,
   tagModel,
@@ -16,11 +17,17 @@ import type {
   OptInEmailStepSchema,
   OptOutEmailStepSchema,
   SetCustomFieldStepSchema,
+  SubscribeSequenceStepSchema,
+  UnsubscribeSequenceStepSchema,
 } from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
 } from "@aha.chat/partysocket-config"
+import {
+  cancelPendingDispatches,
+  enrollContactInSequence,
+} from "@aha.chat/sequence-scheduler"
 import type {
   IntegrationJobBlockContact,
   IntegrationJobUnblockContact,
@@ -355,4 +362,100 @@ export const broadcastUnblockContactEvent = async ({
   ]
 
   await Promise.all(promises)
+}
+
+export async function addContactSequence({
+  conversation,
+  step,
+}: ExecuteStepProps<SubscribeSequenceStepSchema>) {
+  if (!step.sequenceId) {
+    return
+  }
+
+  const existing = await db.query.contactsOnSequenceModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      sequenceId: step.sequenceId,
+      chatbotId: conversation.chatbotId,
+    },
+    columns: { id: true },
+  })
+
+  if (existing) {
+    return
+  }
+
+  const now = new Date()
+
+  const firstStep = await db.query.sequenceStepModel.findFirst({
+    where: {
+      sequenceId: step.sequenceId,
+      order: 0,
+      isActive: true,
+    },
+    columns: {
+      id: true,
+      delayDays: true,
+      delayMinutes: true,
+    },
+  })
+
+  const nextRunAt = firstStep
+    ? new Date(
+        now.getTime() +
+          firstStep.delayDays * 24 * 60 * 60 * 1000 +
+          firstStep.delayMinutes * 60 * 1000,
+      )
+    : now
+
+  await enrollContactInSequence({
+    chatbotId: conversation.chatbotId,
+    contactId: conversation.contactId,
+    sequenceId: step.sequenceId,
+    nextRunAt,
+    nextStepId: firstStep?.id ?? null,
+    enrolledAt: now,
+  })
+}
+
+export async function removeContactSequence({
+  conversation,
+  step,
+}: ExecuteStepProps<UnsubscribeSequenceStepSchema>) {
+  if (!step.sequenceId) {
+    return
+  }
+
+  const enrollments = await db.query.contactsOnSequenceModel.findMany({
+    where: {
+      contactId: conversation.contactId,
+      sequenceId: step.sequenceId,
+      chatbotId: conversation.chatbotId,
+    },
+    columns: {
+      id: true,
+    },
+  })
+
+  if (enrollments.length === 0) {
+    return
+  }
+
+  await db.delete(contactsOnSequenceModel).where(
+    and(
+      inArray(
+        contactsOnSequenceModel.id,
+        enrollments.map((e) => e.id),
+      ),
+      eq(contactsOnSequenceModel.chatbotId, conversation.chatbotId),
+    ),
+  )
+
+  for (const enrollment of enrollments) {
+    await cancelPendingDispatches({
+      enrollmentId: enrollment.id,
+      chatbotId: conversation.chatbotId,
+      reason: "unsubscribed_via_flow",
+    })
+  }
 }
