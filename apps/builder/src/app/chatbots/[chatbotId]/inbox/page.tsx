@@ -2,7 +2,9 @@ import { cookies } from "next/headers"
 import { ChatLayout } from "@/features/chat/chat-layout"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
+import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved-reply-store-provider"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 
 type InboxPageProps = {
@@ -20,7 +22,11 @@ export default async function InboxPage({ params }: InboxPageProps) {
         <InboxStoreProvider chatbotId={chatbotId}>
           <UserStoreProvider chatbotId={chatbotId}>
             <CustomFieldStoreProvider chatbotId={chatbotId}>
-              <ChatLayout layout={savedLayout} />
+              <SavedReplyStoreProvider>
+                <FlowStoreProvider chatbotId={chatbotId}>
+                  <ChatLayout layout={savedLayout} />
+                </FlowStoreProvider>
+              </SavedReplyStoreProvider>
             </CustomFieldStoreProvider>
           </UserStoreProvider>
         </InboxStoreProvider>

@@ -1,0 +1,30 @@
+import { useMemo } from "react"
+import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
+import { useFlowStore } from "./flow-store-context"
+
+export const useFlowNodesSelectOptions = () => {
+  const { flows } = useFlowStore((state) => state)
+
+  return useMemo(
+    () =>
+      flows.map((flow) => ({
+        label: flow.name,
+        value: flow.id,
+        children: getFlowNodesOptions(flow.flowVersions),
+      })),
+    [flows],
+  )
+}
+
+const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
+  const lastedFlowVersion = flowVersions.find(({ isLatest }) => isLatest)
+  if (!lastedFlowVersion) {
+    return []
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: wip
+  return lastedFlowVersion.nodes.map((node: any) => ({
+    label: node.data.name,
+    value: node.id,
+  }))
+}

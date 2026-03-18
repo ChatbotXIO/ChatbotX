@@ -59,6 +59,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   side?: PopoverContentProps["side"]
   triggerValueChange?: (value: string) => void
   disableValues?: string[]
+  portal?: boolean
 }
 
 export function ComboboxField<T extends FieldValues>({
@@ -72,6 +73,7 @@ export function ComboboxField<T extends FieldValues>({
   side,
   triggerValueChange,
   disableValues,
+  portal = false,
 }: ComboboxFieldProps<T>) {
   const [open, setOpen] = useState(false)
 
@@ -123,7 +125,7 @@ export function ComboboxField<T extends FieldValues>({
             <PopoverContent
               align="start"
               className="w-[200px] p-0"
-              portal={false}
+              portal={portal}
               side={side}
             >
               <Command>

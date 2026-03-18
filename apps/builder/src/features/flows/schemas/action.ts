@@ -48,3 +48,8 @@ export const updateFlowVersionSchema = z.object({
   ),
 })
 export type UpdateFlowVersionSchema = z.infer<typeof updateFlowVersionSchema>
+
+export const selectFlowSchema = z.object({
+  flowId: z.string(),
+})
+export type SelectFlowSchema = z.infer<typeof selectFlowSchema>

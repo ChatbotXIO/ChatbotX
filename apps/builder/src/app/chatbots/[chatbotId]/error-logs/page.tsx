@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import { AppBreadcrumb } from "@/components/app-breadcrumb"
 import { AppTab } from "@/components/app-tab"
 import { ErrorLogsTable } from "@/features/error-logs/error-logs-table"
 import { listErrorLogs } from "@/features/error-logs/queries"
@@ -26,17 +25,13 @@ export default async function ErrorLogsPage(props: {
 
   return (
     <div className="flex flex-col gap-4">
-      <AppBreadcrumb
-        items={[
-          {
-            label: t("fields.flows.label"),
-            href: `/chatbots/${params.chatbotId}/flows`,
-          },
-          { label: t("errorLogs.title"), href: "" },
-        ]}
-      />
       <AppTab
         tabs={[
+          {
+            label: t("flows.title"),
+            href: `/chatbots/${params.chatbotId}/flows`,
+            isActive: false,
+          },
           {
             label: t("tags.title"),
             href: `/chatbots/${params.chatbotId}/tags`,

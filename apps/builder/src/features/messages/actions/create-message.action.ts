@@ -85,6 +85,7 @@ export const createMessage = async (props: {
       data: {
         conversationId: conversation.id,
         flowId: parsedInput.flowId,
+        nodeId: parsedInput.nodeId,
       },
     })
     return null

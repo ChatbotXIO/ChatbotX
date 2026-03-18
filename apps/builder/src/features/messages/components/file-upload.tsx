@@ -64,7 +64,7 @@ export const FileUploadPreview = ({
       </div>
 
       <Button
-        className="absolute -top-2 -right-2 h-auto rounded-full bg-white p-0 px-0"
+        className="absolute -top-2 -right-2 h-auto rounded-full bg-white p-0 px-0 dark:bg-neutral-600"
         onClick={() => onRemoveChooseFile(file.name)}
         type="button"
         variant="ghost"

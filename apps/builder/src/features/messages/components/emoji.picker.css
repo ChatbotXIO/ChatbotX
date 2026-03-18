@@ -1,0 +1,11 @@
+.epr-main {
+  background-color: var(--background) !important;
+}
+
+.epr-main h2 {
+  background-color: var(--muted) !important;
+}
+
+.epr-skin-tones {
+  border: 0 !important;
+}

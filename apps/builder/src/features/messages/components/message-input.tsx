@@ -10,12 +10,13 @@ import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller } from "react-hook-form"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { createMessageAction } from "../actions/create-message.action"
 import { createMessageRequest } from "../schemas/create-message.schema"
-import EmojiPicker from "./emoji-picker"
 import { FileUploadPreview } from "./file-upload"
+import { InputMenu } from "./input-menu"
 
 export const MessageInput = () => {
   const session = authClient.useSession()
@@ -91,8 +92,8 @@ export const MessageInput = () => {
     )
 
   // Memoize emoji selection handler
-  const onSelectEmoji = useCallback(
-    (emoji: string) => {
+  const insertTextAtCursor = useCallback(
+    (value: string) => {
       const element = textareaRef.current
       if (!element) {
         return
@@ -101,9 +102,30 @@ export const MessageInput = () => {
       const text = element.value
       const before = text.slice(0, element.selectionStart)
       const after = text.slice(element.selectionStart)
-      const newText = `${before}${emoji}${after}`
 
-      form.setValue("content", newText)
+      form.setValue("content", `${before}${value}${after}`)
+    },
+    [form],
+  )
+
+  const onSelectEmoji = useCallback(
+    (emoji: string) => {
+      insertTextAtCursor(emoji)
+    },
+    [insertTextAtCursor],
+  )
+
+  const onSelectSavedReply = useCallback(
+    (message: string) => {
+      insertTextAtCursor(message)
+    },
+    [insertTextAtCursor],
+  )
+
+  const handleSelectQuickReply = useCallback(
+    (message: string) => {
+      form.setValue("content", message)
+      textareaRef.current?.focus()
     },
     [form],
   )
@@ -133,6 +155,10 @@ export const MessageInput = () => {
   // Memoize inbox type and icon for current conversation
   const currentInboxType = conversation?.inbox?.inboxType ?? "webchat"
 
+  // Check if files are attached
+  const files = form.watch("files")
+  const hasFiles = Array.isArray(files) && files.length > 0
+
   // Early return if no active conversation
   if (!activeConversationId) {
     return null
@@ -151,15 +177,20 @@ export const MessageInput = () => {
               control={form.control}
               name="content"
               render={({ field }) => (
-                <Textarea
-                  aria-label="Type your message"
-                  autoComplete="off"
-                  className="h-16 resize-none border-0 px-1.5 py-0 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
-                  placeholder="Message..."
-                  {...field}
-                  onKeyDown={onKeyDown}
-                  ref={textareaRef}
-                />
+                <QuickRepliesPopover
+                  inputValue={field.value ?? ""}
+                  onSelect={handleSelectQuickReply}
+                >
+                  <Textarea
+                    aria-label="Type your message"
+                    autoComplete="off"
+                    className="h-16 resize-none border-0 px-1.5 py-1 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
+                    placeholder="Message..."
+                    {...field}
+                    onKeyDown={onKeyDown}
+                    ref={textareaRef}
+                  />
+                </QuickRepliesPopover>
               )}
             />
           </div>
@@ -172,6 +203,12 @@ export const MessageInput = () => {
             </div>
 
             <div className="message-toolbar flex items-center gap-2">
+              {!hasFiles && (
+                <InputMenu
+                  onSelectEmoji={onSelectEmoji}
+                  onSelectSavedReply={onSelectSavedReply}
+                />
+              )}
               <Button
                 aria-label="Attach file"
                 className="px-2 py-1.5 [&_svg]:size-5"
@@ -181,7 +218,6 @@ export const MessageInput = () => {
               >
                 <PaperclipIcon aria-hidden="true" />
               </Button>
-              <EmojiPicker onSelectEmoji={onSelectEmoji} />
               <Button
                 aria-label="Send message"
                 className="px-2 py-1.5 [&_svg]:size-5"

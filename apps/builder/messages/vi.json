@@ -78,6 +78,11 @@
     "filter": "Lọc",
     "selectFile": "Chọn tệp",
     "insertLink": "Chèn liên kết",
+    "insertEmoji": "Chèn Emoji",
+    "sendProduct": "Gửi sản phẩm",
+    "insertSavedReplies": "Chèn phản hồi đã lưu",
+    "addNew": "Thêm mới",
+    "send": "Gửi",
     "loginWithMagicLink": "Đăng nhập bằng Magic Link",
     "manage": "Quản lý",
     "markEmailVerified": "Đánh dấu email đã xác minh",
@@ -793,12 +798,17 @@
         "label": "{aiName}: Tạo văn bản"
       },
       "label": "Luồng",
+      "placeholder": "Chọn luồng",
       "sendMessage": {
         "label": "Gửi tin nhắn"
       }
     },
     "flowToSend": {
       "label": "Luồng để gửi"
+    },
+    "steps": {
+      "label": "Bước",
+      "placeholder": "Chọn bước"
     },
     "folder": {
       "label": "Thư mục"
@@ -1317,6 +1327,15 @@
     },
     "customRange": {
       "label": "Khoảng tùy chỉnh"
+    },
+    "messages": {
+      "label": "Tin nhắn"
+    },
+    "shortcut": {
+      "label": "Phím tắt"
+    },
+    "savedReplies": {
+      "label": "Phản hồi đã lưu"
     }
   },
   "flows": {

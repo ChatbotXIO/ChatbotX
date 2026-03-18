@@ -23,6 +23,7 @@ export const createMessageRequest = z
     // }),
     z.object({
       flowId: z.cuid2(),
+      nodeId: z.cuid2().optional(),
     }),
   ])
   .and(

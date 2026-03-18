@@ -21,6 +21,11 @@ export default function FolderableLayout({
       <AppTab
         tabs={[
           {
+            label: t("flows.title"),
+            href: `/chatbots/${chatbotId}/flows`,
+            isActive: true,
+          },
+          {
             label: t("tags.title"),
             href: `/chatbots/${chatbotId}/tags`,
             isActive: false,

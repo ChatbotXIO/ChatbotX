@@ -1364,6 +1364,19 @@ export const auditLogModel = pgTable("AuditLog", {
     }),
 })
 
+export const savedReplyModel = pgTable("SavedReply", {
+  ...sharedColumns,
+  shortcut: text().notNull(),
+  message: text().notNull(),
+  userId: text()
+    .notNull()
+    .references(() => userModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+      name: "SavedReply_userId_fkey",
+    }),
+})
+
 export const messageModel = pgTable(
   "Message",
   {
