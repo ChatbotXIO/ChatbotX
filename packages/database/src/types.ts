@@ -79,6 +79,14 @@ export type ContactsOnSequenceModel =
 export type SequenceEventModel = typeof schema.sequenceEventModel.$inferSelect
 export type SequenceDispatchModel =
   typeof schema.sequenceDispatchModel.$inferSelect
+export type TriggerModel = typeof schema.triggerModel.$inferSelect
+export type WebhookModel = typeof schema.webhookModel.$inferSelect
+export type ConditionModel = typeof schema.conditionModel.$inferSelect
+export type TriggerStatsModel = typeof schema.triggerStatsModel.$inferSelect
+export type TriggerContactHistoryModel =
+  typeof schema.triggerContactHistoryModel.$inferSelect
+export type TriggerExecutionModel =
+  typeof schema.triggerExecutionModel.$inferSelect
 
 export type PlanModel = typeof schema.planModel.$inferSelect
 export type FolderType = (typeof schema.folderType.enumValues)[number]

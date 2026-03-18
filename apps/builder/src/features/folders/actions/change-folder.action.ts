@@ -8,6 +8,8 @@ import {
   flowModel,
   sequenceModel,
   tagModel,
+  triggerModel,
+  webhookModel,
 } from "@aha.chat/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
@@ -89,6 +91,10 @@ function findResourceModel(folderType: string) {
       return automatedResponseModel
     case FolderType.sequence:
       return sequenceModel
+    case FolderType.trigger:
+      return triggerModel
+    case FolderType.webhook:
+      return webhookModel
     default:
       throw new ChatbotXException("Invalid folder type")
   }
