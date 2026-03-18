@@ -115,10 +115,39 @@ export const listConversations = async (
     .orderBy(desc(conversationModel.lastActivityAt))
     .limit(pagination.limit)
 
+  const contactIds = conversations
+    .map((c) => c.Contact?.id)
+    .filter((id): id is string => id !== null && id !== undefined)
+
+  const contactsOnSequences =
+    contactIds.length > 0
+      ? await db.query.contactsOnSequenceModel.findMany({
+          where: {
+            contactId: {
+              in: contactIds,
+            },
+          },
+          with: {
+            sequence: true,
+          },
+        })
+      : []
+
+  const contactsOnSequencesMap = new Map<string, typeof contactsOnSequences>()
+  for (const cos of contactsOnSequences) {
+    const existing = contactsOnSequencesMap.get(cos.contactId) || []
+    contactsOnSequencesMap.set(cos.contactId, [...existing, cos])
+  }
+
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
-      contact: c.Contact,
+      contact: c.Contact
+        ? {
+            ...c.Contact,
+            contactsOnSequences: contactsOnSequencesMap.get(c.Contact.id) || [],
+          }
+        : null,
       inbox: c.Inbox,
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
@@ -136,7 +165,15 @@ export const findConversation = async (
 
   const conversation = await db.query.conversationModel.findFirst({
     with: {
-      contact: true,
+      contact: {
+        with: {
+          contactsOnSequences: {
+            with: {
+              sequence: true,
+            },
+          },
+        },
+      },
       inbox: true,
       messages: true,
       assignedUser: true,

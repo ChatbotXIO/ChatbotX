@@ -23,8 +23,6 @@ export type GetSequencesSchema = Awaited<
 > & { chatbotId: string; folderId?: string | null }
 
 export type SequenceResource = SequenceModel & {
-  _count?: {
-    steps?: number
-    contactsOnSequences?: number
-  }
+  stepsCount: number
+  subscribersCount: number
 }

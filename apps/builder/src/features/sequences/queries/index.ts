@@ -1,5 +1,10 @@
-import { and, count, db, eq, ilike, sql } from "@aha.chat/database/client"
-import { sequenceModel } from "@aha.chat/database/schema"
+import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
+import {
+  contactsOnSequenceModel,
+  sequenceModel,
+  sequenceStepModel,
+} from "@aha.chat/database/schema"
+import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetSequencesSchema,
@@ -11,49 +16,53 @@ export async function listSequences(
 ): Promise<{ data: SequenceResource[]; pageCount: number }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const conditions = [eq(sequenceModel.chatbotId, input.chatbotId)]
-
-  if (input.folderId !== undefined) {
-    const folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
-    if (folderId === null) {
-      conditions.push(sql`${sequenceModel.folderId} IS NULL`)
-    } else {
-      conditions.push(eq(sequenceModel.folderId, folderId))
-    }
+  let folderIdFilter: string | { isNull: true } | undefined
+  if (input.folderId) {
+    folderIdFilter =
+      input.folderId === "0" ? { isNull: true as const } : input.folderId
   }
 
-  if (input.name) {
-    conditions.push(ilike(sequenceModel.name, `%${input.name}%`))
+  const where = {
+    chatbotId: input.chatbotId,
+    folderId: folderIdFilter,
+    name: input.name
+      ? {
+          ilike: `%${input.name}%`,
+        }
+      : undefined,
+    active:
+      input.active !== undefined && input.active !== null
+        ? input.active
+        : undefined,
   }
 
-  if (input.active !== undefined && input.active !== null) {
-    conditions.push(eq(sequenceModel.active, input.active))
-  }
+  const pagination = parsePagination(input)
+  const orderBy = parseOrderByAsObject(sequenceModel, input)
 
-  const whereClause = and(...conditions)
+  const [data, total] = await Promise.all([
+    db.query.sequenceModel.findMany({
+      where,
+      orderBy,
+      ...pagination,
+      extras: {
+        stepsCount: (table) =>
+          db.$count(
+            sequenceStepModel,
+            eq(sequenceStepModel.sequenceId, table.id),
+          ),
+        subscribersCount: (table) =>
+          db.$count(
+            contactsOnSequenceModel,
+            eq(contactsOnSequenceModel.sequenceId, table.id),
+          ),
+      },
+    }),
+    db.$count(sequenceModel, relationsFilterToSQL(sequenceModel, where)),
+  ])
 
-  const orderBy = input.sort.map((sortItem) => {
-    const column = sequenceModel[sortItem.id as keyof typeof sequenceModel]
-    return sortItem.desc ? sql`${column} DESC` : sql`${column} ASC`
-  })
+  const pageCount = Math.ceil(total / input.perPage)
 
-  const sequences = await db
-    .select()
-    .from(sequenceModel)
-    .where(whereClause)
-    .limit(input.perPage)
-    .offset((input.page - 1) * input.perPage)
-    .orderBy(...orderBy)
-
-  const [totalCount] = await db
-    .select({ count: count() })
-    .from(sequenceModel)
-    .where(whereClause)
-
-  const pageCount = Math.ceil((totalCount?.count ?? 0) / input.perPage)
-
-  return { data: sequences, pageCount }
+  return { data, pageCount }
 }
 
 export async function getSequence(chatbotId: string, sequenceId: string) {

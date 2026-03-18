@@ -43,6 +43,7 @@ export const ContactInboxPanel = () => {
       const conversation = conversations.find(
         (item) => item.id === activeConversationId,
       )
+      console.log({ conversation })
 
       if (conversation?.contact) {
         setContact(conversation.contact)

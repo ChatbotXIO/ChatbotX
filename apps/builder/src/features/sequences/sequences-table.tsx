@@ -135,9 +135,7 @@ export function SequencesTable({ chatbotId, promises }: SequencesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="text-center">
-            {row.original._count?.contactsOnSequences ?? 0}
-          </div>
+          <div className="text-center">{row.original.subscribersCount}</div>
         ),
       },
       {
@@ -150,7 +148,7 @@ export function SequencesTable({ chatbotId, promises }: SequencesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="text-center">{row.original._count?.steps ?? 0}</div>
+          <div className="text-center">{row.original.stepsCount}</div>
         ),
         size: 100,
         enableSorting: true,
