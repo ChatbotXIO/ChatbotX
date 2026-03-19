@@ -36,7 +36,7 @@
     "@ai-sdk/deepseek": "^2.0.24",
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/openai": "^3.0.41",
-    "@aws-sdk/client-s3": "^3.1011.0",
+    "@aws-sdk/client-s3": "^3.1012.0",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx/events": "workspace:*",

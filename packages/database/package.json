@@ -5,7 +5,7 @@
   "dependencies": {
     "@t3-oss/env-core": "^0.13.10",
     "drizzle-cuid2": "^2.2.0",
-    "drizzle-orm": "1.0.0-beta.15-859cf75",
+    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
     "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
@@ -15,7 +15,7 @@
     "@types/node": "^24.10.4",
     "@types/pg": "^8.18.0",
     "dotenv-cli": "^11.0.0",
-    "drizzle-kit": "1.0.0-beta.15-859cf75"
+    "drizzle-kit": "1.0.0-beta.18-7eb39f0"
   },
   "scripts": {
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",

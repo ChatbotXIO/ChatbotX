@@ -172,7 +172,7 @@ export class ActionExecutor {
       case TriggerAction.assignConversation: {
         const assignedId = action.assignedId as string
         if (assignedId.startsWith("u_")) {
-          const userId = assignedId.substring(2)
+          const userId = assignedId.slice(2)
           const chatbotMember = await db.query.chatbotMemberModel.findFirst({
             where: {
               userId,
@@ -186,7 +186,7 @@ export class ActionExecutor {
               .where(eq(conversationModel.id, conversation.id))
           }
         } else if (assignedId.startsWith("t_")) {
-          const inboxTeamId = assignedId.substring(2)
+          const inboxTeamId = assignedId.slice(2)
           const inboxTeam = await db.query.inboxTeamModel.findFirst({
             where: {
               id: inboxTeamId,

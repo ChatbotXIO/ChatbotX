@@ -40,12 +40,12 @@
     "@icons-pack/react-simple-icons": "^13.13.0",
     "@lobehub/icons": "^5.0.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@next-safe-action/adapter-react-hook-form": "^2.0.2",
-    "@orpc/client": "^1.13.7",
-    "@orpc/json-schema": "^1.13.7",
-    "@orpc/openapi": "^1.13.7",
-    "@orpc/server": "^1.13.7",
-    "@orpc/zod": "^1.13.7",
+    "@next-safe-action/adapter-react-hook-form": "^2.0.3",
+    "@orpc/client": "^1.13.9",
+    "@orpc/json-schema": "^1.13.9",
+    "@orpc/openapi": "^1.13.9",
+    "@orpc/server": "^1.13.9",
+    "@orpc/zod": "^1.13.9",
     "@paralleldrive/cuid2": "^3.3.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@t3-oss/env-nextjs": "^0.13.10",
@@ -64,14 +64,13 @@
     "countries-list": "^3.3.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
-    "drizzle-cursor": "^0.5.3",
     "emoji-picker-react": "^4.18.0",
     "ky": "^1.14.3",
     "libphonenumber-js": "^1.12.40",
     "lodash.unset": "^4.5.2",
     "lucide-react": "^0.577.0",
     "mime-types": "^3.0.2",
-    "next": "16.1.7",
+    "next": "16.2.0",
     "next-intl": "^4.8.3",
     "next-safe-action": "^8.1.8",
     "next-themes": "^0.4.6",
@@ -98,8 +97,8 @@
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@aws-sdk/client-s3": "^3.1011.0",
-    "@tailwindcss/postcss": "^4.2.1",
+    "@aws-sdk/client-s3": "^3.1012.0",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/facebook-js-sdk": "^3.3.12",
     "@types/lodash.unset": "^4.5.9",
     "@types/mime-types": "^3.0.1",
@@ -112,7 +111,13 @@
     "pg": "^8.20.0",
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }

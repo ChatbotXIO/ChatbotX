@@ -56,14 +56,11 @@ export const listConversations = async (
       where.push(isNull(conversationModel.assignedInboxTeamId))
     } else if (input.assignedId.startsWith("u_")) {
       where.push(
-        eq(conversationModel.assignedUserId, input.assignedId.substring(2)),
+        eq(conversationModel.assignedUserId, input.assignedId.slice(2)),
       )
     } else if (input.assignedId.startsWith("t_")) {
       where.push(
-        eq(
-          conversationModel.assignedInboxTeamId,
-          input.assignedId.substring(2),
-        ),
+        eq(conversationModel.assignedInboxTeamId, input.assignedId.slice(2)),
       )
     }
   }

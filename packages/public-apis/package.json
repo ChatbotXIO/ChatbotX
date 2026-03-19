@@ -5,13 +5,10 @@
   "type": "module",
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@types/node": "^24.10.4",
     "openapi-typescript": "^7.13.0",
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@aha.chat/logger": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.13.10",
     "ky": "^1.14.3",
     "zod": "^4.3.6"
   },

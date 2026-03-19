@@ -41,7 +41,7 @@ export const assignConversationAction = chatbotActionClient
       }
 
       if (parsedInput.assignedId?.startsWith("u_")) {
-        const userId = parsedInput.assignedId.substring(2)
+        const userId = parsedInput.assignedId.slice(2)
         const chatbotMember = await db.query.chatbotMemberModel.findFirst({
           where: {
             chatbotId,
@@ -57,7 +57,7 @@ export const assignConversationAction = chatbotActionClient
         }
         updatedData.assignedUserId = chatbotMember.userId
       } else if (parsedInput.assignedId?.startsWith("t_")) {
-        const inboxteamId = parsedInput.assignedId.substring(2)
+        const inboxteamId = parsedInput.assignedId.slice(2)
         const inboxTeam = await db.query.inboxTeamModel.findFirst({
           where: {
             chatbotId,

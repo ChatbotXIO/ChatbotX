@@ -151,9 +151,9 @@ async function runMigrations() {
         } else {
           await command(statement)
         }
-        console.log(`✓ Executed: ${statement.substring(0, 50)}...`)
+        console.log(`✓ Executed: ${statement.slice(0, 50)}...`)
       } catch (error) {
-        console.error(`✗ Failed: ${statement.substring(0, 50)}...`)
+        console.error(`✗ Failed: ${statement.slice(0, 50)}...`)
         console.error(error)
         console.error(`Stopping migrations due to failure in ${fileName}`)
         process.exit(1)

@@ -15,7 +15,7 @@
     "@aha.chat/ui": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
-    "@orpc/server": "^1.13.7",
+    "@orpc/server": "^1.13.9",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@types/node": "^24.10.4",
     "date-fns": "^4.1.0",

@@ -23,14 +23,14 @@
   },
   "devDependencies": {
     "@aha.chat/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/color": "^4.2.1",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^24.10.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "postcss": "^8.5.8",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.2.2",
     "typescript": "5.9.3"
   },
   "dependencies": {

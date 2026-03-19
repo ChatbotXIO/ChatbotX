@@ -11,12 +11,12 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.7",
+    "@biomejs/biome": "^2.4.8",
     "@types/node": "^24.10.4",
-    "knip": "^5.87.0",
+    "knip": "^5.88.1",
     "lefthook": "^2.1.4",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.17",
+    "turbo": "^2.8.19",
     "typescript": "5.9.3",
     "ultracite": "7.3.2"
   },
@@ -32,6 +32,10 @@
     "packages/*"
   ],
   "pnpm": {
+    "overrides": {
+      "@types/node": "24.x",
+      "ioredis": "5.9.3"
+    },
     "updateConfig": {
       "ignoreDependencies": [
         "@types/node"

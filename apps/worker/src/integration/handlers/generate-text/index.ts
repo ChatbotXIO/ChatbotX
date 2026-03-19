@@ -227,8 +227,8 @@ async function saveResultToCustomField({
         const trimmedName = fullText.trim()
         const spaceIndex = trimmedName.indexOf(" ")
         if (spaceIndex > 0) {
-          updateData.firstName = trimmedName.substring(0, spaceIndex)
-          updateData.lastName = trimmedName.substring(spaceIndex + 1).trim()
+          updateData.firstName = trimmedName.slice(0, spaceIndex)
+          updateData.lastName = trimmedName.slice(spaceIndex + 1).trim()
         } else if (trimmedName.length > 0) {
           updateData.firstName = trimmedName
         }

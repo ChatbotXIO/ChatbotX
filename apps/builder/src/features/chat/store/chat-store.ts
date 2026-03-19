@@ -224,11 +224,11 @@ export const createChatStore = () => {
           conversation.assignedInboxTeam = null
           conversation.assignedInboxTeamId = null
         } else if (value.startsWith("u_")) {
-          const userId = value.substring(2)
+          const userId = value.slice(2)
           conversation.assignedUserId = userId
           conversation.assignedInboxTeamId = null
         } else if (value.startsWith("t_")) {
-          const inboxTeamId = value.substring(2)
+          const inboxTeamId = value.slice(2)
           conversation.assignedInboxTeamId = inboxTeamId
           conversation.assignedUserId = null
         }

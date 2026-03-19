@@ -8,7 +8,6 @@ services:
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
-    # image: realcodesiman/chatbotx-builder:latest
     platform: linux/amd64
     restart: unless-stopped
     env_file:
