@@ -150,7 +150,7 @@ export const createMessage = async (props: {
     await tx
       .update(conversationModel)
       .set({
-        agentLastSeenAt: new Date(),
+        agentLastReadAt: new Date(),
         lastActivityAt: new Date(),
         adminRepliedAt: new Date(),
       })

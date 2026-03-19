@@ -34,16 +34,16 @@ export const unreadConversationAction = chatbotActionClient
         })
         const lastMessage = last2Messages.at(-1)
 
-        const agentLastSeenAt = lastMessage ? lastMessage.createdAt : null
+        const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
 
         await tx
           .update(conversationModel)
           .set({
-            agentLastSeenAt,
+            agentLastReadAt,
           })
           .where(eq(conversationModel.id, id))
 
-        return { agentLastSeenAt }
+        return { agentLastReadAt }
       })
     },
   )

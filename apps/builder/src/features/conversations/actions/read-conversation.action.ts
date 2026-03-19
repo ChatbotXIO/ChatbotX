@@ -19,7 +19,7 @@ export const readConversationAction = chatbotActionClient
       await db
         .update(conversationModel)
         .set({
-          agentLastSeenAt: new Date(),
+          agentLastReadAt: new Date(),
         })
         .where(
           and(

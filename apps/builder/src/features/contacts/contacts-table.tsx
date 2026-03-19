@@ -156,20 +156,20 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
         enableHiding: false,
       },
       {
-        id: "lastSeenAt",
-        accessorKey: "lastSeenAt",
+        id: "lastReadAt",
+        accessorKey: "lastReadAt",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.lastSeen.label")}
+            title={t("fields.lastRead.label")}
           />
         ),
         cell: ({ row }) => (
           <div>
-            {row.original.conversation?.contactLastSeenAt
+            {row.original.conversation?.contactLastReadAt
               ? formatDistance(
                   new Date(),
-                  row.original.conversation.contactLastSeenAt,
+                  row.original.conversation.contactLastReadAt,
                   {
                     addSuffix: true,
                   },
@@ -178,7 +178,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
           </div>
         ),
         meta: {
-          label: t("fields.lastSeen.label"),
+          label: t("fields.lastRead.label"),
         },
         enableSorting: true,
         enableHiding: false,

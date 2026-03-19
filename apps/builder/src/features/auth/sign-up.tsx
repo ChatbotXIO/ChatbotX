@@ -3,8 +3,8 @@
 import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import SSOSignUp from "@/enterprise/features/auth/sso-sign-in"
 import { isCommunity } from "@/env"
+import SSOSignUp from "@/features/auth/sso-sign-in"
 import { EmailPasswordSignUp } from "./components/email-password-sign-up"
 import {
   AcceptTermsAndPolicy,

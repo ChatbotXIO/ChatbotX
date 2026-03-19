@@ -79,7 +79,7 @@ export const listConversations = async (
     }
     if (input.tags.includes("unread")) {
       where.push(
-        gt(conversationModel.lastActivityAt, conversationModel.agentLastSeenAt),
+        gt(conversationModel.lastActivityAt, conversationModel.agentLastReadAt),
       )
     }
     if (input.tags.includes("followUp")) {

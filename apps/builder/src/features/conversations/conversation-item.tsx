@@ -152,13 +152,13 @@ export default function ConversationItem({
             className={cn(
               "w-full truncate text-left text-sm",
               !(
-                conversation.agentLastSeenAt && conversation.contactLastSeenAt
+                conversation.agentLastReadAt && conversation.contactLastReadAt
               ) ||
-                (conversation.agentLastSeenAt &&
-                  conversation.contactLastSeenAt &&
+                (conversation.agentLastReadAt &&
+                  conversation.contactLastReadAt &&
                   isAfter(
-                    conversation.agentLastSeenAt,
-                    conversation.contactLastSeenAt,
+                    conversation.agentLastReadAt,
+                    conversation.contactLastReadAt,
                   ))
                 ? "text-gray-500"
                 : "font-semibold",

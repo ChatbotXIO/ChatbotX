@@ -181,7 +181,7 @@ export const createChatStore = () => {
       if (conversationIndex > -1) {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
-        conversation.agentLastSeenAt = new Date()
+        conversation.agentLastReadAt = new Date()
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations })
@@ -361,7 +361,7 @@ export const createChatStore = () => {
       if (message.messageType === "incoming") {
         updateConversation(message.conversationId, {
           contactRepliedAt: message.createdAt,
-          contactLastSeenAt: message.createdAt,
+          contactLastReadAt: message.createdAt,
         })
       }
       if (
@@ -370,7 +370,7 @@ export const createChatStore = () => {
           message.conversationId === activeConversationId)
       ) {
         updateConversation(message.conversationId, {
-          agentLastSeenAt: new Date(),
+          agentLastReadAt: new Date(),
           adminRepliedAt: new Date(),
         })
       }

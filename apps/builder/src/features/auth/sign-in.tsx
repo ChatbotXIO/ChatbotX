@@ -3,8 +3,7 @@
 import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import SSOSignIn from "@/enterprise/features/auth/sso-sign-in"
-import { isCommunity } from "@/env"
+import SSOSignIn from "@/features/auth/sso-sign-in"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 import {
@@ -43,12 +42,8 @@ export const SignInForm = ({
 
             <MagicLinkSignIn />
 
-            {!isCommunity && (
-              <>
-                <OrSeparator />
-                <SSOSignIn />
-              </>
-            )}
+            <OrSeparator />
+            <SSOSignIn />
 
             <div className="text-center font-medium text-foreground/60 text-sm">
               {t("auth.dontHaveAnAccount")}{" "}

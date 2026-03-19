@@ -1,12 +1,15 @@
 import { sql } from "drizzle-orm"
-import { text, timestamp } from "drizzle-orm/pg-core"
+import { type PgTimestampConfig, text, timestamp } from "drizzle-orm/pg-core"
+
+export const timestampConfig: PgTimestampConfig<"date"> = {
+  precision: 6,
+  withTimezone: true,
+}
 
 export const sharedColumns = {
   id: text().primaryKey(),
-  createdAt: timestamp({ precision: 6, withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp({ precision: 6, withTimezone: true })
+  createdAt: timestamp(timestampConfig).defaultNow().notNull(),
+  updatedAt: timestamp(timestampConfig)
     .notNull()
     .defaultNow()
     .$onUpdate(() => sql`CURRENT_TIMESTAMP`),

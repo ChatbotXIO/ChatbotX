@@ -142,7 +142,7 @@ export async function handleCreateWebchatMessage({
       await tx
         .update(conversationModel)
         .set({
-          contactLastSeenAt: new Date(),
+          contactLastReadAt: new Date(),
           lastActivityAt: new Date(),
           contactRepliedAt: new Date(),
         })

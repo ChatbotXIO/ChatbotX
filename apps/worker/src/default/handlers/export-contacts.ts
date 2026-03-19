@@ -20,7 +20,7 @@ const headerNames: Record<string, string> = {
   phoneNumber: "Phone Number",
   gender: "Gender",
   source: "Source",
-  lastSeenAt: "Last Seen At",
+  lastReadAt: "Last Read At",
   blockedAt: "Blocked At",
 }
 

@@ -81,7 +81,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     {
       onSuccess: (result) => {
         updateConversation(conversation.id, {
-          agentLastSeenAt: new Date(result.data?.agentLastSeenAt ?? new Date()),
+          agentLastReadAt: new Date(result.data?.agentLastReadAt ?? new Date()),
         })
       },
       onError: ({ error }) => {

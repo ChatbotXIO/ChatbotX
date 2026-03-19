@@ -35,7 +35,7 @@ export const contactMarkAsRead = async (
   await db
     .update(conversationModel)
     .set({
-      contactLastSeenAt: new Date(),
+      contactLastReadAt: new Date(),
     })
     .where(eq(conversationModel.sourceId, sourceConversationId))
 }

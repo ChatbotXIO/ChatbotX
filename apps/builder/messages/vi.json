@@ -272,7 +272,10 @@
     "messagesSent": "Tin nhắn đã gửi",
     "averageResponseTimeShort": "Thời gian phản hồi TB (phút)",
     "averageFirstResponseTimeByAdminShort": "Thời gian phản hồi đầu tiên TB (phút)",
-    "assignedConversations": "Cuộc trò chuyện đã gán",
+    "assignedConversations": {
+      "title": "Cuộc trò chuyện đã gán",
+      "helpText": "Cuộc trò chuyện được gán từ hộp thư hoặc bởi bot."
+    },
     "messagesReceivedByTheBot": "Tin nhắn nhận được bởi bot",
     "messagesReceivedByTheBotHelp": "Tin nhắn được gửi bởi liên hệ của bạn mà bot hiểu thành công hoặc không hiểu. Không bao gồm tin nhắn khi trò chuyện trực tiếp được bật.",
     "messagesSentByHumanOrBot": "Tin nhắn được gửi bởi Người/bot",
@@ -1067,8 +1070,8 @@
       "placeholder": "Chọn loại",
       "searchPlaceholder": "Tìm kiếm loại..."
     },
-    "lastSeen": {
-      "label": "Lần xem cuối"
+    "lastRead": {
+      "label": "Lần đọc cuối"
     },
     "assignee": {
       "label": "Người được gán"
@@ -1290,6 +1293,30 @@
     },
     "accountFields": {
       "label": "Trường tài khoản"
+    },
+    "today": {
+      "label": "Hôm nay"
+    },
+    "yesterday": {
+      "label": "Hôm qua"
+    },
+    "last7days": {
+      "label": "7 ngày qua"
+    },
+    "last30days": {
+      "label": "30 ngày qua"
+    },
+    "thisMonth": {
+      "label": "Tháng này"
+    },
+    "lastMonth": {
+      "label": "Tháng trước"
+    },
+    "lifeTime": {
+      "label": "Toàn thời gian"
+    },
+    "customRange": {
+      "label": "Khoảng tùy chỉnh"
     }
   },
   "flows": {
@@ -1618,6 +1645,9 @@
     "resetPasswordDescription": "Nhập mật khẩu mới của bạn bên dưới.",
     "signUpTitle": "Đăng ký vào {name}"
   },
+  "tools": {
+    "title": "Công cụ"
+  },
   "tags": {
     "title": "Thẻ",
     "heading": {
@@ -1745,7 +1775,8 @@
   },
   "zalo": {
     "description": "Tích hợp này cho phép bạn tạo bot Zalo OA.",
-    "title": "Zalo OA"
+    "title": "Zalo OA",
+    "refreshPermissions": "Làm mới quyền"
   },
   "invitation": {
     "title": "Lời mời",
