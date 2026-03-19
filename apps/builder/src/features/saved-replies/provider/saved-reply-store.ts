@@ -14,8 +14,6 @@ export type SavedReplyStoreActions = {
   initialize: () => Promise<void>
   getAllSavedReplies: () => Promise<void>
   deleteSavedReply: (id: string) => void
-  setLoadingSavedReplies: (isLoadingSavedReplies: boolean) => void
-  setSavedReplies: (savedReplies: SavedReplyResource[]) => void
   upsertSavedReply: (savedReply: SavedReplyResource) => void
 }
 
@@ -88,12 +86,6 @@ export const createSavedReplyStore = () =>
       set((state) => ({
         savedReplies: state.savedReplies.filter((item) => item.id !== id),
       }))
-    },
-    setLoadingSavedReplies: (isLoadingSavedReplies) => {
-      set({ isLoadingSavedReplies })
-    },
-    setSavedReplies: (savedReplies) => {
-      set({ initialized: true, isLoadingSavedReplies: false, savedReplies })
     },
     upsertSavedReply: (savedReply) => {
       set((state) => {
