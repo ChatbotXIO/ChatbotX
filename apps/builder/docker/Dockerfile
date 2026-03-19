@@ -25,7 +25,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pre /app/out/full/ .
 COPY --from=pre /app/.env .env
 
-RUN pnpm turbo run build --filter=builder
+RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
 
 # Build the application
 FROM base AS release

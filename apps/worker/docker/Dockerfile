@@ -24,7 +24,7 @@ COPY --from=pre /app/.env .env
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-RUN pnpm turbo run build --filter=worker
+RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=worker
 
 FROM base AS release
 RUN apt update && \

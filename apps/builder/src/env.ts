@@ -59,6 +59,7 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     ...baseEnv.runtimeEnv,
   },
+  skipValidation: process.env.SKIP_ENV_CHECK === "true",
 })
 
 export const isEnterprise = env.NEXT_PUBLIC_EDITION === "enterprise"
