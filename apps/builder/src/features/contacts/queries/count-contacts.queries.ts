@@ -2,7 +2,7 @@ import { db, eq } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 
-export async function getTotalContacts(
+export async function getContactCounts(
   chatbotId: string,
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(chatbotId)

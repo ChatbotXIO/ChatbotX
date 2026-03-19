@@ -1,136 +1,74 @@
+import { contactStatsRepository } from "../repositories"
 import type {
+  ContactCountsSchema,
   ContactEventType,
   ContactStats,
   ContactsByDimension,
-  DailyTotalContacts,
   MessagesBySenderStats,
-  TimeRange,
-} from "../models"
-import { contactStatsRepository } from "../repositories"
+  TimeRangeQuery,
+} from "../schemas"
 
 export class ContactAnalyticsService {
   getStatsByMinute(
-    chatbotId: string,
-    timeRange: TimeRange,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    return contactStatsRepository.getStatsByMinute(
-      chatbotId,
-      timeRange,
-      eventTypes,
-    )
+    return contactStatsRepository.getStatsByMinute(props)
   }
 
   getStatsByHour(
-    chatbotId: string,
-    timeRange: TimeRange,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    return contactStatsRepository.getStatsByHour(
-      chatbotId,
-      timeRange,
-      eventTypes,
-    )
+    return contactStatsRepository.getStatsByHour(props)
   }
 
   getStatsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    return contactStatsRepository.getStatsByDay(
-      chatbotId,
-      timeRange,
-      timezone,
-      eventTypes,
-    )
+    return contactStatsRepository.getStatsByDay(props)
   }
 
-  getTotalContactsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<DailyTotalContacts[]> {
-    return contactStatsRepository.getTotalContactsByDay(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getContactCountsPerDay(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    return contactStatsRepository.getContactCountsPerDay(props)
   }
 
-  getNewContactsCount(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<number> {
-    return contactStatsRepository.getNewContactsCount(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getNewContactsCount(props: TimeRangeQuery): Promise<number> {
+    return contactStatsRepository.getNewContactsCount(props)
   }
 
-  getContactsByCountry(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsByCountry(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getContactsCount(props: TimeRangeQuery): Promise<number> {
+    return contactStatsRepository.getContactsCount(props)
   }
 
-  getContactsByChannel(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsByChannel(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getContactsByCountry(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
+    return contactStatsRepository.getContactsByCountry(props)
   }
 
-  getActiveContacts(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<number> {
-    return contactStatsRepository.getActiveContacts(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getContactsByChannel(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
+    return contactStatsRepository.getContactsByChannel(props)
   }
 
-  getContactsBySource(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<ContactsByDimension[]> {
-    return contactStatsRepository.getContactsBySource(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getActiveContactsCount(props: TimeRangeQuery): Promise<number> {
+    return contactStatsRepository.getActiveContactsCount(props)
+  }
+
+  getContactsBySource(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
+    return contactStatsRepository.getContactsBySource(props)
   }
 
   getMessagesBySender(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity?: "day" | "month",
+    props: TimeRangeQuery & {
+      granularity?: "day" | "month"
+    },
   ): Promise<MessagesBySenderStats[]> {
-    return contactStatsRepository.getMessagesBySender(
-      chatbotId,
-      timeRange,
-      timezone,
-      granularity,
-    )
+    return contactStatsRepository.getMessagesBySender(props)
   }
 }
 

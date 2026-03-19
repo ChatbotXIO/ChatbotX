@@ -84,7 +84,7 @@ services:
     volumes:
       - clickhouse-data:/var/lib/clickhouse
       - clickhouse-backups:/var/backups/clickhouse
-      - ./packages/analytics/clickhouse/init:/docker-entrypoint-initdb.d
+      - ./packages/database/src/clickhouse:/docker-entrypoint-initdb.d
     environment:
       - CLICKHOUSE_DB=${CLICKHOUSE_DB:-chatbotx_analytics}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-chatbotx}

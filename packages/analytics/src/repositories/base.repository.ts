@@ -3,6 +3,7 @@ import {
   insert as executeInsert,
   query as executeQuery,
 } from "@aha.chat/database/clickhouse/client"
+import type { TimeRangeQuery } from "../schemas"
 
 export abstract class BaseRepository {
   protected query<T>(
@@ -27,13 +28,14 @@ export abstract class BaseRepository {
   }
 
   protected buildTimestampFilter(
-    field: string,
-    from: Date,
-    to: Date,
-    columnType: "Date" | "DateTime" = "DateTime",
+    props: TimeRangeQuery & {
+      field: string
+      columnType?: "Date" | "DateTime"
+    },
   ): { sql: string; params: Record<string, number> } {
-    const fromTimestamp = Math.floor(from.getTime() / 1000)
-    const toTimestamp = Math.floor(to.getTime() / 1000)
+    const { field, columnType = "DateTime" } = props
+    const fromTimestamp = Math.floor(props.from.getTime() / 1000)
+    const toTimestamp = Math.floor(props.to.getTime() / 1000)
 
     if (columnType === "Date") {
       return {
@@ -62,29 +64,28 @@ export abstract class BaseRepository {
     return `AND event_type IN (${types})`
   }
 
-  protected buildHourlyTimestampFilter(
-    from: Date,
-    to: Date,
-    timezone: string,
-  ): { sql: string; params: Record<string, unknown> } {
-    const fromTimestamp = Math.floor(from.getTime() / 1000)
-    const toTimestamp = Math.floor(to.getTime() / 1000)
+  protected buildHourlyTimestampFilter(props: TimeRangeQuery): {
+    sql: string
+    params: Record<string, unknown>
+  } {
+    const fromTimestamp = Math.floor(props.from.getTime() / 1000)
+    const toTimestamp = Math.floor(props.to.getTime() / 1000)
 
     return {
       sql: "hour >= toStartOfHour(toDateTime({from:UInt32}, {timezone:String})) AND hour <= toDateTime({to:UInt32}, {timezone:String})",
       params: {
         from: fromTimestamp,
         to: toTimestamp,
-        timezone,
+        timezone: props.timezone,
       },
     }
   }
 
-  protected buildDayGroupFromHourly(timezone: string): string {
-    return `toDate(hour, '${timezone}')`
+  protected buildDayGroupFromHourly(props: TimeRangeQuery): string {
+    return `toDate(hour, '${props.timezone}')`
   }
 
-  protected buildMonthGroupFromHourly(timezone: string): string {
-    return `toStartOfMonth(toDate(hour, '${timezone}'))`
+  protected buildMonthGroupFromHourly(props: TimeRangeQuery): string {
+    return `toStartOfMonth(toDate(hour, '${props.timezone}'))`
   }
 }

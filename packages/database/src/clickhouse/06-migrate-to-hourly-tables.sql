@@ -1,12 +1,12 @@
 -- Migration: Convert daily tables to hourly tables with timezone support
 -- This migration:
 -- 1. Drops all old daily tables and materialized views
--- 2. Drops all old hourly tables and materialized views  
+-- 2. Drops all old hourly tables and materialized views
 -- 3. Recreates hourly tables with 3-year TTL
 -- 4. Recreates materialized views
 -- NOTE: Main source tables (contact_events, bot_message_events, conversation_events) are preserved
 
-USE chatbot_analytics;
+USE chatbotx_analytics;
 
 -- ============================================================
 -- PART 1: Drop all existing materialized views and aggregated tables

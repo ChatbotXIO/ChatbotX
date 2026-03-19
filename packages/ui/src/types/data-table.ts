@@ -38,3 +38,5 @@ export interface DataTableRowAction<TData> {
   row: Row<TData>
   variant: "update" | "delete" | "duplicate" | "rename" | "resend" | "enable" | "move" | "copyUrl"
 }
+
+export type { ColumnDef } from "@tanstack/react-table"

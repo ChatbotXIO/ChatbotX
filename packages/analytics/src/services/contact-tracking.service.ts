@@ -1,5 +1,5 @@
 import { CONTACT_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import type { CreateContactEvent } from "../models"
+import type { CreateContactEvent } from "../schemas"
 import { BaseService } from "./base.service"
 
 export class ContactTrackingService extends BaseService {

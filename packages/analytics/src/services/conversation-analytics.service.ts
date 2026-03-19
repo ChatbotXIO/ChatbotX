@@ -1,17 +1,9 @@
-import type { ConversationHandoffStats, TimeRange } from "../models"
 import { conversationStatsRepository } from "../repositories/conversation-stats.repository"
+import type { ConversationHandoffStats, TimeRangeQuery } from "../schemas"
 
 export class ConversationAnalyticsService {
-  getHandoffsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<ConversationHandoffStats[]> {
-    return conversationStatsRepository.getHandoffsByDay(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+  getHandoffsByDay(props: TimeRangeQuery): Promise<ConversationHandoffStats[]> {
+    return conversationStatsRepository.getHandoffsByDay(props)
   }
 }
 

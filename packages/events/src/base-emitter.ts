@@ -45,14 +45,6 @@ export abstract class BaseEventEmitter {
       sourceId,
     )
 
-    // console.log({
-    //   emitter: this.constructor.name,
-    //   shouldEmit,
-    //   eventType,
-    //   chatbotId,
-    //   sourceId,
-    // })
-
     if (!shouldEmit) {
       return
     }

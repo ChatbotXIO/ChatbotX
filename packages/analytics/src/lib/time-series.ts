@@ -1,10 +1,17 @@
+import {
+  differenceInDays,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  endOfMonth,
+  startOfMonth,
+} from "date-fns"
 import type {
   BotMessageStats,
+  ContactCountsSchema,
   ContactEventType,
   ContactStats,
-  DailyTotalContacts,
-  TimeRange,
-} from "../models"
+  TimeRangeQuery,
+} from "../schemas"
 
 export function getUtcMonthKey(date: Date): string {
   return date.toISOString().slice(0, 7)
@@ -14,21 +21,22 @@ export function getUtcMonthStart(date: Date): Date {
   return new Date(`${getUtcMonthKey(date)}-01T00:00:00.000Z`)
 }
 
-export function* iterateUtcMonths(from: Date, to: Date): Generator<Date> {
-  const fromMonth = getUtcMonthStart(from)
-  const toMonth = getUtcMonthStart(to)
+export function generateMonthSeries(from: Date, to: Date) {
+  const fromMonth = startOfMonth(from)
+  const toMonth = endOfMonth(to)
 
-  const current = new Date(fromMonth)
-  while (current <= toMonth) {
-    yield new Date(current)
-    current.setUTCMonth(current.getUTCMonth() + 1)
-  }
+  return eachMonthOfInterval({ start: fromMonth, end: toMonth })
 }
 
-export function shouldUseMonthlyGranularity(from: Date, to: Date): boolean {
-  const diffMs = to.getTime() - from.getTime()
-  const diffDays = diffMs / (1000 * 60 * 60 * 24)
-  return diffDays > 60
+export function generateDaySeries(from: Date, to: Date) {
+  const fromDay = getUtcDayStart(from)
+  const toDay = getUtcDayStart(to)
+
+  return eachDayOfInterval({ start: fromDay, end: toDay })
+}
+
+export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
+  return differenceInDays(props.to, props.from) > 60
 }
 
 export function getUtcDayKey(date: Date): string {
@@ -52,12 +60,13 @@ export function* iterateUtcDays(from: Date, to: Date): Generator<Date> {
   }
 }
 
-export function fillContactStatsDaySeries(
-  chatbotId: string,
-  timeRange: TimeRange,
-  rows: ContactStats[],
-  eventTypes: ContactEventType[],
+export function fillDailyContactStats(
+  props: TimeRangeQuery & {
+    rows: ContactStats[]
+    eventTypes: ContactEventType[]
+  },
 ): ContactStats[] {
+  const { chatbotId, from, to, rows, eventTypes } = props
   const keyOf = (day: string, eventType: string) => `${day}::${eventType}`
 
   const byKey = new Map<string, ContactStats>()
@@ -66,7 +75,8 @@ export function fillContactStatsDaySeries(
   }
 
   const filled: ContactStats[] = []
-  for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
+  const daySeries = generateDaySeries(from, to)
+  for (const d of daySeries) {
     const dayKey = getUtcDayKey(d)
     for (const et of eventTypes) {
       const existing = byKey.get(keyOf(dayKey, et))
@@ -86,38 +96,43 @@ export function fillContactStatsDaySeries(
 }
 
 export function fillDailyTotalContactsSeries(
-  timeRange: TimeRange,
-  raw: DailyTotalContacts[],
-  initialTotal = 0,
-): DailyTotalContacts[] {
+  props: TimeRangeQuery & {
+    raw: ContactCountsSchema[]
+    initialTotal: number
+  },
+): ContactCountsSchema[] {
+  const { from, to, raw, initialTotal = 0 } = props
+
   const byDay = new Map<string, number>()
   for (const r of raw) {
-    byDay.set(getUtcDayKey(r.day), r.totalContacts)
+    byDay.set(getUtcDayKey(r.date), r.count)
   }
 
-  const filled: DailyTotalContacts[] = []
+  const filled: ContactCountsSchema[] = []
+  const dateSeries = eachDayOfInterval({ start: from, end: to })
   let lastTotal = initialTotal
-  for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
+  for (const d of dateSeries) {
     const dayKey = getUtcDayKey(d)
     const v = byDay.get(dayKey)
     if (typeof v === "number") {
       lastTotal = v
     }
     filled.push({
-      day: getUtcDayStart(d),
-      totalContacts: lastTotal,
+      date: getUtcDayStart(d),
+      count: lastTotal,
     })
   }
 
   return filled
 }
 
-export function fillContactStatsMonthSeries(
-  chatbotId: string,
-  timeRange: TimeRange,
-  rows: ContactStats[],
-  eventTypes: ContactEventType[],
+export function fillContactStatsMonthlySeries(
+  props: TimeRangeQuery & {
+    rows: ContactStats[]
+    eventTypes: ContactEventType[]
+  },
 ): ContactStats[] {
+  const { rows, eventTypes } = props
   const keyOf = (month: string, eventType: string) => `${month}::${eventType}`
 
   const byKey = new Map<string, ContactStats>()
@@ -126,13 +141,14 @@ export function fillContactStatsMonthSeries(
   }
 
   const filled: ContactStats[] = []
-  for (const m of iterateUtcMonths(timeRange.from, timeRange.to)) {
+  const monthSeries = generateMonthSeries(props.from, props.to)
+  for (const m of monthSeries) {
     const monthKey = getUtcMonthKey(m)
     for (const et of eventTypes) {
       const existing = byKey.get(keyOf(monthKey, et))
       filled.push(
         existing ?? {
-          chatbotId,
+          chatbotId: props.chatbotId,
           timestamp: getUtcMonthStart(m),
           eventType: et,
           count: 0,
@@ -145,27 +161,31 @@ export function fillContactStatsMonthSeries(
   return filled
 }
 
-export function fillMonthlyTotalContactsSeries(
-  timeRange: TimeRange,
-  raw: DailyTotalContacts[],
-  initialTotal = 0,
-): DailyTotalContacts[] {
+export function fillTotalContactsMonthlySeries(
+  props: TimeRangeQuery & {
+    raw: ContactCountsSchema[]
+    initialTotal: number
+  },
+): ContactCountsSchema[] {
+  const { from, to, raw, initialTotal = 0 } = props
   const byMonth = new Map<string, number>()
   for (const r of raw) {
-    byMonth.set(getUtcMonthKey(r.day), r.totalContacts)
+    byMonth.set(getUtcMonthKey(r.date), r.count)
   }
 
-  const filled: DailyTotalContacts[] = []
+  const filled: ContactCountsSchema[] = []
   let lastTotal = initialTotal
-  for (const m of iterateUtcMonths(timeRange.from, timeRange.to)) {
+
+  const monthSeries = generateMonthSeries(from, to)
+  for (const m of monthSeries) {
     const monthKey = getUtcMonthKey(m)
     const v = byMonth.get(monthKey)
     if (typeof v === "number") {
       lastTotal = v
     }
     filled.push({
-      day: getUtcMonthStart(m),
-      totalContacts: lastTotal,
+      date: getUtcMonthStart(m),
+      count: lastTotal,
     })
   }
 
@@ -173,11 +193,12 @@ export function fillMonthlyTotalContactsSeries(
 }
 
 export function fillBotMessageStatsDaySeries(
-  chatbotId: string,
-  timeRange: TimeRange,
-  rows: BotMessageStats[],
-  results: Array<"success" | "fallback">,
+  props: TimeRangeQuery & {
+    rows: BotMessageStats[]
+    results: Array<"success" | "fallback">
+  },
 ): BotMessageStats[] {
+  const { chatbotId, from, to, rows, results } = props
   const keyOf = (day: string, result: string) => `${day}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -194,7 +215,8 @@ export function fillBotMessageStatsDaySeries(
   }
 
   const filled: BotMessageStats[] = []
-  for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
+  const daySeries = generateDaySeries(from, to)
+  for (const d of daySeries) {
     const dayKey = getUtcDayKey(d)
     for (const result of results) {
       const existing = byKey.get(keyOf(dayKey, result))
@@ -216,11 +238,12 @@ export function fillBotMessageStatsDaySeries(
 }
 
 export function fillBotMessageStatsMonthSeries(
-  chatbotId: string,
-  timeRange: TimeRange,
-  rows: BotMessageStats[],
-  results: Array<"success" | "fallback">,
+  props: TimeRangeQuery & {
+    rows: BotMessageStats[]
+    results: Array<"success" | "fallback">
+  },
 ): BotMessageStats[] {
+  const { chatbotId, from, to, rows, results } = props
   const keyOf = (month: string, result: string) => `${month}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -237,7 +260,8 @@ export function fillBotMessageStatsMonthSeries(
   }
 
   const filled: BotMessageStats[] = []
-  for (const m of iterateUtcMonths(timeRange.from, timeRange.to)) {
+  const monthSeries = generateMonthSeries(from, to)
+  for (const m of monthSeries) {
     const monthKey = getUtcMonthKey(m)
     for (const result of results) {
       const existing = byKey.get(keyOf(monthKey, result))

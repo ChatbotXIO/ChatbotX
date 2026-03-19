@@ -272,7 +272,10 @@
     "messagesSent": "Messages Sent",
     "averageResponseTimeShort": "Avg. Response Time(mins)",
     "averageFirstResponseTimeByAdminShort": "Avg. First Response Time (mins)",
-    "assignedConversations": "Assigned Conversations",
+    "assignedConversations": {
+      "title": "Assigned Conversations",
+      "helpText": "Conversations assigned from the inbox or by the bot."
+    },
     "messagesReceivedByTheBot": "Messages received by the bot",
     "messagesReceivedByTheBotHelp": "Messages sent by your contacts that your bot successful understood or failed to understand. It doesn't include messages when live chat is enabled.",
     "messagesSentByHumanOrBot": "Messages sent by Human/bot",
@@ -1613,12 +1616,7 @@
     "orContinueWith": "Or continue with",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
-    "signUp": "Sign up"
-  },
-  "tools": {
-    "title": "Tools"
-  },
-  "signIn": {
+    "signUp": "Sign up",
     "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "and": "and",
     "privacyPolicy": "Privacy Policy",
@@ -1643,6 +1641,9 @@
     "resetPasswordTitle": "Reset your password",
     "resetPasswordDescription": "Enter your new password below.",
     "signUpTitle": "Sign up to {name}"
+  },
+  "tools": {
+    "title": "Tools"
   },
   "tags": {
     "title": "Tags",

@@ -1,39 +1,16 @@
 import type { BotResponseTrackingContext } from "@aha.chat/worker-config"
 import {
-  type BotMessageAIProvider,
-  type BotMessageFallbackReason,
   type BotMessageResponseType,
-  type BotMessageResult,
-  type BotMessageRouteType,
   botMessageTrackingService,
-  type TriggerContext,
+  type TrackBotRequest,
 } from "@chatbotx.io/analytics"
-
-interface TrackBotResponseParams {
-  aiProvider: BotMessageAIProvider
-  chatbotId: string
-  conversationId: string
-  hasResponse: boolean
-  messageId: string
-  metadata?: {
-    flowId?: string
-    intentId?: string
-    intentConfidence?: number
-    fallbackReason?: BotMessageFallbackReason
-  }
-  responseType: BotMessageResponseType
-  result?: BotMessageResult
-  routeType?: BotMessageRouteType
-  startTime: number
-  triggerContext?: TriggerContext
-}
 
 export function createTrackingContext(params: {
   messageId: string
   chatbotId: string
   conversationId: string
   responseType: BotMessageResponseType
-  aiProvider: BotMessageAIProvider
+  aiProvider: string
   triggerType: string
 }): BotResponseTrackingContext {
   return {
@@ -42,7 +19,7 @@ export function createTrackingContext(params: {
   }
 }
 
-export async function trackBotResponse(params: TrackBotResponseParams) {
+export async function trackBotResponse(params: TrackBotRequest) {
   try {
     await botMessageTrackingService.trackEvent({
       chatbotId: params.chatbotId,

@@ -6,7 +6,8 @@
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
     "./events": "./src/events.ts",
-    "./queries": "./src/queries.ts"
+    "./queries": "./src/queries.ts",
+    "./schemas": "./src/schemas/index.ts"
   },
   "scripts": {
     "migrate": "dotenv -e ../../.env -- tsx src/migrations/run.ts"

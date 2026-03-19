@@ -175,10 +175,7 @@ function evaluateContactForTrigger(
 
   for (const condition of triggerInfo.conditions) {
     const customFieldValue = customFieldValues.get(condition.customFieldId)
-
     const datetimeValue = parseDateTimeValue(customFieldValue, timezone)
-
-    // console.log({ datetimeValue, triggerId: triggerInfo.triggerId })
 
     if (!datetimeValue) {
       return false
@@ -451,7 +448,7 @@ export async function evaluateDateTimeTriggers(params: {
   const TRIGGER_CHUNK_SIZE = 100
   const allResults: DateTimeTriggerResult[] = []
   let triggerCursor: string | undefined
-  let triggerCount = 0
+  let _triggerCount = 0
 
   while (true) {
     const { triggerMap, nextCursor } = await fetchTriggerChunk(
@@ -464,10 +461,7 @@ export async function evaluateDateTimeTriggers(params: {
       break
     }
 
-    triggerCount += triggerIds.length
-    console.log(
-      `Processing ${triggerIds.length} triggers (total: ${triggerCount})`,
-    )
+    _triggerCount += triggerIds.length
 
     const results = await processTriggerChunk(triggerMap, params)
     allResults.push(...results)
@@ -479,9 +473,6 @@ export async function evaluateDateTimeTriggers(params: {
     triggerCursor = nextCursor
   }
 
-  console.log(
-    `Completed: ${triggerCount} triggers, ${allResults.length} executions`,
-  )
   return allResults
 }
 

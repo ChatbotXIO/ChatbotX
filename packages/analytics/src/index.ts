@@ -1,7 +1,7 @@
 export * from "@aha.chat/database/clickhouse/client"
 export * from "./lib"
-export * from "./models"
 export * from "./repositories"
+export * from "./schemas"
 export * from "./services"
 export { botMessageTrackingService } from "./services/bot-message-tracking.service"
 export { contactTrackingService } from "./services/contact-tracking.service"

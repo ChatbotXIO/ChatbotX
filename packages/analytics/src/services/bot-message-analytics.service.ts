@@ -1,63 +1,39 @@
+import { botMessageStatsRepository } from "../repositories/bot-message-stats.repository"
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
-  TimeRange,
-} from "../models"
-import { botMessageStatsRepository } from "../repositories/bot-message-stats.repository"
+  TimeRangeQuery,
+} from "../schemas"
 
 export class BotMessageAnalyticsService {
   getMessagesByResult(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
-    return botMessageStatsRepository.getMessagesByResult(
-      chatbotId,
-      timeRange,
-      timezone,
-      granularity,
-    )
+    return botMessageStatsRepository.getMessagesByResult(props)
   }
 
   getMessagesWithNoResponse(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
-    return botMessageStatsRepository.getMessagesWithNoResponse(
-      chatbotId,
-      timeRange,
-      timezone,
-      granularity,
-    )
+    return botMessageStatsRepository.getMessagesWithNoResponse(props)
   }
 
   getMessagesWithResponse(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
-    return botMessageStatsRepository.getMessagesWithResponse(
-      chatbotId,
-      timeRange,
-      timezone,
-      granularity,
-    )
+    return botMessageStatsRepository.getMessagesWithResponse(props)
   }
 
   getAIProviderStats(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<BotMessageAIProviderStats[]> {
-    return botMessageStatsRepository.getAIProviderStats(
-      chatbotId,
-      timeRange,
-      timezone,
-    )
+    return botMessageStatsRepository.getAIProviderStats(props)
   }
 }
 

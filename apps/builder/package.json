@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
+    "@chatbotx.io/analytics-nextjs": "workspace:*",
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",

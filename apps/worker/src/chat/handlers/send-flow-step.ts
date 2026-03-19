@@ -388,9 +388,6 @@ export const sendChatMessage = async (
         message: message as OutgoingMessage,
       },
     })
-    console.log({
-      aaa: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    })
 
     const promises: Promise<unknown>[] = [
       broadcastToChatbotParty(conversation.chatbotId, {
@@ -415,9 +412,6 @@ export const sendChatMessage = async (
     }
 
     await Promise.all(promises)
-    console.log({
-      aaa: "aaaaaaaaaaaaaaaaaaaaaaaaa1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    })
 
     if (contact.sourceId) {
       contactTrackingService

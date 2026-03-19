@@ -1,5 +1,5 @@
 import { CONVERSATION_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import type { CreateConversationEvent } from "../models"
+import type { CreateConversationEvent } from "../schemas"
 import { BaseService } from "./base.service"
 
 export class ConversationTrackingService extends BaseService {

@@ -29,9 +29,6 @@ class TriggerEventEmitterImpl extends BaseEventEmitter {
     chatbotId: string,
     sourceId?: string,
   ): Promise<boolean> {
-    // console.log("shouldEmitTriggerEvent", {
-    //   isWorkerContext: isWorkerContext(),
-    // })
     if (isWorkerContext()) {
       console.log("Skipping emit from worker context to prevent loop")
       return false

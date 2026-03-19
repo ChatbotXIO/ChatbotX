@@ -6,6 +6,7 @@ import type { UserModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { emitConversationAssigned } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
+import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -124,6 +125,7 @@ export const assignConversationAction = chatbotActionClient
               chatbotId,
               conversationId: conv.id,
               eventType: "conversation_assigned",
+              eventId: createId(),
               toAssignee,
               occurredAt: new Date(),
               channel: conv.inboxType,
@@ -145,6 +147,7 @@ export const assignConversationAction = chatbotActionClient
               chatbotId,
               conversationId: conv.id,
               eventType: "conversation_unassigned",
+              eventId: createId(),
               occurredAt: new Date(),
               channel: conv.inboxType,
               metadata: {

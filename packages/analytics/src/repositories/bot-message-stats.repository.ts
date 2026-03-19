@@ -1,13 +1,15 @@
 import {
   fillBotMessageStatsDaySeries,
   fillBotMessageStatsMonthSeries,
+  generateDaySeries,
+  getUtcDayKey,
   shouldUseMonthlyGranularity,
 } from "../lib"
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
-  TimeRange,
-} from "../models"
+  TimeRangeQuery,
+} from "../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class BotMessageStatsRepository extends BaseRepository {
@@ -22,16 +24,12 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   private async getMessagesByResultMonth(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<BotMessageStats[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const monthGroup = this.buildMonthGroupFromHourly(timezone)
+    const { chatbotId } = props
+
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const monthGroup = this.buildMonthGroupFromHourly(props)
 
     const sql = `
       SELECT
@@ -82,29 +80,26 @@ export class BotMessageStatsRepository extends BaseRepository {
     }))
 
     const results: Array<"success" | "fallback"> = ["success", "fallback"]
-    return fillBotMessageStatsMonthSeries(chatbotId, timeRange, rows, results)
+    return fillBotMessageStatsMonthSeries({
+      ...props,
+      rows,
+      results,
+    })
   }
 
   async getMessagesByResult(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
-    if (
-      granularity === "day" &&
-      shouldUseMonthlyGranularity(timeRange.from, timeRange.to)
-    ) {
-      return this.getMessagesByResultMonth(chatbotId, timeRange, timezone)
+    const { granularity, chatbotId } = props
+    if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
+      return this.getMessagesByResultMonth(props)
     }
 
     if (granularity === "day") {
-      const timeFilter = this.buildHourlyTimestampFilter(
-        timeRange.from,
-        timeRange.to,
-        timezone,
-      )
-      const dayGroup = this.buildDayGroupFromHourly(timezone)
+      const timeFilter = this.buildHourlyTimestampFilter(props)
+      const dayGroup = this.buildDayGroupFromHourly(props)
 
       const sql = `
         SELECT
@@ -152,15 +147,18 @@ export class BotMessageStatsRepository extends BaseRepository {
       }))
 
       const results: Array<"success" | "fallback"> = ["success", "fallback"]
-      return fillBotMessageStatsDaySeries(chatbotId, timeRange, rows, results)
+      return fillBotMessageStatsDaySeries({
+        ...props,
+        rows,
+        results,
+      })
     }
 
     const { table, timeColumn } = this.getTableAndColumn(granularity)
-    const timeFilter = this.buildTimestampFilter(
-      timeColumn,
-      timeRange.from,
-      timeRange.to,
-    )
+    const timeFilter = this.buildTimestampFilter({
+      ...props,
+      field: timeColumn,
+    })
 
     const sql = `
       SELECT
@@ -200,18 +198,14 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesWithNoResponse(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
+    const { granularity, chatbotId } = props
     if (granularity === "day") {
-      const timeFilter = this.buildHourlyTimestampFilter(
-        timeRange.from,
-        timeRange.to,
-        timezone,
-      )
-      const dayGroup = this.buildDayGroupFromHourly(timezone)
+      const timeFilter = this.buildHourlyTimestampFilter(props)
+      const dayGroup = this.buildDayGroupFromHourly(props)
 
       const sql = `
         SELECT
@@ -256,11 +250,10 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     const { table, timeColumn } = this.getTableAndColumn(granularity)
-    const timeFilter = this.buildTimestampFilter(
-      timeColumn,
-      timeRange.from,
-      timeRange.to,
-    )
+    const timeFilter = this.buildTimestampFilter({
+      ...props,
+      field: timeColumn,
+    })
 
     const sql = `
       SELECT
@@ -297,18 +290,14 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getMessagesWithResponse(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    granularity: "minute" | "hour" | "day",
+    props: TimeRangeQuery & {
+      granularity: "minute" | "hour" | "day"
+    },
   ): Promise<BotMessageStats[]> {
+    const { granularity, chatbotId } = props
     if (granularity === "day") {
-      const timeFilter = this.buildHourlyTimestampFilter(
-        timeRange.from,
-        timeRange.to,
-        timezone,
-      )
-      const dayGroup = this.buildDayGroupFromHourly(timezone)
+      const timeFilter = this.buildHourlyTimestampFilter(props)
+      const dayGroup = this.buildDayGroupFromHourly(props)
 
       const sql = `
         SELECT
@@ -355,10 +344,6 @@ export class BotMessageStatsRepository extends BaseRepository {
         count: Number(row.count),
       }))
 
-      const { getUtcDayKey, iterateUtcDays } = await import(
-        "../lib/time-series"
-      )
-
       const byDay = new Map<string, BotMessageStats[]>()
       for (const r of rows) {
         const dayKey = getUtcDayKey(r.timestamp)
@@ -372,7 +357,8 @@ export class BotMessageStatsRepository extends BaseRepository {
       }
 
       const filled: BotMessageStats[] = []
-      for (const d of iterateUtcDays(timeRange.from, timeRange.to)) {
+      const daySeries = generateDaySeries(props.from, props.to)
+      for (const d of daySeries) {
         const dayKey = getUtcDayKey(d)
         const dayRows = byDay.get(dayKey)
         if (dayRows && dayRows.length > 0) {
@@ -384,11 +370,10 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     const { table, timeColumn } = this.getTableAndColumn(granularity)
-    const timeFilter = this.buildTimestampFilter(
-      timeColumn,
-      timeRange.from,
-      timeRange.to,
-    )
+    const timeFilter = this.buildTimestampFilter({
+      ...props,
+      field: timeColumn,
+    })
 
     const sql = `
       SELECT
@@ -428,15 +413,10 @@ export class BotMessageStatsRepository extends BaseRepository {
   }
 
   async getAIProviderStats(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<BotMessageAIProviderStats[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+    const { chatbotId } = props
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT

@@ -239,11 +239,6 @@ export class WebhookExecutor {
   }): Promise<void> {
     const payload = await this.createPayload(eventData)
 
-    // console.log({
-    //   webhookUrl: webhook.url,
-    //   payload,
-    // })
-
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       const shouldStop = await this.attemptRequest(webhook, payload, attempt)
 

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2"
-import type { CreateContactEvent } from "../models"
+import type { CreateContactEvent } from "../schemas"
 
 type Redis = {
   set: (

@@ -1,18 +1,14 @@
-import type { ConversationHandoffStats, TimeRange } from "../models"
+import type { ConversationHandoffStats, TimeRangeQuery } from "../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class ConversationStatsRepository extends BaseRepository {
   async getHandoffsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<ConversationHandoffStats[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const dayGroup = this.buildDayGroupFromHourly(timezone)
+    const { chatbotId } = props
+
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const dayGroup = this.buildDayGroupFromHourly(props)
 
     const sql = `
       SELECT

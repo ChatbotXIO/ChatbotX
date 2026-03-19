@@ -1,4 +1,4 @@
-USE chatbot_analytics;
+USE chatbotx_analytics;
 
 -- Add unique_messages_state column to destination tables
 ALTER TABLE bot_messages_minute

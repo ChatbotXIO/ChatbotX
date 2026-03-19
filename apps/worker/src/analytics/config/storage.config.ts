@@ -44,7 +44,7 @@ export function getS3StorageConfig(): S3StorageConfig {
 
 export function getClickhouseConfig(): ClickhouseConfig {
   return {
-    database: process.env.CLICKHOUSE_DATABASE || "chatbot_analytics",
+    database: process.env.CLICKHOUSE_DATABASE || "chatbotx_analytics",
     batchSize: Number.parseInt(process.env.CLICKHOUSE_BATCH_SIZE || "10", 10),
     maxRetries: Number.parseInt(process.env.CLICKHOUSE_MAX_RETRIES || "5", 10),
   }

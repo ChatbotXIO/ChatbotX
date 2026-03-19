@@ -1,31 +1,31 @@
 import {
-  fillContactStatsDaySeries,
-  fillContactStatsMonthSeries,
+  fillContactStatsMonthlySeries,
+  fillDailyContactStats,
   fillDailyTotalContactsSeries,
-  fillMonthlyTotalContactsSeries,
+  fillTotalContactsMonthlySeries,
   shouldUseMonthlyGranularity,
 } from "../lib/time-series"
 import type {
+  ContactCountsSchema,
   ContactEventType,
   ContactStats,
   ContactsByDimension,
-  DailyTotalContacts,
   MessagesBySenderStats,
-  TimeRange,
-} from "../models"
+  TimeRangeQuery,
+} from "../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class ContactStatsRepository extends BaseRepository {
   async getStatsByMinute(
-    chatbotId: string,
-    timeRange: TimeRange,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "minute",
-      timeRange.from,
-      timeRange.to,
-    )
+    const { chatbotId, eventTypes } = props
+    const timeFilter = this.buildTimestampFilter({
+      ...props,
+      field: "minute",
+    })
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
 
     const sql = `
@@ -64,15 +64,14 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getStatsByHour(
-    chatbotId: string,
-    timeRange: TimeRange,
+    props: TimeRangeQuery,
     eventTypes?: ContactEventType[],
   ): Promise<ContactStats[]> {
-    const timeFilter = this.buildTimestampFilter(
-      "hour",
-      timeRange.from,
-      timeRange.to,
-    )
+    const { chatbotId } = props
+    const timeFilter = this.buildTimestampFilter({
+      ...props,
+      field: "hour",
+    })
     const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
 
     const sql = `
@@ -111,18 +110,15 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getStatsByMonth(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
-    const monthGroup = this.buildMonthGroupFromHourly(timezone)
+    const { eventTypes } = props
+
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const eventTypeFilter = this.buildEventTypeFilter(props.eventTypes)
+    const monthGroup = this.buildMonthGroupFromHourly(props)
 
     const sql = `
       SELECT
@@ -155,7 +151,7 @@ export class ContactStatsRepository extends BaseRepository {
       count: string
       unique_contacts: string
     }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
@@ -171,26 +167,29 @@ export class ContactStatsRepository extends BaseRepository {
       return rows
     }
 
-    return fillContactStatsMonthSeries(chatbotId, timeRange, rows, eventTypes)
+    return fillContactStatsMonthlySeries({
+      ...props,
+      rows,
+      eventTypes,
+    })
   }
 
   async getStatsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    eventTypes?: ContactEventType[],
+    props: TimeRangeQuery & {
+      eventTypes?: ContactEventType[]
+    },
   ): Promise<ContactStats[]> {
-    if (shouldUseMonthlyGranularity(timeRange.from, timeRange.to)) {
-      return this.getStatsByMonth(chatbotId, timeRange, timezone, eventTypes)
+    const { chatbotId, eventTypes } = props
+    if (shouldUseMonthlyGranularity(props)) {
+      return this.getStatsByMonth({
+        ...props,
+        eventTypes,
+      })
     }
 
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const eventTypeFilter = this.buildEventTypeFilter(eventTypes)
-    const dayGroup = this.buildDayGroupFromHourly(timezone)
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const eventTypeFilter = this.buildEventTypeFilter(props.eventTypes)
+    const dayGroup = this.buildDayGroupFromHourly(props)
 
     const sql = `
       SELECT
@@ -239,20 +238,18 @@ export class ContactStatsRepository extends BaseRepository {
       return rows
     }
 
-    return fillContactStatsDaySeries(chatbotId, timeRange, rows, eventTypes)
+    return fillDailyContactStats({
+      ...props,
+      rows,
+      eventTypes,
+    })
   }
 
   async getTotalContactsByMonth(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<DailyTotalContacts[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const monthGroup = this.buildMonthGroupFromHourly(timezone)
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const monthGroup = this.buildMonthGroupFromHourly(props)
 
     const baselineSql = `
       WITH hourly_created AS (
@@ -349,21 +346,21 @@ export class ContactStatsRepository extends BaseRepository {
       this.query<{
         baseline_total: string
       }>(baselineSql, {
-        chatbotId,
+        chatbotId: props.chatbotId,
         ...timeFilter.params,
       }),
       this.query<{
         month: string
         total_contacts: string
       }>(createdSql, {
-        chatbotId,
+        chatbotId: props.chatbotId,
         ...timeFilter.params,
       }),
       this.query<{
         month: string
         total_deleted: string
       }>(deletedSql, {
-        chatbotId,
+        chatbotId: props.chatbotId,
         ...timeFilter.params,
       }),
     ])
@@ -382,28 +379,28 @@ export class ContactStatsRepository extends BaseRepository {
       const created = Number(row.total_contacts)
       const deleted = deletedByMonth.get(monthKey) ?? 0
       return {
-        day: new Date(row.month),
-        totalContacts: created - deleted,
+        date: new Date(row.month),
+        count: created - deleted,
       }
     })
 
-    return fillMonthlyTotalContactsSeries(timeRange, raw, baselineTotal)
+    return fillTotalContactsMonthlySeries({
+      ...props,
+      raw,
+      initialTotal: baselineTotal,
+    })
   }
 
-  async getTotalContactsByDay(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<DailyTotalContacts[]> {
-    if (shouldUseMonthlyGranularity(timeRange.from, timeRange.to)) {
-      return this.getTotalContactsByMonth(chatbotId, timeRange, timezone)
+  async getContactCountsPerDay(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    const { chatbotId } = props
+    if (shouldUseMonthlyGranularity(props)) {
+      return this.getTotalContactsByMonth(props)
     }
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-    const dayGroup = this.buildDayGroupFromHourly(timezone)
+
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const dayGroup = this.buildDayGroupFromHourly(props)
 
     const baselineSql = `
       WITH hourly_created AS (
@@ -533,24 +530,20 @@ export class ContactStatsRepository extends BaseRepository {
       const created = Number(row.total_contacts)
       const deleted = deletedByDay.get(dayKey) ?? 0
       return {
-        day: new Date(row.day),
-        totalContacts: created - deleted,
+        date: new Date(row.day),
+        count: created - deleted,
       }
     })
 
-    return fillDailyTotalContactsSeries(timeRange, raw, baselineTotal)
+    return fillDailyTotalContactsSeries({
+      ...props,
+      raw,
+      initialTotal: baselineTotal,
+    })
   }
 
-  async getNewContactsCount(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<number> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+  async getNewContactsCount(props: TimeRangeQuery): Promise<number> {
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT
@@ -564,24 +557,41 @@ export class ContactStatsRepository extends BaseRepository {
     const result = await this.query<{
       new_contacts: string
     }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
     return result[0]?.new_contacts ? Number(result[0].new_contacts) : 0
   }
 
+  async getContactsCount(props: TimeRangeQuery): Promise<number> {
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+
+    const sql = `
+      SELECT
+        countMerge(event_count_state) as count
+      FROM contact_stats_hourly
+      WHERE chatbot_id = {chatbotId:String}
+        AND ${timeFilter.sql}
+    `
+
+    const result = await this.query<{
+      count: string
+    }>(sql, {
+      chatbotId: props.chatbotId,
+      ...timeFilter.params,
+    })
+
+    return result[0]?.count ? Number(result[0].count) : 0
+  }
+
   async getContactsByDimension(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-    dimension: "country" | "channel",
+    props: TimeRangeQuery & {
+      dimension: "country" | "channel"
+    },
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+    const { dimension } = props
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT
@@ -600,7 +610,7 @@ export class ContactStatsRepository extends BaseRepository {
       count: string
       unique_contacts: string
     }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
@@ -611,29 +621,17 @@ export class ContactStatsRepository extends BaseRepository {
     }))
   }
 
-  getContactsByCountry(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<ContactsByDimension[]> {
-    return this.getContactsByDimension(
-      chatbotId,
-      timeRange,
-      timezone,
-      "country",
-    )
+  getContactsByCountry(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
+    return this.getContactsByDimension({
+      ...props,
+      dimension: "country",
+    })
   }
 
   async getContactsByChannel(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT
@@ -652,7 +650,7 @@ export class ContactStatsRepository extends BaseRepository {
       count: string
       unique_contacts: string
     }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
@@ -663,16 +661,8 @@ export class ContactStatsRepository extends BaseRepository {
     }))
   }
 
-  async getActiveContacts(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
-  ): Promise<number> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+  async getActiveContactsCount(props: TimeRangeQuery): Promise<number> {
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT
@@ -683,7 +673,7 @@ export class ContactStatsRepository extends BaseRepository {
     `
 
     const result = await this.query<{ active_contacts: string }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
@@ -691,15 +681,9 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getContactsBySource(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
   ): Promise<ContactsByDimension[]> {
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
+    const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
       SELECT
@@ -718,7 +702,7 @@ export class ContactStatsRepository extends BaseRepository {
       count: string
       unique_contacts: string
     }>(sql, {
-      chatbotId,
+      chatbotId: props.chatbotId,
       ...timeFilter.params,
     })
 
@@ -730,27 +714,19 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getMessagesBySender(
-    chatbotId: string,
-    timeRange: TimeRange,
-    timezone: string,
+    props: TimeRangeQuery,
     granularity: "day" | "month" = "day",
   ): Promise<MessagesBySenderStats[]> {
+    const { chatbotId } = props
     const effectiveGranularity =
-      granularity === "day" &&
-      shouldUseMonthlyGranularity(timeRange.from, timeRange.to)
+      granularity === "day" && shouldUseMonthlyGranularity(props)
         ? "month"
         : granularity
-
-    const timeFilter = this.buildHourlyTimestampFilter(
-      timeRange.from,
-      timeRange.to,
-      timezone,
-    )
-
+    const timeFilter = this.buildHourlyTimestampFilter(props)
     const timeGroup =
       effectiveGranularity === "month"
-        ? this.buildMonthGroupFromHourly(timezone)
-        : this.buildDayGroupFromHourly(timezone)
+        ? this.buildMonthGroupFromHourly(props)
+        : this.buildDayGroupFromHourly(props)
 
     const sql = `
       SELECT

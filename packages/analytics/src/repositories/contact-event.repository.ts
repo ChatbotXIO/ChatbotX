@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2"
 import { CONTACT_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import type { ContactEvent, CreateContactEvent } from "../models"
+import type { ContactEvent, CreateContactEvent } from "../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class ContactEventRepository extends BaseRepository {

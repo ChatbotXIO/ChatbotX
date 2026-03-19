@@ -128,7 +128,6 @@ export class ClickhouseIngester {
           'JSONEachRow'
         )
       `
-      // console.log({ query })
 
       await this.executeWithRetry(query, objectKey, attempts)
 

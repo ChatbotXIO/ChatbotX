@@ -1,11 +1,14 @@
+import { analyticsRoutes } from "@chatbotx.io/analytics-nextjs/routes"
 import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
-import botFieldsAPI from "@/features/bot-fields/api"
-import contactsAPI from "@/features/contacts/api"
+import botFieldsAPIs from "@/features/bot-fields/api"
+import contactsAPIs from "@/features/contacts/api"
 import conversationsAPI from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
 import flowsAPI from "@/features/flows/api"
 import tagsAPI from "@/features/tags/api"
+import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { authorizedAPI } from "@/orpc"
 
 export const router = {
   aiMcpServerApi,
@@ -14,6 +17,10 @@ export const router = {
   tagsAPI,
   customFieldsAPI,
   flowsAPI,
-  contactsAPI,
-  botFieldsAPI,
+  contactsAPIs,
+  botFieldsAPIs,
+  analyticsRoutes: authorizedAPI
+    // @ts-expect-error
+    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .router(analyticsRoutes),
 }

@@ -9,13 +9,6 @@ const clickhouseRequestTimeout = Number.parseInt(
   10,
 )
 
-// console.log("ClickHouse environment variables:", {
-//   clickhouseUrl,
-//   clickhouseUser,
-//   clickhousePassword,
-//   clickhouseDatabase,
-// })
-
 if (
   !(clickhouseUrl && clickhouseUser && clickhousePassword && clickhouseDatabase)
 ) {

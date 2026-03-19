@@ -1,0 +1,36 @@
+{
+  "name": "@chatbotx.io/analytics-nextjs",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./routes": "./src/routes/index.ts",
+    "./provider/analysis-store-context": "./src/provider/analysis-store-context.tsx",
+    "./provider/analysis-store": "./src/provider/analysis-store.ts"
+  },
+  "dependencies": {
+    "@aha.chat/database": "workspace:*",
+    "@aha.chat/ui": "workspace:*",
+    "@chatbotx.io/analytics": "workspace:*",
+    "@hookform/resolvers": "^5.2.2",
+    "@orpc/server": "^1.13.7",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "@types/node": "^24.10.4",
+    "date-fns": "^4.1.0",
+    "ky": "^1.14.3",
+    "lucide-react": "^0.577.0",
+    "next-intl": "^4.8.3",
+    "react": "19.2.4",
+    "react-hook-form": "^7.71.2",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@types/node": "^24.10.1",
+    "@types/react": "19.2.14",
+    "tsx": "^4.21.0"
+  }
+}

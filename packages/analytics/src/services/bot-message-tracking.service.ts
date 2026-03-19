@@ -1,5 +1,5 @@
 import { BOT_MESSAGE_EVENTS_EVENT_TYPE } from "../lib/events-config"
-import type { CreateBotMessageEvent } from "../models"
+import type { CreateBotMessageEvent } from "../schemas"
 import { BaseService } from "./base.service"
 
 export class BotMessageTrackingService extends BaseService {

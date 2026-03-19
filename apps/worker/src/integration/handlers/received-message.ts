@@ -133,7 +133,6 @@ export const receiveMessage = async (
         })
         .returning()
         .then((result) => result[0])
-      console.log({ newContact })
 
       isNewContact = true
     }

@@ -1,10 +1,7 @@
-import type {
-  BotMessageAIProvider,
-  BotMessageResponseType,
-} from "@chatbotx.io/analytics"
+import type { BotMessageResponseType } from "@chatbotx.io/analytics"
 
 export interface BotResponseTrackingContext {
-  aiProvider: BotMessageAIProvider
+  aiProvider: string
   chatbotId: string
   conversationId: string
   messageId: string

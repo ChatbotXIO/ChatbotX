@@ -38,6 +38,7 @@ async function main() {
       id: createId(),
       email: "demo@example.com",
       name: "Demo ChatbotX",
+      emailVerified: true,
     })
     .returning()
     .then((result) => result[0])

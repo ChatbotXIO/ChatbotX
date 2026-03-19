@@ -1,6 +1,6 @@
 
 -- Use the database
-USE chatbot_analytics;
+USE chatbotx_analytics;
 
 -- Step 1: Create conversation_events table
 CREATE TABLE IF NOT EXISTS conversation_events (
