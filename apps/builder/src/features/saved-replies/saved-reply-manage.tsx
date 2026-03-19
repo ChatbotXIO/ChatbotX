@@ -1,16 +1,11 @@
 "use client"
 
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
-import { Form } from "@aha.chat/ui/components/ui/form"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
   Loader2Icon,
   MessageSquareMoreIcon,
@@ -22,15 +17,10 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { createSavedReplyAction } from "./actions/create-saved-reply.action"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
-import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
 import type { SavedReplyItem } from "./provider/saved-reply-store"
 import { useSavedReplyStore } from "./provider/saved-reply-store-context"
-import {
-  createSavedReplyRequest,
-  editSavedReplyRequest,
-} from "./schemas/action"
+import { SavedReplyForm } from "./saved-reply-form"
 
 type ViewState =
   | { type: "list" }
@@ -46,12 +36,12 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
     savedReplies,
     isLoadingSavedReplies,
     getAllSavedReplies,
-    removeSavedReply: removeSavedReplyFromStore,
+    deleteSavedReply: deleteSavedReplyFromStore,
   } = useSavedReplyStore((state) => state)
 
   const upsertSavedReply = useSavedReplyStore((state) => state.upsertSavedReply)
 
-  const { executeAsync: removeSavedReply, isPending: isDeletingSavedReply } =
+  const { executeAsync: deleteSavedReply, isPending: isDeletingSavedReply } =
     useAction(deleteSavedReplyAction, {
       onError: ({ error }) => {
         if (error.serverError) {
@@ -65,87 +55,6 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
     [view],
   )
 
-  const {
-    form: createForm,
-    handleSubmitWithAction: handleCreate,
-    resetFormAndAction: resetCreateForm,
-  } = useHookFormAction(
-    createSavedReplyAction,
-    zodResolver(createSavedReplyRequest),
-    {
-      actionProps: {
-        onSuccess: ({ data }) => {
-          if (data) {
-            upsertSavedReply(data)
-          }
-
-          toast.success(t("messages.savedSuccessfully"))
-          setView({ type: "list" })
-          resetCreateForm()
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          shortcut: "",
-          text: "",
-        },
-      },
-      errorMapProps: {},
-    },
-  )
-
-  const {
-    form: editForm,
-    handleSubmitWithAction: handleEdit,
-    resetFormAndAction: resetEditForm,
-  } = useHookFormAction(
-    editSavedReplyAction.bind(null, editingSavedReply?.id ?? ""),
-    zodResolver(editSavedReplyRequest),
-    {
-      actionProps: {
-        onSuccess: ({ data }) => {
-          if (data) {
-            upsertSavedReply(data)
-          }
-
-          toast.success(t("messages.savedSuccessfully"))
-          setView({ type: "list" })
-          resetEditForm()
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          shortcut: "",
-          text: "",
-        },
-      },
-      errorMapProps: {},
-    },
-  )
-
-  useEffect(() => {
-    if (!editingSavedReply) {
-      return
-    }
-
-    editForm.reset({
-      shortcut: editingSavedReply.shortcut,
-      text: editingSavedReply.text,
-    })
-  }, [editForm, editingSavedReply])
-
   const onSelectSavedReply = (item: SavedReplyItem) => {
     props.onSelect(item.text)
     setOpen(false)
@@ -153,8 +62,8 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   }
 
   const onDeleteSavedReply = async (id: string) => {
-    await removeSavedReply({ id })
-    removeSavedReplyFromStore(id)
+    await deleteSavedReply({ id })
+    deleteSavedReplyFromStore(id)
     if (editingSavedReply?.id === id) {
       setView({ type: "list" })
     }
@@ -166,50 +75,6 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
     }
   }, [open, getAllSavedReplies])
 
-  const renderForm = (mode: "create" | "edit") => {
-    const form = mode === "create" ? createForm : editForm
-    const onSubmit = mode === "create" ? handleCreate : handleEdit
-
-    return (
-      <Form {...form}>
-        <form className="space-y-4 p-4" onSubmit={onSubmit}>
-          <InputField
-            label={t("fields.shortcut.label")}
-            name="shortcut"
-            placeholder="/hello"
-            required
-          />
-
-          <TextareaField
-            label={t("fields.messages.label")}
-            name="text"
-            placeholder="..."
-            required
-          />
-
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              onClick={() => setView({ type: "list" })}
-              type="button"
-              variant="outline"
-            >
-              {t("actions.cancel")}
-            </Button>
-            <Button
-              disabled={!form.formState.isValid || form.formState.isSubmitting}
-              type="submit"
-            >
-              {form.formState.isSubmitting ? (
-                <Loader2Icon className="animate-spin" />
-              ) : null}
-              {t("actions.save")}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    )
-  }
-
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
@@ -219,8 +84,22 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-100 p-0">
-        {view.type === "create" ? renderForm("create") : null}
-        {view.type === "edit" ? renderForm("edit") : null}
+        {view.type === "create" ? (
+          <SavedReplyForm
+            editingSavedReply={null}
+            mode="create"
+            onCancel={() => setView({ type: "list" })}
+            onSaved={upsertSavedReply}
+          />
+        ) : null}
+        {view.type === "edit" ? (
+          <SavedReplyForm
+            editingSavedReply={editingSavedReply}
+            mode="edit"
+            onCancel={() => setView({ type: "list" })}
+            onSaved={upsertSavedReply}
+          />
+        ) : null}
 
         {view.type === "list" ? (
           <div>
@@ -229,10 +108,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
                 {t("fields.savedReplies.label")}
               </h3>
               <Button
-                onClick={() => {
-                  resetCreateForm()
-                  setView({ type: "create" })
-                }}
+                onClick={() => setView({ type: "create" })}
                 size="sm"
                 type="button"
                 variant="ghost"
