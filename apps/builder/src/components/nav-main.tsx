@@ -7,7 +7,8 @@ import {
   SidebarMenuItem,
 } from "@aha.chat/ui/components/ui/sidebar"
 import type { LucideIcon } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export function NavMain({
   items,
@@ -23,7 +24,6 @@ export function NavMain({
     }[]
   }[]
 }) {
-  const router = useRouter()
   const pathname = usePathname()
 
   return (
@@ -34,19 +34,17 @@ export function NavMain({
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                className="h-9 cursor-pointer"
+                className="h-9 cursor-pointer p-0"
                 isActive={isActive}
-                onClick={() => {
-                  router.push(item.url)
-                }}
                 tooltip={item.title}
               >
-                <div
-                  className={`flex items-center gap-2 ${isActive ? "dark:text-gray-50" : "dark:text-gray-400"}`}
+                <Link
+                  className={`flex w-full items-center gap-2 p-2 ${isActive ? "dark:text-gray-50" : "dark:text-gray-400"}`}
+                  href={item.url}
                 >
-                  {item.icon && <item.icon className="size-5" />}
+                  {item.icon && <item.icon className="size-5 shrink-0" />}
                   <span>{item.title}</span>
-                </div>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )

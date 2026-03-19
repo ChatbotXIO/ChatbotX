@@ -1367,7 +1367,7 @@ export const auditLogModel = pgTable("AuditLog", {
 export const savedReplyModel = pgTable("SavedReply", {
   ...sharedColumns,
   shortcut: text().notNull(),
-  message: text().notNull(),
+  text: text().notNull(),
   userId: text()
     .notNull()
     .references(() => userModel.id, {

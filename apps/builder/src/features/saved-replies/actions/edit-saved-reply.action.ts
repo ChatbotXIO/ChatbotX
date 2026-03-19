@@ -8,7 +8,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type EditSavedReplyRequest,
   editSavedReplyRequest,
-} from "../schemas/edit-saved-reply.schema"
+} from "../schemas/action"
 
 const savedReplyIdRequestParams: [z.ZodCUID2] = [z.cuid2().describe("id")]
 type SavedReplyIdRequestParams = [string]
@@ -30,7 +30,7 @@ export const editSavedReplyAction = authActionClient
         .update(savedReplyModel)
         .set({
           shortcut: parsedInput.shortcut,
-          message: parsedInput.message,
+          text: parsedInput.text,
         })
         .where(
           and(
@@ -41,7 +41,7 @@ export const editSavedReplyAction = authActionClient
         .returning({
           id: savedReplyModel.id,
           shortcut: savedReplyModel.shortcut,
-          message: savedReplyModel.message,
+          text: savedReplyModel.text,
         })
         .then((result) => result[0])
 

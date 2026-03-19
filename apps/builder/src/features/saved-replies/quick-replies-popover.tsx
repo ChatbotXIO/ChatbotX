@@ -16,14 +16,11 @@ import {
   useRef,
   useState,
 } from "react"
-import {
-  useSavedReplyStore,
-  useSavedReplyStoreActions,
-} from "./provider/saved-reply-store-provider"
+import { useSavedReplyStore } from "./provider/saved-reply-store-context"
 
 type SavedReplySlashPopoverProps = {
   inputValue: string
-  onSelect: (message: string) => void
+  onSelect: (text: string) => void
   children: ReactNode
 }
 
@@ -36,11 +33,8 @@ export const QuickRepliesPopover = ({
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const savedReplies = useSavedReplyStore((state) => state.savedReplies)
-  const isLoadingSavedReplies = useSavedReplyStore(
-    (state) => state.isLoadingSavedReplies,
-  )
-  const { initializeSavedReplies } = useSavedReplyStoreActions()
+  const { savedReplies, isLoadingSavedReplies, getAllSavedReplies } =
+    useSavedReplyStore((state) => state)
 
   const normalizedContent = (inputValue ?? "").trimStart()
   const shouldShow = normalizedContent.startsWith("/")
@@ -55,8 +49,8 @@ export const QuickRepliesPopover = ({
 
     return savedReplies.filter((reply) => {
       const shortcut = reply.shortcut.toLowerCase()
-      const message = reply.message.toLowerCase()
-      return shortcut.includes(keyword) || message.includes(keyword)
+      const text = reply.text.toLowerCase()
+      return shortcut.includes(keyword) || text.includes(keyword)
     })
   }, [keyword, savedReplies])
 
@@ -68,11 +62,8 @@ export const QuickRepliesPopover = ({
     }
 
     setOpen(true)
-
-    initializeSavedReplies().catch(() => {
-      return
-    })
-  }, [initializeSavedReplies, shouldShow])
+    getAllSavedReplies()
+  }, [shouldShow, getAllSavedReplies])
 
   useEffect(() => {
     if (filteredSavedReplies.length === 0) {
@@ -129,7 +120,7 @@ export const QuickRepliesPopover = ({
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault()
           event.stopPropagation()
-          onSelect(filteredSavedReplies[activeIndex].message)
+          onSelect(filteredSavedReplies[activeIndex].text)
           setOpen(false)
           setActiveIndex(0)
           return
@@ -178,7 +169,7 @@ export const QuickRepliesPopover = ({
                   }`}
                   key={reply.id}
                   onClick={() => {
-                    onSelect(reply.message)
+                    onSelect(reply.text)
                     setOpen(false)
                     setActiveIndex(0)
                   }}
@@ -192,7 +183,7 @@ export const QuickRepliesPopover = ({
                     {reply.shortcut}
                   </p>
                   <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-xs">
-                    {reply.message}
+                    {reply.text}
                   </p>
                 </Button>
               ))}

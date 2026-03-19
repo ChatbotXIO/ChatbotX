@@ -3,7 +3,7 @@ import { db } from "@aha.chat/database/client"
 export type SavedReplyResource = {
   id: string
   shortcut: string
-  message: string
+  text: string
 }
 
 export async function listSavedReplies(input: {
@@ -16,7 +16,7 @@ export async function listSavedReplies(input: {
     columns: {
       id: true,
       shortcut: true,
-      message: true,
+      text: true,
     },
   })
 }

@@ -8,7 +8,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { createId } from "@paralleldrive/cuid2"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
-import { Controller } from "react-hook-form"
+import { Controller, useWatch } from "react-hook-form"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
@@ -92,10 +92,15 @@ export const MessageInput = () => {
     )
 
   // Memoize emoji selection handler
-  const insertTextAtCursor = useCallback(
-    (value: string) => {
+  const setContent = useCallback(
+    (value: string, insert = false) => {
       const element = textareaRef.current
       if (!element) {
+        return
+      }
+
+      if (!insert) {
+        form.setValue("content", value)
         return
       }
 
@@ -104,28 +109,6 @@ export const MessageInput = () => {
       const after = text.slice(element.selectionStart)
 
       form.setValue("content", `${before}${value}${after}`)
-    },
-    [form],
-  )
-
-  const onSelectEmoji = useCallback(
-    (emoji: string) => {
-      insertTextAtCursor(emoji)
-    },
-    [insertTextAtCursor],
-  )
-
-  const onSelectSavedReply = useCallback(
-    (message: string) => {
-      insertTextAtCursor(message)
-    },
-    [insertTextAtCursor],
-  )
-
-  const handleSelectQuickReply = useCallback(
-    (message: string) => {
-      form.setValue("content", message)
-      textareaRef.current?.focus()
     },
     [form],
   )
@@ -156,7 +139,10 @@ export const MessageInput = () => {
   const currentInboxType = conversation?.inbox?.inboxType ?? "webchat"
 
   // Check if files are attached
-  const files = form.watch("files")
+  const files = useWatch({
+    control: form.control,
+    name: "files",
+  })
   const hasFiles = Array.isArray(files) && files.length > 0
 
   // Early return if no active conversation
@@ -179,7 +165,7 @@ export const MessageInput = () => {
               render={({ field }) => (
                 <QuickRepliesPopover
                   inputValue={field.value ?? ""}
-                  onSelect={handleSelectQuickReply}
+                  onSelect={setContent}
                 >
                   <Textarea
                     aria-label="Type your message"
@@ -203,12 +189,7 @@ export const MessageInput = () => {
             </div>
 
             <div className="message-toolbar flex items-center gap-2">
-              {!hasFiles && (
-                <InputMenu
-                  onSelectEmoji={onSelectEmoji}
-                  onSelectSavedReply={onSelectSavedReply}
-                />
-              )}
+              {!hasFiles && <InputMenu setContent={setContent} />}
               <Button
                 aria-label="Attach file"
                 className="px-2 py-1.5 [&_svg]:size-5"

@@ -7,7 +7,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type DeleteSavedReplyRequest,
   deleteSavedReplyRequest,
-} from "../schemas/delete-saved-reply.schema"
+} from "../schemas/action"
 
 export const deleteSavedReplyAction = authActionClient
   .inputSchema(deleteSavedReplyRequest)

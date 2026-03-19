@@ -26,32 +26,30 @@ import { createSavedReplyAction } from "./actions/create-saved-reply.action"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
 import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
 import type { SavedReplyItem } from "./provider/saved-reply-store"
+import { useSavedReplyStore } from "./provider/saved-reply-store-context"
 import {
-  useSavedReplyStore,
-  useSavedReplyStoreActions,
-} from "./provider/saved-reply-store-provider"
-import { createSavedReplyRequest } from "./schemas/create-saved-reply.schema"
-import { editSavedReplyRequest } from "./schemas/edit-saved-reply.schema"
+  createSavedReplyRequest,
+  editSavedReplyRequest,
+} from "./schemas/action"
 
 type ViewState =
   | { type: "list" }
   | { type: "create" }
   | { type: "edit"; item: SavedReplyItem }
 
-const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
+const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<ViewState>({ type: "list" })
-  const savedReplies = useSavedReplyStore((state) => state.savedReplies)
-  const isLoadingSavedReplies = useSavedReplyStore(
-    (state) => state.isLoadingSavedReplies,
-  )
-  const removeSavedReplyFromStore = useSavedReplyStore(
-    (state) => state.removeSavedReply,
-  )
+  const {
+    savedReplies,
+    isLoadingSavedReplies,
+    getAllSavedReplies,
+    removeSavedReply: removeSavedReplyFromStore,
+  } = useSavedReplyStore((state) => state)
+
   const upsertSavedReply = useSavedReplyStore((state) => state.upsertSavedReply)
-  const { refreshSavedReplies } = useSavedReplyStoreActions()
 
   const { executeAsync: removeSavedReply, isPending: isDeletingSavedReply } =
     useAction(deleteSavedReplyAction, {
@@ -66,16 +64,6 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
     () => (view.type === "edit" ? view.item : null),
     [view],
   )
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-
-    refreshSavedReplies().catch(() => {
-      return
-    })
-  }, [open, refreshSavedReplies])
 
   const {
     form: createForm,
@@ -105,7 +93,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
         mode: "onChange",
         defaultValues: {
           shortcut: "",
-          message: "",
+          text: "",
         },
       },
       errorMapProps: {},
@@ -140,7 +128,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
         mode: "onChange",
         defaultValues: {
           shortcut: "",
-          message: "",
+          text: "",
         },
       },
       errorMapProps: {},
@@ -154,12 +142,12 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
 
     editForm.reset({
       shortcut: editingSavedReply.shortcut,
-      message: editingSavedReply.message,
+      text: editingSavedReply.text,
     })
   }, [editForm, editingSavedReply])
 
   const onSelectSavedReply = (item: SavedReplyItem) => {
-    props.onSelect(item.message)
+    props.onSelect(item.text)
     setOpen(false)
     setView({ type: "list" })
   }
@@ -171,6 +159,12 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
       setView({ type: "list" })
     }
   }
+
+  useEffect(() => {
+    if (open) {
+      getAllSavedReplies()
+    }
+  }, [open, getAllSavedReplies])
 
   const renderForm = (mode: "create" | "edit") => {
     const form = mode === "create" ? createForm : editForm
@@ -188,7 +182,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
 
           <TextareaField
             label={t("fields.messages.label")}
-            name="message"
+            name="text"
             placeholder="..."
             required
           />
@@ -276,7 +270,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
                           /{item.shortcut}
                         </p>
                         <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-sm">
-                          {item.message}
+                          {item.text}
                         </p>
                       </div>
 
@@ -297,9 +291,7 @@ const SavedReplyManage = (props: { onSelect: (message: string) => void }) => {
                           disabled={isDeletingSavedReply}
                           onClick={(event) => {
                             event.stopPropagation()
-                            onDeleteSavedReply(item.id).catch(() => {
-                              return
-                            })
+                            onDeleteSavedReply(item.id)
                           }}
                           size="icon"
                           type="button"

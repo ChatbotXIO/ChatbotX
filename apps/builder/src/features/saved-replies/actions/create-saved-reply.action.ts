@@ -8,7 +8,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type CreateSavedReplyRequest,
   createSavedReplyRequest,
-} from "../schemas/create-saved-reply.schema"
+} from "../schemas/action"
 
 export const createSavedReplyAction = authActionClient
   .inputSchema(createSavedReplyRequest)
@@ -26,12 +26,12 @@ export const createSavedReplyAction = authActionClient
           id: createId(),
           userId: ctx.user.id,
           shortcut: parsedInput.shortcut,
-          message: parsedInput.message,
+          text: parsedInput.text,
         })
         .returning({
           id: savedReplyModel.id,
           shortcut: savedReplyModel.shortcut,
-          message: savedReplyModel.message,
+          text: savedReplyModel.text,
         })
         .then((result) => result[0])
 

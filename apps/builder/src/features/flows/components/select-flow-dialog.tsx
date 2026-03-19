@@ -27,8 +27,10 @@ import { toast } from "sonner"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { createMessageAction } from "@/features/messages/actions/create-message.action"
 import { createMessageRequest } from "@/features/messages/schemas/create-message.schema"
-import { useFlowSelectOptions } from "../provider/flow-hook"
-import { useFlowNodesSelectOptions } from "../provider/flow-nodes-hook"
+import {
+  useFlowNodesSelectOptions,
+  useFlowSelectOptions,
+} from "../provider/flow-hook"
 
 export function SelectFlowDialog({
   children,
