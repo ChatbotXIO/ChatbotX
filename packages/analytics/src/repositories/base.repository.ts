@@ -2,7 +2,7 @@ import {
   command as executeCommand,
   insert as executeInsert,
   query as executeQuery,
-} from "@aha.chat/database/clickhouse/client"
+} from "@chatbotx.io/clickhouse/client"
 import type { TimeRangeQuery } from "../schemas"
 
 export abstract class BaseRepository {

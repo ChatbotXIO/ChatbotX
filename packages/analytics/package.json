@@ -9,12 +9,10 @@
     "./queries": "./src/queries.ts",
     "./schemas": "./src/schemas/index.ts"
   },
-  "scripts": {
-    "migrate": "dotenv -e ../../.env -- tsx src/migrations/run.ts"
-  },
   "dependencies": {
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
+    "@chatbotx.io/clickhouse": "workspace:*",
     "@clickhouse/client": "^1.18.2",
     "@paralleldrive/cuid2": "^3.3.0",
     "date-fns": "^4.1.0",

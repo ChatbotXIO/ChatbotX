@@ -1,4 +1,3 @@
-export * from "@aha.chat/database/clickhouse/client"
 export * from "./lib"
 export * from "./repositories"
 export * from "./schemas"

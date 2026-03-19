@@ -89,6 +89,9 @@ importers:
       '@chatbotx.io/analytics-nextjs':
         specifier: workspace:*
         version: link:../../packages/analytics-nextjs
+      '@chatbotx.io/clickhouse':
+        specifier: workspace:*
+        version: link:../../packages/clickhouse
       '@chatbotx/events':
         specifier: workspace:*
         version: link:../../packages/events
@@ -486,6 +489,9 @@ importers:
       '@chatbotx.io/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
+      '@chatbotx.io/clickhouse':
+        specifier: workspace:*
+        version: link:../../packages/clickhouse
       '@chatbotx/events':
         specifier: workspace:*
         version: link:../../packages/events
@@ -797,6 +803,9 @@ importers:
       '@aha.chat/filesystem':
         specifier: workspace:*
         version: link:../filesystem
+      '@chatbotx.io/clickhouse':
+        specifier: workspace:*
+        version: link:../clickhouse
       '@clickhouse/client':
         specifier: ^1.18.2
         version: 1.18.2
@@ -884,12 +893,34 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
 
-  packages/database:
+  packages/clickhouse:
     dependencies:
       '@clickhouse/client':
         specifier: ^1.18.2
         version: 1.18.2
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
+        specifier: ^0.13.10
+        version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@paralleldrive/cuid2':
+        specifier: ^3.3.0
+        version: 3.3.0
+      '@types/node':
+        specifier: ^24.10.4
+        version: 24.12.0
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
+
+  packages/database:
+    dependencies:
+      '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.3.6)
       drizzle-cuid2:
@@ -16043,20 +16074,20 @@ snapshots:
 
   '@types/nodemailer@7.0.11':
     dependencies:
-      '@types/node': 24.10.13
+      '@types/node': 24.12.0
 
   '@types/parse-json@4.0.2': {}
 
   '@types/pg@8.18.0':
     dependencies:
-      '@types/node': 24.10.13
+      '@types/node': 24.12.0
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
   '@types/probe-image-size@7.2.5':
     dependencies:
       '@types/needle': 3.3.0
-      '@types/node': 24.10.13
+      '@types/node': 24.12.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:

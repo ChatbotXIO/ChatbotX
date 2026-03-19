@@ -20,7 +20,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@chatbotx.io/analytics": "workspace:*",
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
     "@aha.chat/flow-config": "workspace:*",
@@ -38,6 +37,8 @@
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/openai": "^3.0.41",
     "@aws-sdk/client-s3": "^3.1011.0",
+    "@chatbotx.io/analytics": "workspace:*",
+    "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx/events": "workspace:*",
     "@faker-js/faker": "^10.3.0",
     "@paralleldrive/cuid2": "^3.3.0",

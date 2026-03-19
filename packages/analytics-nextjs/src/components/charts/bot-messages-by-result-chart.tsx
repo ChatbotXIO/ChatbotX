@@ -47,9 +47,9 @@ export function BotMessagesByResultChart() {
       // Update firstTimestamp in case out-of-order items come in.
       group.firstTimestamp = Math.min(group.firstTimestamp, timestampMs)
 
-      if (item.result === "success") {
+      if (item.result === "SUCCESS") {
         group.success += item.count
-      } else if (item.result === "fallback") {
+      } else if (item.result === "FALLBACK") {
         group.fallback += item.count
       }
     }

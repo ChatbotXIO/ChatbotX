@@ -2,31 +2,31 @@ import { z } from "zod"
 import { triggerContextSchema } from "./trigger-context"
 
 export const botMessageResponseTypeSchema = z.enum([
-  "keyword",
-  "aiAgent",
-  "flow",
-  "none",
+  "AUTOMATED_RESPONSE",
+  "AI_AGENT",
+  "FLOW",
+  "NONE",
 ])
 export type BotMessageResponseType = z.infer<
   typeof botMessageResponseTypeSchema
 >
 
-export const botMessageRouteTypeSchema = z.enum(["flow", "agent", "fallback"])
+export const botMessageRouteTypeSchema = z.enum(["FLOW", "AGENT", "FALLBACK"])
 export type BotMessageRouteType = z.infer<typeof botMessageRouteTypeSchema>
 
-export const botMessageResultSchema = z.enum(["success", "fallback"])
+export const botMessageResultSchema = z.enum(["SUCCESS", "FALLBACK"])
 export type BotMessageResult = z.infer<typeof botMessageResultSchema>
 
 export const botMessageFallbackReasonSchema = z.enum([
-  "noIntentMatch",
-  "lowConfidence",
-  "routeGuardBlocked",
-  "noContent",
-  "notFromContact",
-  "noAiAgent",
-  "buttonNotFound",
-  "handlerErrorToFallback",
-  "unsupportedMessageType",
+  "NO_INTENT_MATCH",
+  "LOW_CONFIDENCE",
+  "ROUTE_GUARD_BLOCKED",
+  "NO_CONTENT",
+  "NOT_FROM_CONTACT",
+  "NO_AI_AGENT",
+  "BUTTON_NOT_FOUND",
+  "HANDLER_ERROR_TO_FALLBACK",
+  "UNSUPPORTED_MESSAGE_TYPE",
 ])
 export type BotMessageFallbackReason = z.infer<
   typeof botMessageFallbackReasonSchema

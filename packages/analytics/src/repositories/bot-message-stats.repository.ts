@@ -79,7 +79,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       count: Number(row.count),
     }))
 
-    const results: Array<"success" | "fallback"> = ["success", "fallback"]
+    const results: Array<"SUCCESS" | "FALLBACK"> = ["SUCCESS", "FALLBACK"]
     return fillBotMessageStatsMonthSeries({
       ...props,
       rows,
@@ -146,7 +146,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         count: Number(row.count),
       }))
 
-      const results: Array<"success" | "fallback"> = ["success", "fallback"]
+      const results: Array<"SUCCESS" | "FALLBACK"> = ["SUCCESS", "FALLBACK"]
       return fillBotMessageStatsDaySeries({
         ...props,
         rows,

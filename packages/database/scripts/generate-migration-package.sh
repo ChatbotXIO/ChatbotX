@@ -27,7 +27,7 @@ jq --arg name "${$(jq -r '.name' "$src")}-migration" \
       scripts: {
         introspect: "drizzle-kit introspect",
         "make:migration": "./scripts/make-migration.sh",
-        migrate: "drizzle-kit migrate",
+        "db:migrate": "drizzle-kit migrate",
         "db:studio": "drizzle-kit studio",
         "db:check": "drizzle-kit check"
       }

@@ -1,29 +1,16 @@
-import { db, sql } from "@aha.chat/database/client"
+import { db, eq, sql } from "@aha.chat/database/client"
+import { analyticsManifestStatusModel } from "@aha.chat/database/schema"
+import { uploader } from "@aha.chat/filesystem"
 import {
   ClickhouseIngester,
   type NdjsonIngestManifestStore,
 } from "@aha.chat/filesystem/server"
 import type { AnalyticsJobData } from "@aha.chat/worker-config"
-import { S3Client } from "@aws-sdk/client-s3"
-import { clickhouseClient } from "@chatbotx.io/analytics"
+import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import { logger } from "../../lib/logger"
-import {
-  getClickhouseConfig,
-  getS3StorageConfig,
-} from "../config/storage.config"
+import { getClickhouseConfig } from "../config/storage.config"
 
-const s3Config = getS3StorageConfig()
 const clickhouseConfig = getClickhouseConfig()
-
-const s3Client = new S3Client({
-  endpoint: s3Config.endpoint,
-  region: s3Config.region,
-  credentials: {
-    accessKeyId: s3Config.accessKey,
-    secretAccessKey: s3Config.secretKey,
-  },
-  forcePathStyle: true,
-})
 
 const ingestedCache = new Map<string, number>()
 const CACHE_TTL = 5 * 60 * 1000
@@ -92,28 +79,26 @@ const manifestStore: NdjsonIngestManifestStore = {
   },
 
   async markIngested(objectKey) {
-    await db.execute(
-      sql`
-        UPDATE "AnalyticsManifestStatus"
-        SET status = 'ingested',
-            "ingestedAt" = CURRENT_TIMESTAMP,
-            "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "objectKey" = ${objectKey}
-      `,
-    )
+    await db
+      .update(analyticsManifestStatusModel)
+      .set({
+        status: "ingested",
+        ingestedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
     ingestedCache.set(objectKey, Date.now())
   },
 
   async markFailed(objectKey, errorMessage) {
-    await db.execute(
-      sql`
-        UPDATE "AnalyticsManifestStatus"
-        SET status = 'failed',
-            "lastError" = ${errorMessage},
-            "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "objectKey" = ${objectKey}
-      `,
-    )
+    await db
+      .update(analyticsManifestStatusModel)
+      .set({
+        status: "failed",
+        lastError: errorMessage,
+        updatedAt: new Date(),
+      })
+      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
   },
 }
 
@@ -123,14 +108,10 @@ function getIngester(eventType: string): ClickhouseIngester {
   let ingester = ingesterCache.get(eventType)
   if (!ingester) {
     ingester = new ClickhouseIngester({
-      s3Client,
-      s3Endpoint: s3Config.endpoint,
-      s3Bucket: s3Config.bucket,
+      s3Client: uploader,
       s3Prefix: eventType,
-      s3AccessKey: s3Config.accessKey,
-      s3SecretKey: s3Config.secretKey,
       manifestStore,
-      clickhouseClient,
+      clickhouseClient: clickhouse,
       clickhouseDatabase: clickhouseConfig.database,
       clickhouseTable: eventType,
       batchSize: clickhouseConfig.batchSize,

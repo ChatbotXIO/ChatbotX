@@ -1,4 +1,4 @@
-import { ListObjectsV2Command, type S3Client } from "@aws-sdk/client-s3"
+import type { Uploader } from "../uploader"
 
 export interface NdjsonIngestManifestStore {
   claimForProcessing(objectKey: string): Promise<number | null>
@@ -23,17 +23,13 @@ export interface ClickhouseIngesterConfig {
   clickhouseTable: string
   manifestStore: NdjsonIngestManifestStore
   maxRetries: number
-  s3AccessKey: string
-  s3Bucket: string
-  s3Client: S3Client
-  s3Endpoint: string
+  s3Client: Uploader
   s3Prefix: string
-  s3SecretKey: string
 }
 
 export class ClickhouseIngester {
   private readonly config: ClickhouseIngesterConfig
-  private readonly s3Client: S3Client
+  private readonly s3Client: Uploader
   private isProcessing = false
 
   constructor(config: ClickhouseIngesterConfig) {
@@ -64,17 +60,12 @@ export class ClickhouseIngester {
     let continuationToken: string | undefined
 
     do {
-      const response = await this.s3Client.send(
-        new ListObjectsV2Command({
-          Bucket: this.config.s3Bucket,
-          Prefix: `${this.config.s3Prefix}/committed/`,
-          ContinuationToken: continuationToken,
-          MaxKeys: 100,
-        }),
+      const response = await this.s3Client.listObjects(
+        `${this.config.s3Prefix}/committed/`,
+        { ContinuationToken: continuationToken, MaxKeys: 100 },
       )
 
-      const contents = response.Contents || []
-
+      const contents = response.Contents ?? []
       if (contents.length === 0) {
         return []
       }
@@ -117,14 +108,14 @@ export class ClickhouseIngester {
         return
       }
 
-      const s3Url = `${this.config.s3Endpoint}/${this.config.s3Bucket}/${objectKey}`
+      const s3Url = `${this.s3Client.bucketName}/${this.config.s3Prefix}/${objectKey}`
 
       const query = `
         INSERT INTO ${this.config.clickhouseDatabase}.${this.config.clickhouseTable}
         SELECT * FROM s3(
           '${s3Url}',
-          '${this.config.s3AccessKey}',
-          '${this.config.s3SecretKey}',
+          '${this.s3Client.accessKeyId}',
+          '${this.s3Client.secretAccessKey}',
           'JSONEachRow'
         )
       `

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "applied": {
+    "01-init-db.sql": {
+      "checksum": "fc9f99755e842f300348af61eb4c6e51a037234b1c92309589dbb6d959b6540d",
+      "appliedAt": "2026-03-19T08:53:15.457Z"
+    },
+    "02-create-tables.sql": {
+      "checksum": "8a64d04c8d50bbbb124a912574b4829d8f1069a3e66ada1d460f43429df2615f",
+      "appliedAt": "2026-03-19T08:53:15.760Z"
+    },
+    "03-bot-messages.sql": {
+      "checksum": "d0637303bbe92e6aea0f73c638148969a28536ef94c898a6f569e1e4ee0d8584",
+      "appliedAt": "2026-03-19T08:53:15.860Z"
+    },
+    "05-conversation-events.sql": {
+      "checksum": "d2aa633a9cd4d47136d333bf962ad861dbeebecd5ba248e62b1fdc020a3eb567",
+      "appliedAt": "2026-03-19T08:53:15.889Z"
+    },
+    "06-migrate-to-hourly-tables.sql": {
+      "checksum": "365758a372e6b339468b2ad6abbb2e712b19cdd3d599de099de3ad5196631a04",
+      "appliedAt": "2026-03-19T08:53:43.361Z"
+    },
+    "07-add-unique-messages-state.sql": {
+      "checksum": "378b2f7c40f6caaac67e127353e97ba2010b4f4076b7c3c50214044dbe9464cd",
+      "appliedAt": "2026-03-19T08:53:43.393Z"
+    }
+  }
+}

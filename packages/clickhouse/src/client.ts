@@ -1,26 +1,14 @@
 import { createClient } from "@clickhouse/client"
+import { keys } from "./keys"
 
-const clickhouseUrl = process.env.CLICKHOUSE_URL
-const clickhouseUser = process.env.CLICKHOUSE_USER
-const clickhousePassword = process.env.CLICKHOUSE_PASSWORD
-const clickhouseDatabase = process.env.CLICKHOUSE_DB
-const clickhouseRequestTimeout = Number.parseInt(
-  process.env.CLICKHOUSE_REQUEST_TIMEOUT || "300000",
-  10,
-)
-
-if (
-  !(clickhouseUrl && clickhouseUser && clickhousePassword && clickhouseDatabase)
-) {
-  throw new Error("Missing ClickHouse environment variables")
-}
+const env = keys()
 
 export const clickhouse = createClient({
-  url: clickhouseUrl,
-  username: clickhouseUser,
-  password: clickhousePassword,
-  database: clickhouseDatabase,
-  request_timeout: clickhouseRequestTimeout,
+  url: env.CLICKHOUSE_URL,
+  username: env.CLICKHOUSE_USER,
+  password: env.CLICKHOUSE_PASSWORD,
+  database: env.CLICKHOUSE_DB,
+  request_timeout: env.CLICKHOUSE_REQUEST_TIMEOUT,
   compression: {
     request: true,
     response: true,
@@ -73,5 +61,3 @@ export async function command(sql: string, params?: Record<string, unknown>) {
     query_params: params,
   })
 }
-
-export const clickhouseClient = clickhouse

@@ -1,0 +1,26 @@
+{
+  "name": "@chatbotx.io/clickhouse",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@clickhouse/client": "^1.18.2",
+    "@t3-oss/env-core": "^0.13.10",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@types/node": "^24.10.4",
+    "dotenv-cli": "^11.0.0"
+  },
+  "scripts": {
+    "db:migrate": "dotenv -e ../../.env -- tsx src/migrate.ts",
+    "db:reset": "dotenv -e ../../.env -v CLICKHOUSE_MIGRATIONS_FORCE=1 -- tsx src/migrate.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./migrate": "./src/migrate.ts",
+    "./keys": "./src/keys.ts"
+  }
+}

@@ -250,7 +250,7 @@ export async function sendFlowStep({
         ...trackingContext,
         hasResponse: true,
         routeType: "FLOW",
-        result: "success",
+        result: "SUCCESS",
         metadata: {
           flowId,
         },
@@ -272,7 +272,7 @@ export async function sendFlowStep({
         ...trackingContext,
         hasResponse: false,
         routeType: "FLOW",
-        result: "fallback",
+        result: "FALLBACK",
         metadata: {
           flowId,
           fallbackReason: "HANDLER_ERROR_TO_FALLBACK",
@@ -445,10 +445,10 @@ export const sendChatMessage = async (
         ...trackingContext,
         hasResponse: true,
         routeType:
-          trackingContext.responseType === "automated_response"
+          trackingContext.responseType === "AUTOMATED_RESPONSE"
             ? "FLOW"
             : "AGENT",
-        result: "success",
+        result: "SUCCESS",
         triggerContext: {
           triggerSource: "worker",
           triggerHandler: "sendChatMessage",
@@ -467,10 +467,10 @@ export const sendChatMessage = async (
         ...trackingContext,
         hasResponse: false,
         routeType:
-          trackingContext.responseType === "automated_response"
+          trackingContext.responseType === "AUTOMATED_RESPONSE"
             ? "FLOW"
             : "AGENT",
-        result: "fallback",
+        result: "FALLBACK",
         metadata: {
           fallbackReason: "HANDLER_ERROR_TO_FALLBACK",
         },

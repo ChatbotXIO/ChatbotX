@@ -1,4 +1,4 @@
-import { clickhouse } from "@aha.chat/database/clickhouse/client"
+import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { EventRow, EventWriter } from "./event-writer-factory"
 
 const MAX_RETRIES = 3

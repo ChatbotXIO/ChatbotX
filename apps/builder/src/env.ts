@@ -1,6 +1,7 @@
 import { keys as database } from "@aha.chat/database/keys"
 import { keys as mail } from "@aha.chat/mail/keys"
 import { keys as partysocket } from "@aha.chat/partysocket-config/keys"
+import { keys as clickhouse } from "@chatbotx.io/clickhouse/keys"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 
@@ -46,7 +47,7 @@ const authEnv = {
 }
 
 export const env = createEnv({
-  extends: [partysocket(), database(), mail()],
+  extends: [partysocket(), database(), mail(), clickhouse()],
   server: {
     ...baseEnv.server,
     ...googleAuthEnv.server,

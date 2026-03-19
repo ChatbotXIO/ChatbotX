@@ -195,7 +195,7 @@ export function fillTotalContactsMonthlySeries(
 export function fillBotMessageStatsDaySeries(
   props: TimeRangeQuery & {
     rows: BotMessageStats[]
-    results: Array<"success" | "fallback">
+    results: Array<"SUCCESS" | "FALLBACK">
   },
 ): BotMessageStats[] {
   const { chatbotId, from, to, rows, results } = props
@@ -225,9 +225,9 @@ export function fillBotMessageStatsDaySeries(
           chatbotId,
           timestamp: getUtcDayStart(d),
           hasResponse: true,
-          responseType: "none",
+          responseType: "NONE",
           result,
-          aiProvider: "none",
+          aiProvider: "NONE",
           count: 0,
         },
       )
@@ -240,7 +240,7 @@ export function fillBotMessageStatsDaySeries(
 export function fillBotMessageStatsMonthSeries(
   props: TimeRangeQuery & {
     rows: BotMessageStats[]
-    results: Array<"success" | "fallback">
+    results: Array<"SUCCESS" | "FALLBACK">
   },
 ): BotMessageStats[] {
   const { chatbotId, from, to, rows, results } = props
@@ -270,9 +270,9 @@ export function fillBotMessageStatsMonthSeries(
           chatbotId,
           timestamp: getUtcMonthStart(m),
           hasResponse: true,
-          responseType: "none",
+          responseType: "NONE",
           result,
-          aiProvider: "none",
+          aiProvider: "NONE",
           count: 0,
         },
       )

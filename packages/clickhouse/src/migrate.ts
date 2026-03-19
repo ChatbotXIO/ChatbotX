@@ -6,7 +6,7 @@ import { createClient } from "@clickhouse/client"
 import { command, ping } from "./client"
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __dirname = join(dirname(__filename), "migrations")
 
 const CREATE_DATABASE_REGEX = /^CREATE\s+DATABASE\b/i
 
