@@ -9,6 +9,7 @@ export default defineConfig({
     "src/default/worker.ts",
     "src/trigger/worker.ts",
     "src/webhook/worker.ts",
+    "src/analytics/worker.ts",
   ],
   dts: true,
   shims: true,
