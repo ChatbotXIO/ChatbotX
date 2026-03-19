@@ -3,16 +3,10 @@ import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
 import type { SavedReplyResource } from "../queries"
 
-export type SavedReplyItem = {
-  id: string
-  shortcut: string
-  text: string
-}
-
 export type SavedReplyStoreState = {
   initialized: boolean
   isLoadingSavedReplies: boolean
-  savedReplies: SavedReplyItem[]
+  savedReplies: SavedReplyResource[]
   error: string | null
 }
 
@@ -21,8 +15,8 @@ export type SavedReplyStoreActions = {
   getAllSavedReplies: () => Promise<void>
   deleteSavedReply: (id: string) => void
   setLoadingSavedReplies: (isLoadingSavedReplies: boolean) => void
-  setSavedReplies: (savedReplies: SavedReplyItem[]) => void
-  upsertSavedReply: (savedReply: SavedReplyItem) => void
+  setSavedReplies: (savedReplies: SavedReplyResource[]) => void
+  upsertSavedReply: (savedReply: SavedReplyResource) => void
 }
 
 export type SavedReplyStore = SavedReplyStoreState & SavedReplyStoreActions

@@ -6358,7 +6358,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "message",
+      "name": "text",
       "entityType": "columns",
       "schema": "public",
       "table": "SavedReply"

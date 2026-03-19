@@ -6,29 +6,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@aha.chat/ui/components/ui/popover"
-import {
-  Loader2Icon,
-  MessageSquareMoreIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { Loader2Icon, MessageSquareMoreIcon, PlusIcon } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
-import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
-import type { SavedReplyItem } from "./provider/saved-reply-store"
 import { useSavedReplyStore } from "./provider/saved-reply-store-context"
-import { SavedReplyForm } from "./saved-reply-form"
+import type { SavedReplyResource } from "./queries"
+import { SavedReplyCreateForm } from "./saved-reply-create-form"
+import { SavedReplyEditForm } from "./saved-reply-edit-form"
+import { SavedReplyItem } from "./saved-reply-item"
 
 type ViewState =
   | { type: "list" }
   | { type: "create" }
-  | { type: "edit"; item: SavedReplyItem }
+  | { type: "edit"; item: SavedReplyResource }
 
 const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   const t = useTranslations()
+  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<ViewState>({ type: "list" })
@@ -41,28 +36,18 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
 
   const upsertSavedReply = useSavedReplyStore((state) => state.upsertSavedReply)
 
-  const { executeAsync: deleteSavedReply, isPending: isDeletingSavedReply } =
-    useAction(deleteSavedReplyAction, {
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    })
-
   const editingSavedReply = useMemo(
     () => (view.type === "edit" ? view.item : null),
     [view],
   )
 
-  const onSelectSavedReply = (item: SavedReplyItem) => {
+  const onSelectSavedReply = (item: SavedReplyResource) => {
     props.onSelect(item.text)
     setOpen(false)
     setView({ type: "list" })
   }
 
-  const onDeleteSavedReply = async (id: string) => {
-    await deleteSavedReply({ id })
+  const onDeleteSavedReply = (id: string) => {
     deleteSavedReplyFromStore(id)
     if (editingSavedReply?.id === id) {
       setView({ type: "list" })
@@ -78,24 +63,20 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
-        <Button className="justify-start rounded-none" variant="ghost">
+        <Button variant="ghost">
           <MessageSquareMoreIcon size={20} />
-          {t("actions.insertSavedReplies")}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-100 p-0">
         {view.type === "create" ? (
-          <SavedReplyForm
-            editingSavedReply={null}
-            mode="create"
+          <SavedReplyCreateForm
             onCancel={() => setView({ type: "list" })}
             onSaved={upsertSavedReply}
           />
         ) : null}
-        {view.type === "edit" ? (
-          <SavedReplyForm
+        {view.type === "edit" && editingSavedReply ? (
+          <SavedReplyEditForm
             editingSavedReply={editingSavedReply}
-            mode="edit"
             onCancel={() => setView({ type: "list" })}
             onSaved={upsertSavedReply}
           />
@@ -134,49 +115,17 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
               {isLoadingSavedReplies
                 ? null
                 : savedReplies.map((item, index) => (
-                    <Button
-                      className={`flex h-auto w-full items-start justify-between gap-3 rounded-none border-b px-4 py-3 text-left hover:bg-accent ${index === savedReplies.length - 1 ? "border-b-0" : ""}`}
+                    <SavedReplyItem
+                      chatbotId={chatbotId}
+                      isLast={index === savedReplies.length - 1}
+                      item={item}
                       key={item.id}
-                      onClick={() => onSelectSavedReply(item)}
-                      type="button"
-                      variant="ghost"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold">
-                          /{item.shortcut}
-                        </p>
-                        <p className="wrap-break-word line-clamp-2 whitespace-normal text-muted-foreground text-sm">
-                          {item.text}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <Button
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setView({ type: "edit", item })
-                          }}
-                          size="icon"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <PencilIcon />
-                        </Button>
-                        <Button
-                          className="text-destructive"
-                          disabled={isDeletingSavedReply}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            onDeleteSavedReply(item.id)
-                          }}
-                          size="icon"
-                          type="button"
-                          variant="ghost"
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    </Button>
+                      onDeleteSuccess={onDeleteSavedReply}
+                      onEdit={(savedReply) =>
+                        setView({ type: "edit", item: savedReply })
+                      }
+                      onSelect={onSelectSavedReply}
+                    />
                   ))}
             </div>
           </div>

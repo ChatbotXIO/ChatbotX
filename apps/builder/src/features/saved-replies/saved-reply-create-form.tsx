@@ -8,35 +8,26 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
 import { toast } from "sonner"
 import { createSavedReplyAction } from "./actions/create-saved-reply.action"
-import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
-import type { SavedReplyItem } from "./provider/saved-reply-store"
-import {
-  createSavedReplyRequest,
-  editSavedReplyRequest,
-} from "./schemas/action"
+import type { SavedReplyResource } from "./queries"
+import { createSavedReplyRequest } from "./schemas/action"
 
-type SavedReplyFormProps = {
-  mode: "create" | "edit"
-  editingSavedReply: SavedReplyItem | null
+type SavedReplyCreateFormProps = {
   onCancel: () => void
-  onSaved: (item: SavedReplyItem) => void
+  onSaved: (item: SavedReplyResource) => void
 }
 
-const SavedReplyForm = ({
-  mode,
-  editingSavedReply,
+const SavedReplyCreateForm = ({
   onCancel,
   onSaved,
-}: SavedReplyFormProps) => {
+}: SavedReplyCreateFormProps) => {
   const t = useTranslations()
 
   const {
-    form: createForm,
-    handleSubmitWithAction: handleCreate,
-    resetFormAndAction: resetCreateForm,
+    form,
+    handleSubmitWithAction,
+    resetFormAndAction: resetForm,
   } = useHookFormAction(
     createSavedReplyAction,
     zodResolver(createSavedReplyRequest),
@@ -47,8 +38,8 @@ const SavedReplyForm = ({
             onSaved(data)
           }
 
-          toast.success(t("messages.savedSuccessfully"))
-          resetCreateForm()
+          toast.success(t("messages.createdSuccess"))
+          resetForm()
           onCancel()
         },
         onError: ({ error }) => {
@@ -67,59 +58,10 @@ const SavedReplyForm = ({
       errorMapProps: {},
     },
   )
-
-  const {
-    form: editForm,
-    handleSubmitWithAction: handleEdit,
-    resetFormAndAction: resetEditForm,
-  } = useHookFormAction(
-    editSavedReplyAction.bind(null, editingSavedReply?.id ?? ""),
-    zodResolver(editSavedReplyRequest),
-    {
-      actionProps: {
-        onSuccess: ({ data }) => {
-          if (data) {
-            onSaved(data)
-          }
-
-          toast.success(t("messages.savedSuccessfully"))
-          resetEditForm()
-          onCancel()
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          shortcut: "",
-          text: "",
-        },
-      },
-      errorMapProps: {},
-    },
-  )
-
-  useEffect(() => {
-    if (!editingSavedReply || mode !== "edit") {
-      return
-    }
-
-    editForm.reset({
-      shortcut: editingSavedReply.shortcut,
-      text: editingSavedReply.text,
-    })
-  }, [editForm, editingSavedReply, mode])
-
-  const form = mode === "create" ? createForm : editForm
-  const onSubmit = mode === "create" ? handleCreate : handleEdit
 
   return (
     <Form {...form}>
-      <form className="space-y-4 p-4" onSubmit={onSubmit}>
+      <form className="space-y-4 p-4" onSubmit={handleSubmitWithAction}>
         <InputField
           label={t("fields.shortcut.label")}
           name="shortcut"
@@ -153,4 +95,4 @@ const SavedReplyForm = ({
   )
 }
 
-export { SavedReplyForm }
+export { SavedReplyCreateForm }

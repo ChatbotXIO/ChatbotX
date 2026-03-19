@@ -2,21 +2,21 @@
 
 import { and, db, eq } from "@aha.chat/database/client"
 import { savedReplyModel } from "@aha.chat/database/schema"
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
-import {
-  type DeleteSavedReplyRequest,
-  deleteSavedReplyRequest,
-} from "../schemas/action"
 
 export const deleteSavedReplyAction = authActionClient
-  .inputSchema(deleteSavedReplyRequest)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
-      parsedInput,
+      bindArgsParsedInputs: [_chatbotId, id],
       ctx,
     }: {
-      parsedInput: DeleteSavedReplyRequest
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       ctx: { user: { id: string } }
     }) => {
       await db
@@ -24,7 +24,7 @@ export const deleteSavedReplyAction = authActionClient
         .where(
           and(
             eq(savedReplyModel.userId, ctx.user.id),
-            eq(savedReplyModel.id, parsedInput.id),
+            eq(savedReplyModel.id, id),
           ),
         )
 

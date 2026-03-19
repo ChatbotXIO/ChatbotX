@@ -6,6 +6,7 @@ import contactsAPIs from "@/features/contacts/api"
 import conversationsAPI from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
 import flowsAPI from "@/features/flows/api"
+import savedRepliesAPI from "@/features/saved-replies/api"
 import tagsAPI from "@/features/tags/api"
 import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -23,4 +24,5 @@ export const router = {
     // @ts-expect-error
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .router(analyticsRoutes),
+  savedRepliesAPI,
 }

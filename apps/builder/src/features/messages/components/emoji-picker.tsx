@@ -26,7 +26,7 @@ const EmojiPicker = (props: {
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          className="justify-start rounded-none px-2 py-1.5 [&_svg]:size-5"
+          className="px-2 py-1.5 [&_svg]:size-5"
           disabled={disabled}
           size="sm"
           variant="ghost"

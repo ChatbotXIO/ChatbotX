@@ -1,3 +1,4 @@
+import type { FlowNode } from "@aha.chat/flow-config"
 import { useMemo } from "react"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { useFlowStore } from "./flow-store-context"
@@ -35,8 +36,7 @@ const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
     return []
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: wip
-  return lastedFlowVersion.nodes.map((node: any) => ({
+  return (lastedFlowVersion.nodes as FlowNode[]).map((node: FlowNode) => ({
     label: node.data.name,
     value: node.id,
   }))

@@ -28,11 +28,7 @@ export const createSavedReplyAction = authActionClient
           shortcut: parsedInput.shortcut,
           text: parsedInput.text,
         })
-        .returning({
-          id: savedReplyModel.id,
-          shortcut: savedReplyModel.shortcut,
-          text: savedReplyModel.text,
-        })
+        .returning()
         .then((result) => result[0])
 
       revalidateCacheTags(`users:${ctx.user.id}#savedReplies`)

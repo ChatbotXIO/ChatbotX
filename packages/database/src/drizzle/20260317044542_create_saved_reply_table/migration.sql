@@ -3,7 +3,7 @@ CREATE TABLE "SavedReply" (
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"shortcut" text NOT NULL,
-	"message" text NOT NULL,
+	"text" text NOT NULL,
 	"userId" text NOT NULL
 );
 --> statement-breakpoint
