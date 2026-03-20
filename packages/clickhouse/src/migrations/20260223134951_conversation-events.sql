@@ -1,7 +1,3 @@
-
--- Use the database
-USE chatbotx_analytics;
-
 -- Step 1: Create conversation_events table
 CREATE TABLE IF NOT EXISTS conversation_events (
     event_id String,

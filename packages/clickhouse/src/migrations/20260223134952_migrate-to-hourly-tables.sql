@@ -6,8 +6,6 @@
 -- 4. Recreates materialized views
 -- NOTE: Main source tables (contact_events, bot_message_events, conversation_events) are preserved
 
-USE chatbotx_analytics;
-
 -- ============================================================
 -- PART 1: Drop all existing materialized views and aggregated tables
 -- (Keep source tables: contact_events, bot_message_events, conversation_events)
