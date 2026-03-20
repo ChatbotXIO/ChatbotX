@@ -1,7 +1,3 @@
-
--- Use the database
-USE chatbotx_analytics;
-
 -- Drop old materialized views if they exist
 DROP VIEW IF EXISTS bot_messages_minute_mv;
 DROP VIEW IF EXISTS bot_messages_hourly_mv;

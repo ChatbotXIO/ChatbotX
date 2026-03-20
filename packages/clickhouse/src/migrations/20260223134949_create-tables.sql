@@ -1,8 +1,3 @@
-
--- Use the database
--- NOTE: If re-running after consolidation, use CLICKHOUSE_MIGRATIONS_FORCE_FILES=02-create-tables.sql
-USE chatbotx_analytics;
-
 -- Drop all existing materialized views
 DROP VIEW IF EXISTS contact_stats_minute_mv;
 DROP VIEW IF EXISTS contact_stats_hourly_mv;
