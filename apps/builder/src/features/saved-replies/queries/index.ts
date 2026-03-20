@@ -1,18 +1,17 @@
 import { db } from "@aha.chat/database/client"
-import type { ListSavedReplyResponse } from "../schemas/query"
-
-export type SavedReplyResource = {
-  id: string
-  shortcut: string
-  text: string
-}
+import type { ListSavedReplyResponse } from "../schema"
 
 export async function listSavedReplies(input: {
   userId: string
 }): Promise<ListSavedReplyResponse> {
-  return await db.query.savedReplyModel.findMany({
+  const data = await db.query.savedReplyModel.findMany({
     where: {
       userId: input.userId,
     },
+    orderBy: {
+      createdAt: "asc",
+    },
   })
+
+  return { data }
 }

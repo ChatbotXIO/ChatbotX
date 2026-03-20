@@ -11,8 +11,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
-import type { SavedReplyResource } from "./queries"
-import { editSavedReplyRequest } from "./schemas/action"
+import { editSavedReplyRequest, type SavedReplyResource } from "./schema"
 
 type SavedReplyEditFormProps = {
   editingSavedReply: SavedReplyResource
@@ -38,7 +37,11 @@ const SavedReplyEditForm = ({
       actionProps: {
         onSuccess: ({ data }) => {
           if (data) {
-            onSaved(data)
+            onSaved({
+              ...editingSavedReply,
+              shortcut: data.shortcut,
+              text: data.text,
+            })
           }
 
           toast.success(t("messages.savedSuccessfully"))

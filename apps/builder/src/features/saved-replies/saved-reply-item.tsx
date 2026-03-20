@@ -5,7 +5,7 @@ import { PencilIcon, Trash2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
-import type { SavedReplyResource } from "./queries"
+import type { SavedReplyResource } from "./schema"
 
 type SavedReplyItemProps = {
   chatbotId: string

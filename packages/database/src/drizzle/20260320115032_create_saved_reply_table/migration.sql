@@ -7,5 +7,4 @@ CREATE TABLE "SavedReply" (
 	"userId" text NOT NULL
 );
 --> statement-breakpoint
-
-ALTER TABLE "SavedReply" ADD CONSTRAINT "SavedReply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "SavedReply" ADD CONSTRAINT "SavedReply_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

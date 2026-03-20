@@ -1,12 +1,18 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ba8decce-1e83-4418-a7b0-606caa5e151a",
-  "prevIds": ["563454e8-79f5-4be8-a26d-ae42f35f4f6f"],
+  "id": "9723d3de-7779-4924-bc72-46c635acad21",
+  "prevIds": ["ba70b53b-a239-4549-87f6-7edacf40d7b4"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
       "name": "AIEmbeddingStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["processing", "ingested", "failed"],
+      "name": "AnalyticsStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -152,6 +158,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "AnalyticsManifestStatus",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Attachment",
       "entityType": "tables",
       "schema": "public"
@@ -285,6 +297,12 @@
     {
       "isRlsEnabled": false,
       "name": "Folder",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "InboxContactStats",
       "entityType": "tables",
       "schema": "public"
     },
@@ -553,7 +571,7 @@
       "table": "Account"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -579,7 +597,7 @@
       "table": "Account"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -1515,6 +1533,97 @@
       "table": "_AITriggerToIntegrationOpenAI"
     },
     {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "objectKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "AnalyticsStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ingestedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -1723,7 +1832,7 @@
       "table": "AuditLog"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -1736,7 +1845,7 @@
       "table": "AuditLog"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2126,7 +2235,7 @@
       "table": "Broadcast"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2568,7 +2677,7 @@
       "table": "Condition"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2763,7 +2872,7 @@
       "table": "ContactInbox"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2776,7 +2885,7 @@
       "table": "ContactInbox"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2971,14 +3080,14 @@
       "table": "Contact"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "lastSeenAt",
+      "name": "lastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Contact"
@@ -2997,7 +3106,7 @@
       "table": "Contact"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -3283,7 +3392,7 @@
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -3335,33 +3444,33 @@
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "contactLastSeenAt",
+      "name": "contactLastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "agentLastSeenAt",
+      "name": "agentLastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -3452,7 +3561,7 @@
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -3465,7 +3574,7 @@
       "table": "Conversation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -4243,6 +4352,45 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalContacts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
     },
     {
       "type": "text",
@@ -5597,7 +5745,7 @@
       "table": "Invitation"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -5692,7 +5840,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "now()",
       "generated": null,
       "identity": null,
       "name": "createdAt",
@@ -6416,7 +6564,7 @@
       "table": "Session"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6676,7 +6824,7 @@
       "table": "TriggerContactHistory"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6728,11 +6876,11 @@
       "table": "TriggerContactHistory"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
       "name": "firstEnteredAt",
@@ -6754,7 +6902,7 @@
       "table": "TriggerExecution"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6767,7 +6915,7 @@
       "table": "TriggerExecution"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6832,7 +6980,7 @@
       "table": "Trigger"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6845,7 +6993,7 @@
       "table": "Trigger"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6936,7 +7084,7 @@
       "table": "TriggerStats"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -6975,7 +7123,7 @@
       "table": "TriggerStats"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -7209,7 +7357,7 @@
       "table": "Verification"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -7235,7 +7383,7 @@
       "table": "Webhook"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -7248,7 +7396,7 @@
       "table": "Webhook"
     },
     {
-      "type": "timestamp(3)",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -7675,7 +7823,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         },
@@ -7685,7 +7833,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "text_ops",
+            "name": "enum_ops",
             "default": false
           }
         },
@@ -7695,7 +7843,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         }
@@ -8251,7 +8399,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         },
@@ -8261,7 +8409,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "text_ops",
+            "name": "enum_ops",
             "default": false
           }
         },
@@ -8271,7 +8419,7 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": {
-            "name": "enum_ops",
+            "name": "text_ops",
             "default": false
           }
         }
@@ -10487,6 +10635,19 @@
     },
     {
       "nameExplicit": true,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboxContactStats_inboxId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["chatbotId"],
       "schemaTo": "public",
       "tableTo": "Chatbot",
@@ -11292,6 +11453,14 @@
       "entityType": "pks"
     },
     {
+      "columns": ["objectKey"],
+      "nameExplicit": false,
+      "name": "AnalyticsManifestStatus_pkey",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus",
+      "entityType": "pks"
+    },
+    {
       "columns": ["id"],
       "nameExplicit": false,
       "name": "Attachment_pkey",
@@ -11449,6 +11618,14 @@
       "name": "Folder_pkey",
       "schema": "public",
       "table": "Folder",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["inboxId"],
+      "nameExplicit": false,
+      "name": "InboxContactStats_pkey",
+      "schema": "public",
+      "table": "InboxContactStats",
       "entityType": "pks"
     },
     {

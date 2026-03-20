@@ -11,10 +11,10 @@ import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
 import { useSavedReplyStore } from "./provider/saved-reply-store-context"
-import type { SavedReplyResource } from "./queries"
 import { SavedReplyCreateForm } from "./saved-reply-create-form"
 import { SavedReplyEditForm } from "./saved-reply-edit-form"
 import { SavedReplyItem } from "./saved-reply-item"
+import type { SavedReplyResource } from "./schema"
 
 type ViewState =
   | { type: "list" }
@@ -29,7 +29,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   const [view, setView] = useState<ViewState>({ type: "list" })
   const {
     savedReplies,
-    isLoadingSavedReplies,
+    isLoading: isLoadingSavedReplies,
     getAllSavedReplies,
     deleteSavedReply: deleteSavedReplyFromStore,
   } = useSavedReplyStore((state) => state)

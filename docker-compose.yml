@@ -7,6 +7,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "log_statement=all"]
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
@@ -17,6 +18,8 @@ services:
       timeout: 60s
       retries: 5
       start_period: 80s
+    networks:
+      - chatbotx-network
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -25,12 +28,16 @@ services:
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@example.com
       - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
+    networks:
+      - chatbotx-network
 
   mailhog:
     image: mailhog/mailhog
     ports:
       - 1025:1025
       - 8025:8025
+    networks:
+      - chatbotx-network
 
   minio:
     image: minio/minio
@@ -49,6 +56,8 @@ services:
       timeout: 20s
       retries: 3
       start_period: 5s
+    networks:
+      - chatbotx-network
 
   createbuckets:
     image: minio/mc
@@ -63,6 +72,8 @@ services:
       /usr/bin/mc anonymous set public minio/chatbotx/public;
       exit 0;
       "
+    networks:
+      - chatbotx-network
 
   redis:
     image: redis:7-alpine
@@ -75,6 +86,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - chatbotx-network
 
   clickhouse:
     image: clickhouse/clickhouse-server:26.2-alpine
@@ -84,7 +97,6 @@ services:
     volumes:
       - clickhouse-data:/var/lib/clickhouse
       - clickhouse-backups:/var/backups/clickhouse
-      - ./packages/database/src/clickhouse:/docker-entrypoint-initdb.d
     environment:
       - CLICKHOUSE_DB=${CLICKHOUSE_DB:-chatbotx_analytics}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-chatbotx}
@@ -99,6 +111,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - chatbotx-network
+
+networks:
+  chatbotx-network:
+    driver: bridge
 
 volumes:
   db-data:

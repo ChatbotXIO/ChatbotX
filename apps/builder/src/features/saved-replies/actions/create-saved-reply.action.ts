@@ -8,7 +8,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type CreateSavedReplyRequest,
   createSavedReplyRequest,
-} from "../schemas/action"
+} from "../schema"
 
 export const createSavedReplyAction = authActionClient
   .inputSchema(createSavedReplyRequest)

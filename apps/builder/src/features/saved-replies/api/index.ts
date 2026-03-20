@@ -1,7 +1,7 @@
-import privateTagsAPI from "./private"
+import { savedRepliesAuthorizedAPI } from "./authorized"
 
-const tagsAPI = {
-  ...privateTagsAPI,
+const savedRepliesAPI = {
+  ...savedRepliesAuthorizedAPI,
 }
 
-export default tagsAPI
+export default savedRepliesAPI

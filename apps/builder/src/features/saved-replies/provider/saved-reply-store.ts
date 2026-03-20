@@ -1,11 +1,11 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { SavedReplyResource } from "../queries"
+import type { ListSavedReplyResponse, SavedReplyResource } from "../schema"
 
 export type SavedReplyStoreState = {
   initialized: boolean
-  isLoadingSavedReplies: boolean
+  isLoading: boolean
   savedReplies: SavedReplyResource[]
   error: string | null
 }
@@ -22,7 +22,7 @@ export type SavedReplyStore = SavedReplyStoreState & SavedReplyStoreActions
 export const createSavedReplyStore = () =>
   createStore<SavedReplyStore>((set, get) => ({
     initialized: false,
-    isLoadingSavedReplies: false,
+    isLoading: false,
     savedReplies: [],
     error: null,
 
@@ -48,23 +48,22 @@ export const createSavedReplyStore = () =>
     },
 
     getAllSavedReplies: async () => {
-      const { isLoadingSavedReplies } = get()
+      const { isLoading } = get()
 
       // Skip if already initialized for the same chatbotId or currently loading
-      if (isLoadingSavedReplies) {
+      if (isLoading) {
         return
       }
 
-      set({ isLoadingSavedReplies: true })
+      set({ isLoading: true })
 
       try {
-        const searchParams = new URLSearchParams({
-          perPage: maxPerPageString,
-        })
-        const data = await ky
-          .get<SavedReplyResource[]>(
-            `/api/saved-replies?${searchParams.toString()}`,
-          )
+        const { data } = await ky
+          .get<ListSavedReplyResponse>("/api/saved-replies", {
+            searchParams: {
+              perPage: maxPerPageString,
+            },
+          })
           .json()
 
         set({
@@ -78,7 +77,7 @@ export const createSavedReplyStore = () =>
               : "Failed to fetch saved replies",
         })
       } finally {
-        set({ isLoadingSavedReplies: false })
+        set({ isLoading: false })
       }
     },
 
@@ -87,6 +86,7 @@ export const createSavedReplyStore = () =>
         savedReplies: state.savedReplies.filter((item) => item.id !== id),
       }))
     },
+
     upsertSavedReply: (savedReply) => {
       set((state) => {
         const existingIndex = state.savedReplies.findIndex(

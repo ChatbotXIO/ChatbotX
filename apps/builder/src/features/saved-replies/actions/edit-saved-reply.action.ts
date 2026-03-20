@@ -5,10 +5,7 @@ import { savedReplyModel } from "@aha.chat/database/schema"
 import { z } from "zod"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
-import {
-  type EditSavedReplyRequest,
-  editSavedReplyRequest,
-} from "../schemas/action"
+import { type EditSavedReplyRequest, editSavedReplyRequest } from "../schema"
 
 const savedReplyIdRequestParams: [z.ZodCUID2] = [z.cuid2().describe("id")]
 type SavedReplyIdRequestParams = [string]

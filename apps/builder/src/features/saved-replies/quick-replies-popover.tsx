@@ -33,8 +33,11 @@ export const QuickRepliesPopover = ({
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
-  const { savedReplies, isLoadingSavedReplies, getAllSavedReplies } =
-    useSavedReplyStore((state) => state)
+  const {
+    savedReplies,
+    isLoading: isLoadingSavedReplies,
+    getAllSavedReplies,
+  } = useSavedReplyStore((state) => state)
 
   const normalizedContent = (inputValue ?? "").trimStart()
   const shouldShow = normalizedContent.startsWith("/")
