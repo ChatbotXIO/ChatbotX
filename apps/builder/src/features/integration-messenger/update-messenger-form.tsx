@@ -1,9 +1,7 @@
 "use client"
 
-import {
-  FileType,
-  type IntegrationMessengerModel,
-} from "@aha.chat/database/types"
+import type { IntegrationMessengerModel } from "@aha.chat/database/types"
+import { FileType } from "@aha.chat/sdk"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"

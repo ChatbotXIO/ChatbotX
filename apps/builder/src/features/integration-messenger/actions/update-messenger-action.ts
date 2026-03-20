@@ -1,8 +1,13 @@
 "use server"
 
-import { prisma } from "@aha.chat/database"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import {
+  flowVersionModel,
+  integrationMessengerModel,
+} from "@aha.chat/database/schema"
 import {
   type ChatbotModel,
+  type FlowVersionModel,
   type IntegrationMessengerModel,
   PersistentMenuType,
 } from "@aha.chat/database/types"
@@ -12,12 +17,13 @@ import {
   type MessengerProfileRequest,
 } from "@aha.chat/integration-messenger"
 import type { FacebookButton } from "@aha.chat/integration-messenger/schemas"
-import { findChatbot } from "@/features/chatbot/queries"
+import { findChatbotOrFail } from "@/features/chatbot/queries"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
 import {
@@ -44,36 +50,40 @@ export const updateMessengerAction = chatbotActionClient
       parsedInput: UpdateMessengerRequest
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const { addLanguage, ...rest } = parsedInput
+      try {
+        const { addLanguage, ...rest } = parsedInput
 
-      await prisma.$transaction(async (tx) => {
-        const chatbot = await findChatbot({ id: chatbotId })
-        const integrationMessengerData = await findIntegrationMessenger({
-          id,
-        })
-        const updatedPersonas = await updatePersonas(
-          chatbot,
-          integrationMessengerData,
-        )
-
-        await tx.integrationMessenger.update({
-          where: { id },
-          data: {
-            ...rest,
-            personas: updatedPersonas,
-          },
-        })
-        integrationMessenger.actions.updateMessengerProfile({
-          ctx: {
+        await db.transaction(async (tx) => {
+          const chatbot = await findChatbotOrFail({ id: chatbotId })
+          const integrationMessengerData = await findIntegrationMessenger({
+            id,
+          })
+          const updatedPersonas = await updatePersonas(
             chatbot,
-            // biome-ignore lint/suspicious/noExplicitAny: wip
-            auth: integrationMessengerData?.auth as any,
-          },
-          params: await getMessengerProfileParams(integrationMessengerData),
-        })
+            integrationMessengerData,
+          )
 
-        revalidateCacheTags([`chatbots:${chatbotId}#messenger`])
-      })
+          await tx
+            .update(integrationMessengerModel)
+            .set({
+              ...rest,
+              personas: updatedPersonas,
+            })
+            .where(eq(integrationMessengerModel.id, id))
+          integrationMessenger.actions.updateMessengerProfile({
+            ctx: {
+              chatbot,
+              // biome-ignore lint/suspicious/noExplicitAny: wip
+              auth: integrationMessengerData?.auth as any,
+            },
+            params: await getMessengerProfileParams(integrationMessengerData),
+          })
+
+          revalidateCacheTags([`chatbots:${chatbotId}#messenger`])
+        })
+      } catch (_error) {
+        throw new ChatbotXException("Failed to update Facebook page")
+      }
     },
   )
 
@@ -83,8 +93,9 @@ const getMessengerProfileParams = async (
   const params: MessengerProfileRequest = {}
 
   if (model.welcomeFlowId) {
-    const flowVersion = await prisma.flowVersion.findFirstOrThrow({
-      where: { flowId: model.welcomeFlowId, isDraft: false },
+    const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
+      flowId: model.welcomeFlowId,
+      isLatest: true,
     })
     params.get_started = {
       payload: encodeButtonPayload({
@@ -123,9 +134,10 @@ const getMessengerProfileParams = async (
       model.conversationStarters as ConversationStarterSchema[]
     params.ice_breakers = await Promise.all(
       conversationStarters.map(async (starter) => {
-        const flowVersion = await prisma.flowVersion.findFirstOrThrow({
-          where: { flowId: starter.flowId, isDraft: false },
-        })
+        const flowVersion = await findOrFail<FlowVersionModel>(
+          flowVersionModel,
+          { flowId: starter.flowId, isLatest: true },
+        )
         return {
           question: starter.question,
           payload: encodeButtonPayload({
@@ -147,8 +159,9 @@ export const parseFacebookButtons = async (
   const buttons: FacebookButton[] = []
   for (const menu of persistentMenus as PersistentMenuSchema[]) {
     if (menu && menu.type === PersistentMenuType.flow) {
-      const flowVersion = await prisma.flowVersion.findFirstOrThrow({
-        where: { flowId: menu.flowId, isDraft: false },
+      const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
+        flowId: menu.flowId,
+        isLatest: true,
       })
       buttons.push({
         type: "postback",
