@@ -120,6 +120,10 @@ export const selectPageAction = authActionClient
             pageId: parsedInput.pageId,
             auth,
             name: parsedInput.pageName,
+            greetingMessages: [],
+            persistentMenus: [],
+            conversationStarters: [],
+            personas: [],
           })
         })
 
