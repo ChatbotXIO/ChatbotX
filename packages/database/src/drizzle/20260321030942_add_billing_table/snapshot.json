@@ -1,12 +1,18 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "a62e4644-3043-47ae-b1b2-1d123be88543",
-  "prevIds": ["6ebd0b21-aff0-4c27-b587-c33f50b45454"],
+  "id": "4ca228f5-a347-4c43-bec5-92579a1fa51a",
+  "prevIds": ["9723d3de-7779-4924-bc72-46c635acad21"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
       "name": "AIEmbeddingStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["processing", "ingested", "failed"],
+      "name": "AnalyticsStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -29,38 +35,8 @@
       "schema": "public"
     },
     {
-      "values": ["male", "female", "unknown"],
-      "name": "Gender",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
       "values": ["text", "location"],
       "name": "ContentType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["image", "video", "audio", "gif", "file"],
-      "name": "FileType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["webchat", "messenger", "whatsapp", "zalo"],
-      "name": "InboxType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["incoming", "outgoing", "activity"],
-      "name": "MessageType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["bot", "contact", "system", "user"],
-      "name": "SenderType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -78,15 +54,58 @@
       "schema": "public"
     },
     {
-      "values": ["accountField", "customField"],
-      "name": "FieldType",
+      "values": ["image", "video", "audio", "gif", "file"],
+      "name": "FileType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["tag", "flow", "customField", "automatedResponse"],
+      "values": [
+        "tag",
+        "flow",
+        "customField",
+        "automatedResponse",
+        "trigger",
+        "webhook"
+      ],
       "name": "FolderType",
       "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["male", "female", "unknown"],
+      "name": "Gender",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["webchat", "messenger", "whatsapp", "zalo"],
+      "name": "InboxType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["error", "audit"],
+      "name": "LogType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["incoming", "outgoing", "activity"],
+      "name": "MessageType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["bot", "contact", "system", "user", "api"],
+      "name": "SenderType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Account",
+      "entityType": "tables",
       "schema": "public"
     },
     {
@@ -139,37 +158,13 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Account",
+      "name": "AnalyticsManifestStatus",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "Invitation",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "jwks",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Session",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "User",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Verification",
+      "name": "Attachment",
       "entityType": "tables",
       "schema": "public"
     },
@@ -181,13 +176,13 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Broadcast",
+      "name": "BotField",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "ContactsOnBroadcasts",
+      "name": "Broadcast",
       "entityType": "tables",
       "schema": "public"
     },
@@ -206,6 +201,12 @@
     {
       "isRlsEnabled": false,
       "name": "ChatbotUsage",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Condition",
       "entityType": "tables",
       "schema": "public"
     },
@@ -235,19 +236,13 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "ContactsOnBroadcasts",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "_ContactToTag",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Tag",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Attachment",
       "entityType": "tables",
       "schema": "public"
     },
@@ -265,43 +260,13 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Inbox",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "InboxTeamMember",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "InboxTeam",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Message",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "AuditLog",
+      "name": "CustomField",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
       "name": "ErrorLog",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "Field",
       "entityType": "tables",
       "schema": "public"
     },
@@ -326,6 +291,30 @@
     {
       "isRlsEnabled": false,
       "name": "Folder",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "InboxContactStats",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Inbox",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "InboxTeamMember",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "InboxTeam",
       "entityType": "tables",
       "schema": "public"
     },
@@ -379,13 +368,19 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "WhatsappFlow",
+      "name": "Invitation",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "WhatsappMessageTemplate",
+      "name": "jwks",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Message",
       "entityType": "tables",
       "schema": "public"
     },
@@ -403,9 +398,280 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "_prisma_migrations",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Reflink",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "SavedReply",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Session",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Spreadsheet",
       "entityType": "tables",
       "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Tag",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TriggerContactHistory",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TriggerExecution",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Trigger",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TriggerStats",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "User",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Verification",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Webhook",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WhatsappFlow",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WhatsappMessageTemplate",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AuditLog",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Plan",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Subscription",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accountId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "providerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accessToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "accessTokenExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshTokenExpiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "scope",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "idToken",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "password",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Account"
     },
     {
       "type": "text",
@@ -1279,17 +1545,69 @@
       "table": "_AITriggerToIntegrationOpenAI"
     },
     {
-      "type": "text",
+      "type": "varchar(255)",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
+      "name": "objectKey",
       "entityType": "columns",
       "schema": "public",
-      "table": "Account"
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "AnalyticsStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ingestedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -1302,7 +1620,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Account"
+      "table": "AnalyticsManifestStatus"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -1315,137 +1633,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "accountId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "providerId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "accessToken",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "accessTokenExpiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refreshToken",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "refreshTokenExpiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "scope",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "idToken",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "password",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Account"
+      "table": "AnalyticsManifestStatus"
     },
     {
       "type": "text",
@@ -1458,7 +1646,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -1471,7 +1659,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -1484,64 +1672,12 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "code",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "permissions",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "organizationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -1549,7 +1685,7 @@
       "name": "chatbotId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1559,10 +1695,23 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "invitedBy",
+      "name": "conversationId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
+    },
+    {
+      "type": "FileType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fileType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1572,127 +1721,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
+      "name": "messageId",
       "entityType": "columns",
       "schema": "public",
-      "table": "jwks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "publicKey",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "jwks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "privateKey",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "jwks"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "jwks"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "jwks"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Session"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Session"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Session"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Session"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "token",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Session"
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1702,10 +1734,62 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "ipAddress",
+      "name": "sourceId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Session"
+      "table": "Attachment"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mimeType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "width",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "height",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "size",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1715,10 +1799,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "userAgent",
+      "name": "thumbnailPath",
       "entityType": "columns",
       "schema": "public",
-      "table": "Session"
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1728,49 +1812,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "userId",
+      "name": "originPath",
       "entityType": "columns",
       "schema": "public",
-      "table": "Session"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -1783,150 +1828,7 @@
       "name": "name",
       "entityType": "columns",
       "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "email",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "emailVerified",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "image",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "isAnonymous",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "stripeCustomerId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "User"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "identifier",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "value",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "expiresAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Verification"
+      "table": "Attachment"
     },
     {
       "type": "text",
@@ -2031,6 +1933,123 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "CustomFieldType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "BotField"
     },
     {
       "type": "text",
@@ -2187,97 +2206,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Broadcast"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "broadcastId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "sent",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "delivered",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "seen",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "clicked",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "failed",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
     },
     {
       "type": "text",
@@ -2573,19 +2501,6 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "stripeCustomerId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Chatbot"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
       "name": "token",
       "entityType": "columns",
       "schema": "public",
@@ -2668,6 +2583,110 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ChatbotUsage"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "webhookId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "operator",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Condition"
     },
     {
       "type": "text",
@@ -2989,7 +3008,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "lastSeenAt",
+      "name": "lastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Contact"
@@ -3132,6 +3151,97 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "broadcastId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "sent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "delivered",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "seen",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "clicked",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "failed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "contactId",
       "entityType": "columns",
       "schema": "public",
@@ -3149,292 +3259,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "_ContactToTag"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "folderId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "syncToMessenger",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "conversationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "FileType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "fileType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "messageId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sourceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "mimeType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "width",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "height",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "size",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "thumbnailPath",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "originPath",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
     },
     {
       "type": "text",
@@ -3548,7 +3372,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "contactLastSeenAt",
+      "name": "contactLastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
@@ -3561,7 +3385,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "agentLastSeenAt",
+      "name": "agentLastReadAt",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
@@ -3772,7 +3596,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Inbox"
+      "table": "CustomField"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -3785,7 +3609,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Inbox"
+      "table": "CustomField"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -3798,176 +3622,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "type": "InboxType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "inboxType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sourceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'connected'",
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "inboxTeamId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeam"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeam"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeam"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "InboxTeam"
+      "table": "CustomField"
     },
     {
       "type": "text",
@@ -3980,72 +3635,59 @@
       "name": "name",
       "entityType": "columns",
       "schema": "public",
-      "table": "InboxTeam"
+      "table": "CustomField"
+    },
+    {
+      "type": "CustomFieldType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomField"
     },
     {
       "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomField"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomField"
+    },
+    {
+      "type": "boolean",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
+      "name": "showInInbox",
       "entityType": "columns",
       "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "conversationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "inboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
+      "table": "CustomField"
     },
     {
       "type": "text",
@@ -4058,189 +3700,7 @@
       "name": "chatbotId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "content",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contentAttributes",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "MessageType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "messageType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "ContentType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contentType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "SenderType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "senderType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "senderId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sourceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "action",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "detail",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AuditLog"
+      "table": "CustomField"
     },
     {
       "type": "text",
@@ -4345,149 +3805,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ErrorLog"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "CustomFieldType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "customFieldType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "description",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "folderId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "FieldType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "fieldType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "value",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "showInInbox",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "chatbotId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Field"
     },
     {
       "type": "text",
@@ -4956,6 +4273,266 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalContacts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "InboxType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'connected'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxTeamId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeam"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeam"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeam"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeam"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "InboxTeam"
     },
     {
       "type": "text",
@@ -6034,7 +5611,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6047,7 +5624,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6060,7 +5637,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
     },
     {
       "type": "text",
@@ -6070,10 +5647,36 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "name",
+      "name": "code",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "permissions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Invitation"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Invitation"
     },
     {
       "type": "text",
@@ -6083,10 +5686,23 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "integrationWhatsappId",
+      "name": "organizationId",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Invitation"
     },
     {
       "type": "text",
@@ -6096,36 +5712,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "sourceId",
+      "name": "invitedBy",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappFlow"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WhatsappFlow"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "isCompleted",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
     },
     {
       "type": "text",
@@ -6138,7 +5728,33 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "jwks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "publicKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "jwks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "privateKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "jwks"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6151,7 +5767,46 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "jwks"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "jwks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6164,7 +5819,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "Message"
     },
     {
       "type": "text",
@@ -6174,10 +5829,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "name",
+      "name": "conversationId",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "Message"
     },
     {
       "type": "text",
@@ -6187,15 +5842,106 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "integrationWhatsappId",
+      "name": "inboxId",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "Message"
     },
     {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentAttributes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "MessageType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "messageType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "ContentType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "SenderType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "senderType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "senderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -6203,46 +5949,7 @@
       "name": "sourceId",
       "entityType": "columns",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "language",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WhatsappMessageTemplate"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "category",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WhatsappMessageTemplate"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "Message"
     },
     {
       "type": "text",
@@ -6466,6 +6173,58 @@
       "table": "Organization"
     },
     {
+      "type": "varchar(36)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "checksum",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "finished_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "migration_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -6473,10 +6232,322 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "billingCustomerId",
+      "name": "logs",
       "entityType": "columns",
       "schema": "public",
-      "table": "Organization"
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "rolled_back_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "started_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "applied_steps_count",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "_prisma_migrations"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customFieldId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "shortcut",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "text",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ipAddress",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userAgent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Session"
     },
     {
       "type": "text",
@@ -6570,6 +6641,1501 @@
       "table": "Spreadsheet"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "syncToMessenger",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "firstEnteredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "executedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "actions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "date",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalContacts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "successCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "failureCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalExecutions",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "emailVerified",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "image",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isAnonymous",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "identifier",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expiresAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Verification"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "active",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "isCompleted",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "language",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "detail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chatbotId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "description",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "price",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "priceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "annualDiscountPrice",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "annualDiscountPriceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "limits",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "freeTrial",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "marketingFeatures",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "organizationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "plan",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "referenceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stripeCustomerId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stripeSubscriptionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancelAtPeriodEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "cancelAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "canceledAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seats",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "trialStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "trialEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "billingInterval",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stripeScheduleId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Subscription"
+    },
+    {
       "nameExplicit": true,
       "columns": [
         {
@@ -6621,7 +8187,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "code",
+          "value": "chatbotId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -6631,21 +8197,21 @@
           }
         }
       ],
-      "isUnique": true,
+      "isUnique": false,
       "where": null,
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Invitation_code_key",
+      "name": "Attachment_chatbotId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "nameExplicit": true,
       "columns": [
         {
-          "value": "token",
+          "value": "messageId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -6655,39 +8221,15 @@
           }
         }
       ],
-      "isUnique": true,
+      "isUnique": false,
       "where": null,
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Session_token_key",
+      "name": "Attachment_messageId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "Session"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "email",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "User_email_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "User"
+      "table": "Attachment"
     },
     {
       "nameExplicit": true,
@@ -6712,6 +8254,50 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "enum_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "BotField_chatbotId_fieldType_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "BotField"
     },
     {
       "nameExplicit": true,
@@ -6837,6 +8423,176 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "int4_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Condition_type_sourceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Condition_triggerId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "webhookId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Condition_webhookId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "int4_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Condition_type_sourceId_triggerId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "int4_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "webhookId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Condition_type_sourceId_webhookId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -6934,112 +8690,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "_ContactToTag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "name",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Tag_chatbotId_name_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "folderId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Tag_folderId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Attachment_chatbotId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "messageId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Attachment_messageId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Attachment"
     },
     {
       "nameExplicit": true,
@@ -7193,6 +8843,98 @@
             "name": "text_ops",
             "default": false
           }
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "enum_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CustomField_chatbotId_fieldType_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CustomField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Folder_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Folder"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "parentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Folder_parentId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Folder"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
         }
       ],
       "isUnique": false,
@@ -7248,238 +8990,6 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Inbox"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_chatbotId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "sourceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_chatbotId_sourceId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "conversationId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_conversationId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "inboxId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_inboxId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "senderType",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "senderId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_senderType_senderId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "fieldType",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        },
-        {
-          "value": "name",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "enum_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Field_chatbotId_fieldType_name_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "chatbotId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Folder_chatbotId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Folder"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "parentId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": {
-            "name": "text_ops",
-            "default": false
-          }
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Folder_parentId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Folder"
     },
     {
       "nameExplicit": true,
@@ -7927,6 +9437,170 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "code",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Invitation_code_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Invitation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_chatbotId_sourceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_conversationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_inboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "senderType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "enum_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "senderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_senderType_senderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "domain",
           "isExpression": false,
           "asc": true,
@@ -7970,6 +9644,64 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Organization"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Reflink_chatbotId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "token",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Session_token_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Session"
     },
     {
       "nameExplicit": true,
@@ -8052,6 +9784,541 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Spreadsheet"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Tag_chatbotId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "folderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Tag_folderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerContactHistory_triggerId_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerContactHistory_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerContactHistory_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerExecution_triggerId_contactId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerExecution_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Trigger_chatbotId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Trigger_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "folderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Trigger_folderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "active",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "bool_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Trigger_chatbotId_active_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "date",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "timestamp_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerStats_triggerId_date_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "triggerId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "date",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "timestamp_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerStats_triggerId_date_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "date",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "timestamp_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TriggerStats_chatbotId_date_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "email",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "User_email_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "User"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Webhook_chatbotId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "folderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Webhook_folderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "chatbotId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "active",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "bool_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Webhook_chatbotId_active_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Account_userId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Account"
     },
     {
       "nameExplicit": true,
@@ -8198,68 +10465,42 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["userId"],
-      "schemaTo": "public",
-      "tableTo": "User",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Account_userId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Account"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["organizationId"],
-      "schemaTo": "public",
-      "tableTo": "Organization",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Invitation_organizationId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "nameExplicit": true,
       "columns": ["chatbotId"],
       "schemaTo": "public",
       "tableTo": "Chatbot",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "Invitation_chatbotId_fkey",
+      "name": "Attachment_chatbotId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "nameExplicit": true,
-      "columns": ["invitedBy"],
+      "columns": ["conversationId"],
       "schemaTo": "public",
-      "tableTo": "User",
+      "tableTo": "Conversation",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "Invitation_invitedBy_fkey",
+      "name": "Attachment_conversationId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "Invitation"
+      "table": "Attachment"
     },
     {
       "nameExplicit": true,
-      "columns": ["userId"],
+      "columns": ["messageId"],
       "schemaTo": "public",
-      "tableTo": "User",
+      "tableTo": "Message",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "Session_userId_fkey",
+      "name": "Attachment_messageId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "Session"
+      "table": "Attachment"
     },
     {
       "nameExplicit": true,
@@ -8273,6 +10514,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AutomatedResponse"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "BotField_folderId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BotField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BotField_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "BotField"
     },
     {
       "nameExplicit": true,
@@ -8299,32 +10566,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "Broadcast"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["broadcastId"],
-      "schemaTo": "public",
-      "tableTo": "Broadcast",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "ContactsOnBroadcasts_broadcastId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["contactId"],
-      "schemaTo": "public",
-      "tableTo": "Contact",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "ContactsOnBroadcasts_contactId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
     },
     {
       "nameExplicit": true,
@@ -8380,6 +10621,32 @@
     },
     {
       "nameExplicit": true,
+      "columns": ["triggerId"],
+      "schemaTo": "public",
+      "tableTo": "Trigger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Condition_triggerId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["webhookId"],
+      "schemaTo": "public",
+      "tableTo": "Webhook",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Condition_webhookId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Condition"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
@@ -8395,7 +10662,7 @@
       "nameExplicit": true,
       "columns": ["customFieldId"],
       "schemaTo": "public",
-      "tableTo": "Field",
+      "tableTo": "CustomField",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
@@ -8445,6 +10712,32 @@
     },
     {
       "nameExplicit": true,
+      "columns": ["broadcastId"],
+      "schemaTo": "public",
+      "tableTo": "Broadcast",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactsOnBroadcasts_broadcastId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactsOnBroadcasts_contactId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["contactId"],
       "schemaTo": "public",
       "tableTo": "Contact",
@@ -8468,71 +10761,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "_ContactToTag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["folderId"],
-      "schemaTo": "public",
-      "tableTo": "Folder",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "Tag_folderId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Tag_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Attachment_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["conversationId"],
-      "schemaTo": "public",
-      "tableTo": "Conversation",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Attachment_conversationId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["messageId"],
-      "schemaTo": "public",
-      "tableTo": "Message",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Attachment_messageId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Attachment"
     },
     {
       "nameExplicit": true,
@@ -8640,120 +10868,29 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["chatbotId"],
+      "columns": ["folderId"],
       "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Inbox_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Inbox"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["inboxTeamId"],
-      "schemaTo": "public",
-      "tableTo": "InboxTeam",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "InboxTeamMember_inboxTeamId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["userId"],
-      "schemaTo": "public",
-      "tableTo": "User",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "InboxTeamMember_userId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "InboxTeamMember"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "InboxTeam_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "InboxTeam"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["conversationId"],
-      "schemaTo": "public",
-      "tableTo": "Conversation",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Message_conversationId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["inboxId"],
-      "schemaTo": "public",
-      "tableTo": "Inbox",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Message_inboxId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Message_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AuditLog_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AuditLog"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["userId"],
-      "schemaTo": "public",
-      "tableTo": "User",
+      "tableTo": "Folder",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "AuditLog_userId_fkey",
+      "name": "Field_folderId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "AuditLog"
+      "table": "CustomField"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Field_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "CustomField"
     },
     {
       "nameExplicit": true,
@@ -8780,32 +10917,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "ErrorLog"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["folderId"],
-      "schemaTo": "public",
-      "tableTo": "Folder",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "Field_folderId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Field"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["chatbotId"],
-      "schemaTo": "public",
-      "tableTo": "Chatbot",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Field_chatbotId_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Field"
     },
     {
       "nameExplicit": true,
@@ -8936,6 +11047,71 @@
       "entityType": "fks",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboxContactStats_inboxId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboxContactStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Inbox_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Inbox"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["inboxTeamId"],
+      "schemaTo": "public",
+      "tableTo": "InboxTeam",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboxTeamMember_inboxTeamId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboxTeamMember_userId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboxTeamMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "InboxTeam_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "InboxTeam"
     },
     {
       "nameExplicit": true,
@@ -9199,29 +11375,81 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["integrationWhatsappId"],
+      "columns": ["organizationId"],
       "schemaTo": "public",
-      "tableTo": "IntegrationWhatsapp",
+      "tableTo": "Organization",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "WhatsappFlow_integrationWhatsappId_fkey",
+      "name": "Invitation_organizationId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "WhatsappFlow"
+      "table": "Invitation"
     },
     {
       "nameExplicit": true,
-      "columns": ["integrationWhatsappId"],
+      "columns": ["chatbotId"],
       "schemaTo": "public",
-      "tableTo": "IntegrationWhatsapp",
+      "tableTo": "Chatbot",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "WhatsappMessageTemplate_integrationWhatsappId_fkey",
+      "name": "Invitation_chatbotId_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "WhatsappMessageTemplate"
+      "table": "Invitation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["invitedBy"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Invitation_invitedBy_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Invitation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Message_conversationId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Message_inboxId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Message_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Message"
     },
     {
       "nameExplicit": true,
@@ -9251,6 +11479,71 @@
     },
     {
       "nameExplicit": true,
+      "columns": ["flowId"],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Reflink_flowId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Reflink_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["customFieldId"],
+      "schemaTo": "public",
+      "tableTo": "CustomField",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Reflink_customFieldId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "SavedReply_userId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "SavedReply"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Session_userId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Session"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["chatbotId"],
       "schemaTo": "public",
       "tableTo": "Chatbot",
@@ -9263,20 +11556,259 @@
       "table": "Spreadsheet"
     },
     {
+      "nameExplicit": true,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Tag_folderId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Tag_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["triggerId"],
+      "schemaTo": "public",
+      "tableTo": "Trigger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerContactHistory_triggerId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerContactHistory_contactId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerContactHistory_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["triggerId"],
+      "schemaTo": "public",
+      "tableTo": "Trigger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerExecution_triggerId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerExecution_contactId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerExecution_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerExecution"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Trigger_folderId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Trigger_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Trigger"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["triggerId"],
+      "schemaTo": "public",
+      "tableTo": "Trigger",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerStats_triggerId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TriggerStats_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TriggerStats"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Webhook_folderId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Webhook_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Webhook"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappFlow_integrationWhatsappId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WhatsappMessageTemplate_integrationWhatsappId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["chatbotId"],
+      "schemaTo": "public",
+      "tableTo": "Chatbot",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AuditLog_chatbotId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AuditLog_userId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AuditLog"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["organizationId"],
+      "schemaTo": "public",
+      "tableTo": "Organization",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "BillingPlan_organizationId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
       "columns": ["A", "B"],
       "nameExplicit": true,
       "name": "_AITriggerToIntegrationOpenAI_AB_pkey",
       "entityType": "pks",
       "schema": "public",
       "table": "_AITriggerToIntegrationOpenAI"
-    },
-    {
-      "columns": ["broadcastId", "contactId"],
-      "nameExplicit": true,
-      "name": "ContactsOnBroadcasts_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "ContactsOnBroadcasts"
     },
     {
       "columns": ["contactId", "inboxId"],
@@ -9287,12 +11819,36 @@
       "table": "ContactInbox"
     },
     {
+      "columns": ["broadcastId", "contactId"],
+      "nameExplicit": true,
+      "name": "ContactsOnBroadcasts_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactsOnBroadcasts"
+    },
+    {
       "columns": ["contactId", "tagId"],
       "nameExplicit": true,
       "name": "_ContactToTag_contactId_tagId_pkey",
       "entityType": "pks",
       "schema": "public",
       "table": "_ContactToTag"
+    },
+    {
+      "columns": ["id", "contactId"],
+      "nameExplicit": true,
+      "name": "TriggerContactHistory_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "TriggerContactHistory"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Account_pkey",
+      "schema": "public",
+      "table": "Account",
+      "entityType": "pks"
     },
     {
       "columns": ["id"],
@@ -9351,51 +11907,19 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": ["objectKey"],
       "nameExplicit": false,
-      "name": "Account_pkey",
+      "name": "AnalyticsManifestStatus_pkey",
       "schema": "public",
-      "table": "Account",
+      "table": "AnalyticsManifestStatus",
       "entityType": "pks"
     },
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Invitation_pkey",
+      "name": "Attachment_pkey",
       "schema": "public",
-      "table": "Invitation",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "jwks_pkey",
-      "schema": "public",
-      "table": "jwks",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Session_pkey",
-      "schema": "public",
-      "table": "Session",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "User_pkey",
-      "schema": "public",
-      "table": "User",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Verification_pkey",
-      "schema": "public",
-      "table": "Verification",
+      "table": "Attachment",
       "entityType": "pks"
     },
     {
@@ -9404,6 +11928,14 @@
       "name": "AutomatedResponse_pkey",
       "schema": "public",
       "table": "AutomatedResponse",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "BotField_pkey",
+      "schema": "public",
+      "table": "BotField",
       "entityType": "pks"
     },
     {
@@ -9441,6 +11973,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "Condition_pkey",
+      "schema": "public",
+      "table": "Condition",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "ContactCustomField_pkey",
       "schema": "public",
       "table": "ContactCustomField",
@@ -9465,22 +12005,6 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Tag_pkey",
-      "schema": "public",
-      "table": "Tag",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Attachment_pkey",
-      "schema": "public",
-      "table": "Attachment",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
       "name": "Conversation_pkey",
       "schema": "public",
       "table": "Conversation",
@@ -9497,41 +12021,9 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Inbox_pkey",
+      "name": "Field_pkey",
       "schema": "public",
-      "table": "Inbox",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "InboxTeamMember_pkey",
-      "schema": "public",
-      "table": "InboxTeamMember",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "InboxTeam_pkey",
-      "schema": "public",
-      "table": "InboxTeam",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Message_pkey",
-      "schema": "public",
-      "table": "Message",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "AuditLog_pkey",
-      "schema": "public",
-      "table": "AuditLog",
+      "table": "CustomField",
       "entityType": "pks"
     },
     {
@@ -9540,14 +12032,6 @@
       "name": "Log_pkey",
       "schema": "public",
       "table": "ErrorLog",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Field_pkey",
-      "schema": "public",
-      "table": "Field",
       "entityType": "pks"
     },
     {
@@ -9580,6 +12064,38 @@
       "name": "Folder_pkey",
       "schema": "public",
       "table": "Folder",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["inboxId"],
+      "nameExplicit": false,
+      "name": "InboxContactStats_pkey",
+      "schema": "public",
+      "table": "InboxContactStats",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Inbox_pkey",
+      "schema": "public",
+      "table": "Inbox",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "InboxTeamMember_pkey",
+      "schema": "public",
+      "table": "InboxTeamMember",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "InboxTeam_pkey",
+      "schema": "public",
+      "table": "InboxTeam",
       "entityType": "pks"
     },
     {
@@ -9649,17 +12165,25 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "WhatsappFlow_pkey",
+      "name": "Invitation_pkey",
       "schema": "public",
-      "table": "WhatsappFlow",
+      "table": "Invitation",
       "entityType": "pks"
     },
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "WhatsappMessageTemplate_pkey",
+      "name": "jwks_pkey",
       "schema": "public",
-      "table": "WhatsappMessageTemplate",
+      "table": "jwks",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Message_pkey",
+      "schema": "public",
+      "table": "Message",
       "entityType": "pks"
     },
     {
@@ -9681,9 +12205,137 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "_prisma_migrations_pkey",
+      "schema": "public",
+      "table": "_prisma_migrations",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Reflink_pkey",
+      "schema": "public",
+      "table": "Reflink",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "SavedReply_pkey",
+      "schema": "public",
+      "table": "SavedReply",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Session_pkey",
+      "schema": "public",
+      "table": "Session",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "Spreadsheet_pkey",
       "schema": "public",
       "table": "Spreadsheet",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Tag_pkey",
+      "schema": "public",
+      "table": "Tag",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "TriggerExecution_pkey",
+      "schema": "public",
+      "table": "TriggerExecution",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Trigger_pkey",
+      "schema": "public",
+      "table": "Trigger",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "TriggerStats_pkey",
+      "schema": "public",
+      "table": "TriggerStats",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "User_pkey",
+      "schema": "public",
+      "table": "User",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Verification_pkey",
+      "schema": "public",
+      "table": "Verification",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Webhook_pkey",
+      "schema": "public",
+      "table": "Webhook",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "WhatsappFlow_pkey",
+      "schema": "public",
+      "table": "WhatsappFlow",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "WhatsappMessageTemplate_pkey",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AuditLog_pkey",
+      "schema": "public",
+      "table": "AuditLog",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Plan_pkey",
+      "schema": "public",
+      "table": "Plan",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Subscription_pkey",
+      "schema": "public",
+      "table": "Subscription",
       "entityType": "pks"
     }
   ],

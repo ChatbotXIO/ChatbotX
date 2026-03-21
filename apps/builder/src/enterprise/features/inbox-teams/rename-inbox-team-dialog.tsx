@@ -21,8 +21,7 @@ import "react-day-picker/style.css"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { updateInboxTeamAction } from "./actions/update-inbox-team.action"
-import type { InboxTeamResource } from "./schema"
-import { updateInboxTeamRequest } from "./schema"
+import { type InboxTeamResource, updateInboxTeamRequest } from "./schema"
 
 export function RenameInboxTeamDialog({
   open,

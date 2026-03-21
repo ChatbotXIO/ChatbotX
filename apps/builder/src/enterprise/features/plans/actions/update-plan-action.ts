@@ -72,15 +72,15 @@ export const updatePlan = async (
   }
 
   if (hasProductUpdate && stripeProductId) {
-    const name = parsedInput.name !== undefined ? parsedInput.name : plan.name
+    const name = parsedInput.name === undefined ? plan.name : parsedInput.name
     const description =
-      parsedInput.description !== undefined
-        ? parsedInput.description
-        : plan.description
+      parsedInput.description === undefined
+        ? plan.description
+        : parsedInput.description
     const marketingFeatures =
-      parsedInput.marketingFeatures !== undefined
-        ? parsedInput.marketingFeatures.map((v) => v.value)
-        : (plan.marketingFeatures ?? [])
+      parsedInput.marketingFeatures === undefined
+        ? (plan.marketingFeatures ?? [])
+        : parsedInput.marketingFeatures.map((v) => v.value)
     await stripe.products.update(stripeProductId, {
       name,
       description: description ?? undefined,
@@ -93,7 +93,7 @@ export const updatePlan = async (
       unit_amount: parsedInput.price,
       currency: parsedInput.currency ?? plan.currency,
       recurring: { interval: "month" },
-      product: stripeProductId!,
+      product: stripeProductId,
     })
     updatePayload.price = parsedInput.price
     updatePayload.priceId = newPriceId
@@ -105,7 +105,7 @@ export const updatePlan = async (
       unit_amount: parsedInput.annualPrice,
       currency,
       recurring: { interval: "year" },
-      product: stripeProductId!,
+      product: stripeProductId,
     })
     updatePayload.annualDiscountPrice = parsedInput.annualPrice
     updatePayload.annualDiscountPriceId = newAnnualPriceId

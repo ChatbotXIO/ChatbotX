@@ -123,7 +123,7 @@ export function CustomFieldsTable({
         ),
         meta: {
           label: t("fields.name.label"),
-          placeholder: t("fields.name.placeholder"),
+          placeholder: t("fields.name.searchPlaceholder"),
           variant: "text",
         },
         enableColumnFilter: true,

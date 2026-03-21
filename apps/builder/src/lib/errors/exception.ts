@@ -1,13 +1,17 @@
 export class ChatbotXException extends Error {
-  code: string
-  httpStatusCode: number
+  code = "systemError"
+  httpStatusCode = 400
 
-  constructor(message: string, code = "sysmtemError", httpStatusCode = 400) {
+  constructor(message: string, code?: string, httpStatusCode?: number) {
     super(message)
 
     this.name = this.constructor.name
-    this.code = code
-    this.httpStatusCode = httpStatusCode
+    if (code) {
+      this.code = "systemError"
+    }
+    if (httpStatusCode) {
+      this.httpStatusCode = httpStatusCode
+    }
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ChatbotXException)

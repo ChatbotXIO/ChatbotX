@@ -1,6 +1,5 @@
 import { pgTable, text } from "drizzle-orm/pg-core"
-import { userModel } from "../auth"
-import { chatbotModel } from "../chatbot"
+import { chatbotModel, userModel } from ".."
 import { sharedColumns } from "../shared"
 
 export const auditLogModel = pgTable("AuditLog", {

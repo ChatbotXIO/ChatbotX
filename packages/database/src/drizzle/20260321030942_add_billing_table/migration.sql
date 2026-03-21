@@ -3,11 +3,15 @@ CREATE TABLE "Plan" (
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"name" text NOT NULL,
+	"description" text,
+	"price" integer NOT NULL,
 	"priceId" text NOT NULL,
+	"annualDiscountPrice" integer,
 	"annualDiscountPriceId" text,
 	"limits" jsonb NOT NULL,
 	"freeTrial" jsonb,
 	"currency" text NOT NULL,
+	"marketingFeatures" text[] DEFAULT '{}'::text[] NOT NULL,
 	"organizationId" text NOT NULL
 );
 --> statement-breakpoint

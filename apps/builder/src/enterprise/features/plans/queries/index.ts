@@ -1,12 +1,12 @@
 import { db } from "@aha.chat/database/client"
 import { findOrganizationByDomain } from "@/features/organization/queries"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type { ListPlansRequest, ListPlansResponse } from "../schemas/query"
 
 export const listPlansRSC = async (input: ListPlansRequest) => {
   const organization = await findOrganizationByDomain()
   if (!organization) {
-    throw new NotfoundException("Organization not found")
+    throw notFoundException("Organization not found")
   }
 
   return listPlans({

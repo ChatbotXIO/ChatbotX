@@ -1,3 +1,7 @@
+import {
+  createSelectSchema,
+  organizationMemberModel,
+} from "@aha.chat/database/schema"
 import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import {
   createSearchParamsCache,
@@ -7,7 +11,11 @@ import {
 import z from "zod"
 import { userResource } from "@/features/users/schemas/resource"
 import { basePaginationRequest } from "@/lib/pagination"
-import { organizationMemberResource } from "./resource"
+
+export const organizationMemberResource = createSelectSchema(
+  organizationMemberModel,
+)
+export const OrganizationMemberResource = organizationMemberResource
 
 export const listOrganizationMembersSearchParams = {
   page: parseAsInteger,

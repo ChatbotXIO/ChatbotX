@@ -10,7 +10,7 @@ import { use, useMemo } from "react"
 import type {
   ListOrganizationMemberItem,
   ListOrganizationMembersResponse,
-} from "./schema/query"
+} from "./schema"
 
 type OrganizationMembersTableProps = {
   promises: Promise<[ListOrganizationMembersResponse]>

@@ -1,6 +1,6 @@
 import type { OrganizationModel } from "@aha.chat/database/types"
 import { env } from "@/env"
-import { BaseException } from "../../lib/errors/exception"
+import { ChatbotXException } from "../../lib/errors/exception"
 
 export const getOrganizationLogoUrl = (organization: OrganizationModel) => {
   return organization.logo
@@ -9,4 +9,4 @@ export const getOrganizationLogoUrl = (organization: OrganizationModel) => {
 }
 
 export const invalidOrganizationSettingsError = (message: string) =>
-  new BaseException(message, "InvalidOrganizationSettings")
+  new ChatbotXException(message, "invalidOrganizationSettings")

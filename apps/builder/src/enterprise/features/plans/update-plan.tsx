@@ -97,9 +97,9 @@ export function UpdatePlanDialog({
       price: plan.price,
       annualPrice: plan.annualDiscountPrice ?? undefined,
       limits: {
-        contacts: plan.limits.contacts,
+        contacts: (plan.limits as { contacts: number }).contacts,
       },
-      freeTrial: plan.freeTrial ?? { days: 0 },
+      freeTrial: (plan.freeTrial as { days: number } | null) ?? { days: 0 },
       marketingFeatures: plan.marketingFeatures.map((value) => ({ value })),
     })
   }, [plan, reset])

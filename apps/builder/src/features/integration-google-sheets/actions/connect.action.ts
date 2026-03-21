@@ -30,7 +30,7 @@ export const connectGoogleSheets = chatbotActionClient
 
       const googleSheetsSetting = await findOrganizationSettingsByKey(
         { id: ctx.chatbot.organizationId },
-        "googleSheets",
+        "google",
       )
 
       const redirectUrl = (await integrations.googleSheets.handleRequest?.({

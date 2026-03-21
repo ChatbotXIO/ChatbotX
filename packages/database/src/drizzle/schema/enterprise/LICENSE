@@ -1,0 +1,54 @@
+The ChatbotX Commercial License (the "Commercial License")
+Copyright (c) 2024-present AhaChat LLC
+
+With regard to the ChatbotX Software:
+
+This software and associated documentation files (the "Software") may only be
+used in production if you (and any entity that you represent) have agreed to,
+and are in compliance with, the AhaChat LLC Subscription Terms available at
+https://chatbotx.io/terms/ or other agreements governing the use of the
+Software, as mutually agreed by you and AhaChat LLC ("AhaChat"), and otherwise
+have a valid ChatbotX Enterprise Edition subscription ("Commercial
+Subscription") for the correct number of chatbots as defined in the Commercial
+Terms.
+
+Subject to the foregoing sentence, you are free to modify this Software and
+publish patches to the Software. You agree that AhaChat LLC and/or its
+licensors (as applicable) retain all right, title and interest in and to all
+such modifications and/or patches, and all such modifications and/or patches
+may only be used, copied, modified, displayed, distributed, or otherwise
+exploited with a valid Commercial Subscription for the correct number of chatbots.
+
+Notwithstanding the foregoing, you may copy and modify the Software for
+development and testing purposes, without requiring a subscription. You agree
+that AhaChat LLC and/or its licensors (as applicable) retain all right, title
+and interest in and to all such modifications. You are not granted any other
+rights beyond what is expressly stated herein. Subject to the foregoing, it is
+forbidden to copy, merge, publish, distribute, sublicense, and/or sell the
+Software.
+
+Open Source vs. Commercial Licensing:
+This Commercial License applies only to the part of this Software that is not
+distributed under the GNU Affero General Public License v3 (AGPLv3). The Open
+Source version of ChatbotX is licensed under the AGPLv3. Any use, copying, or
+distribution of the Enterprise and Cloud versions is strictly prohibited
+without a valid license agreement from AhaChat LLC.
+
+For information about licensing of the Enterprise and Cloud versions, please
+contact: security@chatbotx.io
+
+The full text of this Commercial License shall be included in all copies or
+substantial portions of the Software.
+
+Disclaimer:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For all third-party components incorporated into the ChatbotX Software, those
+components are licensed under the original license provided by the owner of the
+applicable component.

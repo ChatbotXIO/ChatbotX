@@ -27,7 +27,7 @@ import type {
   ListConversationsRequest,
 } from "@/features/conversations/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type {
   FindConversationResponse,
   ListConversationsResponse,
@@ -145,7 +145,7 @@ export const findConversation = async (
     where: input,
   })
   if (!conversation) {
-    throw new NotfoundException("Conversation not found")
+    throw notFoundException("Conversation not found")
   }
 
   const lastMessage = await db.query.messageModel.findFirst({

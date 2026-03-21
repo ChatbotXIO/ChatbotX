@@ -1,4 +1,3 @@
-import { stripeClient } from "@better-auth/stripe/client"
 import {
   anonymousClient,
   jwtClient,
@@ -15,8 +14,8 @@ export const authClient = createAuthClient({
     oneTimeTokenClient(),
     anonymousClient(),
     jwtClient(),
-    stripeClient({
-      subscription: true,
-    }),
+    // stripeClient({
+    //   subscription: true,
+    // }),
   ],
 })

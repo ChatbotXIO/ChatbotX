@@ -10,8 +10,6 @@ const editionRule = z
   .enum(["community", "enterprise", "cloud"])
   .default("community")
 
-const _isEnterprise = process.env.NEXT_PUBLIC_EDITION === "enterprise"
-const _isCloud = process.env.NEXT_PUBLIC_EDITION === "cloud"
 const _isCommunity = process.env.NEXT_PUBLIC_EDITION === "community"
 
 const baseEnv = {

@@ -5,18 +5,18 @@ import {
   parseOrderByAsObject,
 } from "@aha.chat/database/utils"
 import { findOrganizationByDomain } from "@/features/organization/queries"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type {
   ListOrganizationMembersRequest,
   ListOrganizationMembersResponse,
-} from "../schema/query"
+} from "../schema"
 
 export const listOrganizationMembersRSC = async (
   input: ListOrganizationMembersRequest,
 ): Promise<ListOrganizationMembersResponse> => {
   const organization = await findOrganizationByDomain()
   if (!organization) {
-    throw new NotfoundException("Organization not found")
+    throw notFoundException("Organization not found")
   }
 
   return await listOrganizationMembers({

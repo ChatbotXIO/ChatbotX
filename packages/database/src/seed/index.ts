@@ -8,7 +8,7 @@ import {
   organizationMemberModel,
   organizationModel,
   userModel,
-} from "../drizzle/schema/schema"
+} from "../drizzle/schema"
 
 async function main() {
   let organization = await db.query.organizationModel.findFirst()

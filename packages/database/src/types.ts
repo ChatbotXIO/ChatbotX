@@ -95,16 +95,6 @@ export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
 
-// export const integrationType = pgEnum("IntegrationType", [
-//   "webchat",
-//   "googleSheets",
-//   "messenger",
-//   "openai",
-//   "gemini",
-//   "whatsapp",
-//   "zalo",
-// ])
-
 export const ReplyType = {
   Message: "R01",
   Flow: "R02",

@@ -10,7 +10,7 @@ import {
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { BaseException } from "@/lib/errors/exception"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
@@ -64,6 +64,6 @@ export const createCustomField = async (
       })
     }
 
-    throw new BaseException("Failed to create custom field")
+    throw new ChatbotXException("Failed to create custom field")
   }
 }

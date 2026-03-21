@@ -8,7 +8,7 @@ import {
 } from "@aha.chat/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { NotfoundException } from "@/lib/errors/exception"
+import { notFoundException } from "@/lib/errors/exception"
 import type { ListAutomatedResponsesRequest } from "../schemas/query"
 import type { AutomatedResponseResource } from "../schemas/resource"
 
@@ -70,7 +70,7 @@ export const findAutomatedResponseOrFail = async (input: {
 }): Promise<AutomatedResponseModel> => {
   const automatedResponse = await findAutomatedResponse(input)
   if (!automatedResponse) {
-    throw new NotfoundException("Automated response not found")
+    throw notFoundException("Automated response not found")
   }
   return automatedResponse
 }
