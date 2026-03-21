@@ -1,10 +1,10 @@
-import { Button, type ButtonProps } from "@aha.chat/ui/components/ui/button"
+import { Button, type ButtonProps } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Slot } from "@radix-ui/react-slot"
 import { useNodeId, useReactFlow } from "@xyflow/react"
 import { EllipsisVertical, Trash } from "lucide-react"

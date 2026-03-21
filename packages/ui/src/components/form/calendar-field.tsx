@@ -1,4 +1,4 @@
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import type { FieldPath, FieldValues } from "react-hook-form"

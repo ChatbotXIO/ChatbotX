@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
-import { aiAgentModel } from "@aha.chat/database/schema"
+import { db, eq } from "@chatbotx.io/database/client"
+import { aiAgentModel } from "@chatbotx.io/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type CreateAIAgentRequest,

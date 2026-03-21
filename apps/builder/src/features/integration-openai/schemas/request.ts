@@ -1,4 +1,4 @@
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
+import type { IntegrationOpenAIModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 import { openaiModels } from "@/features/openai/models"
 

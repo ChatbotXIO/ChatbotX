@@ -1,7 +1,7 @@
 "use client"
 
-import type { SendTextStepSchema } from "@aha.chat/flow-config"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import type { SendTextStepSchema } from "@chatbotx.io/flow-config"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { ButtonGroupViewer } from "../button/viewer"
 
 type SendTextStepViewerProps = {

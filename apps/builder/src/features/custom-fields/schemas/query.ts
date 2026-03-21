@@ -1,5 +1,8 @@
-import { createSelectSchema, customFieldModel } from "@aha.chat/database/schema"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import {
+  createSelectSchema,
+  customFieldModel,
+} from "@chatbotx.io/database/schema"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,

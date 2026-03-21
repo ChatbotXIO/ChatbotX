@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { aiFunctionModel } from "@aha.chat/database/schema"
-import type { AIFunctionModel } from "@aha.chat/database/types"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { aiFunctionModel } from "@chatbotx.io/database/schema"
+import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"

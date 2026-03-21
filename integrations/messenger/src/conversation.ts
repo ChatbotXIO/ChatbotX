@@ -2,7 +2,7 @@ import {
   type AgentMarkAsReadProps,
   SdkException,
   type SendTypingProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { sendPageMessage } from "./apis/page"
 import type { MessengerAuthValue } from "./schemas"
 

@@ -1,7 +1,7 @@
 "use client"
 
-import type { GetUserDataStepSchema } from "@aha.chat/flow-config"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import type { GetUserDataStepSchema } from "@chatbotx.io/flow-config"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { BaseStateViewer } from "../../states/viewer"
 
 const GetUserDataStepViewer = ({ data }: { data: GetUserDataStepSchema }) => {

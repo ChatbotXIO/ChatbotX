@@ -1,6 +1,6 @@
 "use client"
 
-import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { Loader2Icon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"

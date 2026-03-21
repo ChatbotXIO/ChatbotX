@@ -1,4 +1,4 @@
-import type { CustomFieldType } from "@aha.chat/database/types"
+import type { CustomFieldType } from "@chatbotx.io/database/types"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 

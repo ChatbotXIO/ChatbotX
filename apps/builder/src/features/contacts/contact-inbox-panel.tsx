@@ -1,10 +1,10 @@
-import type { ContactNoteModel, TagModel } from "@aha.chat/database/types"
+import type { ContactNoteModel, TagModel } from "@chatbotx.io/database/types"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
+} from "@chatbotx.io/ui/components/ui/accordion"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"

@@ -1,7 +1,7 @@
 "use server"
 
-import { and, arrayContains, db, eq, or } from "@aha.chat/database/client"
-import { folderModel } from "@aha.chat/database/schema"
+import { and, arrayContains, db, eq, or } from "@chatbotx.io/database/client"
+import { folderModel } from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

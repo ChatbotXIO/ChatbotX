@@ -1,4 +1,4 @@
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (

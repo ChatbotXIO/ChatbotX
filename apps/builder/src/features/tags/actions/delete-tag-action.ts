@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
-import { tagModel } from "@aha.chat/database/schema"
-import type { TagModel } from "@aha.chat/database/types"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
+import type { TagModel } from "@chatbotx.io/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

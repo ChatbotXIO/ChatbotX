@@ -1,7 +1,7 @@
-import { Button, buttonVariants } from '@aha.chat/ui/components/ui/button';
-import { Input } from '@aha.chat/ui/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@aha.chat/ui/components/ui/popover';
-import { cn } from '@aha.chat/ui/lib/utils';
+import { Button, buttonVariants } from '@chatbotx.io/ui/components/ui/button';
+import { Input } from '@chatbotx.io/ui/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@chatbotx.io/ui/components/ui/popover';
+import { cn } from '@chatbotx.io/ui/lib/utils';
 import { add, format } from 'date-fns';
 import { type Locale, enUS } from 'date-fns/locale';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@aha.chat/ui/components/ui/select';
+} from '@chatbotx.io/ui/components/ui/select';
 import { DayPicker, type DayPickerProps, type Matcher } from 'react-day-picker';
 
 // ---------- utils start ----------

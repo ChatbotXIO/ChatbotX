@@ -1,10 +1,10 @@
-import type { FlowNode, NodeType } from "@aha.chat/flow-config"
+import type { FlowNode, NodeType } from "@chatbotx.io/flow-config"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import { NodeToolbar, Position } from "@xyflow/react"
 import { PlayCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

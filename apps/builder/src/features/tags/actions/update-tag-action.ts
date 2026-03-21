@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
-import { tagModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
+import { db, eq } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"

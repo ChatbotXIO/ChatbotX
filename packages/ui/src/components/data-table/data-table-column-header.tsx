@@ -9,8 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.ComponentProps<typeof DropdownMenuTrigger> {

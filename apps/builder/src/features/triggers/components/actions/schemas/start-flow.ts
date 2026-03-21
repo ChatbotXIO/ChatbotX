@@ -1,4 +1,4 @@
-import { TriggerAction } from "@aha.chat/database/enums"
+import { TriggerAction } from "@chatbotx.io/database/enums"
 import z from "zod"
 
 export const startFlow = z.object({

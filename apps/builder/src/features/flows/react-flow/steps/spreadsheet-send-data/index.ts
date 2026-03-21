@@ -2,7 +2,7 @@ import {
   type SpreadsheetSendDataSchema,
   spreadsheetSendDataDefaultFn,
   spreadsheetSendDataSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import { SpreadsheetViewer } from "../spreadsheet/viewer"
 import { SpreadsheetSendDataEditor } from "./editor"

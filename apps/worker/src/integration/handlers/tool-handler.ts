@@ -1,16 +1,16 @@
-import { and, db, inArray } from "@aha.chat/database/client"
+import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
+import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,
   type GenerateCodeStepSchema,
   GenerateCodeType,
   type GetDataFromJsonStepSchema,
-} from "@aha.chat/flow-config"
-import { emitCustomFieldChanged } from "@chatbotx/events"
+} from "@chatbotx.io/flow-config"
 import { faker } from "@faker-js/faker"
 import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"

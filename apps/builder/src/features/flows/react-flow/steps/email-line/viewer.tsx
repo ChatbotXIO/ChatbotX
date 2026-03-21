@@ -1,7 +1,7 @@
 "use client"
 
-import type { EmailLineStepSchema } from "@aha.chat/flow-config"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+import type { EmailLineStepSchema } from "@chatbotx.io/flow-config"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 
 type EmailLineStepViewerProps = {
   data: EmailLineStepSchema

@@ -1,6 +1,6 @@
 "use client"
 
-import AreaChart from "@aha.chat/ui/components/charts/area-chart"
+import AreaChart from "@chatbotx.io/ui/components/charts/area-chart"
 import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { useAnalysisStore } from "../../provider/analysis-store-context"

@@ -1,10 +1,10 @@
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { aiEmbeddingModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { aiEmbeddingModel } from "@chatbotx.io/database/schema"
 import type {
   AIEmbeddingModel,
   AIEmbeddingStatus,
-} from "@aha.chat/database/types"
-import type { AIJobProcessPendingEmbedding } from "@aha.chat/worker-config"
+} from "@chatbotx.io/database/types"
+import type { AIJobProcessPendingEmbedding } from "@chatbotx.io/worker-config"
 import { embed } from "ai"
 import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
 import { logger } from "../../lib/logger"

@@ -1,4 +1,4 @@
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import type { MentionOptions } from "@tiptap/extension-mention"
 import { ReactRenderer } from "@tiptap/react"
 import tippy from "tippy.js"

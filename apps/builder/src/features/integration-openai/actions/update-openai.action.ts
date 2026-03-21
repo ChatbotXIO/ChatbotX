@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { integrationOpenAIModel } from "@aha.chat/database/schema"
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { integrationOpenAIModel } from "@chatbotx.io/database/schema"
+import type { IntegrationOpenAIModel } from "@chatbotx.io/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { updateOpenAIRequest } from "../schemas/request"

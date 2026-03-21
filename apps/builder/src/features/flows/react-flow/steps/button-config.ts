@@ -1,4 +1,4 @@
-import { ButtonType } from "@aha.chat/flow-config"
+import { ButtonType } from "@chatbotx.io/flow-config"
 import {
   LinkIcon,
   type LucideIcon,

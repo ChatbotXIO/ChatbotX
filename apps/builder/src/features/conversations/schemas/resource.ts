@@ -1,7 +1,7 @@
 import {
   conversationModel,
   createSelectSchema,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema"
 import { contactResource } from "@/features/contacts/schemas/resource"

@@ -1,4 +1,4 @@
-import { NdjsonSpooler } from "@aha.chat/filesystem/server"
+import { NdjsonSpooler } from "@chatbotx.io/filesystem/server"
 import { buildTmpFilename, getDefaultSpoolerConfig } from "./events-config"
 
 type NdjsonSpoolerInitConfig = {

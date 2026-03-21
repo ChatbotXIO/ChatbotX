@@ -1,17 +1,17 @@
 {
-  "name": "@aha.chat/worker-config",
+  "name": "@chatbotx.io/worker-config",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/flow-config": "workspace:*",
-    "@aha.chat/sdk": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@types/node": "^24.10.4",
     "bullmq": "^5.71.0",

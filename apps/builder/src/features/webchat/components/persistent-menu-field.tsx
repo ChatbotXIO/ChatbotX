@@ -1,22 +1,22 @@
-import { PersistentMenuType } from "@aha.chat/database/types"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
+import { PersistentMenuType } from "@chatbotx.io/database/types"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/accordion"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
-import { Label } from "@aha.chat/ui/components/ui/label"
+} from "@chatbotx.io/ui/components/ui/card"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useMemo } from "react"

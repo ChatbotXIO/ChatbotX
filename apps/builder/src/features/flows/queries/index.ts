@@ -1,7 +1,10 @@
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
-import { rootFolderId } from "@aha.chat/database/enums"
-import { flowModel } from "@aha.chat/database/schema"
-import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import { flowModel } from "@chatbotx.io/database/schema"
+import {
+  parseOrderByAsObject,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { notFoundException } from "@/lib/errors/exception"
 import type {

@@ -1,13 +1,13 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
-} from "@aha.chat/database/schema"
-import type { CustomFieldModel } from "@aha.chat/database/types"
-import { FieldOperationType } from "@aha.chat/flow-config"
-import { emitCustomFieldChanged } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
+import type { CustomFieldModel } from "@chatbotx.io/database/types"
+import { emitCustomFieldChanged } from "@chatbotx.io/events"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

@@ -1,6 +1,6 @@
 import type * as React from "react"
 
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (

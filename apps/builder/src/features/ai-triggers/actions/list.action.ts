@@ -1,9 +1,9 @@
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
-import { aiTriggerModel } from "@aha.chat/database/schema"
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/utils"
 import type {
   AITriggerCollection,
   ListAITriggersRequest,

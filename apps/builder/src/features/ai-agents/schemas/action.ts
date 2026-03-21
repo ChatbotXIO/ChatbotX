@@ -1,5 +1,5 @@
-import { AIMessageRole } from "@aha.chat/database/types"
-import { aiProviders } from "@aha.chat/flow-config"
+import { AIMessageRole } from "@chatbotx.io/database/types"
+import { aiProviders } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
 import { openaiChatModels } from "@/features/openai/models"

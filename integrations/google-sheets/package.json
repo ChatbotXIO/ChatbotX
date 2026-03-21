@@ -1,17 +1,17 @@
 {
-  "name": "@aha.chat/integration-google-sheets",
+  "name": "@chatbotx.io/integration-google-sheets",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
-    "@aha.chat/logger": "workspace:*",
-    "@aha.chat/sdk": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
     "google-auth-library": "^10.6.2",
     "googleapis": "^171.4.0"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
     "typescript": "5.9.3"
   },

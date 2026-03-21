@@ -5,8 +5,8 @@ import {
   MoreHorizontalIcon,
 } from "lucide-react"
 
-import { cn } from "@aha.chat/ui/lib/utils"
-import { type Button, buttonVariants } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { type Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (

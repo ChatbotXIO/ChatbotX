@@ -1,20 +1,20 @@
 "use client"
 
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
-import { FieldLabel } from "@aha.chat/ui/components/ui/field"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { FieldLabel } from "@chatbotx.io/ui/components/ui/field"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 // biome-ignore lint/performance/noNamespaceImport: safe import

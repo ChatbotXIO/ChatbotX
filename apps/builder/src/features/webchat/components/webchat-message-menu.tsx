@@ -1,14 +1,14 @@
 "use client"
 
-import { PersistentMenuType } from "@aha.chat/database/types"
-import { MessageType } from "@aha.chat/sdk"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { PersistentMenuType } from "@chatbotx.io/database/types"
+import { MessageType } from "@chatbotx.io/sdk"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { createId } from "@paralleldrive/cuid2"
 import { MenuIcon } from "lucide-react"
 import Link from "next/link"

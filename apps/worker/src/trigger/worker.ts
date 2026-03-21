@@ -1,11 +1,11 @@
-import { SdkException } from "@aha.chat/sdk"
+import { SdkException } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
   getRedisConnection,
   queueName,
   TriggerJobAction,
   type TriggerJobData,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { TriggerExecutorService } from "./services/trigger-executor.service"

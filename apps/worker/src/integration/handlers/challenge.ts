@@ -1,6 +1,6 @@
-import type { FlowNode } from "@aha.chat/flow-config"
-import { initVariables, SdkException } from "@aha.chat/sdk"
-import type { IntegrationJobRunChallenge } from "@aha.chat/worker-config"
+import type { FlowNode } from "@chatbotx.io/flow-config"
+import { initVariables, SdkException } from "@chatbotx.io/sdk"
+import type { IntegrationJobRunChallenge } from "@chatbotx.io/worker-config"
 import { findConversationAndFlowVersion } from "../../lib/db"
 import { runStepsAndQuickReplies } from "./flow"
 

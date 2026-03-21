@@ -1,6 +1,6 @@
-import { ConversationStatus } from "@aha.chat/database/enums"
-import { inboxType } from "@aha.chat/database/schema"
-import { Omnichannel } from "@aha.chat/database/types"
+import { ConversationStatus } from "@chatbotx.io/database/enums"
+import { inboxType } from "@chatbotx.io/database/schema"
+import { Omnichannel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 

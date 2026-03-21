@@ -1,9 +1,9 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { aiEmbeddingModel, aiFileModel } from "@aha.chat/database/schema"
-import type { AIFileModel } from "@aha.chat/database/types"
-import { uploader } from "@aha.chat/filesystem"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
+import type { AIFileModel } from "@chatbotx.io/database/types"
+import { uploader } from "@chatbotx.io/filesystem"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"

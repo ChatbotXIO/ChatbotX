@@ -1,11 +1,11 @@
-import { SdkException } from "@aha.chat/sdk"
+import { SdkException } from "@chatbotx.io/sdk"
 import {
   AnalyticsJobData,
   analyticsQueue,
   defaultWorkerOptions,
   getRedisConnection,
   queueName,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"

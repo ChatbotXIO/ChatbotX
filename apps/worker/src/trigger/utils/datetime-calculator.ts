@@ -1,4 +1,4 @@
-import type { DateTimeTriggerType } from "@aha.chat/database/enums"
+import type { DateTimeTriggerType } from "@chatbotx.io/database/enums"
 import { addDays, addHours, subDays, subHours } from "date-fns"
 
 export type DateTimeOperator = "before" | "after" | "atTheDayOf"

@@ -1,4 +1,4 @@
-import type { FlowNode } from "@aha.chat/flow-config"
+import type { FlowNode } from "@chatbotx.io/flow-config"
 import { useMemo } from "react"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { useFlowStore } from "./flow-store-context"

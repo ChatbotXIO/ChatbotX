@@ -1,4 +1,4 @@
-import { FolderType } from "@aha.chat/database/enums"
+import { FolderType } from "@chatbotx.io/database/enums"
 import type { ReactNode } from "react"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 

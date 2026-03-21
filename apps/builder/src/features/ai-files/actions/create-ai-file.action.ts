@@ -1,8 +1,8 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { aiFileModel } from "@aha.chat/database/schema"
-import { AIJobAction, aiAgentQueue } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import { aiFileModel } from "@chatbotx.io/database/schema"
+import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"

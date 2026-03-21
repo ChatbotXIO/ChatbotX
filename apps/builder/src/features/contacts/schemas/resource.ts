@@ -1,5 +1,5 @@
-import { contactModel, createSelectSchema } from "@aha.chat/database/schema"
-import type { CustomFieldType } from "@aha.chat/database/types"
+import { contactModel, createSelectSchema } from "@chatbotx.io/database/schema"
+import type { CustomFieldType } from "@chatbotx.io/database/types"
 import type { LucideIcon } from "lucide-react"
 import type { z } from "zod"
 

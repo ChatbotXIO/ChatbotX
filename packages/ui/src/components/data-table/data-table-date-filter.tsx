@@ -5,15 +5,15 @@ import { CalendarIcon, XCircle } from "lucide-react"
 import * as React from "react"
 import type { DateRange } from "react-day-picker"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Calendar } from "@aha.chat/ui/components/ui/calendar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Calendar } from "@chatbotx.io/ui/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
-import { formatDate } from "@aha.chat/ui/lib/format"
+} from "@chatbotx.io/ui/components/ui/popover"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
+import { formatDate } from "@chatbotx.io/ui/lib/format"
 
 type DateSelection = Date[] | DateRange
 

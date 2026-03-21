@@ -2,9 +2,9 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"

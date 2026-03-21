@@ -1,8 +1,8 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
-import { sendMessageNodeDefaultFn } from "@aha.chat/flow-config"
+import { db } from "@chatbotx.io/database/client"
+import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
+import { sendMessageNodeDefaultFn } from "@chatbotx.io/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

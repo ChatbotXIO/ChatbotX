@@ -2,7 +2,7 @@ import {
   type EmailButtonStepSchema,
   emailButtonStepDefaultFn,
   emailButtonStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import EmailButtonStepEditor from "./editor"
 import EmailButtonStepViewer from "./viewer"

@@ -1,4 +1,4 @@
-import { Condition } from "@aha.chat/database/enums"
+import { Condition } from "@chatbotx.io/database/enums"
 import z from "zod"
 
 export const tagApplied = z.object({

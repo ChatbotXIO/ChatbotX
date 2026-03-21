@@ -3,7 +3,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import { ChatbotMembersTable } from "@/features/chatbot-members/chatbot-members-table"
 import { getAgents } from "@/features/chatbot-members/queries"

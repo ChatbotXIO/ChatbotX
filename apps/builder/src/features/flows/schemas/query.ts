@@ -1,4 +1,4 @@
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsBoolean,

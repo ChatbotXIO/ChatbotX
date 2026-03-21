@@ -1,8 +1,8 @@
-import { AIMcpServerAuthType } from "@aha.chat/database/types"
 import {
   experimental_createMCPClient,
   type experimental_MCPClient,
 } from "@ai-sdk/mcp"
+import { AIMcpServerAuthType } from "@chatbotx.io/database/types"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import z from "zod"
 import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"

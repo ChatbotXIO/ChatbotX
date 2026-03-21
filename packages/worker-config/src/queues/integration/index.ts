@@ -1,5 +1,8 @@
-import type { ContactModel, ConversationModel } from "@aha.chat/database/types"
-import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
+import type {
+  ContactModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
+import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,

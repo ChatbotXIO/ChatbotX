@@ -1,7 +1,7 @@
 import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
 import type * as React from "react"
 
-import { DataTablePagination } from "@aha.chat/ui/components/data-table/data-table-pagination"
+import { DataTablePagination } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
 import {
   Table,
   TableBody,
@@ -9,9 +9,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@aha.chat/ui/components/ui/table"
-import { getCommonPinningStyles } from "@aha.chat/ui/lib/data-table"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/table"
+import { getCommonPinningStyles } from "@chatbotx.io/ui/lib/data-table"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>

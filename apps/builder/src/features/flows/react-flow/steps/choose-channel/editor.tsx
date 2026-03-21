@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { InboxIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useConfiguredInboxTypeOptions } from "@/features/inboxes/provider/inbox-hook"

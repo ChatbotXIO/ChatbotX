@@ -1,7 +1,7 @@
 import * as ListboxPrimitive from "@diceui/listbox";
 import { Check } from "lucide-react";
 import type * as React from "react";
-import { cn } from "@aha.chat/ui/lib/utils";
+import { cn } from "@chatbotx.io/ui/lib/utils";
 
 const Listbox = (({
   className,

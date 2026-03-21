@@ -1,15 +1,15 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
-} from "@aha.chat/database/schema"
-import type { IntegrationGoogleSheetsModel } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/schema"
+import type { IntegrationGoogleSheetsModel } from "@chatbotx.io/database/types"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGoogleSheets,
-} from "@aha.chat/integration-google-sheets"
+} from "@chatbotx.io/integration-google-sheets"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

@@ -2,7 +2,7 @@ import * as ComboboxPrimitive from "@diceui/combobox"
 import { Check, ChevronDown, X } from "lucide-react"
 import * as React from "react"
 
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 const Combobox = React.forwardRef<
   React.ComponentRef<typeof ComboboxPrimitive.Root>,

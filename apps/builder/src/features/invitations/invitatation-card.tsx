@@ -5,14 +5,14 @@ import type {
   InvitationModel,
   OrganizationModel,
   UserModel,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"

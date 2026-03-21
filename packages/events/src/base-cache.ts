@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import { getRedisConnection } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { LRUCache } from "lru-cache"
 
 type CacheEntry = {

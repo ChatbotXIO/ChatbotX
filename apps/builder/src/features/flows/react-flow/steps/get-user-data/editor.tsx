@@ -5,12 +5,12 @@ import {
   getUserDataStepDefaultFn,
   getUserDataStepSchema,
   ReplyFormat,
-} from "@aha.chat/flow-config"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/flow-config"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { KeyboardIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"

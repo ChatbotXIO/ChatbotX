@@ -1,13 +1,13 @@
-import { findOrFail } from "@aha.chat/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationGoogleSheetsModel,
   spreadsheetModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import type {
   IntegrationGoogleSheetsModel,
   SpreadsheetModel,
-} from "@aha.chat/database/types"
-import type { GoogleSheetsAuthValue } from "@aha.chat/integration-google-sheets"
+} from "@chatbotx.io/database/types"
+import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { integrations } from "@/integration"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {

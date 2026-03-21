@@ -1,7 +1,7 @@
-import { keys as database } from "@aha.chat/database/keys"
-import { keys as mail } from "@aha.chat/mail/keys"
-import { keys as partysocket } from "@aha.chat/partysocket-config/keys"
 import { keys as clickhouse } from "@chatbotx.io/clickhouse/keys"
+import { keys as database } from "@chatbotx.io/database/keys"
+import { keys as mail } from "@chatbotx.io/mail/keys"
+import { keys as partysocket } from "@chatbotx.io/partysocket-config/keys"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
 
@@ -48,20 +48,12 @@ const authEnv = {
   },
 }
 
-const billingEnv = {
-  server: {
-    STRIPE_SECRET_KEY: z.string(),
-    STRIPE_WEBHOOK_SECRET: z.string(),
-  },
-}
-
 export const env = createEnv({
   extends: [partysocket(), database(), mail(), clickhouse()],
   server: {
     ...baseEnv.server,
     ...googleAuthEnv.server,
     ...authEnv.server,
-    ...(_isCommunity ? {} : billingEnv.server),
   },
   client: {
     ...baseEnv.client,

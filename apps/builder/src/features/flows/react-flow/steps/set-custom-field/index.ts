@@ -2,7 +2,7 @@ import {
   type SetCustomFieldStepSchema,
   setCustomFieldStepDefaultFn,
   setCustomFieldStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import SetCustomFieldStepEditor from "./editor"
 import SetCustomFieldStepViewer from "./viewer"

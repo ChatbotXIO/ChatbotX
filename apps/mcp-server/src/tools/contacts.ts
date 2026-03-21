@@ -21,7 +21,7 @@ import {
   updateContactCustomFieldValue,
   updateContactCustomFieldValueInputSchema,
   updateContactTagInputSchema,
-} from "@chatbotx/public-apis"
+} from "@chatbotx.io/public-apis"
 import { formatResult } from "../utils"
 
 const getErrorMessage = (error: unknown): string => {

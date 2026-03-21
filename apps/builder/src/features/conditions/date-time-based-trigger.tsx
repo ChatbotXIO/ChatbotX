@@ -1,6 +1,9 @@
-import { CustomFieldType, DateTimeTriggerType } from "@aha.chat/database/enums"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import {
+  CustomFieldType,
+  DateTimeTriggerType,
+} from "@chatbotx.io/database/enums"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"

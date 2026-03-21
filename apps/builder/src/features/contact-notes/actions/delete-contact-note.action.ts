@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, findOrFail } from "@aha.chat/database/client"
-import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
+import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
+import type { ContactModel } from "@chatbotx.io/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

@@ -1,7 +1,7 @@
 "use client"
 
-import type { AIEmbeddingStatus } from "@aha.chat/database/types"
-import { Badge } from "@aha.chat/ui/components/ui/badge"
+import type { AIEmbeddingStatus } from "@chatbotx.io/database/types"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
 

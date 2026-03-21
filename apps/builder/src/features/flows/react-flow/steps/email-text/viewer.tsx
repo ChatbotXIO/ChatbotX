@@ -1,7 +1,7 @@
 "use client"
 
-import type { EmailTextStepSchema } from "@aha.chat/flow-config"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import type { EmailTextStepSchema } from "@chatbotx.io/flow-config"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 
 type EmailTextStepViewerProps = {
   data: EmailTextStepSchema

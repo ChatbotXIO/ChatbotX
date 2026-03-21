@@ -1,8 +1,8 @@
 "use client"
 
-import { useComposedRefs } from "@aha.chat/ui/lib/compose-refs"
-import { cn } from "@aha.chat/ui/lib/utils"
-import { VisuallyHiddenInput } from "@aha.chat/ui/components/visually-hidden-input"
+import { useComposedRefs } from "@chatbotx.io/ui/lib/compose-refs"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { VisuallyHiddenInput } from "@chatbotx.io/ui/components/visually-hidden-input"
 import { Slot } from "@radix-ui/react-slot"
 import * as React from "react"
 

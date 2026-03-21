@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { useCallbackRef } from "@aha.chat/ui/hooks/use-callback-ref"
+import { useCallbackRef } from "@chatbotx.io/ui/hooks/use-callback-ref"
 
 export function useDebouncedCallback<T extends (...args: never[]) => unknown>(
   callback: T,

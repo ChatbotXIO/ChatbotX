@@ -1,6 +1,9 @@
-import { db } from "@aha.chat/database/client"
-import { AIMessageRole, type ConversationModel } from "@aha.chat/database/types"
-import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
+import { db } from "@chatbotx.io/database/client"
+import {
+  AIMessageRole,
+  type ConversationModel,
+} from "@chatbotx.io/database/types"
+import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import type { ModelMessage } from "ai"
 import { maxConversationHistory } from "../automated-response/constants"
 

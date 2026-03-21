@@ -1,6 +1,6 @@
-import { db } from "@aha.chat/database/client"
-import { auditLogModel } from "@aha.chat/database/schema"
-import type { JobSendAuditLog } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import { auditLogModel } from "@chatbotx.io/database/schema"
+import type { JobSendAuditLog } from "@chatbotx.io/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { env } from "../../env"
 

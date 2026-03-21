@@ -7,10 +7,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@aha.chat/ui/components/ui/form";
-import { Input } from "@aha.chat/ui/components/ui/input";
-import { Badge } from "@aha.chat/ui/components/ui/badge";
-import { cn } from "@aha.chat/ui/lib/utils";
+} from "@chatbotx.io/ui/components/ui/form";
+import { Input } from "@chatbotx.io/ui/components/ui/input";
+import { Badge } from "@chatbotx.io/ui/components/ui/badge";
+import { cn } from "@chatbotx.io/ui/lib/utils";
 import {
   type ReactNode,
   useState,

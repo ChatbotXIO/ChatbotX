@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { integrationGeminiModel } from "@aha.chat/database/schema"
-import type { IntegrationGeminiModel } from "@aha.chat/database/types"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { integrationGeminiModel } from "@chatbotx.io/database/schema"
+import type { IntegrationGeminiModel } from "@chatbotx.io/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

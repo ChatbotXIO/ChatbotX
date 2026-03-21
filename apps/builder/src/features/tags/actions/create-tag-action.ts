@@ -1,8 +1,8 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { tagModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
+import { db } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

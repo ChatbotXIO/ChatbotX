@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import { findOrganizationByDomain } from "@/features/organization/queries"
 import { notFoundException } from "@/lib/errors/exception"
 import type { ListPlansRequest, ListPlansResponse } from "../schemas/query"

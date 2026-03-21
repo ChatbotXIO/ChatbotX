@@ -2,7 +2,7 @@ import {
   type SplitTrafficStepSchema,
   splitTrafficStepDefaultFn,
   splitTrafficStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import SplitTrafficStepEditor from "./editor"
 import SplitTrafficStepViewer from "./viewer"

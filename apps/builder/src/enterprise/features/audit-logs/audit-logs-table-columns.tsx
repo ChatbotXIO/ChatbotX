@@ -1,16 +1,16 @@
 "use client"
 
-import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
+} from "@chatbotx.io/ui/components/ui/avatar"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import type { AuditLogResource } from "./schemas"

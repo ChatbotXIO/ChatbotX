@@ -1,7 +1,7 @@
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { conversationModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
-import { emitConversationTransferredToHuman } from "@chatbotx/events"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
+import { emitConversationTransferredToHuman } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

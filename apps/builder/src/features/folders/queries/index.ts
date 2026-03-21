@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
+import { db } from "@chatbotx.io/database/client"
+import type { FolderModel, FolderType } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,

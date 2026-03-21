@@ -1,4 +1,4 @@
-import { createSelectSchema, planModel } from "@aha.chat/database/schema"
+import { createSelectSchema, planModel } from "@chatbotx.io/database/schema"
 import type z from "zod"
 
 export const planResource = createSelectSchema(planModel)

@@ -1,6 +1,6 @@
 "use client"
 
-import type { EmailImageStepSchema } from "@aha.chat/flow-config"
+import type { EmailImageStepSchema } from "@chatbotx.io/flow-config"
 import Image from "next/image"
 
 type EmailImageStepViewerProps = {

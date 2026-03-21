@@ -2,13 +2,13 @@ import {
   type SendImageStepSchema,
   type SendTextStepSchema,
   StepType,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import {
   ContentType,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { Audio, Document, Image, Text, Video } from "whatsapp-api-js/messages"
 import type {
   ClientMessage,

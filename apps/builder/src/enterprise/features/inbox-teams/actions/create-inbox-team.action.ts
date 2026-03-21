@@ -1,7 +1,10 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
+import { db } from "@chatbotx.io/database/client"
+import {
+  inboxTeamMemberModel,
+  inboxTeamModel,
+} from "@chatbotx.io/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

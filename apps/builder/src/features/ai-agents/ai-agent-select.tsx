@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
 type AIAgentSelectProps = {

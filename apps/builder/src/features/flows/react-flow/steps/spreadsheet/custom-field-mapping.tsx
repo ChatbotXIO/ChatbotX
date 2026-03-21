@@ -1,7 +1,7 @@
 "use client"
 
-import { spreadsheetMappingDefaultFn } from "@aha.chat/flow-config"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { spreadsheetMappingDefaultFn } from "@chatbotx.io/flow-config"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"

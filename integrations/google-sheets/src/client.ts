@@ -1,4 +1,4 @@
-import type { Oauth2AuthValue } from "@aha.chat/sdk"
+import type { Oauth2AuthValue } from "@chatbotx.io/sdk"
 import { OAuth2Client } from "google-auth-library"
 import { google } from "googleapis"
 import type { GoogleSheetsConfig } from "./schemas"

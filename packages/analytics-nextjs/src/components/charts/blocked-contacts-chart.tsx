@@ -1,6 +1,6 @@
 "use client"
 
-import BarChart from "@aha.chat/ui/components/charts/bar-chart"
+import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { useTranslations } from "next-intl"
 
 export function BlockedContactsChart() {

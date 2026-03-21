@@ -1,4 +1,4 @@
-import type { FolderModel } from "@aha.chat/database/types"
+import type { FolderModel } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"

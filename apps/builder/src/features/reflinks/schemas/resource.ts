@@ -1,4 +1,4 @@
-import { createSelectSchema, reflinkModel } from "@aha.chat/database/schema"
+import { createSelectSchema, reflinkModel } from "@chatbotx.io/database/schema"
 import type z from "zod"
 
 export const reflinkResource = createSelectSchema(reflinkModel)

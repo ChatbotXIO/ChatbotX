@@ -1,8 +1,8 @@
 "use server"
 
-import { db, findOrFail } from "@aha.chat/database/client"
-import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
-import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
+import type { FlowModel, FlowVersionModel } from "@chatbotx.io/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,

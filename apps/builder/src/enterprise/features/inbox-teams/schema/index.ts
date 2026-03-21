@@ -1,8 +1,11 @@
-import { createSelectSchema, inboxTeamModel } from "@aha.chat/database/schema"
+import {
+  createSelectSchema,
+  inboxTeamModel,
+} from "@chatbotx.io/database/schema"
 import type {
   InboxTeamMemberModel,
   InboxTeamModel,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import { z } from "zod"
 import type { UserResource } from "@/features/users/schemas/resource"
 

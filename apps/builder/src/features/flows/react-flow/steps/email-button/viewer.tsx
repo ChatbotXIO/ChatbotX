@@ -1,6 +1,6 @@
 "use client"
 
-import type { EmailButtonStepSchema } from "@aha.chat/flow-config"
+import type { EmailButtonStepSchema } from "@chatbotx.io/flow-config"
 
 type EmailButtonStepViewerProps = {
   data: EmailButtonStepSchema

@@ -1,11 +1,11 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { planModel } from "@aha.chat/database/schema"
+import { db } from "@chatbotx.io/database/client"
+import { planModel } from "@chatbotx.io/database/schema"
 import {
   type OrganizationModel,
   organizationSettingsSchema,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { invalidOrganizationSettingsError } from "@/features/organization/utils"
 import { organizationActionClient } from "@/lib/safe-action"
