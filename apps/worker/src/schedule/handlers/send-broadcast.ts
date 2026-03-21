@@ -1,9 +1,9 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
   IntegrationJobAction,
   integrationQueue,
   type ScheduleJobBroadcast,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 
 export const sendBroadcast = async (data: ScheduleJobBroadcast) => {
   const broadcasts = await db.query.broadcastModel.findMany({

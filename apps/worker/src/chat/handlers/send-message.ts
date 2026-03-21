@@ -1,15 +1,15 @@
-import { findOrFail } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
 import type {
   ContactModel,
   ConversationModel,
   IntegrationType,
-} from "@aha.chat/database/types"
-import type { SendFlowStepData } from "@aha.chat/sdk"
+} from "@chatbotx.io/database/types"
+import type { SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"

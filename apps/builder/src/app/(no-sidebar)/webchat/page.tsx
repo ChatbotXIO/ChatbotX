@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { notFound } from "next/navigation"
 import z from "zod"

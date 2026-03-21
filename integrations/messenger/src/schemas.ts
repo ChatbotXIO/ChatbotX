@@ -4,7 +4,7 @@ import type {
   Oauth2AuthValue,
   Oauth2Config,
   SendFlowStepProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"

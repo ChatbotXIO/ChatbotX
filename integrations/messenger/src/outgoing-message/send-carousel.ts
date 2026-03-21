@@ -1,5 +1,5 @@
-import type { SendCarouselStepSchema } from "@aha.chat/flow-config"
-import type { SendFlowStepProps } from "@aha.chat/sdk"
+import type { SendCarouselStepSchema } from "@chatbotx.io/flow-config"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
 import type { MessengerAuthValue } from "../schemas"
 import { getButtonTemplate } from "./send-button"

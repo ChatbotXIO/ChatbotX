@@ -1,8 +1,8 @@
 import {
   encodeButtonPayload,
   type SendImageStepSchema,
-} from "@aha.chat/flow-config"
-import type { SendFlowStepProps } from "@aha.chat/sdk"
+} from "@chatbotx.io/flow-config"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
 import {
   ActionButtons,

@@ -5,7 +5,7 @@ import {
   type IntegrationJobData,
   integrationQueue,
   queueName,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"

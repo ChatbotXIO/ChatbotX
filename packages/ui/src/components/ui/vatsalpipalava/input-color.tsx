@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@aha.chat/ui/components/ui/button";
+import { Button } from "@chatbotx.io/ui/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover";
+} from "@chatbotx.io/ui/components/ui/popover";
 import { HexColorPicker, HexAlphaColorPicker } from "react-colorful";
 import {
   Select,
@@ -13,9 +13,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select";
-import { Input } from "@aha.chat/ui/components/ui/input";
-import { Label } from "@aha.chat/ui/components/ui/label";
+} from "@chatbotx.io/ui/components/ui/select";
+import { Input } from "@chatbotx.io/ui/components/ui/input";
+import { Label } from "@chatbotx.io/ui/components/ui/label";
 import { Loader2, PipetteIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -27,9 +27,9 @@ import {
   rgbaToHex,
   rgbaToHsla,
   hslaToRgba,
-} from "@aha.chat/ui/components/ui/vatsalpipalava/color-converter";
+} from "@chatbotx.io/ui/components/ui/vatsalpipalava/color-converter";
 import { z } from "zod";
-import { cn } from "@aha.chat/ui/lib/utils";
+import { cn } from "@chatbotx.io/ui/lib/utils";
 
 export const colorSchema = z
   .string()

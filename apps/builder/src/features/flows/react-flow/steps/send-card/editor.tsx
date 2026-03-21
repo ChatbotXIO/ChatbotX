@@ -1,6 +1,6 @@
 "use client"
 
-import { Input } from "@aha.chat/ui/components/ui/input"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"

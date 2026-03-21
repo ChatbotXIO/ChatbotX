@@ -1,4 +1,4 @@
-import { StepType } from "@aha.chat/flow-config"
+import { StepType } from "@chatbotx.io/flow-config"
 import { memo } from "react"
 import { addContactNotesStep } from "./add-contact-notes"
 import { addContactTagStep } from "./add-contact-tag"

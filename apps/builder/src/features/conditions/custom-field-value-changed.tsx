@@ -1,14 +1,14 @@
-import { CustomFieldType, Operator } from "@aha.chat/database/enums"
-import { DateTimePicker } from "@aha.chat/ui/components/ui/date-picker"
-import { Input } from "@aha.chat/ui/components/ui/input"
+import { CustomFieldType, Operator } from "@chatbotx.io/database/enums"
+import { DateTimePicker } from "@chatbotx.io/ui/components/ui/date-picker"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select"
-import { Textarea } from "@aha.chat/ui/components/ui/textarea"
+} from "@chatbotx.io/ui/components/ui/select"
+import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { Controller, useFormContext } from "react-hook-form"

@@ -1,10 +1,10 @@
 "use server"
 
-import { uploader } from "@aha.chat/filesystem"
+import { uploader } from "@chatbotx.io/filesystem"
 import type {
   CreateMessageTemplateProps,
   WhatsappAuthValue,
-} from "@aha.chat/integration-whatsapp"
+} from "@chatbotx.io/integration-whatsapp"
 import slugify from "@sindresorhus/slugify"
 import {
   type ChatbotIdRequestParams,

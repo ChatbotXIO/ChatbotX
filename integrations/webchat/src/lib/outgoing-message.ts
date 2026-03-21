@@ -1,4 +1,4 @@
-import type { SendMessageProps, SendTypingProps } from "@aha.chat/sdk"
+import type { SendMessageProps, SendTypingProps } from "@chatbotx.io/sdk"
 import ky from "ky"
 import type { WebchatAuthValue } from "../schemas"
 

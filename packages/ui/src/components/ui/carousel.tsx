@@ -6,8 +6,8 @@ import useEmblaCarousel, {
 } from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
-import { cn } from "@aha.chat/ui/lib/utils"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>

@@ -1,4 +1,4 @@
-import type { Oauth2Config } from "@aha.chat/sdk"
+import type { Oauth2Config } from "@chatbotx.io/sdk"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"

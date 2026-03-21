@@ -3,25 +3,25 @@
 import {
   ConversationStarterType,
   PersistentMenuType,
-} from "@aha.chat/database/types"
-import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
+} from "@chatbotx.io/database/types"
+import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { DialogFooter } from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+} from "@chatbotx.io/ui/components/ui/accordion"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"

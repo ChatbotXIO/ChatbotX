@@ -1,4 +1,4 @@
-import { ScheduleJobData, scheduleQueue } from "@aha.chat/worker-config"
+import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
 import { Queue } from "bullmq"
 
 export const registerSchedules = async () => {

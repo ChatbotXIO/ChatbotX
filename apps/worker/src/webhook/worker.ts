@@ -4,7 +4,7 @@ import {
   queueName,
   WebhookJobAction,
   type WebhookJobData,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"

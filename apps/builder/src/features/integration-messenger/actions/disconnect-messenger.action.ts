@@ -1,14 +1,14 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { InboxStatus } from "@aha.chat/database/enums"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { InboxStatus } from "@chatbotx.io/database/enums"
 import {
   inboxModel,
   integrationMessengerModel,
-} from "@aha.chat/database/schema"
-import type { IntegrationMessengerModel } from "@aha.chat/database/types"
-import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
-import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
+} from "@chatbotx.io/database/schema"
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import { unsubscribePageFromAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

@@ -1,11 +1,11 @@
-import { Condition, TriggerAction } from "@aha.chat/database/enums"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Condition, TriggerAction } from "@chatbotx.io/database/enums"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import { XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"

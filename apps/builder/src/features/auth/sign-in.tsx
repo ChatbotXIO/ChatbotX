@@ -1,6 +1,10 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@chatbotx.io/ui/components/ui/card"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import SSOSignIn from "@/features/auth/sso-sign-in"

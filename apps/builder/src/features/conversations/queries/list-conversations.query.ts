@@ -11,7 +11,7 @@ import {
   isNull,
   type SQL,
   sql,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   conversationModel,
@@ -19,9 +19,9 @@ import {
   inboxTeamModel,
   messageModel,
   userModel,
-} from "@aha.chat/database/schema"
-import type { InboxType } from "@aha.chat/database/types"
-import { getPaginationWithDefaults } from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/schema"
+import type { InboxType } from "@chatbotx.io/database/types"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import type {
   FindConversationSchema,
   ListConversationsRequest,

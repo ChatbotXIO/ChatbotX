@@ -3,7 +3,7 @@
 import {
   type RealtimeEventData,
   RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+} from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
 import type { MessageResource } from "../messages/schemas"

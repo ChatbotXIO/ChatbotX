@@ -6,8 +6,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@aha.chat/ui/components/ui/form"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/form"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { TiptapEditor } from "./tiptap-editor"

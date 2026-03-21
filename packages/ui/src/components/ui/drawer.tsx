@@ -3,7 +3,7 @@
 import type * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 function Drawer({
   ...props

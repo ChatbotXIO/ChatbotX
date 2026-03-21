@@ -1,4 +1,4 @@
-import type { ChatbotXAPI } from "@chatbotx/public-apis"
+import type { ChatbotXAPI } from "@chatbotx.io/public-apis"
 import {
   createTag as createTagApi,
   deleteTag as deleteTagApi,
@@ -6,7 +6,7 @@ import {
   showTag as showTagApi,
   showTagByName as showTagByNameApi,
   updateTag as updateTagApi,
-} from "@chatbotx/public-apis"
+} from "@chatbotx.io/public-apis"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 

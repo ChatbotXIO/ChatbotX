@@ -1,9 +1,9 @@
-import { db, sql } from "@aha.chat/database/client"
+import { db, sql } from "@chatbotx.io/database/client"
 import {
   triggerContactHistoryModel,
   triggerStatsModel,
-} from "@aha.chat/database/schema"
-import { setTriggerExecutionContext } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
+import { setTriggerExecutionContext } from "@chatbotx.io/events"
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"

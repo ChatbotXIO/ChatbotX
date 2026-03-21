@@ -1,9 +1,9 @@
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useReactFlow } from "@xyflow/react"
 import { TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

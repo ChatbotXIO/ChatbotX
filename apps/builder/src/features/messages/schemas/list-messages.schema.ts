@@ -1,4 +1,4 @@
-import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
 import { z } from "zod"
 
 export const listMessagesRequest = z.object({

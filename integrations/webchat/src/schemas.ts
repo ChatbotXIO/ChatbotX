@@ -1,4 +1,4 @@
-import type { CustomAuthValue } from "@aha.chat/sdk"
+import type { CustomAuthValue } from "@chatbotx.io/sdk"
 
 export type WebchatAuthValue = CustomAuthValue & {
   websocketUrl: string

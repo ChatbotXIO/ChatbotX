@@ -1,13 +1,13 @@
 "use client"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
-import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
+import type { OrganizationSettings } from "@chatbotx.io/database/types"
+import type { FacebookPage } from "@chatbotx.io/integration-messenger/schemas"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"

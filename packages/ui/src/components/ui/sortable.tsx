@@ -39,8 +39,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
 
-import { useComposedRefs } from "@aha.chat/ui/lib/compose-refs";
-import { cn } from "@aha.chat/ui/lib/utils";
+import { useComposedRefs } from "@chatbotx.io/ui/lib/compose-refs";
+import { cn } from "@chatbotx.io/ui/lib/utils";
 import * as ReactDOM from "react-dom";
 
 const orientationConfig = {

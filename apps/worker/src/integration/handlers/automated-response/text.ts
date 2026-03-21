@@ -2,7 +2,7 @@ import {
   type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { SUPPORTED_IMAGE_EXTENSIONS } from "./constants"
 
 // Precompiled regex literals (top-level for performance)

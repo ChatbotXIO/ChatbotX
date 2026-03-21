@@ -1,10 +1,10 @@
-import type { FlowNode } from "@aha.chat/flow-config"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { FlowNode } from "@chatbotx.io/flow-config"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { createId } from "@paralleldrive/cuid2"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon } from "lucide-react"

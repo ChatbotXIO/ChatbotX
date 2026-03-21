@@ -8,12 +8,12 @@ import StarterKit from "@tiptap/starter-kit"
 import emojiSuggestion from "./extensions/emoij/suggestion"
 import variableInjectionSuggestion from "./extensions/variable-injection/suggestion"
 import "./tiptap-editor.css"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
 import { CodeXml, Smile } from "lucide-react"
 import { useEffect, useState } from "react"

@@ -1,5 +1,5 @@
-import type { ChatbotXAPI } from "@chatbotx/public-apis"
-import { listFlows as listFlowsApi } from "@chatbotx/public-apis"
+import type { ChatbotXAPI } from "@chatbotx.io/public-apis"
+import { listFlows as listFlowsApi } from "@chatbotx.io/public-apis"
 import { createApiClient } from "../config"
 import { printResult } from "./utils"
 

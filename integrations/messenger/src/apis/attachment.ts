@@ -1,4 +1,4 @@
-import type { FileType } from "@aha.chat/sdk"
+import type { FileType } from "@chatbotx.io/sdk"
 import { MessengerAttachmentException } from "../exception"
 import { facebookAttachmentClient } from "../lib/http-client"
 import { logger } from "../lib/logger"

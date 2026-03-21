@@ -13,10 +13,10 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
     "@types/node": "^24.10.4",
-    "knip": "^5.88.1",
+    "knip": "^6.0.1",
     "lefthook": "^2.1.4",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.19",
+    "turbo": "^2.8.20",
     "typescript": "5.9.3",
     "ultracite": "7.3.2"
   },

@@ -1,4 +1,4 @@
-import type { AuthValue, Context } from "@aha.chat/sdk"
+import type { AuthValue, Context } from "@chatbotx.io/sdk"
 import ky, { type KyInstance } from "ky"
 import { chatbotxAuthSchema } from "../auth"
 

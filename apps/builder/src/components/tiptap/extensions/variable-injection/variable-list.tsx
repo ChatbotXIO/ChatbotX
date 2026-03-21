@@ -1,4 +1,4 @@
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { type Ref, useEffect, useImperativeHandle, useState } from "react"
 import type { PromptVariableListRef } from "./definition"

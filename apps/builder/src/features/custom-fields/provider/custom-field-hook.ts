@@ -2,8 +2,8 @@ import {
   type CustomFieldType,
   type ReservedCustomFieldNames,
   reservedCustomFieldNames,
-} from "@aha.chat/database/types"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+} from "@chatbotx.io/database/types"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
   CalendarClockIcon,
   CalendarDaysIcon,

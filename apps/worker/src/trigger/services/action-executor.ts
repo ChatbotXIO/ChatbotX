@@ -1,10 +1,10 @@
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { TriggerAction } from "@aha.chat/database/enums"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { TriggerAction } from "@chatbotx.io/database/enums"
 import {
   contactCustomFieldModel,
   contactsToTagsModel,
   conversationModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   FieldOperationType,
   type SpreadsheetClearRowSchema,
@@ -15,10 +15,13 @@ import {
   type SpreadsheetSendDataSchema,
   type SpreadsheetUpdateRowSchema,
   StepType,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 
-import baseLogger from "@aha.chat/logger"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import baseLogger from "@chatbotx.io/logger"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import {
   clearSpreadsheetRow,

@@ -1,3 +1,4 @@
+import { createOpenAI } from "@ai-sdk/openai"
 import {
   and,
   db,
@@ -6,13 +7,12 @@ import {
   findOrFail,
   inArray,
   sql,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
 import {
   aiEmbeddingModel,
   integrationOpenAIModel,
-} from "@aha.chat/database/schema"
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
-import { createOpenAI } from "@ai-sdk/openai"
+} from "@chatbotx.io/database/schema"
+import type { IntegrationOpenAIModel } from "@chatbotx.io/database/types"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
 import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"

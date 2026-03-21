@@ -2,7 +2,7 @@ import {
   type EmailHeaderStepSchema,
   emailHeaderStepDefaultFn,
   emailHeaderStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import EmailHeaderStepEditor from "./editor"
 import EmailHeaderStepViewer from "./viewer"

@@ -1,3 +1,3 @@
-import { getChildLogger } from "@aha.chat/logger"
+import { getChildLogger } from "@chatbotx.io/logger"
 
 export const logger = getChildLogger("ui")

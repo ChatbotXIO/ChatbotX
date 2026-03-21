@@ -1,5 +1,5 @@
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   BaseEdge,
   EdgeLabelRenderer,

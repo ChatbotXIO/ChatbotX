@@ -1,4 +1,4 @@
-import type { ChatbotModel, UserModel } from "@aha.chat/database/types"
+import type { ChatbotModel, UserModel } from "@chatbotx.io/database/types"
 import { os } from "@orpc/server"
 
 export const base = os.$context<{

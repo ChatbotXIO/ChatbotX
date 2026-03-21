@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type { IntegrationGeminiResource } from "../schemas/resource"
 
 export const findIntegrationGemini = async ({

@@ -1,8 +1,8 @@
 "use client"
 
-import type { WhatsappMessageTemplateModel } from "@aha.chat/database/types"
-import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+import type { WhatsappMessageTemplateModel } from "@chatbotx.io/database/types"
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Dispatch, SetStateAction } from "react"
 

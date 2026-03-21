@@ -1,4 +1,4 @@
-import { type ChatbotXAPI, listFlows } from "@chatbotx/public-apis"
+import { type ChatbotXAPI, listFlows } from "@chatbotx.io/public-apis"
 import { formatResult } from "../utils"
 
 const getErrorMessage = (error: unknown): string => {

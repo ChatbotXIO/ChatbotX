@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { createChatbotXAPI } from "@chatbotx/public-apis"
+import { createChatbotXAPI } from "@chatbotx.io/public-apis"
 import { getChatbotXConfigFromEnv } from "./config"
 import customFields from "./tools/custom-fields"
 import tags from "./tools/tag"

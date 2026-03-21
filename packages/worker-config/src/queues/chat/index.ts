@@ -8,8 +8,8 @@ import type {
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
-} from "@aha.chat/flow-config"
-import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
+} from "@chatbotx.io/flow-config"
+import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,

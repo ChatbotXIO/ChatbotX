@@ -1,6 +1,6 @@
 "use client"
 
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { useTranslations } from "next-intl"
 
 type AITriggerSelectProps = {

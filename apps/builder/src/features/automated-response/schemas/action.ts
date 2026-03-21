@@ -1,4 +1,4 @@
-import { ReplyType } from "@aha.chat/database/types"
+import { ReplyType } from "@chatbotx.io/database/types"
 import { z } from "zod"
 
 export const createAutomatedResponseRequest = z.object({

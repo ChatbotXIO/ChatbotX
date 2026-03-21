@@ -1,4 +1,4 @@
-import type { FacebookPage } from "@aha.chat/integration-messenger/schemas"
+import type { FacebookPage } from "@chatbotx.io/integration-messenger/schemas"
 
 // declare const FB: facebook.FacebookStatic // Declare FB if not already globally available
 

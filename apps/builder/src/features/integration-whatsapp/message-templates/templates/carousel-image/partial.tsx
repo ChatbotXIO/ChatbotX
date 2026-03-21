@@ -1,7 +1,7 @@
 "use client"
 
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"

@@ -1,6 +1,6 @@
 "use client"
 
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { env } from "@/env"
 import type { InboxResource } from "../inboxes/schemas/resource"
 

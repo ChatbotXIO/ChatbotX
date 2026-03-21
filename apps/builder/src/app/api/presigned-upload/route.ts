@@ -1,4 +1,4 @@
-import { createPresignedUploadRequest, uploader } from "@aha.chat/filesystem"
+import { createPresignedUploadRequest, uploader } from "@chatbotx.io/filesystem"
 import { type NextRequest, NextResponse } from "next/server"
 import { env } from "@/env"
 import { serverErrorHandler } from "@/lib/errors/server-handler"

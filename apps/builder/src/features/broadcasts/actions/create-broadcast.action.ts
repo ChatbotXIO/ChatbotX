@@ -1,11 +1,14 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
-} from "@aha.chat/database/schema"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+} from "@chatbotx.io/database/schema"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {

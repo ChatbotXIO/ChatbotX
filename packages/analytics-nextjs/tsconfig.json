@@ -1,5 +1,5 @@
 {
-  "extends": "@aha.chat/typescript-config/base.json",
+  "extends": "@chatbotx.io/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src"

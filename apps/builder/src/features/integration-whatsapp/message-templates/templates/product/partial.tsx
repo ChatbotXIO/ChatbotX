@@ -1,8 +1,8 @@
 "use client"
 
-import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { CheckboxGroupField } from "@chatbotx.io/ui/components/form/checkbox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { useTranslations } from "next-intl"
 import { memo, useCallback } from "react"
 import { useFormContext, useWatch } from "react-hook-form"

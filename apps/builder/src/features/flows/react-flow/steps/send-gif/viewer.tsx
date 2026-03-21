@@ -1,6 +1,6 @@
 "use client"
 
-import type { SendGifStepSchema } from "@aha.chat/flow-config"
+import type { SendGifStepSchema } from "@chatbotx.io/flow-config"
 import Image from "next/image"
 
 type SendGifStepViewerProps = {

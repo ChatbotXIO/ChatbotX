@@ -3,8 +3,8 @@ import {
   type SkipStateSchema,
   type SuccessStateSchema,
   stateTypes,
-} from "@aha.chat/flow-config"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/flow-config"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Position } from "@xyflow/react"
 import { useTranslations } from "next-intl"
 import { BaseHandle } from "@/components/base-handle"

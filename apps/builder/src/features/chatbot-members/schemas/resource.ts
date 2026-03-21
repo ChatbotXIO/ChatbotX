@@ -3,7 +3,7 @@ import type {
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
   ChatbotMemberPermissions,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
 

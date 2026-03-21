@@ -1,14 +1,14 @@
-import { db, eq } from "@aha.chat/database/client"
-import { conversationModel } from "@aha.chat/database/schema"
+import { db, eq } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+} from "@chatbotx.io/partysocket-config"
 import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobAssignConversation,
   IntegrationJobContactMarkAsRead,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 
 export const broadcastAssignConversation = async (

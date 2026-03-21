@@ -1,8 +1,8 @@
 import {
   contactCustomFieldModel,
   createSelectSchema,
-} from "@aha.chat/database/schema"
-import { FieldOperationType } from "@aha.chat/flow-config"
+} from "@chatbotx.io/database/schema"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 

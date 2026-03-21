@@ -1,4 +1,4 @@
-import type { ChatbotXAPI } from "@chatbotx/public-apis"
+import type { ChatbotXAPI } from "@chatbotx.io/public-apis"
 import type { ZodType } from "zod"
 
 export interface McpContent {

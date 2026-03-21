@@ -1,5 +1,5 @@
-import { createSelectSchema, messageModel } from "@aha.chat/database/schema"
-import type { MessageModel } from "@aha.chat/database/types"
+import { createSelectSchema, messageModel } from "@chatbotx.io/database/schema"
+import type { MessageModel } from "@chatbotx.io/database/types"
 import z from "zod"
 import {
   type AttachmentResource,

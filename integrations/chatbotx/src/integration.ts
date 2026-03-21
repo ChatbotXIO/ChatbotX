@@ -4,7 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import type { ChatbotxAuthValue } from "./auth"
 import { broadcastMessageToChatbotParty } from "./lib/outgoing-message"
 

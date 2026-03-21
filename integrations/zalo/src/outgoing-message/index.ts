@@ -4,13 +4,13 @@ import {
   type SendImageStepSchema,
   type SendTextStepSchema,
   StepType,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type {
   OutgoingContact,
   OutgoingMessage,
   SendFlowStepProps,
   SendMessageProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { sendMessage, uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
 import type { ZaloAuthValue } from "../schemas/definition"

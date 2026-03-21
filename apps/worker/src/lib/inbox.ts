@@ -1,6 +1,6 @@
-import { db, sql } from "@aha.chat/database/client"
-import type { ChatbotModel, InboxModel } from "@aha.chat/database/types"
-import { type AuthValue, SdkException } from "@aha.chat/sdk"
+import { db, sql } from "@chatbotx.io/database/client"
+import type { ChatbotModel, InboxModel } from "@chatbotx.io/database/types"
+import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
 
 export const getIntegrationAuth = async (
   inbox: InboxModel,

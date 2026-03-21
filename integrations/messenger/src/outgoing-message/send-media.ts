@@ -1,8 +1,8 @@
 import type {
   SendImageStepSchema,
   SendVideoStepSchema,
-} from "@aha.chat/flow-config"
-import type { SendFlowStepProps } from "@aha.chat/sdk"
+} from "@chatbotx.io/flow-config"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../apis/attachment"
 import { logger } from "../lib/logger"
 import type { MessengerAuthValue } from "../schemas"

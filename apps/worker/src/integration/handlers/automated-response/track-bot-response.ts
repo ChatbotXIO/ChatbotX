@@ -1,9 +1,9 @@
-import type { BotResponseTrackingContext } from "@aha.chat/worker-config"
 import {
   type BotMessageResponseType,
   botMessageTrackingService,
   type TrackBotRequest,
 } from "@chatbotx.io/analytics"
+import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
 
 export function createTrackingContext(params: {
   messageId: string

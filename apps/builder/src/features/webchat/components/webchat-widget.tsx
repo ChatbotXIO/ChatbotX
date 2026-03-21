@@ -1,9 +1,9 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card } from "@aha.chat/ui/components/ui/card"
-import { Input } from "@aha.chat/ui/components/ui/input"
+import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Card } from "@chatbotx.io/ui/components/ui/card"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { MessageCircleIcon, SendIcon, XIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import {

@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { conditionModel, triggerModel } from "@aha.chat/database/schema"
-import { updateTriggerCache } from "@chatbotx/events"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
+import { updateTriggerCache } from "@chatbotx.io/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,

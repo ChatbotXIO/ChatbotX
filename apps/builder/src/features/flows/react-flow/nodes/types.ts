@@ -1,4 +1,4 @@
-import type { StepType } from "@aha.chat/flow-config"
+import type { StepType } from "@chatbotx.io/flow-config"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 

@@ -11,7 +11,7 @@ import type { NameType, ValueType } from "recharts/types/component/DefaultToolti
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const

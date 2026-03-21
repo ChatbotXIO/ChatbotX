@@ -1,3 +1,4 @@
+import { createOpenAI } from "@ai-sdk/openai"
 import {
   type BaseConfig,
   type HandleRequestProps,
@@ -5,8 +6,7 @@ import {
   type IntegrationDefinition,
   type Oauth2AuthValue,
   type SecretTextAuthValue,
-} from "@aha.chat/sdk"
-import { createOpenAI } from "@ai-sdk/openai"
+} from "@chatbotx.io/sdk"
 import { generateText } from "ai"
 import type { OpenAIActions, OpenAIAuthValue } from "./schemas"
 

@@ -1,4 +1,4 @@
-import { AI_FILE_MIME_TYPES } from "@aha.chat/sdk"
+import { AI_FILE_MIME_TYPES } from "@chatbotx.io/sdk"
 import { extension as getExtensionFromMime } from "mime-types"
 
 const allAIFileMimeTypes = AI_FILE_MIME_TYPES

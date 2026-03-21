@@ -3,8 +3,8 @@ import * as Stepperize from "@stepperize/react";
 import { type VariantProps, cva } from "class-variance-authority";
 import * as React from "react";
 
-import { cn } from "@aha.chat/ui/lib/utils";
-import { Button } from "@aha.chat/ui/components/ui/button";
+import { cn } from "@chatbotx.io/ui/lib/utils";
+import { Button } from "@chatbotx.io/ui/components/ui/button";
 
 const StepperContext = React.createContext<Stepper.ConfigProps | null>(null);
 

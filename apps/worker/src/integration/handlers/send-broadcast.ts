@@ -1,7 +1,10 @@
-import { db, findOrFail } from "@aha.chat/database/client"
-import { broadcastModel } from "@aha.chat/database/schema"
-import type { BroadcastModel } from "@aha.chat/database/types"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { broadcastModel } from "@chatbotx.io/database/schema"
+import type { BroadcastModel } from "@chatbotx.io/database/types"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 
 export const sendBroadcast = async (broadcastId: string) => {
   const broadcast = await findOrFail<BroadcastModel>(

@@ -1,6 +1,6 @@
 "use client"
 
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MessageCirclePlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useContactAssigneeOptions } from "@/features/users/provider/user-hook"

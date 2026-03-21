@@ -1,6 +1,6 @@
-import { db, findOrFail } from "@aha.chat/database/client"
-import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import type { IntegrationWhatsappResource } from "../schemas"
 

@@ -1,12 +1,12 @@
-import { db } from "@aha.chat/database/client"
-import type { contactCustomFieldModel } from "@aha.chat/database/schema"
-import { uploader } from "@aha.chat/filesystem"
+import { db } from "@chatbotx.io/database/client"
+import type { contactCustomFieldModel } from "@chatbotx.io/database/schema"
+import { uploader } from "@chatbotx.io/filesystem"
 import {
   DefaultJobAction,
   defaultQueue,
   type JobExportContacts,
   loopableItemsCount,
-} from "@aha.chat/worker-config"
+} from "@chatbotx.io/worker-config"
 
 const contactFieldPrefix = "ct:"
 const customFieldPrefix = "cf:"

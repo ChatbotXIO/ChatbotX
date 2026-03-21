@@ -1,14 +1,14 @@
 "use client"
 
-import type { CustomFieldType } from "@aha.chat/database/types"
-import { FieldOperationType } from "@aha.chat/flow-config"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import type { CustomFieldType } from "@chatbotx.io/database/types"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import {
   SelectField,
   type SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { FormItem, FormLabel } from "@chatbotx.io/ui/components/ui/form"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"

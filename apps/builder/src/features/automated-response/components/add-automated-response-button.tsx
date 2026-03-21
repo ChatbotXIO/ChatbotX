@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useParams, useSearchParams } from "next/navigation"

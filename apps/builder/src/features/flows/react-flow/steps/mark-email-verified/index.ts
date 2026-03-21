@@ -2,7 +2,7 @@ import {
   type MarkEmailVerifiedStepSchema,
   markEmailVerifiedStepDefaultFn,
   markEmailVerifiedStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import MarkEmailVerifiedStepEditor from "./editor"
 import MarkEmailVerifiedStepViewer from "./viewer"

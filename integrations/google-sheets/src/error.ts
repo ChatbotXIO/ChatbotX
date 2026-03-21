@@ -1,4 +1,4 @@
-import { SdkException } from "@aha.chat/sdk"
+import { SdkException } from "@chatbotx.io/sdk"
 import type { Common as GoogleApisCommon } from "googleapis"
 import { googleSheetsLogger } from "./logger"
 

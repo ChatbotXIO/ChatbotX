@@ -1,9 +1,9 @@
-import { AnalyticsJobData, analyticsQueue } from "@aha.chat/worker-config"
 import {
   BOT_MESSAGE_EVENTS_EVENT_TYPE,
   CONTACT_EVENTS_EVENT_TYPE,
   CONVERSATION_EVENTS_EVENT_TYPE,
 } from "@chatbotx.io/analytics"
+import { AnalyticsJobData, analyticsQueue } from "@chatbotx.io/worker-config"
 import { Queue } from "bullmq"
 
 export const registerSchedules = async () => {

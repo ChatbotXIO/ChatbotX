@@ -1,8 +1,8 @@
 import {
   createSelectSchema,
   organizationMemberModel,
-} from "@aha.chat/database/schema"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+} from "@chatbotx.io/database/schema"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,

@@ -2,7 +2,7 @@ import {
   type SendImageStepSchema,
   sendImageStepDefaultFn,
   sendImageStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import SendImageStepEditor from "./editor"
 import SendImageStepViewer from "./viewer"

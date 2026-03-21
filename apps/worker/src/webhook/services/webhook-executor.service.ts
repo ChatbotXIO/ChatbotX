@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import { Condition } from "@aha.chat/database/enums"
+import { db } from "@chatbotx.io/database/client"
+import { Condition } from "@chatbotx.io/database/enums"
 import { logger } from "../../lib/logger"
 import type { WebhookEventData, WebhookWithConditions } from "../types"
 

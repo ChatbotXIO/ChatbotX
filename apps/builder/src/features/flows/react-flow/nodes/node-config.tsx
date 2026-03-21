@@ -1,4 +1,4 @@
-import { NodeType } from "@aha.chat/flow-config"
+import { NodeType } from "@chatbotx.io/flow-config"
 import performActionNodeConfig from "./perform-action"
 import sendMessageNodeConfig from "./send-message"
 import startFlowNodeConfig from "./start-flow"

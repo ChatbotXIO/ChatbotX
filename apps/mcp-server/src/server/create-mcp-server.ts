@@ -1,4 +1,4 @@
-import { createChatbotXAPI } from "@chatbotx/public-apis"
+import { createChatbotXAPI } from "@chatbotx.io/public-apis"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import {
   name as packageName,

@@ -1,5 +1,5 @@
-import type { ConversationStatus } from "@aha.chat/database/enums"
-import type { InboxType } from "@aha.chat/database/types"
+import type { ConversationStatus } from "@chatbotx.io/database/enums"
+import type { InboxType } from "@chatbotx.io/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"

@@ -8,25 +8,25 @@ import {
   ChevronRightIcon,
 } from "lucide-react"
 
-import { useIsMobile } from "@aha.chat/ui/hooks/use-mobile"
-import { cn } from "@aha.chat/ui/lib/utils"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Input } from "@aha.chat/ui/components/ui/input"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { useIsMobile } from "@chatbotx.io/ui/hooks/use-mobile"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@aha.chat/ui/components/ui/sheet"
-import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
+} from "@chatbotx.io/ui/components/ui/sheet"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7

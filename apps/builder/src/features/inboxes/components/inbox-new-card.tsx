@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"

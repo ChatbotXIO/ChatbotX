@@ -1,4 +1,4 @@
-import type { AIFunctionModel } from "@aha.chat/database/types"
+import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 
 export type AIFunctionCollection = {

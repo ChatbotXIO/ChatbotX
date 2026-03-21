@@ -1,5 +1,5 @@
-import { Input } from "@aha.chat/ui/components/ui/input"
-import { Slider } from "@aha.chat/ui/components/ui/slider"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { Slider } from "@chatbotx.io/ui/components/ui/slider"
 import { useFormContext } from "react-hook-form"
 
 const SplitTrafficStepEditor = ({ parentName }: { parentName: string }) => {

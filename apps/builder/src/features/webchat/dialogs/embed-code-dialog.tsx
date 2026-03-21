@@ -1,7 +1,7 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { Textarea } from "@aha.chat/ui/components/ui/textarea"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"

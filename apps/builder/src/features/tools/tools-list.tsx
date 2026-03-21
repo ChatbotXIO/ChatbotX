@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { SiFacebook } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,

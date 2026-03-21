@@ -1,4 +1,4 @@
-import { Condition } from "@aha.chat/database/enums"
+import { Condition } from "@chatbotx.io/database/enums"
 
 /**
  * Base event emitter class with common functionality

@@ -1,10 +1,10 @@
-import type { NodeType } from "@aha.chat/flow-config"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { NodeType } from "@chatbotx.io/flow-config"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import {
   ControlButton,
   type ReactFlowInstance,

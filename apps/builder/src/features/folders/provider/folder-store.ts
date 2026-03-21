@@ -1,4 +1,4 @@
-import type { FolderType } from "@aha.chat/database/types"
+import type { FolderType } from "@chatbotx.io/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"

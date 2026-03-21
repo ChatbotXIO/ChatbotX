@@ -1,6 +1,6 @@
 "use client"
 
-import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
+import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { AIIcon } from "./components/ai-icon"
 
 type AIGenerateTextViewerProps = {

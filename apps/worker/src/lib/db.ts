@@ -1,10 +1,10 @@
-import { db, findOrFail } from "@aha.chat/database/client"
-import { conversationModel } from "@aha.chat/database/schema"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import type {
   ConversationModel,
   FlowVersionModel,
-} from "@aha.chat/database/types"
-import { SdkException } from "@aha.chat/sdk"
+} from "@chatbotx.io/database/types"
+import { SdkException } from "@chatbotx.io/sdk"
 
 export async function findConversationAndFlowVersion(props: {
   conversationId: string

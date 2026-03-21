@@ -1,33 +1,33 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { contactTrackingService } from "@chatbotx.io/analytics"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   attachmentModel,
   contactModel,
   conversationModel,
   messageModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   type ContactModel,
   type ConversationModel,
   type UserModel,
   WEBCHAT_SOURCE_PREFIX,
-} from "@aha.chat/database/types"
-import { getPublicUrl } from "@aha.chat/database/utils"
-import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
+} from "@chatbotx.io/database/types"
+import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import {
   broadcastToChatbotParty,
   broadcastToGuestParty,
   RealtimeEventType,
-} from "@aha.chat/partysocket-config"
-import type { OutgoingConversation, OutgoingMessage } from "@aha.chat/sdk"
+} from "@chatbotx.io/partysocket-config"
+import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
-} from "@aha.chat/worker-config"
-import { contactTrackingService } from "@chatbotx.io/analytics"
+} from "@chatbotx.io/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {

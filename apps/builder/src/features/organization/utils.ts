@@ -1,4 +1,4 @@
-import type { OrganizationModel } from "@aha.chat/database/types"
+import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { env } from "@/env"
 import { ChatbotXException } from "../../lib/errors/exception"
 

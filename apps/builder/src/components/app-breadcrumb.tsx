@@ -5,7 +5,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@aha.chat/ui/components/ui/breadcrumb"
+} from "@chatbotx.io/ui/components/ui/breadcrumb"
 import { Fragment, type ReactNode } from "react"
 
 export interface BreadcrumbsProps {

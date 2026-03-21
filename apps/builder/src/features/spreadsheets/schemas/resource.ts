@@ -1,3 +1,3 @@
-import type { SpreadsheetModel } from "@aha.chat/database/types"
+import type { SpreadsheetModel } from "@chatbotx.io/database/types"
 
 export type SpreadsheetResource = SpreadsheetModel

@@ -1,6 +1,6 @@
 "use client"
 
-import type { EmailSpacingStepSchema } from "@aha.chat/flow-config"
+import type { EmailSpacingStepSchema } from "@chatbotx.io/flow-config"
 
 type EmailSpacingStepViewerProps = {
   data: EmailSpacingStepSchema

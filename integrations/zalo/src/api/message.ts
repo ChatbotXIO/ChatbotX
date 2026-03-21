@@ -2,7 +2,7 @@ import {
   type Context,
   guessFileTypeFromMimeType,
   type IncomingAttachment,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { fetch } from "cross-fetch"
 import imageSize from "image-size"

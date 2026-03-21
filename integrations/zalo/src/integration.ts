@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
   SdkException,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { getUserProfile } from "./api/user"
 import { callbackHandler } from "./handlers/callback"
 import { webhookHandler } from "./handlers/webhook"

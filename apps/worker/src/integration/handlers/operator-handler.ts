@@ -1,4 +1,4 @@
-import { type FilterMode, Operator } from "@aha.chat/flow-config"
+import { type FilterMode, Operator } from "@chatbotx.io/flow-config"
 
 type OperatorType = (typeof Operator)[keyof typeof Operator]
 

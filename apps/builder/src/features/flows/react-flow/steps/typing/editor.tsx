@@ -1,6 +1,6 @@
 "use client"
 
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 
 type TypingStepEditorProps = {
   parentName: string

@@ -3,7 +3,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@aha.chat/ui/components/ui/sidebar"
+} from "@chatbotx.io/ui/components/ui/sidebar"
 import { useEffect, useState } from "react"
 import { ManageSidebar } from "@/enterprise/features/manage/components/manage-sidebar"
 

@@ -1,4 +1,4 @@
-import type { IntegrationGoogleSheetsModel } from "@aha.chat/database/types"
+import type { IntegrationGoogleSheetsModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
 
 export type IntegrationGoogleSheetsResource = IntegrationGoogleSheetsModel
