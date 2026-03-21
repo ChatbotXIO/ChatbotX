@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e00a686a-4267-49ad-b782-a2ddf5580474",
+  "id": "1e3d3339-e405-4acb-b0da-2fa42fdbe5a3",
   "prevIds": ["a62e4644-3043-47ae-b1b2-1d123be88543"],
   "ddl": [
     {
@@ -4354,6 +4354,19 @@
       "generated": null,
       "identity": null,
       "name": "freeTrial",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Plan"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currency",
       "entityType": "columns",
       "schema": "public",
       "table": "Plan"

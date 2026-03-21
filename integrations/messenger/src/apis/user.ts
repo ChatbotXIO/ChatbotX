@@ -30,10 +30,14 @@ export const getUserProfile = async ({
     }
 
     if (response.profile_pic) {
-      result.avatar = await getUserProfilePicture({
-        ctx,
-        pictureUrl: response.profile_pic,
-      })
+      try {
+        result.avatar = await getUserProfilePicture({
+          ctx,
+          pictureUrl: response.profile_pic,
+        })
+      } catch (error) {
+        logger.error(error, "getUserProfilePicture error")
+      }
     }
 
     return result

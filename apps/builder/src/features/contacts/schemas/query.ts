@@ -1,6 +1,6 @@
 import { Operator } from "@aha.chat/database/enums"
 import z from "zod"
-import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schemas/resource"
+import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { conversationResource } from "@/features/conversations/schemas/resource"
 import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schemas/resource"

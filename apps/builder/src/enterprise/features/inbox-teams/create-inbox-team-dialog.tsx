@@ -22,7 +22,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import type { UserResource } from "../../../features/users/schemas/resource"
 import { createInboxTeamAction } from "./actions/create-inbox-team.action"
-import { createInboxTeamRequest } from "./schemas/create-inbox-team.request"
+import { createInboxTeamRequest } from "./schema"
 
 export function CreateInboxTeamDialog({
   chatbotId,

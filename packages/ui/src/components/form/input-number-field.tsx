@@ -1,37 +1,41 @@
 import type { FieldPath, FieldValues } from "react-hook-form"
-import { NumberInput } from "../ui/input-number"
+import { NumberInput, type NumberInputProps } from "../ui/input-number"
 import { FormFieldWrapper } from "./field-wrapper"
 
-type InputNumberFieldProps<T extends FieldValues> = {
+type InputNumberFieldProps<T extends FieldValues> = NumberInputProps & {
   name: FieldPath<T>
+  formItemClassName?: string
   label?: string
   required?: boolean
-  placeholder?: string
   description?: string
-  defaultValue?: number
   className?: string
-  stepper?: number
-  min?: number
-  max?: number
 }
 
 export function InputNumberField<T extends FieldValues>({
   name,
   label,
   required,
-  placeholder,
   description,
+  formItemClassName,
+  prefix,
+  suffix,
+  className,
   ...props
 }: InputNumberFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
+      formItemClassName={formItemClassName}
       label={label}
       name={name}
       required={required}
     >
       {(field) => (
-        <NumberInput placeholder={placeholder} {...props} {...field} />
+        <div className="flex items-center gap-2">
+          {prefix && <span className="text-muted-foreground">{prefix}</span>}
+          <NumberInput {...props} {...field} />
+          {suffix && <span className="text-muted-foreground">{suffix}</span>}
+        </div>
       )}
     </FormFieldWrapper>
   )

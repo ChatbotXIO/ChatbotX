@@ -1,4 +1,5 @@
 export const queueName = {
+  default: "default",
   integration: "integration",
   chat: "chat",
   aiAgent: "aiAgent",

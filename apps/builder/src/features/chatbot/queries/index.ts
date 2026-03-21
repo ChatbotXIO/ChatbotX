@@ -2,6 +2,7 @@
 
 import { db } from "@aha.chat/database/client"
 import type { ChatbotModel } from "@aha.chat/database/types"
+import { NotfoundException } from "@/lib/errors/exception"
 
 export const findChatbotOrFail = async (
   where: Record<string, unknown>,
@@ -10,7 +11,7 @@ export const findChatbotOrFail = async (
     where,
   })
   if (!chatbot) {
-    throw new Error("Chatbot not found")
+    throw new NotfoundException("Chatbot not found")
   }
   return chatbot
 }

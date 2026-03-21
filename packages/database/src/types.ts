@@ -1,6 +1,8 @@
 import z from "zod"
 import type * as schema from "./drizzle/schema"
 
+export * from "./drizzle/schema/organization-settings"
+
 export const integrationType = {
   webchat: "webchat",
   googleSheets: "googleSheets",
@@ -13,7 +15,7 @@ export const integrationType = {
 } as const
 
 export type IntegrationWebchatModel =
-  typeof schema.integrationWebchatModel.$inferInsert
+  typeof schema.integrationWebchatModel.$inferSelect
 export type UserModel = typeof schema.userModel.$inferSelect
 export type AIAgentModel = typeof schema.aiAgentModel.$inferSelect
 export type AIFunctionModel = typeof schema.aiFunctionModel.$inferSelect
@@ -26,7 +28,7 @@ export type FolderModel = typeof schema.folderModel.$inferSelect
 export type TagModel = typeof schema.tagModel.$inferSelect
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
 export type InvitationModel = typeof schema.invitationModel.$inferSelect
-export type BroadcastModel = typeof schema.broadcastModel.$inferInsert
+export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type ChatbotMemberModel = typeof schema.chatbotMemberModel.$inferSelect
 export type ChatbotUsageModel = typeof schema.chatbotUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
@@ -64,6 +66,7 @@ export type TriggerModel = typeof schema.triggerModel.$inferSelect
 export type WebhookModel = typeof schema.webhookModel.$inferSelect
 export type ConditionModel = typeof schema.conditionModel.$inferSelect
 
+export type PlanModel = typeof schema.planModel.$inferSelect
 export type FolderType = (typeof schema.folderType.enumValues)[number]
 export type IntegrationType = keyof typeof integrationType
 export type InboxType = (typeof schema.inboxType.enumValues)[number]
@@ -85,6 +88,8 @@ export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type OrganizationMember =
   typeof schema.organizationMemberModel.$inferSelect
+
+export * from "./drizzle/schema/organization-settings"
 
 export const Omnichannel = "omnichannel"
 
@@ -148,51 +153,6 @@ export const AIMessageRole = {
   developer: "developer",
 } as const
 export type AIMessageRole = (typeof AIMessageRole)[keyof typeof AIMessageRole]
-
-export const organizationSettingsSchema = z.object({
-  whatsapp: z
-    .object({
-      clientId: z.string(),
-      clientSecret: z.string(),
-      verifyToken: z.string(),
-      version: z.string(),
-      configId: z.string(),
-      systemUserId: z.string(),
-      systemUserToken: z.string(),
-      businessId: z.string().optional(),
-      businessName: z.string(),
-    })
-    .optional(),
-  googleSheets: z
-    .object({
-      clientId: z.string(),
-      clientSecret: z.string(),
-      verifyToken: z.string(),
-    })
-    .optional(),
-  messenger: z
-    .object({
-      clientId: z.string(),
-      clientSecret: z.string(),
-      verifyToken: z.string(),
-      version: z.string(),
-    })
-    .optional(),
-  zalo: z
-    .object({
-      clientId: z.string(),
-      clientSecret: z.string(),
-      verifyToken: z.string(),
-      version: z.string(),
-    })
-    .optional(),
-  giphy: z
-    .object({
-      apiKey: z.string(),
-    })
-    .optional(),
-})
-export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>
 
 export type AIAgentProvider = {
   provider: "openai" | "gemini"

@@ -530,6 +530,10 @@
     "chooseTime": {
       "label": "Chọn thời gian"
     },
+    "marketingFeatures": {
+      "label": "Tính năng marketing",
+      "placeholder": "Nhập tính năng và nhấn Enter"
+    },
     "notificationType": {
       "label": "Loại thông báo",
       "notifyAdmin": "Thông báo quản trị viên",
@@ -1485,11 +1489,21 @@
     "deleted": "Google Sheets đã được xóa thành công",
     "length": "Số lượng Google Sheets",
     "setting": {
-      "description": "Mô tả Google Sheets",
-      "label": "Google Sheets"
+      "description": "Cấu hình dịch vụ Google (Sheets, SSO và nhiều hơn nữa)",
+      "label": "Google"
     },
     "header": "Tiêu đề cột",
-    "title": "Google Sheets"
+    "title": "Google"
+  },
+  "giphySettings": {
+    "title": "GIPHY",
+    "description": "Cấu hình khóa API GIPHY để bật gửi GIF.",
+    "label": "GIPHY"
+  },
+  "stripeSettings": {
+    "title": "Stripe",
+    "description": "Cấu hình khóa Stripe cho thanh toán và hóa đơn.",
+    "label": "Stripe"
   },
   "inboxTeam": {
     "updateAction": {

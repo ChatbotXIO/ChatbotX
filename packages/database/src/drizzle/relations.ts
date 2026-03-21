@@ -315,6 +315,7 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.userModel.id.through(r.organizationMemberModel.userId),
     }),
     organizationMembers: r.many.organizationMemberModel(),
+    plans: r.many.planModel(),
   },
   chatbotUsageModel: {
     chatbot: r.one.chatbotModel({

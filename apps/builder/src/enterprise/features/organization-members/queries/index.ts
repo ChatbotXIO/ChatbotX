@@ -1,10 +1,11 @@
 import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { organizationMemberModel } from "@aha.chat/database/schema"
-import { findOrganizationByDomain } from "@/features/organization/queries"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@/lib/pagination"
+} from "@aha.chat/database/utils"
+import { findOrganizationByDomain } from "@/features/organization/queries"
+import { NotfoundException } from "@/lib/errors/exception"
 import type {
   ListOrganizationMembersRequest,
   ListOrganizationMembersResponse,
@@ -15,7 +16,7 @@ export const listOrganizationMembersRSC = async (
 ): Promise<ListOrganizationMembersResponse> => {
   const organization = await findOrganizationByDomain()
   if (!organization) {
-    throw new Error("Organization not found")
+    throw new NotfoundException("Organization not found")
   }
 
   return await listOrganizationMembers({

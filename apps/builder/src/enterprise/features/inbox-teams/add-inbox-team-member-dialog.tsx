@@ -20,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import type { UserResource } from "../../../features/users/schemas/resource"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
-import { addInboxTeamMemberRequest } from "./schemas/add-inbox-team-member.request"
+import { addInboxTeamMemberRequest } from "./schema"
 
 export function AddInboxTeamMemberDialog({
   open,

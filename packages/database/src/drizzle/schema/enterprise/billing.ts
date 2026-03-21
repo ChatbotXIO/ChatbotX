@@ -9,6 +9,14 @@ import {
 import { organizationModel } from "../"
 import { sharedColumns } from "../shared"
 
+type PlanLimits = {
+  contacts: number
+}
+
+type PlanFreeTrial = {
+  days: number
+}
+
 export const subscriptionModel = pgTable("Subscription", {
   ...sharedColumns,
   plan: text().notNull(),
@@ -35,10 +43,15 @@ export const subscriptionModel = pgTable("Subscription", {
 export const planModel = pgTable("Plan", {
   ...sharedColumns,
   name: text().notNull(),
+  description: text(),
+  price: integer().notNull(),
   priceId: text().notNull(),
+  annualDiscountPrice: integer(),
   annualDiscountPriceId: text(),
-  limits: jsonb().notNull(),
-  freeTrial: jsonb(),
+  limits: jsonb().$type<PlanLimits>().notNull(),
+  freeTrial: jsonb().$type<PlanFreeTrial>(),
+  currency: text().notNull(),
+  marketingFeatures: text().array().notNull().default([]),
   organizationId: text()
     .notNull()
     .references(() => organizationModel.id, {

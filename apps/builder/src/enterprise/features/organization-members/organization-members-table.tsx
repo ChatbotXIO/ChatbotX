@@ -59,7 +59,7 @@ const getOrganizationMembersColumns = ({
       size: 300,
       meta: {
         label: t("fields.name.label"),
-        placeholder: t("fields.name.searchPlaceholder"),
+        placeholder: t("fields.name.placeholder"),
         variant: "text",
       },
       enableColumnFilter: true,
@@ -78,7 +78,7 @@ const getOrganizationMembersColumns = ({
       size: 300,
       meta: {
         label: t("fields.email.label"),
-        placeholder: t("fields.email.searchPlaceholder"),
+        placeholder: t("fields.email.placeholder"),
         variant: "text",
       },
       enableColumnFilter: true,
@@ -94,11 +94,10 @@ const getOrganizationMembersColumns = ({
       size: 300,
       meta: {
         label: t("fields.role.label"),
-        placeholder: t("fields.role.searchPlaceholder"),
         variant: "text",
       },
       enableColumnFilter: true,
-      enableSorting: true,
+      enableSorting: false,
     },
   ]
 }

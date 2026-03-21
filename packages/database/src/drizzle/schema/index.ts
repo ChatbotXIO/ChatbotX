@@ -16,6 +16,7 @@ import {
   vector,
 } from "drizzle-orm/pg-core"
 import { sharedColumns, timestampConfig } from "./shared"
+import type { OrganizationSettings } from "./organization-settings"
 
 export * from "drizzle-orm/zod"
 export * from "./enterprise"
@@ -80,6 +81,12 @@ export const analyticsStatusEnum = pgEnum("AnalyticsStatus", [
   "processing",
   "ingested",
   "failed",
+])
+
+export const conditionOwnerType = pgEnum("ConditionOwnerType", [
+  "trigger",
+  "webhook",
+  "broadcast",
 ])
 
 export const aiTriggerToIntegrationOpenAIModel = pgTable(
@@ -1447,7 +1454,7 @@ export const organizationModel = pgTable(
     metadata: text(),
     domain: text(),
     supportEmail: text(),
-    settings: jsonb().default({}).notNull(),
+    settings: jsonb().$type<OrganizationSettings>().default({}).notNull(),
     defaultMaxContacts: integer().default(999_999_999).notNull(),
   },
   (table) => [
@@ -1607,22 +1614,6 @@ export const whatsappFlowModel = pgTable("WhatsappFlow", {
   sourceId: text().notNull(),
   status: text().notNull(),
   isCompleted: boolean().notNull(),
-})
-
-export const whatsappMessageTemplateModel = pgTable("WhatsappMessageTemplate", {
-  ...sharedColumns,
-  name: text().notNull(),
-  integrationWhatsappId: text()
-    .notNull()
-    .references(() => integrationWhatsappModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-      name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
-    }),
-  sourceId: text().notNull(),
-  language: text().notNull(),
-  category: text().notNull(),
-  status: text().notNull(),
 })
 
 export const jwkModel = pgTable("jwks", {
@@ -1925,6 +1916,35 @@ export const triggerExecutionModel = pgTable(
     index("TriggerExecution_chatbotId_idx").using(
       "btree",
       table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)
+
+export const whatsappMessageTemplateModel = pgTable(
+  "WhatsappMessageTemplate",
+  {
+    ...sharedColumns,
+    name: text().notNull(),
+    integrationWhatsappId: text()
+      .notNull()
+      .references(() => integrationWhatsappModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "WhatsappMessageTemplate_integrationWhatsappId_fkey",
+      }),
+    sourceId: text().notNull(),
+    language: text().notNull(),
+    category: text().notNull(),
+    status: text().notNull(),
+    components: jsonb().notNull().default(sql`'[]'::jsonb`),
+  },
+  (table) => [
+    uniqueIndex(
+      "WhatsappMessageTemplate_integrationWhatsappId_sourceId_key",
+    ).using(
+      "btree",
+      table.integrationWhatsappId.asc().nullsLast().op("text_ops"),
+      table.sourceId.asc().nullsLast().op("text_ops"),
     ),
   ],
 )

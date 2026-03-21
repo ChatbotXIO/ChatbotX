@@ -13,7 +13,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddInboxTeamMemberRequest,
   addInboxTeamMemberRequest,
-} from "../schemas/add-inbox-team-member.request"
+} from "../schema"
 
 export const addInboxTeamMemberAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

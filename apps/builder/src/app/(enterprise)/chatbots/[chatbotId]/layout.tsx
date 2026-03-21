@@ -48,13 +48,6 @@ export default async function ChatbotLayout({
       />
       <SidebarInset>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
-        {/* {!isInboxPage && (
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator className="mr-2 h-4" orientation="vertical" />
-            {breadcrumb}
-          </header>
-        )} */}
         <main className={cn("flex flex-1 flex-col gap-4", requiredPadding)}>
           {children}
         </main>

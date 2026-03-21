@@ -7,6 +7,7 @@ CREATE TABLE "Plan" (
 	"annualDiscountPriceId" text,
 	"limits" jsonb NOT NULL,
 	"freeTrial" jsonb,
+	"currency" text NOT NULL,
 	"organizationId" text NOT NULL
 );
 --> statement-breakpoint

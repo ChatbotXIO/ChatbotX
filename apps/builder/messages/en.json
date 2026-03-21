@@ -1228,10 +1228,6 @@
       "now": "Now",
       "scheduled": "Schedule for later"
     },
-    "placeholders": {
-      "selectTools": "Select tools",
-      "temperatureHint": "Controls randomness (0-2), higher = more creative"
-    },
     "inputCfId": {
       "label": "Input Custom Field"
     },
@@ -1333,6 +1329,78 @@
     },
     "role": {
       "label": "Role"
+    },
+    "plan": {
+      "label": "Plan"
+    },
+    "price": {
+      "label": "Price"
+    },
+    "annualPrice": {
+      "label": "Annual Price"
+    },
+    "limits": {
+      "label": "Limits"
+    },
+    "limitContacts": {
+      "label": "Maximum of Contacts"
+    },
+    "marketingFeatures": {
+      "label": "Marketing feature list",
+      "description": "A list of product features that will be visible to customers. Displayed in pricing tables."
+    },
+    "marketingFeature": {
+      "label": "Marketing Feature"
+    },
+    "planDescription": {
+      "label": "Description",
+      "description": "Appears at checkout, on the customer portal, and in quotes."
+    },
+    "currency": {
+      "label": "Currency"
+    },
+    "clientId": {
+      "label": "Client ID"
+    },
+    "clientSecret": {
+      "label": "Client Secret"
+    },
+    "verifyToken": {
+      "label": "Webhook Verify Token"
+    },
+    "apiVersion": {
+      "label": "API Version"
+    },
+    "configId": {
+      "label": "App Config ID"
+    },
+    "systemUserId": {
+      "label": "System User ID"
+    },
+    "systemUserToken": {
+      "label": "System User Token"
+    },
+    "businessId": {
+      "label": "Business ID"
+    },
+    "businessName": {
+      "label": "Business Name"
+    },
+    "publishableKey": {
+      "label": "Publishable Key"
+    },
+    "secretKey": {
+      "label": "Secret Key"
+    },
+    "version": {
+      "label": "Version"
+    },
+    "freeTrial": {
+      "label": "Free Trial",
+      "suffix": "days"
+    },
+    "pricing": {
+      "label": "Pricing"
     }
   },
   "flows": {
@@ -1485,11 +1553,21 @@
     "deleted": "Google Sheets deleted successfully",
     "length": "Google Sheets length",
     "setting": {
-      "description": "Google Sheets description",
-      "label": "Google Sheets"
+      "description": "Google services configuration (Sheets, SSO, and more)",
+      "label": "Google"
     },
     "header": "Column Header",
-    "title": "Google Sheets"
+    "title": "Google"
+  },
+  "giphySettings": {
+    "title": "GIPHY",
+    "description": "Configure your GIPHY API key to enable GIF sending.",
+    "label": "GIPHY"
+  },
+  "stripeSettings": {
+    "title": "Stripe",
+    "description": "Configure Stripe keys for billing and payments.",
+    "label": "Stripe"
   },
   "inboxTeam": {
     "updateAction": {
@@ -1945,5 +2023,14 @@
   },
   "triggers": {
     "title": "Triggers"
+  },
+  "users": {
+    "title": "Users"
+  },
+  "plans": {
+    "title": "Billing Plans"
+  },
+  "subscriptions": {
+    "title": "Subscriptions"
   }
 }

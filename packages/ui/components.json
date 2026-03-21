@@ -18,6 +18,7 @@
     "hooks": "@aha.chat/ui/hooks"
   },
   "registries": {
-    "@billingsdk": "https://billingsdk.com/r/{name}.json"
+    "@billingsdk": "https://billingsdk.com/r/{name}.json",
+    "@diceui": "https://diceui.com/r/{name}.json"
   }
 }

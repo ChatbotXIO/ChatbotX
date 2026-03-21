@@ -39,10 +39,7 @@ import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
 import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
 import type { getInboxTeams } from "./queries"
 import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
-import type {
-  InboxTeamMemberResource,
-  InboxTeamResource,
-} from "./schemas/resource"
+import type { InboxTeamMemberResource, InboxTeamResource } from "./schema"
 
 type ListInboxTeamsProps = {
   chatbotId: string

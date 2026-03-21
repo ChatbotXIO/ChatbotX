@@ -7,12 +7,14 @@ import {
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
+import { findOrganizationByDomain } from "@/features/organization/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { ChatbotXException } from "./errors/exception"
 import { logger } from "./log"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
+    console.log("Error in action:", error)
     if (isDatabaseError(error)) {
       logger.error(error)
       return DEFAULT_SERVER_ERROR_MESSAGE
@@ -52,5 +54,16 @@ export const chatbotActionClient = authActionClient.use(
     }
 
     return next({ ctx: { chatbot } })
+  },
+)
+
+export const organizationActionClient = authActionClient.use(
+  async ({ next }) => {
+    const organization = await findOrganizationByDomain()
+    if (!organization) {
+      throw new Error("Organization not found")
+    }
+
+    return next({ ctx: { organization } })
   },
 )

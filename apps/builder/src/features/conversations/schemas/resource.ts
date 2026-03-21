@@ -3,7 +3,7 @@ import {
   createSelectSchema,
 } from "@aha.chat/database/schema"
 import z from "zod"
-import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schemas/resource"
+import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactResource } from "@/features/contacts/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schemas/resource"
 import { messageResource } from "@/features/messages/schemas"

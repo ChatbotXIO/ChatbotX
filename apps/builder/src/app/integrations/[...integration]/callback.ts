@@ -71,7 +71,7 @@ export const handleCallback = async (
     }
 
     case "googleSheets": {
-      if (!organizationSettings.googleSheets) {
+      if (!organizationSettings.google) {
         return notFound()
       }
 
@@ -79,7 +79,7 @@ export const handleCallback = async (
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
-          ...organizationSettings.googleSheets,
+          ...organizationSettings.google,
           redirectUrl: new URL(
             "/integrations/google-sheets/callback",
             req.url,
