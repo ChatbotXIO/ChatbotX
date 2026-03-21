@@ -48,20 +48,12 @@ const authEnv = {
   },
 }
 
-const billingEnv = {
-  server: {
-    STRIPE_SECRET_KEY: z.string(),
-    STRIPE_WEBHOOK_SECRET: z.string(),
-  },
-}
-
 export const env = createEnv({
   extends: [partysocket(), database(), mail(), clickhouse()],
   server: {
     ...baseEnv.server,
     ...googleAuthEnv.server,
     ...authEnv.server,
-    ...(_isCommunity ? {} : billingEnv.server),
   },
   client: {
     ...baseEnv.client,
