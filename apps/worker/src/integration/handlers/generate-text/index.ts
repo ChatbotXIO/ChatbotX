@@ -1,15 +1,15 @@
-import { db, eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import {
   AIMessageRole,
   type ConversationModel,
   type Gender,
   reservedCustomFieldNames,
-} from "@chatbotx.io/database/types"
-import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
+} from "@aha.chat/database/types"
+import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import { createId } from "@paralleldrive/cuid2"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { getAIIntegrationInDB, getAIModel } from "../../../lib/ai"

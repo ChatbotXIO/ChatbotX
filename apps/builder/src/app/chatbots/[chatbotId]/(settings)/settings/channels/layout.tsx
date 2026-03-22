@@ -1,12 +1,12 @@
 "use client"
 
-import type { InboxType } from "@chatbotx.io/database/types"
+import type { InboxType } from "@aha.chat/database/types"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@chatbotx.io/ui/components/ui/accordion"
+} from "@aha.chat/ui/components/ui/accordion"
 import type { ReactNode } from "react"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 

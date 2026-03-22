@@ -1,18 +1,18 @@
+import { db, findOrFail } from "@aha.chat/database/client"
+import {
+  integrationGeminiModel,
+  integrationOpenAIModel,
+} from "@aha.chat/database/schema"
+import type {
+  IntegrationGeminiModel,
+  IntegrationOpenAIModel,
+} from "@aha.chat/database/types"
+import { aiProviders } from "@aha.chat/flow-config"
+import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  integrationGeminiModel,
-  integrationOpenAIModel,
-} from "@chatbotx.io/database/schema"
-import type {
-  IntegrationGeminiModel,
-  IntegrationOpenAIModel,
-} from "@chatbotx.io/database/types"
-import { aiProviders } from "@chatbotx.io/flow-config"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { jsonSchema, type ToolSet, tool } from "ai"
 import {
   JSON_TYPE,

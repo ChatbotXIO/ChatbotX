@@ -1,10 +1,10 @@
 {
-  "name": "@chatbotx.io/mail",
+  "name": "@aha.chat/mail",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "@react-email/preview-server": "5.2.10",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.11",

@@ -2,7 +2,7 @@ import {
   type ArchiveConversationStepSchema,
   archiveConversationStepDefaultFn,
   archiveConversationStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import ArchiveConversationStepEditor from "./editor"
 import ArchiveConversationStepViewer from "./viewer"

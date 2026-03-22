@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { triggerModel } from "@chatbotx.io/database/schema"
+import { db, eq } from "@aha.chat/database/client"
+import { triggerModel } from "@aha.chat/database/schema"
 import { z } from "zod"
 import {
   type ChatbotIdAndIdRequestParams,

@@ -1,6 +1,6 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger } from "@chatbotx.io/ui/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@aha.chat/ui/components/ui/tabs"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 

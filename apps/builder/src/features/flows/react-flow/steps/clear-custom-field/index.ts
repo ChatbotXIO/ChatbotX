@@ -2,7 +2,7 @@ import {
   type ClearCustomFieldStepSchema,
   clearCustomFieldStepDefaultFn,
   clearCustomFieldStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import ClearCustomFieldStepEditor from "./editor"
 import ClearCustomFieldStepViewer from "./viewer"

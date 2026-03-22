@@ -2,8 +2,8 @@ import {
   ConversationStarterType,
   type IntegrationWebchatModel,
   PersistentMenuType,
-} from "@chatbotx.io/database/types"
-import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
+} from "@aha.chat/database/types"
+import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 

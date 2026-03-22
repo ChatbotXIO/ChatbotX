@@ -1,7 +1,7 @@
 "use server"
 
-import type { ChatbotModel } from "@chatbotx.io/database/types"
-import { HandleRequestType } from "@chatbotx.io/sdk"
+import type { ChatbotModel } from "@aha.chat/database/types"
+import { HandleRequestType } from "@aha.chat/sdk"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { chatbotIdRequestParams } from "@/features/common/schemas"

@@ -1,19 +1,19 @@
 "use client"
 
-import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
+} from "@aha.chat/ui/components/ui/tooltip"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import Link from "next/link"

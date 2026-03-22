@@ -2,7 +2,7 @@ import {
   NodeType,
   performActionNodeDefaultFn,
   performActionNodeSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import { ZapIcon } from "lucide-react"
 import type { TranslationFn } from "../types"
 import { performActionMenus } from "./menu"

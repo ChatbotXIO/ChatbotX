@@ -1,4 +1,4 @@
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"

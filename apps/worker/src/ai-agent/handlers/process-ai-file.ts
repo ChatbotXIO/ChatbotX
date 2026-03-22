@@ -1,14 +1,11 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
-import type {
-  AIEmbeddingStatus,
-  AIFileModel,
-} from "@chatbotx.io/database/types"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { aiEmbeddingModel, aiFileModel } from "@aha.chat/database/schema"
+import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
 import {
   AIJobAction,
   type AIJobProcessFile,
   aiAgentQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { extractTextFromFile } from "../lib/text-extractor"
 

@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { webhookModel } from "@chatbotx.io/database/schema"
-import { updateWebhookCache } from "@chatbotx.io/events"
+import { db, eq } from "@aha.chat/database/client"
+import { webhookModel } from "@aha.chat/database/schema"
+import { updateWebhookCache } from "@chatbotx/events"
 import { z } from "zod"
 import {
   type ChatbotIdAndIdRequestParams,

@@ -1,8 +1,8 @@
 import {
   BroadcastInboxType,
   BroadcastSubaction,
-} from "@chatbotx.io/database/enums"
-import { broadcastSchedulesType } from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/enums"
+import { broadcastSchedulesType } from "@aha.chat/database/schema"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 

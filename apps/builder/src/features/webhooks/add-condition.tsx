@@ -1,7 +1,7 @@
 "use client"
 
-import { Condition } from "@chatbotx.io/database/enums"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Condition } from "@aha.chat/database/enums"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+} from "@aha.chat/ui/components/ui/dropdown-menu"
 import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"

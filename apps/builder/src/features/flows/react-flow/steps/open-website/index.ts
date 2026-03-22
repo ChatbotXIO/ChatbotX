@@ -2,7 +2,7 @@ import {
   type OpenWebsiteStepSchema,
   openWebsiteStepDefaultFn,
   openWebsiteStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import OpenWebsiteStepEditor from "./editor"
 import OpenWebsiteStepViewer from "./viewer"

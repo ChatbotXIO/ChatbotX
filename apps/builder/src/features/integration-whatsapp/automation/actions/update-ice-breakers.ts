@@ -1,10 +1,10 @@
 "use server"
 
-import { findOrFail } from "@chatbotx.io/database/client"
-import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
-import { uploader } from "@chatbotx.io/filesystem"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { findOrFail } from "@aha.chat/database/client"
+import { integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
+import { uploader } from "@aha.chat/filesystem"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

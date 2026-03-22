@@ -1,11 +1,11 @@
 "use client"
 
-import type { FileType } from "@chatbotx.io/database/types"
-import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
+import type { FileType } from "@aha.chat/database/types"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
+import { DirectUploadButton } from "@aha.chat/ui/components/uploader/direct-upload-button"
 import {
   FileIcon,
   ImageIcon,

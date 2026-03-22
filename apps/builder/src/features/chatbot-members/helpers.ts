@@ -1,4 +1,4 @@
-import type { ChatbotMemberNotificationTypes } from "@chatbotx.io/database/types"
+import type { ChatbotMemberNotificationTypes } from "@aha.chat/database/types"
 
 export function isEnableAtLeastOneNotification(
   notificationTypes: ChatbotMemberNotificationTypes,

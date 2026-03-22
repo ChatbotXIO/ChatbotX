@@ -4,7 +4,7 @@ import type {
   Handler,
   Oauth2AuthValue,
   SendFlowStepProps,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import type { ServerMessage } from "whatsapp-api-js/types"
 import z from "zod"
 import type {

@@ -2,8 +2,8 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@chatbotx.io/ui/components/ui/sidebar"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/sidebar"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"

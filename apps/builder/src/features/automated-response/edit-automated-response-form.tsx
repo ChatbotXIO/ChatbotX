@@ -4,12 +4,12 @@ import {
   type AutomatedResponseModel,
   type AutomatedResponseReply,
   ReplyType,
-} from "@chatbotx.io/database/types"
-import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
-import { Label } from "@chatbotx.io/ui/components/ui/label"
+} from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {

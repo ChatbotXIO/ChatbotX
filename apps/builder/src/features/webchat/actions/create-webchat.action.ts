@@ -1,10 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import {
-  inboxModel,
-  integrationWebchatModel,
-} from "@chatbotx.io/database/schema"
+import { db } from "@aha.chat/database/client"
+import { inboxModel, integrationWebchatModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"

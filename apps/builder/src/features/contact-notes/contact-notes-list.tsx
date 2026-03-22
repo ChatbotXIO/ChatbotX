@@ -1,11 +1,11 @@
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { formatDate } from "@chatbotx.io/ui/lib/format"
+} from "@aha.chat/ui/components/ui/tooltip"
+import { formatDate } from "@aha.chat/ui/lib/format"
 import { CircleUserRound, PencilIcon, TrashIcon } from "lucide-react"
 import type { ContactNoteResource } from "./schemas/resource"
 

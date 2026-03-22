@@ -17,7 +17,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "dotenv-cli": "^11.0.0"
   }
 }

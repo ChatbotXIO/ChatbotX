@@ -7,14 +7,14 @@ import {
   type SendTextStepSchema,
   type SendVideoStepSchema,
   StepType,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import {
   ContentType,
   type OutgoingConversation,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import { sendPageMessage } from "../apis/page"
 import { logger } from "../lib/logger"
 import {

@@ -1,4 +1,4 @@
-import type { OrganizationSettings } from "@chatbotx.io/database/types"
+import type { OrganizationSettings } from "@aha.chat/database/types"
 import { Suspense } from "react"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"

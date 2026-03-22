@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 import { SiClaude, SiGooglegemini } from "@icons-pack/react-simple-icons"
 import { OpenAI as OpenAIIcon } from "@lobehub/icons"
 import {

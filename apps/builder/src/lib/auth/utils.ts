@@ -1,11 +1,11 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import type {
   ChatbotMemberModel,
   ChatbotModel,
   UserModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { headers } from "next/headers"
 import { ChatbotXException } from "../errors/exception"
 import { auth } from "./auth"

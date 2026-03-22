@@ -1,6 +1,6 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { createContext, type ReactNode, useContext, useRef } from "react"
 import { useStore } from "zustand"
 import {

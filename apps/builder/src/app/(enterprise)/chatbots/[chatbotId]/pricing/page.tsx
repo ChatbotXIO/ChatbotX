@@ -1,7 +1,7 @@
 "use client"
 
-import { PricingTableFour } from "@chatbotx.io/ui/components/billingsdk/pricing-table-four"
-import { samplePlans } from "@chatbotx.io/ui/lib/billingsdk-config"
+import { PricingTableFour } from "@aha.chat/ui/components/billingsdk/pricing-table-four"
+import { samplePlans } from "@aha.chat/ui/lib/billingsdk-config"
 
 export default function PricingTableFourDemo() {
   // authClient.subscription.upgrade({

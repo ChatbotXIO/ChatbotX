@@ -1,4 +1,4 @@
-import { type Context, SdkException } from "@chatbotx.io/sdk"
+import { type Context, SdkException } from "@aha.chat/sdk"
 import { WhatsAppAPI } from "whatsapp-api-js"
 import type {
   WhatsappPhoneNumber,

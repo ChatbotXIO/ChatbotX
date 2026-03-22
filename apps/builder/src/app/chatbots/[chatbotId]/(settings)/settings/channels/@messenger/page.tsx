@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { findIntegrationMessenger } from "@/features/integration-messenger/queries"

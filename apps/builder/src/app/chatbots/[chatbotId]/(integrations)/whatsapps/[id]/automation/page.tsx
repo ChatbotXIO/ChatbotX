@@ -1,5 +1,5 @@
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import { findConversationalAutomation } from "@chatbotx.io/integration-whatsapp/api/phone-number"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { findConversationalAutomation } from "@aha.chat/integration-whatsapp/api/phone-number"
 import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automation/whatsapp-automation-manage"
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 

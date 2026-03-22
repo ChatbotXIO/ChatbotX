@@ -1,6 +1,6 @@
 "use client"
 
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { TextIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"

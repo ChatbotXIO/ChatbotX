@@ -1,4 +1,4 @@
-import { ModelNotfoundException } from "@chatbotx.io/database/errors"
+import { ModelNotfoundException } from "@aha.chat/database/errors"
 import { ORPCError, onError } from "@orpc/server"
 import { ChatbotXException } from "./lib/errors/exception"
 import { authMiddleware } from "./middlewares/auth"

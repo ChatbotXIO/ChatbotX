@@ -1,4 +1,4 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import { SdkException } from "@aha.chat/sdk"
 
 export class MessengerException extends SdkException {}
 

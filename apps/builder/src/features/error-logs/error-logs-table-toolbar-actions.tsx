@@ -1,6 +1,6 @@
 "use client"
 
-import type { ErrorLogModel } from "@chatbotx.io/database/types"
+import type { ErrorLogModel } from "@aha.chat/database/types"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { DeleteErrorLogsDialog } from "./delete-error-logs"

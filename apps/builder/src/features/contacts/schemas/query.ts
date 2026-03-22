@@ -1,4 +1,4 @@
-import { Operator } from "@chatbotx.io/database/enums"
+import { Operator } from "@aha.chat/database/enums"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema"
 import { conversationResource } from "@/features/conversations/schemas/resource"

@@ -2,7 +2,7 @@ import type {
   AIFileModel,
   AIFunctionModel,
   AIMCPServerModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { AIFileCollection } from "@/features/ai-files/schemas"

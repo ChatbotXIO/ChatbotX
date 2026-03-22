@@ -1,7 +1,4 @@
-import type {
-  AIEmbeddingStatus,
-  AIFileModel,
-} from "@chatbotx.io/database/types"
+import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export type AIFileWithProcessing = AIFileModel & {

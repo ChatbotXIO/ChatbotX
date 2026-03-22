@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { aiMCPServerModel } from "@chatbotx.io/database/schema"
+import { db } from "@aha.chat/database/client"
+import { aiMCPServerModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"

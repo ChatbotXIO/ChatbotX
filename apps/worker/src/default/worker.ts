@@ -5,7 +5,7 @@ import {
   defaultWorkerOptions,
   getRedisConnection,
   queueName,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
 import { loopableExportContacts } from "./handlers/export-contacts"

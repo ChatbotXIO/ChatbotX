@@ -3,23 +3,23 @@
 import {
   type BroadcastInboxType,
   BroadcastSubaction,
-} from "@chatbotx.io/database/enums"
+} from "@aha.chat/database/enums"
 import {
   type BroadcastSchedulesType,
   type InboxType,
   Omnichannel,
-} from "@chatbotx.io/database/types"
-import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+} from "@aha.chat/database/types"
+import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+} from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"

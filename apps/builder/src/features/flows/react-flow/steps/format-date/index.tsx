@@ -2,7 +2,7 @@ import {
   type FormatDateStepSchema,
   formatDateStepDefaultFn,
   formatDateStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import FormatDateStepEditor from "./editor"
 import FormatDateStepViewer from "./viewer"

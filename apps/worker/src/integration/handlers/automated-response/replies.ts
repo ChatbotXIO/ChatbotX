@@ -1,13 +1,11 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import { createOpenAI } from "@ai-sdk/openai"
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import {
   type AIAgentProvider,
   AIMessageRole,
   type AutomatedResponseReply,
   ReplyType,
-} from "@chatbotx.io/database/types"
-import { aiProviders } from "@chatbotx.io/flow-config"
+} from "@aha.chat/database/types"
+import { aiProviders } from "@aha.chat/flow-config"
 import {
   type BotResponseTrackingContext,
   ChatJobAction,
@@ -15,7 +13,9 @@ import {
   IntegrationJobAction,
   type IntegrationJobTriggerAutomatedResponse,
   integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createOpenAI } from "@ai-sdk/openai"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"

@@ -1,7 +1,7 @@
 "use client"
 
-import type { InboxTeamModel } from "@chatbotx.io/database/types"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import type { InboxTeamModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@chatbotx.io/ui/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"

@@ -1,5 +1,5 @@
-import type { AIAgentModel } from "@chatbotx.io/database/types"
-import type { OutgoingMessage } from "@chatbotx.io/sdk"
+import type { AIAgentModel } from "@aha.chat/database/types"
+import type { OutgoingMessage } from "@aha.chat/sdk"
 import type { ModelMessage, ToolSet } from "ai"
 
 export type ReplyByAIProps = {
@@ -32,5 +32,5 @@ export type FileSearchConfig = {
   maxResults: number
 }
 
-export type { AutomatedResponseReply } from "@chatbotx.io/database/types"
-export type { SecretTextAuthValue } from "@chatbotx.io/sdk"
+export type { AutomatedResponseReply } from "@aha.chat/database/types"
+export type { SecretTextAuthValue } from "@aha.chat/sdk"

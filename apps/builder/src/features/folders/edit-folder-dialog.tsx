@@ -1,16 +1,16 @@
 "use client"
 
-import type { FolderModel } from "@chatbotx.io/database/types"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import type { FolderModel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"

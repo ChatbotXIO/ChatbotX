@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream"
 import { TextDecoder } from "node:util"
-import { uploader } from "@chatbotx.io/filesystem"
+import { uploader } from "@aha.chat/filesystem"
 import {
   CSV_MIME_TYPES,
   DOCX_MIME_TYPES,
@@ -13,7 +13,7 @@ import {
   SPREADSHEET_MIME_TYPES,
   VTT_MIME_TYPES,
   XML_MIME_TYPES,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import { htmlToText } from "html-to-text"
 import { simpleParser } from "mailparser"
 import { extractRawText } from "mammoth"

@@ -1,6 +1,6 @@
-import { db } from "@chatbotx.io/database/client"
-import { errorLogModel } from "@chatbotx.io/database/schema"
-import type { JobSendErrorLog } from "@chatbotx.io/worker-config"
+import { db } from "@aha.chat/database/client"
+import { errorLogModel } from "@aha.chat/database/schema"
+import type { JobSendErrorLog } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 
 export const sendErrorLog = async (data: JobSendErrorLog["data"]) => {

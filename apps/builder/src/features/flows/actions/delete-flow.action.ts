@@ -1,7 +1,7 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { flowModel } from "@chatbotx.io/database/schema"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { flowModel } from "@aha.chat/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

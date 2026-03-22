@@ -1,7 +1,7 @@
 import {
   AIAnalyzeImageDefaultFn,
   AIAnalyzeImageSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import AIAnalyzeImageEditor from "./editor"
 import AIAnalyzeImageViewer from "./viewer"

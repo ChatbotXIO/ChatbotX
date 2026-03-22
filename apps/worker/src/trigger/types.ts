@@ -2,7 +2,7 @@ import type {
   ChatbotModel,
   ConditionModel,
   TriggerModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 
 export type TriggerWithConditions = TriggerModel & {
   conditions: ConditionModel[]

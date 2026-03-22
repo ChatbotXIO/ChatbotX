@@ -2,7 +2,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
+} from "@aha.chat/ui/components/ui/tooltip"
 import { TriangleAlertIcon } from "lucide-react"
 
 export const ErrorAlert = ({ message }: { message: string }) => (

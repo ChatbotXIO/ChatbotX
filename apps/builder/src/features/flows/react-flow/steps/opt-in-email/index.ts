@@ -2,7 +2,7 @@ import {
   type OptInEmailStepSchema,
   optInEmailStepDefaultFn,
   optInEmailStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import OptInEmailStepEditor from "./editor"
 import OptInEmailStepViewer from "./viewer"

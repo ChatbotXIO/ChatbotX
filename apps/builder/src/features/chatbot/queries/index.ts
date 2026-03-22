@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import { notFoundException } from "@/lib/errors/exception"
 
 export const findChatbotOrFail = async (

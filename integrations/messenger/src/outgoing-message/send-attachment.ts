@@ -1,5 +1,5 @@
-import { StepType } from "@chatbotx.io/flow-config"
-import type { FileType } from "@chatbotx.io/sdk"
+import { StepType } from "@aha.chat/flow-config"
+import type { FileType } from "@aha.chat/sdk"
 import type { FacebookMessageAttachment } from "../schemas"
 
 export function getAttachmentTemplate(

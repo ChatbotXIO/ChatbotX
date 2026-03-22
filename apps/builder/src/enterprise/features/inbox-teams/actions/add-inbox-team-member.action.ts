@@ -1,11 +1,8 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  inboxTeamMemberModel,
-  inboxTeamModel,
-} from "@chatbotx.io/database/schema"
-import type { InboxTeamModel } from "@chatbotx.io/database/types"
+import { db, findOrFail } from "@aha.chat/database/client"
+import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
+import type { InboxTeamModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,

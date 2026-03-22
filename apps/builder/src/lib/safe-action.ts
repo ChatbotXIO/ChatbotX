@@ -1,7 +1,7 @@
-import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
-import { userModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
-import { SdkException } from "@chatbotx.io/sdk"
+import { findOrFail, isDatabaseError } from "@aha.chat/database/client"
+import { userModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { SdkException } from "@aha.chat/sdk"
 import {
   createSafeActionClient,
   DEFAULT_SERVER_ERROR_MESSAGE,

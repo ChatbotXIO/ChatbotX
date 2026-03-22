@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { StepType } from "@aha.chat/flow-config"
 import {
   CreditCardIcon,
   ImageIcon,

@@ -3,14 +3,14 @@ import {
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
   StepType,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import {
   ChatJobAction,
   type ChatJobSendFlowStep,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import {
   addContactNotes,
   addContactTag,

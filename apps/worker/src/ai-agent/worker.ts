@@ -4,7 +4,7 @@ import {
   defaultWorkerOptions,
   getRedisConnection,
   queueName,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"

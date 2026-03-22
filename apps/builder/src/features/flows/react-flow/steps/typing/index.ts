@@ -2,7 +2,7 @@ import {
   type TypingStepSchema,
   typingStepDefaultFn,
   typingStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import TypingStepEditor from "./editor"
 import TypingStepViewer from "./viewer"

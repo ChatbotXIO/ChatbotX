@@ -5,7 +5,7 @@ import {
   type ChatbotXAPI,
   type ChatbotXConfig,
   createChatbotXAPI,
-} from "@chatbotx.io/public-apis"
+} from "@chatbotx/public-apis"
 import { parseBooleanEnv } from "./commands/utils"
 import { env } from "./env"
 

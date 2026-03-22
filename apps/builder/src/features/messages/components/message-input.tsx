@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Textarea } from "@aha.chat/ui/components/ui/textarea"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { createId } from "@paralleldrive/cuid2"

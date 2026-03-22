@@ -2,7 +2,7 @@ import {
   type BlockContactStepSchema,
   blockContactStepDefaultFn,
   blockContactStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import BlockContactStepEditor from "./editor"
 import BlockContactStepViewer from "./viewer"

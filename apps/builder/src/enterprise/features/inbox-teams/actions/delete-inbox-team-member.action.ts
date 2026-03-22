@@ -1,11 +1,8 @@
 "use server"
 
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
-import {
-  inboxTeamMemberModel,
-  inboxTeamModel,
-} from "@chatbotx.io/database/schema"
-import type { InboxTeamModel } from "@chatbotx.io/database/types"
+import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
+import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
+import type { InboxTeamModel } from "@aha.chat/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

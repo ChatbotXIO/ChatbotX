@@ -1,7 +1,7 @@
 "use server"
 
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { customFieldModel } from "@chatbotx.io/database/schema"
+import { db, isDatabaseError } from "@aha.chat/database/client"
+import { customFieldModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {

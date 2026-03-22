@@ -1,6 +1,6 @@
 "use client"
 
-import { DelayType, type WaitStepSchema } from "@chatbotx.io/flow-config"
+import { DelayType, type WaitStepSchema } from "@aha.chat/flow-config"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { ListCustomFieldsResponse } from "@/features/custom-fields/schemas/query"

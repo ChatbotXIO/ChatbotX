@@ -1,18 +1,18 @@
 "use client"
 
-import { Omnichannel } from "@chatbotx.io/database/types"
+import { Omnichannel } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@chatbotx.io/ui/components/ui/avatar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+} from "@aha.chat/ui/components/ui/avatar"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/tooltip"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import { StarIcon, UsersRoundIcon } from "lucide-react"
 import { useParams } from "next/navigation"

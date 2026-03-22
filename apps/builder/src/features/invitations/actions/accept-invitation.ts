@@ -1,16 +1,16 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, findOrFail } from "@aha.chat/database/client"
 import {
   chatbotMemberModel,
   invitationModel,
   organizationMemberModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import type {
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
   InvitationModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { ChatbotXException } from "@/lib/errors/exception"

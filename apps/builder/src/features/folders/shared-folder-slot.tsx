@@ -1,11 +1,11 @@
-import type { FolderType } from "@chatbotx.io/database/enums"
-import type { FolderModel } from "@chatbotx.io/database/types"
+import type { FolderType } from "@aha.chat/database/enums"
+import type { FolderModel } from "@aha.chat/database/types"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
+} from "@aha.chat/ui/components/ui/card"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"

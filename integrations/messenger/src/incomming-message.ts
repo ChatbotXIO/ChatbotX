@@ -6,7 +6,7 @@ import {
   type IncomingMessage,
   MessageType,
   type ReceivedMessageResult,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 
 import { getMessageAttachmentEntity } from "./apis/page"
 import { MessengerException } from "./exception"

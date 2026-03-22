@@ -1,5 +1,5 @@
-import { Condition } from "@chatbotx.io/database/enums"
-import { webhookQueue } from "@chatbotx.io/worker-config"
+import { Condition } from "@aha.chat/database/enums"
+import { webhookQueue } from "@aha.chat/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
 import { hasActiveWebhooks } from "./cache"
 import { isWebhookContext } from "./context"

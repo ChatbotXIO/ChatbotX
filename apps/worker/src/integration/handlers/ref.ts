@@ -1,23 +1,23 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, findOrFail } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   conversationModel,
   flowModel,
   flowVersionModel,
   reflinkModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import type {
   ConversationModel,
   CustomFieldModel,
   FlowModel,
   FlowVersionModel,
   ReflinkModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import {
   IntegrationJobAction,
   type IntegrationJobRunRef,
   integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { logger } from "../../lib/logger"
 

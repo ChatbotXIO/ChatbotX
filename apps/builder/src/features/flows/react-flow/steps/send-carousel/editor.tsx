@@ -1,12 +1,12 @@
 "use client"
 
-import { CardLayout } from "@chatbotx.io/database/types"
-import { sendCardStepDefaultFn } from "@chatbotx.io/flow-config"
+import { CardLayout } from "@aha.chat/database/types"
+import { sendCardStepDefaultFn } from "@aha.chat/flow-config"
 import {
   SelectedSnapDisplay,
   useSelectedSnapDisplay,
-} from "@chatbotx.io/ui/components/carousel-snap"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+} from "@aha.chat/ui/components/carousel-snap"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Carousel,
   type CarouselApi,
@@ -14,8 +14,8 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@chatbotx.io/ui/components/ui/carousel"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/carousel"
+import { cn } from "@aha.chat/ui/lib/utils"
 import {
   PlusIcon,
   RectangleHorizontalIcon,

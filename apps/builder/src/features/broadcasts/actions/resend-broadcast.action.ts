@@ -1,15 +1,12 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, findOrFail } from "@aha.chat/database/client"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
-import type { BroadcastModel } from "@chatbotx.io/database/types"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/database/schema"
+import type { BroadcastModel } from "@aha.chat/database/types"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"

@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { invitationModel } from "@chatbotx.io/database/schema"
+import { db } from "@aha.chat/database/client"
+import { invitationModel } from "@aha.chat/database/schema"
 import { createId, init } from "@paralleldrive/cuid2"
 import { addDays } from "date-fns"
 import { chatbotIdRequestParams } from "@/features/common/schemas"

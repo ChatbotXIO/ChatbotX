@@ -1,9 +1,9 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
-import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { DefaultJobAction, defaultQueue } from "@aha.chat/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,

@@ -1,12 +1,7 @@
 "use server"
 
-import {
-  and,
-  db,
-  eq,
-  isUniqueViolationError,
-} from "@chatbotx.io/database/client"
-import { reflinkModel } from "@chatbotx.io/database/schema"
+import { and, db, eq, isUniqueViolationError } from "@aha.chat/database/client"
+import { reflinkModel } from "@aha.chat/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdAndIdRequestParams,

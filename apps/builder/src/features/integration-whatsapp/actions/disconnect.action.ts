@@ -1,14 +1,11 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { InboxStatus } from "@chatbotx.io/database/enums"
-import {
-  inboxModel,
-  integrationWhatsappModel,
-} from "@chatbotx.io/database/schema"
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import { unsubscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { InboxStatus } from "@aha.chat/database/enums"
+import { inboxModel, integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { unsubscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

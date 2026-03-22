@@ -1,5 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
-import type { IntegrationJobTriggerAutomatedResponse } from "@chatbotx.io/worker-config"
+import { db } from "@aha.chat/database/client"
+import type { IntegrationJobTriggerAutomatedResponse } from "@aha.chat/worker-config"
 import type { ModelMessage } from "ai"
 import { getAIToolset } from "../generate-text/tools"
 import {

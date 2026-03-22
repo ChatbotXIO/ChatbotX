@@ -4,7 +4,7 @@ import type {
   Oauth2AuthValue,
   Oauth2Config,
   SendFlowStepProps,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 
 export const DEFAULT_VERSION = "v4"
 

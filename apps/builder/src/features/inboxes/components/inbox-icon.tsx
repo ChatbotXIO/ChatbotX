@@ -1,5 +1,5 @@
-import type { InboxType } from "@chatbotx.io/database/types"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+import type { InboxType } from "@aha.chat/database/types"
+import { cn } from "@aha.chat/ui/lib/utils"
 import {
   SiMessenger,
   SiMessengerHex,

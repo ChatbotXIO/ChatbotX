@@ -1,4 +1,4 @@
-import type { ConditionModel, WebhookModel } from "@chatbotx.io/database/types"
+import type { ConditionModel, WebhookModel } from "@aha.chat/database/types"
 
 export type WebhookWithConditions = WebhookModel & {
   conditions: ConditionModel[]

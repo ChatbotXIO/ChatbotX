@@ -1,15 +1,15 @@
 "use client"
 
-import type { FileType } from "@chatbotx.io/database/types"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
+import type { FileType } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/tooltip"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import {
   File,

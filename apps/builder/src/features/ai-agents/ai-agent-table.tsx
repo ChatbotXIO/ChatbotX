@@ -1,16 +1,16 @@
 "use client"
 
-import type { AIAgentModel } from "@chatbotx.io/database/types"
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import type { AIAgentModel } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
+} from "@aha.chat/ui/components/ui/card"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"

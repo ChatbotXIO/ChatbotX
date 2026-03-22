@@ -1,16 +1,16 @@
 "use server"
 
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
   customFieldModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import {
   type CustomFieldModel,
   type FillableContactKeys,
   fillableContactKeys,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { isCuid } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

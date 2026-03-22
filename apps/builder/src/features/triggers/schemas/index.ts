@@ -1,4 +1,4 @@
-import type { TriggerModel } from "@chatbotx.io/database/types"
+import type { TriggerModel } from "@aha.chat/database/types"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
 

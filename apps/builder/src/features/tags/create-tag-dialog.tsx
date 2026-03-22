@@ -1,9 +1,9 @@
 "use client"
 
-import { rootFolderId } from "@chatbotx.io/database/enums"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { rootFolderId } from "@aha.chat/database/enums"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -13,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"

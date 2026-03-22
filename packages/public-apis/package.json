@@ -1,10 +1,10 @@
 {
-  "name": "@chatbotx.io/public-apis",
+  "name": "@chatbotx/public-apis",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "openapi-typescript": "^7.13.0",
     "typescript": "5.9.3"
   },

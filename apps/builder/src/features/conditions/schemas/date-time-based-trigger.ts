@@ -2,7 +2,7 @@ import {
   Condition,
   DateTimeTriggerType,
   Operator,
-} from "@chatbotx.io/database/enums"
+} from "@aha.chat/database/enums"
 import z from "zod"
 
 export const dateTimeBasedTrigger = z

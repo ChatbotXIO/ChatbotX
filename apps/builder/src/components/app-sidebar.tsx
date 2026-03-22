@@ -5,7 +5,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@chatbotx.io/ui/components/ui/sidebar"
+} from "@aha.chat/ui/components/ui/sidebar"
 import {
   AtomIcon,
   BrainIcon,

@@ -1,8 +1,5 @@
-import {
-  attachmentModel,
-  createSelectSchema,
-} from "@chatbotx.io/database/schema"
-import type { AttachmentModel } from "@chatbotx.io/database/types"
+import { attachmentModel, createSelectSchema } from "@aha.chat/database/schema"
+import type { AttachmentModel } from "@aha.chat/database/types"
 import { z } from "zod"
 import { logger } from "@/lib/log"
 

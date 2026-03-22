@@ -2,7 +2,7 @@ import {
   type SpreadsheetUpdateRowSchema,
   spreadsheetUpdateRowDefaultFn,
   spreadsheetUpdateRowSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import { SpreadsheetViewer } from "../spreadsheet/viewer"
 import { SpreadsheetUpdateRowEditor } from "./editor"

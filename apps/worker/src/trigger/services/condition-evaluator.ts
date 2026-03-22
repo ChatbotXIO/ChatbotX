@@ -1,6 +1,6 @@
-import { db } from "@chatbotx.io/database/client"
-import { Condition as ConditionEnum } from "@chatbotx.io/database/enums"
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import { Condition as ConditionEnum } from "@aha.chat/database/enums"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
 

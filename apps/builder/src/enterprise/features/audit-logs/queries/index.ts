@@ -1,9 +1,9 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { auditLogModel, errorLogModel } from "@chatbotx.io/database/schema"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { auditLogModel, errorLogModel } from "@aha.chat/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
+} from "@aha.chat/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { AuditLogResource } from "../schemas"

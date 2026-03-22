@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { spreadsheetModel } from "@chatbotx.io/database/schema"
+import { db } from "@aha.chat/database/client"
+import { spreadsheetModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

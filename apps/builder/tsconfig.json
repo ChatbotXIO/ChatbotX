@@ -1,10 +1,10 @@
 {
-  "extends": "@chatbotx.io/typescript-config/nextjs.json",
+  "extends": "@aha.chat/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@chatbotx.io/ui/*": ["../../packages/ui/src/*"]
+      "@aha.chat/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [
       {

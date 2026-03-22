@@ -1,5 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
-import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { IntegrationZaloResource } from "../schemas/resource"
 

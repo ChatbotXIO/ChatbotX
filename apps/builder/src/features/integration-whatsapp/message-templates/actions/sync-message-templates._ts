@@ -1,7 +1,7 @@
 "use server"
 
-import { uploader } from "@chatbotx.io/filesystem"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { uploader } from "@aha.chat/filesystem"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

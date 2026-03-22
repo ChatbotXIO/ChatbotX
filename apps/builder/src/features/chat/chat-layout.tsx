@@ -1,11 +1,11 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@chatbotx.io/ui/components/ui/resizable"
+} from "@aha.chat/ui/components/ui/resizable"
 import { BotIcon, Loader2Icon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"

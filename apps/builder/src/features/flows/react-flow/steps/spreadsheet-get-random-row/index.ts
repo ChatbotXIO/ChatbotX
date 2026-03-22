@@ -2,7 +2,7 @@ import {
   type SpreadsheetGetRandomRowSchema,
   spreadsheetGetRandomRowDefaultFn,
   spreadsheetGetRandomRowSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import { SpreadsheetViewer } from "../spreadsheet/viewer"
 import { SpreadsheetGetRandomRowEditor } from "./editor"

@@ -1,7 +1,7 @@
 import {
   type OrganizationModel,
   organizationSettingsSchema,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"

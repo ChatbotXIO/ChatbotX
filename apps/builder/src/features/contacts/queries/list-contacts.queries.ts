@@ -1,9 +1,9 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { contactModel } from "@aha.chat/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
+} from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListContactsRequest,

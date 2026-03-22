@@ -1,11 +1,11 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { chatbotMemberModel } from "@chatbotx.io/database/schema"
+import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { chatbotMemberModel } from "@aha.chat/database/schema"
 import type {
   ChatbotMemberModel,
   ChatbotMemberPermissions,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"

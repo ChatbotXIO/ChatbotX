@@ -1,9 +1,9 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
-import { emitConversationFollowUp } from "@chatbotx.io/events"
+import { and, db, eq } from "@aha.chat/database/client"
+import { conversationModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
+import { emitConversationFollowUp } from "@chatbotx/events"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

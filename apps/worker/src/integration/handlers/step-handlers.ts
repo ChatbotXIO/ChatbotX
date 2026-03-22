@@ -1,4 +1,3 @@
-import { conversationTrackingService } from "@chatbotx.io/analytics"
 import {
   and,
   db,
@@ -8,15 +7,8 @@ import {
   or,
   type SQL,
   sql,
-} from "@chatbotx.io/database/client"
-import { contactModel, conversationModel } from "@chatbotx.io/database/schema"
-import {
-  emitConversationArchived,
-  emitConversationAssigned,
-  emitConversationTransferredToBot,
-  emitConversationTransferredToHuman,
-  emitConversationUnassigned,
-} from "@chatbotx.io/events"
+} from "@aha.chat/database/client"
+import { contactModel, conversationModel } from "@aha.chat/database/schema"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -30,12 +22,20 @@ import {
   type UnarchiveConversationStepSchema,
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import {
   broadcastToGuestParty,
   RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
-import type { OutgoingConversation } from "@chatbotx.io/sdk"
+} from "@aha.chat/partysocket-config"
+import type { OutgoingConversation } from "@aha.chat/sdk"
+import {
+  emitConversationArchived,
+  emitConversationAssigned,
+  emitConversationTransferredToBot,
+  emitConversationTransferredToHuman,
+  emitConversationUnassigned,
+} from "@chatbotx/events"
+import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import { subHours } from "date-fns"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"

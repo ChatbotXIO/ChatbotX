@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { base } from "./context"

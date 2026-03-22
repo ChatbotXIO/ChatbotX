@@ -1,21 +1,21 @@
 "use client"
 
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
+} from "@aha.chat/ui/components/ui/card"
+import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
+} from "@aha.chat/ui/components/ui/tooltip"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import Link from "next/link"

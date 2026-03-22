@@ -2,7 +2,7 @@ import {
   type DeleteContactStepSchema,
   deleteContactStepDefaultFn,
   deleteContactStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import DeleteContactStepEditor from "./editor"
 import DeleteContactStepViewer from "./viewer"

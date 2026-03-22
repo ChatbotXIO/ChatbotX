@@ -1,8 +1,8 @@
 import {
   type IntegrationWebchatModel,
   WEBCHAT_SOURCE_PREFIX,
-} from "@chatbotx.io/database/types"
-import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
+} from "@aha.chat/database/types"
+import type { MessageButtonTemplate } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"

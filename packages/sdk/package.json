@@ -1,15 +1,15 @@
 {
-  "name": "@chatbotx.io/sdk",
+  "name": "@aha.chat/sdk",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@chatbotx.io/flow-config": "workspace:*",
-    "@chatbotx.io/logger": "workspace:*",
+    "@aha.chat/flow-config": "workspace:*",
+    "@aha.chat/logger": "workspace:*",
     "@types/node": "^24.10.4",
     "zod": "^4.3.6"
   },

@@ -1,4 +1,4 @@
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@aha.chat/database/enums"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { FlowsTable } from "@/features/flows/flows-table"

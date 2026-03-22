@@ -1,16 +1,16 @@
 "use client"
 
-import type { ChatbotMemberModel, UserModel } from "@chatbotx.io/database/types"
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import type { ChatbotMemberModel, UserModel } from "@aha.chat/database/types"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { ColumnDef } from "@chatbotx.io/ui/types/data-table"
+} from "@aha.chat/ui/components/ui/card"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { ColumnDef } from "@aha.chat/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 

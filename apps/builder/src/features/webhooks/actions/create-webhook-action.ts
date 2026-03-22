@@ -1,9 +1,9 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { FolderType } from "@chatbotx.io/database/enums"
-import { webhookModel } from "@chatbotx.io/database/schema"
-import { updateWebhookCache } from "@chatbotx.io/events"
+import { db, eq } from "@aha.chat/database/client"
+import { FolderType } from "@aha.chat/database/enums"
+import { webhookModel } from "@aha.chat/database/schema"
+import { updateWebhookCache } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getTranslations } from "next-intl/server"
 import {

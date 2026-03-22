@@ -1,7 +1,7 @@
 import {
   type AIMCPServerModel,
   AIMcpServerAuthType,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { z } from "zod"
 
 export type AIMcpServerCollection = {

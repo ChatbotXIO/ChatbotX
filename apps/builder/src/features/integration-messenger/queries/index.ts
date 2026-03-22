@@ -1,5 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
-import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import type { IntegrationMessengerModel } from "@aha.chat/database/types"
 
 export const findIntegrationMessenger = async ({
   chatbotId,

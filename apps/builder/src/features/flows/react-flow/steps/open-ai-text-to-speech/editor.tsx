@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
+} from "@aha.chat/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
 
 const AITextToSpeechEditor = () => {

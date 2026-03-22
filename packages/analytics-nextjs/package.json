@@ -11,8 +11,8 @@
     "./provider/analysis-store": "./src/provider/analysis-store.ts"
   },
   "dependencies": {
-    "@chatbotx.io/database": "workspace:*",
-    "@chatbotx.io/ui": "workspace:*",
+    "@aha.chat/database": "workspace:*",
+    "@aha.chat/ui": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@orpc/server": "^1.13.9",
@@ -28,7 +28,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "@types/react": "19.2.14",
     "tsx": "^4.21.0"

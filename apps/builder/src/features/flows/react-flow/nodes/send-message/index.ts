@@ -2,7 +2,7 @@ import {
   NodeType,
   sendMessageNodeDefaultFn,
   sendMessageNodeSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import { MessageCircleMoreIcon } from "lucide-react"
 import type { TranslationFn } from "../types"
 import { sendMessageEditorMenus } from "./menu"

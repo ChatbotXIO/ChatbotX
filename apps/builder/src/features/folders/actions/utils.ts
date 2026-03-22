@@ -1,6 +1,6 @@
-import { findOrFail } from "@chatbotx.io/database/client"
-import { folderModel } from "@chatbotx.io/database/schema"
-import type { FolderModel, FolderType } from "@chatbotx.io/database/types"
+import { findOrFail } from "@aha.chat/database/client"
+import { folderModel } from "@aha.chat/database/schema"
+import type { FolderModel, FolderType } from "@aha.chat/database/types"
 
 export const ensureFolderIsExists = async (
   id: string,

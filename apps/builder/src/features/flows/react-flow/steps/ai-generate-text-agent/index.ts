@@ -1,7 +1,7 @@
 import {
   AIGenerateTextAgentDefaultFn,
   AIGenerateTextAgentSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import AIGenerateTextAgentEditor from "./editor"
 import AIGenerateTextAgentViewer from "./viewer"

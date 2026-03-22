@@ -1,15 +1,15 @@
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import {
   accountModel,
   sessionModel,
   userModel,
   verificationModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import {
   sendMagicLink,
   sendResetPassword,
   sendSignUpVerification,
-} from "@chatbotx.io/mail"
+} from "@aha.chat/mail"
 import { createId } from "@paralleldrive/cuid2"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"

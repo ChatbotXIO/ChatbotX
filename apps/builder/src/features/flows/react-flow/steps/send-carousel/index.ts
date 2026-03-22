@@ -2,7 +2,7 @@ import {
   type SendCarouselStepSchema,
   sendCarouselStepDefaultFn,
   sendCarouselStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import SendCarouselStepEditor from "./editor"
 import SendCarouselStepViewer from "./viewer"

@@ -2,7 +2,7 @@ import {
   type ChooseChannelStepSchema,
   chooseChannelStepDefaultFn,
   chooseChannelStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import ChooseChannelStepEditor from "./editor"
 import ChooseChannelStepViewer from "./viewer"

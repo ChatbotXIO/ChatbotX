@@ -1,5 +1,5 @@
-import { Condition } from "@chatbotx.io/database/enums"
-import { triggerQueue } from "@chatbotx.io/worker-config"
+import { Condition } from "@aha.chat/database/enums"
+import { triggerQueue } from "@aha.chat/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
 import { hasActiveTriggers } from "./cache"
 import { isWorkerContext } from "./context"

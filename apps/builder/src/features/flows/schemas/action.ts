@@ -3,7 +3,7 @@ import {
   edgeSchema,
   flowVersionSchema,
   sendMessageNodeSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import { z } from "zod"
 
 export const createFlowSchema = z.object({

@@ -1,4 +1,4 @@
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export type IntegrationWhatsappResource = IntegrationWhatsappModel

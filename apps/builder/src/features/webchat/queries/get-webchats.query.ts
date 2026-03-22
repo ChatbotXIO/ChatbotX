@@ -1,13 +1,9 @@
 "use server"
 
-import {
-  db,
-  findOrFail,
-  relationsFilterToSQL,
-} from "@chatbotx.io/database/client"
-import { integrationWebchatModel } from "@chatbotx.io/database/schema"
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { parsePagination } from "@chatbotx.io/database/utils"
+import { db, findOrFail, relationsFilterToSQL } from "@aha.chat/database/client"
+import { integrationWebchatModel } from "@aha.chat/database/schema"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
+import { parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetWebchatRequest } from "../schemas/webchat.schema"
 

@@ -1,5 +1,5 @@
-import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { FormFieldWrapper } from "@aha.chat/ui/components/form/field-wrapper"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -7,13 +7,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@chatbotx.io/ui/components/ui/command"
+} from "@aha.chat/ui/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@chatbotx.io/ui/components/ui/popover"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/popover"
+import { cn } from "@aha.chat/ui/lib/utils"
 import type { PopoverContentProps } from "@radix-ui/react-popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { useMemo, useState } from "react"

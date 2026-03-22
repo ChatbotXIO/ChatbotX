@@ -1,4 +1,4 @@
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
@@ -6,13 +6,8 @@ import {
   contactsToTagsModel,
   conversationModel,
   tagModel,
-} from "@chatbotx.io/database/schema"
-import type { ConversationModel } from "@chatbotx.io/database/types"
-import {
-  emitCustomFieldChanged,
-  emitTagApplied,
-  emitTagRemoved,
-} from "@chatbotx.io/events"
+} from "@aha.chat/database/schema"
+import type { ConversationModel } from "@aha.chat/database/types"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,
@@ -22,15 +17,20 @@ import type {
   OptInEmailStepSchema,
   OptOutEmailStepSchema,
   SetCustomFieldStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+} from "@aha.chat/partysocket-config"
 import type {
   IntegrationJobBlockContact,
   IntegrationJobUnblockContact,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
+import {
+  emitCustomFieldChanged,
+  emitTagApplied,
+  emitTagRemoved,
+} from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"

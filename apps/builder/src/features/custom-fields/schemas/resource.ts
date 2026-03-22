@@ -1,7 +1,4 @@
-import {
-  createSelectSchema,
-  customFieldModel,
-} from "@chatbotx.io/database/schema"
+import { createSelectSchema, customFieldModel } from "@aha.chat/database/schema"
 import type z from "zod"
 
 export const customFieldResource = createSelectSchema(customFieldModel)

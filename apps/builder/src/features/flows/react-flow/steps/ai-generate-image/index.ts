@@ -2,7 +2,7 @@ import {
   AIGenerateImageDefaultFn,
   type AIGenerateImageSchema,
   aiGenerateImageSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import AIGenerateImageEditor from "./editor"
 import AIGenerateImageViewer from "./viewer"

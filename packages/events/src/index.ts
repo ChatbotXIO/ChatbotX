@@ -11,5 +11,5 @@ export * from "./webhook/cache"
 export * as WebhookEventEmitter from "./webhook/emitter"
 export type { WebhookEventType } from "./webhook/types"
 
-// NOTE: Context functions are exported from @chatbotx.io/events/context
+// NOTE: Context functions are exported from @aha.chat/events/context
 // to avoid Edge Runtime issues with AsyncLocalStorage

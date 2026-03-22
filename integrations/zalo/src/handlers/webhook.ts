@@ -2,7 +2,7 @@ import {
   type ContextQueue,
   type HandleRequestProps,
   SdkException,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import crypto from "crypto"
 import type { ZaloConfig } from "../schemas/definition"
 import {

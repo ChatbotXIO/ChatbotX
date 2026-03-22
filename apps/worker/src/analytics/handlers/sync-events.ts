@@ -1,10 +1,10 @@
-import { getAnalyticsConfig, parseTmpFilename } from "@chatbotx.io/analytics"
 import {
   NdjsonCleaner,
   NdjsonFinalizer,
   NdjsonS3Uploader,
-} from "@chatbotx.io/filesystem/server"
-import type { AnalyticsJobData } from "@chatbotx.io/worker-config"
+} from "@aha.chat/filesystem/server"
+import type { AnalyticsJobData } from "@aha.chat/worker-config"
+import { getAnalyticsConfig, parseTmpFilename } from "@chatbotx.io/analytics"
 import { logger } from "../../lib/logger"
 
 const runningJobs = new Map<string, Date>()

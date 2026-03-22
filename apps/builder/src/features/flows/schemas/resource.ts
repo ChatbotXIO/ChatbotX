@@ -1,4 +1,4 @@
-import { createSelectSchema, flowModel } from "@chatbotx.io/database/schema"
+import { createSelectSchema, flowModel } from "@aha.chat/database/schema"
 import z from "zod"
 
 export const flowResource = createSelectSchema(flowModel, {

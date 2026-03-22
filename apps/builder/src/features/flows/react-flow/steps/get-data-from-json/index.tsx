@@ -2,7 +2,7 @@ import {
   type GetDataFromJsonStepSchema,
   getDataFromJsonStepDefaultFn,
   getDataFromJsonStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import GetDataFromJsonStepEditor from "./editor"
 import GetdatafromJsonStepViewer from "./viewer"

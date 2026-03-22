@@ -1,14 +1,14 @@
 "use client"
 
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Badge } from "@aha.chat/ui/components/ui/badge"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Label } from "@aha.chat/ui/components/ui/label"
 import {
   RadioGroup,
   RadioGroupItem,
-} from "@chatbotx.io/ui/components/ui/radio-group"
-import type { Plan } from "@chatbotx.io/ui/lib/billingsdk-config"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/radio-group"
+import type { Plan } from "@aha.chat/ui/lib/billingsdk-config"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Award, Building2, Check, Package } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"

@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
   SdkException,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import {
   findConversationalAutomation,
   updateConversationalAutomation,

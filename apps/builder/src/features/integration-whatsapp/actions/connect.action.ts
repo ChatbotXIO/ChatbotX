@@ -1,22 +1,19 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { InboxStatus } from "@chatbotx.io/database/enums"
-import {
-  inboxModel,
-  integrationWhatsappModel,
-} from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import { InboxStatus } from "@aha.chat/database/enums"
+import { inboxModel, integrationWhatsappModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
 import {
   addSystemUser,
   registerPhoneNumber,
   shareCreditLine,
   type WhatsappAuthValue,
-} from "@chatbotx.io/integration-whatsapp"
-import { exchangeAccessToken } from "@chatbotx.io/integration-whatsapp/api/auth"
-import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
-import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
-import { AuthType } from "@chatbotx.io/sdk"
+} from "@aha.chat/integration-whatsapp"
+import { exchangeAccessToken } from "@aha.chat/integration-whatsapp/api/auth"
+import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
+import { subscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
+import { AuthType } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { headers } from "next/headers"
 import { env } from "@/env"

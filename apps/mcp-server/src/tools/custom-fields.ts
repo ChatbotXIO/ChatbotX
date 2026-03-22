@@ -1,4 +1,4 @@
-import type { ChatbotXAPI } from "@chatbotx.io/public-apis"
+import type { ChatbotXAPI } from "@chatbotx/public-apis"
 import {
   createCustomField,
   createCustomFieldInputSchema,
@@ -7,7 +7,7 @@ import {
   getCustomFieldByNameInputSchema,
   getCustomFieldInputSchema,
   listCustomFields,
-} from "@chatbotx.io/public-apis"
+} from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
 const getErrorMessage = (error: unknown): string => {

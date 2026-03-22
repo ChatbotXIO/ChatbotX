@@ -1,4 +1,4 @@
-import type { AgentMarkAsReadProps, SendTypingProps } from "@chatbotx.io/sdk"
+import type { AgentMarkAsReadProps, SendTypingProps } from "@aha.chat/sdk"
 import { getWhatsappClient } from "./client"
 import type { WhatsappAuthValue } from "./schemas"
 

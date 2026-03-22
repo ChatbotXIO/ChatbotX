@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { aiTriggerModel } from "@chatbotx.io/database/schema"
+import { db } from "@aha.chat/database/client"
+import { aiTriggerModel } from "@aha.chat/database/schema"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type CreateAITriggerRequest,

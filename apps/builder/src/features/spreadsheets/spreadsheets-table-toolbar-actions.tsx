@@ -1,7 +1,7 @@
 "use client"
 
-import type { SpreadsheetModel } from "@chatbotx.io/database/types"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
+import type { SpreadsheetModel } from "@aha.chat/database/types"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
 import type { Dispatch, SetStateAction } from "react"
 import { DeleteSpreadsheetsDialog } from "./delete-spreadsheet-dialog"

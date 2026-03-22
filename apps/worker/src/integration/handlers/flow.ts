@@ -1,7 +1,7 @@
 import type {
   ConversationModel,
   FlowVersionModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import {
   type BaseStepSchema,
   type ButtonStepProps,
@@ -10,8 +10,8 @@ import {
   type FlowNode,
   type SendQuickReplyStepSchema,
   StepType,
-} from "@chatbotx.io/flow-config"
-import { initVariables, SdkException, type Variables } from "@chatbotx.io/sdk"
+} from "@aha.chat/flow-config"
+import { initVariables, SdkException, type Variables } from "@aha.chat/sdk"
 import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
@@ -19,7 +19,7 @@ import {
   type IntegrationJobSendFlowPostback,
   type IntegrationJobSendFlowQuickReply,
   integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
 import { findConversationAndFlowVersion } from "../../lib/db"
 import { logger } from "../../lib/logger"
 import { flowStepHandlers } from "./step"

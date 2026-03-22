@@ -1,11 +1,11 @@
-import { createSelectSchema, inboxModel } from "@chatbotx.io/database/schema"
+import { createSelectSchema, inboxModel } from "@aha.chat/database/schema"
 import type {
   InboxModel,
   IntegrationMessengerModel,
   IntegrationWebchatModel,
   IntegrationWhatsappModel,
   IntegrationZaloModel,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 
 export const inboxResource = createSelectSchema(inboxModel)
 

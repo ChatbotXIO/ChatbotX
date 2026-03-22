@@ -3,8 +3,8 @@
 import {
   type CountCharactersStepSchema,
   countCharactersStepSchema,
-} from "@chatbotx.io/flow-config"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+} from "@aha.chat/flow-config"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CalculatorIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

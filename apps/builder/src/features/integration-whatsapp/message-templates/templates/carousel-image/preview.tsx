@@ -1,17 +1,17 @@
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   Carousel,
   type CarouselApi,
   CarouselContent,
   CarouselItem,
-} from "@chatbotx.io/ui/components/ui/carousel"
+} from "@aha.chat/ui/components/ui/carousel"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
+} from "@aha.chat/ui/components/ui/tooltip"
 import {
   ArrowLeft,
   ArrowRight,

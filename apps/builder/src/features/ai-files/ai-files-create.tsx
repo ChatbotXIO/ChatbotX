@@ -1,5 +1,5 @@
-import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
-import { getMimeTypeFromFile } from "@chatbotx.io/ui/lib/file-types"
+import { DirectUploadButton } from "@aha.chat/ui/components/uploader/direct-upload-button"
+import { getMimeTypeFromFile } from "@aha.chat/ui/lib/file-types"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"

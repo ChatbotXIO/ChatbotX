@@ -1,6 +1,6 @@
 "use client"
 
-import { CardTitle } from "@chatbotx.io/ui/components/ui/card"
+import { CardTitle } from "@aha.chat/ui/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"

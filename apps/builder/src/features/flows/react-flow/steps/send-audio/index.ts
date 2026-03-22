@@ -2,7 +2,7 @@ import {
   type SendAudioStepSchema,
   sendAudioStepDefaultFn,
   sendAudioStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import SendAudioStepEditor from "./editor"
 import SendAudioStepViewer from "./viewer"

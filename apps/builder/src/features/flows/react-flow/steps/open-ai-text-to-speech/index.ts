@@ -1,7 +1,7 @@
 import {
   AITextToSpeechDefaultFn,
   AITextToSpeechSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import AITextToSpeechEditor from "./editor"
 import AITextToSpeechViewer from "./viewer"

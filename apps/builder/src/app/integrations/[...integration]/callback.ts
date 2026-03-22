@@ -1,13 +1,13 @@
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import type {
   IntegrationType,
   OrganizationSettings,
-} from "@chatbotx.io/database/types"
-import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
+} from "@aha.chat/database/types"
+import type { AuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"

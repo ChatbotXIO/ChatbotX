@@ -1,7 +1,7 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { rootFolderId } from "@aha.chat/database/enums"
 import {
   automatedResponseModel,
   customFieldModel,
@@ -9,7 +9,7 @@ import {
   tagModel,
   triggerModel,
   webhookModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { ChatbotXException, notFoundException } from "@/lib/errors/exception"

@@ -1,10 +1,10 @@
 {
-  "name": "@chatbotx.io/logger",
+  "name": "@aha.chat/logger",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@aha.chat/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   },
   "dependencies": {

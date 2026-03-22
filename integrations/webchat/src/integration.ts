@@ -4,7 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
   type Oauth2AuthValue,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import { sendTyping } from "./lib/outgoing-message"
 import type { WebchatActions, WebchatAuthValue } from "./schemas"
 

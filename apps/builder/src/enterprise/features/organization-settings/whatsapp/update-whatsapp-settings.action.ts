@@ -1,12 +1,12 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { organizationModel } from "@chatbotx.io/database/schema"
+import { db, eq } from "@aha.chat/database/client"
+import { organizationModel } from "@aha.chat/database/schema"
 import {
   type OrganizationModel,
   type WhatsappSettingsSchema,
   whatsappSettingsSchema,
-} from "@chatbotx.io/database/types"
+} from "@aha.chat/database/types"
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateWhatsappSettingsAction = organizationActionClient

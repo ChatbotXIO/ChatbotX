@@ -1,6 +1,6 @@
 "use client"
 
-import { DonutChart } from "@chatbotx.io/ui/components/charts/donut-chart"
+import { DonutChart } from "@aha.chat/ui/components/charts/donut-chart"
 import { useTranslations } from "next-intl"
 
 export function AllContactsByChannelChart() {

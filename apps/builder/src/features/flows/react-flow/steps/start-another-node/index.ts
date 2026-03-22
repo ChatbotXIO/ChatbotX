@@ -2,7 +2,7 @@ import {
   type StartAnotherNodeStepSchema,
   startAnotherNodeStepDefaultFn,
   startAnotherNodeStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import StartAnotherNodeStepEditor from "./editor"
 import SendNodeStepViewer from "./viewer"

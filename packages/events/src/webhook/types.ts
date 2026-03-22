@@ -1,3 +1,3 @@
-import type { Condition } from "@chatbotx.io/database/enums"
+import type { Condition } from "@aha.chat/database/enums"
 
 export type WebhookEventType = Condition

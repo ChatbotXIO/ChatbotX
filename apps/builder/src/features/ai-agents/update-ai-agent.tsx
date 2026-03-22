@@ -6,26 +6,26 @@ import {
   type AIFunctionModel,
   type AIMCPServerModel,
   AIMessageRole,
-} from "@chatbotx.io/database/types"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Card } from "@chatbotx.io/ui/components/ui/card"
+} from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SliderField } from "@aha.chat/ui/components/form/slider-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card } from "@aha.chat/ui/components/ui/card"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+} from "@aha.chat/ui/components/ui/dialog"
+import { Form } from "@aha.chat/ui/components/ui/form"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@chatbotx.io/ui/components/ui/popover"
+} from "@aha.chat/ui/components/ui/popover"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {

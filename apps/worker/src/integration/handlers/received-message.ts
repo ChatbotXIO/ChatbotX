@@ -1,12 +1,11 @@
-import { contactTrackingService } from "@chatbotx.io/analytics"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, findOrFail } from "@aha.chat/database/client"
 import {
   attachmentModel,
   chatbotUsageModel,
   contactModel,
   conversationModel,
   messageModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import type {
   ChatbotUsageModel,
   ContentType,
@@ -14,28 +13,29 @@ import type {
   Gender,
   IntegrationType,
   MessageModel,
-} from "@chatbotx.io/database/types"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
-import {
-  emitContactCreated,
-  setWebhookExecutionContext,
-} from "@chatbotx.io/events"
-import { uploader } from "@chatbotx.io/filesystem"
+} from "@aha.chat/database/types"
+import { getPublicUrl } from "@aha.chat/database/utils"
+import { uploader } from "@aha.chat/filesystem"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+} from "@aha.chat/partysocket-config"
 import {
   type AuthValue,
   type Context,
   type IncomingAttachment,
   SdkException,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import {
   IntegrationJobAction,
   type IntegrationJobReceiveMessage,
   integrationQueue,
-} from "@chatbotx.io/worker-config"
+} from "@aha.chat/worker-config"
+import {
+  emitContactCreated,
+  setWebhookExecutionContext,
+} from "@chatbotx/events"
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"

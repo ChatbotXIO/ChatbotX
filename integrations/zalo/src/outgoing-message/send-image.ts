@@ -2,8 +2,8 @@ import {
   type SendGifStepSchema,
   type SendImageStepSchema,
   StepType,
-} from "@chatbotx.io/flow-config"
-import type { SendFlowStepProps } from "@chatbotx.io/sdk"
+} from "@aha.chat/flow-config"
+import type { SendFlowStepProps } from "@aha.chat/sdk"
 import { uploadAttachment } from "../api/message"
 import { logger } from "../libs/logger"
 import type { ZaloAuthValue } from "../schemas/definition"

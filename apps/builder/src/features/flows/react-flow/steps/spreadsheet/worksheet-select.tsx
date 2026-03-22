@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { useParams } from "next/navigation"
 import { callAPI } from "@/lib/swr"
 

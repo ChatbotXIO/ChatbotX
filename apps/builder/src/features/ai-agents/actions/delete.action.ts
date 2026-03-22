@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { aiAgentModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { aiAgentModel } from "@aha.chat/database/schema"
+import type { UserModel } from "@aha.chat/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

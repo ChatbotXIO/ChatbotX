@@ -1,17 +1,17 @@
 import type {
   MessageButtonTemplate,
   MessageTemplateEntity,
-} from "@chatbotx.io/sdk"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+} from "@aha.chat/sdk"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@chatbotx.io/ui/components/ui/carousel"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/carousel"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"

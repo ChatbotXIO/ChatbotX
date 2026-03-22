@@ -1,5 +1,5 @@
-import { Badge } from "@chatbotx.io/ui/components/ui/badge"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Badge } from "@aha.chat/ui/components/ui/badge"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -8,14 +8,14 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@chatbotx.io/ui/components/ui/command"
+} from "@aha.chat/ui/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@chatbotx.io/ui/components/ui/popover"
-import { Separator } from "@chatbotx.io/ui/components/ui/separator"
-import { cn } from "@chatbotx.io/ui/lib/utils"
+} from "@aha.chat/ui/components/ui/popover"
+import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { cn } from "@aha.chat/ui/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 import {
   CheckIcon,

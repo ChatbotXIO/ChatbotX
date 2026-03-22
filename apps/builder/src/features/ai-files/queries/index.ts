@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import type { AIEmbeddingStatus } from "@chatbotx.io/database/types"
+import { db } from "@aha.chat/database/client"
+import type { AIEmbeddingStatus } from "@aha.chat/database/types"
 import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { AIFileCollection, ListAIFilesRequest } from "../schemas"

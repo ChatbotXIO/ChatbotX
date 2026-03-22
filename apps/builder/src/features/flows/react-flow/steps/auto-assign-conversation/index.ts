@@ -2,7 +2,7 @@ import {
   type AutoAssignConversationStepSchema,
   autoAssignConversationStepDefaultFn,
   autoAssignConversationStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import AutoAssignConversationStepEditor from "./editor"
 import AutoAssignConversationStepViewer from "./viewer"

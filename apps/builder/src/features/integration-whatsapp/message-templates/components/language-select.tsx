@@ -1,6 +1,6 @@
 "use client"
 
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { LanguageOptions } from "@/features/integration-whatsapp/message-templates/type"
 
 export function WhatsappMessageTemplateLanguageSelect({

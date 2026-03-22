@@ -1,5 +1,5 @@
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import { getUrls } from "@chatbotx.io/integration-whatsapp/api/url"
+import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { getUrls } from "@aha.chat/integration-whatsapp/api/url"
 import WhatsappEcommerce from "@/features/integration-whatsapp/components/whatsapp-ecommerce"
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { ChevronDownIcon } from "lucide-react"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 

@@ -1,7 +1,7 @@
 import {
   createSelectSchema,
   integrationZaloModel,
-} from "@chatbotx.io/database/schema"
+} from "@aha.chat/database/schema"
 import type z from "zod"
 
 export const integrationZaloResource = createSelectSchema(integrationZaloModel)

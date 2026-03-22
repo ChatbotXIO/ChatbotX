@@ -1,4 +1,4 @@
-import { folderType } from "@chatbotx.io/database/schema"
+import { folderType } from "@aha.chat/database/schema"
 import { z } from "zod"
 
 export const createFolderSchema = z.object({

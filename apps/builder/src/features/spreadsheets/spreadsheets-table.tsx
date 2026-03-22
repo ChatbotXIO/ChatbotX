@@ -1,8 +1,8 @@
 "use client"
 
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
+import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
+import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import { DeleteSpreadsheetsDialog } from "./delete-spreadsheet-dialog"

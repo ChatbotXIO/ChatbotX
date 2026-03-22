@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { db } from "@aha.chat/database/client"
 import type {
   FindContactRequest,
   PublicFindContactResponse,

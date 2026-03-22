@@ -1,17 +1,17 @@
 "use client"
 
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@chatbotx.io/ui/components/ui/accordion"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
+} from "@aha.chat/ui/components/ui/accordion"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Input } from "@aha.chat/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { ArrowRightIcon, Loader2Icon } from "lucide-react"

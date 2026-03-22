@@ -2,7 +2,7 @@ import {
   type SpreadsheetClearRowSchema,
   spreadsheetClearRowDefaultFn,
   spreadsheetClearRowSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import { SpreadsheetViewer } from "../spreadsheet/viewer"
 import { SpreadsheetClearRowEditor } from "./editor"

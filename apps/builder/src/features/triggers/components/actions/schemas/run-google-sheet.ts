@@ -1,10 +1,10 @@
-import { TriggerAction } from "@chatbotx.io/database/enums"
+import { TriggerAction } from "@aha.chat/database/enums"
 import {
   FilterMode,
   StepType,
   spreadsheetColumnFilterSchema,
   spreadsheetMappingSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import z from "zod"
 
 export const runGoogleSheet = z.object({

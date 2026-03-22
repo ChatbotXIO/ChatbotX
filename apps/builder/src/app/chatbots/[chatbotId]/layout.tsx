@@ -2,7 +2,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@chatbotx.io/ui/components/ui/sidebar"
+} from "@aha.chat/ui/components/ui/sidebar"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"

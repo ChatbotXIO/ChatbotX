@@ -7,7 +7,7 @@ import type {
   SendQuickReplyStepSchema,
   SendTextStepSchema,
   SendVideoStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { AuthValue } from "./auth"
 import type {
   Context,

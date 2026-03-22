@@ -1,15 +1,12 @@
 "use client"
 
-import {
-  AssignerFilterType,
-  ConversationType,
-} from "@chatbotx.io/database/enums"
-import { Omnichannel } from "@chatbotx.io/database/types"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
+import { Omnichannel } from "@aha.chat/database/types"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { Button } from "@aha.chat/ui/components/ui/button"
+import { Form } from "@aha.chat/ui/components/ui/form"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"

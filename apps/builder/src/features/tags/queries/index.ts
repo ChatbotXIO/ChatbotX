@@ -1,10 +1,7 @@
-import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
-import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
-import {
-  parseOrderByAsObject,
-  parsePagination,
-} from "@chatbotx.io/database/utils"
+import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
+import { rootFolderId } from "@aha.chat/database/enums"
+import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
+import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   FindTagRequest,

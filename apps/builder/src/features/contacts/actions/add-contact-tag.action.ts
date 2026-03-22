@@ -1,13 +1,13 @@
 "use server"
 
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   contactModel,
   contactsToTagsModel,
   tagModel,
-} from "@chatbotx.io/database/schema"
-import type { ContactModel, TagModel } from "@chatbotx.io/database/types"
-import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
+} from "@aha.chat/database/schema"
+import type { ContactModel, TagModel } from "@aha.chat/database/types"
+import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdRequestParams,

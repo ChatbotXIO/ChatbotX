@@ -1,13 +1,13 @@
 "use client"
 
-import type { CustomFieldType } from "@chatbotx.io/database/types"
+import type { CustomFieldType } from "@aha.chat/database/types"
 import {
   DatePickerField,
   DateTimePickerField,
-} from "@chatbotx.io/ui/components/form/date-picker-field"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
+} from "@aha.chat/ui/components/form/date-picker-field"
+import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
 import { useTranslations } from "next-intl"
 
 type BotFieldValueInputProps = {

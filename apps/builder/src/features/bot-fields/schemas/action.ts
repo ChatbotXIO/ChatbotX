@@ -1,4 +1,4 @@
-import { customFieldType } from "@chatbotx.io/database/schema"
+import { customFieldType } from "@aha.chat/database/schema"
 import { z } from "zod"
 
 export const createBotFieldRequest = z.object({

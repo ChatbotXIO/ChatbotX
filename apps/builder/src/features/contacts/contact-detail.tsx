@@ -1,12 +1,12 @@
 "use client"
 
-import type { ContactCustomFieldModel } from "@chatbotx.io/database/types"
+import type { ContactCustomFieldModel } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@chatbotx.io/ui/components/ui/avatar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+} from "@aha.chat/ui/components/ui/avatar"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"

@@ -1,7 +1,7 @@
 "use client"
 
-import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { PlusIcon } from "lucide-react"
 import Link from "next/link"

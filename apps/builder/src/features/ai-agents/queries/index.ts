@@ -1,12 +1,12 @@
 "use server"
 
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { aiAgentModel } from "@chatbotx.io/database/schema"
-import type { AIAgentModel } from "@chatbotx.io/database/types"
+import { db, relationsFilterToSQL } from "@aha.chat/database/client"
+import { aiAgentModel } from "@aha.chat/database/schema"
+import type { AIAgentModel } from "@aha.chat/database/types"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@chatbotx.io/database/utils"
+} from "@aha.chat/database/utils"
 import type { ListAIAgentsRequest } from "@/features/ai-agents/schemas/query"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 

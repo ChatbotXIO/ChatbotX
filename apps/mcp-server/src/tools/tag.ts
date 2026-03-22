@@ -11,7 +11,7 @@ import {
   showTagInputSchema,
   updateTag,
   updateTagInputSchema,
-} from "@chatbotx.io/public-apis"
+} from "@chatbotx/public-apis"
 import { formatResult } from "../utils"
 
 const getErrorMessage = (error: unknown): string => {

@@ -2,7 +2,7 @@ import {
   type StartExternalFlowStepSchema,
   startExternalFlowStepDefaultFn,
   startExternalFlowStepSchema,
-} from "@chatbotx.io/flow-config"
+} from "@aha.chat/flow-config"
 import type { StepDefinition } from "../definition"
 import SendExternalFlowStepEditor from "./editor"
 import SendExternalFlowStepViewer from "./viewer"

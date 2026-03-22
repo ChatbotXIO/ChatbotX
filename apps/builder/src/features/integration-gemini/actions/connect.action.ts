@@ -1,11 +1,11 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@aha.chat/database/client"
 import {
   integrationGeminiModel,
   integrationModel,
-} from "@chatbotx.io/database/schema"
-import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
+} from "@aha.chat/database/schema"
+import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
 import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {

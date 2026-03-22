@@ -1,6 +1,6 @@
 "use client"
 
-import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"

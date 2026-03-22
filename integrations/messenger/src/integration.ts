@@ -2,7 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-} from "@chatbotx.io/sdk"
+} from "@aha.chat/sdk"
 import { getUserProfile } from "./apis/user"
 import { agentMarkAsRead, sendTyping } from "./conversation"
 import { MessengerAPIException } from "./exception"

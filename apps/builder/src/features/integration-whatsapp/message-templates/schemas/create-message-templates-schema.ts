@@ -1,4 +1,4 @@
-import { WhatsappTemplateCategory } from "@chatbotx.io/database/types"
+import { WhatsappTemplateCategory } from "@aha.chat/database/types"
 import { z } from "zod"
 import {
   LanguageOptions,

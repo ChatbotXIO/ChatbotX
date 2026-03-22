@@ -1,11 +1,11 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@chatbotx.io/ui/components/ui/popover"
+} from "@aha.chat/ui/components/ui/popover"
 import { useTranslations } from "next-intl"
 import {
   type KeyboardEvent as ReactKeyboardEvent,

@@ -1,4 +1,4 @@
-import { Condition, Operator } from "@chatbotx.io/database/enums"
+import { Condition, Operator } from "@aha.chat/database/enums"
 import z from "zod"
 
 export const customFieldValueChanged = z.object({

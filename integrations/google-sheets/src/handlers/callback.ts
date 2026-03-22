@@ -1,8 +1,4 @@
-import {
-  AuthType,
-  type HandleRequestProps,
-  SdkException,
-} from "@chatbotx.io/sdk"
+import { AuthType, type HandleRequestProps, SdkException } from "@aha.chat/sdk"
 import { getClient } from "../client"
 import { handleError } from "../error"
 import type { GoogleSheetsAuthValue, GoogleSheetsConfig } from "../schemas"

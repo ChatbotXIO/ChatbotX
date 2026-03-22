@@ -1,7 +1,4 @@
-import type {
-  ChatbotModel,
-  OrganizationModel,
-} from "@chatbotx.io/database/types"
+import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
 import { findChatbotOrFail } from "../chatbot/queries"
 import { findOrganization } from "../organization/queries"
