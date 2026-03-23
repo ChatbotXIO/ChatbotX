@@ -16,7 +16,10 @@ import {
   integration as integrationMessenger,
   type MessengerProfileRequest,
 } from "@aha.chat/integration-messenger"
-import type { FacebookButton } from "@aha.chat/integration-messenger/schemas"
+import type {
+  FacebookButton,
+  MessengerAuthValue,
+} from "@aha.chat/integration-messenger/schemas"
 import { findChatbotOrFail } from "@/features/chatbot/queries"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -74,7 +77,7 @@ export const updateMessengerAction = chatbotActionClient
             ctx: {
               chatbot,
               // biome-ignore lint/suspicious/noExplicitAny: wip
-              auth: integrationMessengerData?.auth as any,
+              auth: integrationMessengerData?.auth as MessengerAuthValue,
             },
             params: await getMessengerProfileParams(integrationMessengerData),
           })
@@ -197,8 +200,7 @@ const updatePersonas = async (
   const newPersona = await integrationMessenger.actions.updatePersona({
     ctx: {
       chatbot,
-      // biome-ignore lint/suspicious/noExplicitAny: wip
-      auth: model?.auth as any,
+      auth: model?.auth as MessengerAuthValue,
     },
     persona: defaultPersona
       ? {
