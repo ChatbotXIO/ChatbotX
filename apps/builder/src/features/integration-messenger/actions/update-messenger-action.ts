@@ -76,7 +76,6 @@ export const updateMessengerAction = chatbotActionClient
           integrationMessenger.actions.updateMessengerProfile({
             ctx: {
               chatbot,
-              // biome-ignore lint/suspicious/noExplicitAny: wip
               auth: integrationMessengerData?.auth as MessengerAuthValue,
             },
             params: await getMessengerProfileParams(integrationMessengerData),
