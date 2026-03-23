@@ -1021,7 +1021,14 @@
       "placeholder": "Chức năng này làm gì?"
     },
     "question": {
-      "label": "Câu hỏi"
+      "label": "Câu hỏi",
+      "placeholder": "Bạn có mở cửa hôm nay không?"
+    },
+    "imageProfileUrl": {
+      "label": "URL hình ảnh hồ sơ"
+    },
+    "persona": {
+      "label": "Nhân vật"
     },
     "quickReply": {
       "label": "Trả lời nhanh"
@@ -1641,8 +1648,31 @@
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
+    "welcomeMessage": "Tin nhắn chào mừng",
+    "welcomeMessageDescription": "Đây là tin nhắn đầu tiên mà người dùng sẽ nhận được từ Bot của bạn. Tin nhắn này được gửi khi người dùng tương tác lần đầu tiên với Bot bằng cách nhấn nút 'Bắt đầu'.",
+    "greeting": "Lời chào",
+    "greetingDescription": "Lời chào mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'.",
+    "conversationStarters": "Gợi ý bắt đầu hội thoại",
+    "conversationStartersDescription": "Gợi ý bắt đầu hội thoại giúp người dùng bắt đầu trò chuyện với doanh nghiệp của bạn bằng danh sách các câu hỏi thường gặp.",
+    "persistentMenu": "Menu cố định",
+    "persistentMenuDescription": "Menu có thể được cấu hình để giúp người dùng dễ dàng khám phá và truy cập các tính năng của Bot. Menu luôn sẵn có cho người dùng. Menu này nên chứa các hành động cấp cao mà người dùng có thể sử dụng bất cứ lúc nào. Việc có menu giúp truyền đạt dễ dàng các khả năng cơ bản của bot cho người mới và người dùng quay lại.",
+    "dynamicPersistentMenu": "Menu cố định động",
+    "dynamicPersistentMenuDescription": "Cho phép bạn thay đổi menu cố định động bất cứ lúc nào ở cấp độ người dùng.",
+    "botProfile": "Hồ sơ Bot",
+    "botProfileDescription": "Thiết lập này cho phép bạn đặt tên và hình ảnh khác cho bot của mình",
+    "personas": "Nhân cách",
+    "personasDescription": "Thiết lập này cho phép bạn đặt tên và hình ảnh khác cho bot của mình",
+    "defaultPersona": "Nhân cách mặc định",
+    "refreshPermissions": "Làm mới quyền truy cập",
+    "reconnect": "Kết nối lại",
+    "reconnectDescription": "Luôn kết nối lại bot của bạn nếu bot Messenger không phản hồi, hoặc nếu bạn thấy bất kỳ lỗi quyền nào trong nhật ký lỗi.",
     "selectFacebookPage": "Chọn trang Facebook",
     "title": "Facebook Messenger"
+  },
+  "greeting": {
+    "title": "Lời chào",
+    "addLanguage": "+ Thêm ngôn ngữ",
+    "description": "Tin nhắn chào mừng mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'."
   },
   "omnichannel": {
     "title": "Đa kênh"
