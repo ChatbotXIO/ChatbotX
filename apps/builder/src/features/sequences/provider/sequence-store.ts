@@ -1,6 +1,7 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { SequenceResource } from "../schemas/get-sequences-schema"
+import { maxPerPageString } from "@/lib/shared-request"
+import type { ListSequencesItem, ListSequencesResponse } from "../schema"
 
 export type SequenceState = {
   loading: boolean
@@ -8,7 +9,7 @@ export type SequenceState = {
   initialized: boolean
 
   chatbotId: string
-  sequences: SequenceResource[]
+  sequences: ListSequencesItem[]
 }
 
 export type SequenceActions = {
@@ -59,14 +60,13 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
     },
 
     getAllActiveSequences: async (chatbotId: string) => {
-      const searchParams = new URLSearchParams({
-        perPage: "9999999",
-        active: "true",
-      })
       const { data } = await ky
-        .get<{ data: SequenceResource[] }>(
-          `/api/chatbots/${chatbotId}/sequences?${searchParams.toString()}`,
-        )
+        .get<ListSequencesResponse>(`/api/chatbots/${chatbotId}/sequences`, {
+          searchParams: {
+            perPage: maxPerPageString,
+            active: "true",
+          },
+        })
         .json()
 
       set({ sequences: data })

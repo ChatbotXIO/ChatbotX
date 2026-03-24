@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation"
 import type { Dispatch, SetStateAction } from "react"
 import { BulkDeleteSequenceDialog } from "./bulk-delete-sequence-dialog"
 import { BulkMoveFolderDialog } from "./bulk-move-folder-dialog"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
+import { AddSequenceButton } from "./components/add-sequence-button"
+import type { ListSequencesItem } from "./schema"
 
 type SequencesTableToolbarActionsProps = {
   chatbotId: string
-  table: Table<SequenceResource>
+  table: Table<ListSequencesItem>
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<SequenceResource> | null>
+    SetStateAction<DataTableRowAction<ListSequencesItem> | null>
   >
 }
 
@@ -50,6 +51,7 @@ export function SequencesTableToolbarActions({
           />
         </>
       ) : null}
+      <AddSequenceButton />
     </div>
   )
 }

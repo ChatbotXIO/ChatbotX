@@ -16,7 +16,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpsertSequenceStepRequest,
   upsertSequenceStepRequest,
-} from "../schemas/upsert-sequence-step-schema"
+} from "../schema"
 
 async function validateSequenceOwnership(
   sequenceId: string,

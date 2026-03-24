@@ -1,25 +1,28 @@
 import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
+import { rootFolderId } from "@aha.chat/database/enums"
 import {
   contactsOnSequenceModel,
   sequenceModel,
   sequenceStepModel,
 } from "@aha.chat/database/schema"
-import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
+import {
+  getPaginationWithDefaults,
+  parseOrderByAsObject,
+} from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type {
-  GetSequencesSchema,
-  SequenceResource,
-} from "../schemas/get-sequences-schema"
+import type { ListSequencesRequest, ListSequencesResponse } from "../schema"
 
 export async function listSequences(
-  input: GetSequencesSchema,
-): Promise<{ data: SequenceResource[]; pageCount: number }> {
+  input: ListSequencesRequest,
+): Promise<ListSequencesResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   let folderIdFilter: string | { isNull: true } | undefined
   if (input.folderId) {
     folderIdFilter =
-      input.folderId === "0" ? { isNull: true as const } : input.folderId
+      input.folderId === rootFolderId
+        ? { isNull: true as const }
+        : input.folderId
   }
 
   const where = {
@@ -36,7 +39,7 @@ export async function listSequences(
         : undefined,
   }
 
-  const pagination = parsePagination(input)
+  const pagination = getPaginationWithDefaults(input)
   const orderBy = parseOrderByAsObject(sequenceModel, input)
 
   const [data, total] = await Promise.all([
@@ -60,7 +63,7 @@ export async function listSequences(
     db.$count(sequenceModel, relationsFilterToSQL(sequenceModel, where)),
   ])
 
-  const pageCount = Math.ceil(total / input.perPage)
+  const pageCount = Math.ceil(total / pagination.limit)
 
   return { data, pageCount }
 }

@@ -303,7 +303,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
       zustand:
-        specifier: ^5.0.11
+        specifier: ^5.0.12
         version: 5.0.12(@types/react@19.2.14)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
       '@aha.chat/typescript-config':
@@ -559,10 +559,10 @@ importers:
         specifier: ^1.14.3
         version: 1.14.3
       mailparser:
-        specifier: ^3.9.3
+        specifier: ^3.9.4
         version: 3.9.4
       mammoth:
-        specifier: ^1.11.0
+        specifier: ^1.12.0
         version: 1.12.0
       mime-types:
         specifier: ^3.0.2

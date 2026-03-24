@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateSequenceAction } from "./actions/update-sequence.action"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
-import { updateSequenceSchema } from "./schemas/update-sequence-schema"
+import type { SequenceResource } from "./schema"
+import { updateSequenceSchema } from "./schema"
 
 export function RenameSequenceDialog({
   sequence,

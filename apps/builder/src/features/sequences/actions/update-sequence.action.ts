@@ -16,10 +16,7 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type UpdateSequenceSchema,
-  updateSequenceSchema,
-} from "../schemas/update-sequence-schema"
+import { type UpdateSequenceSchema, updateSequenceSchema } from "../schema"
 
 export const updateSequenceAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

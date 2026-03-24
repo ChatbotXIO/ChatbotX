@@ -9,6 +9,7 @@ import flowsAPI from "@/features/flows/api"
 import { integrationWhatsappAPIs } from "@/features/integration-whatsapp/api"
 import { whatsappMessageTemplateAPIs } from "@/features/integration-whatsapp/message-templates/api"
 import savedRepliesAPI from "@/features/saved-replies/api"
+import { sequencesAPI } from "@/features/sequences/api"
 import tagsAPI from "@/features/tags/api"
 import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -29,4 +30,5 @@ export const router = {
   integrationWhatsappAPIs,
   whatsappMessageTemplateAPIs,
   savedRepliesAPI,
+  sequencesAPI,
 }

@@ -770,6 +770,7 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.userModel({
       from: r.organizationMemberModel.userId,
       to: r.userModel.id,
+      optional: false,
     }),
   },
   triggerModel: {

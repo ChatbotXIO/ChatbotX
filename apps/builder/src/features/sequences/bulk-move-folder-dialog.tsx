@@ -22,7 +22,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 import { changeFolderAction } from "../folders/actions/change-folder.action"
 import { useFolderSelectOptions } from "../folders/provider/folder-hook"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
+import type { SequenceResource } from "./schema"
 
 type BulkMoveFolderDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   chatbotId: string

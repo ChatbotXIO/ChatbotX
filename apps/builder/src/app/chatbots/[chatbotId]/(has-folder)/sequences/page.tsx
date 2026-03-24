@@ -1,9 +1,13 @@
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@aha.chat/ui/components/ui/card"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
-import { Suspense } from "react"
-import { AddSequenceButton } from "@/features/sequences/components/add-sequence-button"
 import { listSequences } from "@/features/sequences/queries"
-import { getSequencesSearchParamsCache } from "@/features/sequences/schemas/get-sequences-schema"
+import { listSequencesSearchParamsCache } from "@/features/sequences/schema"
 import { SequencesTable } from "@/features/sequences/sequences-table"
 
 export default async function SequencesPage(props: {
@@ -12,7 +16,7 @@ export default async function SequencesPage(props: {
 }) {
   const { chatbotId } = await props.params
   const searchParams = await props.searchParams
-  const search = getSequencesSearchParamsCache.parse(searchParams)
+  const search = await listSequencesSearchParamsCache.parse(searchParams)
   const t = await getTranslations()
 
   const promises = Promise.all([
@@ -23,14 +27,13 @@ export default async function SequencesPage(props: {
   ])
 
   return (
-    <>
-      <div className="flex items-center">
-        <h4 className="flex-1 font-bold">{t("sequences.heading.title")}</h4>
-        <AddSequenceButton />
-      </div>
-      <Suspense>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("sequences.heading.title")}</CardTitle>
+      </CardHeader>
+      <CardContent>
         <SequencesTable chatbotId={chatbotId} promises={promises} />
-      </Suspense>
-    </>
+      </CardContent>
+    </Card>
   )
 }

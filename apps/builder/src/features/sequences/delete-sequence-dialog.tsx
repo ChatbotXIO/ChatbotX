@@ -15,7 +15,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteSequenceAction } from "./actions/delete-sequence.action"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
+import type { SequenceResource } from "./schema"
 
 export function DeleteSequenceDialog({
   sequence,

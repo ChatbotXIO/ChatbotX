@@ -17,7 +17,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createSequenceAction } from "@/features/sequences/actions/create-sequence.action"
-import { createSequenceRequest } from "@/features/sequences/schemas/create-sequence-schema"
+import { createSequenceRequest } from "@/features/sequences/schema"
 
 export function CreateSequenceForm({
   chatbotId,

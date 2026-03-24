@@ -34,7 +34,7 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import { updateSequenceAction } from "./actions/update-sequence.action"
 import { DeleteSequenceDialog } from "./delete-sequence-dialog"
 import { RenameSequenceDialog } from "./rename-sequence-dialog"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
+import type { ListSequencesItem } from "./schema"
 import { SequencesTableToolbarActions } from "./sequences-table-toolbar-actions"
 
 type SequencesTableProps = {
@@ -49,10 +49,10 @@ export function SequencesTable({ chatbotId, promises }: SequencesTableProps) {
   const [{ data, pageCount }] = use(promises)
 
   const [rowAction, setRowAction] =
-    React.useState<DataTableRowAction<SequenceResource> | null>(null)
+    React.useState<DataTableRowAction<ListSequencesItem> | null>(null)
 
   const handleToggleStatus = useCallback(
-    async (sequence: SequenceResource) => {
+    async (sequence: ListSequencesItem) => {
       try {
         await updateSequenceAction(chatbotId, sequence.id, {
           active: !sequence.active,
@@ -68,7 +68,7 @@ export function SequencesTable({ chatbotId, promises }: SequencesTableProps) {
     [chatbotId, t, router],
   )
 
-  const columns = useMemo<ColumnDef<SequenceResource>[]>(
+  const columns = useMemo<ColumnDef<ListSequencesItem>[]>(
     () => [
       {
         id: "select",

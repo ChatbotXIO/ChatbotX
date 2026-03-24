@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteSequenceAction } from "./actions/delete-sequence.action"
-import type { SequenceResource } from "./schemas/get-sequences-schema"
+import type { SequenceResource } from "./schema"
 
 type BulkDeleteSequenceDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   sequences: SequenceResource[]
