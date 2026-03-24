@@ -17,6 +17,7 @@ export async function GET(
 
     const allInboxes = await listInboxes({
       ...search,
+      includes: ["integration"],
       chatbotId: (await params).chatbotId,
     })
 

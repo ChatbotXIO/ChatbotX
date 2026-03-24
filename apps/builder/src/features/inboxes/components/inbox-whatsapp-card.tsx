@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo, useMemo } from "react"
-import { ScanQRCodeDiaglog } from "@/features/qrcode/scan-qrcode"
+import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 import { InboxIcon } from "./inbox-icon"
@@ -32,7 +32,7 @@ export const InboxWhatsappCard = memo(function InboxWhatsappCard({
           label={inbox.integrationWhatsapp?.name}
         />
 
-        <ScanQRCodeDiaglog
+        <ScanQRCodeDialog
           link={link}
           title={t("actions.connectFeature", {
             feature: t("fields.whatsapp.label"),

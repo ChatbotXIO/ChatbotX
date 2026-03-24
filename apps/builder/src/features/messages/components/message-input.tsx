@@ -100,7 +100,9 @@ export const MessageInput = () => {
       }
 
       if (!insert) {
-        form.setValue("content", value)
+        form.setValue("content", value, {
+          shouldValidate: true,
+        })
         return
       }
 
@@ -108,7 +110,9 @@ export const MessageInput = () => {
       const before = text.slice(0, element.selectionStart)
       const after = text.slice(element.selectionStart)
 
-      form.setValue("content", `${before}${value}${after}`)
+      form.setValue("content", `${before}${value}${after}`, {
+        shouldValidate: true,
+      })
     },
     [form],
   )

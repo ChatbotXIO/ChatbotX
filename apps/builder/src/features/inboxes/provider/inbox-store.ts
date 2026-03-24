@@ -60,6 +60,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
       set({ loading: true, error: null })
       try {
         const searchParams = new URLSearchParams({
+          integration: "true",
           perPage: maxPerPageString,
         })
         const { data } = await ky
