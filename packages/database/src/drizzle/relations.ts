@@ -446,7 +446,7 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
     }),
     flow: r.one.flowModel({
-      from: r.integrationMessengerModel.fallbackFlowId,
+      from: r.integrationMessengerModel.welcomeFlowId,
       to: r.flowModel.id,
     }),
     inbox: r.one.inboxModel({
