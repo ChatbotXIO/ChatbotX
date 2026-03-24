@@ -4,6 +4,7 @@ import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { memo, useMemo } from "react"
 import type { InboxResource } from "../schema/resource"
+import { InboxInstagramCard } from "./inbox-instagram-card"
 import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
 import { InboxTelegramCard } from "./inbox-telegram-card"
@@ -32,6 +33,7 @@ export const cardConfigs: Record<
   whatsapp: InboxWhatsappCard,
   webchat: InboxWebchatCard,
   messenger: InboxMessengerCard,
+  instagram: InboxInstagramCard,
   zalo: InboxZaloCard,
   smtp: undefined,
   telegram: InboxTelegramCard,

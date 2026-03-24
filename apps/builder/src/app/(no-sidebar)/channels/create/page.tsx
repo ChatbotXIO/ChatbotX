@@ -1,5 +1,6 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
+import { InstagramConnect } from "@/features/integration-instagram/components/instagram-connect"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
@@ -44,6 +45,15 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     return (
       <MessengerConnect
         settings={settings.messenger}
+        workspaceId={workspaceId}
+      />
+    )
+  }
+
+  if (selectedChannel === "instagram" && settings.instagram) {
+    return (
+      <InstagramConnect
+        settings={settings.instagram}
         workspaceId={workspaceId}
       />
     )

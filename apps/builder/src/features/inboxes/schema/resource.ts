@@ -1,6 +1,7 @@
 import { createSelectSchema, inboxModel } from "@chatbotx.io/database/schema"
 import type {
   InboxModel,
+  IntegrationInstagramModel,
   IntegrationMessengerModel,
   IntegrationTelegramModel,
   IntegrationWebchatModel,
@@ -14,6 +15,7 @@ export type InboxResource = InboxModel & {
   integrationWhatsapp?: IntegrationWhatsappModel
   integrationWebchat?: IntegrationWebchatModel
   integrationMessenger?: IntegrationMessengerModel
+  integrationInstagram?: IntegrationInstagramModel
   integrationZalo?: IntegrationZaloModel
   integrationTelegram?: IntegrationTelegramModel
 }

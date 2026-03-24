@@ -28,6 +28,14 @@ export const messengerSettingsSchema = z.object({
 })
 export type MessengerSettingsSchema = z.infer<typeof messengerSettingsSchema>
 
+export const instagramSettingsSchema = z.object({
+  clientId: z.string(),
+  clientSecret: z.string(),
+  verifyToken: z.string(),
+  version: z.string(),
+})
+export type InstagramSettingsSchema = z.infer<typeof instagramSettingsSchema>
+
 export const zaloSettingsSchema = z.object({
   clientId: z.string(),
   clientSecret: z.string(),
@@ -51,6 +59,7 @@ export type StripeSettingsSchema = z.infer<typeof stripeSettingsSchema>
 export const organizationSettingsSchema = z.object({
   whatsapp: whatsappSettingsSchema.optional(),
   messenger: messengerSettingsSchema.optional(),
+  instagram: instagramSettingsSchema.optional(),
   google: googleSettingsSchema.optional(),
   zalo: zaloSettingsSchema.optional(),
   giphy: giphySettingsSchema.optional(),

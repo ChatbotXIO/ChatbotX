@@ -315,6 +315,9 @@
     "messenger": {
       "label": "Messenger"
     },
+    "instagram": {
+      "label": "Instagram"
+    },
     "zalo": {
       "label": "Zalo OA"
     },
@@ -1337,6 +1340,13 @@
     "moveFolderDescription": "Move {feature} to folder",
     "noData": "No data",
     "featureNotFound": "{feature} not found"
+  },
+  "instagram": {
+    "description": "This integration lets you create Instagram bots.",
+    "selectInstagramAccount": "Select Instagram Account",
+    "iceBreakers": "Ice Breakers",
+    "iceBreakersDescription": "Ice breakers provide a way for users to start a conversation with your bot by showing a list of frequently asked questions.",
+    "title": "Instagram"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",

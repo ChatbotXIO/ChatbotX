@@ -1,0 +1,1 @@
+ALTER TABLE "IntegrationInstagram" ADD COLUMN "persistentMenus" jsonb[] DEFAULT '{}'::jsonb[] NOT NULL;

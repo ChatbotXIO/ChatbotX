@@ -35,6 +35,12 @@ export const getInboxLink = (props: {
         "ref",
         reflinkData,
       )
+    case "instagram":
+      return buildUrlWithParam(
+        `https://ig.me/m/${inbox.integrationInstagram?.username ?? ""}`,
+        "ref",
+        reflinkData,
+      )
     case "whatsapp": {
       const phoneNumber = (
         inbox.integrationWhatsapp?.auth as WhatsappAuthValue | undefined

@@ -14,6 +14,7 @@ import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 type SettingsChannelsPageProps = {
   readonly whatsapp: ReactNode
   readonly messenger: ReactNode
+  readonly instagram: ReactNode
   readonly zalo: ReactNode
   readonly telegram: ReactNode
   readonly webchat: ReactNode
@@ -28,6 +29,7 @@ type IntegrationItem = {
 export default function SettingsChannelsPage({
   whatsapp,
   messenger,
+  instagram,
   zalo,
   telegram,
   webchat,
@@ -44,6 +46,10 @@ export default function SettingsChannelsPage({
     {
       value: "messenger",
       content: messenger,
+    },
+    {
+      value: "instagram",
+      content: instagram,
     },
     {
       value: "zalo",

@@ -79,6 +79,7 @@ export async function listInboxes(
             integrationWhatsapp: true,
             integrationWebchat: true,
             integrationMessenger: true,
+            integrationInstagram: true,
             integrationZalo: true,
             integrationTelegram: true,
           }

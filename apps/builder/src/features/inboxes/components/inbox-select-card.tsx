@@ -32,6 +32,9 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
         value: "messenger",
       },
       {
+        value: "instagram",
+      },
+      {
         value: "zalo",
       },
       {

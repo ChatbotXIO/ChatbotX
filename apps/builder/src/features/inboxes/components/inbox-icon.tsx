@@ -1,6 +1,8 @@
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
+  SiInstagram,
+  SiInstagramHex,
   SiMessenger,
   SiMessengerHex,
   SiTelegram,
@@ -45,6 +47,11 @@ const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
     Icon: SiMessenger,
     fill: SiMessengerHex,
     defaultLabel: "Messenger",
+  },
+  instagram: {
+    Icon: SiInstagram,
+    fill: SiInstagramHex,
+    defaultLabel: "Instagram",
   },
   whatsapp: {
     Icon: SiWhatsapp,
