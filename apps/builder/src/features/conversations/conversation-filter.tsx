@@ -33,7 +33,7 @@ export function ConversationFilter() {
   const inboxOptions = useConfiguredInboxTypeOptions()
 
   const hasFilter = Boolean(
-    (filters.inboxType && filters.inboxType !== "omnichannel") ||
+    (filters.channel && filters.channel !== "omnichannel") ||
       (filters.assignedUserId && filters.assignedUserId !== "omnichannel") ||
       filters.status,
   )
@@ -81,7 +81,7 @@ export function ConversationFilter() {
         <div className="flex flex-col gap-4">
           <SelectField
             label={t("fields.channel.label")}
-            name="inboxType"
+            name="channel"
             options={inboxOptions}
             required
           />

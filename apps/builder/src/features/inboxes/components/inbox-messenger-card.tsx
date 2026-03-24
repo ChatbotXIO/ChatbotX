@@ -27,10 +27,7 @@ export const InboxMessengerCard = memo(function InboxMessengerCard({
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon
-          inboxType="messenger"
-          label={inbox.integrationMessenger?.name}
-        />
+        <InboxIcon channel="messenger" label={inbox.name} />
 
         <ScanQRCodeDialog
           link={link}

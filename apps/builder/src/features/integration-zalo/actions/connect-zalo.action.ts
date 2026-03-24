@@ -33,15 +33,12 @@ export async function connectZaloHandler({
       .values({
         id: createId(),
         chatbotId,
-        inboxType: "zalo",
+        name: authValue.metadata.oaName,
+        channel: "zalo",
         sourceId: authValue.oaId,
       })
       .onConflictDoUpdate({
-        target: [
-          inboxModel.chatbotId,
-          inboxModel.inboxType,
-          inboxModel.sourceId,
-        ],
+        target: [inboxModel.channel, inboxModel.sourceId],
         set: {
           status: InboxStatus.connected,
         },

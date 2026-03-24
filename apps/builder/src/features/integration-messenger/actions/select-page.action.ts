@@ -90,15 +90,12 @@ export const selectPageAction = authActionClient
             .values({
               id: createId(),
               chatbotId,
-              inboxType: "messenger",
+              name: parsedInput.pageName,
+              channel: "messenger",
               sourceId: parsedInput.pageId,
             })
             .onConflictDoUpdate({
-              target: [
-                inboxModel.chatbotId,
-                inboxModel.inboxType,
-                inboxModel.sourceId,
-              ],
+              target: [inboxModel.channel, inboxModel.sourceId],
               set: {
                 status: InboxStatus.connected,
               },

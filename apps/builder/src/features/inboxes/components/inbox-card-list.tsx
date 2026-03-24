@@ -1,6 +1,6 @@
 "use client"
 
-import type { InboxType } from "@aha.chat/database/types"
+import { type ChannelType, channelType } from "@aha.chat/database/types"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { memo, useMemo } from "react"
 import type { InboxResource } from "../schemas/resource"
@@ -19,13 +19,15 @@ type InboxCardListProps = {
 }
 
 export const cardConfigs: Record<
-  InboxType,
-  React.ComponentType<{
-    inbox: InboxResource
-    actionLabel?: string
-    refId?: string
-  }>
+  ChannelType,
+  | React.ComponentType<{
+      inbox: InboxResource
+      actionLabel?: string
+      refId?: string
+    }>
+  | undefined
 > = {
+  omnichannel: undefined,
   whatsapp: InboxWhatsappCard,
   webchat: InboxWebchatCard,
   messenger: InboxMessengerCard,
@@ -43,7 +45,7 @@ export const InboxCardList = memo(function InboxCardList({
     () =>
       allowAddNew
         ? inboxes
-        : inboxes.filter((inbox) => inbox.inboxType !== "zalo"),
+        : inboxes.filter((inbox) => inbox.channel !== channelType.zalo),
     [allowAddNew, inboxes],
   )
 
@@ -57,14 +59,14 @@ export const InboxCardList = memo(function InboxCardList({
       )}
     >
       {inboxesFiltered.map((inbox) => {
-        const CardComponent = cardConfigs[inbox.inboxType]
-        return (
+        const CardComponent = cardConfigs[inbox.channel as ChannelType]
+        return CardComponent ? (
           <CardComponent
             actionLabel={actionLabel}
             inbox={inbox}
             key={inbox.id}
           />
-        )
+        ) : null
       })}
 
       {allowAddNew && <InboxNewCard chatbotId={chatbotId} />}

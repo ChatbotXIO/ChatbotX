@@ -303,7 +303,7 @@ export const broadcastBlockContactEvent = async ({
   )
 
   const promises = [
-    allIntegrations[inbox.inboxType]?.channels?.channel?.contact?.block?.({
+    allIntegrations[inbox.channel]?.channels?.channel?.contact?.block?.({
       ctx: {
         chatbot: inbox.chatbot,
         auth,
@@ -338,7 +338,7 @@ export const broadcastUnblockContactEvent = async ({
   )
 
   const promises = [
-    allIntegrations[inbox.inboxType]?.channels?.channel?.contact?.unblock?.({
+    allIntegrations[inbox.channel]?.channels?.channel?.contact?.unblock?.({
       ctx: {
         chatbot: inbox.chatbot,
         auth,

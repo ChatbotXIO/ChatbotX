@@ -25,10 +25,10 @@ export async function sendMessageToExternal(
   )
 
   // Find integration detail
-  const integrationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  const integrationDetail = allIntegrations[inbox.channel as IntegrationType]
   if (!integrationDetail) {
     logger.debug(
-      `Does not support this integration for inboxType: ${inbox.inboxType}`,
+      `Does not support this integration for channel: ${inbox.channel}`,
     )
     return
   }
@@ -61,10 +61,10 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   )
 
   // Find integration detail
-  const integrationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  const integrationDetail = allIntegrations[inbox.channel as IntegrationType]
   if (!integrationDetail) {
     logger.debug(
-      `Does not support this integration for inboxType: ${inbox.inboxType}`,
+      `Does not support this integration for channel: ${inbox.channel}`,
     )
     return
   }
@@ -95,10 +95,10 @@ export async function sendFlowStepToExternal({
   )
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.inboxType as IntegrationType]
+  const intergationDetail = allIntegrations[inbox.channel as IntegrationType]
   if (!intergationDetail) {
     logger.error(
-      `Unable to find integration detail for inboxType: ${inbox.inboxType}`,
+      `Unable to find integration detail for channel: ${inbox.channel}`,
     )
     return
   }

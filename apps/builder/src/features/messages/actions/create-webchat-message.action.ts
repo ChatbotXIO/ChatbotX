@@ -294,7 +294,7 @@ async function getConversationFromInput(
           chatbotId: parsedInput.chatbotId,
           sourceId,
           email: parsedInput.guestConversationId,
-          source: "webchat",
+          channel: "webchat",
           gender: "unknown",
           firstName: "Guest",
           lastName: randomString(10),

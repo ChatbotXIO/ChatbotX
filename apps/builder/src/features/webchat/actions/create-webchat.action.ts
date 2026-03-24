@@ -40,7 +40,8 @@ export const createWebchatAction = authActionClient
         .values({
           id: webchatId,
           chatbotId: chatbotId as string,
-          inboxType: "webchat",
+          channel: "webchat",
+          name: rest.name,
           sourceId: webchatId,
         })
         .returning()

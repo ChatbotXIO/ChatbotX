@@ -27,7 +27,7 @@ export const InboxWebchatCard = memo(function InboxWebchatCard({
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon inboxType="webchat" label={inbox.integrationWebchat?.name} />
+        <InboxIcon channel="webchat" label={inbox.name} />
 
         <ScanQRCodeDialog
           link={link}

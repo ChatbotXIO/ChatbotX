@@ -253,7 +253,7 @@ export const chatbotTokenAPIs = {
         {
           chatbotId: context.chatbot.id,
           contactId: input.contactId,
-          inboxType: input.channel,
+          channel: input.channel,
         },
       )
 

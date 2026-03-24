@@ -81,7 +81,7 @@ export const assignConversationAction = chatbotActionClient
             in: parsedInput.contactIds,
           },
         },
-        columns: { id: true, contactId: true, inboxType: true },
+        columns: { id: true, contactId: true, channel: true },
       })
       const conversationIds = conversations.map((c) => c.id)
       if (conversationIds.length === 0) {
@@ -128,7 +128,7 @@ export const assignConversationAction = chatbotActionClient
               eventId: createId(),
               toAssignee,
               occurredAt: new Date(),
-              channel: conv.inboxType,
+              channel: conv.channel,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",
@@ -149,7 +149,7 @@ export const assignConversationAction = chatbotActionClient
               eventType: "conversation_unassigned",
               eventId: createId(),
               occurredAt: new Date(),
-              channel: conv.inboxType,
+              channel: conv.channel,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",

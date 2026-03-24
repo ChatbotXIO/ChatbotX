@@ -20,7 +20,7 @@ import {
   messageModel,
   userModel,
 } from "@aha.chat/database/schema"
-import type { InboxType } from "@aha.chat/database/types"
+import type { ChannelType } from "@aha.chat/database/types"
 import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import type {
   FindConversationSchema,
@@ -47,8 +47,8 @@ export const listConversations = async (
     where.push(eq(conversationModel.liveChatEnabled, input.liveChatEnabled))
   }
 
-  if (input.inboxType !== null && input.inboxType !== undefined) {
-    where.push(eq(conversationModel.inboxType, input.inboxType as InboxType))
+  if (input.channel !== null && input.channel !== undefined) {
+    where.push(eq(conversationModel.channel, input.channel))
   }
 
   if (input.assignedId !== null && input.assignedId !== undefined) {
@@ -169,18 +169,18 @@ export const findConversation = async (
 export const findConversationByContact = async ({
   chatbotId,
   contactId,
-  inboxType,
+  channel,
 }: {
   chatbotId: string
   contactId: string
-  inboxType: InboxType
+  channel: ChannelType
 }) => {
   return await db.query.conversationModel.findFirst({
     where: {
       chatbotId,
       contactId,
       inbox: {
-        inboxType,
+        channel,
       },
     },
   })

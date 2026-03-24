@@ -27,7 +27,7 @@ export const InboxZaloCard = memo(function InboxZaloCard({
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon inboxType="zalo" label={inbox.integrationZalo?.name} />
+        <InboxIcon channel="zalo" label={inbox.name} />
 
         <ScanQRCodeDialog
           link={link}

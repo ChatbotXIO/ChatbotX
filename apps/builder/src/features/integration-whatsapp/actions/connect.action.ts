@@ -155,15 +155,12 @@ export const connectWhatsappAction = authActionClient
             .values({
               id: createId(),
               chatbotId: chatbotId as string,
-              inboxType: "whatsapp",
+              channel: "whatsapp",
               sourceId: foundPhoneNumber.id,
+              name: foundPhoneNumber.verified_name,
             })
             .onConflictDoUpdate({
-              target: [
-                inboxModel.chatbotId,
-                inboxModel.inboxType,
-                inboxModel.sourceId,
-              ],
+              target: [inboxModel.channel, inboxModel.sourceId],
               set: {
                 status: InboxStatus.connected,
               },

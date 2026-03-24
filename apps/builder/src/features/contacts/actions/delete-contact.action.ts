@@ -49,6 +49,7 @@ export const deleteContactAction = chatbotActionClient
           eventType: "contact_deleted" as const,
           occurredAt: contact.updatedAt,
           source: contact.source,
+          channel: contact.channel,
           sourceId: contact.sourceId as string,
         }))
 

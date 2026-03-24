@@ -27,10 +27,7 @@ export const InboxWhatsappCard = memo(function InboxWhatsappCard({
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon
-          inboxType="whatsapp"
-          label={inbox.integrationWhatsapp?.name}
-        />
+        <InboxIcon channel="whatsapp" label={inbox.name} />
 
         <ScanQRCodeDialog
           link={link}

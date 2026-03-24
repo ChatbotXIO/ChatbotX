@@ -23,13 +23,15 @@ export const backfillContactEvents = async () => {
           id: true,
           chatbotId: true,
           createdAt: true,
+          channel: true,
           source: true,
           sourceId: true,
         },
         with: {
           conversation: {
-            columns: {},
-            with: { inbox: { columns: { inboxType: true } } },
+            columns: {
+              channel: true,
+            },
           },
         },
         orderBy: { createdAt: "asc" },
@@ -50,7 +52,7 @@ export const backfillContactEvents = async () => {
           occurredAt: contact.createdAt,
           source: contact.source,
           sourceId: contact.sourceId as string,
-          channel: contact.conversation?.inbox?.inboxType || "",
+          channel: contact.conversation?.channel || "",
         }))
 
       try {

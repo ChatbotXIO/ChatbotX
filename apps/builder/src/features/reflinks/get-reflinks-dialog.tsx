@@ -1,6 +1,5 @@
 "use client"
 
-import type { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -13,7 +12,6 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useInboxStore } from "../inboxes/provider/inbox-store-context"
-import type { InboxResource } from "../inboxes/schemas/resource"
 import { ScanQRCodeDialog } from "../qrcode/scan-qrcode"
 import { getInboxLink } from "./helpers"
 import type { ReflinkResource } from "./schemas/resource"
@@ -60,16 +58,6 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
       })
   }
 
-  const getIntegrationName = (inbox: InboxResource) => {
-    return (
-      inbox.integrationMessenger?.name ??
-      inbox.integrationWhatsapp?.name ??
-      inbox.integrationWebchat?.name ??
-      inbox.integrationZalo?.name ??
-      ""
-    )
-  }
-
   return (
     <div className="flex flex-col">
       {inboxes.map((inbox) => {
@@ -81,13 +69,8 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
             key={inbox.id}
           >
             <div className="flex flex-1 flex-col gap-1">
-              <InboxIcon
-                inboxType={inbox.inboxType as InboxType}
-                size="large"
-              />
-              <div className="text-muted-foreground text-xs">
-                {getIntegrationName(inbox)}
-              </div>
+              <InboxIcon channel={inbox.channel} size="large" />
+              <div className="text-muted-foreground text-xs">{inbox.name}</div>
             </div>
             <Button
               onClick={() => handleCopy(link)}

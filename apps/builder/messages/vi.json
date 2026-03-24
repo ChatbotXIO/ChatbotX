@@ -333,7 +333,7 @@
     "update": {
       "title": "Cập nhật phát sóng"
     },
-    "inboxType": {
+    "channel": {
       "messenger": "Messenger",
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA"
