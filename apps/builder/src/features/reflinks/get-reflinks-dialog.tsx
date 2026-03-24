@@ -1,6 +1,5 @@
 "use client"
 
-import type { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -13,7 +12,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { useInboxStore } from "../inboxes/provider/inbox-store-context"
-import { ScanQRCodeDiaglog } from "../qrcode/scan-qrcode"
+import { ScanQRCodeDialog } from "../qrcode/scan-qrcode"
 import { getInboxLink } from "./helpers"
 import type { ReflinkResource } from "./schemas/resource"
 
@@ -50,7 +49,6 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
   const { inboxes } = useInboxStore((state) => state)
 
   const handleCopy = (text: string) => {
-    console.log("copying text", text)
     copyToClipboard(text)
       .then(() => {
         toast.success(t("messages.copiedToClipboard"))
@@ -61,14 +59,19 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       {inboxes.map((inbox) => {
         const link = getInboxLink({ inbox, reflinkData })
 
         return (
-          <div className="flex w-full items-center gap-2" key={inbox.id}>
-            <InboxIcon inboxType={inbox.inboxType as InboxType} size="large" />
-            <div className="flex-1">{inbox.integrationMessenger?.name}</div>
+          <div
+            className="flex w-full items-center gap-2 border-t py-4"
+            key={inbox.id}
+          >
+            <div className="flex flex-1 flex-col gap-1">
+              <InboxIcon channel={inbox.channel} size="large" />
+              <div className="text-muted-foreground text-xs">{inbox.name}</div>
+            </div>
             <Button
               onClick={() => handleCopy(link)}
               size="sm"
@@ -77,7 +80,7 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
               {t("actions.copyUrl")}
             </Button>
 
-            <ScanQRCodeDiaglog
+            <ScanQRCodeDialog
               link={link}
               title={"Scan QR Code to connect to the inbox"}
               triggerName={t("actions.qrCode")}

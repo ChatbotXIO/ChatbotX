@@ -15,7 +15,7 @@ import QRCode from "react-qr-code"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 
-export function ScanQRCodeDiaglog({
+export function ScanQRCodeDialog({
   title,
   triggerName,
   link,

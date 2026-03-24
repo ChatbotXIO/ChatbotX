@@ -330,7 +330,7 @@
     "title": "Broadcasts",
     "description": "Send messages to your contacts in real-time or schedule them for later. You can send messages to all contacts, a specific list of contacts, or a specific contact.",
     "scheduleSendMessage": "Schedule send message",
-    "inboxType": {
+    "channel": {
       "messenger": "Messenger",
       "whatsapp": "WhatsApp",
       "zalo": "Zalo OA"

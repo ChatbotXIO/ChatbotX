@@ -1,6 +1,6 @@
 "use client"
 
-import { Omnichannel } from "@aha.chat/database/types"
+import { channelType } from "@aha.chat/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -132,7 +132,7 @@ export default function ConversationItem({
           </div>
           <div className="absolute right-0 bottom-0 transform">
             <InboxIcon
-              inboxType={conversation.inbox?.inboxType ?? Omnichannel}
+              channel={conversation.inbox?.channel ?? channelType.omnichannel}
               showLabel={false}
               size="small"
             />

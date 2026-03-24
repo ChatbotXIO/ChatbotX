@@ -1,7 +1,7 @@
 "use client"
 
 import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
-import { Omnichannel } from "@aha.chat/database/types"
+import { channelType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
@@ -64,7 +64,7 @@ export default function ConversationList() {
     defaultValues: {
       keyword: "",
       liveChatEnabled: undefined,
-      inboxType: Omnichannel,
+      channel: channelType.omnichannel,
       assignedUserId: AssignerFilterType.all,
       status: [],
       contactFilter: {

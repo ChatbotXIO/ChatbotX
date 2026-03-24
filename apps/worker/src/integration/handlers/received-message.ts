@@ -128,7 +128,7 @@ export const receiveMessage = async (
           firstName: conversation.contact.firstName,
           lastName: conversation.contact.lastName,
           gender: (conversation.contact.gender as Gender) || "unknown",
-          source: integrationType,
+          channel: integrationType,
           avatar: conversation.contact.avatar,
         })
         .returning()
@@ -147,7 +147,7 @@ export const receiveMessage = async (
         id: createId(),
         sourceId: conversation.sourceId,
         conversationAttributes: conversation.conversationAttributes,
-        inboxType: inbox.inboxType,
+        channel: inbox.channel,
         inboxId,
         chatbotId,
         contactId: newContact.id,
@@ -255,7 +255,7 @@ export const receiveMessage = async (
         occurredAt: result.message.createdAt,
         source: integrationType,
         sourceId: conversation.contact.sourceId,
-        channel: inbox.inboxType,
+        channel: inbox.channel,
         metadata: {
           triggerContext: {
             triggerSource: "worker",
@@ -279,7 +279,7 @@ export const receiveMessage = async (
         occurredAt: result.message.createdAt,
         source: integrationType,
         sourceId: conversation.contact.sourceId,
-        channel: inbox.inboxType,
+        channel: inbox.channel,
         metadata: {
           triggerContext: {
             triggerSource: "worker",
@@ -326,7 +326,7 @@ export const receiveMessage = async (
       occurredAt: new Date(),
       source: integrationType,
       sourceId: conversation.contact.sourceId,
-      channel: inbox.inboxType,
+      channel: inbox.channel,
       country: undefined,
       metadata: {
         inboxId,
@@ -342,7 +342,7 @@ export const receiveMessage = async (
       occurredAt: new Date(),
       source: integrationType,
       sourceId: conversation.contact.sourceId,
-      channel: inbox.inboxType,
+      channel: inbox.channel,
       country: undefined,
       metadata: {
         inboxId,

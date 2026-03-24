@@ -31,7 +31,7 @@ export const useConfiguredInboxTypeOptions = () => {
   useEffect(() => {
     const setOfInboxTypes = new Set<string>(["omnichannel"])
     for (const inbox of inboxes) {
-      setOfInboxTypes.add(inbox.inboxType)
+      setOfInboxTypes.add(inbox.channel)
     }
     setInboxTypes(Array.from(setOfInboxTypes))
   }, [inboxes])

@@ -1,4 +1,5 @@
-import { gender, inboxType } from "@aha.chat/database/schema"
+import { gender } from "@aha.chat/database/schema"
+import { channelType } from "@aha.chat/database/types"
 import { z } from "zod"
 
 export const contactPrefix = "ct"
@@ -36,7 +37,7 @@ export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
 
 export const importContactsRequest = z.object({
   file: z.instanceof(File),
-  inboxType: z.enum(inboxType.enumValues),
+  channel: z.enum(channelType),
   phoneNumber: z.string().optional(),
   contactId: z.string(),
   email: z.string().optional(),

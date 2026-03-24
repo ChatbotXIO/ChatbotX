@@ -1,6 +1,6 @@
 "use client"
 
-import type { InboxType } from "@aha.chat/database/types"
+import type { ChannelType } from "@aha.chat/database/types"
 import {
   Accordion,
   AccordionContent,
@@ -19,7 +19,7 @@ type SettingsChannelsPageProps = {
 }
 
 type IntegrationItem = {
-  readonly value: InboxType
+  readonly value: ChannelType
   readonly content: ReactNode
 }
 
@@ -65,7 +65,7 @@ export default function SettingsChannelsPage({
           value={integration.value}
         >
           <AccordionTrigger className="rounded-none px-4 transition-all hover:bg-muted hover:no-underline data-[state=open]:bg-muted">
-            <InboxIcon inboxType={integration.value} />
+            <InboxIcon channel={integration.value} />
           </AccordionTrigger>
           <AccordionContent className="p-4">
             {integration.content}

@@ -1,4 +1,4 @@
-import type { InboxType } from "@aha.chat/database/types"
+import type { ChannelType } from "@aha.chat/database/types"
 import { cn } from "@aha.chat/ui/lib/utils"
 import {
   SiMessenger,
@@ -33,7 +33,7 @@ type InboxIconConfig = {
   defaultLabel: string
 }
 
-const INBOX_ICON_CONFIG: Record<InboxType | "omnichannel", InboxIconConfig> = {
+const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
   messenger: {
     Icon: SiMessenger,
     fill: SiMessengerHex,
@@ -61,7 +61,7 @@ const INBOX_ICON_CONFIG: Record<InboxType | "omnichannel", InboxIconConfig> = {
 }
 
 type InboxIconProps = {
-  inboxType: InboxType | "omnichannel"
+  channel: string
   wrapperClassName?: string
   iconClassName?: string
   label?: string
@@ -72,7 +72,7 @@ type InboxIconProps = {
 
 export const InboxIcon = memo(
   ({
-    inboxType,
+    channel,
     wrapperClassName,
     iconClassName,
     label,
@@ -80,7 +80,8 @@ export const InboxIcon = memo(
     showLabel = true,
     size = "medium",
   }: InboxIconProps) => {
-    const config = INBOX_ICON_CONFIG[inboxType] ?? INBOX_ICON_CONFIG.omnichannel
+    const config =
+      INBOX_ICON_CONFIG[channel as ChannelType] ?? INBOX_ICON_CONFIG.omnichannel
     const {
       Icon,
       fill,

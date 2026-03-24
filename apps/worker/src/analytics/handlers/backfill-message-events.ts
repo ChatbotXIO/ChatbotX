@@ -28,7 +28,7 @@ export const backfillMessageEvents = async () => {
           createdAt: messageModel.createdAt,
           contactSourceId: contactModel.sourceId,
           contactSource: contactModel.source,
-          inboxType: inboxModel.inboxType,
+          channel: inboxModel.channel,
         })
         .from(messageModel)
         .innerJoin(
@@ -58,7 +58,7 @@ export const backfillMessageEvents = async () => {
           occurredAt: msg.createdAt,
           source: msg.contactSource || "",
           sourceId: msg.contactSourceId as string,
-          channel: msg.inboxType || "",
+          channel: msg.channel,
         }))
 
       try {

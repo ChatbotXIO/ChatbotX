@@ -68,16 +68,6 @@ export const ConditionType = {
 } as const
 export type ConditionType = (typeof ConditionType)[keyof typeof ConditionType]
 
-export const BroadcastInboxType = {
-  omnichannel: "omnichannel",
-  whatsapp: "whatsapp",
-  messenger: "messenger",
-  webchat: "webchat",
-  zalo: "zalo",
-} as const
-export type BroadcastInboxType =
-  (typeof BroadcastInboxType)[keyof typeof BroadcastInboxType]
-
 export const InboxStatus = {
   connected: "connected",
   disconnected: "disconnected",

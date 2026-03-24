@@ -5,7 +5,7 @@ import { type AuthValue, SdkException } from "@aha.chat/sdk"
 export const getIntegrationAuth = async (
   inbox: InboxModel,
 ): Promise<AuthValue> => {
-  const inboxName = inbox.inboxType
+  const inboxName = inbox.channel
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join("")
@@ -17,7 +17,7 @@ export const getIntegrationAuth = async (
 
   if (!result.rows[0]) {
     throw new SdkException(
-      `Unable to find integration auth for inboxType: ${inbox.inboxType}`,
+      `Unable to find integration auth for channel: ${inbox.channel}`,
     )
   }
 

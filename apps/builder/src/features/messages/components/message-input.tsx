@@ -100,7 +100,9 @@ export const MessageInput = () => {
       }
 
       if (!insert) {
-        form.setValue("content", value)
+        form.setValue("content", value, {
+          shouldValidate: true,
+        })
         return
       }
 
@@ -108,7 +110,9 @@ export const MessageInput = () => {
       const before = text.slice(0, element.selectionStart)
       const after = text.slice(element.selectionStart)
 
-      form.setValue("content", `${before}${value}${after}`)
+      form.setValue("content", `${before}${value}${after}`, {
+        shouldValidate: true,
+      })
     },
     [form],
   )
@@ -136,7 +140,7 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.inbox?.inboxType ?? "webchat"
+  const currentInboxType = conversation?.channel ?? "webchat"
 
   // Check if files are attached
   const files = useWatch({
@@ -185,7 +189,7 @@ export const MessageInput = () => {
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              <InboxIcon inboxType={currentInboxType} />
+              <InboxIcon channel={currentInboxType} />
             </div>
 
             <div className="message-toolbar flex items-center gap-2">

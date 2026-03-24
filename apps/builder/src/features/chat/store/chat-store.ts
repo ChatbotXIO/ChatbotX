@@ -1,5 +1,5 @@
 import type { ConversationStatus } from "@aha.chat/database/enums"
-import type { InboxType } from "@aha.chat/database/types"
+import type { ChannelType } from "@aha.chat/database/types"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -17,7 +17,7 @@ import type {
 
 export type ConversationFilters = {
   assignedUserId?: string
-  inboxType?: InboxType | "omnichannel"
+  channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
   liveChatEnabled?: boolean

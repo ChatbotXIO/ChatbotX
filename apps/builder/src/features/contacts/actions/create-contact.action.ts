@@ -7,7 +7,11 @@ import {
   conversationModel,
   inboxModel,
 } from "@aha.chat/database/schema"
-import type { ChatbotUsageModel, InboxModel } from "@aha.chat/database/types"
+import {
+  type ChatbotUsageModel,
+  channelType,
+  type InboxModel,
+} from "@aha.chat/database/types"
 import { emitContactCreated } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
@@ -64,7 +68,7 @@ export const createContact = async ({
 
   const inbox = await findOrFail<InboxModel>(
     inboxModel,
-    { chatbotId, inboxType: "webchat" },
+    { chatbotId, channel: channelType.webchat },
     "Inbox not found",
   )
 
@@ -88,7 +92,7 @@ export const createContact = async ({
       .values({
         ...parsedInput,
         chatbotId,
-        source: inbox.inboxType,
+        channel: inbox.channel,
         id: createId(),
       })
       .returning()
@@ -102,7 +106,7 @@ export const createContact = async ({
       .where(eq(chatbotUsageModel.chatbotId, chatbotId))
 
     await tx.insert(conversationModel).values({
-      inboxType: inbox.inboxType,
+      channel: inbox.channel,
       chatbotId,
       contactId: newContact.id,
       inboxId: inbox.id,
@@ -134,7 +138,7 @@ export const createContact = async ({
         occurredAt: contact.createdAt,
         source: contact.source,
         sourceId: contact.sourceId,
-        channel: inbox.inboxType,
+        channel: inbox.channel,
         country: undefined,
         metadata: {
           triggerContext: {

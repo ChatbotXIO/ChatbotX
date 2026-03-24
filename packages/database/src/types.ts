@@ -14,6 +14,15 @@ export const integrationType = {
   chatbotX: "chatbotX",
 } as const
 
+export const channelType = {
+  omnichannel: "omnichannel",
+  webchat: "webchat",
+  messenger: "messenger",
+  whatsapp: "whatsapp",
+  zalo: "zalo",
+} as const
+export type ChannelType = (typeof channelType)[keyof typeof channelType]
+
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type UserModel = typeof schema.userModel.$inferSelect
@@ -69,7 +78,6 @@ export type ConditionModel = typeof schema.conditionModel.$inferSelect
 export type PlanModel = typeof schema.planModel.$inferSelect
 export type FolderType = (typeof schema.folderType.enumValues)[number]
 export type IntegrationType = keyof typeof integrationType
-export type InboxType = (typeof schema.inboxType.enumValues)[number]
 export type BroadcastSchedulesType =
   (typeof schema.broadcastSchedulesType.enumValues)[number]
 export type FileType = (typeof schema.fileType.enumValues)[number]

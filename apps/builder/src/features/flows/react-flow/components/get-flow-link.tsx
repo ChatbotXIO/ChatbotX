@@ -1,4 +1,3 @@
-import type { InboxType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -39,7 +38,7 @@ export default function GetFlowLinkDialog({
 
     let url = ""
     const ref = isDraft ? `draft-${flow.id}` : `flow-${flow.id}`
-    switch (inbox.inboxType) {
+    switch (inbox.channel) {
       case "messenger":
         url = `https://m.me/${inbox.sourceId}?ref=${ref}`
         break
@@ -61,16 +60,16 @@ export default function GetFlowLinkDialog({
           <DialogDescription />
         </DialogHeader>
 
-        {inboxes.map((inboxType) => (
-          <div className="flex w-full items-center" key={inboxType.id}>
+        {inboxes.map((inbox) => (
+          <div className="flex w-full items-center" key={inbox.id}>
             <div className="flex-1">
               <InboxIcon
+                channel={inbox.channel}
                 iconClassName="size-6"
-                inboxType={inboxType.inboxType as InboxType | "omnichannel"}
-                label={inboxType.inboxType as string}
+                label={inbox.channel}
               />
             </div>
-            <Button onClick={() => handleCopy(inboxType.id)} size="sm">
+            <Button onClick={() => handleCopy(inbox.id)} size="sm">
               {t("actions.copy")}
             </Button>
           </div>

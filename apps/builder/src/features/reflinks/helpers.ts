@@ -28,7 +28,7 @@ export const getInboxLink = (props: {
 }): string => {
   const { inbox, reflinkData } = props
 
-  switch (inbox.inboxType) {
+  switch (inbox.channel) {
     case "messenger":
       return buildUrlWithParam(
         `https://m.me/${inbox.sourceId}`,

@@ -81,8 +81,8 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         enableHiding: false,
       },
       {
-        id: "inboxType",
-        accessorKey: "inboxType",
+        id: "channel",
+        accessorKey: "channel",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -90,7 +90,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div>{t(`fields.${row.original.inboxType}.label`)}</div>
+          <div>{t(`fields.${row.original.channel}.label`)}</div>
         ),
         meta: {
           label: t("fields.channel.label"),

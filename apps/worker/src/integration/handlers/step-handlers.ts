@@ -423,7 +423,7 @@ export const stepSendTyping = async (
 
   await Promise.all([
     allIntegrations[
-      inbox.inboxType
+      inbox.channel
     ]?.channels.channel?.conversation?.sendTyping?.({
       ctx: {
         chatbot: inbox.chatbot,

@@ -189,7 +189,7 @@ export const createMessage = async (props: {
         occurredAt: new Date(),
         source: contact.source,
         sourceId: contact.sourceId,
-        channel: conversation.inboxType,
+        channel: conversation.channel,
         country: undefined,
         metadata: {
           messageId: message.id,
@@ -234,7 +234,7 @@ export const createMessage = async (props: {
         occurredAt: new Date(),
         source: contact.source,
         sourceId: contact.sourceId,
-        channel: conversation.inboxType,
+        channel: conversation.channel,
         country: undefined,
         metadata: {
           messageId: message.id,

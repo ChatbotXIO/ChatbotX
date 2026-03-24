@@ -1,13 +1,11 @@
-import {
-  BroadcastInboxType,
-  BroadcastSubaction,
-} from "@aha.chat/database/enums"
+import { BroadcastSubaction } from "@aha.chat/database/enums"
 import { broadcastSchedulesType } from "@aha.chat/database/schema"
+import { channelType } from "@aha.chat/database/types"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 
 export const createBroadcastRequest = z.object({
-  inboxType: z.enum(BroadcastInboxType),
+  channel: z.enum(channelType),
   flowId: z.cuid2(),
   subaction: z.enum(BroadcastSubaction),
   schedulesType: z.enum(broadcastSchedulesType.enumValues),

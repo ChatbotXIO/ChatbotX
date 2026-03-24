@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     const conversation = await db.query.conversationModel.findFirst({
       where: {
-        inboxType: "webchat",
+        channel: "webchat",
         sourceId: data.guestConversationId,
       },
     })

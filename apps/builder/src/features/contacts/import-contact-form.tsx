@@ -1,5 +1,6 @@
 "use client"
 
+import { channelType } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import {
@@ -54,7 +55,7 @@ export function ImportContactsForm({ chatbotId }: { chatbotId: string }) {
       formProps: {
         mode: "onChange",
         defaultValues: {
-          inboxType: "messenger",
+          channel: "messenger",
           fieldMapping: [
             {
               column: "",
@@ -150,24 +151,24 @@ export function ImportContactsForm({ chatbotId }: { chatbotId: string }) {
 export function ContactsSettings({ csvHeaders }: { csvHeaders: string[] }) {
   const t = useTranslations()
   const channelOptions = useConfiguredInboxTypeOptions()
-  const [inboxType, setInboxType] = useState<string | undefined>(undefined)
+  const [channel, setChannel] = useState<string | undefined>(undefined)
 
   return (
     <div className="flex flex-col gap-4">
       <SelectField
         label={t("fields.source.label")}
-        name="inboxType"
+        name="channel"
         options={channelOptions}
-        triggerValueChange={setInboxType}
+        triggerValueChange={setChannel}
       />
-      {inboxType === "whatsapp" && (
+      {channel === channelType.whatsapp && (
         <InputField
           label={t("fields.countryCode.label")}
           name="countryCode"
           placeholder="+1"
         />
       )}
-      {inboxType !== "whatsapp" && (
+      {channel !== channelType.whatsapp && (
         <>
           <HeaderConnectContactField
             csvHeaders={csvHeaders}
