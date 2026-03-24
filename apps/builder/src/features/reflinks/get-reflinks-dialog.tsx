@@ -49,7 +49,6 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
   const [_, copyToClipboard] = useCopyToClipboard()
 
   const { inboxes } = useInboxStore((state) => state)
-  console.log(inboxes)
 
   const handleCopy = (text: string) => {
     copyToClipboard(text)
