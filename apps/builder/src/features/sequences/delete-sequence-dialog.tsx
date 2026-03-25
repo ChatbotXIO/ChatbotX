@@ -64,7 +64,7 @@ export function DeleteSequenceDialog({
             })}
           </DialogTitle>
           <DialogDescription>
-            {t("messages.deleteFeatureDescription", {
+            {t("messages.deleteConfirmation", {
               feature: t("fields.sequences.label"),
             })}
           </DialogDescription>

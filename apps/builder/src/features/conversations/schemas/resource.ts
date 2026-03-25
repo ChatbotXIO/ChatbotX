@@ -13,6 +13,7 @@ import { userResource } from "@/features/users/schemas/resource"
 
 export const conversationResource = createSelectSchema(conversationModel)
 export type ConversationResource = z.infer<typeof conversationResource>
+
 const contactsOnSequenceResource = createSelectSchema(contactsOnSequenceModel)
 const sequenceResourceSchema = createSelectSchema(sequenceModel)
 

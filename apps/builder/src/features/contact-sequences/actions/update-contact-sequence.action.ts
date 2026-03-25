@@ -2,15 +2,17 @@
 
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
+  findOrFail,
   inArray,
-  type Transaction,
 } from "@aha.chat/database/client"
 import {
   contactModel,
   contactsOnSequenceModel,
 } from "@aha.chat/database/schema"
+import type { ContactModel } from "@aha.chat/database/types"
 import {
   cancelPendingDispatches,
   enrollContactInSequence,
@@ -24,15 +26,13 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactSequenceRequest,
   updateContactSequenceRequest,
-} from "../schemas/contact-sequence"
+} from "../schema"
 import { calculateNextRunAtBulk } from "../utils/calculate-next-run-at"
 
-type DrizzleTransaction = Transaction
-
 async function getCurrentSequenceIds(
+  tx: DatabaseClient,
   contactId: string,
   chatbotId: string,
-  tx: DrizzleTransaction,
 ) {
   const sequences = await tx
     .select({ sequenceId: contactsOnSequenceModel.sequenceId })
@@ -60,10 +60,10 @@ function calculateSequenceDiff(
 }
 
 async function removeContactSequences(
+  tx: DatabaseClient,
   contactId: string,
   sequenceIds: string[],
   chatbotId: string,
-  tx: DrizzleTransaction,
 ) {
   if (sequenceIds.length === 0) {
     return
@@ -79,14 +79,17 @@ async function removeContactSequences(
         eq(contactsOnSequenceModel.chatbotId, chatbotId),
       ),
     )
+  if (enrollments.length === 0) {
+    return
+  }
 
   await Promise.all(
     enrollments.map((enrollment: { id: string }) =>
       cancelPendingDispatches({
+        client: tx,
         enrollmentId: enrollment.id,
         chatbotId,
         reason: "enrollment_removed",
-        client: tx,
       }),
     ),
   )
@@ -105,10 +108,10 @@ async function removeContactSequences(
 }
 
 async function addContactSequences(
+  tx: DatabaseClient,
   contactId: string,
   sequenceIds: string[],
   chatbotId: string,
-  tx: DrizzleTransaction,
 ) {
   if (sequenceIds.length === 0) {
     return
@@ -146,44 +149,36 @@ export const updateContactSequenceAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactSequenceRequest
     }) => {
-      const contacts = await db
-        .select()
-        .from(contactModel)
-        .where(
-          and(
-            eq(contactModel.id, parsedInput.contactId),
-            eq(contactModel.chatbotId, chatbotId),
-          ),
-        )
-        .limit(1)
+      const contact = await findOrFail<ContactModel>(
+        contactModel,
+        {
+          id: parsedInput.contactId,
+          chatbotId,
+        },
+        "Contact not found",
+      )
 
-      const contact = contacts[0]
-      if (!contact) {
-        throw new Error("Contact not found")
+      const currentIds = await getCurrentSequenceIds(db, contact.id, chatbotId)
+      if (currentIds.length === 0) {
+        return []
       }
 
       const returnedSequences = await db.transaction(async (tx) => {
-        const currentIds = await getCurrentSequenceIds(
-          contact.id,
-          chatbotId,
-          tx,
-        )
         const { toAdd, toRemove } = calculateSequenceDiff(
           currentIds,
           parsedInput.sequences,
         )
 
-        await removeContactSequences(contact.id, toRemove, chatbotId, tx)
-        await addContactSequences(contact.id, toAdd, chatbotId, tx)
+        await removeContactSequences(tx, contact.id, toRemove, chatbotId)
+        await addContactSequences(tx, contact.id, toAdd, chatbotId)
 
-        const result = await tx.query.contactsOnSequenceModel.findMany({
+        return await tx.query.contactsOnSequenceModel.findMany({
           where: {
             contactId: contact.id,
             chatbotId,
           },
           with: { sequence: true },
         })
-        return result
       })
 
       revalidateCacheTags([

@@ -1,26 +1,33 @@
 import { db, type Transaction } from "@aha.chat/database/client"
+import { addMilliseconds } from "date-fns"
 
 type DrizzleClient = typeof db | Transaction
 
-export interface SequenceStepDelay {
+export type SequenceStepDelay = {
   delayDays: number
   delayMinutes: number
   delayUnit: string | null
   specificDateTime: Date | null
 }
 
+const MINUTE_IN_MS = 60_000
+const DAY_IN_MS = 24 * 60 * MINUTE_IN_MS
+
 export function calculateNextRunAtFromStep(
   step: SequenceStepDelay,
   baseTime: Date = new Date(),
 ): Date {
   if (step.delayUnit === "specificTime" && step.specificDateTime) {
-    return new Date(step.specificDateTime)
+    return new Date(step.specificDateTime.getTime())
   }
 
-  const delayMs =
-    step.delayDays * 24 * 60 * 60 * 1000 + step.delayMinutes * 60 * 1000
+  const delayMs = step.delayDays * DAY_IN_MS + step.delayMinutes * MINUTE_IN_MS
 
-  return delayMs > 0 ? new Date(baseTime.getTime() + delayMs) : baseTime
+  if (delayMs <= 0) {
+    return baseTime
+  }
+
+  return addMilliseconds(baseTime, delayMs)
 }
 
 export async function calculateNextRunAt(
@@ -49,10 +56,8 @@ export async function calculateNextRunAt(
     return { nextRunAt: enrolledAt, nextStepId: null }
   }
 
-  const nextRunAt = calculateNextRunAtFromStep(firstStep, enrolledAt)
-
   return {
-    nextRunAt,
+    nextRunAt: calculateNextRunAtFromStep(firstStep, enrolledAt),
     nextStepId: firstStep.id,
   }
 }

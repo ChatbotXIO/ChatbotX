@@ -1,5 +1,6 @@
 "use client"
 
+import { SelectTagsInputField } from "@aha.chat/ui/components/form/select-tags-input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -12,7 +13,6 @@ import {
   DialogTrigger,
 } from "@aha.chat/ui/components/ui/dialog"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { SelectTagsInputField } from "@aha.chat/ui/components/ui/muhammada86/select-tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -98,7 +98,7 @@ export default function RemoveContactSequenceDialog({
               <SelectTagsInputField
                 name="sequences"
                 options={sequenceSelectOptions}
-                placeholder={t("sequences.field.placeholder")}
+                placeholder={t("fields.search.placeholder")}
               />
             </div>
 

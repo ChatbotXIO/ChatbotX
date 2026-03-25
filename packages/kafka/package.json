@@ -1,0 +1,21 @@
+{
+  "name": "@chatbotx.io/kafka",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@aha.chat/logger": "workspace:*",
+    "@platformatic/kafka": "^1.31.0",
+    "@t3-oss/env-core": "^0.13.10",
+    "async-mutex": "^0.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@aha.chat/typescript-config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}

@@ -46,6 +46,7 @@
     "@chatbotx/events": "workspace:*",
     "@faker-js/faker": "^10.3.0",
     "@paralleldrive/cuid2": "^3.3.0",
+    "@platformatic/kafka": "^1.31.0",
     "@t3-oss/env-core": "^0.13.10",
     "ai": "^6.0.134",
     "bullmq": "^5.71.0",

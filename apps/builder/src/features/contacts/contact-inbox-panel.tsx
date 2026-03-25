@@ -1,9 +1,4 @@
-import type {
-  ContactNoteModel,
-  ContactsOnSequenceModel,
-  SequenceModel,
-  TagModel,
-} from "@aha.chat/database/types"
+import type { ContactNoteModel, TagModel } from "@aha.chat/database/types"
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +11,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import { ContactSequencesManage } from "../contact-sequences/contact-sequences-manage"
+import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
@@ -35,7 +31,7 @@ export const ContactInboxPanel = () => {
   const [contactNotes, setContactNotes] = useState<ContactNoteModel[]>([])
   const [tags, setTags] = useState<TagModel[]>([])
   const [contactOnSequences, setContactOnSequences] = useState<
-    (ContactsOnSequenceModel & { sequence: SequenceModel })[]
+    ContactOnSequenceWithRelations[]
   >([])
 
   useEffect(() => {

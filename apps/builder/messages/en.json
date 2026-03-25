@@ -2114,14 +2114,7 @@
     "title": "AI Hub"
   },
   "sequences": {
-    "heading": {
-      "title": "Sequences"
-    },
-    "field": {
-      "placeholder": "Select",
-      "searchPlaceholder": "Search",
-      "emptyMessage": "Not found"
-    },
+    "title": "Sequences",
     "subscribers": "Subscibers",
     "steps": "Messages",
     "step": "Message",

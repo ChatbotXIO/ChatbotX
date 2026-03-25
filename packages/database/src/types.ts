@@ -23,6 +23,14 @@ export const channelType = {
 } as const
 export type ChannelType = (typeof channelType)[keyof typeof channelType]
 
+export type CancelDispatchReason = "enrollment_removed"
+export const sequenceEventType = {
+  dispatch_canceled: "dispatch_canceled",
+  dispatch_rescheduled: "dispatch_rescheduled",
+  dispatch_paused: "dispatch_paused",
+  dispatch_resumed: "dispatch_resumed",
+} as const
+
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
 export type UserModel = typeof schema.userModel.$inferSelect

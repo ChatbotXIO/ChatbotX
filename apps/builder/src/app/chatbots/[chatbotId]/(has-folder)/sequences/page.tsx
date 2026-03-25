@@ -29,7 +29,9 @@ export default async function SequencesPage(props: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("sequences.heading.title")}</CardTitle>
+        <CardTitle className="font-bold text-xl">
+          {t("sequences.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <SequencesTable chatbotId={chatbotId} promises={promises} />

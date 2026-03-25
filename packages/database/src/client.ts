@@ -26,6 +26,7 @@ export type Transaction = Parameters<
   Parameters<(typeof db)["transaction"]>[0]
 >[0]
 export type { PgTable } from "drizzle-orm/pg-core"
+export type DatabaseClient = typeof db | Transaction
 
 export const findOrFail = async <TTable extends PgTable>(
   table: TTable,

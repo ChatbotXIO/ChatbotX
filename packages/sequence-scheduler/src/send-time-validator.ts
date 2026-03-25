@@ -1,9 +1,40 @@
-export interface SendTimeWindow {
+import {
+  addDays,
+  getDay,
+  getHours,
+  getMinutes,
+  set,
+  startOfDay,
+} from "date-fns"
+
+export type SendTimeWindow = {
   anytime: boolean
   sendDays: string | null
   sendTimeEnd: string | null
   sendTimeStart: string | null
 }
+
+const ALL_DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const
+
+const DAY_NAMES = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const
+
+const MAX_ATTEMPTS = 14
 
 export function calculateNextValidSendTime(
   baseTime: Date,
@@ -13,40 +44,45 @@ export function calculateNextValidSendTime(
     return baseTime
   }
 
-  const result = new Date(baseTime)
-  const allowedDays = parseSendDays(window.sendDays)
+  let result = new Date(baseTime)
+  const allowedDays = new Set(parseSendDays(window.sendDays))
+
+  let startTimeInMin: number | null = null
+  let endTimeInMin: number | null = null
+  if (window.sendTimeStart && window.sendTimeEnd) {
+    startTimeInMin = parseTimeToMinutes(window.sendTimeStart)
+    endTimeInMin = parseTimeToMinutes(window.sendTimeEnd)
+  }
 
   let attempts = 0
-  const maxAttempts = 14
 
-  while (attempts < maxAttempts) {
+  while (attempts < MAX_ATTEMPTS) {
     const dayName = getDayName(result)
 
-    if (!allowedDays.includes(dayName)) {
-      result.setDate(result.getDate() + 1)
-      result.setHours(0, 0, 0, 0)
+    if (!allowedDays.has(dayName)) {
+      result = startOfDay(addDays(result, 1))
       attempts++
       continue
     }
 
-    if (window.sendTimeStart && window.sendTimeEnd) {
-      const [startHour, startMin] = window.sendTimeStart.split(":").map(Number)
-      const [endHour, endMin] = window.sendTimeEnd.split(":").map(Number)
-
-      const currentHour = result.getHours()
-      const currentMin = result.getMinutes()
+    if (startTimeInMin !== null && endTimeInMin !== null) {
+      const currentHour = getHours(result)
+      const currentMin = getMinutes(result)
       const currentTimeInMin = currentHour * 60 + currentMin
-      const startTimeInMin = startHour * 60 + startMin
-      const endTimeInMin = endHour * 60 + endMin
 
       if (currentTimeInMin < startTimeInMin) {
-        result.setHours(startHour, startMin, 0, 0)
+        const [startHour, startMin] = minutesToHourAndMinute(startTimeInMin)
+        result = set(result, {
+          hours: startHour,
+          minutes: startMin,
+          seconds: 0,
+          milliseconds: 0,
+        })
         return result
       }
 
       if (currentTimeInMin >= endTimeInMin) {
-        result.setDate(result.getDate() + 1)
-        result.setHours(0, 0, 0, 0)
+        result = startOfDay(addDays(result, 1))
         attempts++
         continue
       }
@@ -62,42 +98,28 @@ export function calculateNextValidSendTime(
 
 function parseSendDays(sendDays: string | null): string[] {
   if (!sendDays) {
-    return [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ]
+    return [...ALL_DAYS]
   }
 
   try {
     const parsed = JSON.parse(sendDays)
     return Array.isArray(parsed) ? parsed : []
   } catch {
-    return [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ]
+    return [...ALL_DAYS]
   }
 }
 
+function parseTimeToMinutes(time: string): number {
+  const [hour, minute] = time.split(":").map(Number)
+  return hour * 60 + minute
+}
+
+function minutesToHourAndMinute(totalMinutes: number): [number, number] {
+  const hour = Math.floor(totalMinutes / 60)
+  const minute = totalMinutes % 60
+  return [hour, minute]
+}
+
 function getDayName(date: Date): string {
-  const days = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-  ]
-  return days[date.getDay()]
+  return DAY_NAMES[getDay(date)]
 }

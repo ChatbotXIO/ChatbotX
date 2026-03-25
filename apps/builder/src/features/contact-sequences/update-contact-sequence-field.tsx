@@ -4,8 +4,8 @@ import type {
   ContactsOnSequenceModel,
   SequenceModel,
 } from "@aha.chat/database/types"
+import { SelectTagsInputField } from "@aha.chat/ui/components/form/select-tags-input-field"
 import { Form } from "@aha.chat/ui/components/ui/form"
-import { SelectTagsInputField } from "@aha.chat/ui/components/ui/muhammada86/select-tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useParams } from "next/navigation"
@@ -15,7 +15,10 @@ import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
-import { updateContactSequenceRequest } from "./schemas/contact-sequence"
+import {
+  type ContactOnSequenceWithRelations,
+  updateContactSequenceRequest,
+} from "./schema"
 
 export default function UpdateContactSequenceField({
   contact,
@@ -23,10 +26,8 @@ export default function UpdateContactSequenceField({
   onSuccess,
 }: {
   contact: ContactResource
-  sequences: (ContactsOnSequenceModel & { sequence: SequenceModel })[]
-  onSuccess: (
-    updatedSequences: (ContactsOnSequenceModel & { sequence: SequenceModel })[],
-  ) => void
+  sequences: ContactOnSequenceWithRelations[]
+  onSuccess: (updatedSequences: ContactOnSequenceWithRelations[]) => void
 }) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
@@ -78,7 +79,7 @@ export default function UpdateContactSequenceField({
       <form className="flex flex-1 flex-col gap-2">
         <SelectTagsInputField
           disabled={form.formState.isSubmitting}
-          emptyMessage={t("sequences.field.emptyMessage")}
+          emptyMessage={t("messages.noResults")}
           label=""
           name="sequences"
           onSelect={(selectedTags) => {
@@ -87,8 +88,8 @@ export default function UpdateContactSequenceField({
             handleSubmitWithAction()
           }}
           options={sequenceSelectOptions}
-          placeholder={t("sequences.field.placeholder")}
-          searchPlaceholder={t("sequences.field.searchPlaceholder")}
+          placeholder={t("fields.search.placeholder")}
+          searchPlaceholder={t("fields.search.placeholder")}
         />
       </form>
     </Form>

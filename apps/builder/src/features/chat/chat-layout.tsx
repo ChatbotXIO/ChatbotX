@@ -1,5 +1,6 @@
 "use client"
 
+import type { ConversationAttributes } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   ResizableHandle,
@@ -64,7 +65,15 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     const selectedConversation = conversations.find(
       (c) => c.id === activeConversationId,
     )
-    setActiveConversation(selectedConversation ?? null)
+    if (selectedConversation) {
+      setActiveConversation({
+        ...selectedConversation,
+        conversationAttributes:
+          selectedConversation.conversationAttributes as ConversationAttributes,
+      })
+    } else {
+      setActiveConversation(null)
+    }
   }, [activeConversationId, conversations])
 
   return (

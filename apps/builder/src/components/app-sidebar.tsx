@@ -86,16 +86,15 @@ export function AppSidebar({
         icon: RadioIcon,
       },
       {
+        title: t("sequences.title"),
+        url: `/chatbots/${chatbotId}/sequences`,
+        icon: ChevronsRight,
+      },
+      {
         title: t("triggers.title"),
         url: `/chatbots/${chatbotId}/triggers`,
         icon: LightbulbIcon,
       },
-      {
-        title: t("fields.sequences.label"),
-        url: `/chatbots/${chatbotId}/sequences`,
-        icon: ChevronsRight,
-      },
-
       {
         title: t("webhooks.title"),
         url: `/chatbots/${chatbotId}/webhooks`,

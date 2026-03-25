@@ -1,5 +1,6 @@
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
   inArray,
@@ -87,7 +88,7 @@ export async function createDispatch(
 }
 export interface CancelPendingDispatchesParams {
   chatbotId: string
-  client?: DrizzleClient
+  client?: DatabaseClient
   enrollmentId: string
   reason?: string
 }

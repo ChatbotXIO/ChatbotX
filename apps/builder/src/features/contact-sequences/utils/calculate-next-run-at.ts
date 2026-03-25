@@ -1,17 +1,15 @@
 import {
   and,
+  type DatabaseClient,
   db,
   eq,
   isNull,
   lte,
   sql,
-  type Transaction,
 } from "@aha.chat/database/client"
 import { contactsOnSequenceModel } from "@aha.chat/database/schema"
 import { getDragonflyClient } from "@aha.chat/scheduler"
 import { createDispatch } from "@aha.chat/sequence-scheduler"
-
-type DrizzleClient = typeof db | Transaction
 
 type SequenceStepForDelay = {
   id: string
@@ -45,11 +43,11 @@ async function createAndScheduleDispatch(
     enrollmentId: string
     runAt: Date
   },
-  client: DrizzleClient,
+  client: DatabaseClient,
 ) {
   const dispatch = await createDispatch({
     ...params,
-    client: client as Transaction,
+    client,
   })
 
   const dragonfly = getDragonflyClient()
@@ -59,7 +57,7 @@ async function createAndScheduleDispatch(
 export async function calculateNextRunAtBulk(
   sequenceIds: string[],
   enrolledAt: Date = new Date(),
-  tx?: DrizzleClient,
+  tx?: DatabaseClient,
 ): Promise<Map<string, { nextRunAt: Date; nextStepId: string | null }>> {
   const client = tx ?? db
 
@@ -118,7 +116,7 @@ function calculateDelayInMs(delayDays: number, delayMinutes: number): number {
 
 async function getActiveStepsForSequence(
   sequenceId: string,
-  client: DrizzleClient,
+  client: DatabaseClient,
 ): Promise<SequenceStepForDelay[]> {
   return await client.query.sequenceStepModel.findMany({
     where: {
@@ -142,7 +140,7 @@ async function getActiveStepsForSequence(
 async function getActiveStepsCumulativeDelay(
   sequenceId: string,
   upToOrder: number,
-  client: DrizzleClient,
+  client: DatabaseClient,
 ): Promise<number | Date> {
   const steps = await getActiveStepsForSequence(sequenceId, client)
 
@@ -177,7 +175,7 @@ async function getActiveStepsCumulativeDelay(
 async function getNextActiveStep(
   sequenceId: string,
   fromOrder: number,
-  client: DrizzleClient,
+  client: DatabaseClient,
 ): Promise<{ id: string; order: number } | null> {
   const nextStep = await client.query.sequenceStepModel.findFirst({
     where: {
@@ -199,7 +197,7 @@ type UpdateContactsNextRunAtParams = {
   currentStepOrder: number
   delayMsOrDate: number | Date
   nextStepId: string | null
-  client: DrizzleClient
+  client: DatabaseClient
 }
 
 async function updateContactsNextRunAt(params: UpdateContactsNextRunAtParams) {
@@ -254,7 +252,7 @@ async function recalculateNextRunAtForStep(
   sequenceId: string,
   chatbotId: string,
   stepOrder: number,
-  client: DrizzleClient,
+  client: DatabaseClient,
 ) {
   // Find the NEXT active step after currentStep
   // Contact is at stepOrder, so we need to find the next step they will run
@@ -319,7 +317,7 @@ async function recalculateNextRunAtForStep(
 export async function recalculateAllContactsInSequence(
   sequenceId: string,
   chatbotId: string,
-  tx?: DrizzleClient,
+  tx?: DatabaseClient,
 ) {
   const client = tx ?? db
 
@@ -374,7 +372,7 @@ async function reactivateCompletedContactsForNewStep(
   sequenceId: string,
   chatbotId: string,
   newStepOrder: number,
-  client: DrizzleClient,
+  client: DatabaseClient,
 ) {
   // Find completed contacts that can process the new step
   // currentStep represents NEXT step to process, so:
@@ -526,7 +524,7 @@ export async function handleStepCreationImpact(
   sequenceId: string,
   chatbotId: string,
   newStepOrder: number,
-  tx?: DrizzleClient,
+  tx?: DatabaseClient,
 ) {
   const client = tx ?? db
 
@@ -615,7 +613,7 @@ export async function handleStepUpdateImpact(
   chatbotId: string,
   updatedStepId: string,
   updatedStepOrder: number,
-  tx?: DrizzleClient,
+  tx?: DatabaseClient,
 ) {
   const client = tx ?? db
 

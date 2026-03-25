@@ -1,9 +1,5 @@
 "use client"
 
-import type {
-  ContactsOnSequenceModel,
-  SequenceModel,
-} from "@aha.chat/database/types"
 import {
   Accordion,
   AccordionContent,
@@ -16,6 +12,7 @@ import { type ReactNode, useEffect, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
+import type { ContactOnSequenceWithRelations } from "./schema"
 import UpdateContactSequenceField from "./update-contact-sequence-field"
 
 type sequencesList = {
@@ -26,7 +23,7 @@ type sequencesList = {
 export function ContactSequencesManage({
   contactOnSequences: initialContactOnSequences,
 }: {
-  contactOnSequences: (ContactsOnSequenceModel & { sequence: SequenceModel })[]
+  contactOnSequences: ContactOnSequenceWithRelations[]
 }) {
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
@@ -34,7 +31,7 @@ export function ContactSequencesManage({
 
   const [contact, setContact] = useState<ContactResource | null>(null)
   const [contactOnSequences, setContactOnSequences] = useState<
-    (ContactsOnSequenceModel & { sequence: SequenceModel })[]
+    ContactOnSequenceWithRelations[]
   >(initialContactOnSequences)
 
   useEffect(() => {
@@ -55,7 +52,7 @@ export function ContactSequencesManage({
   const sequencesModules: sequencesList[] = contact
     ? [
         {
-          keyName: t("sequences.heading.title"),
+          keyName: t("sequences.title"),
           content: (
             <UpdateContactSequenceField
               contact={contact}

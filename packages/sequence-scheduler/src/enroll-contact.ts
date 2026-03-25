@@ -6,7 +6,7 @@ import { createDispatch } from "./dispatch-manager"
 
 type DrizzleClient = typeof db | Transaction
 
-export interface EnrollContactParams {
+export type EnrollContactParams = {
   chatbotId: string
   client?: DrizzleClient
   contactId: string
@@ -15,6 +15,7 @@ export interface EnrollContactParams {
   nextStepId: string | null
   sequenceId: string
 }
+
 export async function enrollContactInSequence(params: EnrollContactParams) {
   const {
     chatbotId,

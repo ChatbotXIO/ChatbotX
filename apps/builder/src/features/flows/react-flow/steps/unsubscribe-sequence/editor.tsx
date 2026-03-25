@@ -26,7 +26,7 @@ const UnsubscribeSequenceSelector = ({
       className="mt-5"
       name={`${parentName}.sequenceId`}
       options={sequenceSelectOptions}
-      placeholder={t("sequences.field.placeholder")}
+      placeholder={t("fields.search.placeholder")}
     />
   )
 }
