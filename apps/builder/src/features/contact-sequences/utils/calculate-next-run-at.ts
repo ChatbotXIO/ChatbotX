@@ -8,8 +8,9 @@ import {
   sql,
 } from "@aha.chat/database/client"
 import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import { getDragonflyClient } from "@aha.chat/scheduler"
+import { SchedulerClient } from "@aha.chat/scheduler"
 import { createDispatch } from "@aha.chat/sequence-scheduler"
+import { sequenceConnections } from "@chatbotx.io/redis"
 
 type SequenceStepForDelay = {
   id: string
@@ -50,8 +51,10 @@ async function createAndScheduleDispatch(
     client,
   })
 
-  const dragonfly = getDragonflyClient()
-  await dragonfly.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
+  // biome-ignore lint/correctness/useHookAtTopLevel: useExisting is not a React hook
+  const redisClient = await sequenceConnections.useExisting()
+  const scheduler = new SchedulerClient(redisClient)
+  await scheduler.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
 }
 
 export async function calculateNextRunAtBulk(

@@ -11,7 +11,8 @@ import {
   sequenceDispatchModel,
   sequenceEventModel,
 } from "@aha.chat/database/schema"
-import { getDragonflyClient } from "@aha.chat/scheduler"
+import { SchedulerClient } from "@aha.chat/scheduler"
+import { sequenceConnections } from "@chatbotx.io/redis"
 import { createId } from "@paralleldrive/cuid2"
 import { createHash } from "crypto"
 
@@ -145,9 +146,10 @@ export async function cancelPendingDispatches(
     })),
   )
 
-  const dragonfly = getDragonflyClient()
+  const redisClient = await sequenceConnections.useExisting()
+  const scheduler = new SchedulerClient(redisClient)
   for (const dispatch of pendingDispatches) {
-    await dragonfly.removeFromSchedule(dispatch.bucket, dispatch.id)
+    await scheduler.removeFromSchedule(dispatch.bucket, dispatch.id)
   }
 
   return pendingDispatches.map((d) => ({

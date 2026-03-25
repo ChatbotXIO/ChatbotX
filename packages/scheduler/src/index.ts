@@ -1,1 +1,1 @@
-export * from "./dragonfly-client"
+export * from "./scheduler-client"

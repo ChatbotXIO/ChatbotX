@@ -1,6 +1,9 @@
 import { cacheConnections } from "./connections/cache-connection"
 import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
+
+export { distributedLockFactory } from "./distributed-lock"
+
 import { distributedStoreFactory } from "./distributed-store"
 
 export { cacheConnections } from "./connections/cache-connection"

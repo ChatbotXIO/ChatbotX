@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@aha.chat/logger": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
     "ioredis": "5.9.3"
   },
   "devDependencies": {

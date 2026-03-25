@@ -1,6 +1,7 @@
 import { db, type Transaction } from "@aha.chat/database/client"
 import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import { getDragonflyClient } from "@aha.chat/scheduler"
+import { SchedulerClient } from "@aha.chat/scheduler"
+import { sequenceConnections } from "@chatbotx.io/redis"
 import { createId } from "@paralleldrive/cuid2"
 import { createDispatch } from "./dispatch-manager"
 
@@ -69,8 +70,9 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
     client,
   })
 
-  const dragonfly = getDragonflyClient()
-  await dragonfly.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
+  const redisClient = await sequenceConnections.useExisting()
+  const scheduler = new SchedulerClient(redisClient)
+  await scheduler.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
 }
 export interface EnrollContactsBulkParams {
   chatbotId: string
@@ -122,7 +124,8 @@ export async function enrollContactsInSequenceBulk(
       },
     })
   })
-  const dragonfly = getDragonflyClient()
+  const redisClient = await sequenceConnections.useExisting()
+  const scheduler = new SchedulerClient(redisClient)
   for (const enrollment of createdEnrollments) {
     if (!(enrollment.nextStepId && enrollment.nextRunAt)) {
       continue
@@ -135,7 +138,7 @@ export async function enrollContactsInSequenceBulk(
       enrollmentId: enrollment.id,
       runAt: enrollment.nextRunAt,
     })
-    await dragonfly.addToSchedule(
+    await scheduler.addToSchedule(
       dispatch.bucket,
       dispatch.id,
       dispatch.runAtMs,

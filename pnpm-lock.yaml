@@ -110,6 +110,9 @@ importers:
       '@chatbotx.io/clickhouse':
         specifier: workspace:*
         version: link:../../packages/clickhouse
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@chatbotx/events':
         specifier: workspace:*
         version: link:../../packages/events
@@ -519,6 +522,12 @@ importers:
       '@chatbotx.io/clickhouse':
         specifier: workspace:*
         version: link:../../packages/clickhouse
+      '@chatbotx.io/kafka':
+        specifier: workspace:*
+        version: link:../../packages/kafka
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@chatbotx/events':
         specifier: workspace:*
         version: link:../../packages/events
@@ -555,9 +564,6 @@ importers:
       ioredis:
         specifier: 5.9.3
         version: 5.9.3
-      kafkajs:
-        specifier: ^2.2.4
-        version: 2.2.4
       ky:
         specifier: ^1.14.3
         version: 1.14.3
@@ -1239,6 +1245,9 @@ importers:
       '@aha.chat/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
       ioredis:
         specifier: 5.9.3
         version: 5.9.3
@@ -8320,10 +8329,6 @@ packages:
   jws@4.0.1:
     resolution: {integrity: sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==}
 
-  kafkajs@2.2.4:
-    resolution: {integrity: sha512-j/YeapB1vfPT2iOIUn/vxdyKEuhuY2PxMBvf5JWux6iSaukAccrMtXEY/Lb7OvavDhOWME589bpLrEdnVHjfjA==}
-    engines: {node: '>=14.0.0'}
-
   katex@0.16.37:
     resolution: {integrity: sha512-TIGjO2cCGYono+uUzgkE7RFF329mLLWGuHUlSr6cwIVj9O8f0VQZ783rsanmJpFUo32vvtj7XT04NGRPh+SZFg==}
     hasBin: true
@@ -13167,8 +13172,8 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.9.1
-      '@emnapi/runtime': 1.9.1
+      '@emnapi/core': 1.8.1
+      '@emnapi/runtime': 1.8.1
       '@tybys/wasm-util': 0.10.1
     optional: true
 
@@ -18427,8 +18432,6 @@ snapshots:
     dependencies:
       jwa: 2.0.1
       safe-buffer: 5.2.1
-
-  kafkajs@2.2.4: {}
 
   katex@0.16.37:
     dependencies:

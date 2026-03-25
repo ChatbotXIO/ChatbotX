@@ -1,5 +1,6 @@
-import { getDragonflyClient } from "@aha.chat/scheduler"
-import { Kafka, type Producer } from "kafkajs"
+import { SchedulerClient } from "@aha.chat/scheduler"
+import { createProducer, type Producer } from "@chatbotx.io/kafka"
+import { sequenceConnections } from "@chatbotx.io/redis"
 import { logger } from "../lib/logger"
 
 const TOTAL_BUCKETS = 256
@@ -14,13 +15,19 @@ interface SchedulerConfig {
   tickIntervalMs: number
 }
 
-export class SchedulerWorker {
+class SchedulerWorker {
   private readonly config: SchedulerConfig
-  private readonly dragonfly = getDragonflyClient()
-  private readonly producer: Producer
-  private readonly kafka: Kafka
+  private _scheduler: SchedulerClient | null = null
+  private readonly producer: Producer<string, string, string, string>
   private running = false
   private timers: NodeJS.Timeout[] = []
+
+  private get scheduler(): SchedulerClient {
+    if (!this._scheduler) {
+      throw new Error("Scheduler not initialized. Call start() first.")
+    }
+    return this._scheduler
+  }
 
   constructor(config: Partial<SchedulerConfig> = {}) {
     this.config = {
@@ -30,35 +37,7 @@ export class SchedulerWorker {
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
     }
 
-    const kafkaBrokers = (process.env.KAFKA_BROKERS || "localhost:9092").split(
-      ",",
-    )
-
-    const sasl =
-      process.env.KAFKA_SASL_USERNAME && process.env.KAFKA_SASL_PASSWORD
-        ? {
-            mechanism: "plain" as const,
-            username: process.env.KAFKA_SASL_USERNAME,
-            password: process.env.KAFKA_SASL_PASSWORD,
-          }
-        : undefined
-
-    this.kafka = new Kafka({
-      clientId: "sequence-scheduler",
-      brokers: kafkaBrokers,
-      ssl: process.env.KAFKA_SSL_ENABLED === "true",
-      sasl,
-      retry: {
-        retries: 5,
-        initialRetryTime: 300,
-        maxRetryTime: 30_000,
-      },
-    })
-
-    this.producer = this.kafka.producer({
-      allowAutoTopicCreation: true,
-      transactionTimeout: 60_000,
-    })
+    this.producer = createProducer("sequence-scheduler")
   }
 
   async getHealth(): Promise<{
@@ -69,8 +48,8 @@ export class SchedulerWorker {
     const stats: Record<number, { schedule: number; retry: number }> = {}
 
     for (const bucket of this.config.buckets) {
-      const schedule = await this.dragonfly.getScheduleCount(bucket)
-      const retry = await this.dragonfly.getRetryCount(bucket)
+      const schedule = await this.scheduler.getScheduleCount(bucket)
+      const retry = await this.scheduler.getRetryCount(bucket)
       stats[bucket] = { schedule, retry }
     }
 
@@ -83,21 +62,17 @@ export class SchedulerWorker {
 
   async start() {
     if (this.running) {
-      logger.info("Scheduler worker is already running")
       return
     }
 
-    await this.producer.connect()
+    const redisClient = await sequenceConnections.useExisting()
+    this._scheduler = new SchedulerClient(redisClient)
 
     this.running = true
 
     for (const bucket of this.config.buckets) {
       this.startBucketScheduler(bucket)
     }
-
-    logger.info(
-      `Scheduler worker started with ${this.config.buckets.length} buckets`,
-    )
   }
 
   private startBucketScheduler(bucket: number) {
@@ -125,13 +100,13 @@ export class SchedulerWorker {
     const nowMs = Date.now()
 
     const [scheduleCandidates, retryCandidates] = await Promise.all([
-      this.dragonfly.getDue(
-        this.dragonfly.getScheduleKey(bucket),
+      this.scheduler.getDue(
+        this.scheduler.getScheduleKey(bucket),
         nowMs,
         this.config.claimLimit,
       ),
-      this.dragonfly.getDue(
-        this.dragonfly.getRetryKey(bucket),
+      this.scheduler.getDue(
+        this.scheduler.getRetryKey(bucket),
         nowMs,
         this.config.claimLimit,
       ),
@@ -146,24 +121,26 @@ export class SchedulerWorker {
 
     await Promise.all(
       candidates.map(async (dispatchId) => {
-        const locked = await this.dragonfly.acquireLock(
-          bucket,
-          dispatchId,
-          this.config.lockTtlMs,
-        )
-
-        if (locked) {
-          await this.dragonfly.removeFromSchedule(bucket, dispatchId)
-          claimed.push({
-            dispatchId,
+        try {
+          await this.scheduler.withLock(
             bucket,
-          })
+            dispatchId,
+            this.config.lockTtlMs / 1000,
+            async () => {
+              await this.scheduler.removeFromSchedule(bucket, dispatchId)
+              claimed.push({
+                dispatchId,
+                bucket,
+              })
+            },
+          )
+        } catch {
+          // Lock not acquired, skip this dispatch
         }
       }),
     )
 
     if (claimed.length > 0) {
-      logger.info(`Claimed ${claimed.length} dispatches from bucket ${bucket}`)
       await this.publishDispatches(claimed)
     }
   }
@@ -172,6 +149,7 @@ export class SchedulerWorker {
     dispatches: { dispatchId: string; bucket: number }[],
   ) {
     const messages = dispatches.map((dispatch) => ({
+      topic: "seq.dispatch.run",
       key: dispatch.dispatchId,
       value: JSON.stringify({
         dispatchId: dispatch.dispatchId,
@@ -180,10 +158,7 @@ export class SchedulerWorker {
       }),
     }))
 
-    await this.producer.send({
-      topic: "seq.dispatch.run",
-      messages,
-    })
+    await this.producer.send({ messages })
   }
 
   async stop() {
@@ -198,8 +173,7 @@ export class SchedulerWorker {
     }
     this.timers = []
 
-    await this.producer.disconnect()
-    await this.dragonfly.disconnect()
+    await this.producer.close()
   }
 
   private getAssignedBuckets(): number[] {
@@ -218,12 +192,66 @@ export class SchedulerWorker {
   }
 }
 
-let schedulerWorker: SchedulerWorker | null = null
+const scheduler = new SchedulerWorker()
 
-export function getSchedulerWorker() {
-  if (!schedulerWorker) {
-    schedulerWorker = new SchedulerWorker()
+let isShuttingDown = false
+
+async function startSchedulerWorker() {
+  console.log("Starting scheduler worker...")
+
+  try {
+    await scheduler.start()
+    console.log("Scheduler worker fully operational")
+  } catch (error) {
+    console.error("Error starting scheduler worker:", error)
+    throw error
   }
-
-  return schedulerWorker
 }
+
+async function stopSchedulerWorker() {
+  console.log("Stopping scheduler worker...")
+
+  try {
+    await scheduler.stop()
+    console.log("Scheduler worker stopped")
+  } catch (error) {
+    console.error("Error stopping scheduler worker:", error)
+    throw error
+  }
+}
+
+startSchedulerWorker().catch((error) => {
+  console.error("Error starting scheduler worker:", error)
+  process.exitCode = 1
+})
+
+const handleShutdownSignal = async (signal: "SIGINT" | "SIGTERM") => {
+  if (isShuttingDown) {
+    return
+  }
+  isShuttingDown = true
+
+  console.log(`${signal} received, shutting down scheduler worker...`)
+
+  try {
+    await stopSchedulerWorker()
+    process.exit(0)
+  } catch (error) {
+    console.error("Error during scheduler worker shutdown:", error)
+    process.exit(1)
+  }
+}
+
+process.on("SIGINT", () => {
+  handleShutdownSignal("SIGINT").catch((error) => {
+    console.error("Unhandled SIGINT shutdown error:", error)
+    process.exit(1)
+  })
+})
+
+process.on("SIGTERM", () => {
+  handleShutdownSignal("SIGTERM").catch((error) => {
+    console.error("Unhandled SIGTERM shutdown error:", error)
+    process.exit(1)
+  })
+})

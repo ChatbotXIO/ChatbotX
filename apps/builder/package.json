@@ -34,6 +34,7 @@
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
     "@chatbotx/events": "workspace:*",
     "@floating-ui/dom": "^1.7.6",
     "@giphy/js-types": "^5.1.0",
