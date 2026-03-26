@@ -1,15 +1,15 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq } from "@aha.chat/database/client"
 import {
-  flowVersionModel,
   integrationMessengerModel,
+  type MessengerPersistentMenu,
+  type MessengerPersona,
+  persistentMenuType,
 } from "@aha.chat/database/schema"
-import {
-  type ChatbotModel,
-  type FlowVersionModel,
-  type IntegrationMessengerModel,
-  PersistentMenuType,
+import type {
+  ChatbotModel,
+  IntegrationMessengerModel,
 } from "@aha.chat/database/types"
 import { encodeButtonPayload } from "@aha.chat/flow-config"
 import {
@@ -20,49 +20,40 @@ import type {
   FacebookButton,
   MessengerAuthValue,
 } from "@aha.chat/integration-messenger/schemas"
-import { findChatbotOrFail } from "@/features/chatbot/queries"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
+import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
-import {
-  type ConversationStarterSchema,
-  type GreetingMessage,
-  type PersistentMenuSchema,
-  type Persona,
-  type UpdateMessengerRequest,
-  updateMessengerRequest,
-} from "../schemas"
+import { type UpdateMessengerRequest, updateMessengerRequest } from "../schemas"
 
-const messengerLocales = {
-  en: "en_US",
-  vi: "vi_VN",
-}
 export const updateMessengerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .inputSchema(updateMessengerRequest)
   .action(
     async ({
+      ctx,
       parsedInput,
       bindArgsParsedInputs: [chatbotId, id],
     }: {
+      ctx: { chatbot: ChatbotModel }
       parsedInput: UpdateMessengerRequest
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      try {
-        const { addLanguage, ...rest } = parsedInput
+      const { addLanguage, ...rest } = parsedInput
 
+      try {
         await db.transaction(async (tx) => {
-          const chatbot = await findChatbotOrFail({ id: chatbotId })
           const integrationMessengerData = await findIntegrationMessenger({
+            chatbotId: ctx.chatbot.id,
             id,
           })
           const updatedPersonas = await updatePersonas(
-            chatbot,
+            ctx.chatbot,
             integrationMessengerData,
           )
 
@@ -73,9 +64,10 @@ export const updateMessengerAction = chatbotActionClient
               personas: updatedPersonas,
             })
             .where(eq(integrationMessengerModel.id, id))
+
           integrationMessenger.actions.updateMessengerProfile({
             ctx: {
-              chatbot,
+              chatbot: ctx.chatbot,
               auth: integrationMessengerData?.auth as MessengerAuthValue,
             },
             params: await getMessengerProfileParams(integrationMessengerData),
@@ -83,102 +75,27 @@ export const updateMessengerAction = chatbotActionClient
 
           revalidateCacheTags([`chatbots:${chatbotId}#messenger`])
         })
-      } catch (_error) {
+      } catch (error) {
+        logger.debug(error, "Failed to update Facebook page")
         throw new ChatbotXException("Failed to update Facebook page")
       }
     },
   )
 
-const getMessengerProfileParams = async (
-  model: IntegrationMessengerModel,
-): Promise<MessengerProfileRequest> => {
-  const params: MessengerProfileRequest = {}
-
-  if (model.welcomeFlowId) {
-    const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
-      flowId: model.welcomeFlowId,
-      isLatest: true,
-    })
-    params.get_started = {
-      payload: encodeButtonPayload({
-        flowId: model.welcomeFlowId,
-        flowVersionId: flowVersion.id,
-        buttonId: "",
-      }),
-    }
-  }
-
-  if (model.greetingMessages.length) {
-    params.greeting = model.greetingMessages.map((greeting) => {
-      const g = greeting as GreetingMessage
-      const locale =
-        messengerLocales[g.language as keyof typeof messengerLocales] || "en_US"
-      return {
-        locale,
-        text: g.text,
-      }
-    })
-  }
-
-  if (model.persistentMenus.length) {
-    const callToActions = await parseFacebookButtons(model.persistentMenus)
-    params.persistent_menu = [
-      {
-        locale: "default",
-        composer_input_disabled: false,
-        call_to_actions: callToActions,
-      },
-    ]
-  }
-
-  if (model.conversationStarters.length) {
-    const conversationStarters =
-      model.conversationStarters as ConversationStarterSchema[]
-    params.ice_breakers = await Promise.all(
-      conversationStarters.map(async (starter) => {
-        const flowVersion = await findOrFail<FlowVersionModel>(
-          flowVersionModel,
-          { flowId: starter.flowId, isLatest: true },
-        )
-        return {
-          question: starter.question,
-          payload: encodeButtonPayload({
-            flowId: starter.flowId,
-            flowVersionId: flowVersion.id,
-            buttonId: "",
-          }),
-        }
-      }),
-    )
-  }
-
-  return params
-}
-
-export const parseFacebookButtons = async (
-  persistentMenus: IntegrationMessengerModel["persistentMenus"],
-): Promise<FacebookButton[]> => {
+const parseFacebookButtons = (
+  persistentMenus: MessengerPersistentMenu[],
+): FacebookButton[] => {
   const buttons: FacebookButton[] = []
-  for (const menu of persistentMenus as PersistentMenuSchema[]) {
-    if (menu && menu.type === PersistentMenuType.flow) {
-      const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
-        flowId: menu.flowId,
-        isLatest: true,
-      })
+  for (const menu of persistentMenus) {
+    if (menu.type === persistentMenuType.enum.flow) {
       buttons.push({
         type: "postback",
         title: menu.label,
         payload: encodeButtonPayload({
           flowId: menu.flowId,
-          flowVersionId: flowVersion.id,
-          buttonId: "",
         }),
       })
-    } else if (
-      menu &&
-      menu.type === PersistentMenuType.website &&
-      "url" in menu
-    ) {
+    } else if (menu.type === persistentMenuType.enum.website) {
       buttons.push({
         type: "web_url",
         title: menu.label,
@@ -189,12 +106,53 @@ export const parseFacebookButtons = async (
   return buttons
 }
 
+const getMessengerProfileParams = (
+  model: IntegrationMessengerModel,
+): MessengerProfileRequest => {
+  const params: MessengerProfileRequest = {}
+
+  if (model.welcomeFlowId) {
+    params.get_started = {
+      payload: encodeButtonPayload({
+        flowId: model.welcomeFlowId,
+      }),
+    }
+  }
+
+  if (model.greetingMessages.length) {
+    params.greeting = model.greetingMessages
+  }
+
+  if (model.persistentMenus.length) {
+    const callToActions = parseFacebookButtons(model.persistentMenus)
+    params.persistent_menu = [
+      {
+        locale: "default",
+        composer_input_disabled: false,
+        call_to_actions: callToActions,
+      },
+    ]
+  }
+
+  if (model.conversationStarters.length) {
+    params.ice_breakers = model.conversationStarters.map((starter) => {
+      return {
+        question: starter.question,
+        payload: encodeButtonPayload({
+          flowId: starter.flowId,
+        }),
+      }
+    })
+  }
+
+  return params
+}
+
 const updatePersonas = async (
   chatbot: ChatbotModel,
   model: IntegrationMessengerModel,
-): Promise<Persona[]> => {
-  const personas = model.personas as Persona[]
-  const defaultPersona = personas.find((persona) => persona.isDefault)
+): Promise<MessengerPersona[]> => {
+  const defaultPersona = model.personas.find((persona) => persona.isDefault)
 
   const newPersona = await integrationMessenger.actions.updatePersona({
     ctx: {
@@ -209,7 +167,7 @@ const updatePersonas = async (
       : undefined,
   })
 
-  return personas.map((persona) => {
+  return model.personas.map((persona) => {
     if (persona.isDefault && newPersona.personaId) {
       return {
         ...persona,

@@ -97,7 +97,7 @@ export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type OrganizationMember =
   typeof schema.organizationMemberModel.$inferSelect
 
-export * from "./drizzle/schema/organization-settings"
+// export * from "./drizzle/schema/integrations"
 
 export const Omnichannel = "omnichannel"
 

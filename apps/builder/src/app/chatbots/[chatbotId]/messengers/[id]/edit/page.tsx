@@ -9,6 +9,7 @@ export default async function UpdateMessengerPage(props: {
   const { chatbotId, id } = await props.params
 
   const integrationMessenger = await findIntegrationMessenger({
+    chatbotId,
     id,
   })
 

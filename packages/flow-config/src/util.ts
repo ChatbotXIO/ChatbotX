@@ -1,15 +1,19 @@
 import { z } from "zod"
 
-const buttonPayloadSchema = z.object({
-  f: z.string(),
-  fv: z.string().optional(),
-  b: z.string(),
-})
-export type ButtonPayload = {
-  flowId: string
-  flowVersionId?: string
-  buttonId: string
-}
+const buttonPayloadSchema = z
+  .object({
+    f: z.string(),
+    fv: z.string().optional(),
+    b: z.string().optional(),
+  })
+  .transform((data) => {
+    return {
+      flowId: data.f,
+      ...(data.fv ? { flowVersionId: data.fv } : {}), // mark the field to be optional
+      ...(data.b ? { buttonId: data.b } : {}), // mark the field to be optional
+    }
+  })
+export type ButtonPayload = z.infer<typeof buttonPayloadSchema>
 
 export const encodeButtonPayload = (props: ButtonPayload) => {
   return btoa(
@@ -23,12 +27,7 @@ export const encodeButtonPayload = (props: ButtonPayload) => {
 
 export const decodeButtonPayload = (payload: string): ButtonPayload | null => {
   try {
-    const parsed = buttonPayloadSchema.parse(JSON.parse(atob(payload)))
-    return {
-      flowId: parsed.f,
-      flowVersionId: parsed.fv,
-      buttonId: parsed.b,
-    }
+    return buttonPayloadSchema.parse(JSON.parse(atob(payload)))
   } catch (error) {
     console.error("Unable to decode button payload", { error })
     return null

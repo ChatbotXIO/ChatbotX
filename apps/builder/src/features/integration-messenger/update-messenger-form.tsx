@@ -52,13 +52,7 @@ import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { allSupportedLanguages } from "../chatbot/schemas/types"
 import PersistentMenuField from "../webchat/components/persistent-menu-field"
 import { updateMessengerAction } from "./actions/update-messenger-action"
-import {
-  type ConversationStarterSchema,
-  type GreetingMessage,
-  type PersistentMenuSchema,
-  type Persona,
-  updateMessengerRequest,
-} from "./schemas"
+import { updateMessengerRequest } from "./schemas"
 
 type UpdateMessengerFormProps = {
   integrationMessenger: IntegrationMessengerModel
@@ -143,11 +137,11 @@ export function UpdateMessengerForm({
   }
 
   const languageOptions = allSupportedLanguages.filter(
-    (lang) => !greetingMessages.find((field) => field.language === lang.value),
+    (lang) => !greetingMessages.find((field) => field.locale === lang.value),
   )
 
-  const onChangeLanguage = (language: string) => {
-    appendGreetingMessage({ language, text: "" })
+  const onChangeLanguage = (locale: string) => {
+    appendGreetingMessage({ locale, text: "" })
     setValue("addLanguage", "")
   }
 
@@ -160,13 +154,13 @@ export function UpdateMessengerForm({
         personas: personasArray,
         welcomeFlowId,
       } = integrationMessenger
+
       form.reset({
         welcomeFlowId,
-        greetingMessages: greetingMessagesArray as GreetingMessage[],
-        persistentMenus: persistentMenusArray as PersistentMenuSchema[],
-        conversationStarters:
-          conversationStartersArray as ConversationStarterSchema[],
-        personas: personasArray as Persona[],
+        greetingMessages: greetingMessagesArray,
+        persistentMenus: persistentMenusArray,
+        conversationStarters: conversationStartersArray,
+        personas: personasArray,
       })
     }
   }, [integrationMessenger, form])
@@ -216,7 +210,7 @@ export function UpdateMessengerForm({
                     name={`greetingMessages.${index}.text`}
                     placeholder={
                       allSupportedLanguages.find(
-                        (lang) => lang.value === message.language,
+                        (lang) => lang.value === message.locale,
                       )?.label
                     }
                     required

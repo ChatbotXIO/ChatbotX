@@ -28,11 +28,11 @@
     "@aha.chat/ui": "workspace:*",
     "@aha.chat/worker-config": "workspace:*",
     "@ai-sdk/mcp": "^1.0.25",
+    "@better-auth/stripe": "^1.5.1",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx/events": "workspace:*",
-    "@better-auth/stripe": "^1.5.1",
     "@floating-ui/dom": "^1.7.6",
     "@giphy/js-types": "^5.1.0",
     "@giphy/react-components": "^10.1.1",
@@ -116,11 +116,5 @@
     "prettier": "^3.8.1",
     "tailwindcss": "^4.2.2",
     "typescript": "5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3"
-    }
   }
 }

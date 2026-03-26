@@ -26,7 +26,7 @@ import { flowStepHandlers } from "./step"
 
 export type ExecuteMultipleStepsProps = {
   conversation: ConversationModel
-  flowVersion?: FlowVersionModel
+  flowVersion: FlowVersionModel
   useLatestFlowVersion?: boolean
   targetType?: "node" | "button" | "step" | "quickReply"
   targetId?: string
@@ -71,6 +71,11 @@ export const seekConnectedNode = (
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
+  if (!props.data.flowId) {
+    logger.debug({ props }, "runFlowNode is called without flowId")
+    return
+  }
+
   const { trackingContext } = props.data
   const { conversation, flowVersion, useLatestFlowVersion } =
     await findConversationAndFlowVersion({

@@ -15,11 +15,18 @@ import {
   varchar,
   vector,
 } from "drizzle-orm/pg-core"
+import type {
+  MessengerConversationStarter,
+  MessengerGreetingMessage,
+  MessengerPersistentMenu,
+  MessengerPersona,
+} from "./integrations/messenger"
 import type { OrganizationSettings } from "./organization-settings"
 import { sharedColumns, timestampConfig } from "./shared"
 
 export * from "drizzle-orm/zod"
 export * from "./enterprise"
+export * from "./integrations"
 
 export const logType = pgEnum("LogType", ["error", "audit"])
 export const customFieldType = pgEnum("CustomFieldType", [
@@ -1075,10 +1082,26 @@ export const integrationMessengerModel = pgTable(
     auth: jsonb().notNull(),
     pageId: text().notNull(),
     name: text().notNull(),
-    conversationStarters: jsonb().array().notNull().default(sql`[]`),
-    persistentMenus: jsonb().array().notNull().default(sql`[]`),
-    greetingMessages: jsonb().array().notNull().default(sql`[]`),
-    personas: jsonb().array().notNull().default(sql`[]`),
+    conversationStarters: jsonb()
+      .$type<MessengerConversationStarter>()
+      .array()
+      .notNull()
+      .default(sql`[]`),
+    persistentMenus: jsonb()
+      .$type<MessengerPersistentMenu>()
+      .array()
+      .notNull()
+      .default(sql`[]`),
+    greetingMessages: jsonb()
+      .$type<MessengerGreetingMessage>()
+      .array()
+      .notNull()
+      .default(sql`[]`),
+    personas: jsonb()
+      .$type<MessengerPersona>()
+      .array()
+      .notNull()
+      .default(sql`[]`),
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {

@@ -20,9 +20,7 @@ export default async function SettingChannelMessengerPage(props: {
 
   const promises = Promise.all([
     listIntegrationMessengers({
-      where: {
-        chatbotId: params.chatbotId,
-      },
+      chatbotId: params.chatbotId,
     }),
     findOrganization({
       id: chatbot.organizationId,

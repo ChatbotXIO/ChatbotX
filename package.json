@@ -7,12 +7,13 @@
     "fix": "ultracite fix --unsafe",
     "lint": "ultracite lint",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
-    "imports:check": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
-    "knip": "knip"
+    "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
+    "check:unused": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",
     "@types/node": "^24.10.4",
+    "dependency-cruiser": "^17.3.9",
     "knip": "^5.88.1",
     "lefthook": "^2.1.4",
     "tsx": "^4.21.0",
@@ -20,7 +21,7 @@
     "typescript": "5.9.3",
     "ultracite": "7.3.2"
   },
-  "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be",
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "engines": {
     "node": ">=24"
   },
@@ -34,7 +35,9 @@
   "pnpm": {
     "overrides": {
       "@types/node": "24.x",
-      "ioredis": "5.9.3"
+      "ioredis": "5.9.3",
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3"
     },
     "updateConfig": {
       "ignoreDependencies": [
