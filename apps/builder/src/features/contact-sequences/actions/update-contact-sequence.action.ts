@@ -159,9 +159,6 @@ export const updateContactSequenceAction = chatbotActionClient
       )
 
       const currentIds = await getCurrentSequenceIds(db, contact.id, chatbotId)
-      if (currentIds.length === 0) {
-        return []
-      }
 
       const returnedSequences = await db.transaction(async (tx) => {
         const { toAdd, toRemove } = calculateSequenceDiff(

@@ -11,11 +11,10 @@ import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import { ContactSequencesManage } from "../contact-sequences/contact-sequences-manage"
-import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
+import type { ListConversationItemResource } from "../conversations/schemas/resource"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
-import type { ContactResource } from "./schemas/resource"
 
 type InboxModule = {
   readonly keyName: string
@@ -27,12 +26,10 @@ export const ContactInboxPanel = () => {
   const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { activeConversationId, conversations } = useChatStore((state) => state)
-  const [contact, setContact] = useState<ContactResource | null>(null)
+  const [contact, setContact] =
+    useState<ListConversationItemResource["contact"]>(null)
   const [contactNotes, setContactNotes] = useState<ContactNoteModel[]>([])
   const [tags, setTags] = useState<TagModel[]>([])
-  const [contactOnSequences, setContactOnSequences] = useState<
-    ContactOnSequenceWithRelations[]
-  >([])
 
   useEffect(() => {
     if (activeConversationId) {
@@ -44,7 +41,6 @@ export const ContactInboxPanel = () => {
         setContact(conversation.contact)
         setContactNotes([] as ContactNoteModel[])
         setTags([] as TagModel[])
-        setContactOnSequences(conversation.contact.contactsOnSequences || [])
       } else {
         setContact(null)
       }
@@ -94,7 +90,7 @@ export const ContactInboxPanel = () => {
           ))}
         </Accordion>
 
-        <ContactSequencesManage contactOnSequences={contactOnSequences} />
+        {contact && <ContactSequencesManage contact={contact} />}
       </div>
     )
   )

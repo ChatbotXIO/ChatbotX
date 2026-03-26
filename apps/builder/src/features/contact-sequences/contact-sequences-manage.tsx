@@ -8,11 +8,9 @@ import {
 } from "@aha.chat/ui/components/ui/accordion"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { type ReactNode, useEffect, useState } from "react"
-import { useChatStore } from "../chat/store/chat-store-provider"
-import type { ContactResource } from "../contacts/schemas/resource"
+import { type ReactNode, useMemo } from "react"
+import type { ListConversationItemResource } from "../conversations/schemas/resource"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
-import type { ContactOnSequenceWithRelations } from "./schema"
 import UpdateContactSequenceField from "./update-contact-sequence-field"
 
 type sequencesList = {
@@ -21,48 +19,27 @@ type sequencesList = {
 }
 
 export function ContactSequencesManage({
-  contactOnSequences: initialContactOnSequences,
+  contact,
 }: {
-  contactOnSequences: ContactOnSequenceWithRelations[]
+  contact: NonNullable<ListConversationItemResource["contact"]>
 }) {
   const t = useTranslations()
   const { chatbotId } = useParams<{ chatbotId: string }>()
-  const { activeConversationId, conversations } = useChatStore((state) => state)
 
-  const [contact, setContact] = useState<ContactResource | null>(null)
-  const [contactOnSequences, setContactOnSequences] = useState<
-    ContactOnSequenceWithRelations[]
-  >(initialContactOnSequences)
-
-  useEffect(() => {
-    if (activeConversationId) {
-      const conversation = conversations.find(
-        (item) => item.id === activeConversationId,
-      )
-
-      if (conversation?.contact) {
-        setContact(conversation.contact)
-        setContactOnSequences(conversation.contact.contactsOnSequences || [])
-      } else {
-        setContact(null)
-      }
-    }
-  }, [activeConversationId, conversations])
-
-  const sequencesModules: sequencesList[] = contact
-    ? [
-        {
-          keyName: t("sequences.title"),
-          content: (
-            <UpdateContactSequenceField
-              contact={contact}
-              onSuccess={setContactOnSequences}
-              sequences={contactOnSequences}
-            />
-          ),
-        },
-      ]
-    : []
+  const sequencesModules: sequencesList[] = useMemo(
+    () => [
+      {
+        keyName: t("sequences.title"),
+        content: (
+          <UpdateContactSequenceField
+            contact={contact}
+            sequences={contact.contactsOnSequences || []}
+          />
+        ),
+      },
+    ],
+    [t, contact],
+  )
 
   return (
     <SequenceStoreProvider autoInitialize={true} chatbotId={chatbotId}>

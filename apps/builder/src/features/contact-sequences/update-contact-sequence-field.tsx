@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import type { ContactResource } from "../contacts/schemas/resource"
@@ -27,7 +27,7 @@ export default function UpdateContactSequenceField({
 }: {
   contact: ContactResource
   sequences: ContactOnSequenceWithRelations[]
-  onSuccess: (updatedSequences: ContactOnSequenceWithRelations[]) => void
+  onSuccess?: (updatedSequences: ContactOnSequenceWithRelations[]) => void
 }) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
@@ -51,7 +51,7 @@ export default function UpdateContactSequenceField({
     {
       actionProps: {
         onSuccess: ({ data: updatedSequences }) => {
-          onSuccess(
+          onSuccess?.(
             updatedSequences as (ContactsOnSequenceModel & {
               sequence: SequenceModel
             })[],
@@ -73,6 +73,15 @@ export default function UpdateContactSequenceField({
       errorMapProps: {},
     },
   )
+
+  useEffect(() => {
+    const newSequencesIds =
+      sequences
+        ?.map((cos) => cos.sequence.id)
+        .filter((id): id is string => !!id) ?? []
+    setCurrentSequencesIds(newSequencesIds)
+    form.setValue("sequences", newSequencesIds)
+  }, [sequences, form])
 
   return (
     <Form {...form}>
