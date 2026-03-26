@@ -12,7 +12,6 @@ import {
   contactModel,
   contactsOnSequenceModel,
 } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
 import {
   cancelPendingDispatches,
   enrollContactInSequence,
@@ -149,7 +148,7 @@ export const updateContactSequenceAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactSequenceRequest
     }) => {
-      const contact = await findOrFail<ContactModel>(
+      const contact = await findOrFail(
         contactModel,
         {
           id: parsedInput.contactId,

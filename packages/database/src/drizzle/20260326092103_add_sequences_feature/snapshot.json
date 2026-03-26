@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "b9659e80-5104-4202-a21a-16b76605951d",
-  "prevIds": ["3ea74ac4-2ad4-4f08-83de-d6696714bbc6"],
+  "id": "8c9a9449-02e2-49e7-acb6-e0410f440e77",
+  "prevIds": ["38fce6a1-9173-4682-82d3-72d82006bb6c"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -31,6 +31,12 @@
     {
       "values": ["owner", "agent"],
       "name": "ChatbotMemberRole",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["trigger", "webhook", "broadcast"],
+      "name": "ConditionOwnerType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -2144,12 +2150,51 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
       "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationWhatsappId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "templateId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'\"{}\"'",
+      "generated": null,
+      "identity": null,
+      "name": "templateData",
       "entityType": "columns",
       "schema": "public",
       "table": "Broadcast"
@@ -5210,6 +5255,58 @@
       "table": "IntegrationMessenger"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "conversationStarters",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "persistentMenus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "greetingMessages",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "personas",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -5243,7 +5340,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "fallbackFlowId",
+      "name": "welcomeFlowId",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -8694,6 +8791,19 @@
       "table": "WhatsappMessageTemplate"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "components",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -10320,7 +10430,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "fallbackFlowId",
+          "value": "welcomeFlowId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -10335,7 +10445,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "IntegrationMessenger_fallbackFlowId_idx",
+      "name": "IntegrationMessenger_welcomeFlowId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -11860,6 +11970,40 @@
     },
     {
       "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationWhatsappId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "text_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappMessageTemplate_integrationWhatsappId_sourceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappMessageTemplate"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
@@ -12114,6 +12258,19 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Broadcast_flowId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Broadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["integrationWhatsappId"],
+      "schemaTo": "public",
+      "tableTo": "IntegrationWhatsapp",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Broadcast_integrationWhatsappId_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "Broadcast"
@@ -12783,13 +12940,13 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["fallbackFlowId"],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "IntegrationMessenger_fallbackFlowId_fkey",
+      "name": "IntegrationMessenger_welcomeFlowId_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationMessenger"
