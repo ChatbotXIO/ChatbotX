@@ -32,14 +32,14 @@ export type ListTagsRequest = z.infer<typeof listTagsRequest>
 
 export const listTagsResponse = z.object({
   data: z.array(tagResource),
-  pageCount: z.number().int().min(1),
+  pageCount: z.number().int(),
 })
 export type ListTagsResponse = z.infer<typeof listTagsResponse>
 
-export const publicLstTagsResponse = z.object({
+export const publicListTagsResponse = z.object({
   data: z.array(publicTagResource),
 })
-export type ListPublicTagResponse = z.infer<typeof publicLstTagsResponse>
+export type ListPublicTagResponse = z.infer<typeof publicListTagsResponse>
 
 export const findTagRequest = createSelectSchema(tagModel)
   .pick({ id: true, chatbotId: true, folderId: true, name: true })

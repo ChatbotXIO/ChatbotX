@@ -11,7 +11,6 @@
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
     "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
     "worker:analytics": "dotenv -e ../../.env -- tsx --watch src/analytics/worker.ts",
-    "worker:schedule": "dotenv -e ../../.env -- tsx --watch src/schedule/worker.ts",
     "dev": "concurrently pnpm:worker:*",
     "https": "pnpm dev",
     "build": "tsdown",

@@ -1,6 +1,8 @@
 import { CreateBroadcastForm } from "@/features/broadcasts/create-broadcast-form"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
+import { TemplateStoreProvider } from "@/features/integration-whatsapp/message-templates/provider/template-store-context"
+import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
 export default async function CreateBroadcastPage({
@@ -13,9 +15,13 @@ export default async function CreateBroadcastPage({
   return (
     <FlowStoreProvider chatbotId={chatbotId}>
       <CustomFieldStoreProvider chatbotId={chatbotId}>
-        <TagStoreProvider chatbotId={chatbotId}>
-          <CreateBroadcastForm chatbotId={chatbotId} />
-        </TagStoreProvider>
+        <IntegrationStoreProvider chatbotId={chatbotId}>
+          <TagStoreProvider chatbotId={chatbotId}>
+            <TemplateStoreProvider chatbotId={chatbotId}>
+              <CreateBroadcastForm chatbotId={chatbotId} />
+            </TemplateStoreProvider>
+          </TagStoreProvider>
+        </IntegrationStoreProvider>
       </CustomFieldStoreProvider>
     </FlowStoreProvider>
   )

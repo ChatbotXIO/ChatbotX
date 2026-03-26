@@ -12,7 +12,7 @@ import { deleteTag } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
 import { findTag, listTags } from "../queries"
 import { createTagRequest } from "../schemas/action"
-import { publicLstTagsResponse } from "../schemas/query"
+import { publicListTagsResponse } from "../schemas/query"
 import { publicTagResource, tagResource } from "../schemas/resource"
 
 export const listTagsChatbotTokenAPI = chatbotTokenAPI
@@ -23,7 +23,7 @@ export const listTagsChatbotTokenAPI = chatbotTokenAPI
     tags: ["Tags"],
   })
   .input(z.object({}))
-  .output(publicLstTagsResponse)
+  .output(publicListTagsResponse)
   .errors(posibleErrorsOnFindingResource)
   .handler(async ({ context, input }) => {
     return await listTags({

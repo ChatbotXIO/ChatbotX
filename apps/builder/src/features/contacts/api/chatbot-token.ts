@@ -4,7 +4,7 @@ import type { ConversationModel } from "@aha.chat/database/types"
 import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
 import { chatbotTokenCreateMessageRequest } from "@/features/messages/schemas/create-message.schema"
-import { publicLstTagsResponse } from "@/features/tags/schemas/query"
+import { publicListTagsResponse } from "@/features/tags/schemas/query"
 import { notFoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
@@ -108,7 +108,7 @@ export const chatbotTokenAPIs = {
       tags: ["Contacts"],
     })
     .input(z.object({ contactId: z.string() }))
-    .output(publicLstTagsResponse)
+    .output(publicListTagsResponse)
     .handler(async ({ context, input }) => {
       const { contactId } = input
       return await listContactTags({

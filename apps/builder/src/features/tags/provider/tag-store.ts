@@ -37,16 +37,8 @@ export const createTagStore = (props: Partial<TagState>) =>
         return
       }
 
-      try {
-        await get().getAllActiveTags()
-      } catch (error: unknown) {
-        set({
-          error:
-            error instanceof HTTPError ? error.message : "Failed to fetch tags",
-        })
-      } finally {
-        set({ initialized: true })
-      }
+      await get().getAllActiveTags()
+      set({ initialized: true })
     },
 
     getAllActiveTags: async () => {
@@ -59,14 +51,12 @@ export const createTagStore = (props: Partial<TagState>) =>
       set({ loading: true, error: null })
 
       try {
-        const searchParams = new URLSearchParams({
-          perPage: maxPerPageString,
-          active: "true",
-        })
         const { data } = await ky
-          .get<ListTagsResponse>(
-            `/api/chatbots/${chatbotId}/tags?${searchParams.toString()}`,
-          )
+          .get<ListTagsResponse>(`/api/chatbots/${chatbotId}/tags`, {
+            searchParams: {
+              perPage: maxPerPageString,
+            },
+          })
           .json()
 
         set({ tags: data, loading: false })

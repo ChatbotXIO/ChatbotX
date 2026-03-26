@@ -113,12 +113,14 @@ export const createBroadcastAction = chatbotActionClient
           .returning()
           .then((result) => result[0])
 
-        await tx.insert(contactsOnBroadcastsModel).values(
-          contacts.map((contact) => ({
-            broadcastId: newBroadcast.id,
-            contactId: contact.id,
-          })),
-        )
+        if (contacts.length > 0) {
+          await tx.insert(contactsOnBroadcastsModel).values(
+            contacts.map((contact) => ({
+              broadcastId: newBroadcast.id,
+              contactId: contact.id,
+            })),
+          )
+        }
         return newBroadcast
       })
 

@@ -70,16 +70,6 @@ export const ConditionType = {
 } as const
 export type ConditionType = (typeof ConditionType)[keyof typeof ConditionType]
 
-export const BroadcastInboxType = {
-  omnichannel: "omnichannel",
-  whatsapp: "whatsapp",
-  messenger: "messenger",
-  webchat: "webchat",
-  zalo: "zalo",
-} as const
-export type BroadcastInboxType =
-  (typeof BroadcastInboxType)[keyof typeof BroadcastInboxType]
-
 export const BroadcastFlowType = {
   flow: "flow",
   template: "template",
@@ -211,16 +201,3 @@ export const CustomFieldType = {
 
 export type CustomFieldType =
   (typeof CustomFieldType)[keyof typeof CustomFieldType]
-
-export const TemplateType = {
-  flow: "flow",
-  template: "template",
-} as const
-
-export type TemplateType = (typeof TemplateType)[keyof typeof TemplateType]
-
-export const FlowStartType = {
-  whatsappTemplate: "whatsapp-template",
-} as const
-
-export type FlowStartType = (typeof FlowStartType)[keyof typeof FlowStartType]

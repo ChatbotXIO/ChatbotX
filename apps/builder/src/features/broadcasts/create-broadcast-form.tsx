@@ -35,22 +35,13 @@ import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { ContactFilter } from "../contacts/components/contact-filter"
-import {
-  FlowStoreProvider,
-  useFlowStore,
-} from "../flows/provider/flow-store-context"
+import { useFlowStore } from "../flows/provider/flow-store-context"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { TemplateParamsForm } from "../integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "../integration-whatsapp/message-templates/components/template-preview"
-import {
-  TemplateStoreProvider,
-  useTemplateStore,
-} from "../integration-whatsapp/message-templates/provider/template-store-context"
+import { useTemplateStore } from "../integration-whatsapp/message-templates/provider/template-store-context"
 import type { MessageTemplateWithComponents } from "../integration-whatsapp/message-templates/type"
-import {
-  IntegrationStoreProvider,
-  useIntegrationStore,
-} from "../integration-whatsapp/provider/integration-store-context"
+import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 
 type BroadcastConfig = {
   value: ChannelType
@@ -146,6 +137,10 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
+  const { appendFilter, resetFilter, getAllActiveFlows } = useFlowStore(
+    (state) => state,
+  )
+
   const { form, handleSubmitWithAction } = useHookFormAction(
     createBroadcastAction.bind(null, chatbotId),
     zodResolver(createBroadcastRequest),
@@ -196,45 +191,45 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
     name: "integrationWhatsappId",
   })
 
-  const flowFilter = useMemo(() => {
+  useEffect(() => {
     if (watchedSubAction === BroadcastSubaction.whatsappTemplateMessage) {
-      return {
+      appendFilter({
         startType: StepType.sendWaTemplateMessage,
         integrationWhatsappId: watchedIntegrationWhatsappId,
-      }
+      })
+      getAllActiveFlows()
+    } else {
+      resetFilter()
+      getAllActiveFlows()
     }
     return undefined
-  }, [watchedSubAction, watchedIntegrationWhatsappId])
+  }, [
+    watchedSubAction,
+    watchedIntegrationWhatsappId,
+    appendFilter,
+    resetFilter,
+    getAllActiveFlows,
+  ])
 
   return (
-    <FlowStoreProvider chatbotId={chatbotId} filter={flowFilter}>
-      <IntegrationStoreProvider chatbotId={chatbotId}>
-        <TemplateStoreProvider chatbotId={chatbotId}>
-          <div className="flex h-svh flex-col items-center justify-center">
-            <Form {...form}>
-              <form
-                className="flex-1 space-y-4"
-                onSubmit={handleSubmitWithAction}
-              >
-                {!watchedChannel && <CreateBroadcastChooseChannel />}
+    <div className="flex h-svh flex-col items-center justify-center">
+      <Form {...form}>
+        <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+          {!watchedChannel && <CreateBroadcastChooseChannel />}
 
-                {watchedChannel && !watchedSubAction && (
-                  <CreateBroadcastChooseSubaction channel={watchedChannel} />
-                )}
+          {watchedChannel && !watchedSubAction && (
+            <CreateBroadcastChooseSubaction channel={watchedChannel} />
+          )}
 
-                {watchedChannel && watchedSubAction && (
-                  <CreateBroadcastChooseFlow
-                    channel={watchedChannel}
-                    subaction={watchedSubAction}
-                  />
-                )}
-              </form>
-            </Form>
-          </div>
-        </TemplateStoreProvider>
-      </IntegrationStoreProvider>
-      =
-    </FlowStoreProvider>
+          {watchedChannel && watchedSubAction && (
+            <CreateBroadcastChooseFlow
+              channel={watchedChannel}
+              subaction={watchedSubAction}
+            />
+          )}
+        </form>
+      </Form>
+    </div>
   )
 }
 
@@ -599,28 +594,16 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
         {(!watchedTemplateType ||
           watchedTemplateType === BroadcastFlowType.flow) && (
-          <>
-            <ComboboxField
-              key="integrationWhatsappId"
-              label={t("fields.whatsappChannel.label")}
-              name="integrationWhatsappId"
-              options={integrations.map((integration) => ({
-                label: integration.name,
-                value: integration.id,
-              }))}
-              required={true}
-            />
-            <ComboboxField
-              key="flowId"
-              label={t("fields.flowId.label")}
-              name="flowId"
-              options={flows.map((flow) => ({
-                label: flow.name,
-                value: flow.id,
-              }))}
-              required={true}
-            />
-          </>
+          <ComboboxField
+            key="flowId"
+            label={t("fields.flowId.label")}
+            name="flowId"
+            options={flows.map((flow) => ({
+              label: flow.name,
+              value: flow.id,
+            }))}
+            required={true}
+          />
         )}
 
         {watchedTemplateType === BroadcastFlowType.template && (

@@ -30,7 +30,6 @@ export const createPlan = async (
   organization: OrganizationModel,
   parsedInput: CreatePlanRequest,
 ) => {
-  console.log("Creating plan with input:", parsedInput)
   const orgSettings = organizationSettingsSchema.parse(organization.settings)
   const stripeSettings = orgSettings.stripe
   if (!stripeSettings) {
