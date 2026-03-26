@@ -2,7 +2,6 @@
 
 import { and, db, eq, findOrFail } from "@aha.chat/database/client"
 import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,7 +23,7 @@ export const deleteContactNoteAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: DeleteContactNoteRequest
     }) => {
-      const contact = await findOrFail<ContactModel>(
+      const contact = await findOrFail(
         contactModel,
         {
           id,

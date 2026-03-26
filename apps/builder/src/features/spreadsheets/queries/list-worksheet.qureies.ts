@@ -3,10 +3,6 @@ import {
   integrationGoogleSheetsModel,
   spreadsheetModel,
 } from "@aha.chat/database/schema"
-import type {
-  IntegrationGoogleSheetsModel,
-  SpreadsheetModel,
-} from "@aha.chat/database/types"
 import type { GoogleSheetsAuthValue } from "@aha.chat/integration-google-sheets"
 import { integrations } from "@/integration"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -22,7 +18,7 @@ export const listWorksheets = async (
 }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const spreadsheet = await findOrFail<SpreadsheetModel>(
+  const spreadsheet = await findOrFail(
     spreadsheetModel,
     {
       id: input.spreadsheetId,
@@ -31,14 +27,13 @@ export const listWorksheets = async (
     "Spreadsheet not found",
   )
 
-  const integrationGoogleSheets =
-    await findOrFail<IntegrationGoogleSheetsModel>(
-      integrationGoogleSheetsModel,
-      {
-        chatbotId: input.chatbotId,
-      },
-      "Google Sheets integration not found",
-    )
+  const integrationGoogleSheets = await findOrFail(
+    integrationGoogleSheetsModel,
+    {
+      chatbotId: input.chatbotId,
+    },
+    "Google Sheets integration not found",
+  )
 
   const ctx = {
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
@@ -61,7 +56,7 @@ export const listWorksheetHeaders = async (
 }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const spreadsheet = await findOrFail<SpreadsheetModel>(
+  const spreadsheet = await findOrFail(
     spreadsheetModel,
     {
       id: input.spreadsheetId,
@@ -70,14 +65,13 @@ export const listWorksheetHeaders = async (
     "Spreadsheet not found",
   )
 
-  const integrationGoogleSheets =
-    await findOrFail<IntegrationGoogleSheetsModel>(
-      integrationGoogleSheetsModel,
-      {
-        chatbotId: input.chatbotId,
-      },
-      "Google Sheets integration not found",
-    )
+  const integrationGoogleSheets = await findOrFail(
+    integrationGoogleSheetsModel,
+    {
+      chatbotId: input.chatbotId,
+    },
+    "Google Sheets integration not found",
+  )
 
   const ctx = {
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,

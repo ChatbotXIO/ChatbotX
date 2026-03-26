@@ -2,7 +2,6 @@
 
 import { db, findOrFail } from "@aha.chat/database/client"
 import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
-import type { InboxTeamModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -27,7 +26,7 @@ export const addInboxTeamMemberAction = chatbotActionClient
       parsedInput: AddInboxTeamMemberRequest
     }) => {
       await db.transaction(async (tx) => {
-        const inboxTeam = await findOrFail<InboxTeamModel>(
+        const inboxTeam = await findOrFail(
           inboxTeamModel,
           {
             id,

@@ -5,7 +5,6 @@ import {
   broadcastModel,
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
-import type { BroadcastModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -15,7 +14,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 export const resendBroadcastAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
-    const broadcast = await findOrFail<BroadcastModel>(broadcastModel, {
+    const broadcast = await findOrFail(broadcastModel, {
       id,
       chatbotId,
     })

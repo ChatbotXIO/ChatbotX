@@ -42,7 +42,7 @@ export async function getAIIntegrationInDB(props: {
 
   switch (provider) {
     case aiProviders.openai:
-      return await findOrFail<IntegrationOpenAIModel>(
+      return await findOrFail(
         integrationOpenAIModel,
         {
           chatbotId,
@@ -50,7 +50,7 @@ export async function getAIIntegrationInDB(props: {
         `IntegrationOpenAI not found for chatbotId: ${chatbotId}`,
       )
     case aiProviders.gemini:
-      return await findOrFail<IntegrationGeminiModel>(
+      return await findOrFail(
         integrationGeminiModel,
         {
           chatbotId,

@@ -7,8 +7,6 @@ import {
 } from "@aha.chat/database/schema"
 import {
   type AttachmentModel,
-  type ContactModel,
-  type InboxModel,
   WEBCHAT_SOURCE_PREFIX,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
@@ -108,14 +106,14 @@ export async function sendFlowStep({
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
-    with: { contact: true, inbox: { columns: { inboxType: true } } },
+    with: { contact: true, inbox: { columns: { channel: true } } },
   })
   if (!conversation) {
     return
   }
 
   if (step.stepType === StepType.sendWaTemplateMessage) {
-    if (conversation.inbox?.inboxType !== "whatsapp") {
+    if (conversation.channel !== "whatsapp") {
       return
     }
 
@@ -396,7 +394,7 @@ export const sendChatMessage = async (
       conversation.inboxId,
     )
 
-    const contact = await findOrFail<ContactModel>(
+    const contact = await findOrFail(
       contactModel,
       { id: conversation.contactId },
       `Contact not found for conversationId: ${conversation.id}`,
@@ -531,7 +529,7 @@ export const sendTyping = async (
     data: { conversation, typing },
   } = props
 
-  const inbox = await findOrFail<InboxModel>(
+  const inbox = await findOrFail(
     inboxModel,
     {
       id: conversation.inboxId,

@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { broadcastModel } from "@aha.chat/database/schema"
-import type { BroadcastModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -25,7 +24,7 @@ export const updateBroadcastAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateBroadcastSchema
     }) => {
-      const broadcast = await findOrFail<BroadcastModel>(broadcastModel, {
+      const broadcast = await findOrFail(broadcastModel, {
         id,
         chatbotId,
       })

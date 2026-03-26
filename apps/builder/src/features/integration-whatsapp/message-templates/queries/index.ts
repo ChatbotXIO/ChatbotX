@@ -1,6 +1,5 @@
 import { db, findOrFail } from "@aha.chat/database/client"
 import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { MessageTemplateWithComponents } from "../type"
@@ -11,7 +10,7 @@ export const getMessageTemplates = async (
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   if (input.id) {
-    const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+    const integrationWhatsapp = await findOrFail(
       integrationWhatsappModel,
       {
         chatbotId: input.chatbotId,

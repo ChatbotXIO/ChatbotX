@@ -5,7 +5,6 @@ import {
   integrationWhatsappModel,
   whatsappMessageTemplateModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { createId } from "@paralleldrive/cuid2"
@@ -25,7 +24,7 @@ export const syncMessageTemplateAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+      const integrationWhatsapp = await findOrFail(
         integrationWhatsappModel,
         {
           chatbotId,

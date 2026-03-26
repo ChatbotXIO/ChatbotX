@@ -1,9 +1,6 @@
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiEmbeddingModel } from "@aha.chat/database/schema"
-import type {
-  AIEmbeddingModel,
-  AIEmbeddingStatus,
-} from "@aha.chat/database/types"
+import type { AIEmbeddingStatus } from "@aha.chat/database/types"
 import type { AIJobProcessPendingEmbedding } from "@aha.chat/worker-config"
 import { embed } from "ai"
 import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
@@ -12,7 +9,7 @@ import { logger } from "../../lib/logger"
 export async function processPendingEmbedding(
   data: AIJobProcessPendingEmbedding["data"],
 ) {
-  const aiEmbedding = await findOrFail<AIEmbeddingModel>(
+  const aiEmbedding = await findOrFail(
     aiEmbeddingModel,
     {
       id: data.aiEmbeddingId,

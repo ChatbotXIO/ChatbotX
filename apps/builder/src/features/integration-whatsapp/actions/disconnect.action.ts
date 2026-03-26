@@ -3,7 +3,6 @@
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
 import { inboxModel, integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { unsubscribeWebhook } from "@aha.chat/integration-whatsapp/api/webhook"
 import {
@@ -21,7 +20,7 @@ export const disconnectWhatsappAction = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+      const integrationWhatsapp = await findOrFail(
         integrationWhatsappModel,
         {
           chatbotId,

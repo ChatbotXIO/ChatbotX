@@ -10,10 +10,8 @@ import {
   messageModel,
 } from "@aha.chat/database/schema"
 import type {
-  ChatbotUsageModel,
   ContactModel,
   ConversationAttributes,
-  IntegrationWebchatModel,
 } from "@aha.chat/database/types"
 import { getPublicUrl } from "@aha.chat/database/utils"
 import { type UploadedFile, uploadMultipleFiles } from "@aha.chat/filesystem"
@@ -238,7 +236,7 @@ async function getConversationFromInput(
   tx: Transaction,
   parsedInput: CreateWebchatMessageRequest,
 ) {
-  const integrationWebchat = await findOrFail<IntegrationWebchatModel>(
+  const integrationWebchat = await findOrFail(
     integrationWebchatModel,
     {
       chatbotId: parsedInput.chatbotId,
@@ -259,7 +257,7 @@ async function getConversationFromInput(
   let isNewContact = false
 
   if (conversation) {
-    contact = await findOrFail<ContactModel>(
+    contact = await findOrFail(
       contactModel,
       {
         id: conversation.contactId,
@@ -276,7 +274,7 @@ async function getConversationFromInput(
     })
 
     if (!contact) {
-      const chatbotUsage = await findOrFail<ChatbotUsageModel>(
+      const chatbotUsage = await findOrFail(
         chatbotUsageModel,
         {
           chatbotId: parsedInput.chatbotId,

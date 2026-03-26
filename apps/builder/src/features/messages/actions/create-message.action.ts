@@ -8,7 +8,6 @@ import {
   messageModel,
 } from "@aha.chat/database/schema"
 import {
-  type ContactModel,
   type ConversationModel,
   type UserModel,
   WEBCHAT_SOURCE_PREFIX,
@@ -55,13 +54,10 @@ export const createMessageAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: CreateMessageRequest
     }) => {
-      const conversation = await findOrFail<ConversationModel>(
-        conversationModel,
-        {
-          id: conversationId,
-          chatbotId,
-        },
-      )
+      const conversation = await findOrFail(conversationModel, {
+        id: conversationId,
+        chatbotId,
+      })
 
       return createMessage({
         conversation,
@@ -170,7 +166,7 @@ export const createMessage = async (props: {
     }),
   ]
 
-  const contact = await findOrFail<ContactModel>(
+  const contact = await findOrFail(
     contactModel,
     {
       where: {

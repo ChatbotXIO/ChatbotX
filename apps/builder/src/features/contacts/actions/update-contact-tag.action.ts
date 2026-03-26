@@ -6,7 +6,6 @@ import {
   contactsToTagsModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
@@ -43,7 +42,7 @@ export const updateContactTags = async ({
   chatbotId: string
   parsedInput: UpdateContactTagRequest
 }): Promise<TagResource[]> => {
-  const contact = await findOrFail<ContactModel>(
+  const contact = await findOrFail(
     contactModel,
     {
       id: parsedInput.contactId,

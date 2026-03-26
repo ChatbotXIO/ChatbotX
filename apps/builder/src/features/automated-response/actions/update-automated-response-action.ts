@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { automatedResponseModel } from "@aha.chat/database/schema"
-import type { AutomatedResponseModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -26,7 +25,7 @@ export const updateAutomatedResponseAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAutomatedResponseRequest
     }) => {
-      const automatedResponse = await findOrFail<AutomatedResponseModel>(
+      const automatedResponse = await findOrFail(
         automatedResponseModel,
         {
           chatbotId,

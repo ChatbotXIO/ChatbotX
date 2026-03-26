@@ -7,7 +7,6 @@ import {
   messageModel,
 } from "@aha.chat/database/schema"
 import type {
-  ChatbotUsageModel,
   ContentType,
   ConversationModel,
   Gender,
@@ -108,7 +107,7 @@ export const receiveMessage = async (
         }
       }
 
-      const chatbotUsage = await findOrFail<ChatbotUsageModel>(
+      const chatbotUsage = await findOrFail(
         chatbotUsageModel,
         { chatbotId },
         "Chatbot usage not found",

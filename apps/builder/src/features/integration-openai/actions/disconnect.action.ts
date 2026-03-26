@@ -5,7 +5,6 @@ import {
   integrationModel,
   integrationOpenAIModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -20,7 +19,7 @@ export const disconnectOpenAIAction = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationOpenAI = await findOrFail<IntegrationOpenAIModel>(
+      const integrationOpenAI = await findOrFail(
         integrationOpenAIModel,
         {
           chatbotId,

@@ -15,7 +15,7 @@ export async function findConversationAndFlowVersion(props: {
   flowVersion: FlowVersionModel
   useLatestFlowVersion: boolean
 }> {
-  const conversation = await findOrFail<ConversationModel>(
+  const conversation = await findOrFail(
     conversationModel,
     {
       id: props.conversationId,

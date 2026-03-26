@@ -1,6 +1,5 @@
 import { findOrFail } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
-import type { ConversationModel } from "@aha.chat/database/types"
 import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
 import { chatbotTokenCreateMessageRequest } from "@/features/messages/schemas/create-message.schema"
@@ -248,14 +247,11 @@ export const chatbotTokenAPIs = {
         throw notFoundException("Contact not found")
       }
 
-      const conversation = await findOrFail<ConversationModel>(
-        conversationModel,
-        {
-          chatbotId: context.chatbot.id,
-          contactId: input.contactId,
-          channel: input.channel,
-        },
-      )
+      const conversation = await findOrFail(conversationModel, {
+        chatbotId: context.chatbot.id,
+        contactId: input.contactId,
+        channel: input.channel,
+      })
 
       await createMessage({
         conversation,

@@ -3,7 +3,6 @@
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { InboxStatus } from "@aha.chat/database/enums"
 import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
-import type { IntegrationZaloModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -19,7 +18,7 @@ export const disconnectZaloAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationZalo = await findOrFail<IntegrationZaloModel>(
+      const integrationZalo = await findOrFail(
         integrationZaloModel,
         {
           chatbotId,

@@ -5,7 +5,6 @@ import {
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationGoogleSheetsModel } from "@aha.chat/database/types"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGoogleSheets,
@@ -25,7 +24,7 @@ export const disconnectGoogleSheets = authActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const googleSheets = await findOrFail<IntegrationGoogleSheetsModel>(
+      const googleSheets = await findOrFail(
         integrationGoogleSheetsModel,
         {
           chatbotId,

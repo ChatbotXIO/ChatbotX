@@ -6,7 +6,6 @@ import {
   contactsToTagsModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import type { ContactModel, TagModel } from "@aha.chat/database/types"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
 import {
@@ -132,11 +131,11 @@ export const attachContactTag = async ({
   contactId: string
   tagId: string
 }) => {
-  findOrFail<ContactModel>(contactModel, {
+  findOrFail(contactModel, {
     id: contactId,
     chatbotId,
   })
-  findOrFail<TagModel>(tagModel, {
+  findOrFail(tagModel, {
     id: tagId,
     chatbotId,
   })
@@ -168,11 +167,11 @@ export const detachContactTag = async ({
   contactId: string
   tagId: string
 }) => {
-  findOrFail<ContactModel>(contactModel, {
+  findOrFail(contactModel, {
     id: contactId,
     chatbotId,
   })
-  findOrFail<TagModel>(tagModel, {
+  findOrFail(tagModel, {
     id: tagId,
     chatbotId,
   })

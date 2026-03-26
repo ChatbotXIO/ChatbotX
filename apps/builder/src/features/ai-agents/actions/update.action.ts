@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiAgentModel } from "@aha.chat/database/schema"
-import type { AIAgentModel } from "@aha.chat/database/types"
 import {
   type UpdateAIAgentRequest,
   updateAIAgentRequest,
@@ -25,7 +24,7 @@ export const updateAIAgentAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAIAgentRequest
     }) => {
-      const aiAgent = await findOrFail<AIAgentModel>(
+      const aiAgent = await findOrFail(
         aiAgentModel,
         {
           id: agentId,

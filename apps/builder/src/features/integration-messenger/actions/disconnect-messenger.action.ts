@@ -6,7 +6,6 @@ import {
   inboxModel,
   integrationMessengerModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationMessengerModel } from "@aha.chat/database/types"
 import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
 import { unsubscribePageFromAppWebhook } from "@aha.chat/integration-messenger/apis/page"
 import {
@@ -24,7 +23,7 @@ export const disconnectMessengerAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationMessenger = await findOrFail<IntegrationMessengerModel>(
+      const integrationMessenger = await findOrFail(
         integrationMessengerModel,
         {
           chatbotId,

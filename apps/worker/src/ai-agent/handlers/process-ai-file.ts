@@ -1,6 +1,6 @@
 import { db, findOrFail } from "@aha.chat/database/client"
 import { aiEmbeddingModel, aiFileModel } from "@aha.chat/database/schema"
-import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
+import type { AIEmbeddingStatus } from "@aha.chat/database/types"
 import {
   AIJobAction,
   type AIJobProcessFile,
@@ -46,7 +46,7 @@ export async function processAIFile(
 ) {
   const { aiFileId } = data
 
-  const aiFile = await findOrFail<AIFileModel>(
+  const aiFile = await findOrFail(
     aiFileModel,
     {
       id: aiFileId,

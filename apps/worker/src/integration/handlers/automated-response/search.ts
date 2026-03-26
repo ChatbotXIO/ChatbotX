@@ -11,7 +11,6 @@ import {
   aiEmbeddingModel,
   integrationOpenAIModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
 import { createOpenAI } from "@ai-sdk/openai"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
@@ -24,7 +23,7 @@ import type {
 } from "./types"
 
 async function getOpenAIIntegration(chatbotId: string) {
-  return await findOrFail<IntegrationOpenAIModel>(
+  return await findOrFail(
     integrationOpenAIModel,
     {
       chatbotId,

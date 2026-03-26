@@ -2,10 +2,7 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { chatbotMemberModel } from "@aha.chat/database/schema"
-import type {
-  ChatbotMemberModel,
-  ChatbotMemberPermissions,
-} from "@aha.chat/database/types"
+import type { ChatbotMemberPermissions } from "@aha.chat/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -17,7 +14,7 @@ export const updateChatbotMemberAction = chatbotActionClient
   .inputSchema(updateChatbotMemberRequest)
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id], parsedInput }) => {
-    const chatbotMember = await findOrFail<ChatbotMemberModel>(
+    const chatbotMember = await findOrFail(
       chatbotMemberModel,
       { id, chatbotId },
       "Chatbot member not found",

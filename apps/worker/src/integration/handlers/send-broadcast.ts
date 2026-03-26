@@ -1,6 +1,5 @@
 import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import { broadcastModel, conversationModel } from "@aha.chat/database/schema"
-import type { BroadcastModel } from "@aha.chat/database/types"
 import type { WaTemplateParams } from "@aha.chat/flow-config"
 import {
   ChatJobAction,
@@ -22,7 +21,7 @@ export const sendBroadcast = async (broadcastId: string) => {
       .where(eq(broadcastModel.id, broadcastId))
   }
 
-  const broadcast = await findOrFail<BroadcastModel>(
+  const broadcast = await findOrFail(
     broadcastModel,
     {
       id: broadcastId,

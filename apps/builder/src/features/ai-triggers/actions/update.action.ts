@@ -2,7 +2,7 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiTriggerModel } from "@aha.chat/database/schema"
-import type { AITriggerModel, UserModel } from "@aha.chat/database/types"
+import type { UserModel } from "@aha.chat/database/types"
 import {
   type UpdateAITriggerRequest,
   updateAITriggerRequest,
@@ -26,7 +26,7 @@ export const updateAITriggerAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateAITriggerRequest
     }) => {
-      const aiTrigger = await findOrFail<AITriggerModel>(
+      const aiTrigger = await findOrFail(
         aiTriggerModel,
         {
           id,

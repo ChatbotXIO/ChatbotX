@@ -48,7 +48,7 @@ export const updateContactFields = async ({
   id: string
   parsedInput: UpdateContactFieldRequest
 }) => {
-  const contact = await findOrFail<ContactModel>(
+  const contact = await findOrFail(
     contactModel,
     {
       chatbotId,

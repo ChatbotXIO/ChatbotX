@@ -1,7 +1,6 @@
 import { findOrFail } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
 import type {
-  ContactModel,
   ConversationModel,
   IntegrationType,
 } from "@aha.chat/database/types"
@@ -33,7 +32,7 @@ export async function sendMessageToExternal(
     return
   }
 
-  const contact = await findOrFail<ContactModel>(
+  const contact = await findOrFail(
     contactModel,
     { id: conversation.contactId },
     "Contact not found",

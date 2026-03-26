@@ -7,7 +7,6 @@ import {
   conversationModel,
   tagModel,
 } from "@aha.chat/database/schema"
-import type { ConversationModel } from "@aha.chat/database/types"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,
@@ -291,7 +290,7 @@ export async function deleteContact({
 export const broadcastBlockContactEvent = async ({
   contact,
 }: IntegrationJobBlockContact["data"]) => {
-  const firstConversation = await findOrFail<ConversationModel>(
+  const firstConversation = await findOrFail(
     conversationModel,
     {
       contactId: contact.id,
@@ -326,7 +325,7 @@ export const broadcastBlockContactEvent = async ({
 export const broadcastUnblockContactEvent = async ({
   contact,
 }: IntegrationJobUnblockContact["data"]) => {
-  const firstConversation = await findOrFail<ConversationModel>(
+  const firstConversation = await findOrFail(
     conversationModel,
     {
       contactId: contact.id,

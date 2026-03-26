@@ -2,7 +2,6 @@
 
 import { db, findOrFail } from "@aha.chat/database/client"
 import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
-import type { FlowModel, FlowVersionModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -19,7 +18,7 @@ export const duplicateFlowAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const flow = await findOrFail<FlowModel>(
+      const flow = await findOrFail(
         flowModel,
         {
           id,
@@ -28,7 +27,7 @@ export const duplicateFlowAction = chatbotActionClient
         "Flow not found",
       )
 
-      const draftVersion = await findOrFail<FlowVersionModel>(
+      const draftVersion = await findOrFail(
         flowVersionModel,
         {
           flowId: flow.id,

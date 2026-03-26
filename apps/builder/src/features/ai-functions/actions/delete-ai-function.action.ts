@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiFunctionModel } from "@aha.chat/database/schema"
-import type { AIFunctionModel } from "@aha.chat/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -10,7 +9,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 export const deleteAIFunctionAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
-    await findOrFail<AIFunctionModel>(
+    await findOrFail(
       aiFunctionModel,
       {
         id,

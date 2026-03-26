@@ -7,8 +7,6 @@ import {
 } from "@aha.chat/database/schema"
 import type {
   ConversationModel,
-  FlowVersionModel,
-  IntegrationGoogleSheetsModel,
   SpreadsheetModel,
 } from "@aha.chat/database/types"
 import type {
@@ -47,7 +45,7 @@ const getWorksheet = async ({
   id: string
   chatbotId: string
 }): Promise<SpreadsheetModel> =>
-  await findOrFail<SpreadsheetModel>(
+  await findOrFail(
     spreadsheetModel,
     {
       id,
@@ -57,7 +55,7 @@ const getWorksheet = async ({
   )
 
 const getGoogleSheetsIntegration = async (chatbotId: string) =>
-  await findOrFail<IntegrationGoogleSheetsModel>(
+  await findOrFail(
     integrationGoogleSheetsModel,
     {
       chatbotId,
@@ -432,7 +430,7 @@ const sendFlow = async (
     return
   }
 
-  const currentFlowVersion = await findOrFail<FlowVersionModel>(
+  const currentFlowVersion = await findOrFail(
     flowVersionModel,
     {
       id: flowVersion.id,

@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
-import type { ContactModel, ContactNoteModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -24,7 +23,7 @@ export const editContactNoteAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateContactNoteRequest
     }) => {
-      const contact = await findOrFail<ContactModel>(
+      const contact = await findOrFail(
         contactModel,
         {
           chatbotId,
@@ -33,7 +32,7 @@ export const editContactNoteAction = chatbotActionClient
         "Contact not found",
       )
 
-      const foundContactNote = await findOrFail<ContactNoteModel>(
+      const foundContactNote = await findOrFail(
         contactNoteModel,
         {
           contactId: contact.id,

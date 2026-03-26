@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { aiEmbeddingModel, aiFileModel } from "@aha.chat/database/schema"
-import type { AIFileModel } from "@aha.chat/database/types"
 import { uploader } from "@aha.chat/filesystem"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -14,7 +13,7 @@ export const deleteAIFileAction = chatbotActionClient
   .action(async ({ bindArgsParsedInputs }) => {
     const [chatbotId, aiFileId] = bindArgsParsedInputs
 
-    const targetAIFile = await findOrFail<AIFileModel>(
+    const targetAIFile = await findOrFail(
       aiFileModel,
       {
         id: aiFileId,

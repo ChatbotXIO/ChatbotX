@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { planModel } from "@aha.chat/database/schema"
-import type { PlanModel } from "@aha.chat/database/types"
 import {
   type OrganizationModel,
   organizationSettingsSchema,
@@ -30,7 +29,7 @@ export const updatePlan = async (
   organization: OrganizationModel,
   parsedInput: UpdatePlanRequest,
 ) => {
-  const plan = await findOrFail<PlanModel>(planModel, {
+  const plan = await findOrFail(planModel, {
     id: parsedInput.id,
     organizationId: organization.id,
   })

@@ -6,16 +6,11 @@ import {
   organizationModel,
   userModel,
 } from "@aha.chat/database/schema"
-import type {
-  ChatbotModel,
-  InvitationModel,
-  OrganizationModel,
-  UserModel,
-} from "@aha.chat/database/types"
+import type { ChatbotModel } from "@aha.chat/database/types"
 import { ChatbotXException } from "@/lib/errors/exception"
 
 export async function findInvitation({ code }: { code: string }) {
-  const invitation = await findOrFail<InvitationModel>(
+  const invitation = await findOrFail(
     invitationModel,
     {
       where: {
@@ -28,7 +23,7 @@ export async function findInvitation({ code }: { code: string }) {
     throw new ChatbotXException("Invitation expired")
   }
 
-  const user = await findOrFail<UserModel>(
+  const user = await findOrFail(
     userModel,
     {
       where: {
@@ -48,7 +43,7 @@ export async function findInvitation({ code }: { code: string }) {
       })) ?? null
   }
 
-  const organization = await findOrFail<OrganizationModel>(
+  const organization = await findOrFail(
     organizationModel,
     {
       where: {

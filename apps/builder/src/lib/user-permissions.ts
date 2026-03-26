@@ -1,6 +1,6 @@
 import { findOrFail } from "@aha.chat/database/client"
 import { chatbotMemberModel, chatbotModel } from "@aha.chat/database/schema"
-import type { ChatbotMemberModel, ChatbotModel } from "@aha.chat/database/types"
+import type { ChatbotMemberModel } from "@aha.chat/database/types"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { notFoundException } from "./errors/exception"
 
@@ -16,7 +16,7 @@ export const findChatbotOrFail = async (
     throw notFoundException("No Chatbot found")
   }
 
-  const chatbotMember = await findOrFail<ChatbotMemberModel>(
+  const chatbotMember = await findOrFail(
     chatbotMemberModel,
     {
       userId,
@@ -24,7 +24,7 @@ export const findChatbotOrFail = async (
     },
     "Chatbot member not found",
   )
-  const chatbot = await findOrFail<ChatbotModel>(
+  const chatbot = await findOrFail(
     chatbotModel,
     {
       id: chatbotId,

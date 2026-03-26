@@ -5,7 +5,6 @@ import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@aha.chat/database/schema"
-import type { CustomFieldModel } from "@aha.chat/database/types"
 import { FieldOperationType } from "@aha.chat/flow-config"
 import { emitCustomFieldChanged } from "@chatbotx/events"
 import { createId } from "@paralleldrive/cuid2"
@@ -60,7 +59,7 @@ export const addContactCustomFields = async ({
     return
   }
 
-  const customField = await findOrFail<CustomFieldModel>(
+  const customField = await findOrFail(
     customFieldModel,
     {
       chatbotId,

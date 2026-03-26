@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { integrationGeminiModel } from "@aha.chat/database/schema"
-import type { IntegrationGeminiModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -24,7 +23,7 @@ export const updateGeminiAction = chatbotActionClient
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await findOrFail<IntegrationGeminiModel>(
+      const integrationGemini = await findOrFail(
         integrationGeminiModel,
         { chatbotId },
         "Integration Gemini not found",

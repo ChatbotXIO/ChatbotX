@@ -6,13 +6,7 @@ import {
   flowVersionModel,
   reflinkModel,
 } from "@aha.chat/database/schema"
-import type {
-  ConversationModel,
-  CustomFieldModel,
-  FlowModel,
-  FlowVersionModel,
-  ReflinkModel,
-} from "@aha.chat/database/types"
+import type { CustomFieldModel } from "@aha.chat/database/types"
 import {
   IntegrationJobAction,
   type IntegrationJobRunRef,
@@ -24,7 +18,7 @@ import { logger } from "../../lib/logger"
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, ref } = data
 
-  const conversation = await findOrFail<ConversationModel>(
+  const conversation = await findOrFail(
     conversationModel,
     { id: conversationId },
     "Conversation not found",
@@ -38,7 +32,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
-    const flowVersion = await findOrFail<FlowVersionModel>(
+    const flowVersion = await findOrFail(
       flowVersionModel,
       { flowId, isDraft: true },
       "Flow version not found",
@@ -63,7 +57,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
-    const flow = await findOrFail<FlowModel>(
+    const flow = await findOrFail(
       flowModel,
       { id: flowId, chatbotId: conversation.chatbotId },
       "Flow not found",
@@ -86,7 +80,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
     return
   }
 
-  const reflink = await findOrFail<ReflinkModel>(
+  const reflink = await findOrFail(
     reflinkModel,
     { name: refParts[0], chatbotId: conversation.chatbotId },
     "Reflink not found",

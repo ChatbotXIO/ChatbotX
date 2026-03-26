@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
-import type { ConversationModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -18,7 +17,7 @@ export const unreadConversationAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
       return await db.transaction(async (tx) => {
-        const conversation = await findOrFail<ConversationModel>(
+        const conversation = await findOrFail(
           conversationModel,
           { id, chatbotId },
           "Conversation not found",

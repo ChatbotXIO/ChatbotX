@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { folderModel } from "@aha.chat/database/schema"
-import type { FolderModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -25,7 +24,7 @@ export const editFolderAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: EditFolderSchema
     }) => {
-      const folder = await findOrFail<FolderModel>(
+      const folder = await findOrFail(
         folderModel,
         {
           chatbotId,

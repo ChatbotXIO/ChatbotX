@@ -40,7 +40,7 @@ export async function getIntegationWebchats(parsedInputs: GetWebchatRequest) {
 export async function findIntegrationWebchat(
   where: Pick<IntegrationWebchatModel, "id" | "chatbotId">,
 ) {
-  return await findOrFail<IntegrationWebchatModel>(
+  return await findOrFail(
     integrationWebchatModel,
     where,
     "Integration webchat not found",

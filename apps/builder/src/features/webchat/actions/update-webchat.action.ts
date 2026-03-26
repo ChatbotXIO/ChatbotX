@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { integrationWebchatModel } from "@aha.chat/database/schema"
-import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -14,7 +13,7 @@ export const updateWebchatAction = chatbotActionClient
   .action(async ({ parsedInput, bindArgsParsedInputs: [chatbotId, id] }) => {
     const { authorizedDomains, welcomeFlowId, ...rest } = parsedInput
 
-    const integration = await findOrFail<IntegrationWebchatModel>(
+    const integration = await findOrFail(
       integrationWebchatModel,
       {
         id,

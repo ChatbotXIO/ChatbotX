@@ -1,6 +1,5 @@
 import { findOrFail, isDatabaseError } from "@aha.chat/database/client"
 import { userModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
 import { SdkException } from "@aha.chat/sdk"
 import {
   createSafeActionClient,
@@ -31,7 +30,7 @@ export const actionClient = createSafeActionClient({
 export const authActionClient = actionClient.use(async ({ next }) => {
   const id = await getCurrentUserId()
 
-  const user = await findOrFail<UserModel>(userModel, {
+  const user = await findOrFail(userModel, {
     id,
   })
 

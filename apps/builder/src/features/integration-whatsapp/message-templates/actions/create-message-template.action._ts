@@ -30,7 +30,7 @@ export const createMessageTemplateAction = chatbotActionClient
       parsedInput: CreateMessageTemplateRequest
     }) => {
       const integrationWhatsapp =
-        await findOrFail<IntegrationWhatsappModel>(integrationWhatsappModel, {
+        await findOrFail(integrationWhatsappModel, {
           chatbotId,
         })
       const ctx = {

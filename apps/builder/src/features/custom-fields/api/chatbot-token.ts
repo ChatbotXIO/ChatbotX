@@ -1,6 +1,5 @@
 import { findOrFail } from "@aha.chat/database/client"
 import { customFieldModel } from "@aha.chat/database/schema"
-import type { CustomFieldModel } from "@aha.chat/database/types"
 import z from "zod"
 import { notFoundException } from "@/lib/errors/exception"
 import { chatbotTokenAPI } from "@/orpc"
@@ -66,7 +65,7 @@ const chatbotTokenCustomFieldsAPI = {
     .input(z.object({ name: z.string() }))
     .output(publicCustomFieldResource)
     .handler(async ({ context, input }) => {
-      const customField = await findOrFail<CustomFieldModel>(
+      const customField = await findOrFail(
         customFieldModel,
         {
           chatbotId: context.chatbot.id,

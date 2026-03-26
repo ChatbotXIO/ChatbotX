@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
-import type { ContactModel } from "@aha.chat/database/types"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -19,7 +18,7 @@ export const blockContactAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const existingContact = await findOrFail<ContactModel>(
+      const existingContact = await findOrFail(
         contactModel,
         {
           chatbotId,

@@ -1,6 +1,5 @@
 import { db, findOrFail } from "@aha.chat/database/client"
 import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import type { IntegrationWhatsappResource } from "../schemas"
 
@@ -21,7 +20,7 @@ export const findIntegrationWhatsapp = async (props: {
   chatbotId: string
   id: string
 }): Promise<IntegrationWhatsappResource> => {
-  return await findOrFail<IntegrationWhatsappModel>(
+  return await findOrFail(
     integrationWhatsappModel,
     props,
     "Whatsapp integration not found",

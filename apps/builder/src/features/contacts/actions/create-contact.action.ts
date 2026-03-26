@@ -7,11 +7,7 @@ import {
   conversationModel,
   inboxModel,
 } from "@aha.chat/database/schema"
-import {
-  type ChatbotUsageModel,
-  channelType,
-  type InboxModel,
-} from "@aha.chat/database/types"
+import { channelType } from "@aha.chat/database/types"
 import { emitContactCreated } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { createId } from "@paralleldrive/cuid2"
@@ -66,13 +62,13 @@ export const createContact = async ({
     })
   }
 
-  const inbox = await findOrFail<InboxModel>(
+  const inbox = await findOrFail(
     inboxModel,
     { chatbotId, channel: channelType.webchat },
     "Inbox not found",
   )
 
-  const chatbotUsage = await findOrFail<ChatbotUsageModel>(
+  const chatbotUsage = await findOrFail(
     chatbotUsageModel,
     { chatbotId },
     "Chatbot usage not found",

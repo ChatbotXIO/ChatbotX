@@ -1,4 +1,8 @@
-import { DrizzleQueryError, relationsFilterToSQL } from "drizzle-orm"
+import {
+  DrizzleQueryError,
+  type InferSelectModel,
+  relationsFilterToSQL,
+} from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import type { PgTable } from "drizzle-orm/pg-core"
 import { Pool } from "pg"
@@ -23,18 +27,17 @@ export type Transaction = Parameters<
 >[0]
 export type { PgTable } from "drizzle-orm/pg-core"
 
-export const findOrFail = async <T>(
-  // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-  table: PgTable<any>,
+export const findOrFail = async <TTable extends PgTable>(
+  table: TTable,
   where: Record<string, unknown> | undefined,
   message = "Record not found",
-): Promise<T> => {
+): Promise<InferSelectModel<TTable>> => {
   const result = await db
     .select()
-    .from(table)
+    .from(table as PgTable)
     .where(relationsFilterToSQL(table, where as RelationsFilterArg))
     .limit(1)
-    .then((result) => result[0])
+    .then((result) => result[0] as InferSelectModel<TTable> | undefined)
 
   if (!result) {
     throw new ModelNotfoundException(message)

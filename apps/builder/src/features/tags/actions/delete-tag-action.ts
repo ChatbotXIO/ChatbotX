@@ -2,7 +2,6 @@
 
 import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import { tagModel } from "@aha.chat/database/schema"
-import type { TagModel } from "@aha.chat/database/types"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -48,7 +47,7 @@ export const deleteTag = async ({
   chatbotId: string
   id: string
 }) => {
-  const tag = await findOrFail<TagModel>(
+  const tag = await findOrFail(
     tagModel,
     {
       chatbotId,

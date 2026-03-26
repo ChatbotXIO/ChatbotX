@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { flowModel } from "@aha.chat/database/schema"
-import type { FlowModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -22,7 +21,7 @@ export const updateFlowAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateFlowSchema
     }) => {
-      const flow = await findOrFail<FlowModel>(
+      const flow = await findOrFail(
         flowModel,
         {
           id,

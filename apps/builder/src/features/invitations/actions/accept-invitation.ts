@@ -9,7 +9,6 @@ import {
 import type {
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
-  InvitationModel,
 } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
@@ -25,7 +24,7 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await findOrFail<InvitationModel>(
+    const invitation = await findOrFail(
       invitationModel,
       {
         code,

@@ -2,7 +2,7 @@
 
 import { db, findOrFail } from "@aha.chat/database/client"
 import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
-import type { ContactModel, UserModel } from "@aha.chat/database/types"
+import type { UserModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -28,7 +28,7 @@ export const createContactNoteAction = chatbotActionClient
       parsedInput: AddContactNoteRequest
     }) => {
       // Make sure contact exists in the chatbot
-      const contact = await findOrFail<ContactModel>(
+      const contact = await findOrFail(
         contactModel,
         {
           chatbotId,

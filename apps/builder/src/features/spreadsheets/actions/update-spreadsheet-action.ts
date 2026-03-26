@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { spreadsheetModel } from "@aha.chat/database/schema"
-import type { SpreadsheetModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -26,7 +25,7 @@ export const updateSpreadsheetAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: CreateSpreadsheetRequest
     }) => {
-      const spreadsheet = await findOrFail<SpreadsheetModel>(
+      const spreadsheet = await findOrFail(
         spreadsheetModel,
         {
           id,

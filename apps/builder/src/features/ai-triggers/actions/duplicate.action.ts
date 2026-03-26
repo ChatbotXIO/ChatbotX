@@ -2,7 +2,6 @@
 
 import { db, findOrFail } from "@aha.chat/database/client"
 import { aiTriggerModel } from "@aha.chat/database/schema"
-import type { AITriggerModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -19,7 +18,7 @@ export const duplicateAITriggerAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const targetAITrigger = await findOrFail<AITriggerModel>(
+      const targetAITrigger = await findOrFail(
         aiTriggerModel,
         {
           id,

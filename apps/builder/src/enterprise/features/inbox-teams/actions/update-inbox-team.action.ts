@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { inboxTeamModel } from "@aha.chat/database/schema"
-import type { InboxTeamModel } from "@aha.chat/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -22,7 +21,7 @@ export const updateInboxTeamAction = chatbotActionClient
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
       parsedInput: UpdateInboxTeamRequest
     }) => {
-      const inboxTeam = await findOrFail<InboxTeamModel>(
+      const inboxTeam = await findOrFail(
         inboxTeamModel,
         {
           id,

@@ -1,6 +1,5 @@
 import { findOrFail } from "@aha.chat/database/client"
 import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import {
   type ListFlowsResponse,
@@ -14,7 +13,7 @@ export async function listWhatsappFlows(
 ): Promise<ListFlowsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const integrationWhatsapp = await findOrFail<IntegrationWhatsappModel>(
+  const integrationWhatsapp = await findOrFail(
     integrationWhatsappModel,
     {
       chatbotId: input.chatbotId,
