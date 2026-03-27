@@ -4,41 +4,45 @@ import {
   evaluateDateTimeTriggers,
 } from "./services/datetime-trigger-evaluator"
 
-export async function scanDateTimeTriggers(): Promise<void> {
+export type DateTimeTriggerScanStats = {
+  durationMs: number
+  failed: number
+  matched: number
+  total: number
+}
+
+export async function scanDateTimeTriggers(): Promise<DateTimeTriggerScanStats> {
   const startTime = Date.now()
   const startOfMinute = startTime - (startTime % 60_000)
-  // logger.info(`Starting datetime trigger scan... ${startOfMinute}`)
 
-  try {
-    const _results = await evaluateDateTimeTriggers({
-      startOfMinute,
-    })
+  const results = await evaluateDateTimeTriggers({
+    startOfMinute,
+  })
+  const matched = results.filter((result) => result.matched).length
+  const failed = results.filter(
+    (result) => !result.matched && !!result.error,
+  ).length
+  const total = results.length
+  const durationMs = Date.now() - startTime
 
-    // const matched = results.filter((r) => r.matched).length
-    // const failed = results.filter((r) => !r.matched && r.error).length
-    // const total = results.length
+  logger.info(
+    `Datetime trigger scan completed: matched=${matched}, failed=${failed}, total=${total}, durationMs=${durationMs}`,
+  )
 
-    // logger.info(
-    //   `Datetime trigger scan completed: ${matched} matched, ${failed} failed, ${total} total evaluated`,
-    //   {
-    //     duration: Date.now() - startTime,
-    //     matched,
-    //     failed,
-    //     total,
-    //   },
-    // )
-  } catch (error) {
-    logger.error(error, "Error scanning datetime triggers")
+  return {
+    durationMs,
+    failed,
+    matched,
+    total,
   }
 }
 
-export async function cleanupTriggerExecutions(): Promise<void> {
-  logger.info("Starting trigger execution cleanup...")
-
-  try {
-    const deletedCount = await cleanupOldExecutions()
-    logger.info(`Cleaned up ${deletedCount} old trigger executions`)
-  } catch (error) {
-    logger.error(error, "Error cleaning up trigger executions")
-  }
+export async function cleanupTriggerExecutions(): Promise<{
+  deletedCount: number
+}> {
+  const deletedCount = await cleanupOldExecutions()
+  logger.info(
+    `Trigger execution cleanup completed: deletedCount=${deletedCount}`,
+  )
+  return { deletedCount }
 }

@@ -1,32 +1,43 @@
 import { db } from "@aha.chat/database/client"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-  type ScheduleJobBroadcast,
-} from "@aha.chat/worker-config"
+import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 
-export const sendBroadcast = async (data: ScheduleJobBroadcast) => {
+const ENQUEUE_BULK_SIZE = 500
+
+export const sendBroadcast = async (schedulesAt: Date) => {
   const broadcasts = await db.query.broadcastModel.findMany({
     where: {
       schedulesAt: {
-        lte: data.data.schedulesAt,
+        lte: schedulesAt,
       },
       status: "scheduled",
     },
   })
 
   if (broadcasts.length === 0) {
-    return
+    return { scanned: 0, enqueued: 0 }
   }
 
-  await Promise.all(
-    broadcasts.map(async (broadcast) => {
-      await integrationQueue.add(IntegrationJobAction.sendBroadcast, {
-        type: IntegrationJobAction.sendBroadcast,
+  let enqueued = 0
+
+  for (let index = 0; index < broadcasts.length; index += ENQUEUE_BULK_SIZE) {
+    const batch = broadcasts.slice(index, index + ENQUEUE_BULK_SIZE)
+    await integrationQueue.addBulk(
+      batch.map((broadcast) => ({
+        name: IntegrationJobAction.sendBroadcast,
         data: {
-          broadcastId: broadcast.id,
+          type: IntegrationJobAction.sendBroadcast,
+          data: {
+            broadcastId: broadcast.id,
+          },
         },
-      })
-    }),
-  )
+        opts: {
+          // Deduplicate fan-out when the scheduler job retries.
+          jobId: `integration-send-broadcast:${broadcast.id}`,
+        },
+      })),
+    )
+    enqueued += batch.length
+  }
+
+  return { scanned: broadcasts.length, enqueued }
 }

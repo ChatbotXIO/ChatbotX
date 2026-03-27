@@ -2,7 +2,7 @@ x-kafka-common-env: &kafka-common-env
   KAFKA_PROCESS_ROLES: broker,controller
   KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
   KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
-  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9093,2@kafka-2:9093,3@kafka-3:9093
+  KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
   KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
   KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
   KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -24,43 +24,17 @@ x-kafka-common: &kafka-common
     retries: 5
 
 services:
-  kafka-1:
+  kafka:
     <<: *kafka-common
     ports:
       - "19092:9092"
     environment:
       <<: *kafka-common-env
       KAFKA_NODE_ID: 1
-      KAFKA_LISTENERS: PLAINTEXT://kafka-1:9092,CONTROLLER://kafka-1:9093,INTERNAL://kafka-1:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092,INTERNAL://kafka-1:9094
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093,INTERNAL://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092,INTERNAL://kafka:9094
     volumes:
       - kafka-data-1:/var/lib/kafka/data
-
-  kafka-2:
-    <<: *kafka-common
-    ports:
-      - "19093:9092"
-    environment:
-      <<: *kafka-common-env
-      KAFKA_NODE_ID: 2
-      KAFKA_LISTENERS: PLAINTEXT://kafka-2:9092,CONTROLLER://kafka-2:9093,INTERNAL://kafka-2:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092,INTERNAL://kafka-2:9094
-    volumes:
-      - kafka-data-2:/var/lib/kafka/data
-
-  kafka-3:
-    <<: *kafka-common
-    hostname: kafka-3
-    container_name: kafka-kraft-3
-    ports:
-      - "19094:9092"
-    environment:
-      <<: *kafka-common-env
-      KAFKA_NODE_ID: 3
-      KAFKA_LISTENERS: PLAINTEXT://kafka-3:9092,CONTROLLER://kafka-3:9093,INTERNAL://kafka-3:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:39092,INTERNAL://kafka-3:9094
-    volumes:
-      - kafka-data-3:/var/lib/kafka/data
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -69,18 +43,14 @@ services:
     restart: always
     environment:
       KAFKA_CLUSTERS_0_NAME: "kraft-cluster"
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-1:9094,kafka-2:9094,kafka-3:9094
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9094
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
+      - kafka
     networks:
       - chatbotx-network
 
 volumes:
   kafka-data-1:
-  kafka-data-2:
-  kafka-data-3:
 
 networks:
   chatbotx-network:

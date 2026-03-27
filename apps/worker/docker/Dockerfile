@@ -28,7 +28,7 @@ RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=worker
 
 FROM base AS release
 RUN apt update && \
-  apt install -y supervisor tini redis && \
+  apt install -y tini redis && \
   apt-get autoremove -y && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
@@ -37,5 +37,6 @@ COPY apps/worker/docker/rootfs/ /
 COPY --from=deps /app/apps/worker/dist /app/apps/worker/dist
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["worker"]
+ENTRYPOINT ["tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
+STOPSIGNAL SIGTERM
+CMD ["worker", "all"]

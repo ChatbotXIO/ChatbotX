@@ -3,26 +3,44 @@ name: chatbotx
 include:
   - docker-compose.yml
 
+x-service-common: &service-common
+  platform: linux/amd64
+  restart: unless-stopped
+  env_file:
+    - ./.env.dev
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  networks:
+    - chatbotx-network
+
+x-worker-common: &worker-common
+  <<: *service-common
+  build:
+    context: .
+    dockerfile: apps/worker/docker/Dockerfile
+
 services:
   builder:
+    <<: *service-common
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
-    platform: linux/amd64
-    restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       - HOSTNAME=0.0.0.0
     ports:
       - "3123:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     labels:
       virtual.host: "virtual-builder.example.com"
       virtual.port: "3000"
@@ -30,44 +48,12 @@ services:
 
   # BullMQ Worker
   worker:
-    build:
-      context: .
-      dockerfile: apps/worker/docker/Dockerfile
+    <<: *worker-common
     # image: realcodesiman/chatbotx-worker:latest
-    platform: linux/amd64
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  realtime:
-    # build:
-    #   context: .
-    #   dockerfile: apps/partysocket/docker/Dockerfile
-    image: realcodesiman/chatbotx-partysocket:latest
-    platform: linux/amd64
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    ports:
-      - "1999:1999"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  mcp-server:
-    build:
-      context: .
-      dockerfile: apps/mcp-server/docker/Dockerfile
-    platform: linux/amd64
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    ports:
-      - "3333:3000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-networks:
-  chatbotx-network:
-    driver: bridge
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy

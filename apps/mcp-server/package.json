@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsdown",
     "start": "node dist/index.mjs",
-    "dev": "dotenv -e .env -- tsx --watch src/index.ts",
+    "dev:mcp": "dotenv -e .env -- tsx --watch src/index.ts",
     "test": "dotenv -e .env -- tsx src/test-tools.ts"
   },
   "keywords": [],

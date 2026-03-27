@@ -15,12 +15,35 @@ import {
 import { registerSchedules } from "./handlers/register-schedules"
 import { sendBroadcast } from "./handlers/send-broadcast"
 
+async function runScheduleJob<T>(
+  job: Job<ScheduleJobData>,
+  execute: () => Promise<T>,
+): Promise<T> {
+  const startedAt = Date.now()
+
+  try {
+    const result = await execute()
+    const durationMs = Date.now() - startedAt
+    logger.info(
+      `[schedule] type=${job.data.type} jobId=${job.id} durationMs=${durationMs}`,
+    )
+    return result
+  } catch (error) {
+    const durationMs = Date.now() - startedAt
+    logger.error(
+      error,
+      `[schedule] failed type=${job.data.type} jobId=${job.id} durationMs=${durationMs}`,
+    )
+    throw error
+  }
+}
+
 async function startScheduleWorker() {
   try {
     await ensureBootstrapped()
     logger.info("Analytics bootstrapped successfully")
   } catch (err) {
-    logger.error("Failed to bootstrap analytics", err)
+    logger.error(err, "Failed to bootstrap analytics")
     process.exit(1)
   }
 
@@ -39,19 +62,21 @@ async function startScheduleWorker() {
     async (job: Job<ScheduleJobData>) => {
       switch (job.data.type) {
         case ScheduleJobData.sendBroadcast:
-          await sendBroadcast(job.data)
+          await runScheduleJob(job, async () => {
+            await sendBroadcast(new Date(job.timestamp))
+          })
           return
 
         case ScheduleJobData.evaluateTriggers:
-          await scanDateTimeTriggers()
+          await runScheduleJob(job, scanDateTimeTriggers)
           return
 
         case ScheduleJobData.cleanupTriggers:
-          await cleanupTriggerExecutions()
+          await runScheduleJob(job, cleanupTriggerExecutions)
           return
 
         default:
-          logger.warn(`Unknown schedule job type: ${job.data.type}`)
+          logger.warn("Unknown schedule job type")
       }
     },
     {

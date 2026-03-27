@@ -72,9 +72,9 @@ async function startIntegrationWorker() {
               conversationId: message.conversationId,
               messageId: message.id,
               hasResponse: false,
-              responseType: "none",
+              responseType: "NONE",
               routeType: "FALLBACK",
-              result: "fallback",
+              result: "FALLBACK",
               aiProvider: "none",
               metadata: {
                 fallbackReason: message.content
