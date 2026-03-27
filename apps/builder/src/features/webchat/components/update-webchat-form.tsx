@@ -1,9 +1,10 @@
 "use client"
 
 import {
-  ConversationStarterType,
-  type IntegrationWebchatModel,
-} from "@aha.chat/database/types"
+  type WebchatConversationStarterType,
+  webchatConversationStarterType,
+} from "@aha.chat/database/schema"
+import type { IntegrationWebchatModel } from "@aha.chat/database/types"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -32,11 +33,7 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { updateWebchatAction } from "../actions/update-webchat.action"
-import {
-  type ConversationStarterSchema,
-  type PersistentMenuSchema,
-  updateWebchatRequest,
-} from "../schemas/webchat.schema"
+import { updateWebchatRequest } from "../schemas/webchat.schema"
 import AuthorizedDomainField from "./authorized-domain-field"
 import PersistentMenuField from "./persistent-menu-field"
 
@@ -54,20 +51,20 @@ export function UpdateWebchatForm({
   const flowOptions = useFlowSelectOptions()
 
   const conversationStarterTypeOptions: {
-    value: ConversationStarterType
+    value: WebchatConversationStarterType
     label: string
   }[] = useMemo(
     () => [
       {
-        value: ConversationStarterType.flow,
+        value: webchatConversationStarterType.enum.flow,
         label: t("fields.conversationStarter.type.sendFlow"),
       },
       {
-        value: ConversationStarterType.website,
+        value: webchatConversationStarterType.enum.url,
         label: t("fields.conversationStarter.type.openWebsite"),
       },
       {
-        value: ConversationStarterType.message,
+        value: webchatConversationStarterType.enum.message,
         label: t("fields.conversationStarter.type.sendText"),
       },
     ],
@@ -122,9 +119,8 @@ export function UpdateWebchatForm({
         authorizedDomains: (authorizedDomainsArray ?? []).map((domain) => ({
           value: domain,
         })),
-        conversationStarters:
-          conversationStartersArray as ConversationStarterSchema[],
-        persistentMenus: persistentMenusArray as PersistentMenuSchema[],
+        conversationStarters: conversationStartersArray,
+        persistentMenus: persistentMenusArray,
         customCss: customCss ?? "",
         ...rest,
       })
@@ -197,7 +193,7 @@ export function UpdateWebchatForm({
                   />
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    ConversationStarterType.flow && (
+                    webchatConversationStarterType.enum.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`conversationStarters.${index}.flowId`}
@@ -206,7 +202,7 @@ export function UpdateWebchatForm({
                   )}
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    ConversationStarterType.website && (
+                    webchatConversationStarterType.enum.url && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`conversationStarters.${index}.url`}
@@ -221,7 +217,7 @@ export function UpdateWebchatForm({
             onClick={() =>
               appendConversationStarters({
                 label: "",
-                type: ConversationStarterType.flow,
+                type: webchatConversationStarterType.enum.flow,
                 flowId: "",
               })
             }

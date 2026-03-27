@@ -17,11 +17,20 @@ import {
   vector,
 } from "drizzle-orm/pg-core"
 import type {
+  ChatbotMemberNotificationChannels,
+  ChatbotMemberNotificationTypes,
+  ChatbotMemberPermissions,
+} from "./chatbot"
+import type {
   MessengerConversationStarter,
   MessengerGreetingMessage,
   MessengerPersistentMenu,
   MessengerPersona,
 } from "./integrations/messenger"
+import type {
+  WebchatConversationStarter,
+  WebchatPersistentMenu,
+} from "./integrations/webchat"
 import type { OrganizationSettings } from "./organization-settings"
 import { sharedColumns, timestampConfig } from "./shared"
 
@@ -482,9 +491,18 @@ export const chatbotMemberModel = pgTable("ChatbotMember", {
       name: "ChatbotMember_userId_fkey",
     }),
   role: chatbotMemberRole().notNull(),
-  notificationChannels: jsonb().default({}).notNull(),
-  notificationTypes: jsonb().default({}).notNull(),
-  permissions: jsonb().default({}).notNull(),
+  notificationChannels: jsonb()
+    .$type<ChatbotMemberNotificationChannels>()
+    .default(sql`'{}'`)
+    .notNull(),
+  notificationTypes: jsonb()
+    .$type<ChatbotMemberNotificationTypes>()
+    .default(sql`'{}'`)
+    .notNull(),
+  permissions: jsonb()
+    .$type<ChatbotMemberPermissions>()
+    .default(sql`'{}'`)
+    .notNull(),
 })
 
 export const chatbotUsageModel = pgTable(
@@ -1087,23 +1105,23 @@ export const integrationMessengerModel = pgTable(
     conversationStarters: jsonb()
       .$type<MessengerConversationStarter>()
       .array()
-      .notNull()
-      .default(sql`[]`),
+      .default(sql`[]`)
+      .notNull(),
     persistentMenus: jsonb()
       .$type<MessengerPersistentMenu>()
       .array()
-      .notNull()
-      .default(sql`[]`),
+      .default(sql`[]`)
+      .notNull(),
     greetingMessages: jsonb()
       .$type<MessengerGreetingMessage>()
       .array()
-      .notNull()
-      .default(sql`[]`),
+      .default(sql`[]`)
+      .notNull(),
     personas: jsonb()
       .$type<MessengerPersona>()
       .array()
-      .notNull()
-      .default(sql`[]`),
+      .default(sql`[]`)
+      .notNull(),
     chatbotId: text()
       .notNull()
       .references(() => chatbotModel.id, {
@@ -1197,8 +1215,14 @@ export const integrationWebchatModel = pgTable(
     name: text().notNull(),
     enable: boolean().default(true).notNull(),
     authorizedDomains: text().array().notNull().default(sql`[]`),
-    conversationStarters: jsonb().array().notNull().default(sql`[]`),
-    persistentMenus: jsonb().array().notNull().default(sql`[]`),
+    conversationStarters: jsonb()
+      .$type<WebchatConversationStarter[]>()
+      .notNull()
+      .default(sql`[]`),
+    persistentMenus: jsonb()
+      .$type<WebchatPersistentMenu[]>()
+      .notNull()
+      .default(sql`[]`),
     brandColor: text().default("#007bff").notNull(),
     hideHeader: boolean().default(false).notNull(),
     showLogo: boolean().default(false).notNull(),
@@ -1346,7 +1370,7 @@ export const invitationModel = pgTable(
   {
     ...sharedColumns,
     code: text().notNull(),
-    permissions: jsonb().notNull(),
+    permissions: jsonb().$type<ChatbotMemberPermissions>().notNull(),
     expiresAt: timestamp(timestampConfig).notNull(),
     organizationId: text()
       .notNull()

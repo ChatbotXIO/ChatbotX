@@ -1,11 +1,6 @@
 "use client"
 
-import type {
-  ChatbotMemberModel,
-  ChatbotMemberNotificationChannels,
-  ChatbotMemberNotificationTypes,
-  ChatbotMemberPermissions,
-} from "@aha.chat/database/types"
+import type { ChatbotMemberModel } from "@aha.chat/database/types"
 import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -165,11 +160,9 @@ export function UpdateChatbotMemberForm({
   useEffect(() => {
     if (chatbotMember) {
       reset({
-        permissions: chatbotMember.permissions as ChatbotMemberPermissions,
-        notificationTypes:
-          chatbotMember.notificationTypes as ChatbotMemberNotificationTypes,
-        notificationChannels:
-          chatbotMember.notificationChannels as ChatbotMemberNotificationChannels,
+        permissions: chatbotMember.permissions,
+        notificationTypes: chatbotMember.notificationTypes,
+        notificationChannels: chatbotMember.notificationChannels,
       })
     }
   }, [chatbotMember, reset])

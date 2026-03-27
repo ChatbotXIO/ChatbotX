@@ -95,7 +95,7 @@ const parseFacebookButtons = (
           flowId: menu.flowId,
         }),
       })
-    } else if (menu.type === persistentMenuType.enum.website) {
+    } else if (menu.type === persistentMenuType.enum.url) {
       buttons.push({
         type: "web_url",
         title: menu.label,
