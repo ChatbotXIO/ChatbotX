@@ -15,29 +15,6 @@ import {
 import { registerSchedules } from "./handlers/register-schedules"
 import { sendBroadcast } from "./handlers/send-broadcast"
 
-async function runScheduleJob<T>(
-  job: Job<ScheduleJobData>,
-  execute: () => Promise<T>,
-): Promise<T> {
-  const startedAt = Date.now()
-
-  try {
-    const result = await execute()
-    const durationMs = Date.now() - startedAt
-    logger.info(
-      `[schedule] type=${job.data.type} jobId=${job.id} durationMs=${durationMs}`,
-    )
-    return result
-  } catch (error) {
-    const durationMs = Date.now() - startedAt
-    logger.error(
-      error,
-      `[schedule] failed type=${job.data.type} jobId=${job.id} durationMs=${durationMs}`,
-    )
-    throw error
-  }
-}
-
 async function startScheduleWorker() {
   try {
     await ensureBootstrapped()
@@ -62,17 +39,15 @@ async function startScheduleWorker() {
     async (job: Job<ScheduleJobData>) => {
       switch (job.data.type) {
         case ScheduleJobData.sendBroadcast:
-          await runScheduleJob(job, async () => {
-            await sendBroadcast(new Date(job.timestamp))
-          })
+          await sendBroadcast(job.data.data.schedulesAt)
           return
 
         case ScheduleJobData.evaluateTriggers:
-          await runScheduleJob(job, scanDateTimeTriggers)
+          await scanDateTimeTriggers()
           return
 
         case ScheduleJobData.cleanupTriggers:
-          await runScheduleJob(job, cleanupTriggerExecutions)
+          await cleanupTriggerExecutions()
           return
 
         default:
