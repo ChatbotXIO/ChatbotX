@@ -6,10 +6,6 @@ import {
   invitationModel,
   organizationMemberModel,
 } from "@aha.chat/database/schema"
-import type {
-  ChatbotMemberNotificationChannels,
-  ChatbotMemberNotificationTypes,
-} from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 import { z } from "zod"
 import { ChatbotXException } from "@/lib/errors/exception"
@@ -57,13 +53,13 @@ export const acceptInvitationAction = authActionClient
           notifyAdmin: true,
           newMessageToHuman: true,
           newOrder: true,
-        } as ChatbotMemberNotificationTypes,
+        },
         notificationChannels: {
           messenger: true,
           email: true,
           telegram: true,
           browser: true,
-        } as ChatbotMemberNotificationChannels,
+        },
       })
     } else {
       await db.insert(organizationMemberModel).values({

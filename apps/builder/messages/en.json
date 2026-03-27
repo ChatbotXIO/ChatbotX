@@ -12,10 +12,7 @@
     "copy": "Copy",
     "copyUrl": "Copy URL",
     "actions": "Actions",
-    "clear": "Clear",
     "add": "Add",
-    "addContactNotes": "Add Contact Notes",
-    "addContactTag": "Add Contact Tag",
     "addVariable": "Add Variable",
     "addFeature": "Add {feature}",
     "addFlowReply": "Add flow reply",
@@ -24,7 +21,6 @@
     "addAction": "Add Action",
     "addCondition": "Add Condition",
     "addTextReply": "Add text reply",
-    "appendToEnd": "Append to the end",
     "markAsFollowUp": "Mark as Follow Up",
     "removeFromFollowUp": "Remove from Follow Up",
     "markAsUnread": "Mark as Unread",
@@ -33,47 +29,28 @@
     "archiveConversation": "Archive Conversation",
     "assign": "Assign",
     "assignConversation": "Assign Conversation",
-    "autoAssignConversation": "Auto Assign Conversation",
     "back": "Back",
     "blockContact": "Block Contact",
     "unblockContact": "Unblock Contact",
-    "broadcastActions": "Broadcast",
     "cancel": "Cancel",
-    "remove": "Remove",
     "clearCustomField": "Clear Custom Field",
     "confirm": "Confirm",
     "connect": "Connect",
-    "contactActions": "Contact",
     "continue": "Continue",
-    "countCharacters": "Count Characters",
     "create": "Create",
     "createFeature": "Create {feature}",
-    "createNewChatbot": "Create new Chatbot",
     "delete": "Delete",
     "deleteContact": "Delete Contact",
-    "deleteProject": "Delete Project",
-    "deleteSelectedRows": "Delete selected rows",
-    "disable": "Disable",
     "disableBot": "Disable Bot",
     "disconnect": "Disconnect",
     "download": "Download",
     "edit": "Edit",
-    "emailActions": "Email",
-    "enable": "Enable",
     "enableBot": "Enable Bot",
     "export": "Export",
-    "flowActions": "Flow",
-    "followConversation": "Follow Conversation",
-    "formatDate": "Format Date",
-    "generateCode": "Generate Code",
-    "generateText": "Generate Text",
-    "getDataFromJson": "Get Data From JSON",
     "getEmbedCode": "Get Embed Code",
     "getID": "Get ID",
     "getTools": "Get Tools",
     "import": "Import",
-    "inboxActions": "Inbox",
-    "selectOptions": "Select options",
     "exportContacts": "Export Contacts",
     "filter": "Filter",
     "selectFile": "Select file",
@@ -82,58 +59,28 @@
     "send": "Send",
     "loginWithMagicLink": "Login with Magic Link",
     "manage": "Manage",
-    "markEmailVerified": "Mark Email Verified",
     "more": "More",
     "moreOptions": "More options",
     "moreSettings": "More settings",
     "openMenu": "Open menu",
     "openWebchat": "Open Webchat",
-    "openWebsite": "Open Website",
-    "optInEmail": "Opt In Email",
-    "optOutEmail": "Opt Out Email",
-    "prependToStart": "Prepend to the start",
-    "readMore": "Read more",
-    "reconnect": "Reconnect",
-    "removeContactTag": "Remove Contact Tag",
     "removeTag": "Remove Tag",
     "rename": "Rename",
     "save": "Save",
     "selectAll": "Select all",
     "selectRow": "Select row",
-    "sendAudio": "Send Audio",
-    "sendCard": "Send Card",
-    "sendCarousel": "Send Carousel",
-    "sendFile": "Send File",
     "sendFlow": "Send Flow",
-    "sendGif": "Send Gif",
-    "sendImage": "Send Image",
     "sendMessage": "Send Message",
-    "sendText": "Send Text",
-    "sendVideo": "Send Video",
     "setCustomField": "Set Custom Field",
-    "setTo": "Set to",
-    "shareProject": "Share Project",
-    "startAnotherFlow": "Start Another Flow",
-    "startAnotherStep": "Start Another Step",
-    "startExternalStep": "Start External Step",
-    "subscribeBroadcast": "Subscribe Broadcast",
     "synchronize": "Synchronize",
     "testNow": "Test Now",
     "toggle": "Toggle",
     "toggleTheme": "Toggle theme",
-    "tools": "Tools",
     "transferConversationToBot": "Transfer Conversation to Bot",
-    "transferConversationToHuman": "Transfer Conversation to Human",
-    "unarchiveConversation": "Unarchive Conversation",
-    "unassignConversation": "Unassign Conversation",
-    "unfollowConversation": "Unfollow Conversation",
-    "unsubscribeBroadcast": "Unsubscribe Broadcast",
     "update": "Update",
     "upgradeToPro": "Upgrade to Pro",
     "uploadFile": "Upload File",
     "view": "View",
-    "viewProject": "View Project",
-    "waitUserAnswer": "Wait User Answer",
     "duplicate": "Duplicate",
     "getDraftLink": "Get Draft Link",
     "getPublishedLink": "Get Published Link",
@@ -155,16 +102,12 @@
     "getNodeId": "Get Node ID",
     "setAsDefaultAgent": "Set as Default",
     "unsetDefaultAgent": "Unset Default",
-    "randomRow": "Random Row",
     "clickToEdit": "Click to edit",
     "move": "Move",
     "removeAssignee": "Remove Assignee",
-    "condition": "Condition",
     "sendMail": "Send Mail",
-    "splitTraffic": "Split Traffic",
     "wait": "Wait",
     "landingPage": "Landing Page",
-    "addNotes": "Add Notes",
     "generate": "Generate",
     "regenerate": "Regenerate",
     "qrCode": "QR Code",
@@ -172,8 +115,9 @@
     "removeSequence": "Remove Sequence",
     "activate": "Activate",
     "deactivate": "Deactivate",
-    "saving": "Saving...",
-    "creating": "Creating..."
+    "onFailure": "On failure",
+    "onSkip": "On skip",
+    "onSuccess": "On success"
   },
   "states": {
     "success": "Success",
@@ -470,32 +414,13 @@
     }
   },
   "dialog": {
-    "archiveConversation": {
-      "description": "Are you sure to archive those conversations?",
-      "title": "Archive Conversation"
-    },
-    "clearCustomField": "Clear Custom Field",
-    "connect": {
-      "title": "Connect {feature}"
-    },
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
-    "disableBot": {
-      "description": "Are you sure to disable bot?",
-      "title": "Disable Bot"
-    },
     "disconnect": {
       "description": "Are you sure to disconnect {feature}?",
       "title": "Disconnect {feature}"
-    },
-    "enable": {
-      "description": "Are you sure to enable {feature}?",
-      "title": "Enable {feature}"
     }
   },
   "fields": {
-    "omnichannel": {
-      "label": "Omnichannel"
-    },
     "messenger": {
       "label": "Messenger"
     },
@@ -590,20 +515,11 @@
     "aiAgent": {
       "label": "AI Agent"
     },
-    "aiAgents": {
-      "label": "AI Agents"
-    },
     "aiFile": {
       "label": "AI File"
     },
     "aiFunction": {
       "label": "AI Function"
-    },
-    "aiMcpServer": {
-      "label": "AI MCP Server"
-    },
-    "aiTools": {
-      "label": "AI Tools"
     },
     "aiTrigger": {
       "description": "Describe how this trigger works",
@@ -622,9 +538,6 @@
     "auth": {
       "label": "Auth"
     },
-    "authHeaders": {
-      "label": "Custom Header"
-    },
     "authorizedDomain": {
       "description": "The domains or subdomains that are authorized to access your webchat.",
       "label": "Authorized Domain{plural, select, 1 {s} other {}}"
@@ -641,20 +554,11 @@
     "automatedResponse": {
       "label": "Automated Response"
     },
-    "automatedResponses": {
-      "label": "Keywords"
-    },
     "reflink": {
       "label": "Entry Point Link"
     },
-    "learnMore": {
-      "label": "Learn more"
-    },
     "savePayloadToCustomField": {
       "label": "Save payload to custom field"
-    },
-    "autoReply": {
-      "label": "Auto Reply"
     },
     "bot": {
       "label": "Bot"
@@ -669,9 +573,6 @@
     "broadcast": {
       "label": "Broadcast"
     },
-    "broadcasts": {
-      "label": "Broadcasts"
-    },
     "trigger": {
       "label": "Trigger"
     },
@@ -685,10 +586,6 @@
     "buttonLabel": {
       "label": "Button Label"
     },
-    "cardUrl": {
-      "label": "Card URL",
-      "placeholder": "Enter card URL"
-    },
     "category": {
       "label": "Category"
     },
@@ -698,10 +595,6 @@
     "chatbotId": {
       "description": "Unique identifier for your chatbot.",
       "label": "Chatbot ID"
-    },
-    "color": {
-      "label": "Color",
-      "placeholder": "Select color"
     },
     "contact": {
       "label": "Contact"
@@ -720,11 +613,6 @@
         "sendFlow": "Send Flow",
         "sendText": "Send Text"
       }
-    },
-    "country": {
-      "description": "The country where most of your contacts live.",
-      "label": "Country",
-      "placeholder": "Search country"
     },
     "createdAt": {
       "label": "Created At"
@@ -786,9 +674,6 @@
     "processingStatus": {
       "label": "Processing Status"
     },
-    "embedUrl": {
-      "label": "Embed URL"
-    },
     "enable": {
       "label": "Enable"
     },
@@ -818,9 +703,6 @@
     "flowId": {
       "label": "Flow ID"
     },
-    "flowNode": {
-      "label": "Flow Node"
-    },
     "flows": {
       "aiGenerateText": {
         "label": "{aiName}: Generate Text"
@@ -830,9 +712,6 @@
       "sendMessage": {
         "label": "Send Message"
       }
-    },
-    "flowToSend": {
-      "label": "Flow to send"
     },
     "steps": {
       "label": "Steps",
@@ -875,9 +754,6 @@
     "hideMessageInput": {
       "label": "Show Message Input"
     },
-    "iceBreaker": {
-      "label": "Ice Breaker"
-    },
     "inbox": {
       "label": "Inbox"
     },
@@ -900,9 +776,6 @@
       "label": "System Message (Prompt)",
       "placeholder": "Enter system instructions"
     },
-    "integration": {
-      "label": "Integration"
-    },
     "isDefault": {
       "label": "Mark as default"
     },
@@ -917,15 +790,8 @@
       "label": "Last name",
       "placeholder": "Enter last name"
     },
-    "loading": {
-      "description": "Please wait",
-      "label": "Loading..."
-    },
     "errorLog": {
       "label": "Error Log"
-    },
-    "auditLog": {
-      "label": "Audit Log"
     },
     "max": {
       "label": "Maximum"
@@ -936,9 +802,6 @@
     },
     "mcpServer": {
       "label": "MCP Server"
-    },
-    "message": {
-      "label": "Message"
     },
     "min": {
       "label": "Minimum"
@@ -971,18 +834,8 @@
     "openai": {
       "label": "OpenAI"
     },
-    "claude": {
-      "label": "Claude"
-    },
-    "deepseek": {
-      "label": "DeepSeek"
-    },
     "operation": {
       "label": "Operation"
-    },
-    "ouputCfId": {
-      "label": "Save response to a custom field",
-      "placeholder": "Select custom field"
     },
     "outputCustomField": {
       "label": "Output Custom Field"
@@ -1018,12 +871,6 @@
       "label": "Prompt",
       "placeholder": "Enter prompt"
     },
-    "promptMessages": {
-      "role": {
-        "assistant": "Assistant",
-        "user": "User"
-      }
-    },
     "purpose": {
       "label": "Purpose",
       "placeholder": "What does this Function do?"
@@ -1045,48 +892,11 @@
       "label": "Search",
       "placeholder": "Search..."
     },
-    "settings": {
-      "label": "Settings",
-      "agents": {
-        "description": "AI Agents description",
-        "title": "AI Agents"
-      },
-      "aiTriggers": {
-        "description": "AI Triggers description",
-        "title": "AI Triggers"
-      },
-      "automatedResponses": {
-        "title": "Keywords"
-      },
-      "title": "Settings"
-    },
-    "signIn": {
-      "acceptTermsAndPolicy": "By clicking continue, you agree to our",
-      "and": "and",
-      "email": "Email",
-      "password": "Password",
-      "privacyPolicy": "Privacy Policy",
-      "termsOfService": "Terms of Service",
-      "title": "Sign in to {name}",
-      "checkYourEmail": "Check your email",
-      "magicLinkSent": "We sent verification URL to your email",
-      "magicLinkSentDescription": "Click the link in your email to continue.",
-      "backToSignIn": "Back to sign in",
-      "didNotReceiveEmail": "Didn't receive the email? Check your spam folder.",
-      "trySigningInAgain": "You can also try signing in again with a different email."
-    },
     "showLogo": {
       "label": "Show Personal Logo"
     },
     "size": {
       "label": "Size"
-    },
-    "imageSize": {
-      "label": "Image Size"
-    },
-    "sort": {
-      "label": "Sort",
-      "placeholder": "Sort by..."
     },
     "status": {
       "label": "Status",
@@ -1169,11 +979,6 @@
     "url": {
       "label": "URL",
       "placeholder": "Enter URL"
-    },
-    "user": {
-      "label": "User",
-      "selectAgent": "Please select agent",
-      "selectAgents": "Please select agents"
     },
     "userId": {
       "description": "Unique identifier for the user.",
@@ -1291,9 +1096,6 @@
     "spreadsheet": {
       "label": "Spreadsheet"
     },
-    "conversationType": {
-      "label": "Conversation Type"
-    },
     "source": {
       "label": "Source"
     },
@@ -1312,9 +1114,6 @@
     "fullName": {
       "label": "Full Name"
     },
-    "moreOptions": {
-      "label": "More Options"
-    },
     "botFields": {
       "label": "Bot Fields"
     },
@@ -1322,33 +1121,6 @@
       "label": "Keyword",
       "placeholder": "Enter keyword",
       "searchPlaceholder": "Search keyword..."
-    },
-    "accountFields": {
-      "label": "Account Fields"
-    },
-    "today": {
-      "label": "Today"
-    },
-    "yesterday": {
-      "label": "Yesterday"
-    },
-    "last7days": {
-      "label": "Last 7 days"
-    },
-    "last30days": {
-      "label": "Last 30 days"
-    },
-    "thisMonth": {
-      "label": "This Month"
-    },
-    "lastMonth": {
-      "label": "Last Month"
-    },
-    "lifeTime": {
-      "label": "Life Time"
-    },
-    "customRange": {
-      "label": "Custom Range"
     },
     "templateId": {
       "label": "WhatsApp Template"
@@ -1377,22 +1149,12 @@
     "annualPrice": {
       "label": "Annual Price"
     },
-    "limits": {
-      "label": "Limits"
-    },
     "limitContacts": {
       "label": "Maximum of Contacts"
     },
     "marketingFeatures": {
       "label": "Marketing feature list",
       "description": "A list of product features that will be visible to customers. Displayed in pricing tables."
-    },
-    "marketingFeature": {
-      "label": "Marketing Feature"
-    },
-    "planDescription": {
-      "label": "Description",
-      "description": "Appears at checkout, on the customer portal, and in quotes."
     },
     "currency": {
       "label": "Currency"
@@ -1430,9 +1192,6 @@
     "secretKey": {
       "label": "Secret Key"
     },
-    "version": {
-      "label": "Version"
-    },
     "freeTrial": {
       "label": "Free Trial",
       "suffix": "days"
@@ -1442,6 +1201,24 @@
     },
     "sequence": {
       "label": "Sequence"
+    },
+    "from": {
+      "label": "From"
+    },
+    "messageTemplate": {
+      "label": "Message Template"
+    },
+    "preheader": {
+      "label": "Preheader"
+    },
+    "subject": {
+      "label": "Subject"
+    },
+    "to": {
+      "label": "To"
+    },
+    "topicId": {
+      "label": "Topic ID"
     }
   },
   "flows": {
@@ -1650,9 +1427,6 @@
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
-    "actionCompleted": "Action completed successfully",
-    "actionFailed": "Action failed. Please try again.",
-    "archivedSuccess": "{feature} archived successfully",
     "connectedSuccess": "{feature} connected successfully",
     "connectFailed": "Failed to connect {feature}",
     "connectSuccess": "Connected {feature} successfully",
@@ -1660,34 +1434,21 @@
     "failed": "Failed",
     "copiedToClipboard": "Copied to clipboard",
     "createdFailed": "{feature} creation failed",
-    "deleteComingSoon": "Delete functionality coming soon",
     "deletedSuccess": "{feature} deleted successfully",
     "deleteFileComingSoon": "Delete file functionality coming soon",
     "disconnectFeature": "Disconnect {feature}",
     "disconnectFeatureDescription": "Are you sure you want to disconnect the {feature}?",
-    "disconnectSuccess": "{feature} disconnected successfully",
-    "downloadComingSoon": "Download functionality coming soon",
-    "enabledSuccessfully": "{feature} enabled successfully",
     "failedToCopy": "Failed to copy",
     "failedToPreviewImage": "Failed to preview image",
-    "inboxTeamCreated": "Inbox team created successfully",
     "loadingData": "Loading data...",
-    "magicLinkSent": "We sent verification URL to your email",
     "needToAddSettings": "You need to add settings to use this integration",
-    "noChatbotsFound": "No chatbots found",
     "noDataAvailable": "No data available",
-    "pleaseWait": "Please wait...",
-    "processingRequest": "Processing your request...",
     "savedSuccessfully": "Saved successfully",
     "syncedSuccessfully": "Synced successfully",
-    "signedInSuccessfully": "Signed in successfully",
-    "unarchivedSuccess": "{feature} unarchived successfully",
     "unknownError": "Unknown error",
     "updatedSuccess": "{feature} updated successfully",
     "updateFileComingSoon": "Update file functionality coming soon",
-    "uploadFailed": "Upload failed",
     "videoError": "Video error",
-    "viewFileComingSoon": "View file functionality coming soon",
     "createdSuccess": "{feature} created successfully",
     "createFeature": "Create {feature}",
     "noItemsFound": "No items found",
@@ -1696,7 +1457,6 @@
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",
     "signOutConfirmation": "Are you sure you want to sign out?",
-    "unableToConnectFeature": "Unable to connect {feature}. Please send logs to developer team.",
     "copyInvitationUrlSuccess": "Copy the link below and send to the person that you want to add as admin.",
     "noAIIntegrationFound": "No AI integration found. Please connect an AI integration to use AI agents.",
     "resendFeature": "Resend {feature}",
@@ -1711,17 +1471,17 @@
     "botIsActive": "Bot is active",
     "archiveFeature": "Archive {feature}",
     "archiveFeatureDescription": "Are you sure you want to archive the {feature}?",
-    "archiveSuccess": "{feature} archived successfully",
-    "unarchiveFeature": "Unarchive {feature}",
-    "unarchiveFeatureDescription": "Are you sure you want to unarchive the {feature}?",
-    "unarchiveSuccess": "{feature} unarchived successfully",
     "disableFeature": "Disable {feature}",
     "disableFeatureDescription": "Are you sure you want to disable the {feature}?",
-    "disableSuccess": "{feature} disabled successfully",
     "enableFeature": "Enable {feature}",
     "enableFeatureDescription": "Are you sure you want to enable the {feature}?",
-    "enableSuccess": "{feature} enabled successfully",
-    "exportedSuccess": "{feature} exported successfully"
+    "exportedSuccess": "{feature} exported successfully",
+    "createSuccess": "{feature} created successfully",
+    "deleteFailed": "Failed to delete {feature}",
+    "deleteSuccess": "{feature} deleted successfully",
+    "error": "Error",
+    "moveFolderDescription": "Move {feature} to folder",
+    "noData": "No data"
   },
   "messenger": {
     "description": "This integration lets you create Messenger bots.",
@@ -1788,12 +1548,7 @@
     "orContinueWith": "Or continue with",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
-    "signUp": "Sign up"
-  },
-  "tools": {
-    "title": "Tools"
-  },
-  "signIn": {
+    "signUp": "Sign up",
     "acceptTermsAndPolicy": "By clicking continue, you agree to our",
     "and": "and",
     "privacyPolicy": "Privacy Policy",
@@ -2293,5 +2048,8 @@
     "botFields": {
       "label": "Bot Fields"
     }
+  },
+  "tools": {
+    "title": "Tools"
   }
 }

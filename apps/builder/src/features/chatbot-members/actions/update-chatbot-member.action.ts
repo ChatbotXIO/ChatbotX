@@ -2,7 +2,6 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { chatbotMemberModel } from "@aha.chat/database/schema"
-import type { ChatbotMemberPermissions } from "@aha.chat/database/types"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -28,8 +27,8 @@ export const updateChatbotMemberAction = chatbotActionClient
       )
     }
 
-    const permissions = currentUserAndTargetChatbot.targetChatbotMember
-      .permissions as ChatbotMemberPermissions
+    const permissions =
+      currentUserAndTargetChatbot.targetChatbotMember.permissions
     if (!permissions.superAdmin) {
       throw new ChatbotXException(
         "You are not authorized to update this chatbot member. You need to be a super admin to do this.",

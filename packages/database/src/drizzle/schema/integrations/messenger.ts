@@ -7,7 +7,7 @@ export const messengerGreetingMessage = z.object({
 })
 export type MessengerGreetingMessage = z.infer<typeof messengerGreetingMessage>
 
-export const persistentMenuType = z.enum(["flow", "website"])
+export const persistentMenuType = z.enum(["flow", "url"])
 
 export const messengerPersistentMenu = z.discriminatedUnion("type", [
   z.object({
@@ -17,7 +17,7 @@ export const messengerPersistentMenu = z.discriminatedUnion("type", [
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(persistentMenuType.enum.website),
+    type: z.literal(persistentMenuType.enum.url),
     url: z.url(),
   }),
 ])

@@ -1,3 +1,4 @@
+import type { WebchatPersistentMenu } from "@aha.chat/database/schema"
 import {
   type IntegrationWebchatModel,
   WEBCHAT_SOURCE_PREFIX,
@@ -12,7 +13,6 @@ import type {
 } from "@/features/messages/schemas"
 import type { CreateWebchatMessageRequest } from "@/features/messages/schemas/create-message.schema"
 import type { UserResource } from "@/features/users/schemas/resource"
-import type { PersistentMenuSchema } from "../../schemas/webchat.schema"
 
 export const GUEST_CONVERSATION_ID_KEY = "x-conversation-id" as const
 
@@ -45,7 +45,7 @@ export type GuestSessionActions = {
   sendPostback: (button: MessageButtonTemplate) => Promise<void>
   setIsTyping: (isTyping: boolean) => void
 
-  getMenus: () => PersistentMenuSchema[]
+  getMenus: () => WebchatPersistentMenu[]
 }
 
 export type GuestSessionStore = GuestSessionState & GuestSessionActions
@@ -209,7 +209,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
 
     getMenus: () => {
       const { config } = get()
-      return (config.persistentMenus ?? []) as PersistentMenuSchema[]
+      return config.persistentMenus ?? []
     },
 
     setIsTyping: (isTyping: boolean) => {

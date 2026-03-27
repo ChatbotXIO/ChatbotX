@@ -4,13 +4,7 @@ import {
   chatbotModel,
   chatbotUsageModel,
 } from "@aha.chat/database/schema"
-import type {
-  ChatbotMemberNotificationChannels,
-  ChatbotMemberNotificationTypes,
-  ChatbotMemberPermissions,
-  ChatbotModel,
-  OrganizationModel,
-} from "@aha.chat/database/types"
+import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
 import { createId } from "@paralleldrive/cuid2"
 
 export async function createSimpleChatbot(
@@ -53,18 +47,18 @@ export async function createSimpleChatbot(
       emailAndPhone: true,
       broadcast: true,
       ecommerce: false,
-    } as ChatbotMemberPermissions,
+    },
     notificationTypes: {
       notifyAdmin: true,
       newMessageToHuman: true,
       newOrder: true,
-    } as ChatbotMemberNotificationTypes,
+    },
     notificationChannels: {
       messenger: true,
       email: true,
       telegram: true,
       browser: true,
-    } as ChatbotMemberNotificationChannels,
+    },
   })
 
   return newChatbot

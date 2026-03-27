@@ -173,7 +173,10 @@
     "activate": "Kích hoạt",
     "deactivate": "Tắt",
     "saving": "Đang lưu...",
-    "creating": "Đang tạo..."
+    "creating": "Đang tạo...",
+    "onFailure": "On failure",
+    "onSkip": "On skip",
+    "onSuccess": "On success"
   },
   "states": {
     "success": "Thành công",
@@ -557,7 +560,8 @@
     },
     "marketingFeatures": {
       "label": "Tính năng marketing",
-      "placeholder": "Nhập tính năng và nhấn Enter"
+      "placeholder": "Nhập tính năng và nhấn Enter",
+      "description": "A list of product features that will be visible to customers. Displayed in pricing tables."
     },
     "notificationType": {
       "label": "Loại thông báo",
@@ -1378,6 +1382,82 @@
     },
     "sequence": {
       "label": "Chăm sóc"
+    },
+    "annualPrice": {
+      "label": "Annual Price"
+    },
+    "apiVersion": {
+      "label": "API Version"
+    },
+    "businessId": {
+      "label": "Business ID"
+    },
+    "businessName": {
+      "label": "Business Name"
+    },
+    "clientId": {
+      "label": "Client ID"
+    },
+    "clientSecret": {
+      "label": "Client Secret"
+    },
+    "configId": {
+      "label": "App Config ID"
+    },
+    "currency": {
+      "label": "Currency"
+    },
+    "freeTrial": {
+      "label": "Free Trial",
+      "suffix": "days"
+    },
+    "from": {
+      "label": "From"
+    },
+    "limitContacts": {
+      "label": "Maximum of Contacts"
+    },
+    "messageTemplate": {
+      "label": "Message Template"
+    },
+    "plan": {
+      "label": "Plan"
+    },
+    "preheader": {
+      "label": "Preheader"
+    },
+    "price": {
+      "label": "Price"
+    },
+    "pricing": {
+      "label": "Pricing"
+    },
+    "publishableKey": {
+      "label": "Publishable Key"
+    },
+    "role": {
+      "label": "Role"
+    },
+    "secretKey": {
+      "label": "Secret Key"
+    },
+    "subject": {
+      "label": "Subject"
+    },
+    "systemUserId": {
+      "label": "System User ID"
+    },
+    "systemUserToken": {
+      "label": "System User Token"
+    },
+    "to": {
+      "label": "To"
+    },
+    "topicId": {
+      "label": "Topic ID"
+    },
+    "verifyToken": {
+      "label": "Webhook Verify Token"
     }
   },
   "flows": {
@@ -1465,7 +1545,8 @@
       "typing": "Đang gõ",
       "sequenceActions": "Hành động chăm sóc",
       "subscribeSequence": "Đăng ký chăm sóc",
-      "unsubscribeSequence": "Hủy đăng ký chăm sóc"
+      "unsubscribeSequence": "Hủy đăng ký chăm sóc",
+      "noTemplatesAvailable": "No templates available"
     },
     "additionalSteps": "Các bước bổ sung",
     "button": {
@@ -1656,7 +1737,13 @@
     "enableFeatureDescription": "Bạn có chắc chắn muốn bật {feature}?",
     "enableSuccess": "Đã bật {feature} thành công",
     "exportedSuccess": "{feature} đã được xuất thành công",
-    "syncedSuccessfully": "Đã đồng bộ thành công"
+    "syncedSuccessfully": "Đã đồng bộ thành công",
+    "createSuccess": "{feature} created successfully",
+    "deleteFailed": "Failed to delete {feature}",
+    "deleteSuccess": "{feature} deleted successfully",
+    "error": "Error",
+    "moveFolderDescription": "Move {feature} to folder",
+    "noData": "No data"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
@@ -2187,7 +2274,8 @@
       "submit": "Xóa chăm sóc",
       "success": "Đã xóa chăm sóc thành công",
       "error": "Không thể xóa chăm sóc"
-    }
+    },
+    "title": "Sequences"
   },
   "tools": {
     "title": "Công cụ"
@@ -2217,5 +2305,14 @@
     "resetPasswordTitle": "Đặt lại mật khẩu",
     "resetPasswordDescription": "Nhập mật khẩu mới của bạn bên dưới.",
     "signUpTitle": "Đăng ký vào {name}"
+  },
+  "plans": {
+    "title": "Billing Plans"
+  },
+  "subscriptions": {
+    "title": "Subscriptions"
+  },
+  "users": {
+    "title": "Users"
   }
 }

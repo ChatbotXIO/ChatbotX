@@ -1,4 +1,7 @@
-import { PersistentMenuType } from "@aha.chat/database/types"
+import {
+  type WebchatPersistentMenuType,
+  webchatPersistentMenuType,
+} from "@aha.chat/database/schema"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
@@ -25,13 +28,13 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 
 type PersistentMenuTypeOption = {
-  value: PersistentMenuType
+  value: WebchatPersistentMenuType
   label: string
 }
 
 type PersistentMenuItemProps = {
   index: number
-  menuType: PersistentMenuType | undefined
+  menuType: WebchatPersistentMenuType | undefined
   persistentMenuTypeOptions: PersistentMenuTypeOption[]
   flowOptions: Array<{ value: string; label: string }>
 }
@@ -58,7 +61,7 @@ const PersistentMenuItem = memo(
           options={persistentMenuTypeOptions}
         />
 
-        {menuType === PersistentMenuType.flow && (
+        {menuType === webchatPersistentMenuType.enum.flow && (
           <ComboboxField
             label={t("fields.flowId.label")}
             name={`persistentMenus.${index}.flowId`}
@@ -67,7 +70,7 @@ const PersistentMenuItem = memo(
           />
         )}
 
-        {menuType === PersistentMenuType.website && (
+        {menuType === webchatPersistentMenuType.enum.url && (
           <InputField
             label={t("fields.url.label")}
             name={`persistentMenus.${index}.url`}
@@ -89,11 +92,11 @@ export default function PersistentMenuField() {
   const persistentMenuTypeOptions: PersistentMenuTypeOption[] = useMemo(
     () => [
       {
-        value: PersistentMenuType.flow,
+        value: webchatPersistentMenuType.enum.flow,
         label: t("fields.persistentMenu.type.sendFlow"),
       },
       {
-        value: PersistentMenuType.website,
+        value: webchatPersistentMenuType.enum.url,
         label: t("fields.persistentMenu.type.openWebsite"),
       },
     ],
@@ -110,13 +113,13 @@ export default function PersistentMenuField() {
   })
 
   const watchedTypes = useWatch({ control, name: "persistentMenus" }) as
-    | Array<{ type?: PersistentMenuType; label?: string }>
+    | Array<{ type?: WebchatPersistentMenuType; label?: string }>
     | undefined
 
   const handleAppend = useCallback(() => {
     appendPersistentMenus({
       label: "",
-      type: PersistentMenuType.flow,
+      type: webchatPersistentMenuType.enum.flow,
       flowId: "",
       url: "",
     })

@@ -1,6 +1,9 @@
 "use client"
 
-import { PersistentMenuType } from "@aha.chat/database/types"
+import {
+  type WebchatPersistentMenu,
+  webchatPersistentMenuType,
+} from "@aha.chat/database/schema"
 import { MessageType } from "@aha.chat/sdk"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
@@ -16,7 +19,6 @@ import { useAction } from "next-safe-action/hooks"
 import { Fragment, useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
 import { useGuestSessionStore } from "../providers/store/guest-session-provider"
-import type { PersistentMenuSchema } from "../schemas/webchat.schema"
 
 type WebchatMessageMenuProps = {
   chatbotId: string
@@ -28,7 +30,7 @@ export default function WebchatMessageMenu({
   webchatId,
 }: WebchatMessageMenuProps) {
   const { getMenus } = useGuestSessionStore((state) => state)
-  const [menus, setMenus] = useState<PersistentMenuSchema[]>([])
+  const [menus, setMenus] = useState<WebchatPersistentMenu[]>([])
 
   useEffect(() => {
     setMenus(getMenus())
@@ -73,7 +75,7 @@ export default function WebchatMessageMenu({
         {menus.map((menu, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <Fragment key={index}>
-            {menu.type === PersistentMenuType.flow && (
+            {menu.type === webchatPersistentMenuType.enum.flow && (
               <DropdownMenuItem
                 onClick={() =>
                   execute({
@@ -88,7 +90,7 @@ export default function WebchatMessageMenu({
                 {menu.label}
               </DropdownMenuItem>
             )}
-            {menu.type === PersistentMenuType.website && (
+            {menu.type === webchatPersistentMenuType.enum.url && (
               <DropdownMenuItem asChild>
                 <Link href={menu.url} rel="noopener noreferrer" target="_blank">
                   {menu.label}

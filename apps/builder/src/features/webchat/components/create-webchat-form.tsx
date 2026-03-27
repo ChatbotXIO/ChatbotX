@@ -1,9 +1,11 @@
 "use client"
 
 import {
-  ConversationStarterType,
-  PersistentMenuType,
-} from "@aha.chat/database/types"
+  type WebchatConversationStarterType,
+  type WebchatPersistentMenuType,
+  webchatConversationStarterType,
+  webchatPersistentMenuType,
+} from "@aha.chat/database/schema"
 import { ColorPickerField } from "@aha.chat/ui/components/form/color-picker-field"
 import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -45,20 +47,20 @@ export function CreateWebchatForm() {
   const flowOptions = useFlowSelectOptions()
 
   const conversationStarterTypeOptions: {
-    value: ConversationStarterType
+    value: WebchatConversationStarterType
     label: string
   }[] = useMemo(
     () => [
       {
-        value: ConversationStarterType.flow,
+        value: webchatConversationStarterType.enum.flow,
         label: t("fields.conversationStarter.type.sendFlow"),
       },
       {
-        value: ConversationStarterType.website,
+        value: webchatConversationStarterType.enum.url,
         label: t("fields.conversationStarter.type.openWebsite"),
       },
       {
-        value: ConversationStarterType.message,
+        value: webchatConversationStarterType.enum.message,
         label: t("fields.conversationStarter.type.sendText"),
       },
     ],
@@ -66,16 +68,16 @@ export function CreateWebchatForm() {
   )
 
   const persistentMenuTypeOptions: {
-    value: PersistentMenuType
+    value: WebchatPersistentMenuType
     label: string
   }[] = useMemo(
     () => [
       {
-        value: PersistentMenuType.flow,
+        value: webchatPersistentMenuType.enum.flow,
         label: t("fields.persistentMenu.type.sendFlow"),
       },
       {
-        value: PersistentMenuType.website,
+        value: webchatPersistentMenuType.enum.url,
         label: t("fields.persistentMenu.type.openWebsite"),
       },
     ],
@@ -193,7 +195,7 @@ export function CreateWebchatForm() {
                   />
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    ConversationStarterType.flow && (
+                    webchatConversationStarterType.enum.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`conversationStarters.${index}.flowId`}
@@ -202,7 +204,7 @@ export function CreateWebchatForm() {
                   )}
 
                   {form.watch(`conversationStarters.${index}.type`) ===
-                    ConversationStarterType.website && (
+                    webchatConversationStarterType.enum.url && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`conversationStarters.${index}.url`}
@@ -217,7 +219,7 @@ export function CreateWebchatForm() {
             onClick={() =>
               appendConversationStarters({
                 label: "",
-                type: ConversationStarterType.flow,
+                type: webchatConversationStarterType.enum.flow,
                 flowId: "",
               })
             }
@@ -273,7 +275,7 @@ export function CreateWebchatForm() {
                   />
 
                   {form.watch(`persistentMenus.${index}.type`) ===
-                    PersistentMenuType.flow && (
+                    webchatPersistentMenuType.enum.flow && (
                     <SelectField
                       label={t("fields.flowId.label")}
                       name={`persistentMenus.${index}.flowId`}
@@ -282,7 +284,7 @@ export function CreateWebchatForm() {
                   )}
 
                   {form.watch(`persistentMenus.${index}.type`) ===
-                    PersistentMenuType.website && (
+                    webchatPersistentMenuType.enum.url && (
                     <InputField
                       label={t("fields.url.label")}
                       name={`persistentMenus.${index}.url`}
@@ -297,7 +299,7 @@ export function CreateWebchatForm() {
             onClick={() =>
               appendPersistentMenus({
                 label: "",
-                type: PersistentMenuType.flow,
+                type: webchatPersistentMenuType.enum.flow,
                 flowId: "",
               })
             }

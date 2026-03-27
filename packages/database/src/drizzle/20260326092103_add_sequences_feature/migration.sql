@@ -2,11 +2,11 @@
 -- WARNING: Dropping tables will delete all sequence-related data.
 
 -- Drop existing tables if they exist (for re-runnable migrations in dev)
-DROP TABLE IF EXISTS "SequenceDispatch" CASCADE;
-DROP TABLE IF EXISTS "SequenceEvent" CASCADE;
-DROP TABLE IF EXISTS "ContactsOnSequence" CASCADE;
-DROP TABLE IF EXISTS "SequenceStep" CASCADE;
-DROP TABLE IF EXISTS "Sequence" CASCADE;
+-- DROP TABLE IF EXISTS "SequenceDispatch" CASCADE;
+-- DROP TABLE IF EXISTS "SequenceEvent" CASCADE;
+-- DROP TABLE IF EXISTS "ContactsOnSequence" CASCADE;
+-- DROP TABLE IF EXISTS "SequenceStep" CASCADE;
+-- DROP TABLE IF EXISTS "Sequence" CASCADE;
 
 -- Add 'sequence' value to FolderType enum if not exists
 DO $$ BEGIN

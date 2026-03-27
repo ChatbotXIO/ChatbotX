@@ -1,9 +1,9 @@
+import type { ChatbotMemberModel } from "@aha.chat/database/types"
 import type {
-  ChatbotMemberModel,
   ChatbotMemberNotificationChannels,
   ChatbotMemberNotificationTypes,
   ChatbotMemberPermissions,
-} from "@aha.chat/database/types"
+} from "node_modules/@aha.chat/database/src/drizzle/schema/chatbot"
 import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import type { UserResource } from "@/features/users/schemas/resource"
 
