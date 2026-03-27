@@ -592,21 +592,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
         <BroadcastFlowTypeSelector subaction={props.subaction} />
 
-        {(!watchedTemplateType ||
-          watchedTemplateType === BroadcastFlowType.flow) && (
-          <ComboboxField
-            key="flowId"
-            label={t("fields.flowId.label")}
-            name="flowId"
-            options={flows.map((flow) => ({
-              label: flow.name,
-              value: flow.id,
-            }))}
-            required={true}
-          />
-        )}
-
-        {watchedTemplateType === BroadcastFlowType.template && (
+        {props.subaction === BroadcastSubaction.whatsappTemplateMessage && (
           <>
             <ComboboxField
               key="integrationWhatsappId"
@@ -619,41 +605,59 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               required={true}
             />
 
-            <ComboboxField
-              key="templateId"
-              label={t("fields.templateId.label")}
-              name="templateId"
-              options={templates.map((template) => ({
-                label: `${template.name} (${template.language})`,
-                value: template.id,
-              }))}
-              required={true}
-            />
-
-            {selectedTemplate && (
-              <div className="space-y-4">
-                <TemplateParamsForm
-                  components={
-                    selectedTemplate.components as TemplateComponent[]
-                  }
-                  parentName="templateData"
+            {watchedTemplateType === BroadcastFlowType.template && (
+              <>
+                <ComboboxField
+                  key="templateId"
+                  label={t("fields.templateId.label")}
+                  name="templateId"
+                  options={templates.map((template) => ({
+                    label: `${template.name} (${template.language})`,
+                    value: template.id,
+                  }))}
+                  required={true}
                 />
-                <div>
-                  <div className="mb-2 font-medium text-xs">
-                    {t("flows.fields.preview")}
+
+                {selectedTemplate && (
+                  <div className="space-y-4">
+                    <TemplateParamsForm
+                      components={
+                        selectedTemplate.components as TemplateComponent[]
+                      }
+                      parentName="templateData"
+                    />
+                    <div>
+                      <div className="mb-2 font-medium text-xs">
+                        {t("flows.fields.preview")}
+                      </div>
+                      <TemplatePreview
+                        bodyParams={watchedTemplateData?.body || []}
+                        buttonParams={watchedTemplateData?.button || []}
+                        components={
+                          selectedTemplate.components as TemplateComponent[]
+                        }
+                        headerParams={watchedTemplateData?.header || []}
+                      />
+                    </div>
                   </div>
-                  <TemplatePreview
-                    bodyParams={watchedTemplateData?.body || []}
-                    buttonParams={watchedTemplateData?.button || []}
-                    components={
-                      selectedTemplate.components as TemplateComponent[]
-                    }
-                    headerParams={watchedTemplateData?.header || []}
-                  />
-                </div>
-              </div>
+                )}
+              </>
             )}
           </>
+        )}
+
+        {(!watchedTemplateType ||
+          watchedTemplateType !== BroadcastFlowType.template) && (
+          <ComboboxField
+            key="flowId"
+            label={t("fields.flowId.label")}
+            name="flowId"
+            options={flows.map((flow) => ({
+              label: flow.name,
+              value: flow.id,
+            }))}
+            required={true}
+          />
         )}
 
         <SelectField
