@@ -1,3 +1,4 @@
+import type { ChannelType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
@@ -16,6 +17,7 @@ export type InboxState = {
 export type InboxActions = {
   initialize: () => Promise<void>
   getAllInboxes: () => Promise<void>
+  getInboxesByChannel: (channel: ChannelType) => InboxResource[]
 }
 
 export type InboxStore = InboxState & InboxActions
@@ -80,5 +82,10 @@ export const createInboxStore = (props: Partial<InboxState>) =>
       } finally {
         set({ loading: false })
       }
+    },
+
+    getInboxesByChannel: (channel: ChannelType) => {
+      const { inboxes } = get()
+      return inboxes.filter((inbox) => inbox.channel === channel)
     },
   }))

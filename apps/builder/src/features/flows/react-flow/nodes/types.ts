@@ -1,6 +1,8 @@
-import type { StepType } from "@aha.chat/flow-config"
+import type { ChooseChannelStepSchema, StepType } from "@aha.chat/flow-config"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
+import type { InboxResource } from "@/features/inboxes/schemas/resource"
+import type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schemas/resource"
 
 export type MenuItem = {
   label: string
@@ -12,3 +14,13 @@ export type MenuItem = {
 }
 
 export type TranslationFn = ReturnType<typeof useTranslations>
+
+export type FlowTemplateMenuData = {
+  waTemplates?: WhatsappMessageTemplateResource[]
+}
+
+export type MenuData = {
+  inboxes: InboxResource[]
+  templates: FlowTemplateMenuData
+  beforeStep: ChooseChannelStepSchema
+}

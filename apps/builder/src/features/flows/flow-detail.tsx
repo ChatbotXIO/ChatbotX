@@ -13,7 +13,7 @@ import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import { UserStoreProvider } from "../users/provider/user-store-context"
 import { FlowStoreProvider } from "./provider/flow-store-context"
 import { ReactFlowFrame } from "./react-flow/frame"
-import { FlowActionProvider } from "./react-flow/stores/flow-action-store-provider"
+import { FlowTemplateStoreProvider } from "./react-flow/stores/flow-template-store-provider"
 import { StepStoreProvider } from "./react-flow/stores/step-store-provider"
 import type { FlowResource } from "./schemas/resource"
 
@@ -37,7 +37,7 @@ export function FlowDetail({
           activeFlowId: flow.id,
         }}
       >
-        <FlowActionProvider chatbotId={flow.chatbotId}>
+        <FlowTemplateStoreProvider chatbotId={flow.chatbotId}>
           <InboxStoreProvider chatbotId={flow.chatbotId}>
             <FlowStoreProvider chatbotId={flow.chatbotId}>
               <TagStoreProvider chatbotId={flow.chatbotId}>
@@ -51,7 +51,7 @@ export function FlowDetail({
               </TagStoreProvider>
             </FlowStoreProvider>
           </InboxStoreProvider>
-        </FlowActionProvider>
+        </FlowTemplateStoreProvider>
       </StepStoreProvider>
     </ReactFlowProvider>
   )

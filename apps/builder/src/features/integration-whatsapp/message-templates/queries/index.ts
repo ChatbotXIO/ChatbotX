@@ -2,7 +2,7 @@ import { db, findOrFail } from "@aha.chat/database/client"
 import { integrationWhatsappModel } from "@aha.chat/database/schema"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { MessageTemplateWithComponents } from "../type"
+import type { WhatsappMessageTemplateResource } from "../schemas/resource"
 
 export const getMessageTemplates = async (
   input: ListMessageTemplatesRequest,
@@ -40,7 +40,7 @@ export const getMessageTemplates = async (
 export const getTemplatesForChatbot = async (
   chatbotId: string,
   status?: string,
-): Promise<MessageTemplateWithComponents[]> => {
+): Promise<WhatsappMessageTemplateResource[]> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
   const filter: {
@@ -56,15 +56,6 @@ export const getTemplatesForChatbot = async (
 
   return await db.query.whatsappMessageTemplateModel.findMany({
     where: filter,
-    columns: {
-      id: true,
-      name: true,
-      language: true,
-      category: true,
-      status: true,
-      components: true,
-      sourceId: true,
-    },
     orderBy: { name: "asc" },
   })
 }

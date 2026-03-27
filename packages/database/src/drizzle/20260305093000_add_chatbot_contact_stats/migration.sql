@@ -1,5 +1,7 @@
 DROP TRIGGER IF EXISTS contact_delete_stats_trigger ON "Contact";
 DROP TRIGGER IF EXISTS contact_insert_stats_trigger ON "Contact";
+DROP TRIGGER IF EXISTS conversation_delete_stats_trigger ON "Conversation";
+DROP TRIGGER IF EXISTS conversation_insert_stats_trigger ON "Conversation";
 DROP FUNCTION IF EXISTS decrement_contact_stats();
 DROP FUNCTION IF EXISTS increment_contact_stats();
 DROP TABLE IF EXISTS "ChatbotContactStats";
@@ -15,54 +17,36 @@ ALTER TABLE "InboxContactStats" ADD CONSTRAINT "InboxContactStats_inboxId_fkey" 
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION increment_contact_stats()
 RETURNS TRIGGER AS $$
-DECLARE
-    v_inbox_id TEXT;
 BEGIN
-    SELECT "inboxId" INTO v_inbox_id
-    FROM "Conversation"
-    WHERE "contactId" = NEW."id"
-    LIMIT 1;
-
-    IF v_inbox_id IS NOT NULL THEN
-        INSERT INTO "InboxContactStats" ("inboxId", "totalContacts", "updatedAt")
-        VALUES (v_inbox_id, 1, CURRENT_TIMESTAMP)
-        ON CONFLICT ("inboxId") DO UPDATE SET
-            "totalContacts" = "InboxContactStats"."totalContacts" + 1,
-            "updatedAt" = CURRENT_TIMESTAMP;
-    END IF;
+    INSERT INTO "InboxContactStats" ("inboxId", "totalContacts", "updatedAt")
+    VALUES (NEW."inboxId", 1, CURRENT_TIMESTAMP)
+    ON CONFLICT ("inboxId") DO UPDATE SET
+        "totalContacts" = "InboxContactStats"."totalContacts" + 1,
+        "updatedAt" = CURRENT_TIMESTAMP;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 --> statement-breakpoint
-CREATE TRIGGER contact_insert_stats_trigger
-    AFTER INSERT ON "Contact"
+CREATE TRIGGER conversation_insert_stats_trigger
+    AFTER INSERT ON "Conversation"
     FOR EACH ROW
     EXECUTE FUNCTION increment_contact_stats();
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION decrement_contact_stats()
 RETURNS TRIGGER AS $$
-DECLARE
-    v_inbox_id TEXT;
 BEGIN
-    SELECT "inboxId" INTO v_inbox_id
-    FROM "Conversation"
-    WHERE "contactId" = OLD."id"
-    LIMIT 1;
-
-    IF v_inbox_id IS NOT NULL THEN
-        UPDATE "InboxContactStats"
-        SET "totalContacts" = GREATEST("totalContacts" - 1, 0),
-            "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "inboxId" = v_inbox_id;
-    END IF;
+    UPDATE "InboxContactStats"
+    SET "totalContacts" = GREATEST("totalContacts" - 1, 0),
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "inboxId" = OLD."inboxId";
 
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
 --> statement-breakpoint
-CREATE TRIGGER contact_delete_stats_trigger
-    BEFORE DELETE ON "Contact"
+CREATE TRIGGER conversation_delete_stats_trigger
+    AFTER DELETE ON "Conversation"
     FOR EACH ROW
     EXECUTE FUNCTION decrement_contact_stats();
 --> statement-breakpoint

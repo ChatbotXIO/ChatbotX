@@ -2153,7 +2153,8 @@ export const whatsappMessageTemplateModel = pgTable(
     language: text().notNull(),
     category: text().notNull(),
     status: text().notNull(),
-    components: jsonb().notNull().default(sql`'[]'::jsonb`),
+    // biome-ignore lint/suspicious/noExplicitAny: <type for components>
+    components: jsonb().$type<any[]>().notNull().default(sql`'[]'::jsonb`),
   },
   (table) => [
     uniqueIndex(

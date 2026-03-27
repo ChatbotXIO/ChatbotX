@@ -1,33 +1,35 @@
 import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { getTemplatesForFlow } from "@/features/integration-whatsapp/message-templates/actions/get-templates-for-flow"
+import type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schemas/resource"
+import type { FlowTemplateMenuData } from "../nodes/types"
 
-export type FlowActionState = {
+export type FlowTemplateState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
   chatbotId: string
-  data: Record<string, unknown>
+  templates: FlowTemplateMenuData
   beforeStep?: { channel?: string; [key: string]: unknown }
 }
 
-export type FlowActionActions = {
+export type FlowTemplateActions = {
   initialize: () => Promise<void>
   fetchWaTemplates: () => Promise<void>
-  setData: (data: Record<string, unknown>) => void
+  setWaTemplates: (templates: WhatsappMessageTemplateResource[]) => void
 }
 
-export type FlowActionStore = FlowActionState & FlowActionActions
+export type FlowTemplateStore = FlowTemplateState & FlowTemplateActions
 
-export const createFlowActionStore = (props: Partial<FlowActionState>) =>
-  createStore<FlowActionStore>((set, get) => ({
+export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
+  createStore<FlowTemplateStore>((set, get) => ({
     loading: false,
     error: null,
     initialized: false,
 
     chatbotId: "",
-    data: {},
+    templates: {},
     beforeStep: undefined,
     ...props,
 
@@ -61,17 +63,12 @@ export const createFlowActionStore = (props: Partial<FlowActionState>) =>
 
       set({ loading: true, error: null })
       try {
-        const templates = await getTemplatesForFlow(chatbotId)
-        const waTemplates = templates.map((t) => ({
-          id: t.id,
-          name: t.name,
-          language: t.language,
-        }))
+        const waTemplates = await getTemplatesForFlow(chatbotId)
 
         set({
-          data: {
-            ...get().data,
-            "wa.templates": waTemplates,
+          templates: {
+            ...get().templates,
+            waTemplates,
           },
         })
       } catch (error: unknown) {
@@ -86,5 +83,8 @@ export const createFlowActionStore = (props: Partial<FlowActionState>) =>
       }
     },
 
-    setData: (data) => set({ data }),
+    setWaTemplates: (waTemplates: WhatsappMessageTemplateResource[]) =>
+      set((state) => ({
+        templates: { ...state.templates, waTemplates },
+      })),
   }))

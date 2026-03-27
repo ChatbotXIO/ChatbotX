@@ -13,6 +13,8 @@ export const whatsappMessageTemplateResouce = createSelectSchema(
   category: true,
   status: true,
   components: true,
+  integrationWhatsappId: true,
+  sourceId: true,
 })
 
 export type WhatsappMessageTemplateResource = z.infer<
