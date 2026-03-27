@@ -77,10 +77,15 @@ const handleWebhookEvent = async (
         },
       })
     } else {
+      const integrationIdentifier = webhookData.event_name.includes("user_send")
+        ? webhookData.recipient.id
+        : webhookData.sender.id
+
       await queue.add("incomingMessage", {
         type: "incomingMessage",
         data: {
           integrationType: "zalo",
+          integrationIdentifier,
           payload: webhookData,
         },
       })
