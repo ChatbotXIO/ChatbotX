@@ -42,3 +42,22 @@ export const messengerConversationStarter = z.object({
 export type MessengerConversationStarter = z.infer<
   typeof messengerConversationStarter
 >
+
+export const waTemplateComponent = z.object({
+  type: z.string(),
+  format: z.string().optional(),
+  text: z.string().optional(),
+  example: z.unknown().optional(),
+  buttons: z.array(
+    z
+      .object({
+        type: z.string(),
+        text: z.string(),
+        url: z.string().optional(),
+        example: z.array(z.string()).optional(),
+      })
+      .optional(),
+  ),
+})
+
+export type TemplateComponent = z.infer<typeof waTemplateComponent>

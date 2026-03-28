@@ -8,7 +8,7 @@ export const waTemplateMenus = (
   menuData?: MenuData,
   inbox?: InboxResource,
 ): MenuItem[] => {
-  let templates = menuData?.templates.waTemplates ?? []
+  let templates = menuData?.templates?.waTemplates ?? []
 
   if (inbox) {
     templates = templates.filter(

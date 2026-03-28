@@ -3,6 +3,7 @@
 import { db, eq, findOrFail, inArray } from "@aha.chat/database/client"
 import {
   integrationWhatsappModel,
+  type TemplateComponent,
   whatsappMessageTemplateModel,
 } from "@aha.chat/database/schema"
 import { uploader } from "@aha.chat/filesystem"
@@ -87,7 +88,7 @@ export const syncMessageTemplateAction = chatbotActionClient
                 language: template.language,
                 category: template.category,
                 status: template.status,
-                components: template.components,
+                components: (template.components ?? []) as TemplateComponent[],
               })
               .where(eq(whatsappMessageTemplateModel.id, existing.id))
           } else {
@@ -100,7 +101,7 @@ export const syncMessageTemplateAction = chatbotActionClient
                 category: template.category,
                 status: template.status,
                 sourceId: template.id,
-                components: template.components,
+                components: (template.components ?? []) as TemplateComponent[],
               },
             ])
           }

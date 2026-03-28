@@ -122,6 +122,7 @@ export const sendWaTemplateMessageStepSchema = z.object({
     name: z.string(),
     languageCode: z.string(),
     params: waTemplateParamsSchema,
+    integrationWhatsappId: z.string(),
   }),
   buttons: z
     .array(buttonStepSchema)
@@ -158,6 +159,7 @@ export const sendWaTemplateMessageStepDefaultFn = (
     name: "",
     languageCode: "",
     params: {},
+    integrationWhatsappId: "",
   },
   buttons: [
     buttonStepDefaultFn({ label: "Delivered" }),

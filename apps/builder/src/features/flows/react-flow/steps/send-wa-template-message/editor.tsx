@@ -16,7 +16,7 @@ import {
 } from "@aha.chat/ui/components/ui/select"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import { useFormContext, useWatch } from "react-hook-form"
 import { useWhatsappInboxOptions } from "@/features/inboxes/provider/inbox-hook"
 import { TemplateParamsForm } from "@/features/integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
@@ -35,7 +35,7 @@ function SendWaTemplateMessageStepEditor(
 ) {
   const { parentName } = props
   const t = useTranslations()
-  const { setValue, watch } = useFormContext()
+  const { setValue, control } = useFormContext()
   const [selectedTemplate, setSelectedTemplate] =
     useState<WhatsappMessageTemplateResource | null>(null)
   const [parameters, setParameters] = useState<ParameterInfo[]>([])
@@ -44,11 +44,15 @@ function SendWaTemplateMessageStepEditor(
   const whatsappInboxOptions = useWhatsappInboxOptions()
   const templates = useFlowTemplate((s) => s.templates)
 
-  const integrationWhatsappId = watch(
-    `${parentName}.template.integrationWhatsappId`,
-  )
-  const templateId = watch(`${parentName}.template.id`)
-  const templateParams = watch(`${parentName}.template.params`) || {}
+  const integrationWhatsappId = useWatch({
+    control,
+    name: `${parentName}.template.integrationWhatsappId`,
+  })
+  const templateId = useWatch({ control, name: `${parentName}.template.id` })
+  const templateParams = useWatch({
+    control,
+    name: `${parentName}.template.params`,
+  })
 
   useEffect(() => {
     if (
@@ -68,11 +72,13 @@ function SendWaTemplateMessageStepEditor(
   useEffect(() => {
     if (
       templateId &&
-      templates.waTemplates &&
+      templates?.waTemplates &&
       templates.waTemplates.length > 0
     ) {
       const template = templates.waTemplates.find((t) => t.id === templateId)
       if (template) {
+        setValue(`${parentName}.template.name`, template.name)
+        setValue(`${parentName}.template.languageCode`, template.language)
         setSelectedTemplate(template)
         const params = extractParameterInfos(
           template.components as TemplateComponent[],
@@ -80,14 +86,14 @@ function SendWaTemplateMessageStepEditor(
         setParameters(params)
       }
     }
-  }, [templateId, templates])
+  }, [templateId, templates, parentName, setValue])
 
   const filteredTemplates = useMemo(
     () =>
-      (templates.waTemplates ?? []).filter(
+      (templates?.waTemplates ?? []).filter(
         (template) => template.integrationWhatsappId === integrationWhatsappId,
       ),
-    [templates.waTemplates, integrationWhatsappId],
+    [templates?.waTemplates, integrationWhatsappId],
   )
 
   const handleTemplateChange = (value: string) => {
@@ -135,6 +141,7 @@ function SendWaTemplateMessageStepEditor(
         {parameters.length > 0 && (
           <TemplateParamsForm
             components={selectedTemplate?.components as TemplateComponent[]}
+            key={selectedTemplate?.id ?? "no-template"}
             parentName={`${parentName}.template.params`}
           />
         )}

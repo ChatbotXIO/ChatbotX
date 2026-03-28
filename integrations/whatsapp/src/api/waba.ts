@@ -1,3 +1,4 @@
+import type { TemplateComponent } from "@aha.chat/flow-config"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
@@ -89,7 +90,7 @@ export type MessageTemplateEntity = {
   status: "APPROVED" | "PENDING" | "REJECTED"
   language: string
   category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
-  components: JSON[]
+  components: TemplateComponent[]
 }
 
 export type CreateMessageTemplateProps = {
