@@ -2122,12 +2122,48 @@
     "heading": {
       "title": "Chăm sóc"
     },
+    "botFields": {
+      "label": "Trường tài khoản"
+    },
+    "chatbotToken": {
+      "label": "Token truy cập API"
+    },
+    "conversationType": {
+      "label": "Loại cuộc trò chuyện"
+    },
+    "customFields": {
+      "label": "Trường tùy chỉnh"
+    },
     "field": {
       "placeholder": "Chọn",
       "searchPlaceholder": "Tìm kiếm",
       "emptyMessage": "Không tìm thấy"
     },
+    "fullName": {
+      "label": "Họ và tên"
+    },
+    "moreOptions": {
+      "label": "Tùy chọn khác"
+    },
+    "newPassword": {
+      "label": "Mật khẩu mới"
+    },
+    "password": {
+      "label": "Mật khẩu"
+    },
+    "passwordConfirmation": {
+      "label": "Nhập lại mật khẩu"
+    },
+    "source": {
+      "label": "Nguồn"
+    },
+    "spreadsheet": {
+      "label": "Bảng tính"
+    },
     "subscribers": "Người đăng ký",
+    "tags": {
+      "label": "Thẻ"
+    },
     "steps": "Các tin nhắn",
     "step": "Tin nhắn",
     "addStep": "Thêm tin nhắn",
@@ -2256,6 +2292,19 @@
     "addContactSequenceDialog": {
       "title": "Thêm chăm sóc",
       "description": "Thêm chăm sóc vào các liên hệ đã chọn",
+      "bulkMoveTitle": "Di chuyển {count} chăm sóc vào thư mục",
+      "bulkMoved": "Đã di chuyển {count} chăm sóc thành công",
+      "confirmDeleteFolderWithName": "Bạn có chắc chắn muốn xóa thư mục \"{name}\"?",
+      "createDescription": "Tạo thư mục mới để tổ chức các chăm sóc của bạn",
+      "moveToFolder": "Di chuyển vào thư mục",
+      "movedToFolder": "Đã di chuyển chăm sóc vào thư mục",
+      "noFolder": "Không có thư mục",
+      "pleaseSelectFolder": "Vui lòng chọn thư mục",
+      "rename": "Đổi tên thư mục",
+      "renameDescription": "Nhập tên mới cho thư mục",
+      "selectFolder": "Chọn thư mục",
+      "selectMultipleHint": "Chọn nhiều thư mục bằng cách tick vào checkbox",
+      "sequenceCount": "{count} chăm sóc",
       "sequencesField": {
         "label": "Chăm sóc",
         "placeholder": "Chọn chăm sóc"
