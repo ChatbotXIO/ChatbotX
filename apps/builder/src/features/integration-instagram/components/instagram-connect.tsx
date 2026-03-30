@@ -93,7 +93,7 @@ export function InstagramConnectButton({
       }}
       scope={INSTAGRAM_SCOPE.join(",")}
     >
-      <InboxIcon inboxType="instagram" label={t("actions.connect")} />
+      <InboxIcon channel="instagram" label={t("actions.connect")} />
     </FacebookLogin>
   )
 }
