@@ -2,6 +2,7 @@ import { organizationSettingsSchema } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
+import { InstagramSettings } from "./instagram/instagram-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
 import { StripeSettings } from "./stripe/stripe-settings"
 import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
@@ -21,6 +22,7 @@ export function ManageOrganizationSettings({
   return (
     <div className="flex flex-wrap gap-4">
       <MessengerSettings config={organizationSetting.messenger} />
+      <InstagramSettings config={organizationSetting.instagram} />
       <GoogleSettings config={organizationSetting.google} />
       <StripeSettings config={organizationSetting.stripe} />
       <WhatsappSettings config={organizationSetting.whatsapp} />

@@ -1339,7 +1339,9 @@
     "error": "Error",
     "moveFolderDescription": "Move {feature} to folder",
     "noData": "No data",
-    "featureNotFound": "{feature} not found"
+    "featureNotFound": "{feature} not found",
+    "enableSuccess": "{feature} enabled successfully",
+    "userInactive": "User has been inactive more than 7 days"
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",

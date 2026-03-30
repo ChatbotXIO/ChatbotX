@@ -10,6 +10,10 @@ export const allInboxConfigs = {
     label: "Messenger",
     value: "messenger",
   },
+  instagram: {
+    label: "Instagram",
+    value: "instagram",
+  },
   whatsapp: {
     label: "Whatsapp",
     value: "whatsapp",

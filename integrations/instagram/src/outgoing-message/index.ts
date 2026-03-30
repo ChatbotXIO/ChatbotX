@@ -103,7 +103,6 @@ export function* convertMessageToInstagramMessage(
 const buildMessagePayload = (
   conversation: OutgoingConversation,
   message: InstagramMessageAttachmentPayload | InstagramSendMessage,
-  messagingType: "MESSAGE_TAG" | "RESPONSE" = "RESPONSE",
 ): InstagramSendMessageRequest => {
   const recipientId = conversation.contact?.sourceId || conversation.sourceId
 
@@ -117,8 +116,6 @@ const buildMessagePayload = (
       ...message,
       metadata: INSTAGRAM_MESSAGE_METADATA,
     },
-    messaging_type: messagingType,
-    tag: messagingType === "MESSAGE_TAG" ? "HUMAN_AGENT" : undefined,
   }
 }
 
@@ -179,7 +176,7 @@ export const sendFlowStep = async (
 ) => {
   const {
     ctx,
-    data: { conversation, step },
+    data: { conversation },
   } = props
   try {
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
@@ -187,13 +184,7 @@ export const sendFlowStep = async (
     )) {
       await sendInstagramMessage(
         ctx.auth,
-        buildMessagePayload(
-          conversation,
-          instagramMessage,
-          step.stepType === StepType.sendQuickReply
-            ? "RESPONSE"
-            : "MESSAGE_TAG",
-        ),
+        buildMessagePayload(conversation, instagramMessage),
       )
       logger.info(`Message sent for IGSID: ${conversation.sourceId}`)
     }

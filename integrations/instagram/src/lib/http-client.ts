@@ -70,6 +70,8 @@ class InstagramHttpClient {
     options?: {
       headers?: Record<string, string>
       json?: unknown
+      body?: URLSearchParams | string
+      searchParams?: Record<string, string>
     },
   ): Promise<T> {
     try {

@@ -125,6 +125,8 @@ export const selectAccountAction = authActionClient
             auth,
             name: parsedInput.igName,
             username: parsedInput.igUsername,
+            persistentMenus: [],
+            conversationStarters: [],
           })
         })
 

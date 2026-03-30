@@ -15,18 +15,19 @@ export const uploadAttachment = async (
 ): Promise<InstagramSendMessageResponse> => {
   try {
     return await instagramAttachmentClient.post<InstagramSendMessageResponse>(
-      `${auth.metadata.version}/me/message_attachments`,
+      `${auth.metadata.version}/${auth.metadata.pageId}/message_attachments`,
       {
         headers: {
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
         json: {
+          platform: "instagram",
           message: {
             attachment: {
               type,
               payload: {
-                is_reusable: true,
                 url,
+                is_reusable: true,
               } as InstagramMessageAttachment["payload"],
             },
           },

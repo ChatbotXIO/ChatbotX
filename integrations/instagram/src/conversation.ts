@@ -23,6 +23,7 @@ export const sendTyping = async (
   await sendInstagramMessage(ctx.auth, {
     recipient: { id: recipientId },
     sender_action: typing ? "typing_on" : "typing_off",
+    messaging_type: "RESPONSE",
   })
 }
 

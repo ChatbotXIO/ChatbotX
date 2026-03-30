@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@aha.chat/sdk"
-import { updateIceBreakers, updatePersistentMenu } from "./apis/page"
+import { updateInstagramProfile as update } from "./apis/page"
 import { getUserProfile } from "./apis/user"
 import { agentMarkAsRead, sendTyping } from "./conversation"
 import { InstagramAPIException } from "./exception"
@@ -32,23 +32,14 @@ const config: IntegrationDefinition<
         sendTyping,
         agentMarkAsRead,
       },
+      profile: {
+        update,
+      },
     },
   },
   actions: {
-    receiveMessage: async ({ ctx, data }) =>
-      await receiveMessage({
-        ctx,
-        data: {
-          integrationType: "instagram",
-          integrationIdentifier: ctx.auth.metadata.igId,
-          payload: data,
-        },
-      }),
-    sendMessage,
     sendFlowStep,
     getUserProfile,
-    updateIceBreakers,
-    updatePersistentMenu,
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")

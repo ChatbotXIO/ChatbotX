@@ -1,12 +1,9 @@
 import type {
   Context,
-  Handler,
   IncomingContact,
   Oauth2AuthValue,
   Oauth2Config,
-  ReceivedMessageResult,
   SendFlowStepProps,
-  SendMessageProps,
 } from "@aha.chat/sdk"
 import { z } from "zod"
 
@@ -30,27 +27,11 @@ export type InstagramAuthValue = Oauth2AuthValue & {
 }
 
 export type InstagramActions = {
-  receiveMessage: Handler<
-    {
-      ctx: Context<InstagramAuthValue>
-      data: InstagramWebhookEvent
-    },
-    ReceivedMessageResult | null
-  >
-  sendMessage: (props: SendMessageProps<InstagramAuthValue>) => Promise<void>
   sendFlowStep: (props: SendFlowStepProps<InstagramAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<InstagramAuthValue>
-    igsid: string
+    psid: string
   }) => Promise<IncomingContact>
-  updateIceBreakers: (props: {
-    ctx: Context<InstagramAuthValue>
-    params: InstagramIceBreakersRequest
-  }) => Promise<void>
-  updatePersistentMenu: (props: {
-    ctx: Context<InstagramAuthValue>
-    params: InstagramPersistentMenuRequest
-  }) => Promise<void>
 }
 
 // Common attachment types
@@ -197,13 +178,7 @@ export const instagramSendMessageRequestSchema = z.object({
   recipient: instagramRecipientSchema,
   message: instagramSendMessageSchema.optional(),
   sender_action: z.enum(["typing_on", "typing_off", "mark_seen"]).optional(),
-  messaging_type: z
-    .enum(["RESPONSE", "UPDATE", "MESSAGE_TAG"])
-    .default("RESPONSE")
-    .optional(),
-  tag: z
-    .enum(["CONFIRMED_EVENT_UPDATE", "HUMAN_AGENT", "ACCOUNT_UPDATE"])
-    .optional(),
+  messaging_type: z.literal("RESPONSE").optional(),
 })
 export type InstagramSendMessageRequest = z.infer<
   typeof instagramSendMessageRequestSchema
@@ -283,34 +258,25 @@ export const selectPageRequestSchema = z.object({
 })
 export type SelectPageRequest = z.infer<typeof selectPageRequestSchema>
 
-export const instagramIceBreakersRequest = z
-  .array(
+export const iceBreakerSchema = z.object({
+  locale: z.string(),
+  call_to_actions: z.array(
     z.object({
       question: z.string(),
       payload: z.string(),
     }),
-  )
-  .optional()
-export type InstagramIceBreakersRequest = z.infer<
-  typeof instagramIceBreakersRequest
->
+  ),
+})
+export type IceBreaker = z.infer<typeof iceBreakerSchema>
 
-export const instagramPersistentMenuItemSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("postback"),
-    title: z.string(),
-    payload: z.string(),
-  }),
-  z.object({
-    type: z.literal("web_url"),
-    title: z.string(),
-    url: z.string(),
-  }),
-])
+export const persistentMenuSchema = z.object({
+  locale: z.string(),
+  call_to_actions: z.array(instagramButtonSchema),
+})
+export type PersistentMenuSchema = z.infer<typeof persistentMenuSchema>
 
-export const instagramPersistentMenuRequest = z.array(
-  instagramPersistentMenuItemSchema,
-)
-export type InstagramPersistentMenuRequest = z.infer<
-  typeof instagramPersistentMenuRequest
->
+export const instagramProfileRequest = z.object({
+  ice_breakers: z.array(iceBreakerSchema),
+  persistent_menu: z.array(persistentMenuSchema),
+})
+export type InstagramProfileRequest = z.infer<typeof instagramProfileRequest>

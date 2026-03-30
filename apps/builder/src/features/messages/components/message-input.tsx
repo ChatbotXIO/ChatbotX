@@ -7,6 +7,7 @@ import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
@@ -19,6 +20,7 @@ import { FileUploadPreview } from "./file-upload"
 import { InputMenu } from "./input-menu"
 
 export const MessageInput = () => {
+  const t = useTranslations()
   const session = authClient.useSession()
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -142,6 +144,23 @@ export const MessageInput = () => {
   // Memoize inbox type and icon for current conversation
   const currentInboxType = "webchat"
 
+  // Check if conversation is over 7 days since last contact reply
+  const isOver7Days = useMemo(() => {
+    if (!conversation?.messages.length) {
+      return false
+    }
+
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    return conversation.contactRepliedAt
+      ? new Date(conversation.contactRepliedAt) < sevenDaysAgo
+      : false
+  }, [conversation])
+  const isDisabled = useMemo(() => {
+    return isOver7Days && currentInboxType === "messenger"
+  }, [isOver7Days, currentInboxType])
+  const placeholder = isDisabled ? t("messages.userInactive") : "Message..."
+
   // Check if files are attached
   const files = useWatch({
     control: form.control,
@@ -175,7 +194,8 @@ export const MessageInput = () => {
                     aria-label="Type your message"
                     autoComplete="off"
                     className="h-16 resize-none border-0 px-1.5 py-1 shadow-none focus:ring-0 focus-visible:ring-0 dark:bg-neutral-900"
-                    placeholder="Message..."
+                    disabled={isDisabled}
+                    placeholder={placeholder}
                     {...field}
                     onKeyDown={onKeyDown}
                     ref={textareaRef}
@@ -192,33 +212,35 @@ export const MessageInput = () => {
               <InboxIcon channel={currentInboxType} />
             </div>
 
-            <div className="message-toolbar flex items-center gap-2">
-              {!hasFiles && <InputMenu setContent={setContent} />}
-              <Button
-                aria-label="Attach file"
-                className="px-2 py-1.5 [&_svg]:size-5"
-                onClick={onClickAttachment}
-                type="button"
-                variant="ghost"
-              >
-                <PaperclipIcon aria-hidden="true" />
-              </Button>
-              <Button
-                aria-label="Send message"
-                className="px-2 py-1.5 [&_svg]:size-5"
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-                variant="ghost"
-              >
-                <SendHorizonalIcon
-                  aria-hidden="true"
-                  height="32px"
-                  width="32px"
-                />
-              </Button>
-            </div>
+            {!isDisabled && (
+              <div className="message-toolbar flex items-center gap-2">
+                {!hasFiles && <InputMenu setContent={setContent} />}
+                <Button
+                  aria-label="Attach file"
+                  className="px-2 py-1.5 [&_svg]:size-5"
+                  onClick={onClickAttachment}
+                  type="button"
+                  variant="ghost"
+                >
+                  <PaperclipIcon aria-hidden="true" />
+                </Button>
+                <Button
+                  aria-label="Send message"
+                  className="px-2 py-1.5 [&_svg]:size-5"
+                  disabled={
+                    !form.formState.isValid || form.formState.isSubmitting
+                  }
+                  type="submit"
+                  variant="ghost"
+                >
+                  <SendHorizonalIcon
+                    aria-hidden="true"
+                    height="32px"
+                    width="32px"
+                  />
+                </Button>
+              </div>
+            )}
           </div>
         </form>
       </Form>

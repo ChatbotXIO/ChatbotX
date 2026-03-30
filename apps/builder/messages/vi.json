@@ -1343,7 +1343,8 @@
     "deleteSuccess": "{feature} deleted successfully",
     "error": "Error",
     "moveFolderDescription": "Move {feature} to folder",
-    "noData": "No data"
+    "noData": "No data",
+    "userInactive": "Người dùng không hoạt động hơn 7 ngày"
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",

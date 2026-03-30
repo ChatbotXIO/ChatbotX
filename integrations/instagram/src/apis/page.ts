@@ -12,9 +12,8 @@ import { instagramGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
   InstagramAuthValue,
-  InstagramIceBreakersRequest,
   InstagramMessageAttachment,
-  InstagramPersistentMenuRequest,
+  InstagramProfileRequest,
   InstagramSendMessageRequest,
   InstagramSendMessageResponse,
 } from "../schemas"
@@ -165,59 +164,28 @@ export const getMessageAttachmentEntity = async ({
   }
 }
 
-export const updateIceBreakers = async (props: {
+export const updateInstagramProfile = async (props: {
   ctx: Context<InstagramAuthValue>
-  params: InstagramIceBreakersRequest
+  params: InstagramProfileRequest
 }): Promise<void> => {
   const { ctx, params } = props
   const { version = DEFAULT_API_VERSION } = ctx.auth
 
-  await instagramGraphClient.post(`${version}/me/messenger_profile`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-    },
-    json: {
-      platform: "instagram",
-      ice_breakers: params,
-    },
-  })
-}
-
-export const updatePersistentMenu = async (props: {
-  ctx: Context<InstagramAuthValue>
-  params: InstagramPersistentMenuRequest
-}): Promise<void> => {
-  const { ctx, params } = props
-  const { version = DEFAULT_API_VERSION } = ctx.auth
-
-  if (params.length === 0) {
-    await instagramGraphClient.delete(`${version}/me/messenger_profile`, {
+  const queries = new URLSearchParams({
+    platform: "instagram",
+    access_token: ctx.auth.tokens.accessToken,
+  }).toString()
+  await instagramGraphClient.post(
+    `${version}/me/messenger_profile?${queries}`,
+    {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
       json: {
         platform: "instagram",
-        fields: ["persistent_menu"],
+        ...params,
       },
-    })
-  } else {
-    await instagramGraphClient.post(`${version}/me/messenger_profile`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-      },
-      json: {
-        platform: "instagram",
-        persistent_menu: [
-          {
-            locale: "default",
-            composer_input_disabled: false,
-            call_to_actions: params,
-          },
-        ],
-      },
-    })
-  }
+    },
+  )
 }

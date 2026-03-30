@@ -8,23 +8,22 @@ import type { InstagramAuthValue, InstagramUserProfile } from "../schemas"
 
 export const getUserProfile = async ({
   ctx,
-  igsid,
+  psid,
 }: {
   ctx: Context<InstagramAuthValue>
-  igsid: string
+  psid: string
 }): Promise<IncomingContact> => {
   try {
+    const queries = new URLSearchParams({
+      fields: "name,username,profile_pic",
+      access_token: ctx.auth.tokens.accessToken,
+    })
     const response = await instagramGraphClient.get<InstagramUserProfile>(
-      `${ctx.auth.metadata.version}/${igsid}`,
-      {
-        headers: {
-          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-        },
-      },
+      `${ctx.auth.metadata.version}/${psid}?${queries.toString()}`,
     )
 
     const result: IncomingContact = {
-      sourceId: igsid,
+      sourceId: psid,
       firstName: response.name,
     }
 
@@ -44,7 +43,7 @@ export const getUserProfile = async ({
     logger.error(error, "getUserProfile error")
     throw new InstagramAPIException(
       "Failed to fetch user profile",
-      `${API_URL}/${ctx.auth.metadata.version}/${igsid}`,
+      `${API_URL}/${ctx.auth.metadata.version}/${psid}`,
     )
   }
 }

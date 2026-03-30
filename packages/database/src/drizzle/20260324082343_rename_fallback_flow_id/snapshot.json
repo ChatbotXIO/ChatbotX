@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "df0d779d-e4ae-4e9a-a194-91890bfe62a4",
+  "id": "0e25ad8c-8cf2-4292-aa09-d1bcf527ae57",
   "prevIds": ["f4d31007-c8bd-495f-93f5-c3318a7d3d6f"],
   "ddl": [
     {
@@ -4912,7 +4912,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "fallbackFlowId",
+      "name": "welcomeFlowId",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -4996,6 +4996,58 @@
       "table": "IntegrationMessenger"
     },
     {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "conversationStarters",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "persistentMenus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "greetingMessages",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "personas",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -5029,7 +5081,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "fallbackFlowId",
+      "name": "welcomeFlowId",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -9253,7 +9305,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "fallbackFlowId",
+          "value": "welcomeFlowId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -9268,7 +9320,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "IntegrationInstagram_fallbackFlowId_idx",
+      "name": "IntegrationInstagram_welcomeFlowId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -9349,7 +9401,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "fallbackFlowId",
+          "value": "welcomeFlowId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -9364,7 +9416,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "IntegrationMessenger_fallbackFlowId_idx",
+      "name": "IntegrationMessenger_welcomeFlowId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -11451,13 +11503,13 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["fallbackFlowId"],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "IntegrationInstagram_fallbackFlowId_fkey",
+      "name": "IntegrationInstagram_welcomeFlowId_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationInstagram"
@@ -11490,13 +11542,13 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["fallbackFlowId"],
+      "columns": ["welcomeFlowId"],
       "schemaTo": "public",
       "tableTo": "Flow",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "IntegrationMessenger_fallbackFlowId_fkey",
+      "name": "IntegrationMessenger_welcomeFlowId_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationMessenger"
@@ -12644,5 +12696,12 @@
       "entityType": "pks"
     }
   ],
-  "renames": []
+  "renames": [
+    "public.IntegrationInstagram.fallbackFlowId->public.IntegrationInstagram.welcomeFlowId",
+    "public.IntegrationMessenger.fallbackFlowId->public.IntegrationMessenger.welcomeFlowId",
+    "public.IntegrationInstagram.IntegrationInstagram_fallbackFlowId_idx->public.IntegrationInstagram.IntegrationInstagram_welcomeFlowId_idx",
+    "public.IntegrationMessenger.IntegrationMessenger_fallbackFlowId_idx->public.IntegrationMessenger.IntegrationMessenger_welcomeFlowId_idx",
+    "public.IntegrationInstagram.IntegrationInstagram_fallbackFlowId_fkey->public.IntegrationInstagram.IntegrationInstagram_welcomeFlowId_fkey",
+    "public.IntegrationMessenger.IntegrationMessenger_fallbackFlowId_fkey->public.IntegrationMessenger.IntegrationMessenger_welcomeFlowId_fkey"
+  ]
 }
