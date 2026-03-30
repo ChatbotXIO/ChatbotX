@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo, useMemo } from "react"
-import { ScanQRCodeDiaglog } from "@/features/qrcode/scan-qrcode"
+import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import { getInboxLink } from "@/features/reflinks/helpers"
 import type { InboxResource } from "../schemas/resource"
 import { InboxIcon } from "./inbox-icon"
@@ -27,12 +27,9 @@ export const InboxInstagramCard = memo(function InboxInstagramCard({
   return (
     <Card className="py-3">
       <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
-        <InboxIcon
-          inboxType="instagram"
-          label={inbox.integrationInstagram?.name}
-        />
+        <InboxIcon channel="instagram" label={inbox.name} />
 
-        <ScanQRCodeDiaglog
+        <ScanQRCodeDialog
           link={link}
           title={t("actions.connectFeature", {
             feature: "Instagram",

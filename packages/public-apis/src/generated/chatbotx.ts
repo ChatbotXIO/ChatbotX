@@ -877,7 +877,7 @@ export interface operations {
                     flowId?: string;
                     clientId?: string;
                     /** @enum {unknown} */
-                    channel: "webchat" | "messenger" | "instagram" | "whatsapp" | "zalo";
+                    channel: "webchat" | "messenger" | "whatsapp" | "zalo";
                 };
             };
         };

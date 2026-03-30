@@ -100,15 +100,11 @@ export const selectAccountAction = authActionClient
             .values({
               id: createId(),
               chatbotId,
-              inboxType: "instagram",
+              channel: "instagram",
               sourceId: parsedInput.igId,
             })
             .onConflictDoUpdate({
-              target: [
-                inboxModel.chatbotId,
-                inboxModel.inboxType,
-                inboxModel.sourceId,
-              ],
+              target: [inboxModel.channel, inboxModel.sourceId],
               set: {
                 status: InboxStatus.connected,
               },
