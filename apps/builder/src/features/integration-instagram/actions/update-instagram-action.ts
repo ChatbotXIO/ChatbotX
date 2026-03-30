@@ -3,13 +3,12 @@
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import {
   flowVersionModel,
+  type InstagramConversationStarter,
+  type InstagramPersistentMenu,
   integrationInstagramModel,
+  persistentMenuType,
 } from "@aha.chat/database/schema"
-import {
-  type FlowVersionModel,
-  type IntegrationInstagramModel,
-  PersistentMenuType,
-} from "@aha.chat/database/types"
+import type { IntegrationInstagramModel } from "@aha.chat/database/types"
 import { encodeButtonPayload } from "@aha.chat/flow-config"
 import type { InstagramAuthValue } from "@aha.chat/integration-instagram"
 import { integration as integrationInstagram } from "@aha.chat/integration-instagram"
@@ -27,12 +26,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
-import {
-  type ConversationStarter,
-  type PersistentMenuSchema,
-  type UpdateInstagramRequest,
-  updateInstagramRequest,
-} from "../schemas"
+import { type UpdateInstagramRequest, updateInstagramRequest } from "../schemas"
 
 export const updateInstagramAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -89,11 +83,11 @@ export const updateInstagramAction = chatbotActionClient
   )
 
 const buildIceBreakersParams = async (
-  conversationStarters: ConversationStarter[],
+  conversationStarters: InstagramConversationStarter[],
 ): Promise<IceBreaker[]> => {
   const callToActions = await Promise.all(
     conversationStarters.map(async (item) => {
-      const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
+      const flowVersion = await findOrFail(flowVersionModel, {
         flowId: item.flowId,
         isLatest: true,
       })
@@ -116,7 +110,7 @@ const buildIceBreakersParams = async (
 }
 
 const buildPersistentMenuParams = async (
-  persistentMenus: PersistentMenuSchema[],
+  persistentMenus: InstagramPersistentMenu[],
 ): Promise<InstagramProfileRequest["persistent_menu"]> => {
   const callToActions = await parseInstagramButtons(persistentMenus)
   return [
@@ -130,9 +124,9 @@ export const parseInstagramButtons = async (
   persistentMenus: IntegrationInstagramModel["persistentMenus"],
 ): Promise<InstagramButton[]> => {
   const buttons: InstagramButton[] = []
-  for (const menu of persistentMenus as PersistentMenuSchema[]) {
-    if (menu && menu.type === PersistentMenuType.flow) {
-      const flowVersion = await findOrFail<FlowVersionModel>(flowVersionModel, {
+  for (const menu of persistentMenus as InstagramPersistentMenu[]) {
+    if (menu.type === persistentMenuType.enum.flow) {
+      const flowVersion = await findOrFail(flowVersionModel, {
         flowId: menu.flowId,
         isLatest: true,
       })
@@ -147,7 +141,7 @@ export const parseInstagramButtons = async (
       })
     } else if (
       menu &&
-      menu.type === PersistentMenuType.website &&
+      menu.type === persistentMenuType.enum.url &&
       "url" in menu
     ) {
       buttons.push({

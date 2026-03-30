@@ -6,7 +6,6 @@ import {
   inboxModel,
   integrationInstagramModel,
 } from "@aha.chat/database/schema"
-import type { IntegrationInstagramModel } from "@aha.chat/database/types"
 import type { InstagramAuthValue } from "@aha.chat/integration-instagram"
 import { unsubscribePageFromInstagramWebhook } from "@aha.chat/integration-instagram/apis/page"
 import {
@@ -24,7 +23,7 @@ export const disconnectInstagramAction = chatbotActionClient
     }: {
       bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
-      const integrationInstagram = await findOrFail<IntegrationInstagramModel>(
+      const integrationInstagram = await findOrFail(
         integrationInstagramModel,
         {
           id: integrationInstagramId,
