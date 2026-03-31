@@ -9,7 +9,7 @@ export type CustomFieldState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   customFields: CustomFieldResource[]
 }
 
@@ -26,7 +26,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     customFields: [],
     ...props,
 

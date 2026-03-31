@@ -3,7 +3,7 @@ import z from "zod"
 
 export const clearCustomField = z.object({
   type: z.literal(TriggerAction.clearCustomField),
-  customFieldId: z.cuid2(),
+  customFieldId: z.bigint(),
 })
 export type ClearCustomField = z.infer<typeof clearCustomField>
 

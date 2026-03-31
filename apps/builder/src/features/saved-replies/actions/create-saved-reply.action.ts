@@ -2,7 +2,7 @@
 
 import { db } from "@aha.chat/database/client"
 import { savedReplyModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import {

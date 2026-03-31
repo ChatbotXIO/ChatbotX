@@ -18,8 +18,8 @@ export function EditContactForm({
   onCancel,
   onSuccess,
 }: {
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint
   contactNote: ContactNoteModel
   onCancel: () => void
   onSuccess: (data: ContactNoteModel) => void
@@ -50,7 +50,7 @@ export function EditContactForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            content: contactNote.content,
+            text: contactNote.text,
           },
         },
         errorMapProps: {},

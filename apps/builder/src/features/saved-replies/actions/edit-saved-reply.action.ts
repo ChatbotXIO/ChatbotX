@@ -7,7 +7,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { type EditSavedReplyRequest, editSavedReplyRequest } from "../schema"
 
-const savedReplyIdRequestParams: [z.ZodCUID2] = [z.cuid2().describe("id")]
+const savedReplyIdRequestParams: [z.ZodCUID2] = [z.bigint().describe("id")]
 type SavedReplyIdRequestParams = [string]
 
 export const editSavedReplyAction = authActionClient

@@ -1,19 +1,19 @@
 "use client"
 
-import type { TriggerModel } from "@aha.chat/database/types"
 import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import type { Dispatch, SetStateAction } from "react"
 import { CreateTriggerDialog } from "./create-trigger-dialog"
 import { DeleteTriggersDialog } from "./delete-triggers-dialog"
+import type { TriggerResource } from "./schema/resource"
 
 type TriggersTableToolbarActionsProps = {
-  table: Table<TriggerModel>
-  chatbotId: string
-  folderId: string | null
+  table: Table<TriggerResource>
+  chatbotId: bigint
+  folderId: bigint | null
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<TriggerModel> | null>
+    SetStateAction<DataTableRowAction<TriggerResource> | null>
   >
 }
 

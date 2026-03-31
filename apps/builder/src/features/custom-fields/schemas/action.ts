@@ -4,7 +4,7 @@ import { z } from "zod"
 export const createCustomFieldRequest = z.object({
   name: z.string().trim().min(1).max(255),
   type: z.enum(customFieldType.enumValues),
-  folderId: z.cuid2().nullish(),
+  folderId: z.bigint().nullish(),
   description: z.string().nullish(),
 })
 export type CreateCustomFieldRequest = z.infer<typeof createCustomFieldRequest>
@@ -19,6 +19,6 @@ export type CreateCustomFieldResponse = z.infer<
 export const updateCustomFieldRequest = z.object({
   name: z.string().trim().min(1).max(255),
   description: z.string().optional(),
-  folderId: z.cuid2().nullish(),
+  folderId: z.bigint().nullish(),
 })
 export type UpdateCustomFieldRequest = z.infer<typeof updateCustomFieldRequest>

@@ -10,7 +10,7 @@ export const useFlowSelectOptions = () => {
     () =>
       flows.map((flow) => ({
         label: flow.name,
-        value: flow.id,
+        value: flow.id.toString(),
       })),
     [flows],
   )
@@ -23,7 +23,7 @@ export const useFlowNodesSelectOptions = () => {
     () =>
       flows.map((flow) => ({
         label: flow.name,
-        value: flow.id,
+        value: flow.id.toString(),
         children: getFlowNodesOptions(flow.flowVersions),
       })),
     [flows],
@@ -38,6 +38,6 @@ const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
 
   return (lastedFlowVersion.nodes as FlowNode[]).map((node: FlowNode) => ({
     label: node.data.name,
-    value: node.id,
+    value: node.id.toString(),
   }))
 }

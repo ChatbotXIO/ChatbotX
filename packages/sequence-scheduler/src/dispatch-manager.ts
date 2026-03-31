@@ -13,36 +13,37 @@ import {
 } from "@aha.chat/database/schema"
 import { SchedulerClient } from "@aha.chat/scheduler"
 import { sequenceConnections } from "@chatbotx.io/redis"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { createHash } from "crypto"
 
 type DrizzleClient = typeof db | Transaction
 
-export function calculateBucket(chatbotId: string, contactId: string): number {
+export function calculateBucket(chatbotId: bigint, contactId: bigint): number {
   const key = `${chatbotId}:${contactId}`
   const hash = createHash("sha256").update(key).digest()
   return hash[0] // First byte gives 0-255
 }
+
 export function generateIdempotencyKey(
-  chatbotId: string,
-  enrollmentId: string,
-  stepId: string,
+  chatbotId: bigint,
+  enrollmentId: bigint,
+  stepId: bigint,
   runAt: Date,
 ): string {
   return `${chatbotId}:${enrollmentId}:${stepId}:${runAt.toISOString()}`
 }
 export interface CreateDispatchParams {
-  chatbotId: string
+  chatbotId: bigint
   client?: DrizzleClient
-  contactId: string
-  enrollmentId: string
+  contactId: bigint
+  enrollmentId: bigint
   runAt: Date
-  sequenceId: string
-  stepId: string
+  sequenceId: bigint
+  stepId: bigint
 }
 export async function createDispatch(
   params: CreateDispatchParams,
-): Promise<{ id: string; bucket: number; runAtMs: number }> {
+): Promise<{ id: bigint; bucket: number; runAtMs: number }> {
   const {
     chatbotId,
     sequenceId,
@@ -88,14 +89,14 @@ export async function createDispatch(
   return dispatch
 }
 export interface CancelPendingDispatchesParams {
-  chatbotId: string
+  chatbotId: bigint
   client?: DatabaseClient
-  enrollmentId: string
+  enrollmentId: bigint
   reason?: string
 }
 export async function cancelPendingDispatches(
   params: CancelPendingDispatchesParams,
-): Promise<Array<{ id: string; bucket: number }>> {
+): Promise<Array<{ id: bigint; bucket: number }>> {
   const { enrollmentId, chatbotId, reason = "canceled", client = db } = params
 
   const pendingDispatches = await client.query.sequenceDispatchModel.findMany({
@@ -158,17 +159,17 @@ export async function cancelPendingDispatches(
   }))
 }
 export interface RescheduleEnrollmentParams {
-  chatbotId: string
+  chatbotId: bigint
   client?: DrizzleClient
-  enrollmentId: string
+  enrollmentId: bigint
   newNextRunAt: Date
-  newStepId: string
+  newStepId: bigint
 }
 export async function rescheduleEnrollment(
   params: RescheduleEnrollmentParams,
 ): Promise<{
-  canceled: Array<{ id: string; bucket: number }> | null
-  created: { id: string; bucket: number; runAtMs: number } | null
+  canceled: Array<{ id: bigint; bucket: number }> | null
+  created: { id: bigint; bucket: number; runAtMs: number } | null
 }> {
   const {
     enrollmentId,
@@ -209,7 +210,7 @@ export async function rescheduleEnrollment(
         stepId: true,
       },
     })
-    let canceled: Array<{ id: string; bucket: number }> | null = null
+    let canceled: Array<{ id: bigint; bucket: number }> | null = null
     if (currentDispatch && currentDispatch.status === "pending") {
       await tx
         .update(sequenceDispatchModel)
@@ -278,13 +279,13 @@ export async function rescheduleEnrollment(
   return await executeReschedule(client)
 }
 export interface PauseEnrollmentParams {
-  chatbotId: string
+  chatbotId: bigint
   client?: DrizzleClient
-  enrollmentId: string
+  enrollmentId: bigint
 }
 export async function pauseEnrollment(
   params: PauseEnrollmentParams,
-): Promise<Array<{ id: string; bucket: number }>> {
+): Promise<Array<{ id: bigint; bucket: number }>> {
   const { enrollmentId, chatbotId, client = db } = params
 
   const executePause = async (tx: DrizzleClient) => {
@@ -314,15 +315,15 @@ export async function pauseEnrollment(
   return await executePause(client)
 }
 export interface ResumeEnrollmentParams {
-  chatbotId: string
+  chatbotId: bigint
   client?: DrizzleClient
-  enrollmentId: string
+  enrollmentId: bigint
   nextRunAt: Date
-  nextStepId: string
+  nextStepId: bigint
 }
 export async function resumeEnrollment(
   params: ResumeEnrollmentParams,
-): Promise<{ id: string; bucket: number; runAtMs: number }> {
+): Promise<{ id: bigint; bucket: number; runAtMs: number }> {
   const { enrollmentId, chatbotId, nextRunAt, nextStepId, client = db } = params
 
   const executeResume = async (tx: DrizzleClient) => {

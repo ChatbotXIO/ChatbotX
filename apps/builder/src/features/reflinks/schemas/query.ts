@@ -24,7 +24,7 @@ export const listReflinksSearchParamsCache = createSearchParamsCache(
 
 export type ListReflinksRequest = Awaited<
   ReturnType<typeof listReflinksSearchParamsCache.parse>
-> & { chatbotId: string }
+> & { chatbotId: bigint }
 
 export const listReflinkItem = reflinkResource.and(
   z.object({

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { memo, useMemo } from "react"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import { getInboxLink } from "@/features/reflinks/helpers"
-import type { InboxResource } from "../schemas/resource"
+import type { InboxResource } from "../schema/resource"
 import { InboxIcon } from "./inbox-icon"
 
 type InboxMessengerCardProps = {

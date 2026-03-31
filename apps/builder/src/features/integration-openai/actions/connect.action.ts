@@ -6,7 +6,7 @@ import {
   integrationOpenAIModel,
 } from "@aha.chat/database/schema"
 import { AuthType, type SecretTextAuthValue } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

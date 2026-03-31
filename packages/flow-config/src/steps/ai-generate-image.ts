@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -10,13 +10,13 @@ const AIGenerateImageQuality = {
 } as const
 
 export const aiGenerateImageSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.aiGenerateImage),
   model: z.string().trim().min(1),
   prompt: z.string().trim().optional(),
   quality: z.enum(AIGenerateImageQuality),
   size: z.string().trim().min(1),
-  outputCfId: z.cuid2(),
+  outputCfId: z.bigint(),
 })
 
 export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>

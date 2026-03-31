@@ -43,8 +43,8 @@ export async function listReflinks(
 }
 
 export async function findReflink(where: {
-  chatbotId: string
-  id: string
+  chatbotId: bigint
+  id: bigint
 }): Promise<ReflinkResource | undefined> {
   return await db.query.reflinkModel.findFirst({
     where,

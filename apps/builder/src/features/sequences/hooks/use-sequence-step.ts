@@ -8,14 +8,14 @@ import { upsertSequenceStepAction } from "../actions/upsert-sequence-step.action
 type DelayUnit = "immediate" | "minutes" | "hours" | "days" | "specificTime"
 
 type SavePayload = {
-  stepId?: string
-  sequenceId: string
+  stepId?: bigint
+  sequenceId: bigint
   order: number
   delayDays?: number
   delayMinutes?: number
   delayUnit?: DelayUnit
   specificDateTime?: string
-  flowId?: string
+  flowId?: bigint
   isActive?: boolean
   anytime?: boolean
   sendTimeStart?: string | null
@@ -34,14 +34,14 @@ const WEEKDAY_ORDER = [
 ]
 
 type Step = {
-  id: string
+  id: bigint
   order: number
   delayDays: number
   delayMinutes: number
   delayUnit?: string | null
   specificDateTime?: Date | null
-  flowId: string | null
-  flow: { id: string; name: string } | null
+  flowId: bigint | null
+  flow: { id: bigint; name: string } | null
   isActive?: boolean
   anytime?: boolean
   sendTimeStart?: string | null
@@ -52,8 +52,8 @@ type Step = {
 type UseSequenceStepProps = {
   step?: Step
   stepNumber: number
-  sequenceId: string
-  chatbotId: string
+  sequenceId: bigint
+  chatbotId: bigint
   isFirst?: boolean
   previousStepTime?: Date
   onSaved?: () => void
@@ -81,7 +81,7 @@ export function useSequenceStep({
 
   const handleSave = useCallback(
     async (changedFields: {
-      flowId?: string
+      flowId?: bigint
       delayUnit?: DelayUnit
       delayValue?: number
       specificDateTime?: string
@@ -238,7 +238,7 @@ export function useSequenceStep({
   }, [step?.id, chatbotId, sequenceId, t, router])
 
   const handleSelectFlow = useCallback(
-    async (flowId: string) => {
+    async (flowId: bigint) => {
       setShowFlowError(false)
       await handleSave({ flowId })
     },
@@ -246,7 +246,7 @@ export function useSequenceStep({
   )
 
   const handleActiveChange = useCallback(
-    async (checked: boolean, selectedFlowId: string) => {
+    async (checked: boolean, selectedFlowId: bigint) => {
       if (checked && !selectedFlowId) {
         toast.error(t("sequences.selectFlowFirst"))
         setShowFlowError(true)

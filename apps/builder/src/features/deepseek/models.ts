@@ -1,25 +1,27 @@
-export const deepseekModels = {
-  deepseekChat: "deepseek-chat",
-  deepseekChatV2: "deepseek-chat-v2",
-  deepseekCoder: "deepseek-coder",
-  deepseekCoderV2: "deepseek-coder-v2",
-} as const
+import { z } from "zod"
+
+export const deepseekModels = z.enum([
+  "deepseek-chat",
+  "deepseek-chat-v2",
+  "deepseek-coder",
+  "deepseek-coder-v2",
+])
 
 export const deepseekModelOptions = [
   {
     label: "DeepSeek-V2.5",
-    value: deepseekModels.deepseekChat,
+    value: deepseekModels.enum["deepseek-chat"],
   },
   {
     label: "DeepSeek-V2",
-    value: deepseekModels.deepseekChatV2,
+    value: deepseekModels.enum["deepseek-chat-v2"],
   },
   {
     label: "DeepSeek-Coder",
-    value: deepseekModels.deepseekCoder,
+    value: deepseekModels.enum["deepseek-coder"],
   },
   {
     label: "DeepSeek-Coder-V2",
-    value: deepseekModels.deepseekCoderV2,
+    value: deepseekModels.enum["deepseek-coder-v2"],
   },
 ]

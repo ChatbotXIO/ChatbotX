@@ -1,9 +1,9 @@
 "use client"
 
-import { type ChannelType, channelType } from "@aha.chat/database/types"
+import { type ChannelType, channelTypes } from "@aha.chat/database/schema"
 import { cn } from "@aha.chat/ui/lib/utils"
 import { memo, useMemo } from "react"
-import type { InboxResource } from "../schemas/resource"
+import type { InboxResource } from "../schema/resource"
 import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
 import { InboxWebchatCard } from "./inbox-webchat-card"
@@ -11,7 +11,7 @@ import { InboxWhatsappCard } from "./inbox-whatsapp-card"
 import { InboxZaloCard } from "./inbox-zalo-card"
 
 type InboxCardListProps = {
-  chatbotId: string
+  chatbotId: bigint
   allowAddNew?: boolean
   actionLabel?: string
   direction?: "horizontal" | "vertical"
@@ -45,7 +45,7 @@ export const InboxCardList = memo(function InboxCardList({
     () =>
       allowAddNew
         ? inboxes
-        : inboxes.filter((inbox) => inbox.channel !== channelType.zalo),
+        : inboxes.filter((inbox) => inbox.channel !== channelTypes.enum.zalo),
     [allowAddNew, inboxes],
   )
 

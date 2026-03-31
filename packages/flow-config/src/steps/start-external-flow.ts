@@ -1,11 +1,11 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const startExternalFlowStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.startExternalFlow),
-  flowId: z.cuid2(),
+  flowId: z.bigint(),
 })
 
 export type StartExternalFlowStepSchema = z.infer<

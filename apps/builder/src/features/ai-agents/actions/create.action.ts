@@ -2,7 +2,7 @@
 
 import { db, eq } from "@aha.chat/database/client"
 import { aiAgentModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type CreateAIAgentRequest,
   createAIAgentRequest,

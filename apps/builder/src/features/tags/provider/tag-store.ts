@@ -9,7 +9,7 @@ export type TagState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   tags: TagResource[]
 }
 
@@ -26,7 +26,7 @@ export const createTagStore = (props: Partial<TagState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     tags: [],
     ...props,
 

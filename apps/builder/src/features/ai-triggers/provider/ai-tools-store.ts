@@ -1,13 +1,8 @@
-import type {
-  AIFileModel,
-  AIFunctionModel,
-  AIMCPServerModel,
-} from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { AIFileCollection } from "@/features/ai-files/schemas"
-import type { AIFunctionCollection } from "@/features/ai-functions/schemas"
-import type { AIMcpServerCollection } from "@/features/ai-mcp-servers/schemas"
+import type { ListAIFilesResponse } from "@/features/ai-files/schemas"
+import type { ListAIFunctionsResponse } from "@/features/ai-functions/schema/action"
+import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schema/action"
 
 export type AIToolsState = {
   loadingAIFiles: boolean
@@ -17,9 +12,9 @@ export type AIToolsState = {
   initialized: boolean
 
   chatbotId: string
-  files: AIFileModel[]
-  functions: AIFunctionModel[]
-  mcpServers: AIMCPServerModel[]
+  files: ListAIFilesResponse["data"]
+  functions: ListAIFunctionsResponse["data"]
+  mcpServers: ListAIMcpServersResponse["data"]
 }
 
 export type AIToolsActions = {
@@ -82,7 +77,7 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
 
       try {
         const { data } = await ky
-          .get<AIFileCollection>(`/api/chatbots/${chatbotId}/ai-files`)
+          .get<ListAIFilesResponse>(`/api/chatbots/${chatbotId}/ai-files`)
           .json()
 
         set({ files: data })
@@ -109,7 +104,9 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
 
       try {
         const { data } = await ky
-          .get<AIFunctionCollection>(`/api/chatbots/${chatbotId}/ai-functions`)
+          .get<ListAIFunctionsResponse>(
+            `/api/chatbots/${chatbotId}/ai-functions`,
+          )
           .json()
 
         set({ functions: data })
@@ -136,7 +133,7 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
 
       try {
         const { data } = await ky
-          .get<AIMcpServerCollection>(
+          .get<ListAIMcpServersResponse>(
             `/api/chatbots/${chatbotId}/ai-mcp-servers`,
           )
           .json()

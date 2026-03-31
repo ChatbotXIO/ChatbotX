@@ -2,7 +2,7 @@ import { db } from "@aha.chat/database/client"
 
 type ListAIIntegrationsProps = {
   where: {
-    chatbotId: string
+    chatbotId: bigint
   }
 }
 
@@ -17,7 +17,7 @@ export async function listAIIntegrations(props: ListAIIntegrationsProps) {
   })
 }
 
-export async function hasAIIntegration(chatbotId: string): Promise<boolean> {
+export async function hasAIIntegration(chatbotId: bigint): Promise<boolean> {
   const exists = await db.query.integrationModel.findFirst({
     where: {
       integrationType: {

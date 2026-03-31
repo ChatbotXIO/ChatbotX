@@ -10,6 +10,7 @@
     "@aha.chat/database": "workspace:*",
     "@aha.chat/scheduler": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
     "date-fns": "^4.1.0"
   },

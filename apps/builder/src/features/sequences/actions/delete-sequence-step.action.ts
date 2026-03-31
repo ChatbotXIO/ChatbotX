@@ -12,15 +12,15 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 
 const deleteSequenceStepRequest = z.object({
-  stepId: z.string(),
-  sequenceId: z.string(),
+  stepId: z.bigint(),
+  sequenceId: z.bigint(),
 })
 
 type DeleteSequenceStepRequest = z.infer<typeof deleteSequenceStepRequest>
 
 async function validateSequenceOwnership(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
 ) {
   await findOrFail(
     sequenceModel,
@@ -32,7 +32,7 @@ async function validateSequenceOwnership(
   )
 }
 
-async function deleteStep(stepId: string, chatbotId: string) {
+async function deleteStep(stepId: bigint, chatbotId: bigint) {
   const step = await db.query.sequenceStepModel.findFirst({
     where: {
       id: stepId,

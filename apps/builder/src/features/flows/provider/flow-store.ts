@@ -3,15 +3,15 @@ import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
 import type { ListFlowsResponse } from "../schemas/query"
 
-type FlowStateFilter = { startType?: string; integrationWhatsappId?: string }
+type FlowStateFilter = { startType?: string; integrationWhatsappId?: bigint }
 
 export type FlowState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: string
-  filter?: FlowStateFilter
+  chatbotId: bigint
+  filter: FlowStateFilter
   flows: ListFlowsResponse["data"]
 }
 
@@ -30,7 +30,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     filter: {},
     flows: [],
     ...props,
@@ -81,6 +81,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
               perPage: maxPerPageString,
               active: "true",
               ...filter,
+              integrationWhatsappId: filter.integrationWhatsappId?.toString(),
             },
           })
           .json()

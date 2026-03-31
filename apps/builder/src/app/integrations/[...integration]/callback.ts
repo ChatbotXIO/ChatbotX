@@ -8,7 +8,7 @@ import type {
   OrganizationSettings,
 } from "@aha.chat/database/types"
 import type { AuthValue, Oauth2AuthValue } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
@@ -19,7 +19,7 @@ import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
-  chatbotId: z.cuid2(),
+  chatbotId: z.bigint(),
   referer: z.url(),
 })
 
@@ -110,7 +110,6 @@ export const handleCallback = async (
 
     if (integrationType === "googleSheets" && googleSheetsAuth) {
       await tx.insert(integrationGoogleSheetsModel).values({
-        id: createId(),
         chatbotId: stateParams.chatbotId,
         integrationId,
         auth: googleSheetsAuth,

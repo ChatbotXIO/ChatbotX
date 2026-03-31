@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const NodeType = {
@@ -22,7 +22,7 @@ export type NewNodeProps = {
 }
 
 export const baseNodeSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   position: z.object({
     x: z.number(),
     y: z.number(),

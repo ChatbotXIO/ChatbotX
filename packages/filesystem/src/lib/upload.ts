@@ -1,5 +1,5 @@
 import type { ObjectCannedACL } from "@aws-sdk/client-s3"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getImageDimensions, pathJoin } from "./helper"
 import type { UploadedFile } from "./schema"
 import { uploader } from "./uploader"

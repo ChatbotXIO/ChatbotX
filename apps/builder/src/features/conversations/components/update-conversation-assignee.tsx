@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { authClient } from "@/lib/auth/auth-client"
 import { useContactAssigneeOptions } from "../../users/provider/user-hook"
-import type { ConversationResource } from "../schemas/resource"
+import type { ConversationResource } from "../schema/resource"
 import AssignConversationDialog from "./assign-conversation-dialog"
 
 type UpdateConversationAssigneeProps = {

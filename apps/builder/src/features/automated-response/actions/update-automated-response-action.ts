@@ -12,7 +12,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateAutomatedResponseRequest,
   updateAutomatedResponseRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const updateAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

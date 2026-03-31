@@ -1,1 +1,0 @@
-ALTER TYPE "SenderType" ADD VALUE 'api';

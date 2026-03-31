@@ -1,25 +1,30 @@
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { getIntegationWebchats } from "@/features/webchat/queries/get-webchats.query"
-import { getWebchatRequest } from "@/features/webchat/schemas/webchat.schema"
-import { WebchatTable } from "@/features/webchat/webchat-table"
+import { listIntegrationWebchats } from "@/features/integration-webchat/queries"
+import { listIntegrationWebchatsRequest } from "@/features/integration-webchat/schema/query"
+import { WebchatTable } from "@/features/integration-webchat/webchat-table"
 
 export default async function WebchatsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
   const t = await getTranslations()
-  const params = await props.params
+  const { chatbotId: chatbotIdString } = await props.params
+  const chatbotId = BigInt(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
-  const search = getWebchatRequest.parse(searchParams)
+  const search = listIntegrationWebchatsRequest.parse(searchParams)
 
   const promises = Promise.all([
-    getIntegationWebchats({
+    listIntegrationWebchats({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
@@ -29,7 +34,7 @@ export default async function WebchatsPage(props: {
         items={[
           {
             label: t("channels.title"),
-            href: `/chatbots/${params.chatbotId}/settings/channels`,
+            href: `/chatbots/${chatbotId}/settings/channels`,
           },
           { label: t("fields.webchat.label"), href: "" },
         ]}

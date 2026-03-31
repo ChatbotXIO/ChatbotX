@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   integer,
   jsonb,
@@ -52,7 +53,7 @@ export const planModel = pgTable("Plan", {
   freeTrial: jsonb().$type<PlanFreeTrial>(),
   currency: text().notNull(),
   marketingFeatures: text().array().notNull().default([]),
-  organizationId: text()
+  organizationId: bigint({ mode: "bigint" })
     .notNull()
     .references(() => organizationModel.id, {
       onDelete: "cascade",

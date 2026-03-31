@@ -15,9 +15,9 @@ export type ReplyByAIProps = {
 }
 
 export type SimilaritySearchResult = {
-  id: string
+  id: bigint
   content: string
-  aiFileId: string
+  aiFileId: bigint
   distance: number
 }
 
@@ -26,11 +26,8 @@ export type FileSearchArgs = {
 }
 
 export type FileSearchConfig = {
-  chatbotId: string
-  selectedFileIds: string[]
+  chatbotId: bigint
+  selectedFileIds: bigint[]
   similarityThreshold: number
   maxResults: number
 }
-
-export type { AutomatedResponseReply } from "@aha.chat/database/types"
-export type { SecretTextAuthValue } from "@aha.chat/sdk"

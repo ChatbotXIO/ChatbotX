@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -16,7 +18,12 @@ export default async function ReflinksPage({
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const t = await getTranslations()
 
   const search = listReflinksSearchParamsCache.parse(await searchParams)

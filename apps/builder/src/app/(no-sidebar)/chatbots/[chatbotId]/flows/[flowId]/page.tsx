@@ -1,4 +1,5 @@
 import { db } from "@aha.chat/database/client"
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowDetail } from "@/features/flows/flow-detail"
@@ -9,7 +10,15 @@ type FlowPageProps = {
 }
 
 export default async function FlowPage({ params }: FlowPageProps) {
-  const { chatbotId, flowId } = await params
+  const { chatbotId: chatbotIdString, flowId: flowIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+  const flowId = parseBigIntId(flowIdString)
+  if (!flowId) {
+    return notFound()
+  }
 
   const userAndChatbot = await getCurrentUserAndTargetChatbot(chatbotId)
   if (!userAndChatbot) {

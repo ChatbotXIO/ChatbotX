@@ -20,16 +20,16 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import type { UserResource } from "../../../features/users/schemas/resource"
+import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
 import { createInboxTeamAction } from "./actions/create-inbox-team.action"
-import { createInboxTeamRequest } from "./schema"
+import { createInboxTeamRequest } from "./schema/action"
 
 export function CreateInboxTeamDialog({
   chatbotId,
-  users,
+  chatbotMembers,
 }: {
-  chatbotId: string
-  users: UserResource[]
+  chatbotId: bigint
+  chatbotMembers: ListChatbotMembersResponse["data"]
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -70,9 +70,9 @@ export function CreateInboxTeamDialog({
       },
     )
 
-  const userOptions = users.map((user) => ({
-    value: user.id,
-    label: user.name ?? "",
+  const userOptions = chatbotMembers.map((cm) => ({
+    value: cm.user.id.toString(),
+    label: cm.user.name ?? "",
   }))
 
   return (

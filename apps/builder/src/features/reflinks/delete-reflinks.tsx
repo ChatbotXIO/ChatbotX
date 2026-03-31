@@ -22,7 +22,7 @@ import { deleteReflinksAction } from "./actions/delete-reflinks.action"
 import type { ReflinkResource } from "./schemas/resource"
 
 type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: string
+  chatbotId: bigint
   reflinks: Row<ReflinkResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void

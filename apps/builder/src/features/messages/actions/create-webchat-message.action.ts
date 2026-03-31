@@ -23,16 +23,16 @@ import {
 import type { OutgoingMessage } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import { ChatbotXException, notFoundException } from "@/lib/errors/exception"
 import { actionClient } from "@/lib/safe-action"
-import type { MessageResource } from "../schemas"
 import {
   type CreateWebchatMessageRequest,
   createWebchatMessageRequest,
-} from "../schemas/create-message.schema"
+} from "../schema/mutation"
+import type { MessageResource } from "../schema/resource"
 
 export const createWebchatMessageAction = actionClient
   .inputSchema(createWebchatMessageRequest)
@@ -98,11 +98,12 @@ export async function handleCreateWebchatMessage({
       "content" in parsedInput &&
       (parsedInput.content || uploadedFiles.length > 0)
     ) {
-      const newMessage: MessageResource = await tx
+      const newMessage: MessageResource & {
+        attachments?: AttachmentResource[]
+      } = await tx
         .insert(messageModel)
         .values({
-          id: createId(),
-          content: "content" in parsedInput ? parsedInput.content : null,
+          text: "text" in parsedInput ? parsedInput.text : null,
           messageType: "incoming",
           chatbotId: conversation.chatbotId,
           conversationId: conversation.id,
@@ -119,7 +120,6 @@ export async function handleCreateWebchatMessage({
           .insert(attachmentModel)
           .values(
             uploadedFiles.map((file) => ({
-              id: createId(),
               messageId: newMessage.id,
               chatbotId: newMessage.chatbotId,
               conversationId: newMessage.conversationId,
@@ -193,7 +193,7 @@ export async function handleCreateWebchatMessage({
         )
       } else if (
         !conversation.liveChatEnabled &&
-        newMessage.content &&
+        newMessage.text &&
         !("postback" in parsedInput && parsedInput.postback)
       ) {
         // trigger automated response if the message is not a postback
@@ -211,7 +211,7 @@ export async function handleCreateWebchatMessage({
       if (isNewContact && parsedInput.guestConversationId) {
         await contactTrackingService.trackEvent({
           chatbotId: parsedInput.chatbotId,
-          contactId: parsedInput.guestConversationId,
+          contactId: contact.id,
           eventType: "contact_created",
           occurredAt: contact.createdAt,
           source: "webchat",
@@ -253,7 +253,7 @@ async function getConversationFromInput(
       inboxId: integrationWebchat.inboxId,
     },
   })
-  let contact: ContactModel | null = null
+  let contact: ContactModel | null | undefined = null
   let isNewContact = false
 
   if (conversation) {
@@ -266,7 +266,7 @@ async function getConversationFromInput(
     )
   } else {
     // find or create contact
-    let contact = await tx.query.contactModel.findFirst({
+    contact = await tx.query.contactModel.findFirst({
       where: {
         chatbotId: parsedInput.chatbotId,
         sourceId,
@@ -299,6 +299,7 @@ async function getConversationFromInput(
         })
         .returning()
         .then((result) => result[0])
+
       isNewContact = true
     }
 

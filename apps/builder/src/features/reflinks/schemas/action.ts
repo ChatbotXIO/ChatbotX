@@ -8,9 +8,9 @@ export const createReflinkRequest = z.object({
     .min(1)
     .max(50)
     .refine((value) => REF_LINK_NAME_REGEX.test(value)),
-  flowId: z.cuid2(),
+  flowId: z.bigint(),
   customFieldId: z
-    .union([z.literal("").transform(() => null), z.cuid2()])
+    .union([z.literal("").transform(() => null), z.bigint()])
     .nullable(),
 })
 export type CreateReflinkRequest = z.infer<typeof createReflinkRequest>

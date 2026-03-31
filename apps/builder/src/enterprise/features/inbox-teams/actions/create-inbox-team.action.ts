@@ -2,14 +2,17 @@
 
 import { db } from "@aha.chat/database/client"
 import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type CreateInboxTeamRequest, createInboxTeamRequest } from "../schema"
+import {
+  type CreateInboxTeamRequest,
+  createInboxTeamRequest,
+} from "../schema/action"
 
 export const createInboxTeamAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

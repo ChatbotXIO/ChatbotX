@@ -1,6 +1,6 @@
 "use client"
 
-import { channelType } from "@aha.chat/database/types"
+import { channelTypes } from "@aha.chat/database/schema"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import {
@@ -27,7 +27,7 @@ import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { importContactsAction } from "./actions/import-contacts.action"
 import { importContactsRequest } from "./schemas/action"
 
-export function ImportContactsForm({ chatbotId }: { chatbotId: string }) {
+export function ImportContactsForm({ chatbotId }: { chatbotId: bigint }) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -161,14 +161,14 @@ export function ContactsSettings({ csvHeaders }: { csvHeaders: string[] }) {
         options={channelOptions}
         triggerValueChange={setChannel}
       />
-      {channel === channelType.whatsapp && (
+      {channel === channelTypes.enum.whatsapp && (
         <InputField
           label={t("fields.countryCode.label")}
           name="countryCode"
           placeholder="+1"
         />
       )}
-      {channel !== channelType.whatsapp && (
+      {channel !== channelTypes.enum.whatsapp && (
         <>
           <HeaderConnectContactField
             csvHeaders={csvHeaders}

@@ -34,7 +34,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) =>
 )
 
 type TimeRangeSelectorProps = {
-  stepId?: string
+  stepId?: bigint
   timeOption: "anytime" | "between"
   startTime: string
   endTime: string

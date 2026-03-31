@@ -6,7 +6,7 @@ import {
   type AIJobProcessFile,
   aiAgentQueue,
 } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { extractTextFromFile } from "../lib/text-extractor"
 
 type TextChunk = { content: string }

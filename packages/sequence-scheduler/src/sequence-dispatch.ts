@@ -7,15 +7,15 @@ import {
 import {
   sequenceDispatchModel,
   sequenceEventModel,
+  sequenceEventTypes,
 } from "@aha.chat/database/schema"
-import { sequenceEventType } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 
 export const sequenceDispatchUtils = {
   bulkCancelPendingDispatches: async (props: {
     dbClient: DatabaseClient
-    chatbotId: string
-    enrollmentId: string
+    chatbotId: bigint
+    enrollmentId: bigint
     reason?: "canceled"
   }) => {
     const { dbClient, chatbotId, enrollmentId, reason } = props
@@ -68,7 +68,7 @@ export const sequenceDispatchUtils = {
         contactId: d.contactId,
         stepId: d.stepId,
         dispatchId: d.id,
-        eventType: sequenceEventType.dispatch_canceled,
+        eventType: sequenceEventTypes.enum.dispatch_canceled,
         payload: { reason },
         occurredAt: new Date(),
       })),

@@ -21,7 +21,8 @@ import "react-day-picker/style.css"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { updateInboxTeamAction } from "./actions/update-inbox-team.action"
-import { type InboxTeamResource, updateInboxTeamRequest } from "./schema"
+import { updateInboxTeamRequest } from "./schema/action"
+import type { InboxTeamResource } from "./schema/resource"
 
 export function RenameInboxTeamDialog({
   open,
@@ -31,7 +32,7 @@ export function RenameInboxTeamDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   inboxTeam: InboxTeamResource | null
 }) {
   const t = useTranslations()
@@ -41,7 +42,7 @@ export function RenameInboxTeamDialog({
     handleSubmitWithAction,
     form: { reset },
   } = useHookFormAction(
-    updateInboxTeamAction.bind(null, chatbotId, inboxTeam?.id ?? ""),
+    updateInboxTeamAction.bind(null, chatbotId, inboxTeam?.id ?? BigInt(0)),
     zodResolver(updateInboxTeamRequest),
     {
       actionProps: {

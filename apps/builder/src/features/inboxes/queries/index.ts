@@ -4,8 +4,8 @@ import { inboxModel } from "@aha.chat/database/schema"
 import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListInboxesRequest } from "../schemas/query"
-import type { InboxResource } from "../schemas/resource"
+import type { ListInboxesRequest } from "../schema/action"
+import type { InboxResource } from "../schema/resource"
 
 export async function listInboxes(
   input: ListInboxesRequest,

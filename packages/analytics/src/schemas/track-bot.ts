@@ -9,13 +9,13 @@ import { triggerContextSchema } from "./trigger-context"
 
 const trackBotRequestSchema = z.object({
   aiProvider: z.string(),
-  chatbotId: z.string(),
-  conversationId: z.string(),
+  chatbotId: z.bigint(),
+  conversationId: z.bigint(),
   hasResponse: z.boolean(),
-  messageId: z.string(),
+  messageId: z.bigint(),
   metadata: z
     .object({
-      flowId: z.string().optional(),
+      flowId: z.bigint().optional(),
       intentId: z.string().optional(),
       intentConfidence: z.number().optional(),
       fallbackReason: botMessageFallbackReasonSchema.optional(),

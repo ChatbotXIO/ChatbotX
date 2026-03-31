@@ -8,7 +8,10 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { type UpdateInboxTeamRequest, updateInboxTeamRequest } from "../schema"
+import {
+  type UpdateInboxTeamRequest,
+  updateInboxTeamRequest,
+} from "../schema/action"
 
 export const updateInboxTeamAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

@@ -3,7 +3,7 @@
 import { db } from "@aha.chat/database/client"
 import { flowModel, flowVersionModel } from "@aha.chat/database/schema"
 import { sendMessageNodeDefaultFn } from "@aha.chat/flow-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

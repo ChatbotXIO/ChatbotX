@@ -7,7 +7,7 @@ export type TemplateState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   integrationWhatsappId?: string
   templates: MessageTemplate[]
 }
@@ -26,7 +26,7 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     templates: [],
     ...props,
 

@@ -20,7 +20,7 @@ import {
 import baseLogger from "@aha.chat/logger"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,

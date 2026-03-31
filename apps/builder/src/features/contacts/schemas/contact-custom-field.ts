@@ -11,8 +11,8 @@ export const contactCustomFieldResource = createSelectSchema(
 )
 
 export const addContactCustomFieldRequest = z.object({
-  ids: z.array(z.cuid2()),
-  customFieldId: z.cuid2(),
+  ids: z.array(z.bigint()),
+  customFieldId: z.bigint(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
 })
@@ -21,16 +21,16 @@ export type AddContactCustomFieldRequest = z.infer<
 >
 
 export const deleteContactCustomFieldsRequest = z.object({
-  ids: z.array(z.cuid2()),
-  customFieldId: z.cuid2(),
+  ids: z.array(z.bigint()),
+  customFieldId: z.bigint(),
 })
 export type DeleteContactCustomFieldsRequest = z.infer<
   typeof deleteContactCustomFieldsRequest
 >
 
 export const listContactCustomFieldsRequest = z.object({
-  chatbotId: z.cuid2(),
-  contactId: z.cuid2(),
+  chatbotId: z.bigint(),
+  contactId: z.bigint(),
 })
 export type ListContactCustomFieldsRequest = z.infer<
   typeof listContactCustomFieldsRequest
@@ -44,8 +44,8 @@ export type ListContactCustomFieldsResponse = z.infer<
 >
 
 export const setContactCustomFieldValueRequest = z.object({
-  contactId: z.cuid2(),
-  customFieldId: z.cuid2(),
+  contactId: z.bigint(),
+  customFieldId: z.bigint(),
   value: z.string().trim(),
 })
 export type SetContactCustomFieldValueRequest = z.infer<
@@ -53,8 +53,8 @@ export type SetContactCustomFieldValueRequest = z.infer<
 >
 
 export const deleteContactCustomFieldRequest = z.object({
-  contactId: z.cuid2(),
-  customFieldId: z.cuid2(),
+  contactId: z.bigint(),
+  customFieldId: z.bigint(),
 })
 export type DeleteContactCustomFieldRequest = z.infer<
   typeof deleteContactCustomFieldRequest

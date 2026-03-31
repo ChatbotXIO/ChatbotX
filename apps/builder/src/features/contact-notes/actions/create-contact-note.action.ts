@@ -3,7 +3,7 @@
 import { db, findOrFail } from "@aha.chat/database/client"
 import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
 import type { UserModel } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

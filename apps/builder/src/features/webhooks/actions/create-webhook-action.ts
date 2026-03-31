@@ -4,7 +4,7 @@ import { db, eq } from "@aha.chat/database/client"
 import { FolderType } from "@aha.chat/database/enums"
 import { webhookModel } from "@aha.chat/database/schema"
 import { updateWebhookCache } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,

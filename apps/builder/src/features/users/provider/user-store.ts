@@ -1,11 +1,7 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { InboxTeamResource } from "@/enterprise/features/inbox-teams/schema"
-import type {
-  ChatbotMemberCollection,
-  ChatbotMemberResource,
-} from "@/features/chatbot-members/schemas/resource"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
+import type { ListInboxTeamsResponse } from "@/enterprise/features/inbox-teams/schema/action"
+import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
 import { maxPerPageString } from "@/lib/shared-request"
 
 export type UserState = {
@@ -14,9 +10,9 @@ export type UserState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
-  chatbotMembers: ChatbotMemberResource[]
-  inboxTeams: InboxTeamResource[]
+  chatbotId: bigint
+  chatbotMembers: ListChatbotMembersResponse["data"]
+  inboxTeams: ListInboxTeamsResponse["data"]
 }
 
 export type UserActions = {
@@ -34,7 +30,7 @@ export const createUserStore = (props: Partial<UserState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     chatbotMembers: [],
     inboxTeams: [],
     ...props,
@@ -77,8 +73,8 @@ export const createUserStore = (props: Partial<UserState>) =>
           perPage: maxPerPageString,
         })
         const { data } = await ky
-          .get<ChatbotMemberCollection>(
-            `/api/chatbots/${chatbotId}/agents?${searchParams.toString()}`,
+          .get<ListChatbotMembersResponse>(
+            `/api/chatbots/${chatbotId}/members?${searchParams.toString()}`,
           )
           .json()
 
@@ -111,7 +107,7 @@ export const createUserStore = (props: Partial<UserState>) =>
         })
 
         const { data } = await ky
-          .get<PaginatedResponse<InboxTeamResource>>(
+          .get<ListInboxTeamsResponse>(
             `/api/chatbots/${chatbotId}/inbox-teams?${searchParams.toString()}`,
           )
           .json()

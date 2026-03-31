@@ -17,18 +17,19 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { parseAsString, useQueryState } from "nuqs"
+import { useQueryState } from "nuqs"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createFolderAction } from "@/features/folders/actions/create-folder.action"
-import { createFolderSchema } from "@/features/folders/schemas/action"
+import { createFolderSchema } from "@/features/folders/schema/action"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { useFolderStore } from "./provider/folder-store-context"
 
 export function CreateFolderDialog({
   chatbotId,
   folderType,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   folderType: FolderType
 }) {
   const t = useTranslations()
@@ -36,7 +37,7 @@ export function CreateFolderDialog({
 
   const [open, setOpen] = useState(false)
 
-  const [folderId] = useQueryState("folderId", parseAsString)
+  const [folderId] = useQueryState("folderId", parseAsBigInt)
   const { getAllFolders } = useFolderStore((state) => state)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =

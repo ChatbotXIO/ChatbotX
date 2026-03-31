@@ -8,7 +8,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { getTriggers } from "@/features/triggers/queries"
-import { getTriggersSearchParamsCache } from "@/features/triggers/schemas/get-trigger-schema"
+import { getTriggersSearchParamsCache } from "@/features/triggers/schema/query"
 import { TriggersTable } from "@/features/triggers/triggers-table"
 
 export default async function TriggersPage(props: {

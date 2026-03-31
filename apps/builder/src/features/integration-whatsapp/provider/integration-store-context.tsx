@@ -20,7 +20,7 @@ export const IntegrationStoreContext = createContext<
 >(undefined)
 
 export type IntegrationStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

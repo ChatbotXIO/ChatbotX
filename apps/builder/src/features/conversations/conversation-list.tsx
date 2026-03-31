@@ -1,14 +1,14 @@
 "use client"
 
-import { AssignerFilterType, ConversationType } from "@aha.chat/database/enums"
-import { channelType } from "@aha.chat/database/types"
+import { assignerFilterTypes, ConversationType } from "@aha.chat/database/enums"
+import { channelTypes } from "@aha.chat/database/schema"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -20,9 +20,8 @@ import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
-export default function ConversationList() {
+export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
   const {
@@ -64,8 +63,8 @@ export default function ConversationList() {
     defaultValues: {
       keyword: "",
       liveChatEnabled: undefined,
-      channel: channelType.omnichannel,
-      assignedUserId: AssignerFilterType.all,
+      channel: channelTypes.enum.omnichannel,
+      assignedType: assignerFilterTypes.enum.all,
       status: [],
       contactFilter: {
         operator: "and",
@@ -145,7 +144,7 @@ export default function ConversationList() {
                 conversation={item}
                 onSelect={() => {
                   const params = new URLSearchParams(searchParams.toString())
-                  params.set("conversationId", item.id)
+                  params.set("conversationId", item.id.toString())
                   router.replace(`?${params.toString()}`)
                   setActiveConversationId(item.id)
                 }}

@@ -27,7 +27,7 @@ import {
   integrationQueue,
 } from "@aha.chat/worker-config"
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -35,11 +35,11 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import type { MessageResource } from "../schemas"
 import {
   type CreateMessageRequest,
   createMessageRequest,
-} from "../schemas/create-message.schema"
+} from "../schema/mutation"
+import type { MessageResource } from "../schema/resource"
 
 export const createMessageAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -104,21 +104,21 @@ export const createMessage = async (props: {
   // }
 
   const message = await db.transaction(async (tx) => {
-    const newMessage: MessageResource = await tx
-      .insert(messageModel)
-      .values({
-        id: createId(),
-        content: "content" in parsedInput ? parsedInput.content : null,
-        messageType: "outgoing",
-        chatbotId: conversation.chatbotId,
-        conversationId: conversation.id,
-        senderType: user ? "user" : "api",
-        senderId: user?.id,
-        inboxId: conversation.inboxId,
-        contentType: "text",
-      })
-      .returning()
-      .then((result) => result[0])
+    const newMessage: MessageResource & { attachments?: AttachmentResource[] } =
+      await tx
+        .insert(messageModel)
+        .values({
+          text: "text" in parsedInput ? parsedInput.text : null,
+          messageType: "outgoing",
+          chatbotId: conversation.chatbotId,
+          conversationId: conversation.id,
+          senderType: user ? "user" : "api",
+          senderId: user?.id,
+          inboxId: conversation.inboxId,
+          contentType: "text",
+        })
+        .returning()
+        .then((result) => result[0])
 
     // create attachment if path exists
     if (uploadedFiles.length > 0) {
@@ -203,10 +203,10 @@ export const createMessage = async (props: {
     promises.push(
       contactTrackingService.trackEvent({
         chatbotId: message.chatbotId,
-        contactId: contact.sourceId,
+        contactId: contact.id,
         eventType: "contact_message_out",
         senderType: "human",
-        adminId: user?.id ?? "",
+        adminId: user?.id,
         occurredAt: new Date(),
         source: contact.source,
         sourceId: contact.sourceId,

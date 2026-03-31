@@ -24,7 +24,7 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { isCommunity } from "@/env"
 import { inviteChatbotMemberAction } from "../actions/invite-chatbot-member.action"
-import { inviteChatbotMemberRequest } from "../schemas/chatbot-member.request"
+import { inviteChatbotMemberRequest } from "../schema/mutation"
 export function InviteChatbotMemberDialog() {
   const t = useTranslations()
 

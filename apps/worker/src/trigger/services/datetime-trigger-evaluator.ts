@@ -2,7 +2,7 @@ import { db, sql } from "@aha.chat/database/client"
 import { Condition } from "@aha.chat/database/enums"
 import { triggerExecutionModel } from "@aha.chat/database/schema"
 import { getRedisConnection } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type {
   DateTimeCondition,

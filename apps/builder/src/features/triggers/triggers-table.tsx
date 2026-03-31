@@ -1,7 +1,6 @@
 "use client"
 
 import { FolderType } from "@aha.chat/database/enums"
-import type { TriggerModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
@@ -13,13 +12,14 @@ import { ChangeFolderDialog } from "../folders/change-folder"
 import { RenameTriggerDialog } from "./components/rename-trigger-dialog"
 import { DeleteTriggersDialog } from "./delete-triggers-dialog"
 import type { getTriggers } from "./queries"
+import type { TriggerResource } from "./schema/resource"
 import { getColumns } from "./triggers-table-columns"
 import { TriggersTableToolbarActions } from "./triggers-table-toolbar-actions"
 
 type TriggersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getTriggers>>]>
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
 }
 
 export function TriggersTable({
@@ -32,7 +32,7 @@ export function TriggersTable({
 
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<TriggerModel> | null>(null)
+    useState<DataTableRowAction<TriggerResource> | null>(null)
 
   const columns = useMemo(
     () => getColumns({ chatbotId, setRowAction, t }),
@@ -47,7 +47,7 @@ export function TriggersTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["action"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

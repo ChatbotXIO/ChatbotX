@@ -1,99 +1,101 @@
-export const openaiModels = {
-  gpt52Pro: "openai/gpt-5.2-pro",
-  gpt52ChatLatest: "openai/gpt-5.2-chat-latest",
-  gpt52: "openai/gpt-5.2",
-  gpt51CodexMini: "openai/gpt-5.1-codex-mini",
-  gpt51Codex: "openai/gpt-5.1-codex",
-  gpt51ChatLatest: "openai/gpt-5.1-chat-latest",
-  gpt51: "openai/gpt-5.1",
-  gpt5Pro: "openai/gpt-5-pro",
-  gpt5: "openai/gpt-5",
-  gpt5Mini: "openai/gpt-5-mini",
-  gpt5Nano: "openai/gpt-5-nano",
-  gpt5Codex: "openai/gpt-5-codex",
-  gpt5ChatLatest: "openai/gpt-5-chat-latest",
-  gpt41: "openai/gpt-4.1",
-  gpt41Mini: "openai/gpt-4.1-mini",
-  gpt41Nano: "openai/gpt-4.1-nano",
-  gpt4o: "openai/gpt-4o",
-  gpt4oMini: "openai/gpt-4o-mini",
-  gpt4oAudioPreview: "openai/gpt-4o-audio-preview",
-  gpt4Turbo: "openai/gpt-4-turbo",
-  gpt4: "openai/gpt-4",
-} as const
+import { z } from "zod"
+
+export const openaiModels = z.enum([
+  "openai/gpt-5.2-pro",
+  "openai/gpt-5.2-chat-latest",
+  "openai/gpt-5.2",
+  "openai/gpt-5.1-codex-mini",
+  "openai/gpt-5.1-codex",
+  "openai/gpt-5.1-chat-latest",
+  "openai/gpt-5.1",
+  "openai/gpt-5-pro",
+  "openai/gpt-5",
+  "openai/gpt-5-mini",
+  "openai/gpt-5-nano",
+  "openai/gpt-5-codex",
+  "openai/gpt-5-chat-latest",
+  "openai/gpt-4.1",
+  "openai/gpt-4.1-mini",
+  "openai/gpt-4.1-nano",
+  "openai/gpt-4o",
+  "openai/gpt-4o-mini",
+  "openai/gpt-4o-audio-preview",
+  "openai/gpt-4-turbo",
+  "openai/gpt-4",
+])
 
 export const openaiChatModelOptions = [
   {
     label: "GPT-5.2 Pro",
-    value: openaiModels.gpt52Pro,
+    value: openaiModels.enum["openai/gpt-5.2-pro"],
   },
   {
     label: "GPT-5.2 Chat Latest",
-    value: openaiModels.gpt52ChatLatest,
+    value: openaiModels.enum["openai/gpt-5.2-chat-latest"],
   },
   {
     label: "GPT-5.2",
-    value: openaiModels.gpt52,
+    value: openaiModels.enum["openai/gpt-5.2"],
   },
   {
     label: "GPT-5.1 Codex Mini",
-    value: openaiModels.gpt51CodexMini,
+    value: openaiModels.enum["openai/gpt-5.1-codex-mini"],
   },
   {
     label: "GPT-5.1 Codex",
-    value: openaiModels.gpt51Codex,
+    value: openaiModels.enum["openai/gpt-5.1-codex"],
   },
   {
     label: "GPT-5.1 Chat Latest",
-    value: openaiModels.gpt51ChatLatest,
+    value: openaiModels.enum["openai/gpt-5.1-chat-latest"],
   },
   {
     label: "GPT-5.1",
-    value: openaiModels.gpt51,
+    value: openaiModels.enum["openai/gpt-5.1"],
   },
   {
     label: "GPT-5 Pro",
-    value: openaiModels.gpt5Pro,
+    value: openaiModels.enum["openai/gpt-5-pro"],
   },
   {
     label: "GPT-5",
-    value: openaiModels.gpt5,
+    value: openaiModels.enum["openai/gpt-5"],
   },
   {
     label: "GPT-5 Mini",
-    value: openaiModels.gpt5Mini,
+    value: openaiModels.enum["openai/gpt-5-mini"],
   },
   {
     label: "GPT-5 Nano",
-    value: openaiModels.gpt5Nano,
+    value: openaiModels.enum["openai/gpt-5-nano"],
   },
   {
     label: "GPT-5 Codex",
-    value: openaiModels.gpt5Codex,
+    value: openaiModels.enum["openai/gpt-5-codex"],
   },
   {
     label: "GPT-5 Chat Latest",
-    value: openaiModels.gpt5ChatLatest,
+    value: openaiModels.enum["openai/gpt-5-chat-latest"],
   },
   {
     label: "GPT-4.1",
-    value: openaiModels.gpt41,
+    value: openaiModels.enum["openai/gpt-4.1"],
   },
   {
     label: "GPT-4.1 Mini",
-    value: openaiModels.gpt41Mini,
+    value: openaiModels.enum["openai/gpt-4.1-mini"],
   },
   {
     label: "GPT-4.1 Nano",
-    value: openaiModels.gpt41Nano,
+    value: openaiModels.enum["openai/gpt-4.1-nano"],
   },
   {
     label: "GPT-4o",
-    value: openaiModels.gpt4o,
+    value: openaiModels.enum["openai/gpt-4o"],
   },
   {
     label: "GPT-4o Mini",
-    value: openaiModels.gpt4oMini,
+    value: openaiModels.enum["openai/gpt-4o-mini"],
   },
 ]
 export const openaiChatModels = openaiChatModelOptions.map(

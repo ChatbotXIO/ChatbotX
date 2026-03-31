@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
 import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
@@ -28,6 +28,7 @@ import {
 } from "./table-columns"
 
 type AIAgentsTableProps = {
+  chatbotId: bigint
   listPromises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
   createPromises: Promise<
     [
@@ -39,13 +40,13 @@ type AIAgentsTableProps = {
 }
 
 export function AIAgentsTable({
+  chatbotId,
   listPromises,
   createPromises,
 }: AIAgentsTableProps) {
   const [{ data, pageCount }] = use(listPromises)
   const [{ data: files }, { data: functions }, { data: mcpServers }] =
     use(createPromises)
-  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const t = useTranslations()
   const router = useRouter()
@@ -70,7 +71,7 @@ export function AIAgentsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AIAgentModel) => originalRow.id as string,
+    getRowId: (originalRow: AIAgentModel) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })
@@ -85,6 +86,7 @@ export function AIAgentsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <CreateAIAgentDialog
+              chatbotId={chatbotId}
               files={files}
               functions={functions}
               mcpServers={mcpServers}

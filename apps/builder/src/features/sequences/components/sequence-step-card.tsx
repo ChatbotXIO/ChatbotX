@@ -18,14 +18,14 @@ import { TimeRangeSelector } from "./time-range-selector"
 
 type SequenceStepCardProps = {
   step?: {
-    id: string
+    id: bigint
     order: number
     delayDays: number
     delayMinutes: number
     delayUnit?: string | null
     specificDateTime?: Date | null
-    flowId: string | null
-    flow: { id: string; name: string } | null
+    flowId: bigint | null
+    flow: { id: bigint; name: string } | null
     isActive?: boolean
     anytime?: boolean
     sendTimeStart?: string | null
@@ -33,8 +33,8 @@ type SequenceStepCardProps = {
     sendDays?: string | null
   }
   stepNumber: number
-  sequenceId: string
-  chatbotId: string
+  sequenceId: bigint
+  chatbotId: bigint
   isFirst?: boolean
   isNew?: boolean
   onSaved?: () => void
@@ -52,7 +52,9 @@ export function SequenceStepCard({
   previousStepTime,
 }: SequenceStepCardProps) {
   const t = useTranslations()
-  const [selectedFlowId, setSelectedFlowId] = useState(step?.flowId || "")
+  const [selectedFlowId, setSelectedFlowId] = useState(
+    step?.flowId || undefined,
+  )
   const [isActive, setIsActive] = useState(step?.isActive ?? false)
   const [isTimeOptionsExpanded, setIsTimeOptionsExpanded] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -109,7 +111,7 @@ export function SequenceStepCard({
                   className="cursor-pointer"
                   onCheckedChange={(checked) => {
                     if (!selectedFlowId) {
-                      handleActiveChange(checked, "")
+                      handleActiveChange(checked, BigInt(0))
                       return
                     }
 

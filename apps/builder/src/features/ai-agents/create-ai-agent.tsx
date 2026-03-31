@@ -1,10 +1,10 @@
 "use client"
 
-import {
-  type AIFileModel,
-  type AIFunctionModel,
-  type AIMCPServerModel,
-  AIMessageRole,
+import { aiMessageRoles } from "@aha.chat/database/schema"
+import type {
+  AIFileModel,
+  AIFunctionModel,
+  AIMCPServerModel,
 } from "@aha.chat/database/types"
 import { aiProviders, defaultAIModelIds } from "@aha.chat/flow-config"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
@@ -41,7 +41,6 @@ import {
   ServerIcon,
   TrashIcon,
 } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -52,6 +51,7 @@ import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openaiChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
+  chatbotId: bigint
   files: AIFileModel[]
   functions: AIFunctionModel[]
   mcpServers: AIMCPServerModel[]
@@ -59,13 +59,13 @@ type CreateAIAgentDialogProps = {
 }
 
 export function CreateAIAgentDialog({
+  chatbotId,
   files,
   functions,
   mcpServers,
   onSuccess,
 }: CreateAIAgentDialogProps) {
   const [open, setOpen] = useState(false)
-  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const t = useTranslations()
 
@@ -101,8 +101,8 @@ export function CreateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: "User", value: AIMessageRole.user },
-      { label: "Assistant", value: AIMessageRole.assistant },
+      { label: "User", value: aiMessageRoles.enum.user },
+      { label: "Assistant", value: aiMessageRoles.enum.assistant },
     ],
     [],
   )
@@ -139,11 +139,11 @@ export function CreateAIAgentDialog({
             messages: [],
             models: [
               {
-                provider: aiProviders.gemini,
+                provider: aiProviders.enum.gemini,
                 model: defaultAIModelIds.gemini,
               },
               {
-                provider: aiProviders.openai,
+                provider: aiProviders.enum.openai,
                 model: defaultAIModelIds.openai,
               },
             ],
@@ -163,7 +163,7 @@ export function CreateAIAgentDialog({
 
   const addMessage = () => {
     append({
-      role: AIMessageRole.user,
+      role: aiMessageRoles.enum.user,
       content: "",
     })
   }

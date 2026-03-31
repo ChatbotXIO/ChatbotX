@@ -9,7 +9,7 @@ import {
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
-import type { ListConversationItemResource } from "../conversations/schemas/resource"
+import type { ListConversationItemResource } from "../conversations/schema/resource"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
 import UpdateContactSequenceField from "./update-contact-sequence-field"
 

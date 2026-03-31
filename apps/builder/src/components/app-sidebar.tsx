@@ -36,7 +36,7 @@ export function AppSidebar({
   allChatbotsPromise,
   ...props
 }: ComponentProps<typeof Sidebar> & {
-  chatbotId: string
+  chatbotId: bigint
   allChatbotsPromise: Promise<{ chatbots: ChatbotResource[] }>
 }) {
   const t = useTranslations()

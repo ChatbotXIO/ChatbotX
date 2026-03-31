@@ -17,7 +17,7 @@ export const FlowStoreContext = createContext<FlowStoreApi | undefined>(
 )
 
 export type FlowStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

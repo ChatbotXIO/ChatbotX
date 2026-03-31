@@ -7,7 +7,7 @@ import type { ListReflinkItem } from "./schemas/query"
 
 type ReflinksTableToolbarActionsProps = {
   table: Table<ListReflinkItem>
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function ReflinksTableToolbarActions({

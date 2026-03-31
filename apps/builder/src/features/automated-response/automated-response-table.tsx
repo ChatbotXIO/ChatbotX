@@ -1,6 +1,5 @@
 "use client"
 
-import { ReplyType } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -41,11 +40,10 @@ import { updateAutomatedResponseAction } from "./actions/update-automated-respon
 import { AddAutomatedResponseButton } from "./components/add-automated-response-button"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { listAutomatedResponses } from "./queries"
-import type { CreateAutomatedResponseRequest } from "./schemas/action"
-import type { AutomatedResponseResource } from "./schemas/resource"
+import type { AutomatedResponseResource } from "./schema/resource"
 
 type AutomatedResponseTableProps = {
-  chatbotId: string
+  chatbotId: bigint
   promises: Promise<[Awaited<ReturnType<typeof listAutomatedResponses>>]>
 }
 
@@ -128,37 +126,16 @@ export function AutomatedResponsesTable({
             title={t("fields.botResponse.label")}
           />
         ),
-        cell: ({ cell }) => {
-          const replies = cell.getValue<
-            AutomatedResponseResource["replies"]
-          >() as CreateAutomatedResponseRequest["replies"]
-
-          const displayData: string[] = []
-          for (const reply of replies) {
-            if (reply.type === ReplyType.Message) {
-              displayData.push(`Message: ${reply.message}`)
-            } else {
-              const flow = allFlows.find((f) => f.id === reply.flowId)
-              if (flow) {
-                displayData.push(`Flow: ${flow.name}`)
-              }
+        cell: ({ row }) => {
+          let reply = row.original.text
+          if (!reply) {
+            const flow = allFlows.find((f) => f.id === row.original.flowId)
+            if (flow) {
+              reply = `Flow: ${flow.name}`
             }
           }
 
-          return (
-            <div className="max-w-[200px]">
-              <ul className="list-disc">
-                {displayData.map((reply, idx) => {
-                  return (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                    <li className="truncate" key={idx}>
-                      {reply}
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          )
+          return <div className="max-w-[200px] truncate">{reply ?? ""}</div>
         },
         enableSorting: false,
         enableHiding: false,
@@ -262,7 +239,7 @@ export function AutomatedResponsesTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })
@@ -310,8 +287,8 @@ export function AutomatedResponsesTable({
 }
 
 const AutomatedResponseStatusCell = (props: {
-  id: string
-  chatbotId: string
+  id: bigint
+  chatbotId: bigint
   checked: boolean
 }) => {
   const { execute, isPending } = useAction(

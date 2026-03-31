@@ -25,7 +25,7 @@ import { updateReflinkRequest } from "./schemas/action"
 import type { ReflinkResource } from "./schemas/resource"
 
 type UpdateReflinkFormProps = {
-  chatbotId: string
+  chatbotId: bigint
   reflink: ReflinkResource | null
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -69,7 +69,7 @@ export function UpdateReflinkDialog({
 
 export function UpdateReflinkForm(props: {
   reflink: ReflinkResource
-  chatbotId: string
+  chatbotId: bigint
   onCompletedForm: () => void
 }) {
   const { chatbotId, reflink, onCompletedForm } = props
@@ -100,8 +100,8 @@ export function UpdateReflinkForm(props: {
         mode: "onChange",
         defaultValues: {
           name: "",
-          flowId: "",
-          customFieldId: "",
+          flowId: BigInt(0),
+          customFieldId: BigInt(0),
         },
       },
     },

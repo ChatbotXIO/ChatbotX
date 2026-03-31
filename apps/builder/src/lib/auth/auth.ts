@@ -10,7 +10,7 @@ import {
   sendResetPassword,
   sendSignUpVerification,
 } from "@aha.chat/mail"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
@@ -97,6 +97,11 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 5 * 60, // Cache duration in seconds (5 minutes)
       strategy: "compact", // or "jwt" or "jwe"
+    },
+  },
+  advanced: {
+    database: {
+      generateId: "serial",
     },
   },
 })

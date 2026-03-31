@@ -1,20 +1,12 @@
 "use client"
 
-import { ReplyType } from "@aha.chat/database/types"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import {
-  Loader2Icon,
-  MessageSquareMoreIcon,
-  PlusCircleIcon,
-  XIcon,
-  ZapIcon,
-} from "lucide-react"
+import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
@@ -22,11 +14,11 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
-import { createAutomatedResponseRequest } from "./schemas/action"
+import { createAutomatedResponseRequest } from "./schema/action"
 
 type CreateAutomatedResponseFormProps = {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | undefined
 }
 
 export function CreateAutomatedResponseForm(
@@ -39,7 +31,7 @@ export function CreateAutomatedResponseForm(
   const t = useTranslations()
   const router = useRouter()
 
-  const flowOptions = useFlowSelectOptions()
+  const _flowOptions = useFlowSelectOptions()
 
   const {
     form,
@@ -71,7 +63,8 @@ export function CreateAutomatedResponseForm(
         defaultValues: {
           folderId: folderId ?? null,
           userMessages: [{ value: "" }],
-          replies: [],
+          text: "",
+          flowId: null,
         },
       },
       errorMapProps: {},
@@ -84,15 +77,6 @@ export function CreateAutomatedResponseForm(
       setValue("folderId", folderId)
     }
   }, [setValue, folderId])
-
-  const {
-    fields: replies,
-    append: appendReplies,
-    remove: removeReplies,
-  } = useFieldArray({
-    control,
-    name: "replies",
-  })
 
   const {
     fields: userMessages,
@@ -152,7 +136,7 @@ export function CreateAutomatedResponseForm(
           </Label>
         </div>
 
-        {replies.map((reply, index) => (
+        {/* {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
             <div className="flex w-1/2 items-start gap-2">
@@ -217,7 +201,7 @@ export function CreateAutomatedResponseForm(
           >
             <PlusCircleIcon /> {t("actions.addFlowReply")}
           </Button>
-        </div>
+        </div> */}
 
         <div className="flex justify-end gap-4">
           <Button

@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
 import { AppTab } from "@/components/app-tab"
@@ -12,7 +14,12 @@ export default async function TagsLayout({
   folders: ReactNode
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const t = await getTranslations()
 
   return (

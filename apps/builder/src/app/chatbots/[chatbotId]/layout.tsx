@@ -3,8 +3,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@aha.chat/ui/components/ui/sidebar"
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
@@ -17,9 +18,16 @@ export default async function ChatbotLayout({
   children: React.ReactNode
   params: Promise<{ chatbotId: string }>
 }) {
-  const userId = await getCurrentUserId()
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
-  const { chatbotId } = await params
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return notFound()
+  }
 
   const allChatbotsPromise = getAllChatbotMembers(userId)
 

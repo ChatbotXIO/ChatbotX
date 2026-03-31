@@ -71,11 +71,11 @@ export class SchedulerClient {
 
   async addToSchedule(
     bucket: number,
-    dispatchId: string,
+    dispatchId: bigint,
     runAtMs: number,
   ): Promise<void> {
     const key = this.getScheduleKey(bucket)
-    await this.redis.zadd(key, runAtMs, dispatchId)
+    await this.redis.zadd(key, runAtMs, dispatchId.toString())
   }
 
   async addToRetry(
@@ -87,17 +87,17 @@ export class SchedulerClient {
     await this.redis.zadd(key, retryAtMs, dispatchId)
   }
 
-  async removeFromSchedule(bucket: number, dispatchId: string): Promise<void> {
+  async removeFromSchedule(bucket: number, dispatchId: bigint): Promise<void> {
     const key = this.getScheduleKey(bucket)
-    await this.redis.zrem(key, dispatchId)
+    await this.redis.zrem(key, dispatchId.toString())
   }
 
-  async removeFromRetry(bucket: number, dispatchId: string): Promise<void> {
+  async removeFromRetry(bucket: number, dispatchId: bigint): Promise<void> {
     const key = this.getRetryKey(bucket)
-    await this.redis.zrem(key, dispatchId)
+    await this.redis.zrem(key, dispatchId.toString())
   }
 
-  async removeFromAll(bucket: number, dispatchId: string): Promise<void> {
+  async removeFromAll(bucket: number, dispatchId: bigint): Promise<void> {
     await Promise.all([
       this.removeFromSchedule(bucket, dispatchId),
       this.removeFromRetry(bucket, dispatchId),
@@ -127,7 +127,7 @@ export class SchedulerClient {
   }
 
   async batchAddToSchedule(
-    items: Array<{ bucket: number; dispatchId: string; runAtMs: number }>,
+    items: Array<{ bucket: number; dispatchId: bigint; runAtMs: number }>,
   ): Promise<void> {
     if (items.length === 0) {
       return
@@ -135,7 +135,7 @@ export class SchedulerClient {
     const pipeline = this.redis.pipeline()
     for (const { bucket, dispatchId, runAtMs } of items) {
       const key = this.getScheduleKey(bucket)
-      pipeline.zadd(key, runAtMs, dispatchId)
+      pipeline.zadd(key, runAtMs, dispatchId.toString())
     }
     await pipeline.exec()
   }

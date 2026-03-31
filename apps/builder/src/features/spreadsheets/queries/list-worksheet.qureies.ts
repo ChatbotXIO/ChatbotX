@@ -9,7 +9,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListWorksheetHeadersRequest,
   ListWorksheetsRequest,
-} from "../schemas/list-worksheets.request"
+} from "../schemas/query"
 
 export const listWorksheets = async (
   input: ListWorksheetsRequest,

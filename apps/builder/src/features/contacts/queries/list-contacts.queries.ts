@@ -44,7 +44,7 @@ export async function listContacts(
 }
 
 export async function countContacts(
-  input: ListContactsRequest & { chatbotId: string },
+  input: ListContactsRequest,
 ): Promise<{ total: number }> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
@@ -62,7 +62,7 @@ export async function countContacts(
 }
 
 async function getTotalContactsFromStats(
-  chatbotId: string,
+  chatbotId: bigint,
 ): Promise<{ total: number }> {
   try {
     const inboxes = await db.query.inboxModel.findMany({
@@ -84,7 +84,7 @@ async function getTotalContactsFromStats(
   }
 }
 
-const generateWhere = (input: ListContactsRequest & { chatbotId: string }) => {
+const generateWhere = (input: ListContactsRequest) => {
   const where = {
     chatbotId: input.chatbotId,
     ...(input.keyword

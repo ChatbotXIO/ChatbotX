@@ -3,7 +3,7 @@
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { conditionModel, webhookModel } from "@aha.chat/database/schema"
 import { updateWebhookCache } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

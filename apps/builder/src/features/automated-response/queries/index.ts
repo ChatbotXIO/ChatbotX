@@ -9,8 +9,11 @@ import {
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { notFoundException } from "@/lib/errors/exception"
-import type { ListAutomatedResponsesRequest } from "../schemas/query"
-import type { AutomatedResponseResource } from "../schemas/resource"
+import type {
+  FindAutomatedResponseRequest,
+  ListAutomatedResponsesRequest,
+} from "../schema/query"
+import type { AutomatedResponseResource } from "../schema/resource"
 
 export async function listAutomatedResponses(
   input: ListAutomatedResponsesRequest,
@@ -50,10 +53,9 @@ export async function listAutomatedResponses(
   return { data, pageCount }
 }
 
-export const findAutomatedResponse = async (input: {
-  chatbotId: string
-  id: string
-}): Promise<AutomatedResponseModel | undefined> => {
+export const findAutomatedResponse = async (
+  input: FindAutomatedResponseRequest,
+): Promise<AutomatedResponseResource | undefined> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   return await db.query.automatedResponseModel.findFirst({
@@ -64,10 +66,9 @@ export const findAutomatedResponse = async (input: {
   })
 }
 
-export const findAutomatedResponseOrFail = async (input: {
-  chatbotId: string
-  id: string
-}): Promise<AutomatedResponseModel> => {
+export const findAutomatedResponseOrFail = async (
+  input: FindAutomatedResponseRequest,
+): Promise<AutomatedResponseModel> => {
   const automatedResponse = await findAutomatedResponse(input)
   if (!automatedResponse) {
     throw notFoundException("Automated response not found")

@@ -21,7 +21,7 @@ import { deleteBotFieldsAction } from "./actions/delete-bot-field.action"
 import type { BotFieldResource } from "./schemas/resource"
 
 type DeleteBotFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: string
+  chatbotId: bigint
   records: Row<BotFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void

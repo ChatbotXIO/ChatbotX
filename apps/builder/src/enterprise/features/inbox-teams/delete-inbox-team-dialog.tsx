@@ -25,7 +25,7 @@ export function DeleteInboxTeamDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   inboxTeam: InboxTeamModel | null
 }) {
   const t = useTranslations()
@@ -78,7 +78,7 @@ export function DeleteInboxTeamDialog({
           </Button>
           <Button
             disabled={isPending}
-            onClick={() => execute({ ids: [inboxTeam?.id ?? ""] })}
+            onClick={() => execute({ ids: [inboxTeam?.id ?? BigInt(0)] })}
             size="sm"
             type="submit"
           >

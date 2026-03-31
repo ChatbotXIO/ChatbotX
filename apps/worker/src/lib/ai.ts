@@ -35,7 +35,7 @@ type DataField = {
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
 
 export async function getAIIntegrationInDB(props: {
-  chatbotId: string
+  chatbotId: bigint
   provider: string
 }) {
   const { chatbotId, provider } = props
@@ -87,8 +87,8 @@ export function getAIModel(
 }
 
 export async function getAIFileTools(
-  chatbotId: string,
-  selectedFileIds: string[],
+  chatbotId: bigint,
+  selectedFileIds: bigint[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
@@ -137,8 +137,8 @@ export async function getAIFileTools(
 }
 
 export async function getAIFunctionTools(
-  chatbotId: string,
-  selectedFunctionIds: string[],
+  chatbotId: bigint,
+  selectedFunctionIds: bigint[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
@@ -205,8 +205,8 @@ export async function getAIFunctionTools(
 }
 
 export async function getMCPServerTools(
-  chatbotId: string,
-  selectedMcpIds: string[],
+  chatbotId: bigint,
+  selectedMcpIds: bigint[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}

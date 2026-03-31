@@ -2,7 +2,7 @@
 
 import { db, findOrFail } from "@aha.chat/database/client"
 import { inboxTeamMemberModel, inboxTeamModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -12,7 +12,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type AddInboxTeamMemberRequest,
   addInboxTeamMemberRequest,
-} from "../schema"
+} from "../schema/action"
 
 export const addInboxTeamMemberAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

@@ -33,8 +33,8 @@ import { createBotFieldAction } from "./actions/create-bot-field.action"
 import { createBotFieldRequest } from "./schemas/action"
 
 type CreateBotFieldDialogProps = {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
   onSuccess?: () => void
 }
 

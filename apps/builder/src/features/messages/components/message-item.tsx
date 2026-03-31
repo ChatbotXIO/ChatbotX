@@ -16,7 +16,7 @@ import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import type { MessageResource } from "../schemas"
+import type { MessageResource } from "../schema/resource"
 import { MessageBubble } from "./message-bubble"
 
 type MessageItemProps = {

@@ -18,7 +18,7 @@ export function CreateContactDialog({
   chatbotId,
   trigger,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   trigger?: ReactNode
 }) {
   const router = useRouter()

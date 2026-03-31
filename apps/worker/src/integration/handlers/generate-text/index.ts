@@ -1,16 +1,16 @@
 import { db, eq } from "@aha.chat/database/client"
 import {
+  aiMessageRoles,
   contactCustomFieldModel,
   contactModel,
 } from "@aha.chat/database/schema"
 import {
-  AIMessageRole,
   type ConversationModel,
   type Gender,
   reservedCustomFieldNames,
 } from "@aha.chat/database/types"
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId, parseBigIntId } from "@chatbotx.io/utils"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { getAIIntegrationInDB, getAIModel } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
@@ -77,7 +77,7 @@ export async function handleAIGenerateText({
     } else {
       await saveResultToCustomField({
         contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
+        customFieldName: step.outputCfId,
         fullText,
         messageCount,
         chatbotId: conversation.chatbotId,
@@ -126,11 +126,11 @@ async function handleToolCallsFollowUp({
   const followUpMessages: ModelMessage[] = [
     ...messages,
     {
-      role: AIMessageRole.assistant,
+      role: aiMessageRoles.enum.assistant,
       content: fullText || TEXT.assistantFoundPrefix,
     },
     {
-      role: AIMessageRole.user,
+      role: aiMessageRoles.enum.user,
       content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
     },
   ]
@@ -151,7 +151,7 @@ async function handleToolCallsFollowUp({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldId: stepConfig.outputCfId,
+      customFieldName: stepConfig.outputCfId,
       fullText: followUpFullText,
       messageCount: followUpMessageCount,
       chatbotId: conversation.chatbotId,
@@ -168,7 +168,7 @@ async function handleToolCallsFollowUp({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldId: stepConfig.outputCfId,
+      customFieldName: stepConfig.outputCfId,
       fullText,
       messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
       chatbotId: conversation.chatbotId,
@@ -178,21 +178,21 @@ async function handleToolCallsFollowUp({
 
 async function saveResultToCustomField({
   contactId,
-  customFieldId,
+  customFieldName,
   fullText,
   messageCount,
   chatbotId,
 }: {
-  contactId: string | null
-  customFieldId: string
+  contactId: bigint | null
+  customFieldName: string
   fullText: string
   messageCount: number
-  chatbotId: string
+  chatbotId: bigint
 }): Promise<void> {
   if (!contactId) {
     return
   }
-  if (!customFieldId.trim()) {
+  if (!customFieldName) {
     return
   }
   if (messageCount === 0) {
@@ -203,7 +203,7 @@ async function saveResultToCustomField({
   }
 
   const isReservedField = Object.values(reservedCustomFieldNames).includes(
-    customFieldId as (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames],
+    customFieldName as (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames],
   )
 
   if (isReservedField) {
@@ -216,14 +216,14 @@ async function saveResultToCustomField({
       gender: Gender
     }> = {}
 
-    switch (customFieldId) {
-      case reservedCustomFieldNames.first_name:
+    switch (customFieldName) {
+      case reservedCustomFieldNames.enum.first_name:
         updateData.firstName = fullText
         break
-      case reservedCustomFieldNames.last_name:
+      case reservedCustomFieldNames.enum.last_name:
         updateData.lastName = fullText
         break
-      case reservedCustomFieldNames.full_name: {
+      case reservedCustomFieldNames.enum.full_name: {
         const trimmedName = fullText.trim()
         const spaceIndex = trimmedName.indexOf(" ")
         if (spaceIndex > 0) {
@@ -234,16 +234,16 @@ async function saveResultToCustomField({
         }
         break
       }
-      case reservedCustomFieldNames.email:
+      case reservedCustomFieldNames.enum.email:
         updateData.email = fullText
         break
-      case reservedCustomFieldNames.phone_number:
+      case reservedCustomFieldNames.enum.phone_number:
         updateData.phoneNumber = fullText
         break
-      case reservedCustomFieldNames.avatar:
+      case reservedCustomFieldNames.enum.avatar:
         updateData.avatar = fullText
         break
-      case reservedCustomFieldNames.gender:
+      case reservedCustomFieldNames.enum.gender:
         if (
           fullText === "male" ||
           fullText === "female" ||
@@ -263,6 +263,10 @@ async function saveResultToCustomField({
     return
   }
 
+  const customFieldId = parseBigIntId(customFieldName)
+  if (!customFieldId) {
+    return
+  }
   const customField = await db.query.customFieldModel.findFirst({
     where: {
       id: customFieldId,

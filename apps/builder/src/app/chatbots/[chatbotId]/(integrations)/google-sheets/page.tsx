@@ -1,38 +1,44 @@
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CreateSpreadsheetDialog } from "@/features/spreadsheets/create-spreadsheet-dialog"
 import { listSpreadsheets } from "@/features/spreadsheets/queries/list-spreadsheet.queries"
-import { listSpreadsheetsRequest } from "@/features/spreadsheets/schemas/list-spreadsheets.request"
+import { listSpreadsheetsRequest } from "@/features/spreadsheets/schemas/query"
 import { SpreadsheetsTable } from "@/features/spreadsheets/spreadsheets-table"
 
 export default async function SpreadsheetsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const { chatbotId: chatbotIdString } = await props.params
+  const chatbotId = BigInt(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = listSpreadsheetsRequest.parse({
     ...searchParams,
     ...{
-      chatbotId: params.chatbotId,
+      chatbotId,
     },
   })
 
   const promises = Promise.all([
     listSpreadsheets({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
   return (
     <>
       <div className="mb-4 flex w-full justify-end">
-        <CreateSpreadsheetDialog chatbotId={params.chatbotId} />
+        <CreateSpreadsheetDialog chatbotId={chatbotId} />
       </div>
 
       <Suspense>
-        <SpreadsheetsTable chatbotId={params.chatbotId} promises={promises} />
+        <SpreadsheetsTable chatbotId={chatbotId} promises={promises} />
       </Suspense>
     </>
   )

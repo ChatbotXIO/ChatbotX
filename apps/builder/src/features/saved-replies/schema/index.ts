@@ -14,7 +14,7 @@ export const editSavedReplyRequest = createSavedReplyRequest
 export type EditSavedReplyRequest = z.infer<typeof editSavedReplyRequest>
 
 export const deleteSavedReplyRequest = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
 })
 export type DeleteSavedReplyRequest = z.infer<typeof deleteSavedReplyRequest>
 

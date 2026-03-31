@@ -17,10 +17,10 @@ export async function listSequences(
 ): Promise<ListSequencesResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  let folderIdFilter: string | { isNull: true } | undefined
+  let folderIdFilter: bigint | { isNull: true } | undefined
   if (input.folderId) {
     folderIdFilter =
-      input.folderId === rootFolderId
+      input.folderId === BigInt(rootFolderId)
         ? { isNull: true as const }
         : input.folderId
   }
@@ -68,7 +68,7 @@ export async function listSequences(
   return { data, pageCount }
 }
 
-export async function getSequence(chatbotId: string, sequenceId: string) {
+export async function getSequence(chatbotId: bigint, sequenceId: bigint) {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
   const sequence = await db.query.sequenceModel.findFirst({

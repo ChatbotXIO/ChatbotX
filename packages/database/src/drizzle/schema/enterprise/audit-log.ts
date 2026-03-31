@@ -1,4 +1,4 @@
-import { pgTable, text } from "drizzle-orm/pg-core"
+import { bigint, pgTable, text } from "drizzle-orm/pg-core"
 import { chatbotModel, userModel } from ".."
 import { sharedColumns } from "../shared"
 
@@ -6,14 +6,14 @@ export const auditLogModel = pgTable("AuditLog", {
   ...sharedColumns,
   action: text().notNull(),
   detail: text().notNull(),
-  chatbotId: text()
+  chatbotId: bigint({ mode: "bigint" })
     .notNull()
     .references(() => chatbotModel.id, {
       onDelete: "cascade",
       onUpdate: "cascade",
       name: "AuditLog_chatbotId_fkey",
     }),
-  userId: text()
+  userId: bigint({ mode: "bigint" })
     .notNull()
     .references(() => userModel.id, {
       onDelete: "set null",

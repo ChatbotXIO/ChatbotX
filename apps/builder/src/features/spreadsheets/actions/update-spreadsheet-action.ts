@@ -11,7 +11,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
   createSpreadsheetRequest,
-} from "../schemas/create-spreadsheet.request"
+} from "../schemas/mutation"
 import { verifyGoogleSheetsUrl } from "./util"
 
 export const updateSpreadsheetAction = chatbotActionClient

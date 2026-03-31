@@ -10,7 +10,9 @@ import { MessageItem } from "./components/message-item"
 const MESSAGE_LIST_PER_PAGE = 50
 
 export function MessageList() {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { chatbotId: chatbotIdString } = useParams<{ chatbotId: string }>()
+  const chatbotId = BigInt(chatbotIdString)
+
   const {
     messages,
     loadMoreMessages,

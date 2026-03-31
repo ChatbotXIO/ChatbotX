@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import AIFunctionsTable from "@/features/ai-functions/ai-functions-table"
 import { listAIFunctions } from "@/features/ai-functions/queries"
@@ -14,7 +16,11 @@ type AIFunctionsPageProps = {
 export default async function AIFunctionsPage({
   params,
 }: AIFunctionsPageProps) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
   const promises = Promise.all([
     listAIFunctions({
@@ -29,7 +35,7 @@ export default async function AIFunctionsPage({
       <Suspense>
         <FlowStoreProvider chatbotId={chatbotId}>
           <CustomFieldStoreProvider chatbotId={chatbotId}>
-            <AIFunctionsTable promises={promises} />
+            <AIFunctionsTable chatbotId={chatbotId} promises={promises} />
           </CustomFieldStoreProvider>
         </FlowStoreProvider>
       </Suspense>

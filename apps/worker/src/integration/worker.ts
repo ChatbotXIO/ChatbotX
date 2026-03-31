@@ -51,7 +51,7 @@ async function startIntegrationWorker() {
           // Trigger automated response if the message is from a user
           if (
             !(postbackAction || quickReplyAction) &&
-            message.content &&
+            message.text &&
             message.senderType === "contact"
           ) {
             await integrationQueue.add(
@@ -77,7 +77,7 @@ async function startIntegrationWorker() {
               result: "FALLBACK",
               aiProvider: "none",
               metadata: {
-                fallbackReason: message.content
+                fallbackReason: message.text
                   ? "NOT_FROM_CONTACT"
                   : "NO_CONTENT",
               },

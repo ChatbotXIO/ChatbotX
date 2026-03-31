@@ -13,7 +13,7 @@ import { getSpreadsheetColumns } from "./spreadsheets-table-columns"
 
 type SpreadsheetsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listSpreadsheets>>]>
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function SpreadsheetsTable({
@@ -35,7 +35,7 @@ export function SpreadsheetsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

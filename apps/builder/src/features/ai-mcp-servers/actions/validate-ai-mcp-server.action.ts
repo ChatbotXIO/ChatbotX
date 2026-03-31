@@ -8,7 +8,7 @@ import {
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { validateAIMcpServerRequest } from "../schemas"
+import { validateAIMcpServerRequest } from "../schema/action"
 
 export const validateAIMcpServerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

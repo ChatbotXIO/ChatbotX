@@ -1,6 +1,7 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound, useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { AppTab } from "@/components/app-tab"
@@ -13,8 +14,13 @@ export default function FolderableLayout({
   children: ReactNode
   folders: ReactNode
 }) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
+
+  const { chatbotId: chatbotIdString } = useParams<{ chatbotId: string }>()
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType="flow">

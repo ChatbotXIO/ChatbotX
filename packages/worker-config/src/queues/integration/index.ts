@@ -51,10 +51,10 @@ export type IntegrationJobMessageStatus = {
 export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
-    conversationId: string
-    flowId?: string
-    flowVersionId?: string
-    nodeId?: string
+    conversationId: bigint
+    flowId?: bigint
+    flowVersionId?: bigint
+    nodeId?: bigint
     trackingContext?: BotResponseTrackingContext
   }
 }
@@ -62,7 +62,7 @@ export type IntegrationJobRunFlowNode = {
 export type IntegrationJobSendFlowPostback = {
   type: typeof IntegrationJobAction.runFlowPostback
   data: {
-    conversationId: string
+    conversationId: bigint
     action: string
     ref?: string | null
   }
@@ -71,7 +71,7 @@ export type IntegrationJobSendFlowPostback = {
 export type IntegrationJobSendFlowQuickReply = {
   type: typeof IntegrationJobAction.runFlowQuickReply
   data: {
-    conversationId: string
+    conversationId: bigint
     action: string
     ref?: string | null
   }
@@ -88,7 +88,7 @@ export type IntegrationJobTriggerAutomatedResponse = {
 export type IntegrationJobSendBroadcast = {
   type: typeof IntegrationJobAction.sendBroadcast
   data: {
-    broadcastId: string
+    broadcastId: bigint
   }
 }
 
@@ -112,7 +112,7 @@ export type IntegrationJobContactMarkAsRead = {
 export type IntegrationJobRunRef = {
   type: typeof IntegrationJobAction.runRef
   data: {
-    conversationId: string
+    conversationId: bigint
     ref: string
   }
 }
@@ -120,14 +120,14 @@ export type IntegrationJobRunRef = {
 export type IntegrationJobRunChallenge = {
   type: typeof IntegrationJobAction.runChallenge
   data: {
-    conversationId: string
+    conversationId: bigint
     challenge: {
       type: "step"
       data: {
-        flowId: string
-        flowVersionId?: string
-        nodeId: string
-        stepId: string
+        flowId: bigint
+        flowVersionId?: bigint
+        nodeId: bigint
+        stepId: bigint
         attempts: number
         lastAttemptAt: Date
       }

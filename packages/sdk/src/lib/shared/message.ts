@@ -11,7 +11,7 @@ export type IncomingContact = {
 }
 
 export type OutgoingContact = {
-  id: string
+  id: bigint
   sourceId: string | null
   phoneNumber: string | null
   firstName: string | null
@@ -28,12 +28,12 @@ export type IncomingConversation = {
 }
 
 export type OutgoingConversation = {
-  id: string
-  chatbotId: string
+  id: bigint
+  chatbotId: bigint
   conversationAttributes: { [x: string]: unknown } | null
   sourceId: string | null
-  inboxId: string
-  contactId: string
+  inboxId: bigint
+  contactId: bigint
   contact?: OutgoingContact
 }
 
@@ -42,13 +42,14 @@ export const conversationEntitySchema = z.custom<IncomingConversation>(
 )
 
 export type OutgoingMessage = {
-  chatbotId: string
-  conversationId: string
+  id: bigint
+  chatbotId: bigint
+  conversationId: bigint
   contentType: ContentType
-  content: string | null
+  text: string | null
   attachments?: OutgoingAttachment[]
-  inboxId: string
-  clientId?: string | null
+  inboxId: bigint
+  clientId?: bigint | null
   messageType: "outgoing" | "incoming" | "activity"
 }
 
@@ -68,7 +69,7 @@ export type IncomingMessage = {
     | MessageTemplateEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
-  clientId?: string | null
+  clientId?: bigint | null
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(

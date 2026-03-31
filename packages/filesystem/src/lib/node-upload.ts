@@ -1,7 +1,7 @@
 import { PassThrough, Readable } from "node:stream"
 import type { ReadableStream } from "node:stream/web"
 import type { ObjectCannedACL } from "@aws-sdk/client-s3"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import probe from "probe-image-size"
 import { guessFileTypeFromMimeType } from "./helper"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"

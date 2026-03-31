@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import type { CreateContactEvent } from "../schemas"
 
 type Redis = {
@@ -170,14 +170,14 @@ export abstract class BaseService {
    * Stable event_id for idempotency across retries.
    * Important: Do NOT use Date.now() here; must reflect the business event time.
    */
-  protected getEventId(_event: CreateContactEvent | unknown): string {
+  protected getEventId(_event: CreateContactEvent | unknown): bigint {
     return createId()
   }
 
   protected async canWrite(row: {
-    chatbot_id: string
-    contact_id?: string
-    message_id?: string
+    chatbot_id: bigint
+    contact_id?: bigint
+    message_id?: bigint
     event_type: string
   }): Promise<boolean> {
     if (!this.redis) {

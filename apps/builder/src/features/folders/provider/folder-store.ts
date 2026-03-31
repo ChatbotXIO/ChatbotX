@@ -2,7 +2,7 @@ import type { FolderType } from "@aha.chat/database/types"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { FolderCollection, FolderResource } from "../schemas/resource"
+import type { FolderCollection, FolderResource } from "../schema/resource"
 
 export type FolderState = {
   // Initialization
@@ -11,7 +11,7 @@ export type FolderState = {
   initialized: boolean
 
   // Data
-  chatbotId: string
+  chatbotId: bigint
   folderType: FolderType | null
   folders: FolderResource[]
 }
@@ -29,7 +29,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     folderType: null,
     folders: [],
     ...props,

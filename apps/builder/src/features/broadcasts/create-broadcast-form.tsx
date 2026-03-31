@@ -1,11 +1,14 @@
 "use client"
 
-import { BroadcastFlowType, BroadcastSubaction } from "@aha.chat/database/enums"
 import {
-  type BroadcastSchedulesType,
+  type BroadcastFlowType,
+  type BroadcastSubaction,
+  broadcastFlowTypes,
+  broadcastSubactions,
   type ChannelType,
-  channelType,
-} from "@aha.chat/database/types"
+  channelTypes,
+} from "@aha.chat/database/schema"
+import type { BroadcastSchedulesType } from "@aha.chat/database/types"
 import {
   extractTemplateParams,
   StepType,
@@ -56,12 +59,12 @@ type BroadcastConfig = {
 const getConfigs = (t: ReturnType<typeof useTranslations>) =>
   [
     {
-      value: channelType.omnichannel,
+      value: channelTypes.enum.omnichannel,
       description:
         "Send a flow to all contacts. You can send messages or executes actions.",
       subactions: [
         {
-          value: BroadcastSubaction.allContacts,
+          value: broadcastSubactions.enum.allContacts,
           name: t("broadcasts.allContacts.title"),
           description: t("broadcasts.allContacts.description"),
         },
@@ -72,29 +75,29 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
       description: "",
       subactions: [
         {
-          value: BroadcastSubaction.messengerList,
+          value: broadcastSubactions.enum.messengerList,
           name: t("broadcasts.messengerList.title"),
           description: t("broadcasts.messengerList.description"),
         },
         {
-          value: BroadcastSubaction.messengerActiveContacts,
+          value: broadcastSubactions.enum.messengerActiveContacts,
           name: t("broadcasts.messengerActiveContacts.title"),
           description: t("broadcasts.messengerActiveContacts.description"),
         },
         {
-          value: BroadcastSubaction.messengerAccountUpdate,
+          value: broadcastSubactions.enum.messengerAccountUpdate,
           name: t("broadcasts.messengerAccountUpdate.title"),
           description: t("broadcasts.messengerAccountUpdate.description"),
         },
         {
-          value: BroadcastSubaction.messengerConfirmedEventUpdate,
+          value: broadcastSubactions.enum.messengerConfirmedEventUpdate,
           name: t("broadcasts.messengerConfirmedEventUpdate.title"),
           description: t(
             "broadcasts.messengerConfirmedEventUpdate.description",
           ),
         },
         {
-          value: BroadcastSubaction.messengerPostPurchaseUpdate,
+          value: broadcastSubactions.enum.messengerPostPurchaseUpdate,
           name: t("broadcasts.messengerPostPurchaseUpdate.title"),
           description: t("broadcasts.messengerPostPurchaseUpdate.description"),
         },
@@ -105,12 +108,12 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
       description: "",
       subactions: [
         {
-          value: BroadcastSubaction.whatsappTemplateMessage,
+          value: broadcastSubactions.enum.whatsappTemplateMessage,
           name: t("broadcasts.whatsappTemplateMessage.title"),
           description: t("broadcasts.whatsappTemplateMessage.description"),
         },
         {
-          value: BroadcastSubaction.whatsappWithin24Hours,
+          value: broadcastSubactions.enum.whatsappWithin24Hours,
           name: t("broadcasts.whatsappWithin24Hours.title"),
           description: t("broadcasts.whatsappWithin24Hours.description"),
         },
@@ -121,7 +124,7 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
       description: "",
       subactions: [
         {
-          value: BroadcastSubaction.allContacts,
+          value: broadcastSubactions.enum.allContacts,
           name: t("broadcasts.allContacts.title"),
           description: t("broadcasts.allContacts.description"),
         },
@@ -130,7 +133,7 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
   ] as BroadcastConfig[]
 
 type CreateBroadcastFormProps = {
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
@@ -165,7 +168,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
         defaultValues: {
           channel: undefined,
           flowId: undefined,
-          subaction: BroadcastSubaction.allContacts,
+          subaction: broadcastSubactions.enum.allContacts,
           schedulesType: "now",
           schedulesAt: null,
           contactFilter: {
@@ -192,7 +195,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   })
 
   useEffect(() => {
-    if (watchedSubAction === BroadcastSubaction.whatsappTemplateMessage) {
+    if (watchedSubAction === broadcastSubactions.enum.whatsappTemplateMessage) {
       appendFilter({
         startType: StepType.sendWaTemplateMessage,
         integrationWhatsappId: watchedIntegrationWhatsappId,
@@ -248,7 +251,7 @@ function CreateBroadcastChooseChannel() {
       if (channel === "messenger" || channel === "whatsapp") {
         setValue("subaction", null)
       } else {
-        setValue("subaction", BroadcastSubaction.allContacts)
+        setValue("subaction", broadcastSubactions.enum.allContacts)
       }
     },
     [setValue],
@@ -367,19 +370,19 @@ function BroadcastFlowTypeSelector({
     description: string
   }> = [
     {
-      value: BroadcastFlowType.flow,
+      value: broadcastFlowTypes.enum.flow,
       label: t("broadcasts.flowType.flow.title"),
       description: t("broadcasts.flowType.flow.description"),
     },
     {
-      value: BroadcastFlowType.template,
+      value: broadcastFlowTypes.enum.template,
       label: t("broadcasts.flowType.template.title"),
       description: t("broadcasts.flowType.template.description"),
     },
   ]
 
   const [selectedType, setSelectedType] = useState<BroadcastFlowType>(
-    BroadcastFlowType.flow,
+    broadcastFlowTypes.enum.flow,
   )
 
   const handleTypeChange = useCallback(
@@ -387,7 +390,7 @@ function BroadcastFlowTypeSelector({
       setSelectedType(type)
       setValue("templateType", type)
 
-      if (type === BroadcastFlowType.flow) {
+      if (type === broadcastFlowTypes.enum.flow) {
         setValue("templateId", undefined)
       } else {
         setValue("flowId", undefined)
@@ -396,7 +399,7 @@ function BroadcastFlowTypeSelector({
     [setValue],
   )
 
-  if (subaction !== BroadcastSubaction.whatsappTemplateMessage) {
+  if (subaction !== broadcastSubactions.enum.whatsappTemplateMessage) {
     return null
   }
 
@@ -472,7 +475,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     name: string
     description: string
   }>({
-    value: BroadcastSubaction.allContacts,
+    value: broadcastSubactions.enum.allContacts,
     name: "Omnichannel",
     description:
       "Send a flow to all contacts. You can send messages or executes actions.",
@@ -592,7 +595,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
         <BroadcastFlowTypeSelector subaction={props.subaction} />
 
-        {props.subaction === BroadcastSubaction.whatsappTemplateMessage && (
+        {props.subaction ===
+          broadcastSubactions.enum.whatsappTemplateMessage && (
           <>
             <ComboboxField
               key="integrationWhatsappId"
@@ -600,12 +604,12 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               name="integrationWhatsappId"
               options={integrations.map((integration) => ({
                 label: integration.name,
-                value: integration.id,
+                value: integration.id.toString(),
               }))}
               required={true}
             />
 
-            {watchedTemplateType === BroadcastFlowType.template && (
+            {watchedTemplateType === broadcastFlowTypes.enum.template && (
               <>
                 <ComboboxField
                   key="templateId"
@@ -647,14 +651,14 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
         )}
 
         {(!watchedTemplateType ||
-          watchedTemplateType !== BroadcastFlowType.template) && (
+          watchedTemplateType !== broadcastFlowTypes.enum.template) && (
           <ComboboxField
             key="flowId"
             label={t("fields.flowId.label")}
             name="flowId"
             options={flows.map((flow) => ({
               label: flow.name,
-              value: flow.id,
+              value: flow.id.toString(),
             }))}
             required={true}
           />

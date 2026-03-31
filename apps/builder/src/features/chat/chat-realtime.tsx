@@ -8,7 +8,7 @@ import { useParams } from "next/navigation"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
 import { authClient } from "@/lib/auth/auth-client"
-import type { MessageResource } from "../messages/schemas"
+import type { MessageResource } from "../messages/schema/resource"
 import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {

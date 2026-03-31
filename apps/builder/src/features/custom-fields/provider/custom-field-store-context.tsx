@@ -20,7 +20,7 @@ export const CustomFieldStoreContext = createContext<
 >(undefined)
 
 export type CustomFieldStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

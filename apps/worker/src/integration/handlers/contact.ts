@@ -37,7 +37,7 @@ import {
   emitTagApplied,
   emitTagRemoved,
 } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"

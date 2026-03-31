@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
-import { editFolderSchema } from "@/features/folders/schemas/action"
+import { editFolderSchema } from "@/features/folders/schema/action"
 
 export function EditFolderDialog({
   open,
@@ -28,14 +28,14 @@ export function EditFolderDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   folder: FolderModel | null
 }) {
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      editFolderAction.bind(null, chatbotId, folder?.id ?? ""),
+      editFolderAction.bind(null, chatbotId, folder?.id ?? BigInt(0)),
       zodResolver(editFolderSchema),
       {
         actionProps: {

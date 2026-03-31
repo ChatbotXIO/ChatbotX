@@ -4,15 +4,15 @@ import { db, relationsFilterToSQL } from "@aha.chat/database/client"
 import { chatbotMemberModel } from "@aha.chat/database/schema"
 import { getPaginationWithDefaults } from "@aha.chat/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { GetChatbotMembersSchema } from "../schemas/get-chatbot-members.request"
 import type {
-  ChatbotMemberCollection,
-  ChatbotMemberResource,
-} from "../schemas/resource"
+  GetChatbotMembersSchema,
+  ListChatbotMembersResponse,
+} from "../schema/query"
+import type { ChatbotMemberResource } from "../schema/resource"
 
-export async function getAgents(
+export async function listChatbotMembers(
   input: GetChatbotMembersSchema,
-): Promise<ChatbotMemberCollection> {
+): Promise<ListChatbotMembersResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const pagination = getPaginationWithDefaults(input)
@@ -43,10 +43,10 @@ export async function getAgents(
   ])
   const pageCount = Math.ceil(totalRows / pagination.limit)
 
-  return { data: data as ChatbotMemberResource[], pageCount }
+  return { data, pageCount }
 }
 
-export const getAllChatbotMembers = async (userId: string) => {
+export const getAllChatbotMembers = async (userId: bigint) => {
   const chatbotMembers = await db.query.chatbotMemberModel.findMany({
     where: {
       userId,

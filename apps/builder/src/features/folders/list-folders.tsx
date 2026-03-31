@@ -3,22 +3,23 @@
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
-import { parseAsString, useQueryState } from "@aha.chat/ui/lib/nuqs"
+import { useQueryState } from "@aha.chat/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
 import { use, useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
-import type { getCurrentFolder, getFolders } from "./queries"
+import type { getCurrentFolder, listFolders } from "./queries"
 
 type ListFoldersProps = {
-  chatbotId: string
+  chatbotId: bigint
   folderType: FolderType
   promises: Promise<
     [
       Awaited<ReturnType<typeof getCurrentFolder>>,
-      Awaited<ReturnType<typeof getFolders>>,
+      Awaited<ReturnType<typeof listFolders>>,
     ]
   >
 }
@@ -27,13 +28,7 @@ const ListFolders = (props: ListFoldersProps) => {
   const { chatbotId, folderType, promises } = props
 
   const [{ folder, parents }, { data: folders }] = use(promises)
-  const [_, setFolderId] = useQueryState(
-    "folderId",
-    parseAsString.withOptions({
-      history: "push",
-      shallow: false,
-    }),
-  )
+  const [_, setFolderId] = useQueryState("folderId", parseAsBigInt)
 
   const [targetFolder, setTargetFolder] = useState<FolderModel | null>(null)
 

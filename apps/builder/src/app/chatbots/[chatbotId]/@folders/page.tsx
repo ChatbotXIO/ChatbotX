@@ -6,7 +6,7 @@ import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
-import { getCurrentFolder, getFolders } from "@/features/folders/queries"
+import { getCurrentFolder, listFolders } from "@/features/folders/queries"
 import { getFolderTypeFromFeature } from "./_lib"
 
 const folderSearchParams = {
@@ -39,7 +39,7 @@ export default async function FoldersDetault(props: {
           chatbotId: params.chatbotId,
         })
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
-    getFolders({
+    listFolders({
       chatbotId: params.chatbotId,
       folderType,
       folderId,

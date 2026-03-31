@@ -2,15 +2,15 @@
 
 import { db, eq, findOrFail, sql } from "@aha.chat/database/client"
 import {
+  channelTypes,
   chatbotUsageModel,
   contactModel,
   conversationModel,
   inboxModel,
 } from "@aha.chat/database/schema"
-import { channelType } from "@aha.chat/database/types"
 import { emitContactCreated } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -43,7 +43,7 @@ export const createContact = async ({
   chatbotId,
   parsedInput,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   parsedInput: CreateContactRequest
 }): Promise<CreateContactResponse> => {
   // Make sure phone number is not exists in the chatbot
@@ -64,7 +64,7 @@ export const createContact = async ({
 
   const inbox = await findOrFail(
     inboxModel,
-    { chatbotId, channel: channelType.webchat },
+    { chatbotId, channel: channelTypes.enum.webchat },
     "Inbox not found",
   )
 
@@ -129,7 +129,7 @@ export const createContact = async ({
     await contactTrackingService.trackEvent(
       {
         chatbotId,
-        contactId: contact.sourceId,
+        contactId: contact.id,
         eventType: "contact_created",
         occurredAt: contact.createdAt,
         source: contact.source,

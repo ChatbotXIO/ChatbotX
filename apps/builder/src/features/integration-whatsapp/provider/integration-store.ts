@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
 
 export type IntegrationWhatsapp = {
-  id: string
+  id: bigint
   name: string
 }
 
@@ -11,7 +11,7 @@ export type IntegrationState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   integrations: IntegrationWhatsapp[]
 }
 
@@ -28,7 +28,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     integrations: [],
     ...props,
 

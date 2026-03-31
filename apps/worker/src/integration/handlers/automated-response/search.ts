@@ -11,6 +11,7 @@ import {
   aiEmbeddingModel,
   integrationOpenAIModel,
 } from "@aha.chat/database/schema"
+import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import { createOpenAI } from "@ai-sdk/openai"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
@@ -18,11 +19,10 @@ import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
 import type {
   FileSearchArgs,
   FileSearchConfig,
-  SecretTextAuthValue,
   SimilaritySearchResult,
 } from "./types"
 
-async function getOpenAIIntegration(chatbotId: string) {
+async function getOpenAIIntegration(chatbotId: bigint) {
   return await findOrFail(
     integrationOpenAIModel,
     {
@@ -35,7 +35,7 @@ async function getOpenAIIntegration(chatbotId: string) {
 
 async function createQueryEmbedding(
   query: string,
-  chatbotId: string,
+  chatbotId: bigint,
 ): Promise<number[]> {
   const integrationOpenAI = await getOpenAIIntegration(chatbotId)
 

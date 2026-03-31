@@ -5,8 +5,8 @@ import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
 import { notFoundException } from "./errors/exception"
 
 export const findChatbotOrFail = async (
-  userId: string | null | undefined,
-  chatbotId: string | null,
+  userId: bigint | null | undefined,
+  chatbotId: bigint | null,
 ): Promise<{ chatbot: ChatbotResource; chatbotMember: ChatbotMemberModel }> => {
   if (!userId) {
     throw notFoundException("No User found")

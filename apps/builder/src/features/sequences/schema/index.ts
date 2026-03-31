@@ -8,6 +8,7 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
 
 export const sequenceResource = createSelectSchema(sequenceModel)
@@ -15,9 +16,9 @@ export type SequenceResource = typeof sequenceModel.$inferSelect
 
 export const listSequencesRequest = basePaginationRequest.and(
   z.object({
-    chatbotId: z.cuid2(),
+    chatbotId: z.bigint(),
     name: z.string().nullish(),
-    folderId: z.string().nullish(),
+    folderId: z.bigint().nullish(),
     active: z.boolean().nullish(),
   }),
 )
@@ -28,7 +29,7 @@ export const listSequencesSearchParamsCache = createSearchParamsCache({
   perPage: parseAsInteger.withDefault(10),
   name: parseAsString.withDefault(""),
   active: parseAsBoolean,
-  folderId: parseAsString,
+  folderId: parseAsBigInt,
   sort: getSortingStateParser<SequenceModel>().withDefault([
     { id: "createdAt", desc: true },
   ]),
@@ -50,7 +51,7 @@ export type ListSequencesResponse = z.infer<typeof listSequencesResponse>
 
 export const createSequenceRequest = z.object({
   name: z.string().trim().min(1).max(255),
-  folderId: z.cuid2().nullish(),
+  folderId: z.bigint().nullish(),
 })
 export type CreateSequenceRequest = z.infer<typeof createSequenceRequest>
 
@@ -63,8 +64,8 @@ export const updateSequenceSchema = z
 export type UpdateSequenceSchema = z.infer<typeof updateSequenceSchema>
 
 export const upsertSequenceStepRequest = z.object({
-  stepId: z.cuid2().optional(),
-  sequenceId: z.cuid2(),
+  stepId: z.bigint().optional(),
+  sequenceId: z.bigint(),
   order: z.number().int().min(0),
   delayDays: z.number().int().min(0).optional(),
   delayMinutes: z.number().int().min(0).optional(),
@@ -72,7 +73,7 @@ export const upsertSequenceStepRequest = z.object({
     .enum(["immediate", "minutes", "hours", "days", "specificTime"])
     .optional(),
   specificDateTime: z.iso.datetime().optional(),
-  flowId: z.cuid2().optional(),
+  flowId: z.bigint().optional(),
   isActive: z.boolean().optional(),
   anytime: z.boolean().optional(),
   sendTimeStart: z.string().nullable().optional(),

@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
 import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"

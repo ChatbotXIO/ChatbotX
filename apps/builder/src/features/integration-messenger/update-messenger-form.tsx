@@ -30,9 +30,9 @@ import {
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { Separator } from "@aha.chat/ui/components/ui/separator"
+import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { createId } from "@paralleldrive/cuid2"
 import {
   EllipsisVerticalIcon,
   Loader2Icon,
@@ -41,7 +41,7 @@ import {
   TrashIcon,
   UserIcon,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -50,18 +50,19 @@ import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { allSupportedLanguages } from "../chatbot/schemas/types"
-import PersistentMenuField from "../webchat/components/persistent-menu-field"
+import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
 import { updateMessengerAction } from "./actions/update-messenger-action"
-import { updateMessengerRequest } from "./schemas"
+import { updateMessengerRequest } from "./schema/action"
 
 type UpdateMessengerFormProps = {
+  chatbotId: bigint
   integrationMessenger: IntegrationMessengerModel
 }
 
 export function UpdateMessengerForm({
+  chatbotId,
   integrationMessenger,
 }: UpdateMessengerFormProps) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
   const t = useTranslations()
   const router = useRouter()
 
@@ -72,7 +73,11 @@ export function UpdateMessengerForm({
     handleSubmitWithAction,
     form: { setValue },
   } = useHookFormAction(
-    updateMessengerAction.bind(null, chatbotId, integrationMessenger.id),
+    updateMessengerAction.bind(
+      null,
+      integrationMessenger.chatbotId,
+      integrationMessenger.id,
+    ),
     zodResolver(updateMessengerRequest),
     {
       actionProps: {
@@ -156,7 +161,7 @@ export function UpdateMessengerForm({
       } = integrationMessenger
 
       form.reset({
-        welcomeFlowId,
+        welcomeFlowId: welcomeFlowId?.toString() ?? "",
         greetingMessages: greetingMessagesArray,
         persistentMenus: persistentMenusArray,
         conversationStarters: conversationStartersArray,

@@ -13,7 +13,7 @@ import {
   subscribePageToAppWebhook,
 } from "@aha.chat/integration-messenger/apis/page"
 import { AuthType } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { verifyOrganizationSettings } from "@/features/organization/queries"
@@ -21,7 +21,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { type SelectPageRequest, selectPageRequest } from "../schemas"
+import { type SelectPageRequest, selectPageRequest } from "../schema/action"
 
 export const selectPageAction = authActionClient
   .inputSchema(selectPageRequest)

@@ -1,5 +1,5 @@
 import type { Context, IncomingContact } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
 import { MessengerAPIException } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"

@@ -9,7 +9,7 @@ import type {
 const env = keys()
 
 export async function broadcastToChatbotParty(
-  chatbotId: string,
+  chatbotId: bigint,
   json: RealtimeEventData,
 ) {
   try {

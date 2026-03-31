@@ -5,7 +5,7 @@ import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 
-export default function InboxNewCard({ chatbotId }: { chatbotId: string }) {
+export default function InboxNewCard({ chatbotId }: { chatbotId: bigint }) {
   const t = useTranslations()
 
   return (

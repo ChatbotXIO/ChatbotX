@@ -11,8 +11,8 @@ import {
   type GetDataFromJsonStepSchema,
 } from "@aha.chat/flow-config"
 import { emitCustomFieldChanged } from "@chatbotx/events"
+import { createId } from "@chatbotx.io/utils"
 import { faker } from "@faker-js/faker"
-import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
 import type { ExecuteStepProps } from "./flow"

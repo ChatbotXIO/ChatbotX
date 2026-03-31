@@ -1,5 +1,5 @@
-import { validateAIMcpServer } from "./validate"
+import { aiMcpServersAuthenticatedAPI } from "./authenticated"
 
 export const aiMcpServerApi = {
-  validate: validateAIMcpServer,
+  ...aiMcpServersAuthenticatedAPI,
 }

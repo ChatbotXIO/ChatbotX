@@ -1,10 +1,10 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendQuickReplyStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.sendQuickReply),
   message: z.string().trim().min(1).max(1000),
   buttons: z.array(buttonStepSchema),

@@ -1,5 +1,8 @@
-import type { ConversationStatus } from "@aha.chat/database/enums"
-import type { ChannelType } from "@aha.chat/database/types"
+import type {
+  AssignerFilterType,
+  ConversationStatus,
+} from "@aha.chat/database/enums"
+import type { ChannelType } from "@aha.chat/database/schema"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -9,14 +12,12 @@ import type {
   FindConversationResponse,
   ListConversationItemResource,
   ListConversationsResponse,
-} from "@/features/conversations/schemas/resource"
-import type {
-  MessageCollection,
-  MessageResource,
-} from "@/features/messages/schemas"
+} from "@/features/conversations/schema/resource"
+import type { ListMessagesResponse } from "@/features/messages/schema/query"
+import type { MessageResource } from "@/features/messages/schema/resource"
 
 export type ConversationFilters = {
-  assignedUserId?: string
+  assignedType?: AssignerFilterType
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
@@ -30,7 +31,7 @@ export type ChatState = {
   conversations: ListConversationsResponse["data"]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
-  activeConversationId: string | null
+  activeConversationId: bigint | null
   hasNextConversationPage: boolean
   filters: ConversationFilters
 
@@ -44,20 +45,20 @@ export type ChatState = {
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
-  loadMoreConversations: (chatbotId: string) => Promise<void>
-  setActiveConversationId: (activeConversationId: string | null) => void
+  loadMoreConversations: (chatbotId: bigint) => Promise<void>
+  setActiveConversationId: (activeConversationId: bigint | null) => void
   updateConversation: (
-    conversationId: string,
+    conversationId: bigint,
     data: Partial<ConversationResource>,
   ) => void
   updateConversations: (
-    conversationIds: string[],
+    conversationIds: bigint[],
     data: Partial<ConversationResource>,
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
 
-  deleteConversation: (conversationId: string) => void
-  readConversation: (conversationId: string) => void
+  deleteConversation: (conversationId: bigint) => void
+  readConversation: (conversationId: bigint) => void
 
   // Filter actions
   resetState: () => void
@@ -66,11 +67,11 @@ export type ChatActions = {
 
   // Message actions
   appendMessage: (message: MessageResource) => void
-  loadMoreMessages: (chatbotId: string, perPage: number) => Promise<void>
+  loadMoreMessages: (chatbotId: bigint, perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResource) => void
 
   // Contact actions
-  updateContact: (contactId: string, data: Partial<ContactResource>) => void
+  updateContact: (contactId: bigint, data: Partial<ContactResource>) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -97,7 +98,7 @@ export const createChatStore = () => {
         conversations: [newConversation, ...state.conversations],
       })),
 
-    loadMoreConversations: async (chatbotId: string) => {
+    loadMoreConversations: async (chatbotId: bigint) => {
       const { isLoadingConversation, hasNextConversationPage } = get()
       if (isLoadingConversation || !hasNextConversationPage) {
         return
@@ -125,20 +126,26 @@ export const createChatStore = () => {
         .json()
 
       const urlParams = new URLSearchParams(window.location.search)
-      const queryConversationId = urlParams.get("conversationId")
-      if (!activeConversationId && newConversations.length > 0) {
-        if (queryConversationId) {
-          const found = newConversations.find(
-            (c) => c.id === queryConversationId,
-          )
-          if (found) {
-            set({ activeConversationId: queryConversationId })
+      try {
+        const queryConversationId = BigInt(
+          urlParams.get("conversationId") ?? "",
+        )
+        if (!activeConversationId && newConversations.length > 0) {
+          if (queryConversationId) {
+            const found = newConversations.find(
+              (c) => c.id === queryConversationId,
+            )
+            if (found) {
+              set({ activeConversationId: queryConversationId })
+            }
+          } else {
+            set({
+              activeConversationId: newConversations[0].id,
+            })
           }
-        } else {
-          set({
-            activeConversationId: newConversations[0].id,
-          })
         }
+      } catch (_error) {
+        //
       }
 
       set({
@@ -149,14 +156,14 @@ export const createChatStore = () => {
       })
     },
 
-    setActiveConversationId: (activeConversationId: string | null) => {
+    setActiveConversationId: (activeConversationId: bigint | null) => {
       const { activeConversationId: oldActiveConversationId } = get()
       if (oldActiveConversationId !== activeConversationId) {
         set({ activeConversationId, messages: [], nextCursorMessage: null })
       }
     },
 
-    deleteConversation: (conversationId: string) => {
+    deleteConversation: (conversationId: bigint) => {
       const { conversations, activeConversationId } = get()
       const updatedConversations = conversations.filter(
         (c) => c.id !== conversationId,
@@ -172,7 +179,7 @@ export const createChatStore = () => {
       })
     },
 
-    readConversation: (conversationId: string) => {
+    readConversation: (conversationId: bigint) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === conversationId,
@@ -218,19 +225,23 @@ export const createChatStore = () => {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
 
-        if (value === null) {
-          conversation.assignedUser = null
-          conversation.assignedUserId = null
-          conversation.assignedInboxTeam = null
-          conversation.assignedInboxTeamId = null
-        } else if (value.startsWith("u_")) {
-          const userId = value.slice(2)
-          conversation.assignedUserId = userId
-          conversation.assignedInboxTeamId = null
-        } else if (value.startsWith("t_")) {
-          const inboxTeamId = value.slice(2)
-          conversation.assignedInboxTeamId = inboxTeamId
-          conversation.assignedUserId = null
+        try {
+          if (value === null) {
+            conversation.assignedUser = null
+            conversation.assignedUserId = null
+            conversation.assignedInboxTeam = null
+            conversation.assignedInboxTeamId = null
+          } else if (value.startsWith("u_")) {
+            const userId = BigInt(value.slice(2))
+            conversation.assignedUserId = userId
+            conversation.assignedInboxTeamId = null
+          } else if (value.startsWith("t_")) {
+            const inboxTeamId = BigInt(value.slice(2))
+            conversation.assignedInboxTeamId = inboxTeamId
+            conversation.assignedUserId = null
+          }
+        } catch (_error) {
+          //
         }
 
         updatedConversations[conversationIndex] = conversation
@@ -247,7 +258,7 @@ export const createChatStore = () => {
       updateConversationViaMessage(message)
     },
 
-    loadMoreMessages: async (chatbotId: string, perPage: number) => {
+    loadMoreMessages: async (chatbotId: bigint, perPage: number) => {
       const { isLoadMoreMessage, hasNextMessagePage } = get()
       if (isLoadMoreMessage || !hasNextMessagePage) {
         return
@@ -256,14 +267,13 @@ export const createChatStore = () => {
       const { nextCursorMessage, messages, activeConversationId } = get()
       set({ isLoadMoreMessage: true })
 
-      const searchParams = new URLSearchParams({
-        perPage: `${perPage}`,
-        cursor: nextCursorMessage ?? "",
-        conversationId: activeConversationId ?? "",
-      })
       const { data, nextCursor } = await ky
-        .get<MessageCollection>(`/api/chatbots/${chatbotId}/messages`, {
-          searchParams,
+        .get<ListMessagesResponse>(`/api/chatbots/${chatbotId}/messages`, {
+          searchParams: {
+            perPage,
+            cursor: nextCursorMessage ?? "",
+            conversationId: activeConversationId?.toString(),
+          },
         })
         .json()
       set({
@@ -305,7 +315,7 @@ export const createChatStore = () => {
     },
 
     updateConversation: (
-      conversationId: string,
+      conversationId: bigint,
       data: Partial<ConversationResource>,
     ) => {
       const { conversations } = get()
@@ -324,7 +334,7 @@ export const createChatStore = () => {
     },
 
     updateConversations: (
-      conversationIds: string[],
+      conversationIds: bigint[],
       data: Partial<ConversationResource>,
     ) => {
       if (conversationIds.length === 0) {
@@ -414,7 +424,7 @@ export const createChatStore = () => {
       }
     },
 
-    updateContact: (contactId: string, data: Partial<ContactResource>) => {
+    updateContact: (contactId: bigint, data: Partial<ContactResource>) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.contactId === contactId,

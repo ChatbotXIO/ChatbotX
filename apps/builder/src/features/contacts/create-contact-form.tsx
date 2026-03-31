@@ -17,7 +17,7 @@ export function CreateContactForm({
   onSubmmited,
   onCancelled,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   onSubmmited?: () => void
   onCancelled?: () => void
 }) {

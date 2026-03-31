@@ -4,4 +4,4 @@ export const getUsersSearchParamsCache = createSearchParamsCache({})
 
 export type GetUsersSchema = Awaited<
   ReturnType<typeof getUsersSearchParamsCache.parse>
-> & { chatbotId: string }
+> & { chatbotId: bigint }

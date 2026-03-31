@@ -1,30 +1,32 @@
-export const claudeModels = {
-  claude35Sonnet: "anthropic/claude-3-5-sonnet-20241022",
-  claude35Haiku: "anthropic/claude-3-5-haiku-20241022",
-  claude3Opus: "anthropic/claude-3-opus-20240229",
-  claude3Sonnet: "anthropic/claude-3-sonnet-20240229",
-  claude3Haiku: "anthropic/claude-3-haiku-20240307",
-} as const
+import { z } from "zod"
+
+export const claudeModels = z.enum([
+  "anthropic/claude-3-5-sonnet-20241022",
+  "anthropic/claude-3-5-haiku-20241022",
+  "anthropic/claude-3-opus-20240229",
+  "anthropic/claude-3-sonnet-20240229",
+  "anthropic/claude-3-haiku-20240307",
+])
 
 export const claudeModelOptions = [
   {
     label: "Claude 3.5 Sonnet",
-    value: claudeModels.claude35Sonnet,
+    value: claudeModels.enum["anthropic/claude-3-5-sonnet-20241022"],
   },
   {
     label: "Claude 3.5 Haiku",
-    value: claudeModels.claude35Haiku,
+    value: claudeModels.enum["anthropic/claude-3-5-haiku-20241022"],
   },
   {
     label: "Claude 3 Opus",
-    value: claudeModels.claude3Opus,
+    value: claudeModels.enum["anthropic/claude-3-opus-20240229"],
   },
   {
     label: "Claude 3 Sonnet",
-    value: claudeModels.claude3Sonnet,
+    value: claudeModels.enum["anthropic/claude-3-sonnet-20240229"],
   },
   {
     label: "Claude 3 Haiku",
-    value: claudeModels.claude3Haiku,
+    value: claudeModels.enum["anthropic/claude-3-haiku-20240307"],
   },
 ]

@@ -19,8 +19,8 @@ import {
   SortableItemHandle,
 } from "@aha.chat/ui/components/ui/sortable"
 import { cn } from "@aha.chat/ui/lib/utils"
+import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createId } from "@paralleldrive/cuid2"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon, MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

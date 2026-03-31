@@ -17,7 +17,7 @@ export type ContactOnSequenceWithRelations = z.infer<
 >
 
 export const updateContactSequenceRequest = z.object({
-  contactId: z.cuid2(),
+  contactId: z.bigint(),
   sequences: z.array(z.string().trim()),
 })
 export type UpdateContactSequenceRequest = z.infer<

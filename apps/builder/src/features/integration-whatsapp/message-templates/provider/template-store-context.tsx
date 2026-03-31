@@ -17,7 +17,7 @@ export const TemplateStoreContext = createContext<TemplateStoreApi | undefined>(
 )
 
 export type TemplateStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   integrationWhatsappId?: string
   children: ReactNode
   autoInitialize?: boolean

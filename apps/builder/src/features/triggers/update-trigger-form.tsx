@@ -20,7 +20,7 @@ import { ActionEditor } from "./components/actions/editor"
 import {
   type UpdateTriggerSchema,
   updateTriggerSchema,
-} from "./schemas/update-trigger-schema"
+} from "./schema/mutation"
 
 type TriggerWithConditions = TriggerModel & {
   conditions?: Array<{
@@ -33,7 +33,7 @@ type TriggerWithConditions = TriggerModel & {
 }
 
 type UpdateTriggerFormProps = {
-  chatbotId: string
+  chatbotId: bigint
   trigger: TriggerWithConditions
 }
 

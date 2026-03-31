@@ -5,7 +5,7 @@ import {
   broadcastModel,
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"

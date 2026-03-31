@@ -2,7 +2,7 @@
 
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
 import { env } from "@/env"
-import type { InboxResource } from "../inboxes/schemas/resource"
+import type { InboxResource } from "../inboxes/schema/resource"
 
 const buildUrlWithParam = (
   baseUrl: string,

@@ -16,13 +16,13 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
+import type { InboxTeamMemberResource } from "../inbox-team-members/schema/resource"
 import { deleteTeamMembersAction } from "./actions/delete-inbox-team-member.action"
-import type { InboxTeamMemberResource } from "./schema"
 
 type DeleteMembersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   teamMember: InboxTeamMemberResource | null
 }
 
@@ -40,7 +40,7 @@ export function DeleteInboxTeamMembersDialog({
     deleteTeamMembersAction.bind(
       null,
       chatbotId,
-      teamMember?.inboxTeamId ?? "",
+      teamMember?.inboxTeamId ?? BigInt(0),
     ),
     {
       onSuccess: () => {
@@ -89,7 +89,7 @@ export function DeleteInboxTeamMembersDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
+            onClick={() => execute({ ids: [teamMember?.id ?? BigInt(0)] })}
             size="sm"
             variant="destructive"
           >

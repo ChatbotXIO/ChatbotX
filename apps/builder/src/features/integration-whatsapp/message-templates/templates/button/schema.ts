@@ -1,11 +1,11 @@
 import { z } from "zod"
 
-export const ButtonActionType = {
-  QuickReply: "QUICK_REPLY",
-  Url: "URL",
-  PhoneNumber: "PHONE_NUMBER",
-  Flow: "FLOW",
-} as const
+export const buttonActionTypes = z.enum([
+  "quickReply",
+  "url",
+  "phoneNumber",
+  "flow",
+])
 
 export const buttonStepSchema = z
   .object({
@@ -14,18 +14,18 @@ export const buttonStepSchema = z
   .and(
     z.discriminatedUnion("type", [
       z.object({
-        type: z.literal(ButtonActionType.QuickReply),
+        type: z.literal(buttonActionTypes.enum.quickReply),
       }),
       z.object({
-        type: z.literal(ButtonActionType.Url),
+        type: z.literal(buttonActionTypes.enum.url),
         url: z.url(),
       }),
       z.object({
-        type: z.literal(ButtonActionType.Flow),
+        type: z.literal(buttonActionTypes.enum.flow),
         flow_id: z.string().min(1),
       }),
       z.object({
-        type: z.literal(ButtonActionType.PhoneNumber),
+        type: z.literal(buttonActionTypes.enum.phoneNumber),
         phone_number: z
           .string()
           .trim()
@@ -41,5 +41,5 @@ export type ButtonStepProps = z.infer<typeof buttonStepSchema>
 
 export const buttonStepDefaultFn = (text = ""): ButtonStepProps => ({
   text,
-  type: ButtonActionType.QuickReply,
+  type: buttonActionTypes.enum.quickReply,
 })

@@ -18,7 +18,6 @@ import { Form } from "@aha.chat/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -26,15 +25,17 @@ import { toast } from "sonner"
 import CustomFieldField from "../custom-fields/components/custom-field-field"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
-import { createAIFunctionRequest } from "./schemas"
+import { createAIFunctionRequest } from "./schema/action"
 
 type AIFunctionsCreateProps = {
+  chatbotId: bigint
   onSuccess?: () => void
 }
 
-export function AIFunctionsCreate({ onSuccess }: AIFunctionsCreateProps) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
-
+export function AIFunctionsCreate({
+  chatbotId,
+  onSuccess,
+}: AIFunctionsCreateProps) {
   const t = useTranslations()
 
   const [isOpen, setIsOpen] = useState(false)

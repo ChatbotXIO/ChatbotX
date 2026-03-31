@@ -1,26 +1,29 @@
 import { db } from "@aha.chat/database/client"
 import type { FolderModel, FolderType } from "@aha.chat/database/types"
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
-} from "../schemas/query"
+} from "../schema/query"
 
-export const getFolders = async (
+export const listFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: FolderModel[] }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const { folderId, ...rest } = input
+  const { folderId: folderIdString, ...rest } = input
+
+  let folderId: bigint | undefined
+  if (folderIdString) {
+    folderId = parseBigIntId(folderIdString)
+  }
 
   const data = await db.query.folderModel.findMany({
     where: {
       ...rest,
       folderType: rest.folderType as FolderType,
-      parentId:
-        !folderId || input.folderId === null
-          ? { isNull: true as const }
-          : input.folderId,
+      parentId: folderId ?? { isNull: true },
     },
     orderBy: {
       createdAt: "asc",
@@ -53,14 +56,14 @@ export const getCurrentFolder = async (
     // Sort by path's order
     const orderedPaths = folder.paths.reduce(
       (result, value) => {
-        result[value] = null
+        result[value.toString()] = null
         return result
       },
       {} as Record<string, FolderModel | null>,
     )
 
     for (const temp of tempParents) {
-      orderedPaths[temp.id] = temp
+      orderedPaths[temp.id.toString()] = temp
     }
 
     // Remove null value

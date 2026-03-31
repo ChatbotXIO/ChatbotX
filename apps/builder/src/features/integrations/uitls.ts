@@ -4,7 +4,7 @@ import { findChatbotOrFail } from "../chatbot/queries"
 import { findOrganization } from "../organization/queries"
 
 export async function identifyChatbotAndOrganizationFromRequest(
-  chatbotId?: string | null,
+  chatbotId?: bigint | null,
 ): Promise<{ chatbot?: ChatbotModel; organization: OrganizationModel }> {
   const domain = await getDomainFromHeader()
   const organization = await findOrganization({

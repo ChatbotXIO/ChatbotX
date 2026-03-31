@@ -2,39 +2,40 @@ import { z } from "zod"
 import { triggerContextSchema } from "./trigger-context"
 
 export const botMessageResponseTypeSchema = z.enum([
-  "AUTOMATED_RESPONSE",
-  "AI_AGENT",
-  "FLOW",
-  "NONE",
+  "automated_response",
+  "ai_agent",
+  "flow",
+  "none",
 ])
 export type BotMessageResponseType = z.infer<
   typeof botMessageResponseTypeSchema
 >
 
-export const botMessageRouteTypeSchema = z.enum(["FLOW", "AGENT", "FALLBACK"])
+export const botMessageRouteTypeSchema = z.enum(["flow", "agent", "fallback"])
 export type BotMessageRouteType = z.infer<typeof botMessageRouteTypeSchema>
 
-export const botMessageResultSchema = z.enum(["SUCCESS", "FALLBACK"])
+export const botMessageResultSchema = z.enum(["success", "fallback"])
 export type BotMessageResult = z.infer<typeof botMessageResultSchema>
 
 export const botMessageFallbackReasonSchema = z.enum([
-  "NO_INTENT_MATCH",
-  "LOW_CONFIDENCE",
-  "ROUTE_GUARD_BLOCKED",
-  "NO_CONTENT",
-  "NOT_FROM_CONTACT",
-  "NO_AI_AGENT",
-  "BUTTON_NOT_FOUND",
-  "HANDLER_ERROR_TO_FALLBACK",
-  "UNSUPPORTED_MESSAGE_TYPE",
+  "no_content",
+  "no_intent_match",
+  "low_confidence",
+  "route_guard_blocked",
+  "no_content",
+  "not_from_contact",
+  "no_ai_agent",
+  "button_not_found",
+  "handler_error_to_fallback",
+  "unsupported_message_type",
 ])
 export type BotMessageFallbackReason = z.infer<
   typeof botMessageFallbackReasonSchema
 >
 
 export const botMessageMetadataSchema = z.object({
-  flowId: z.string().optional(),
-  automatedResponseId: z.string().optional(),
+  flowId: z.bigint().optional(),
+  automatedResponseId: z.bigint().optional(),
   intentId: z.string().optional(),
   intentConfidence: z.number().optional(),
   fallbackReason: botMessageFallbackReasonSchema.optional(),
@@ -47,11 +48,11 @@ export type BotMessageMetadata = z.infer<typeof botMessageMetadataSchema>
 export const botMessageEventSchema = z.object({
   aiProvider: z.string(),
   channel: z.string().optional(),
-  chatbotId: z.string(),
-  conversationId: z.string(),
-  eventId: z.string(),
+  chatbotId: z.bigint(),
+  conversationId: z.bigint(),
+  eventId: z.bigint(),
   hasResponse: z.boolean(),
-  messageId: z.string(),
+  messageId: z.bigint(),
   metadata: botMessageMetadataSchema.optional(),
   occurredAt: z.coerce.date(),
   responseType: botMessageResponseTypeSchema,

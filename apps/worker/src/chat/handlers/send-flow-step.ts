@@ -37,7 +37,7 @@ import type {
   ChatJobSendFlowStep,
 } from "@aha.chat/worker-config"
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { trackBotResponse } from "../../integration/handlers/automated-response/track-bot-response"
 import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"

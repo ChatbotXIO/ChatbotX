@@ -2,7 +2,7 @@
 
 import { db, isUniqueViolationError } from "@aha.chat/database/client"
 import { reflinkModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,

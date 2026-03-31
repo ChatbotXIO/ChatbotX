@@ -3,7 +3,7 @@
 import { db } from "@aha.chat/database/client"
 import { folderModel } from "@aha.chat/database/schema"
 import type { FolderModel } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -11,7 +11,7 @@ import {
 import {
   type CreateFolderSchema,
   createFolderSchema,
-} from "@/features/folders/schemas/action"
+} from "@/features/folders/schema/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 

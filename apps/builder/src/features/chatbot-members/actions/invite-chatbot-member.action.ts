@@ -6,7 +6,7 @@ import { createId, init } from "@paralleldrive/cuid2"
 import { addDays } from "date-fns"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { inviteChatbotMemberRequest } from "../schemas/chatbot-member.request"
+import { inviteChatbotMemberRequest } from "../schema/mutation"
 
 export const inviteChatbotMemberAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

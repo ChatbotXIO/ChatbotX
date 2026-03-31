@@ -5,14 +5,16 @@ export default defineConfig({
   entry: ["src/index.ts"],
   dts: true,
   shims: true,
-  skipNodeModulesBundle: false,
+  deps: {
+    skipNodeModulesBundle: false,
+    // https://github.com/egoist/tsdown/issues/619
+    alwaysBundle: [/(.*)/],
+  },
   clean: true,
   // target: 'node20',
   platform: "node",
   minify: true,
   unbundle: false,
-  // https://github.com/egoist/tsdown/issues/619
-  noExternal: [/(.*)/],
   // splitting: false,
   // external: ["react"],
   // esbuildOptions(options) {

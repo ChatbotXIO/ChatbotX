@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import z from "zod"
 
 export const stateTypes = {
@@ -9,7 +9,7 @@ export const stateTypes = {
 export type StateType = (typeof stateTypes)[keyof typeof stateTypes]
 
 const baseStateSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stateType: z.string().pipe(z.enum(stateTypes)),
 })
 export type BaseStateSchema = z.infer<typeof baseStateSchema>

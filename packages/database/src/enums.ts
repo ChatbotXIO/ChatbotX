@@ -1,18 +1,6 @@
-export const rootFolderId = "0"
+import { z } from "zod"
 
-export const BroadcastSubaction = {
-  allContacts: "BS00",
-
-  messengerList: "BSM01",
-  messengerActiveContacts: "BSM02",
-  messengerAccountUpdate: "BSM04",
-  messengerConfirmedEventUpdate: "BSM05",
-  messengerPostPurchaseUpdate: "BSM06",
-  whatsappTemplateMessage: "BSW01",
-  whatsappWithin24Hours: "BSW02",
-} as const
-export type BroadcastSubaction =
-  (typeof BroadcastSubaction)[keyof typeof BroadcastSubaction]
+export const rootFolderId = BigInt(0)
 
 export const ConditionField = {
   language: "language",
@@ -69,13 +57,6 @@ export const ConditionType = {
   number: "number",
 } as const
 export type ConditionType = (typeof ConditionType)[keyof typeof ConditionType]
-
-export const BroadcastFlowType = {
-  flow: "flow",
-  template: "template",
-} as const
-export type BroadcastFlowType =
-  (typeof BroadcastFlowType)[keyof typeof BroadcastFlowType]
 
 export const InboxStatus = {
   connected: "connected",
@@ -155,12 +136,9 @@ export const DateTimeTriggerType = {
 export type DateTimeTriggerType =
   (typeof DateTimeTriggerType)[keyof typeof DateTimeTriggerType]
 
-export const AssignerFilterType = {
-  all: "all",
-  unassigned: "unassigned",
-} as const
+export const assignerFilterTypes = z.enum(["all", "unassigned"])
 export type AssignerFilterType =
-  (typeof AssignerFilterType)[keyof typeof AssignerFilterType]
+  (typeof assignerFilterTypes)[keyof typeof assignerFilterTypes]
 
 export const ConversationStatus = {
   noAdminReply: "noAdminReply",

@@ -23,7 +23,7 @@ import { deleteAutomatedResponseAction } from "./actions/delete-automated-respon
 type DeleteAutomatedResponsesDialogProps = ComponentPropsWithoutRef<
   typeof Dialog
 > & {
-  chatbotId: string
+  chatbotId: bigint
   automatedResponses: Row<AutomatedResponseModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void

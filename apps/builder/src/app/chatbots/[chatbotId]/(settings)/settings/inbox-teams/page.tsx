@@ -1,21 +1,31 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { ListInboxTeams } from "@/enterprise/features/inbox-teams/list-inbox-teams"
-import { getInboxTeams } from "@/enterprise/features/inbox-teams/queries"
-import { getAllChatbotMembers } from "@/features/users/queries"
+import { listInboxTeams } from "@/enterprise/features/inbox-teams/queries"
+import { listChatbotMembers } from "@/features/chatbot-members/queries"
+import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schema/query"
 
 export default async function InboxTeamsPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const params = await props.params
+  const { chatbotId: chatbotIdString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
   const promises = Promise.all([
-    getInboxTeams({ chatbotId: params.chatbotId }),
-    getAllChatbotMembers({ chatbotId: params.chatbotId }),
+    listInboxTeams({ chatbotId }),
+    listChatbotMembers({
+      chatbotId,
+      ...getChatbotMembersSearchParamsCache.parse({}),
+    }),
   ])
 
   return (
     <Suspense>
-      <ListInboxTeams chatbotId={params.chatbotId} promises={promises} />
+      <ListInboxTeams chatbotId={chatbotId} promises={promises} />
     </Suspense>
   )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import type { TriggerModel } from "@aha.chat/database/types"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import {
   Dialog,
@@ -19,10 +18,11 @@ import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteTriggersAction } from "./actions/delete-triggers-action"
+import type { TriggerResource } from "./schema/resource"
 
 type DeleteTriggersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: string
-  triggers: Row<TriggerModel>["original"][]
+  chatbotId: bigint
+  triggers: Row<TriggerResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void

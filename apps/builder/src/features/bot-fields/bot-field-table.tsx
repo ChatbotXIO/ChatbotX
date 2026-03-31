@@ -45,8 +45,8 @@ import type { BotFieldResource } from "./schemas/resource"
 import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 type FieldsTableProps = {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
   promises: Promise<[Awaited<ReturnType<typeof listBotFields>>]>
 }
 
@@ -181,7 +181,7 @@ export function BotFieldsTable({
                 {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => copyToClipboard(row.original.id)}
+                onClick={() => copyToClipboard(row.original.id.toString())}
               >
                 <FingerprintIcon />
                 {t("actions.getID")}
@@ -213,7 +213,7 @@ export function BotFieldsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

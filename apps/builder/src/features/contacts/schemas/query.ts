@@ -1,9 +1,9 @@
 import { Operator } from "@aha.chat/database/enums"
 import z from "zod"
-import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema"
-import { conversationResource } from "@/features/conversations/schemas/resource"
+import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
+import { conversationResource } from "@/features/conversations/schema/resource"
 import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
-import { inboxResource } from "@/features/inboxes/schemas/resource"
+import { inboxResource } from "@/features/inboxes/schema/resource"
 import {
   publicTagResource,
   tagResource,
@@ -14,11 +14,10 @@ import { contactCustomFieldResource } from "./contact-custom-field"
 import { contactNoteResource } from "./contact-note"
 import { contactResource, publicContactResource } from "./resource"
 
-export const listContactsRequest = basePaginationRequest.and(
-  z.object({
-    keyword: z.string().optional(),
-  }),
-)
+export const listContactsRequest = basePaginationRequest.extend({
+  keyword: z.string().optional(),
+  chatbotId: z.bigint(),
+})
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
 export const listContactsItem = contactResource.and(

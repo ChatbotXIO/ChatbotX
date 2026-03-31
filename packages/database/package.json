@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.10",
     "drizzle-cuid2": "^2.2.0",
     "drizzle-orm": "1.0.0-beta.18-7eb39f0",
@@ -34,6 +35,7 @@
     "./enums": "./src/enums.ts",
     "./schema": "./src/drizzle/schema/index.ts",
     "./errors": "./src/errors.ts",
-    "./utils": "./src/utils.ts"
+    "./utils": "./src/utils.ts",
+    "./id": "./src/id.ts"
   }
 }

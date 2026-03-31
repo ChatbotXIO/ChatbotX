@@ -14,7 +14,7 @@ import { useEffect } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { selectPageAction } from "../actions/select-page.action"
-import { selectPageRequest } from "../schemas"
+import { selectPageRequest } from "../schema/action"
 
 export function FacebookPages({
   chatbotId,

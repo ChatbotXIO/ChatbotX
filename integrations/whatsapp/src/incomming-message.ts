@@ -8,7 +8,7 @@ import {
   type ReceivedMessageResult,
   SdkException,
 } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
 import type { WhatsAppAPI } from "whatsapp-api-js"

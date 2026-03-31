@@ -2,7 +2,7 @@
 
 import { db, eq, findOrFail } from "@aha.chat/database/client"
 import { sequenceModel, sequenceStepModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -19,8 +19,8 @@ import {
 } from "../schema"
 
 async function validateSequenceOwnership(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
 ) {
   await findOrFail(
     sequenceModel,
@@ -72,7 +72,7 @@ function buildUpdateData(
 
 function buildCreateData(
   parsedInput: UpsertSequenceStepRequest,
-  sequenceId: string,
+  sequenceId: bigint,
 ): typeof sequenceStepModel.$inferInsert {
   const {
     order,
@@ -165,9 +165,9 @@ function shouldRecalculateOnUpdate(
  */
 async function handleStepCreation(
   parsedInput: UpsertSequenceStepRequest,
-  sequenceId: string,
-  chatbotId: string,
-): Promise<{ stepId: string }> {
+  sequenceId: bigint,
+  chatbotId: bigint,
+): Promise<{ stepId: bigint }> {
   const createData = buildCreateData(parsedInput, sequenceId)
   const step = await createSequenceStep(createData)
 
@@ -234,10 +234,10 @@ async function handleStepCreation(
  */
 async function handleStepUpdate(
   parsedInput: UpsertSequenceStepRequest,
-  stepId: string,
-  sequenceId: string,
-  chatbotId: string,
-): Promise<{ stepId: string }> {
+  stepId: bigint,
+  sequenceId: bigint,
+  chatbotId: bigint,
+): Promise<{ stepId: bigint }> {
   const updateData = buildUpdateData(parsedInput)
   const step = await updateSequenceStep(stepId, updateData, chatbotId)
 
@@ -262,9 +262,9 @@ async function handleStepUpdate(
 }
 
 async function updateSequenceStep(
-  stepId: string,
+  stepId: bigint,
   updateData: Partial<typeof sequenceStepModel.$inferInsert>,
-  chatbotId: string,
+  chatbotId: bigint,
 ) {
   const step = await db.query.sequenceStepModel.findFirst({
     where: {
@@ -318,7 +318,7 @@ export const upsertSequenceStepAction = chatbotActionClient
 
       await validateSequenceOwnership(sequenceId, chatbotId)
 
-      let result: { stepId: string }
+      let result: { stepId: bigint }
 
       if (stepId) {
         result = await handleStepUpdate(

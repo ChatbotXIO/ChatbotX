@@ -2,7 +2,7 @@
 
 import { db } from "@aha.chat/database/client"
 import { aiTriggerModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type CreateAITriggerRequest,
   createAITriggerRequest,

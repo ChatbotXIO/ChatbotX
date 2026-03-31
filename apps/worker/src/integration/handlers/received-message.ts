@@ -35,7 +35,7 @@ import {
   setWebhookExecutionContext,
 } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 

@@ -27,7 +27,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
 })
 
 export const chatbotAuthMiddleware = base.middleware(
-  async ({ context, next }, chatbotId: string) => {
+  async ({ context, next }, chatbotId: bigint) => {
     if (!context.user) {
       throw new ORPCError("UNAUTHORIZED")
     }

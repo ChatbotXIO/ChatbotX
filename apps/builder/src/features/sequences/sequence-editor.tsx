@@ -24,15 +24,15 @@ import { SequenceStepCard } from "./components/sequence-step-card"
 type SequenceEditorProps = {
   sequence: SequenceModel & {
     steps: Array<{
-      id: string
+      id: bigint
       order: number
       delayDays: number
       delayMinutes: number
-      flowId: string | null
-      flow: { id: string; name: string } | null
+      flowId: bigint | null
+      flow: { id: bigint; name: string } | null
     }>
   }
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function SequenceEditor({ sequence, chatbotId }: SequenceEditorProps) {

@@ -4,7 +4,7 @@ import {
   sequenceEventModel,
 } from "@aha.chat/database/schema"
 import type { SchedulerClient } from "@aha.chat/scheduler"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import { RETRY_BASE_DELAY_MS } from "./constants"
 import type { DispatchWithRelations } from "./types"

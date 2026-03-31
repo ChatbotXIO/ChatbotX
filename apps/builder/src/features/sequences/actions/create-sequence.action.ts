@@ -2,7 +2,7 @@
 
 import { db, isDatabaseError } from "@aha.chat/database/client"
 import { sequenceModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {

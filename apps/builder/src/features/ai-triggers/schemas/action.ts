@@ -2,14 +2,14 @@ import { z } from "zod"
 
 const aiTriggerQuestionSchema = z.object({
   name: z.string().trim().min(1).max(40).optional(),
-  customFieldId: z.cuid2().optional(),
+  customFieldId: z.bigint().optional(),
 })
 
 export const createAITriggerRequest = z.object({
   name: z.string().trim().min(1).max(64),
   description: z.string().trim().max(1000).nullable(),
   questions: z.array(aiTriggerQuestionSchema),
-  flowId: z.cuid2().nullable(),
+  flowId: z.bigint().nullable(),
   finalMessage: z.string().trim().max(255).nullable(),
 })
 export type CreateAITriggerRequest = z.infer<typeof createAITriggerRequest>

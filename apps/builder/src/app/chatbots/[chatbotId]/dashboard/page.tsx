@@ -1,4 +1,6 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
 
@@ -7,7 +9,12 @@ export default async function Dashboard({
 }: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
   const { data: inboxes } = await listInboxes({
@@ -21,7 +28,7 @@ export default async function Dashboard({
 
       <BaseDashboard
         defaultSearchParams={{
-          chatbotId,
+          chatbotId: chatbotId.toString(),
           timezone,
         }}
       />

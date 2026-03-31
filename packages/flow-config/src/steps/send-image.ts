@@ -1,11 +1,11 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { UploadMode } from "../types"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendImageStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.sendImage),
   mode: z.enum(UploadMode),
   url: z.url(),

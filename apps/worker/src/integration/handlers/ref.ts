@@ -12,7 +12,7 @@ import {
   type IntegrationJobRunRef,
   integrationQueue,
 } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {

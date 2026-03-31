@@ -1,4 +1,6 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
+import { notFound } from "next/navigation"
 import { ChatLayout } from "@/features/chat/chat-layout"
 import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -12,9 +14,14 @@ type InboxPageProps = {
 }
 
 export default async function InboxPage({ params }: InboxPageProps) {
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const layout = (await cookies()).get("csm:layout:inbox")
   const savedLayout = layout ? JSON.parse(layout.value) : [25, 50, 25]
-  const { chatbotId } = await params
 
   return (
     <div className="-m-6">
@@ -24,7 +31,7 @@ export default async function InboxPage({ params }: InboxPageProps) {
             <CustomFieldStoreProvider chatbotId={chatbotId}>
               <SavedReplyStoreProvider autoInitialize={false}>
                 <FlowStoreProvider chatbotId={chatbotId}>
-                  <ChatLayout layout={savedLayout} />
+                  <ChatLayout chatbotId={chatbotId} layout={savedLayout} />
                 </FlowStoreProvider>
               </SavedReplyStoreProvider>
             </CustomFieldStoreProvider>

@@ -31,34 +31,36 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"
-import type { getAllChatbotMembers } from "../../../features/users/queries"
-import type { UserResource } from "../../../features/users/schemas/resource"
+import type { listChatbotMembers } from "@/features/chatbot-members/queries"
+import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
+import type { InboxTeamMemberResource } from "../inbox-team-members/schema/resource"
 import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
 import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
 import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
-import type { getInboxTeams } from "./queries"
+import type { listInboxTeams } from "./queries"
 import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
-import type { InboxTeamMemberResource, InboxTeamResource } from "./schema"
+import type { ListInboxTeamsResponse } from "./schema/action"
+import type { InboxTeamResource } from "./schema/resource"
 
 type ListInboxTeamsProps = {
-  chatbotId: string
+  chatbotId: bigint
   promises: Promise<
     [
-      Awaited<ReturnType<typeof getInboxTeams>>,
-      Awaited<ReturnType<typeof getAllChatbotMembers>>,
+      Awaited<ReturnType<typeof listInboxTeams>>,
+      Awaited<ReturnType<typeof listChatbotMembers>>,
     ]
   >
 }
 
 function ListInboxTeamsDetail({
   chatbotId,
-  allInboxTeams,
-  allUsers,
+  inboxTeams,
+  chatbotMembers,
 }: {
-  chatbotId: string
-  allInboxTeams: InboxTeamResource[]
-  allUsers: UserResource[]
+  chatbotId: bigint
+  inboxTeams: ListInboxTeamsResponse["data"]
+  chatbotMembers: ListChatbotMembersResponse["data"]
 }) {
   const t = useTranslations()
   const [renameInboxTeam, setRenameInboxTeam] =
@@ -71,10 +73,13 @@ function ListInboxTeamsDetail({
     useState<InboxTeamMemberResource | null>(null)
   const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({})
 
-  const rows: Array<{ showMembers: boolean; team: InboxTeamResource }> = []
-  for (const team of allInboxTeams) {
+  const rows: Array<{
+    showMembers: boolean
+    team: ListInboxTeamsResponse["data"][number]
+  }> = []
+  for (const team of inboxTeams) {
     rows.push({ showMembers: true, team })
-    if (openTeams[team.id]) {
+    if (openTeams[team.id.toString()]) {
       rows.push({ showMembers: false, team })
     }
   }
@@ -103,13 +108,14 @@ function ListInboxTeamsDetail({
                           onClick={() =>
                             setOpenTeams((prev) => ({
                               ...prev,
-                              [row.team.id]: !prev[row.team.id],
+                              [row.team.id.toString()]:
+                                !prev[row.team.id.toString()],
                             }))
                           }
                           type="button"
                           variant="ghost"
                         >
-                          {openTeams[row.team.id] ? (
+                          {openTeams[row.team.id.toString()] ? (
                             <ChevronDownIcon size={16} />
                           ) : (
                             <ChevronRightIcon size={16} />
@@ -122,7 +128,8 @@ function ListInboxTeamsDetail({
                           onClick={() =>
                             setOpenTeams((prev) => ({
                               ...prev,
-                              [row.team.id]: !prev[row.team.id],
+                              [row.team.id.toString()]:
+                                !prev[row.team.id.toString()],
                             }))
                           }
                           type="button"
@@ -217,8 +224,8 @@ function ListInboxTeamsDetail({
       />
       <AddInboxTeamMemberDialog
         chatbotId={chatbotId}
+        chatbotMembers={chatbotMembers}
         inboxTeam={addInboxTeamMember}
-        listUsers={allUsers}
         onOpenChange={() => setAddInboxTeamMember(null)}
         open={Boolean(addInboxTeamMember)}
       />
@@ -240,7 +247,7 @@ function ListInboxTeamsDetail({
 
 export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
   const t = useTranslations()
-  const [{ data: allInboxTeams }, { data: allUsers }] = use(promises)
+  const [{ data: allInboxTeams }, { data: allChatbotMembers }] = use(promises)
 
   return (
     <Card>
@@ -251,12 +258,15 @@ export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex justify-end">
-          <CreateInboxTeamDialog chatbotId={chatbotId} users={allUsers} />
+          <CreateInboxTeamDialog
+            chatbotId={chatbotId}
+            chatbotMembers={allChatbotMembers}
+          />
         </div>
         <ListInboxTeamsDetail
-          allInboxTeams={allInboxTeams || []}
-          allUsers={allUsers || []}
           chatbotId={chatbotId}
+          chatbotMembers={allChatbotMembers || []}
+          inboxTeams={allInboxTeams || []}
         />
       </CardContent>
     </Card>

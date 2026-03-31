@@ -10,7 +10,7 @@ import {
   type FillableContactKeys,
   fillableContactKeys,
 } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

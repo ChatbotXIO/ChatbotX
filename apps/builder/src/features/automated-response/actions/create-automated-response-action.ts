@@ -2,7 +2,7 @@
 
 import { db } from "@aha.chat/database/client"
 import { automatedResponseModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -14,7 +14,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateAutomatedResponseRequest,
   createAutomatedResponseRequest,
-} from "../schemas/action"
+} from "../schema/action"
 
 export const createAutomatedResponseAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

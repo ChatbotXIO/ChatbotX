@@ -6,17 +6,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
-import { getCurrentFolder, getFolders } from "@/features/folders/queries"
-import { listFoldersSearchParams } from "@/features/folders/schemas/query"
+import { getCurrentFolder, listFolders } from "@/features/folders/queries"
+import { listFoldersSearchParams } from "@/features/folders/schema/query"
 
 export default async function SharedFolderSlot(props: {
-  chatbotId: string
+  chatbotId: bigint
   searchParams: Promise<SearchParams>
 }) {
   const t = await getTranslations()
@@ -59,7 +60,9 @@ export default async function SharedFolderSlot(props: {
   }
 
   const searchParams = await props.searchParams
-  const { folderId } = await listFoldersSearchParams.parse(searchParams)
+  const { folderId: folderIdString } =
+    await listFoldersSearchParams.parse(searchParams)
+  const folderId = parseBigIntId(folderIdString)
 
   const promises = Promise.all([
     folderId
@@ -68,10 +71,10 @@ export default async function SharedFolderSlot(props: {
           chatbotId: props.chatbotId,
         })
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
-    getFolders({
+    listFolders({
       chatbotId: props.chatbotId,
       folderType,
-      folderId,
+      folderId: folderIdString,
     }),
   ])
 

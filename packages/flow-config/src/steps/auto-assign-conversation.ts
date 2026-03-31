@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -10,7 +10,7 @@ export const AutoAssignConversationRule = {
 } as const
 
 export const autoAssignConversationStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.autoAssignConversation),
   assignedIds: z.array(z.string()),
   rule: z.enum(AutoAssignConversationRule),

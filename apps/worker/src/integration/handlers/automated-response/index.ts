@@ -13,21 +13,21 @@ export async function triggerAutomatedResponse(
   props: IntegrationJobTriggerAutomatedResponse["data"],
 ) {
   const { message } = props
-  const messageId = (message as { id?: string }).id ?? ""
+  const messageId = (message as { id?: bigint }).id ?? BigInt(0)
   const startTime = Date.now()
-  if (!message.content) {
+  if (!message.text) {
     await trackBotResponse({
       chatbotId: message.chatbotId,
       conversationId: message.conversationId,
       messageId,
       hasResponse: false,
       responseType: "none",
-      routeType: "FALLBACK",
+      routeType: "fallback",
       result: "fallback",
       aiProvider: "none",
       startTime: Date.now(),
       metadata: {
-        fallbackReason: "NO_CONTENT",
+        fallbackReason: "no_content",
       },
       triggerContext: {
         triggerSource: "worker",
@@ -66,11 +66,11 @@ export async function triggerAutomatedResponse(
       messageId,
       hasResponse: false,
       responseType: "none",
-      routeType: "FALLBACK",
+      routeType: "fallback",
       result: "fallback",
       aiProvider: "none",
       metadata: {
-        fallbackReason: "NO_AI_AGENT",
+        fallbackReason: "no_ai_agent",
       },
       startTime,
       triggerContext: {
@@ -89,16 +89,16 @@ export async function triggerAutomatedResponse(
   })
   const lastAIMessages: ModelMessage[] = []
   for (const msg of last100Messages) {
-    if (!msg.content) {
+    if (!msg.text) {
       continue
     }
     if (msg.senderType === "contact") {
       lastAIMessages.push({
         role: "user",
-        content: msg.content,
+        content: msg.text,
       })
     } else if (msg.senderType === "user" || msg.senderType === "bot") {
-      lastAIMessages.push({ role: "assistant", content: msg.content })
+      lastAIMessages.push({ role: "assistant", content: msg.text })
     }
   }
   lastAIMessages.reverse()
@@ -135,7 +135,7 @@ export async function triggerAutomatedResponse(
       messageId,
       hasResponse: true,
       responseType: "ai_agent",
-      routeType: "AGENT",
+      routeType: "agent",
       result: "success",
       aiProvider: "openai",
       startTime,
@@ -176,11 +176,11 @@ export async function triggerAutomatedResponse(
     messageId,
     hasResponse: false,
     responseType: "ai_agent",
-    routeType: "AGENT",
+    routeType: "agennt",
     result: "success",
     aiProvider: "none",
     metadata: {
-      fallbackReason: "NO_INTENT_MATCH",
+      fallbackReason: "no_intent_match",
     },
     startTime,
     triggerContext: {

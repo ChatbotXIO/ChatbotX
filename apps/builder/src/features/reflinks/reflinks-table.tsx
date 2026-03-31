@@ -41,7 +41,7 @@ import type { ListReflinkItem, ListReflinksResponse } from "./schemas/query"
 import { UpdateReflinkDialog } from "./update-reflink"
 
 type ReflinksTableProps = {
-  chatbotId: string
+  chatbotId: bigint
   promises: Promise<[Awaited<ListReflinksResponse>]>
 }
 
@@ -192,7 +192,7 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

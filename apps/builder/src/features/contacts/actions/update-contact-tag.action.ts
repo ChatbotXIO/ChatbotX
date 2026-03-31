@@ -7,7 +7,7 @@ import {
   tagModel,
 } from "@aha.chat/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

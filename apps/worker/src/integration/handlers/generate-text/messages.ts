@@ -1,5 +1,6 @@
 import { db } from "@aha.chat/database/client"
-import { AIMessageRole, type ConversationModel } from "@aha.chat/database/types"
+import { aiMessageRoles } from "@aha.chat/database/schema"
+import type { ConversationModel } from "@aha.chat/database/types"
 import type { AIGenerateTextSchema } from "@aha.chat/flow-config"
 import type { ModelMessage } from "ai"
 import { maxConversationHistory } from "../automated-response/constants"
@@ -14,7 +15,7 @@ export async function buildAIMessages(
     const lastMessages = await db.query.messageModel.findMany({
       where: {
         conversationId: conversation.id,
-        content: {
+        text: {
           isNotNull: true,
         },
         messageType: {
@@ -26,19 +27,19 @@ export async function buildAIMessages(
     })
 
     for (const message of lastMessages) {
-      if (!message.content) {
+      if (!message.text) {
         continue
       }
 
       if (message.senderType === "contact") {
         messages.push({
-          role: AIMessageRole.user,
-          content: message.content,
+          role: aiMessageRoles.enum.user,
+          content: message.text,
         })
       } else {
         messages.push({
-          role: AIMessageRole.assistant,
-          content: message.content,
+          role: aiMessageRoles.enum.assistant,
+          content: message.text,
         })
       }
     }
@@ -48,7 +49,7 @@ export async function buildAIMessages(
 
   if (step.text) {
     messages.push({
-      role: AIMessageRole.user,
+      role: aiMessageRoles.enum.user,
       content: step.text,
     })
   }

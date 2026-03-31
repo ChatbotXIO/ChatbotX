@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
@@ -11,7 +13,11 @@ export default async function FolderableLayout({
   folders: ReactNode
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
   return (
     <FolderStoreProvider chatbotId={chatbotId} folderType="automatedResponse">

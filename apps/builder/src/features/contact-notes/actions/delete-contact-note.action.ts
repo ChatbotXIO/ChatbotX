@@ -36,7 +36,7 @@ export const deleteContactNoteAction = chatbotActionClient
         .delete(contactNoteModel)
         .where(
           and(
-            eq(contactNoteModel.id, parsedInput.id),
+            eq(contactNoteModel.id, parsedInput.contactNoteId),
             eq(contactNoteModel.contactId, contact.id),
           ),
         )

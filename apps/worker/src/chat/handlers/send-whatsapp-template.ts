@@ -15,7 +15,7 @@ import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
 } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,

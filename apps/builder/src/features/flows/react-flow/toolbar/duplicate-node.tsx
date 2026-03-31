@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@aha.chat/ui/components/ui/tooltip"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

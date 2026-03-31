@@ -3,7 +3,6 @@ import { InboxStatus } from "@aha.chat/database/enums"
 import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
 import type { OrganizationSettings } from "@aha.chat/database/types"
 import type { ZaloAuthValue } from "@aha.chat/integration-zalo"
-import { createId } from "@paralleldrive/cuid2"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 
@@ -13,7 +12,7 @@ export async function connectZaloHandler({
   req,
 }: {
   zaloSettings: NonNullable<OrganizationSettings["zalo"]>
-  chatbotId: string
+  chatbotId: bigint
   req: Request
 }) {
   const authValue = (await integrations.zalo.handleRequest({
@@ -31,7 +30,6 @@ export async function connectZaloHandler({
     const inbox = await tx
       .insert(inboxModel)
       .values({
-        id: createId(),
         chatbotId,
         name: authValue.metadata.oaName,
         channel: "zalo",
@@ -47,7 +45,6 @@ export async function connectZaloHandler({
       .then((result) => result[0])
 
     await tx.insert(integrationZaloModel).values({
-      id: createId(),
       inboxId: inbox.id,
       chatbotId,
       oaId: authValue.oaId,

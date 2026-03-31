@@ -26,7 +26,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
 import { createMessageAction } from "@/features/messages/actions/create-message.action"
-import { createMessageRequest } from "@/features/messages/schemas/create-message.schema"
+import { createMessageRequest } from "@/features/messages/schema/mutation"
 import {
   useFlowNodesSelectOptions,
   useFlowSelectOptions,

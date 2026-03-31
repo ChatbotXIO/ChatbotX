@@ -1,6 +1,5 @@
 "use client"
 
-import type { AIMCPServerModel } from "@aha.chat/database/types"
 import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
@@ -33,12 +32,15 @@ import { use, useMemo } from "react"
 import { toast } from "sonner"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
 import type { listAIMcpServers } from "./queries"
+import type { AIMcpServerResource } from "./schema/resource"
 
 type AIMcpServersTableProps = {
+  chatbotId: bigint
   promises: Promise<[Awaited<ReturnType<typeof listAIMcpServers>>]>
 }
 
 export default function AIMcpServersTable({
+  chatbotId,
   promises,
 }: AIMcpServersTableProps) {
   const [{ data }] = use(promises)
@@ -48,7 +50,7 @@ export default function AIMcpServersTable({
   // const [rowAction, setRowAction] =
   //   useState<DataTableRowAction<AIMCPServerModel> | null>(null)
 
-  const columns = useMemo<ColumnDef<AIMCPServerModel>[]>(
+  const columns = useMemo<ColumnDef<AIMcpServerResource>[]>(
     () => [
       {
         id: "select",
@@ -167,7 +169,7 @@ export default function AIMcpServersTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })
@@ -184,6 +186,7 @@ export default function AIMcpServersTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <AIMcpServersCreate
+              chatbotId={chatbotId}
               onSuccess={() => {
                 router.refresh()
               }}

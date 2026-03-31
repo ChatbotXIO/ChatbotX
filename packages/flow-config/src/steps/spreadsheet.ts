@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -23,7 +23,7 @@ export const FilterMode = {
 export type FilterMode = (typeof FilterMode)[keyof typeof FilterMode]
 
 export const spreadsheetSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.union([
     z.literal(StepType.spreadsheetGetRandomRow),
     z.literal(StepType.spreadsheetGetRow),

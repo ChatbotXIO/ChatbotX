@@ -17,8 +17,8 @@ export function AddContactForm({
   onCancel,
   onSuccess,
 }: {
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint | undefined
   onCancel: () => void
   onSuccess: (data: ContactNoteModel) => void
 }) {
@@ -26,7 +26,7 @@ export function AddContactForm({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createContactNoteAction.bind(null, chatbotId, contactId),
+      createContactNoteAction.bind(null, chatbotId, contactId ?? BigInt(0)),
       zodResolver(addContactNoteRequest),
       {
         actionProps: {
@@ -48,7 +48,7 @@ export function AddContactForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            content: "",
+            text: "",
           },
         },
         errorMapProps: {},

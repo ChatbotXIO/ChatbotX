@@ -3,7 +3,7 @@
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import { conditionModel, triggerModel } from "@aha.chat/database/schema"
 import { updateTriggerCache } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -12,7 +12,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type UpdateTriggerSchema,
   updateTriggerSchema,
-} from "../schemas/update-trigger-schema"
+} from "../schema/mutation"
 
 export const updateTriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)
@@ -36,17 +36,15 @@ export const updateTriggerAction = chatbotActionClient
 
         const existingIds = new Set(existingConditions.map((c) => c.id))
         const submittedIds = new Set(
-          conditions
-            .filter((c) => "id" in c && c.id)
-            .map((c) => c.id as string),
+          conditions.filter((c) => "id" in c && c.id).map((c) => c.id),
         )
 
         const conditionsToDelete = existingConditions.filter(
-          (existing) => !submittedIds.has(existing.id),
+          (existing) => !submittedIds.has(existing.id.toString()),
         )
 
         const conditionsToUpdate = conditions.filter(
-          (c) => "id" in c && c.id && existingIds.has(c.id as string),
+          (c) => "id" in c && c.id && existingIds.has(c.id.toString()),
         )
 
         const conditionsToCreate = conditions.filter(
@@ -81,7 +79,7 @@ export const updateTriggerAction = chatbotActionClient
                   ? condition.value
                   : null,
             })
-            .where(eq(conditionModel.id, condition.id as string))
+            .where(eq(conditionModel.id, condition.id))
         }
 
         if (conditionsToCreate.length > 0) {

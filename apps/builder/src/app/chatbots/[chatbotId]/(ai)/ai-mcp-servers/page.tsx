@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 import AIMcpServersTable from "@/features/ai-mcp-servers/ai-mcp-servers-table"
@@ -12,7 +14,11 @@ type AIMcpServersPageProps = {
 export default async function AIMcpServersPage({
   params,
 }: AIMcpServersPageProps) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
 
   const promises = Promise.all([
     listAIMcpServers({
@@ -24,7 +30,7 @@ export default async function AIMcpServersPage({
     <div className="space-y-6">
       <AITab />
       <Suspense>
-        <AIMcpServersTable promises={promises} />
+        <AIMcpServersTable chatbotId={chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

@@ -1,28 +1,28 @@
 "use client"
 
-import type { TagModel } from "@aha.chat/database/types"
 import { Form } from "@aha.chat/ui/components/ui/form"
 import { TagsInputField } from "@aha.chat/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useParams } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
+import type { TagResource } from "@/features/tags/schemas/resource"
 import { updateContactTagAction } from "../actions/update-contact-tag.action"
 import { updateContactTagRequest } from "../schemas/contact-tag"
 import type { ContactResource } from "../schemas/resource"
 
 export default function UpdateContactTagField({
+  chatbotId,
   contact,
   tags,
   onSuccess,
 }: {
+  chatbotId: bigint
   contact: ContactResource
-  tags: TagModel[]
-  onSuccess: (updatedTags: TagModel[]) => void
+  tags: TagResource[]
+  onSuccess: (updatedTags: TagResource[]) => void
 }) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
   const [currentTagsName, setCurrentTagsName] = useState<string[]>(
     tags.map((tag) => tag.name) ?? [],
   )

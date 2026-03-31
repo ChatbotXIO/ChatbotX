@@ -30,7 +30,7 @@ import { followConversationAction } from "./actions/follow-conversation.action"
 import { unarchiveConversationAction } from "./actions/unarchive-conversation.action"
 import { unfollowConversationAction } from "./actions/unfollow-conversation.action"
 import { unreadConversationAction } from "./actions/unread-conversation.action"
-import type { ListConversationItemResource } from "./schemas/resource"
+import type { ListConversationItemResource } from "./schema/resource"
 
 type ConversationActionProps = {
   conversation: ListConversationItemResource

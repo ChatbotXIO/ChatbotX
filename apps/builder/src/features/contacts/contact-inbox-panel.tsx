@@ -5,13 +5,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@aha.chat/ui/components/ui/accordion"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
 import { ContactSequencesManage } from "../contact-sequences/contact-sequences-manage"
-import type { ListConversationItemResource } from "../conversations/schemas/resource"
+import type { ListConversationItemResource } from "../conversations/schema/resource"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
@@ -21,9 +20,8 @@ type InboxModule = {
   readonly content: ReactNode
 }
 
-export const ContactInboxPanel = () => {
+export const ContactInboxPanel = ({ chatbotId }: { chatbotId: bigint }) => {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
 
   const { activeConversationId, conversations } = useChatStore((state) => state)
   const [contact, setContact] =
@@ -56,6 +54,7 @@ export const ContactInboxPanel = () => {
               content: (
                 <TagStoreProvider chatbotId={chatbotId}>
                   <UpdateContactTagField
+                    chatbotId={chatbotId}
                     contact={contact}
                     onSuccess={setTags}
                     tags={tags}

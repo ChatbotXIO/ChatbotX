@@ -1,7 +1,7 @@
 import { db } from "@aha.chat/database/client"
 import { auditLogModel } from "@aha.chat/database/schema"
 import type { JobSendAuditLog } from "@aha.chat/worker-config"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { env } from "../../env"
 
 export const sendAuditLog = async (data: JobSendAuditLog["data"]) => {

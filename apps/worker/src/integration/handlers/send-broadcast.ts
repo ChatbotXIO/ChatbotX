@@ -8,9 +8,9 @@ import {
   integrationQueue,
 } from "@aha.chat/worker-config"
 
-export const sendBroadcast = async (broadcastId: string) => {
+export const sendBroadcast = async (broadcastId: bigint) => {
   async function updateBroadcastStatus(
-    broadcastId: string,
+    broadcastId: bigint,
     status: "sent" | "scheduled",
   ) {
     return await db
@@ -41,7 +41,7 @@ export const sendBroadcast = async (broadcastId: string) => {
     return
   }
 
-  let validInboxIds: string[] | undefined
+  let validInboxIds: bigint[] | undefined
   if (broadcast.templateId) {
     const template = await db.query.whatsappMessageTemplateModel.findFirst({
       where: { id: broadcast.templateId },

@@ -21,12 +21,12 @@ import { type ReactNode, useEffect } from "react"
 import { toast } from "sonner"
 import { changeFolderAction } from "./actions/change-folder.action"
 import { useFolderSelectOptions } from "./provider/folder-hook"
-import { changeFolderRequest } from "./schemas/action"
+import { changeFolderRequest } from "./schema/action"
 
 export type ChangeFolderDialogProps = {
-  chatbotId: string
-  modelIds: string[] | null
-  currentFolderId: string | null
+  chatbotId: bigint
+  modelIds: bigint[] | null
+  currentFolderId: bigint | null
   folderType: FolderType
   open: boolean
   trigger?: ReactNode
@@ -76,9 +76,9 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
 }
 
 export type ChangeFolderFormProps = {
-  chatbotId: string
-  modelIds: string[] | null
-  currentFolderId: string | null
+  chatbotId: bigint
+  modelIds: bigint[] | null
+  currentFolderId: bigint | null
   folderType: FolderType
   onClose?: () => void
   onSuccess?: () => void
@@ -120,7 +120,7 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
         formProps: {
           mode: "onChange",
           defaultValues: {
-            newFolderId: "",
+            newFolderId: BigInt(0),
           },
         },
       },
@@ -129,8 +129,8 @@ export function ChangeFolderForm(props: ChangeFolderFormProps) {
 
   useEffect(() => {
     if (modelIds) {
-      setValue("newFolderId", currentFolderId ?? "")
-      setValue("folderType", folderType as FolderType)
+      setValue("newFolderId", currentFolderId ?? BigInt(0))
+      setValue("folderType", folderType)
       setValue("modelIds", modelIds)
     }
   }, [modelIds, currentFolderId, folderType, setValue])

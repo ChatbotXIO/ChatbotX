@@ -4,7 +4,7 @@ import z from "zod"
 
 export const setCustomField = z.object({
   type: z.literal(TriggerAction.setCustomField),
-  customFieldId: z.cuid2(),
+  customFieldId: z.bigint(),
   operation: z.enum(FieldOperationType),
   value: z.string(),
 })

@@ -3,7 +3,7 @@ import type { GoogleSheetsAuthValue } from "@aha.chat/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
-import { createSpreadsheetRequest } from "../schemas/create-spreadsheet.request"
+import { createSpreadsheetRequest } from "../schemas/mutation"
 
 const SPREADSHEET_ID_REGEX = /\/d\/([^/]+)\//
 

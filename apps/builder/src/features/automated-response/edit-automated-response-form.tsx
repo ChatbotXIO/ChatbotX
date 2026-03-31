@@ -1,24 +1,13 @@
 "use client"
 
-import {
-  type AutomatedResponseModel,
-  type AutomatedResponseReply,
-  ReplyType,
-} from "@aha.chat/database/types"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import type { AutomatedResponseModel } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { Button } from "@aha.chat/ui/components/ui/button"
 import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
 import { Label } from "@aha.chat/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import {
-  Loader2Icon,
-  MessageSquareMoreIcon,
-  PlusCircleIcon,
-  XIcon,
-  ZapIcon,
-} from "lucide-react"
+import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
@@ -26,10 +15,10 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
-import { updateAutomatedResponseRequest } from "./schemas/action"
+import { updateAutomatedResponseRequest } from "./schema/action"
 
 type EditAutomatedResponseFormProps = {
-  chatbotId: string
+  chatbotId: bigint
   automatedResponse: AutomatedResponseModel
 }
 
@@ -40,7 +29,7 @@ export default function EditAutomatedResponseForm(
   const t = useTranslations()
   const router = useRouter()
 
-  const flowOptions = useFlowSelectOptions()
+  const _flowOptions = useFlowSelectOptions()
 
   const {
     form,
@@ -70,7 +59,8 @@ export default function EditAutomatedResponseForm(
         mode: "onChange",
         defaultValues: {
           userMessages: [{ value: "" }],
-          replies: [],
+          text: "",
+          flowId: null,
         },
       },
       errorMapProps: {},
@@ -81,21 +71,13 @@ export default function EditAutomatedResponseForm(
     if (automatedResponse) {
       form.reset({
         ...automatedResponse,
-        replies: automatedResponse.replies as AutomatedResponseReply[],
+        text: automatedResponse.text,
+        flowId: automatedResponse.flowId,
         userMessages:
           automatedResponse.userMessages?.map((m) => ({ value: m })) ?? [],
       })
     }
   }, [automatedResponse, form])
-
-  const {
-    fields: replies,
-    append: appendReplies,
-    remove: removeReplies,
-  } = useFieldArray({
-    control,
-    name: "replies",
-  })
 
   const {
     fields: userMessages,
@@ -154,11 +136,11 @@ export default function EditAutomatedResponseForm(
             {t("fields.botResponse.label")}
           </Label>
         </div>
-        {replies.map((reply, index) => (
+        {/* {replies.map((reply, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: wip
           <div className="flex w-full gap-2" key={index}>
             <div className="flex w-1/2 items-center gap-2">
-              {reply.type === ReplyType.Message ? (
+              {reply.type === replyTypes.enum.text ? (
                 <>
                   <MessageSquareMoreIcon />
                   <InputField
@@ -196,7 +178,7 @@ export default function EditAutomatedResponseForm(
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
-                type: ReplyType.Message,
+                type: replyTypes.enum.text,
                 message: "",
                 buttons: [],
               })
@@ -211,7 +193,7 @@ export default function EditAutomatedResponseForm(
             onClick={(e) => {
               e.preventDefault()
               appendReplies({
-                type: ReplyType.Flow,
+                type: replyTypes.enum.flow,
                 flowId: "",
               })
             }}
@@ -220,7 +202,7 @@ export default function EditAutomatedResponseForm(
           >
             <PlusCircleIcon /> {t("actions.addFlowReply")}
           </Button>
-        </div>
+        </div> */}
         <div className="flex justify-end gap-4">
           <Button onClick={() => router.back()} type="button" variant="ghost">
             {t("actions.cancel")}

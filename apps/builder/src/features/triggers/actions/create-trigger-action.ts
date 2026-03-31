@@ -4,7 +4,7 @@ import { db, eq } from "@aha.chat/database/client"
 import { FolderType } from "@aha.chat/database/enums"
 import { triggerModel } from "@aha.chat/database/schema"
 import { updateTriggerCache } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
@@ -17,7 +17,7 @@ import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
   type CreateTriggerSchema,
   createTriggerSchema,
-} from "../schemas/create-trigger-schema"
+} from "../schema/mutation"
 
 export const createTriggerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

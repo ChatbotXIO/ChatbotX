@@ -2,8 +2,8 @@ import { and, count, db, eq, isNull } from "@aha.chat/database/client"
 import { triggerModel } from "@aha.chat/database/schema"
 import type { TriggerModel } from "@aha.chat/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { TriggerCollection } from "../schemas"
-import type { GetTriggersSchema } from "../schemas/get-trigger-schema"
+import type { GetTriggersSchema } from "../schema/query"
+import type { TriggerCollection } from "../schema/resource"
 
 export async function getTriggers(
   input: GetTriggersSchema,

@@ -17,7 +17,7 @@ export const InboxStoreContext = createContext<InboxStoreApi | undefined>(
 )
 
 export type InboxStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

@@ -2,7 +2,7 @@ import { db, type Transaction } from "@aha.chat/database/client"
 import { contactsOnSequenceModel } from "@aha.chat/database/schema"
 import { SchedulerClient } from "@aha.chat/scheduler"
 import { sequenceConnections } from "@chatbotx.io/redis"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { createDispatch } from "./dispatch-manager"
 
 type DrizzleClient = typeof db | Transaction

@@ -3,7 +3,7 @@ import z from "zod"
 
 export const startFlow = z.object({
   type: z.literal(TriggerAction.startAnotherFlow),
-  flowId: z.cuid2(),
+  flowId: z.bigint(),
 })
 export type StartFlow = z.infer<typeof startFlow>
 

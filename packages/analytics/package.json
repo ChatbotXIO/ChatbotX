@@ -12,7 +12,9 @@
   "dependencies": {
     "@aha.chat/database": "workspace:*",
     "@aha.chat/filesystem": "workspace:*",
+    "@aha.chat/logger": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "@clickhouse/client": "^1.18.2",
     "@paralleldrive/cuid2": "^3.3.0",
     "date-fns": "^4.1.0",

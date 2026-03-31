@@ -1,15 +1,18 @@
 import { analyticsRoutes } from "@chatbotx.io/analytics-nextjs/routes"
 import aiAgentsAPI from "@/features/ai-agents/api"
+import { aiFilesAPI } from "@/features/ai-files/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
 import botFieldsAPIs from "@/features/bot-fields/api"
 import contactsAPIs from "@/features/contacts/api"
-import conversationsAPI from "@/features/conversations/api"
+import { conversationsAPI } from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
 import flowsAPI from "@/features/flows/api"
+import { inboxesAPI } from "@/features/inboxes/api"
 import { integrationWhatsappAPIs } from "@/features/integration-whatsapp/api"
 import { whatsappMessageTemplateAPIs } from "@/features/integration-whatsapp/message-templates/api"
 import savedRepliesAPI from "@/features/saved-replies/api"
 import { sequencesAPI } from "@/features/sequences/api"
+import { spreadsheetsAPI } from "@/features/spreadsheets/api"
 import tagsAPI from "@/features/tags/api"
 import { chatbotAuthMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
@@ -31,4 +34,7 @@ export const router = {
   whatsappMessageTemplateAPIs,
   savedRepliesAPI,
   sequencesAPI,
+  aiFilesAPI,
+  inboxesAPI,
+  spreadsheetsAPI,
 }

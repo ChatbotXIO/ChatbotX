@@ -1,5 +1,5 @@
 import type { Context } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import type { ZaloAuthValue } from "../schemas/definition"
 
 export const fetchAndReuploadImage = async ({

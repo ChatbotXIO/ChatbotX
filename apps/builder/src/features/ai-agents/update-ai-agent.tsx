@@ -1,11 +1,11 @@
 "use client"
 
-import {
-  type AIAgentModel,
-  type AIFileModel,
-  type AIFunctionModel,
-  type AIMCPServerModel,
-  AIMessageRole,
+import { aiMessageRoles } from "@aha.chat/database/schema"
+import type {
+  AIAgentModel,
+  AIFileModel,
+  AIFunctionModel,
+  AIMCPServerModel,
 } from "@aha.chat/database/types"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
@@ -59,7 +59,7 @@ export function UpdateAIAgentDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   agent: AIAgentModel | null
   onSuccess?: () => void
   files: AIFileModel[]
@@ -73,7 +73,7 @@ export function UpdateAIAgentDialog({
     handleSubmitWithAction,
     form: { setValue, control },
   } = useHookFormAction(
-    updateAIAgentAction.bind(null, chatbotId, agent?.id ?? ""),
+    updateAIAgentAction.bind(null, chatbotId, agent?.id ?? BigInt(0)),
     zodResolver(updateAIAgentRequest),
     {
       actionProps: {
@@ -107,8 +107,8 @@ export function UpdateAIAgentDialog({
 
   const messageRoleOptions = useMemo(
     () => [
-      { label: "User", value: AIMessageRole.user },
-      { label: "Assistant", value: AIMessageRole.assistant },
+      { label: "User", value: aiMessageRoles.enum.user },
+      { label: "Assistant", value: aiMessageRoles.enum.assistant },
     ],
     [],
   )
@@ -144,12 +144,13 @@ export function UpdateAIAgentDialog({
   )
 
   const addOptions = () => {
-    const lastRole: string = fields.at(-1)?.role || AIMessageRole.assistant
+    const lastRole: string =
+      fields.at(-1)?.role || aiMessageRoles.enum.assistant
     append({
       role:
-        lastRole === AIMessageRole.user
-          ? AIMessageRole.assistant
-          : AIMessageRole.user,
+        lastRole === aiMessageRoles.enum.user
+          ? aiMessageRoles.enum.assistant
+          : aiMessageRoles.enum.user,
       content: "",
     })
   }

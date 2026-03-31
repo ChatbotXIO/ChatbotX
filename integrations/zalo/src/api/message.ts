@@ -3,7 +3,7 @@ import {
   guessFileTypeFromMimeType,
   type IncomingAttachment,
 } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { fetch } from "cross-fetch"
 import imageSize from "image-size"
 import { ZALO_API_ENDPOINTS } from "../constants"

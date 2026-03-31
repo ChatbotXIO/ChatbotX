@@ -4,7 +4,7 @@ import {
   triggerStatsModel,
 } from "@aha.chat/database/schema"
 import { setTriggerExecutionContext } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"
 import { ActionExecutor } from "./action-executor"

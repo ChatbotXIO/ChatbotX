@@ -1,9 +1,9 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const openWebsiteStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.openWebsite),
   url: z.url(),
   browserSize: z.literal([40, 70, 100]),

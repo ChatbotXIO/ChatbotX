@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -10,7 +10,7 @@ export const GenerateCodeType = {
 
 export const generateCodeStepSchema = z
   .object({
-    id: z.cuid2(),
+    id: z.bigint(),
     stepType: z.literal(StepType.generateCode),
     type: z.enum(GenerateCodeType),
     min: z
@@ -19,7 +19,7 @@ export const generateCodeStepSchema = z
       .min(0)
       .max(Number.MAX_SAFE_INTEGER - 1),
     max: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-    outputCfId: z.cuid2(),
+    outputCfId: z.bigint(),
   })
   .refine((data) => data.min <= data.max, {
     message: "Max must be larger than Min",

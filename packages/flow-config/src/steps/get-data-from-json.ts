@@ -1,15 +1,15 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const getDataFromJsonStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.getDataFromJson),
-  inputCfId: z.cuid2(),
+  inputCfId: z.bigint(),
   mapping: z.array(
     z.object({
       jsonPath: z.string().trim().min(1),
-      outputCfId: z.cuid2(),
+      outputCfId: z.bigint(),
     }),
   ),
 })

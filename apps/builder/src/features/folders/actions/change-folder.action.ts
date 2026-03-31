@@ -15,7 +15,7 @@ import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { changeFolderRequest } from "../schemas/action"
+import { changeFolderRequest } from "../schema/action"
 
 export const changeFolderAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdRequestParams)

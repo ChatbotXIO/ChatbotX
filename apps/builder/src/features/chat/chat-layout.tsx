@@ -8,7 +8,6 @@ import {
   ResizablePanelGroup,
 } from "@aha.chat/ui/components/ui/resizable"
 import { BotIcon, Loader2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
@@ -16,7 +15,7 @@ import { toast } from "sonner"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
-import type { ConversationResource } from "../conversations/schemas/resource"
+import type { ConversationResource } from "../conversations/schema/resource"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -24,13 +23,13 @@ import { ChatRealtime } from "./chat-realtime"
 import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
+  chatbotId: bigint
   layout?: [number, number, number]
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
-  const { layout = [25, 50, 25] } = props
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { chatbotId, layout = [25, 50, 25] } = props
 
   const {
     conversations,
@@ -133,7 +132,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {isFirstLoadConversation && isLoadingConversation && (
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
-        {activeConversation && <ContactInboxPanel />}
+        {activeConversation && <ContactInboxPanel chatbotId={chatbotId} />}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

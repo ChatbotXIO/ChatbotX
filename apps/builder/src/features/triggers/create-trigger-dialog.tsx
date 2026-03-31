@@ -22,14 +22,14 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createTriggerAction } from "./actions/create-trigger-action"
-import { createTriggerSchema } from "./schemas/create-trigger-schema"
+import { createTriggerSchema } from "./schema/mutation"
 
 export function CreateTriggerDialog({
   chatbotId,
   folderId,
 }: {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
 }) {
   const t = useTranslations()
   const router = useRouter()

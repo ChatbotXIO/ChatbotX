@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AuditLogsTable } from "@/enterprise/features/audit-logs/audit-logs-table"
@@ -8,20 +10,25 @@ export default async function AuditLogsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const { chatbotId: chatbotIdString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = listAuditLogsSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
     listAuditLogs({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
   return (
     <Suspense>
-      <AuditLogsTable chatbotId={params.chatbotId} promises={promises} />
+      <AuditLogsTable chatbotId={chatbotId} promises={promises} />
     </Suspense>
   )
 }

@@ -26,8 +26,8 @@ async function emitToAllEmitters(
 
 // Contact events
 export const emitContactCreated = async (
-  chatbotId: string,
-  contactId: string,
+  chatbotId: bigint,
+  contactId: bigint,
   name?: string,
   phone?: string,
   email?: string,

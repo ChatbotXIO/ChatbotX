@@ -1,6 +1,6 @@
 "use client"
 
-import { AIMcpServerAuthType } from "@aha.chat/database/types"
+import { aiMcpServerAuthTypes } from "@aha.chat/database/schema"
 import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
 import { InputField } from "@aha.chat/ui/components/form/input-field"
 import { SelectField } from "@aha.chat/ui/components/form/select-field"
@@ -19,17 +19,20 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
-import { createAIMcpServerRequest } from "./schemas"
+import { createAIMcpServerRequest } from "./schema/action"
 
-export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
-
+export function AIMcpServersCreate({
+  chatbotId,
+  onSuccess,
+}: {
+  chatbotId: bigint
+  onSuccess?: () => void
+}) {
   const t = useTranslations()
 
   const [isMcpServerValidating, setIsMcpServerValidating] =
@@ -41,11 +44,17 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
 
   const authOptions = useMemo(
     () => [
-      { label: t("fields.authType.none"), value: AIMcpServerAuthType.none },
-      { label: t("fields.authType.token"), value: AIMcpServerAuthType.token },
+      {
+        label: t("fields.authType.none"),
+        value: aiMcpServerAuthTypes.enum.none,
+      },
+      {
+        label: t("fields.authType.token"),
+        value: aiMcpServerAuthTypes.enum.token,
+      },
       {
         label: t("fields.authType.headers"),
-        value: AIMcpServerAuthType.header,
+        value: aiMcpServerAuthTypes.enum.header,
       },
     ],
     [t],
@@ -62,7 +71,7 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
             url: "",
             name: "",
             auth: {
-              type: AIMcpServerAuthType.none,
+              type: aiMcpServerAuthTypes.enum.none,
             },
             availableTools: {},
             selectedTools: [],
@@ -154,14 +163,14 @@ export function AIMcpServersCreate({ onSuccess }: { onSuccess?: () => void }) {
               options={authOptions}
               required
             />
-            {form.watch("auth.type") === AIMcpServerAuthType.token && (
+            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.token && (
               <InputField
                 label={t("fields.authToken.label")}
                 name="auth.token"
                 required
               />
             )}
-            {form.watch("auth.type") === AIMcpServerAuthType.header &&
+            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.header &&
               fields && (
                 <div className="flex flex-col gap-2">
                   {fields.map((field, index) => (

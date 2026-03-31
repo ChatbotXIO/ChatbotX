@@ -1,4 +1,4 @@
-import { AIMessageRole } from "@aha.chat/database/types"
+import { aiMessageRoles } from "@aha.chat/database/schema"
 import { aiProviders } from "@aha.chat/flow-config"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
@@ -9,7 +9,7 @@ export const createAIAgentRequest = z.object({
   prompt: z.string().trim().min(1).max(5000),
   messages: z.array(
     z.object({
-      role: z.enum(AIMessageRole),
+      role: aiMessageRoles,
       content: z.string().trim().min(1).max(255),
     }),
   ),

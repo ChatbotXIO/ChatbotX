@@ -47,6 +47,7 @@
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/kafka": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "@chatbotx/events": "workspace:*",
     "@faker-js/faker": "^10.3.0",
     "@paralleldrive/cuid2": "^3.3.0",

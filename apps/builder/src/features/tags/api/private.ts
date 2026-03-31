@@ -49,7 +49,7 @@ export const privateUpdateTagAPI = authorizedAPI
   .input(
     updateTagSchema.and(withChatbotIdSchema).and(
       z.object({
-        id: z.cuid2(),
+        id: z.bigint(),
       }),
     ),
   )

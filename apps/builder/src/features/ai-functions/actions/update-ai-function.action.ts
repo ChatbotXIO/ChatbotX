@@ -5,7 +5,7 @@ import { aiFunctionModel } from "@aha.chat/database/schema"
 import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { updateAIFunctionRequest } from "../schemas"
+import { updateAIFunctionRequest } from "../schema/action"
 
 export const updateAIFunctionAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

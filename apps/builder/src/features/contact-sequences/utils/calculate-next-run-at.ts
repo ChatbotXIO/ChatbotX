@@ -13,9 +13,9 @@ import { createDispatch } from "@aha.chat/sequence-scheduler"
 import { sequenceConnections } from "@chatbotx.io/redis"
 
 type SequenceStepForDelay = {
-  id: string
+  id: bigint
   order: number
-  sequenceId?: string
+  sequenceId?: bigint
   delayDays: number
   delayMinutes: number
   delayUnit: string | null
@@ -23,8 +23,8 @@ type SequenceStepForDelay = {
 }
 
 type ContactForRecalculation = {
-  id: string
-  contactId: string
+  id: bigint
+  contactId: bigint
   currentStep: number
   enrolledAt: Date
 }
@@ -37,11 +37,11 @@ const RECALCULATION_CHUNK_SIZE = 500
  */
 async function createAndScheduleDispatch(
   params: {
-    chatbotId: string
-    sequenceId: string
-    contactId: string
-    stepId: string
-    enrollmentId: string
+    chatbotId: bigint
+    sequenceId: bigint
+    contactId: bigint
+    stepId: bigint
+    enrollmentId: bigint
     runAt: Date
   },
   client: DatabaseClient,
@@ -58,10 +58,10 @@ async function createAndScheduleDispatch(
 }
 
 export async function calculateNextRunAtBulk(
-  sequenceIds: string[],
+  sequenceIds: bigint[],
   enrolledAt: Date = new Date(),
   tx?: DatabaseClient,
-): Promise<Map<string, { nextRunAt: Date; nextStepId: string | null }>> {
+): Promise<Map<bigint, { nextRunAt: Date; nextStepId: bigint | null }>> {
   const client = tx ?? db
 
   const firstSteps = await client.query.sequenceStepModel.findMany({
@@ -83,8 +83,8 @@ export async function calculateNextRunAtBulk(
   const stepMap = new Map(firstSteps.map((step) => [step.sequenceId, step]))
 
   const resultMap = new Map<
-    string,
-    { nextRunAt: Date; nextStepId: string | null }
+    bigint,
+    { nextRunAt: Date; nextStepId: bigint | null }
   >()
   for (const sequenceId of sequenceIds) {
     const step = stepMap.get(sequenceId)
@@ -118,7 +118,7 @@ function calculateDelayInMs(delayDays: number, delayMinutes: number): number {
 }
 
 async function getActiveStepsForSequence(
-  sequenceId: string,
+  sequenceId: bigint,
   client: DatabaseClient,
 ): Promise<SequenceStepForDelay[]> {
   return await client.query.sequenceStepModel.findMany({
@@ -141,7 +141,7 @@ async function getActiveStepsForSequence(
 }
 
 async function getActiveStepsCumulativeDelay(
-  sequenceId: string,
+  sequenceId: bigint,
   upToOrder: number,
   client: DatabaseClient,
 ): Promise<number | Date> {
@@ -176,10 +176,10 @@ async function getActiveStepsCumulativeDelay(
 }
 
 async function getNextActiveStep(
-  sequenceId: string,
+  sequenceId: bigint,
   fromOrder: number,
   client: DatabaseClient,
-): Promise<{ id: string; order: number } | null> {
+): Promise<{ id: bigint; order: number } | null> {
   const nextStep = await client.query.sequenceStepModel.findFirst({
     where: {
       sequenceId,
@@ -195,11 +195,11 @@ async function getNextActiveStep(
 }
 
 type UpdateContactsNextRunAtParams = {
-  sequenceId: string
-  chatbotId: string
+  sequenceId: bigint
+  chatbotId: bigint
   currentStepOrder: number
   delayMsOrDate: number | Date
-  nextStepId: string | null
+  nextStepId: bigint | null
   client: DatabaseClient
 }
 
@@ -252,8 +252,8 @@ async function updateContactsNextRunAt(params: UpdateContactsNextRunAtParams) {
 }
 
 async function recalculateNextRunAtForStep(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
   stepOrder: number,
   client: DatabaseClient,
 ) {
@@ -318,8 +318,8 @@ async function recalculateNextRunAtForStep(
  * - Contacts at different currentStep positions: each gets appropriate nextRunAt
  */
 export async function recalculateAllContactsInSequence(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
   tx?: DatabaseClient,
 ) {
   const client = tx ?? db
@@ -372,8 +372,8 @@ export async function recalculateAllContactsInSequence(
  * 6. Process in chunks to prevent timeout
  */
 async function reactivateCompletedContactsForNewStep(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
   newStepOrder: number,
   client: DatabaseClient,
 ) {
@@ -524,8 +524,8 @@ async function reactivateCompletedContactsForNewStep(
  *   - ❌ SKIP: Only process active and completed contacts
  */
 export async function handleStepCreationImpact(
-  sequenceId: string,
-  chatbotId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
   newStepOrder: number,
   tx?: DatabaseClient,
 ) {
@@ -612,9 +612,9 @@ export async function handleStepCreationImpact(
  *   - Example: Contact completed at step 4, enable step 5 → reactivate
  */
 export async function handleStepUpdateImpact(
-  sequenceId: string,
-  chatbotId: string,
-  updatedStepId: string,
+  sequenceId: bigint,
+  chatbotId: bigint,
+  updatedStepId: bigint,
   updatedStepOrder: number,
   tx?: DatabaseClient,
 ) {

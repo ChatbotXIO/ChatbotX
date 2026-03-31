@@ -4,7 +4,7 @@ import { Button } from "@aha.chat/ui/components/ui/button"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 
-export function NoAIIntegrationFound({ chatbotId }: { chatbotId: string }) {
+export function NoAIIntegrationFound({ chatbotId }: { chatbotId: bigint }) {
   const t = useTranslations()
 
   return (

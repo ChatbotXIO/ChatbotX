@@ -7,7 +7,7 @@ import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { chatbotActionClient } from "@/lib/safe-action"
-import { updateChatbotMemberRequest } from "../schemas/chatbot-member.request"
+import { updateChatbotMemberRequest } from "../schema/mutation"
 
 export const updateChatbotMemberAction = chatbotActionClient
   .inputSchema(updateChatbotMemberRequest)

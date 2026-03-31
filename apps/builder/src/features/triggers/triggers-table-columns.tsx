@@ -29,10 +29,10 @@ import type { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { Dispatch, SetStateAction } from "react"
 import { updateTriggerSettingsAction } from "./actions/update-trigger-settings-action"
-import type { TriggerResource } from "./schemas"
+import type { TriggerResource } from "./schema/resource"
 
 type GetColumnsProps = {
-  chatbotId: string
+  chatbotId: bigint
   t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<TriggerResource> | null>

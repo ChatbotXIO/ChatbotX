@@ -7,22 +7,18 @@ type MCPSuccess = { content: unknown; success: true }
 type MCPFailure = { error: string; success: false }
 type MCPResult = MCPSuccess | MCPFailure
 
-export const mcpAuthTypes = {
-  none: "none",
-  header: "header",
-  token: "token",
-} as const
+export const mcpAuthTypes = z.enum(["none", "header", "token"])
 
 const mcpAuthSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal(mcpAuthTypes.none),
+    type: z.literal(mcpAuthTypes.enum.none),
   }),
   z.object({
-    type: z.literal(mcpAuthTypes.token),
+    type: z.literal(mcpAuthTypes.enum.token),
     token: z.string().trim().min(1),
   }),
   z.object({
-    type: z.literal(mcpAuthTypes.header),
+    type: z.literal(mcpAuthTypes.enum.header),
     headers: z.array(
       z.object({
         header: z.string().trim().min(1),
@@ -54,7 +50,7 @@ export async function callMCPTool(props: {
       },
     }
     switch (auth.type) {
-      case mcpAuthTypes.header:
+      case mcpAuthTypes.enum.header:
         requestOptions.headers = {
           ...auth.headers.reduce(
             (acc, header) => {
@@ -65,7 +61,7 @@ export async function callMCPTool(props: {
           ),
         }
         break
-      case mcpAuthTypes.token:
+      case mcpAuthTypes.enum.token:
         requestOptions.headers = {
           Authorization: `Bearer ${auth.token}`,
         }

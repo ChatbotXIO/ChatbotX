@@ -10,12 +10,12 @@ import { headers } from "next/headers"
 import { ChatbotXException } from "../errors/exception"
 import { auth } from "./auth"
 
-export const getCurrentUserId = async (): Promise<string> => {
+export const getCurrentUserId = async (): Promise<bigint | null> => {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
 
-  return session?.user.id || "unknown"
+  return session?.user.id || null
 }
 
 export const getCurrentUser = async (): Promise<UserModel | null> => {
@@ -33,7 +33,7 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
     : null
 }
 
-export const assertCurrentUserCanAccessChatbot = async (chatbotId: string) => {
+export const assertCurrentUserCanAccessChatbot = async (chatbotId: bigint) => {
   const userAndChatbots = await getCurrentUserAndTargetChatbot(chatbotId)
 
   if (!userAndChatbots) {
@@ -68,7 +68,7 @@ export const getCurrentUserAndAllLinkedChatbots = async (): Promise<{
 }
 
 export const getCurrentUserAndTargetChatbot = async (
-  chatbotId: string,
+  chatbotId: bigint,
 ): Promise<{
   user: UserModel
   targetChatbot: ChatbotModel

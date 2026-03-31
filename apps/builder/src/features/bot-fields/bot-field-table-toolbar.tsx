@@ -9,8 +9,8 @@ export function BotFieldToolbarActions({
   folderId,
   table,
 }: {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
   table: Table<BotFieldResource>
 }) {
   const router = useRouter()

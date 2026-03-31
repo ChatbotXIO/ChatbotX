@@ -5,7 +5,6 @@ import {
   broadcastModel,
   contactsOnBroadcastsModel,
 } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -70,7 +69,7 @@ export const createBroadcastAction = chatbotActionClient
         broadcastName = template.name
       }
 
-      let inboxId: string | undefined
+      let inboxId: bigint | undefined
       if (parsedInput.integrationWhatsappId) {
         const integrationWhatsapp =
           await db.query.integrationWhatsappModel.findFirst({
@@ -91,7 +90,6 @@ export const createBroadcastAction = chatbotActionClient
         status: "scheduled",
         schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
         templateData: parsedInput.templateData ?? "{}",
-        id: createId(),
       }
 
       const contacts = await db.query.contactModel.findMany({

@@ -15,7 +15,7 @@ export type TagStoreApi = ReturnType<typeof createTagStore>
 export const TagStoreContext = createContext<TagStoreApi | undefined>(undefined)
 
 export type TagStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

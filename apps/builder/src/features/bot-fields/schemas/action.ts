@@ -6,7 +6,7 @@ export const createBotFieldRequest = z.object({
   type: z.enum(customFieldType.enumValues),
   value: z.string().trim().max(1000).nullable(),
   description: z.string().max(1000).nullable(),
-  folderId: z.cuid2().nullish(),
+  folderId: z.bigint().nullish(),
 })
 export type CreateBotFieldRequest = z.infer<typeof createBotFieldRequest>
 

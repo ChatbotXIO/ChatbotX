@@ -2,7 +2,7 @@
 
 import { db } from "@aha.chat/database/client"
 import { spreadsheetModel } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -12,7 +12,7 @@ import { chatbotActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
   createSpreadsheetRequest,
-} from "../schemas/create-spreadsheet.request"
+} from "../schemas/mutation"
 import { verifyGoogleSheetsUrl } from "./util"
 
 export const createSpreadsheetAction = chatbotActionClient

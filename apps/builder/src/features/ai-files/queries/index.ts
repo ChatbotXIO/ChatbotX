@@ -4,11 +4,11 @@ import { db } from "@aha.chat/database/client"
 import type { AIEmbeddingStatus } from "@aha.chat/database/types"
 import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { AIFileCollection, ListAIFilesRequest } from "../schemas"
+import type { ListAIFilesRequest, ListAIFilesResponse } from "../schemas"
 
 export async function listAIFiles(
   input: ListAIFilesRequest,
-): Promise<AIFileCollection> {
+): Promise<ListAIFilesResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const data = await db.query.aiFileModel.findMany({

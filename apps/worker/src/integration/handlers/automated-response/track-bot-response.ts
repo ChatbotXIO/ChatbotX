@@ -6,9 +6,9 @@ import {
 } from "@chatbotx.io/analytics"
 
 export function createTrackingContext(params: {
-  messageId: string
-  chatbotId: string
-  conversationId: string
+  messageId: bigint
+  chatbotId: bigint
+  conversationId: bigint
   responseType: BotMessageResponseType
   aiProvider: string
   triggerType: string

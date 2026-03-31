@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
@@ -9,14 +11,17 @@ import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 import { listAIMcpServers } from "@/features/ai-mcp-servers/queries"
 
 type AIAgentsPageProps = {
-  params: Promise<{
-    chatbotId: string
-  }>
+  params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }
 
 export default async function AIAgentsPage(props: AIAgentsPageProps) {
-  const { chatbotId } = await props.params
+  const { chatbotId: chatbotIdString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
 
   const aiAgentPromises = Promise.all([
@@ -44,6 +49,7 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
 
       <Suspense>
         <AIAgentsTable
+          chatbotId={chatbotId}
           createPromises={aiCreatePromises}
           listPromises={aiAgentPromises}
         />

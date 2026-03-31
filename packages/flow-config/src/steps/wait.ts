@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -17,7 +17,7 @@ export const DelayUnit = {
 
 export const waitStepSchema = z
   .object({
-    id: z.cuid2(),
+    id: z.bigint(),
     stepType: z.literal(StepType.wait),
   })
   .and(
@@ -36,7 +36,7 @@ export const waitStepSchema = z
       }),
       z.object({
         delayType: z.literal(DelayType.customField),
-        outputCfId: z.cuid2(),
+        outputCfId: z.bigint(),
       }),
     ]),
   )

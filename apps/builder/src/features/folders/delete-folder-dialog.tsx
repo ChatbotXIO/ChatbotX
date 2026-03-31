@@ -24,7 +24,7 @@ export function DeleteFolderDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: string
+  chatbotId: bigint
   folder: FolderModel | null
 }) {
   const t = useTranslations()
@@ -73,7 +73,7 @@ export function DeleteFolderDialog({
           </Button>
           <Button
             disabled={isPending}
-            onClick={() => execute({ ids: [folder?.id ?? ""] })}
+            onClick={() => execute({ ids: [folder?.id ?? BigInt(0)] })}
             size="sm"
             type="submit"
             variant={"destructive"}

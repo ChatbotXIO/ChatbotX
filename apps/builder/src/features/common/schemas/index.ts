@@ -1,17 +1,17 @@
 import { z } from "zod"
 
-export const chatbotIdRequestParams: [z.ZodCUID2] = [
-  z.cuid2().describe("chatbotId"),
+export const chatbotIdRequestParams: [z.ZodBigInt] = [
+  z.bigint().describe("chatbotId"),
 ]
-export type ChatbotIdRequestParams = [string]
+export type ChatbotIdRequestParams = [bigint]
 
-export const chatbotIdAndIdRequestParams: [z.ZodCUID2, z.ZodCUID2] = [
-  z.cuid2().describe("chatbotId"),
-  z.cuid2().describe("id"),
+export const chatbotIdAndIdRequestParams: [z.ZodBigInt, z.ZodBigInt] = [
+  z.bigint().describe("chatbotId"),
+  z.bigint().describe("id"),
 ]
-export type ChatbotIdAndIdRequestParams = [string, string]
+export type ChatbotIdAndIdRequestParams = [bigint, bigint]
 
 export const bulkUpdateIdsRequest = z.object({
-  ids: z.array(z.cuid2()),
+  ids: z.array(z.bigint()),
 })
 export type BulkUpdateIdsRequest = z.infer<typeof bulkUpdateIdsRequest>

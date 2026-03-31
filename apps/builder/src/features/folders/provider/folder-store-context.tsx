@@ -18,7 +18,7 @@ export const FolderStoreContext = createContext<FolderStoreApi | undefined>(
 )
 
 export type FolderStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   folderType: FolderType
   children: ReactNode
   autoInitialize?: boolean

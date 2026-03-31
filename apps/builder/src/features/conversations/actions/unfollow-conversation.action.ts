@@ -3,7 +3,7 @@
 import { and, db, eq } from "@aha.chat/database/client"
 import { conversationModel } from "@aha.chat/database/schema"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

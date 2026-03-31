@@ -2,8 +2,8 @@ import { db } from "@aha.chat/database/client"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { notFound } from "next/navigation"
 import z from "zod"
-import { GuestSessionStoreProvider } from "@/features/webchat/providers/store/guest-session-provider"
-import { WebchatWrapper } from "@/features/webchat/webchat-wrapper"
+import { GuestSessionStoreProvider } from "@/features/integration-webchat/providers/store/guest-session-provider"
+import { WebchatWrapper } from "@/features/integration-webchat/webchat-wrapper"
 
 type WebchatPageProps = {
   searchParams: Promise<SearchParams>
@@ -16,8 +16,8 @@ export default async function WebchatPage(props: WebchatPageProps) {
 
   const { data } = z
     .object({
-      chatbotId: z.cuid2(),
-      webchatId: z.cuid2(),
+      chatbotId: z.bigint(),
+      webchatId: z.bigint(),
       ref: z.string().optional(),
     })
     .safeParse(searchParams)

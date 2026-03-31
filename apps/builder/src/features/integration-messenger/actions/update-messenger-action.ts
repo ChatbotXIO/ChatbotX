@@ -29,7 +29,10 @@ import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { chatbotActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
-import { type UpdateMessengerRequest, updateMessengerRequest } from "../schemas"
+import {
+  type UpdateMessengerRequest,
+  updateMessengerRequest,
+} from "../schema/action"
 
 export const updateMessengerAction = chatbotActionClient
   .bindArgsSchemas(chatbotIdAndIdRequestParams)

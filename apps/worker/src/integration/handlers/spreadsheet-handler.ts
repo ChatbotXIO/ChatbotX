@@ -26,7 +26,7 @@ import {
 import { SdkException } from "@aha.chat/sdk"
 import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { emitCustomFieldChanged } from "@chatbotx/events"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"

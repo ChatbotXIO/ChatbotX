@@ -3,7 +3,7 @@ import {
   sequenceDispatchModel,
   sequenceEventModel,
 } from "@aha.chat/database/schema"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { sendFlowDirect } from "../../integration/handlers/send-flow-direct"
 import type {
   DispatchWithRelations,

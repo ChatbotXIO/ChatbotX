@@ -4,21 +4,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@aha.chat/ui/components/ui/card"
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { ChatbotMembersTable } from "@/features/chatbot-members/chatbot-members-table"
-import { getAgents } from "@/features/chatbot-members/queries"
-import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schemas/get-chatbot-members.request"
+import { listChatbotMembers } from "@/features/chatbot-members/queries"
+import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/schema/query"
 
 export default async function SettingsAdminPage({
   params,
 }: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const t = await getTranslations()
 
   const promises = Promise.all([
-    getAgents({
+    listChatbotMembers({
       chatbotId,
       ...getChatbotMembersSearchParamsCache.parse({}),
     }),

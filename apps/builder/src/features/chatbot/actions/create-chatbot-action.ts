@@ -5,11 +5,11 @@ import {
   chatbotUsageModel,
 } from "@aha.chat/database/schema"
 import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 
 export async function createSimpleChatbot(
   tx: Transaction,
-  userId: string,
+  userId: bigint,
   organization: OrganizationModel,
   chatbotData: Pick<
     ChatbotModel,

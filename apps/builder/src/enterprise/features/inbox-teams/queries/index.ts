@@ -1,11 +1,13 @@
 import { db } from "@aha.chat/database/client"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { InboxTeamResource, ListInboxTeamsRequest } from "../schema"
+import type {
+  ListInboxTeamsRequest,
+  ListInboxTeamsResponse,
+} from "../schema/action"
 
-export async function getInboxTeams(
+export async function listInboxTeams(
   input: ListInboxTeamsRequest,
-): Promise<PaginatedResponse<InboxTeamResource>> {
+): Promise<ListInboxTeamsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   const data = await db.query.inboxTeamModel.findMany({

@@ -6,7 +6,7 @@ import {
   type OrganizationModel,
   organizationSettingsSchema,
 } from "@aha.chat/database/types"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { invalidOrganizationSettingsError } from "@/features/organization/utils"
 import { organizationActionClient } from "@/lib/safe-action"
 import { getStripeClient } from "@/lib/stripe"

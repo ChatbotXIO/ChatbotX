@@ -4,8 +4,9 @@ import {
   SidebarTrigger,
 } from "@aha.chat/ui/components/ui/sidebar"
 import { cn } from "@aha.chat/ui/lib/utils"
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { cookies, headers } from "next/headers"
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { getAllChatbotMembers } from "@/features/chatbot-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
@@ -14,16 +15,26 @@ import { findChatbotOrFail } from "@/lib/user-permissions"
 const INBOX_PAGE_REGEX =
   /\/chatbots\/[a-z0-9]+\/inbox(?:\?conversationId=[a-z0-9]+)?$/
 
+type ChatbotLayoutProps = {
+  children: React.ReactNode
+  params: Promise<{ chatbotId: string }>
+}
+
 export default async function ChatbotLayout({
   children,
   params,
-}: {
-  children: React.ReactNode
-  params: Promise<{ chatbotId: string }>
-}) {
+}: ChatbotLayoutProps) {
   const userId = await getCurrentUserId()
+  if (!userId) {
+    return notFound()
+  }
 
-  const { chatbotId } = await params
+  const { chatbotId: chatbotIdString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const headersList = await headers()
 
   const isInboxPage = INBOX_PAGE_REGEX.test(headersList.get("x-url") ?? "")

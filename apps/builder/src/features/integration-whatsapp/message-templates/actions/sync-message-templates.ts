@@ -7,7 +7,7 @@ import {
 } from "@aha.chat/database/schema"
 import { uploader } from "@aha.chat/filesystem"
 import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

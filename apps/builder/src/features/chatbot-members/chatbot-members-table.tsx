@@ -30,11 +30,11 @@ import { DeleteChatbotMemberDialog } from "./components/delete-chatbot-member"
 import { InviteChatbotMemberDialog } from "./components/invite-chatbot-member"
 import { UpdateChatbotMemberDialog } from "./components/update-chatbot-member"
 import { isEnableAtLeastOneNotification } from "./helpers"
-import type { getAgents } from "./queries"
-import type { ChatbotMemberResource } from "./schemas/resource"
+import type { listChatbotMembers } from "./queries"
+import type { ChatbotMemberResource } from "./schema/resource"
 
 type ChatbotMembersTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof getAgents>>]>
+  promises: Promise<[Awaited<ReturnType<typeof listChatbotMembers>>]>
 }
 
 export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {

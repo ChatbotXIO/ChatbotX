@@ -17,7 +17,7 @@ export const UserStoreContext = createContext<UserStoreApi | undefined>(
 )
 
 export type UserStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateSpreadsheetAction } from "./actions/update-spreadsheet-action"
-import { createSpreadsheetRequest } from "./schemas/create-spreadsheet.request"
+import { createSpreadsheetRequest } from "./schemas/mutation"
 
 export function UpdateSpreadsheetDialog({
   spreadsheet,

@@ -4,10 +4,10 @@ import * as schema from "./schema"
 
 export const relations = defineRelations(schema, (r) => ({
   aiTriggerModel: {
-    integrationOpenAIS: r.many.integrationOpenAIModel({
-      from: r.aiTriggerModel.id.through(r.aiTriggerToIntegrationOpenAIModel.a),
+    integrationOpenAIs: r.many.integrationOpenAIModel({
+      from: r.aiTriggerModel.id,
       to: r.integrationOpenAIModel.id.through(
-        r.aiTriggerToIntegrationOpenAIModel.b,
+        r.aiTriggerToIntegrationOpenAIModel.integrationOpenAIId,
       ),
     }),
     chatbot: r.one.chatbotModel({
@@ -328,7 +328,6 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.userModel.id.through(r.organizationMemberModel.userId),
     }),
     organizationMembers: r.many.organizationMemberModel(),
-    plans: r.many.planModel(),
   },
   chatbotUsageModel: {
     chatbot: r.one.chatbotModel({
@@ -753,12 +752,6 @@ export const relations = defineRelations(schema, (r) => ({
     inbox: r.one.inboxModel({
       from: r.inboxContactStatsModel.inboxId,
       to: r.inboxModel.id,
-    }),
-  },
-  planModel: {
-    organization: r.one.organizationModel({
-      from: r.planModel.organizationId,
-      to: r.organizationModel.id,
     }),
   },
   organizationMemberModel: {

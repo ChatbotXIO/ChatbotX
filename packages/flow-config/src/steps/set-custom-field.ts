@@ -1,4 +1,4 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
@@ -13,9 +13,9 @@ export type FieldOperationType =
   (typeof FieldOperationType)[keyof typeof FieldOperationType]
 
 export const setCustomFieldStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.setCustomField),
-  inputCfId: z.cuid2(),
+  inputCfId: z.bigint(),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
 })

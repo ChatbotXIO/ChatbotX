@@ -1,15 +1,15 @@
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { StepType } from "./step-action"
 
 export const splitTrafficStepSchema = z.object({
-  id: z.cuid2(),
+  id: z.bigint(),
   stepType: z.literal(StepType.splitTraffic),
   cases: z
     .array(
       z.object({
         value: z.number().int().min(0).max(100),
-        nodeId: z.cuid2().nullish(),
+        nodeId: z.bigint().nullish(),
       }),
     )
     .refine((data) => data.reduce((acc, curr) => acc + curr.value, 0) === 100, {

@@ -2,14 +2,14 @@ import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { InboxResource } from "../schemas/resource"
+import type { InboxResource } from "../schema/resource"
 
 export type InboxState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   inboxes: InboxResource[]
 }
 
@@ -26,7 +26,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     inboxes: [],
     ...props,
 

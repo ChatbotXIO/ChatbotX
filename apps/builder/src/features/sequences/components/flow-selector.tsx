@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 
 type FlowSelectorSimpleProps = {
-  value: string
+  value: bigint
   onChange: (value: string) => void
   showError?: boolean
 }
@@ -35,7 +35,7 @@ export function FlowSelectorSimple({
   useEffect(() => {
     const subscription = form.watch((formData) => {
       if (formData.flowId && formData.flowId !== value) {
-        onChange(formData.flowId)
+        onChange(formData.flowId.toString())
       }
     })
     return () => subscription.unsubscribe()

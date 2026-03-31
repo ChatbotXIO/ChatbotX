@@ -24,7 +24,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { isCommunity } from "@/env"
 import { updateChatbotMemberAction } from "../actions/update-chatbot-member.action"
-import { updateChatbotMemberRequest } from "../schemas/chatbot-member.request"
+import { updateChatbotMemberRequest } from "../schema/mutation"
 
 export function UpdateChatbotMemberDialog({
   chatbotMember,
