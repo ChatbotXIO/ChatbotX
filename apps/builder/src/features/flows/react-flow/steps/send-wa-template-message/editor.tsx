@@ -5,14 +5,14 @@ import {
   extractTemplateParams,
   type ParameterInfo,
   type TemplateComponent,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select"
+} from "@chatbotx.io/ui/components/ui/select"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFormContext } from "react-hook-form"

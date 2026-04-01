@@ -1,12 +1,12 @@
 "use server"
 
-import { db, findOrFail } from "@aha.chat/database/client"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   invitationModel,
   organizationModel,
   userModel,
-} from "@aha.chat/database/schema"
-import type { ChatbotModel } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/schema"
+import type { ChatbotModel } from "@chatbotx.io/database/types"
 import { ChatbotXException } from "@/lib/errors/exception"
 
 export async function findInvitation({ code }: { code: string }) {

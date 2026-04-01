@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { botFieldModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { botFieldModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -19,8 +19,8 @@ export const updateBotField = async ({
   id,
   parsedInput,
 }: {
-  chatbotId: string
-  id: string
+  chatbotId: bigint
+  id: bigint
   parsedInput: UpdateBotFieldRequest
 }) => {
   const botField = await findOrFail(

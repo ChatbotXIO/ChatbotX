@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
-import { chatbotModel } from "@aha.chat/database/schema"
+import { db, eq } from "@chatbotx.io/database/client"
+import { chatbotModel } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -17,10 +17,10 @@ const updateChatbotToken = async ({
   chatbotId,
   token,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   token: string
 }) => {
-  if (!token.startsWith(chatbotId)) {
+  if (!token.startsWith(chatbotId.toString())) {
     return returnValidationErrors(updateChatbotTokenRequest, {
       _errors: ["Validation Exception"],
       token: {

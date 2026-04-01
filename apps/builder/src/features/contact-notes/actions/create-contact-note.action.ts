@@ -1,8 +1,8 @@
 "use server"
 
-import { db, findOrFail } from "@aha.chat/database/client"
-import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -42,7 +42,7 @@ export const createContactNoteAction = chatbotActionClient
         .values({
           id: createId(),
           contactId: contact.id,
-          content: parsedInput.content,
+          text: parsedInput.text,
           createdById: ctx.user.id,
         })
         .returning()

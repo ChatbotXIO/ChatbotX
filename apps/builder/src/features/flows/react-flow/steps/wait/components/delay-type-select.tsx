@@ -1,5 +1,5 @@
-import { DelayType } from "@aha.chat/flow-config"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { DelayType } from "@chatbotx.io/flow-config"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
 type DelayTypeSelectProps = {

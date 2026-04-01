@@ -5,18 +5,18 @@ import {
   type ConditionFieldType,
   ConditionType,
   Operator,
-} from "@aha.chat/database/enums"
-import type { CustomFieldType } from "@aha.chat/database/types"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
-import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
+} from "@chatbotx.io/database/enums"
+import type { CustomFieldType } from "@chatbotx.io/database/types"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import {
   SelectField,
   type SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

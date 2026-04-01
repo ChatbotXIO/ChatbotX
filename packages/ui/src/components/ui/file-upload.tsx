@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@aha.chat/ui/lib/utils"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Slot } from "@radix-ui/react-slot"
 import {
   FileArchiveIcon,

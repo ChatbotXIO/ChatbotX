@@ -1,9 +1,9 @@
 "use client"
 
-import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
-import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
-import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
+import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
@@ -116,7 +116,7 @@ const OrganizationMembersTable = (props: OrganizationMembersTableProps) => {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

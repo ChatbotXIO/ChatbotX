@@ -1,10 +1,10 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type { IntegrationGoogleSheetsResource } from "../schemas"
 
 export const getGoogleSheetsIntegration = async ({
   chatbotId,
 }: {
-  chatbotId: string
+  chatbotId: bigint
 }): Promise<{
   data: IntegrationGoogleSheetsResource | null
 }> => {

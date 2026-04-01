@@ -1,16 +1,18 @@
-import type { FolderModel } from "@aha.chat/database/types"
+import type { FolderModel } from "@chatbotx.io/database/types"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import { createLoader, parseAsString, type SearchParams } from "nuqs/server"
+import { createLoader, type SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 import { getCurrentFolder, listFolders } from "@/features/folders/queries"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { getFolderTypeFromFeature } from "./_lib"
 
 const folderSearchParams = {
-  folderId: parseAsString.withDefault(""),
+  folderId: parseAsBigInt.withDefault(BigInt(0)),
 }
 const loadSearchParams = createLoader(folderSearchParams)
 
@@ -18,6 +20,11 @@ export default async function FoldersDetault(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const headersList = await headers()
   const url = new URL(headersList.get("x-url") as string)
   const featureName = url.pathname.split("/").pop()
@@ -27,7 +34,6 @@ export default async function FoldersDetault(props: {
     return notFound()
   }
 
-  const params = await props.params
   const searchParams = await props.searchParams
   const { folderId } = await loadSearchParams(searchParams)
   const t = await getTranslations()
@@ -36,11 +42,11 @@ export default async function FoldersDetault(props: {
     folderId
       ? getCurrentFolder({
           id: folderId,
-          chatbotId: params.chatbotId,
+          chatbotId,
         })
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     listFolders({
-      chatbotId: params.chatbotId,
+      chatbotId,
       folderType,
       folderId,
     }),
@@ -55,12 +61,9 @@ export default async function FoldersDetault(props: {
       </div>
 
       <Suspense>
-        <FolderStoreProvider
-          chatbotId={params.chatbotId}
-          folderType={folderType}
-        >
+        <FolderStoreProvider chatbotId={chatbotId} folderType={folderType}>
           <ListFolders
-            chatbotId={params.chatbotId}
+            chatbotId={chatbotId}
             folderType={folderType}
             promises={promises}
           />

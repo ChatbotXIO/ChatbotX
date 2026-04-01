@@ -1,12 +1,15 @@
 "use client"
 
-import { assignerFilterTypes, ConversationType } from "@aha.chat/database/enums"
-import { channelTypes } from "@aha.chat/database/schema"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
+import {
+  assignerFilterTypes,
+  ConversationType,
+} from "@chatbotx.io/database/enums"
+import { channelTypes } from "@chatbotx.io/database/partials"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -64,7 +67,7 @@ export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
       keyword: "",
       liveChatEnabled: undefined,
       channel: channelTypes.enum.omnichannel,
-      assignedType: assignerFilterTypes.enum.all,
+      assignedId: assignerFilterTypes.enum.all,
       status: [],
       contactFilter: {
         operator: "and",

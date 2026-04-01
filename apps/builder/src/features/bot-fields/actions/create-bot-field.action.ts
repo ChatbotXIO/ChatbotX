@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { botFieldModel } from "@aha.chat/database/schema"
+import { db } from "@chatbotx.io/database/client"
+import { botFieldModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,

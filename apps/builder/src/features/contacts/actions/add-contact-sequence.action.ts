@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { enrollContactsInSequenceBulk } from "@aha.chat/sequence-scheduler"
+import { db } from "@chatbotx.io/database/client"
+import { enrollContactsInSequenceBulk } from "@chatbotx.io/sequence-scheduler"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -17,9 +17,9 @@ import {
 const CHUNK_SIZE = 1000
 
 async function getExistingEnrollments(
-  chatbotId: string,
-  contactIds: string[],
-  sequenceIds: string[],
+  chatbotId: bigint,
+  contactIds: bigint[],
+  sequenceIds: bigint[],
 ): Promise<Set<string>> {
   const enrollments = await db.query.contactsOnSequenceModel.findMany({
     where: {
@@ -34,14 +34,11 @@ async function getExistingEnrollments(
   })
 
   return new Set<string>(
-    enrollments.map(
-      (e: { contactId: string; sequenceId: string }) =>
-        `${e.contactId}-${e.sequenceId}`,
-    ),
+    enrollments.map((e) => `${e.contactId}-${e.sequenceId}`),
   )
 }
 
-function getValidContacts(chatbotId: string, contactIds: string[]) {
+function getValidContacts(chatbotId: bigint, contactIds: bigint[]) {
   return db.query.contactModel.findMany({
     where: {
       chatbotId,
@@ -54,11 +51,11 @@ function getValidContacts(chatbotId: string, contactIds: string[]) {
 }
 
 function buildEnrollmentRecords(
-  contacts: Array<{ id: string }>,
-  sequenceIds: string[],
+  contacts: Array<{ id: bigint }>,
+  sequenceIds: bigint[],
   existingKeys: Set<string>,
-  nextRunAtMap: Map<string, { nextRunAt: Date; nextStepId: string | null }>,
-  chatbotId: string,
+  nextRunAtMap: Map<bigint, { nextRunAt: Date; nextStepId: bigint | null }>,
+  chatbotId: bigint,
   now: Date,
 ) {
   return contacts.flatMap((contact) =>

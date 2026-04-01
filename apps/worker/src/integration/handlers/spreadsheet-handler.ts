@@ -1,14 +1,15 @@
-import { db, findOrFail } from "@aha.chat/database/client"
+import { emitCustomFieldChanged } from "@chatbotx/events"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   flowVersionModel,
   integrationGoogleSheetsModel,
   spreadsheetModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import type {
   ConversationModel,
   SpreadsheetModel,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import type {
   EdgeSchema,
   FilterMode,
@@ -18,15 +19,17 @@ import type {
   SpreadsheetGetRowSchema,
   SpreadsheetSendDataSchema,
   SpreadsheetUpdateRowSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGooglesheets,
-} from "@aha.chat/integration-google-sheets"
-import { SdkException } from "@aha.chat/sdk"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
-import { emitCustomFieldChanged } from "@chatbotx/events"
+} from "@chatbotx.io/integration-google-sheets"
+import { SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
@@ -42,8 +45,8 @@ const getWorksheet = async ({
   id,
   chatbotId,
 }: {
-  id: string
-  chatbotId: string
+  id: bigint
+  chatbotId: bigint
 }): Promise<SpreadsheetModel> =>
   await findOrFail(
     spreadsheetModel,
@@ -54,7 +57,7 @@ const getWorksheet = async ({
     "Spreadsheet not found",
   )
 
-const getGoogleSheetsIntegration = async (chatbotId: string) =>
+const getGoogleSheetsIntegration = async (chatbotId: bigint) =>
   await findOrFail(
     integrationGoogleSheetsModel,
     {
@@ -156,7 +159,7 @@ export const getSpreadsheetRow = async (
   }
 }
 
-const getGoogleSheetAuth = async (chatbotId: string) => {
+const getGoogleSheetAuth = async (chatbotId: bigint) => {
   const googleSheetsIntegration = await getGoogleSheetsIntegration(chatbotId)
   if (!googleSheetsIntegration.auth) {
     throw new SdkException("Google Sheets integration auth is missing")

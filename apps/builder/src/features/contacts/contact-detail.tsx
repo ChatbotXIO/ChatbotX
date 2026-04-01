@@ -1,16 +1,16 @@
 "use client"
 
-import type { ContactCustomFieldModel } from "@aha.chat/database/types"
+import type { ContactCustomFieldModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { useChatbotId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
@@ -22,7 +22,7 @@ import { getAvatarUrl } from "./utils"
 export const ContactDetail = () => {
   const t = useTranslations()
 
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
   const { activeConversationId, conversations } = useChatStore((state) => state)
 
   const [contact, setContact] = useState<ContactResource | null>(null)
@@ -82,7 +82,7 @@ export const ContactDetail = () => {
           )
           if (targetCustomField) {
             tmpContactFields.push({
-              key: cc.customFieldId,
+              key: cc.customFieldId.toString(),
               icon: customFieldIconsMap[targetCustomField.type],
               label: targetCustomField.name,
               value: cc.value,
@@ -150,7 +150,7 @@ export const ContactDetail = () => {
           disabledIds={contactFields.map((c) => c.key)}
           onChooseCustomField={(customFieldId) => {
             const targetCustomField = customFields.find(
-              (c) => c.id === customFieldId,
+              (c) => c.id.toString() === customFieldId,
             )
 
             if (targetCustomField) {

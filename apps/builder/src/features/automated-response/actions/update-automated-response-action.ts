@@ -1,12 +1,12 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { automatedResponseModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { automatedResponseModel } from "@chatbotx.io/database/schema"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { ensureAllFlowIdsExists } from "@/features/flows/queries"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { chatbotActionClient } from "@/lib/safe-action"
 import {
@@ -34,15 +34,28 @@ export const updateAutomatedResponseAction = chatbotActionClient
         "Automated response not found",
       )
 
-      // ensure all input flows are exists
-      const flowIds: string[] = []
-      if (parsedInput.replies) {
-        for (const reply of parsedInput.replies) {
-          if ("flowId" in reply) {
-            flowIds.push(reply.flowId)
-          }
+      // validate flow id if text is not provided
+      if (parsedInput.text) {
+        parsedInput.flowId = null
+      } else if (parsedInput.flowId) {
+        const exists = await db.query.flowModel.findFirst({
+          columns: {
+            id: true,
+          },
+          where: {
+            id: parsedInput.flowId,
+            chatbotId,
+          },
+        })
+        if (!exists) {
+          return returnValidationErrors(updateAutomatedResponseRequest, {
+            _errors: ["Validation Exception"],
+            flowId: {
+              _errors: ["Flow not found"],
+            },
+          })
         }
-        await ensureAllFlowIdsExists(chatbotId, [...new Set(flowIds)])
+        parsedInput.text = null
       }
 
       await db

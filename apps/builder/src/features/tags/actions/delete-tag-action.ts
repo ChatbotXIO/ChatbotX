@@ -1,7 +1,7 @@
 "use server"
 
-import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
-import { tagModel } from "@aha.chat/database/schema"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -30,8 +30,8 @@ export const deleteTags = async ({
   chatbotId,
   ids,
 }: {
-  chatbotId: string
-  ids: string[]
+  chatbotId: bigint
+  ids: bigint[]
 }) => {
   await db
     .delete(tagModel)
@@ -44,8 +44,8 @@ export const deleteTag = async ({
   chatbotId,
   id,
 }: {
-  chatbotId: string
-  id: string
+  chatbotId: bigint
+  id: bigint
 }) => {
   const tag = await findOrFail(
     tagModel,

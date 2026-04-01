@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,23 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { TagsInputField } from "@aha.chat/ui/components/ui/muhammada86/tags-input-field"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
+import { useChatbotId } from "@/hooks/routing"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
 import { removeContactTagsRequest } from "../schemas/contact-tag"
 
 type RemoveContactTagDialogProps = {
   trigger: ReactElement
-  ids: string[]
+  ids: bigint[]
 }
 
 export default function RemoveContactTagDialog({
@@ -36,7 +36,8 @@ export default function RemoveContactTagDialog({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
+
   const tagOptions = useTagOptions()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =

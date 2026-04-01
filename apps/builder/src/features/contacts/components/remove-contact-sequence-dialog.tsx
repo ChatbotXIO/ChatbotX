@@ -1,7 +1,7 @@
 "use client"
 
-import { SelectTagsInputField } from "@aha.chat/ui/components/form/select-tags-input-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { SelectTagsInputField } from "@chatbotx.io/ui/components/form/select-tags-input-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -11,22 +11,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
+import { useChatbotId } from "@/hooks/routing"
 import { removeContactSequenceAction } from "../actions/remove-contact-sequence.action"
 import { removeContactSequenceRequest } from "../schemas/contact-sequence"
 
 type RemoveContactSequenceDialogProps = {
   trigger: ReactElement
-  ids: string[]
+  ids: bigint[]
 }
 
 export default function RemoveContactSequenceDialog({
@@ -35,7 +35,7 @@ export default function RemoveContactSequenceDialog({
 }: RemoveContactSequenceDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const sequenceOptions = useSequenceOptions()
   const sequenceSelectOptions = sequenceOptions.map((sequence) => ({

@@ -1,4 +1,4 @@
-import { createSelectSchema, messageModel } from "@aha.chat/database/schema"
+import { createSelectSchema, messageModel } from "@chatbotx.io/database/schema"
 import z from "zod"
 import { attachmentResource } from "@/features/attachments/schemas"
 import { contactResource } from "@/features/contacts/schemas/resource"

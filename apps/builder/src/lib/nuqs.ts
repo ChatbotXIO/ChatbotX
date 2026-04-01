@@ -1,4 +1,4 @@
-import { createParser } from "nuqs"
+import { createParser } from "nuqs/server"
 
 export const parseAsBigInt = createParser({
   parse(queryValue) {

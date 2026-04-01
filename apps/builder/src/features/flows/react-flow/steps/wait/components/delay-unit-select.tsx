@@ -1,8 +1,8 @@
-import { DelayUnit } from "@aha.chat/flow-config"
+import { DelayUnit } from "@chatbotx.io/flow-config"
 import {
   SelectField,
   type SelectFieldProps,
-} from "@aha.chat/ui/components/form/select-field"
+} from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import type { FieldValues } from "react-hook-form"
 

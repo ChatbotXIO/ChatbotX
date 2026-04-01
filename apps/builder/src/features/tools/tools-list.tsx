@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { SiFacebook } from "@icons-pack/react-simple-icons"
 import {
   BotIcon,
@@ -14,9 +14,10 @@ import {
   QrCodeIcon,
   UserCheck2Icon,
 } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
+import { useChatbotId } from "@/hooks/routing"
 
 const TOOLS_CONFIG = [
   {
@@ -97,7 +98,7 @@ const TOOLS_CONFIG = [
 ] as const
 
 export const ToolsList = () => {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
   const t = useTranslations()
   const router = useRouter()
 
@@ -110,7 +111,7 @@ export const ToolsList = () => {
         icon: config.icon,
         link:
           "getLink" in config && config.getLink
-            ? config.getLink(chatbotId ?? "")
+            ? config.getLink(chatbotId.toString())
             : undefined,
       })),
     [t, chatbotId],

@@ -1,4 +1,4 @@
-import type { ChatbotMemberNotificationTypes } from "node_modules/@aha.chat/database/src/drizzle/schema/chatbot"
+import type { ChatbotMemberNotificationTypes } from "@chatbotx.io/database/partials"
 
 export function isEnableAtLeastOneNotification(
   notificationTypes: ChatbotMemberNotificationTypes,

@@ -1,19 +1,6 @@
 import { z } from "zod"
 
-export type MessageTemplate = {
-  category: string
-  id: string
-  language: string
-  name: string
-  status: string
-}
-
-export type MessageTemplateWithComponents = MessageTemplate & {
-  components: unknown
-  sourceId: string
-}
-
-export const templateType = z.enum([
+export const templateTypes = z.enum([
   "Text",
   "Image",
   "Video",
@@ -24,8 +11,7 @@ export const templateType = z.enum([
   "ViewCatalog",
   "ViewProduct",
 ])
-
-export type TemplateType = z.infer<typeof templateType>
+export type TemplateType = z.infer<typeof templateTypes>
 
 export const languageOptions = [
   { label: "Afrikaans", value: "af" },

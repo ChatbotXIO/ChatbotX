@@ -1,10 +1,13 @@
-import type { Transaction } from "@aha.chat/database/client"
+import type { Transaction } from "@chatbotx.io/database/client"
 import {
   chatbotMemberModel,
   chatbotModel,
   chatbotUsageModel,
-} from "@aha.chat/database/schema"
-import type { ChatbotModel, OrganizationModel } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/schema"
+import type {
+  ChatbotModel,
+  OrganizationModel,
+} from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 
 export async function createSimpleChatbot(

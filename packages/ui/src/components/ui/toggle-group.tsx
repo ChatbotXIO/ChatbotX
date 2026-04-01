@@ -4,8 +4,8 @@ import * as React from "react"
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
 import type { VariantProps } from "class-variance-authority"
 
-import { cn } from "@aha.chat/ui/lib/utils"
-import { toggleVariants } from "@aha.chat/ui/components/ui/toggle"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { toggleVariants } from "@chatbotx.io/ui/components/ui/toggle"
 
 const ToggleGroupContext = React.createContext<
   VariantProps<typeof toggleVariants>

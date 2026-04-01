@@ -1,3 +1,5 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ContactsTable } from "@/features/contacts/contacts-table"
@@ -12,24 +14,28 @@ export default async function ContactsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = listContactsRequest.parse(searchParams)
 
   const promises = Promise.all([
     listContacts({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
   return (
     <Suspense>
-      <UserStoreProvider chatbotId={params.chatbotId}>
-        <TagStoreProvider chatbotId={params.chatbotId}>
-          <CustomFieldStoreProvider chatbotId={params.chatbotId}>
-            <InboxStoreProvider chatbotId={params.chatbotId}>
-              <ContactsTable chatbotId={params.chatbotId} promises={promises} />
+      <UserStoreProvider chatbotId={chatbotId}>
+        <TagStoreProvider chatbotId={chatbotId}>
+          <CustomFieldStoreProvider chatbotId={chatbotId}>
+            <InboxStoreProvider chatbotId={chatbotId}>
+              <ContactsTable chatbotId={chatbotId} promises={promises} />
             </InboxStoreProvider>
           </CustomFieldStoreProvider>
         </TagStoreProvider>

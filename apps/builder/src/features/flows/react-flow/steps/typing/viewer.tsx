@@ -1,6 +1,6 @@
 "use client"
 
-import type { TypingStepSchema } from "@aha.chat/flow-config"
+import type { TypingStepSchema } from "@chatbotx.io/flow-config"
 
 type TypingStepViewerProps = {
   data: TypingStepSchema

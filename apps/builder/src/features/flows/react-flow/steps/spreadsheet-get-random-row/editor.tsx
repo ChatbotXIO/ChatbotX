@@ -1,7 +1,7 @@
 "use client"
 
-import { spreadsheetGetRandomRowSchema } from "@aha.chat/flow-config"
-import { Form } from "@aha.chat/ui/components/ui/form"
+import { spreadsheetGetRandomRowSchema } from "@chatbotx.io/flow-config"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useCallback, useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"

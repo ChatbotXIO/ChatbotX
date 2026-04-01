@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import type { AIFunctionModel } from "@aha.chat/database/types"
+import { db } from "@chatbotx.io/database/client"
+import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import type { ListAIFunctionsRequest } from "../schema/action"
 

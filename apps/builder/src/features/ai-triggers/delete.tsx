@@ -1,7 +1,7 @@
 "use client"
 
-import type { AITriggerModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { AITriggerModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
+} from "@chatbotx.io/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { deleteAITriggerAction } from "@/features/ai-triggers/actions/delete.action"
 
 type DeleteAITriggerDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: string
+  chatbotId: bigint
   trigger: Row<AITriggerModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void

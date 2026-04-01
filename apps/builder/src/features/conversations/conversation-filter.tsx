@@ -1,15 +1,18 @@
 "use client"
 
-import { ConversationStatus } from "@aha.chat/database/enums"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import {
+  assignerFilterTypes,
+  ConversationStatus,
+} from "@chatbotx.io/database/enums"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import {
   ArchiveIcon,
   CornerUpLeftIcon,
@@ -34,7 +37,8 @@ export function ConversationFilter() {
 
   const hasFilter = Boolean(
     (filters.channel && filters.channel !== "omnichannel") ||
-      (filters.assignedUserId && filters.assignedUserId !== "omnichannel") ||
+      (filters.assignedId &&
+        filters.assignedId !== assignerFilterTypes.enum.all) ||
       filters.status,
   )
   const contactAssigneeOptions = useContactAssigneeOptions({

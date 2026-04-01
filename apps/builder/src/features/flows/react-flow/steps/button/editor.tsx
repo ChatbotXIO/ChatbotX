@@ -1,10 +1,10 @@
-import { buttonStepDefaultFn } from "@aha.chat/flow-config"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { buttonStepDefaultFn } from "@chatbotx.io/flow-config"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Sortable,
   SortableItem,
   SortableItemHandle,
-} from "@aha.chat/ui/components/ui/sortable"
+} from "@chatbotx.io/ui/components/ui/sortable"
 import { GripVerticalIcon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"

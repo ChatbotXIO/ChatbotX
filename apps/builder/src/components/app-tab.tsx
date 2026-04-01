@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import Link from "next/link"
 
 type AppTabProps = {

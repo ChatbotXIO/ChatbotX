@@ -1,8 +1,8 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { InboxStatus } from "@aha.chat/database/enums"
-import { inboxModel, integrationZaloModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { InboxStatus } from "@chatbotx.io/database/enums"
+import { inboxModel, integrationZaloModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

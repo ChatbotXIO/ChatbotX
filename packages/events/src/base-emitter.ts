@@ -1,4 +1,4 @@
-import { Condition } from "@aha.chat/database/enums"
+import { Condition } from "@chatbotx.io/database/enums"
 
 /**
  * Base event emitter class with common functionality
@@ -7,15 +7,15 @@ export abstract class BaseEventEmitter {
   protected abstract supportedEventTypes: Set<Condition>
   protected abstract shouldEmitEvent(
     eventType: Condition,
-    chatbotId: string,
+    chatbotId: bigint,
     sourceId?: string,
   ): Promise<boolean>
 
   protected abstract emitToQueue(
     eventType: Condition,
     data: {
-      chatbotId: string
-      contactId: string
+      chatbotId: bigint
+      contactId: bigint
       metadata?: Record<string, unknown>
     },
   ): Promise<void>
@@ -23,8 +23,8 @@ export abstract class BaseEventEmitter {
   async emit(
     eventType: Condition,
     data: {
-      chatbotId: string
-      contactId: string
+      chatbotId: bigint
+      contactId: bigint
       metadata?: Record<string, unknown>
     },
   ): Promise<void> {
@@ -53,8 +53,8 @@ export abstract class BaseEventEmitter {
   }
 
   async tagApplied(
-    chatbotId: string,
-    contactId: string,
+    chatbotId: bigint,
+    contactId: bigint,
     tagId: string,
   ): Promise<void> {
     await this.emit(Condition.tagApplied, {
@@ -65,8 +65,8 @@ export abstract class BaseEventEmitter {
   }
 
   async tagRemoved(
-    chatbotId: string,
-    contactId: string,
+    chatbotId: bigint,
+    contactId: bigint,
     tagId: string,
   ): Promise<void> {
     await this.emit(Condition.tagRemoved, {
@@ -77,9 +77,9 @@ export abstract class BaseEventEmitter {
   }
 
   async customFieldChanged(
-    chatbotId: string,
-    contactId: string,
-    customFieldId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    customFieldId: bigint,
     customFieldName: string,
     oldValue: unknown,
     newValue: unknown,
@@ -98,9 +98,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationTransferredToHuman(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     transferredBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationTransferredToHuman, {
@@ -114,9 +114,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationTransferredToBot(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     transferredBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationTransferredToBot, {
@@ -130,8 +130,8 @@ export abstract class BaseEventEmitter {
   }
 
   async contactCreated(
-    chatbotId: string,
-    contactId: string,
+    chatbotId: bigint,
+    contactId: bigint,
     name?: string,
     phone?: string,
     email?: string,
@@ -150,8 +150,8 @@ export abstract class BaseEventEmitter {
   }
 
   async contactUnsubscribed(
-    chatbotId: string,
-    contactId: string,
+    chatbotId: bigint,
+    contactId: bigint,
   ): Promise<void> {
     await this.emit(Condition.contactUnsubscribedFormBroadcast, {
       chatbotId,
@@ -160,9 +160,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationArchived(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     archivedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.archived, {
@@ -176,9 +176,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationFollowUp(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     markedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.followUp, {
@@ -192,9 +192,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationAssigned(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     assignedTo: string,
     assignedBy?: string,
   ): Promise<void> {
@@ -210,9 +210,9 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationUnassigned(
-    chatbotId: string,
-    contactId: string,
-    conversationId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    conversationId: bigint,
     unassignedBy?: string,
   ): Promise<void> {
     await this.emit(Condition.conversationUnassigned, {
@@ -226,9 +226,9 @@ export abstract class BaseEventEmitter {
   }
 
   async sequenceSubscribed(
-    chatbotId: string,
-    contactId: string,
-    sequenceId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    sequenceId: bigint,
     sequenceName: string,
   ): Promise<void> {
     await this.emit(Condition.subscribedToSequence, {
@@ -239,9 +239,9 @@ export abstract class BaseEventEmitter {
   }
 
   async sequenceUnsubscribed(
-    chatbotId: string,
-    contactId: string,
-    sequenceId: string,
+    chatbotId: bigint,
+    contactId: bigint,
+    sequenceId: bigint,
     sequenceName: string,
   ): Promise<void> {
     await this.emit(Condition.unsubscribedFromSequence, {

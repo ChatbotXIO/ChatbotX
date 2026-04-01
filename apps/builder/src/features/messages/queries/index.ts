@@ -1,12 +1,12 @@
 "use server"
 
-import { and, db, desc, eq, inArray } from "@aha.chat/database/client"
-import { attachmentModel, messageModel } from "@aha.chat/database/schema"
-import type { MessageModel } from "@aha.chat/database/types"
+import { and, db, desc, eq, inArray } from "@chatbotx.io/database/client"
+import { attachmentModel, messageModel } from "@chatbotx.io/database/schema"
+import type { MessageModel } from "@chatbotx.io/database/types"
 import {
   getPaginationWithDefaults,
   getPublicUrl,
-} from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/utils"
 import type { AttachmentResource } from "@/features/attachments/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { encodeCursor } from "@/lib/pagination"

@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { conditionModel, triggerModel } from "@aha.chat/database/schema"
 import { updateTriggerCache } from "@chatbotx/events"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,
@@ -44,7 +44,7 @@ export const updateTriggerAction = chatbotActionClient
         )
 
         const conditionsToUpdate = conditions.filter(
-          (c) => "id" in c && c.id && existingIds.has(c.id.toString()),
+          (c) => "id" in c && c.id && existingIds.has(c.id),
         )
 
         const conditionsToCreate = conditions.filter(

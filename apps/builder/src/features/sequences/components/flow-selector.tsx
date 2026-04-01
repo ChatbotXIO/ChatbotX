@@ -1,8 +1,8 @@
 "use client"
 
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"

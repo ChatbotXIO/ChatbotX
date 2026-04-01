@@ -1,9 +1,9 @@
 "use client"
 
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
-import { useQueryState } from "@aha.chat/ui/lib/nuqs"
+import type { FolderModel, FolderType } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
+import { useQueryState } from "@chatbotx.io/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
 import { use, useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"

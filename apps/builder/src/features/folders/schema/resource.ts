@@ -2,7 +2,7 @@ import {
   createSelectSchema,
   folderModel,
   folderType,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import z from "zod"
 
 export const folderResource = createSelectSchema(folderModel)

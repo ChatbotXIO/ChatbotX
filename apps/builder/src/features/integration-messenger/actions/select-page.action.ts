@@ -1,18 +1,18 @@
 "use server"
 
-import { db, isDatabaseError } from "@aha.chat/database/client"
-import { InboxStatus } from "@aha.chat/database/enums"
+import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { InboxStatus } from "@chatbotx.io/database/enums"
 import {
   inboxModel,
   integrationMessengerModel,
-} from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
-import type { MessengerAuthValue } from "@aha.chat/integration-messenger"
+} from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
+import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
   subscribePageToAppWebhook,
-} from "@aha.chat/integration-messenger/apis/page"
-import { AuthType } from "@aha.chat/sdk"
+} from "@chatbotx.io/integration-messenger/apis/page"
+import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"

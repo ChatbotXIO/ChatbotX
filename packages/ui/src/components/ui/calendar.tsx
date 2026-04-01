@@ -12,8 +12,8 @@ import {
   getDefaultClassNames,
 } from "react-day-picker"
 
-import { cn } from "@aha.chat/ui/lib/utils"
-import { Button, buttonVariants } from "@aha.chat/ui/components/ui/button"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { Button, buttonVariants } from "@chatbotx.io/ui/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 

@@ -1,16 +1,16 @@
 {
-  "name": "@aha.chat/integration-openai",
+  "name": "@chatbotx.io/integration-openai",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
-    "@aha.chat/sdk": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
     "@ai-sdk/openai": "^3.0.47",
     "ai": "^6.0.134"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
     "typescript": "5.9.3"
   },

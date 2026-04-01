@@ -1,9 +1,9 @@
 "use client"
 
-import type { TriggerModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Form, FormMessage } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
+import type { TriggerModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"

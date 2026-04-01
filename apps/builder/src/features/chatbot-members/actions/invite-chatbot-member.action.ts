@@ -1,8 +1,8 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import { invitationModel } from "@aha.chat/database/schema"
-import { createId, init } from "@paralleldrive/cuid2"
+import { db } from "@chatbotx.io/database/client"
+import { invitationModel } from "@chatbotx.io/database/schema"
+import { createId } from "@chatbotx.io/utils"
 import { addDays } from "date-fns"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { chatbotActionClient } from "@/lib/safe-action"
@@ -17,7 +17,7 @@ export const inviteChatbotMemberAction = chatbotActionClient
         .insert(invitationModel)
         .values({
           id: createId(),
-          code: init({ length: 32 })(),
+          code: createId().toString(),
           permissions: parsedInput.permissions,
           expiresAt: addDays(new Date(), 1),
           chatbotId,

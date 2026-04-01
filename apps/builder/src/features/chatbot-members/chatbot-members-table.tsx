@@ -1,27 +1,27 @@
 "use client"
 
-import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
-import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -31,7 +31,7 @@ import { InviteChatbotMemberDialog } from "./components/invite-chatbot-member"
 import { UpdateChatbotMemberDialog } from "./components/update-chatbot-member"
 import { isEnableAtLeastOneNotification } from "./helpers"
 import type { listChatbotMembers } from "./queries"
-import type { ChatbotMemberResource } from "./schema/resource"
+import type { ListChatbotMembersResponse } from "./schema/query"
 
 type ChatbotMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listChatbotMembers>>]>
@@ -41,10 +41,13 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
   const [{ data, pageCount }] = use(promises)
   const t = useTranslations()
 
-  const [rowAction, setRowAction] =
-    useState<DataTableRowAction<ChatbotMemberResource> | null>(null)
+  const [rowAction, setRowAction] = useState<DataTableRowAction<
+    ListChatbotMembersResponse["data"][number]
+  > | null>(null)
 
-  const columns = useMemo<ColumnDef<ChatbotMemberResource>[]>(
+  const columns = useMemo<
+    ColumnDef<ListChatbotMembersResponse["data"][number]>[]
+  >(
     () => [
       {
         id: "name",
@@ -56,21 +59,21 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
             <Avatar className="size-7 justify-items-center">
               <AvatarImage
                 alt="avatar"
-                src={row.original.user?.image ?? undefined}
+                src={row.original.user.image ?? undefined}
               />
               <AvatarFallback>
-                {(row.original.user?.name || "").charAt(0).toUpperCase()}
+                {(row.original.user.name || "").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="max-w-[200px] truncate">
-                  {row.original.user?.name}
+                  {row.original.user.name}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{row.original.user?.name}</p>
+                <p>{row.original.user.name}</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -182,7 +185,7 @@ export function ChatbotMembersTable({ promises }: ChatbotMembersTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

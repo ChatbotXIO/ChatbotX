@@ -1,5 +1,5 @@
-import { FolderType } from "@aha.chat/database/enums"
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { FolderType } from "@chatbotx.io/database/enums"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { type ReactNode, Suspense } from "react"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -14,8 +14,7 @@ export default async function FolderableLayout({
   folders: ReactNode
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

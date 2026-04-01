@@ -1,12 +1,12 @@
 "use server"
 
-import { and, db, eq, findOrFail } from "@aha.chat/database/client"
+import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
+import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsToTagsModel,
   tagModel,
-} from "@aha.chat/database/schema"
-import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
@@ -41,7 +41,7 @@ export const addContactTags = async ({
   chatbotId,
   parsedInput,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   parsedInput: AddContactTagRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({
@@ -127,9 +127,9 @@ export const attachContactTag = async ({
   contactId,
   tagId,
 }: {
-  chatbotId: string
-  contactId: string
-  tagId: string
+  chatbotId: bigint
+  contactId: bigint
+  tagId: bigint
 }) => {
   findOrFail(contactModel, {
     id: contactId,
@@ -163,9 +163,9 @@ export const detachContactTag = async ({
   contactId,
   tagId,
 }: {
-  chatbotId: string
-  contactId: string
-  tagId: string
+  chatbotId: bigint
+  contactId: bigint
+  tagId: bigint
 }) => {
   findOrFail(contactModel, {
     id: contactId,

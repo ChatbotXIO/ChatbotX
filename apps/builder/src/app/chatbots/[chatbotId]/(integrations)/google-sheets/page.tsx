@@ -1,3 +1,4 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -10,8 +11,7 @@ export default async function SpreadsheetsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const { chatbotId: chatbotIdString } = await props.params
-  const chatbotId = BigInt(chatbotIdString)
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

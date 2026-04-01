@@ -1,9 +1,9 @@
-import { db, sql } from "@aha.chat/database/client"
+import { setTriggerExecutionContext } from "@chatbotx/events"
+import { db, sql } from "@chatbotx.io/database/client"
 import {
   triggerContactHistoryModel,
   triggerStatsModel,
-} from "@aha.chat/database/schema"
-import { setTriggerExecutionContext } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"
@@ -18,7 +18,7 @@ export class TriggerExecutorService {
 
   async execute(
     trigger: TriggerWithConditions,
-    contactId: string,
+    contactId: bigint,
   ): Promise<void> {
     const { id: triggerId, chatbotId, actions } = trigger
 
@@ -68,8 +68,8 @@ export class TriggerExecutorService {
   }
 
   private async updateStats(
-    triggerId: string,
-    chatbotId: string,
+    triggerId: bigint,
+    chatbotId: bigint,
     success: boolean,
   ): Promise<void> {
     const today = new Date()

@@ -11,11 +11,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@aha.chat/ui/components",
-    "utils": "@aha.chat/ui/lib/utils",
-    "ui": "@aha.chat/ui/components/ui",
-    "lib": "@aha.chat/ui/lib",
-    "hooks": "@aha.chat/ui/hooks"
+    "components": "@chatbotx.io/ui/components",
+    "utils": "@chatbotx.io/ui/lib/utils",
+    "ui": "@chatbotx.io/ui/components/ui",
+    "lib": "@chatbotx.io/ui/lib",
+    "hooks": "@chatbotx.io/ui/hooks"
   },
   "registries": {
     "@billingsdk": "https://billingsdk.com/r/{name}.json",

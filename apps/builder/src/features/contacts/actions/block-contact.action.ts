@@ -1,8 +1,11 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

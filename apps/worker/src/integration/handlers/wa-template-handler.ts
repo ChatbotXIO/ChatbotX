@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import type { SendWaTemplateMessageStepSchema } from "@aha.chat/flow-config"
+import { db } from "@chatbotx.io/database/client"
+import type { SendWaTemplateMessageStepSchema } from "@chatbotx.io/flow-config"
 import { replaceCustomFieldAttributes } from "./automated-response/replies"
 
 export async function replaceWhatsappTemplateVariables(

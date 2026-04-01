@@ -1,3 +1,4 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import ManageAccessTokenPage from "@/features/chatbot/manage-access-token"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
@@ -5,8 +6,11 @@ import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 export default async function SettingsIntegrationGeminiPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const params = await props.params
-  const userAndChatbot = await getCurrentUserAndTargetChatbot(params.chatbotId)
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+  const userAndChatbot = await getCurrentUserAndTargetChatbot(chatbotId)
   if (!userAndChatbot) {
     return notFound()
   }

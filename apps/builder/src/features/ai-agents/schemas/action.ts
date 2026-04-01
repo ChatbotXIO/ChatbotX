@@ -1,5 +1,5 @@
-import { aiMessageRoles } from "@aha.chat/database/schema"
-import { aiProviders } from "@aha.chat/flow-config"
+import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import { aiProviders } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { geminiModels } from "@/features/integration-gemini/schemas/models"
 import { openaiChatModels } from "@/features/openai/models"
@@ -16,12 +16,12 @@ export const createAIAgentRequest = z.object({
   models: z.array(
     z.discriminatedUnion("provider", [
       z.object({
-        provider: z.literal(aiProviders.gemini),
-        model: z.enum(geminiModels),
+        provider: z.literal(aiProviders.enum.gemini),
+        model: geminiModels,
       }),
       z.object({
-        provider: z.literal(aiProviders.openai),
-        model: z.enum(openaiChatModels),
+        provider: z.literal(aiProviders.enum.openai),
+        model: openaiChatModels,
       }),
     ]),
   ),

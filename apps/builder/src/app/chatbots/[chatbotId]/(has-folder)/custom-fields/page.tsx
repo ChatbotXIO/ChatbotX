@@ -1,4 +1,6 @@
-import { rootFolderId } from "@aha.chat/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { CustomFieldsTable } from "@/features/custom-fields/custom-field-table"
@@ -9,7 +11,11 @@ export default async function CustomFieldsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = await listCustomFieldsSearchParams.parse(searchParams)
   const folderId = search.folderId ?? rootFolderId
@@ -17,7 +23,7 @@ export default async function CustomFieldsPage(props: {
   const promises = Promise.all([
     listCustomFieldsRSC({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
       folderId,
     }),
   ])
@@ -25,7 +31,7 @@ export default async function CustomFieldsPage(props: {
   return (
     <Suspense>
       <CustomFieldsTable
-        chatbotId={params.chatbotId}
+        chatbotId={chatbotId}
         folderId={folderId}
         promises={promises}
       />

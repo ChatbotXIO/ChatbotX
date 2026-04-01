@@ -1,12 +1,15 @@
 "use server"
 
-import { db, inArray } from "@aha.chat/database/client"
-import { conversationModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
 import { emitConversationAssigned } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
+import { db, inArray } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
@@ -33,15 +36,15 @@ export const assignConversationAction = chatbotActionClient
       ctx: { user: UserModel }
     }) => {
       const updatedData: {
-        assignedUserId: string | null
-        assignedInboxTeamId: string | null
+        assignedUserId: bigint | null
+        assignedInboxTeamId: bigint | null
       } = {
         assignedUserId: null,
         assignedInboxTeamId: null,
       }
 
       if (parsedInput.assignedId?.startsWith("u_")) {
-        const userId = parsedInput.assignedId.slice(2)
+        const userId = BigInt(parsedInput.assignedId.slice(2))
         const chatbotMember = await db.query.chatbotMemberModel.findFirst({
           where: {
             chatbotId,
@@ -57,7 +60,7 @@ export const assignConversationAction = chatbotActionClient
         }
         updatedData.assignedUserId = chatbotMember.userId
       } else if (parsedInput.assignedId?.startsWith("t_")) {
-        const inboxteamId = parsedInput.assignedId.slice(2)
+        const inboxteamId = BigInt(parsedInput.assignedId.slice(2))
         const inboxTeam = await db.query.inboxTeamModel.findFirst({
           where: {
             chatbotId,
@@ -99,7 +102,9 @@ export const assignConversationAction = chatbotActionClient
 
       // Emit conversation assigned events
       const assignedTo =
-        updatedData.assignedUserId || updatedData.assignedInboxTeamId || ""
+        updatedData.assignedUserId ||
+        updatedData.assignedInboxTeamId ||
+        BigInt(0)
       const assignedBy = ctx.user.id
 
       for (const conversation of conversations) {

@@ -4,7 +4,7 @@ import { authorizedAPI } from "@/orpc"
 import {
   listMessageTemplatesInputSchema,
   listWhatsappMessageTemplatesResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const privateAPIs = {
   listWhatsappMessageTemplates: authorizedAPI

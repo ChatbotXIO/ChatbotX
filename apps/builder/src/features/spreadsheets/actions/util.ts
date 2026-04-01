@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import type { GoogleSheetsAuthValue } from "@aha.chat/integration-google-sheets"
+import { db } from "@chatbotx.io/database/client"
+import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
@@ -8,7 +8,7 @@ import { createSpreadsheetRequest } from "../schemas/mutation"
 const SPREADSHEET_ID_REGEX = /\/d\/([^/]+)\//
 
 export async function verifyGoogleSheetsUrl(
-  chatbotId: string,
+  chatbotId: bigint,
   url: string,
 ): Promise<string> {
   const dbIntegration = await db.query.integrationModel.findFirst({

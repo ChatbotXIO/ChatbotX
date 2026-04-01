@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { sequenceModel, sequenceStepModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,

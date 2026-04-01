@@ -15,19 +15,19 @@ export type ConversationEventType = z.infer<typeof conversationEventTypeSchema>
 
 export const conversationEventSchema = z.object({
   channel: z.string().optional(),
-  chatbotId: z.string(),
-  conversationId: z.string(),
-  eventId: z.string(),
+  chatbotId: z.bigint(),
+  conversationId: z.bigint(),
+  eventId: z.bigint(),
   eventType: conversationEventTypeSchema,
-  fromAssignee: z.string().optional(),
+  fromAssignee: z.bigint().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   occurredAt: z.date(),
-  toAssignee: z.string().optional(),
+  toAssignee: z.bigint().optional(),
 })
 export type ConversationEvent = z.infer<typeof conversationEventSchema>
 
 export const createConversationEventSchema = conversationEventSchema.extend({
-  eventId: z.string(),
+  eventId: z.bigint(),
 })
 export type CreateConversationEvent = z.infer<
   typeof createConversationEventSchema

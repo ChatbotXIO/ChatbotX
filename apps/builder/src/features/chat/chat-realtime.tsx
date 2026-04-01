@@ -3,23 +3,24 @@
 import {
   type RealtimeEventData,
   RealtimeEventType,
-} from "@aha.chat/partysocket-config"
-import { useParams } from "next/navigation"
+} from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
+import { useChatbotId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import type { MessageResource } from "../messages/schema/resource"
 import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
+
   const { handleNewMessage, updateContact, updateConversations } = useChatStore(
     (state) => state,
   )
 
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
-    room: chatbotId,
+    room: chatbotId.toString(),
     party: "chatbots",
     // protocol: "ws",
 

@@ -1,20 +1,20 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
-import { Label } from "@aha.chat/ui/components/ui/label"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select"
+} from "@chatbotx.io/ui/components/ui/select"
 import { useTranslations } from "next-intl"
 import { memo, useRef, useState } from "react"
 import { toast } from "sonner"

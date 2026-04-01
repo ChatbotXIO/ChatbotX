@@ -13,17 +13,17 @@ class WebhookCache extends BaseCache {
 const webhookCache = new WebhookCache()
 
 export async function hasActiveWebhooks(
-  chatbotId: string,
+  chatbotId: bigint,
   eventTypes: number[],
   sourceId?: string,
 ): Promise<boolean> {
   return await webhookCache.hasActive(chatbotId, eventTypes, sourceId)
 }
 
-export async function updateWebhookCache(chatbotId: string): Promise<void> {
+export async function updateWebhookCache(chatbotId: bigint): Promise<void> {
   return await webhookCache.updateCache(chatbotId)
 }
 
-export async function removeWebhookCache(chatbotId: string): Promise<void> {
+export async function removeWebhookCache(chatbotId: bigint): Promise<void> {
   return await webhookCache.removeCache(chatbotId)
 }

@@ -3,12 +3,12 @@ import {
   type DatabaseClient,
   eq,
   inArray,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
+import { sequenceEventTypes } from "@chatbotx.io/database/partials"
 import {
   sequenceDispatchModel,
   sequenceEventModel,
-  sequenceEventTypes,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 
 export const sequenceDispatchUtils = {

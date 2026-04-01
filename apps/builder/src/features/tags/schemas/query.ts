@@ -1,12 +1,13 @@
-import { createSelectSchema, tagModel } from "@aha.chat/database/schema"
-import type { TagModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import { createSelectSchema, tagModel } from "@chatbotx.io/database/schema"
+import type { TagModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { basePaginationRequest } from "@/lib/pagination"
 import { publicTagResource, tagResource } from "./resource"
 
@@ -17,7 +18,7 @@ export const listTagsSearchParams = {
   sort: getSortingStateParser<
     TagModel & { contactsCount?: number }
   >().withDefault([{ id: "createdAt", desc: true }]),
-  folderId: parseAsString,
+  folderId: parseAsBigInt,
 }
 export const listTagsSearchParamsCache =
   createSearchParamsCache(listTagsSearchParams)
@@ -25,7 +26,7 @@ export const listTagsSearchParamsCache =
 export const listTagsRequest = basePaginationRequest.and(
   z.object({
     name: z.string().nullish(),
-    folderId: z.string().nullish(),
+    folderId: z.bigint().nullish(),
   }),
 )
 export type ListTagsRequest = z.infer<typeof listTagsRequest>

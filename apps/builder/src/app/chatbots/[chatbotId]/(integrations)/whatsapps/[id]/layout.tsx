@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { ReactNode } from "react"
@@ -15,8 +15,7 @@ export default async function WhatsappLayout({
   params,
 }: LayoutProps) {
   const t = await getTranslations()
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

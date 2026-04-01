@@ -1,14 +1,14 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Input } from "@aha.chat/ui/components/ui/input"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select"
+} from "@chatbotx.io/ui/components/ui/select"
 import { RotateCcwIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { memo, useState } from "react"

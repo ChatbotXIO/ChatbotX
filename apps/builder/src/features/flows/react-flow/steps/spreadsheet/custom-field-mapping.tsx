@@ -1,13 +1,13 @@
 "use client"
 
-import { spreadsheetMappingDefaultFn } from "@aha.chat/flow-config"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
+import { spreadsheetMappingDefaultFn } from "@chatbotx.io/flow-config"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
+import { useChatbotId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
 type FieldAction = "get" | "update"
@@ -22,7 +22,7 @@ export const SpreadsheetCustomFieldMapping = ({
   type,
 }: ISpreadsheetCustomFieldMappingProps) => {
   const t = useTranslations()
-  const params = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const getFieldName = useCallback(
     (field: string) => {
@@ -46,7 +46,7 @@ export const SpreadsheetCustomFieldMapping = ({
   })
   const map = getValues(getFieldName("map"))
 
-  const worksheetHeadersUrl = `/api/chatbots/${params.chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
+  const worksheetHeadersUrl = `/api/chatbots/${chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
   const headers = headersData?.data ?? []
 

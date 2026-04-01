@@ -10,8 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@aha.chat/ui/components/ui/alert-dialog"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/alert-dialog"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -21,8 +21,8 @@ import { toast } from "sonner"
 import { disconnectWhatsappAction } from "./actions/disconnect.action"
 
 type WhatsappDisconnectDialogProps = {
-  chatbotId: string
-  integrationWhatsappId: string
+  chatbotId: bigint
+  integrationWhatsappId: bigint
 }
 
 export function WhatsappDisconnectDialog({

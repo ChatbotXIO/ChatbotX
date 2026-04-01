@@ -1,4 +1,4 @@
-import { logger } from "@aha.chat/ui/lib/logger"
+import { logger } from "@chatbotx.io/ui/lib/logger"
 import type { SelectProps } from "@radix-ui/react-select"
 import ky from "ky"
 import type { LucideIcon } from "lucide-react"

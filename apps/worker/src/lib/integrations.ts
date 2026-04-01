@@ -1,11 +1,11 @@
-import { db } from "@aha.chat/database/client"
-import type { IntegrationType } from "@aha.chat/database/types"
-import { integration as integrationChatbotx } from "@aha.chat/integration-chatbotx"
-import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
-import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
-import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
-import { integration as integrationZalo } from "@aha.chat/integration-zalo"
-import type { Integration, IntegrationDefinition } from "@aha.chat/sdk"
+import { db } from "@chatbotx.io/database/client"
+import type { IntegrationType } from "@chatbotx.io/database/schema"
+import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
+import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
+import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
+import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
+import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
+import type { Integration, IntegrationDefinition } from "@chatbotx.io/sdk"
 
 export const allIntegrations: Record<
   string,

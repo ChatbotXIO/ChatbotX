@@ -1,6 +1,6 @@
 "use client"
 
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import type { Dispatch, SetStateAction } from "react"
@@ -10,7 +10,7 @@ import { AddSequenceButton } from "./components/add-sequence-button"
 import type { ListSequencesItem } from "./schema"
 
 type SequencesTableToolbarActionsProps = {
-  chatbotId: string
+  chatbotId: bigint
   table: Table<ListSequencesItem>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<ListSequencesItem> | null>

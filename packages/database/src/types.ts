@@ -1,7 +1,5 @@
 import { z } from "zod"
-import type * as schema from "./drizzle/schema"
-
-export * from "./drizzle/schema/organization-settings"
+import type * as schema from "./schema"
 
 export type IntegrationWebchatModel =
   typeof schema.integrationWebchatModel.$inferSelect
@@ -69,7 +67,6 @@ export type TriggerExecutionModel =
   typeof schema.triggerExecutionModel.$inferSelect
 
 export type FolderType = (typeof schema.folderType.enumValues)[number]
-export type IntegrationType = keyof typeof schema.integrationTypes
 export type BroadcastSchedulesType =
   (typeof schema.broadcastSchedulesType.enumValues)[number]
 export type FileType = (typeof schema.fileType.enumValues)[number]
@@ -94,18 +91,6 @@ export type OrganizationMember =
 export const Omnichannel = "omnichannel"
 
 export const WEBCHAT_SOURCE_PREFIX = "cw:"
-
-export const UploadMode = {
-  link: "link",
-  file: "file",
-} as const
-export type UploadMode = (typeof UploadMode)[keyof typeof UploadMode]
-
-export const CardLayout = {
-  vertical: "ver",
-  horizontal: "hor",
-} as const
-export type CardLayout = (typeof CardLayout)[keyof typeof CardLayout]
 
 export const WhatsappTemplateCategory = {
   marketing: "MARKETING",

@@ -1,5 +1,5 @@
-import { findOrFail } from "@aha.chat/database/client"
-import { conversationModel } from "@aha.chat/database/schema"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { conversationModel } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
 import { chatbotTokenCreateMessageRequest } from "@/features/messages/schema/mutation"
@@ -44,7 +44,7 @@ export const chatbotTokenAPIs = {
       summary: "Get contact by contact id",
       tags: ["Contacts"],
     })
-    .input(z.object({ contactId: z.string() }))
+    .input(z.object({ contactId: z.bigint() }))
     .output(publicFindContactResponse)
     .handler(async ({ context, input }) => {
       const contact = await publicFindContact({
@@ -106,7 +106,7 @@ export const chatbotTokenAPIs = {
       summary: "Get all tags added to this contact",
       tags: ["Contacts"],
     })
-    .input(z.object({ contactId: z.string() }))
+    .input(z.object({ contactId: z.bigint() }))
     .output(publicListTagsResponse)
     .handler(async ({ context, input }) => {
       const { contactId } = input
@@ -124,7 +124,7 @@ export const chatbotTokenAPIs = {
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(z.object({ contactId: z.string(), tagId: z.string() }))
+    .input(z.object({ contactId: z.bigint(), tagId: z.bigint() }))
     .handler(async ({ context, input }) => {
       await attachContactTag({
         chatbotId: context.chatbot.id,
@@ -155,7 +155,7 @@ export const chatbotTokenAPIs = {
       summary: "Get all custom fields from a contact",
       tags: ["Contacts"],
     })
-    .input(z.object({ contactId: z.string() }))
+    .input(z.object({ contactId: z.bigint() }))
     .output(listPublicContactCustomFieldsResponse)
     .handler(async ({ context, input }) => {
       const { contactId } = input
@@ -172,7 +172,7 @@ export const chatbotTokenAPIs = {
       summary: "Get contact custom field value",
       tags: ["Contacts"],
     })
-    .input(z.object({ contactId: z.string(), customFieldId: z.string() }))
+    .input(z.object({ contactId: z.bigint(), customFieldId: z.bigint() }))
     .output(publicContactCustomFieldResource)
     .handler(async ({ context, input }) => {
       const { contactId, customFieldId } = input
@@ -234,7 +234,7 @@ export const chatbotTokenAPIs = {
     .input(
       chatbotTokenCreateMessageRequest.and(
         z.object({
-          contactId: z.string(),
+          contactId: z.bigint(),
         }),
       ),
     )

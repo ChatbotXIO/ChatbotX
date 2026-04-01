@@ -8,13 +8,13 @@ export type SequenceState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   sequences: ListSequencesItem[]
 }
 
 export type SequenceActions = {
   initialize: () => void
-  getAllActiveSequences: (chatbotId: string) => void
+  getAllActiveSequences: (chatbotId: bigint) => void
 }
 
 export type SequenceStore = SequenceState & SequenceActions
@@ -25,7 +25,7 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     sequences: [],
     ...props,
 
@@ -59,7 +59,7 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
       }
     },
 
-    getAllActiveSequences: async (chatbotId: string) => {
+    getAllActiveSequences: async (chatbotId: bigint) => {
       const { data } = await ky
         .get<ListSequencesResponse>(`/api/chatbots/${chatbotId}/sequences`, {
           searchParams: {

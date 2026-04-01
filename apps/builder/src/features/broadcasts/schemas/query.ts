@@ -1,5 +1,5 @@
-import type { BroadcastModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import type { BroadcastModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -19,7 +19,7 @@ export const getBroadcastsSearchParamsCache = createSearchParamsCache({
 
 export type GetBroadcastsSchema = Awaited<
   ReturnType<typeof getBroadcastsSearchParamsCache.parse>
-> & { chatbotId: string }
+> & { chatbotId: bigint }
 
 export const publicListBroadcastsResponse = z.object({
   data: z.array(publicBroadcastResource),

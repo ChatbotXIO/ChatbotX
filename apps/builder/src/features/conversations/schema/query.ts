@@ -1,5 +1,5 @@
-import { ConversationStatus } from "@aha.chat/database/enums"
-import { channelTypes } from "@aha.chat/database/schema"
+import { ConversationStatus } from "@chatbotx.io/database/enums"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 

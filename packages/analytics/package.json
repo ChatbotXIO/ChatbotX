@@ -10,9 +10,9 @@
     "./schemas": "./src/schemas/index.ts"
   },
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/filesystem": "workspace:*",
-    "@aha.chat/logger": "workspace:*",
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/filesystem": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@clickhouse/client": "^1.18.2",
@@ -23,7 +23,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.1",
     "tsx": "^4.21.0"
   }

@@ -1,3 +1,4 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
@@ -7,21 +8,24 @@ import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 export default async function SettingChannelWhatsappPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
 
-  const userAndChatbot = await getCurrentUserAndTargetChatbot(params.chatbotId)
+  const userAndChatbot = await getCurrentUserAndTargetChatbot(chatbotId)
   if (!userAndChatbot) {
     return notFound()
   }
 
   const promises = Promise.all([
     listIntegrationWhatsapps({
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
     findOrganization({
       id: userAndChatbot.targetChatbot.organizationId,
     }),
   ])
 
-  return <WhatsappManage chatbotId={params.chatbotId} promises={promises} />
+  return <WhatsappManage chatbotId={chatbotId} promises={promises} />
 }

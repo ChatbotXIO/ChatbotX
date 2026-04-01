@@ -1,34 +1,36 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
-import { tagModel } from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
+import { db, eq } from "@chatbotx.io/database/client"
+import { tagModel } from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
+import {
+  type ChatbotIdAndIdRequestParams,
+  chatbotIdAndIdRequestParams,
+} from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
 import {
-  type UpdateTagBindSchema,
   type UpdateTagSchema,
-  updateTagBindSchema,
   updateTagSchema,
 } from "../schemas/update-tag-schema"
 
 export const updateTagAction = authActionClient
   .inputSchema(updateTagSchema)
-  .bindArgsSchemas(updateTagBindSchema)
+  .bindArgsSchemas(chatbotIdAndIdRequestParams)
   .action(
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, tagId],
+      bindArgsParsedInputs: [chatbotId, id],
     }: {
       ctx: { user: UserModel }
       parsedInput: UpdateTagSchema
-      bindArgsParsedInputs: UpdateTagBindSchema
+      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
     }) => {
       await findChatbotOrFail(ctx.user.id, chatbotId)
 
-      await updateTag({ chatbotId, id: tagId, parsedInput })
+      await updateTag({ chatbotId, id, parsedInput })
     },
   )
 
@@ -37,8 +39,8 @@ export const updateTag = async ({
   id,
   parsedInput,
 }: {
-  chatbotId: string
-  id: string
+  chatbotId: bigint
+  id: bigint
   parsedInput: UpdateTagSchema
 }) => {
   const existingTag = await db.query.tagModel.findFirst({

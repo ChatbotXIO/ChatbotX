@@ -1,9 +1,9 @@
 "use client"
-import { rootFolderId } from "@aha.chat/database/enums"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
@@ -24,8 +24,8 @@ import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldRequest } from "./schemas/action"
 
 type CreateCustomFieldDialogProps = {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
   triggerButton?: ReactNode
   onSuccess?: () => void
 }
@@ -89,8 +89,8 @@ function CreateCustomFieldForm({
   onSuccess,
   onClose,
 }: {
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
   onSuccess?: () => void
   onClose?: () => void
 }) {

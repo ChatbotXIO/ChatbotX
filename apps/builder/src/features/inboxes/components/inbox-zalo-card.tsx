@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo, useMemo } from "react"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"

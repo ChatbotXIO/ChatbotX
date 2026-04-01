@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
@@ -12,8 +12,7 @@ export default async function FolderableLayout({
   folders: ReactNode
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

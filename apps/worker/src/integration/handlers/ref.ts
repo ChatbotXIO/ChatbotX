@@ -1,18 +1,18 @@
-import { db, findOrFail } from "@aha.chat/database/client"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   conversationModel,
   flowModel,
   flowVersionModel,
   reflinkModel,
-} from "@aha.chat/database/schema"
-import type { CustomFieldModel } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/schema"
+import type { CustomFieldModel } from "@chatbotx.io/database/types"
+import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
   type IntegrationJobRunRef,
   integrationQueue,
-} from "@aha.chat/worker-config"
-import { createId } from "@chatbotx.io/utils"
+} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {

@@ -1,4 +1,5 @@
-import { channelTypes, gender } from "@aha.chat/database/schema"
+import { channelTypes } from "@chatbotx.io/database/partials"
+import { gender } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
 export const contactPrefix = "ct"
@@ -30,7 +31,7 @@ export type UpdateContactFieldRequest = z.infer<
 
 export const exportContactsRequest = z.object({
   fields: z.array(z.string()).min(1),
-  contactIds: z.array(z.string()).min(1),
+  contactIds: z.array(z.bigint()).min(1),
 })
 export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
 

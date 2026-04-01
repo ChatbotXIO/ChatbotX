@@ -3,7 +3,7 @@
 import type {
   OrganizationModel,
   OrganizationSettings,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 import { ReactFlowProvider } from "@xyflow/react"
 import { AIToolsStoreProvider } from "../ai-triggers/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"

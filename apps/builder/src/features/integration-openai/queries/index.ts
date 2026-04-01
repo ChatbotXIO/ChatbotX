@@ -1,10 +1,10 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import type { IntegrationOpenAIResource } from "../schemas/request"
 
 export const findIntegrationOpenAI = async ({
   chatbotId,
 }: {
-  chatbotId: string
+  chatbotId: bigint
 }): Promise<{
   data: IntegrationOpenAIResource | null
 }> => {

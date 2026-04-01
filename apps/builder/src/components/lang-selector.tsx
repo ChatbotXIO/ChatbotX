@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@aha.chat/ui/components/ui/select"
+} from "@chatbotx.io/ui/components/ui/select"
 import { useLocale, useTranslations } from "next-intl"
 import type React from "react"
 import { useTransition } from "react"

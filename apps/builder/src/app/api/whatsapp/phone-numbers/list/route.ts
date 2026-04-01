@@ -1,4 +1,4 @@
-import { listPhoneNumbers as whatsappListPhoneNumbers } from "@aha.chat/integration-whatsapp/api/phone-number"
+import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { type NextRequest, NextResponse } from "next/server"
 import { listPhoneNumbersRequest } from "@/features/integration-whatsapp/schemas"
 import { findOrganizationSettingsByKey } from "@/features/organization/queries"

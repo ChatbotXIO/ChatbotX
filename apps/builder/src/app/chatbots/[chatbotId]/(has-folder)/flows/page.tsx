@@ -1,4 +1,6 @@
-import { rootFolderId } from "@aha.chat/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { FlowsTable } from "@/features/flows/flows-table"
@@ -9,7 +11,10 @@ export default async function FlowsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
   const searchParams = await props.searchParams
 
   const search = await listFlowsSearchParams.parse(searchParams)
@@ -19,14 +24,14 @@ export default async function FlowsPage(props: {
     listFlowsRSC({
       ...search,
       folderId,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
   return (
     <Suspense>
       <FlowsTable
-        chatbotId={params.chatbotId}
+        chatbotId={chatbotId}
         folderId={folderId}
         promises={promises}
       />

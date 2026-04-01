@@ -1,15 +1,15 @@
-import { and, db, eq } from "@aha.chat/database/client"
-import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import type { SchedulerClient } from "@aha.chat/scheduler"
+import { and, db, eq } from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
+import type { SchedulerClient } from "@chatbotx.io/scheduler"
 import {
   calculateNextRunAtFromStep,
   calculateNextValidSendTime,
   createDispatch,
-} from "@aha.chat/sequence-scheduler"
+} from "@chatbotx.io/sequence-scheduler"
 import type { DispatchWithRelations, StepWithRelations } from "./types"
 
 export class EnrollmentAdvancerService {
-  async fetchEnrollment(enrollmentId: string, chatbotId: string) {
+  async fetchEnrollment(enrollmentId: bigint, chatbotId: bigint) {
     const enrollment = await db.query.contactsOnSequenceModel.findFirst({
       where: {
         id: enrollmentId,
@@ -21,7 +21,7 @@ export class EnrollmentAdvancerService {
   }
 
   async findNextStep(
-    sequenceId: string,
+    sequenceId: bigint,
     currentOrder: number,
   ): Promise<StepWithRelations | null> {
     const nextStep = await db.query.sequenceStepModel.findFirst({
@@ -59,8 +59,8 @@ export class EnrollmentAdvancerService {
   }
 
   async completeEnrollment(
-    enrollmentId: string,
-    chatbotId: string,
+    enrollmentId: bigint,
+    chatbotId: bigint,
     step: StepWithRelations,
     sentAt: Date,
   ): Promise<void> {

@@ -1,4 +1,4 @@
-import { WEBCHAT_SOURCE_PREFIX } from "@aha.chat/database/types"
+import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
 import { z } from "zod"
 import { attachmentResource } from "@/features/attachments/schemas"
 import { contactResource } from "@/features/contacts/schemas/resource"

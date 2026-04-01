@@ -1,18 +1,18 @@
 "use client"
 
-import { channelTypes } from "@aha.chat/database/schema"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { formatDistanceToNowStrict, isAfter } from "date-fns"
 import { StarIcon, UsersRoundIcon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"

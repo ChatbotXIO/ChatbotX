@@ -1,6 +1,6 @@
-import { db, eq } from "@aha.chat/database/client"
-import { messageModel } from "@aha.chat/database/schema"
-import type { IntegrationJobMessageStatus } from "@aha.chat/worker-config"
+import { db, eq } from "@chatbotx.io/database/client"
+import { messageModel } from "@chatbotx.io/database/schema"
+import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { runFlowPostback } from "./flow"
 

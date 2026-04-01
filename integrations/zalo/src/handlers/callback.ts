@@ -3,7 +3,7 @@ import {
   type HandleRequestProps,
   type Oauth2Config,
   SdkException,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { convertCodeToTokens, getZaloOAProfile } from "../api/auth"
 import type { ZaloAuthValue } from "../schemas/definition"
 

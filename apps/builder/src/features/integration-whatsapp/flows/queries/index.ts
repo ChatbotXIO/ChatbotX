@@ -1,10 +1,10 @@
-import { findOrFail } from "@aha.chat/database/client"
-import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type ListFlowsResponse,
   listFlows,
-} from "@aha.chat/integration-whatsapp/api/waba"
+} from "@chatbotx.io/integration-whatsapp/api/waba"
 import type { ListWhatsappFlowsRequest } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 

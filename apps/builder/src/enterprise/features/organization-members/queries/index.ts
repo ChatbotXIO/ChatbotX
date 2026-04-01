@@ -1,9 +1,9 @@
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
-import { organizationMemberModel } from "@aha.chat/database/schema"
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { organizationMemberModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/utils"
 import { findOrganizationByDomain } from "@/features/organization/queries"
 import { notFoundException } from "@/lib/errors/exception"
 import type {
@@ -26,7 +26,7 @@ export const listOrganizationMembersRSC = async (
 }
 
 export const listOrganizationMembers = async (
-  input: ListOrganizationMembersRequest & { organizationId: string },
+  input: ListOrganizationMembersRequest & { organizationId: bigint },
 ): Promise<ListOrganizationMembersResponse> => {
   const pagination = getPaginationWithDefaults(input)
   const orderBy = parseOrderByAsObject(organizationMemberModel, input)

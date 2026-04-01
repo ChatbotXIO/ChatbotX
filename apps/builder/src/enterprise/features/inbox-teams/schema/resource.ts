@@ -1,4 +1,7 @@
-import { createSelectSchema, inboxTeamModel } from "@aha.chat/database/schema"
+import {
+  createSelectSchema,
+  inboxTeamModel,
+} from "@chatbotx.io/database/schema"
 import type z from "zod"
 
 export const inboxTeamResource = createSelectSchema(inboxTeamModel)

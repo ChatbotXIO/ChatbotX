@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import { notFoundException } from "@/lib/errors/exception"
 import type {
   ListContactCustomFieldsRequest,
@@ -27,9 +27,9 @@ export async function listContactCustomFields(
 }
 
 export async function findContactCustomField(input: {
-  contactId: string
-  customFieldId: string
-  chatbotId: string
+  contactId: bigint
+  customFieldId: bigint
+  chatbotId: bigint
 }): Promise<PublicContactCustomFieldResource> {
   const contactCustomField = await db.query.contactCustomFieldModel.findFirst({
     where: {

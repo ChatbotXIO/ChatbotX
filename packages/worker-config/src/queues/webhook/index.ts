@@ -13,8 +13,8 @@ export const WebhookJobAction = {
 export type WebhookJobEvaluate = {
   type: "evaluateWebhooks"
   data: {
-    chatbotId: string
-    contactId: string
+    chatbotId: bigint
+    contactId: bigint
     eventType: number
     eventData: Record<string, unknown>
     timestamp: Date

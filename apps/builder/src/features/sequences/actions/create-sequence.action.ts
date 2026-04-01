@@ -1,7 +1,7 @@
 "use server"
 
-import { db, isDatabaseError } from "@aha.chat/database/client"
-import { sequenceModel } from "@aha.chat/database/schema"
+import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { sequenceModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"

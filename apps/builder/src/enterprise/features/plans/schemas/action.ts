@@ -26,7 +26,7 @@ export type CreatePlanRequest = z.infer<typeof createPlanRequest>
 
 export const updatePlanRequest = z
   .object({
-    id: z.string().min(1),
+    id: z.bigint(),
   })
   .and(createPlanRequest.partial())
 export type UpdatePlanRequest = z.infer<typeof updatePlanRequest>

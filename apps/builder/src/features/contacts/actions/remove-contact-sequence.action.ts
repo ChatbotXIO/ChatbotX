@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import { cancelPendingDispatches } from "@aha.chat/sequence-scheduler"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
+import { cancelPendingDispatches } from "@chatbotx.io/sequence-scheduler"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -42,7 +42,7 @@ export const removeContactSequenceAction = chatbotActionClient
         })
 
         await Promise.all(
-          enrollments.map((enrollment: { id: string }) =>
+          enrollments.map((enrollment) =>
             cancelPendingDispatches({
               enrollmentId: enrollment.id,
               chatbotId,
@@ -51,7 +51,7 @@ export const removeContactSequenceAction = chatbotActionClient
           ),
         )
 
-        const enrollmentIds = enrollments.map((e: { id: string }) => e.id)
+        const enrollmentIds = enrollments.map((e) => e.id)
         if (enrollmentIds.length > 0) {
           await db
             .delete(contactsOnSequenceModel)

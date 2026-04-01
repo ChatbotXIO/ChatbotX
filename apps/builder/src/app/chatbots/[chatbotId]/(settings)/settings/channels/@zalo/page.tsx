@@ -1,3 +1,4 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationZalo } from "@/features/integration-zalo/queries"
 import { ZaloManage } from "@/features/integration-zalo/zalo-manage"
@@ -7,21 +8,24 @@ import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 export default async function SettingChannelZaloPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
 
-  const userAndChatbot = await getCurrentUserAndTargetChatbot(params.chatbotId)
+  const userAndChatbot = await getCurrentUserAndTargetChatbot(chatbotId)
   if (!userAndChatbot) {
     return notFound()
   }
 
   const promises = Promise.all([
     listIntegrationZalo({
-      where: { chatbotId: params.chatbotId },
+      where: { chatbotId },
     }),
     findOrganization({
       id: userAndChatbot.targetChatbot.organizationId,
     }),
   ])
 
-  return <ZaloManage chatbotId={params.chatbotId} promises={promises} />
+  return <ZaloManage chatbotId={chatbotId} promises={promises} />
 }

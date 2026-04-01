@@ -1,3 +1,4 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
@@ -10,7 +11,15 @@ export default async function UpdateWebhookPage({
 }: {
   params: Promise<{ chatbotId: string; id: string }>
 }) {
-  const { chatbotId, id } = await params
+  const { chatbotId: chatbotIdString, id: idString } = await params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+  const id = parseBigIntId(idString)
+  if (!id) {
+    return notFound()
+  }
   const webhook = await findWebhook({ chatbotId, id })
   if (!webhook) {
     return notFound()

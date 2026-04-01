@@ -33,7 +33,7 @@ export const privateCreateChatbotTagAPI = authorizedAPI
   })
   .input(createTagRequest.and(withChatbotIdSchema))
   .use(chatbotAuthMiddleware, (input) => input.chatbotId)
-  .output(z.object({ id: z.string() }))
+  .output(z.object({ id: z.bigint() }))
   .handler(async ({ input }) => {
     const { data } = await createTag(input)
     return { id: data.id }
@@ -73,7 +73,7 @@ export const privateDeleteTagsAPI = authorizedAPI
   .input(
     withChatbotIdSchema.and(
       z.object({
-        id: z.string(),
+        id: z.bigint(),
       }),
     ),
   )

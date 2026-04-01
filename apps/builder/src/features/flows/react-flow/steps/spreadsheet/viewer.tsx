@@ -1,6 +1,6 @@
 "use client"
 
-import type { SpreadsheetSchema } from "@aha.chat/flow-config"
+import type { SpreadsheetSchema } from "@chatbotx.io/flow-config"
 import { Handle, Position } from "@xyflow/react"
 import { FileSpreadsheetIcon } from "lucide-react"
 import { useTranslations } from "next-intl"

@@ -1,7 +1,7 @@
 "use client"
 
-import type { AIAgentModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { AIAgentModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
+} from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -39,7 +39,11 @@ export function ChangeDefault(props: ChangeDefaultProps) {
   } = props
 
   const { execute, isPending } = useAction(
-    updateAIAgentAction.bind(null, aiAgent?.chatbotId || "", aiAgent?.id || ""),
+    updateAIAgentAction.bind(
+      null,
+      aiAgent?.chatbotId ?? BigInt(0),
+      aiAgent?.id ?? BigInt(0),
+    ),
     {
       onSuccess: () => {
         onOpenChange(false)

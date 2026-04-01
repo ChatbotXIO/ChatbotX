@@ -3,10 +3,10 @@
 import {
   SelectField,
   type SelectFieldProps,
-} from "@aha.chat/ui/components/form/select-field"
-import { useParams } from "next/navigation"
+} from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import type { FieldValues } from "react-hook-form"
+import { useChatbotId } from "@/hooks/routing"
 
 type SpreadsheetSelectProps = SelectFieldProps<FieldValues> & {
   allowCreate?: boolean
@@ -16,10 +16,10 @@ export const SpreadsheetSelect = ({
   allowCreate = false,
   ...props
 }: SpreadsheetSelectProps) => {
-  const params = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
   const t = useTranslations()
 
-  const url = `/api/chatbots/${params.chatbotId}/spreadsheets?perPage=9999`
+  const url = `/api/chatbots/${chatbotId}/spreadsheets?perPage=9999`
 
   return (
     <SelectField

@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, inArray } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
 import { contactTrackingService } from "@chatbotx.io/analytics"
+import { and, db, inArray } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -45,12 +45,12 @@ export const deleteContactAction = chatbotActionClient
         .filter((contact) => Boolean(contact.sourceId))
         .map((contact) => ({
           chatbotId,
-          contactId: contact.sourceId as string,
+          contactId: contact.id,
           eventType: "contact_deleted" as const,
           occurredAt: contact.updatedAt,
           source: contact.source,
           channel: contact.channel,
-          sourceId: contact.sourceId as string,
+          sourceId: contact.sourceId,
         }))
 
       contactTrackingService.trackEvents(events).catch((error) => {

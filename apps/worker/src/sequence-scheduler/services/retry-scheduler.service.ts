@@ -1,9 +1,9 @@
-import { and, db, eq } from "@aha.chat/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import {
   sequenceDispatchModel,
   sequenceEventModel,
-} from "@aha.chat/database/schema"
-import type { SchedulerClient } from "@aha.chat/scheduler"
+} from "@chatbotx.io/database/schema"
+import type { SchedulerClient } from "@chatbotx.io/scheduler"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import { RETRY_BASE_DELAY_MS } from "./constants"
@@ -50,8 +50,8 @@ export class RetrySchedulerService {
   }
 
   async markDispatchFailed(
-    dispatchId: string,
-    chatbotId: string,
+    dispatchId: bigint,
+    chatbotId: bigint,
     errorMessage: string,
   ): Promise<void> {
     await db
@@ -72,8 +72,8 @@ export class RetrySchedulerService {
   }
 
   async markDispatchCanceled(
-    dispatchId: string,
-    chatbotId: string,
+    dispatchId: bigint,
+    chatbotId: bigint,
     _reason: string,
   ): Promise<void> {
     await db

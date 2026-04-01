@@ -1,5 +1,5 @@
 {
-  "name": "@aha.chat/sequence-scheduler",
+  "name": "@chatbotx.io/sequence-scheduler",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,15 +7,15 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/scheduler": "workspace:*",
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@paralleldrive/cuid2": "^3.3.0",
     "date-fns": "^4.1.0"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "typescript": "^5.9.3"
   }
 }

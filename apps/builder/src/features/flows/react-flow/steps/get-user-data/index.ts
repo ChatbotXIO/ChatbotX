@@ -2,7 +2,7 @@ import {
   type GetUserDataStepSchema,
   getUserDataStepDefaultFn,
   getUserDataStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import GetUserDataStepEditor from "./editor"
 import GetUserDataStepViewer from "./viewer"

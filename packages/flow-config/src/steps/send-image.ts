@@ -1,13 +1,13 @@
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { UploadMode } from "../types"
+import { uploadModes } from "../types"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendImageStepSchema = z.object({
   id: z.bigint(),
   stepType: z.literal(StepType.sendImage),
-  mode: z.enum(UploadMode),
+  mode: uploadModes,
   url: z.url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -17,7 +17,7 @@ export type SendImageStepSchema = z.infer<typeof sendImageStepSchema>
 export const sendImageStepDefaultFn = (): SendImageStepSchema => ({
   id: createId(),
   stepType: StepType.sendImage,
-  mode: UploadMode.file,
+  mode: uploadModes.enum.file,
   url: "",
   buttons: [],
 })

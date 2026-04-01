@@ -1,5 +1,5 @@
 {
-  "extends": "@aha.chat/typescript-config/nextjs.json",
+  "extends": "@chatbotx.io/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "lib": ["esnext", "dom"],
@@ -9,7 +9,7 @@
       }
     ],
     "paths": {
-      "@aha.chat/ui/*": ["./src/*"]
+      "@chatbotx.io/ui/*": ["./src/*"]
     },
     "strictNullChecks": true
   },

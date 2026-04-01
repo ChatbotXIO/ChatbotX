@@ -1,5 +1,5 @@
-import type { OrganizationSettings } from "@aha.chat/database/types"
-import type { ButtonStepProps } from "@aha.chat/flow-config"
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import type { ButtonStepProps } from "@chatbotx.io/flow-config"
 import { createStore } from "zustand"
 
 type UpdatedButtonData = {

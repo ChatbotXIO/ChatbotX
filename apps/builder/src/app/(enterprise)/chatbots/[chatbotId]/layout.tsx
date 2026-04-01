@@ -2,9 +2,9 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@aha.chat/ui/components/ui/sidebar"
-import { cn } from "@aha.chat/ui/lib/utils"
-import { parseBigIntId } from "@chatbotx.io/utils"
+} from "@chatbotx.io/ui/components/ui/sidebar"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies, headers } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -29,8 +29,7 @@ export default async function ChatbotLayout({
     return notFound()
   }
 
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

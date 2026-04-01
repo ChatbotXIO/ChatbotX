@@ -1,5 +1,5 @@
-import { StepType } from "@aha.chat/flow-config"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { StepType } from "@chatbotx.io/flow-config"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { useFormContext } from "react-hook-form"

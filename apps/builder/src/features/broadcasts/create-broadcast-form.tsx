@@ -7,43 +7,44 @@ import {
   broadcastSubactions,
   type ChannelType,
   channelTypes,
-} from "@aha.chat/database/schema"
-import type { BroadcastSchedulesType } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/partials"
+import type { BroadcastSchedulesType } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
   StepType,
   type TemplateComponent,
   type WaTemplateParams,
-} from "@aha.chat/flow-config"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/flow-config"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/card"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { add } from "date-fns"
 import { Loader2Icon, XIcon } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
+import { useChatbotId } from "@/hooks/routing"
 import { ContactFilter } from "../contacts/components/contact-filter"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { TemplateParamsForm } from "../integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "../integration-whatsapp/message-templates/components/template-preview"
 import { useTemplateStore } from "../integration-whatsapp/message-templates/provider/template-store-context"
-import type { MessageTemplateWithComponents } from "../integration-whatsapp/message-templates/type"
+import type { MessageTemplateWithComponents } from "../integration-whatsapp/message-templates/schema/resource"
 import { useIntegrationStore } from "../integration-whatsapp/provider/integration-store-context"
 
 type BroadcastConfig = {
@@ -240,7 +241,8 @@ function CreateBroadcastChooseChannel() {
   const t = useTranslations()
   const router = useRouter()
 
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
+
   const { setValue } = useFormContext()
 
   const configs = useMemo(() => getConfigs(t), [t])
@@ -453,7 +455,8 @@ type CreateBroadcastChooseFlowProps = {
 function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const t = useTranslations()
   const router = useRouter()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+
+  const chatbotId = useChatbotId()
 
   const schedulesOptions = useMemo(
     () => [

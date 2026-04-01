@@ -1,14 +1,14 @@
 "use client"
 
-import { DelayType } from "@aha.chat/flow-config"
-import { DateTimePickerField } from "@aha.chat/ui/components/form/date-picker-field"
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
-import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+import { DelayType } from "@chatbotx.io/flow-config"
+import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFormContext, useWatch } from "react-hook-form"

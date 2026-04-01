@@ -3,7 +3,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -15,7 +17,11 @@ export default async function TriggersPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = getTriggersSearchParamsCache.parse(searchParams)
   const t = await getTranslations()
@@ -23,7 +29,7 @@ export default async function TriggersPage(props: {
   const promises = Promise.all([
     getTriggers({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
@@ -37,7 +43,7 @@ export default async function TriggersPage(props: {
       <CardContent>
         <Suspense>
           <TriggersTable
-            chatbotId={params.chatbotId}
+            chatbotId={chatbotId}
             folderId={search.folderId}
             promises={promises}
           />

@@ -1,5 +1,5 @@
-import { TriggerAction } from "@aha.chat/database/enums"
-import { FieldOperationType } from "@aha.chat/flow-config"
+import { TriggerAction } from "@chatbotx.io/database/enums"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
 import z from "zod"
 
 export const setCustomField = z.object({

@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
@@ -13,8 +13,7 @@ export default async function ChatbotNoSidebarLayout({
   params,
   children,
 }: ChatbotNoSidebarLayoutProps) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

@@ -1,12 +1,13 @@
 "use client"
 
-import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { Loader2Icon } from "lucide-react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
+import { useChatbotId } from "@/hooks/routing"
 import { updateGeminiAction } from "./actions/update.action"
 import { GeminiConnectDialog } from "./gemini-connect-dialog"
 import { GeminiDisconnectDialog } from "./gemini-disconnect-dialog"
@@ -18,7 +19,7 @@ type GeminiAIManageProps = {
 
 export const GeminiAIManage = (props: GeminiAIManageProps) => {
   const { promises } = props
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const [integrationGemini] = use(promises)
   const router = useRouter()

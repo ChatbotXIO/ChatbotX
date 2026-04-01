@@ -1,9 +1,9 @@
 import {
-  broadcastSchedulesType,
   broadcastSubactions,
   channelTypes,
-} from "@aha.chat/database/schema"
-import { waTemplateParamsSchema } from "@aha.chat/flow-config"
+} from "@chatbotx.io/database/partials"
+import { broadcastSchedulesType } from "@chatbotx.io/database/schema"
+import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 

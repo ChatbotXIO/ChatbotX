@@ -1,8 +1,8 @@
 "use client"
 
-import type { SendWaTemplateMessageStepSchema } from "@aha.chat/flow-config"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { cn } from "@aha.chat/ui/lib/utils"
+import type { SendWaTemplateMessageStepSchema } from "@chatbotx.io/flow-config"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Position } from "@xyflow/react"
 import { MessageSquareIcon } from "lucide-react"
 import { BaseHandle } from "@/components/base-handle"

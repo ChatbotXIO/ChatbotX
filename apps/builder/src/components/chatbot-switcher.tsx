@@ -1,11 +1,11 @@
 "use client"
 
-import type { ChatbotModel } from "@aha.chat/database/types"
+import type { ChatbotModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
+} from "@chatbotx.io/ui/components/ui/avatar"
 
 import {
   DropdownMenu,
@@ -14,33 +14,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@aha.chat/ui/components/ui/sidebar"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/sidebar"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { ChevronsUpDown, PlusCircle } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import { useChatbotId } from "@/hooks/routing"
 
 export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
   const { isMobile } = useSidebar()
-  const params = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | null>(null)
   const t = useTranslations()
 
   useEffect(() => {
-    const foundChatbot = chatbots.find(
-      (chatbot) => chatbot.id === params.chatbotId,
-    )
+    const foundChatbot = chatbots.find((chatbot) => chatbot.id === chatbotId)
     setActiveChatbot(foundChatbot ?? null)
-  }, [chatbots, params.chatbotId])
+  }, [chatbots, chatbotId])
 
   return (
     <SidebarMenu>

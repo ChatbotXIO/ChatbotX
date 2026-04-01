@@ -1,6 +1,6 @@
-import { db } from "@aha.chat/database/client"
-import { SchedulerClient } from "@aha.chat/scheduler"
+import { db } from "@chatbotx.io/database/client"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { logger } from "../lib/logger"
 
 const BOOTSTRAP_WINDOW_HOURS = 24

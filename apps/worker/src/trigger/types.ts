@@ -2,7 +2,7 @@ import type {
   ChatbotModel,
   ConditionModel,
   TriggerModel,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/types"
 
 export type TriggerWithConditions = TriggerModel & {
   conditions: ConditionModel[]
@@ -10,8 +10,8 @@ export type TriggerWithConditions = TriggerModel & {
 }
 
 export type TriggerEventData = {
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint
   eventType: number
   eventData: Record<string, unknown>
   timestamp: Date
@@ -21,13 +21,13 @@ export type TriggerEventData = {
 export type ConditionEvaluationContext = {
   condition: TriggerWithConditions["conditions"][number]
   eventData: TriggerEventData
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint
   chatbot: ChatbotModel
 }
 
 export type ActionExecutionContext = {
   action: Record<string, unknown>
-  contactId: string
-  chatbotId: string
+  contactId: bigint
+  chatbotId: bigint
 }

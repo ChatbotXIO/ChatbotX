@@ -1,13 +1,17 @@
-import type { SearchParams } from "nuqs/server"
+import { getIdFromParams, parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { CreateSequenceForm } from "@/features/sequences/create-sequence-form"
 
 export default async function CreateSequencePage(props: {
   params: Promise<{ chatbotId: string }>
-  searchParams: Promise<SearchParams>
+  searchParams: Promise<{ folderId: string | null }>
 }) {
-  const { chatbotId } = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
   const searchParams = await props.searchParams
-  const folderId = searchParams.folderId as string | undefined
+  const folderId = parseBigIntId(searchParams.folderId)
 
   return <CreateSequenceForm chatbotId={chatbotId} defaultFolderId={folderId} />
 }

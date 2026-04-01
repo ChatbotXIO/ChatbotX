@@ -1,4 +1,4 @@
-import type { Context, IncomingContact } from "@aha.chat/sdk"
+import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
 import { handleZaloError, ZaloException } from "../libs/exception"
 import { ZaloHttpClient } from "../libs/http-client"

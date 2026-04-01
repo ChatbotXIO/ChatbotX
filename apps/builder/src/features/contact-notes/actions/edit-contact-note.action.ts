@@ -1,7 +1,7 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { contactModel, contactNoteModel } from "@aha.chat/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -44,7 +44,7 @@ export const editContactNoteAction = chatbotActionClient
       return await db
         .update(contactNoteModel)
         .set({
-          content: parsedInput.content,
+          text: parsedInput.text,
         })
         .where(eq(contactNoteModel.id, foundContactNote.id))
         .returning()

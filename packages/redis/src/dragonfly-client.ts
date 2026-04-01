@@ -1,4 +1,4 @@
-import logger from "@aha.chat/logger"
+import logger from "@chatbotx.io/logger"
 import Redis, { type RedisOptions } from "ioredis"
 
 export class DragonflyClient {

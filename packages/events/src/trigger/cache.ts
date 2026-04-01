@@ -14,24 +14,24 @@ class TriggerCache extends BaseCache {
 const triggerCache = new TriggerCache()
 
 export async function hasActiveTriggers(
-  chatbotId: string,
+  chatbotId: bigint,
   eventTypes: TriggerEventType[],
   sourceId?: string,
 ): Promise<boolean> {
   return await triggerCache.hasActive(chatbotId, eventTypes, sourceId)
 }
 
-export async function updateTriggerCache(chatbotId: string): Promise<void> {
+export async function updateTriggerCache(chatbotId: bigint): Promise<void> {
   return await triggerCache.updateCache(chatbotId)
 }
 
 export async function getCacheData(
-  chatbotId: string,
+  chatbotId: bigint,
 ): Promise<Record<number, string[]>> {
   return await triggerCache.getCacheData(chatbotId)
 }
 
-export async function removeTriggerCache(chatbotId: string): Promise<void> {
+export async function removeTriggerCache(chatbotId: bigint): Promise<void> {
   return await triggerCache.removeCache(chatbotId)
 }
 

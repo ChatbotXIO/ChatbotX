@@ -17,7 +17,7 @@ export type ContextQueue = {
 }
 
 export type ChatbotEntity = {
-  id: string
+  id: bigint
 }
 
 export type Context<AO extends AuthValue> = {

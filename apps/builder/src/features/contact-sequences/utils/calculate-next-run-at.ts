@@ -6,11 +6,11 @@ import {
   isNull,
   lte,
   sql,
-} from "@aha.chat/database/client"
-import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import { SchedulerClient } from "@aha.chat/scheduler"
-import { createDispatch } from "@aha.chat/sequence-scheduler"
+} from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
+import { createDispatch } from "@chatbotx.io/sequence-scheduler"
 
 type SequenceStepForDelay = {
   id: bigint

@@ -1,8 +1,8 @@
-import { db, sql } from "@aha.chat/database/client"
-import { Condition } from "@aha.chat/database/enums"
-import { triggerExecutionModel } from "@aha.chat/database/schema"
-import { getRedisConnection } from "@aha.chat/worker-config"
+import { db, sql } from "@chatbotx.io/database/client"
+import { Condition } from "@chatbotx.io/database/enums"
+import { triggerExecutionModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import type {
   DateTimeCondition,
@@ -16,16 +16,16 @@ import {
 import { ActionExecutor } from "./action-executor"
 
 interface DateTimeTriggerResult {
-  contactId: string
+  contactId: bigint
   error?: string
   matched: boolean
-  triggerId: string
+  triggerId: bigint
 }
 
 interface TriggerMap {
   [triggerId: string]: {
-    triggerId: string
-    chatbotId: string
+    triggerId: bigint
+    chatbotId: bigint
     actions: unknown
     conditions: DateTimeCondition[]
     timezone: string
@@ -89,7 +89,7 @@ async function fetchTriggerChunk(
     }
 
     if (conditions.length > 0) {
-      triggerMap[trigger.id] = {
+      triggerMap[trigger.id.toString()] = {
         triggerId: trigger.id,
         chatbotId: trigger.chatbotId,
         actions: trigger.actions,
@@ -139,13 +139,13 @@ function buildContactCustomFieldMap(
 
 function filterContactsWithAllCustomFields(
   contactCustomFields: Array<{
-    contactId: string
-    contact: { chatbotId: string }
+    contactId: bigint
+    contact: { chatbotId: bigint }
   }>,
   triggerInfo: TriggerMap[string],
-  contactCustomFieldMap: Map<string, Map<string, unknown>>,
-): Set<string> {
-  const contactsToCheck = new Set<string>()
+  contactCustomFieldMap: Map<bigint, Map<bigint, unknown>>,
+): Set<bigint> {
+  const contactsToCheck = new Set<bigint>()
 
   for (const cf of contactCustomFields) {
     if (cf.contact.chatbotId !== triggerInfo.chatbotId) {
@@ -196,8 +196,8 @@ function evaluateContactForTrigger(
 }
 
 async function getExecutedTriggers(
-  triggerIds: string[],
-  contactIds: string[],
+  triggerIds: bigint[],
+  contactIds: bigint[],
 ): Promise<Set<string>> {
   const executions = await db.query.triggerExecutionModel.findMany({
     where: {
@@ -215,8 +215,8 @@ async function getExecutedTriggers(
 
 async function checkExecutionCache(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: string,
-  contactId: string,
+  triggerId: bigint,
+  contactId: bigint,
 ): Promise<boolean> {
   const cacheKey = `trigger:executed:${triggerId}:${contactId}`
   const cached = await redis.get(cacheKey)
@@ -225,8 +225,8 @@ async function checkExecutionCache(
 
 async function acquireExecutionLock(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: string,
-  contactId: string,
+  triggerId: bigint,
+  contactId: bigint,
 ): Promise<boolean> {
   const lockKey = `trigger:lock:${triggerId}:${contactId}`
   const lockAcquired = await redis.set(lockKey, "1", "EX", 30, "NX")
@@ -235,8 +235,8 @@ async function acquireExecutionLock(
 
 async function releaseExecutionLock(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: string,
-  contactId: string,
+  triggerId: bigint,
+  contactId: bigint,
 ): Promise<void> {
   const lockKey = `trigger:lock:${triggerId}:${contactId}`
   await redis.del(lockKey)
@@ -244,7 +244,7 @@ async function releaseExecutionLock(
 
 async function executeActions(
   triggerInfo: TriggerMap[string],
-  contactId: string,
+  contactId: bigint,
 ): Promise<void> {
   const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
   const executor = new ActionExecutor()
@@ -268,7 +268,7 @@ async function executeActions(
 async function markTriggerExecuted(
   redis: ReturnType<typeof getRedisConnection>,
   triggerInfo: TriggerMap[string],
-  contactId: string,
+  contactId: bigint,
 ): Promise<void> {
   await db
     .insert(triggerExecutionModel)
@@ -288,7 +288,7 @@ async function markTriggerExecuted(
 
 async function executeAndMarkTrigger(
   triggerInfo: TriggerMap[string],
-  contactId: string,
+  contactId: bigint,
 ): Promise<DateTimeTriggerResult> {
   const notExecutedResult = {
     triggerId: triggerInfo.triggerId,
@@ -337,8 +337,8 @@ async function executeAndMarkTrigger(
 
 async function processContactBatch(
   triggerMap: TriggerMap,
-  triggerIds: string[],
-  allCustomFieldIds: Set<string>,
+  triggerIds: bigint[],
+  allCustomFieldIds: Set<bigint>,
   skip: number,
   batchSize: number,
   params: {

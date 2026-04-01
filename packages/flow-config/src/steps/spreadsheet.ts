@@ -31,24 +31,24 @@ export const spreadsheetSchema = z.object({
     z.literal(StepType.spreadsheetSendData),
     z.literal(StepType.spreadsheetUpdateRow),
   ]),
-  spreadsheetId: z.string().cuid2(),
+  spreadsheetId: z.bigint(),
   sheetName: z.string().min(1),
-  successNodeId: z.string().optional(),
-  errorNodeId: z.string().optional(),
+  successNodeId: z.bigint().optional(),
+  errorNodeId: z.bigint().optional(),
 })
 export type SpreadsheetSchema = z.infer<typeof spreadsheetSchema>
 
 export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   id: createId(),
   stepType: StepType.spreadsheetGetRow,
-  spreadsheetId: "",
+  spreadsheetId: BigInt(0),
   sheetName: "",
   successNodeId: createId(),
   errorNodeId: createId(),
 })
 
 export const spreadsheetMappingSchema = z.object({
-  customFieldId: z.string().cuid2(),
+  customFieldId: z.bigint(),
   header: z.string().min(1),
 })
 
@@ -57,7 +57,7 @@ export type SpreadsheetMappingSchema = z.infer<typeof spreadsheetMappingSchema>
 export const spreadsheetMappingDefaultFn = (
   header: string,
 ): SpreadsheetMappingSchema => ({
-  customFieldId: "",
+  customFieldId: BigInt(0),
   header,
 })
 

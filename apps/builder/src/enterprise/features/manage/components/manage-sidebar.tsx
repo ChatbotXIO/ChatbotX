@@ -5,7 +5,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@aha.chat/ui/components/ui/sidebar"
+} from "@chatbotx.io/ui/components/ui/sidebar"
 import {
   CoinsIcon,
   CreditCardIcon,

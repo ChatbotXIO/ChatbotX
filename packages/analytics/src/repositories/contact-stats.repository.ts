@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
   fillContactStatsMonthlySeries,
   fillDailyContactStats,
@@ -849,7 +849,7 @@ export class ContactStatsRepository extends BaseRepository {
     return members.map((member) => ({
       chatbotId,
       adminId: member.userId,
-      count: countByUserId.get(member.userId) || 0,
+      count: countByUserId.get(member.userId.toString()) || 0,
       userName: member.user?.name || undefined,
       userEmail: member.user?.email || undefined,
     }))
@@ -910,7 +910,7 @@ export class ContactStatsRepository extends BaseRepository {
     return members.map((member) => ({
       chatbotId,
       toAssignee: member.userId,
-      count: countByUserId.get(member.userId) || 0,
+      count: countByUserId.get(member.userId.toString()) || 0,
       userName: member.user?.name || undefined,
       userEmail: member.user?.email || undefined,
     }))
@@ -941,12 +941,12 @@ export class ContactStatsRepository extends BaseRepository {
 
     const messagesByUserId = new Map<string, number>()
     for (const stat of messagesByAdmin) {
-      messagesByUserId.set(stat.adminId, stat.count)
+      messagesByUserId.set(stat.adminId.toString(), stat.count)
     }
 
     const contactsByUserId = new Map<string, number>()
     for (const stat of contactsByAdmin) {
-      contactsByUserId.set(stat.toAssignee, stat.count)
+      contactsByUserId.set(stat.toAssignee.toString(), stat.count)
     }
 
     const assignedByUserId = new Map<string, number>()
@@ -957,9 +957,10 @@ export class ContactStatsRepository extends BaseRepository {
     return members.map((member) => ({
       chatbotId,
       adminId: member.userId,
-      messagesSent: messagesByUserId.get(member.userId) || 0,
-      uniqueContacts: contactsByUserId.get(member.userId) || 0,
-      assignedConversations: assignedByUserId.get(member.userId) || 0,
+      messagesSent: messagesByUserId.get(member.userId.toString()) || 0,
+      uniqueContacts: contactsByUserId.get(member.userId.toString()) || 0,
+      assignedConversations:
+        assignedByUserId.get(member.userId.toString()) || 0,
       userName: member.user?.name || undefined,
       userEmail: member.user?.email || undefined,
     }))

@@ -1,9 +1,9 @@
 "use client"
 
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { TextareaField } from "@aha.chat/ui/components/form/textarea-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -13,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form, FormLabel } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form, FormLabel } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { ArrowRightIcon, Loader2Icon, PlusIcon, XIcon } from "lucide-react"
@@ -29,7 +29,7 @@ import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-fi
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 
 type CreateAITriggerDialogProps = {
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function CreateAITriggerDialog({
@@ -91,7 +91,7 @@ export function CreateAITriggerDialog({
   const onAddDataCollection = () => {
     append({
       name: "",
-      customFieldId: "",
+      customFieldId: BigInt(0),
     })
   }
 

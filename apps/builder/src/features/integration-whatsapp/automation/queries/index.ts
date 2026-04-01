@@ -1,10 +1,10 @@
-import { findOrFail } from "@aha.chat/database/client"
-import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
+import { findOrFail } from "@chatbotx.io/database/client"
+import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type ConversationalAutomation,
   findConversationalAutomation,
-} from "@aha.chat/integration-whatsapp/api/phone-number"
+} from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListWhatsappPhoneNumberAutomation } from "../schemas/get-ice-breakers-schema"
 

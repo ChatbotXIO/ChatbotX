@@ -1,6 +1,6 @@
 "use client"
 
-import type { SplitTrafficStepSchema } from "@aha.chat/flow-config"
+import type { SplitTrafficStepSchema } from "@chatbotx.io/flow-config"
 
 const SplitTrafficStepViewer = ({ data }: { data: SplitTrafficStepSchema }) => (
   <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">

@@ -1,5 +1,5 @@
-import type { TriggerModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import type { TriggerModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -8,6 +8,7 @@ import {
 import z from "zod"
 import { contactResource } from "@/features/contacts/schemas/resource"
 import { userResource } from "@/features/users/schemas/resource"
+import { parseAsBigInt } from "@/lib/nuqs"
 import { triggerResource } from "./resource"
 
 export const getTriggersSearchParamsCache = createSearchParamsCache({
@@ -17,13 +18,13 @@ export const getTriggersSearchParamsCache = createSearchParamsCache({
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
-  folderId: parseAsString,
+  folderId: parseAsBigInt,
 })
 
 export type GetTriggersSchema = Awaited<
   ReturnType<typeof getTriggersSearchParamsCache.parse>
 > & {
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export const listTriggersRequest = z.object({

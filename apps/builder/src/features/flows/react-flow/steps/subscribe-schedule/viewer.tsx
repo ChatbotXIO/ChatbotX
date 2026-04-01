@@ -1,14 +1,14 @@
 "use client"
 
 import { Layers2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
+import { useChatbotId } from "@/hooks/routing"
 import { BaseStepViewer } from "../base/viewer"
 
 const SubscribeSequenceStepViewer = () => {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   return (
     <SequenceStoreProvider autoInitialize={true} chatbotId={chatbotId}>

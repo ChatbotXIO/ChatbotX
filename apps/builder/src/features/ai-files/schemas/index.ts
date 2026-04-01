@@ -2,8 +2,11 @@ import {
   aiEmbeddingStatus,
   aiFileModel,
   createSelectSchema,
-} from "@aha.chat/database/schema"
-import type { AIEmbeddingStatus, AIFileModel } from "@aha.chat/database/types"
+} from "@chatbotx.io/database/schema"
+import type {
+  AIEmbeddingStatus,
+  AIFileModel,
+} from "@chatbotx.io/database/types"
 import { z } from "zod"
 
 export const aiFileResource = createSelectSchema(aiFileModel)

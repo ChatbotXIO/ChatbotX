@@ -17,7 +17,7 @@ export const AIToolsStoreContext = createContext<AIToolsStoreApi | undefined>(
 )
 
 export type AIToolsStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

@@ -1,4 +1,4 @@
-import { aiMcpServerAuth } from "@aha.chat/database/schema"
+import { aiMcpServerAuth } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import { aiMcpServerResource } from "./resource"
 

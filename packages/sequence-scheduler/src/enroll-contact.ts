@@ -1,20 +1,20 @@
-import { db, type Transaction } from "@aha.chat/database/client"
-import { contactsOnSequenceModel } from "@aha.chat/database/schema"
-import { SchedulerClient } from "@aha.chat/scheduler"
+import { db, type Transaction } from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { createId } from "@chatbotx.io/utils"
 import { createDispatch } from "./dispatch-manager"
 
 type DrizzleClient = typeof db | Transaction
 
 export type EnrollContactParams = {
-  chatbotId: string
+  chatbotId: bigint
   client?: DrizzleClient
-  contactId: string
+  contactId: bigint
   enrolledAt?: Date
   nextRunAt: Date
-  nextStepId: string | null
-  sequenceId: string
+  nextStepId: bigint | null
+  sequenceId: bigint
 }
 
 export async function enrollContactInSequence(params: EnrollContactParams) {
@@ -75,13 +75,13 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
   await scheduler.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
 }
 export interface EnrollContactsBulkParams {
-  chatbotId: string
+  chatbotId: bigint
   enrolledAt?: Date
   enrollments: Array<{
-    contactId: string
-    sequenceId: string
+    contactId: bigint
+    sequenceId: bigint
     nextRunAt: Date
-    nextStepId: string | null
+    nextStepId: bigint | null
   }>
 }
 export async function enrollContactsInSequenceBulk(

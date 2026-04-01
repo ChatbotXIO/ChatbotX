@@ -1,5 +1,5 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
 import { listInboxes } from "@/features/inboxes/queries"
@@ -9,8 +9,7 @@ export default async function Dashboard({
 }: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

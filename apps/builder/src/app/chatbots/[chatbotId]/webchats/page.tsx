@@ -1,3 +1,4 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
@@ -12,8 +13,7 @@ export default async function WebchatsPage(props: {
   searchParams: Promise<SearchParams>
 }) {
   const t = await getTranslations()
-  const { chatbotId: chatbotIdString } = await props.params
-  const chatbotId = BigInt(chatbotIdString)
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import AIFilesTable from "@/features/ai-files/ai-files-table"
@@ -6,14 +6,11 @@ import { listAIFiles } from "@/features/ai-files/queries"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
 
 type AIFilesPageProps = {
-  params: Promise<{
-    chatbotId: string
-  }>
+  params: Promise<{ chatbotId: string }>
 }
 
 export default async function AIFilesPage({ params }: AIFilesPageProps) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

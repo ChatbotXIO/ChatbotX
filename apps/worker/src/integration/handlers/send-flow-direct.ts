@@ -1,11 +1,11 @@
-import { db } from "@aha.chat/database/client"
-import { IntegrationJobAction } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import { IntegrationJobAction } from "@chatbotx.io/worker-config"
 import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
-  chatbotId: string
-  contactId: string
-  flowId: string
+  chatbotId: bigint
+  contactId: bigint
+  flowId: bigint
 }
 
 export async function sendFlowDirect(

@@ -1,5 +1,5 @@
-import { rootFolderId } from "@aha.chat/database/enums"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useMemo } from "react"
 import { useFolderStore } from "./folder-store-context"
 

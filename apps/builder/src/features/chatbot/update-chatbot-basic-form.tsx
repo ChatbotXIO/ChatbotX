@@ -1,10 +1,10 @@
 "use client"
 
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Input } from "@aha.chat/ui/components/ui/input"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon } from "lucide-react"
@@ -74,8 +74,15 @@ export function UpdateChatbotBasicForm({
               label={t("fields.chatbotId.label")}
             >
               <div className="flex gap-x-2">
-                <Input className="flex-1" defaultValue={chatbot.id} disabled />
-                <Button onClick={() => onCopy(chatbot.id)} size={"icon"}>
+                <Input
+                  className="flex-1"
+                  defaultValue={chatbot.id.toString()}
+                  disabled
+                />
+                <Button
+                  onClick={() => onCopy(chatbot.id.toString())}
+                  size={"icon"}
+                >
                   <CopyIcon />
                 </Button>
               </div>

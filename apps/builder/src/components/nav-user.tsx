@@ -4,7 +4,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
+} from "@chatbotx.io/ui/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,13 +13,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@aha.chat/ui/components/ui/sidebar"
+} from "@chatbotx.io/ui/components/ui/sidebar"
 import { BadgeCheck, Bell, ChevronsUpDown, Crown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { SignOut } from "@/features/auth/sign-out"

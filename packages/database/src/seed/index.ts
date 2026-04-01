@@ -8,7 +8,7 @@ import {
   organizationMemberModel,
   organizationModel,
   userModel,
-} from "../drizzle/schema"
+} from "../schema"
 
 async function main() {
   let organization = await db.query.organizationModel.findFirst()
@@ -35,7 +35,6 @@ async function main() {
   user = await db
     .insert(userModel)
     .values({
-      id: createId(),
       email: "demo@example.com",
       name: "Demo ChatbotX",
       emailVerified: true,
@@ -44,7 +43,6 @@ async function main() {
     .then((result) => result[0])
 
   await db.insert(accountModel).values({
-    id: createId(),
     accountId: user?.id ?? "",
     providerId: "credential",
     // NOTES: password is "Demo@1234" hashed with scrypt
@@ -55,7 +53,6 @@ async function main() {
 
   // add user to organization
   await db.insert(organizationMemberModel).values({
-    id: createId(),
     organizationId: organization?.id ?? "",
     userId: user?.id ?? "",
     role: "admin",

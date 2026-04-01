@@ -1,21 +1,21 @@
-import { db, eq } from "@aha.chat/database/client"
-import { messageModel } from "@aha.chat/database/schema"
-import type { ConversationModel } from "@aha.chat/database/types"
+import { db, eq } from "@chatbotx.io/database/client"
+import { messageModel } from "@chatbotx.io/database/schema"
+import type { ConversationModel } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
   StepType,
   type TemplateComponent,
   type WaTemplateParams,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import {
   broadcastToChatbotParty,
   RealtimeEventType,
-} from "@aha.chat/partysocket-config"
+} from "@chatbotx.io/partysocket-config"
+import { createId } from "@chatbotx.io/utils"
 import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
-} from "@aha.chat/worker-config"
-import { createId } from "@chatbotx.io/utils"
+} from "@chatbotx.io/worker-config"
 import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,

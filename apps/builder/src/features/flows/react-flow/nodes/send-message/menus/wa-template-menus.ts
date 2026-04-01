@@ -1,4 +1,4 @@
-import { StepType } from "@aha.chat/flow-config"
+import { StepType } from "@chatbotx.io/flow-config"
 import { MessageSquareIcon } from "lucide-react"
 import type { FlowActionState } from "../../../stores/flow-action-store"
 import type { MenuItem, TranslationFn } from "../../types"

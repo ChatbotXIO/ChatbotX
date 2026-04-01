@@ -7,7 +7,7 @@ import {
   MessageType,
   type ReceivedMessageResult,
   SdkException,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import fetch from "cross-fetch"
 import imageSize from "image-size"

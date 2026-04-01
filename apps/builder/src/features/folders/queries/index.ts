@@ -1,6 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import type { FolderModel, FolderType } from "@aha.chat/database/types"
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { db } from "@chatbotx.io/database/client"
+import type { FolderModel, FolderType } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
@@ -11,17 +10,11 @@ export const listFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: FolderModel[] }> => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
-
-  const { folderId: folderIdString, ...rest } = input
-
-  let folderId: bigint | undefined
-  if (folderIdString) {
-    folderId = parseBigIntId(folderIdString)
-  }
+  const { folderId, ...rest } = input
 
   const data = await db.query.folderModel.findMany({
     where: {
-      ...rest,
+      ...input,
       folderType: rest.folderType as FolderType,
       parentId: folderId ?? { isNull: true },
     },

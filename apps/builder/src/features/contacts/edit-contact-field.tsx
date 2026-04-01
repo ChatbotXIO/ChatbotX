@@ -1,8 +1,8 @@
 import {
   type FillableContactKeys,
   fillableContactKeys,
-} from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -26,8 +26,8 @@ import { updateContactFieldRequest } from "./schemas/action"
 import type { ContactEditableField } from "./schemas/resource"
 
 type EditContactField = {
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint
   open: boolean
   onOpenChange: (open: boolean) => void
   targetField: ContactEditableField | null
@@ -134,7 +134,7 @@ export function EditContactField(props: EditContactField) {
                     onClick={() => {
                       executeDelete({
                         ids: [contactId],
-                        customFieldId: targetField?.key ?? "",
+                        customFieldId: BigInt(targetField?.key ?? 0),
                       })
                     }}
                     size="sm"

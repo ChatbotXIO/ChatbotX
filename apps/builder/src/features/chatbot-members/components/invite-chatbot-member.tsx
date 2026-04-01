@@ -1,7 +1,7 @@
 "use client"
 
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,20 +9,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { isCommunity } from "@/env"
+import { useChatbotId } from "@/hooks/routing"
 import { inviteChatbotMemberAction } from "../actions/invite-chatbot-member.action"
 import { inviteChatbotMemberRequest } from "../schema/mutation"
 export function InviteChatbotMemberDialog() {
@@ -107,7 +107,8 @@ export function AddChatbotMemberForm({
   cancelHandler,
   submitHandler,
 }: AddChatbotMemberFormProps) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
+
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =

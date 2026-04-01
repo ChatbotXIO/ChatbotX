@@ -1,15 +1,15 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import { Loader2Icon, MessageSquareMoreIcon, PlusIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
+import { useChatbotId } from "@/hooks/routing"
 import { useSavedReplyStore } from "./provider/saved-reply-store-context"
 import { SavedReplyCreateForm } from "./saved-reply-create-form"
 import { SavedReplyEditForm } from "./saved-reply-edit-form"
@@ -23,7 +23,7 @@ type ViewState =
 
 const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<ViewState>({ type: "list" })

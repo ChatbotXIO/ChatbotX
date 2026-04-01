@@ -1,12 +1,11 @@
-import { FolderType } from "@aha.chat/database/enums"
-import type { FolderModel } from "@aha.chat/database/types"
+import { FolderType } from "@chatbotx.io/database/enums"
+import type { FolderModel } from "@chatbotx.io/database/types"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
-import { parseBigIntId } from "@chatbotx.io/utils"
+} from "@chatbotx.io/ui/components/ui/card"
 import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -60,9 +59,7 @@ export default async function SharedFolderSlot(props: {
   }
 
   const searchParams = await props.searchParams
-  const { folderId: folderIdString } =
-    await listFoldersSearchParams.parse(searchParams)
-  const folderId = parseBigIntId(folderIdString)
+  const { folderId } = await listFoldersSearchParams.parse(searchParams)
 
   const promises = Promise.all([
     folderId
@@ -74,7 +71,7 @@ export default async function SharedFolderSlot(props: {
     listFolders({
       chatbotId: props.chatbotId,
       folderType,
-      folderId: folderIdString,
+      folderId,
     }),
   ])
 

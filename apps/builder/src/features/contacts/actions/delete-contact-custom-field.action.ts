@@ -1,16 +1,6 @@
 "use server"
 
-import { and, db, eq, findOrFail, inArray } from "@aha.chat/database/client"
-import {
-  contactCustomFieldModel,
-  contactModel,
-  customFieldModel,
-} from "@aha.chat/database/schema"
-import {
-  type FillableContactKeys,
-  fillableContactKeys,
-} from "@aha.chat/database/types"
-import { isCuid } from "@paralleldrive/cuid2"
+import { db } from "@chatbotx.io/database/client"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -44,11 +34,10 @@ export const deleteContactCustomFieldAction = chatbotActionClient
 export const deleteContactCustomFields = async ({
   chatbotId,
   contactIds,
-  customFieldId,
 }: {
-  chatbotId: string
-  contactIds: string[]
-  customFieldId: string
+  chatbotId: bigint
+  contactIds: bigint[]
+  customFieldId: bigint
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
@@ -65,45 +54,45 @@ export const deleteContactCustomFields = async ({
     return
   }
 
-  if (isCuid(customFieldId)) {
-    const customField = await findOrFail(
-      customFieldModel,
-      {
-        chatbotId,
-        id: customFieldId,
-      },
-      "Custom field not found",
-    )
+  // if (isCuid(customFieldId)) {
+  //   const customField = await findOrFail(
+  //     customFieldModel,
+  //     {
+  //       chatbotId,
+  //       id: customFieldId,
+  //     },
+  //     "Custom field not found",
+  //   )
 
-    await db.transaction(async (tx) => {
-      await tx.delete(contactCustomFieldModel).where(
-        and(
-          inArray(
-            contactCustomFieldModel.contactId,
-            contacts.map((c) => c.id),
-          ),
-          eq(contactCustomFieldModel.customFieldId, customField.id),
-        ),
-      )
-    })
-  } else if (
-    fillableContactKeys.includes(customFieldId as FillableContactKeys)
-  ) {
-    await db
-      .update(contactModel)
-      .set({
-        [customFieldId]: "",
-      })
-      .where(
-        and(
-          inArray(
-            contactModel.id,
-            contacts.map((c) => c.id),
-          ),
-          eq(contactModel.chatbotId, chatbotId),
-        ),
-      )
-  }
+  //   await db.transaction(async (tx) => {
+  //     await tx.delete(contactCustomFieldModel).where(
+  //       and(
+  //         inArray(
+  //           contactCustomFieldModel.contactId,
+  //           contacts.map((c) => c.id),
+  //         ),
+  //         eq(contactCustomFieldModel.customFieldId, customField.id),
+  //       ),
+  //     )
+  //   })
+  // } else if (
+  //   fillableContactKeys.includes(customFieldId as FillableContactKeys)
+  // ) {
+  //   await db
+  //     .update(contactModel)
+  //     .set({
+  //       [customFieldId]: "",
+  //     })
+  //     .where(
+  //       and(
+  //         inArray(
+  //           contactModel.id,
+  //           contacts.map((c) => c.id),
+  //         ),
+  //         eq(contactModel.chatbotId, chatbotId),
+  //       ),
+  //     )
+  // }
 
   revalidateCacheTags([
     `chatbots:${chatbotId}#contacts`,

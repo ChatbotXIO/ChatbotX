@@ -1,3 +1,5 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -9,7 +11,11 @@ export default async function BroadcastsPage(props: {
   params: Promise<{ chatbotId: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const { chatbotId } = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = getBroadcastsSearchParamsCache.parse(searchParams)
   const t = await getTranslations()

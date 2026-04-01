@@ -1,3 +1,3 @@
-import { aiAgentModel, createSelectSchema } from "@aha.chat/database/schema"
+import { aiAgentModel, createSelectSchema } from "@chatbotx.io/database/schema"
 
 export const aiAgentResourceSchema = createSelectSchema(aiAgentModel)

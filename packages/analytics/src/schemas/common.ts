@@ -4,7 +4,7 @@ export const timeRangeQuerySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
   timezone: z.string().default("UTC"),
-  chatbotId: z.string(),
+  chatbotId: z.bigint(),
 })
 export type TimeRangeQuery = z.infer<typeof timeRangeQuerySchema>
 

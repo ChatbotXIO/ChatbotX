@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { WhatsappFlowsTable } from "@/features/integration-whatsapp/flows/flows-table"
@@ -8,7 +10,15 @@ export default async function WhatsappFlowsPage(props: {
   params: Promise<{ chatbotId: string; id: string }>
   searchParams: Promise<SearchParams>
 }) {
-  const { chatbotId, id } = await props.params
+  const { chatbotId: chatbotIdString, id: idString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+  const id = parseBigIntId(idString)
+  if (!id) {
+    return notFound()
+  }
 
   const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 

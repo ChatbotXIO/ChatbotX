@@ -61,7 +61,7 @@ export const findTagChatbotTokenAPI = chatbotTokenAPI
     summary: "Get tag by id",
     tags: ["Tags"],
   })
-  .input(z.object({ id: z.string() }))
+  .input(z.object({ id: z.bigint() }))
   .output(tagResource.pick({ id: true, name: true }))
   .errors(posibleErrorsOnFindingResource)
   .handler(async ({ context, input }) => {
@@ -107,7 +107,7 @@ export const updateTagChatbotTokenAPI = chatbotTokenAPI
     tags: ["Tags"],
   })
   .input(
-    createTagRequest.pick({ name: true }).and(z.object({ id: z.string() })),
+    createTagRequest.pick({ name: true }).and(z.object({ id: z.bigint() })),
   )
   .output(publicTagResource)
   .errors(posibleErrorsOnCreatingResource)
@@ -128,7 +128,7 @@ export const deleteTagsChatbotTokenAPI = chatbotTokenAPI
     successStatus: 204,
     tags: ["Tags"],
   })
-  .input(z.object({ id: z.string() }))
+  .input(z.object({ id: z.bigint() }))
   .errors(posibleErrorsOnDeletingResource)
   .handler(async ({ context, input }) => {
     const { id } = input

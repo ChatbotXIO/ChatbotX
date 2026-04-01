@@ -1,9 +1,9 @@
 import {
   type CustomFieldType,
-  type ReservedCustomFieldNames,
+  type ReservedCustomFieldName,
   reservedCustomFieldNames,
-} from "@aha.chat/database/types"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+} from "@chatbotx.io/database/types"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
   CalendarClockIcon,
   CalendarDaysIcon,
@@ -27,86 +27,86 @@ export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
 export const reservedCustomFieldOptions: {
   name: string
   type: CustomFieldType
-  id: ReservedCustomFieldNames
+  id: ReservedCustomFieldName
 }[] = [
   {
     name: "First Name",
-    id: reservedCustomFieldNames.first_name,
+    id: reservedCustomFieldNames.enum.first_name,
     type: "shortText",
   },
   {
     name: "Last Name",
-    id: reservedCustomFieldNames.last_name,
+    id: reservedCustomFieldNames.enum.last_name,
     type: "shortText",
   },
   {
     name: "Full Name",
-    id: reservedCustomFieldNames.full_name,
+    id: reservedCustomFieldNames.enum.full_name,
     type: "shortText",
   },
   {
     name: "Email",
-    id: reservedCustomFieldNames.email,
+    id: reservedCustomFieldNames.enum.email,
     type: "shortText",
   },
   {
     name: "Phone Number",
-    id: reservedCustomFieldNames.phone_number,
+    id: reservedCustomFieldNames.enum.phone_number,
     type: "shortText",
   },
   {
     name: "Avatar",
-    id: reservedCustomFieldNames.avatar,
+    id: reservedCustomFieldNames.enum.avatar,
     type: "shortText",
   },
   {
     name: "Locale",
-    id: reservedCustomFieldNames.locale,
+    id: reservedCustomFieldNames.enum.locale,
     type: "shortText",
   },
   {
     name: "Gender",
-    id: reservedCustomFieldNames.gender,
+    id: reservedCustomFieldNames.enum.gender,
     type: "shortText",
   },
   {
     name: "Timezone",
-    id: reservedCustomFieldNames.timezone,
+    id: reservedCustomFieldNames.enum.timezone,
     type: "shortText",
   },
   {
     name: "User ID",
-    id: reservedCustomFieldNames.user_id,
+    id: reservedCustomFieldNames.enum.user_id,
     type: "shortText",
   },
   {
     name: "User Tags",
-    id: reservedCustomFieldNames.user_tags,
+    id: reservedCustomFieldNames.enum.user_tags,
     type: "shortText",
   },
   {
     name: "Account Name",
-    id: reservedCustomFieldNames.account_name,
+    id: reservedCustomFieldNames.enum.account_name,
     type: "shortText",
   },
   {
     name: "Account ID",
-    id: reservedCustomFieldNames.account_id,
+    id: reservedCustomFieldNames.enum.account_id,
     type: "shortText",
   },
   {
     name: "Page User Name",
-    id: reservedCustomFieldNames.page_user_name,
+    id: reservedCustomFieldNames.enum.page_user_name,
     type: "shortText",
   },
   {
     name: "Last Input",
-    id: reservedCustomFieldNames.last_input,
+    id: reservedCustomFieldNames.enum.last_input,
     type: "shortText",
   },
   {
     name: "Current Time",
-    id: reservedCustomFieldNames.current_time,
+    id: reservedCustomFieldNames.enum.current_time,
     type: "shortText",
   },
 ]
@@ -132,14 +132,16 @@ export const useCustomFieldSelectOptions = (
         .filter((customField) => customFieldTypes.includes(customField.type))
         .map((customField) => ({
           label: customField.name,
-          value: prefix ? `${prefix}:${customField.id}` : customField.id,
+          value: prefix
+            ? `${prefix}:${customField.id}`
+            : customField.id.toString(),
           Icon: customFieldIconsMap[customField.type],
         }))
     }
 
     return allFields.map((customField) => ({
       label: customField.name,
-      value: prefix ? `${prefix}:${customField.id}` : customField.id,
+      value: prefix ? `${prefix}:${customField.id}` : customField.id.toString(),
       Icon: customFieldIconsMap[customField.type],
     }))
   }, [customFieldTypes, includeReserved, customFields, prefix])

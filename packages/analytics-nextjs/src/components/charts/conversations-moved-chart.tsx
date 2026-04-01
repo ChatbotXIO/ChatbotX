@@ -1,6 +1,6 @@
 "use client"
 
-import BarChart from "@aha.chat/ui/components/charts/bar-chart"
+import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { eachDayOfInterval, format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"

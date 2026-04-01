@@ -1,10 +1,10 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,

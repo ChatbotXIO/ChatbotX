@@ -1,10 +1,10 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationModel,
   integrationOpenAIModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,

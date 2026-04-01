@@ -1,7 +1,7 @@
 "use client"
 
-import { organizationSettingsSchema } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { organizationSettingsSchema } from "@chatbotx.io/database/partials"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@aha.chat/ui/components/ui/table"
+} from "@chatbotx.io/ui/components/ui/table"
 import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -19,7 +19,7 @@ import { ZaloDisconnect } from "./components/zalo-disconnect"
 import type { listIntegrationZalo } from "./queries"
 
 type ZaloManageProps = {
-  chatbotId: string
+  chatbotId: bigint
   promises: Promise<
     [
       Awaited<ReturnType<typeof listIntegrationZalo>>,

@@ -1,15 +1,15 @@
 "use server"
 
-import { db, eq, findOrFail, sql } from "@aha.chat/database/client"
+import { emitContactCreated } from "@chatbotx/events"
+import { contactTrackingService } from "@chatbotx.io/analytics"
+import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  channelTypes,
   chatbotUsageModel,
   contactModel,
   conversationModel,
   inboxModel,
-} from "@aha.chat/database/schema"
-import { emitContactCreated } from "@chatbotx/events"
-import { contactTrackingService } from "@chatbotx.io/analytics"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {

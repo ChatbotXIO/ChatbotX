@@ -1,4 +1,4 @@
-import { Label } from "@aha.chat/ui/components/ui/label"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import type { ReactElement } from "react"
 
 type SettingRowProps = {

@@ -1,12 +1,12 @@
 "use client"
 
-import { CardLayout } from "@aha.chat/database/types"
-import { sendCardStepDefaultFn } from "@aha.chat/flow-config"
+import { cardLayouts } from "@chatbotx.io/database/partials"
+import { sendCardStepDefaultFn } from "@chatbotx.io/flow-config"
 import {
   SelectedSnapDisplay,
   useSelectedSnapDisplay,
-} from "@aha.chat/ui/components/carousel-snap"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/carousel-snap"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Carousel,
   type CarouselApi,
@@ -14,8 +14,8 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@aha.chat/ui/components/ui/carousel"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/carousel"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   PlusIcon,
   RectangleHorizontalIcon,
@@ -73,10 +73,10 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
         <Button
           className={cn(
             "size-6 p-0!",
-            layout === CardLayout.horizontal ? "text-destructive" : "",
+            layout === cardLayouts.enum.horizontal ? "text-destructive" : "",
           )}
           onClick={() =>
-            setValue(`${parentName}.layout`, CardLayout.horizontal)
+            setValue(`${parentName}.layout`, cardLayouts.enum.horizontal)
           }
           size="icon"
           variant="ghost"
@@ -86,9 +86,11 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
         <Button
           className={cn(
             "size-6 p-0!",
-            layout === CardLayout.vertical ? "text-destructive" : "",
+            layout === cardLayouts.enum.vertical ? "text-destructive" : "",
           )}
-          onClick={() => setValue(`${parentName}.layout`, CardLayout.vertical)}
+          onClick={() =>
+            setValue(`${parentName}.layout`, cardLayouts.enum.vertical)
+          }
           size="icon"
           variant="ghost"
         >

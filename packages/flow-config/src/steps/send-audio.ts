@@ -1,13 +1,13 @@
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { UploadMode } from "../types"
+import { uploadModes } from "../types"
 import { buttonStepSchema } from "./button"
 import { StepType } from "./step-action"
 
 export const sendAudioStepSchema = z.object({
   id: z.bigint(),
   stepType: z.literal(StepType.sendAudio),
-  mode: z.enum(UploadMode),
+  mode: uploadModes,
   url: z.url(),
   buttons: z.array(buttonStepSchema),
 })
@@ -18,7 +18,7 @@ export const sendAudioStepDefaultFn = (
   props?: Partial<SendAudioStepSchema>,
 ): SendAudioStepSchema => ({
   id: createId(),
-  mode: "file",
+  mode: uploadModes.enum.file,
   url: "",
   buttons: [],
   ...props,

@@ -3,15 +3,15 @@
 import {
   type WebchatPersistentMenu,
   webchatPersistentMenuType,
-} from "@aha.chat/database/schema"
-import { MessageType } from "@aha.chat/sdk"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/database/partials"
+import { MessageType } from "@chatbotx.io/sdk"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { createId } from "@chatbotx.io/utils"
 import { MenuIcon } from "lucide-react"
 import Link from "next/link"

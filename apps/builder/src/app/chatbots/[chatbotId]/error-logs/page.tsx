@@ -1,3 +1,5 @@
+import { getIdFromParams } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
@@ -12,14 +14,18 @@ export default async function ErrorLogsPage(props: {
 }) {
   const t = await getTranslations()
 
-  const params = await props.params
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
+  if (!chatbotId) {
+    return notFound()
+  }
+
   const searchParams = await props.searchParams
   const search = listErrorLogsSearchParamsCache.parse(searchParams)
 
   const promises = Promise.all([
     listErrorLogs({
       ...search,
-      chatbotId: params.chatbotId,
+      chatbotId,
     }),
   ])
 
@@ -29,28 +35,28 @@ export default async function ErrorLogsPage(props: {
         tabs={[
           {
             label: t("flows.title"),
-            href: `/chatbots/${params.chatbotId}/flows`,
+            href: `/chatbots/${chatbotId}/flows`,
             isActive: false,
           },
           {
             label: t("tags.title"),
-            href: `/chatbots/${params.chatbotId}/tags`,
+            href: `/chatbots/${chatbotId}/tags`,
             isActive: false,
           },
           {
             label: t("customFields.title"),
-            href: `/chatbots/${params.chatbotId}/custom-fields`,
+            href: `/chatbots/${chatbotId}/custom-fields`,
             isActive: false,
           },
           {
             label: t("errorLogs.title"),
-            href: `/chatbots/${params.chatbotId}/error-logs`,
+            href: `/chatbots/${chatbotId}/error-logs`,
             isActive: true,
           },
         ]}
       />
       <Suspense>
-        <ErrorLogsTable chatbotId={params.chatbotId} promises={promises} />
+        <ErrorLogsTable chatbotId={chatbotId} promises={promises} />
       </Suspense>
     </div>
   )

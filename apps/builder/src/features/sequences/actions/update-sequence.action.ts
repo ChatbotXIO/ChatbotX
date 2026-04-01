@@ -6,8 +6,8 @@ import {
   eq,
   findOrFail,
   isDatabaseError,
-} from "@aha.chat/database/client"
-import { sequenceModel } from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/client"
+import { sequenceModel } from "@chatbotx.io/database/schema"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {

@@ -1,25 +1,25 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
-  integrationMessengerModel,
   type MessengerPersistentMenu,
   type MessengerPersona,
   persistentMenuType,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/partials"
+import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
   ChatbotModel,
   IntegrationMessengerModel,
-} from "@aha.chat/database/types"
-import { encodeButtonPayload } from "@aha.chat/flow-config"
+} from "@chatbotx.io/database/types"
+import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
   type MessengerProfileRequest,
-} from "@aha.chat/integration-messenger"
+} from "@chatbotx.io/integration-messenger"
 import type {
   FacebookButton,
   MessengerAuthValue,
-} from "@aha.chat/integration-messenger/schemas"
+} from "@chatbotx.io/integration-messenger/schemas"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,

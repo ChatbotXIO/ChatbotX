@@ -2,7 +2,7 @@ import {
   type ButtonStepProps,
   ButtonType,
   encodeButtonPayload,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../constants"
 import type { ButtonPayload } from "../schemas/webhook"

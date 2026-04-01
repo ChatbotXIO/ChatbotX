@@ -1,7 +1,7 @@
 "use server"
 
-import { db, findOrFail } from "@aha.chat/database/client"
-import { aiTriggerModel } from "@aha.chat/database/schema"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdAndIdRequestParams,

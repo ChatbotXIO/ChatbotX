@@ -1,7 +1,7 @@
 import {
   createSelectSchema,
   integrationWhatsappModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import type { z } from "zod"
 
 export const integrationWhatsappResource = createSelectSchema(

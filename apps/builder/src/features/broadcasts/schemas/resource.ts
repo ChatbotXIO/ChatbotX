@@ -1,5 +1,8 @@
-import { broadcastModel, createSelectSchema } from "@aha.chat/database/schema"
-import type { BroadcastModel, FlowModel } from "@aha.chat/database/types"
+import {
+  broadcastModel,
+  createSelectSchema,
+} from "@chatbotx.io/database/schema"
+import type { BroadcastModel, FlowModel } from "@chatbotx.io/database/types"
 
 export const broadcastResource = createSelectSchema(broadcastModel)
 export type BroadcastResource = BroadcastModel

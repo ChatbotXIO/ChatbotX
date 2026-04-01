@@ -1,6 +1,6 @@
 "use client"
 
-import type { TemplateComponent } from "@aha.chat/flow-config"
+import type { TemplateComponent } from "@chatbotx.io/flow-config"
 import Image from "next/image"
 
 type TemplatePreviewProps = {

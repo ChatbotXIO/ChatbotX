@@ -1,15 +1,15 @@
 "use client"
-
-import { useParams, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { AppTab } from "@/components/app-tab"
+import { useChatbotId } from "@/hooks/routing"
 
 export function SettingsTab() {
   const t = useTranslations()
   const pathname = usePathname()
 
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const tabs = useMemo(
     () => [

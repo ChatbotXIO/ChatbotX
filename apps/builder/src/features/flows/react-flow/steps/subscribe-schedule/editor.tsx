@@ -1,11 +1,11 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Layers2Icon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
+import { useChatbotId } from "@/hooks/routing"
 import { BaseStepEditor } from "../base/editor"
 
 const SubscribeSequenceSelector = ({ parentName }: { parentName: string }) => {
@@ -33,7 +33,7 @@ const SubscribeSequenceStepEditor = ({
   parentName: string
 }) => {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   return (
     <SequenceStoreProvider autoInitialize={true} chatbotId={chatbotId}>

@@ -1,15 +1,15 @@
 "use client"
 
-import type { IntegrationWhatsappModel } from "@aha.chat/database/types"
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import {
   Table,
   TableBody,
   TableCell,
   TableRow,
-} from "@aha.chat/ui/components/ui/table"
+} from "@chatbotx.io/ui/components/ui/table"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"

@@ -1,4 +1,4 @@
-import type { db } from "@aha.chat/database/client"
+import type { db } from "@chatbotx.io/database/client"
 
 export interface ConsumerConfig {
   groupId: string

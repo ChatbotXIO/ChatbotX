@@ -1,11 +1,11 @@
-import { db, eq } from "@aha.chat/database/client"
+import { contactTrackingService } from "@chatbotx.io/analytics"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
   contactModel,
   conversationModel,
   inboxModel,
   messageModel,
-} from "@aha.chat/database/schema"
-import { contactTrackingService } from "@chatbotx.io/analytics"
+} from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000

@@ -1,11 +1,11 @@
 "use client"
 
-import { FolderType } from "@aha.chat/database/enums"
-import type { WebhookModel } from "@aha.chat/database/types"
-import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
-import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@aha.chat/ui/types/data-table"
+import { FolderType } from "@chatbotx.io/database/enums"
+import type { WebhookModel } from "@chatbotx.io/database/types"
+import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
@@ -18,8 +18,8 @@ import { WebhooksTableToolbarActions } from "./webhooks-table-toolbar-actions"
 
 type WebhooksTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getWebhooks>>]>
-  chatbotId: string
-  folderId: string | null
+  chatbotId: bigint
+  folderId: bigint | null
 }
 
 export function WebhooksTable({
@@ -47,7 +47,7 @@ export function WebhooksTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["action"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

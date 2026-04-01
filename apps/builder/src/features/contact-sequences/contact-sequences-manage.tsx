@@ -5,10 +5,10 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
-import { useParams } from "next/navigation"
+} from "@chatbotx.io/ui/components/ui/accordion"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
+import { useChatbotId } from "@/hooks/routing"
 import type { ListConversationItemResource } from "../conversations/schema/resource"
 import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
 import UpdateContactSequenceField from "./update-contact-sequence-field"
@@ -24,7 +24,7 @@ export function ContactSequencesManage({
   contact: NonNullable<ListConversationItemResource["contact"]>
 }) {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const sequencesModules: sequencesList[] = useMemo(
     () => [

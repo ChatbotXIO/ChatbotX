@@ -1,6 +1,6 @@
-import { createSelectSchema, sequenceModel } from "@aha.chat/database/schema"
-import type { SequenceModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import { createSelectSchema, sequenceModel } from "@chatbotx.io/database/schema"
+import type { SequenceModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsBoolean,

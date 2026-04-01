@@ -1,7 +1,7 @@
 "use client"
 
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -9,14 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@aha.chat/ui/components/ui/tabs"
+} from "@chatbotx.io/ui/components/ui/tabs"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2 } from "lucide-react"
@@ -71,8 +71,8 @@ export function SelectFlowDialog({
     useHookFormAction(
       createMessageAction.bind(
         null,
-        conversation?.chatbotId ?? "",
-        conversation?.id ?? "",
+        conversation?.chatbotId ?? BigInt(0),
+        conversation?.id ?? BigInt(0),
       ),
       zodResolver(createMessageRequest),
       {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { PencilIcon, Trash2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -8,10 +8,10 @@ import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
 import type { SavedReplyResource } from "./schema"
 
 type SavedReplyItemProps = {
-  chatbotId: string
+  chatbotId: bigint
   isLast: boolean
   item: SavedReplyResource
-  onDeleteSuccess: (id: string) => void
+  onDeleteSuccess: (id: bigint) => void
   onEdit: (item: SavedReplyResource) => void
   onSelect: (item: SavedReplyResource) => void
 }

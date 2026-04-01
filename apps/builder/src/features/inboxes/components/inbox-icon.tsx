@@ -1,5 +1,5 @@
-import type { ChannelType } from "@aha.chat/database/types"
-import { cn } from "@aha.chat/ui/lib/utils"
+import type { ChannelType } from "@chatbotx.io/database/partials"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiMessenger,
   SiMessengerHex,

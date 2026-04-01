@@ -1,11 +1,12 @@
 "use client"
-
-import { useParams, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { AppTab } from "@/components/app-tab"
+import { useChatbotId } from "@/hooks/routing"
 
 export function AITab() {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
+
   const t = useTranslations()
 
   const pathname = usePathname()

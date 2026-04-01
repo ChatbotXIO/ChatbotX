@@ -6,11 +6,12 @@ import {
 import { drizzle } from "drizzle-orm/node-postgres"
 import type { PgTable } from "drizzle-orm/pg-core"
 import { Pool } from "pg"
-import { relations } from "./drizzle/relations"
-// biome-ignore lint/performance/noNamespaceImport: drizzle schema
-import * as schema from "./drizzle/schema"
 import { ModelNotfoundException } from "./errors"
 import { keys } from "./keys"
+import { relations } from "./relations"
+
+// biome-ignore lint/performance/noNamespaceImport: drizzle schema
+import * as schema from "./schema"
 
 const env = keys()
 

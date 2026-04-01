@@ -1,7 +1,7 @@
 "use client"
 
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -10,9 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import type { MultiSelectGroup } from "@aha.chat/ui/components/ui/sersavan/multi-select"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2 } from "lucide-react"
@@ -33,8 +33,8 @@ export function ExportContactDialog({
   contactIds,
   trigger,
 }: {
-  chatbotId: string
-  contactIds: string[]
+  chatbotId: bigint
+  contactIds: bigint[]
   trigger: React.ReactElement
 }) {
   const t = useTranslations()

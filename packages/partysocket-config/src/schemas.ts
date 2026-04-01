@@ -15,7 +15,7 @@ export type RealtimeEventCreateMessage = {
 export type RealtimeEventTyping = {
   eventType: typeof RealtimeEventType.typing
   data: {
-    conversationId: string
+    conversationId: bigint
     typing: boolean
   }
 }
@@ -25,16 +25,16 @@ export type RealtimeEventContactCommon = {
     | typeof RealtimeEventType.contactBlocked
     | typeof RealtimeEventType.contactUnblocked
   data: {
-    contactId: string
+    contactId: bigint
   }
 }
 
 export type RealtimeEventConversationAssigned = {
   eventType: typeof RealtimeEventType.conversationAssigned
   data: {
-    conversationIds: string[]
-    assignedUserId: string | null
-    assignedInboxTeamId: string | null
+    conversationIds: bigint[]
+    assignedUserId: bigint | null
+    assignedInboxTeamId: bigint | null
   }
 }
 

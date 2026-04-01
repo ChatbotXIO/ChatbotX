@@ -1,8 +1,8 @@
-import { and, db, eq } from "@aha.chat/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import {
   sequenceDispatchModel,
   sequenceEventModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { sendFlowDirect } from "../../integration/handlers/send-flow-direct"
 import type {
@@ -13,7 +13,7 @@ import type {
 } from "./types"
 
 export class StepExecutorService {
-  async fetchStep(stepId: string) {
+  async fetchStep(stepId: bigint) {
     const step = await db.query.sequenceStepModel.findFirst({
       where: {
         id: stepId,
@@ -60,8 +60,8 @@ export class StepExecutorService {
   }
 
   async markDispatchCompleted(
-    dispatchId: string,
-    chatbotId: string,
+    dispatchId: bigint,
+    chatbotId: bigint,
     sentAt: Date,
   ): Promise<void> {
     await db

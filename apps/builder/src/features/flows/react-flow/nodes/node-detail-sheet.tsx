@@ -1,12 +1,12 @@
 "use client"
 
-import type { FlowNode, NodeType } from "@aha.chat/flow-config"
+import type { FlowNode, NodeType } from "@chatbotx.io/flow-config"
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetTitle,
-} from "@aha.chat/ui/components/ui/sheet"
+} from "@chatbotx.io/ui/components/ui/sheet"
 import { type ReactFlowState, useStore } from "@xyflow/react"
 import { memo } from "react"
 import { NodeEditor } from "./editor"

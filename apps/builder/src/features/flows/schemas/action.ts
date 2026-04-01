@@ -3,11 +3,11 @@ import {
   edgeSchema,
   flowVersionSchema,
   sendMessageNodeSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export const createFlowSchema = z.object({
-  folderId: z.string().nullable(),
+  folderId: z.bigint().nullable(),
   name: z.string().trim().min(1).max(255),
 })
 export type CreateFlowSchema = z.infer<typeof createFlowSchema>

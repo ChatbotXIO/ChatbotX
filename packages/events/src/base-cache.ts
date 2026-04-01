@@ -1,5 +1,5 @@
-import { db } from "@aha.chat/database/client"
-import { getRedisConnection } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { LRUCache } from "lru-cache"
 
 type CacheEntry = {
@@ -24,12 +24,12 @@ export abstract class BaseCache {
     return this._ramCache
   }
 
-  protected getCacheKey(chatbotId: string): string {
+  protected getCacheKey(chatbotId: bigint): string {
     return `${this.cachePrefix}${chatbotId}`
   }
 
   protected async getCachedData(
-    chatbotId: string,
+    chatbotId: bigint,
   ): Promise<Record<number, string[]> | null> {
     const cacheKey = this.getCacheKey(chatbotId)
     const cached = this.ramCache.get(cacheKey)
@@ -54,7 +54,7 @@ export abstract class BaseCache {
   }
 
   protected async buildCacheData(
-    chatbotId: string,
+    chatbotId: bigint,
   ): Promise<Record<number, string[]>> {
     const tableName = this.getTableName()
 
@@ -106,7 +106,7 @@ export abstract class BaseCache {
         return true
       }
 
-      if (sourceId && sourceIds.includes(sourceId)) {
+      if (sourceId && sourceIds.includes(sourceId.toString())) {
         return true
       }
     }
@@ -115,7 +115,7 @@ export abstract class BaseCache {
   }
 
   async hasActive(
-    chatbotId: string,
+    chatbotId: bigint,
     eventTypes: number[],
     sourceId?: string,
   ): Promise<boolean> {
@@ -144,7 +144,7 @@ export abstract class BaseCache {
     return this.checkEventTypes(cached, eventTypes, sourceId)
   }
 
-  async updateCache(chatbotId: string): Promise<void> {
+  async updateCache(chatbotId: bigint): Promise<void> {
     try {
       const chatbotMap = await this.buildCacheData(chatbotId)
 
@@ -163,7 +163,7 @@ export abstract class BaseCache {
     }
   }
 
-  async removeCache(chatbotId: string): Promise<void> {
+  async removeCache(chatbotId: bigint): Promise<void> {
     try {
       const cacheKey = this.getCacheKey(chatbotId)
       this.ramCache.delete(cacheKey)
@@ -175,7 +175,7 @@ export abstract class BaseCache {
     }
   }
 
-  async getCacheData(chatbotId: string): Promise<Record<number, string[]>> {
+  async getCacheData(chatbotId: bigint): Promise<Record<number, string[]>> {
     const cached = await this.getCachedData(chatbotId)
 
     if (cached) {

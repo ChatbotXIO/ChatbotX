@@ -1,17 +1,17 @@
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@aha.chat/ui/components/ui/command"
+} from "@chatbotx.io/ui/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
+} from "@chatbotx.io/ui/components/ui/popover"
 import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
@@ -20,7 +20,7 @@ import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
 import { useCustomFieldStore } from "./provider/custom-field-store-context"
 
 type ContactCustomFieldManageProps = {
-  chatbotId: string
+  chatbotId: bigint
   disabledIds: string[]
   onChooseCustomField: (customFieldId: string) => void
 }

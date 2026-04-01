@@ -1,3 +1,6 @@
-import { aiFunctionModel, createSelectSchema } from "@aha.chat/database/schema"
+import {
+  aiFunctionModel,
+  createSelectSchema,
+} from "@chatbotx.io/database/schema"
 
 export const aiFunctionResource = createSelectSchema(aiFunctionModel)

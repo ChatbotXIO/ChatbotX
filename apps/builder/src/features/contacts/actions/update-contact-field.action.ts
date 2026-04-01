@@ -1,16 +1,15 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   type ContactModel,
   type FillableContactKeys,
   fillableContactKeys,
-} from "@aha.chat/database/types"
-import { createId } from "@chatbotx.io/utils"
+} from "@chatbotx.io/database/types"
 import {
   type ChatbotIdAndIdRequestParams,
   chatbotIdAndIdRequestParams,
@@ -44,8 +43,8 @@ export const updateContactFields = async ({
   id,
   parsedInput,
 }: {
-  chatbotId: string
-  id: string
+  chatbotId: bigint
+  id: bigint
   parsedInput: UpdateContactFieldRequest
 }) => {
   const contact = await findOrFail(
@@ -60,12 +59,11 @@ export const updateContactFields = async ({
   const allCustomFields = await listCustomFields({
     chatbotId,
     ...listCustomFieldsSearchParams.parse({
-      chatbotId,
       perPage: maxPerPageString,
     }),
   })
   const allCustomFieldsMap = new Map(
-    allCustomFields.data.map((field) => [field.id, field]),
+    allCustomFields.data.map((field) => [field.id.toString(), field]),
   )
 
   // Prepare data
@@ -95,9 +93,8 @@ export const updateContactFields = async ({
           .insert(contactCustomFieldModel)
           .values({
             contactId: id,
-            customFieldId: key,
+            customFieldId: BigInt(key),
             value: value as string,
-            id: createId(),
           })
           .onConflictDoUpdate({
             target: [

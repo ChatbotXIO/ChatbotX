@@ -1,5 +1,5 @@
-import { Condition } from "@aha.chat/database/enums"
-import { webhookQueue } from "@aha.chat/worker-config"
+import { Condition } from "@chatbotx.io/database/enums"
+import { webhookQueue } from "@chatbotx.io/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
 import { hasActiveWebhooks } from "./cache"
 import { isWebhookContext } from "./context"
@@ -26,7 +26,7 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
 
   protected async shouldEmitEvent(
     eventType: Condition,
-    chatbotId: string,
+    chatbotId: bigint,
     sourceId?: string,
   ): Promise<boolean> {
     if (!isWebhookContext()) {
@@ -39,8 +39,8 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
   protected async emitToQueue(
     eventType: Condition,
     data: {
-      chatbotId: string
-      contactId: string
+      chatbotId: bigint
+      contactId: bigint
       metadata?: Record<string, unknown>
     },
   ): Promise<void> {

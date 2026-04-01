@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { ListInboxTeams } from "@/enterprise/features/inbox-teams/list-inbox-teams"
@@ -9,8 +9,7 @@ import { getChatbotMembersSearchParamsCache } from "@/features/chatbot-members/s
 export default async function InboxTeamsPage(props: {
   params: Promise<{ chatbotId: string }>
 }) {
-  const { chatbotId: chatbotIdString } = await props.params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await props.params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

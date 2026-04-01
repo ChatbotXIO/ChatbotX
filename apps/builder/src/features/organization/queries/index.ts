@@ -1,11 +1,9 @@
 "use server"
 
-import { db } from "@aha.chat/database/client"
-import {
-  type OrganizationModel,
-  type OrganizationSettings,
-  organizationSettingsSchema,
-} from "@aha.chat/database/types"
+import { db } from "@chatbotx.io/database/client"
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import { organizationSettingsSchema } from "@chatbotx.io/database/partials"
+import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"

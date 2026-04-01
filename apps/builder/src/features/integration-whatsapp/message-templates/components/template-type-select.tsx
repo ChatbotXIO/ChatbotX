@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   CopyIcon,
   FileIcon,
@@ -11,7 +11,7 @@ import {
   VideoIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { TemplateType } from "@/features/integration-whatsapp/message-templates/type"
+import { type TemplateType, templateTypes } from "../type"
 
 type WhatsappMessageTemplateTypeSelectProps = {
   onSelectTemplateType: (templateType: TemplateType) => void
@@ -26,47 +26,47 @@ export function WhatsappMessageTemplateTypeSelect(
     {
       icon: TypeIcon,
       name: t("whatsapp.messageTemplate.text.label"),
-      value: TemplateType.Text,
+      value: templateTypes.enum.Text,
     },
     {
       icon: ImageIcon,
       name: t("whatsapp.messageTemplate.image.label"),
-      value: TemplateType.Image,
+      value: templateTypes.enum.Image,
     },
     {
       icon: VideoIcon,
       name: t("whatsapp.messageTemplate.video.label"),
-      value: TemplateType.Video,
+      value: templateTypes.enum.Video,
     },
     {
       icon: FileIcon,
       name: t("whatsapp.messageTemplate.document.label"),
-      value: TemplateType.Document,
+      value: templateTypes.enum.Document,
     },
     {
       icon: CopyIcon,
       name: t("whatsapp.messageTemplate.carouselImage.label"),
-      value: TemplateType.CarouselImage,
+      value: templateTypes.enum.CarouselImage,
     },
     {
       icon: CopyIcon,
       name: t("whatsapp.messageTemplate.carouselVideo.label"),
-      value: TemplateType.CarouselVideo,
+      value: templateTypes.enum.CarouselVideo,
     },
     {
       icon: MapIcon,
       name: t("whatsapp.messageTemplate.location.label"),
-      value: TemplateType.Location,
+      value: templateTypes.enum.Location,
     },
     {
       icon: StoreIcon,
       name: t("whatsapp.messageTemplate.viewCatalog.label"),
-      value: TemplateType.ViewCatalog,
+      value: templateTypes.enum.ViewCatalog,
     },
     {
       icon: StoreIcon,
       name: t("whatsapp.messageTemplate.viewProduct.label"),
-      value: TemplateType.ViewProduct,
+      value: templateTypes.enum.ViewProduct,
     },
   ]
 
@@ -75,7 +75,7 @@ export function WhatsappMessageTemplateTypeSelect(
       {validTypes.map((validType) => (
         <Button
           className="flex h-auto! w-full items-center justify-start gap-4 truncate p-6 text-xl"
-          disabled={validType.value === TemplateType.Location}
+          disabled={validType.value === templateTypes.enum.Location}
           key={validType.value}
           onClick={() => props.onSelectTemplateType(validType.value)}
           variant="secondary"

@@ -1,6 +1,6 @@
 "use client"
 
-import { Badge } from "@aha.chat/ui/components/ui/badge"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import {
   Command,
   CommandEmpty,
@@ -8,7 +8,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@aha.chat/ui/components/ui/command"
+} from "@chatbotx.io/ui/components/ui/command"
 import {
   FormControl,
   FormDescription,
@@ -16,13 +16,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/form"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@aha.chat/ui/components/ui/popover"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/popover"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { AnimatePresence, motion } from "framer-motion"
 import { Check, ChevronDown, X } from "lucide-react"
 import { memo, type ReactNode, useRef, useState } from "react"

@@ -1,12 +1,12 @@
-import { db, eq, sql } from "@aha.chat/database/client"
-import { analyticsManifestStatusModel } from "@aha.chat/database/schema"
-import { uploader } from "@aha.chat/filesystem"
+import { clickhouse } from "@chatbotx.io/clickhouse/client"
+import { db, eq, sql } from "@chatbotx.io/database/client"
+import { analyticsManifestStatusModel } from "@chatbotx.io/database/schema"
+import { uploader } from "@chatbotx.io/filesystem"
 import {
   ClickhouseIngester,
   type NdjsonIngestManifestStore,
-} from "@aha.chat/filesystem/server"
-import type { AnalyticsJobData } from "@aha.chat/worker-config"
-import { clickhouse } from "@chatbotx.io/clickhouse/client"
+} from "@chatbotx.io/filesystem/server"
+import type { AnalyticsJobData } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { getClickhouseConfig } from "../config/storage.config"
 

@@ -1,7 +1,9 @@
-import { db } from "@aha.chat/database/client"
-import { aiMessageRoles } from "@aha.chat/database/schema"
-import { type AIProvider, aiProviders } from "@aha.chat/flow-config"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createOpenAI } from "@ai-sdk/openai"
+import { db } from "@chatbotx.io/database/client"
+import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import { type AIProvider, aiProviders } from "@chatbotx.io/flow-config"
+import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import {
   type BotResponseTrackingContext,
   ChatJobAction,
@@ -9,9 +11,7 @@ import {
   IntegrationJobAction,
   type IntegrationJobTriggerAutomatedResponse,
   integrationQueue,
-} from "@aha.chat/worker-config"
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import { createOpenAI } from "@ai-sdk/openai"
+} from "@chatbotx.io/worker-config"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
 import { TEXT } from "./constants"
 import { processStreamingText, sendMessageWithRender } from "./text"

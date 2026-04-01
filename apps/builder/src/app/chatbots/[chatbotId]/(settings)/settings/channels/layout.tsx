@@ -1,12 +1,12 @@
 "use client"
 
-import type { ChannelType } from "@aha.chat/database/types"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
+} from "@chatbotx.io/ui/components/ui/accordion"
 import { useSearchParams } from "next/navigation"
 import type { ReactNode } from "react"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"

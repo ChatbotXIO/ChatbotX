@@ -1,7 +1,7 @@
 "use client"
 
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { TagsInputField } from "@aha.chat/ui/components/ui/muhammada86/tags-input-field"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { useState } from "react"

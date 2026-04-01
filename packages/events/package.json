@@ -7,12 +7,12 @@
     "./context": "./src/context.ts"
   },
   "dependencies": {
-    "@aha.chat/database": "workspace:*",
-    "@aha.chat/worker-config": "workspace:*",
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/worker-config": "workspace:*",
     "lru-cache": "^11.2.7"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "typescript": "5.9.3"
   }
 }

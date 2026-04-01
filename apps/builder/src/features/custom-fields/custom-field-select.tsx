@@ -1,17 +1,17 @@
 "use client"
 
-import type { CustomFieldType } from "@aha.chat/database/types"
-import { FieldOperationType } from "@aha.chat/flow-config"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import type { CustomFieldType } from "@chatbotx.io/database/types"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import {
   SelectField,
   type SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { FormItem, FormLabel } from "@aha.chat/ui/components/ui/form"
-import { useParams } from "next/navigation"
+} from "@chatbotx.io/ui/components/form/select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { FormItem, FormLabel } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
+import { useChatbotId } from "@/hooks/routing"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
 import { useCustomFieldStore } from "./provider/custom-field-store-context"
@@ -40,7 +40,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   } = props
 
   const t = useTranslations()
-  const params = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     customFieldTypes,
     includeReserved,
@@ -71,7 +71,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
 
           {allowCreate && (
             <CreateCustomFieldDialog
-              chatbotId={params.chatbotId}
+              chatbotId={chatbotId}
               folderId={null}
               onSuccess={handleSuccess}
               triggerButton={

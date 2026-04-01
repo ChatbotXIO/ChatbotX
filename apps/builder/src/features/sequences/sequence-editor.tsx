@@ -1,6 +1,6 @@
 "use client"
 
-import type { SequenceModel } from "@aha.chat/database/types"
+import type { SequenceModel } from "@chatbotx.io/database/types"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,10 +8,14 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@aha.chat/ui/components/ui/breadcrumb"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent, CardHeader } from "@aha.chat/ui/components/ui/card"
-import { Label } from "@aha.chat/ui/components/ui/label"
+} from "@chatbotx.io/ui/components/ui/breadcrumb"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@chatbotx.io/ui/components/ui/card"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"

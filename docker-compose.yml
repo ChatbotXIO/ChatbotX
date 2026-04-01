@@ -33,17 +33,14 @@ services:
       retries: 5
       start_period: 20s
 
-  pgadmin:
+  adminer:
     <<: *network
-    image: dpage/pgadmin4:latest
+    image: adminer:latest
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "5050:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@example.com
-      - PGADMIN_DEFAULT_PASSWORD=nr541Kv59xB4f48bhZOy5wBz
+      - "8080:8080"
 
   mailhog:
     <<: *network

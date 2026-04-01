@@ -1,6 +1,6 @@
 "use client"
 
-import type { StartExternalFlowStepSchema } from "@aha.chat/flow-config"
+import type { StartExternalFlowStepSchema } from "@chatbotx.io/flow-config"
 import { ExternalLinkIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"

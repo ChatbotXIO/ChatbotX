@@ -1,9 +1,9 @@
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListContactsRequest,
@@ -11,7 +11,7 @@ import type {
 } from "../schemas/query"
 
 export async function listContacts(
-  input: ListContactsRequest & { chatbotId: string },
+  input: ListContactsRequest & { chatbotId: bigint },
 ): Promise<ListContactsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 

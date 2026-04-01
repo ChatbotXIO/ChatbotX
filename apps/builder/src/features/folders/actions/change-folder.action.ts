@@ -1,7 +1,7 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { FolderType, rootFolderId } from "@aha.chat/database/enums"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { FolderType, rootFolderId } from "@chatbotx.io/database/enums"
 import {
   automatedResponseModel,
   customFieldModel,
@@ -10,7 +10,7 @@ import {
   tagModel,
   triggerModel,
   webhookModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { chatbotIdRequestParams } from "@/features/common/schemas"
 import { ChatbotXException } from "@/lib/errors/exception"
@@ -40,7 +40,7 @@ export const changeFolderAction = chatbotActionClient
       throw new ChatbotXException("Resource not found")
     }
 
-    let newFolderId: string | null = null
+    let newFolderId: bigint | null = null
     const inputNewFolderId =
       parsedInput.newFolderId === rootFolderId ? null : parsedInput.newFolderId
     if (inputNewFolderId) {

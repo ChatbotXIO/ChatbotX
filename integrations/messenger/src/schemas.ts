@@ -7,7 +7,7 @@ import type {
   ReceivedMessageResult,
   SendFlowStepProps,
   SendMessageProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
@@ -16,7 +16,7 @@ export type MessengerConfig = Oauth2Config & {
   verifyToken?: string
   version: string
   stateParams: {
-    chatbotId: string
+    chatbotId: bigint
   }
 }
 

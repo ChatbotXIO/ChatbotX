@@ -5,14 +5,14 @@ import {
   eq,
   inArray,
   type Transaction,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
 import {
   contactsOnSequenceModel,
   sequenceDispatchModel,
   sequenceEventModel,
-} from "@aha.chat/database/schema"
-import { SchedulerClient } from "@aha.chat/scheduler"
+} from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { createId } from "@chatbotx.io/utils"
 import { createHash } from "crypto"
 

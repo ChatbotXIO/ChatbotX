@@ -17,7 +17,7 @@ export const SequenceStoreContext = createContext<SequenceStoreApi | undefined>(
 )
 
 export type SequenceStoreProviderProps = {
-  chatbotId: string
+  chatbotId: bigint
   children: ReactNode
   autoInitialize?: boolean
 }

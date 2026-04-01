@@ -7,15 +7,15 @@ import {
   eq,
   findOrFail,
   inArray,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsOnSequenceModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   cancelPendingDispatches,
   enrollContactInSequence,
-} from "@aha.chat/sequence-scheduler"
+} from "@chatbotx.io/sequence-scheduler"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -30,8 +30,8 @@ import { calculateNextRunAtBulk } from "../utils/calculate-next-run-at"
 
 async function getCurrentSequenceIds(
   tx: DatabaseClient,
-  contactId: string,
-  chatbotId: string,
+  contactId: bigint,
+  chatbotId: bigint,
 ) {
   const sequences = await tx
     .select({ sequenceId: contactsOnSequenceModel.sequenceId })
@@ -46,9 +46,9 @@ async function getCurrentSequenceIds(
 }
 
 function calculateSequenceDiff(
-  currentIds: string[],
-  newIds: string[],
-): { toAdd: string[]; toRemove: string[] } {
+  currentIds: bigint[],
+  newIds: bigint[],
+): { toAdd: bigint[]; toRemove: bigint[] } {
   const currentSet = new Set(currentIds)
   const newSet = new Set(newIds)
 
@@ -60,9 +60,9 @@ function calculateSequenceDiff(
 
 async function removeContactSequences(
   tx: DatabaseClient,
-  contactId: string,
-  sequenceIds: string[],
-  chatbotId: string,
+  contactId: bigint,
+  sequenceIds: bigint[],
+  chatbotId: bigint,
 ) {
   if (sequenceIds.length === 0) {
     return
@@ -83,7 +83,7 @@ async function removeContactSequences(
   }
 
   await Promise.all(
-    enrollments.map((enrollment: { id: string }) =>
+    enrollments.map((enrollment: { id: bigint }) =>
       cancelPendingDispatches({
         client: tx,
         enrollmentId: enrollment.id,
@@ -93,7 +93,7 @@ async function removeContactSequences(
     ),
   )
 
-  const enrollmentIds = enrollments.map((e: { id: string }) => e.id)
+  const enrollmentIds = enrollments.map((e: { id: bigint }) => e.id)
   if (enrollmentIds.length > 0) {
     await tx
       .delete(contactsOnSequenceModel)
@@ -108,9 +108,9 @@ async function removeContactSequences(
 
 async function addContactSequences(
   tx: DatabaseClient,
-  contactId: string,
-  sequenceIds: string[],
-  chatbotId: string,
+  contactId: bigint,
+  sequenceIds: bigint[],
+  chatbotId: bigint,
 ) {
   if (sequenceIds.length === 0) {
     return

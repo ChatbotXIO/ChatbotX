@@ -2,7 +2,7 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { updateMessengerProfile, updatePersona } from "./apis/page"
 import { getUserProfile } from "./apis/user"
 import { agentMarkAsRead, sendTyping } from "./conversation"

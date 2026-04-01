@@ -57,7 +57,7 @@ export const privateCustomFieldsAPI = {
     .input(
       updateCustomFieldRequest
         .and(withChatbotIdSchema)
-        .and(z.object({ id: z.string() })),
+        .and(z.object({ id: z.bigint() })),
     )
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)
     .handler(async ({ input }) => {
@@ -78,8 +78,8 @@ export const privateCustomFieldsAPI = {
     })
     .input(
       z.object({
-        chatbotId: z.string(),
-        customFieldId: z.string(),
+        chatbotId: z.bigint(),
+        customFieldId: z.bigint(),
       }),
     )
     .use(chatbotAuthMiddleware, (input) => input.chatbotId)

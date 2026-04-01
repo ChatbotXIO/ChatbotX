@@ -1,6 +1,6 @@
-import { SchedulerClient } from "@aha.chat/scheduler"
 import { createProducer, type Producer } from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { logger } from "../lib/logger"
 
 const TOTAL_BUCKETS = 256

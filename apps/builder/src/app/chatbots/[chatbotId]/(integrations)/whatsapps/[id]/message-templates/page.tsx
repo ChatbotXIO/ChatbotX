@@ -1,3 +1,5 @@
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
 import { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
@@ -6,7 +8,15 @@ import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries
 export default async function WhatsappMessageTemplatePage(props: {
   params: Promise<{ chatbotId: string; id: string }>
 }) {
-  const { chatbotId, id } = await props.params
+  const { chatbotId: chatbotIdString, id: idString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+  const id = parseBigIntId(idString)
+  if (!id) {
+    return notFound()
+  }
 
   const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 

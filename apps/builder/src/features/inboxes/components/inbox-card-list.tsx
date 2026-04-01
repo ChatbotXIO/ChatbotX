@@ -1,7 +1,7 @@
 "use client"
 
-import { type ChannelType, channelTypes } from "@aha.chat/database/schema"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { memo, useMemo } from "react"
 import type { InboxResource } from "../schema/resource"
 import { InboxMessengerCard } from "./inbox-messenger-card"

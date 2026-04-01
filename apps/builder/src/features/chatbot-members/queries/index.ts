@@ -1,8 +1,8 @@
 "use server"
 
-import { db, relationsFilterToSQL } from "@aha.chat/database/client"
-import { chatbotMemberModel } from "@aha.chat/database/schema"
-import { getPaginationWithDefaults } from "@aha.chat/database/utils"
+import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { chatbotMemberModel } from "@chatbotx.io/database/schema"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetChatbotMembersSchema,

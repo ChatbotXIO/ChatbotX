@@ -4,13 +4,13 @@ import type { Column, Table } from "@tanstack/react-table"
 import { X } from "lucide-react"
 import * as React from "react"
 
-import { DataTableDateFilter } from "@aha.chat/ui/components/data-table/data-table-date-filter"
-import { DataTableFacetedFilter } from "@aha.chat/ui/components/data-table/data-table-faceted-filter"
-import { DataTableSliderFilter } from "@aha.chat/ui/components/data-table/data-table-slider-filter"
-import { DataTableViewOptions } from "@aha.chat/ui/components/data-table/data-table-view-options"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Input } from "@aha.chat/ui/components/ui/input"
-import { cn } from "@aha.chat/ui/lib/utils"
+import { DataTableDateFilter } from "@chatbotx.io/ui/components/data-table/data-table-date-filter"
+import { DataTableFacetedFilter } from "@chatbotx.io/ui/components/data-table/data-table-faceted-filter"
+import { DataTableSliderFilter } from "@chatbotx.io/ui/components/data-table/data-table-slider-filter"
+import { DataTableViewOptions } from "@chatbotx.io/ui/components/data-table/data-table-view-options"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<"div"> {
   table: Table<TData>

@@ -1,4 +1,4 @@
-import type { FolderType } from "@aha.chat/database/types"
+import type { FolderType } from "@chatbotx.io/database/types"
 
 export function getFolderTypeFromFeature(
   featureName?: string,

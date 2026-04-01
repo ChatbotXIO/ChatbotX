@@ -1,11 +1,11 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@aha.chat/ui/components/ui/chart"
+} from "@chatbotx.io/ui/components/ui/chart"
 import { AreaChart as AC, Area, XAxis, YAxis } from "recharts"
 import ChartHeader from "./chart-header"
 

@@ -1,10 +1,10 @@
 "use client"
 
-import { aiGenerateImageSchema } from "@aha.chat/flow-config"
-import { CheckboxGroupField } from "@aha.chat/ui/components/form/checkbox-field"
-import { InputNumberField } from "@aha.chat/ui/components/form/input-number-field"
-import { MultiSelectField } from "@aha.chat/ui/components/form/multi-select-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { aiGenerateImageSchema } from "@chatbotx.io/flow-config"
+import { CheckboxGroupField } from "@chatbotx.io/ui/components/form/checkbox-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogClose,
@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
 import { useState } from "react"

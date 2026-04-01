@@ -1,12 +1,12 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import {
   ArchiveIcon,
   ArchiveXIcon,
@@ -17,10 +17,10 @@ import {
   TrashIcon,
   UserLockIcon,
 } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useChatbotId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { blockContactAction } from "../contacts/actions/block-contact.action"
 import { unblockContactAction } from "../contacts/actions/unblock-contact.action"
@@ -38,7 +38,7 @@ type ConversationActionProps = {
 
 export function ConversationAction({ conversation }: ConversationActionProps) {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const { deleteConversation, updateConversation, updateContact } =
     useChatStore((state) => state)
@@ -221,7 +221,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         )}
 
         <DeleteContactDialog
-          ids={[conversation.contact?.id || ""]}
+          ids={[conversation.contact?.id || BigInt(0)]}
           onSuccess={() => {
             deleteConversation(conversation.id)
           }}

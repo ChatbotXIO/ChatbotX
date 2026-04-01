@@ -1,5 +1,5 @@
 import url from "node:url"
-import { type HandleRequestProps, SdkException } from "@aha.chat/sdk"
+import { type HandleRequestProps, SdkException } from "@chatbotx.io/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"

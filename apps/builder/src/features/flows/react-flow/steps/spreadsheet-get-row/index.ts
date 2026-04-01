@@ -2,7 +2,7 @@ import {
   type SpreadsheetGetRowSchema,
   spreadsheetGetRowDefaultFn,
   spreadsheetGetRowSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import { SpreadsheetViewer } from "../spreadsheet/viewer"
 import { SpreadsheetGetRowEditor } from "./editor"

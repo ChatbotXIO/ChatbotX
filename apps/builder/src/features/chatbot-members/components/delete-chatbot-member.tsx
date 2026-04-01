@@ -1,7 +1,7 @@
 "use client"
 
-import type { ChatbotMemberModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { ChatbotMemberModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
+} from "@chatbotx.io/ui/components/ui/dialog"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -32,8 +32,8 @@ export function DeleteChatbotMemberDialog({
   const { execute, isPending } = useAction(
     deleteChatbotMemberAction.bind(
       null,
-      chatbotMember?.chatbotId ?? "",
-      chatbotMember?.id ?? "",
+      chatbotMember?.chatbotId ?? BigInt(0),
+      chatbotMember?.id ?? BigInt(0),
     ),
     {
       onSuccess: () => {

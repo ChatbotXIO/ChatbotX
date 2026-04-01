@@ -1,12 +1,12 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { emitCustomFieldChanged } from "@chatbotx/events"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
-} from "@aha.chat/database/schema"
-import { FieldOperationType } from "@aha.chat/flow-config"
-import { emitCustomFieldChanged } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
+import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
@@ -145,9 +145,9 @@ export const setContactCustomFieldValue = async ({
   customFieldId,
   value,
 }: {
-  chatbotId: string
-  contactId: string
-  customFieldId: string
+  chatbotId: bigint
+  contactId: bigint
+  customFieldId: bigint
   value: string
 }) => {
   // Get custom field info for event emission

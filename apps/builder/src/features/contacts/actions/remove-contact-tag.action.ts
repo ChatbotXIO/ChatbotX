@@ -1,8 +1,8 @@
 "use server"
 
-import { and, db, eq, inArray } from "@aha.chat/database/client"
-import { contactsToTagsModel } from "@aha.chat/database/schema"
 import { emitTagRemoved } from "@chatbotx/events"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdRequestParams,
   chatbotIdRequestParams,
@@ -36,7 +36,7 @@ export const removeContactTags = async ({
   chatbotId,
   parsedInput,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   parsedInput: RemoveContactTagsRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({
@@ -60,11 +60,6 @@ export const removeContactTags = async ({
       where: {
         chatbotId,
         OR: [
-          {
-            name: {
-              in: parsedInput.tags,
-            },
-          },
           {
             id: {
               in: parsedInput.tags,

@@ -1,7 +1,10 @@
-import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
-import { rootFolderId } from "@aha.chat/database/enums"
-import { contactsToTagsModel, tagModel } from "@aha.chat/database/schema"
-import { parseOrderByAsObject, parsePagination } from "@aha.chat/database/utils"
+import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { rootFolderId } from "@chatbotx.io/database/enums"
+import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
+import {
+  parseOrderByAsObject,
+  parsePagination,
+} from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   FindTagRequest,
@@ -10,7 +13,7 @@ import type {
 } from "../schemas/query"
 
 export const listTagsRSC = async (
-  input: ListTagsRequest & { chatbotId: string },
+  input: ListTagsRequest & { chatbotId: bigint },
 ) => {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
@@ -18,7 +21,7 @@ export const listTagsRSC = async (
 }
 
 export async function listTags(
-  input: ListTagsRequest & { chatbotId: string },
+  input: ListTagsRequest & { chatbotId: bigint },
 ): Promise<ListTagsResponse> {
   const where = {
     chatbotId: input.chatbotId,

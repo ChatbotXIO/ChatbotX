@@ -1,10 +1,10 @@
-import { Condition } from "@aha.chat/database/enums"
+import { Condition } from "@chatbotx.io/database/enums"
 import z from "zod"
 
 // Simple conditions without additional fields
 const createSimpleCondition = (type: Condition) =>
   z.object({
-    id: z.string().optional(),
+    id: z.bigint().optional(),
     type: z.literal(type),
   })
 
@@ -37,7 +37,7 @@ export const contactReferredExistingContact = createSimpleCondition(
 // Conditions with sourceId
 const createConditionWithSourceId = (type: Condition) =>
   z.object({
-    id: z.string().optional(),
+    id: z.bigint().optional(),
     type: z.literal(type),
     sourceId: z.string().min(1, "Required"),
   })

@@ -1,4 +1,4 @@
-import type { Context, OutgoingMessage } from "@aha.chat/sdk"
+import type { Context, OutgoingMessage } from "@chatbotx.io/sdk"
 import type { ChatbotxAuthValue } from "../auth"
 import { getRealtimeClient } from "./client"
 

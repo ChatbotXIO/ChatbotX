@@ -1,7 +1,7 @@
 import {
   contactsOnSequenceModel,
   createSelectSchema,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import { z } from "zod"
 import { sequenceResource } from "@/features/sequences/schema"
 
@@ -18,7 +18,7 @@ export type ContactOnSequenceWithRelations = z.infer<
 
 export const updateContactSequenceRequest = z.object({
   contactId: z.bigint(),
-  sequences: z.array(z.string().trim()),
+  sequences: z.array(z.bigint()),
 })
 export type UpdateContactSequenceRequest = z.infer<
   typeof updateContactSequenceRequest

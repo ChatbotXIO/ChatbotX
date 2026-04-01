@@ -1,21 +1,21 @@
 "use client"
 
-import { DataTable } from "@aha.chat/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@aha.chat/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@aha.chat/ui/components/data-table/data-table-toolbar"
+import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
-import { Checkbox } from "@aha.chat/ui/components/ui/checkbox"
+} from "@chatbotx.io/ui/components/ui/card"
+import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
-import { useDataTable } from "@aha.chat/ui/hooks/use-data-table"
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistance } from "date-fns"
 import Link from "next/link"
@@ -31,7 +31,7 @@ import type { ContactResource } from "./schemas/resource"
 import { getFullName } from "./utils"
 
 type ContactsTableProps = {
-  chatbotId: string
+  chatbotId: bigint
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
 }
 
@@ -210,7 +210,7 @@ export function ContactsTable({ chatbotId, promises }: ContactsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id,
+    getRowId: (originalRow) => originalRow.id.toString(),
     shallow: false,
     clearOnDefault: true,
   })

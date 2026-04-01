@@ -1,4 +1,4 @@
-import type { Context } from "@aha.chat/sdk"
+import type { Context } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import type { ZaloAuthValue } from "../schemas/definition"
 

@@ -1,19 +1,19 @@
 "use client"
 
-import type { ChatbotMemberModel } from "@aha.chat/database/types"
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { ChatbotMemberModel } from "@chatbotx.io/database/types"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
-import { cn } from "@aha.chat/ui/lib/utils"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -89,8 +89,8 @@ export function UpdateChatbotMemberForm({
     useHookFormAction(
       updateChatbotMemberAction.bind(
         null,
-        chatbotMember?.chatbotId ?? "",
-        chatbotMember?.id ?? "",
+        chatbotMember?.chatbotId ?? BigInt(0),
+        chatbotMember?.id ?? BigInt(0),
       ),
       zodResolver(updateChatbotMemberRequest),
       {

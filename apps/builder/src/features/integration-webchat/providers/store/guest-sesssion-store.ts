@@ -1,9 +1,9 @@
-import type { WebchatPersistentMenu } from "@aha.chat/database/schema"
+import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
 import {
   type IntegrationWebchatModel,
   WEBCHAT_SOURCE_PREFIX,
-} from "@aha.chat/database/types"
-import type { MessageButtonTemplate } from "@aha.chat/sdk"
+} from "@chatbotx.io/database/types"
+import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"

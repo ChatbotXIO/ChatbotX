@@ -11,7 +11,7 @@ import {
   isNull,
   type SQL,
   sql,
-} from "@aha.chat/database/client"
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   conversationModel,
@@ -19,8 +19,8 @@ import {
   inboxTeamModel,
   messageModel,
   userModel,
-} from "@aha.chat/database/schema"
-import { getPaginationWithDefaults } from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/schema"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { parseBigIntId } from "@chatbotx.io/utils"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"

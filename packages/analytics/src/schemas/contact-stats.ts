@@ -44,8 +44,8 @@ export type GetMessagesBySenderStatsResponseSchema = z.infer<
 >
 
 export const messagesByAdminStatsSchema = z.object({
-  adminId: z.string(),
-  chatbotId: z.string(),
+  adminId: z.bigint(),
+  chatbotId: z.bigint(),
   count: z.number(),
   userEmail: z.string().optional(),
   userName: z.string().optional(),
@@ -60,8 +60,8 @@ export type GetMessagesByAdminStatsResponseSchema = z.infer<
 >
 
 export const uniqueContactsByAdminStatsSchema = z.object({
-  chatbotId: z.string(),
-  toAssignee: z.string(),
+  chatbotId: z.bigint(),
+  toAssignee: z.bigint(),
   count: z.number(),
   userName: z.string().optional(),
   userEmail: z.string().optional(),
@@ -71,8 +71,8 @@ export type UniqueContactsByAdminStats = z.infer<
 >
 
 export const humanAgentStatsSchema = z.object({
-  adminId: z.string(),
-  chatbotId: z.string(),
+  adminId: z.bigint(),
+  chatbotId: z.bigint(),
   assignedConversations: z.number(),
   messagesSent: z.number(),
   uniqueContacts: z.number(),

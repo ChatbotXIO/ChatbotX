@@ -1,7 +1,7 @@
 "use client"
 
-import type { TagModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { TagModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -11,7 +11,7 @@ import { DeleteTagsDialog } from "./delete-tag-dialog"
 
 type TagsTableToolbarActionsProps = {
   table: Table<TagModel>
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export function TagsTableToolbarActions({

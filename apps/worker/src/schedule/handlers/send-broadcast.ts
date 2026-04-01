@@ -1,5 +1,8 @@
-import { db } from "@aha.chat/database/client"
-import { IntegrationJobAction, integrationQueue } from "@aha.chat/worker-config"
+import { db } from "@chatbotx.io/database/client"
+import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
 
 const ENQUEUE_BULK_SIZE = 500
 

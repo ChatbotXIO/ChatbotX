@@ -1,13 +1,12 @@
-import { and, count, db, eq, isNull } from "@aha.chat/database/client"
-import { triggerModel } from "@aha.chat/database/schema"
-import type { TriggerModel } from "@aha.chat/database/types"
+import { and, count, db, eq, isNull } from "@chatbotx.io/database/client"
+import { triggerModel } from "@chatbotx.io/database/schema"
+import type { TriggerModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { GetTriggersSchema } from "../schema/query"
-import type { TriggerCollection } from "../schema/resource"
+import type { GetTriggersSchema, ListTriggersResponse } from "../schema/query"
 
 export async function getTriggers(
   input: GetTriggersSchema,
-): Promise<TriggerCollection> {
+): Promise<ListTriggersResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
   // Build SQL conditions
@@ -15,7 +14,9 @@ export async function getTriggers(
 
   if (input.folderId !== undefined) {
     const folderId =
-      input.folderId === null || input.folderId === "0" ? null : input.folderId
+      input.folderId === null || input.folderId === BigInt(0)
+        ? null
+        : input.folderId
     if (folderId === null) {
       conditions.push(isNull(triggerModel.folderId))
     } else {
@@ -62,8 +63,8 @@ export async function getTriggers(
 }
 
 export async function findTrigger(params: {
-  id?: string
-  chatbotId?: string
+  id?: bigint
+  chatbotId?: bigint
 }): Promise<TriggerModel | null> {
   const where: Record<string, unknown> = {}
 

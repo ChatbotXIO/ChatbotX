@@ -4,7 +4,7 @@ import {
   extractParameterInfos,
   type ParameterInfo,
   type TemplateComponent,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import { useMemo } from "react"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 

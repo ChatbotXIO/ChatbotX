@@ -1,8 +1,8 @@
 "use client"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
-import { generateAuthUrl } from "@aha.chat/integration-zalo"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import { generateAuthUrl } from "@chatbotx.io/integration-zalo"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { RedirectType, redirect } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"

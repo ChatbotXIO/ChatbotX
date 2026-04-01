@@ -1,5 +1,5 @@
-import { type DatabaseClient, inArray } from "@aha.chat/database/client"
-import { contactsOnSequenceModel } from "@aha.chat/database/schema"
+import { type DatabaseClient, inArray } from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { cancelPendingDispatches } from "./dispatch-manager"
 
 export const contactsOnSequencesUtils = {

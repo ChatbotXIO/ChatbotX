@@ -1,35 +1,35 @@
 "use client"
 
-import type { IntegrationMessengerModel } from "@aha.chat/database/types"
-import { FileType } from "@aha.chat/sdk"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
+import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
+import { FileType } from "@chatbotx.io/sdk"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@aha.chat/ui/components/ui/accordion"
-import { Badge } from "@aha.chat/ui/components/ui/badge"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/accordion"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
-import { DialogFooter } from "@aha.chat/ui/components/ui/dialog"
+} from "@chatbotx.io/ui/components/ui/card"
+import { DialogFooter } from "@chatbotx.io/ui/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@aha.chat/ui/components/ui/dropdown-menu"
-import { Form } from "@aha.chat/ui/components/ui/form"
-import { Label } from "@aha.chat/ui/components/ui/label"
-import { Separator } from "@aha.chat/ui/components/ui/separator"
+} from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
+import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"

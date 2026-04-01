@@ -1,7 +1,7 @@
 "use server"
 
-import { db, isDatabaseError } from "@aha.chat/database/client"
-import { customFieldModel } from "@aha.chat/database/schema"
+import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { customFieldModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
@@ -34,7 +34,7 @@ export const createCustomFieldAction = chatbotActionClient
   )
 
 export const createCustomField = async (
-  chatbotId: string,
+  chatbotId: bigint,
   parsedInput: CreateCustomFieldRequest,
 ): Promise<CustomFieldResource> => {
   if (parsedInput.folderId) {

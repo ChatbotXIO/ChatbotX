@@ -1,10 +1,11 @@
-import type { WebhookModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import type { WebhookModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import { parseAsBigInt } from "@/lib/nuqs"
 
 export const getWebhooksSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -13,11 +14,11 @@ export const getWebhooksSearchParamsCache = createSearchParamsCache({
     { id: "createdAt", desc: true },
   ]),
   name: parseAsString.withDefault(""),
-  folderId: parseAsString,
+  folderId: parseAsBigInt,
 })
 
 export type GetWebhooksSchema = Awaited<
   ReturnType<typeof getWebhooksSearchParamsCache.parse>
 > & {
-  chatbotId: string
+  chatbotId: bigint
 }

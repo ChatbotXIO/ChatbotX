@@ -1,4 +1,4 @@
-# @aha.chat/scheduler
+# @chatbotx.io/scheduler
 
 Scheduler client for managing sequence dispatches with Redis/Dragonfly.
 
@@ -7,9 +7,9 @@ Scheduler client for managing sequence dispatches with Redis/Dragonfly.
 ### Using the legacy DragonflyClient (backward compatible)
 
 ```typescript
-import { initializeDragonfly } from "@aha.chat/scheduler"
+import { initializeDragonfly } from "@chatbotx.io/scheduler"
 
-// Initialize the client (uses sequenceConnections from @aha.chat/redis)
+// Initialize the client (uses sequenceConnections from @chatbotx.io/redis)
 const client = await initializeDragonfly()
 
 // Add a dispatch to schedule
@@ -22,8 +22,8 @@ await client.removeFromSchedule(bucket, dispatchId)
 ### Using the new SchedulerClient (recommended)
 
 ```typescript
-import { SchedulerClient } from "@aha.chat/scheduler"
-import { sequenceConnections } from "@aha.chat/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
+import { sequenceConnections } from "@chatbotx.io/redis"
 
 // Create client with your own Redis instance
 const redisClient = await sequenceConnections.useExisting()
@@ -61,7 +61,7 @@ Generic scheduler client that accepts any Redis client.
 
 ### DragonflyClient (Legacy)
 
-Extends SchedulerClient with connection management. Uses `sequenceConnections` from `@aha.chat/redis`.
+Extends SchedulerClient with connection management. Uses `sequenceConnections` from `@chatbotx.io/redis`.
 
 **Functions:**
 - `initializeDragonfly()` - Initialize and connect the client

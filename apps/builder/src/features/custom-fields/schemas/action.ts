@@ -1,4 +1,4 @@
-import { customFieldType } from "@aha.chat/database/schema"
+import { customFieldType } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
 export const createCustomFieldRequest = z.object({
@@ -10,7 +10,7 @@ export const createCustomFieldRequest = z.object({
 export type CreateCustomFieldRequest = z.infer<typeof createCustomFieldRequest>
 
 export const createCustomFieldResponse = z.object({
-  id: z.string(),
+  id: z.bigint(),
 })
 export type CreateCustomFieldResponse = z.infer<
   typeof createCustomFieldResponse

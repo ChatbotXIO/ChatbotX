@@ -1,11 +1,11 @@
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
-import { formatDate } from "@aha.chat/ui/lib/format"
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { formatDate } from "@chatbotx.io/ui/lib/format"
 import { CircleUserRound, PencilIcon, TrashIcon } from "lucide-react"
 import type { ContactNoteResource } from "./schemas/resource"
 
@@ -57,7 +57,7 @@ export function ContactNoteList({
             </Button>
           </div>
           <div className="mb-4 w-full whitespace-pre-wrap text-gray-500 text-sm">
-            {contactNote.content}
+            {contactNote.text}
           </div>
         </div>
       ))}

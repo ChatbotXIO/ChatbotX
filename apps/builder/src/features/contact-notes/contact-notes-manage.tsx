@@ -1,11 +1,11 @@
-import type { ContactNoteModel } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Label } from "@aha.chat/ui/components/ui/label"
+import type { ContactNoteModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { PlusIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { z } from "zod"
+import { useChatbotId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { AddContactForm } from "./add-contact-note-form"
@@ -23,8 +23,7 @@ export function ContactNotesManage({
   contactNotes: ContactNoteResource[]
 }) {
   const t = useTranslations()
-  const params = useParams<{ chatbotId: string }>()
-  const chatbotId = BigInt(params.chatbotId)
+  const chatbotId = useChatbotId()
 
   const [mode, setMode] = useState<ContactNoteMode>(contactNoteModes.enum.list)
 

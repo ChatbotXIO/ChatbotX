@@ -1,4 +1,4 @@
-import { folderType } from "@aha.chat/database/schema"
+import { folderType } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
 export const createFolderSchema = z.object({
@@ -18,6 +18,6 @@ export type EditFolderSchema = z.infer<typeof editFolderSchema>
 export const changeFolderRequest = z.object({
   folderType: z.enum(folderType.enumValues),
   modelIds: z.array(z.bigint()),
-  newFolderId: z.bigint().or(z.literal("0")),
+  newFolderId: z.bigint().or(z.literal(BigInt(0))),
 })
 export type ChangeFolderRequest = z.infer<typeof changeFolderRequest>

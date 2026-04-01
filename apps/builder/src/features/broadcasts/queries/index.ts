@@ -1,12 +1,12 @@
-import { db, eq, relationsFilterToSQL } from "@aha.chat/database/client"
+import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
-} from "@aha.chat/database/utils"
+} from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { GetBroadcastsSchema } from "../schemas/query"

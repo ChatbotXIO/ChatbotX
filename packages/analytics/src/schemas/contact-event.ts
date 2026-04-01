@@ -23,7 +23,7 @@ export const contactEventSchema = z.object({
   occurredAt: z.date(),
   senderType: contactSenderTypeSchema.optional(),
   source: z.string().nullish(),
-  sourceId: z.string().optional(),
+  sourceId: z.string().nullish(),
 })
 export type ContactEvent = z.infer<typeof contactEventSchema>
 

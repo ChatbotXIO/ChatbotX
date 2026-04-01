@@ -1,7 +1,7 @@
 "use client"
 
-import { SelectField } from "@aha.chat/ui/components/form/select-field"
-import { useParams } from "next/navigation"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { useChatbotId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
 type WorksheetSelectProps = {
@@ -17,10 +17,9 @@ export const WorksheetSelect = ({
   label = "Worksheet",
   required = true,
 }: WorksheetSelectProps) => {
-  const params = useParams<{ chatbotId: string }>()
-  // const { control } = useFormContext()
+  const chatbotId = useChatbotId()
 
-  const url = `/api/chatbots/${params.chatbotId}/worksheets?spreadsheetId=${spreadsheetId}`
+  const url = `/api/chatbots/${chatbotId}/worksheets?spreadsheetId=${spreadsheetId}`
   const { data } = callAPI<{ data: string[] }>(url)
   const worksheetOptions = (data?.data ?? []).map((v) => ({
     label: v,

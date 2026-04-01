@@ -3,15 +3,15 @@
 import type {
   ChannelType,
   OrganizationSettings,
-} from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useMemo } from "react"

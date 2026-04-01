@@ -1,7 +1,7 @@
 import {
   webchatConversationStarter,
   webchatPersistentMenu,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
 export const createWebchatRequest = z.object({

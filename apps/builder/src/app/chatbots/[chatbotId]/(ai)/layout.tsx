@@ -1,4 +1,4 @@
-import { parseBigIntId } from "@chatbotx.io/utils"
+import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -12,8 +12,7 @@ export default async function AILayout({
   params: Promise<{ chatbotId: string }>
   children: ReactNode
 }) {
-  const { chatbotId: chatbotIdString } = await params
-  const chatbotId = parseBigIntId(chatbotIdString)
+  const chatbotId = getIdFromParams(await params, "chatbotId")
   if (!chatbotId) {
     return notFound()
   }

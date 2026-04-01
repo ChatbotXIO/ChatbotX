@@ -1,5 +1,5 @@
-import type { SendWaTemplateMessageStepSchema } from "@aha.chat/flow-config"
-import type { SendFlowStepProps } from "@aha.chat/sdk"
+import type { SendWaTemplateMessageStepSchema } from "@chatbotx.io/flow-config"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import type {
   TemplateMessage,
   WhatsAppTemplateComponent,

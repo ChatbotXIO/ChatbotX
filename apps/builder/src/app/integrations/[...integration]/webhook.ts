@@ -1,8 +1,8 @@
 import {
   type OrganizationSettings,
   organizationSettingsSchema,
-} from "@aha.chat/database/types"
-import { integrationQueue } from "@aha.chat/worker-config"
+} from "@chatbotx.io/database/partials"
+import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"

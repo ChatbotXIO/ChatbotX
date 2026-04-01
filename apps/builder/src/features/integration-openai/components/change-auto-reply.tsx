@@ -1,10 +1,10 @@
-import type { IntegrationOpenAIModel } from "@aha.chat/database/types"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
-import { useParams } from "next/navigation"
+import type { IntegrationOpenAIModel } from "@chatbotx.io/database/types"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useChatbotId } from "@/hooks/routing"
 import { updateIntegrationOpenAIAction } from "../actions/update-openai.action"
 
 export default function ChangeAutoReply({
@@ -12,7 +12,7 @@ export default function ChangeAutoReply({
 }: {
   integrationOpenAI: IntegrationOpenAIModel
 }) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const t = useTranslations()
   const [autoReply, setAutoReply] = useState(integrationOpenAI.autoReply)

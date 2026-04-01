@@ -1,6 +1,6 @@
-import { SchedulerClient } from "@aha.chat/scheduler"
 import { type Consumer, createConsumer } from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
+import { SchedulerClient } from "@chatbotx.io/scheduler"
 import pLimit, { type LimitFunction } from "p-limit"
 import { logger } from "../lib/logger"
 import {

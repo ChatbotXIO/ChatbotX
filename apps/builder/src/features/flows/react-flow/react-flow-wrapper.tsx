@@ -4,8 +4,8 @@ import {
   NodeType,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
-} from "@aha.chat/flow-config"
-import { useDebouncedCallback } from "@aha.chat/ui/hooks/use-debounced-callback"
+} from "@chatbotx.io/flow-config"
+import { useDebouncedCallback } from "@chatbotx.io/ui/hooks/use-debounced-callback"
 import {
   addEdge,
   Background,

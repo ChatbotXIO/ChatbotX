@@ -1,5 +1,5 @@
-import type { ContextQueue, HandleRequestProps } from "@aha.chat/sdk"
-import crypto from "crypto"
+import crypto from "node:crypto"
+import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
 import {

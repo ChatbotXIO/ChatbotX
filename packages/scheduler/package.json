@@ -1,5 +1,5 @@
 {
-  "name": "@aha.chat/scheduler",
+  "name": "@chatbotx.io/scheduler",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,12 +7,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@aha.chat/logger": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "ioredis": "5.9.3"
   },
   "devDependencies": {
-    "@aha.chat/typescript-config": "workspace:*",
+    "@chatbotx.io/typescript-config": "workspace:*",
     "typescript": "^5.9.3"
   }
 }

@@ -1,12 +1,12 @@
 "use client"
 
-import type { ConversationAttributes } from "@aha.chat/database/types"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import type { ConversationAttributes } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@aha.chat/ui/components/ui/resizable"
+} from "@chatbotx.io/ui/components/ui/resizable"
 import { BotIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
@@ -84,7 +84,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         maxSize={"30%"}
         minSize={"20%"}
       >
-        <ConversationList />
+        <ConversationList chatbotId={chatbotId} />
       </ResizablePanel>
 
       <ResizableHandle withHandle />

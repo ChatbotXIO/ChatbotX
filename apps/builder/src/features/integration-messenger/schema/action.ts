@@ -3,7 +3,7 @@ import {
   messengerGreetingMessage,
   messengerPersistentMenu,
   messengerPersona,
-} from "@aha.chat/database/schema"
+} from "@chatbotx.io/database/partials"
 import z from "zod"
 
 export const selectPageRequest = z.object({
@@ -16,7 +16,7 @@ export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
 export const updateMessengerRequest = z.object({
   addLanguage: z.string().optional(),
-  welcomeFlowId: z.string().nullable(),
+  welcomeFlowId: z.bigint().nullable(),
   greetingMessages: z.array(messengerGreetingMessage),
   persistentMenus: z.array(messengerPersistentMenu),
   personas: z.array(messengerPersona),

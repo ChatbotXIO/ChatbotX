@@ -1,3 +1,3 @@
-import type { IntegrationGeminiModel } from "@aha.chat/database/types"
+import type { IntegrationGeminiModel } from "@chatbotx.io/database/types"
 
 export type IntegrationGeminiResource = IntegrationGeminiModel

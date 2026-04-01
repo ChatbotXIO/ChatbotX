@@ -1,12 +1,18 @@
 "use server"
 
-import { and, db, eq, findOrFail, notInArray } from "@aha.chat/database/client"
+import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  notInArray,
+} from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsToTagsModel,
   tagModel,
-} from "@aha.chat/database/schema"
-import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
+} from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
@@ -39,7 +45,7 @@ export const updateContactTags = async ({
   chatbotId,
   parsedInput,
 }: {
-  chatbotId: string
+  chatbotId: bigint
   parsedInput: UpdateContactTagRequest
 }): Promise<TagResource[]> => {
   const contact = await findOrFail(

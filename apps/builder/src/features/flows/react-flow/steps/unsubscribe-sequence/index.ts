@@ -2,7 +2,7 @@ import {
   type UnsubscribeSequenceStepSchema,
   unsubscribeSequenceStepDefaultFn,
   unsubscribeSequenceStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import UnsubscribeSequenceStepEditor from "./editor"
 import UnsubscribeSequenceStepViewer from "./viewer"

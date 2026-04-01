@@ -1,8 +1,8 @@
-import { db, findOrFail } from "@aha.chat/database/client"
-import { integrationWhatsappModel } from "@aha.chat/database/schema"
-import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schemas/query"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
+import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { MessageTemplateWithComponents } from "../type"
+import type { MessageTemplateWithComponents } from "../schema/resource"
 
 export const getMessageTemplates = async (
   input: ListMessageTemplatesRequest,
@@ -38,13 +38,13 @@ export const getMessageTemplates = async (
 }
 
 export const getTemplatesForChatbot = async (
-  chatbotId: string,
+  chatbotId: bigint,
   status?: string,
 ): Promise<MessageTemplateWithComponents[]> => {
   await assertCurrentUserCanAccessChatbot(chatbotId)
 
   const filter: {
-    integrationWhatsapp: { chatbotId: string }
+    integrationWhatsapp: { chatbotId: bigint }
     status?: string
   } = {
     integrationWhatsapp: { chatbotId },
@@ -56,15 +56,6 @@ export const getTemplatesForChatbot = async (
 
   return await db.query.whatsappMessageTemplateModel.findMany({
     where: filter,
-    columns: {
-      id: true,
-      name: true,
-      language: true,
-      category: true,
-      status: true,
-      components: true,
-      sourceId: true,
-    },
     orderBy: { name: "asc" },
   })
 }

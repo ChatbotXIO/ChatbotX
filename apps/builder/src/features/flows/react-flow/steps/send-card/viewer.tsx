@@ -1,7 +1,7 @@
 "use client"
 
-import type { SendCardStepSchema } from "@aha.chat/flow-config"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
+import type { SendCardStepSchema } from "@chatbotx.io/flow-config"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { ImageIcon } from "lucide-react"
 import Image from "next/image"
 import { ButtonGroupViewer } from "@/features/flows/react-flow/steps/button/viewer"

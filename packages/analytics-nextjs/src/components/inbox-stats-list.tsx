@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
 import { useAnalysisStore } from "@chatbotx.io/analytics-nextjs/provider/analysis-store-context"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 
 export default function InboxStatsList() {

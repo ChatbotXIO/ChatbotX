@@ -1,9 +1,9 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 
 export async function listFlowVersions({
   where,
 }: {
-  where: { chatbotId?: string; flowId?: string }
+  where: { chatbotId?: bigint; flowId?: bigint }
 }) {
   const data = await db.query.flowVersionModel.findMany({
     where,

@@ -2,7 +2,7 @@ import {
   type GenerateCodeStepSchema,
   generateCodeStepDefaultFn,
   generateCodeStepSchema,
-} from "@aha.chat/flow-config"
+} from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import GenerateCodeStepEditor from "./editor"
 import GenerateCodeStepViewer from "./viewer"

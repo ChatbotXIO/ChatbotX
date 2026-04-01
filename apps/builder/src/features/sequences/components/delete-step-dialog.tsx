@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@aha.chat/ui/components/ui/alert-dialog"
+} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
 

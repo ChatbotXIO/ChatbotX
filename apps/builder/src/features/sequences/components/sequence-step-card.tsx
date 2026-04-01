@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Card, CardContent } from "@aha.chat/ui/components/ui/card"
-import { Switch } from "@aha.chat/ui/components/ui/switch"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { ChevronDownIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"

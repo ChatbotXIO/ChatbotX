@@ -1,12 +1,12 @@
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import type { Context } from "@aha.chat/sdk"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import type { Context } from "@chatbotx.io/sdk"
 import { integrations } from "@/integration"
-import type { CreateMessageTemplateRequest } from "../schemas/create-message-templates-schema"
+import type { CreateMessageTemplateRequest } from "../schema/mutation"
 import type { TemplateDocumentSchema } from "../templates/document/schema"
 import type { TemplateImageSchema } from "../templates/image/schema"
 import type { TemplateTextSchema } from "../templates/text/schema"
 import type { TemplateVideoSchema } from "../templates/video/schema"
-import { TemplateType } from "../type"
+import { type TemplateType, templateTypes } from "../type"
 
 export type HeaderMediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT"
 
@@ -19,14 +19,14 @@ export const parseComponents = async (
   let components: any[] = []
 
   switch (templateType) {
-    case TemplateType.CarouselImage: {
+    case templateTypes.enum.CarouselImage: {
       components = parseBody(components, content)
       const cards: Record<string, unknown>[] = []
       if ("cards" in content) {
         for (const card of content.cards) {
           const cardComponents = await parseComponents(
             ctx,
-            TemplateType.Image,
+            templateTypes.enum.Image,
             card,
           )
           cards.push({ components: cardComponents })
@@ -40,14 +40,14 @@ export const parseComponents = async (
       return components
     }
 
-    case TemplateType.CarouselVideo: {
+    case templateTypes.enum.CarouselVideo: {
       components = parseBody(components, content)
       const cards: Record<string, unknown>[] = []
       if ("cards" in content) {
         for (const card of content.cards) {
           const cardComponents = await parseComponents(
             ctx,
-            TemplateType.Video,
+            templateTypes.enum.Video,
             card,
           )
           cards.push({ components: cardComponents })
@@ -92,7 +92,7 @@ export const parseHeader = async (
     return components
   }
   switch (templateType) {
-    case TemplateType.Image:
+    case templateTypes.enum.Image:
       components.push(
         await parseHeaderMedia(
           ctx,
@@ -103,7 +103,7 @@ export const parseHeader = async (
 
       return components
 
-    case TemplateType.Video:
+    case templateTypes.enum.Video:
       components.push(
         await parseHeaderMedia(
           ctx,
@@ -114,7 +114,7 @@ export const parseHeader = async (
 
       return components
 
-    case TemplateType.Document:
+    case templateTypes.enum.Document:
       components.push(
         await parseHeaderMedia(
           ctx,

@@ -23,15 +23,15 @@ export const DefaultJobAction = {
 export type JobExportContacts = {
   type: typeof DefaultJobAction.exportContacts
   data: {
-    requestedUserId: string
-    chatbotId: string
+    requestedUserId: bigint
+    chatbotId: bigint
     fields: string[]
-    contactIds: string[]
+    contactIds: bigint[]
     outputPath: string
     outputFormat: "csv"
     cursor?: {
       createdAt: string
-      id: string
+      id: bigint
     }
   }
 }
@@ -39,7 +39,7 @@ export type JobExportContacts = {
 export type JobSendErrorLog = {
   type: typeof DefaultJobAction.sendErrorLog
   data: {
-    chatbotId: string
+    chatbotId: bigint
     error: {
       message: string
       stack?: string
@@ -51,8 +51,8 @@ export type JobSendErrorLog = {
 export type JobSendAuditLog = {
   type: typeof DefaultJobAction.sendAuditLog
   data: {
-    userId: string
-    chatbotId: string
+    userId: bigint
+    chatbotId: bigint
     action: string
     detail: string
   }

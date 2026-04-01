@@ -1,4 +1,4 @@
-import { db, type Transaction } from "@aha.chat/database/client"
+import { db, type Transaction } from "@chatbotx.io/database/client"
 import { addMilliseconds } from "date-fns"
 
 type DrizzleClient = typeof db | Transaction

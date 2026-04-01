@@ -2,8 +2,8 @@ import {
   type ButtonStepProps,
   encodeButtonPayload,
   type SendQuickReplyStepSchema,
-} from "@aha.chat/flow-config"
-import type { SendFlowStepProps } from "@aha.chat/sdk"
+} from "@chatbotx.io/flow-config"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import type {
   FacebookMessage,
   FacebookMessageAttachment,

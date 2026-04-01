@@ -11,7 +11,7 @@ export type AIToolsState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   files: ListAIFilesResponse["data"]
   functions: ListAIFunctionsResponse["data"]
   mcpServers: ListAIMcpServersResponse["data"]
@@ -34,7 +34,7 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     files: [],
     functions: [],
     mcpServers: [],

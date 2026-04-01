@@ -1,12 +1,13 @@
-import { and, db, eq, gte, lt } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
-import { contactTrackingService, query } from "@chatbotx.io/analytics"
+import { contactTrackingService } from "@chatbotx.io/analytics"
+import { query } from "@chatbotx.io/clickhouse/client"
+import { and, db, eq, gte, lt } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000
 
 export const reconcileContactEvents = async (job: {
-  data: { chatbotId: string; fromDate: string; toDate: string }
+  data: { chatbotId: bigint; fromDate: string; toDate: string }
 }) => {
   const { chatbotId, fromDate, toDate } = job.data
 
@@ -20,7 +21,7 @@ export const reconcileContactEvents = async (job: {
   const fromTimestamp = Math.floor(from.getTime() / 1000)
   const toTimestamp = Math.floor(to.getTime() / 1000)
 
-  const existingContactIds = await query<{ contact_id: string }>(
+  const existingContactIds = await query<{ contact_id: bigint }>(
     `
     SELECT DISTINCT contact_id
     FROM contact_events
@@ -70,13 +71,13 @@ export const reconcileContactEvents = async (job: {
     }
 
     const missingContacts = contacts.filter(
-      (c) => Boolean(c.sourceId) && !existingIds.has(c.sourceId as string),
+      (c) => Boolean(c.sourceId) && !existingIds.has(c.sourceId ?? ""),
     )
 
     if (missingContacts.length > 0) {
       const events = missingContacts.map((contact) => ({
         chatbotId: contact.chatbotId,
-        contactId: contact.sourceId as string,
+        contactId: contact.id,
         eventType: "contact_created" as const,
         occurredAt: contact.createdAt,
         source: contact.source,

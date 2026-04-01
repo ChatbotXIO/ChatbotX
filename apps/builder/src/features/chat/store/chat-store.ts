@@ -1,8 +1,5 @@
-import type {
-  AssignerFilterType,
-  ConversationStatus,
-} from "@aha.chat/database/enums"
-import type { ChannelType } from "@aha.chat/database/schema"
+import type { ConversationStatus } from "@chatbotx.io/database/enums"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -17,7 +14,7 @@ import type { ListMessagesResponse } from "@/features/messages/schema/query"
 import type { MessageResource } from "@/features/messages/schema/resource"
 
 export type ConversationFilters = {
-  assignedType?: AssignerFilterType
+  assignedId?: string
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string

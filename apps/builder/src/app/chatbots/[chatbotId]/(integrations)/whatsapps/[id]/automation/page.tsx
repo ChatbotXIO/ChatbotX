@@ -1,12 +1,22 @@
-import type { WhatsappAuthValue } from "@aha.chat/integration-whatsapp"
-import { findConversationalAutomation } from "@aha.chat/integration-whatsapp/api/phone-number"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
+import { findConversationalAutomation } from "@chatbotx.io/integration-whatsapp/api/phone-number"
+import { parseBigIntId } from "@chatbotx.io/utils"
+import { notFound } from "next/navigation"
 import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automation/whatsapp-automation-manage"
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 
 export default async function WhatsappIceBreakersPage(props: {
   params: Promise<{ chatbotId: string; id: string }>
 }) {
-  const { chatbotId, id } = await props.params
+  const { chatbotId: chatbotIdString, id: idString } = await props.params
+  const chatbotId = parseBigIntId(chatbotIdString)
+  if (!chatbotId) {
+    return notFound()
+  }
+  const id = parseBigIntId(idString)
+  if (!id) {
+    return notFound()
+  }
 
   const integrationWhatsapp = await findIntegrationWhatsapp({ chatbotId, id })
 

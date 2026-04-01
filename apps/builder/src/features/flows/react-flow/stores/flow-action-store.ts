@@ -7,7 +7,7 @@ export type FlowActionState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: string
+  chatbotId: bigint
   data: Record<string, unknown>
   beforeStep?: { channel?: string; [key: string]: unknown }
 }
@@ -26,7 +26,7 @@ export const createFlowActionStore = (props: Partial<FlowActionState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: "",
+    chatbotId: BigInt(0),
     data: {},
     beforeStep: undefined,
     ...props,

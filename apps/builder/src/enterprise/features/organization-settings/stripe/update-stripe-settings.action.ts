@@ -1,12 +1,12 @@
 "use server"
 
-import { db, eq } from "@aha.chat/database/client"
-import { organizationModel } from "@aha.chat/database/schema"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
-  type OrganizationModel,
   type StripeSettingsSchema,
   stripeSettingsSchema,
-} from "@aha.chat/database/types"
+} from "@chatbotx.io/database/partials"
+import { organizationModel } from "@chatbotx.io/database/schema"
+import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateStripeSettingsAction = organizationActionClient

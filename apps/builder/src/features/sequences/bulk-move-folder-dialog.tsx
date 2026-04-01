@@ -1,8 +1,8 @@
 "use client"
 
-import { FolderType } from "@aha.chat/database/enums"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { FolderType } from "@chatbotx.io/database/enums"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@aha.chat/ui/components/ui/dialog"
-import { Form } from "@aha.chat/ui/components/ui/form"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { FolderInput, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -25,7 +25,7 @@ import { useFolderSelectOptions } from "../folders/provider/folder-hook"
 import type { SequenceResource } from "./schema"
 
 type BulkMoveFolderDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: string
+  chatbotId: bigint
   sequences: SequenceResource[]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -33,7 +33,7 @@ type BulkMoveFolderDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 const bulkMoveFolderSchema = z.object({
-  newFolderId: z.string(),
+  newFolderId: z.bigint(),
 })
 
 export function BulkMoveFolderDialog({
@@ -51,7 +51,7 @@ export function BulkMoveFolderDialog({
   const form = useForm<z.infer<typeof bulkMoveFolderSchema>>({
     resolver: zodResolver(bulkMoveFolderSchema),
     defaultValues: {
-      newFolderId: "",
+      newFolderId: BigInt(0),
     },
   })
 

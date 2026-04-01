@@ -1,5 +1,5 @@
-import type { AITriggerModel } from "@aha.chat/database/types"
-import { getSortingStateParser } from "@aha.chat/ui/lib/parsers"
+import type { AITriggerModel } from "@chatbotx.io/database/types"
+import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -18,7 +18,7 @@ export const listAITriggersRequest = createSearchParamsCache({
 export type ListAITriggersRequest = Awaited<
   ReturnType<typeof listAITriggersRequest.parse>
 > & {
-  chatbotId: string
+  chatbotId: bigint
 }
 
 export type AITriggerResource = AITriggerModel

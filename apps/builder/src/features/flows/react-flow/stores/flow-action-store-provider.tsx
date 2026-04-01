@@ -21,7 +21,7 @@ const FlowActionContext = createContext<FlowActionStoreApi | undefined>(
 
 export type FlowActionProviderProps = {
   children: ReactNode
-  chatbotId: string
+  chatbotId: bigint
   data?: Record<string, unknown>
   beforeStep?: { channel?: string; [key: string]: unknown }
   autoInitialize?: boolean

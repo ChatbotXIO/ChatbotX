@@ -1,16 +1,16 @@
 "use client"
 
-import { Button } from "@aha.chat/ui/components/ui/button"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { BotIcon } from "lucide-react"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { useChatbotId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getFullName } from "../contacts/utils"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
@@ -19,7 +19,7 @@ import { ConversationAction } from "../conversations/conversation-action"
 
 export default function MessageHead() {
   const t = useTranslations()
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const chatbotId = useChatbotId()
 
   const {
     conversations,

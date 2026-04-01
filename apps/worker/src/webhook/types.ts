@@ -1,12 +1,12 @@
-import type { ConditionModel, WebhookModel } from "@aha.chat/database/types"
+import type { ConditionModel, WebhookModel } from "@chatbotx.io/database/types"
 
 export type WebhookWithConditions = WebhookModel & {
   conditions: ConditionModel[]
 }
 
 export type WebhookEventData = {
-  chatbotId: string
-  contactId: string
+  chatbotId: bigint
+  contactId: bigint
   eventType: number
   eventData: Record<string, unknown>
   timestamp: Date

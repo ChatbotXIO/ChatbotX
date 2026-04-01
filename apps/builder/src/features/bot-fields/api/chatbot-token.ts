@@ -13,7 +13,7 @@ const botFieldChatbotTokenAPIs = {
       summary: "Get bot field by id",
       tags: ["Bot Fields"],
     })
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.bigint() }))
     .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
       const botField = await findBotField({
@@ -33,7 +33,7 @@ const botFieldChatbotTokenAPIs = {
       summary: "Update bot field",
       tags: ["Bot Fields"],
     })
-    .input(z.object({ id: z.string(), value: z.string() }))
+    .input(z.object({ id: z.bigint(), value: z.string() }))
     .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
@@ -51,7 +51,7 @@ const botFieldChatbotTokenAPIs = {
       summary: "Unset the value of the bot field",
       tags: ["Bot Fields"],
     })
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.bigint() }))
     .output(publicBotFieldResource)
     .handler(async ({ context, input }) => {
       return await updateBotField({

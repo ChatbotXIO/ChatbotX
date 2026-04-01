@@ -1,4 +1,4 @@
-import { db } from "@aha.chat/database/client"
+import { db } from "@chatbotx.io/database/client"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListInboxTeamsRequest,
@@ -26,5 +26,5 @@ export async function listInboxTeams(
     },
   })
 
-  return { data, pageCount: 1 }
+  return { data }
 }

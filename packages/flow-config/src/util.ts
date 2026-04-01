@@ -2,9 +2,9 @@ import { z } from "zod"
 
 const buttonPayloadSchema = z
   .object({
-    f: z.string(),
-    fv: z.string().optional(),
-    b: z.string().optional(),
+    f: z.bigint(),
+    fv: z.bigint().optional(),
+    b: z.bigint().optional(),
   })
   .transform((data) => {
     return {

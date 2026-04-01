@@ -80,11 +80,11 @@ export class SchedulerClient {
 
   async addToRetry(
     bucket: number,
-    dispatchId: string,
+    dispatchId: bigint,
     retryAtMs: number,
   ): Promise<void> {
     const key = this.getRetryKey(bucket)
-    await this.redis.zadd(key, retryAtMs, dispatchId)
+    await this.redis.zadd(key, retryAtMs, dispatchId.toString())
   }
 
   async removeFromSchedule(bucket: number, dispatchId: bigint): Promise<void> {

@@ -1,4 +1,4 @@
-import type { Context, IncomingContact } from "@aha.chat/sdk"
+import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
 import { MessengerAPIException } from "../exception"

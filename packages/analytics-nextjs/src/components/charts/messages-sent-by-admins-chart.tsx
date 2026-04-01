@@ -1,6 +1,6 @@
 "use client"
 
-import { RadarChart } from "@aha.chat/ui/components/charts/radar-chart"
+import { RadarChart } from "@chatbotx.io/ui/components/charts/radar-chart"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"

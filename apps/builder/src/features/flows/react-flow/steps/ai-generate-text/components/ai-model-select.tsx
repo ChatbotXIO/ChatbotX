@@ -1,11 +1,11 @@
 "use client"
 
-import type { AIProvider } from "@aha.chat/flow-config"
-import { ComboboxField } from "@aha.chat/ui/components/form/combobox-field"
+import type { AIProvider } from "@chatbotx.io/flow-config"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import type {
   SelectFieldProps,
   SelectOption,
-} from "@aha.chat/ui/components/form/select-field"
+} from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import type { FieldValues } from "react-hook-form"
