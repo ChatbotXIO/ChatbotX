@@ -68,6 +68,17 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   }
 
   const value = stats[field]
+  const sent = stats.sent
+
+  const getPercentage = () => {
+    if (field === "sent" || !value || !sent) {
+      return null
+    }
+    const percentage = (value / sent) * 100
+    return percentage.toFixed(1)
+  }
+
+  const percentage = getPercentage()
 
   return (
     <>
@@ -80,6 +91,9 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
         type="button"
       >
         {value ? value.toLocaleString() : "----"}
+        {percentage && (
+          <span className="ml-1 text-muted-foreground">({percentage}%)</span>
+        )}
       </button>
 
       <BroadcastContactsDialog
