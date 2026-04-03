@@ -25,32 +25,21 @@ export const broadcastStathandler = {
     const insertedData: BroadcastStatsType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "broadcast") {
+      if (
+        payload.metadata?.type === "broadcast" &&
+        payload.channel !== "whatsapp"
+      ) {
         insertedData.push({
           event_id: createId(),
           chatbot_id: payload.chatbotId,
           broadcast_id: payload.metadata.broadcastId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
-          event_type: "sent",
+          event_type: "delivered",
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
         })
-
-        if (payload.channel !== "whatsapp") {
-          insertedData.push({
-            event_id: createId(),
-            chatbot_id: payload.chatbotId,
-            broadcast_id: payload.metadata.broadcastId,
-            contact_id: payload.contactId,
-            conv_id: payload.conversationId,
-            event_type: "delivered",
-            content: JSON.stringify({}),
-            occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-            inserted_at: toClickHouseDateTime(new Date()),
-          })
-        }
       }
     }
 

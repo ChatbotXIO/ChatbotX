@@ -28,6 +28,7 @@ export async function getBroadcastStats(input: {
     WHERE chatbot_id = {chatbotId:String}
       AND broadcast_id = {broadcastId:String}
       AND batch_id = 1
+      AND event_type IN ('delivered', 'seen', 'clicked', 'failed')
     GROUP BY event_type
   `
 
@@ -47,9 +48,6 @@ export async function getBroadcastStats(input: {
   for (const row of rows) {
     const count = Number.parseInt(row.count, 10)
     switch (row.event_type) {
-      case "sent":
-        stats.sent = count
-        break
       case "delivered":
         stats.delivered = count
         break
@@ -66,6 +64,8 @@ export async function getBroadcastStats(input: {
         break
     }
   }
+
+  stats.sent = stats.delivered + stats.failed
 
   return stats
 }

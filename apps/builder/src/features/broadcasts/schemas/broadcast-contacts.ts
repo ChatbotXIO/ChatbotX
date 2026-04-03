@@ -1,3 +1,4 @@
+import { conversationAnalyticsService } from "@chatbotx.io/analytics"
 import z from "zod"
 
 export const broadcastEventType = z.enum([
@@ -36,8 +37,14 @@ export const broadcastContactResource = z.object({
 
 export type BroadcastContactResource = z.infer<typeof broadcastContactResource>
 
+export const BroadcastContactData = broadcastContactResource.extend({
+  conversationId: z.string(),
+})
+
+export type BroadcastContactData = z.infer<typeof BroadcastContactData>
+
 export const listBroadcastContactsResponse = z.object({
-  data: z.array(broadcastContactResource),
+  data: z.array(BroadcastContactData),
   total: z.number(),
   page: z.number(),
   pageCount: z.number(),

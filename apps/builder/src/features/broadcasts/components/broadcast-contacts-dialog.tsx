@@ -14,18 +14,15 @@ import {
 } from "@aha.chat/ui/components/ui/dialog"
 import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import {
-  AlertTriangleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useState } from "react"
 import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { client } from "@/lib/orpc/orpc"
 import type {
-  BroadcastContactResource,
+  BroadcastContactData,
   BroadcastEventType,
 } from "../schemas/broadcast-contacts"
 
@@ -49,7 +46,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
   const t = useTranslations()
   const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
-  const [contacts, setContacts] = useState<BroadcastContactResource[]>([])
+  const [contacts, setContacts] = useState<BroadcastContactData[]>([])
   const [pageCount, setPageCount] = useState(1)
   const perPage = 20
 
@@ -100,7 +97,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
-        <DialogHeader>
+        <DialogHeader className="mb-20">
           <DialogTitle>
             {t(`broadcasts.stats.${eventType}`)} ({total.toLocaleString()})
           </DialogTitle>
@@ -124,7 +121,11 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
           {!isLoading && contacts.length > 0 && (
             <div className="space-y-2 pr-4">
               {contacts.map((contact) => (
-                <ContactItem contact={contact} key={contact.contactId} />
+                <ContactItem
+                  chatbotId={chatbotId}
+                  contact={contact}
+                  key={contact.contactId}
+                />
               ))}
             </div>
           )}
@@ -161,9 +162,11 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 })
 
 const ContactItem = memo(function ContactItem({
+  chatbotId,
   contact,
 }: {
-  contact: BroadcastContactResource
+  chatbotId: string
+  contact: BroadcastContactData
 }) {
   const avatarUrl = getAvatarUrl({
     avatar: contact.avatar,
@@ -178,42 +181,38 @@ const ContactItem = memo(function ContactItem({
   } as Parameters<typeof getFullName>[0])
 
   return (
-    <div className="flex items-start gap-3 rounded-lg p-0 transition-colors hover:bg-muted/50">
+    <div className="flex items-center gap-3 rounded-lg p-0 transition-colors hover:bg-muted/50">
       <Avatar className="size-8 shrink-0">
         <AvatarImage src={avatarUrl} />
         <AvatarFallback>
           {contact.firstName?.[0]?.toUpperCase() ?? "?"}
         </AvatarFallback>
       </Avatar>
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
+
+      <div className="w-32 shrink space-y-1">
+        <div className="flex items-center gap-1.5">
+          <Link
+            className="max-w-[200px] truncate text-blue-500"
+            href={`/chatbots/${chatbotId}/inbox?conversationId=${contact.conversationId}`}
+            target="_blank"
+          >
             <span className="truncate font-medium text-sm leading-tight">
               {fullName}
             </span>
-            <InboxIcon
-              channel={contact.channel}
-              showLabel={false}
-              size="small"
-            />
-            {contact.errorContent && (
-              <AlertTriangleIcon className="size-3 shrink-0 text-destructive" />
-            )}
-          </div>
-          {contact.occurredAt && (
-            <div className="mt-1 block text-muted-foreground text-sm">
-              {new Date(contact.occurredAt).toLocaleString()}
-            </div>
-          )}
+          </Link>
+          <InboxIcon channel={contact.channel} showLabel={false} size="small" />
         </div>
-        {contact.sourceId && (
-          <span className="block truncate text-muted-foreground text-xs">
-            {contact.sourceId}
-          </span>
+        {contact.occurredAt && (
+          <div className="text-left text-muted-foreground text-xs">
+            {new Date(contact.occurredAt).toLocaleString()}
+          </div>
         )}
+      </div>
+
+      <div className="flex min-w-0 flex-1 items-center">
         {contact.errorContent && (
-          <div className="mt-1 flex items-start gap-1 text-destructive text-xs">
-            <span className="flex-1">{contact.errorContent}</span>
+          <div className="space-y-0 whitespace-pre-wrap text-left text-destructive text-xs">
+            {contact.errorContent}
           </div>
         )}
       </div>

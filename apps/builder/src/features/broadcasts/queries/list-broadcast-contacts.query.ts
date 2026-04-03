@@ -1,10 +1,10 @@
-import { db, inArray } from "@aha.chat/database/client"
-import { contactModel } from "@aha.chat/database/schema"
+import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { contactModel, conversationModel } from "@aha.chat/database/schema"
 import { query } from "@chatbotx.io/clickhouse/client"
 import type { ClickHouseContactResponseRow } from "@chatbotx.io/clickhouse/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
-  BroadcastContactResource,
+  BroadcastContactData,
   BroadcastEventType,
   ListBroadcastContactsResponse,
 } from "../schemas/broadcast-contacts"
@@ -24,6 +24,13 @@ export async function listBroadcastContacts(input: {
   const totalValue: number = total || 0
   const offset = (page - 1) * perPage
 
+  let eventTypeFilter: string[]
+  if (eventType === "sent") {
+    eventTypeFilter = ["delivered", "failed"]
+  } else {
+    eventTypeFilter = [eventType]
+  }
+
   const contactRows = await query<
     ClickHouseContactResponseRow & { max_occurred_at: string }
   >(
@@ -36,7 +43,7 @@ export async function listBroadcastContacts(input: {
       WHERE chatbot_id = {chatbotId:String}
         AND broadcast_id = {broadcastId:String}
         AND batch_id = 1
-        AND event_type = {eventType:String}
+        AND event_type in {eventTypeFilter:Array(String)}
       GROUP BY contact_id
       ORDER BY max_occurred_at DESC
       LIMIT {limit:UInt32} OFFSET {offset:UInt32}
@@ -44,7 +51,7 @@ export async function listBroadcastContacts(input: {
     {
       chatbotId,
       broadcastId,
-      eventType,
+      eventTypeFilter,
       limit: perPage,
       offset,
     },
@@ -94,14 +101,33 @@ export async function listBroadcastContacts(input: {
     .from(contactModel)
     .where(inArray(contactModel.id, contactIds))
 
-  const contactMap = new Map(contacts.map((c) => [c.id, c]))
+  const conversations = await db
+    .select({
+      id: conversationModel.id,
+      contactId: conversationModel.contactId,
+    })
+    .from(conversationModel)
+    .where(
+      and(
+        inArray(conversationModel.contactId, contactIds),
+        eq(conversationModel.chatbotId, chatbotId),
+      ),
+    )
 
-  const data: BroadcastContactResource[] = contactRows
+  const contactMap = new Map(contacts.map((c) => [c.id, c]))
+  const conversationMap = new Map(conversations.map((c) => [c.contactId, c.id]))
+
+  const data: BroadcastContactData[] = contactRows
     .map((row) => {
       const contact = contactMap.get(row.contact_id)
       if (!contact) {
         return null
       }
+      const conversationId = conversationMap.get(contact.id)
+      if (!conversationId) {
+        return null
+      }
+
       return {
         contactId: contact.id,
         firstName: contact.firstName,
@@ -109,11 +135,12 @@ export async function listBroadcastContacts(input: {
         sourceId: contact.sourceId,
         avatar: contact.avatar,
         channel: contact.channel,
+        conversationId,
         errorContent: errorContentMap.get(row.contact_id) ?? null,
         occurredAt: occurredAtMap.get(row.contact_id) ?? null,
       }
     })
-    .filter((c): c is BroadcastContactResource => c !== null)
+    .filter((c): c is BroadcastContactData => c !== null)
 
   return {
     data,
