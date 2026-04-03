@@ -1,3 +1,4 @@
+import { createSelectSchema, errorLogModel } from "@chatbotx.io/database/schema"
 import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
@@ -5,6 +6,8 @@ import {
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
+import z from "zod"
+import { basePaginationRequest } from "@/lib/pagination"
 
 export const listErrorLogsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -20,3 +23,19 @@ export type ListErrorLogsRequest = Awaited<
 > & {
   workspaceId: string
 }
+
+export const listErrorLogsRequest = basePaginationRequest.extend({
+  keyword: z.string().optional(),
+  chatbotId: z.string(),
+})
+
+export const publicErrorLogResource = createSelectSchema(errorLogModel)
+export type PublicErrorLogResource = z.infer<typeof publicErrorLogResource>
+
+export const publicListErrorLogsResponse = z.object({
+  data: z.array(publicErrorLogResource),
+  pageCount: z.number(),
+})
+export type PublicListErrorLogsResponse = z.infer<
+  typeof publicListErrorLogsResponse
+>

@@ -4,9 +4,11 @@ import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiFilesAPI } from "@/features/ai-files/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
 import botFieldsAPIs from "@/features/bot-fields/api"
+import chatbotMembersAPI from "@/features/chatbot-members/api"
 import contactsAPIs from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
+import chatbotTokenErrorLogsAPI from "@/features/error-logs/api"
 import flowsAPI from "@/features/flows/api"
 import { foldersAPI } from "@/features/folders/api"
 import { inboxesAPI } from "@/features/inboxes/api"
@@ -45,4 +47,6 @@ export const router = {
   inboxTeamsAPI,
   foldersAPI,
   messagesAPI,
+  chatbotTokenErrorLogsAPI,
+  chatbotMembersAPI,
 }
