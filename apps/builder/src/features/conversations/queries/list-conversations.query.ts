@@ -102,7 +102,7 @@ export const listConversations = async (
   const conversations = await db
     .select()
     .from(conversationModel)
-    .leftJoinLateral(lastMessageQuery.as("last_message"), sql`true`)
+    .leftJoinLateral(lastMessageQuery.as("lastMessage"), sql`true`)
     .leftJoin(contactModel, eq(conversationModel.contactId, contactModel.id))
     // .leftJoin(inboxModel, eq(conversationModel.inboxId, inboxModel.id))
     .leftJoin(userModel, eq(conversationModel.assignedUserId, userModel.id))
@@ -148,7 +148,7 @@ export const listConversations = async (
       contactInboxes: [],
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
-      messages: c.last_message ? [c.last_message] : [],
+      messages: c.lastMessage ? [c.lastMessage] : [],
     })),
     nextCursor: null,
     prevCursor: null,

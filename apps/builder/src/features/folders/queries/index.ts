@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import type { FolderType } from "@chatbotx.io/database/partials"
+import { type FolderType, rootFolderId } from "@chatbotx.io/database/partials"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
@@ -11,13 +11,19 @@ export const listFolders = async (
   input: ListFoldersSearchParams,
 ): Promise<{ data: ListFoldersResponse["data"] }> => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
   const { folderId, ...rest } = input
 
   const data = await db.query.folderModel.findMany({
     where: {
-      ...input,
+      ...rest,
       folderType: rest.folderType as FolderType,
-      parentId: folderId ?? { isNull: true },
+      parentId: folderId
+        ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
+          folderId === rootFolderId
+          ? { isNull: true as const }
+          : folderId
+        : undefined,
     },
     orderBy: {
       createdAt: "asc",

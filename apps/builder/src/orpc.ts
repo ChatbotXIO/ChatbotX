@@ -8,6 +8,7 @@ import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-aut
 export const authorizedAPI = base
   .use(
     onError((error: Error) => {
+      console.error("ORPC error", error)
       if (error.name === ChatbotXException.name) {
         throw new ORPCError((error as ChatbotXException).code, {
           message: error.message,

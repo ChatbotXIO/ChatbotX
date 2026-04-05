@@ -12,8 +12,8 @@ export type FolderResource = z.infer<typeof folderResource>
 export const listFoldersRequest = z.object({
   workspaceId: zodBigintAsString(),
   folderType: z.string(),
-  folderId: zodBigintAsString().nullish(),
-  isTrash: z.boolean().nullish(),
+  folderId: zodBigintAsString().nullish().default(null),
+  isTrash: z.boolean().nullish().default(false),
 })
 export type ListFoldersRequest = z.infer<typeof listFoldersRequest>
 

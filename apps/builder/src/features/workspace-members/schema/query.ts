@@ -24,7 +24,7 @@ export const listWorkspaceMembersRequest = z.object({
   workspaceId: zodBigintAsString(),
   page: z.coerce.number().int().min(1).default(1),
   perPage: z.coerce.number().int().min(1).default(10),
-  keyword: z.string().nullable(),
+  keyword: z.string().nullish().default(null),
 })
 export type ListWorkspaceMembersRequest = z.infer<
   typeof listWorkspaceMembersRequest

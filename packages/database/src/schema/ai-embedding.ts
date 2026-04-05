@@ -4,7 +4,7 @@ import { bigintAsString, sharedColumns } from "../partials/shared"
 import { aiFileModel } from "./ai-file"
 import { workspaceModel } from "./workspace"
 
-const aiEmbeddingStatus = pgEnum(
+export const aiEmbeddingStatus = pgEnum(
   "aiEmbeddingStatus",
   aiEmbeddingStatuses.options as [string, ...string[]],
 )
@@ -15,7 +15,7 @@ export const aiEmbeddingModel = pgTable(
     ...sharedColumns,
     content: text().notNull(),
     embedding: vector("embedding", { dimensions: 1536 }),
-    status: aiEmbeddingStatus("status").default("pending").notNull(),
+    status: aiEmbeddingStatus().default("pending").notNull(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

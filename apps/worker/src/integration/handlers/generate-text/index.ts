@@ -1,14 +1,15 @@
 import { db, eq } from "@chatbotx.io/database/client"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import {
+  aiMessageRoles,
+  type GenderType,
+  type ReservedCustomFieldName,
+  reservedCustomFieldNames,
+} from "@chatbotx.io/database/partials"
 import {
   contactCustomFieldModel,
   contactModel,
 } from "@chatbotx.io/database/schema"
-import {
-  type ConversationModel,
-  type Gender,
-  reservedCustomFieldNames,
-} from "@chatbotx.io/database/types"
+import type { ConversationModel } from "@chatbotx.io/database/types"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { createId, parseBigIntId } from "@chatbotx.io/utils"
 import { type LanguageModel, type ModelMessage, streamText } from "ai"
@@ -206,7 +207,7 @@ async function saveResultToCustomField({
   }
 
   const isReservedField = Object.values(reservedCustomFieldNames).includes(
-    customFieldName as (typeof reservedCustomFieldNames)[keyof typeof reservedCustomFieldNames],
+    customFieldName as ReservedCustomFieldName,
   )
 
   if (isReservedField) {
@@ -216,7 +217,7 @@ async function saveResultToCustomField({
       email: string
       phoneNumber: string
       avatar: string
-      gender: Gender
+      gender: GenderType
     }> = {}
 
     switch (customFieldName) {
@@ -252,7 +253,7 @@ async function saveResultToCustomField({
           fullText === "female" ||
           fullText === "unknown"
         ) {
-          updateData.gender = fullText as Gender
+          updateData.gender = fullText as GenderType
         }
         break
       default:

@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  primaryKey,
-  text,
-  timestamp,
-  uniqueIndex,
-} from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
 import { sharedColumns, timestampConfig } from "../partials/shared"
 
 export const contactInboxModel = pgTable(
@@ -21,10 +15,6 @@ export const contactInboxModel = pgTable(
     lastIncomingMessageAt: timestamp(timestampConfig),
   },
   (table) => [
-    primaryKey({
-      columns: [table.contactId, table.inboxId],
-      name: "ContactInbox_pkey",
-    }),
     uniqueIndex("ContactInbox_channel_sourceId_key").using(
       "btree",
       table.channel.asc().nullsLast(),

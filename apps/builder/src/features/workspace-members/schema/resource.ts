@@ -1,8 +1,4 @@
-import {
-  workspaceMemberNotificationChannelsSchema,
-  workspaceMemberNotificationTypesSchema,
-  workspaceMemberPermissionsSchema,
-} from "@chatbotx.io/database/partials"
+import { workspaceMemberPermissionsSchema } from "@chatbotx.io/database/partials"
 import {
   createSelectSchema,
   workspaceMemberModel,
@@ -18,7 +14,7 @@ export const workspaceMemberResource = createSelectSchema(
   },
 ).extend({
   permissions: workspaceMemberPermissionsSchema,
-  notificationTypes: workspaceMemberNotificationTypesSchema,
-  notificationChannels: workspaceMemberNotificationChannelsSchema,
+  // notificationTypes: workspaceMemberNotificationTypesSchema.partial(),
+  // notificationChannels: workspaceMemberNotificationChannelsSchema.partial(),
 })
 export type WorkspaceMemberResource = z.infer<typeof workspaceMemberResource>

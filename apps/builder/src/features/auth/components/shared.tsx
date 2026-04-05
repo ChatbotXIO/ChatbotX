@@ -27,6 +27,7 @@ export const AuthHeader = ({ brandName, title }: AuthHeaderProps) => {
           height={80}
           priority={true}
           src={logoSrc}
+          width={140}
         />
       </div>
 

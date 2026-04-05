@@ -1,6 +1,5 @@
 "use client"
 
-import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -25,13 +24,14 @@ import { toast } from "sonner"
 import { isCommunity } from "@/env"
 import { updateWorkspaceMemberAction } from "../actions/update-workspace-member.action"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
+import type { WorkspaceMemberResource } from "../schema/resource"
 
 export function UpdateWorkspaceMemberDialog({
   workspaceMember,
   open,
   onOpenChange,
 }: {
-  workspaceMember: WorkspaceMemberModel | null
+  workspaceMember: WorkspaceMemberResource | null
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {
@@ -78,7 +78,7 @@ export function UpdateWorkspaceMemberForm({
   submitHandler,
   className,
 }: {
-  workspaceMember: WorkspaceMemberModel | null
+  workspaceMember: WorkspaceMemberResource | null
   cancelHandler?: () => void
   submitHandler?: () => void
   className?: string
@@ -161,8 +161,8 @@ export function UpdateWorkspaceMemberForm({
     if (workspaceMember) {
       reset({
         permissions: workspaceMember.permissions,
-        notificationTypes: workspaceMember.notificationTypes,
-        notificationChannels: workspaceMember.notificationChannels,
+        // notificationTypes: workspaceMember.notificationTypes,
+        // notificationChannels: workspaceMember.notificationChannels,
       })
     }
   }, [workspaceMember, reset])

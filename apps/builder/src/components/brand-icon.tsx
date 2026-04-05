@@ -52,6 +52,7 @@ export const BrandIcon = ({
           "hidden h-8 w-(--sidebar-width-icon) group-data-[collapsible=icon]:block",
         )}
         height={5}
+        loading="eager"
         src={iconSrc}
         width={10}
       />

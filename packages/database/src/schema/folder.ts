@@ -4,7 +4,7 @@ import { folderTypes } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { workspaceModel } from "./workspace"
 
-const folderType = pgEnum(
+export const folderType = pgEnum(
   "folderType",
   folderTypes.options as [string, ...string[]],
 )
@@ -14,7 +14,7 @@ export const folderModel = pgTable(
   {
     ...sharedColumns,
     name: text().notNull(),
-    folderType: folderType("folderType").notNull(),
+    folderType: folderType().notNull(),
     parentId: bigintAsString(),
     workspaceId: bigintAsString()
       .notNull()

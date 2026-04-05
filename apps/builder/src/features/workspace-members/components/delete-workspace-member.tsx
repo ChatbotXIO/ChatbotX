@@ -1,6 +1,5 @@
 "use client"
 
-import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -16,13 +15,14 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteWorkspaceMemberAction } from "../actions/delete-workspace-member.action"
+import type { WorkspaceMemberResource } from "../schema/resource"
 
 export function DeleteWorkspaceMemberDialog({
   workspaceMember,
   open,
   onOpenChange,
 }: {
-  workspaceMember?: WorkspaceMemberModel
+  workspaceMember?: WorkspaceMemberResource
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {

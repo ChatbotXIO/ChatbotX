@@ -10,7 +10,7 @@ import { bigintAsString, sharedColumns } from "../partials/shared"
 import { userModel } from "./auth-user"
 import { workspaceModel } from "./workspace"
 
-const workspaceMemberRole = pgEnum(
+export const workspaceMemberRole = pgEnum(
   "workspaceMemberRole",
   workspaceMemberRoles.options as [string, ...string[]],
 )

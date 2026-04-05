@@ -20,7 +20,7 @@ export const customFieldModel = pgTable(
   {
     ...sharedColumns,
     name: text().notNull(),
-    type: customFieldType("type").$type<CustomFieldType>().notNull(),
+    type: customFieldType().$type<CustomFieldType>().notNull(),
     description: text(),
     folderId: bigintAsString().references(() => folderModel.id, {
       onDelete: "set null",

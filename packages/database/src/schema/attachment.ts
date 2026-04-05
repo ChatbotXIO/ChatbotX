@@ -5,7 +5,10 @@ import { conversationModel } from "./conversation"
 import { messageModel } from "./message"
 import { workspaceModel } from "./workspace"
 
-const fileType = pgEnum("fileType", fileTypes.options as [string, ...string[]])
+export const fileType = pgEnum(
+  "fileType",
+  fileTypes.options as [string, ...string[]],
+)
 
 export const attachmentModel = pgTable(
   "Attachment",
@@ -23,7 +26,7 @@ export const attachmentModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    fileType: fileType("file_type").notNull(),
+    fileType: fileType().notNull(),
     messageId: bigintAsString()
       .notNull()
       .references(() => messageModel.id, {

@@ -16,11 +16,11 @@ import { flowModel } from "./flow"
 import { integrationWhatsappModel } from "./integration-whatsapp"
 import { workspaceModel } from "./workspace"
 
-const broadcastStatus = pgEnum(
+export const broadcastStatus = pgEnum(
   "broadcastStatus",
   broadcastStatuses.options as [string, ...string[]],
 )
-const broadcastScheduleType = pgEnum(
+export const broadcastScheduleType = pgEnum(
   "broadcastScheduleType",
   broadcastScheduleTypes.options as [string, ...string[]],
 )

@@ -14,7 +14,10 @@ import {
 } from "../partials/shared"
 import { workspaceModel } from "./workspace"
 
-const gender = pgEnum("gender", genderTypes.options as [string, ...string[]])
+export const gender = pgEnum(
+  "gender",
+  genderTypes.options as [string, ...string[]],
+)
 
 export const contactModel = pgTable("Contact", {
   ...sharedColumns,

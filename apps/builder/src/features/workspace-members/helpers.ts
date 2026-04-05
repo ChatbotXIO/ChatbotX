@@ -1,7 +1,7 @@
 import type { WorkspaceMemberNotificationTypes } from "@chatbotx.io/database/partials"
 
 export function isEnableAtLeastOneNotification(
-  notificationTypes: WorkspaceMemberNotificationTypes,
+  notificationTypes: Partial<WorkspaceMemberNotificationTypes>,
 ) {
   return (
     notificationTypes.notifyAdmin ||

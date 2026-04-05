@@ -29,7 +29,6 @@ import { use, useMemo, useState } from "react"
 import { DeleteWorkspaceMemberDialog } from "./components/delete-workspace-member"
 import { InviteWorkspaceMemberDialog } from "./components/invite-workspace-member"
 import { UpdateWorkspaceMemberDialog } from "./components/update-workspace-member"
-import { isEnableAtLeastOneNotification } from "./helpers"
 import type { listWorkspaceMembers } from "./queries"
 import type { ListWorkspaceMembersResponse } from "./schema/query"
 
@@ -135,19 +134,19 @@ export function WorkspaceMembersTable({
           ),
         enableHiding: false,
       },
-      {
-        id: "notificationTypes",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Notifications" />
-        ),
-        cell: ({ row }) =>
-          isEnableAtLeastOneNotification(row.original.notificationTypes) ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
+      // {
+      //   id: "notificationTypes",
+      //   header: ({ column }) => (
+      //     <DataTableColumnHeader column={column} title="Notifications" />
+      //   ),
+      //   cell: ({ row }) =>
+      //     isEnableAtLeastOneNotification(row.original.notificationTypes) ? (
+      //       <CheckCircle2Icon className="size-5 text-green-500" />
+      //     ) : (
+      //       <XCircleIcon className="size-5" />
+      //     ),
+      //   enableHiding: false,
+      // },
       {
         id: "actions",
         cell: ({ row }) => (

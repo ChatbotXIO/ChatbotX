@@ -12,15 +12,15 @@ import { contactInboxModel } from "./contact-inbox"
 import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
 
-const senderType = pgEnum(
+export const senderType = pgEnum(
   "senderType",
   senderTypes.options as [string, ...string[]],
 )
-const messageType = pgEnum(
+export const messageType = pgEnum(
   "messageType",
   messageTypes.options as [string, ...string[]],
 )
-const contentType = pgEnum(
+export const contentType = pgEnum(
   "contentType",
   contentTypes.options as [string, ...string[]],
 )

@@ -64,10 +64,10 @@ export function WhatsappMessageTemplateCategorySelect({
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">
-            {t("whatsapp.category.makerting.label")}
+            {t("whatsapp.category.marketing.label")}
           </span>
           <span className="text-gray-400">
-            {t("whatsapp.category.makerting.description")}
+            {t("whatsapp.category.marketing.description")}
           </span>
         </div>
       )}
