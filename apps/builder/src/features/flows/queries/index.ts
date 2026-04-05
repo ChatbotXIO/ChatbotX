@@ -1,5 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { flowModel } from "@chatbotx.io/database/schema"
 import {
   parseOrderByAsObject,
@@ -16,21 +16,21 @@ import type {
 import type { FlowResource } from "../schemas/resource"
 
 export const listFlowsRSC = async (
-  input: ListFlowsRequest & { chatbotId: bigint },
+  input: ListFlowsRequest & { workspaceId: string },
 ) => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   return listFlows(input)
 }
 
 export async function listFlows(
-  input: ListFlowsRequest & { chatbotId: bigint },
+  input: ListFlowsRequest & { workspaceId: string },
 ): Promise<ListFlowsResponse> {
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     folderId: input.folderId
       ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
-        input.folderId === BigInt(rootFolderId)
+        input.folderId === rootFolderId
         ? { isNull: true as const }
         : input.folderId
       : undefined,
@@ -89,11 +89,11 @@ export async function listFlows(
 export const findFlow = async (
   input: FindFlowParams,
 ): Promise<{ data: FlowResource | null }> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const targetFlow = await db.query.flowModel.findFirst({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
       id: input.id,
     },
     with: {
@@ -108,12 +108,12 @@ export const findFlow = async (
 }
 
 export const ensureAllFlowIdsExists = async (
-  chatbotId: bigint,
-  flowIds: bigint[],
+  workspaceId: string,
+  flowIds: string[],
 ): Promise<void> => {
   const rows = await db.query.flowModel.findMany({
     where: {
-      chatbotId,
+      workspaceId,
       id: {
         in: flowIds,
       },

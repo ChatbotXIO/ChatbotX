@@ -18,11 +18,11 @@ import { logger } from "../../lib/logger"
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, ref } = data
 
-  const conversation = await findOrFail(
-    conversationModel,
-    { id: conversationId },
-    "Conversation not found",
-  )
+  const conversation = await findOrFail({
+    table: conversationModel,
+    where: { id: conversationId },
+    message: "Conversation not found",
+  })
 
   if (ref.startsWith("draft-")) {
     logger.debug(`Draft ref: ${ref}`)
@@ -32,11 +32,11 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
-    const flowVersion = await findOrFail(
-      flowVersionModel,
-      { flowId, isDraft: true },
-      "Flow version not found",
-    )
+    const flowVersion = await findOrFail({
+      table: flowVersionModel,
+      where: { flowId, isDraft: true },
+      message: "Flow version not found",
+    })
 
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
@@ -57,11 +57,11 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       return
     }
 
-    const flow = await findOrFail(
-      flowModel,
-      { id: flowId, chatbotId: conversation.chatbotId },
-      "Flow not found",
-    )
+    const flow = await findOrFail({
+      table: flowModel,
+      where: { id: flowId, workspaceId: conversation.workspaceId },
+      message: "Flow not found",
+    })
 
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
@@ -80,11 +80,11 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
     return
   }
 
-  const reflink = await findOrFail(
-    reflinkModel,
-    { name: refParts[0], chatbotId: conversation.chatbotId },
-    "Reflink not found",
-  )
+  const reflink = await findOrFail({
+    table: reflinkModel,
+    where: { name: refParts[0], workspaceId: conversation.workspaceId },
+    message: "Reflink not found",
+  })
 
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -108,7 +108,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       if (customFieldId) {
         customField = await db.query.customFieldModel.findFirst({
           where: {
-            chatbotId: conversation.chatbotId,
+            workspaceId: conversation.workspaceId,
             id: customFieldId,
           },
         })

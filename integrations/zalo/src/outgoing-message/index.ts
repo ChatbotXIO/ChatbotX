@@ -3,7 +3,7 @@ import {
   type SendGifStepSchema,
   type SendImageStepSchema,
   type SendTextStepSchema,
-  StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import type {
   OutgoingContact,
@@ -27,7 +27,7 @@ export const sendOutgoingMessage = async (
 ): Promise<void> => {
   const {
     ctx,
-    data: { conversation, contact, message },
+    data: { contact, message, contactInbox },
   } = props
   try {
     for await (const zaloMessage of convertMessageToZaloMessage(
@@ -36,7 +36,7 @@ export const sendOutgoingMessage = async (
     )) {
       const payload = buildMessagePayload(contact, zaloMessage)
       await sendMessage(ctx.auth, payload)
-      logger.info(`Message sent for Zalo OA UID: ${conversation.sourceId}`)
+      logger.info(`Message sent for Zalo OA UID: ${contactInbox.sourceId}`)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
@@ -47,9 +47,9 @@ export async function* convertMessageToZaloMessage(
   auth: ZaloAuthValue,
   message: OutgoingMessage,
 ): AsyncGenerator<MessageTemplate> {
-  if (message.content) {
+  if (message.text) {
     yield {
-      text: message.content,
+      text: message.text,
     }
   } else if (message.attachments) {
     for (const attachment of message.attachments) {
@@ -115,13 +115,13 @@ export async function* convertFlowStepToZaloMessage(
     data: { step },
   } = props
   switch (step.stepType) {
-    case StepType.sendText:
+    case stepTypes.enum.sendText:
       yield* convertFlowStepText(
         props as SendFlowStepProps<ZaloAuthValue, SendTextStepSchema>,
       )
       break
-    case StepType.sendImage:
-    case StepType.sendGif:
+    case stepTypes.enum.sendImage:
+    case stepTypes.enum.sendGif:
       yield* await convertFlowStepImage(
         props as SendFlowStepProps<
           ZaloAuthValue,
@@ -129,7 +129,7 @@ export async function* convertFlowStepToZaloMessage(
         >,
       )
       break
-    case StepType.sendFile:
+    case stepTypes.enum.sendFile:
       yield* await convertFlowStepFile(
         props as SendFlowStepProps<ZaloAuthValue, SendFileStepSchema>,
       )
@@ -142,12 +142,12 @@ export async function* convertFlowStepToZaloMessage(
 export const sendFlowStep = async (props: SendFlowStepProps<ZaloAuthValue>) => {
   const {
     ctx,
-    data: { conversation, contact },
+    data: { contact, contactInbox },
   } = props
   try {
     for await (const zaloMessage of convertFlowStepToZaloMessage(props)) {
       await sendMessage(ctx.auth, buildMessagePayload(contact, zaloMessage))
-      logger.info(`Message sent for ID: ${conversation.sourceId}`)
+      logger.info(`Message sent for ID: ${contactInbox.sourceId}`)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")

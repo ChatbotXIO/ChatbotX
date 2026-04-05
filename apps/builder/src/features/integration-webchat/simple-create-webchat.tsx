@@ -19,10 +19,10 @@ import { createWebchatAction } from "./actions/create-webchat.action"
 import { createWebchatRequest } from "./schema/mutation"
 
 type SimpleCreateWebchatProps = {
-  chatbotId?: string | null
+  workspaceId?: string | null
 }
 
-export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
+export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -37,8 +37,8 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
               feature: t("fields.webchat.label"),
             }),
           )
-          if (data.chatbotId) {
-            return router.push(`/chatbots/${data.chatbotId}/webchats`)
+          if (data.workspaceId) {
+            return router.push(`/space/${data.workspaceId}/webchats`)
           }
           return router.push("/")
         },
@@ -48,7 +48,7 @@ export function SimpleCreateWebchat({ chatbotId }: SimpleCreateWebchatProps) {
       },
       formProps: {
         defaultValues: {
-          chatbotId,
+          workspaceId,
           name: "",
           welcomeFlowId: null,
           authorizedDomains: [],

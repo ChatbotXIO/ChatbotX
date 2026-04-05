@@ -1,15 +1,15 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const optOutEmailStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.optOutEmail),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.optOutEmail),
 })
 
 export type OptOutEmailStepSchema = z.infer<typeof optOutEmailStepSchema>
 
 export const optOutEmailStepDefaultFn = (): OptOutEmailStepSchema => ({
   id: createId(),
-  stepType: StepType.optOutEmail,
+  stepType: stepTypes.enum.optOutEmail,
 })

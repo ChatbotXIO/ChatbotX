@@ -10,22 +10,22 @@ import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { verifyGeminiApiKey } from "../lib"
 import {
   type ConnectGeminiRequest,
   connectGeminiRequest,
 } from "../schemas/request"
 
-export const connectGeminiAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const connectGeminiAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(connectGeminiRequest)
   .action(
     async ({
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: ConnectGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -41,7 +41,7 @@ export const connectGeminiAction = chatbotActionClient
       const integrationGemini = await db.query.integrationGeminiModel.findFirst(
         {
           where: {
-            chatbotId,
+            workspaceId,
           },
         },
       )
@@ -64,7 +64,7 @@ export const connectGeminiAction = chatbotActionClient
           const integration = await tx
             .insert(integrationModel)
             .values({
-              chatbotId,
+              workspaceId,
               integrationType: "gemini",
               id: createId(),
             })
@@ -72,7 +72,7 @@ export const connectGeminiAction = chatbotActionClient
             .then((result) => result[0])
 
           await tx.insert(integrationGeminiModel).values({
-            chatbotId,
+            workspaceId,
             model: parsedInput.model,
             auth: {
               authType: AuthType.secretText,

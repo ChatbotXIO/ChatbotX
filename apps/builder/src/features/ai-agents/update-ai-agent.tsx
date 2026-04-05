@@ -48,7 +48,7 @@ import { openaiChatModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/action"
 
 export function UpdateAIAgentDialog({
-  chatbotId,
+  workspaceId,
   agent,
   open,
   files,
@@ -59,7 +59,7 @@ export function UpdateAIAgentDialog({
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   agent: AIAgentModel | null
   onSuccess?: () => void
   files: AIFileModel[]
@@ -73,7 +73,7 @@ export function UpdateAIAgentDialog({
     handleSubmitWithAction,
     form: { setValue, control },
   } = useHookFormAction(
-    updateAIAgentAction.bind(null, chatbotId, agent?.id ?? BigInt(0)),
+    updateAIAgentAction.bind(null, workspaceId, agent?.id ?? ""),
     zodResolver(updateAIAgentRequest),
     {
       actionProps: {
@@ -256,7 +256,7 @@ export function UpdateAIAgentDialog({
                         />
                       </div>
                       <div className="pt-14 pr-3 pb-3 pl-3">
-                        <TiptapEditorField name={`messages.${index}.content`} />
+                        <TiptapEditorField name={`messages.${index}.text`} />
                       </div>
                       <Button
                         className="absolute top-0 right-0"

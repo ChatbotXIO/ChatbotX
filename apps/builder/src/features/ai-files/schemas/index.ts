@@ -1,15 +1,16 @@
 import {
-  aiEmbeddingStatus,
-  aiFileModel,
-  createSelectSchema,
-} from "@chatbotx.io/database/schema"
-import type {
-  AIEmbeddingStatus,
-  AIFileModel,
-} from "@chatbotx.io/database/types"
+  type AIEmbeddingStatus,
+  aiEmbeddingStatuses,
+} from "@chatbotx.io/database/partials"
+import { aiFileModel, createSelectSchema } from "@chatbotx.io/database/schema"
+import type { AIFileModel } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const aiFileResource = createSelectSchema(aiFileModel)
+export const aiFileResource = createSelectSchema(aiFileModel, {
+  id: zodBigintAsString(),
+  workspaceId: zodBigintAsString(),
+})
 
 export type AIFileWithProcessing = AIFileModel & {
   url: string
@@ -18,7 +19,7 @@ export type AIFileWithProcessing = AIFileModel & {
 }
 
 export const listAIFilesRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
 })
 export type ListAIFilesRequest = z.infer<typeof listAIFilesRequest>
 
@@ -27,7 +28,7 @@ export const listAIFilesResponse = z.object({
     aiFileResource.extend({
       url: z.string(),
       chunksCount: z.number(),
-      processingStatus: z.enum(aiEmbeddingStatus.enumValues),
+      processingStatus: aiEmbeddingStatuses,
     }),
   ),
 })

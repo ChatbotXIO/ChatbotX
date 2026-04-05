@@ -1,5 +1,6 @@
 "use client"
 
+import { botMessageResults } from "@chatbotx.io/analytics/schemas"
 import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { format } from "date-fns"
 import { useTranslations } from "next-intl"
@@ -47,9 +48,9 @@ export function BotMessagesByResultChart() {
       // Update firstTimestamp in case out-of-order items come in.
       group.firstTimestamp = Math.min(group.firstTimestamp, timestampMs)
 
-      if (item.result === "SUCCESS") {
+      if (item.result === botMessageResults.enum.success) {
         group.success += item.count
-      } else if (item.result === "FALLBACK") {
+      } else if (item.result === botMessageResults.enum.fallback) {
         group.fallback += item.count
       }
     }

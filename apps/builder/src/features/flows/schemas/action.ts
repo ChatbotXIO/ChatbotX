@@ -4,10 +4,11 @@ import {
   flowVersionSchema,
   sendMessageNodeSchema,
 } from "@chatbotx.io/flow-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createFlowSchema = z.object({
-  folderId: z.bigint().nullable(),
+  folderId: zodBigintAsString().nullable(),
   name: z.string().trim().min(1).max(255),
 })
 export type CreateFlowSchema = z.infer<typeof createFlowSchema>

@@ -1,6 +1,6 @@
 "use client"
 
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -25,11 +25,11 @@ import { createFlowAction } from "./actions/create-flow-action"
 import { createFlowSchema } from "./schemas/action"
 
 export function CreateFlowDialog({
-  chatbotId,
+  workspaceId,
   folderId,
 }: {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -38,7 +38,7 @@ export function CreateFlowDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createFlowAction.bind(null, chatbotId),
+      createFlowAction.bind(null, workspaceId),
       zodResolver(createFlowSchema),
       {
         actionProps: {

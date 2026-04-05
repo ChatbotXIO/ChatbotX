@@ -1,5 +1,6 @@
 "use client"
 
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -29,13 +30,13 @@ import {
   CustomFieldSelect,
 } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { addContactCustomFieldAction } from "../actions/add-contact-custom-field.action"
 import { addContactCustomFieldRequest } from "../schemas/contact-custom-field"
 
 type AddContactCustomFieldDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function AddContactCustomFieldDialog({
@@ -44,10 +45,10 @@ export default function AddContactCustomFieldDialog({
 }: AddContactCustomFieldDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    addContactCustomFieldAction.bind(null, chatbotId),
+    addContactCustomFieldAction.bind(null, workspaceId),
     zodResolver(addContactCustomFieldRequest),
     {
       actionProps: {
@@ -70,7 +71,7 @@ export default function AddContactCustomFieldDialog({
         mode: "onChange",
         defaultValues: {
           ids,
-          customFieldId: BigInt(0),
+          customFieldId: "",
           operation: FieldOperationType.set,
           value: "",
         },
@@ -167,7 +168,7 @@ export const SetCustomField = ({ parentName }: { parentName?: string }) => {
       <CustomFieldOperationSelect
         name={getFieldName("operation")}
         required
-        type={selectedCustomFieldType}
+        type={selectedCustomFieldType as CustomFieldType | null}
       />
 
       <div className="flex flex-col gap-2">

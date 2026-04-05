@@ -1,6 +1,6 @@
 "use client"
 
-import { FolderType } from "@chatbotx.io/database/enums"
+import { folderTypes } from "@chatbotx.io/database/partials"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -18,13 +18,13 @@ import { WebhooksTableToolbarActions } from "./webhooks-table-toolbar-actions"
 
 type WebhooksTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getWebhooks>>]>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
 export function WebhooksTable({
   promises,
-  chatbotId,
+  workspaceId,
   folderId,
 }: WebhooksTableProps) {
   const t = useTranslations()
@@ -35,8 +35,8 @@ export function WebhooksTable({
     useState<DataTableRowAction<WebhookModel> | null>(null)
 
   const columns = useMemo(
-    () => getColumns({ chatbotId, setRowAction, t }),
-    [chatbotId, t],
+    () => getColumns({ workspaceId, setRowAction, t }),
+    [workspaceId, t],
   )
 
   const { table } = useDataTable({
@@ -47,7 +47,7 @@ export function WebhooksTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["action"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -57,10 +57,10 @@ export function WebhooksTable({
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <WebhooksTableToolbarActions
-            chatbotId={chatbotId}
             folderId={folderId}
             setRowAction={setRowAction}
             table={table}
+            workspaceId={workspaceId}
           />
         </DataTableToolbar>
       </DataTable>
@@ -72,21 +72,21 @@ export function WebhooksTable({
       />
 
       <DeleteWebhooksDialog
-        chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => router.refresh()}
         open={rowAction?.variant === "delete"}
         showWebhook={false}
         webhooks={rowAction?.row.original ? [rowAction?.row.original] : []}
+        workspaceId={workspaceId}
       />
 
       <ChangeFolderDialog
-        chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType={FolderType.webhook}
+        folderType={folderTypes.enum.webhook}
         modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : []}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
       />
     </>
   )

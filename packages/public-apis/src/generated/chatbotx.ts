@@ -12,7 +12,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get contact by contact id */
-        get: operations["findContactChatbotTokenAPI"];
+        get: operations["findContactWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -31,7 +31,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Create a contact */
-        post: operations["createContactChatbotTokenAPI"];
+        post: operations["createContactWorkspaceTokenAPI"];
         delete?: never;
         options?: never;
         head?: never;
@@ -49,7 +49,7 @@ export interface paths {
          * List contacts by custom field
          * @description Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.
          */
-        get: operations["listContactsByCustomFieldChatbotTokenAPI"];
+        get: operations["listContactsByCustomFieldWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -66,7 +66,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all tags added to this contact */
-        get: operations["listContactTagsChatbotTokenAPI"];
+        get: operations["listContactTagsWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -85,9 +85,9 @@ export interface paths {
         get?: never;
         put?: never;
         /** Add a tag to the contact */
-        post: operations["addContactTagsChatbotTokenAPI"];
+        post: operations["addContactTagsWorkspaceTokenAPI"];
         /** Remove a tag from the contact */
-        delete: operations["deleteContactTagChatbotTokenAPI"];
+        delete: operations["deleteContactTagWorkspaceTokenAPI"];
         options?: never;
         head?: never;
         patch?: never;
@@ -101,7 +101,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all custom fields from a contact */
-        get: operations["listContactCustomFieldsChatbotTokenAPI"];
+        get: operations["listContactCustomFieldsWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -118,12 +118,12 @@ export interface paths {
             cookie?: never;
         };
         /** Get contact custom field value */
-        get: operations["findContactCustomFieldValueChatbotTokenAPI"];
+        get: operations["findContactCustomFieldValueWorkspaceTokenAPI"];
         put?: never;
         /** Set contact custom field value */
-        post: operations["setContactCustomFieldValueChatbotTokenAPI"];
+        post: operations["setContactCustomFieldValueWorkspaceTokenAPI"];
         /** Delete contact custom field */
-        delete: operations["deleteContactCustomFieldChatbotTokenAPI"];
+        delete: operations["deleteContactCustomFieldWorkspaceTokenAPI"];
         options?: never;
         head?: never;
         patch?: never;
@@ -139,7 +139,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Send message to contact */
-        post: operations["sendMessageChatbotTokenAPI"];
+        post: operations["sendMessageWorkspaceTokenAPI"];
         delete?: never;
         options?: never;
         head?: never;
@@ -154,10 +154,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get all custom fields */
-        get: operations["listCustomFieldsChatbotTokenAPI"];
+        get: operations["listCustomFieldsWorkspaceTokenAPI"];
         put?: never;
         /** Create a custom field */
-        post: operations["createCustomFieldChatbotTokenAPI"];
+        post: operations["createCustomFieldWorkspaceTokenAPI"];
         delete?: never;
         options?: never;
         head?: never;
@@ -172,7 +172,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get custom field by id */
-        get: operations["findCustomFieldChatbotTokenAPI"];
+        get: operations["findCustomFieldWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -189,7 +189,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get custom field by name */
-        get: operations["findCustomFieldByNameChatbotTokenAPI"];
+        get: operations["findCustomFieldByNameWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -206,10 +206,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get all tags */
-        get: operations["listTagsChatbotTokenAPI"];
+        get: operations["listTagsWorkspaceTokenAPI"];
         put?: never;
         /** Create a new tag */
-        post: operations["createTagChatbotTokenAPI"];
+        post: operations["createTagWorkspaceTokenAPI"];
         delete?: never;
         options?: never;
         head?: never;
@@ -224,12 +224,12 @@ export interface paths {
             cookie?: never;
         };
         /** Get tag by id */
-        get: operations["findTagChatbotTokenAPI"];
+        get: operations["findTagWorkspaceTokenAPI"];
         /** Update tag */
-        put: operations["updateTagChatbotTokenAPI"];
+        put: operations["updateTagWorkspaceTokenAPI"];
         post?: never;
         /** Delete tag */
-        delete: operations["deleteTagsChatbotTokenAPI"];
+        delete: operations["deleteTagsWorkspaceTokenAPI"];
         options?: never;
         head?: never;
         patch?: never;
@@ -243,7 +243,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get tag by name */
-        get: operations["findTagByNameChatbotTokenAPI"];
+        get: operations["findTagByNameWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -260,7 +260,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all flows */
-        get: operations["listFlowsChatbotTokenAPI"];
+        get: operations["listFlowsWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -277,12 +277,12 @@ export interface paths {
             cookie?: never;
         };
         /** Get bot field by id */
-        get: operations["findBotFieldChatbotTokenAPI"];
+        get: operations["findBotFieldWorkspaceTokenAPI"];
         /** Update bot field */
-        put: operations["updateBotFieldChatbotTokenAPI"];
+        put: operations["updateBotFieldWorkspaceTokenAPI"];
         post?: never;
         /** Unset the value of the bot field */
-        delete: operations["deleteBotFieldsChatbotTokenAPI"];
+        delete: operations["deleteBotFieldsWorkspaceTokenAPI"];
         options?: never;
         head?: never;
         patch?: never;
@@ -296,7 +296,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get all broadcasts */
-        get: operations["listBroadcastsChatbotTokenAPI"];
+        get: operations["listBroadcastsWorkspaceTokenAPI"];
         put?: never;
         post?: never;
         delete?: never;
@@ -326,7 +326,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    findContactChatbotTokenAPI: {
+    findContactWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -389,7 +389,7 @@ export interface operations {
             };
         };
     };
-    createContactChatbotTokenAPI: {
+    createContactWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -461,7 +461,7 @@ export interface operations {
             };
         };
     };
-    listContactsByCustomFieldChatbotTokenAPI: {
+    listContactsByCustomFieldWorkspaceTokenAPI: {
         parameters: {
             query: {
                 customFieldId: string;
@@ -527,7 +527,7 @@ export interface operations {
             };
         };
     };
-    listContactTagsChatbotTokenAPI: {
+    listContactTagsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -573,7 +573,7 @@ export interface operations {
             };
         };
     };
-    addContactTagsChatbotTokenAPI: {
+    addContactTagsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -619,7 +619,7 @@ export interface operations {
             };
         };
     };
-    deleteContactTagChatbotTokenAPI: {
+    deleteContactTagWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -665,7 +665,7 @@ export interface operations {
             };
         };
     };
-    listContactCustomFieldsChatbotTokenAPI: {
+    listContactCustomFieldsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -716,7 +716,7 @@ export interface operations {
             };
         };
     };
-    findContactCustomFieldValueChatbotTokenAPI: {
+    findContactCustomFieldValueWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -766,7 +766,7 @@ export interface operations {
             };
         };
     };
-    setContactCustomFieldValueChatbotTokenAPI: {
+    setContactCustomFieldValueWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -814,7 +814,7 @@ export interface operations {
             };
         };
     };
-    deleteContactCustomFieldChatbotTokenAPI: {
+    deleteContactCustomFieldWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -860,7 +860,7 @@ export interface operations {
             };
         };
     };
-    sendMessageChatbotTokenAPI: {
+    sendMessageWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -872,7 +872,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    content?: string;
+                    text?: string;
                     files?: unknown[];
                     flowId?: string;
                     clientId?: string;
@@ -912,7 +912,7 @@ export interface operations {
             };
         };
     };
-    listCustomFieldsChatbotTokenAPI: {
+    listCustomFieldsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -959,7 +959,7 @@ export interface operations {
             };
         };
     };
-    createCustomFieldChatbotTokenAPI: {
+    createCustomFieldWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1012,7 +1012,7 @@ export interface operations {
             };
         };
     };
-    findCustomFieldChatbotTokenAPI: {
+    findCustomFieldWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1059,7 +1059,7 @@ export interface operations {
             };
         };
     };
-    findCustomFieldByNameChatbotTokenAPI: {
+    findCustomFieldByNameWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1106,7 +1106,7 @@ export interface operations {
             };
         };
     };
-    listTagsChatbotTokenAPI: {
+    listTagsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1150,7 +1150,7 @@ export interface operations {
             };
         };
     };
-    createTagChatbotTokenAPI: {
+    createTagWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1198,7 +1198,7 @@ export interface operations {
             };
         };
     };
-    findTagChatbotTokenAPI: {
+    findTagWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1242,7 +1242,7 @@ export interface operations {
             };
         };
     };
-    updateTagChatbotTokenAPI: {
+    updateTagWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1292,7 +1292,7 @@ export interface operations {
             };
         };
     };
-    deleteTagsChatbotTokenAPI: {
+    deleteTagsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1337,7 +1337,7 @@ export interface operations {
             };
         };
     };
-    findTagByNameChatbotTokenAPI: {
+    findTagByNameWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1381,7 +1381,7 @@ export interface operations {
             };
         };
     };
-    listFlowsChatbotTokenAPI: {
+    listFlowsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1425,7 +1425,7 @@ export interface operations {
             };
         };
     };
-    findBotFieldChatbotTokenAPI: {
+    findBotFieldWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1472,7 +1472,7 @@ export interface operations {
             };
         };
     };
-    updateBotFieldChatbotTokenAPI: {
+    updateBotFieldWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1525,7 +1525,7 @@ export interface operations {
             };
         };
     };
-    deleteBotFieldsChatbotTokenAPI: {
+    deleteBotFieldsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;
@@ -1576,7 +1576,7 @@ export interface operations {
             };
         };
     };
-    listBroadcastsChatbotTokenAPI: {
+    listBroadcastsWorkspaceTokenAPI: {
         parameters: {
             query?: never;
             header?: never;

@@ -2,29 +2,29 @@
 
 import { updateWebhookCache } from "@chatbotx/events"
 import { db, eq } from "@chatbotx.io/database/client"
-import { FolderType } from "@chatbotx.io/database/enums"
+import { folderTypes } from "@chatbotx.io/database/partials"
 import { webhookModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { ChatbotXException } from "@/lib/errors/exception"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_WEBHOOKS_PER_CHATBOT } from "../constants"
 import {
   type CreateWebhookSchema,
   createWebhookSchema,
 } from "../schemas/create-webhook-schema"
 
-export const createWebhookAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createWebhookAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createWebhookSchema)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -34,7 +34,7 @@ export const createWebhookAction = chatbotActionClient
 
       const existingWebhooksCount = await db.$count(
         webhookModel,
-        eq(webhookModel.chatbotId, chatbotId),
+        eq(webhookModel.workspaceId, workspaceId),
       )
 
       if (existingWebhooksCount >= MAX_WEBHOOKS_PER_CHATBOT) {
@@ -49,8 +49,8 @@ export const createWebhookAction = chatbotActionClient
       if (parsedInput.folderId) {
         await ensureFolderIsExists(
           parsedInput.folderId,
-          chatbotId,
-          FolderType.webhook,
+          workspaceId,
+          folderTypes.enum.webhook,
         )
       }
 
@@ -61,13 +61,13 @@ export const createWebhookAction = chatbotActionClient
         .values({
           id: createId(),
           ...webhookData,
-          chatbotId,
+          workspaceId,
           url: "",
         })
         .returning()
         .then((rows) => rows[0])
 
-      await updateWebhookCache(chatbotId)
+      await updateWebhookCache(workspaceId)
 
       return result
     },

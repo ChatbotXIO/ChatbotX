@@ -17,10 +17,13 @@ import { getAITriggersColumns } from "./table-columns"
 
 type AITriggersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listAITriggers>>]>
-  chatbotId: bigint
+  workspaceId: string
 }
 
-export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
+export function AITriggersTable({
+  promises,
+  workspaceId,
+}: AITriggersTableProps) {
   const [{ data, pageCount }] = use(promises)
   const router = useRouter()
   const [rowAction, setRowAction] =
@@ -31,8 +34,8 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
   const { execute } = useAction(
     duplicateAITriggerAction.bind(
       null,
-      chatbotId,
-      rowAction?.row.original ? rowAction.row.original.id : BigInt(0),
+      workspaceId,
+      rowAction?.row.original ? rowAction.row.original.id : "",
     ),
   )
 
@@ -53,7 +56,7 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AITriggerModel) => originalRow.id.toString(),
+    getRowId: (originalRow: AITriggerModel) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -63,20 +66,20 @@ export function AITriggersTable({ promises, chatbotId }: AITriggersTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <AITriggersTableToolbarActions
-            chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
             table={table}
+            workspaceId={workspaceId}
           />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteAITriggerDialog
-        chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
         trigger={rowAction?.row.original ? [rowAction?.row.original] : []}
+        workspaceId={workspaceId}
       />
     </>
   )

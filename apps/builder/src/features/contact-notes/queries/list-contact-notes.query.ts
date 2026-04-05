@@ -7,7 +7,7 @@ import type { ContactNoteResource } from "../schemas/resource"
 export async function listContactNotes(
   input: ListContactNotesRequest,
 ): Promise<PaginatedResponse<ContactNoteResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.contactNoteModel.findMany({
     where: {

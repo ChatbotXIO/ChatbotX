@@ -1,18 +1,18 @@
 import {
-  Condition,
-  DateTimeTriggerType,
-  Operator,
-} from "@chatbotx.io/database/enums"
+  dateTimeTriggerTypes,
+  operatorTypes,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import z from "zod"
 
 export const dateTimeBasedTrigger = z
   .object({
     id: z.string().optional(),
-    type: z.literal(Condition.dateTimeBasedTrigger),
+    type: z.literal(triggerEventTypes.enum.dateTimeBasedTrigger),
     sourceId: z.string().optional(),
     operator: z.string(),
     value: z.object({
-      triggerType: z.enum(DateTimeTriggerType),
+      triggerType: dateTimeTriggerTypes,
       timeValue: z.coerce.number().min(1).optional(),
       timeType: z.enum(["minutes", "hours", "days"]).optional(),
       at: z.string().optional(),
@@ -34,7 +34,7 @@ export const dateTimeBasedTrigger = z
       })
       return
     }
-    if (data.value.triggerType === DateTimeTriggerType.atTheDayOf) {
+    if (data.value.triggerType === dateTimeTriggerTypes.enum.atTheDayOf) {
       if (!data.value.at) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -54,11 +54,11 @@ export const dateTimeBasedTrigger = z
 export type DateTimeBasedTrigger = z.infer<typeof dateTimeBasedTrigger>
 
 export const defaultFn = (): DateTimeBasedTrigger => ({
-  type: Condition.dateTimeBasedTrigger,
+  type: triggerEventTypes.enum.dateTimeBasedTrigger,
   sourceId: "",
-  operator: Operator.is,
+  operator: operatorTypes.enum.is,
   value: {
-    triggerType: DateTimeTriggerType.before,
+    triggerType: dateTimeTriggerTypes.enum.before,
     timeValue: 1,
     timeType: "hours",
     at: "",

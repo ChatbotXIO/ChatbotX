@@ -2,37 +2,38 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { recalculateAllContactsInSequence } from "@/features/contact-sequences/utils/calculate-next-run-at"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
 const deleteSequenceStepRequest = z.object({
-  stepId: z.bigint(),
-  sequenceId: z.bigint(),
+  stepId: zodBigintAsString(),
+  sequenceId: zodBigintAsString(),
 })
 
 type DeleteSequenceStepRequest = z.infer<typeof deleteSequenceStepRequest>
 
 async function validateSequenceOwnership(
-  sequenceId: bigint,
-  chatbotId: bigint,
+  sequenceId: string,
+  workspaceId: string,
 ) {
-  await findOrFail(
-    sequenceModel,
-    {
+  await findOrFail({
+    table: sequenceModel,
+    where: {
       id: sequenceId,
-      chatbotId,
+      workspaceId,
     },
-    "Sequence not found",
-  )
+    message: "Sequence not found",
+  })
 }
 
-async function deleteStep(stepId: bigint, chatbotId: bigint) {
+async function deleteStep(stepId: string, workspaceId: string) {
   const step = await db.query.sequenceStepModel.findFirst({
     where: {
       id: stepId,
@@ -46,19 +47,19 @@ async function deleteStep(stepId: bigint, chatbotId: bigint) {
     throw new Error("Step not found")
   }
 
-  if (step.sequence.chatbotId !== chatbotId) {
-    throw new Error("Unauthorized: Step does not belong to this chatbot")
+  if (step.sequence.workspaceId !== workspaceId) {
+    throw new Error("Unauthorized: Step does not belong to this workspace")
   }
 
   await db.delete(sequenceStepModel).where(eq(sequenceStepModel.id, stepId))
 }
 
-export const deleteSequenceStepAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteSequenceStepAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(deleteSequenceStepRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -66,11 +67,11 @@ export const deleteSequenceStepAction = chatbotActionClient
     }) => {
       const { stepId, sequenceId } = parsedInput
 
-      await validateSequenceOwnership(sequenceId, chatbotId)
-      await deleteStep(stepId, chatbotId)
-      await recalculateAllContactsInSequence(sequenceId, chatbotId)
+      await validateSequenceOwnership(sequenceId, workspaceId)
+      await deleteStep(stepId, workspaceId)
+      await recalculateAllContactsInSequence(sequenceId, workspaceId)
 
-      revalidateCacheTags([`chatbots:${chatbotId}#sequences`])
+      revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
       return { success: true }
     },

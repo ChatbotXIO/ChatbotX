@@ -1,6 +1,6 @@
 "use client"
 
-import type { FolderType } from "@chatbotx.io/database/types"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -26,10 +26,10 @@ import { parseAsBigInt } from "@/lib/nuqs"
 import { useFolderStore } from "./provider/folder-store-context"
 
 export function CreateFolderDialog({
-  chatbotId,
+  workspaceId,
   folderType,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   folderType: FolderType
 }) {
   const t = useTranslations()
@@ -42,7 +42,7 @@ export function CreateFolderDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createFolderAction.bind(null, chatbotId),
+      createFolderAction.bind(null, workspaceId),
       zodResolver(createFolderSchema),
       {
         actionProps: {

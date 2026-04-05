@@ -4,10 +4,11 @@ import {
   messengerPersistentMenu,
   messengerPersona,
 } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
 export const selectPageRequest = z.object({
-  chatbotId: z.string().nullish(),
+  workspaceId: z.string().nullish(),
   pageId: z.string(),
   pageName: z.string(),
   accessToken: z.string(),
@@ -16,7 +17,7 @@ export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
 export const updateMessengerRequest = z.object({
   addLanguage: z.string().optional(),
-  welcomeFlowId: z.bigint().nullable(),
+  welcomeFlowId: zodBigintAsString().nullable(),
   greetingMessages: z.array(messengerGreetingMessage),
   persistentMenus: z.array(messengerPersistentMenu),
   personas: z.array(messengerPersona),

@@ -1,4 +1,9 @@
-import { Condition, TriggerAction } from "@chatbotx.io/database/enums"
+import {
+  type TriggerAction,
+  type TriggerEventType,
+  triggerActions,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -16,7 +21,7 @@ export const BaseEditor = ({
   onRemove,
   children,
 }: {
-  conditionType?: Condition
+  conditionType?: TriggerEventType
   actionType?: TriggerAction
   children: ReactNode
   onRemove: () => void
@@ -25,77 +30,77 @@ export const BaseEditor = ({
 
   const conditionLabel = useMemo(() => {
     switch (conditionType) {
-      case Condition.tagApplied:
+      case triggerEventTypes.enum.tagApplied:
         return t("trigger.conditions.tagApplied")
-      case Condition.tagRemoved:
+      case triggerEventTypes.enum.tagRemoved:
         return t("trigger.conditions.tagRemoved")
-      case Condition.customFieldValueChanged:
+      case triggerEventTypes.enum.customFieldValueChanged:
         return t("trigger.conditions.customFieldValueChanged")
-      case Condition.dateTimeBasedTrigger:
+      case triggerEventTypes.enum.dateTimeBasedTrigger:
         return t("trigger.conditions.dateTimeBasedTrigger")
-      case Condition.conversationTransferredToHuman:
+      case triggerEventTypes.enum.conversationTransferredToHuman:
         return t("trigger.conditions.conversationTransferredToHuman")
-      case Condition.conversationTransferredToBot:
+      case triggerEventTypes.enum.conversationTransferredToBot:
         return t("trigger.conditions.conversationTransferredToBot")
-      case Condition.newContact:
+      case triggerEventTypes.enum.newContact:
         return t("trigger.conditions.newContact")
-      case Condition.contactUnsubscribedFormBroadcast:
+      case triggerEventTypes.enum.contactUnsubscribedFormBroadcast:
         return t("trigger.conditions.contactUnsubscribedFormBroadcast")
-      case Condition.archived:
+      case triggerEventTypes.enum.archived:
         return t("trigger.conditions.archived")
-      case Condition.followUp:
+      case triggerEventTypes.enum.followUp:
         return t("trigger.conditions.followUp")
-      case Condition.conversationAssigned:
+      case triggerEventTypes.enum.conversationAssigned:
         return t("trigger.conditions.conversationAssigned")
-      case Condition.conversationUnassigned:
+      case triggerEventTypes.enum.conversationUnassigned:
         return t("trigger.conditions.conversationUnassigned")
-      case Condition.incomingCall:
+      case triggerEventTypes.enum.incomingCall:
         return t("trigger.conditions.incomingCall")
-      case Condition.missedAudioCall:
+      case triggerEventTypes.enum.missedAudioCall:
         return t("trigger.conditions.missedAudioCall")
-      case Condition.callEnded:
+      case triggerEventTypes.enum.callEnded:
         return t("trigger.conditions.callEnded")
-      case Condition.ticketCreated:
+      case triggerEventTypes.enum.ticketCreated:
         return t("trigger.conditions.ticketCreated")
-      case Condition.ticketMovedToStage:
+      case triggerEventTypes.enum.ticketMovedToStage:
         return t("trigger.conditions.ticketMovedToStage")
-      case Condition.ticketValueChanged:
+      case triggerEventTypes.enum.ticketValueChanged:
         return t("trigger.conditions.ticketValueChanged")
-      case Condition.ticketStatusChanged:
+      case triggerEventTypes.enum.ticketStatusChanged:
         return t("trigger.conditions.ticketStatusChanged")
-      case Condition.ticketPriorityChanged:
+      case triggerEventTypes.enum.ticketPriorityChanged:
         return t("trigger.conditions.ticketPriorityChanged")
-      case Condition.subscribedToSequence:
+      case triggerEventTypes.enum.subscribedToSequence:
         return t("trigger.conditions.subscribedToSequence")
-      case Condition.unsubscribedFromSequence:
+      case triggerEventTypes.enum.unsubscribedFromSequence:
         return t("trigger.conditions.unsubscribedFromSequence")
-      case Condition.WhatsappShoppingCartSent:
+      case triggerEventTypes.enum.WhatsappShoppingCartSent:
         return t("trigger.conditions.WhatsappShoppingCartSent")
-      case Condition.userAskedAboutProduct:
+      case triggerEventTypes.enum.userAskedAboutProduct:
         return t("trigger.conditions.userAskedAboutProduct")
-      case Condition.cartAbandoned:
+      case triggerEventTypes.enum.cartAbandoned:
         return t("trigger.conditions.cartAbandoned")
-      case Condition.newOrder:
+      case triggerEventTypes.enum.newOrder:
         return t("trigger.conditions.newOrder")
-      case Condition.orderAccepted:
+      case triggerEventTypes.enum.orderAccepted:
         return t("trigger.conditions.orderAccepted")
-      case Condition.orderShipped:
+      case triggerEventTypes.enum.orderShipped:
         return t("trigger.conditions.orderShipped")
-      case Condition.orderConcluded:
+      case triggerEventTypes.enum.orderConcluded:
         return t("trigger.conditions.orderConcluded")
-      case Condition.orderCancelled:
+      case triggerEventTypes.enum.orderCancelled:
         return t("trigger.conditions.orderCancelled")
-      case Condition.categoryAddedToCart:
+      case triggerEventTypes.enum.categoryAddedToCart:
         return t("trigger.conditions.categoryAddedToCart")
-      case Condition.productAddedToCart:
+      case triggerEventTypes.enum.productAddedToCart:
         return t("trigger.conditions.productAddedToCart")
-      case Condition.productRemovedFromCart:
+      case triggerEventTypes.enum.productRemovedFromCart:
         return t("trigger.conditions.productRemovedFromCart")
-      case Condition.productOrdered:
+      case triggerEventTypes.enum.productOrdered:
         return t("trigger.conditions.productOrdered")
-      case Condition.contactReferredANewContact:
+      case triggerEventTypes.enum.contactReferredANewContact:
         return t("trigger.conditions.contactReferredANewContact")
-      case Condition.contactReferredExistingContact:
+      case triggerEventTypes.enum.contactReferredExistingContact:
         return t("trigger.conditions.contactReferredExistingContact")
       default:
         break
@@ -104,19 +109,19 @@ export const BaseEditor = ({
 
   const actionLabel = useMemo(() => {
     switch (actionType) {
-      case TriggerAction.addTag:
+      case triggerActions.enum.addTag:
         return t("trigger.actions.addTag")
-      case TriggerAction.removeTag:
+      case triggerActions.enum.removeTag:
         return t("trigger.actions.removeTag")
-      case TriggerAction.setCustomField:
+      case triggerActions.enum.setCustomField:
         return t("trigger.actions.setCustomField")
-      case TriggerAction.clearCustomField:
+      case triggerActions.enum.clearCustomField:
         return t("trigger.actions.clearCustomField")
-      case TriggerAction.startAnotherFlow:
+      case triggerActions.enum.startAnotherFlow:
         return t("trigger.actions.startAnotherFlow")
-      case TriggerAction.transferConversationToHuman:
+      case triggerActions.enum.transferConversationToHuman:
         return t("trigger.actions.transferConversationToHuman")
-      case TriggerAction.runGoogleSheet:
+      case triggerActions.enum.runGoogleSheet:
         return "Google Sheets"
       default:
         break

@@ -1,4 +1,4 @@
 export type ListContactNotesRequest = {
-  chatbotId: bigint
-  contactId: bigint
+  workspaceId: string
+  contactId: string
 }

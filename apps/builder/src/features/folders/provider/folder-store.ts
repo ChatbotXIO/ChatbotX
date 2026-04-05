@@ -1,8 +1,8 @@
-import type { FolderType } from "@chatbotx.io/database/types"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { FolderCollection, FolderResource } from "../schema/resource"
+import type { FolderResource, ListFoldersResponse } from "../schema/resource"
 
 export type FolderState = {
   // Initialization
@@ -11,7 +11,7 @@ export type FolderState = {
   initialized: boolean
 
   // Data
-  chatbotId: bigint
+  workspaceId: string
   folderType: FolderType | null
   folders: FolderResource[]
 }
@@ -29,7 +29,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     folderType: null,
     folders: [],
     ...props,
@@ -56,9 +56,9 @@ export const createFolderStore = (props: Partial<FolderState>) =>
     },
 
     getAllFolders: async () => {
-      const { chatbotId, folderType, loading } = get()
+      const { workspaceId, folderType, loading } = get()
 
-      if (loading || !chatbotId) {
+      if (loading || !workspaceId) {
         return
       }
 
@@ -69,8 +69,8 @@ export const createFolderStore = (props: Partial<FolderState>) =>
           folderType: folderType ?? "",
         })
         const { data } = await ky
-          .get<FolderCollection>(
-            `/api/chatbots/${get().chatbotId}/folders?${searchParams.toString()}`,
+          .get<ListFoldersResponse>(
+            `/api/workspaces/${get().workspaceId}/folders?${searchParams.toString()}`,
           )
           .json()
 

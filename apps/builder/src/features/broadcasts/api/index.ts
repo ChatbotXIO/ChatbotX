@@ -1,5 +1,5 @@
-import { broadcastChatbotTokenAPIs } from "./chatbot-token"
+import { broadcastWorkspaceTokenAPIs } from "./workspace-token"
 
 export const broadcastAPIs = {
-  ...broadcastChatbotTokenAPIs,
+  ...broadcastWorkspaceTokenAPIs,
 }

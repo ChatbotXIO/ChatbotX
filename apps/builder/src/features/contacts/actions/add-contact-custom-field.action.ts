@@ -10,35 +10,32 @@ import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactCustomFieldRequest,
   addContactCustomFieldRequest,
 } from "../schemas/contact-custom-field"
 
-export const addContactCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const addContactCustomFieldAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(addContactCustomFieldRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: AddContactCustomFieldRequest
-    }) => {
-      await addContactCustomFields({
-        bindArgsParsedInputs: [chatbotId],
-        parsedInput,
-      })
-    },
-  )
+    } = props
+
+    await addContactCustomFields({
+      bindArgsParsedInputs: [workspaceId],
+      parsedInput,
+    })
+  })
 
 export const addContactCustomFields = async ({
-  bindArgsParsedInputs: [chatbotId],
+  bindArgsParsedInputs: [workspaceId],
   parsedInput,
 }: {
   bindArgsParsedInputs: ChatbotIdRequestParams
@@ -46,7 +43,7 @@ export const addContactCustomFields = async ({
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
-      chatbotId,
+      workspaceId,
       id: {
         in: parsedInput.ids,
       },
@@ -59,14 +56,14 @@ export const addContactCustomFields = async ({
     return
   }
 
-  const customField = await findOrFail(
-    customFieldModel,
-    {
-      chatbotId,
+  const customField = await findOrFail({
+    table: customFieldModel,
+    where: {
+      workspaceId,
       id: parsedInput.customFieldId,
     },
-    "Custom field not found",
-  )
+    message: "Custom field not found",
+  })
 
   await db.transaction(async (tx) => {
     await Promise.all(
@@ -124,7 +121,7 @@ export const addContactCustomFields = async ({
   for (const contact of contacts) {
     try {
       await emitCustomFieldChanged(
-        chatbotId,
+        workspaceId,
         contact.id,
         customField.id,
         customField.name,
@@ -136,25 +133,25 @@ export const addContactCustomFields = async ({
     }
   }
 
-  revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
+  revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }
 
 export const setContactCustomFieldValue = async ({
-  chatbotId,
+  workspaceId,
   contactId,
   customFieldId,
   value,
 }: {
-  chatbotId: bigint
-  contactId: bigint
-  customFieldId: bigint
+  workspaceId: string
+  contactId: string
+  customFieldId: string
   value: string
 }) => {
   // Get custom field info for event emission
   const customField = await db.query.customFieldModel.findFirst({
     where: {
       id: customFieldId,
-      chatbotId,
+      workspaceId,
     },
     columns: {
       id: true,
@@ -192,7 +189,7 @@ export const setContactCustomFieldValue = async ({
   // Emit custom field changed event
   try {
     await emitCustomFieldChanged(
-      chatbotId,
+      workspaceId,
       contactId,
       customField.id,
       customField.name,
@@ -203,5 +200,5 @@ export const setContactCustomFieldValue = async ({
     console.error("Failed to emit customFieldChanged event:", error)
   }
 
-  revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
+  revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }

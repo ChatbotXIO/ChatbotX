@@ -47,7 +47,7 @@ worker.on("failed", async (job, err) => {
         await defaultQueue.add(DefaultJobAction.sendErrorLog, {
           type: DefaultJobAction.sendErrorLog,
           data: {
-            chatbotId: job.data.data.chatbotId,
+            workspaceId: job.data.data.workspaceId,
             error: {
               message: err.message,
               stack: err.stack,

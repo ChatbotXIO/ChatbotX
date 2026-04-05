@@ -3,20 +3,20 @@ import { IntegrationJobAction } from "@chatbotx.io/worker-config"
 import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
-  chatbotId: bigint
-  contactId: bigint
-  flowId: bigint
+  contactId: string
+  flowId: string
+  workspaceId: string
 }
 
 export async function sendFlowDirect(
   params: SendFlowDirectParams,
 ): Promise<Date> {
-  const { flowId, chatbotId, contactId } = params
+  const { flowId, workspaceId, contactId } = params
 
   const conversation = await db.query.conversationModel.findFirst({
     where: {
       contactId,
-      chatbotId,
+      workspaceId,
     },
   })
 

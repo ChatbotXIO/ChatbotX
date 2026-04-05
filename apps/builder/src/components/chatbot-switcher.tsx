@@ -1,6 +1,5 @@
 "use client"
 
-import type { ChatbotModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -26,19 +25,28 @@ import { ChevronsUpDown, PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { useChatbotId } from "@/hooks/routing"
+import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
+import { useWorkspaceId } from "@/hooks/routing"
 
-export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
+export function ChatbotSwitcher({
+  workspaces,
+}: {
+  workspaces: WorkspaceResource[]
+}) {
   const { isMobile } = useSidebar()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
-  const [activeChatbot, setActiveChatbot] = useState<ChatbotModel | null>(null)
+  const [activeChatbot, setActiveChatbot] = useState<WorkspaceResource | null>(
+    null,
+  )
   const t = useTranslations()
 
   useEffect(() => {
-    const foundChatbot = chatbots.find((chatbot) => chatbot.id === chatbotId)
+    const foundChatbot = workspaces.find(
+      (workspace) => workspace.id === workspaceId,
+    )
     setActiveChatbot(foundChatbot ?? null)
-  }, [chatbots, chatbotId])
+  }, [workspaces, workspaceId])
 
   return (
     <SidebarMenu>
@@ -74,27 +82,30 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              {t("chatbots.list.title")}
+              {t("workspaces.list.title")}
             </DropdownMenuLabel>
-            {chatbots.map((chatbot) => (
+            {workspaces.map((workspace) => (
               <DropdownMenuItem
                 asChild
                 className={cn(
                   "gap-2 p-2",
-                  activeChatbot?.id === chatbot.id &&
+                  activeChatbot?.id === workspace.id &&
                     "bg-sidebar-accent text-sidebar-accent-foreground",
                 )}
-                key={chatbot.name}
-                onClick={() => setActiveChatbot(chatbot)}
+                key={workspace.name}
+                onClick={() => setActiveChatbot(workspace)}
               >
-                <Link href={`/chatbots/${chatbot.id}/dashboard`}>
+                <Link href={`/space/${workspace.id}/dashboard`}>
                   <Avatar className="rounded-lg border">
-                    <AvatarImage alt={chatbot.name} src={chatbot.logo ?? ""} />
+                    <AvatarImage
+                      alt={workspace.name}
+                      src={workspace.logo ?? ""}
+                    />
                     <AvatarFallback className="rounded font-medium">
-                      {chatbot.name.slice(0, 2) || "  "}
+                      {workspace.name.slice(0, 2) || "  "}
                     </AvatarFallback>
                   </Avatar>
-                  {chatbot.name}
+                  {workspace.name}
                 </Link>
               </DropdownMenuItem>
             ))}
@@ -106,7 +117,7 @@ export function ChatbotSwitcher({ chatbots }: { chatbots: ChatbotModel[] }) {
               >
                 <PlusCircle className="ml-2 size-4" />
                 {t("actions.addFeature", {
-                  feature: t("fields.chatbot.label"),
+                  feature: t("fields.workspace.label"),
                 })}
               </Link>
             </DropdownMenuItem>

@@ -1,5 +1,5 @@
-import { channelTypes } from "@chatbotx.io/database/partials"
-import { gender } from "@chatbotx.io/database/schema"
+import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const contactPrefix = "ct"
@@ -15,12 +15,12 @@ export const createContactRequest = z.object({
   email: z.union([z.literal(""), z.email().max(100)]),
   firstName: z.optional(z.string().trim().max(100)),
   lastName: z.optional(z.string().trim().max(100)),
-  gender: z.enum(gender.enumValues),
+  gender: genderTypes,
 })
 export type CreateContactRequest = z.infer<typeof createContactRequest>
 
 export const createContactResponse = z.object({
-  id: z.bigint(),
+  id: zodBigintAsString(),
 })
 export type CreateContactResponse = z.infer<typeof createContactResponse>
 
@@ -31,7 +31,7 @@ export type UpdateContactFieldRequest = z.infer<
 
 export const exportContactsRequest = z.object({
   fields: z.array(z.string()).min(1),
-  contactIds: z.array(z.bigint()).min(1),
+  contactIds: z.array(zodBigintAsString()).min(1),
 })
 export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
 

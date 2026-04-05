@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const unsubscribeSequenceStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.unsubscribeSequence),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.unsubscribeSequence),
   sequenceId: z.string().optional(),
 })
 
@@ -15,6 +15,6 @@ export type UnsubscribeSequenceStepSchema = z.infer<
 export const unsubscribeSequenceStepDefaultFn =
   (): UnsubscribeSequenceStepSchema => ({
     id: createId(),
-    stepType: StepType.unsubscribeSequence,
+    stepType: stepTypes.enum.unsubscribeSequence,
     sequenceId: undefined,
   })

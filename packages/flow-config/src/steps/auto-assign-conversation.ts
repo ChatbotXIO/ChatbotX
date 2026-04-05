@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const AutoAssignConversationRule = {
   ALL_TIME: "ALL_TIME",
@@ -10,8 +10,8 @@ export const AutoAssignConversationRule = {
 } as const
 
 export const autoAssignConversationStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.autoAssignConversation),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.autoAssignConversation),
   assignedIds: z.array(z.string()),
   rule: z.enum(AutoAssignConversationRule),
 })
@@ -24,7 +24,7 @@ export const autoAssignConversationStepDefaultFn = (
   props?: Partial<AutoAssignConversationStepSchema>,
 ): AutoAssignConversationStepSchema => ({
   id: createId(),
-  stepType: StepType.autoAssignConversation,
+  stepType: stepTypes.enum.autoAssignConversation,
   assignedIds: [],
   rule: AutoAssignConversationRule.ALL_TIME,
   ...props,

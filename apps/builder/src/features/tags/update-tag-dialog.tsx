@@ -26,17 +26,17 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateTagAction } from "./actions/update-tag-action"
-import { updateTagSchema } from "./schemas/update-tag-schema"
+import { updateTagSchema } from "./schema/action"
 
 export function UpdateTagDialog({
-  chatbotId,
+  workspaceId,
   tag,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   tag: TagModel | null
 }) {
   const t = useTranslations()
@@ -48,7 +48,7 @@ export function UpdateTagDialog({
     resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateTagAction.bind(null, chatbotId, tag?.id ?? BigInt(0)),
+    updateTagAction.bind(null, workspaceId, tag?.id ?? ""),
     zodResolver(updateTagSchema),
     {
       actionProps: {

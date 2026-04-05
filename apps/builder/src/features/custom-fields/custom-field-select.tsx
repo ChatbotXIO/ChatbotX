@@ -1,6 +1,6 @@
 "use client"
 
-import type { CustomFieldType } from "@chatbotx.io/database/types"
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import {
@@ -11,7 +11,7 @@ import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { FormItem, FormLabel } from "@chatbotx.io/ui/components/ui/form"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
 import { useCustomFieldStore } from "./provider/custom-field-store-context"
@@ -40,7 +40,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
   } = props
 
   const t = useTranslations()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const customFieldSelectOptions = useCustomFieldSelectOptions({
     customFieldTypes,
     includeReserved,
@@ -71,7 +71,6 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
 
           {allowCreate && (
             <CreateCustomFieldDialog
-              chatbotId={chatbotId}
               folderId={null}
               onSuccess={handleSuccess}
               triggerButton={
@@ -82,6 +81,7 @@ export const CustomFieldSelect = (props: CustomFieldSelectProps) => {
                   {t("actions.add")}
                 </Button>
               }
+              workspaceId={workspaceId}
             />
           )}
         </div>

@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateSpreadsheetAction } from "./actions/update-spreadsheet-action"
-import { createSpreadsheetRequest } from "./schemas/mutation"
+import { createSpreadsheetRequest } from "./schema/mutation"
 
 export function UpdateSpreadsheetDialog({
   spreadsheet,
@@ -43,7 +43,7 @@ export function UpdateSpreadsheetDialog({
   } = useHookFormAction(
     updateSpreadsheetAction.bind(
       null,
-      spreadsheet?.chatbotId ?? "",
+      spreadsheet?.workspaceId ?? "",
       spreadsheet?.id ?? "",
     ),
     zodResolver(createSpreadsheetRequest),

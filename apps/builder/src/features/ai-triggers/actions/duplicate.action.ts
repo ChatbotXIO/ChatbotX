@@ -2,38 +2,38 @@
 
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const duplicateAITriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      const targetAITrigger = await findOrFail(
-        aiTriggerModel,
-        {
-          id,
-          chatbotId,
-        },
-        "AITrigger not found",
-      )
-      const { id: eid, name, createdAt, updatedAt, ...rest } = targetAITrigger
+export const duplicateAITriggerAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
 
-      await db.insert(aiTriggerModel).values({
-        ...rest,
-        name: `${name} _copy`,
-        id: createId(),
-      })
+    return await duplicateAITrigger({ workspaceId, id })
+  })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
+export const duplicateAITrigger = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  const targetAITrigger = await findOrFail({
+    table: aiTriggerModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "AITrigger not found",
+  })
+  const { id: eid, name, createdAt, updatedAt, ...rest } = targetAITrigger
+
+  await db.insert(aiTriggerModel).values({
+    ...rest,
+    name: `${name} _copy`,
+  })
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiTriggers`)
+}

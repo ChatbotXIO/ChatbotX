@@ -13,11 +13,11 @@ export async function triggerAutomatedResponse(
   props: IntegrationJobTriggerAutomatedResponse["data"],
 ) {
   const { message } = props
-  const messageId = (message as { id?: bigint }).id ?? BigInt(0)
+  const messageId = (message as { id?: string }).id ?? ""
   const startTime = Date.now()
   if (!message.text) {
     await trackBotResponse({
-      chatbotId: message.chatbotId,
+      workspaceId: message.workspaceId,
       conversationId: message.conversationId,
       messageId,
       hasResponse: false,
@@ -44,7 +44,7 @@ export async function triggerAutomatedResponse(
       props,
       createTrackingContext({
         messageId,
-        chatbotId: message.chatbotId,
+        workspaceId: message.workspaceId,
         conversationId: message.conversationId,
         responseType: "automated_response",
         aiProvider: "none",
@@ -56,12 +56,12 @@ export async function triggerAutomatedResponse(
   }
 
   const aiAgent = await db.query.aiAgentModel.findFirst({
-    where: { chatbotId: message.chatbotId, isDefault: true },
+    where: { workspaceId: message.workspaceId, isDefault: true },
   })
   if (!aiAgent) {
     // No AI Agent configured → Route to FALLBACK
     await trackBotResponse({
-      chatbotId: message.chatbotId,
+      workspaceId: message.workspaceId,
       conversationId: message.conversationId,
       messageId,
       hasResponse: false,
@@ -103,7 +103,7 @@ export async function triggerAutomatedResponse(
   }
   lastAIMessages.reverse()
 
-  const toolset = await getAIToolset(aiAgent.chatbotId, aiAgent.tools)
+  const toolset = await getAIToolset(aiAgent.workspaceId, aiAgent.tools)
 
   if (
     await replyByOpenAI(
@@ -120,7 +120,7 @@ export async function triggerAutomatedResponse(
       },
       createTrackingContext({
         messageId,
-        chatbotId: message.chatbotId,
+        workspaceId: message.workspaceId,
         conversationId: message.conversationId,
         responseType: "ai_agent",
         aiProvider: "openai",
@@ -130,7 +130,7 @@ export async function triggerAutomatedResponse(
   ) {
     // Step 3: AI Agent exists → Route to AGENT
     await trackBotResponse({
-      chatbotId: message.chatbotId,
+      workspaceId: message.workspaceId,
       conversationId: message.conversationId,
       messageId,
       hasResponse: true,
@@ -157,7 +157,7 @@ export async function triggerAutomatedResponse(
       },
       createTrackingContext({
         messageId,
-        chatbotId: message.chatbotId,
+        workspaceId: message.workspaceId,
         conversationId: message.conversationId,
         responseType: "ai_agent",
         aiProvider: "gemini",
@@ -171,7 +171,7 @@ export async function triggerAutomatedResponse(
   // Step 4: AI Agent failed to respond → Still routed to AGENT, but response failed
   // This is NOT fallback - routing decision was AGENT, but execution failed
   await trackBotResponse({
-    chatbotId: message.chatbotId,
+    workspaceId: message.workspaceId,
     conversationId: message.conversationId,
     messageId,
     hasResponse: false,

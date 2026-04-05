@@ -71,7 +71,7 @@ export const handleWebhook = async (
         ...settings,
         redirectUrl,
         stateParams: {
-          chatbotId: req.nextUrl.searchParams.get("chatbotId") ?? "",
+          workspaceId: req.nextUrl.searchParams.get("workspaceId") ?? "",
           referer: req.nextUrl.toString(),
         },
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value

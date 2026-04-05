@@ -38,7 +38,7 @@ export const BrandIcon = ({
         alt={alt}
         className={cn(
           className,
-          "h-8 w-full group-data-[collapsible=icon]:hidden",
+          "h-8 w-auto group-data-[collapsible=icon]:hidden",
         )}
         height={5}
         src={logoSrc}

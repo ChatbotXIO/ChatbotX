@@ -7,13 +7,13 @@ import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 
 type WebchatTableToolbarActionsProps = {
-  chatbotId: bigint
+  workspaceId: string
   table: Table<IntegrationWebchatModel>
   onOpenChange: (open: boolean) => void
 }
 
 export function WebchatTableToolbarActions({
-  chatbotId,
+  workspaceId,
   // table,
 }: WebchatTableToolbarActionsProps) {
   // const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -27,7 +27,7 @@ export function WebchatTableToolbarActions({
         <Button size="sm">
           <Link
             className="flex items-center gap-2"
-            href={`/chatbots/${chatbotId}/webchats/create`}
+            href={`/space/${workspaceId}/webchats/create`}
           >
             <PlusIcon className="h-4 w-4" />
             Add Webchat
@@ -36,13 +36,13 @@ export function WebchatTableToolbarActions({
       </div>
 
       {/* <CreateWebchatDialog
-        chatbotId={chatbotId}
+        workspaceId={workspaceId}
         onOpenChange={setCreateDialogOpen}
         open={createDialogOpen}
       /> */}
 
       {/* <DeleteWebchatDialog
-        chatbotId={chatbotId}
+        workspaceId={workspaceId}
         onOpenChange={setDeleteDialogOpen}
         onSuccess={() => {
           for (const row of selectedRows) {

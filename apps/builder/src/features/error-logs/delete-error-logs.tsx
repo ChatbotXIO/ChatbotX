@@ -21,14 +21,14 @@ import { toast } from "sonner"
 import { deleteErrorLogAction } from "./actions/delete-error-log-action"
 
 type DeleteErrorLogsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   errorLogs: Row<ErrorLogModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
 }
 
 export function DeleteErrorLogsDialog({
-  chatbotId,
+  workspaceId,
   errorLogs,
   showTrigger = true,
   onSuccess,
@@ -37,7 +37,7 @@ export function DeleteErrorLogsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteErrorLogAction.bind(null, chatbotId),
+    deleteErrorLogAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

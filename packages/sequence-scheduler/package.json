@@ -8,14 +8,13 @@
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
-    "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@paralleldrive/cuid2": "^3.3.0",
     "date-fns": "^4.1.0"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { deleteTagAction } from "./actions/delete-tag-action"
 
 type DeleteTagsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   tags: Row<TagModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteTagsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteTagsDialog({
-  chatbotId,
+  workspaceId,
   tags,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteTagsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteTagAction.bind(null, chatbotId),
+    deleteTagAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

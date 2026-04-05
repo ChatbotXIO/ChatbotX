@@ -1,5 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
-import { Condition } from "@chatbotx.io/database/enums"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import { triggerExecutionModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
@@ -16,16 +16,16 @@ import {
 import { ActionExecutor } from "./action-executor"
 
 interface DateTimeTriggerResult {
-  contactId: bigint
+  contactId: string
   error?: string
   matched: boolean
-  triggerId: bigint
+  triggerId: string
 }
 
 interface TriggerMap {
   [triggerId: string]: {
-    triggerId: bigint
-    chatbotId: bigint
+    triggerId: string
+    workspaceId: string
     actions: unknown
     conditions: DateTimeCondition[]
     timezone: string
@@ -42,7 +42,7 @@ async function fetchTriggerChunk(
     },
     with: {
       conditions: true,
-      chatbot: true,
+      workspace: true,
     },
     limit: chunkSize,
     orderBy: { id: "asc" },
@@ -51,7 +51,9 @@ async function fetchTriggerChunk(
   // Filter triggers that have datetime conditions and apply cursor
   const filteredTriggers = triggers
     .filter((t) =>
-      t.conditions.some((c) => c.type === Condition.dateTimeBasedTrigger),
+      t.conditions.some(
+        (c) => c.type === triggerEventTypes.enum.dateTimeBasedTrigger,
+      ),
     )
     .filter((t) => (cursor ? t.id > cursor : true))
     .slice(0, chunkSize)
@@ -60,7 +62,7 @@ async function fetchTriggerChunk(
   const triggersWithFilteredConditions = filteredTriggers.map((t) => ({
     ...t,
     conditions: t.conditions.filter(
-      (c) => c.type === Condition.dateTimeBasedTrigger,
+      (c) => c.type === triggerEventTypes.enum.dateTimeBasedTrigger,
     ),
   }))
 
@@ -91,10 +93,10 @@ async function fetchTriggerChunk(
     if (conditions.length > 0) {
       triggerMap[trigger.id.toString()] = {
         triggerId: trigger.id,
-        chatbotId: trigger.chatbotId,
+        workspaceId: trigger.workspaceId,
         actions: trigger.actions,
         conditions,
-        timezone: trigger.chatbot?.accountTimezone || "UTC",
+        timezone: trigger.workspace?.timezone || "UTC",
       }
     }
   }
@@ -139,16 +141,16 @@ function buildContactCustomFieldMap(
 
 function filterContactsWithAllCustomFields(
   contactCustomFields: Array<{
-    contactId: bigint
-    contact: { chatbotId: bigint }
+    contactId: string
+    contact: { workspaceId: string }
   }>,
   triggerInfo: TriggerMap[string],
-  contactCustomFieldMap: Map<bigint, Map<bigint, unknown>>,
-): Set<bigint> {
-  const contactsToCheck = new Set<bigint>()
+  contactCustomFieldMap: Map<string, Map<string, unknown>>,
+): Set<string> {
+  const contactsToCheck = new Set<string>()
 
   for (const cf of contactCustomFields) {
-    if (cf.contact.chatbotId !== triggerInfo.chatbotId) {
+    if (cf.contact.workspaceId !== triggerInfo.workspaceId) {
       return new Set()
     }
 
@@ -196,8 +198,8 @@ function evaluateContactForTrigger(
 }
 
 async function getExecutedTriggers(
-  triggerIds: bigint[],
-  contactIds: bigint[],
+  triggerIds: string[],
+  contactIds: string[],
 ): Promise<Set<string>> {
   const executions = await db.query.triggerExecutionModel.findMany({
     where: {
@@ -215,8 +217,8 @@ async function getExecutedTriggers(
 
 async function checkExecutionCache(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: bigint,
-  contactId: bigint,
+  triggerId: string,
+  contactId: string,
 ): Promise<boolean> {
   const cacheKey = `trigger:executed:${triggerId}:${contactId}`
   const cached = await redis.get(cacheKey)
@@ -225,8 +227,8 @@ async function checkExecutionCache(
 
 async function acquireExecutionLock(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: bigint,
-  contactId: bigint,
+  triggerId: string,
+  contactId: string,
 ): Promise<boolean> {
   const lockKey = `trigger:lock:${triggerId}:${contactId}`
   const lockAcquired = await redis.set(lockKey, "1", "EX", 30, "NX")
@@ -235,8 +237,8 @@ async function acquireExecutionLock(
 
 async function releaseExecutionLock(
   redis: ReturnType<typeof getRedisConnection>,
-  triggerId: bigint,
-  contactId: bigint,
+  triggerId: string,
+  contactId: string,
 ): Promise<void> {
   const lockKey = `trigger:lock:${triggerId}:${contactId}`
   await redis.del(lockKey)
@@ -244,7 +246,7 @@ async function releaseExecutionLock(
 
 async function executeActions(
   triggerInfo: TriggerMap[string],
-  contactId: bigint,
+  contactId: string,
 ): Promise<void> {
   const actions = Array.isArray(triggerInfo.actions) ? triggerInfo.actions : []
   const executor = new ActionExecutor()
@@ -254,7 +256,7 @@ async function executeActions(
       await executor.execute({
         action,
         contactId,
-        chatbotId: triggerInfo.chatbotId,
+        workspaceId: triggerInfo.workspaceId,
       })
     } catch (error) {
       logger.error(
@@ -268,7 +270,7 @@ async function executeActions(
 async function markTriggerExecuted(
   redis: ReturnType<typeof getRedisConnection>,
   triggerInfo: TriggerMap[string],
-  contactId: bigint,
+  contactId: string,
 ): Promise<void> {
   await db
     .insert(triggerExecutionModel)
@@ -276,7 +278,7 @@ async function markTriggerExecuted(
       id: createId(),
       triggerId: triggerInfo.triggerId,
       contactId,
-      chatbotId: triggerInfo.chatbotId,
+      workspaceId: triggerInfo.workspaceId,
       createdAt: new Date(),
       executedAt: new Date(),
     })
@@ -288,7 +290,7 @@ async function markTriggerExecuted(
 
 async function executeAndMarkTrigger(
   triggerInfo: TriggerMap[string],
-  contactId: bigint,
+  contactId: string,
 ): Promise<DateTimeTriggerResult> {
   const notExecutedResult = {
     triggerId: triggerInfo.triggerId,
@@ -337,8 +339,8 @@ async function executeAndMarkTrigger(
 
 async function processContactBatch(
   triggerMap: TriggerMap,
-  triggerIds: bigint[],
-  allCustomFieldIds: Set<bigint>,
+  triggerIds: string[],
+  allCustomFieldIds: Set<string>,
   skip: number,
   batchSize: number,
   params: {
@@ -353,7 +355,7 @@ async function processContactBatch(
       contact: {
         columns: {
           id: true,
-          chatbotId: true,
+          workspaceId: true,
         },
       },
     },

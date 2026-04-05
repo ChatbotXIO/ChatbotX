@@ -38,7 +38,7 @@ import { createWebchatAction } from "../actions/create-webchat.action"
 import { createWebchatRequest } from "../schema/mutation"
 import AuthorizedDomainField from "./authorized-domain-field"
 
-export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
+export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -93,7 +93,7 @@ export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
               feature: t("fields.webchat.label"),
             }),
           )
-          router.push(`/chatbots/${chatbotId}/webchats`)
+          router.push(`/space/${workspaceId}/webchats`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to create webchat")
@@ -101,7 +101,7 @@ export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
       },
       formProps: {
         defaultValues: {
-          chatbotId,
+          workspaceId,
           name: "",
           welcomeFlowId: null,
           authorizedDomains: [],
@@ -218,7 +218,7 @@ export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
               appendConversationStarters({
                 label: "",
                 type: webchatConversationStarterType.enum.flow,
-                flowId: BigInt(0),
+                flowId: "",
               })
             }
             size="sm"
@@ -298,7 +298,7 @@ export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
               appendPersistentMenus({
                 label: "",
                 type: webchatPersistentMenuType.enum.flow,
-                flowId: BigInt(0),
+                flowId: "",
               })
             }
             size="sm"
@@ -345,7 +345,7 @@ export function CreateWebchatForm({ chatbotId }: { chatbotId: bigint }) {
 
         <DialogFooter>
           <Button asChild size="sm" variant="ghost">
-            <Link href={`/chatbots/${chatbotId}/webchats`}>
+            <Link href={`/space/${workspaceId}/webchats`}>
               {t("actions.cancel")}
             </Link>
           </Button>

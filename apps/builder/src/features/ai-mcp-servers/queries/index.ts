@@ -8,11 +8,11 @@ import type {
 export async function listAIMcpServers(
   input: ListAIMcpServersRequest,
 ): Promise<ListAIMcpServersResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.aiMCPServerModel.findMany({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
     },
   })
 

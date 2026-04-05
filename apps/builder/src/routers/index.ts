@@ -14,7 +14,7 @@ import savedRepliesAPI from "@/features/saved-replies/api"
 import { sequencesAPI } from "@/features/sequences/api"
 import { spreadsheetsAPI } from "@/features/spreadsheets/api"
 import tagsAPI from "@/features/tags/api"
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
 export const router = {
@@ -28,7 +28,7 @@ export const router = {
   botFieldsAPIs,
   analyticsRoutes: authorizedAPI
     // @ts-expect-error
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
   integrationWhatsappAPIs,
   whatsappMessageTemplateAPIs,

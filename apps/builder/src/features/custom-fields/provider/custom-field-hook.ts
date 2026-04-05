@@ -2,7 +2,7 @@ import {
   type CustomFieldType,
   type ReservedCustomFieldName,
   reservedCustomFieldNames,
-} from "@chatbotx.io/database/types"
+} from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
   CalendarClockIcon,
@@ -129,20 +129,22 @@ export const useCustomFieldSelectOptions = (
 
     if (customFieldTypes) {
       return allFields
-        .filter((customField) => customFieldTypes.includes(customField.type))
+        .filter((customField) =>
+          customFieldTypes.includes(customField.type as CustomFieldType),
+        )
         .map((customField) => ({
           label: customField.name,
           value: prefix
             ? `${prefix}:${customField.id}`
             : customField.id.toString(),
-          Icon: customFieldIconsMap[customField.type],
+          Icon: customFieldIconsMap[customField.type as CustomFieldType],
         }))
     }
 
     return allFields.map((customField) => ({
       label: customField.name,
       value: prefix ? `${prefix}:${customField.id}` : customField.id.toString(),
-      Icon: customFieldIconsMap[customField.type],
+      Icon: customFieldIconsMap[customField.type as CustomFieldType],
     }))
   }, [customFieldTypes, includeReserved, customFields, prefix])
 }

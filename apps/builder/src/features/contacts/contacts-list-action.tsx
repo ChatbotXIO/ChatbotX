@@ -45,12 +45,12 @@ import { ExportContactDialog } from "./export-contact-dialog"
 import type { ListContactsItem } from "./schemas/query"
 
 type ContactListActionProps = {
-  chatbotId: bigint
+  workspaceId: string
   table: Table<ListContactsItem>
 }
 
 export function ContactListAction({
-  chatbotId,
+  workspaceId,
   table,
 }: ContactListActionProps) {
   const t = useTranslations()
@@ -68,7 +68,7 @@ export function ContactListAction({
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <AssignConversationDialog
-          contactIds={rows.map((r) => BigInt(r.id))}
+          contactIds={rows.map((r) => r.id)}
           onSuccess={() => {
             router.refresh()
           }}
@@ -84,7 +84,7 @@ export function ContactListAction({
         />
 
         <AddContactTagDialog
-          ids={rows.map((r) => BigInt(r.id))}
+          ids={rows.map((r) => r.id)}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -96,9 +96,9 @@ export function ContactListAction({
           }
         />
 
-        <SequenceStoreProvider autoInitialize={true} chatbotId={chatbotId}>
+        <SequenceStoreProvider autoInitialize={true} workspaceId={workspaceId}>
           <AddContactSequenceDialog
-            ids={rows.map((r) => BigInt(r.id))}
+            ids={rows.map((r) => r.id)}
             trigger={
               <DropdownMenuItem
                 disabled={rows.length === 0}
@@ -112,7 +112,7 @@ export function ContactListAction({
         </SequenceStoreProvider>
 
         <AddContactCustomFieldDialog
-          ids={rows.map((r) => BigInt(r.id))}
+          ids={rows.map((r) => r.id)}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -125,7 +125,7 @@ export function ContactListAction({
         />
 
         <DeleteContactDialog
-          ids={rows.map((r) => BigInt(r.id))}
+          ids={rows.map((r) => r.id)}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -138,8 +138,7 @@ export function ContactListAction({
         />
 
         <ExportContactDialog
-          chatbotId={chatbotId}
-          contactIds={rows.map((r) => BigInt(r.original.id))}
+          contactIds={rows.map((r) => r.original.id)}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}
@@ -149,11 +148,12 @@ export function ContactListAction({
               {t("actions.export")}
             </DropdownMenuItem>
           }
+          workspaceId={workspaceId}
         />
 
         <DropdownMenuItem
           onSelect={() => {
-            router.push(`/chatbots/${chatbotId}/contacts/import`)
+            router.push(`/space/${workspaceId}/contacts/import`)
           }}
         >
           <CloudUploadIcon />
@@ -169,7 +169,7 @@ export function ContactListAction({
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
               <RemoveContactTagDialog
-                ids={rows.map((r) => BigInt(r.id))}
+                ids={rows.map((r) => r.id)}
                 trigger={
                   <DropdownMenuItem
                     disabled={rows.length === 0}
@@ -183,10 +183,10 @@ export function ContactListAction({
 
               <SequenceStoreProvider
                 autoInitialize={true}
-                chatbotId={chatbotId}
+                workspaceId={workspaceId}
               >
                 <RemoveContactSequenceDialog
-                  ids={rows.map((r) => BigInt(r.id))}
+                  ids={rows.map((r) => r.id)}
                   trigger={
                     <DropdownMenuItem
                       disabled={rows.length === 0}
@@ -200,7 +200,7 @@ export function ContactListAction({
               </SequenceStoreProvider>
 
               <ClearContactCustomFieldDialog
-                ids={rows.map((r) => BigInt(r.id))}
+                ids={rows.map((r) => r.id)}
                 trigger={
                   <DropdownMenuItem
                     disabled={rows.length === 0}
@@ -216,7 +216,7 @@ export function ContactListAction({
                 ids={
                   rows
                     .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as bigint[]
+                    .filter(Boolean) as string[]
                 }
                 trigger={
                   <DropdownMenuItem
@@ -233,7 +233,7 @@ export function ContactListAction({
                 ids={
                   rows
                     .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as bigint[]
+                    .filter(Boolean) as string[]
                 }
                 trigger={
                   <DropdownMenuItem
@@ -250,7 +250,7 @@ export function ContactListAction({
                 ids={
                   rows
                     .map((r) => r.original.conversation?.id || null)
-                    .filter(Boolean) as bigint[]
+                    .filter(Boolean) as string[]
                 }
                 trigger={
                   <DropdownMenuItem

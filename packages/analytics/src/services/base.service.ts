@@ -170,14 +170,14 @@ export abstract class BaseService {
    * Stable event_id for idempotency across retries.
    * Important: Do NOT use Date.now() here; must reflect the business event time.
    */
-  protected getEventId(_event: CreateContactEvent | unknown): bigint {
+  protected getEventId(_event: CreateContactEvent | unknown): string {
     return createId()
   }
 
   protected async canWrite(row: {
-    chatbot_id: bigint
-    contact_id?: bigint
-    message_id?: bigint
+    chatbot_id: string
+    contact_id?: string
+    message_id?: string
     event_type: string
   }): Promise<boolean> {
     if (!this.redis) {

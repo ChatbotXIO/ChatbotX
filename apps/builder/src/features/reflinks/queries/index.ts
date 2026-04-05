@@ -14,10 +14,10 @@ import type { ReflinkResource } from "../schemas/resource"
 export async function listReflinks(
   input: ListReflinksRequest,
 ): Promise<ListReflinksResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     ...(input.keyword ? { name: { ilike: `%${input.keyword}%` } } : {}),
   }
 
@@ -43,8 +43,8 @@ export async function listReflinks(
 }
 
 export async function findReflink(where: {
-  chatbotId: bigint
-  id: bigint
+  workspaceId: string
+  id: string
 }): Promise<ReflinkResource | undefined> {
   return await db.query.reflinkModel.findFirst({
     where,

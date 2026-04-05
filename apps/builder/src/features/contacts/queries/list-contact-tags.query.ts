@@ -8,11 +8,11 @@ import type {
 export async function listContactTags(
   input: ListContactTagsRequest,
 ): Promise<ListContactTagsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.tagModel.findMany({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
       contactsToTags: {
         contactId: input.contactId,
       },

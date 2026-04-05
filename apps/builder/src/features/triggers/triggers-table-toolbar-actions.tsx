@@ -10,8 +10,8 @@ import type { TriggerResource } from "./schema/resource"
 
 type TriggersTableToolbarActionsProps = {
   table: Table<TriggerResource>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<TriggerResource> | null>
   >
@@ -19,7 +19,7 @@ type TriggersTableToolbarActionsProps = {
 
 export function TriggersTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
   folderId,
   setRowAction,
 }: TriggersTableToolbarActionsProps) {
@@ -29,7 +29,6 @@ export function TriggersTableToolbarActions({
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <DeleteTriggersDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             table.toggleAllRowsSelected(false)
@@ -38,10 +37,11 @@ export function TriggersTableToolbarActions({
           triggers={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
+          workspaceId={workspaceId}
         />
       ) : null}
 
-      <CreateTriggerDialog chatbotId={chatbotId} folderId={folderId} />
+      <CreateTriggerDialog folderId={folderId} workspaceId={workspaceId} />
     </div>
   )
 }

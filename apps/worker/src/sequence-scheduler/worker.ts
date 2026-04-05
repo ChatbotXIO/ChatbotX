@@ -73,18 +73,16 @@ class ReconcileJob {
       let offset = 0
 
       while (hasMore) {
-        const windowEndMs = BigInt(windowEnd.getTime())
-
         const dispatches = await db.query.sequenceDispatchModel.findMany({
           where: {
             status: "pending",
-            runAtMs: { lte: Number(windowEndMs) },
+            runAtMs: { lte: windowEnd.getTime() },
           },
           columns: {
             id: true,
             bucket: true,
             runAtMs: true,
-            chatbotId: true,
+            workspaceId: true,
             contactId: true,
           },
           orderBy: (d, { asc }) => [asc(d.runAtMs)],

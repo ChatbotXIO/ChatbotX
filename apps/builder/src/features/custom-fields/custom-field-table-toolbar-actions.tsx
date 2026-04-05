@@ -1,6 +1,5 @@
 "use client"
 
-import type { CustomFieldModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import type { Table } from "@tanstack/react-table"
 import { FolderUpIcon } from "lucide-react"
@@ -8,15 +7,16 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
+import type { CustomFieldResource } from "./schemas/resource"
 
 type CustomFieldsTableToolbarActionsProps = {
-  table: Table<CustomFieldModel>
-  chatbotId: bigint
+  table: Table<CustomFieldResource>
+  workspaceId: string
 }
 
 export function CustomFieldsTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
   // setRowAction,
 }: CustomFieldsTableToolbarActionsProps) {
   const t = useTranslations()
@@ -27,14 +27,13 @@ export function CustomFieldsTableToolbarActions({
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <>
           <DeleteFieldsDialog
-            chatbotId={chatbotId}
             onSuccess={() => table.toggleAllRowsSelected(false)}
             records={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original)}
+            workspaceId={workspaceId}
           />
           <ChangeFolderDialog
-            chatbotId={chatbotId}
             currentFolderId={null}
             folderType="customField"
             modelIds={table
@@ -48,6 +47,7 @@ export function CustomFieldsTableToolbarActions({
                 {t("actions.move")}
               </Button>
             }
+            workspaceId={workspaceId}
           />
         </>
       ) : null}

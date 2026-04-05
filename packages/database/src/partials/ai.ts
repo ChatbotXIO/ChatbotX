@@ -11,6 +11,14 @@ export const aiMessageRoles = z.enum([
 ])
 export type AIMessageRole = z.infer<typeof aiMessageRoles>
 
+export const aiEmbeddingStatuses = z.enum([
+  "pending",
+  "success",
+  "error",
+  "processing",
+])
+export type AIEmbeddingStatus = z.infer<typeof aiEmbeddingStatuses>
+
 export const aiAgentProviders = z.enum(["openai", "gemini"])
 export type AIAgentProvider = z.infer<typeof aiAgentProviders>
 

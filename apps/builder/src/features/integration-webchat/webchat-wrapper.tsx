@@ -21,14 +21,14 @@ export const WebchatWrapper = ({ referral }: { referral?: string }) => {
       <WebchatHeader />
       <WebchatMessageList />
       <WebchatMessageInput
-        chatbotId={config.chatbotId}
         referral={referral}
         webchatId={config.id}
+        workspaceId={config.workspaceId}
       />
       <WebchatRef
-        chatbotId={config.chatbotId}
         guestConversationId={guestConversationId ?? ""}
         webchatId={config.id}
+        workspaceId={config.workspaceId}
       />
       {!!guestConversationId && (
         <WebchatRealtime guestConversationId={guestConversationId} />

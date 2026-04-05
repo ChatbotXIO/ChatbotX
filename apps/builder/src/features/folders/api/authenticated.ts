@@ -1,4 +1,4 @@
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listFolders } from "../queries"
 import { listFoldersRequest, listFoldersResponse } from "../schema/resource"
@@ -7,14 +7,17 @@ export const foldersAuthenticatedAPI = {
   listFoldersAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/folders",
+      path: "/workspaces/{workspaceId}/folders",
       summary: "List folders",
       tags: ["Folders"],
     })
     .input(listFoldersRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFoldersResponse)
     .handler(async ({ input }) => {
-      return await listFolders(input)
+      return await listFolders({
+        ...input,
+        folderId: input.folderId ?? null,
+      })
     }),
 }

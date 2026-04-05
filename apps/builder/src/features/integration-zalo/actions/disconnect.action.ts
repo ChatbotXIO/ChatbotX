@@ -1,42 +1,36 @@
 "use server"
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { InboxStatus } from "@chatbotx.io/database/enums"
+import { inboxStatuses } from "@chatbotx.io/database/partials"
 import { inboxModel, integrationZaloModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const disconnectZaloAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      const integrationZalo = await findOrFail(
-        integrationZaloModel,
-        {
-          chatbotId,
-          id,
-        },
-        "Integration Zalo OA not found",
-      )
+export const disconnectZaloAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
+    const integrationZalo = await findOrFail({
+      table: integrationZaloModel,
+      where: {
+        workspaceId,
+        id,
+      },
+      message: "Integration Zalo OA not found",
+    })
 
-      await db.transaction(async (tx) => {
-        await tx
-          .delete(integrationZaloModel)
-          .where(eq(integrationZaloModel.id, integrationZalo.id))
-        await tx
-          .update(inboxModel)
-          .set({ status: InboxStatus.disconnected })
-          .where(eq(inboxModel.id, integrationZalo.inboxId))
-      })
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(integrationZaloModel)
+        .where(eq(integrationZaloModel.id, integrationZalo.id))
+      await tx
+        .update(inboxModel)
+        .set({ status: inboxStatuses.enum.disconnected })
+        .where(eq(inboxModel.id, integrationZalo.inboxId))
+    })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#zalos`)
-    },
-  )
+    revalidateCacheTags(`workspaces:${workspaceId}#zalos`)
+  })

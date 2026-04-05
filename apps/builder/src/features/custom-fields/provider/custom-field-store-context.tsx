@@ -20,20 +20,20 @@ export const CustomFieldStoreContext = createContext<
 >(undefined)
 
 export type CustomFieldStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const CustomFieldStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: CustomFieldStoreProviderProps) => {
   const storeRef = useRef<CustomFieldStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createCustomFieldStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

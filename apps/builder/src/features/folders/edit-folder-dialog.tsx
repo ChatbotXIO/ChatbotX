@@ -1,6 +1,5 @@
 "use client"
 
-import type { FolderModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -19,23 +18,24 @@ import { useEffect } from "react"
 import { toast } from "sonner"
 import { editFolderAction } from "@/features/folders/actions/edit-folder-action"
 import { editFolderSchema } from "@/features/folders/schema/action"
+import type { FolderResource } from "./schema/resource"
 
 export function EditFolderDialog({
   open,
   onOpenChange,
-  chatbotId,
+  workspaceId,
   folder,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
-  folder: FolderModel | null
+  workspaceId: string
+  folder: FolderResource | null
 }) {
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      editFolderAction.bind(null, chatbotId, folder?.id ?? BigInt(0)),
+      editFolderAction.bind(null, workspaceId, folder?.id ?? ""),
       zodResolver(editFolderSchema),
       {
         actionProps: {

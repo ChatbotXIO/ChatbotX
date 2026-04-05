@@ -6,8 +6,8 @@ import {
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
 import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { createWebchatRequest } from "../schema/mutation"
@@ -17,24 +17,24 @@ export const createWebchatAction = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { authorizedDomains, ...rest } = parsedInput
 
-    let chatbotId = parsedInput.chatbotId
+    let workspaceId = parsedInput.workspaceId
     const { organization } = await identifyChatbotAndOrganizationFromRequest(
-      parsedInput.chatbotId,
+      parsedInput.workspaceId,
     )
 
     await db.transaction(async (tx) => {
-      if (!chatbotId) {
-        const newChatbot = await createSimpleChatbot(
+      if (!workspaceId) {
+        const newChatbot = await createSimpleWorkspace(
           tx,
           ctx.user.id,
           organization,
           {
             name: parsedInput.name,
-            accountTimezone: "UTC",
+            timezone: "UTC",
             organizationId: organization.id,
           },
         )
-        chatbotId = newChatbot.id
+        workspaceId = newChatbot.id
       }
 
       const webchatId = createId()
@@ -42,29 +42,27 @@ export const createWebchatAction = authActionClient
         .insert(inboxModel)
         .values({
           id: webchatId,
-          chatbotId,
+          workspaceId,
           channel: "webchat",
           name: rest.name,
-          sourceId: webchatId.toString(),
+          sourceId: webchatId,
         })
         .returning()
         .then((result) => result[0])
-
-      console.log("integrationWebchatModel", rest)
 
       await tx.insert(integrationWebchatModel).values({
         ...rest,
         id: webchatId,
         authorizedDomains: authorizedDomains.map((domain) => domain.value),
-        chatbotId,
+        workspaceId,
         inboxId: inbox.id,
         auth: {},
       })
     })
 
-    revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
+    revalidateCacheTags(`workspaces:${workspaceId}#webchats`)
 
     return {
-      chatbotId,
+      workspaceId,
     }
   })

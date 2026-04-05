@@ -3,71 +3,72 @@
 import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const unfollowConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      const conversation = await db.query.conversationModel.findFirst({
-        where: {
-          id,
-          chatbotId,
-        },
-        columns: {
-          id: true,
-          channel: true,
-        },
-      })
+export const unfollowConversationAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
 
-      if (!conversation) {
-        throw new Error("Conversation not found")
-      }
+    await unfollowConversation({ workspaceId, id })
+  })
 
-      await db
-        .update(conversationModel)
-        .set({
-          followed: false,
-        })
-        .where(
-          and(
-            eq(conversationModel.id, id),
-            eq(conversationModel.chatbotId, chatbotId),
-          ),
-        )
-
-      await conversationTrackingService.trackEvent(
-        {
-          chatbotId,
-          conversationId: conversation.id,
-          eventType: "conversation_unfollowed",
-          eventId: createId(),
-          channel: conversation.channel,
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "api",
-              triggerHandler: "unfollowConversationAction",
-              triggerType: "conversation_unfollowed",
-            },
-          },
-        },
-        { skipSpooler: true },
-      )
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-      ])
+export const unfollowConversation = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  const conversation = await db.query.conversationModel.findFirst({
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
+    columns: {
+      id: true,
+      channel: true,
+    },
+  })
+
+  if (!conversation) {
+    throw new Error("Conversation not found")
+  }
+
+  await db
+    .update(conversationModel)
+    .set({
+      followed: false,
+    })
+    .where(
+      and(
+        eq(conversationModel.id, ctx.id),
+        eq(conversationModel.workspaceId, ctx.workspaceId),
+      ),
+    )
+
+  await conversationTrackingService.trackEvent(
+    {
+      workspaceId: ctx.workspaceId,
+      conversationId: conversation.id,
+      eventType: "conversation_unfollowed",
+      eventId: createId(),
+      channel: "webchat", // TODO: replace correct channel from contact inbox
+      occurredAt: new Date(),
+      metadata: {
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "unfollowConversationAction",
+          triggerType: "conversation_unfollowed",
+        },
+      },
+    },
+    { skipSpooler: true },
   )
+
+  revalidateCacheTags([
+    `workspaces:${ctx.workspaceId}#contacts`,
+    `workspaces:${ctx.workspaceId}#conversations`,
+  ])
+}

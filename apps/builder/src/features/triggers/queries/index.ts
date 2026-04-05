@@ -7,16 +7,14 @@ import type { GetTriggersSchema, ListTriggersResponse } from "../schema/query"
 export async function getTriggers(
   input: GetTriggersSchema,
 ): Promise<ListTriggersResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   // Build SQL conditions
-  const conditions = [eq(triggerModel.chatbotId, input.chatbotId)]
+  const conditions = [eq(triggerModel.workspaceId, input.workspaceId)]
 
   if (input.folderId !== undefined) {
     const folderId =
-      input.folderId === null || input.folderId === BigInt(0)
-        ? null
-        : input.folderId
+      input.folderId === null || input.folderId === "" ? null : input.folderId
     if (folderId === null) {
       conditions.push(isNull(triggerModel.folderId))
     } else {
@@ -63,8 +61,8 @@ export async function getTriggers(
 }
 
 export async function findTrigger(params: {
-  id?: bigint
-  chatbotId?: bigint
+  id?: string
+  workspaceId?: string
 }): Promise<TriggerModel | null> {
   const where: Record<string, unknown> = {}
 
@@ -72,8 +70,8 @@ export async function findTrigger(params: {
     where.id = params.id
   }
 
-  if (params.chatbotId) {
-    where.chatbotId = params.chatbotId
+  if (params.workspaceId) {
+    where.workspaceId = params.workspaceId
   }
 
   if (Object.keys(where).length === 0) {

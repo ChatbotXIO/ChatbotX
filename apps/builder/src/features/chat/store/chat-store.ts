@@ -1,5 +1,7 @@
-import type { ConversationStatus } from "@chatbotx.io/database/enums"
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import type {
+  ChannelType,
+  ConversationStatus,
+} from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
@@ -11,14 +13,17 @@ import type {
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
 import type { ListMessagesResponse } from "@/features/messages/schema/query"
-import type { MessageResource } from "@/features/messages/schema/resource"
+import type {
+  MessageResource,
+  MessageResourceWithRelations,
+} from "@/features/messages/schema/resource"
 
 export type ConversationFilters = {
   assignedId?: string
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
-  liveChatEnabled?: boolean
+  botEnabled?: boolean
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -28,12 +33,12 @@ export type ChatState = {
   conversations: ListConversationsResponse["data"]
   nextCursorConversation: string | null
   isLoadingConversation: boolean
-  activeConversationId: bigint | null
+  activeConversationId: string | null
   hasNextConversationPage: boolean
   filters: ConversationFilters
 
   // message list
-  messages: MessageResource[]
+  messages: MessageResourceWithRelations[]
   nextCursorMessage: string | null
   isLoadMoreMessage: boolean
   hasNextMessagePage: boolean
@@ -42,20 +47,20 @@ export type ChatState = {
 export type ChatActions = {
   // Conversation actions
   prependConversation: (newConversation: ListConversationItemResource) => void
-  loadMoreConversations: (chatbotId: bigint) => Promise<void>
-  setActiveConversationId: (activeConversationId: bigint | null) => void
+  loadMoreConversations: (workspaceId: string) => Promise<void>
+  setActiveConversationId: (activeConversationId: string | null) => void
   updateConversation: (
-    conversationId: bigint,
+    conversationId: string,
     data: Partial<ConversationResource>,
   ) => void
   updateConversations: (
-    conversationIds: bigint[],
+    conversationIds: string[],
     data: Partial<ConversationResource>,
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
 
-  deleteConversation: (conversationId: bigint) => void
-  readConversation: (conversationId: bigint) => void
+  deleteConversation: (conversationId: string) => void
+  readConversation: (conversationId: string) => void
 
   // Filter actions
   resetState: () => void
@@ -63,12 +68,12 @@ export type ChatActions = {
   setFilters: (filters: ConversationFilters) => void
 
   // Message actions
-  appendMessage: (message: MessageResource) => void
-  loadMoreMessages: (chatbotId: bigint, perPage: number) => Promise<void>
-  handleNewMessage: (message: MessageResource) => void
+  appendMessage: (message: MessageResourceWithRelations) => void
+  loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
+  handleNewMessage: (message: MessageResourceWithRelations) => void
 
   // Contact actions
-  updateContact: (contactId: bigint, data: Partial<ContactResource>) => void
+  updateContact: (contactId: string, data: Partial<ContactResource>) => void
 }
 
 export type ChatStore = ChatState & ChatActions
@@ -95,7 +100,7 @@ export const createChatStore = () => {
         conversations: [newConversation, ...state.conversations],
       })),
 
-    loadMoreConversations: async (chatbotId: bigint) => {
+    loadMoreConversations: async (workspaceId: string) => {
       const { isLoadingConversation, hasNextConversationPage } = get()
       if (isLoadingConversation || !hasNextConversationPage) {
         return
@@ -117,16 +122,14 @@ export const createChatStore = () => {
       }
       const { data: newConversations, nextCursor } = await ky
         .post<ListConversationsResponse>(
-          `/api/chatbots/${chatbotId}/conversations/list`,
+          `/api/workspaces/${workspaceId}/conversations/list`,
           { json: searchParams },
         )
         .json()
 
       const urlParams = new URLSearchParams(window.location.search)
       try {
-        const queryConversationId = BigInt(
-          urlParams.get("conversationId") ?? "",
-        )
+        const queryConversationId = urlParams.get("conversationId") ?? ""
         if (!activeConversationId && newConversations.length > 0) {
           if (queryConversationId) {
             const found = newConversations.find(
@@ -153,14 +156,14 @@ export const createChatStore = () => {
       })
     },
 
-    setActiveConversationId: (activeConversationId: bigint | null) => {
+    setActiveConversationId: (activeConversationId: string | null) => {
       const { activeConversationId: oldActiveConversationId } = get()
       if (oldActiveConversationId !== activeConversationId) {
         set({ activeConversationId, messages: [], nextCursorMessage: null })
       }
     },
 
-    deleteConversation: (conversationId: bigint) => {
+    deleteConversation: (conversationId: string) => {
       const { conversations, activeConversationId } = get()
       const updatedConversations = conversations.filter(
         (c) => c.id !== conversationId,
@@ -176,7 +179,7 @@ export const createChatStore = () => {
       })
     },
 
-    readConversation: (conversationId: bigint) => {
+    readConversation: (conversationId: string) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.id === conversationId,
@@ -229,11 +232,11 @@ export const createChatStore = () => {
             conversation.assignedInboxTeam = null
             conversation.assignedInboxTeamId = null
           } else if (value.startsWith("u_")) {
-            const userId = BigInt(value.slice(2))
+            const userId = value.slice(2)
             conversation.assignedUserId = userId
             conversation.assignedInboxTeamId = null
           } else if (value.startsWith("t_")) {
-            const inboxTeamId = BigInt(value.slice(2))
+            const inboxTeamId = value.slice(2)
             conversation.assignedInboxTeamId = inboxTeamId
             conversation.assignedUserId = null
           }
@@ -246,7 +249,7 @@ export const createChatStore = () => {
       }
     },
 
-    appendMessage: (message: MessageResource) => {
+    appendMessage: (message: MessageResourceWithRelations) => {
       const { updateConversationViaMessage } = get()
       set((state) => ({
         messages: [...state.messages, message],
@@ -255,7 +258,7 @@ export const createChatStore = () => {
       updateConversationViaMessage(message)
     },
 
-    loadMoreMessages: async (chatbotId: bigint, perPage: number) => {
+    loadMoreMessages: async (workspaceId: string, perPage: number) => {
       const { isLoadMoreMessage, hasNextMessagePage } = get()
       if (isLoadMoreMessage || !hasNextMessagePage) {
         return
@@ -265,11 +268,11 @@ export const createChatStore = () => {
       set({ isLoadMoreMessage: true })
 
       const { data, nextCursor } = await ky
-        .get<ListMessagesResponse>(`/api/chatbots/${chatbotId}/messages`, {
+        .get<ListMessagesResponse>(`/api/workspaces/${workspaceId}/messages`, {
           searchParams: {
             perPage,
             cursor: nextCursorMessage ?? "",
-            conversationId: activeConversationId?.toString(),
+            conversationId: activeConversationId ?? "",
           },
         })
         .json()
@@ -303,7 +306,7 @@ export const createChatStore = () => {
         // New conversation, we'll need basic details
         const newConversation = await ky
           .get<FindConversationResponse>(
-            `/api/chatbots/${message.chatbotId}/conversations/${message.conversationId}`,
+            `/api/workspaces/${message.workspaceId}/conversations/${message.conversationId}`,
           )
           .json()
         newConversation.data.messages = [message]
@@ -312,7 +315,7 @@ export const createChatStore = () => {
     },
 
     updateConversation: (
-      conversationId: bigint,
+      conversationId: string,
       data: Partial<ConversationResource>,
     ) => {
       const { conversations } = get()
@@ -331,7 +334,7 @@ export const createChatStore = () => {
     },
 
     updateConversations: (
-      conversationIds: bigint[],
+      conversationIds: string[],
       data: Partial<ConversationResource>,
     ) => {
       if (conversationIds.length === 0) {
@@ -355,7 +358,7 @@ export const createChatStore = () => {
       set({ conversations: updatedConversations })
     },
 
-    handleNewMessage: async (message: MessageResource) => {
+    handleNewMessage: async (message: MessageResourceWithRelations) => {
       const {
         messages,
         activeConversationId,
@@ -409,8 +412,8 @@ export const createChatStore = () => {
         } else {
           // New conversation, we'll need basic details
           const newMessage = await ky
-            .get<MessageResource>(
-              `/api/chatbots/${message.chatbotId}/messages/${message.id}`,
+            .get<MessageResourceWithRelations>(
+              `/api/workspaces/${message.workspaceId}/messages/${message.id}`,
             )
             .json()
           appendMessage(newMessage)
@@ -421,7 +424,7 @@ export const createChatStore = () => {
       }
     },
 
-    updateContact: (contactId: bigint, data: Partial<ContactResource>) => {
+    updateContact: (contactId: string, data: Partial<ContactResource>) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
         (c) => c.contactId === contactId,

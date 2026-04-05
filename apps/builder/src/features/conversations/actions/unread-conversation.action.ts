@@ -2,47 +2,49 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const unreadConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      return await db.transaction(async (tx) => {
-        const conversation = await findOrFail(
-          conversationModel,
-          { id, chatbotId },
-          "Conversation not found",
-        )
+export const unreadConversationAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
 
-        const last2Messages = await tx.query.messageModel.findMany({
-          where: {
-            conversationId: conversation.id,
-            messageType: "incoming",
-          },
-          orderBy: { createdAt: "desc" },
-          limit: 2,
-        })
-        const lastMessage = last2Messages.at(-1)
+    return await unreadConversation({ workspaceId, id })
+  })
 
-        const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
+export const unreadConversation = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  return await db.transaction(async (tx) => {
+    const conversation = await findOrFail({
+      table: conversationModel,
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+      message: "Conversation not found",
+    })
 
-        await tx
-          .update(conversationModel)
-          .set({
-            agentLastReadAt,
-          })
-          .where(eq(conversationModel.id, id))
+    const last2Messages = await tx.query.messageModel.findMany({
+      where: {
+        conversationId: conversation.id,
+        messageType: "incoming",
+      },
+      orderBy: { createdAt: "desc" },
+      limit: 2,
+    })
+    const lastMessage = last2Messages.at(-1)
 
-        return { agentLastReadAt }
+    const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
+
+    await tx
+      .update(conversationModel)
+      .set({
+        agentLastReadAt,
       })
-    },
-  )
+      .where(eq(conversationModel.id, ctx.id))
+
+    return { agentLastReadAt }
+  })
+}

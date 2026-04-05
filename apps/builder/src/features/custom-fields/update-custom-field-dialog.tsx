@@ -1,6 +1,5 @@
 "use client"
 
-import type { CustomFieldModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -21,17 +20,18 @@ import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
 import { updateCustomFieldRequest } from "./schemas/action"
+import type { CustomFieldResource } from "./schemas/resource"
 
 export function UpdateCustomFieldDialog({
-  chatbotId,
+  workspaceId,
   customField,
   open,
   onOpenChange,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
-  customField: CustomFieldModel | null
+  workspaceId: string
+  customField: CustomFieldResource | null
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -42,7 +42,7 @@ export function UpdateCustomFieldDialog({
     resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateCustomFieldAction.bind(null, chatbotId, customField?.id ?? BigInt(0)),
+    updateCustomFieldAction.bind(null, workspaceId, customField?.id ?? ""),
     zodResolver(updateCustomFieldRequest),
     {
       actionProps: {

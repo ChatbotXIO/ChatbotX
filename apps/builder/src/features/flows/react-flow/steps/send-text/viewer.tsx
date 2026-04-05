@@ -14,9 +14,7 @@ const SendTextStepViewer = (props: SendTextStepViewerProps) => {
   return (
     <Card className="overflow-hidden p-0">
       <CardContent className="p-0">
-        <p className="bg-gray-200 px-4 py-2 dark:bg-neutral-600">
-          {data.message}
-        </p>
+        <p className="bg-gray-200 px-4 py-2 dark:bg-neutral-600">{data.text}</p>
         {data.buttons.length > 0 && <ButtonGroupViewer data={data.buttons} />}
       </CardContent>
     </Card>

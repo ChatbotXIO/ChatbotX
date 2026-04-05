@@ -1,5 +1,5 @@
 import { and, count, db, eq, isNull } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { webhookModel } from "@chatbotx.io/database/schema"
 import type { WebhookModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -9,10 +9,10 @@ import type { GetWebhooksSchema } from "../schemas/get-webhook-schema"
 export async function getWebhooks(
   input: GetWebhooksSchema,
 ): Promise<WebhookCollection> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   // Build SQL conditions
-  const conditions = [eq(webhookModel.chatbotId, input.chatbotId)]
+  const conditions = [eq(webhookModel.workspaceId, input.workspaceId)]
 
   if (input.folderId !== undefined) {
     const folderId =
@@ -65,8 +65,8 @@ export async function getWebhooks(
 }
 
 export async function findWebhook(params: {
-  id?: bigint
-  chatbotId?: bigint
+  id?: string
+  workspaceId?: string
 }): Promise<WebhookModel | null> {
   const where: Record<string, unknown> = {}
 
@@ -74,8 +74,8 @@ export async function findWebhook(params: {
     where.id = params.id
   }
 
-  if (params.chatbotId) {
-    where.chatbotId = params.chatbotId
+  if (params.workspaceId) {
+    where.workspaceId = params.workspaceId
   }
 
   if (Object.keys(where).length === 0) {

@@ -8,11 +8,11 @@ import type {
 export async function listInboxTeams(
   input: ListInboxTeamsRequest,
 ): Promise<ListInboxTeamsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.inboxTeamModel.findMany({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
     },
     with: {
       inboxTeamMembers: {

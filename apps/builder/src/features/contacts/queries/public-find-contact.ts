@@ -19,12 +19,12 @@ export const publicFindContact = async (
 }
 
 export const publicListContactsByCustomField = async (
-  input: PublicListContactsByCustomFieldRequest & { chatbotId: bigint },
+  input: PublicListContactsByCustomFieldRequest & { workspaceId: string },
 ): Promise<PublicListContactsResponse> => {
-  const { chatbotId, customFieldId, value } = input
+  const { workspaceId, customFieldId, value } = input
 
   const where: Record<string, unknown> = {
-    chatbotId,
+    workspaceId,
   }
   if (customFieldId === "email") {
     where.email = value

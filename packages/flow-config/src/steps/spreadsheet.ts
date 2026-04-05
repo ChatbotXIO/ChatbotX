@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const Operator = {
   IS: "is",
@@ -23,32 +23,32 @@ export const FilterMode = {
 export type FilterMode = (typeof FilterMode)[keyof typeof FilterMode]
 
 export const spreadsheetSchema = z.object({
-  id: z.bigint(),
+  id: zodBigintAsString(),
   stepType: z.union([
-    z.literal(StepType.spreadsheetGetRandomRow),
-    z.literal(StepType.spreadsheetGetRow),
-    z.literal(StepType.spreadsheetClearRow),
-    z.literal(StepType.spreadsheetSendData),
-    z.literal(StepType.spreadsheetUpdateRow),
+    z.literal(stepTypes.enum.spreadsheetGetRandomRow),
+    z.literal(stepTypes.enum.spreadsheetGetRow),
+    z.literal(stepTypes.enum.spreadsheetClearRow),
+    z.literal(stepTypes.enum.spreadsheetSendData),
+    z.literal(stepTypes.enum.spreadsheetUpdateRow),
   ]),
-  spreadsheetId: z.bigint(),
+  spreadsheetId: zodBigintAsString(),
   sheetName: z.string().min(1),
-  successNodeId: z.bigint().optional(),
-  errorNodeId: z.bigint().optional(),
+  successNodeId: zodBigintAsString().optional(),
+  errorNodeId: zodBigintAsString().optional(),
 })
 export type SpreadsheetSchema = z.infer<typeof spreadsheetSchema>
 
 export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   id: createId(),
-  stepType: StepType.spreadsheetGetRow,
-  spreadsheetId: BigInt(0),
+  stepType: stepTypes.enum.spreadsheetGetRow,
+  spreadsheetId: "",
   sheetName: "",
   successNodeId: createId(),
   errorNodeId: createId(),
 })
 
 export const spreadsheetMappingSchema = z.object({
-  customFieldId: z.bigint(),
+  customFieldId: zodBigintAsString(),
   header: z.string().min(1),
 })
 
@@ -57,7 +57,7 @@ export type SpreadsheetMappingSchema = z.infer<typeof spreadsheetMappingSchema>
 export const spreadsheetMappingDefaultFn = (
   header: string,
 ): SpreadsheetMappingSchema => ({
-  customFieldId: BigInt(0),
+  customFieldId: "",
   header,
 })
 

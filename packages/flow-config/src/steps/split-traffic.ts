@@ -1,15 +1,15 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const splitTrafficStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.splitTraffic),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.splitTraffic),
   cases: z
     .array(
       z.object({
         value: z.number().int().min(0).max(100),
-        nodeId: z.bigint().nullish(),
+        nodeId: zodBigintAsString().nullish(),
       }),
     )
     .refine((data) => data.reduce((acc, curr) => acc + curr.value, 0) === 100, {
@@ -22,7 +22,7 @@ export type SplitTrafficStepSchema = z.infer<typeof splitTrafficStepSchema>
 
 export const splitTrafficStepDefaultFn = (): SplitTrafficStepSchema => ({
   id: createId(),
-  stepType: StepType.splitTraffic,
+  stepType: stepTypes.enum.splitTraffic,
   cases: [
     {
       value: 50,

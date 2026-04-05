@@ -15,20 +15,20 @@ export type TagStoreApi = ReturnType<typeof createTagStore>
 export const TagStoreContext = createContext<TagStoreApi | undefined>(undefined)
 
 export type TagStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const TagStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: TagStoreProviderProps) => {
   const storeRef = useRef<TagStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createTagStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

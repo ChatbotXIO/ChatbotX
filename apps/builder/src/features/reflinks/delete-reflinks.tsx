@@ -22,7 +22,7 @@ import { deleteReflinksAction } from "./actions/delete-reflinks.action"
 import type { ReflinkResource } from "./schemas/resource"
 
 type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   reflinks: Row<ReflinkResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -30,7 +30,7 @@ type DeleteReflinkDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteReflinksDialog({
-  chatbotId,
+  workspaceId,
   reflinks,
   showTrigger = true,
   onSuccess,
@@ -41,7 +41,7 @@ export function DeleteReflinksDialog({
   const router = useRouter()
 
   const { execute, isPending } = useAction(
-    deleteReflinksAction.bind(null, chatbotId),
+    deleteReflinksAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

@@ -1,36 +1,39 @@
-import { Condition } from "@chatbotx.io/database/enums"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 
 /**
  * Base event emitter class with common functionality
  */
 export abstract class BaseEventEmitter {
-  protected abstract supportedEventTypes: Set<Condition>
+  protected abstract supportedEventTypes: Set<TriggerEventType>
   protected abstract shouldEmitEvent(
-    eventType: Condition,
-    chatbotId: bigint,
+    eventType: TriggerEventType,
+    workspaceId: string,
     sourceId?: string,
   ): Promise<boolean>
 
   protected abstract emitToQueue(
-    eventType: Condition,
+    eventType: TriggerEventType,
     data: {
-      chatbotId: bigint
-      contactId: bigint
+      workspaceId: string
+      contactId: string
       metadata?: Record<string, unknown>
     },
   ): Promise<void>
 
   async emit(
-    eventType: Condition,
+    eventType: TriggerEventType,
     data: {
-      chatbotId: bigint
-      contactId: bigint
+      workspaceId: string
+      contactId: string
       metadata?: Record<string, unknown>
     },
   ): Promise<void> {
-    const { chatbotId, contactId, metadata = {} } = data
+    const { workspaceId, contactId, metadata = {} } = data
 
-    if (!(chatbotId && contactId)) {
+    if (!(workspaceId && contactId)) {
       return
     }
 
@@ -41,7 +44,7 @@ export abstract class BaseEventEmitter {
     const sourceId = metadata.sourceId as string | undefined
     const shouldEmit = await this.shouldEmitEvent(
       eventType,
-      chatbotId,
+      workspaceId,
       sourceId,
     )
 
@@ -53,39 +56,39 @@ export abstract class BaseEventEmitter {
   }
 
   async tagApplied(
-    chatbotId: bigint,
-    contactId: bigint,
+    workspaceId: string,
+    contactId: string,
     tagId: string,
   ): Promise<void> {
-    await this.emit(Condition.tagApplied, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.tagApplied, {
+      workspaceId,
       contactId,
       metadata: { sourceId: tagId, tagId },
     })
   }
 
   async tagRemoved(
-    chatbotId: bigint,
-    contactId: bigint,
+    workspaceId: string,
+    contactId: string,
     tagId: string,
   ): Promise<void> {
-    await this.emit(Condition.tagRemoved, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.tagRemoved, {
+      workspaceId,
       contactId,
       metadata: { sourceId: tagId, tagId },
     })
   }
 
   async customFieldChanged(
-    chatbotId: bigint,
-    contactId: bigint,
-    customFieldId: bigint,
+    workspaceId: string,
+    contactId: string,
+    customFieldId: string,
     customFieldName: string,
     oldValue: unknown,
     newValue: unknown,
   ): Promise<void> {
-    await this.emit(Condition.customFieldValueChanged, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.customFieldValueChanged, {
+      workspaceId,
       contactId,
       metadata: {
         sourceId: customFieldId,
@@ -98,13 +101,13 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationTransferredToHuman(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     transferredBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.conversationTransferredToHuman, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.conversationTransferredToHuman, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -114,13 +117,13 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationTransferredToBot(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     transferredBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.conversationTransferredToBot, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.conversationTransferredToBot, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -130,15 +133,15 @@ export abstract class BaseEventEmitter {
   }
 
   async contactCreated(
-    chatbotId: bigint,
-    contactId: bigint,
+    workspaceId: string,
+    contactId: string,
     name?: string,
     phone?: string,
     email?: string,
     customFields?: Record<string, unknown>,
   ): Promise<void> {
-    await this.emit(Condition.newContact, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.newContact, {
+      workspaceId,
       contactId,
       metadata: {
         name,
@@ -150,23 +153,23 @@ export abstract class BaseEventEmitter {
   }
 
   async contactUnsubscribed(
-    chatbotId: bigint,
-    contactId: bigint,
+    workspaceId: string,
+    contactId: string,
   ): Promise<void> {
-    await this.emit(Condition.contactUnsubscribedFormBroadcast, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.contactUnsubscribedFormBroadcast, {
+      workspaceId,
       contactId,
     })
   }
 
   async conversationArchived(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     archivedBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.archived, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.archived, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -176,13 +179,13 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationFollowUp(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     markedBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.followUp, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.followUp, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -192,14 +195,14 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationAssigned(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     assignedTo: string,
     assignedBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.conversationAssigned, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.conversationAssigned, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -210,13 +213,13 @@ export abstract class BaseEventEmitter {
   }
 
   async conversationUnassigned(
-    chatbotId: bigint,
-    contactId: bigint,
-    conversationId: bigint,
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
     unassignedBy?: string,
   ): Promise<void> {
-    await this.emit(Condition.conversationUnassigned, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.conversationUnassigned, {
+      workspaceId,
       contactId,
       metadata: {
         conversationId,
@@ -226,26 +229,26 @@ export abstract class BaseEventEmitter {
   }
 
   async sequenceSubscribed(
-    chatbotId: bigint,
-    contactId: bigint,
-    sequenceId: bigint,
+    workspaceId: string,
+    contactId: string,
+    sequenceId: string,
     sequenceName: string,
   ): Promise<void> {
-    await this.emit(Condition.subscribedToSequence, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.subscribedToSequence, {
+      workspaceId,
       contactId,
       metadata: { sourceId: sequenceId, sequenceId, sequenceName },
     })
   }
 
   async sequenceUnsubscribed(
-    chatbotId: bigint,
-    contactId: bigint,
-    sequenceId: bigint,
+    workspaceId: string,
+    contactId: string,
+    sequenceId: string,
     sequenceName: string,
   ): Promise<void> {
-    await this.emit(Condition.unsubscribedFromSequence, {
-      chatbotId,
+    await this.emit(triggerEventTypes.enum.unsubscribedFromSequence, {
+      workspaceId,
       contactId,
       metadata: { sourceId: sequenceId, sequenceId, sequenceName },
     })

@@ -43,37 +43,37 @@ type FindRowType = (typeof findRowType)[keyof typeof findRowType]
 
 const getWorksheet = async ({
   id,
-  chatbotId,
+  workspaceId,
 }: {
-  id: bigint
-  chatbotId: bigint
+  id: string
+  workspaceId: string
 }): Promise<SpreadsheetModel> =>
-  await findOrFail(
-    spreadsheetModel,
-    {
+  await findOrFail({
+    table: spreadsheetModel,
+    where: {
       id,
-      chatbotId,
+      workspaceId,
     },
-    "Spreadsheet not found",
-  )
+    message: "Spreadsheet not found",
+  })
 
-const getGoogleSheetsIntegration = async (chatbotId: bigint) =>
-  await findOrFail(
-    integrationGoogleSheetsModel,
-    {
-      chatbotId,
+const getGoogleSheetsIntegration = async (workspaceId: string) =>
+  await findOrFail({
+    table: integrationGoogleSheetsModel,
+    where: {
+      workspaceId,
     },
-    "Google Sheets integration not found",
-  )
+    message: "Google Sheets integration not found",
+  })
 
 const getSheetData = async ({
   conversation,
   step,
 }: ExecuteStepProps<SpreadsheetGetRowSchema>) => {
-  const auth = await getGoogleSheetAuth(conversation.chatbotId)
+  const auth = await getGoogleSheetAuth(conversation.workspaceId)
   const worksheet = await getWorksheet({
     id: step.spreadsheetId,
-    chatbotId: conversation.chatbotId,
+    workspaceId: conversation.workspaceId,
   })
 
   const headers = await integrationGooglesheets.actions.listSheetHeaders({
@@ -159,8 +159,8 @@ export const getSpreadsheetRow = async (
   }
 }
 
-const getGoogleSheetAuth = async (chatbotId: bigint) => {
-  const googleSheetsIntegration = await getGoogleSheetsIntegration(chatbotId)
+const getGoogleSheetAuth = async (workspaceId: string) => {
+  const googleSheetsIntegration = await getGoogleSheetsIntegration(workspaceId)
   if (!googleSheetsIntegration.auth) {
     throw new SdkException("Google Sheets integration auth is missing")
   }
@@ -171,10 +171,10 @@ export const sendSpreadsheetData = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
-    const auth = await getGoogleSheetAuth(props.conversation.chatbotId)
+    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
-      chatbotId: props.conversation.chatbotId,
+      workspaceId: props.conversation.workspaceId,
     })
 
     const data: string[] = []
@@ -225,10 +225,10 @@ export const updateSpreadsheetRow = async (
       return
     }
 
-    const auth = await getGoogleSheetAuth(props.conversation.chatbotId)
+    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
-      chatbotId: props.conversation.chatbotId,
+      workspaceId: props.conversation.workspaceId,
     })
 
     const data: string[] = []
@@ -282,10 +282,10 @@ export const clearSpreadsheetRow = async (
       return
     }
 
-    const auth = await getGoogleSheetAuth(props.conversation.chatbotId)
+    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
-      chatbotId: props.conversation.chatbotId,
+      workspaceId: props.conversation.workspaceId,
     })
 
     for (const foundRow of foundRows) {
@@ -393,7 +393,7 @@ const updateContactCustomFields = async ({
       // Emit custom field changed event
       try {
         await emitCustomFieldChanged(
-          conversation.chatbotId,
+          conversation.workspaceId,
           conversation.contactId,
           mapItem.customFieldId,
           customFieldMap.get(mapItem.customFieldId) || mapItem.customFieldId,
@@ -433,14 +433,14 @@ const sendFlow = async (
     return
   }
 
-  const currentFlowVersion = await findOrFail(
-    flowVersionModel,
-    {
+  const currentFlowVersion = await findOrFail({
+    table: flowVersionModel,
+    where: {
       id: flowVersion.id,
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
     },
-    "FlowVersion not found",
-  )
+    message: "FlowVersion not found",
+  })
 
   const edges = currentFlowVersion.edges || []
   const nodeId: string | undefined = isSuccess

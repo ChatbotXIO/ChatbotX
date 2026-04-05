@@ -21,7 +21,7 @@ import { deleteFieldsAction } from "./actions/delete-custom-field.action"
 import type { CustomFieldResource } from "./schemas/resource"
 
 type DeleteFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   records: Row<CustomFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteFieldsDialog({
-  chatbotId,
+  workspaceId,
   records,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteFieldsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteFieldsAction.bind(null, chatbotId),
+    deleteFieldsAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

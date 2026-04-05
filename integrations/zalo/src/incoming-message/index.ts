@@ -1,10 +1,10 @@
 import {
-  ContentType,
   type Context,
+  contentTypes,
   type IncomingAttachment,
   type IncomingConversation,
   type IncomingMessage,
-  MessageType,
+  messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
 import { getMessageAttachmentEntity } from "../api/message"
@@ -75,7 +75,7 @@ export const receiveMessage = async (props: {
 
   const conversation: IncomingConversation = {
     sourceId,
-    conversationAttributes: {},
+    additionalAttributes: {},
     contact: {
       sourceId,
     },
@@ -100,10 +100,10 @@ const getMessageEntity = async (
   let message: IncomingMessage = {
     sourceId: event.message.msg_id,
     messageType: event.event_name.includes("user_send")
-      ? MessageType.incoming
-      : MessageType.outgoing,
-    content: event.message?.text,
-    contentType: ContentType.text,
+      ? messageTypes.enum.incoming
+      : messageTypes.enum.outgoing,
+    text: event.message?.text,
+    contentType: contentTypes.enum.text,
     attachments: [],
   }
 
@@ -123,10 +123,10 @@ const getMessageEntity = async (
       const attachment = event.message?.attachments?.[0]
       message = {
         ...message,
-        content: attachment?.payload?.coordinates
+        text: attachment?.payload?.coordinates
           ? `https://www.google.com/maps/search/?api=1&query=${attachment.payload.coordinates.latitude},${attachment.payload.coordinates.longitude}`
           : "Location",
-        contentType: ContentType.location,
+        contentType: contentTypes.enum.location,
         attachments: await getMessageAttachments(ctx, event.message),
         contentAttributes: {
           latitude: attachment?.payload.coordinates?.latitude,
@@ -139,14 +139,14 @@ const getMessageEntity = async (
       break
   }
 
-  if (!message.content) {
+  if (!message.text) {
     throw new ZaloException(`No content found in message ${event.event_name}`)
   }
 
   // Detect postback action
   let postbackAction: string | null = null
-  if (message.content.startsWith("postback_")) {
-    postbackAction = message.content.replace("postback_", "")
+  if (message.text.startsWith("postback_")) {
+    postbackAction = message.text.replace("postback_", "")
   }
 
   return { message, postbackAction }

@@ -22,12 +22,12 @@ import { deleteTeamMembersAction } from "./actions/delete-inbox-team-member.acti
 type DeleteMembersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   onSuccess?: () => void
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   teamMember: InboxTeamMemberResource | null
 }
 
 export function DeleteInboxTeamMembersDialog({
-  chatbotId,
+  workspaceId,
   onSuccess,
   onOpenChange,
   teamMember,
@@ -39,8 +39,8 @@ export function DeleteInboxTeamMembersDialog({
   const { execute, isPending } = useAction(
     deleteTeamMembersAction.bind(
       null,
-      chatbotId,
-      teamMember?.inboxTeamId ?? BigInt(0),
+      workspaceId,
+      teamMember?.inboxTeamId ?? "",
     ),
     {
       onSuccess: () => {
@@ -89,7 +89,7 @@ export function DeleteInboxTeamMembersDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() => execute({ ids: [teamMember?.id ?? BigInt(0)] })}
+            onClick={() => execute({ ids: [teamMember?.id ?? ""] })}
             size="sm"
             variant="destructive"
           >

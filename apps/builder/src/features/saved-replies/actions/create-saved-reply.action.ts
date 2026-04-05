@@ -8,7 +8,7 @@ import { authActionClient } from "@/lib/safe-action"
 import {
   type CreateSavedReplyRequest,
   createSavedReplyRequest,
-} from "../schema"
+} from "../schema/mutation"
 
 export const createSavedReplyAction = authActionClient
   .inputSchema(createSavedReplyRequest)

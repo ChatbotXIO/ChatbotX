@@ -1,8 +1,8 @@
-import { TriggerAction } from "@chatbotx.io/database/enums"
+import { triggerActions } from "@chatbotx.io/database/partials"
 import z from "zod"
 
 export const transferConversationToHuman = z.object({
-  type: z.literal(TriggerAction.transferConversationToHuman),
+  type: z.literal(triggerActions.enum.transferConversationToHuman),
   notifyAdmins: z.boolean(),
 })
 export type TransferConversationToHuman = z.infer<
@@ -10,6 +10,6 @@ export type TransferConversationToHuman = z.infer<
 >
 
 export const defaultFn = (): TransferConversationToHuman => ({
-  type: TriggerAction.transferConversationToHuman,
+  type: triggerActions.enum.transferConversationToHuman,
   notifyAdmins: true,
 })

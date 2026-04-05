@@ -2,30 +2,32 @@
 
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const readConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      await db
-        .update(conversationModel)
-        .set({
-          agentLastReadAt: new Date(),
-        })
-        .where(
-          and(
-            eq(conversationModel.id, id),
-            eq(conversationModel.chatbotId, chatbotId),
-          ),
-        )
-    },
-  )
+export const readConversationAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
+
+    await readConversation({ workspaceId, id })
+  })
+
+export const readConversation = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  await db
+    .update(conversationModel)
+    .set({
+      agentLastReadAt: new Date(),
+    })
+    .where(
+      and(
+        eq(conversationModel.id, ctx.id),
+        eq(conversationModel.workspaceId, ctx.workspaceId),
+      ),
+    )
+}

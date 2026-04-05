@@ -1,6 +1,6 @@
 "use client"
 
-import { FolderType } from "@chatbotx.io/database/enums"
+import { folderTypes } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
@@ -18,13 +18,13 @@ import { TriggersTableToolbarActions } from "./triggers-table-toolbar-actions"
 
 type TriggersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof getTriggers>>]>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
 export function TriggersTable({
   promises,
-  chatbotId,
+  workspaceId,
   folderId,
 }: TriggersTableProps) {
   const t = useTranslations()
@@ -35,8 +35,8 @@ export function TriggersTable({
     useState<DataTableRowAction<TriggerResource> | null>(null)
 
   const columns = useMemo(
-    () => getColumns({ chatbotId, setRowAction, t }),
-    [chatbotId, t],
+    () => getColumns({ workspaceId, setRowAction, t }),
+    [workspaceId, t],
   )
 
   const { table } = useDataTable({
@@ -47,7 +47,7 @@ export function TriggersTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["action"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -57,10 +57,10 @@ export function TriggersTable({
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <TriggersTableToolbarActions
-            chatbotId={chatbotId}
             folderId={folderId}
             setRowAction={setRowAction}
             table={table}
+            workspaceId={workspaceId}
           />
         </DataTableToolbar>
       </DataTable>
@@ -72,21 +72,21 @@ export function TriggersTable({
       />
 
       <DeleteTriggersDialog
-        chatbotId={chatbotId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => router.refresh()}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
         triggers={rowAction?.row.original ? [rowAction?.row.original] : []}
+        workspaceId={workspaceId}
       />
 
       <ChangeFolderDialog
-        chatbotId={chatbotId}
         currentFolderId={rowAction?.row.original?.folderId || null}
-        folderType={FolderType.trigger}
+        folderType={folderTypes.enum.trigger}
         modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : []}
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
       />
     </>
   )

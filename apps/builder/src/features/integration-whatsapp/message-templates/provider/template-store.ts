@@ -1,15 +1,15 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { MessageTemplate } from "../type"
+import type { WhatsappMessageTemplateResource } from "../schema/resource"
 
 export type TemplateState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   integrationWhatsappId?: string
-  templates: MessageTemplate[]
+  templates: WhatsappMessageTemplateResource[]
 }
 
 export type TemplateActions = {
@@ -26,7 +26,7 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     templates: [],
     ...props,
 
@@ -52,9 +52,9 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
     },
 
     getAllTemplates: async () => {
-      const { chatbotId, integrationWhatsappId, loading } = get()
+      const { workspaceId, integrationWhatsappId, loading } = get()
 
-      if (loading || !chatbotId || !integrationWhatsappId) {
+      if (loading || !workspaceId || !integrationWhatsappId) {
         if (!integrationWhatsappId) {
           set({ templates: [] })
         }
@@ -64,9 +64,11 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
       try {
         set({ loading: true, error: null })
 
-        const url = `/api/chatbots/${chatbotId}/channels/${integrationWhatsappId}/whatsapp-templates`
+        const url = `/api/workspaces/${workspaceId}/channels/${integrationWhatsappId}/whatsapp-templates`
 
-        const templates = await ky.get(url).json<MessageTemplate[]>()
+        const templates = await ky
+          .get(url)
+          .json<WhatsappMessageTemplateResource[]>()
 
         set({ templates })
       } catch (error: unknown) {

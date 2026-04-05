@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { deleteWebhooksAction } from "./actions/delete-webhooks-action"
 
 type DeleteWebhooksDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   webhooks: Row<WebhookModel>["original"][]
   showWebhook?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteWebhooksDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteWebhooksDialog({
-  chatbotId,
+  workspaceId,
   webhooks,
   showWebhook = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteWebhooksDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteWebhooksAction.bind(null, chatbotId),
+    deleteWebhooksAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

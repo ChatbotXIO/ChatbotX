@@ -3,12 +3,12 @@ import { messageModel } from "@chatbotx.io/database/schema"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
-  StepType,
+  stepTypes,
   type TemplateComponent,
   type WaTemplateParams,
 } from "@chatbotx.io/flow-config"
 import {
-  broadcastToChatbotParty,
+  broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
@@ -82,7 +82,7 @@ export async function processWhatsappTemplate(
   const messageData: typeof messageModel.$inferInsert = {
     id: createId(),
     inboxId: conversation.inboxId,
-    chatbotId: conversation.chatbotId,
+    workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
     messageType: "outgoing",
     contentType: "text",
@@ -118,7 +118,7 @@ export async function processWhatsappTemplate(
     "WhatsApp template message created in DB",
   )
 
-  broadcastToChatbotParty(conversation.chatbotId, {
+  broadcastToWorkspaceParty(conversation.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
     data: newMessage,
   })
@@ -130,7 +130,7 @@ export async function processWhatsappTemplate(
       flowVersionId,
       step: {
         id: createId(),
-        stepType: StepType.sendWaTemplateMessage,
+        stepType: stepTypes.enum.sendWaTemplateMessage,
         buttons: [],
         template: {
           id: templateId,

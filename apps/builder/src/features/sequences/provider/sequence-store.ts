@@ -1,20 +1,20 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListSequencesItem, ListSequencesResponse } from "../schema"
+import type { ListSequencesResponse } from "../schema/action"
 
 export type SequenceState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
-  sequences: ListSequencesItem[]
+  workspaceId: string
+  sequences: ListSequencesResponse["data"]
 }
 
 export type SequenceActions = {
   initialize: () => void
-  getAllActiveSequences: (chatbotId: bigint) => void
+  getAllActiveSequences: (workspaceId: string) => void
 }
 
 export type SequenceStore = SequenceState & SequenceActions
@@ -25,12 +25,12 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     sequences: [],
     ...props,
 
     initialize: async () => {
-      const { initialized, chatbotId } = get()
+      const { initialized, workspaceId } = get()
 
       if (initialized) {
         return
@@ -39,7 +39,7 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
       set({ loading: true, error: null })
 
       try {
-        await get().getAllActiveSequences(chatbotId)
+        await get().getAllActiveSequences(workspaceId)
         set({
           loading: false,
           initialized: true,
@@ -59,14 +59,17 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
       }
     },
 
-    getAllActiveSequences: async (chatbotId: bigint) => {
+    getAllActiveSequences: async (workspaceId: string) => {
       const { data } = await ky
-        .get<ListSequencesResponse>(`/api/chatbots/${chatbotId}/sequences`, {
-          searchParams: {
-            perPage: maxPerPageString,
-            active: "true",
+        .get<ListSequencesResponse>(
+          `/api/workspaces/${workspaceId}/sequences`,
+          {
+            searchParams: {
+              perPage: maxPerPageString,
+              active: "true",
+            },
           },
-        })
+        )
         .json()
 
       set({ sequences: data })

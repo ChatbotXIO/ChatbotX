@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const emailCodeStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.emailCode),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.emailCode),
   text: z.string().trim().min(1).max(1000),
 })
 
@@ -16,5 +16,5 @@ export const emailCodeStepDefaultFn = (
   text: "",
   ...props,
   id: createId(),
-  stepType: StepType.emailCode,
+  stepType: stepTypes.enum.emailCode,
 })

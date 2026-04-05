@@ -43,12 +43,12 @@ import type { listAutomatedResponses } from "./queries"
 import type { AutomatedResponseResource } from "./schema/resource"
 
 type AutomatedResponseTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listAutomatedResponses>>]>
 }
 
 export function AutomatedResponsesTable({
-  chatbotId,
+  workspaceId,
   promises,
 }: AutomatedResponseTableProps) {
   const t = useTranslations()
@@ -104,7 +104,7 @@ export function AutomatedResponsesTable({
             <div className="max-w-[200px] truncate">
               <Link
                 className="truncate"
-                href={`/chatbots/${chatbotId}/automated-responses/${id}/edit?${searchParams.toString()}`}
+                href={`/space/${workspaceId}/automated-responses/${id}/edit?${searchParams.toString()}`}
                 title={userMessages.join(",")}
               >
                 {userMessages.join(",")}
@@ -155,9 +155,9 @@ export function AutomatedResponsesTable({
         ),
         cell: ({ cell, row }) => (
           <AutomatedResponseStatusCell
-            chatbotId={chatbotId}
             checked={cell.getValue<AutomatedResponseResource["status"]>()}
             id={row.original.id}
+            workspaceId={workspaceId}
           />
         ),
         enableSorting: false,
@@ -201,7 +201,7 @@ export function AutomatedResponsesTable({
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/chatbots/${chatbotId}/automated-responses/${row.original.id}/edit`}
+                  href={`/space/${workspaceId}/automated-responses/${row.original.id}/edit`}
                 >
                   <PencilIcon />
                   {t("actions.edit")}
@@ -228,7 +228,7 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
     ],
-    [chatbotId, t, allFlows, searchParams],
+    [workspaceId, t, allFlows, searchParams],
   )
 
   const { table } = useDataTable({
@@ -239,7 +239,7 @@ export function AutomatedResponsesTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -262,17 +262,16 @@ export function AutomatedResponsesTable({
           automatedResponses={
             rowAction?.row.original ? [rowAction?.row.original] : []
           }
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
           }}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
 
         <ChangeFolderDialog
-          chatbotId={chatbotId}
           currentFolderId={rowAction?.row.original?.folderId || null}
           folderType="automatedResponse"
           modelIds={
@@ -280,6 +279,7 @@ export function AutomatedResponsesTable({
           }
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "move"}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>
@@ -287,12 +287,12 @@ export function AutomatedResponsesTable({
 }
 
 const AutomatedResponseStatusCell = (props: {
-  id: bigint
-  chatbotId: bigint
+  id: string
+  workspaceId: string
   checked: boolean
 }) => {
   const { execute, isPending } = useAction(
-    updateAutomatedResponseAction.bind(null, props.chatbotId, props.id),
+    updateAutomatedResponseAction.bind(null, props.workspaceId, props.id),
     {
       onError: ({ error }) => {
         if (error.serverError) {

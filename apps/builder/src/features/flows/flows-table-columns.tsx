@@ -82,7 +82,7 @@ export function getFlowColumns({
             <TooltipTrigger asChild>
               <Link
                 className="max-w-[300px] truncate"
-                href={`/chatbots/${row.original.chatbotId}/flows/${row.original.id}`}
+                href={`/space/${row.original.workspaceId}/flows/${row.original.id}`}
               >
                 {row.original.name}
               </Link>
@@ -113,7 +113,11 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
-          updateFlowAction.bind(null, row.original.chatbotId, row.original.id),
+          updateFlowAction.bind(
+            null,
+            row.original.workspaceId,
+            row.original.id,
+          ),
           {
             onSuccess: () => {
               row.original.active = !row.original.active
@@ -147,7 +151,11 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => {
         const { execute, isPending } = useAction(
-          updateFlowAction.bind(null, row.original.chatbotId, row.original.id),
+          updateFlowAction.bind(
+            null,
+            row.original.workspaceId,
+            row.original.id,
+          ),
           {
             onSuccess: () => {
               row.original.enableInInbox = !row.original.enableInInbox

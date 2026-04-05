@@ -1,27 +1,28 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const contactEventTypeSchema = z.enum([
+export const contactEventTypes = z.enum([
   "contact_created",
   "contact_deleted",
   "contact_message_in",
   "contact_message_out",
 ])
-export type ContactEventType = z.infer<typeof contactEventTypeSchema>
+export type ContactEventType = z.infer<typeof contactEventTypes>
 
-export const contactSenderTypeSchema = z.enum(["bot", "human", ""])
-export type ContactSenderType = z.infer<typeof contactSenderTypeSchema>
+export const contactSenderTypes = z.enum(["bot", "human"])
+export type ContactSenderType = z.infer<typeof contactSenderTypes>
 
 export const contactEventSchema = z.object({
-  adminId: z.bigint().optional(),
+  adminId: zodBigintAsString().optional(),
   channel: z.string().optional(),
-  chatbotId: z.bigint(),
-  contactId: z.bigint(),
+  workspaceId: zodBigintAsString(),
+  contactId: zodBigintAsString(),
   country: z.string().optional(),
-  eventId: z.bigint(),
-  eventType: contactEventTypeSchema,
+  eventId: zodBigintAsString(),
+  eventType: contactEventTypes,
   metadata: z.record(z.string(), z.unknown()).optional(),
   occurredAt: z.date(),
-  senderType: contactSenderTypeSchema.optional(),
+  senderType: contactSenderTypes.optional(),
   source: z.string().nullish(),
   sourceId: z.string().nullish(),
 })

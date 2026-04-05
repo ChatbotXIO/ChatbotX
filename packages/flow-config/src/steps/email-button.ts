@@ -1,11 +1,11 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepDefaultFn, buttonStepSchema } from "./button"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const emailButtonStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.emailButton),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.emailButton),
   beforeStep: buttonStepSchema,
 })
 
@@ -16,6 +16,6 @@ export const emailButtonStepDefaultFn = (
 ): EmailButtonStepSchema => ({
   ...props,
   id: createId(),
-  stepType: StepType.emailButton,
+  stepType: stepTypes.enum.emailButton,
   beforeStep: buttonStepDefaultFn(),
 })

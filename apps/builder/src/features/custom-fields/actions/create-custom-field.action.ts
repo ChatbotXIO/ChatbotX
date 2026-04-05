@@ -2,58 +2,56 @@
 
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
   createCustomFieldRequest,
 } from "../schemas/action"
 import type { CustomFieldResource } from "../schemas/resource"
 
-export const createCustomFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createCustomFieldAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createCustomFieldRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateCustomFieldRequest
     }) => {
-      await createCustomField(chatbotId, parsedInput)
+      await createCustomField(workspaceId, parsedInput)
     },
   )
 
 export const createCustomField = async (
-  chatbotId: bigint,
+  workspaceId: string,
   parsedInput: CreateCustomFieldRequest,
 ): Promise<CustomFieldResource> => {
   if (parsedInput.folderId) {
-    await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
+    await ensureFolderIsExists(parsedInput.folderId, workspaceId, "customField")
   }
 
   try {
     const newField = await db
       .insert(customFieldModel)
       .values({
-        id: createId(),
-        chatbotId,
+        workspaceId,
         showInInbox: true,
         ...parsedInput,
       })
       .returning()
       .then((result) => result[0])
 
-    revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+    revalidateCacheTags(`workspaces:${workspaceId}#customFields`)
 
     return newField
   } catch (error) {

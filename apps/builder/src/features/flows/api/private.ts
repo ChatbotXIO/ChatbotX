@@ -1,5 +1,5 @@
-import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listFlows } from "../queries"
 import { listFlowsRequest, listFlowsResponse } from "../schemas/query"
@@ -8,17 +8,17 @@ export const privateFlowsAPI = {
   privateListFlowsAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/flows",
+      path: "/workspaces/{workspaceId}/flows",
       summary: "List flows",
       tags: ["Flows"],
     })
-    .input(listFlowsRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(listFlowsRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFlowsResponse)
     .handler(async ({ input }) => {
-      const { chatbotId, ...rest } = input
+      const { workspaceId, ...rest } = input
 
-      return await listFlows({ ...rest, chatbotId })
+      return await listFlows({ ...rest, workspaceId })
     }),
 }
 

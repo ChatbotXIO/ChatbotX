@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const assignConversationStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.assignConversation),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.assignConversation),
   assignedId: z.string(),
 })
 
@@ -16,7 +16,7 @@ export const assignConversationStepDefaultFn = (
   props?: Partial<AssignConversationStepSchema>,
 ): AssignConversationStepSchema => ({
   id: createId(),
-  stepType: StepType.assignConversation,
+  stepType: stepTypes.enum.assignConversation,
   assignedId: "",
   ...props,
 })

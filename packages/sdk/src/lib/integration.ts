@@ -5,6 +5,7 @@ import type {
   HandleRequestProps,
   Handler,
   OutgoingContact,
+  OutgoingContactInbox,
   OutgoingConversation,
   OutgoingMessage,
   ReceivedMessageResult,
@@ -18,6 +19,7 @@ type IChannel<IAuth extends AuthValue> = {
         data: {
           contact: OutgoingContact
           conversation: OutgoingConversation
+          contactInbox: OutgoingContactInbox
           message: OutgoingMessage
         }
       },
@@ -41,7 +43,9 @@ type IChannel<IAuth extends AuthValue> = {
         ctx: Context<IAuth>
         data: {
           conversation: OutgoingConversation
+          contactInbox: OutgoingContactInbox
           typing: boolean
+          seconds: number
         }
       },
       void
@@ -62,6 +66,7 @@ type IChannel<IAuth extends AuthValue> = {
         ctx: Context<IAuth>
         data: {
           conversation: OutgoingConversation
+          contactInbox: OutgoingContactInbox
         }
       },
       void

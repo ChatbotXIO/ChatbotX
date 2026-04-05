@@ -20,13 +20,13 @@ import { useCustomFieldSelectOptions } from "./provider/custom-field-hook"
 import { useCustomFieldStore } from "./provider/custom-field-store-context"
 
 type ContactCustomFieldManageProps = {
-  chatbotId: bigint
+  workspaceId: string
   disabledIds: string[]
   onChooseCustomField: (customFieldId: string) => void
 }
 
 export function ContactCustomFieldManage({
-  chatbotId,
+  workspaceId,
   disabledIds = [],
   onChooseCustomField,
 }: ContactCustomFieldManageProps) {
@@ -62,7 +62,6 @@ export function ContactCustomFieldManage({
         <div className="mb-3 flex items-center">
           <p className="flex-1 font-medium">{t("fields.customField.label")}</p>
           <CreateCustomFieldDialog
-            chatbotId={chatbotId}
             folderId={null}
             onSuccess={() => {
               getAllCustomFields()
@@ -74,6 +73,7 @@ export function ContactCustomFieldManage({
                 {t("actions.add")}
               </Button>
             }
+            workspaceId={workspaceId}
           />
         </div>
 

@@ -1,6 +1,6 @@
 import z from "zod"
-import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import { addContactTags } from "../actions/add-contact-tag.action"
@@ -29,27 +29,27 @@ export const contactsAuthenticatedAPI = {
   listContactsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/contacts",
+      path: "/workspaces/{workspaceId}/contacts",
       summary: "List contacts",
       tags: ["Contacts"],
     })
-    .input(listContactsRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(listContactsRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listContactsResponse)
     .handler(async ({ input }) => {
-      const { chatbotId, ...rest } = input
-      return await listContacts({ ...rest, chatbotId })
+      const { workspaceId, ...rest } = input
+      return await listContacts({ ...rest, workspaceId })
     }),
 
   countContactsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/contacts/count",
+      path: "/workspaces/{workspaceId}/contacts/count",
       summary: "Count contacts",
       tags: ["Contacts"],
     })
     .input(listContactsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
     .handler(async ({ input }) => {
       return await countContacts(input)
@@ -58,32 +58,32 @@ export const contactsAuthenticatedAPI = {
   createContactAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/contacts",
+      path: "/workspaces/{workspaceId}/contacts",
       summary: "Create a contact",
       tags: ["Contacts"],
     })
-    .input(createContactRequest.and(withChatbotIdSchema))
+    .input(createContactRequest.and(withWorkspaceIdSchema))
     .output(createContactResponse)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, ...parsedInput } = input
-      return await createContact({ chatbotId, parsedInput })
+      const { workspaceId, ...parsedInput } = input
+      return await createContact({ workspaceId, parsedInput })
     }),
 
   listContactTagsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/tags",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/tags",
       summary: "List contact tags",
       tags: ["Contacts"],
     })
     .input(listContactTagsRequest)
     .output(listContactTagsResponse)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, contactId } = input
+      const { workspaceId, contactId } = input
       return await listContactTags({
-        chatbotId,
+        workspaceId,
         contactId,
       })
     }),
@@ -91,16 +91,16 @@ export const contactsAuthenticatedAPI = {
   addContactTagAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/contacts/tags",
+      path: "/workspaces/{workspaceId}/contacts/tags",
       summary: "Add tags to contact",
       tags: ["Contacts"],
     })
-    .input(addContactTagRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(addContactTagRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, tags, ids } = input
+      const { workspaceId, tags, ids } = input
       await addContactTags({
-        chatbotId,
+        workspaceId,
         parsedInput: {
           ids,
           tags,
@@ -111,16 +111,16 @@ export const contactsAuthenticatedAPI = {
   removeContactTagAuthenticatedAPI: authorizedAPI
     .route({
       method: "DELETE",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/tags/{tagId}",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/tags/{tagId}",
       summary: "Remove tag from contact",
       tags: ["Contacts"],
     })
-    .input(removeContactTagRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(removeContactTagRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, contactId, tagId } = input
+      const { workspaceId, contactId, tagId } = input
       await removeContactTags({
-        chatbotId,
+        workspaceId,
         parsedInput: {
           ids: [contactId],
           tags: [tagId],
@@ -131,18 +131,18 @@ export const contactsAuthenticatedAPI = {
   listContactFieldsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/fields",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/fields",
       summary: "List contact custom fields",
       tags: ["Contacts"],
     })
     .input(listContactCustomFieldsRequest)
     .output(listPublicContactCustomFieldsResponse)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, contactId } = input
+      const { workspaceId, contactId } = input
 
       return await listContactCustomFields({
-        chatbotId,
+        workspaceId,
         contactId,
       })
     }),
@@ -150,16 +150,16 @@ export const contactsAuthenticatedAPI = {
   addContactFieldAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/fields",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/fields",
       summary: "Set contact custom field value",
       tags: ["Contacts"],
     })
-    .input(setContactCustomFieldValueRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(setContactCustomFieldValueRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, contactId } = input
+      const { workspaceId, contactId } = input
       return await setContactCustomFieldValue({
-        chatbotId,
+        workspaceId,
         contactId,
         customFieldId: input.customFieldId,
         value: input.value,
@@ -169,16 +169,16 @@ export const contactsAuthenticatedAPI = {
   deleteContactFieldAuthenticatedAPI: authorizedAPI
     .route({
       method: "DELETE",
-      path: "/chatbots/{chatbotId}/contacts/{contactId}/fields/{customFieldId}",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}/fields/{customFieldId}",
       summary: "Delete contact custom field",
       tags: ["Contacts"],
     })
-    .input(deleteContactCustomFieldRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(deleteContactCustomFieldRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, contactId, customFieldId } = input
+      const { workspaceId, contactId, customFieldId } = input
       return await deleteContactCustomFields({
-        chatbotId,
+        workspaceId,
         contactIds: [contactId],
         customFieldId,
       })

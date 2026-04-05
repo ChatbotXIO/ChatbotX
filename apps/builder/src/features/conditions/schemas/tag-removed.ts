@@ -1,14 +1,14 @@
-import { Condition } from "@chatbotx.io/database/enums"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import z from "zod"
 
 export const tagRemoved = z.object({
   id: z.string().optional(),
-  type: z.literal(Condition.tagRemoved),
+  type: z.literal(triggerEventTypes.enum.tagRemoved),
   sourceId: z.string(),
 })
 export type TagRemoved = z.infer<typeof tagRemoved>
 
 export const defaultFn = (): TagRemoved => ({
-  type: Condition.tagRemoved,
+  type: triggerEventTypes.enum.tagRemoved,
   sourceId: "",
 })

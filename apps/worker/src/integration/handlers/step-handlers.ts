@@ -31,14 +31,10 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
-import {
-  broadcastToGuestParty,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
 import type { OutgoingConversation } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { subHours } from "date-fns"
-import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
+import { getIntegrationAuth } from "../../lib/inbox"
 import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"
 
@@ -66,7 +62,7 @@ export async function stepArchiveConversation({
   // Emit conversation archived event
   try {
     await emitConversationArchived(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       conversation.id,
     )
@@ -74,25 +70,25 @@ export async function stepArchiveConversation({
     console.error("Failed to emit conversationArchived event:", error)
   }
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_archived",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepArchiveConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepArchiveConversation] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_archived",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepArchiveConversation",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepArchiveConversation] Failed to track", error)
+  //   })
 }
 
 export async function stepUnarchiveConversation({
@@ -105,25 +101,25 @@ export async function stepUnarchiveConversation({
     })
     .where(eq(conversationModel.id, conversation.id))
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_unarchived",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepUnarchiveConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepUnarchiveConversation] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_unarchived",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepUnarchiveConversation",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepUnarchiveConversation] Failed to track", error)
+  //   })
 }
 
 export async function stepAssignConversation({
@@ -134,13 +130,13 @@ export async function stepAssignConversation({
 
   if (step.assignedId.startsWith("u_")) {
     const userId = step.assignedId.slice(2)
-    const chatbotMember = await db.query.chatbotMemberModel.findFirst({
+    const workspaceMember = await db.query.workspaceMemberModel.findFirst({
       where: {
         userId,
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
       },
     })
-    if (chatbotMember) {
+    if (workspaceMember) {
       await db
         .update(conversationModel)
         .set({
@@ -154,7 +150,7 @@ export async function stepAssignConversation({
     const inboxTeam = await db.query.inboxTeamModel.findFirst({
       where: {
         id: inboxTeamId,
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
       },
     })
     if (inboxTeam) {
@@ -172,7 +168,7 @@ export async function stepAssignConversation({
   if (assignedTo) {
     try {
       await emitConversationAssigned(
-        conversation.chatbotId,
+        conversation.workspaceId,
         conversation.contactId,
         conversation.id,
         assignedTo,
@@ -181,26 +177,26 @@ export async function stepAssignConversation({
       console.error("Failed to emit conversationAssigned event:", error)
     }
 
-    conversationTrackingService
-      .trackEvent({
-        eventId: createId(),
-        chatbotId: conversation.chatbotId,
-        conversationId: conversation.id,
-        eventType: "conversation_assigned",
-        channel: conversation.channel,
-        occurredAt: new Date(),
-        toAssignee: assignedTo,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "stepAssignConversation",
-            triggerType: "flow_action",
-          },
-        },
-      })
-      .catch((error) => {
-        console.error("[stepAssignConversation] Failed to track", error)
-      })
+    // conversationTrackingService
+    //   .trackEvent({
+    //     eventId: createId(),
+    //     workspaceId: conversation.workspaceId,
+    //     conversationId: conversation.id,
+    //     eventType: "conversation_assigned",
+    //     channel: conversation.channel,
+    //     occurredAt: new Date(),
+    //     toAssignee: assignedTo,
+    //     metadata: {
+    //       triggerContext: {
+    //         triggerSource: "worker",
+    //         triggerHandler: "stepAssignConversation",
+    //         triggerType: "flow_action",
+    //       },
+    //     },
+    //   })
+    //   .catch((error) => {
+    //     console.error("[stepAssignConversation] Failed to track", error)
+    //   })
   }
 }
 
@@ -258,9 +254,9 @@ export async function stepAutoAssignConversation({
 
   let requiredUsers: { userId: string }[] = []
   if (userIds.length > 0) {
-    requiredUsers = await db.query.chatbotMemberModel.findMany({
+    requiredUsers = await db.query.workspaceMemberModel.findMany({
       where: {
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
         userId: {
           in: userIds,
         },
@@ -282,7 +278,7 @@ export async function stepAutoAssignConversation({
   if (inboxTeamIds.length > 0) {
     requiredInboxTeams = await db.query.inboxTeamModel.findMany({
       where: {
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
         id: {
           in: inboxTeamIds,
         },
@@ -369,7 +365,7 @@ export async function stepAutoAssignConversation({
   if (assignedTo) {
     try {
       await emitConversationAssigned(
-        conversation.chatbotId,
+        conversation.workspaceId,
         conversation.contactId,
         conversation.id,
         assignedTo,
@@ -378,26 +374,26 @@ export async function stepAutoAssignConversation({
       console.error("Failed to emit conversationAssigned event:", error)
     }
 
-    conversationTrackingService
-      .trackEvent({
-        eventId: createId(),
-        chatbotId: conversation.chatbotId,
-        conversationId: conversation.id,
-        eventType: "conversation_assigned",
-        channel: conversation.channel,
-        occurredAt: new Date(),
-        toAssignee: assignedTo,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "stepAutoAssignConversation",
-            triggerType: "flow_action",
-          },
-        },
-      })
-      .catch((error) => {
-        console.error("[stepAutoAssignConversation] Failed to track", error)
-      })
+    // conversationTrackingService
+    //   .trackEvent({
+    //     eventId: createId(),
+    //     workspaceId: conversation.workspaceId,
+    //     conversationId: conversation.id,
+    //     eventType: "conversation_assigned",
+    //     channel: conversation.channel,
+    //     occurredAt: new Date(),
+    //     toAssignee: assignedTo,
+    //     metadata: {
+    //       triggerContext: {
+    //         triggerSource: "worker",
+    //         triggerHandler: "stepAutoAssignConversation",
+    //         triggerType: "flow_action",
+    //       },
+    //     },
+    //   })
+    //   .catch((error) => {
+    //     console.error("[stepAutoAssignConversation] Failed to track", error)
+    //   })
   }
 }
 
@@ -415,7 +411,7 @@ export async function stepUnassignConversation({
   // Emit conversation unassigned event
   try {
     await emitConversationUnassigned(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       conversation.id,
     )
@@ -426,7 +422,7 @@ export async function stepUnassignConversation({
   conversationTrackingService
     .trackEvent({
       eventId: createId(),
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
       eventType: "conversation_unassigned",
       fromAssignee:
@@ -455,25 +451,25 @@ export async function stepFollowConversation({
     })
     .where(eq(conversationModel.id, conversation.id))
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_followed",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepFollowConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepFollowConversation] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_followed",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepFollowConversation",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepFollowConversation] Failed to track", error)
+  //   })
 }
 
 export async function stepUnfollowConversation({
@@ -486,25 +482,25 @@ export async function stepUnfollowConversation({
     })
     .where(eq(conversationModel.id, conversation.id))
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_unfollowed",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepUnfollowConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepUnfollowConversation] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_unfollowed",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepUnfollowConversation",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepUnfollowConversation] Failed to track", error)
+  //   })
 }
 
 export async function stepDisableBot({
@@ -513,14 +509,14 @@ export async function stepDisableBot({
   await db
     .update(conversationModel)
     .set({
-      liveChatEnabled: true,
+      botEnabled: false,
     })
     .where(eq(conversationModel.id, conversation.id))
 
   // Emit conversation transferred to human event
   try {
     await emitConversationTransferredToHuman(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       conversation.id,
     )
@@ -528,25 +524,25 @@ export async function stepDisableBot({
     console.error("Failed to emit conversationTransferredToHuman event:", error)
   }
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_transferred_to_human",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepDisableBot",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepDisableBot] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_transferred_to_human",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepDisableBot",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepDisableBot] Failed to track", error)
+  //   })
 }
 
 export async function stepEnableBot({
@@ -555,14 +551,14 @@ export async function stepEnableBot({
   await db
     .update(conversationModel)
     .set({
-      liveChatEnabled: false,
+      botEnabled: true,
     })
     .where(eq(conversationModel.id, conversation.id))
 
   // Emit conversation transferred to bot event
   try {
     await emitConversationTransferredToBot(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       conversation.id,
     )
@@ -570,25 +566,25 @@ export async function stepEnableBot({
     console.error("Failed to emit conversationTransferredToBot event:", error)
   }
 
-  conversationTrackingService
-    .trackEvent({
-      eventId: createId(),
-      chatbotId: conversation.chatbotId,
-      conversationId: conversation.id,
-      eventType: "conversation_transferred_to_bot",
-      channel: conversation.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepEnableBot",
-          triggerType: "flow_action",
-        },
-      },
-    })
-    .catch((error) => {
-      console.error("[stepEnableBot] Failed to track", error)
-    })
+  // conversationTrackingService
+  //   .trackEvent({
+  //     eventId: createId(),
+  //     workspaceId: conversation.workspaceId,
+  //     conversationId: conversation.id,
+  //     eventType: "conversation_transferred_to_bot",
+  //     channel: conversation.channel,
+  //     occurredAt: new Date(),
+  //     metadata: {
+  //       triggerContext: {
+  //         triggerSource: "worker",
+  //         triggerHandler: "stepEnableBot",
+  //         triggerType: "flow_action",
+  //       },
+  //     },
+  //   })
+  //   .catch((error) => {
+  //     console.error("[stepEnableBot] Failed to track", error)
+  //   })
 }
 
 export const stepSendTyping = async (
@@ -596,43 +592,39 @@ export const stepSendTyping = async (
 ) => {
   const { conversation } = props
 
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    conversation.inboxId,
-  )
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId: conversation.contactId,
+    },
+    with: {
+      inbox: {
+        with: {
+          workspace: true,
+        },
+      },
+    },
+  })
 
-  await Promise.all([
-    allIntegrations[
-      inbox.channel
-    ]?.channels.channel?.conversation?.sendTyping?.({
-      ctx: {
-        chatbot: inbox.chatbot,
-        auth,
-      },
-      data: {
-        conversation: conversation as OutgoingConversation,
-        typing: true,
-      },
-    }),
-    broadcastToGuestParty(conversation.sourceId as string, {
-      eventType: RealtimeEventType.typing,
-      data: {
-        conversationId: "",
-        typing: true,
-      },
-    })
-      .then(() => {
-        return new Promise((resolve) => {
-          setTimeout(resolve, props.step.seconds * 1000)
-        })
-      })
-      .then(() => {
-        broadcastToGuestParty(conversation.sourceId as string, {
-          eventType: RealtimeEventType.typing,
-          data: {
-            conversationId: "",
-            typing: false,
-          },
-        })
+  const promises: (Promise<unknown> | undefined)[] = []
+  for (const contactInbox of contactInboxes) {
+    const auth = await getIntegrationAuth(contactInbox.inbox)
+
+    promises.push(
+      allIntegrations[
+        contactInbox.channel
+      ]?.channels.channel?.conversation?.sendTyping?.({
+        ctx: {
+          workspace: contactInbox.inbox.workspace,
+          auth,
+        },
+        data: {
+          conversation: conversation as OutgoingConversation,
+          typing: true,
+          seconds: props.step.seconds,
+        },
       }),
-  ])
+    )
+  }
+
+  await Promise.all(promises)
 }

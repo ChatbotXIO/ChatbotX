@@ -1,6 +1,6 @@
 "use client"
 
-import { WhatsappTemplateCategory } from "@chatbotx.io/database/types"
+import { whatsappTemplateCategories } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
@@ -75,9 +75,9 @@ const contentVariables: Record<
 }
 
 export function CreateMessageTemplateForm({
-  chatbotId,
+  workspaceId,
 }: {
-  chatbotId: string
+  workspaceId: string
 }) {
   const t = useTranslations()
   const [templateType, setTemplateType] = useState<TemplateType | null>(null)
@@ -87,7 +87,7 @@ export function CreateMessageTemplateForm({
     handleSubmitWithAction,
     form: { setValue },
   } = useHookFormAction(
-    createMessageTemplateAction.bind(null, chatbotId),
+    createMessageTemplateAction.bind(null, workspaceId),
     zodResolver(createMessageTemplateRequest),
     {
       actionProps: {
@@ -136,7 +136,7 @@ export function CreateMessageTemplateForm({
     // biome-ignore lint/suspicious/noExplicitAny: wip
     setValue("templateType", type as any)
     setValue("name", "")
-    setValue("category", WhatsappTemplateCategory.marketing)
+    setValue("category", whatsappTemplateCategories.enum.marketing)
 
     switch (type) {
       case TemplateType.Text:
@@ -224,7 +224,7 @@ export function CreateMessageTemplateForm({
               <div className="mt-6 flex justify-center gap-2">
                 <Button asChild variant="outline">
                   <Link
-                    href={`/chatbots/${chatbotId}/whatsapp/message-templates`}
+                    href={`/space/${workspaceId}/whatsapp/message-templates`}
                   >
                     {t("actions.cancel")}
                   </Link>

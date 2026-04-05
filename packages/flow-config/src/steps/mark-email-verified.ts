@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const markEmailVerifiedStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.markEmailVerified),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.markEmailVerified),
 })
 
 export type MarkEmailVerifiedStepSchema = z.infer<
@@ -14,5 +14,5 @@ export type MarkEmailVerifiedStepSchema = z.infer<
 export const markEmailVerifiedStepDefaultFn =
   (): MarkEmailVerifiedStepSchema => ({
     id: createId(),
-    stepType: StepType.markEmailVerified,
+    stepType: stepTypes.enum.markEmailVerified,
   })

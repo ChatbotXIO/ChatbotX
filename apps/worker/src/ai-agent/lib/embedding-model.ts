@@ -14,14 +14,14 @@ export type EmbeddingModel =
     >
 
 export async function resolveEmbeddingModel(
-  chatbotId: bigint,
+  workspaceId: string,
 ): Promise<EmbeddingModel> {
   const [integrationOpenAI, integrationGemini] = await Promise.all([
-    db.query.integrationOpenAIModel.findFirst({
-      where: { chatbotId },
+    db.query.integrationOpenaiModel.findFirst({
+      where: { workspaceId },
     }),
     db.query.integrationGeminiModel.findFirst({
-      where: { chatbotId },
+      where: { workspaceId },
     }),
   ])
 

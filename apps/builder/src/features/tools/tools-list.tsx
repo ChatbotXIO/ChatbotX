@@ -17,7 +17,7 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useCallback, useMemo } from "react"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 
 const TOOLS_CONFIG = [
   {
@@ -37,14 +37,14 @@ const TOOLS_CONFIG = [
     labelKey: "reflinks.title",
     descriptionKey: "reflinks.description",
     icon: LinkIcon,
-    getLink: (id: string) => `/chatbots/${id}/reflinks`,
+    getLink: (id: string) => `/space/${id}/reflinks`,
   },
   {
     id: "qr-code",
     labelKey: "qrCodeGenerator.title",
     descriptionKey: "qrCodeGenerator.description",
     icon: QrCodeIcon,
-    getLink: (id: string) => `/chatbots/${id}/qr-codes`,
+    getLink: (id: string) => `/space/${id}/qr-codes`,
   },
   {
     id: "templates",
@@ -93,12 +93,12 @@ const TOOLS_CONFIG = [
   //   labelKey: "webhooks.title",
   //   descriptionKey: "webhooks.description",
   //   icon: UsersIcon,
-  //   getLink: (id: string) => `/chatbots/${id}/webhooks`,
+  //   getLink: (id: string) => `/space/${id}/webhooks`,
   // },
 ] as const
 
 export const ToolsList = () => {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
 
@@ -111,10 +111,10 @@ export const ToolsList = () => {
         icon: config.icon,
         link:
           "getLink" in config && config.getLink
-            ? config.getLink(chatbotId.toString())
+            ? config.getLink(workspaceId.toString())
             : undefined,
       })),
-    [t, chatbotId],
+    [t, workspaceId],
   )
 
   const handleCardClick = useCallback(

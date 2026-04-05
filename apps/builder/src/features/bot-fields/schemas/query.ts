@@ -21,10 +21,10 @@ export const listBotFieldsSearchParams = createSearchParamsCache({
 export type ListBotFieldsSearchParams = Awaited<
   ReturnType<typeof listBotFieldsSearchParams.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export const findBotFieldRequest = botFieldResource
-  .pick({ id: true, chatbotId: true, name: true })
+  .pick({ id: true, workspaceId: true, name: true })
   .partial()
 export type FindBotFieldRequest = z.infer<typeof findBotFieldRequest>

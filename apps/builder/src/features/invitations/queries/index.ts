@@ -6,51 +6,51 @@ import {
   organizationModel,
   userModel,
 } from "@chatbotx.io/database/schema"
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { ChatbotXException } from "@/lib/errors/exception"
 
 export async function findInvitation({ code }: { code: string }) {
-  const invitation = await findOrFail(
-    invitationModel,
-    {
+  const invitation = await findOrFail({
+    table: invitationModel,
+    where: {
       code,
     },
-    "Invitation not found",
-  )
+    message: "Invitation not found",
+  })
   if (invitation.expiresAt < new Date()) {
     throw new ChatbotXException("Invitation expired")
   }
 
-  const user = await findOrFail(
-    userModel,
-    {
+  const user = await findOrFail({
+    table: userModel,
+    where: {
       id: invitation.invitedBy,
     },
-    "User not found",
-  )
+    message: "User not found",
+  })
 
-  let chatbot: ChatbotModel | null = null
-  if (invitation.chatbotId) {
-    chatbot =
-      (await db.query.chatbotModel.findFirst({
+  let workspace: WorkspaceModel | null = null
+  if (invitation.workspaceId) {
+    workspace =
+      (await db.query.workspaceModel.findFirst({
         where: {
-          id: invitation.chatbotId,
+          id: invitation.workspaceId,
         },
       })) ?? null
   }
 
-  const organization = await findOrFail(
-    organizationModel,
-    {
+  const organization = await findOrFail({
+    table: organizationModel,
+    where: {
       id: invitation.organizationId,
     },
-    "Organization not found",
-  )
+    message: "Organization not found",
+  })
 
   return {
     invitation,
     user,
-    chatbot,
+    workspace,
     organization,
   }
 }

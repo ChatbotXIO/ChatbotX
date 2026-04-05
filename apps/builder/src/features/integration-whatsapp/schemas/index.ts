@@ -12,7 +12,7 @@ export const connectWhatsappSchema = z
     manualConnect: z.boolean(),
     marketingMessageLite: z.boolean(),
     phoneNumberId: z.string().min(1),
-    chatbotId: z.string().nullish(),
+    workspaceId: z.string().nullish(),
     accessToken: z.string().nullish(),
     code: z.string().nullish(),
   })

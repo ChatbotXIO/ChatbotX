@@ -7,16 +7,16 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteWebhooksAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteWebhooksAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -26,11 +26,11 @@ export const deleteWebhooksAction = chatbotActionClient
         .delete(webhookModel)
         .where(
           and(
-            eq(webhookModel.chatbotId, chatbotId),
+            eq(webhookModel.workspaceId, workspaceId),
             inArray(webhookModel.id, parsedInput.ids),
           ),
         )
 
-      await removeWebhookCache(chatbotId)
+      await removeWebhookCache(workspaceId)
     },
   )

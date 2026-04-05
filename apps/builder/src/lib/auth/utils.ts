@@ -2,15 +2,15 @@
 
 import { db } from "@chatbotx.io/database/client"
 import type {
-  ChatbotMemberModel,
-  ChatbotModel,
   UserModel,
+  WorkspaceMemberModel,
+  WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
 import { ChatbotXException } from "../errors/exception"
 import { auth } from "./auth"
 
-export const getCurrentUserId = async (): Promise<bigint | null> => {
+export const getCurrentUserId = async (): Promise<string | null> => {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
@@ -33,64 +33,68 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
     : null
 }
 
-export const assertCurrentUserCanAccessChatbot = async (chatbotId: bigint) => {
-  const userAndChatbots = await getCurrentUserAndTargetChatbot(chatbotId)
+export const assertCurrentUserCanAccessChatbot = async (
+  workspaceId: string,
+) => {
+  const userAndChatbots = await getCurrentUserAndTargetChatbot(workspaceId)
 
   if (!userAndChatbots) {
-    throw new ChatbotXException("User is not associated with this chatbot")
+    throw new ChatbotXException("User is not associated with this workspace")
   }
 }
 
 export const getCurrentUserAndAllLinkedChatbots = async (): Promise<{
   user: UserModel
-  allChatbots: ChatbotModel[]
-  allChatbotMembers: (ChatbotMemberModel & { chatbot: ChatbotModel })[]
+  allChatbots: WorkspaceModel[]
+  allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
   const user = await getCurrentUser()
   if (!user) {
     return null
   }
 
-  const chatbotMembers = await db.query.chatbotMemberModel.findMany({
+  const workspaceMembers = await db.query.workspaceMemberModel.findMany({
     where: {
       userId: user.id,
     },
     with: {
-      chatbot: true,
+      workspace: true,
     },
   })
 
   return {
     user,
-    allChatbots: chatbotMembers.map((chatbotMember) => chatbotMember.chatbot),
-    allChatbotMembers: chatbotMembers,
+    allChatbots: workspaceMembers.map(
+      (workspaceMember) => workspaceMember.workspace,
+    ),
+    allWorkspaceMembers: workspaceMembers,
   }
 }
 
 export const getCurrentUserAndTargetChatbot = async (
-  chatbotId: bigint,
+  workspaceId: string,
 ): Promise<{
   user: UserModel
-  targetChatbot: ChatbotModel
-  targetChatbotMember: ChatbotMemberModel
-  allChatbots: ChatbotModel[]
-  allChatbotMembers: (ChatbotMemberModel & { chatbot: ChatbotModel })[]
+  targetChatbot: WorkspaceModel
+  targetWorkspaceMember: WorkspaceMemberModel
+  allChatbots: WorkspaceModel[]
+  allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
   const userAndChatbots = await getCurrentUserAndAllLinkedChatbots()
   if (!userAndChatbots) {
     return null
   }
 
-  const targetChatbotMember = userAndChatbots.allChatbotMembers.find(
-    (chatbotMember) => chatbotMember.chatbotId === chatbotId,
+  const targetWorkspaceMember = userAndChatbots.allWorkspaceMembers.find(
+    (workspaceMember) => workspaceMember.workspaceId === workspaceId,
   )
-  if (!targetChatbotMember) {
+  if (!targetWorkspaceMember) {
     return null
   }
 
   return {
     ...userAndChatbots,
-    targetChatbot: targetChatbotMember.chatbot,
-    targetChatbotMember,
+    targetChatbot: targetWorkspaceMember.workspace,
+    targetWorkspaceMember,
   }
 }

@@ -20,7 +20,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { blockContactAction } from "../contacts/actions/block-contact.action"
 import { unblockContactAction } from "../contacts/actions/unblock-contact.action"
@@ -38,13 +38,13 @@ type ConversationActionProps = {
 
 export function ConversationAction({ conversation }: ConversationActionProps) {
   const t = useTranslations()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { deleteConversation, updateConversation, updateContact } =
     useChatStore((state) => state)
 
   const { execute: followUpFn, isExecuting: isFollowingUp } = useAction(
-    followConversationAction.bind(null, chatbotId, conversation.id),
+    followConversationAction.bind(null, workspaceId, conversation.id),
     {
       onSuccess: () => {
         updateConversation(conversation.id, {
@@ -61,7 +61,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
 
   const { execute: removeFollowUpFn, isExecuting: isRemovingFollowUp } =
     useAction(
-      unfollowConversationAction.bind(null, chatbotId, conversation.id),
+      unfollowConversationAction.bind(null, workspaceId, conversation.id),
       {
         onSuccess: () => {
           updateConversation(conversation.id, {
@@ -77,7 +77,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     )
 
   const { execute: unreadFn, isExecuting: isMarkingUnread } = useAction(
-    unreadConversationAction.bind(null, chatbotId, conversation.id),
+    unreadConversationAction.bind(null, workspaceId, conversation.id),
     {
       onSuccess: (result) => {
         updateConversation(conversation.id, {
@@ -93,7 +93,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: archiveFn, isExecuting: isArchiving } = useAction(
-    archiveConversationAction.bind(null, chatbotId),
+    archiveConversationAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         updateConversation(conversation.id, {
@@ -109,7 +109,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: unarchiveFn, isExecuting: isUnarchiving } = useAction(
-    unarchiveConversationAction.bind(null, chatbotId),
+    unarchiveConversationAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         updateConversation(conversation.id, {
@@ -125,7 +125,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: blockContactFn, isExecuting: isBlockingContact } = useAction(
-    blockContactAction.bind(null, chatbotId, conversation.contactId),
+    blockContactAction.bind(null, workspaceId, conversation.contactId),
     {
       onSuccess: () => {
         updateContact(conversation.contactId, {
@@ -141,7 +141,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   )
 
   const { execute: unblockContactFn } = useAction(
-    unblockContactAction.bind(null, chatbotId, conversation.contactId),
+    unblockContactAction.bind(null, workspaceId, conversation.contactId),
     {
       onSuccess: () => {
         updateContact(conversation.contactId, {
@@ -221,7 +221,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         )}
 
         <DeleteContactDialog
-          ids={[conversation.contact?.id || BigInt(0)]}
+          ids={[conversation.contact?.id || ""]}
           onSuccess={() => {
             deleteConversation(conversation.id)
           }}

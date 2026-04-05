@@ -20,13 +20,13 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { removeContactTagAction } from "../actions/remove-contact-tag.action"
 import { removeContactTagsRequest } from "../schemas/contact-tag"
 
 type RemoveContactTagDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function RemoveContactTagDialog({
@@ -36,13 +36,13 @@ export default function RemoveContactTagDialog({
   const t = useTranslations()
   const [open, setOpen] = useState(false)
 
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const tagOptions = useTagOptions()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      removeContactTagAction.bind(null, chatbotId),
+      removeContactTagAction.bind(null, workspaceId),
       zodResolver(removeContactTagsRequest),
       {
         actionProps: {

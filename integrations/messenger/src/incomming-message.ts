@@ -1,10 +1,10 @@
 import {
-  ContentType,
   type Context,
+  contentTypes,
   type IncomingAttachment,
   type IncomingConversation,
   type IncomingMessage,
-  MessageType,
+  messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
 
@@ -79,12 +79,12 @@ export const receiveMessage = async ({
   )
 
   const sourceId =
-    message.messageType === MessageType.outgoing
+    message.messageType === messageTypes.enum.outgoing
       ? messaging.recipient.id
       : messaging.sender.id
   const conversation: IncomingConversation = {
     sourceId,
-    conversationAttributes: {},
+    additionalAttributes: {},
     contact: {
       sourceId,
     },
@@ -113,10 +113,10 @@ const getMessageEntity = async (
       sourceId: messaging.message.mid,
       messageType:
         messaging.sender.id === ctx.auth.metadata.pageId
-          ? MessageType.outgoing
-          : MessageType.incoming,
-      content: messaging.message.text,
-      contentType: ContentType.text,
+          ? messageTypes.enum.outgoing
+          : messageTypes.enum.incoming,
+      text: messaging.message.text,
+      contentType: contentTypes.enum.text,
       attachments: await getMessageAttachments(ctx, messaging.message),
     }
     quickReplyAction = messaging.message.quick_reply?.payload ?? null
@@ -125,9 +125,9 @@ const getMessageEntity = async (
   if (messaging.postback) {
     message = {
       sourceId: messaging.postback.mid,
-      messageType: MessageType.incoming,
-      content: messaging.postback.title,
-      contentType: ContentType.text,
+      messageType: messageTypes.enum.incoming,
+      text: messaging.postback.title,
+      contentType: contentTypes.enum.text,
     }
     postbackAction = messaging.postback.payload
   }

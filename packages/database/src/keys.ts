@@ -18,3 +18,5 @@ export const keys = () =>
     },
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
+
+export const env = keys()

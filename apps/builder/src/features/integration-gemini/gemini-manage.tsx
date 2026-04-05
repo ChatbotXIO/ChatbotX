@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { use } from "react"
 import { SettingRow } from "@/components/setting-row"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { updateGeminiAction } from "./actions/update.action"
 import { GeminiConnectDialog } from "./gemini-connect-dialog"
 import { GeminiDisconnectDialog } from "./gemini-disconnect-dialog"
@@ -19,14 +19,14 @@ type GeminiAIManageProps = {
 
 export const GeminiAIManage = (props: GeminiAIManageProps) => {
   const { promises } = props
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const [integrationGemini] = use(promises)
   const router = useRouter()
   const t = useTranslations()
 
   const { execute: onChangeGemini, isPending: onPendingGemini } = useAction(
-    updateGeminiAction.bind(null, chatbotId),
+    updateGeminiAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         router.refresh()

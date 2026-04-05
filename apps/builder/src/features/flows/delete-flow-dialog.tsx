@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { deleteFlowAction } from "./actions/delete-flow.action"
 
 type DeleteFlowsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   flows: Row<FlowModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteFlowsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteFlowsDialog({
-  chatbotId,
+  workspaceId,
   flows,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteFlowsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteFlowAction.bind(null, chatbotId),
+    deleteFlowAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

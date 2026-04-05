@@ -1,15 +1,15 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const enableBotStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.enableBot),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.enableBot),
 })
 
 export type EnableBotStepSchema = z.infer<typeof enableBotStepSchema>
 
 export const enableBotStepDefaultFn = (): EnableBotStepSchema => ({
   id: createId(),
-  stepType: StepType.enableBot,
+  stepType: stepTypes.enum.enableBot,
 })

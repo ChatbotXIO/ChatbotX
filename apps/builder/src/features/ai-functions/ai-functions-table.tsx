@@ -27,12 +27,12 @@ import { AIFunctionsCreate } from "./ai-functions-create"
 import type { listAIFunctions } from "./queries"
 
 type AIFunctionsTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listAIFunctions>>]>
 }
 
 export default function AIFunctionsTable({
-  chatbotId,
+  workspaceId,
   promises,
 }: AIFunctionsTableProps) {
   const [{ data }] = use(promises)
@@ -118,7 +118,7 @@ export default function AIFunctionsTable({
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -135,10 +135,10 @@ export default function AIFunctionsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <AIFunctionsCreate
-              chatbotId={chatbotId}
               onSuccess={() => {
                 router.refresh()
               }}
+              workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>

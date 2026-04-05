@@ -5,31 +5,31 @@ import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import {
   handleStepCreationImpact,
   handleStepUpdateImpact,
 } from "@/features/contact-sequences/utils/calculate-next-run-at"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpsertSequenceStepRequest,
   upsertSequenceStepRequest,
-} from "../schema"
+} from "../schema/action"
 
 async function validateSequenceOwnership(
-  sequenceId: bigint,
-  chatbotId: bigint,
+  sequenceId: string,
+  workspaceId: string,
 ) {
-  await findOrFail(
-    sequenceModel,
-    {
+  await findOrFail({
+    table: sequenceModel,
+    where: {
       id: sequenceId,
-      chatbotId,
+      workspaceId,
     },
-    "Sequence not found",
-  )
+    message: "Sequence not found",
+  })
 }
 
 function buildUpdateData(
@@ -72,7 +72,7 @@ function buildUpdateData(
 
 function buildCreateData(
   parsedInput: UpsertSequenceStepRequest,
-  sequenceId: bigint,
+  sequenceId: string,
 ): typeof sequenceStepModel.$inferInsert {
   const {
     order,
@@ -165,15 +165,15 @@ function shouldRecalculateOnUpdate(
  */
 async function handleStepCreation(
   parsedInput: UpsertSequenceStepRequest,
-  sequenceId: bigint,
-  chatbotId: bigint,
-): Promise<{ stepId: bigint }> {
+  sequenceId: string,
+  workspaceId: string,
+): Promise<{ stepId: string }> {
   const createData = buildCreateData(parsedInput, sequenceId)
   const step = await createSequenceStep(createData)
 
   // Recalculate only for affected contacts (currentStep <= newStepOrder)
   // More efficient than recalculating all contacts
-  await handleStepCreationImpact(sequenceId, chatbotId, parsedInput.order)
+  await handleStepCreationImpact(sequenceId, workspaceId, parsedInput.order)
 
   return { stepId: step.id }
 }
@@ -234,12 +234,12 @@ async function handleStepCreation(
  */
 async function handleStepUpdate(
   parsedInput: UpsertSequenceStepRequest,
-  stepId: bigint,
-  sequenceId: bigint,
-  chatbotId: bigint,
-): Promise<{ stepId: bigint }> {
+  stepId: string,
+  sequenceId: string,
+  workspaceId: string,
+): Promise<{ stepId: string }> {
   const updateData = buildUpdateData(parsedInput)
-  const step = await updateSequenceStep(stepId, updateData, chatbotId)
+  const step = await updateSequenceStep(stepId, updateData, workspaceId)
 
   // Only recalculate if changes affect scheduling
   if (shouldRecalculateOnUpdate(parsedInput)) {
@@ -252,7 +252,7 @@ async function handleStepUpdate(
     // - Completed contacts (status = 'completed')
     await handleStepUpdateImpact(
       sequenceId,
-      chatbotId,
+      workspaceId,
       stepId,
       parsedInput.order,
     )
@@ -262,9 +262,9 @@ async function handleStepUpdate(
 }
 
 async function updateSequenceStep(
-  stepId: bigint,
+  stepId: string,
   updateData: Partial<typeof sequenceStepModel.$inferInsert>,
-  chatbotId: bigint,
+  workspaceId: string,
 ) {
   const step = await db.query.sequenceStepModel.findFirst({
     where: {
@@ -279,8 +279,8 @@ async function updateSequenceStep(
     throw new Error("Step not found")
   }
 
-  if (step.sequence.chatbotId !== chatbotId) {
-    throw new Error("Unauthorized: Step does not belong to this chatbot")
+  if (step.sequence.workspaceId !== workspaceId) {
+    throw new Error("Unauthorized: Step does not belong to this workspace")
   }
 
   const [updated] = await db
@@ -303,12 +303,12 @@ async function createSequenceStep(
   return created
 }
 
-export const upsertSequenceStepAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const upsertSequenceStepAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(upsertSequenceStepRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -316,22 +316,22 @@ export const upsertSequenceStepAction = chatbotActionClient
     }) => {
       const { stepId, sequenceId } = parsedInput
 
-      await validateSequenceOwnership(sequenceId, chatbotId)
+      await validateSequenceOwnership(sequenceId, workspaceId)
 
-      let result: { stepId: bigint }
+      let result: { stepId: string }
 
       if (stepId) {
         result = await handleStepUpdate(
           parsedInput,
           stepId,
           sequenceId,
-          chatbotId,
+          workspaceId,
         )
       } else {
-        result = await handleStepCreation(parsedInput, sequenceId, chatbotId)
+        result = await handleStepCreation(parsedInput, sequenceId, workspaceId)
       }
 
-      revalidateCacheTags([`chatbots:${chatbotId}#sequences`])
+      revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
       return result
     },

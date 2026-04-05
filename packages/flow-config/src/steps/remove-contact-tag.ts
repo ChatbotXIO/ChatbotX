@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const removeContactTagStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.removeContactTag),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.removeContactTag),
   tags: z.array(z.string().trim().min(1)).min(1),
 })
 
@@ -15,6 +15,6 @@ export type RemoveContactTagStepSchema = z.infer<
 export const removeContactTagStepDefaultFn =
   (): RemoveContactTagStepSchema => ({
     id: createId(),
-    stepType: StepType.removeContactTag,
+    stepType: stepTypes.enum.removeContactTag,
     tags: [],
   })

@@ -1,0 +1,83 @@
+"use client"
+
+import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
+import { toast } from "sonner"
+import { deleteWorkspaceMemberAction } from "../actions/delete-workspace-member.action"
+
+export function DeleteWorkspaceMemberDialog({
+  workspaceMember,
+  open,
+  onOpenChange,
+}: {
+  workspaceMember?: WorkspaceMemberModel
+  open: boolean
+  onOpenChange: (val: boolean) => void
+}) {
+  const t = useTranslations()
+  const router = useRouter()
+
+  const { execute, isPending } = useAction(
+    deleteWorkspaceMemberAction.bind(
+      null,
+      workspaceMember?.workspaceId ?? "",
+      workspaceMember?.id ?? "",
+    ),
+    {
+      onSuccess: () => {
+        onOpenChange(false)
+        router.refresh()
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
+  )
+
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("messages.deleteFeature", {
+              feature: t("fields.workspaceMember.label"),
+            })}
+          </DialogTitle>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
+            {t("messages.deleteConfirmation", {
+              feature: t("fields.workspaceMember.label"),
+            })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)} variant="outline">
+            {t("actions.cancel")}
+          </Button>
+          <Button
+            disabled={isPending}
+            onClick={() => execute()}
+            variant="destructive"
+          >
+            {isPending && <Loader2Icon className="animate-spin" />}
+            {t("actions.delete")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

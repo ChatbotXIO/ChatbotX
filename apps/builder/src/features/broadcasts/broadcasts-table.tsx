@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
@@ -43,7 +43,7 @@ type BroadcastsTableProps = {
 export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
 
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const t = useTranslations()
   const router = useRouter()
@@ -197,7 +197,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -208,7 +208,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         <DataTableToolbar table={table}>
           <div className="flex justify-end">
             <Button asChild size="sm">
-              <Link href={`/chatbots/${chatbotId}/broadcasts/create`}>
+              <Link href={`/space/${workspaceId}/broadcasts/create`}>
                 <PlusIcon />
                 {t("actions.createFeature", {
                   feature: t("fields.broadcast.label"),

@@ -6,9 +6,9 @@ import {
 import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
 
 export function createTrackingContext(params: {
-  messageId: bigint
-  chatbotId: bigint
-  conversationId: bigint
+  messageId: string
+  workspaceId: string
+  conversationId: string
   responseType: BotMessageResponseType
   aiProvider: string
   triggerType: string
@@ -22,7 +22,7 @@ export function createTrackingContext(params: {
 export async function trackBotResponse(params: TrackBotRequest) {
   try {
     await botMessageTrackingService.trackEvent({
-      chatbotId: params.chatbotId,
+      workspaceId: params.workspaceId,
       conversationId: params.conversationId,
       messageId: params.messageId,
       occurredAt: new Date(),

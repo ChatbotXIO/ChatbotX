@@ -1,4 +1,7 @@
-import { TriggerAction } from "@chatbotx.io/database/enums"
+import {
+  type TriggerAction,
+  triggerActions,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
@@ -21,8 +24,8 @@ export const ActionEditor = ({
   const flowOptions = useFlowSelectOptions()
 
   switch (type) {
-    case TriggerAction.addTag:
-    case TriggerAction.removeTag: {
+    case triggerActions.enum.addTag:
+    case triggerActions.enum.removeTag: {
       return (
         <MultiSelectField
           label=""
@@ -31,15 +34,15 @@ export const ActionEditor = ({
         />
       )
     }
-    case TriggerAction.setCustomField:
+    case triggerActions.enum.setCustomField:
       return (
         <div className="flex flex-col gap-4">
           <SetCustomField parentName={parentName} />
         </div>
       )
-    case TriggerAction.clearCustomField:
+    case triggerActions.enum.clearCustomField:
       return <CustomFieldSelect label="" name={`${parentName}.customFieldId`} />
-    case TriggerAction.startAnotherFlow:
+    case triggerActions.enum.startAnotherFlow:
       return (
         <ComboboxField
           name={`${parentName}.flowId`}
@@ -47,7 +50,7 @@ export const ActionEditor = ({
           required={true}
         />
       )
-    case TriggerAction.transferConversationToHuman:
+    case triggerActions.enum.transferConversationToHuman:
       return (
         <SwitchField
           label={t("trigger.actions.notifyAdmins")}
@@ -55,7 +58,7 @@ export const ActionEditor = ({
           required
         />
       )
-    case TriggerAction.runGoogleSheet:
+    case triggerActions.enum.runGoogleSheet:
       return <GoogleSheetAction parentName={parentName} />
     default:
       return null

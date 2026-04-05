@@ -2,17 +2,17 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationGeminiModel } from "@chatbotx.io/database/schema"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const disconnectGeminiAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
-  .action(async ({ bindArgsParsedInputs: [chatbotId] }) => {
-    const integrationGemini = await findOrFail(
-      integrationGeminiModel,
-      { chatbotId },
-      "Integration Gemini not found",
-    )
+export const disconnectGeminiAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
+  .action(async ({ bindArgsParsedInputs: [workspaceId] }) => {
+    const integrationGemini = await findOrFail({
+      table: integrationGeminiModel,
+      where: { workspaceId },
+      message: "Integration Gemini not found",
+    })
     await db
       .delete(integrationGeminiModel)
       .where(eq(integrationGeminiModel.id, integrationGemini.id))

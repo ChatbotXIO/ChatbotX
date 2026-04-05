@@ -20,13 +20,13 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { deleteContactCustomFieldAction } from "../actions/delete-contact-custom-field.action"
 import { deleteContactCustomFieldsRequest } from "../schemas/contact-custom-field"
 
 type ClearContactCustomFieldDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function ClearContactCustomFieldDialog({
@@ -37,10 +37,10 @@ export default function ClearContactCustomFieldDialog({
   const [open, setOpen] = useState(false)
   const customFieldSelectOptions = useCustomFieldSelectOptions({})
 
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    deleteContactCustomFieldAction.bind(null, chatbotId),
+    deleteContactCustomFieldAction.bind(null, workspaceId),
     zodResolver(deleteContactCustomFieldsRequest),
     {
       actionProps: {
@@ -62,7 +62,7 @@ export default function ClearContactCustomFieldDialog({
         mode: "onChange",
         defaultValues: {
           ids,
-          customFieldId: BigInt(0),
+          customFieldId: "",
         },
       },
       errorMapProps: {},

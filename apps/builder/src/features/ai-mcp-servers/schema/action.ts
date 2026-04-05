@@ -1,9 +1,10 @@
 import { aiMcpServerAuth } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { aiMcpServerResource } from "./resource"
 
 export const listAIMcpServersRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
 })
 export type ListAIMcpServersRequest = z.infer<typeof listAIMcpServersRequest>
 

@@ -7,7 +7,7 @@ import type {
 
 export type GoogleSheetsConfig = Oauth2Config & {
   stateParams?: {
-    chatbotId: bigint
+    workspaceId: string
     referer: string
   }
 }

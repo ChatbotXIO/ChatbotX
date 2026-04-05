@@ -1,7 +1,7 @@
 "use client"
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { LanguageOptions } from "@/features/integration-whatsapp/message-templates/type"
+import { languageOptions } from "../type"
 
 export function WhatsappMessageTemplateLanguageSelect({
   name,
@@ -16,7 +16,7 @@ export function WhatsappMessageTemplateLanguageSelect({
     <SelectField
       label={label}
       name={name}
-      options={LanguageOptions}
+      options={languageOptions}
       placeholder="Please select"
       required={required}
     />

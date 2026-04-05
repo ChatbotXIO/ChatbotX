@@ -1,8 +1,8 @@
-import chatbotTokenCustomFieldsAPI from "./chatbot-token"
 import privateCustomFieldsAPI from "./private"
+import customFieldsWorkspaceTokenAPI from "./workspace-token"
 
 const customFieldsAPI = {
-  ...chatbotTokenCustomFieldsAPI,
+  ...customFieldsWorkspaceTokenAPI,
   ...privateCustomFieldsAPI,
 }
 

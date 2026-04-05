@@ -5,10 +5,10 @@ import {
   spreadsheetDefaultFn,
   spreadsheetSchema,
 } from "./spreadsheet"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const spreadsheetClearRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(StepType.spreadsheetClearRow),
+  stepType: z.literal(stepTypes.enum.spreadsheetClearRow),
   lookup: spreadsheetColumnFilterSchema,
 })
 export type SpreadsheetClearRowSchema = z.infer<
@@ -17,6 +17,6 @@ export type SpreadsheetClearRowSchema = z.infer<
 
 export const spreadsheetClearRowDefaultFn = (): SpreadsheetClearRowSchema => ({
   ...spreadsheetDefaultFn(),
-  stepType: StepType.spreadsheetClearRow,
+  stepType: stepTypes.enum.spreadsheetClearRow,
   lookup: spreadsheetColumnFilterDefaultFn(),
 })

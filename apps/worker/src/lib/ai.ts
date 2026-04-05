@@ -5,7 +5,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationGeminiModel,
-  integrationOpenAIModel,
+  integrationOpenaiModel,
 } from "@chatbotx.io/database/schema"
 import type {
   IntegrationGeminiModel,
@@ -35,28 +35,28 @@ type DataField = {
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
 
 export async function getAIIntegrationInDB(props: {
-  chatbotId: bigint
+  workspaceId: string
   provider: string
 }) {
-  const { chatbotId, provider } = props
+  const { workspaceId, provider } = props
 
   switch (provider) {
     case aiProviders.openai:
-      return await findOrFail(
-        integrationOpenAIModel,
-        {
-          chatbotId,
+      return await findOrFail({
+        table: integrationOpenaiModel,
+        where: {
+          workspaceId,
         },
-        `IntegrationOpenAI not found for chatbotId: ${chatbotId}`,
-      )
+        message: `IntegrationOpenAI not found for workspaceId: ${workspaceId}`,
+      })
     case aiProviders.gemini:
-      return await findOrFail(
-        integrationGeminiModel,
-        {
-          chatbotId,
+      return await findOrFail({
+        table: integrationGeminiModel,
+        where: {
+          workspaceId,
         },
-        `IntegrationGemini not found for chatbotId: ${chatbotId}`,
-      )
+        message: `IntegrationGemini not found for workspaceId: ${workspaceId}`,
+      })
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
@@ -87,8 +87,8 @@ export function getAIModel(
 }
 
 export async function getAIFileTools(
-  chatbotId: bigint,
-  selectedFileIds: bigint[],
+  workspaceId: string,
+  selectedFileIds: string[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
@@ -98,7 +98,7 @@ export async function getAIFileTools(
     }
 
     const allFiles = await db.query.aiFileModel.findMany({
-      where: { chatbotId, id: { in: selectedFileIds } },
+      where: { workspaceId, id: { in: selectedFileIds } },
     })
 
     if (allFiles.length > 0) {
@@ -116,7 +116,7 @@ export async function getAIFileTools(
         } as Parameters<typeof jsonSchema>[0]),
         execute: async (args: { query: string }) => {
           const config = {
-            chatbotId,
+            workspaceId,
             selectedFileIds,
             similarityThreshold: 0.7,
             maxResults: 5,
@@ -130,15 +130,15 @@ export async function getAIFileTools(
   } catch (error) {
     logger.error(
       error,
-      `[automated-response] getAIFileTools failed for chatbotId: ${chatbotId}`,
+      `[automated-response] getAIFileTools failed for workspaceId: ${workspaceId}`,
     )
     return {}
   }
 }
 
 export async function getAIFunctionTools(
-  chatbotId: bigint,
-  selectedFunctionIds: bigint[],
+  workspaceId: string,
+  selectedFunctionIds: string[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
@@ -149,7 +149,7 @@ export async function getAIFunctionTools(
 
     const aiFunctions = await db.query.aiFunctionModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         id: {
           in: selectedFunctionIds,
         },
@@ -198,15 +198,15 @@ export async function getAIFunctionTools(
   } catch (error) {
     logger.error(
       error,
-      `[automated-response] getAIFunctionTools failed for chatbotId: ${chatbotId}`,
+      `[automated-response] getAIFunctionTools failed for workspaceId: ${workspaceId}`,
     )
     return {}
   }
 }
 
 export async function getMCPServerTools(
-  chatbotId: bigint,
-  selectedMcpIds: bigint[],
+  workspaceId: string,
+  selectedMcpIds: string[],
 ): Promise<ToolSet> {
   try {
     const tools: ToolSet = {}
@@ -217,7 +217,7 @@ export async function getMCPServerTools(
 
     // Find MCP servers from DB
     const mcpServers = await db.query.aiMCPServerModel.findMany({
-      where: { chatbotId, id: { in: selectedMcpIds } },
+      where: { workspaceId, id: { in: selectedMcpIds } },
     })
     if (mcpServers.length === 0) {
       return tools
@@ -271,7 +271,7 @@ export async function getMCPServerTools(
   } catch (error) {
     logger.error(
       error,
-      `[automated-response] getMCPServerTools failed for chatbotId: ${chatbotId}`,
+      `[automated-response] getMCPServerTools failed for workspaceId: ${workspaceId}`,
     )
     return {}
   }

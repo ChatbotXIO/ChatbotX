@@ -1,10 +1,11 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const timeRangeQuerySchema = z.object({
   from: z.string().transform((val) => new Date(val)),
   to: z.string().transform((val) => new Date(val)),
   timezone: z.string().default("UTC"),
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
 })
 export type TimeRangeQuery = z.infer<typeof timeRangeQuerySchema>
 

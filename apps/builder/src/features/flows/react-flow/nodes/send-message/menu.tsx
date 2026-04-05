@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import {
   CreditCardIcon,
   ImageIcon,
@@ -25,48 +25,48 @@ const ALL_MENU_ITEMS = (
   sendText: {
     label: t("flows.actions.sendText"),
     icon: TextIcon,
-    stepType: StepType.sendText,
+    stepType: stepTypes.enum.sendText,
   },
   sendImage: {
     label: t("flows.actions.sendImage"),
     icon: ImageIcon,
-    stepType: StepType.sendImage,
+    stepType: stepTypes.enum.sendImage,
   },
   sendCard: {
     label: t("flows.actions.sendCard"),
     icon: CreditCardIcon,
-    stepType: StepType.sendCard,
+    stepType: stepTypes.enum.sendCard,
   },
   sendCarousel: {
     label: t("flows.actions.sendCarousel"),
     icon: PictureInPicture2Icon,
-    stepType: StepType.sendCarousel,
+    stepType: stepTypes.enum.sendCarousel,
   },
   sendVideo: {
     label: t("flows.actions.sendVideo"),
     icon: VideoIcon,
-    stepType: StepType.sendVideo,
+    stepType: stepTypes.enum.sendVideo,
   },
   getUserData: {
     label: t("flows.actions.getUserData"),
     icon: KeyboardIcon,
-    stepType: StepType.getUserData,
+    stepType: stepTypes.enum.getUserData,
   },
   sendGif: {
     label: t("flows.actions.sendGif"),
     icon: ImagePlayIcon,
-    stepType: StepType.sendGif,
+    stepType: stepTypes.enum.sendGif,
   },
   sendWaTemplateMessage: {
     label: t("flows.actions.sendWaTemplateMessage"),
     icon: MessageSquareIcon,
-    stepType: StepType.sendWaTemplateMessage,
+    stepType: stepTypes.enum.sendWaTemplateMessage,
     children: waTemplateMenus(t, menuData),
   },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
-    stepType: StepType.typing,
+    stepType: stepTypes.enum.typing,
   },
   sendFile: {
     label: t("flows.actions.sendFile"),
@@ -76,12 +76,12 @@ const ALL_MENU_ITEMS = (
       {
         label: t("flows.actions.sendAudio"),
         icon: Volume2Icon,
-        stepType: StepType.sendAudio,
+        stepType: stepTypes.enum.sendAudio,
       },
       {
         label: t("flows.actions.sendFile"),
         icon: PaperclipIcon,
-        stepType: StepType.sendFile,
+        stepType: stepTypes.enum.sendFile,
       },
     ],
   },

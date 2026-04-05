@@ -12,14 +12,14 @@ import { editContactNoteAction } from "./actions/edit-contact-note.action"
 import { updateContactNoteRequest } from "./schemas/action"
 
 export function EditContactForm({
-  chatbotId,
+  workspaceId,
   contactId,
   contactNote,
   onCancel,
   onSuccess,
 }: {
-  chatbotId: bigint
-  contactId: bigint
+  workspaceId: string
+  contactId: string
   contactNote: ContactNoteModel
   onCancel: () => void
   onSuccess: (data: ContactNoteModel) => void
@@ -28,7 +28,7 @@ export function EditContactForm({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      editContactNoteAction.bind(null, chatbotId, contactId),
+      editContactNoteAction.bind(null, workspaceId, contactId),
       zodResolver(updateContactNoteRequest),
       {
         actionProps: {

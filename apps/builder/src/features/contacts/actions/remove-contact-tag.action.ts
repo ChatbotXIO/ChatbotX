@@ -5,43 +5,43 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type RemoveContactTagsRequest,
   removeContactTagsRequest,
 } from "../schemas/contact-tag"
 
-export const removeContactTagAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const removeContactTagAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(removeContactTagsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: RemoveContactTagsRequest
     }) => {
       await removeContactTags({
-        chatbotId,
+        workspaceId,
         parsedInput,
       })
     },
   )
 
 export const removeContactTags = async ({
-  chatbotId,
+  workspaceId,
   parsedInput,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   parsedInput: RemoveContactTagsRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
-      chatbotId,
+      workspaceId,
       id: {
         in: parsedInput.ids,
       },
@@ -58,7 +58,7 @@ export const removeContactTags = async ({
   const allTags = await db.transaction(async (tx) => {
     const allTags = await tx.query.tagModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         OR: [
           {
             id: {
@@ -92,7 +92,7 @@ export const removeContactTags = async ({
   for (const contact of contacts) {
     for (const tag of allTags) {
       try {
-        await emitTagRemoved(chatbotId, contact.id, tag.id)
+        await emitTagRemoved(workspaceId, contact.id, tag.id)
       } catch (error) {
         console.error("Failed to emit tagRemoved event:", error)
       }
@@ -100,8 +100,8 @@ export const removeContactTags = async ({
   }
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#contacts`,
-    `chatbots:${chatbotId}#conversations`,
-    `chatbots:${chatbotId}#tags`,
+    `workspaces:${workspaceId}#contacts`,
+    `workspaces:${workspaceId}#conversations`,
+    `workspaces:${workspaceId}#tags`,
   ])
 }

@@ -10,17 +10,17 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const archiveConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const archiveConversationAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
       ctx,
     }: {
@@ -31,7 +31,7 @@ export const archiveConversationAction = chatbotActionClient
       // Get conversations before archiving to emit events
       const conversations = await db.query.conversationModel.findMany({
         where: {
-          chatbotId,
+          workspaceId,
           id: {
             in: parsedInput.ids,
           },
@@ -50,7 +50,7 @@ export const archiveConversationAction = chatbotActionClient
         })
         .where(
           and(
-            eq(conversationModel.chatbotId, chatbotId),
+            eq(conversationModel.workspaceId, workspaceId),
             inArray(conversationModel.id, parsedInput.ids),
           ),
         )
@@ -59,7 +59,7 @@ export const archiveConversationAction = chatbotActionClient
       for (const conv of conversations) {
         try {
           await emitConversationArchived(
-            chatbotId,
+            workspaceId,
             conv.contactId,
             conv.id,
             ctx.user.id,
@@ -72,11 +72,11 @@ export const archiveConversationAction = chatbotActionClient
       for (const conv of conversations) {
         await conversationTrackingService.trackEvent(
           {
-            chatbotId,
+            workspaceId,
             conversationId: conv.id,
             eventType: "conversation_archived",
             eventId: createId(),
-            channel: conv.channel,
+            channel: "webchat", // TODO: replace correct channel from contact inbox
             occurredAt: new Date(),
             metadata: {
               triggerContext: {
@@ -90,6 +90,6 @@ export const archiveConversationAction = chatbotActionClient
         )
       }
 
-      revalidateCacheTags(`chatbots:${chatbotId}#conversations`)
+      revalidateCacheTags(`workspaces:${workspaceId}#conversations`)
     },
   )

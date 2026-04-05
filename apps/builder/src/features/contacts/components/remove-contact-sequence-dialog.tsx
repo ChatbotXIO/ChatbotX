@@ -20,13 +20,13 @@ import { useTranslations } from "next-intl"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { removeContactSequenceAction } from "../actions/remove-contact-sequence.action"
 import { removeContactSequenceRequest } from "../schemas/contact-sequence"
 
 type RemoveContactSequenceDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function RemoveContactSequenceDialog({
@@ -35,7 +35,7 @@ export default function RemoveContactSequenceDialog({
 }: RemoveContactSequenceDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const sequenceOptions = useSequenceOptions()
   const sequenceSelectOptions = sequenceOptions.map((sequence) => ({
@@ -45,7 +45,7 @@ export default function RemoveContactSequenceDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      removeContactSequenceAction.bind(null, chatbotId),
+      removeContactSequenceAction.bind(null, workspaceId),
       zodResolver(removeContactSequenceRequest),
       {
         actionProps: {

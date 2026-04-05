@@ -7,16 +7,16 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteTriggersAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteTriggersAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -26,11 +26,11 @@ export const deleteTriggersAction = chatbotActionClient
         .delete(triggerModel)
         .where(
           and(
-            eq(triggerModel.chatbotId, chatbotId),
+            eq(triggerModel.workspaceId, workspaceId),
             inArray(triggerModel.id, parsedInput.ids),
           ),
         )
 
-      await removeTriggerCache(chatbotId)
+      await removeTriggerCache(workspaceId)
     },
   )

@@ -3,37 +3,34 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { botFieldModel } from "@chatbotx.io/database/schema"
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteBotFieldsAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteBotFieldsAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      await db
-        .delete(botFieldModel)
-        .where(
-          and(
-            eq(botFieldModel.chatbotId, chatbotId),
-            inArray(botFieldModel.id, parsedInput.ids),
-          ),
-        )
+    } = props
 
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#botFields`,
-        ...parsedInput.ids.map((id) => `chatbots:${chatbotId}#botFields:${id}`),
-      ])
-    },
-  )
+    await db
+      .delete(botFieldModel)
+      .where(
+        and(
+          eq(botFieldModel.workspaceId, workspaceId),
+          inArray(botFieldModel.id, parsedInput.ids),
+        ),
+      )
+
+    revalidateCacheTags([
+      `workspaces:${workspaceId}#botFields`,
+      ...parsedInput.ids.map(
+        (id) => `workspaces:${workspaceId}#botFields:${id}`,
+      ),
+    ])
+  })

@@ -1,12 +1,12 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "../types"
 import { buttonStepSchema } from "./button"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const sendAudioStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.sendAudio),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.sendAudio),
   mode: uploadModes,
   url: z.url(),
   buttons: z.array(buttonStepSchema),
@@ -22,5 +22,5 @@ export const sendAudioStepDefaultFn = (
   url: "",
   buttons: [],
   ...props,
-  stepType: StepType.sendAudio,
+  stepType: stepTypes.enum.sendAudio,
 })

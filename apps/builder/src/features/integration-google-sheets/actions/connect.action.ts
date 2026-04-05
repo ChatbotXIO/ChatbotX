@@ -1,20 +1,20 @@
 "use server"
 
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { findOrganizationSettingsByKey } from "@/features/organization/queries"
 import { integrations } from "@/integration"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,
   connectGoogleSheetsSchema,
 } from "../schemas"
 
-export const connectGoogleSheets = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const connectGoogleSheets = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(connectGoogleSheetsSchema)
   .action(
     async ({
@@ -22,14 +22,14 @@ export const connectGoogleSheets = chatbotActionClient
       parsedInput,
     }: {
       ctx: {
-        chatbot: ChatbotModel
+        workspace: WorkspaceModel
       }
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
       const headersList = await headers()
 
       const googleSheetsSetting = await findOrganizationSettingsByKey(
-        { id: ctx.chatbot.organizationId },
+        { id: ctx.workspace.organizationId },
         "google",
       )
 
@@ -41,7 +41,7 @@ export const connectGoogleSheets = chatbotActionClient
             parsedInput.referer,
           ).toString(),
           stateParams: {
-            chatbotId: ctx.chatbot.id,
+            workspaceId: ctx.workspace.id,
             referer: parsedInput.referer,
           },
         },

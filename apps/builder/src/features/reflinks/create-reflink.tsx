@@ -24,7 +24,7 @@ import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createReflinkAction } from "./actions/create-reflink.action"
 import { createReflinkRequest } from "./schemas/action"
 
-export function CreateReflinkDialog({ chatbotId }: { chatbotId: bigint }) {
+export function CreateReflinkDialog({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -54,8 +54,8 @@ export function CreateReflinkDialog({ chatbotId }: { chatbotId: bigint }) {
         </DialogHeader>
 
         <CreateReflinkForm
-          chatbotId={chatbotId}
           onCompletedForm={onCompletedForm}
+          workspaceId={workspaceId}
         />
       </DialogContent>
     </Dialog>
@@ -63,10 +63,10 @@ export function CreateReflinkDialog({ chatbotId }: { chatbotId: bigint }) {
 }
 
 export function CreateReflinkForm({
-  chatbotId,
+  workspaceId,
   onCompletedForm,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   onCompletedForm?: () => void
 }) {
   const t = useTranslations()
@@ -74,7 +74,7 @@ export function CreateReflinkForm({
   const flowOptions = useFlowSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createReflinkAction.bind(null, chatbotId),
+    createReflinkAction.bind(null, workspaceId),
     zodResolver(createReflinkRequest),
     {
       actionProps: {
@@ -96,7 +96,7 @@ export function CreateReflinkForm({
         mode: "onChange",
         defaultValues: {
           name: "",
-          flowId: BigInt(0),
+          flowId: "",
           customFieldId: "",
         },
       },

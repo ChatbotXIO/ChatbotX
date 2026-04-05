@@ -58,7 +58,7 @@ export const contactsOnSequencesUtils = {
       enrollments.map((enrollment) =>
         cancelPendingDispatches({
           enrollmentId: enrollment.id,
-          chatbotId: enrollment.chatbotId,
+          workspaceId: enrollment.workspaceId,
           reason: "enrollment_removed",
           client: dbClient,
         }),

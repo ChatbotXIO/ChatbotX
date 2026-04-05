@@ -25,7 +25,7 @@ type LegacySseSession = {
 const sseSessions = new Map<string, SseSession>()
 const legacySseSessions = new Map<string, LegacySseSession>()
 
-const apiTokenHeaderNames = ["x-chatbot-token", "x-chatbo-token"] as const
+const apiTokenHeaderNames = ["x-workspace-token", "x-chatbo-token"] as const
 
 const resolveHeaderValue = (value: string | string[] | undefined): string => {
   if (typeof value === "string") {

@@ -20,8 +20,8 @@ export async function GET() {
                 bearerAuth: {
                   token: 'default-token',
                 },
-                chatbotToken: {
-                  token: 'default-chatbot-token',
+                developerAccessToken: {
+                  token: 'default-workspace-token',
                 },
               },
             },

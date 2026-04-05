@@ -1,13 +1,7 @@
 {
   "extends": "@chatbotx.io/typescript-config/base.json",
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "@chatbotx.io/database": ["../database/src/index.ts"],
-      "@chatbotx.io/logger": ["../logger/src/index.ts"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "strictNullChecks": true
+  }
 }

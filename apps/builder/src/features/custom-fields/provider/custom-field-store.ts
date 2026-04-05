@@ -9,7 +9,7 @@ export type CustomFieldState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   customFields: CustomFieldResource[]
 }
 
@@ -26,7 +26,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     customFields: [],
     ...props,
 
@@ -52,10 +52,10 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
     },
 
     getAllCustomFields: async () => {
-      const { chatbotId, loading } = get()
+      const { workspaceId, loading } = get()
 
-      // Skip if already initialized for the same chatbotId or currently loading
-      if (loading || !chatbotId) {
+      // Skip if already initialized for the same workspaceId or currently loading
+      if (loading || !workspaceId) {
         return
       }
 
@@ -67,7 +67,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
         })
         const { data } = await ky
           .get<ListCustomFieldsResponse>(
-            `/api/chatbots/${chatbotId}/custom-fields?${searchParams.toString()}`,
+            `/api/workspaces/${workspaceId}/custom-fields?${searchParams.toString()}`,
           )
           .json()
 

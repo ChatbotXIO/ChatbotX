@@ -1,12 +1,12 @@
 "use client"
 
-import { WhatsappTemplateCategory } from "@chatbotx.io/database/types"
+import { whatsappTemplateCategories } from "@chatbotx.io/database/partials"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { VolumeIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext } from "react-hook-form"
-import { TemplateType } from "../type"
+import { templateTypes } from "../type"
 
 export function WhatsappMessageTemplateCategorySelect({
   name,
@@ -23,16 +23,16 @@ export function WhatsappMessageTemplateCategorySelect({
   const templateType = watch("templateType")
   const allowOptions = useMemo(() => {
     if (
-      [TemplateType.ViewCatalog, TemplateType.ViewProduct].includes(
+      [templateTypes.enum.ViewCatalog, templateTypes.enum.ViewProduct].includes(
         templateType,
       )
     ) {
-      return [WhatsappTemplateCategory.marketing]
+      return [whatsappTemplateCategories.enum.MARKETING]
     }
 
     return [
-      WhatsappTemplateCategory.marketing,
-      WhatsappTemplateCategory.utility,
+      whatsappTemplateCategories.enum.MARKETING,
+      whatsappTemplateCategories.enum.UTILITY,
     ]
   }, [templateType])
 
@@ -41,11 +41,11 @@ export function WhatsappMessageTemplateCategorySelect({
       [
         {
           label: "Marketing",
-          value: WhatsappTemplateCategory.marketing,
+          value: whatsappTemplateCategories.enum.MARKETING,
         },
         {
           label: "Utility",
-          value: WhatsappTemplateCategory.utility,
+          value: whatsappTemplateCategories.enum.UTILITY,
         },
       ].filter((option) => allowOptions.includes(option.value)),
     [allowOptions],
@@ -60,7 +60,7 @@ export function WhatsappMessageTemplateCategorySelect({
         placeholder="Please select"
         required={required}
       />
-      {category === WhatsappTemplateCategory.marketing && (
+      {category === whatsappTemplateCategories.enum.MARKETING && (
         <div className="grid auto-cols-min grid-flow-col items-center gap-x-4 rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">
@@ -71,7 +71,7 @@ export function WhatsappMessageTemplateCategorySelect({
           </span>
         </div>
       )}
-      {category === WhatsappTemplateCategory.utility && (
+      {category === whatsappTemplateCategories.enum.UTILITY && (
         <div className="grid auto-cols-min grid-flow-col items-center rounded bg-slate-200 p-6">
           <VolumeIcon className="row-span-2" size={36} />
           <span className="font-bold">

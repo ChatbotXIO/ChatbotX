@@ -6,15 +6,15 @@ import {
 } from "../../../lib/ai"
 import { toolPrefix } from "../automated-response/constants"
 
-export function parseToolIds(allTools: string[], prefix: string): bigint[] {
+export function parseToolIds(allTools: string[], prefix: string): string[] {
   return allTools
     .filter((value) => value.startsWith(prefix))
-    .map((value) => BigInt(value.replace(prefix, "")))
+    .map((value) => value.replace(prefix, ""))
     .filter((id) => Boolean(id))
 }
 
 export async function getAIToolset(
-  chatbotId: bigint,
+  workspaceId: string,
   tools: string[],
 ): Promise<ToolSet> {
   try {
@@ -23,9 +23,9 @@ export async function getAIToolset(
     const mcpIds = parseToolIds(tools, toolPrefix.mcp)
 
     const [fileTools, functionTools, mcpTools] = await Promise.all([
-      getAIFileTools(chatbotId, fileIds),
-      getAIFunctionTools(chatbotId, functionIds),
-      getMCPServerTools(chatbotId, mcpIds),
+      getAIFileTools(workspaceId, fileIds),
+      getAIFunctionTools(workspaceId, functionIds),
+      getMCPServerTools(workspaceId, mcpIds),
     ])
 
     return { ...fileTools, ...functionTools, ...mcpTools }

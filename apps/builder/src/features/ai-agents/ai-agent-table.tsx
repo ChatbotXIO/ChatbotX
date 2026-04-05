@@ -28,7 +28,7 @@ import {
 } from "./table-columns"
 
 type AIAgentsTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   listPromises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
   createPromises: Promise<
     [
@@ -40,7 +40,7 @@ type AIAgentsTableProps = {
 }
 
 export function AIAgentsTable({
-  chatbotId,
+  workspaceId,
   listPromises,
   createPromises,
 }: AIAgentsTableProps) {
@@ -71,7 +71,7 @@ export function AIAgentsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow: AIAgentModel) => originalRow.id.toString(),
+    getRowId: (originalRow: AIAgentModel) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -86,20 +86,19 @@ export function AIAgentsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <CreateAIAgentDialog
-              chatbotId={chatbotId}
               files={files}
               functions={functions}
               mcpServers={mcpServers}
               onSuccess={() => {
                 router.refresh()
               }}
+              workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>
 
         <DeleteAIAgentsDialog
           agents={rowAction?.row.original ? [rowAction?.row.original] : []}
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             rowAction?.row.toggleSelected(false)
@@ -107,11 +106,11 @@ export function AIAgentsTable({
           }}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
 
         <UpdateAIAgentDialog
           agent={rowAction?.row.original || null}
-          chatbotId={chatbotId}
           files={files}
           functions={functions}
           mcpServers={mcpServers}
@@ -120,6 +119,7 @@ export function AIAgentsTable({
             router.refresh()
           }}
           open={rowAction?.variant === "update"}
+          workspaceId={workspaceId}
         />
 
         <ChangeDefault

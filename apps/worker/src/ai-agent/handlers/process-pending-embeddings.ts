@@ -9,19 +9,19 @@ import { logger } from "../../lib/logger"
 export async function processPendingEmbedding(
   data: AIJobProcessPendingEmbedding["data"],
 ) {
-  const aiEmbedding = await findOrFail(
-    aiEmbeddingModel,
-    {
+  const aiEmbedding = await findOrFail({
+    table: aiEmbeddingModel,
+    where: {
       id: data.aiEmbeddingId,
     },
-    "AI embedding not found",
-  )
+    message: "AI embedding not found",
+  })
   if (aiEmbedding.status !== "pending" && aiEmbedding.status !== "processing") {
     throw new Error("AI embedding is processing or already processed")
   }
 
   try {
-    const embeddingModel = await resolveEmbeddingModel(aiEmbedding.chatbotId)
+    const embeddingModel = await resolveEmbeddingModel(aiEmbedding.workspaceId)
 
     const { embedding } = await embed({
       model: embeddingModel,

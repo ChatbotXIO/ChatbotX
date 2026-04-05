@@ -9,11 +9,11 @@ import {
 import type { DispatchWithRelations, StepWithRelations } from "./types"
 
 export class EnrollmentAdvancerService {
-  async fetchEnrollment(enrollmentId: bigint, chatbotId: bigint) {
+  async fetchEnrollment(enrollmentId: string, workspaceId: string) {
     const enrollment = await db.query.contactsOnSequenceModel.findFirst({
       where: {
         id: enrollmentId,
-        chatbotId,
+        workspaceId,
       },
     })
 
@@ -21,7 +21,7 @@ export class EnrollmentAdvancerService {
   }
 
   async findNextStep(
-    sequenceId: bigint,
+    sequenceId: string,
     currentOrder: number,
   ): Promise<StepWithRelations | null> {
     const nextStep = await db.query.sequenceStepModel.findFirst({
@@ -59,8 +59,8 @@ export class EnrollmentAdvancerService {
   }
 
   async completeEnrollment(
-    enrollmentId: bigint,
-    chatbotId: bigint,
+    enrollmentId: string,
+    workspaceId: string,
     step: StepWithRelations,
     sentAt: Date,
   ): Promise<void> {
@@ -78,7 +78,7 @@ export class EnrollmentAdvancerService {
       .where(
         and(
           eq(contactsOnSequenceModel.id, enrollmentId),
-          eq(contactsOnSequenceModel.chatbotId, chatbotId),
+          eq(contactsOnSequenceModel.workspaceId, workspaceId),
         ),
       )
   }
@@ -105,12 +105,12 @@ export class EnrollmentAdvancerService {
         .where(
           and(
             eq(contactsOnSequenceModel.id, dispatch.enrollmentId),
-            eq(contactsOnSequenceModel.chatbotId, dispatch.chatbotId),
+            eq(contactsOnSequenceModel.workspaceId, dispatch.workspaceId),
           ),
         )
 
       const nextDispatch = await createDispatch({
-        chatbotId: dispatch.chatbotId,
+        workspaceId: dispatch.workspaceId,
         sequenceId: dispatch.sequenceId,
         contactId: dispatch.contactId,
         stepId: nextStep.id,

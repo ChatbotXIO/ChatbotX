@@ -17,19 +17,19 @@ export const UserStoreContext = createContext<UserStoreApi | undefined>(
 )
 
 export type UserStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const UserStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: UserStoreProviderProps) => {
   const storeRef = useRef<UserStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createUserStore({ chatbotId })
+    storeRef.current = createUserStore({ workspaceId })
   }
 
   useEffect(() => {

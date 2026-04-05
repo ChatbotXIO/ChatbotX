@@ -15,8 +15,8 @@ import { WebchatRealtime } from "../webchat-realtime"
 
 type WebchatWidgetProps = {
   config: IntegrationWebchatModel
-  chatbotId: bigint
-  webchatId: bigint
+  workspaceId: string
+  webchatId: string
   baseUrl: string
 }
 

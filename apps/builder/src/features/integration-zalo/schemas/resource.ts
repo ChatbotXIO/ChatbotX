@@ -2,10 +2,13 @@ import {
   createSelectSchema,
   integrationZaloModel,
 } from "@chatbotx.io/database/schema"
-import type z from "zod"
+import z from "zod"
 
 export const integrationZaloResource = createSelectSchema(
   integrationZaloModel,
+  {
+    id: z.string(),
+  },
 ).pick({
   id: true,
   name: true,

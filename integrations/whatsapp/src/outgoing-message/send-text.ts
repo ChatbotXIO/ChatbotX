@@ -21,7 +21,7 @@ export function* convertFlowStepText(
     data: { step },
   } = props
   if (step.buttons.length === 0) {
-    yield new Text(step.message)
+    yield new Text(step.text)
   } else {
     const chunks = chunk(step.buttons, MAX_BUTTONS)
 
@@ -37,7 +37,7 @@ export function* convertFlowStepText(
 
       yield new Interactive(
         new ActionButtons(...(buttons as [Button, ...Button[]])),
-        new Body(step.message),
+        new Body(step.text),
       )
     }
   }

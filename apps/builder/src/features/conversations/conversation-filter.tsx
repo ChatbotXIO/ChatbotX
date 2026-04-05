@@ -2,8 +2,8 @@
 
 import {
   assignerFilterTypes,
-  ConversationStatus,
-} from "@chatbotx.io/database/enums"
+  conversationStatuses,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -49,27 +49,27 @@ export function ConversationFilter() {
   const conversationStatusOptions = [
     {
       label: t("condition.fields.noAdminReply"),
-      value: ConversationStatus.noAdminReply,
+      value: conversationStatuses.enum.noAdminReply,
       icon: CornerUpLeftIcon,
     },
     {
       label: t("condition.fields.unread"),
-      value: ConversationStatus.unread,
+      value: conversationStatuses.enum.unread,
       icon: MailIcon,
     },
     {
       label: t("condition.fields.followUp"),
-      value: ConversationStatus.followUp,
+      value: conversationStatuses.enum.followUp,
       icon: StarIcon,
     },
     {
       label: t("condition.fields.archived"),
-      value: ConversationStatus.archived,
+      value: conversationStatuses.enum.archived,
       icon: ArchiveIcon,
     },
     {
       label: t("condition.fields.blocked"),
-      value: ConversationStatus.blocked,
+      value: conversationStatuses.enum.blocked,
       icon: UserLockIcon,
     },
   ]

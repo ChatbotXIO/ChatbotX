@@ -13,7 +13,7 @@ import type {
 } from "./types"
 
 export class StepExecutorService {
-  async fetchStep(stepId: bigint) {
+  async fetchStep(stepId: string) {
     const step = await db.query.sequenceStepModel.findFirst({
       where: {
         id: stepId,
@@ -52,7 +52,7 @@ export class StepExecutorService {
 
     const sentAt = await sendFlowDirect({
       flowId: step.flow.id,
-      chatbotId: dispatch.chatbotId,
+      workspaceId: dispatch.workspaceId,
       contactId: dispatch.contactId,
     })
 
@@ -60,8 +60,8 @@ export class StepExecutorService {
   }
 
   async markDispatchCompleted(
-    dispatchId: bigint,
-    chatbotId: bigint,
+    dispatchId: string,
+    workspaceId: string,
     sentAt: Date,
   ): Promise<void> {
     await db
@@ -74,7 +74,7 @@ export class StepExecutorService {
       .where(
         and(
           eq(sequenceDispatchModel.id, dispatchId),
-          eq(sequenceDispatchModel.chatbotId, chatbotId),
+          eq(sequenceDispatchModel.workspaceId, workspaceId),
         ),
       )
   }
@@ -86,7 +86,7 @@ export class StepExecutorService {
   ): Promise<void> {
     await db.insert(sequenceEventModel).values({
       id: createId(),
-      chatbotId: dispatch.chatbotId,
+      workspaceId: dispatch.workspaceId,
       sequenceId: dispatch.sequenceId,
       contactId: dispatch.contactId,
       stepId: dispatch.stepId,

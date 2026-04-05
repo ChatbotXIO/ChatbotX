@@ -84,8 +84,8 @@ export function WhatsappMessageTemplatesTable({
       </div>
       <div className="flex flex-col items-center justify-center p-4">
         <WhatsappMessageTemplatesTableToolbarActions
-          chatbotId={integrationWhatsapp.chatbotId}
           integrationWhatsappId={integrationWhatsapp.id}
+          workspaceId={integrationWhatsapp.workspaceId}
         />
       </div>
     </div>

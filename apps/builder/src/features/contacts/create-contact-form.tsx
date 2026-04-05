@@ -13,11 +13,11 @@ import { createContactAction } from "./actions/create-contact.action"
 import { createContactRequest } from "./schemas/action"
 
 export function CreateContactForm({
-  chatbotId,
+  workspaceId,
   onSubmmited,
   onCancelled,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   onSubmmited?: () => void
   onCancelled?: () => void
 }) {
@@ -25,7 +25,7 @@ export function CreateContactForm({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createContactAction.bind(null, chatbotId),
+      createContactAction.bind(null, workspaceId),
       zodResolver(createContactRequest),
       {
         actionProps: {

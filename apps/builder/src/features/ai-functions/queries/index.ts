@@ -8,7 +8,7 @@ export async function listAIFunctions(
 ): Promise<PaginatedResponse<AIFunctionModel>> {
   const data = await db.query.aiFunctionModel.findMany({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
     },
   })
 

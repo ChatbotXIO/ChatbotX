@@ -1,6 +1,6 @@
 "use client"
 
-import type { ConversationAttributes } from "@chatbotx.io/database/types"
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   ResizableHandle,
@@ -23,13 +23,13 @@ import { ChatRealtime } from "./chat-realtime"
 import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
-  chatbotId: bigint
+  workspaceId: string
   layout?: [number, number, number]
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
-  const { chatbotId, layout = [25, 50, 25] } = props
+  const { workspaceId, layout = [25, 50, 25] } = props
 
   const {
     conversations,
@@ -43,12 +43,12 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     useState<ConversationResource | null>(null)
 
   const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
-    disableBotAction.bind(null, chatbotId),
+    disableBotAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
-            liveChatEnabled: true,
+            botEnabled: false,
           })
         }
       },
@@ -67,8 +67,8 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     if (selectedConversation) {
       setActiveConversation({
         ...selectedConversation,
-        conversationAttributes:
-          selectedConversation.conversationAttributes as ConversationAttributes,
+        additionalAttributes:
+          selectedConversation.additionalAttributes as ConversationAttributes,
       })
     } else {
       setActiveConversation(null)
@@ -84,7 +84,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         maxSize={"30%"}
         minSize={"20%"}
       >
-        <ConversationList chatbotId={chatbotId} />
+        <ConversationList workspaceId={workspaceId} />
       </ResizablePanel>
 
       <ResizableHandle withHandle />
@@ -98,7 +98,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
           <>
             <div className="flex h-full w-full flex-col">
               <MessageHead />
-              {!activeConversation?.liveChatEnabled && (
+              {activeConversation?.botEnabled && (
                 <Button
                   className="rounded-none"
                   disabled={isDisablingBot}
@@ -132,7 +132,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {isFirstLoadConversation && isLoadingConversation && (
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
-        {activeConversation && <ContactInboxPanel chatbotId={chatbotId} />}
+        {activeConversation && <ContactInboxPanel workspaceId={workspaceId} />}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

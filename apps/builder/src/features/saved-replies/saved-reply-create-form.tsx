@@ -10,7 +10,8 @@ import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { createSavedReplyAction } from "./actions/create-saved-reply.action"
-import { createSavedReplyRequest, type SavedReplyResource } from "./schema"
+import { createSavedReplyRequest } from "./schema/mutation"
+import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyCreateFormProps = {
   onCancel: () => void

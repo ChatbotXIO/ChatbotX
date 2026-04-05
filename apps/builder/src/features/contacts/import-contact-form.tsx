@@ -27,7 +27,7 @@ import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { importContactsAction } from "./actions/import-contacts.action"
 import { importContactsRequest } from "./schemas/action"
 
-export function ImportContactsForm({ chatbotId }: { chatbotId: bigint }) {
+export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -38,13 +38,13 @@ export function ImportContactsForm({ chatbotId }: { chatbotId: bigint }) {
     form: { register, setValue, resetField, unregister, formState },
     handleSubmitWithAction,
   } = useHookFormAction(
-    importContactsAction.bind(null, chatbotId),
+    importContactsAction.bind(null, workspaceId),
     zodResolver(importContactsRequest),
     {
       actionProps: {
         onSuccess: () => {
           // TODO
-          router.push(`/chatbots/${chatbotId}/contacts`)
+          router.push(`/space/${workspaceId}/contacts`)
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -69,7 +69,7 @@ export function ImportContactsForm({ chatbotId }: { chatbotId: bigint }) {
   )
 
   const handleCancel = () => {
-    router.push(`/chatbots/${chatbotId}/contacts`)
+    router.push(`/space/${workspaceId}/contacts`)
   }
 
   const handleSelectFile = (file: File) => {

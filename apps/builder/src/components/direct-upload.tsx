@@ -1,6 +1,6 @@
 "use client"
 
-import type { FileType } from "@chatbotx.io/database/types"
+import type { FileType } from "@chatbotx.io/database/partials"
 import { FormFieldWrapper } from "@chatbotx.io/ui/components/form/field-wrapper"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -27,7 +27,7 @@ export function DirectUploadOrInsertLink({
   parentName: string
   fileType: FileType
 }) {
-  const params = useParams<{ chatbotId: string; flowId: string }>()
+  const params = useParams<{ workspaceId: string; flowId: string }>()
   const t = useTranslations()
 
   const { setValue, getValues } = useFormContext()
@@ -102,7 +102,7 @@ export function DirectUploadOrInsertLink({
               setValue(`${parentName}.url`, finalUrl)
             }}
             triggerRef={triggerRef}
-            uploadPath={`public/chatbots/${params.chatbotId}/flows/${params.flowId}/steps/${stepId}`}
+            uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/steps/${stepId}`}
           />
           {publicUrl && publicUrl.length > 0 ? (
             <Button

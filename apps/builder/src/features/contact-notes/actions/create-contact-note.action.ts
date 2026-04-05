@@ -3,49 +3,51 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactNoteRequest,
   addContactNoteRequest,
 } from "../schemas/action"
 
-export const createContactNoteAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const createContactNoteAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(addContactNoteRequest)
-  .action(
-    async ({
-      ctx,
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      ctx: { user: UserModel }
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: AddContactNoteRequest
-    }) => {
-      // Make sure contact exists in the chatbot
-      const contact = await findOrFail(
-        contactModel,
-        {
-          chatbotId,
-          id,
-        },
-        "Contact not found",
-      )
+      ctx: { user },
+    } = props
 
-      return await db
-        .insert(contactNoteModel)
-        .values({
-          id: createId(),
-          contactId: contact.id,
-          text: parsedInput.text,
-          createdById: ctx.user.id,
-        })
-        .returning()
-        .then((result) => result[0])
+    return await createContactNote(
+      { workspaceId, id, userId: (user as UserModel).id },
+      parsedInput,
+    )
+  })
+
+export const createContactNote = async (
+  ctx: { workspaceId: string; id: string; userId: string },
+  parsedInput: AddContactNoteRequest,
+) => {
+  // Make sure contact exists in the workspace
+  const contact = await findOrFail({
+    table: contactModel,
+    where: {
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
     },
-  )
+    message: "Contact not found",
+  })
+
+  return await db
+    .insert(contactNoteModel)
+    .values({
+      id: createId(),
+      contactId: contact.id,
+      text: parsedInput.text,
+      createdById: ctx.userId,
+    })
+    .returning()
+    .then((result) => result[0])
+}

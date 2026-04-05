@@ -18,10 +18,10 @@ async function handleRequest(request: Request) {
     commonSchemas: {
       UndefinedError: { error: "UndefinedError" },
     },
-    security: [{ chatbotToken: [] }],
+    security: [{ developerAccessToken: [] }],
     components: {
       securitySchemes: {
-        chatbotToken: {
+        developerAccessToken: {
           type: "apiKey",
           in: "header",
           name: "X-CHATBOT-TOKEN",

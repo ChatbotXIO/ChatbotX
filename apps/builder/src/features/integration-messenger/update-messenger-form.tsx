@@ -1,7 +1,7 @@
 "use client"
 
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
-import { FileType } from "@chatbotx.io/sdk"
+import { fileTypes } from "@chatbotx.io/sdk"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -49,18 +49,18 @@ import { toast } from "sonner"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { allSupportedLanguages } from "../chatbot/schemas/types"
 import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
+import { allSupportedLanguages } from "../workspaces/schema/types"
 import { updateMessengerAction } from "./actions/update-messenger-action"
 import { updateMessengerRequest } from "./schema/action"
 
 type UpdateMessengerFormProps = {
-  chatbotId: bigint
+  workspaceId: string
   integrationMessenger: IntegrationMessengerModel
 }
 
 export function UpdateMessengerForm({
-  chatbotId,
+  workspaceId,
   integrationMessenger,
 }: UpdateMessengerFormProps) {
   const t = useTranslations()
@@ -75,7 +75,7 @@ export function UpdateMessengerForm({
   } = useHookFormAction(
     updateMessengerAction.bind(
       null,
-      integrationMessenger.chatbotId,
+      integrationMessenger.workspaceId,
       integrationMessenger.id,
     ),
     zodResolver(updateMessengerRequest),
@@ -88,7 +88,7 @@ export function UpdateMessengerForm({
             }),
           )
           router.push(
-            `/chatbots/${chatbotId}/settings/channels?channel=messenger`,
+            `/space/${workspaceId}/settings/channels?channel=messenger`,
           )
         },
         onError: ({ error }) => {
@@ -374,7 +374,7 @@ export function UpdateMessengerForm({
                       <Card>
                         <CardContent>
                           <DirectUploadOrInsertLink
-                            fileType={FileType.image}
+                            fileType={fileTypes.enum.image}
                             parentName={`personas.${index}.profilePicture`}
                           />
                         </CardContent>
@@ -390,7 +390,7 @@ export function UpdateMessengerForm({
                     name: "",
                     profilePicture: {
                       id: createId(),
-                      mode: FileType.file,
+                      mode: fileTypes.enum.file,
                       url: "",
                     },
                     isDefault: false,
@@ -415,7 +415,7 @@ export function UpdateMessengerForm({
           <Button
             onClick={() =>
               router.push(
-                `/chatbots/${chatbotId}/settings/channels?channel=messenger`,
+                `/space/${workspaceId}/settings/channels?channel=messenger`,
               )
             }
             type="button"

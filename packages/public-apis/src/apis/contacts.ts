@@ -220,7 +220,7 @@ export const sendMessageToContact = (
     .post(`contacts/${input.contactId}/messages`, {
       json: {
         channel: input.channel,
-        content: input.content,
+        text: input.text,
         files: input.files,
         flowId: input.flowId,
         clientId: input.clientId,

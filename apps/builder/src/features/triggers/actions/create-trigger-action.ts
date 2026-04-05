@@ -2,29 +2,29 @@
 
 import { updateTriggerCache } from "@chatbotx/events"
 import { db, eq } from "@chatbotx.io/database/client"
-import { FolderType } from "@chatbotx.io/database/enums"
+import { folderTypes } from "@chatbotx.io/database/partials"
 import { triggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { ChatbotXException } from "@/lib/errors/exception"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_TRIGGERS_PER_CHATBOT } from "../constants"
 import {
   type CreateTriggerSchema,
   createTriggerSchema,
 } from "../schema/mutation"
 
-export const createTriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createTriggerAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createTriggerSchema)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -34,7 +34,7 @@ export const createTriggerAction = chatbotActionClient
 
       const existingTriggersCount = await db.$count(
         triggerModel,
-        eq(triggerModel.chatbotId, chatbotId),
+        eq(triggerModel.workspaceId, workspaceId),
       )
 
       if (existingTriggersCount >= MAX_TRIGGERS_PER_CHATBOT) {
@@ -49,8 +49,8 @@ export const createTriggerAction = chatbotActionClient
       if (parsedInput.folderId) {
         await ensureFolderIsExists(
           parsedInput.folderId,
-          chatbotId,
-          FolderType.trigger,
+          workspaceId,
+          folderTypes.enum.trigger,
         )
       }
 
@@ -61,12 +61,12 @@ export const createTriggerAction = chatbotActionClient
         .values({
           id: createId(),
           ...triggerData,
-          chatbotId,
+          workspaceId,
         })
         .returning()
         .then((rows) => rows[0])
 
-      await updateTriggerCache(chatbotId)
+      await updateTriggerCache(workspaceId)
 
       return result
     },

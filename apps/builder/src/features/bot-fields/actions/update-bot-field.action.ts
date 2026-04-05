@@ -3,37 +3,37 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { botFieldModel } from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateBotFieldRequest,
   updateBotFieldRequest,
 } from "../schemas/action"
 
 export const updateBotField = async ({
-  chatbotId,
+  workspaceId,
   id,
   parsedInput,
 }: {
-  chatbotId: bigint
-  id: bigint
+  workspaceId: string
+  id: string
   parsedInput: UpdateBotFieldRequest
 }) => {
-  const botField = await findOrFail(
-    botFieldModel,
-    {
+  const botField = await findOrFail({
+    table: botFieldModel,
+    where: {
       id,
-      chatbotId,
+      workspaceId,
     },
-    "Account field not found",
-  )
+    message: "Account field not found",
+  })
 
   if (parsedInput.folderId && parsedInput.folderId !== botField.folderId) {
-    await ensureFolderIsExists(parsedInput.folderId, chatbotId, "customField")
+    await ensureFolderIsExists(parsedInput.folderId, workspaceId, "customField")
   }
 
   const updatedBotField = await db
@@ -44,24 +44,24 @@ export const updateBotField = async ({
     .then((result) => result[0])
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#botFields`,
-    `chatbots:${chatbotId}#botFields:${id}`,
+    `workspaces:${workspaceId}#botFields`,
+    `workspaces:${workspaceId}#botFields:${id}`,
   ])
 
   return updatedBotField
 }
 
-export const updateBotFieldAction = chatbotActionClient
+export const updateBotFieldAction = workspaceActionClient
   .inputSchema(updateBotFieldRequest)
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, id],
+      bindArgsParsedInputs: [workspaceId, id],
     }: {
       parsedInput: UpdateBotFieldRequest
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      return await updateBotField({ chatbotId, id, parsedInput })
+      return await updateBotField({ workspaceId, id, parsedInput })
     },
   )

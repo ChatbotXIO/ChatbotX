@@ -1,4 +1,7 @@
-import { Condition } from "@chatbotx.io/database/enums"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useFormContext } from "react-hook-form"
@@ -11,21 +14,21 @@ export const ConditionEditor = ({
   type,
 }: {
   parentName: string
-  type: Condition
+  type: TriggerEventType
 }) => {
   const tagOptions = useTagSelectOptions()
   const form = useFormContext()
 
   switch (type) {
-    case Condition.tagApplied:
-    case Condition.tagRemoved: {
+    case triggerEventTypes.enum.tagApplied:
+    case triggerEventTypes.enum.tagRemoved: {
       return (
         <SelectField name={`${parentName}.sourceId`} options={tagOptions} />
       )
     }
-    case Condition.dateTimeBasedTrigger:
+    case triggerEventTypes.enum.dateTimeBasedTrigger:
       return <DateTimeBasedTrigger parentName={parentName} />
-    case Condition.customFieldValueChanged:
+    case triggerEventTypes.enum.customFieldValueChanged:
       return <CustomFieldValueChanged parentName={parentName} />
     default:
       return (

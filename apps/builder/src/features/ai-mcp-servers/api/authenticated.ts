@@ -5,9 +5,9 @@ import {
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import z from "zod"
-import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { validateAIMcpServerRequest } from "../schema/action"
 
@@ -15,12 +15,12 @@ export const aiMcpServersAuthenticatedAPI = {
   validateAIMcpServerAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/ai-mcp-servers/validate",
+      path: "/workspaces//{workspaceId}/ai-mcp-servers/validate",
       summary: "Validate an MCP server",
       tags: ["AI"],
     })
-    .input(validateAIMcpServerRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(validateAIMcpServerRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.any())
     .handler(async ({ input }) => {
       const headers: Record<string, string> = {}

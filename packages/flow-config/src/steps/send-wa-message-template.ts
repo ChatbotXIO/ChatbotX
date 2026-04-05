@@ -1,7 +1,7 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepDefaultFn, buttonStepSchema } from "./button"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const waTemplateParamsSchema = z.object({
   header: z
@@ -115,8 +115,8 @@ export function extractTemplateParams(
 }
 
 export const sendWaTemplateMessageStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.sendWaTemplateMessage),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.sendWaTemplateMessage),
   template: z.object({
     id: z.string().trim().min(1),
     name: z.string(),
@@ -165,5 +165,5 @@ export const sendWaTemplateMessageStepDefaultFn = (
   ],
   ...props,
   id: createId(),
-  stepType: StepType.sendWaTemplateMessage,
+  stepType: stepTypes.enum.sendWaTemplateMessage,
 })

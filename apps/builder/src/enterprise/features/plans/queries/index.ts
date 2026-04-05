@@ -16,7 +16,7 @@ export const listPlansRSC = async (input: ListPlansRequest) => {
 }
 
 export const listPlans = async (
-  input: ListPlansRequest & { organizationId: bigint },
+  input: ListPlansRequest & { organizationId: string },
 ): Promise<ListPlansResponse> => {
   const where = {
     organizationId: input.organizationId,

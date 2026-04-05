@@ -1,11 +1,11 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const sendQuickReplyStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.sendQuickReply),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.sendQuickReply),
   message: z.string().trim().min(1).max(1000),
   buttons: z.array(buttonStepSchema),
 })
@@ -19,5 +19,5 @@ export const sendQuickReplyStepDefaultFn = (
   buttons: [],
   ...props,
   id: createId(),
-  stepType: StepType.sendQuickReply,
+  stepType: stepTypes.enum.sendQuickReply,
 })

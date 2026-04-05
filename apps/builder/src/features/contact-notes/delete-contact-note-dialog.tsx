@@ -18,15 +18,15 @@ import { toast } from "sonner"
 import { deleteContactNoteAction } from "./actions/delete-contact-note.action"
 
 type DeleteDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
-  contactId: bigint | undefined
-  contactNoteId: bigint | undefined
+  workspaceId: string
+  contactId: string | undefined
+  contactNoteId: string | undefined
   onCancel?: () => void
   onSuccess: () => void
 }
 
 export function DeleteContactNoteDialog({
-  chatbotId,
+  workspaceId,
   contactId,
   contactNoteId,
   onSuccess,
@@ -36,7 +36,7 @@ export function DeleteContactNoteDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteContactNoteAction.bind(null, chatbotId, contactNoteId ?? BigInt(0)),
+    deleteContactNoteAction.bind(null, workspaceId, contactNoteId ?? ""),
     {
       onSuccess: () => {
         toast.success(
@@ -79,9 +79,7 @@ export function DeleteContactNoteDialog({
           <Button
             aria-label="Delete selected rows"
             disabled={isPending}
-            onClick={() =>
-              execute({ contactNoteId: contactNoteId ?? BigInt(0) })
-            }
+            onClick={() => execute({ contactNoteId: contactNoteId ?? "" })}
             size="sm"
             variant="destructive"
           >

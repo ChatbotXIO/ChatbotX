@@ -6,122 +6,113 @@ import {
   contactsOnBroadcastsModel,
 } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type CreateBroadcastRequest,
-  createBroadcastRequest,
-} from "../schemas/action"
-export const createBroadcastAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+import { workspaceActionClient } from "@/lib/safe-action"
+import { createBroadcastRequest } from "../schemas/action"
+export const createBroadcastAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createBroadcastRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: CreateBroadcastRequest
-    }) => {
-      let broadcastName = "Broadcast"
+    } = props
 
-      // Validate flow if flowId is provided
-      if (parsedInput.flowId) {
-        const flow = await db.query.flowModel.findFirst({
-          where: {
-            chatbotId,
-            id: parsedInput.flowId,
-          },
-        })
-        if (!flow) {
-          return returnValidationErrors(createBroadcastRequest, {
-            _errors: ["Validation Exception"],
-            flowId: {
-              _errors: ["Flow not found"],
-            },
-          })
-        }
-        broadcastName = flow.name
-      }
+    let broadcastName = "Broadcast"
 
-      if (parsedInput.templateId) {
-        const template = await db.query.whatsappMessageTemplateModel.findFirst({
-          where: {
-            id: parsedInput.templateId,
-            integrationWhatsapp: {
-              chatbotId,
-              id: parsedInput.integrationWhatsappId,
-            },
-          },
-        })
-        if (!template) {
-          return returnValidationErrors(createBroadcastRequest, {
-            _errors: ["Validation Exception"],
-            templateId: {
-              _errors: ["Template not found"],
-            },
-          })
-        }
-        broadcastName = template.name
-      }
-
-      let inboxId: bigint | undefined
-      if (parsedInput.integrationWhatsappId) {
-        const integrationWhatsapp =
-          await db.query.integrationWhatsappModel.findFirst({
-            where: {
-              chatbotId,
-              id: parsedInput.integrationWhatsappId,
-            },
-          })
-        if (integrationWhatsapp) {
-          inboxId = integrationWhatsapp.inboxId
-        }
-      }
-
-      const data: typeof broadcastModel.$inferInsert = {
-        ...parsedInput,
-        name: broadcastName,
-        chatbotId,
-        status: "scheduled",
-        schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
-        templateData: parsedInput.templateData ?? "{}",
-      }
-
-      const contacts = await db.query.contactModel.findMany({
-        columns: { id: true },
+    // Validate flow if flowId is provided
+    if (parsedInput.flowId) {
+      const flow = await db.query.flowModel.findFirst({
         where: {
-          chatbotId,
-          ...(inboxId && {
-            conversation: {
-              inboxId,
-            },
-          }),
+          workspaceId,
+          id: parsedInput.flowId,
         },
       })
+      if (!flow) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          flowId: {
+            _errors: ["Flow not found"],
+          },
+        })
+      }
+      broadcastName = flow.name
+    }
 
-      await db.transaction(async (tx) => {
-        const newBroadcast = await tx
-          .insert(broadcastModel)
-          .values(data)
-          .returning()
-          .then((result) => result[0])
-
-        if (contacts.length > 0) {
-          await tx.insert(contactsOnBroadcastsModel).values(
-            contacts.map((contact) => ({
-              broadcastId: newBroadcast.id,
-              contactId: contact.id,
-            })),
-          )
-        }
-        return newBroadcast
+    if (parsedInput.templateId) {
+      const template = await db.query.whatsappMessageTemplateModel.findFirst({
+        where: {
+          id: parsedInput.templateId,
+          integrationWhatsapp: {
+            workspaceId,
+            id: parsedInput.integrationWhatsappId,
+          },
+        },
       })
+      if (!template) {
+        return returnValidationErrors(createBroadcastRequest, {
+          _errors: ["Validation Exception"],
+          templateId: {
+            _errors: ["Template not found"],
+          },
+        })
+      }
+      broadcastName = template.name
+    }
 
-      revalidateCacheTags(`chatbots:${chatbotId}#broadcasts`)
-    },
-  )
+    let inboxId: string | undefined
+    if (parsedInput.integrationWhatsappId) {
+      const integrationWhatsapp =
+        await db.query.integrationWhatsappModel.findFirst({
+          where: {
+            workspaceId,
+            id: parsedInput.integrationWhatsappId,
+          },
+        })
+      if (integrationWhatsapp) {
+        inboxId = integrationWhatsapp.inboxId
+      }
+    }
+
+    const data: typeof broadcastModel.$inferInsert = {
+      ...parsedInput,
+      name: broadcastName,
+      workspaceId,
+      status: "scheduled",
+      schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
+      templateData: parsedInput.templateData ?? "{}",
+    }
+
+    const contacts = await db.query.contactModel.findMany({
+      columns: { id: true },
+      where: {
+        workspaceId,
+        ...(inboxId && {
+          contactInboxes: {
+            inboxId,
+          },
+        }),
+      },
+    })
+
+    await db.transaction(async (tx) => {
+      const newBroadcast = await tx
+        .insert(broadcastModel)
+        .values(data)
+        .returning()
+        .then((result) => result[0])
+
+      if (contacts.length > 0) {
+        await tx.insert(contactsOnBroadcastsModel).values(
+          contacts.map((contact) => ({
+            broadcastId: newBroadcast.id,
+            contactId: contact.id,
+          })),
+        )
+      }
+      return newBroadcast
+    })
+
+    revalidateCacheTags(`workspaces:${workspaceId}#broadcasts`)
+  })

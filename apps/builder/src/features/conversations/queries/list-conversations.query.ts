@@ -15,7 +15,6 @@ import {
 import {
   contactModel,
   conversationModel,
-  inboxModel,
   inboxTeamModel,
   messageModel,
   userModel,
@@ -34,20 +33,20 @@ import type {
 export const listConversations = async (
   data: ListConversationsRequest,
 ): Promise<ListConversationsResponse> => {
-  const { chatbotId, ...input } = data
-  await assertCurrentUserCanAccessChatbot(chatbotId)
+  const { workspaceId, ...input } = data
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const pagination = getPaginationWithDefaults(input)
 
-  const where: SQL[] = [eq(conversationModel.chatbotId, chatbotId)]
+  const where: SQL[] = [eq(conversationModel.workspaceId, workspaceId)]
 
-  if (input.liveChatEnabled !== null && input.liveChatEnabled !== undefined) {
-    where.push(eq(conversationModel.liveChatEnabled, input.liveChatEnabled))
+  if (input.botEnabled !== null && input.botEnabled !== undefined) {
+    where.push(eq(conversationModel.botEnabled, input.botEnabled))
   }
 
-  if (input.channel !== null && input.channel !== undefined) {
-    where.push(eq(conversationModel.channel, input.channel))
-  }
+  // if (input.channel !== null && input.channel !== undefined) {
+  //   where.push(eq(conversationModel.channel, input.channel))
+  // }
 
   if (input.assignedId !== null && input.assignedId !== undefined) {
     if (input.assignedId === "unassigned") {
@@ -105,7 +104,7 @@ export const listConversations = async (
     .from(conversationModel)
     .leftJoinLateral(lastMessageQuery.as("last_message"), sql`true`)
     .leftJoin(contactModel, eq(conversationModel.contactId, contactModel.id))
-    .leftJoin(inboxModel, eq(conversationModel.inboxId, inboxModel.id))
+    // .leftJoin(inboxModel, eq(conversationModel.inboxId, inboxModel.id))
     .leftJoin(userModel, eq(conversationModel.assignedUserId, userModel.id))
     .leftJoin(
       inboxTeamModel,
@@ -115,7 +114,7 @@ export const listConversations = async (
     .orderBy(desc(conversationModel.lastActivityAt))
     .limit(pagination.limit)
 
-  const contactIds = conversations.map((c) => c.conversations.contactId)
+  const contactIds = conversations.map((c) => c.Conversation.contactId)
 
   const contactsOnSequences =
     contactIds.length > 0
@@ -131,7 +130,7 @@ export const listConversations = async (
         })
       : []
 
-  const contactsOnSequencesMap = new Map<bigint, typeof contactsOnSequences>()
+  const contactsOnSequencesMap = new Map<string, typeof contactsOnSequences>()
   for (const cos of contactsOnSequences) {
     const existing = contactsOnSequencesMap.get(cos.contactId) || []
     contactsOnSequencesMap.set(cos.contactId, [...existing, cos])
@@ -139,17 +138,16 @@ export const listConversations = async (
 
   return {
     data: conversations.map((c) => ({
-      ...c.conversations,
-      contact: c.contacts
+      ...c.Conversation,
+      contact: c.Contact
         ? {
-            ...c.contacts,
-            contactsOnSequences:
-              contactsOnSequencesMap.get(c.contacts.id) || [],
+            ...c.Contact,
+            contactsOnSequences: contactsOnSequencesMap.get(c.Contact.id) || [],
           }
         : null,
-      inbox: c.inboxes,
-      assignedUser: c.users,
-      assignedInboxTeam: c.inbox_teams,
+      contactInboxes: [],
+      assignedUser: c.User,
+      assignedInboxTeam: c.InboxTeam,
       messages: c.last_message ? [c.last_message] : [],
     })),
     nextCursor: null,
@@ -160,7 +158,7 @@ export const listConversations = async (
 export const findConversation = async (
   input: FindConversationRequest,
 ): Promise<FindConversationResponse> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const conversation = await db.query.conversationModel.findFirst({
     with: {
@@ -173,7 +171,7 @@ export const findConversation = async (
           },
         },
       },
-      inbox: true,
+      contactInboxes: true,
       messages: true,
       assignedUser: true,
       assignedInboxTeam: true,

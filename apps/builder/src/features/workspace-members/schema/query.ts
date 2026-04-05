@@ -1,0 +1,43 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import {
+  createSearchParamsCache,
+  parseAsInteger,
+  parseAsString,
+} from "nuqs/server"
+import { z } from "zod"
+import { userResource } from "@/features/users/schemas/resource"
+import { workspaceMemberResource } from "./resource"
+
+export const getWorkspaceMembersSearchParamsCache = createSearchParamsCache({
+  page: parseAsInteger,
+  perPage: parseAsInteger,
+  keyword: parseAsString,
+})
+
+export type GetWorkspaceMembersSchema = Awaited<
+  ReturnType<typeof getWorkspaceMembersSearchParamsCache.parse>
+> & {
+  workspaceId: string
+}
+
+export const listWorkspaceMembersRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  page: z.coerce.number().int().min(1).default(1),
+  perPage: z.coerce.number().int().min(1).default(10),
+  keyword: z.string().nullable(),
+})
+export type ListWorkspaceMembersRequest = z.infer<
+  typeof listWorkspaceMembersRequest
+>
+
+export const listWorkspaceMembersResponse = z.object({
+  data: z.array(
+    workspaceMemberResource.extend({
+      user: userResource.pick({ id: true, name: true, image: true }),
+    }),
+  ),
+  pageCount: z.number(),
+})
+export type ListWorkspaceMembersResponse = z.infer<
+  typeof listWorkspaceMembersResponse
+>

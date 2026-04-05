@@ -1,7 +1,10 @@
 import { botFieldModel, createSelectSchema } from "@chatbotx.io/database/schema"
-import type z from "zod"
+import { z } from "zod"
 
-export const botFieldResource = createSelectSchema(botFieldModel)
+export const botFieldResource = createSelectSchema(botFieldModel, {
+  id: z.string(),
+  workspaceId: z.string(),
+})
 export type BotFieldResource = z.infer<typeof botFieldResource>
 
 export const publicBotFieldResource = botFieldResource.pick({

@@ -2,39 +2,40 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { flowModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { type UpdateFlowSchema, updateFlowSchema } from "../schemas/action"
 
-export const updateFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateFlowAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateFlowSchema)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateFlowSchema
-    }) => {
-      const flow = await findOrFail(
-        flowModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Flow not found",
-      )
+    } = props
 
-      await db
-        .update(flowModel)
-        .set(parsedInput)
-        .where(eq(flowModel.id, flow.id))
+    await updateFlow({ workspaceId, id }, parsedInput)
+  })
 
-      revalidateCacheTags(`chatbots:${flow.chatbotId}#flows`)
+const updateFlow = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: UpdateFlowSchema,
+) => {
+  const flow = await findOrFail({
+    table: flowModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Flow not found",
+  })
+
+  await db.update(flowModel).set(parsedInput).where(eq(flowModel.id, flow.id))
+
+  revalidateCacheTags(`workspaces:${flow.workspaceId}#flows`)
+}

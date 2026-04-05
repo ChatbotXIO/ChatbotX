@@ -37,10 +37,10 @@ import GetFlowLinkDialog from "./components/get-flow-link"
 import { RenameFlowDialog } from "./components/rename-flow"
 
 export function FlowEditToolbar({
-  chatbotId,
+  workspaceId,
   flow,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   flow: FlowModel
 }) {
   const t = useTranslations()
@@ -64,7 +64,7 @@ export function FlowEditToolbar({
   const { getNodes, getEdges } = useReactFlow()
 
   const { execute: executePublish, isPending: isPendingPublish } = useAction(
-    publishFlowAction.bind(null, chatbotId, flow.id),
+    publishFlowAction.bind(null, workspaceId, flow.id),
     {
       onSuccess: () => {
         toast.success("A new version has been published")
@@ -175,7 +175,6 @@ export function FlowEditToolbar({
       />
 
       <DeleteFlowsDialog
-        chatbotId={chatbotId}
         flows={[flow]}
         onOpenChange={() => setAction(null)}
         onSuccess={() => {
@@ -183,6 +182,7 @@ export function FlowEditToolbar({
         }}
         open={action === "delete"}
         showTrigger={false}
+        workspaceId={workspaceId}
       />
 
       <GetFlowLinkDialog

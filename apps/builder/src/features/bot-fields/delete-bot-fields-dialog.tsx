@@ -21,7 +21,7 @@ import { deleteBotFieldsAction } from "./actions/delete-bot-field.action"
 import type { BotFieldResource } from "./schemas/resource"
 
 type DeleteBotFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   records: Row<BotFieldResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteBotFieldsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteBotFieldsDialog({
-  chatbotId,
+  workspaceId,
   records,
   showTrigger = true,
   onOpenChange,
@@ -39,7 +39,7 @@ export function DeleteBotFieldsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteBotFieldsAction.bind(null, chatbotId),
+    deleteBotFieldsAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

@@ -8,7 +8,7 @@ import { DeleteSpreadsheetsDialog } from "./delete-spreadsheet-dialog"
 
 type SpreadsheetsTableToolbarActionsProps = {
   table: Table<SpreadsheetModel>
-  chatbotId: bigint
+  workspaceId: string
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<SpreadsheetModel> | null>
   >
@@ -16,19 +16,19 @@ type SpreadsheetsTableToolbarActionsProps = {
 
 export function SpreadsheetsTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
   setRowAction,
 }: SpreadsheetsTableToolbarActionsProps) {
   return (
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <DeleteSpreadsheetsDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => table.toggleAllRowsSelected(false)}
           spreadsheets={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
+          workspaceId={workspaceId}
         />
       ) : null}
     </div>

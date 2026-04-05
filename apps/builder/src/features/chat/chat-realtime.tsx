@@ -6,13 +6,13 @@ import {
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
-import type { MessageResource } from "../messages/schema/resource"
+import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { handleNewMessage, updateContact, updateConversations } = useChatStore(
     (state) => state,
@@ -20,8 +20,8 @@ export function ChatRealtime() {
 
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
-    room: chatbotId.toString(),
-    party: "chatbots",
+    room: workspaceId,
+    party: "workspaces",
     // protocol: "ws",
 
     query: async () => {
@@ -38,7 +38,7 @@ export function ChatRealtime() {
         const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
         switch (eventType) {
           case RealtimeEventType.messageCreated:
-            handleNewMessage(data as MessageResource)
+            handleNewMessage(data as MessageResourceWithRelations)
             break
           case RealtimeEventType.contactBlocked:
             updateContact(data.contactId, {

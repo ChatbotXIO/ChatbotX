@@ -2,16 +2,16 @@
 
 import {
   type BroadcastFlowType,
+  type BroadcastScheduleType,
   type BroadcastSubaction,
   broadcastFlowTypes,
   broadcastSubactions,
   type ChannelType,
   channelTypes,
 } from "@chatbotx.io/database/partials"
-import type { BroadcastSchedulesType } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
-  StepType,
+  stepTypes,
   type TemplateComponent,
   type WaTemplateParams,
 } from "@chatbotx.io/flow-config"
@@ -37,7 +37,7 @@ import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contacts/components/contact-filter"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
@@ -134,10 +134,10 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
   ] as BroadcastConfig[]
 
 type CreateBroadcastFormProps = {
-  chatbotId: bigint
+  workspaceId: string
 }
 
-export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
+export function CreateBroadcastForm({ workspaceId }: CreateBroadcastFormProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -146,7 +146,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createBroadcastAction.bind(null, chatbotId),
+    createBroadcastAction.bind(null, workspaceId),
     zodResolver(createBroadcastRequest),
     {
       actionProps: {
@@ -156,7 +156,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
               feature: t("fields.broadcast.label"),
             }),
           )
-          router.push(`/chatbots/${chatbotId}/broadcasts`)
+          router.push(`/space/${workspaceId}/broadcasts`)
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -198,7 +198,7 @@ export function CreateBroadcastForm({ chatbotId }: CreateBroadcastFormProps) {
   useEffect(() => {
     if (watchedSubAction === broadcastSubactions.enum.whatsappTemplateMessage) {
       appendFilter({
-        startType: StepType.sendWaTemplateMessage,
+        startType: stepTypes.enum.sendWaTemplateMessage,
         integrationWhatsappId: watchedIntegrationWhatsappId,
       })
       getAllActiveFlows()
@@ -241,7 +241,7 @@ function CreateBroadcastChooseChannel() {
   const t = useTranslations()
   const router = useRouter()
 
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { setValue } = useFormContext()
 
@@ -260,8 +260,8 @@ function CreateBroadcastChooseChannel() {
   )
 
   const handleBack = useCallback(() => {
-    router.push(`/chatbots/${chatbotId}/broadcasts`)
-  }, [router, chatbotId])
+    router.push(`/space/${workspaceId}/broadcasts`)
+  }, [router, workspaceId])
 
   return (
     <Card className="mt-10 w-lg">
@@ -456,7 +456,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const t = useTranslations()
   const router = useRouter()
 
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const schedulesOptions = useMemo(
     () => [
@@ -505,11 +505,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   )
 
   const handleCancel = useCallback(() => {
-    router.push(`/chatbots/${chatbotId}/broadcasts`)
-  }, [router, chatbotId])
+    router.push(`/space/${workspaceId}/broadcasts`)
+  }, [router, workspaceId])
 
   const handleScheduleTypeChange = useCallback(
-    (value: BroadcastSchedulesType) => {
+    (value: BroadcastScheduleType) => {
       if (value === "now") {
         setValue("schedulesAt", null)
       }
@@ -607,7 +607,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
               name="integrationWhatsappId"
               options={integrations.map((integration) => ({
                 label: integration.name,
-                value: integration.id.toString(),
+                value: integration.id,
               }))}
               required={true}
             />
@@ -661,7 +661,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
             name="flowId"
             options={flows.map((flow) => ({
               label: flow.name,
-              value: flow.id.toString(),
+              value: flow.id,
             }))}
             required={true}
           />
@@ -674,7 +674,7 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
           options={schedulesOptions}
           required
           triggerValueChange={(value) =>
-            handleScheduleTypeChange(value as BroadcastSchedulesType)
+            handleScheduleTypeChange(value as BroadcastScheduleType)
           }
         />
 

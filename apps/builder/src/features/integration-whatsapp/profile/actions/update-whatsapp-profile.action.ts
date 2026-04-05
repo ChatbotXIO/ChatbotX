@@ -1,12 +1,12 @@
 "use server"
 
-import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWhatsappProfileRequest } from "../schemas/update-whatsapp-profile.request"
 
-export const updateWhatsappProfileAction = chatbotActionClient
+export const updateWhatsappProfileAction = workspaceActionClient
   .inputSchema(updateWhatsappProfileRequest)
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async () =>
       await {

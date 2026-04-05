@@ -7,12 +7,12 @@ import { DeleteErrorLogsDialog } from "./delete-error-logs"
 
 type ErrorLogsTableToolbarActionsProps = {
   table: Table<ErrorLogModel>
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export function ErrorLogsTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
 }: ErrorLogsTableToolbarActionsProps) {
   const router = useRouter()
 
@@ -20,7 +20,6 @@ export function ErrorLogsTableToolbarActions({
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <DeleteErrorLogsDialog
-          chatbotId={chatbotId}
           errorLogs={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
@@ -28,6 +27,7 @@ export function ErrorLogsTableToolbarActions({
             table.toggleAllRowsSelected(false)
             router.refresh()
           }}
+          workspaceId={workspaceId}
         />
       ) : null}
     </div>

@@ -4,16 +4,16 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { IntegrationZaloResource } from "../schemas/resource"
 
 export const findIntegrationZalo = async ({
-  chatbotId,
+  workspaceId,
 }: {
-  chatbotId: bigint
+  workspaceId: string
 }): Promise<IntegrationZaloResource | null> => {
-  await assertCurrentUserCanAccessChatbot(chatbotId)
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   return (
     (await db.query.integrationZaloModel.findFirst({
       where: {
-        chatbotId,
+        workspaceId,
       },
     })) ?? null
   )
@@ -22,7 +22,7 @@ export const findIntegrationZalo = async ({
 export const listIntegrationZalo = async ({
   where,
 }: {
-  where: Partial<Pick<IntegrationZaloModel, "chatbotId" | "id">>
+  where: Partial<Pick<IntegrationZaloModel, "workspaceId" | "id">>
 }): Promise<{ data: IntegrationZaloModel[] }> => {
   const data = await db.query.integrationZaloModel.findMany({
     where,

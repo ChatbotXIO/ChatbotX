@@ -14,18 +14,18 @@ import { createId } from "@chatbotx.io/utils"
 export const sequenceDispatchUtils = {
   bulkCancelPendingDispatches: async (props: {
     dbClient: DatabaseClient
-    chatbotId: bigint
-    enrollmentId: bigint
+    workspaceId: string
+    enrollmentId: string
     reason?: "canceled"
   }) => {
-    const { dbClient, chatbotId, enrollmentId, reason } = props
+    const { dbClient, workspaceId, enrollmentId, reason } = props
 
     // Find all pending dispatches for the enrollment
     const pendingDispatches =
       await dbClient.query.sequenceDispatchModel.findMany({
         where: {
           enrollmentId,
-          chatbotId,
+          workspaceId,
           status: "pending",
         },
         columns: {
@@ -63,7 +63,7 @@ export const sequenceDispatchUtils = {
     await dbClient.insert(sequenceEventModel).values(
       pendingDispatches.map((d) => ({
         id: createId(),
-        chatbotId,
+        workspaceId,
         sequenceId: d.sequenceId,
         contactId: d.contactId,
         stepId: d.stepId,

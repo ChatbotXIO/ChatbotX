@@ -1,46 +1,48 @@
-import { Condition } from "@chatbotx.io/database/enums"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import { webhookQueue } from "@chatbotx.io/worker-config"
 import { BaseEventEmitter } from "../base-emitter"
 import { hasActiveWebhooks } from "./cache"
 import { isWebhookContext } from "./context"
-import type { WebhookEventType } from "./types"
 
-const SUPPORTED_EVENT_TYPES: Set<WebhookEventType> = new Set([
-  Condition.tagApplied,
-  Condition.tagRemoved,
-  Condition.customFieldValueChanged,
-  Condition.conversationTransferredToHuman,
-  Condition.conversationTransferredToBot,
-  Condition.newContact,
-  Condition.contactUnsubscribedFormBroadcast,
-  Condition.archived,
-  Condition.followUp,
-  Condition.conversationAssigned,
-  Condition.conversationUnassigned,
-  Condition.subscribedToSequence,
-  Condition.unsubscribedFromSequence,
+const SUPPORTED_EVENT_TYPES: Set<TriggerEventType> = new Set([
+  triggerEventTypes.enum.tagApplied,
+  triggerEventTypes.enum.tagRemoved,
+  triggerEventTypes.enum.customFieldValueChanged,
+  triggerEventTypes.enum.conversationTransferredToHuman,
+  triggerEventTypes.enum.conversationTransferredToBot,
+  triggerEventTypes.enum.newContact,
+  triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
+  triggerEventTypes.enum.archived,
+  triggerEventTypes.enum.followUp,
+  triggerEventTypes.enum.conversationAssigned,
+  triggerEventTypes.enum.conversationUnassigned,
+  triggerEventTypes.enum.subscribedToSequence,
+  triggerEventTypes.enum.unsubscribedFromSequence,
 ])
 
 class WebhookEventEmitterImpl extends BaseEventEmitter {
   protected supportedEventTypes = SUPPORTED_EVENT_TYPES
 
   protected async shouldEmitEvent(
-    eventType: Condition,
-    chatbotId: bigint,
+    eventType: TriggerEventType,
+    workspaceId: string,
     sourceId?: string,
   ): Promise<boolean> {
     if (!isWebhookContext()) {
       return false
     }
 
-    return await hasActiveWebhooks(chatbotId, [eventType], sourceId)
+    return await hasActiveWebhooks(workspaceId, [eventType], sourceId)
   }
 
   protected async emitToQueue(
-    eventType: Condition,
+    eventType: TriggerEventType,
     data: {
-      chatbotId: bigint
-      contactId: bigint
+      workspaceId: string
+      contactId: string
       metadata?: Record<string, unknown>
     },
   ): Promise<void> {
@@ -49,7 +51,7 @@ class WebhookEventEmitterImpl extends BaseEventEmitter {
       {
         type: "evaluateWebhooks" as const,
         data: {
-          chatbotId: data.chatbotId,
+          workspaceId: data.workspaceId,
           contactId: data.contactId,
           eventType,
           eventData: data.metadata || {},

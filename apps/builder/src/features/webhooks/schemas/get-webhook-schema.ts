@@ -20,5 +20,5 @@ export const getWebhooksSearchParamsCache = createSearchParamsCache({
 export type GetWebhooksSchema = Awaited<
   ReturnType<typeof getWebhooksSearchParamsCache.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }

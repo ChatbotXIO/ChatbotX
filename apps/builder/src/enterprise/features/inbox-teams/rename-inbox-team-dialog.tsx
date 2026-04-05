@@ -27,12 +27,12 @@ import type { InboxTeamResource } from "./schema/resource"
 export function RenameInboxTeamDialog({
   open,
   onOpenChange,
-  chatbotId,
+  workspaceId,
   inboxTeam,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   inboxTeam: InboxTeamResource | null
 }) {
   const t = useTranslations()
@@ -42,7 +42,7 @@ export function RenameInboxTeamDialog({
     handleSubmitWithAction,
     form: { reset },
   } = useHookFormAction(
-    updateInboxTeamAction.bind(null, chatbotId, inboxTeam?.id ?? BigInt(0)),
+    updateInboxTeamAction.bind(null, workspaceId, inboxTeam?.id ?? ""),
     zodResolver(updateInboxTeamRequest),
     {
       actionProps: {

@@ -3,34 +3,29 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { inboxTeamModel } from "@chatbotx.io/database/schema"
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteInboxTeamAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteInboxTeamAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      await db
-        .delete(inboxTeamModel)
-        .where(
-          and(
-            eq(inboxTeamModel.chatbotId, chatbotId),
-            inArray(inboxTeamModel.id, parsedInput.ids),
-          ),
-        )
+      bindArgsParsedInputs: [workspaceId],
+    } = props
 
-      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
-    },
-  )
+    await db
+      .delete(inboxTeamModel)
+      .where(
+        and(
+          eq(inboxTeamModel.workspaceId, workspaceId),
+          inArray(inboxTeamModel.id, parsedInput.ids),
+        ),
+      )
+
+    revalidateCacheTags(`workspaces:${workspaceId}#inboxTeams`)
+  })

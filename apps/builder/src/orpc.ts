@@ -2,13 +2,12 @@ import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import { ORPCError, onError } from "@orpc/server"
 import { ChatbotXException } from "./lib/errors/exception"
 import { authMiddleware } from "./middlewares/auth"
-import { chatbotTokenMiddleware } from "./middlewares/chatbot-token"
 import { base } from "./middlewares/context"
+import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
 
 export const authorizedAPI = base
   .use(
     onError((error: Error) => {
-      console.error("3333", error)
       if (error.name === ChatbotXException.name) {
         throw new ORPCError((error as ChatbotXException).code, {
           message: error.message,
@@ -26,7 +25,7 @@ export const authorizedAPI = base
   )
   .use(authMiddleware)
 
-export const chatbotTokenAPI = base
+export const workspaceTokenAuthAPI = base
   .use(
     onError((error: Error) => {
       if (error.name === ChatbotXException.name) {
@@ -44,4 +43,4 @@ export const chatbotTokenAPI = base
       }
     }),
   )
-  .use(chatbotTokenMiddleware)
+  .use(workspaceTokenAuthMidddleware)

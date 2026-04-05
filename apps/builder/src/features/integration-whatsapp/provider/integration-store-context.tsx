@@ -20,20 +20,20 @@ export const IntegrationStoreContext = createContext<
 >(undefined)
 
 export type IntegrationStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const IntegrationStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: IntegrationStoreProviderProps) => {
   const storeRef = useRef<IntegrationStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createIntegrationStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

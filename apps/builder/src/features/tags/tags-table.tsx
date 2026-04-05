@@ -25,11 +25,11 @@ import { UpdateTagDialog } from "./update-tag-dialog"
 
 type TagsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listTags>>]>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
-export function TagsTable({ promises, chatbotId, folderId }: TagsTableProps) {
+export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
   const [rowAction, setRowAction] =
     React.useState<DataTableRowAction<TagModel> | null>(null)
@@ -60,7 +60,7 @@ export function TagsTable({ promises, chatbotId, folderId }: TagsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -73,29 +73,28 @@ export function TagsTable({ promises, chatbotId, folderId }: TagsTableProps) {
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
-            <CreateTagDialog chatbotId={chatbotId} folderId={folderId} />
-            <TagsTableToolbarActions chatbotId={chatbotId} table={table} />
+            <CreateTagDialog folderId={folderId} workspaceId={workspaceId} />
+            <TagsTableToolbarActions table={table} workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>
 
         <DeleteTagsDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => rowAction?.row.toggleSelected(false)}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
           tags={rowAction?.row.original ? [rowAction?.row.original] : []}
+          workspaceId={workspaceId}
         />
 
         <UpdateTagDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "update"}
           tag={rowAction?.row.original || null}
+          workspaceId={workspaceId}
         />
 
         <ChangeFolderDialog
-          chatbotId={chatbotId}
           currentFolderId={rowAction?.row.original?.folderId || null}
           folderType="tag"
           modelIds={
@@ -103,6 +102,7 @@ export function TagsTable({ promises, chatbotId, folderId }: TagsTableProps) {
           }
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "move"}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

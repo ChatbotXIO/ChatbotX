@@ -134,7 +134,7 @@ export const getMessageAttachmentEntity = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`
+    const originPath = `public/space/${ctx.workspace?.id ?? ""}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
     const fileType = guessFileTypeFromMimeType(attachment.type)

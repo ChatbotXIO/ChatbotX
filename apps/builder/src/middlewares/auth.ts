@@ -26,29 +26,29 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
   })
 })
 
-export const chatbotAuthMiddleware = base.middleware(
-  async ({ context, next }, chatbotId: bigint) => {
+export const workspaceAuthorizedMidddleware = base.middleware(
+  async ({ context, next }, workspaceId: string) => {
     if (!context.user) {
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    const chatbotMember = await db.query.chatbotMemberModel.findFirst({
+    const workspaceMember = await db.query.workspaceMemberModel.findFirst({
       where: {
-        chatbotId,
+        workspaceId,
         userId: context.user.id,
       },
       with: {
-        chatbot: true,
+        workspace: true,
       },
     })
 
-    if (!chatbotMember) {
+    if (!workspaceMember) {
       throw new ORPCError("UNAUTHORIZED")
     }
 
     return next({
       context: {
-        chatbot: chatbotMember.chatbot,
+        workspace: workspaceMember.workspace,
       },
     })
   },

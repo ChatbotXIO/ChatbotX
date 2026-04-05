@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import { MessageSquareIcon } from "lucide-react"
 import type { FlowActionState } from "../../../stores/flow-action-store"
 import type { MenuItem, TranslationFn } from "../../types"
@@ -28,7 +28,7 @@ export const waTemplateMenus = (
   return templates.map((template) => ({
     label: `${template.name} (${template.language})`,
     icon: MessageSquareIcon,
-    stepType: StepType.sendWaTemplateMessage,
+    stepType: stepTypes.enum.sendWaTemplateMessage,
     props: {
       template: {
         id: template.id,

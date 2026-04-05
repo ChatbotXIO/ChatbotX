@@ -1,6 +1,6 @@
 "use client"
 
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -23,15 +23,15 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createTagAction } from "./actions/create-tag-action"
-import { createTagRequest } from "./schemas/action"
+import { createTagRequest } from "./schema/action"
 
 type CreateTagDialogProps = {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
 export const CreateTagDialog = ({
-  chatbotId,
+  workspaceId,
   folderId,
 }: CreateTagDialogProps) => {
   const t = useTranslations()
@@ -40,7 +40,7 @@ export const CreateTagDialog = ({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createTagAction.bind(null, chatbotId),
+      createTagAction.bind(null, workspaceId),
       zodResolver(createTagRequest),
       {
         actionProps: {

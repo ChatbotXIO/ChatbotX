@@ -1,7 +1,8 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createAutomatedResponseRequest = z.object({
-  folderId: z.bigint().nullish(),
+  folderId: zodBigintAsString().nullish(),
   userMessages: z
     .array(
       z.object({
@@ -10,7 +11,7 @@ export const createAutomatedResponseRequest = z.object({
     )
     .min(1),
   text: z.string().min(1).max(255).nullish(),
-  flowId: z.bigint().nullish(),
+  flowId: zodBigintAsString().nullish(),
 })
 export type CreateAutomatedResponseRequest = z.infer<
   typeof createAutomatedResponseRequest

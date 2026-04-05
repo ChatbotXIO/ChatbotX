@@ -7,18 +7,21 @@ import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
-import { type CreateSequenceRequest, createSequenceRequest } from "../schema"
+import { workspaceActionClient } from "@/lib/safe-action"
+import {
+  type CreateSequenceRequest,
+  createSequenceRequest,
+} from "../schema/action"
 
-export const createSequenceAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createSequenceAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createSequenceRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -31,12 +34,12 @@ export const createSequenceAction = chatbotActionClient
 
         await db.insert(sequenceModel).values({
           id: sequenceId,
-          chatbotId,
+          workspaceId,
           name: parsedInput.name,
           folderId: parsedInput.folderId || null,
         })
 
-        revalidateCacheTags([`chatbots:${chatbotId}#sequences`])
+        revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
         return { sequenceId }
       } catch (error) {

@@ -31,8 +31,8 @@ export function ResendBroadcastDialog({
   const { execute, isPending } = useAction(
     resendBroadcastAction.bind(
       null,
-      broadcast?.chatbotId ?? BigInt(0),
-      broadcast?.id ?? BigInt(0),
+      broadcast?.workspaceId ?? "",
+      broadcast?.id ?? "",
     ),
     {
       onSuccess: () => {

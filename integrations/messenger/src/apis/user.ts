@@ -64,7 +64,7 @@ export const getUserProfilePicture = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `public/chatbots/${ctx.chatbot?.id}/avatars/${createId()}`
+    const originPath = `public/space/${ctx.workspace?.id}/avatars/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
 

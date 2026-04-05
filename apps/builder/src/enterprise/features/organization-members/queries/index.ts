@@ -9,7 +9,7 @@ import { notFoundException } from "@/lib/errors/exception"
 import type {
   ListOrganizationMembersRequest,
   ListOrganizationMembersResponse,
-} from "../schema"
+} from "../schema/mutation"
 
 export const listOrganizationMembersRSC = async (
   input: ListOrganizationMembersRequest,
@@ -26,7 +26,7 @@ export const listOrganizationMembersRSC = async (
 }
 
 export const listOrganizationMembers = async (
-  input: ListOrganizationMembersRequest & { organizationId: bigint },
+  input: ListOrganizationMembersRequest & { organizationId: string },
 ): Promise<ListOrganizationMembersResponse> => {
   const pagination = getPaginationWithDefaults(input)
   const orderBy = parseOrderByAsObject(organizationMemberModel, input)

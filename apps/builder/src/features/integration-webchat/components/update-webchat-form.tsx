@@ -32,7 +32,7 @@ import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { updateWebchatAction } from "../actions/update-webchat.action"
 import { updateWebchatRequest } from "../schema/mutation"
 import AuthorizedDomainField from "./authorized-domain-field"
@@ -45,7 +45,7 @@ type UpdateWebchatFormProps = {
 export function UpdateWebchatForm({
   integrationWebchat,
 }: UpdateWebchatFormProps) {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const t = useTranslations()
   const router = useRouter()
 
@@ -73,7 +73,7 @@ export function UpdateWebchatForm({
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateWebchatAction.bind(null, chatbotId, integrationWebchat?.id ?? ""),
+    updateWebchatAction.bind(null, workspaceId, integrationWebchat?.id ?? ""),
     zodResolver(updateWebchatRequest),
     {
       actionProps: {
@@ -83,7 +83,7 @@ export function UpdateWebchatForm({
               feature: t("fields.webchat.label"),
             }),
           )
-          router.push(`/chatbots/${chatbotId}/webchats`)
+          router.push(`/space/${workspaceId}/webchats`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to update webchat")
@@ -263,7 +263,7 @@ export function UpdateWebchatForm({
         />
         <DialogFooter>
           <Button
-            onClick={() => router.push(`/chatbots/${chatbotId}/webchats`)}
+            onClick={() => router.push(`/space/${workspaceId}/webchats`)}
             type="button"
             variant="link"
           >

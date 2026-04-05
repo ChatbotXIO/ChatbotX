@@ -10,43 +10,43 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactTagRequest,
   addContactTagRequest,
 } from "../schemas/contact-tag"
 
-export const addContactTagAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const addContactTagAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(addContactTagRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: AddContactTagRequest
     }) => {
       await addContactTags({
-        chatbotId,
+        workspaceId,
         parsedInput,
       })
     },
   )
 
 export const addContactTags = async ({
-  chatbotId,
+  workspaceId,
   parsedInput,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   parsedInput: AddContactTagRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({
     where: {
-      chatbotId,
+      workspaceId,
       id: {
         in: parsedInput.ids,
       },
@@ -68,17 +68,17 @@ export const addContactTags = async ({
           parsedInput.tags.map((name) => ({
             id: createId(),
             name,
-            chatbotId,
+            workspaceId,
           })),
         )
         .onConflictDoNothing({
-          target: [tagModel.chatbotId, tagModel.name],
+          target: [tagModel.workspaceId, tagModel.name],
         })
     }
 
     const allTags = await tx.query.tagModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         name: { in: parsedInput.tags },
       },
       columns: {
@@ -108,7 +108,7 @@ export const addContactTags = async ({
   for (const contact of contacts) {
     for (const tag of allTags) {
       try {
-        await emitTagApplied(chatbotId, contact.id, tag.id)
+        await emitTagApplied(workspaceId, contact.id, tag.id)
       } catch (error) {
         console.error("Failed to emit tagApplied event:", error)
       }
@@ -116,29 +116,26 @@ export const addContactTags = async ({
   }
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#contacts`,
-    `chatbots:${chatbotId}#conversations`,
-    `chatbots:${chatbotId}#tags`,
+    `workspaces:${workspaceId}#contacts`,
+    `workspaces:${workspaceId}#conversations`,
+    `workspaces:${workspaceId}#tags`,
   ])
 }
 
 export const attachContactTag = async ({
-  chatbotId,
+  workspaceId,
   contactId,
   tagId,
 }: {
-  chatbotId: bigint
-  contactId: bigint
-  tagId: bigint
+  workspaceId: string
+  contactId: string
+  tagId: string
 }) => {
-  findOrFail(contactModel, {
-    id: contactId,
-    chatbotId,
+  await findOrFail({
+    table: contactModel,
+    where: { id: contactId, workspaceId },
   })
-  findOrFail(tagModel, {
-    id: tagId,
-    chatbotId,
-  })
+  await findOrFail({ table: tagModel, where: { id: tagId, workspaceId } })
 
   await db
     .insert(contactsToTagsModel)
@@ -152,28 +149,34 @@ export const attachContactTag = async ({
 
   // Emit tag applied event
   try {
-    await emitTagApplied(chatbotId, contactId, tagId)
+    await emitTagApplied(workspaceId, contactId, tagId)
   } catch (error) {
     console.error("Failed to emit tagApplied event:", error)
   }
 }
 
 export const detachContactTag = async ({
-  chatbotId,
+  workspaceId,
   contactId,
   tagId,
 }: {
-  chatbotId: bigint
-  contactId: bigint
-  tagId: bigint
+  workspaceId: string
+  contactId: string
+  tagId: string
 }) => {
-  findOrFail(contactModel, {
-    id: contactId,
-    chatbotId,
+  await findOrFail({
+    table: contactModel,
+    where: {
+      id: contactId,
+      workspaceId,
+    },
   })
-  findOrFail(tagModel, {
-    id: tagId,
-    chatbotId,
+  await findOrFail({
+    table: tagModel,
+    where: {
+      id: tagId,
+      workspaceId,
+    },
   })
 
   await db
@@ -187,7 +190,7 @@ export const detachContactTag = async ({
 
   // Emit tag removed event
   try {
-    await emitTagRemoved(chatbotId, contactId, tagId)
+    await emitTagRemoved(workspaceId, contactId, tagId)
   } catch (error) {
     console.error("Failed to emit tagRemoved event:", error)
   }

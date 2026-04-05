@@ -5,19 +5,19 @@ import { PencilIcon, Trash2Icon } from "lucide-react"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteSavedReplyAction } from "./actions/delete-saved-reply.action"
-import type { SavedReplyResource } from "./schema"
+import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyItemProps = {
-  chatbotId: bigint
+  workspaceId: string
   isLast: boolean
   item: SavedReplyResource
-  onDeleteSuccess: (id: bigint) => void
+  onDeleteSuccess: (id: string) => void
   onEdit: (item: SavedReplyResource) => void
   onSelect: (item: SavedReplyResource) => void
 }
 
 export const SavedReplyItem = ({
-  chatbotId,
+  workspaceId,
   isLast,
   item,
   onDeleteSuccess,
@@ -25,7 +25,7 @@ export const SavedReplyItem = ({
   onSelect,
 }: SavedReplyItemProps) => {
   const { executeAsync: deleteSavedReply, isPending: isDeletingSavedReply } =
-    useAction(deleteSavedReplyAction.bind(null, chatbotId, item.id), {
+    useAction(deleteSavedReplyAction.bind(null, workspaceId, item.id), {
       onError: ({ error }) => {
         if (error.serverError) {
           toast.error(error.serverError)

@@ -1,14 +1,12 @@
 "use client"
 
-import type {
-  OrganizationModel,
-  OrganizationSettings,
-} from "@chatbotx.io/database/types"
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import { ReactFlowProvider } from "@xyflow/react"
 import { AIToolsStoreProvider } from "../ai-triggers/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"
+import type { OrganizationResource } from "../organization/schema/resource"
 import { TagStoreProvider } from "../tags/provider/tag-store-context"
 import { UserStoreProvider } from "../users/provider/user-store-context"
 import { FlowStoreProvider } from "./provider/flow-store-context"
@@ -20,7 +18,7 @@ import type { FlowResource } from "./schemas/resource"
 type FlowDetailProps = {
   flow: FlowResource
   flowVersion: FlowVersionResource
-  organization: OrganizationModel
+  organization: OrganizationResource
 }
 
 export function FlowDetail({
@@ -37,13 +35,13 @@ export function FlowDetail({
           activeFlowId: flow.id,
         }}
       >
-        <FlowActionProvider chatbotId={flow.chatbotId}>
-          <InboxStoreProvider chatbotId={flow.chatbotId}>
-            <FlowStoreProvider chatbotId={flow.chatbotId}>
-              <TagStoreProvider chatbotId={flow.chatbotId}>
-                <UserStoreProvider chatbotId={flow.chatbotId}>
-                  <CustomFieldStoreProvider chatbotId={flow.chatbotId}>
-                    <AIToolsStoreProvider chatbotId={flow.chatbotId}>
+        <FlowActionProvider workspaceId={flow.workspaceId}>
+          <InboxStoreProvider workspaceId={flow.workspaceId}>
+            <FlowStoreProvider workspaceId={flow.workspaceId}>
+              <TagStoreProvider workspaceId={flow.workspaceId}>
+                <UserStoreProvider workspaceId={flow.workspaceId}>
+                  <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
+                    <AIToolsStoreProvider workspaceId={flow.workspaceId}>
                       <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
                     </AIToolsStoreProvider>
                   </CustomFieldStoreProvider>

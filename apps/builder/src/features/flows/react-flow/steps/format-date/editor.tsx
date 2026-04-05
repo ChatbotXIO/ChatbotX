@@ -107,8 +107,8 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
                   value: FormatTimezone.contact,
                 },
                 {
-                  label: t("flows.formatTimezone.accountTimezone"),
-                  value: FormatTimezone.chatbot,
+                  label: t("flows.formatTimezone.timezone"),
+                  value: FormatTimezone.workspace,
                 },
               ]}
               required

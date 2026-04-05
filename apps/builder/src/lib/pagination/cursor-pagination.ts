@@ -1,9 +1,10 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
 export const cursorPagination = z.object({
   direction: z.enum(["next", "prev"]),
   createdAt: z.coerce.date(),
-  id: z.bigint(),
+  id: zodBigintAsString(),
 })
 
 export type CursorPagination = z.infer<typeof cursorPagination>

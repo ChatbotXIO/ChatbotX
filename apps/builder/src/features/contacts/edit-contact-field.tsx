@@ -1,7 +1,7 @@
 import {
-  type FillableContactKeys,
+  type FillableContactKey,
   fillableContactKeys,
-} from "@chatbotx.io/database/types"
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -26,8 +26,8 @@ import { updateContactFieldRequest } from "./schemas/action"
 import type { ContactEditableField } from "./schemas/resource"
 
 type EditContactField = {
-  chatbotId: bigint
-  contactId: bigint
+  workspaceId: string
+  contactId: string
   open: boolean
   onOpenChange: (open: boolean) => void
   targetField: ContactEditableField | null
@@ -37,7 +37,7 @@ type EditContactField = {
 
 export function EditContactField(props: EditContactField) {
   const {
-    chatbotId,
+    workspaceId,
     contactId,
     open,
     onOpenChange,
@@ -50,7 +50,7 @@ export function EditContactField(props: EditContactField) {
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateContactFieldAction.bind(null, chatbotId, contactId),
+      updateContactFieldAction.bind(null, workspaceId, contactId),
       zodResolver(updateContactFieldRequest),
       {
         actionProps: {
@@ -88,7 +88,7 @@ export function EditContactField(props: EditContactField) {
   }, [targetField, form])
 
   const { execute: executeDelete, isPending: isDeleting } = useAction(
-    deleteContactCustomFieldAction.bind(null, chatbotId),
+    deleteContactCustomFieldAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(
@@ -127,14 +127,14 @@ export function EditContactField(props: EditContactField) {
             <DialogFooter className="mt-4 justify-start">
               <div className="flex-1">
                 {!fillableContactKeys.includes(
-                  targetField?.key as FillableContactKeys,
+                  targetField?.key as FillableContactKey,
                 ) && (
                   <Button
                     disabled={isDeleting}
                     onClick={() => {
                       executeDelete({
                         ids: [contactId],
-                        customFieldId: BigInt(targetField?.key ?? 0),
+                        customFieldId: targetField?.key ?? "",
                       })
                     }}
                     size="sm"

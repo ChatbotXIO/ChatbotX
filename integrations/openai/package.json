@@ -5,14 +5,14 @@
   "type": "module",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.50",
     "@chatbotx.io/sdk": "workspace:*",
-    "@ai-sdk/openai": "^3.0.47",
-    "ai": "^6.0.134"
+    "ai": "^6.0.145"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   },
   "exports": {
     ".": "./src/index.ts",

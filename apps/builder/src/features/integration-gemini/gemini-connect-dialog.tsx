@@ -20,19 +20,19 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { connectGeminiAction } from "./actions/connect.action"
 import { connectGeminiRequest } from "./schemas/request"
 
 export const GeminiConnectDialog = () => {
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const t = useTranslations()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    connectGeminiAction.bind(null, chatbotId),
+    connectGeminiAction.bind(null, workspaceId),
     zodResolver(connectGeminiRequest),
     {
       actionProps: {

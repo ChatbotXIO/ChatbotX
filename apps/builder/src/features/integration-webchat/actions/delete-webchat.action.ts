@@ -2,25 +2,28 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
-import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteWebchatAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(async ({ bindArgsParsedInputs: [chatbotId, id] }) => {
-    const integration = await findOrFail(
-      integrationWebchatModel,
-      {
+export const deleteWebchatAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
+    const integration = await findOrFail({
+      table: integrationWebchatModel,
+      where: {
         id,
-        chatbotId,
+        workspaceId,
       },
-      "Webchat integration not found",
-    )
+      message: "Webchat integration not found",
+    })
 
     await db
       .delete(integrationWebchatModel)
       .where(eq(integrationWebchatModel.id, integration.id))
 
-    revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
+    revalidateCacheTags(`workspaces:${workspaceId}#webchats`)
   })

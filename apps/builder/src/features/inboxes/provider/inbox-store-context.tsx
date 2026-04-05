@@ -17,20 +17,20 @@ export const InboxStoreContext = createContext<InboxStoreApi | undefined>(
 )
 
 export type InboxStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const InboxStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: InboxStoreProviderProps) => {
   const storeRef = useRef<InboxStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createInboxStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

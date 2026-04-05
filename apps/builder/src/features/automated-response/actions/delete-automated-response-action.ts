@@ -3,34 +3,29 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteAutomatedResponseAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteAutomatedResponseAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      await db
-        .delete(automatedResponseModel)
-        .where(
-          and(
-            eq(automatedResponseModel.chatbotId, chatbotId),
-            inArray(automatedResponseModel.id, parsedInput.ids),
-          ),
-        )
+    } = props
 
-      revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)
-    },
-  )
+    await db
+      .delete(automatedResponseModel)
+      .where(
+        and(
+          eq(automatedResponseModel.workspaceId, workspaceId),
+          inArray(automatedResponseModel.id, parsedInput.ids),
+        ),
+      )
+
+    revalidateCacheTags(`workspaces:${workspaceId}#automatedResponses`)
+  })

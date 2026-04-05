@@ -3,7 +3,7 @@ import { db } from "@chatbotx.io/database/client"
 export async function listFlowVersions({
   where,
 }: {
-  where: { chatbotId?: bigint; flowId?: bigint }
+  where: { workspaceId?: string; flowId?: string }
 }) {
   const data = await db.query.flowVersionModel.findMany({
     where,

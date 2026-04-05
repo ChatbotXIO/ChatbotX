@@ -11,10 +11,10 @@ export const sendTyping = async (
 ): Promise<void> => {
   const {
     ctx,
-    data: { conversation, typing },
+    data: { contactInbox, typing },
   } = props
 
-  const recipientId = conversation.sourceId
+  const recipientId = contactInbox.sourceId
 
   if (!recipientId) {
     throw new SdkException("Missing recipient ID in conversation")
@@ -31,10 +31,10 @@ export const agentMarkAsRead = async (
 ): Promise<void> => {
   const {
     ctx,
-    data: { conversation },
+    data: { contactInbox },
   } = props
 
-  const recipientId = conversation.sourceId
+  const recipientId = contactInbox.sourceId
   if (!recipientId) {
     throw new SdkException("Missing recipient ID in conversation")
   }

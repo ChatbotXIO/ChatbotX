@@ -15,10 +15,10 @@ import { type ReactNode, useState } from "react"
 import { CreateContactForm } from "./create-contact-form"
 
 export function CreateContactDialog({
-  chatbotId,
+  workspaceId,
   trigger,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   trigger?: ReactNode
 }) {
   const router = useRouter()
@@ -52,9 +52,9 @@ export function CreateContactDialog({
         </DialogHeader>
         <div className="flex items-center space-x-2">
           <CreateContactForm
-            chatbotId={chatbotId}
             onCancelled={() => setOpen(false)}
             onSubmmited={onSubmmited}
+            workspaceId={workspaceId}
           />
         </div>
       </DialogContent>

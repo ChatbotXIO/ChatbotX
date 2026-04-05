@@ -1,42 +1,36 @@
 import { sql } from "drizzle-orm"
-import { bigint, boolean, index, pgTable, text } from "drizzle-orm/pg-core"
-import { sharedColumns } from "../partials/shared"
-import { chatbotModel } from "./chatbot"
+import { boolean, index, pgTable, text } from "drizzle-orm/pg-core"
+import { bigintAsString, sharedColumns } from "../partials/shared"
 import { flowModel } from "./flow"
 import { folderModel } from "./folder"
+import { workspaceModel } from "./workspace"
 
 export const automatedResponseModel = pgTable(
-  "automated_responses",
+  "AutomatedResponse",
   {
     ...sharedColumns,
-    chatbotId: bigint("chatbot_id", { mode: "bigint" })
+    workspaceId: bigintAsString()
       .notNull()
-      .references(() => chatbotModel.id, {
+      .references(() => workspaceModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    folderId: bigint("folder_id", { mode: "bigint" }).references(
-      () => folderModel.id,
-      {
-        onDelete: "set null",
-        onUpdate: "cascade",
-      },
-    ),
-    userMessages: text("user_messages").array().notNull().default(sql`[]`),
-    status: boolean("status").notNull(),
-    text: text("text"),
-    flowId: bigint("flow_id", { mode: "bigint" }).references(
-      () => flowModel.id,
-      {
-        onDelete: "set null",
-        onUpdate: "cascade",
-      },
-    ),
+    folderId: bigintAsString().references(() => folderModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
+    userMessages: text().array().notNull().default(sql`[]`),
+    status: boolean().notNull(),
+    text: text(),
+    flowId: bigintAsString().references(() => flowModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
   },
   (table) => [
-    index("automated_responses_chatbot_id_idx").using(
+    index("AutomatedResponse_workspaceId_idx").using(
       "btree",
-      table.chatbotId.asc().nullsLast(),
+      table.workspaceId.asc().nullsLast(),
     ),
   ],
 )

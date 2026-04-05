@@ -17,14 +17,14 @@ import { createAutomatedResponseAction } from "./actions/create-automated-respon
 import { createAutomatedResponseRequest } from "./schema/action"
 
 type CreateAutomatedResponseFormProps = {
-  chatbotId: bigint
-  folderId: bigint | undefined
+  workspaceId: string
+  folderId: string | null
 }
 
 export function CreateAutomatedResponseForm(
   props: CreateAutomatedResponseFormProps,
 ) {
-  const { chatbotId, folderId } = props
+  const { workspaceId, folderId } = props
 
   const searchParams = useSearchParams()
 
@@ -38,7 +38,7 @@ export function CreateAutomatedResponseForm(
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    createAutomatedResponseAction.bind(null, chatbotId),
+    createAutomatedResponseAction.bind(null, workspaceId),
     zodResolver(createAutomatedResponseRequest),
     {
       actionProps: {
@@ -49,7 +49,7 @@ export function CreateAutomatedResponseForm(
             }),
           )
           router.push(
-            `/chatbots/${chatbotId}/automated-responses?${searchParams.toString()}`,
+            `/space/${workspaceId}/automated-responses?${searchParams.toString()}`,
           )
         },
         onError: ({ error }) => {
@@ -206,7 +206,7 @@ export function CreateAutomatedResponseForm(
         <div className="flex justify-end gap-4">
           <Button
             onClick={() =>
-              router.push(`/chatbots/${chatbotId}/automated-responses`)
+              router.push(`/space/${workspaceId}/automated-responses`)
             }
             type="button"
             variant="ghost"

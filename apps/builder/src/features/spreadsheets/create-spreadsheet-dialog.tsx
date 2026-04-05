@@ -21,14 +21,14 @@ import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { createSpreadsheetAction } from "./actions/create-spreadsheet-action"
-import { createSpreadsheetRequest } from "./schemas/mutation"
+import { createSpreadsheetRequest } from "./schema/mutation"
 
 export function CreateSpreadsheetDialog({
-  chatbotId,
+  workspaceId,
   triggerButton,
   onSuccess,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   triggerButton?: ReactNode
   onSuccess?: () => void
 }) {
@@ -38,7 +38,7 @@ export function CreateSpreadsheetDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createSpreadsheetAction.bind(null, chatbotId),
+      createSpreadsheetAction.bind(null, workspaceId),
       zodResolver(createSpreadsheetRequest),
       {
         actionProps: {

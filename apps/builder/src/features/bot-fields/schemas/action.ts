@@ -1,12 +1,13 @@
-import { customFieldType } from "@chatbotx.io/database/schema"
+import { customFieldTypes } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createBotFieldRequest = z.object({
   name: z.string().trim().min(1).max(255),
-  type: z.enum(customFieldType.enumValues),
+  type: customFieldTypes,
   value: z.string().trim().max(1000).nullable(),
   description: z.string().max(1000).nullable(),
-  folderId: z.bigint().nullish(),
+  folderId: zodBigintAsString().nullish(),
 })
 export type CreateBotFieldRequest = z.infer<typeof createBotFieldRequest>
 

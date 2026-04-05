@@ -2,6 +2,6 @@
 
 import { getTemplatesForChatbot } from "../queries"
 
-export async function getTemplatesForFlow(chatbotId: bigint) {
-  return await getTemplatesForChatbot(chatbotId, "APPROVED")
+export async function getTemplatesForFlow(workspaceId: string) {
+  return await getTemplatesForChatbot(workspaceId, "APPROVED")
 }

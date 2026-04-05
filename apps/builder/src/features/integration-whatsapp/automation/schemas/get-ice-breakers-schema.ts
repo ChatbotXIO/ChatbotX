@@ -1,4 +1,4 @@
 export type ListWhatsappPhoneNumberAutomation = {
-  chatbotId: bigint
-  id: bigint
+  workspaceId: string
+  id: string
 }

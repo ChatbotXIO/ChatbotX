@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { SearchParams } from "next/dist/server/request/search-params"
 import { notFound } from "next/navigation"
 import z from "zod"
@@ -16,12 +17,11 @@ export default async function WebchatPage(props: WebchatPageProps) {
 
   const { data } = z
     .object({
-      chatbotId: z.bigint(),
-      webchatId: z.bigint(),
+      workspaceId: zodBigintAsString(),
+      webchatId: zodBigintAsString(),
       ref: z.string().optional(),
     })
     .safeParse(searchParams)
-
   if (!data) {
     return notFound()
   }
@@ -29,7 +29,7 @@ export default async function WebchatPage(props: WebchatPageProps) {
   const targetWebchat = await db.query.integrationWebchatModel.findFirst({
     where: {
       id: data.webchatId,
-      chatbotId: data.chatbotId,
+      workspaceId: data.workspaceId,
     },
   })
 

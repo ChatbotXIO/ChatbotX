@@ -7,7 +7,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { getWebchatColumns } from "./columns/webchat-columns"
 import { WebchatTableToolbarActions } from "./components/webchat-table-toolbar-actions"
 import type { listIntegrationWebchats } from "./queries"
@@ -18,7 +18,7 @@ type WebchatTableProps = {
 
 export function WebchatTable({ promises }: WebchatTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const t = useTranslations()
 
   const [_rowAction, setRowAction] =
@@ -33,7 +33,7 @@ export function WebchatTable({ promises }: WebchatTableProps) {
       sorting: [{ id: "updatedAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -43,15 +43,15 @@ export function WebchatTable({ promises }: WebchatTableProps) {
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <WebchatTableToolbarActions
-            chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
             table={table}
+            workspaceId={workspaceId}
           />
         </DataTableToolbar>
       </DataTable>
 
       {/* <DeleteWebchatDialog
-        chatbotId={chatbotId}
+        workspaceId={workspaceId}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => rowAction?.row.toggleSelected(false)}
         open={rowAction?.variant === "delete"}

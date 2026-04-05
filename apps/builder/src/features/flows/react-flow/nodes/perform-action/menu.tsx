@@ -1,6 +1,5 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import { SiClaude, SiGooglegemini } from "@icons-pack/react-simple-icons"
-import { OpenAI as OpenAIIcon } from "@lobehub/icons"
 import {
   ArchiveIcon,
   BellOffIcon,
@@ -32,33 +31,34 @@ import {
   UserRoundXIcon,
   ZapIcon,
 } from "lucide-react"
+import { OpenAIIcon } from "@/icons/openai"
 import type { MenuItem, TranslationFn } from "../types"
 
 const sheetsMenus = (t: TranslationFn): MenuItem[] => [
   {
     label: t("flows.actions.spreadsheetGetRow"),
     icon: SheetIcon,
-    stepType: StepType.spreadsheetGetRow,
+    stepType: stepTypes.enum.spreadsheetGetRow,
   },
   {
     label: t("flows.actions.spreadsheetGetRandomRow"),
     icon: SheetIcon,
-    stepType: StepType.spreadsheetGetRandomRow,
+    stepType: stepTypes.enum.spreadsheetGetRandomRow,
   },
   {
     label: t("flows.actions.spreadsheetUpdateRow"),
     icon: SheetIcon,
-    stepType: StepType.spreadsheetUpdateRow,
+    stepType: stepTypes.enum.spreadsheetUpdateRow,
   },
   {
     label: t("flows.actions.spreadsheetClearRow"),
     icon: SheetIcon,
-    stepType: StepType.spreadsheetClearRow,
+    stepType: stepTypes.enum.spreadsheetClearRow,
   },
   {
     label: t("flows.actions.spreadsheetSendData"),
     icon: SheetIcon,
-    stepType: StepType.spreadsheetSendData,
+    stepType: stepTypes.enum.spreadsheetSendData,
   },
 ]
 
@@ -73,7 +73,7 @@ const openaiMenus = (t: TranslationFn): MenuItem[] => [
           name: "OpenAI",
         }),
         icon: OpenAIIcon,
-        stepType: StepType.aiGenerateText,
+        stepType: stepTypes.enum.aiGenerateText,
         props: {
           provider: "openai",
         },
@@ -93,7 +93,7 @@ const claudeMenus = (t: TranslationFn): MenuItem[] => [
           name: "Claude",
         }),
         icon: SiClaude,
-        stepType: StepType.aiGenerateText,
+        stepType: stepTypes.enum.aiGenerateText,
         props: {
           provider: "claude",
         },
@@ -113,7 +113,7 @@ const geminiMenus = (t: TranslationFn): MenuItem[] => [
           name: "Gemini",
         }),
         icon: SiGooglegemini,
-        stepType: StepType.aiGenerateText,
+        stepType: stepTypes.enum.aiGenerateText,
         props: {
           provider: "gemini",
         },
@@ -133,7 +133,7 @@ const deepseekMenus = (t: TranslationFn): MenuItem[] => [
           name: "Deepseek",
         }),
         icon: BotIcon,
-        stepType: StepType.aiGenerateText,
+        stepType: stepTypes.enum.aiGenerateText,
         props: {
           provider: "deepseek",
         },
@@ -151,47 +151,47 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.transferConversationToHuman"),
         icon: UserIcon,
-        stepType: StepType.disableBot,
+        stepType: stepTypes.enum.disableBot,
       },
       {
         label: t("flows.actions.transferConversationToBot"),
         icon: BotIcon,
-        stepType: StepType.enableBot,
+        stepType: stepTypes.enum.enableBot,
       },
       {
         label: t("flows.actions.assignConversation"),
         icon: MessageCirclePlusIcon,
-        stepType: StepType.assignConversation,
+        stepType: stepTypes.enum.assignConversation,
       },
       {
         label: t("flows.actions.autoAssignConversation"),
         icon: MessageCirclePlusIcon,
-        stepType: StepType.autoAssignConversation,
+        stepType: stepTypes.enum.autoAssignConversation,
       },
       {
         label: t("flows.actions.unassignConversation"),
         icon: MessageCircleXIcon,
-        stepType: StepType.unassignConversation,
+        stepType: stepTypes.enum.unassignConversation,
       },
       {
         label: t("flows.actions.followConversation"),
         icon: StarIcon,
-        stepType: StepType.followConversation,
+        stepType: stepTypes.enum.followConversation,
       },
       {
         label: t("flows.actions.unfollowConversation"),
         icon: StarOffIcon,
-        stepType: StepType.unfollowConversation,
+        stepType: stepTypes.enum.unfollowConversation,
       },
       {
         label: t("flows.actions.archiveConversation"),
         icon: ArchiveIcon,
-        stepType: StepType.archiveConversation,
+        stepType: stepTypes.enum.archiveConversation,
       },
       {
         label: t("flows.actions.unarchiveConversation"),
         icon: PackageOpenIcon,
-        stepType: StepType.unarchiveConversation,
+        stepType: stepTypes.enum.unarchiveConversation,
       },
     ],
   },
@@ -203,37 +203,37 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.addContactNotes"),
         icon: MessageCircleMoreIcon,
-        stepType: StepType.addContactNotes,
+        stepType: stepTypes.enum.addContactNotes,
       },
       {
         label: t("flows.actions.addContactTag"),
         icon: TagIcon,
-        stepType: StepType.addContactTag,
+        stepType: stepTypes.enum.addContactTag,
       },
       {
         label: t("flows.actions.removeContactTag"),
         icon: OctagonXIcon,
-        stepType: StepType.removeContactTag,
+        stepType: stepTypes.enum.removeContactTag,
       },
       {
         label: t("flows.actions.setCustomField"),
         icon: SaveIcon,
-        stepType: StepType.setCustomField,
+        stepType: stepTypes.enum.setCustomField,
       },
       {
         label: t("flows.actions.clearCustomField"),
         icon: SaveOffIcon,
-        stepType: StepType.clearCustomField,
+        stepType: stepTypes.enum.clearCustomField,
       },
       {
         label: t("flows.actions.blockContact"),
         icon: UserRoundXIcon,
-        stepType: StepType.blockContact,
+        stepType: stepTypes.enum.blockContact,
       },
       {
         label: t("flows.actions.deleteContact"),
         icon: UserRoundXIcon,
-        stepType: StepType.deleteContact,
+        stepType: stepTypes.enum.deleteContact,
       },
     ],
   },
@@ -245,12 +245,12 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.subscribeBroadcast"),
         icon: BellRingIcon,
-        stepType: StepType.subscribeBroadcast,
+        stepType: stepTypes.enum.subscribeBroadcast,
       },
       {
         label: t("flows.actions.unsubscribeBroadcast"),
         icon: BellOffIcon,
-        stepType: StepType.unsubscribeBroadcast,
+        stepType: stepTypes.enum.unsubscribeBroadcast,
       },
     ],
   },
@@ -262,12 +262,12 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.subscribeSequence"),
         icon: LayersPlus,
-        stepType: StepType.subscribeSequence,
+        stepType: stepTypes.enum.subscribeSequence,
       },
       {
         label: t("flows.actions.unsubscribeSequence"),
         icon: Layers2,
-        stepType: StepType.unsubscribeSequence,
+        stepType: stepTypes.enum.unsubscribeSequence,
       },
     ],
   },
@@ -279,17 +279,17 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.markEmailVerified"),
         icon: CircleCheckIcon,
-        stepType: StepType.markEmailVerified,
+        stepType: stepTypes.enum.markEmailVerified,
       },
       {
         label: t("flows.actions.optInEmail"),
         icon: BellRingIcon,
-        stepType: StepType.optInEmail,
+        stepType: stepTypes.enum.optInEmail,
       },
       {
         label: t("flows.actions.optOutEmail"),
         icon: BellOffIcon,
-        stepType: StepType.optOutEmail,
+        stepType: stepTypes.enum.optOutEmail,
       },
     ],
   },
@@ -307,17 +307,17 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.sendNode"),
         icon: ZapIcon,
-        stepType: StepType.startAnotherNode,
+        stepType: stepTypes.enum.startAnotherNode,
       },
       {
         label: t("flows.actions.sendExternalFlow"),
         icon: ZapIcon,
-        stepType: StepType.startExternalFlow,
+        stepType: stepTypes.enum.startExternalFlow,
       },
       {
         label: t("flows.actions.sendExternalNode"),
         icon: ZapIcon,
-        stepType: StepType.startExternalNode,
+        stepType: stepTypes.enum.startExternalNode,
       },
     ],
   },
@@ -329,22 +329,22 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       {
         label: t("flows.actions.getDataFromJson"),
         icon: CodeIcon,
-        stepType: StepType.getDataFromJson,
+        stepType: stepTypes.enum.getDataFromJson,
       },
       {
         label: t("flows.actions.formatDate"),
         icon: ZapIcon,
-        stepType: StepType.formatDate,
+        stepType: stepTypes.enum.formatDate,
       },
       {
         label: t("flows.actions.generateCode"),
         icon: ShuffleIcon,
-        stepType: StepType.generateCode,
+        stepType: stepTypes.enum.generateCode,
       },
       {
         label: t("flows.actions.countCharacters"),
         icon: CalculatorIcon,
-        stepType: StepType.countCharacters,
+        stepType: stepTypes.enum.countCharacters,
       },
     ],
   },

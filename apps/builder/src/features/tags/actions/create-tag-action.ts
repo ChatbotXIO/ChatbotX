@@ -6,35 +6,35 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import { type CreateTagRequest, createTagRequest } from "../schemas/action"
+import { type CreateTagRequest, createTagRequest } from "../schema/action"
 
 export const createTagAction = authActionClient
   .inputSchema(createTagRequest)
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       ctx: { user: UserModel }
       parsedInput: CreateTagRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
+      await findChatbotOrFail(ctx.user.id, workspaceId)
 
-      return await createTag({ chatbotId, ...parsedInput })
+      return await createTag({ workspaceId, ...parsedInput })
     },
   )
 
 export const createTag = async (
-  parsedInput: CreateTagRequest & { chatbotId: bigint },
+  parsedInput: CreateTagRequest & { workspaceId: string },
 ) => {
   const existingTag = await db.query.tagModel.findFirst({
     columns: {
@@ -42,7 +42,7 @@ export const createTag = async (
     },
     where: {
       name: parsedInput.name,
-      chatbotId: parsedInput.chatbotId,
+      workspaceId: parsedInput.workspaceId,
     },
   })
   if (existingTag) {
@@ -52,7 +52,7 @@ export const createTag = async (
   if (parsedInput.folderId) {
     await ensureFolderIsExists(
       parsedInput.folderId,
-      parsedInput.chatbotId,
+      parsedInput.workspaceId,
       "tag",
     )
   }
@@ -68,7 +68,7 @@ export const createTag = async (
     .returning()
     .then((result) => result[0])
 
-  revalidateCacheTags(`chatbots:${parsedInput.chatbotId}#tags`)
+  revalidateCacheTags(`workspaces:${parsedInput.workspaceId}#tags`)
 
   return {
     data: newTag,

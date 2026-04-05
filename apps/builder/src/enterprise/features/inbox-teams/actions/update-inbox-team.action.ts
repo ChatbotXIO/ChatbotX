@@ -2,42 +2,43 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { inboxTeamModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateInboxTeamRequest,
   updateInboxTeamRequest,
 } from "../schema/action"
 
-export const updateInboxTeamAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateInboxTeamAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateInboxTeamRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, inboxTeamId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateInboxTeamRequest
-    }) => {
-      const inboxTeam = await findOrFail(
-        inboxTeamModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Inbox team not found",
-      )
+    } = props
 
-      await db
-        .update(inboxTeamModel)
-        .set(parsedInput)
-        .where(eq(inboxTeamModel.id, inboxTeam.id))
+    return await updateInboxTeam({ workspaceId, inboxTeamId }, parsedInput)
+  })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
+export const updateInboxTeam = async (
+  ctx: { workspaceId: string; inboxTeamId: string },
+  parsedInput: UpdateInboxTeamRequest,
+) => {
+  const inboxTeam = await findOrFail({
+    table: inboxTeamModel,
+    where: {
+      id: ctx.inboxTeamId,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Inbox team not found",
+  })
+
+  await db
+    .update(inboxTeamModel)
+    .set(parsedInput)
+    .where(eq(inboxTeamModel.id, inboxTeam.id))
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#inboxTeams`)
+}

@@ -1,4 +1,4 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { actionSteps } from "../shared"
 import { openWebsiteStepSchema } from "./open-website"
@@ -18,7 +18,7 @@ export type ButtonType = (typeof ButtonType)[keyof typeof ButtonType]
 
 export const buttonStepSchema = z
   .object({
-    id: z.bigint(),
+    id: zodBigintAsString(),
     label: z.string().min(1).max(20),
   })
   .and(

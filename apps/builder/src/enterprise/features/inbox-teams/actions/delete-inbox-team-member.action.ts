@@ -5,44 +5,50 @@ import {
   inboxTeamMemberModel,
   inboxTeamModel,
 } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteTeamMembersAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const deleteTeamMembersAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsClientInputs: [workspaceId, inboxTeamId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      const inboxTeam = await findOrFail(
-        inboxTeamModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Inbox team not found",
-      )
+    } = props
 
-      await db
-        .delete(inboxTeamMemberModel)
-        .where(
-          and(
-            eq(inboxTeamMemberModel.inboxTeamId, inboxTeam.id),
-            inArray(inboxTeamMemberModel.id, parsedInput.ids),
-          ),
-        )
+    return await deleteInboxTeamMember(
+      { workspaceId, inboxTeamId },
+      parsedInput,
+    )
+  })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
+export const deleteInboxTeamMember = async (
+  ctx: { workspaceId: string; inboxTeamId: string },
+  parsedInput: BulkUpdateIdsRequest,
+) => {
+  const inboxTeam = await findOrFail({
+    table: inboxTeamModel,
+    where: {
+      id: ctx.inboxTeamId,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Inbox team not found",
+  })
+
+  await db
+    .delete(inboxTeamMemberModel)
+    .where(
+      and(
+        eq(inboxTeamMemberModel.inboxTeamId, inboxTeam.id),
+        inArray(inboxTeamMemberModel.id, parsedInput.ids),
+      ),
+    )
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#inboxTeams`)
+}

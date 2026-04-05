@@ -1,7 +1,7 @@
 import {
-  CustomFieldType,
-  DateTimeTriggerType,
-} from "@chatbotx.io/database/enums"
+  customFieldTypes,
+  dateTimeTriggerTypes,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
@@ -15,9 +15,12 @@ export const DateTimeBasedTrigger = ({
 }) => {
   const t = useTranslations()
   const triggerTypeOptions = [
-    { label: t("trigger.atTheDayOf"), value: DateTimeTriggerType.atTheDayOf },
-    { label: t("trigger.before"), value: DateTimeTriggerType.before },
-    { label: t("trigger.after"), value: DateTimeTriggerType.after },
+    {
+      label: t("trigger.atTheDayOf"),
+      value: dateTimeTriggerTypes.enum.atTheDayOf,
+    },
+    { label: t("trigger.before"), value: dateTimeTriggerTypes.enum.before },
+    { label: t("trigger.after"), value: dateTimeTriggerTypes.enum.after },
   ]
   const timeTypeOptions = [
     { label: t("trigger.day"), value: "days" },
@@ -41,7 +44,7 @@ export const DateTimeBasedTrigger = ({
           options={triggerTypeOptions}
         />
         {form.watch(`${parentName}.value.triggerType`) !==
-          DateTimeTriggerType.atTheDayOf && (
+          dateTimeTriggerTypes.enum.atTheDayOf && (
           <>
             <InputField name={`${parentName}.value.timeValue`} type="number" />
             <SelectField
@@ -53,13 +56,16 @@ export const DateTimeBasedTrigger = ({
       </div>
 
       <CustomFieldSelect
-        customFieldTypes={[CustomFieldType.datetime, CustomFieldType.date]}
+        customFieldTypes={[
+          customFieldTypes.enum.datetime,
+          customFieldTypes.enum.date,
+        ]}
         label=""
         name={`${parentName}.sourceId`}
       />
 
       {form.watch(`${parentName}.value.triggerType`) ===
-        DateTimeTriggerType.atTheDayOf && (
+        dateTimeTriggerTypes.enum.atTheDayOf && (
         <div className="flex items-center gap-2">
           <div>{t("trigger.at")}</div>
           <SelectField name={`${parentName}.value.at`} options={atOptions} />

@@ -2,12 +2,16 @@
 
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
-import { z } from "zod"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import type { z } from "zod"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
-import { type EditSavedReplyRequest, editSavedReplyRequest } from "../schema"
+import {
+  type EditSavedReplyRequest,
+  editSavedReplyRequest,
+} from "../schema/mutation"
 
-const savedReplyIdRequestParams: [z.ZodCUID2] = [z.bigint().describe("id")]
+const savedReplyIdRequestParams: [z.ZodString] = [zodBigintAsString()]
 type SavedReplyIdRequestParams = [string]
 
 export const editSavedReplyAction = authActionClient

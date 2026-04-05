@@ -1,10 +1,10 @@
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listSpreadsheets } from "../queries/list-spreadsheet.queries"
 import {
   listWorksheetHeaders,
   listWorksheets,
-} from "../queries/list-worksheet.qureies"
+} from "../queries/list-worksheet.queries"
 import {
   listSpreadsheetsRequest,
   listSpreadsheetsResponse,
@@ -12,18 +12,18 @@ import {
   listWorksheetHeadersResponse,
   listWorksheetsRequest,
   listWorksheetsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const spreadsheetsAuthenticatedAPI = {
   listSpreadsheetsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/spreadsheets",
+      path: "/workspaces/{workspaceId}/spreadsheets",
       summary: "List spreadsheets",
       tags: ["Spreadsheets"],
     })
     .input(listSpreadsheetsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSpreadsheetsResponse)
     .handler(async ({ input }) => {
       return await listSpreadsheets(input)
@@ -31,12 +31,12 @@ export const spreadsheetsAuthenticatedAPI = {
   listWorksheetsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/worksheets",
+      path: "/workspaces/{workspaceId}/worksheets",
       summary: "List worksheets",
       tags: ["Worksheets"],
     })
     .input(listWorksheetsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWorksheetsResponse)
     .handler(async ({ input }) => {
       return await listWorksheets(input)
@@ -44,12 +44,12 @@ export const spreadsheetsAuthenticatedAPI = {
   listWorksheetHeadersAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/worksheets/{id}/headers",
+      path: "/workspaces/{workspaceId}/worksheets/{id}/headers",
       summary: "List worksheet headers",
       tags: ["Worksheet Headers"],
     })
     .input(listWorksheetHeadersRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWorksheetHeadersResponse)
     .handler(async ({ input }) => {
       return await listWorksheetHeaders(input)

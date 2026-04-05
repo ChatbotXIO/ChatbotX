@@ -7,7 +7,7 @@ export type FlowActionState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   data: Record<string, unknown>
   beforeStep?: { channel?: string; [key: string]: unknown }
 }
@@ -26,7 +26,7 @@ export const createFlowActionStore = (props: Partial<FlowActionState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     data: {},
     beforeStep: undefined,
     ...props,
@@ -53,15 +53,15 @@ export const createFlowActionStore = (props: Partial<FlowActionState>) =>
     },
 
     fetchWaTemplates: async () => {
-      const { chatbotId, loading } = get()
+      const { workspaceId, loading } = get()
 
-      if (loading || !chatbotId) {
+      if (loading || !workspaceId) {
         return
       }
 
       set({ loading: true, error: null })
       try {
-        const templates = await getTemplatesForFlow(chatbotId)
+        const templates = await getTemplatesForFlow(workspaceId)
         const waTemplates = templates.map((t) => ({
           id: t.id,
           name: t.name,

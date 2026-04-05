@@ -9,7 +9,7 @@ import {
 } from "react-virtuoso"
 import { MessageBubble } from "../messages/components/message-bubble"
 import { MessageItem } from "../messages/components/message-item"
-import type { MessageResource } from "../messages/schema/resource"
+import type { MessageResourceWithRelations } from "../messages/schema/resource"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 const MESSAGE_LIST_PER_PAGE = 50
@@ -72,7 +72,7 @@ export function WebchatMessageList() {
             <MessageItem
               guestDisplay={true}
               key={item.id}
-              message={item as MessageResource}
+              message={item as MessageResourceWithRelations}
               onPostback={sendPostback}
             />
           )

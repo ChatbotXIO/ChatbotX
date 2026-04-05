@@ -1,6 +1,5 @@
 "use client"
 
-import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -20,7 +19,6 @@ import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getAvatarUrl, getFullName } from "../contacts/utils"
-import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
 import type { ListConversationItemResource } from "./schema/resource"
 
@@ -92,7 +90,11 @@ export default function ConversationItem({
   )
 
   const { execute } = useAction(
-    readConversationAction.bind(null, conversation.chatbotId, conversation.id),
+    readConversationAction.bind(
+      null,
+      conversation.workspaceId,
+      conversation.id,
+    ),
     {
       onSuccess: () => {
         readConversation(conversation.id)
@@ -129,13 +131,13 @@ export default function ConversationItem({
             {assignedIcon(conversation)}
           </div>
           <div className="absolute right-0 bottom-0 transform">
-            <InboxIcon
+            {/* <InboxIcon
               channel={
                 conversation.inbox?.channel ?? channelTypes.enum.omnichannel
               }
               showLabel={false}
               size="small"
-            />
+            /> */}
           </div>
           {conversation.followed && (
             <div className="absolute top-0 right-0 transform">

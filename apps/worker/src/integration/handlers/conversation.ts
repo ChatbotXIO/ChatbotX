@@ -1,7 +1,7 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import {
-  broadcastToChatbotParty,
+  broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import type {
@@ -17,7 +17,7 @@ export const broadcastAssignConversation = async (
   const { conversations } = props
   const { inbox } = await getInboxWithAuthFromInboxId(conversations[0].inboxId)
 
-  await broadcastToChatbotParty(inbox.chatbotId, {
+  await broadcastToWorkspaceParty(inbox.workspaceId, {
     eventType: RealtimeEventType.conversationAssigned,
     data: {
       conversationIds: conversations.map((c) => c.id),

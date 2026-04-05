@@ -23,7 +23,7 @@ import { deleteAutomatedResponseAction } from "./actions/delete-automated-respon
 type DeleteAutomatedResponsesDialogProps = ComponentPropsWithoutRef<
   typeof Dialog
 > & {
-  chatbotId: bigint
+  workspaceId: string
   automatedResponses: Row<AutomatedResponseModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -31,7 +31,7 @@ type DeleteAutomatedResponsesDialogProps = ComponentPropsWithoutRef<
 }
 
 export function DeleteAutomatedResponsesDialog({
-  chatbotId,
+  workspaceId,
   automatedResponses,
   showTrigger = true,
   onSuccess,
@@ -41,7 +41,7 @@ export function DeleteAutomatedResponsesDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAutomatedResponseAction.bind(null, chatbotId),
+    deleteAutomatedResponseAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

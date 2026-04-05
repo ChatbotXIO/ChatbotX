@@ -9,11 +9,15 @@ import { useTranslations } from "next-intl"
 import { updateWhatsappProfileAction } from "./actions/update-whatsapp-profile.action"
 import { updateWhatsappProfileRequest } from "./schemas/update-whatsapp-profile.request"
 
-export function UpdateWhatsappProfile({ chatbotId }: { chatbotId: bigint }) {
+export function UpdateWhatsappProfile({
+  workspaceId,
+}: {
+  workspaceId: string
+}) {
   const t = useTranslations()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateWhatsappProfileAction.bind(null, chatbotId),
+    updateWhatsappProfileAction.bind(null, workspaceId),
     zodResolver(updateWhatsappProfileRequest),
     {
       actionProps: {},

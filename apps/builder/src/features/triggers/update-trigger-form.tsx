@@ -25,7 +25,7 @@ import {
 type TriggerWithConditions = TriggerModel & {
   conditions?: Array<{
     id: string
-    type: number
+    type: string
     sourceId: string | null
     operator: string | null
     value: unknown
@@ -33,12 +33,12 @@ type TriggerWithConditions = TriggerModel & {
 }
 
 type UpdateTriggerFormProps = {
-  chatbotId: bigint
+  workspaceId: string
   trigger: TriggerWithConditions
 }
 
 export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
-  const { chatbotId, trigger } = props
+  const { workspaceId, trigger } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -47,7 +47,7 @@ export default function UpdateTriggerForm(props: UpdateTriggerFormProps) {
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    updateTriggerAction.bind(null, chatbotId, trigger.id),
+    updateTriggerAction.bind(null, workspaceId, trigger.id),
     zodResolver(updateTriggerSchema),
     {
       actionProps: {

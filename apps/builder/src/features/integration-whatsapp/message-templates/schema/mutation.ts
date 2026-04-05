@@ -1,4 +1,4 @@
-import { WhatsappTemplateCategory } from "@chatbotx.io/database/types"
+import { whatsappTemplateCategories } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 import {
   languageOptions,
@@ -19,10 +19,7 @@ export const createMessageTemplateRequest = z
     language: z.enum(
       languageOptions.map((option) => option.value) as [string, ...string[]],
     ),
-    category: z.enum([
-      WhatsappTemplateCategory.marketing,
-      WhatsappTemplateCategory.utility,
-    ]),
+    category: whatsappTemplateCategories,
     templateType: templateTypes,
   })
   .and(

@@ -7,6 +7,7 @@ import {
 } from "../lib"
 import type {
   BotMessageAIProviderStats,
+  BotMessageResult,
   BotMessageStats,
   TimeRangeQuery,
 } from "../schemas"
@@ -26,7 +27,7 @@ export class BotMessageStatsRepository extends BaseRepository {
   private async getMessagesByResultMonth(
     props: TimeRangeQuery,
   ): Promise<BotMessageStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const monthGroup = this.buildMonthGroupFromHourly(props)
@@ -48,7 +49,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           ai_provider,
           uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND result != ''
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, month_group, result, response_type, ai_provider
@@ -65,12 +66,12 @@ export class BotMessageStatsRepository extends BaseRepository {
       ai_provider: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     const rows = result.map((row) => ({
-      chatbotId: row.chatbot_id,
+      workspaceId: row.chatbot_id,
       timestamp: new Date(row.month),
       hasResponse: true,
       responseType: row.response_type as BotMessageStats["responseType"],
@@ -79,7 +80,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       count: Number(row.count),
     }))
 
-    const results: Array<"SUCCESS" | "FALLBACK"> = ["SUCCESS", "FALLBACK"]
+    const results: BotMessageResult[] = ["success", "fallback"]
     return fillBotMessageStatsMonthSeries({
       ...props,
       rows,
@@ -92,7 +93,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
-    const { granularity, chatbotId } = props
+    const { granularity, workspaceId } = props
     if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
       return this.getMessagesByResultMonth(props)
     }
@@ -116,7 +117,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ai_provider,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {chatbotId:String}
+          WHERE chatbot_id = {workspaceId:String}
             AND result != ''
             AND ${timeFilter.sql}
           GROUP BY day_group, result, response_type, ai_provider
@@ -132,12 +133,12 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider: string
         count: string
       }>(sql, {
-        chatbotId,
+        workspaceId,
         ...timeFilter.params,
       })
 
       const rows = result.map((row) => ({
-        chatbotId,
+        workspaceId,
         timestamp: new Date(row.timestamp),
         hasResponse: true,
         responseType: row.response_type as BotMessageStats["responseType"],
@@ -146,7 +147,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         count: Number(row.count),
       }))
 
-      const results: Array<"SUCCESS" | "FALLBACK"> = ["SUCCESS", "FALLBACK"]
+      const results: BotMessageResult[] = ["success", "fallback"]
       return fillBotMessageStatsDaySeries({
         ...props,
         rows,
@@ -168,7 +169,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {chatbotId:String}
+      WHERE chatbot_id = {workspaceId:String}
         AND result != ''
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, result, response_type, ai_provider
@@ -182,12 +183,12 @@ export class BotMessageStatsRepository extends BaseRepository {
       ai_provider: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId,
+      workspaceId,
       timestamp: new Date(row.timestamp),
       hasResponse: true,
       responseType: row.response_type as BotMessageStats["responseType"],
@@ -202,7 +203,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
-    const { granularity, chatbotId } = props
+    const { granularity, workspaceId } = props
     if (granularity === "day") {
       const timeFilter = this.buildHourlyTimestampFilter(props)
       const dayGroup = this.buildDayGroupFromHourly(props)
@@ -220,7 +221,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             response_type,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {chatbotId:String}
+          WHERE chatbot_id = {workspaceId:String}
             AND has_response = 0
             AND ${timeFilter.sql}
           GROUP BY day_group, has_response, response_type
@@ -235,12 +236,12 @@ export class BotMessageStatsRepository extends BaseRepository {
         response_type: string
         count: string
       }>(sql, {
-        chatbotId,
+        workspaceId,
         ...timeFilter.params,
       })
 
       return result.map((row) => ({
-        chatbotId,
+        workspaceId,
         timestamp: new Date(row.timestamp),
         hasResponse: row.has_response === 1,
         responseType: row.response_type as BotMessageStats["responseType"],
@@ -262,7 +263,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         response_type,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {chatbotId:String}
+      WHERE chatbot_id = {workspaceId:String}
         AND has_response = 0
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, has_response, response_type
@@ -275,12 +276,12 @@ export class BotMessageStatsRepository extends BaseRepository {
       response_type: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId,
+      workspaceId,
       timestamp: new Date(row.timestamp),
       hasResponse: row.has_response === 1,
       responseType: row.response_type as BotMessageStats["responseType"],
@@ -294,7 +295,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       granularity: "minute" | "hour" | "day"
     },
   ): Promise<BotMessageStats[]> {
-    const { granularity, chatbotId } = props
+    const { granularity, workspaceId } = props
     if (granularity === "day") {
       const timeFilter = this.buildHourlyTimestampFilter(props)
       const dayGroup = this.buildDayGroupFromHourly(props)
@@ -314,7 +315,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ai_provider,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {chatbotId:String}
+          WHERE chatbot_id = {workspaceId:String}
             AND has_response = 1
             AND ${timeFilter.sql}
           GROUP BY day_group, response_type, result, ai_provider
@@ -330,12 +331,12 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider: string
         count: string
       }>(sql, {
-        chatbotId,
+        workspaceId,
         ...timeFilter.params,
       })
 
       const rows = result.map((row) => ({
-        chatbotId,
+        workspaceId,
         timestamp: new Date(row.timestamp),
         hasResponse: true,
         responseType: row.response_type as BotMessageStats["responseType"],
@@ -383,7 +384,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {chatbotId:String}
+      WHERE chatbot_id = {workspaceId:String}
         AND has_response = 1
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, response_type, result, ai_provider
@@ -397,12 +398,12 @@ export class BotMessageStatsRepository extends BaseRepository {
       ai_provider: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId,
+      workspaceId,
       timestamp: new Date(row.timestamp),
       hasResponse: true,
       responseType: row.response_type as BotMessageStats["responseType"],
@@ -415,7 +416,7 @@ export class BotMessageStatsRepository extends BaseRepository {
   async getAIProviderStats(
     props: TimeRangeQuery,
   ): Promise<BotMessageAIProviderStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
     const timeFilter = this.buildHourlyTimestampFilter(props)
 
     const sql = `
@@ -427,7 +428,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           ai_provider,
           uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND has_response = 1
           AND response_type = 'ai_agent'
           AND ai_provider != 'none'
@@ -442,7 +443,7 @@ export class BotMessageStatsRepository extends BaseRepository {
       ai_provider: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 

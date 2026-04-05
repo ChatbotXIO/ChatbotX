@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const GenerateCodeType = {
   NUMERIC_LENGTH: "NUMERIC_LENGTH",
@@ -10,8 +10,8 @@ export const GenerateCodeType = {
 
 export const generateCodeStepSchema = z
   .object({
-    id: z.bigint(),
-    stepType: z.literal(StepType.generateCode),
+    id: zodBigintAsString(),
+    stepType: z.literal(stepTypes.enum.generateCode),
     type: z.enum(GenerateCodeType),
     min: z
       .number()
@@ -19,7 +19,7 @@ export const generateCodeStepSchema = z
       .min(0)
       .max(Number.MAX_SAFE_INTEGER - 1),
     max: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-    outputCfId: z.bigint(),
+    outputCfId: zodBigintAsString(),
   })
   .refine((data) => data.min <= data.max, {
     message: "Max must be larger than Min",
@@ -29,7 +29,7 @@ export type GenerateCodeStepSchema = z.infer<typeof generateCodeStepSchema>
 
 export const generateCodeStepDefaultFn = (): GenerateCodeStepSchema => ({
   id: createId(),
-  stepType: StepType.generateCode,
+  stepType: stepTypes.enum.generateCode,
   type: GenerateCodeType.NUMERIC_LENGTH,
   min: 0,
   max: 100,

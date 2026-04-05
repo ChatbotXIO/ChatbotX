@@ -1,6 +1,8 @@
 import { db } from "@chatbotx.io/database/client"
-import { InboxStatus } from "@chatbotx.io/database/enums"
-import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import {
+  inboxStatuses,
+  type OrganizationSettings,
+} from "@chatbotx.io/database/partials"
 import { inboxModel, integrationZaloModel } from "@chatbotx.io/database/schema"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { integrations } from "@/integration"
@@ -8,11 +10,11 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 
 export async function connectZaloHandler({
   zaloSettings,
-  chatbotId,
+  workspaceId,
   req,
 }: {
   zaloSettings: NonNullable<OrganizationSettings["zalo"]>
-  chatbotId: bigint
+  workspaceId: string
   req: Request
 }) {
   const authValue = (await integrations.zalo.handleRequest({
@@ -20,7 +22,7 @@ export async function connectZaloHandler({
       ...zaloSettings,
       redirectUrl: new URL("/integrations/zalo/callback", req.url).toString(),
       stateParams: {
-        chatbotId,
+        workspaceId,
       },
     },
     req,
@@ -30,7 +32,7 @@ export async function connectZaloHandler({
     const inbox = await tx
       .insert(inboxModel)
       .values({
-        chatbotId,
+        workspaceId,
         name: authValue.metadata.oaName,
         channel: "zalo",
         sourceId: authValue.oaId,
@@ -38,7 +40,7 @@ export async function connectZaloHandler({
       .onConflictDoUpdate({
         target: [inboxModel.channel, inboxModel.sourceId],
         set: {
-          status: InboxStatus.connected,
+          status: inboxStatuses.enum.connected,
         },
       })
       .returning()
@@ -46,12 +48,12 @@ export async function connectZaloHandler({
 
     await tx.insert(integrationZaloModel).values({
       inboxId: inbox.id,
-      chatbotId,
+      workspaceId,
       oaId: authValue.oaId,
       auth: authValue,
       name: authValue.metadata.oaName,
     })
   })
 
-  revalidateCacheTags(`chatbots:${chatbotId}#zalos`)
+  revalidateCacheTags(`workspaces:${workspaceId}#zalos`)
 }

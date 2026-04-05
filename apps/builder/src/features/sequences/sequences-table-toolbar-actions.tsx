@@ -7,18 +7,20 @@ import type { Dispatch, SetStateAction } from "react"
 import { BulkDeleteSequenceDialog } from "./bulk-delete-sequence-dialog"
 import { BulkMoveFolderDialog } from "./bulk-move-folder-dialog"
 import { AddSequenceButton } from "./components/add-sequence-button"
-import type { ListSequencesItem } from "./schema"
+import type { ListSequencesResponse } from "./schema/action"
 
 type SequencesTableToolbarActionsProps = {
-  chatbotId: bigint
-  table: Table<ListSequencesItem>
+  workspaceId: string
+  table: Table<ListSequencesResponse["data"][number]>
   setRowAction: Dispatch<
-    SetStateAction<DataTableRowAction<ListSequencesItem> | null>
+    SetStateAction<DataTableRowAction<
+      ListSequencesResponse["data"][number]
+    > | null>
   >
 }
 
 export function SequencesTableToolbarActions({
-  chatbotId,
+  workspaceId,
   table,
   setRowAction,
 }: SequencesTableToolbarActionsProps) {
@@ -29,7 +31,6 @@ export function SequencesTableToolbarActions({
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <>
           <BulkMoveFolderDialog
-            chatbotId={chatbotId}
             onOpenChange={() => setRowAction(null)}
             onSuccess={() => {
               table.toggleAllRowsSelected(false)
@@ -38,6 +39,7 @@ export function SequencesTableToolbarActions({
             sequences={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original)}
+            workspaceId={workspaceId}
           />
           <BulkDeleteSequenceDialog
             onOpenChange={() => setRowAction(null)}

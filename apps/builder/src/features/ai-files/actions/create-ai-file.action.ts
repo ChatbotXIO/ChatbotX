@@ -4,23 +4,23 @@ import { db } from "@chatbotx.io/database/client"
 import { aiFileModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { createAIFileRequest } from "../schemas"
 
-export const createAIFileAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createAIFileAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createAIFileRequest)
   .action(async ({ bindArgsParsedInputs, parsedInput }) => {
-    const [chatbotId] = bindArgsParsedInputs
+    const [workspaceId] = bindArgsParsedInputs
 
     const created = await db
       .insert(aiFileModel)
       .values({
         ...parsedInput,
         id: createId(),
-        chatbotId,
+        workspaceId,
       })
       .returning({ id: aiFileModel.id })
 
@@ -32,5 +32,5 @@ export const createAIFileAction = chatbotActionClient
       },
     })
 
-    revalidateCacheTags(`chatbots:${chatbotId}#aiFiles`)
+    revalidateCacheTags(`workspaces:${workspaceId}#aiFiles`)
   })

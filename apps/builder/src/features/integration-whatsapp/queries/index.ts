@@ -5,7 +5,7 @@ import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import type { IntegrationWhatsappResource } from "../schemas"
 
 export const listIntegrationWhatsapps = async (
-  props: Pick<IntegrationWhatsappModel, "chatbotId">,
+  props: Pick<IntegrationWhatsappModel, "workspaceId">,
 ): Promise<PaginatedResponse<IntegrationWhatsappResource>> => {
   const data = await db.query.integrationWhatsappModel.findMany({
     where: props,
@@ -18,11 +18,11 @@ export const listIntegrationWhatsapps = async (
 }
 
 export const findIntegrationWhatsapp = async (
-  props: Pick<IntegrationWhatsappModel, "chatbotId" | "id">,
+  props: Pick<IntegrationWhatsappModel, "workspaceId" | "id">,
 ): Promise<IntegrationWhatsappResource> => {
-  return await findOrFail(
-    integrationWhatsappModel,
-    props,
-    "Whatsapp integration not found",
-  )
+  return await findOrFail({
+    table: integrationWhatsappModel,
+    where: props,
+    message: "Whatsapp integration not found",
+  })
 }

@@ -11,7 +11,7 @@ import { InboxWhatsappCard } from "./inbox-whatsapp-card"
 import { InboxZaloCard } from "./inbox-zalo-card"
 
 type InboxCardListProps = {
-  chatbotId: bigint
+  workspaceId: string
   allowAddNew?: boolean
   actionLabel?: string
   direction?: "horizontal" | "vertical"
@@ -35,7 +35,7 @@ export const cardConfigs: Record<
 }
 
 export const InboxCardList = memo(function InboxCardList({
-  chatbotId,
+  workspaceId,
   actionLabel,
   allowAddNew = true,
   direction = "horizontal",
@@ -69,7 +69,7 @@ export const InboxCardList = memo(function InboxCardList({
         ) : null
       })}
 
-      {allowAddNew && <InboxNewCard chatbotId={chatbotId} />}
+      {allowAddNew && <InboxNewCard workspaceId={workspaceId} />}
     </div>
   )
 })

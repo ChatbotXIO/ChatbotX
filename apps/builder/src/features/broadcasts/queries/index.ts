@@ -15,10 +15,10 @@ import type { BroadcastResourceWithRelations } from "../schemas/resource"
 export async function listBroadcasts(
   input: GetBroadcastsSchema,
 ): Promise<PaginatedResponse<BroadcastResourceWithRelations>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
   }
 

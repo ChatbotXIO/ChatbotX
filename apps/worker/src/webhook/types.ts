@@ -5,9 +5,9 @@ export type WebhookWithConditions = WebhookModel & {
 }
 
 export type WebhookEventData = {
-  chatbotId: bigint
-  contactId: bigint
-  eventType: number
+  workspaceId: string
+  contactId: string
+  eventType: string
   eventData: Record<string, unknown>
   timestamp: Date
   source?: string

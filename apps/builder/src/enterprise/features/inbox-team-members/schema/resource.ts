@@ -2,7 +2,13 @@ import {
   createSelectSchema,
   inboxTeamMemberModel,
 } from "@chatbotx.io/database/schema"
-import type z from "zod"
+import { z } from "zod"
 
-export const inboxTeamMemberResource = createSelectSchema(inboxTeamMemberModel)
+export const inboxTeamMemberResource = createSelectSchema(
+  inboxTeamMemberModel,
+  {
+    id: z.string(),
+    inboxTeamId: z.string(),
+  },
+)
 export type InboxTeamMemberResource = z.infer<typeof inboxTeamMemberResource>

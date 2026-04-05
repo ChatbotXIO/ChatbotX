@@ -8,16 +8,16 @@ import { toast } from "sonner"
 import { syncMessageTemplateAction } from "./actions/sync-message-templates"
 
 export function WhatsappMessageTemplatesTableToolbarActions({
-  chatbotId,
+  workspaceId,
   integrationWhatsappId,
 }: {
-  chatbotId: bigint
-  integrationWhatsappId: bigint
+  workspaceId: string
+  integrationWhatsappId: string
 }) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    syncMessageTemplateAction.bind(null, chatbotId, integrationWhatsappId),
+    syncMessageTemplateAction.bind(null, workspaceId, integrationWhatsappId),
     {
       onSuccess() {
         toast.success(t("messages.syncedSuccessfully"))

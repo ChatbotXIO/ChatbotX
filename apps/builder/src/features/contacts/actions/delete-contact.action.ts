@@ -1,23 +1,26 @@
 "use server"
 
-import { contactTrackingService } from "@chatbotx.io/analytics"
+import {
+  type CreateContactEvent,
+  contactTrackingService,
+} from "@chatbotx.io/analytics"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteContactAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -25,10 +28,13 @@ export const deleteContactAction = chatbotActionClient
     }) => {
       const contacts = await db.query.contactModel.findMany({
         where: {
-          chatbotId,
+          workspaceId,
           id: {
             in: parsedInput.ids,
           },
+        },
+        with: {
+          contactInboxes: true,
         },
       })
 
@@ -41,17 +47,21 @@ export const deleteContactAction = chatbotActionClient
         ),
       )
 
-      const events = contacts
-        .filter((contact) => Boolean(contact.sourceId))
-        .map((contact) => ({
-          chatbotId,
-          contactId: contact.id,
-          eventType: "contact_deleted" as const,
-          occurredAt: contact.updatedAt,
-          source: contact.source,
-          channel: contact.channel,
-          sourceId: contact.sourceId,
-        }))
+      // Trigger delete events
+      const events: CreateContactEvent[] = []
+      for (const contact of contacts) {
+        for (const contactInbox of contact.contactInboxes) {
+          events.push({
+            workspaceId,
+            contactId: contact.id,
+            eventType: "contact_deleted" as const,
+            occurredAt: contact.updatedAt,
+            source: contactInbox.source,
+            channel: contactInbox.channel,
+            sourceId: contactInbox.sourceId,
+          })
+        }
+      }
 
       contactTrackingService.trackEvents(events).catch((error) => {
         console.error(
@@ -60,6 +70,6 @@ export const deleteContactAction = chatbotActionClient
         )
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#contacts`)
+      revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
     },
   )

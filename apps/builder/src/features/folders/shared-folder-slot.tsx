@@ -1,4 +1,4 @@
-import { FolderType } from "@chatbotx.io/database/enums"
+import { type FolderType, folderTypes } from "@chatbotx.io/database/partials"
 import type { FolderModel } from "@chatbotx.io/database/types"
 import {
   Card,
@@ -16,7 +16,7 @@ import { getCurrentFolder, listFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schema/query"
 
 export default async function SharedFolderSlot(props: {
-  chatbotId: bigint
+  workspaceId: string
   searchParams: Promise<SearchParams>
 }) {
   const t = await getTranslations()
@@ -30,26 +30,26 @@ export default async function SharedFolderSlot(props: {
   let folderType: FolderType | null = null
   switch (featureName) {
     case "automated-responses":
-      folderType = FolderType.automatedResponse
+      folderType = folderTypes.enum.automatedResponse
       break
     case "sequences":
-      folderType = FolderType.sequence
+      folderType = folderTypes.enum.sequence
       break
     case "flows":
-      folderType = FolderType.flow
+      folderType = folderTypes.enum.flow
       break
     case "bot-fields":
     case "custom-fields":
-      folderType = FolderType.customField
+      folderType = folderTypes.enum.customField
       break
     case "tags":
-      folderType = FolderType.tag
+      folderType = folderTypes.enum.tag
       break
     case "triggers":
-      folderType = FolderType.trigger
+      folderType = folderTypes.enum.trigger
       break
     case "webhooks":
-      folderType = FolderType.webhook
+      folderType = folderTypes.enum.webhook
       break
     default:
       break
@@ -65,11 +65,11 @@ export default async function SharedFolderSlot(props: {
     folderId
       ? getCurrentFolder({
           id: folderId,
-          chatbotId: props.chatbotId,
+          workspaceId: props.workspaceId,
         })
       : Promise.resolve({ folder: null, parents: [] as FolderModel[] }),
     listFolders({
-      chatbotId: props.chatbotId,
+      workspaceId: props.workspaceId,
       folderType,
       folderId,
     }),
@@ -85,9 +85,9 @@ export default async function SharedFolderSlot(props: {
       <CardContent>
         <Suspense>
           <ListFolders
-            chatbotId={props.chatbotId}
             folderType={folderType}
             promises={promises}
+            workspaceId={props.workspaceId}
           />
         </Suspense>
       </CardContent>

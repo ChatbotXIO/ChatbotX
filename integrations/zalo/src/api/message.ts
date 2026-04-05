@@ -61,7 +61,7 @@ export const getMessageAttachmentEntity = ({
       throw new ZaloException("No response body received")
     }
 
-    const originPath = `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`
+    const originPath = `public/workspaces${ctx.workspace?.id ?? ""}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
     const fileType = guessFileTypeFromMimeType(mimeType)

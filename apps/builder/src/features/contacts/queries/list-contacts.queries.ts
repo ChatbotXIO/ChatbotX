@@ -11,9 +11,9 @@ import type {
 } from "../schemas/query"
 
 export async function listContacts(
-  input: ListContactsRequest & { chatbotId: bigint },
+  input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = generateWhere(input)
 
@@ -30,7 +30,7 @@ export async function listContacts(
           with: {
             assignedUser: true,
             assignedInboxTeam: true,
-            inbox: true,
+            // inbox: true,
           },
         },
       },
@@ -46,10 +46,10 @@ export async function listContacts(
 export async function countContacts(
   input: ListContactsRequest,
 ): Promise<{ total: number }> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   if (!input.keyword) {
-    return getTotalContactsFromStats(input.chatbotId)
+    return getTotalContactsFromStats(input.workspaceId)
   }
 
   const where = generateWhere(input)
@@ -62,11 +62,11 @@ export async function countContacts(
 }
 
 async function getTotalContactsFromStats(
-  chatbotId: bigint,
+  workspaceId: string,
 ): Promise<{ total: number }> {
   try {
     const inboxes = await db.query.inboxModel.findMany({
-      where: { chatbotId },
+      where: { workspaceId },
       with: {
         contactStats: true,
       },
@@ -86,7 +86,7 @@ async function getTotalContactsFromStats(
 
 const generateWhere = (input: ListContactsRequest) => {
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     ...(input.keyword
       ? {
           OR: [

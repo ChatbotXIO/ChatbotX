@@ -3,53 +3,55 @@
 import { emitContactCreated } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
-  chatbotUsageModel,
+  contactInboxModel,
   contactModel,
   conversationModel,
   inboxModel,
+  workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
+import { randomString } from "remeda"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
   type CreateContactResponse,
   createContactRequest,
 } from "../schemas/action"
 
-export const createContactAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createContactAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createContactRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateContactRequest
     }) => {
-      await createContact({ chatbotId, parsedInput })
+      await createContact({ workspaceId, parsedInput })
     },
   )
 
 export const createContact = async ({
-  chatbotId,
+  workspaceId,
   parsedInput,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   parsedInput: CreateContactRequest
 }): Promise<CreateContactResponse> => {
-  // Make sure phone number is not exists in the chatbot
+  // Make sure phone number is not exists in the workspace
   const existedContact = await db.query.contactModel.findFirst({
     where: {
-      chatbotId,
+      workspaceId,
       phoneNumber: parsedInput.phoneNumber,
     },
   })
@@ -62,18 +64,18 @@ export const createContact = async ({
     })
   }
 
-  const inbox = await findOrFail(
-    inboxModel,
-    { chatbotId, channel: channelTypes.enum.webchat },
-    "Inbox not found",
-  )
+  const inbox = await findOrFail({
+    table: inboxModel,
+    where: { workspaceId, channel: channelTypes.enum.webchat },
+    message: "Inbox not found",
+  })
 
-  const chatbotUsage = await findOrFail(
-    chatbotUsageModel,
-    { chatbotId },
-    "Chatbot usage not found",
-  )
-  if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+  const workspaceUsage = await findOrFail({
+    table: workspaceUsageModel,
+    where: { workspaceId },
+    message: "Workspace usage not found",
+  })
+  if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
       phoneNumber: {
@@ -82,40 +84,48 @@ export const createContact = async ({
     })
   }
 
-  const contact = await db.transaction(async (tx) => {
-    const newContact = await tx
+  const [contact, contactInbox] = await db.transaction(async (tx) => {
+    const [newContact] = await tx
       .insert(contactModel)
       .values({
         ...parsedInput,
-        chatbotId,
-        channel: inbox.channel,
+        workspaceId,
         id: createId(),
       })
       .returning()
-      .then((result) => result[0])
+
+    const [newContactInbox] = await tx
+      .insert(contactInboxModel)
+      .values({
+        originalContactId: newContact.id,
+        contactId: newContact.id,
+        inboxId: inbox.id,
+        channel: channelTypes.enum.webchat,
+        source: contactSources.enum.imported,
+        sourceId: `${randomString()}${createId()}`,
+      })
+      .returning()
 
     await tx
-      .update(chatbotUsageModel)
+      .update(workspaceUsageModel)
       .set({
-        contactsCount: sql`${chatbotUsageModel.contactsCount} + 1`,
+        contactsCount: sql`${workspaceUsageModel.contactsCount} + 1`,
       })
-      .where(eq(chatbotUsageModel.chatbotId, chatbotId))
+      .where(eq(workspaceUsageModel.workspaceId, workspaceId))
 
     await tx.insert(conversationModel).values({
-      channel: inbox.channel,
-      chatbotId,
+      workspaceId,
       contactId: newContact.id,
-      inboxId: inbox.id,
       id: createId(),
     })
 
-    return newContact
+    return [newContact, newContactInbox]
   })
 
   // Emit contact created event
   try {
     await emitContactCreated(
-      chatbotId,
+      workspaceId,
       contact.id,
       contact.firstName || undefined,
       contact.phoneNumber || undefined,
@@ -125,15 +135,15 @@ export const createContact = async ({
     console.error("Failed to emit contactCreated event:", error)
   }
 
-  if (contact.sourceId) {
+  if (contactInbox.sourceId) {
     await contactTrackingService.trackEvent(
       {
-        chatbotId,
+        workspaceId,
         contactId: contact.id,
         eventType: "contact_created",
         occurredAt: contact.createdAt,
-        source: contact.source,
-        sourceId: contact.sourceId,
+        source: contactInbox.source,
+        sourceId: contactInbox.sourceId,
         channel: inbox.channel,
         country: undefined,
         metadata: {
@@ -149,8 +159,8 @@ export const createContact = async ({
   }
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#contacts`,
-    `chatbots:${chatbotId}#conversations`,
+    `workspaces:${workspaceId}#contacts`,
+    `workspaces:${workspaceId}#conversations`,
   ])
 
   return contact

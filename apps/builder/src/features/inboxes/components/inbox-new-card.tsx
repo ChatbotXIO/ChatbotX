@@ -5,7 +5,7 @@ import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 
-export default function InboxNewCard({ chatbotId }: { chatbotId: bigint }) {
+export default function InboxNewCard({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
 
   return (
@@ -13,7 +13,7 @@ export default function InboxNewCard({ chatbotId }: { chatbotId: bigint }) {
       <CardContent className="justify-middle flex h-full w-full flex-wrap items-center gap-2 px-0">
         <Link
           className="flex h-14 w-full items-center justify-center gap-2 text-sm"
-          href={`/channels/create?chatbotId=${chatbotId}`}
+          href={`/channels/create?workspaceId=${workspaceId}`}
         >
           <PlusCircleIcon className="h-4 w-4" />
           {t("actions.createFeature", { feature: t("fields.inbox.label") })}

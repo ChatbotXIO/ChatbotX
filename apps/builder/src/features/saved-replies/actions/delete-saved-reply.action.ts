@@ -3,20 +3,20 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
 export const deleteSavedReplyAction = authActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
       bindArgsParsedInputs: [_chatbotId, id],
       ctx,
     }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
       ctx: { user: { id: string } }
     }) => {
       await db

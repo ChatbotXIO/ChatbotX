@@ -11,7 +11,7 @@ export type IncomingContact = {
 }
 
 export type OutgoingContact = {
-  id: bigint
+  id: string
   sourceId: string | null
   phoneNumber: string | null
   firstName: string | null
@@ -23,53 +23,49 @@ export type OutgoingContact = {
 
 export type IncomingConversation = {
   sourceId: string
-  conversationAttributes: { [x: string]: unknown }
+  additionalAttributes: { [x: string]: unknown }
   contact: IncomingContact
 }
 
 export type OutgoingConversation = {
-  id: bigint
-  chatbotId: bigint
-  conversationAttributes: { [x: string]: unknown } | null
-  sourceId: string | null
-  inboxId: bigint
-  contactId: bigint
+  id: string
+  workspaceId: string
+  additionalAttributes: { [x: string]: unknown } | null
+  contactId: string
   contact?: OutgoingContact
 }
 
-export const conversationEntitySchema = z.custom<IncomingConversation>(
-  (data) => typeof data === "object",
-)
+export type OutgoingContactInbox = {
+  id: string
+  channel: string
+  sourceId: string
+}
 
 export type OutgoingMessage = {
-  id: bigint
-  chatbotId: bigint
-  conversationId: bigint
+  id: string
+  workspaceId: string
+  conversationId: string
   contentType: ContentType
   text: string | null
   attachments?: OutgoingAttachment[]
-  inboxId: bigint
-  clientId?: bigint | null
-  messageType: "outgoing" | "incoming" | "activity"
+  clientId?: string | null
+  messageType: MessageType
 }
 
-export const MessageType = {
-  incoming: "incoming",
-  outgoing: "outgoing",
-} as const
-export type MessageType = (typeof MessageType)[keyof typeof MessageType]
+export const messageTypes = z.enum(["outgoing", "incoming", "activity"])
+export type MessageType = z.infer<typeof messageTypes>
 
 export type IncomingMessage = {
   sourceId: string
   messageType: MessageType
   contentType: ContentType
-  content?: string
+  text?: string
   contentAttributes?:
     | MessageLocationEntity
     | MessageTemplateEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
-  clientId?: bigint | null
+  clientId?: string | null
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(
@@ -147,18 +143,8 @@ export type MessageTemplateEntity = {
       }
 }
 
-export const ContentType = {
-  text: "text",
-  location: "location",
-} as const
+export const contentTypes = z.enum(["text", "location"])
+export type ContentType = z.infer<typeof contentTypes>
 
-export type ContentType = (typeof ContentType)[keyof typeof ContentType]
-
-export const FileType = {
-  image: "image",
-  audio: "audio",
-  video: "video",
-  file: "file",
-} as const
-
-export type FileType = (typeof FileType)[keyof typeof FileType]
+export const fileTypes = z.enum(["image", "audio", "video", "file"])
+export type FileType = z.infer<typeof fileTypes>

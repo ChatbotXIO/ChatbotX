@@ -1,36 +1,42 @@
 import { findOrFail } from "@chatbotx.io/database/client"
-import { chatbotMemberModel, chatbotModel } from "@chatbotx.io/database/schema"
-import type { ChatbotMemberModel } from "@chatbotx.io/database/types"
-import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
+import {
+  workspaceMemberModel,
+  workspaceModel,
+} from "@chatbotx.io/database/schema"
+import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
+import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { notFoundException } from "./errors/exception"
 
 export const findChatbotOrFail = async (
-  userId: bigint | null | undefined,
-  chatbotId: bigint | null,
-): Promise<{ chatbot: ChatbotResource; chatbotMember: ChatbotMemberModel }> => {
+  userId: string | null | undefined,
+  workspaceId: string | null,
+): Promise<{
+  workspace: WorkspaceResource
+  workspaceMember: WorkspaceMemberModel
+}> => {
   if (!userId) {
     throw notFoundException("No User found")
   }
 
-  if (!chatbotId) {
-    throw notFoundException("No Chatbot found")
+  if (!workspaceId) {
+    throw notFoundException("No Workspace found")
   }
 
-  const chatbotMember = await findOrFail(
-    chatbotMemberModel,
-    {
+  const workspaceMember = await findOrFail({
+    table: workspaceMemberModel,
+    where: {
       userId,
-      chatbotId,
+      workspaceId,
     },
-    "Chatbot member not found",
-  )
-  const chatbot = await findOrFail(
-    chatbotModel,
-    {
-      id: chatbotId,
+    message: "Workspace member not found",
+  })
+  const workspace = await findOrFail({
+    table: workspaceModel,
+    where: {
+      id: workspaceId,
     },
-    "Chatbot not found",
-  )
+    message: "Workspace not found",
+  })
 
-  return { chatbot, chatbotMember }
+  return { workspace, workspaceMember }
 }

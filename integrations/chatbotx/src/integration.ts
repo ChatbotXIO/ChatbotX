@@ -6,7 +6,7 @@ import {
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
 import type { ChatbotxAuthValue } from "./auth"
-import { broadcastMessageToChatbotParty } from "./lib/outgoing-message"
+import { broadcastMessageToWorkspaceParty } from "./lib/outgoing-message"
 
 const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
   name: "chatbotx",
@@ -14,7 +14,7 @@ const config: IntegrationDefinition<BaseConfig, ChatbotxAuthValue> = {
     channel: {
       message: {
         sendMessage: async ({ ctx, data }) => {
-          await broadcastMessageToChatbotParty(ctx, data.message)
+          await broadcastMessageToWorkspaceParty(ctx, data.message)
         },
       },
     },

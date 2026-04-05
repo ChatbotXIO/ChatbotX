@@ -17,14 +17,14 @@ export const TemplateStoreContext = createContext<TemplateStoreApi | undefined>(
 )
 
 export type TemplateStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   integrationWhatsappId?: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const TemplateStoreProvider = ({
-  chatbotId,
+  workspaceId,
   integrationWhatsappId,
   autoInitialize = true,
   children,
@@ -32,7 +32,7 @@ export const TemplateStoreProvider = ({
   const storeRef = useRef<TemplateStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createTemplateStore({
-      chatbotId,
+      workspaceId,
       integrationWhatsappId,
     })
   }

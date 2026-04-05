@@ -10,7 +10,7 @@ import { BotIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { getFullName } from "../contacts/utils"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
@@ -19,7 +19,7 @@ import { ConversationAction } from "../conversations/conversation-action"
 
 export default function MessageHead() {
   const t = useTranslations()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const {
     conversations,
@@ -33,12 +33,12 @@ export default function MessageHead() {
   )
 
   const { execute: enableBot, isExecuting: isEnablingBot } = useAction(
-    enableBotAction.bind(null, chatbotId),
+    enableBotAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
-            liveChatEnabled: false,
+            botEnabled: true,
           })
         }
       },
@@ -62,7 +62,7 @@ export default function MessageHead() {
             onChange={setAssignee}
           />
         </div>
-        {activeConversation.liveChatEnabled && (
+        {!activeConversation.botEnabled && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

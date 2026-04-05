@@ -2,51 +2,61 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
   createSpreadsheetRequest,
-} from "../schemas/mutation"
+} from "../schema/mutation"
 import { verifyGoogleSheetsUrl } from "./util"
 
-export const updateSpreadsheetAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateSpreadsheetAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(createSpreadsheetRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: CreateSpreadsheetRequest
-    }) => {
-      const spreadsheet = await findOrFail(
-        spreadsheetModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Spreadsheet not found",
-      )
+    } = props
 
-      const spreadsheetId = await verifyGoogleSheetsUrl(
-        chatbotId,
-        parsedInput.url,
-      )
+    return await updateSpreadsheet(
+      {
+        workspaceId,
+        id,
+      },
+      parsedInput,
+    )
+  })
 
-      await db
-        .update(spreadsheetModel)
-        .set({
-          ...parsedInput,
-          spreadsheetId,
-        })
-        .where(eq(spreadsheetModel.id, spreadsheet.id))
-
-      revalidateCacheTags(`chatbots:${spreadsheet.chatbotId}#spreadsheets`)
+export const updateSpreadsheet = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: CreateSpreadsheetRequest,
+) => {
+  const spreadsheet = await findOrFail({
+    table: spreadsheetModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
+    message: "Spreadsheet not found",
+  })
+
+  const spreadsheetId = await verifyGoogleSheetsUrl(
+    ctx.workspaceId,
+    parsedInput.url,
   )
+
+  await db
+    .update(spreadsheetModel)
+    .set({
+      ...parsedInput,
+      spreadsheetId,
+    })
+    .where(eq(spreadsheetModel.id, spreadsheet.id))
+
+  revalidateCacheTags(`workspaces:${spreadsheet.workspaceId}#spreadsheets`)
+}

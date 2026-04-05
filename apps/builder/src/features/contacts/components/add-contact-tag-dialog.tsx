@@ -21,13 +21,13 @@ import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import { useTagStore } from "@/features/tags/provider/tag-store-context"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { addContactTagAction } from "../actions/add-contact-tag.action"
 import { addContactTagRequest } from "../schemas/contact-tag"
 
 type AddContactTagDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function AddContactTagDialog({
@@ -36,14 +36,14 @@ export default function AddContactTagDialog({
 }: AddContactTagDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const tagOptions = useTagOptions()
   const { getAllActiveTags } = useTagStore((state) => state)
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      addContactTagAction.bind(null, chatbotId),
+      addContactTagAction.bind(null, workspaceId),
       zodResolver(addContactTagRequest),
       {
         actionProps: {

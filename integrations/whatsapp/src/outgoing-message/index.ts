@@ -2,10 +2,10 @@ import {
   type SendImageStepSchema,
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
-  StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
-  ContentType,
+  contentTypes,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
@@ -27,9 +27,9 @@ import { convertFlowStepWaTemplate } from "./send-wa-template"
 export function* convertMessageToWhatsappMessage(
   message: OutgoingMessage,
 ): Generator<ClientMessage | null> {
-  if (message.contentType === ContentType.text) {
-    if (message.content) {
-      yield new Text(message.content)
+  if (message.contentType === contentTypes.enum.text) {
+    if (message.text) {
+      yield new Text(message.text)
     }
 
     for (const attachment of message.attachments || []) {
@@ -49,7 +49,7 @@ export function* convertMessageToWhatsappMessage(
       }
     }
   } else {
-    yield new Text(message.content ?? "not handled yet")
+    yield new Text(message.text ?? "not handled yet")
   }
 }
 
@@ -60,17 +60,17 @@ export function* convertFlowStepToWhatsappMessage(
     data: { step },
   } = props
   switch (step.stepType) {
-    case StepType.sendText:
+    case stepTypes.enum.sendText:
       yield* convertFlowStepText(
         props as SendFlowStepProps<WhatsappAuthValue, SendTextStepSchema>,
       )
       break
-    case StepType.sendImage:
+    case stepTypes.enum.sendImage:
       yield* convertFlowStepImage(
         props as SendFlowStepProps<WhatsappAuthValue, SendImageStepSchema>,
       )
       break
-    case StepType.sendWaTemplateMessage:
+    case stepTypes.enum.sendWaTemplateMessage:
       yield* convertFlowStepWaTemplate(
         props as SendFlowStepProps<
           WhatsappAuthValue,
@@ -88,7 +88,7 @@ export const sendMessage = async (
 ) => {
   const {
     ctx,
-    data: { conversation, message },
+    data: { conversation, message, contactInbox },
   } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
 
@@ -100,9 +100,9 @@ export const sendMessage = async (
       }
 
       const sendResponse = await whatsappClient.sendMessage(
-        (conversation.conversationAttributes as { phoneNumberId: string })
+        (conversation.additionalAttributes as { phoneNumberId: string })
           .phoneNumberId,
-        conversation.sourceId as string,
+        contactInbox.sourceId,
         whatsappMessage,
       )
 
@@ -144,7 +144,7 @@ export const sendFlowStep = async (
 ): Promise<{ messageId?: string; messageIds?: string[] }> => {
   const {
     ctx,
-    data: { conversation, step },
+    data: { conversation, step, contactInbox },
   } = props
   const whatsappClient = getWhatsappClient(ctx.auth)
   const messageIds: string[] = []
@@ -163,13 +163,13 @@ export const sendFlowStep = async (
         const payload = {
           messaging_product: "whatsapp",
           recipient_type: "individual",
-          to: conversation.sourceId,
+          to: contactInbox.sourceId,
           type: "template",
           template: templateMessage.template,
         }
 
         const response = await whatsappClient.$$apiFetch$$(
-          `${API_URL}/${DEFAULT_API_VERSION}/${conversation.conversationAttributes?.phoneNumberId}/messages`,
+          `${API_URL}/${DEFAULT_API_VERSION}/${conversation.additionalAttributes?.phoneNumberId}/messages`,
           {
             method: "POST",
             headers: {
@@ -188,8 +188,8 @@ export const sendFlowStep = async (
         sendResponse = await response.json()
       } else {
         sendResponse = await whatsappClient.sendMessage(
-          conversation.conversationAttributes?.phoneNumberId as string,
-          conversation.sourceId as string,
+          conversation.additionalAttributes?.phoneNumberId as string,
+          contactInbox.sourceId,
           whatsappMessage,
         )
       }

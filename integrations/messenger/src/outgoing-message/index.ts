@@ -6,11 +6,11 @@ import {
   type SendQuickReplyStepSchema,
   type SendTextStepSchema,
   type SendVideoStepSchema,
-  StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
-  ContentType,
-  type OutgoingConversation,
+  contentTypes,
+  type OutgoingContactInbox,
   type OutgoingMessage,
   type SendFlowStepProps,
   type SendMessageProps,
@@ -37,14 +37,17 @@ export const sendMessage = async (
 ): Promise<void> => {
   const {
     ctx,
-    data: { conversation, message },
+    data: { contactInbox, message },
   } = props
 
   try {
     for (const facebookMessage of convertMessageToFacebookMessage(message)) {
-      const payload = buildMessagePayload(conversation, facebookMessage)
+      const payload = buildMessagePayload({
+        contactInbox,
+        message: facebookMessage,
+      })
       await sendPageMessage(ctx.auth, payload)
-      logger.info(`Message sent for PSID: ${conversation.sourceId}`)
+      logger.info(`Message sent for PSID: ${contactInbox.sourceId}`)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
@@ -54,10 +57,10 @@ export const sendMessage = async (
 export function* convertMessageToFacebookMessage(
   message: OutgoingMessage,
 ): Generator<FacebookMessage> {
-  if (message.contentType === ContentType.text) {
-    if (message.content) {
+  if (message.contentType === contentTypes.enum.text) {
+    if (message.text) {
       yield {
-        text: message.content,
+        text: message.text,
       }
     }
     for (const attachment of message.attachments || []) {
@@ -95,17 +98,18 @@ export function* convertMessageToFacebookMessage(
     }
   } else {
     yield {
-      text: message.content ?? "not handled yet",
+      text: message.text ?? "not handled yet",
     }
   }
 }
 
-const buildMessagePayload = (
-  conversation: OutgoingConversation,
-  message: FacebookMessageAttachmentPayload | FacebookMessage,
-  messagingType: "MESSAGE_TAG" | "RESPONSE" = "MESSAGE_TAG",
-): FacebookSendMessageRequest => {
-  const recipientId = conversation.contact?.sourceId || conversation.sourceId
+const buildMessagePayload = (props: {
+  contactInbox: OutgoingContactInbox
+  message: FacebookMessageAttachmentPayload | FacebookMessage
+  messagingType?: "MESSAGE_TAG" | "RESPONSE"
+}): FacebookSendMessageRequest => {
+  const { contactInbox, message, messagingType = "MESSAGE_TAG" } = props
+  const recipientId = contactInbox.sourceId
 
   if (!recipientId) {
     throw new Error("Missing recipient ID in conversation")
@@ -130,13 +134,13 @@ export async function* convertFlowStepToFacebookMessage(
   } = props
 
   switch (step.stepType) {
-    case StepType.sendText:
+    case stepTypes.enum.sendText:
       yield* convertFlowStepText(
         props as SendFlowStepProps<MessengerAuthValue, SendTextStepSchema>,
       ) as Generator<FacebookMessageAttachmentPayload | FacebookMessage>
       break
-    case StepType.sendImage:
-    case StepType.sendVideo:
+    case stepTypes.enum.sendImage:
+    case stepTypes.enum.sendVideo:
       await (yield* convertFlowStepMedia(
         props as SendFlowStepProps<
           MessengerAuthValue,
@@ -144,8 +148,8 @@ export async function* convertFlowStepToFacebookMessage(
         >,
       ))
       break
-    case StepType.sendAudio:
-    case StepType.sendFile:
+    case stepTypes.enum.sendAudio:
+    case stepTypes.enum.sendFile:
       await (yield* convertFlowStepFile(
         props as SendFlowStepProps<
           MessengerAuthValue,
@@ -153,10 +157,10 @@ export async function* convertFlowStepToFacebookMessage(
         >,
       ))
       break
-    case StepType.sendGif:
+    case stepTypes.enum.sendGif:
       yield* convertFlowStepGif(step.url) as Generator<FacebookMessage>
       break
-    case StepType.sendQuickReply:
+    case stepTypes.enum.sendQuickReply:
       yield* convertFlowStepQuickReply(
         props as SendFlowStepProps<
           MessengerAuthValue,
@@ -164,7 +168,7 @@ export async function* convertFlowStepToFacebookMessage(
         >,
       ) as Generator<FacebookMessage>
       break
-    case StepType.sendCarousel:
+    case stepTypes.enum.sendCarousel:
       yield* convertFlowStepCarousel(
         props as SendFlowStepProps<MessengerAuthValue, SendCarouselStepSchema>,
       ) as Generator<FacebookMessage>
@@ -179,7 +183,7 @@ export const sendFlowStep = async (
 ) => {
   const {
     ctx,
-    data: { conversation, step },
+    data: { contactInbox, step },
   } = props
   try {
     for await (const facebookMessage of convertFlowStepToFacebookMessage(
@@ -187,15 +191,16 @@ export const sendFlowStep = async (
     )) {
       await sendPageMessage(
         ctx.auth,
-        buildMessagePayload(
-          conversation,
-          facebookMessage,
-          step.stepType === StepType.sendQuickReply
-            ? "RESPONSE"
-            : "MESSAGE_TAG",
-        ),
+        buildMessagePayload({
+          contactInbox,
+          message: facebookMessage,
+          messagingType:
+            step.stepType === stepTypes.enum.sendQuickReply
+              ? "RESPONSE"
+              : "MESSAGE_TAG",
+        }),
       )
-      logger.info(`Message sent for PSID: ${conversation.sourceId}`)
+      logger.info(`Message sent for PSID: ${contactInbox.sourceId}`)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")

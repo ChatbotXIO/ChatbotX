@@ -3,24 +3,24 @@ import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-shee
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
 import { logger } from "@/lib/log"
-import { createSpreadsheetRequest } from "../schemas/mutation"
+import { createSpreadsheetRequest } from "../schema/mutation"
 
 const SPREADSHEET_ID_REGEX = /\/d\/([^/]+)\//
 
 export async function verifyGoogleSheetsUrl(
-  chatbotId: bigint,
+  workspaceId: string,
   url: string,
 ): Promise<string> {
   const dbIntegration = await db.query.integrationModel.findFirst({
     where: {
-      chatbotId,
+      workspaceId,
       integrationType: "googleSheets",
     },
     with: {
-      integrationGoogleSheets: true,
+      integrationGoogleSheet: true,
     },
   })
-  if (!dbIntegration?.integrationGoogleSheets) {
+  if (!dbIntegration?.integrationGoogleSheet) {
     returnValidationErrors(createSpreadsheetRequest, {
       url: {
         _errors: ["You need to setup google sheets first."],
@@ -42,7 +42,7 @@ export async function verifyGoogleSheetsUrl(
   try {
     await integrations.googleSheets.actions.listSheetNames({
       ctx: {
-        auth: dbIntegration.integrationGoogleSheets
+        auth: dbIntegration.integrationGoogleSheet
           .auth as unknown as GoogleSheetsAuthValue,
       },
       props: {

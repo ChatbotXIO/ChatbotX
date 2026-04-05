@@ -13,20 +13,16 @@ import { createWebchatMessageAction } from "../messages/actions/create-webchat-m
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
-import WebchatMessageMenu from "./components/webchat-message-menu"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
-  chatbotId: bigint
-  webchatId: bigint
-  referral?: string
+  workspaceId: string
+  webchatId: string
+  referral?: string | undefined
 }
 
-export const WebchatMessageInput = ({
-  chatbotId,
-  webchatId,
-  referral,
-}: WebchatMessageInputProps) => {
+export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
+  const { workspaceId, webchatId, referral = "" } = props
   const { sendMessage, guestConversationId } = useGuestSessionStore(
     (state) => state,
   )
@@ -36,12 +32,12 @@ export const WebchatMessageInput = ({
     () => ({
       content: "",
       files: [],
-      chatbotId,
+      workspaceId,
       webchatId,
       guestConversationId: guestConversationId ?? "",
       ref: referral,
     }),
-    [chatbotId, webchatId, guestConversationId, referral],
+    [workspaceId, webchatId, guestConversationId, referral],
   )
 
   const {
@@ -165,13 +161,13 @@ export const WebchatMessageInput = ({
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              <WebchatMessageMenu chatbotId={chatbotId} webchatId={webchatId} />
+              {/* <WebchatMessageMenu workspaceId={workspaceId} webchatId={webchatId} /> */}
             </div>
             <div className="message-toolbar flex items-center">
               {!content && (
                 <Button
                   className="px-2 py-1.5 [&_svg]:size-5"
-                  disabled={!chatbotId}
+                  disabled={!workspaceId}
                   onClick={onClickAttachment}
                   type="button"
                   variant="ghost"
@@ -186,7 +182,7 @@ export const WebchatMessageInput = ({
               <Button
                 className="px-2 py-1.5 [&_svg]:size-5"
                 disabled={
-                  !(chatbotId && form.formState.isValid) ||
+                  !(workspaceId && form.formState.isValid) ||
                   form.formState.isSubmitting
                 }
                 type="submit"

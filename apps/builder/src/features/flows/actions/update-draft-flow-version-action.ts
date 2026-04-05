@@ -2,45 +2,49 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { flowVersionModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateDraftFlowVersionSchema,
   updateDraftFlowVersionSchema,
 } from "../schemas/action"
 
-export const updateDraftFlowVersionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateDraftFlowVersionAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateDraftFlowVersionSchema)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateDraftFlowVersionSchema
-    }) => {
-      const flowVersion = await findOrFail(
-        flowVersionModel,
-        {
-          id,
-          chatbotId,
-          isDraft: true,
-        },
-        "Draft flow version not found",
-      )
+    } = props
 
-      await db
-        .update(flowVersionModel)
-        .set({
-          nodes: parsedInput.nodes,
-          edges: parsedInput.edges,
-        })
-        .where(eq(flowVersionModel.id, flowVersion.id))
+    await updateDraftFlowVersion({ workspaceId, id }, parsedInput)
+  })
 
-      // revalidateCacheTags(`chatbots:${chatbotId}#flows:${id}`)
+export const updateDraftFlowVersion = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: UpdateDraftFlowVersionSchema,
+) => {
+  const flowVersion = await findOrFail({
+    table: flowVersionModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
+      isDraft: true,
     },
-  )
+    message: "Draft flow version not found",
+  })
+
+  await db
+    .update(flowVersionModel)
+    .set({
+      nodes: parsedInput.nodes,
+      edges: parsedInput.edges,
+    })
+    .where(eq(flowVersionModel.id, flowVersion.id))
+
+  // revalidateCacheTags(`workspaces:${ctx.workspaceId}#flows:${ctx.id}`)
+}

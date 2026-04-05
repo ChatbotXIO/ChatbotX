@@ -12,12 +12,12 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListIntegrationWebchatsRequest } from "../schema/query"
 
 export const listIntegrationWebchats = async (
-  input: ListIntegrationWebchatsRequest,
+  input: ListIntegrationWebchatsRequest & { workspaceId: string },
 ) => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
   }
 
   const pagination = parsePagination(input)
@@ -44,11 +44,11 @@ export const listIntegrationWebchats = async (
 }
 
 export async function findIntegrationWebchat(
-  where: Pick<IntegrationWebchatModel, "id" | "chatbotId">,
+  where: Pick<IntegrationWebchatModel, "id" | "workspaceId">,
 ) {
-  return await findOrFail(
-    integrationWebchatModel,
+  return await findOrFail({
+    table: integrationWebchatModel,
     where,
-    "Integration webchat not found",
-  )
+    message: "Integration webchat not found",
+  })
 }

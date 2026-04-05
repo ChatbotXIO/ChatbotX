@@ -11,7 +11,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { editSavedReplyAction } from "./actions/edit-saved-reply.action"
-import { editSavedReplyRequest, type SavedReplyResource } from "./schema"
+import { editSavedReplyRequest } from "./schema/mutation"
+import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyEditFormProps = {
   editingSavedReply: SavedReplyResource

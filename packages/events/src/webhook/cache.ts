@@ -1,3 +1,4 @@
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { BaseCache } from "../base-cache"
 
 class WebhookCache extends BaseCache {
@@ -13,17 +14,17 @@ class WebhookCache extends BaseCache {
 const webhookCache = new WebhookCache()
 
 export async function hasActiveWebhooks(
-  chatbotId: bigint,
-  eventTypes: number[],
+  workspaceId: string,
+  eventTypes: TriggerEventType[],
   sourceId?: string,
 ): Promise<boolean> {
-  return await webhookCache.hasActive(chatbotId, eventTypes, sourceId)
+  return await webhookCache.hasActive(workspaceId, eventTypes, sourceId)
 }
 
-export async function updateWebhookCache(chatbotId: bigint): Promise<void> {
-  return await webhookCache.updateCache(chatbotId)
+export async function updateWebhookCache(workspaceId: string): Promise<void> {
+  return await webhookCache.updateCache(workspaceId)
 }
 
-export async function removeWebhookCache(chatbotId: bigint): Promise<void> {
-  return await webhookCache.removeCache(chatbotId)
+export async function removeWebhookCache(workspaceId: string): Promise<void> {
+  return await webhookCache.removeCache(workspaceId)
 }

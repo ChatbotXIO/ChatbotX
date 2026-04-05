@@ -3,46 +3,37 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import { aiAgentModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import {
-  type CreateAIAgentRequest,
-  createAIAgentRequest,
-} from "@/features/ai-agents/schemas/action"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { createAIAgentRequest } from "@/features/ai-agents/schemas/action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const createAIAgentAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createAIAgentAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createAIAgentRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: CreateAIAgentRequest
-    }) => {
-      await db.transaction(async (tx) => {
-        // Reset isDefault to false for all other agents
-        if (parsedInput.isDefault) {
-          await tx
-            .update(aiAgentModel)
-            .set({
-              isDefault: false,
-            })
-            .where(eq(aiAgentModel.chatbotId, chatbotId))
-        }
+      bindArgsParsedInputs: [workspaceId],
+    } = props
 
-        await tx.insert(aiAgentModel).values({
-          ...parsedInput,
-          chatbotId,
-          id: createId(),
-        })
+    await db.transaction(async (tx) => {
+      // Reset isDefault to false for all other agents
+      if (parsedInput.isDefault) {
+        await tx
+          .update(aiAgentModel)
+          .set({
+            isDefault: false,
+          })
+          .where(eq(aiAgentModel.workspaceId, workspaceId))
+      }
+
+      await tx.insert(aiAgentModel).values({
+        ...parsedInput,
+        workspaceId,
+        id: createId(),
       })
+    })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)
-    },
-  )
+    revalidateCacheTags(`workspaces:${workspaceId}#aiAgents`)
+  })

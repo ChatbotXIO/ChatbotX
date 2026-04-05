@@ -32,15 +32,15 @@ export async function sendMessageToExternal(
     return
   }
 
-  const contact = await findOrFail(
-    contactModel,
-    { id: conversation.contactId },
-    "Contact not found",
-  )
+  const contact = await findOrFail({
+    table: contactModel,
+    where: { id: conversation.contactId },
+    message: "Contact not found",
+  })
 
   await integrationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {
-      chatbot: inbox.chatbot,
+      workspace: inbox.workspace,
       auth,
     },
     data: {
@@ -70,7 +70,7 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
 
   await integrationDetail.channels?.channel?.conversation?.sendTyping?.({
     ctx: {
-      chatbot: inbox.chatbot,
+      workspace: inbox.workspace,
       auth,
     },
     data: { conversation, typing },
@@ -104,7 +104,7 @@ export async function sendFlowStepToExternal({
 
   const result = await intergationDetail.runAction("sendFlowStep", {
     ctx: {
-      chatbot: inbox.chatbot,
+      workspace: inbox.workspace,
       auth,
     },
     data: {

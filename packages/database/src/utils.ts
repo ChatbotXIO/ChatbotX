@@ -1,5 +1,6 @@
 import { asc, desc, type SQL } from "drizzle-orm"
 import type { PgTable } from "drizzle-orm/pg-core"
+import { env } from "./keys"
 
 type PaginationInput = {
   page?: number | null
@@ -105,7 +106,7 @@ export const parseOrderByAsObject = (
 
 export const getPublicUrl = (path: string) => {
   try {
-    return new URL(path, process.env.NEXT_PUBLIC_ASSET_URL).toString()
+    return new URL(path, env.NEXT_PUBLIC_ASSET_URL).toString()
   } catch (error) {
     console.error("Error getting attachment URL", error)
     return ""

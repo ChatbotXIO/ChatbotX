@@ -11,16 +11,16 @@ import type { ListWhatsappPhoneNumberAutomation } from "../schemas/get-ice-break
 export const findWhatsappAutomation = async (
   input: ListWhatsappPhoneNumberAutomation,
 ): Promise<ConversationalAutomation> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const integrationWhatsapp = await findOrFail(
-    integrationWhatsappModel,
-    {
-      chatbotId: input.chatbotId,
+  const integrationWhatsapp = await findOrFail({
+    table: integrationWhatsappModel,
+    where: {
+      workspaceId: input.workspaceId,
       id: input.id,
     },
-    "Whatsapp integration not found",
-  )
+    message: "Whatsapp integration not found",
+  })
 
   return await findConversationalAutomation(
     integrationWhatsapp.auth as WhatsappAuthValue,

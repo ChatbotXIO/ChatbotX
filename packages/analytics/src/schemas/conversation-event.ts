@@ -1,3 +1,4 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const conversationEventTypeSchema = z.enum([
@@ -15,26 +16,26 @@ export type ConversationEventType = z.infer<typeof conversationEventTypeSchema>
 
 export const conversationEventSchema = z.object({
   channel: z.string().optional(),
-  chatbotId: z.bigint(),
-  conversationId: z.bigint(),
-  eventId: z.bigint(),
+  workspaceId: zodBigintAsString(),
+  conversationId: zodBigintAsString(),
+  eventId: zodBigintAsString(),
   eventType: conversationEventTypeSchema,
-  fromAssignee: z.bigint().optional(),
+  fromAssignee: zodBigintAsString().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   occurredAt: z.date(),
-  toAssignee: z.bigint().optional(),
+  toAssignee: zodBigintAsString().optional(),
 })
 export type ConversationEvent = z.infer<typeof conversationEventSchema>
 
 export const createConversationEventSchema = conversationEventSchema.extend({
-  eventId: z.bigint(),
+  eventId: zodBigintAsString(),
 })
 export type CreateConversationEvent = z.infer<
   typeof createConversationEventSchema
 >
 
 export const conversationHandoffStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   count: z.number(),
   direction: z.enum(["to_human", "to_bot"]),
   timestamp: z.date(),
@@ -51,7 +52,7 @@ export type GetConversationHandoffsResponse = z.infer<
 >
 
 export const conversationFollowUpStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   count: z.number(),
   timestamp: z.date(),
 })
@@ -67,7 +68,7 @@ export type GetConversationFollowUpsResponse = z.infer<
 >
 
 export const conversationArchivedStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   count: z.number(),
   timestamp: z.date(),
 })
@@ -83,7 +84,7 @@ export type GetConversationArchivedResponse = z.infer<
 >
 
 export const conversationAssignedStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   count: z.number(),
   timestamp: z.date(),
 })
@@ -99,7 +100,7 @@ export type GetConversationAssignedResponse = z.infer<
 >
 
 export const conversationAssignedByAdminStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   toAssignee: z.string(),
   count: z.number(),
   userName: z.string().optional(),
@@ -117,7 +118,7 @@ export type GetConversationAssignedByAdminResponse = z.infer<
 >
 
 export const uniqueConversationsByAdminStatsSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   toAssignee: z.string(),
   count: z.number(),
   userName: z.string().optional(),

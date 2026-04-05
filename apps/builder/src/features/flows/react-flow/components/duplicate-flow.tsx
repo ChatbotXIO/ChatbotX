@@ -33,7 +33,7 @@ export function DuplicateFlowDialog({
   const router = useRouter()
 
   const { execute, isPending } = useAction(
-    duplicateFlowAction.bind(null, flow?.chatbotId ?? "", flow?.id ?? ""),
+    duplicateFlowAction.bind(null, flow?.workspaceId ?? "", flow?.id ?? ""),
     {
       onSuccess: () => {
         toast.success(

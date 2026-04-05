@@ -6,33 +6,33 @@ import { uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateWhatsappIceBreakerSchema,
   updateWhatsappIceBreakerSchema,
 } from "../schemas/update-ice-breaker-schema"
 
-export const updateWhatsappIceBreakerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const updateWhatsappIceBreakerAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(updateWhatsappIceBreakerSchema)
   .action(
     async ({
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: UpdateWhatsappIceBreakerSchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationWhatsapp = await findOrFail(
-        integrationWhatsappModel,
-        {
-          chatbotId,
+      const integrationWhatsapp = await findOrFail({
+        table: integrationWhatsappModel,
+        where: {
+          workspaceId,
         },
-        "Integration Whatsapp not found",
-      )
+        message: "Integration Whatsapp not found",
+      })
 
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,

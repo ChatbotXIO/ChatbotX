@@ -4,19 +4,17 @@
   "type": "module",
   "dependencies": {
     "@chatbotx.io/utils": "workspace:*",
-    "@t3-oss/env-core": "^0.13.10",
-    "drizzle-cuid2": "^2.2.0",
-    "drizzle-orm": "1.0.0-beta.18-7eb39f0",
+    "@t3-oss/env-core": "^0.13.11",
+    "drizzle-orm": "1.0.0-beta.20",
     "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "@paralleldrive/cuid2": "^3.3.0",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.20.0",
     "dotenv-cli": "^11.0.0",
-    "drizzle-kit": "1.0.0-beta.18-7eb39f0"
+    "drizzle-kit": "1.0.0-beta.20"
   },
   "scripts": {
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",

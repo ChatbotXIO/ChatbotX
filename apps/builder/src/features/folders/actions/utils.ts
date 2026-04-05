@@ -1,19 +1,19 @@
 import { findOrFail } from "@chatbotx.io/database/client"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { folderModel } from "@chatbotx.io/database/schema"
-import type { FolderType } from "@chatbotx.io/database/types"
 
 export const ensureFolderIsExists = async (
-  id: bigint,
-  chatbotId: bigint,
+  id: string,
+  workspaceId: string,
   folderType: FolderType,
 ) => {
-  await findOrFail(
-    folderModel,
-    {
-      chatbotId,
+  await findOrFail({
+    table: folderModel,
+    where: {
+      workspaceId,
       id,
       folderType,
     },
-    "Folder does not exists.",
-  )
+    message: "Folder does not exists.",
+  })
 }

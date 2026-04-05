@@ -3,7 +3,7 @@
 import { DelayType, type WaitStepSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
 import type { ListCustomFieldsResponse } from "@/features/custom-fields/schemas/query"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
 type WaitStepViewerProps = {
@@ -14,8 +14,8 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const { data } = props
 
   const t = useTranslations()
-  const chatbotId = useChatbotId()
-  const url = `/api/chatbots/${chatbotId}/custom-fields?perPage=9999`
+  const workspaceId = useWorkspaceId()
+  const url = `/api/workspaces/${workspaceId}/custom-fields?perPage=9999`
   const { data: dataCustomFields } = callAPI<ListCustomFieldsResponse>(url)
 
   const customField = (dataCustomFields?.data ?? []).find(

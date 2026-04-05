@@ -17,12 +17,12 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { deleteContactAction } from "../actions/delete-contact.action"
 
 type DeleteContactDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
   onSuccess?: () => void
 }
 
@@ -35,10 +35,10 @@ export default function DeleteContactDialog({
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { execute, isPending, isExecuting } = useAction(
-    deleteContactAction.bind(null, chatbotId),
+    deleteContactAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

@@ -1,5 +1,5 @@
 import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import {
   parseOrderByAsObject,
@@ -10,21 +10,21 @@ import type {
   FindTagRequest,
   ListTagsRequest,
   ListTagsResponse,
-} from "../schemas/query"
+} from "../schema/query"
 
 export const listTagsRSC = async (
-  input: ListTagsRequest & { chatbotId: bigint },
+  input: ListTagsRequest & { workspaceId: string },
 ) => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   return await listTags(input)
 }
 
 export async function listTags(
-  input: ListTagsRequest & { chatbotId: bigint },
+  input: ListTagsRequest & { workspaceId: string },
 ): Promise<ListTagsResponse> {
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     name: input.name ? { ilike: `%${input.name.toLowerCase()}%` } : undefined,
     folderId: input.folderId
       ? // biome-ignore lint/style/noNestedTernary: allow nested ternary

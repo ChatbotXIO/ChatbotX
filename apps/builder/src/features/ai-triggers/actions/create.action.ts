@@ -3,34 +3,25 @@
 import { db } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import {
-  type CreateAITriggerRequest,
-  createAITriggerRequest,
-} from "@/features/ai-triggers/schemas/action"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { createAITriggerRequest } from "@/features/ai-triggers/schemas/action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const createAITriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createAITriggerAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createAITriggerRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: CreateAITriggerRequest
-    }) => {
-      await db.insert(aiTriggerModel).values({
-        ...parsedInput,
-        chatbotId,
-        id: createId(),
-      })
+    } = props
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
-    },
-  )
+    await db.insert(aiTriggerModel).values({
+      ...parsedInput,
+      workspaceId,
+      id: createId(),
+    })
+
+    revalidateCacheTags(`workspaces:${workspaceId}#aiTriggers`)
+  })

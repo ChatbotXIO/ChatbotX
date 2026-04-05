@@ -4,7 +4,7 @@ import {
   type WebchatPersistentMenu,
   webchatPersistentMenuType,
 } from "@chatbotx.io/database/partials"
-import { MessageType } from "@chatbotx.io/sdk"
+import { messageTypes } from "@chatbotx.io/sdk"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -21,12 +21,12 @@ import { createWebchatMessageAction } from "@/features/messages/actions/create-w
 import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 
 type WebchatMessageMenuProps = {
-  chatbotId: bigint
-  webchatId: bigint
+  workspaceId: string
+  webchatId: string
 }
 
 export default function WebchatMessageMenu({
-  chatbotId,
+  workspaceId,
   webchatId,
 }: WebchatMessageMenuProps) {
   const { getMenus } = useGuestSessionStore((state) => state)
@@ -49,15 +49,15 @@ export default function WebchatMessageMenu({
           id: createId(),
           createdAt: new Date(),
           updatedAt: new Date(),
-          chatbotId: BigInt(0),
-          inboxId: BigInt(0),
+          workspaceId: "",
+          // inboxId: "",
           sourceId: null,
-          conversationId: BigInt(0),
+          conversationId: "",
           contentAttributes: null,
-          messageType: MessageType.incoming,
+          messageType: messageTypes.enum.incoming,
           contentType: "text",
           senderType: "contact",
-          senderId: BigInt(0),
+          senderId: "",
           clientId: input.clientId,
         })
       }
@@ -81,7 +81,7 @@ export default function WebchatMessageMenu({
                   execute({
                     flowId: menu.flowId,
                     clientId: createId(),
-                    chatbotId,
+                    workspaceId,
                     webchatId,
                     guestConversationId: guestConversationId ?? "",
                   })

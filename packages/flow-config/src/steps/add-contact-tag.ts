@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const addContactTagStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.addContactTag),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.addContactTag),
   tags: z.array(z.string().trim().min(1)).min(1),
 })
 
@@ -14,7 +14,7 @@ export const addContactTagStepDefaultFn = (
   props?: Partial<AddContactTagStepSchema>,
 ): AddContactTagStepSchema => ({
   id: createId(),
-  stepType: StepType.addContactTag,
+  stepType: stepTypes.enum.addContactTag,
   tags: [],
   ...props,
 })

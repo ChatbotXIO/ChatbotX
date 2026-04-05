@@ -18,7 +18,7 @@ export const listAITriggersRequest = createSearchParamsCache({
 export type ListAITriggersRequest = Awaited<
   ReturnType<typeof listAITriggersRequest.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export type AITriggerResource = AITriggerModel

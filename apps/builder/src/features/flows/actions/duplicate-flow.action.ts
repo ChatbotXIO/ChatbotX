@@ -2,59 +2,60 @@
 
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const duplicateFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      const flow = await findOrFail(
-        flowModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Flow not found",
-      )
+export const duplicateFlowAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
 
-      const draftVersion = await findOrFail(
-        flowVersionModel,
-        {
-          flowId: flow.id,
-          isDraft: true,
-        },
-        "Draft version not found",
-      )
+    await duplicateFlow({ workspaceId, id })
+  })
 
-      await db.transaction(async (tx) => {
-        const newFlowId = createId()
-        await tx.insert(flowModel).values({
-          ...flow,
-          id: newFlowId,
-          name: `${flow.name} _copy`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-
-        await tx.insert(flowVersionModel).values({
-          ...draftVersion,
-          id: createId(),
-          flowId: newFlowId,
-          isDraft: true,
-          startNodeId: draftVersion.startNodeId,
-        })
-      })
-
-      revalidateCacheTags(`chatbots:${flow.chatbotId}#flows`)
+export const duplicateFlow = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  const flow = await findOrFail({
+    table: flowModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Flow not found",
+  })
+
+  const draftVersion = await findOrFail({
+    table: flowVersionModel,
+    where: {
+      flowId: flow.id,
+      isDraft: true,
+    },
+    message: "Draft version not found",
+  })
+
+  await db.transaction(async (tx) => {
+    const newFlowId = createId()
+    await tx.insert(flowModel).values({
+      ...flow,
+      id: newFlowId,
+      name: `${flow.name} _copy`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    await tx.insert(flowVersionModel).values({
+      ...draftVersion,
+      id: createId(),
+      flowId: newFlowId,
+      isDraft: true,
+      startNodeId: draftVersion.startNodeId,
+    })
+  })
+
+  revalidateCacheTags(`workspaces:${flow.workspaceId}#flows`)
+}

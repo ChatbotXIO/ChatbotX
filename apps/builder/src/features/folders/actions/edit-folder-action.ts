@@ -2,47 +2,51 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { folderModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   type EditFolderSchema,
   editFolderSchema,
 } from "@/features/folders/schema/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const editFolderAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const editFolderAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(editFolderSchema)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: EditFolderSchema
-    }) => {
-      const folder = await findOrFail(
-        folderModel,
-        {
-          chatbotId,
-          id,
-        },
-        "Folder not found",
-      )
+    } = props
 
-      await db.transaction(async (tx) => {
-        await tx
-          .update(folderModel)
-          .set(parsedInput)
-          .where(eq(folderModel.id, folder.id))
+    await editFolder({ workspaceId, id }, parsedInput)
+  })
 
-        revalidateCacheTags([
-          `chatbots:${chatbotId}#folders:${folder.folderType}`,
-          `chatbots:${chatbotId}#folders:${folder.id}`,
-        ])
-      })
+export const editFolder = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: EditFolderSchema,
+) => {
+  const folder = await findOrFail({
+    table: folderModel,
+    where: {
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
     },
-  )
+    message: "Folder not found",
+  })
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(folderModel)
+      .set(parsedInput)
+      .where(eq(folderModel.id, folder.id))
+
+    revalidateCacheTags([
+      `workspaces:${ctx.workspaceId}#folders:${folder.folderType}`,
+      `workspaces:${ctx.workspaceId}#folders:${folder.id}`,
+    ])
+  })
+}

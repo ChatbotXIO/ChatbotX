@@ -90,7 +90,7 @@ export function ReactFlowWrapper({
   const { execute: savingDraft } = useOptimisticAction(
     updateDraftFlowVersionAction.bind(
       null,
-      flowVersion.chatbotId,
+      flowVersion.workspaceId,
       flowVersion.id,
     ),
     {

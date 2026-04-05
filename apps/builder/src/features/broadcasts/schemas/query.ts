@@ -19,7 +19,7 @@ export const getBroadcastsSearchParamsCache = createSearchParamsCache({
 
 export type GetBroadcastsSchema = Awaited<
   ReturnType<typeof getBroadcastsSearchParamsCache.parse>
-> & { chatbotId: bigint }
+> & { workspaceId: string }
 
 export const publicListBroadcastsResponse = z.object({
   data: z.array(publicBroadcastResource),

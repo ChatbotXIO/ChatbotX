@@ -14,7 +14,7 @@ export async function listAIAgents(
   input: ListAIAgentsRequest,
 ): Promise<PaginatedResponse<AIAgentModel>> {
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     name: input.name
       ? {
           ilike: `%${input.name.toLowerCase()}%`,

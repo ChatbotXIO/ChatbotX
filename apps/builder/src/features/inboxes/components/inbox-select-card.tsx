@@ -3,7 +3,7 @@
 import type {
   ChannelType,
   OrganizationSettings,
-} from "@chatbotx.io/database/types"
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -55,7 +55,7 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
     <Card className="mx-auto mt-40 max-w-md">
       <CardHeader>
         <CardTitle className="font-bold text-xl">
-          {t("actions.createFeature", { feature: t("fields.chatbot.label") })}
+          {t("actions.createFeature", { feature: t("fields.workspace.label") })}
         </CardTitle>
         <CardDescription />
       </CardHeader>

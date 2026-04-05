@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const chooseChannelStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.chooseChannel),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.chooseChannel),
   channel: z.string().trim().min(1),
 })
 
@@ -14,7 +14,7 @@ export const chooseChannelStepDefaultFn = (
   props?: Partial<ChooseChannelStepSchema>,
 ): ChooseChannelStepSchema => ({
   id: createId(),
-  stepType: StepType.chooseChannel,
+  stepType: stepTypes.enum.chooseChannel,
   channel: "omnichannel",
   ...props,
 })

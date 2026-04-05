@@ -1,7 +1,8 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListSavedReplyResponse, SavedReplyResource } from "../schema"
+import type { ListSavedReplyResponse } from "../schema/mutation"
+import type { SavedReplyResource } from "../schema/resource"
 
 export type SavedReplyStoreState = {
   initialized: boolean
@@ -50,7 +51,7 @@ export const createSavedReplyStore = () =>
     getAllSavedReplies: async () => {
       const { isLoading } = get()
 
-      // Skip if already initialized for the same chatbotId or currently loading
+      // Skip if already initialized for the same workspaceId or currently loading
       if (isLoading) {
         return
       }

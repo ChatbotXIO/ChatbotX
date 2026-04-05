@@ -27,9 +27,12 @@ export const updatePlan = async (
   organization: OrganizationModel,
   parsedInput: UpdatePlanRequest,
 ) => {
-  const plan = await findOrFail(planModel, {
-    id: parsedInput.id,
-    organizationId: organization.id,
+  const plan = await findOrFail({
+    table: planModel,
+    where: {
+      id: parsedInput.id,
+      organizationId: organization.id,
+    },
   })
 
   const orgSettings = organizationSettingsSchema.parse(organization.settings)

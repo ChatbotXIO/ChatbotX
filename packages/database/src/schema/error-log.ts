@@ -1,24 +1,21 @@
-import { bigint, pgTable, text } from "drizzle-orm/pg-core"
-import { sharedColumns } from "../partials/shared"
-import { chatbotModel } from "./chatbot"
+import { pgTable, text } from "drizzle-orm/pg-core"
+import { bigintAsString, sharedColumns } from "../partials/shared"
 import { contactModel } from "./contact"
+import { workspaceModel } from "./workspace"
 
-export const errorLogModel = pgTable("error_logs", {
+export const errorLogModel = pgTable("ErrorLog", {
   ...sharedColumns,
-  action: text("action").notNull(),
-  detail: text("detail").notNull(),
-  httpCode: text("http_code"),
-  chatbotId: bigint("chatbot_id", { mode: "bigint" })
+  action: text().notNull(),
+  detail: text().notNull(),
+  httpCode: text(),
+  workspaceId: bigintAsString()
     .notNull()
-    .references(() => chatbotModel.id, {
+    .references(() => workspaceModel.id, {
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
-  contactId: bigint("contact_id", { mode: "bigint" }).references(
-    () => contactModel.id,
-    {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    },
-  ),
+  contactId: bigintAsString().references(() => contactModel.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
 })

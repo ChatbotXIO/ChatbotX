@@ -15,10 +15,10 @@ import type { listErrorLogs } from "./queries"
 
 type ErrorLogsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listErrorLogs>>]>
-  chatbotId: bigint
+  workspaceId: string
 }
 
-export function ErrorLogsTable({ promises, chatbotId }: ErrorLogsTableProps) {
+export function ErrorLogsTable({ promises, workspaceId }: ErrorLogsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -36,7 +36,7 @@ export function ErrorLogsTable({ promises, chatbotId }: ErrorLogsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -45,12 +45,14 @@ export function ErrorLogsTable({ promises, chatbotId }: ErrorLogsTableProps) {
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <ErrorLogsTableToolbarActions chatbotId={chatbotId} table={table} />
+          <ErrorLogsTableToolbarActions
+            table={table}
+            workspaceId={workspaceId}
+          />
         </DataTableToolbar>
       </DataTable>
 
       <DeleteErrorLogsDialog
-        chatbotId={chatbotId}
         errorLogs={rowAction?.row.original ? [rowAction?.row.original] : []}
         onOpenChange={() => setRowAction(null)}
         onSuccess={() => {
@@ -59,6 +61,7 @@ export function ErrorLogsTable({ promises, chatbotId }: ErrorLogsTableProps) {
         }}
         open={rowAction?.variant === "delete"}
         showTrigger={false}
+        workspaceId={workspaceId}
       />
     </>
   )

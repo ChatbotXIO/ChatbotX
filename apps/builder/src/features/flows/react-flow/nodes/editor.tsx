@@ -1,8 +1,8 @@
-import type { FlowNode, NodeType } from "@chatbotx.io/flow-config"
+import type { FlowNode, NodeType, StepType } from "@chatbotx.io/flow-config"
 import {
   buttonStepDefaultFn,
   disabledCopyActionTypes,
-  StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -310,7 +310,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                     className={cn(
                       "flex items-center gap-2",
                       // biome-ignore lint/suspicious/noExplicitAny: wip
-                      (field as any).stepType === StepType.sendCarousel
+                      (field as any).stepType === stepTypes.enum.sendCarousel
                         ? "relative"
                         : "",
                     )}
@@ -337,7 +337,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                       className={cn(
                         "break-word flex-1",
                         // biome-ignore lint/suspicious/noExplicitAny: wip
-                        (field as any).stepType === StepType.sendCarousel
+                        (field as any).stepType === stepTypes.enum.sendCarousel
                           ? "overflow-hidden"
                           : "",
                       )}

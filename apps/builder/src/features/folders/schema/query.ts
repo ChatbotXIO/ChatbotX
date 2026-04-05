@@ -8,10 +8,10 @@ export const listFoldersSearchParams = createSearchParamsCache({
 export type ListFoldersSearchParams = Awaited<
   ReturnType<typeof listFoldersSearchParams.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export type GetCurrentFolderSchema = {
-  id: bigint
-  chatbotId: bigint
+  id: string
+  workspaceId: string
 }

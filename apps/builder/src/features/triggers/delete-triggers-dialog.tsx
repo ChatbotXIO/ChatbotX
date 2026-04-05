@@ -21,7 +21,7 @@ import { deleteTriggersAction } from "./actions/delete-triggers-action"
 import type { TriggerResource } from "./schema/resource"
 
 type DeleteTriggersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   triggers: Row<TriggerResource>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteTriggersDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteTriggersDialog({
-  chatbotId,
+  workspaceId,
   triggers,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteTriggersDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteTriggersAction.bind(null, chatbotId),
+    deleteTriggersAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

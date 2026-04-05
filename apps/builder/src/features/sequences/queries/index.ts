@@ -1,5 +1,5 @@
 import { db, eq, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import {
   contactsOnSequenceModel,
   sequenceModel,
@@ -10,23 +10,26 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ListSequencesRequest, ListSequencesResponse } from "../schema"
+import type {
+  ListSequencesRequest,
+  ListSequencesResponse,
+} from "../schema/action"
 
 export async function listSequences(
   input: ListSequencesRequest,
 ): Promise<ListSequencesResponse> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  let folderIdFilter: bigint | { isNull: true } | undefined
+  let folderIdFilter: string | { isNull: true } | undefined
   if (input.folderId) {
     folderIdFilter =
-      input.folderId === BigInt(rootFolderId)
+      input.folderId === rootFolderId
         ? { isNull: true as const }
         : input.folderId
   }
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     folderId: folderIdFilter,
     name: input.name
       ? {
@@ -68,13 +71,13 @@ export async function listSequences(
   return { data, pageCount }
 }
 
-export async function getSequence(chatbotId: bigint, sequenceId: bigint) {
-  await assertCurrentUserCanAccessChatbot(chatbotId)
+export async function getSequence(workspaceId: string, sequenceId: string) {
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const sequence = await db.query.sequenceModel.findFirst({
     where: {
       id: sequenceId,
-      chatbotId,
+      workspaceId,
     },
     with: {
       sequenceSteps: {

@@ -4,43 +4,40 @@ import { db, eq } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { findChatbotOrFail } from "@/lib/user-permissions"
-import {
-  type UpdateTagSchema,
-  updateTagSchema,
-} from "../schemas/update-tag-schema"
+import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
 
 export const updateTagAction = authActionClient
   .inputSchema(updateTagSchema)
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, id],
+      bindArgsParsedInputs: [workspaceId, id],
     }: {
       ctx: { user: UserModel }
       parsedInput: UpdateTagSchema
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, chatbotId)
+      await findChatbotOrFail(ctx.user.id, workspaceId)
 
-      await updateTag({ chatbotId, id, parsedInput })
+      await updateTag({ workspaceId, id, parsedInput })
     },
   )
 
 export const updateTag = async ({
-  chatbotId,
+  workspaceId,
   id,
   parsedInput,
 }: {
-  chatbotId: bigint
-  id: bigint
+  workspaceId: string
+  id: string
   parsedInput: UpdateTagSchema
 }) => {
   const existingTag = await db.query.tagModel.findFirst({
@@ -49,7 +46,7 @@ export const updateTag = async ({
     },
     where: {
       name: parsedInput.name,
-      chatbotId,
+      workspaceId,
       id: {
         ne: id,
       },
@@ -68,7 +65,7 @@ export const updateTag = async ({
     .returning()
     .then((result) => result[0])
 
-  revalidateCacheTags(`chatbots:${chatbotId}#tags`)
+  revalidateCacheTags(`workspaces:${workspaceId}#tags`)
 
   return updatedTag
 }

@@ -1,4 +1,4 @@
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {
   findConversation,
@@ -15,12 +15,12 @@ export const conversationsAuthenticatedAPI = {
   listConversationsAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/conversations",
+      path: "/workspaces/{workspaceId}/conversations",
       summary: "List conversations by cursor pagination",
       tags: ["Conversations"],
     })
     .input(listConversationsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(async ({ input }) => {
       return await listConversations(input)
@@ -29,12 +29,12 @@ export const conversationsAuthenticatedAPI = {
   listConversationsByPOSTAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/conversations/list",
+      path: "/workspaces/{workspaceId}/conversations/list",
       summary: "List conversations by cursor pagination using POST request",
       tags: ["Conversations"],
     })
     .input(listConversationsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
     .handler(async ({ input }) => {
       return await listConversations(input)
@@ -43,12 +43,12 @@ export const conversationsAuthenticatedAPI = {
   findConversationAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/conversations/{conversationId}",
+      path: "/workspaces/{workspaceId}/conversations/{conversationId}",
       summary: "Find conversation by conversation id",
       tags: ["Conversations"],
     })
     .input(findConversationRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(findConversationResponse)
     .handler(async ({ input }) => {
       return await findConversation(input)

@@ -1,38 +1,35 @@
-import { bigint, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
-import { sharedColumns } from "../partials/shared"
-import { chatbotModel } from "./chatbot"
-import { customFieldModel } from "./contact"
+import { pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
+import { bigintAsString, sharedColumns } from "../partials/shared"
+import { customFieldModel } from "./custom-field"
 import { flowModel } from "./flow"
+import { workspaceModel } from "./workspace"
 
 export const reflinkModel = pgTable(
-  "reflinks",
+  "Reflink",
   {
     ...sharedColumns,
-    name: text("name").notNull(),
-    flowId: bigint("flow_id", { mode: "bigint" })
+    name: text().notNull(),
+    flowId: bigintAsString()
       .notNull()
       .references(() => flowModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    chatbotId: bigint("chatbot_id", { mode: "bigint" })
+    workspaceId: bigintAsString()
       .notNull()
-      .references(() => chatbotModel.id, {
+      .references(() => workspaceModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    customFieldId: bigint("custom_field_id", { mode: "bigint" }).references(
-      () => customFieldModel.id,
-      {
-        onDelete: "set null",
-        onUpdate: "cascade",
-      },
-    ),
+    customFieldId: bigintAsString().references(() => customFieldModel.id, {
+      onDelete: "set null",
+      onUpdate: "cascade",
+    }),
   },
   (table) => [
-    uniqueIndex("reflinks_chatbot_id_name_key").using(
+    uniqueIndex("Reflink_workspaceId_name_key").using(
       "btree",
-      table.chatbotId.asc().nullsLast(),
+      table.workspaceId.asc().nullsLast(),
       table.name.asc().nullsLast(),
     ),
   ],

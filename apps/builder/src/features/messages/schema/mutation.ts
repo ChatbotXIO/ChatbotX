@@ -1,5 +1,6 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 const MAX_FILE_SIZE = 5 * 1000 * 1000
@@ -22,13 +23,17 @@ export const createMessageRequest = z
     //   fileUrl: z.url(),
     // }),
     z.object({
-      flowId: z.bigint(),
-      nodeId: z.bigint().optional(),
+      flowId: zodBigintAsString(),
+      nodeId: zodBigintAsString().optional(),
     }),
   ])
   .and(
     z.object({
-      clientId: z.bigint().optional(),
+      inboxId: zodBigintAsString().optional().meta({
+        description:
+          "ID of the channel to send the message on. null to send message on the last interacted channel (if any).",
+      }),
+      clientId: zodBigintAsString().optional(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
@@ -40,7 +45,7 @@ export const createWebchatMessageRequest = z
       postback: z.string().trim().optional(),
     }),
     z.object({
-      flowId: z.bigint(),
+      flowId: zodBigintAsString(),
     }),
     z.object({
       initRef: z.string(),
@@ -57,9 +62,9 @@ export const createWebchatMessageRequest = z
   ])
   .and(
     z.object({
-      clientId: z.bigint().optional(),
-      chatbotId: z.bigint(),
-      webchatId: z.bigint(),
+      clientId: z.string().optional(),
+      workspaceId: z.string(),
+      webchatId: z.string(),
       guestConversationId: z
         .string()
         .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
@@ -73,7 +78,7 @@ export type CreateWebchatMessageRequest = z.infer<
 >
 
 export const sendFileMessageRequest = z.object({
-  contactId: z.bigint(),
+  contactId: zodBigintAsString(),
   channel: channelTypes,
   file: z.file().refine((file) => file.size <= MAX_FILE_SIZE, {
     message: "Max image size is 5MB.",
@@ -81,13 +86,14 @@ export const sendFileMessageRequest = z.object({
 })
 
 export const sendFlowMessageRequest = z.object({
-  contactId: z.bigint(),
+  contactId: zodBigintAsString(),
   channel: channelTypes,
-  flowId: z.bigint(),
+  flowId: zodBigintAsString(),
 })
 
-export const chatbotTokenCreateMessageRequest = createMessageRequest.and(
-  z.object({
-    channel: channelTypes,
-  }),
-)
+export const developerAccessTokenCreateMessageRequest =
+  createMessageRequest.and(
+    z.object({
+      channel: channelTypes,
+    }),
+  )

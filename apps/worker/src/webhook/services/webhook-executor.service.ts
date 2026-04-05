@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import { Condition } from "@chatbotx.io/database/enums"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import { logger } from "../../lib/logger"
 import type { WebhookEventData, WebhookWithConditions } from "../types"
 
@@ -28,23 +28,26 @@ export class WebhookExecutor {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
-  private getEventName(eventType: number): string {
-    const eventMap: Record<number, string> = {
-      [Condition.tagApplied]: "tag_applied",
-      [Condition.tagRemoved]: "tag_removed",
-      [Condition.customFieldValueChanged]: "custom_field_changed",
-      [Condition.conversationTransferredToHuman]:
+  private getEventName(eventType: string): string {
+    const eventMap: Record<string, string> = {
+      [triggerEventTypes.enum.tagApplied]: "tag_applied",
+      [triggerEventTypes.enum.tagRemoved]: "tag_removed",
+      [triggerEventTypes.enum.customFieldValueChanged]: "custom_field_changed",
+      [triggerEventTypes.enum.conversationTransferredToHuman]:
         "conversation_transferred_to_human",
-      [Condition.conversationTransferredToBot]:
+      [triggerEventTypes.enum.conversationTransferredToBot]:
         "conversation_transferred_to_bot",
-      [Condition.newContact]: "new_contact",
-      [Condition.contactUnsubscribedFormBroadcast]: "contact_unsubscribed",
-      [Condition.archived]: "conversation_archived",
-      [Condition.followUp]: "marked_as_follow_up",
-      [Condition.conversationAssigned]: "conversation_assigned",
-      [Condition.conversationUnassigned]: "conversation_unassigned",
-      [Condition.subscribedToSequence]: "subscribed_to_sequence",
-      [Condition.unsubscribedFromSequence]: "unsubscribed_from_sequence",
+      [triggerEventTypes.enum.newContact]: "new_contact",
+      [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]:
+        "contact_unsubscribed",
+      [triggerEventTypes.enum.archived]: "conversation_archived",
+      [triggerEventTypes.enum.followUp]: "marked_as_follow_up",
+      [triggerEventTypes.enum.conversationAssigned]: "conversation_assigned",
+      [triggerEventTypes.enum.conversationUnassigned]:
+        "conversation_unassigned",
+      [triggerEventTypes.enum.subscribedToSequence]: "subscribed_to_sequence",
+      [triggerEventTypes.enum.unsubscribedFromSequence]:
+        "unsubscribed_from_sequence",
     }
     return eventMap[eventType] || `event_${eventType}`
   }
@@ -61,8 +64,8 @@ export class WebhookExecutor {
 
     // Tag events
     if (
-      eventData.eventType === Condition.tagApplied ||
-      eventData.eventType === Condition.tagRemoved
+      eventData.eventType === triggerEventTypes.enum.tagApplied ||
+      eventData.eventType === triggerEventTypes.enum.tagRemoved
     ) {
       const tag = await db.query.tagModel.findFirst({
         where: { id: data.tagId as string },
@@ -76,7 +79,9 @@ export class WebhookExecutor {
     }
 
     // Custom field events
-    if (eventData.eventType === Condition.customFieldValueChanged) {
+    if (
+      eventData.eventType === triggerEventTypes.enum.customFieldValueChanged
+    ) {
       return {
         ...basePayload,
         custom_field: {
@@ -89,8 +94,8 @@ export class WebhookExecutor {
 
     // Sequence events
     if (
-      eventData.eventType === Condition.subscribedToSequence ||
-      eventData.eventType === Condition.unsubscribedFromSequence
+      eventData.eventType === triggerEventTypes.enum.subscribedToSequence ||
+      eventData.eventType === triggerEventTypes.enum.unsubscribedFromSequence
     ) {
       return {
         ...basePayload,
@@ -100,7 +105,10 @@ export class WebhookExecutor {
     }
 
     // Conversation transferred to human
-    if (eventData.eventType === Condition.conversationTransferredToHuman) {
+    if (
+      eventData.eventType ===
+      triggerEventTypes.enum.conversationTransferredToHuman
+    ) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -109,7 +117,10 @@ export class WebhookExecutor {
     }
 
     // Conversation transferred to bot
-    if (eventData.eventType === Condition.conversationTransferredToBot) {
+    if (
+      eventData.eventType ===
+      triggerEventTypes.enum.conversationTransferredToBot
+    ) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -118,7 +129,7 @@ export class WebhookExecutor {
     }
 
     // Conversation archived
-    if (eventData.eventType === Condition.archived) {
+    if (eventData.eventType === triggerEventTypes.enum.archived) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -127,7 +138,7 @@ export class WebhookExecutor {
     }
 
     // Conversation follow up
-    if (eventData.eventType === Condition.followUp) {
+    if (eventData.eventType === triggerEventTypes.enum.followUp) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -136,7 +147,7 @@ export class WebhookExecutor {
     }
 
     // Conversation assigned
-    if (eventData.eventType === Condition.conversationAssigned) {
+    if (eventData.eventType === triggerEventTypes.enum.conversationAssigned) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -146,7 +157,7 @@ export class WebhookExecutor {
     }
 
     // Conversation unassigned
-    if (eventData.eventType === Condition.conversationUnassigned) {
+    if (eventData.eventType === triggerEventTypes.enum.conversationUnassigned) {
       return {
         ...basePayload,
         conversation_id: data.conversationId as string,
@@ -155,7 +166,7 @@ export class WebhookExecutor {
     }
 
     // New contact
-    if (eventData.eventType === Condition.newContact) {
+    if (eventData.eventType === triggerEventTypes.enum.newContact) {
       return {
         ...basePayload,
         name: data.name as string,
@@ -166,7 +177,10 @@ export class WebhookExecutor {
     }
 
     // Contact unsubscribed from broadcast
-    if (eventData.eventType === Condition.contactUnsubscribedFormBroadcast) {
+    if (
+      eventData.eventType ===
+      triggerEventTypes.enum.contactUnsubscribedFormBroadcast
+    ) {
       return basePayload
     }
 

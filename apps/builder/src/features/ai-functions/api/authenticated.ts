@@ -1,4 +1,4 @@
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listAIFunctions } from "../queries"
 import {
@@ -10,12 +10,12 @@ export const aiFunctionsAuthenticatedAPI = {
   listAIFunctionsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/ai-functions",
+      path: "/workspaces/{workspaceId}/ai-functions",
       summary: "List AI functions",
       tags: ["AI Functions"],
     })
     .input(listAIFunctionsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listAIFunctionsResponse)
     .handler(async ({ input }) => {
       return await listAIFunctions(input)

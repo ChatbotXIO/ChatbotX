@@ -1,5 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
   parseOrderByAsObject,
@@ -16,10 +16,10 @@ import type { BotFieldResource } from "../schemas/resource"
 export async function listBotFields(
   input: ListBotFieldsSearchParams,
 ): Promise<PaginatedResponse<BotFieldResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     folderId: input.folderId
       ? // biome-ignore lint/style/noNestedTernary: allow nested ternary
         input.folderId === rootFolderId

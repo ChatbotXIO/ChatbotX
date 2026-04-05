@@ -25,22 +25,22 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, use } from "react"
 import { BrandIcon } from "@/components/brand-icon"
-import { ChatbotSwitcher } from "@/components/chatbot-switcher"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import type { ChatbotResource } from "@/features/chatbots/schemas/resource"
+import { WorkspaceSwitcher } from "@/components/workspace-switcher"
+import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
 
 export function AppSidebar({
-  chatbotId,
+  workspaceId,
   allChatbotsPromise,
   ...props
 }: ComponentProps<typeof Sidebar> & {
-  chatbotId: bigint
-  allChatbotsPromise: Promise<{ chatbots: ChatbotResource[] }>
+  workspaceId: string
+  allChatbotsPromise: Promise<{ workspaces: WorkspaceResource[] }>
 }) {
   const t = useTranslations()
-  const { chatbots } = use(allChatbotsPromise)
+  const { workspaces } = use(allChatbotsPromise)
   const { data: session } = authClient.useSession()
 
   const data = {
@@ -52,62 +52,62 @@ export function AppSidebar({
     navMain: [
       {
         title: t("fields.analytics.label"),
-        url: `/chatbots/${chatbotId}/dashboard`,
+        url: `/space/${workspaceId}/dashboard`,
         icon: ChartPieIcon,
       },
       {
         title: t("fields.inbox.label"),
-        url: `/chatbots/${chatbotId}/inbox`,
+        url: `/space/${workspaceId}/inbox`,
         icon: MessageCircleMoreIcon,
       },
       {
         title: t("fields.flows.label"),
-        url: `/chatbots/${chatbotId}/flows`,
+        url: `/space/${workspaceId}/flows`,
         icon: WorkflowIcon,
       },
       {
         title: t("fields.contacts.label"),
-        url: `/chatbots/${chatbotId}/contacts`,
+        url: `/space/${workspaceId}/contacts`,
         icon: UsersIcon,
       },
       {
         title: t("aiAgent.title"),
-        url: `/chatbots/${chatbotId}/ai-agents`,
+        url: `/space/${workspaceId}/ai-agents`,
         icon: BrainIcon,
       },
       {
         title: t("keywords.title"),
-        url: `/chatbots/${chatbotId}/automated-responses`,
+        url: `/space/${workspaceId}/automated-responses`,
         icon: AtomIcon,
       },
       {
         title: t("broadcasts.title"),
-        url: `/chatbots/${chatbotId}/broadcasts`,
+        url: `/space/${workspaceId}/broadcasts`,
         icon: RadioIcon,
       },
       {
         title: t("sequences.title"),
-        url: `/chatbots/${chatbotId}/sequences`,
+        url: `/space/${workspaceId}/sequences`,
         icon: ChevronsRight,
       },
       {
         title: t("triggers.title"),
-        url: `/chatbots/${chatbotId}/triggers`,
+        url: `/space/${workspaceId}/triggers`,
         icon: LightbulbIcon,
       },
       {
         title: t("webhooks.title"),
-        url: `/chatbots/${chatbotId}/webhooks`,
+        url: `/space/${workspaceId}/webhooks`,
         icon: WebhookIcon,
       },
       {
         title: t("tools.title"),
-        url: `/chatbots/${chatbotId}/tools`,
+        url: `/space/${workspaceId}/tools`,
         icon: WrenchIcon,
       },
       {
         title: t("settings.title"),
-        url: `/chatbots/${chatbotId}/settings/general`,
+        url: `/space/${workspaceId}/settings/general`,
         icon: SlidersHorizontalIcon,
       },
     ],
@@ -123,7 +123,7 @@ export function AppSidebar({
           <BrandIcon alt="Brand" />
         </Link>
         <div className="border-b px-1">
-          <ChatbotSwitcher chatbots={chatbots} />
+          <WorkspaceSwitcher workspaces={workspaces} />
         </div>
       </SidebarHeader>
       <SidebarContent>

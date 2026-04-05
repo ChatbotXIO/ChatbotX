@@ -1,6 +1,5 @@
 "use client"
 
-import type { FolderModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -15,22 +14,23 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { deleteFolderAction } from "@/features/folders/actions/delete-folder.action"
+import type { FolderResource } from "./schema/resource"
 
 export function DeleteFolderDialog({
   open,
   onOpenChange,
-  chatbotId,
+  workspaceId,
   folder,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
-  folder: FolderModel | null
+  workspaceId: string
+  folder: FolderResource | null
 }) {
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteFolderAction.bind(null, chatbotId),
+    deleteFolderAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(
@@ -73,7 +73,7 @@ export function DeleteFolderDialog({
           </Button>
           <Button
             disabled={isPending}
-            onClick={() => execute({ ids: [folder?.id ?? BigInt(0)] })}
+            onClick={() => execute({ ids: [folder?.id ?? ""] })}
             size="sm"
             type="submit"
             variant={"destructive"}

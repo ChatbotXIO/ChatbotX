@@ -32,7 +32,7 @@ import { updateTriggerSettingsAction } from "./actions/update-trigger-settings-a
 import type { TriggerResource } from "./schema/resource"
 
 type GetColumnsProps = {
-  chatbotId: bigint
+  workspaceId: string
   t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<TriggerResource> | null>
@@ -40,7 +40,7 @@ type GetColumnsProps = {
 }
 
 export function getColumns({
-  chatbotId,
+  workspaceId,
   t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<TriggerResource>[] {
@@ -84,7 +84,7 @@ export function getColumns({
             <div className="max-w-[300px] truncate">
               <Link
                 className="truncate"
-                href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}
+                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
               >
                 {row.original.name}
               </Link>
@@ -117,7 +117,7 @@ export function getColumns({
         const { execute, isPending } = useAction(
           updateTriggerSettingsAction.bind(
             null,
-            row.original.chatbotId,
+            row.original.workspaceId,
             row.original.id,
           ),
           {
@@ -158,7 +158,7 @@ export function getColumns({
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link
-                href={`/chatbots/${chatbotId}/triggers/${row.original.id}/edit`}
+                href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}
               >
                 <PencilIcon />
                 {t("actions.edit")}

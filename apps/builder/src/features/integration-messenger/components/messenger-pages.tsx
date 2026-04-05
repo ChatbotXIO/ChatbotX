@@ -17,10 +17,10 @@ import { selectPageAction } from "../actions/select-page.action"
 import { selectPageRequest } from "../schema/action"
 
 export function FacebookPages({
-  chatbotId,
+  workspaceId,
   pages,
 }: {
-  chatbotId?: string | null
+  workspaceId?: string | null
   pages: FacebookPage[]
 }) {
   const t = useTranslations()
@@ -33,7 +33,7 @@ export function FacebookPages({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          chatbotId,
+          workspaceId,
           pageId: "",
           pageName: "",
           accessToken: "",
@@ -41,9 +41,9 @@ export function FacebookPages({
       },
       actionProps: {
         onSuccess: ({ data }) => {
-          if (chatbotId) {
+          if (workspaceId) {
             router.push(
-              `/chatbots/${data.chatbotId}/settings/channels?channel=messenger`,
+              `/space/${data.workspaceId}/settings/channels?channel=messenger`,
             )
           } else {
             router.push("/")

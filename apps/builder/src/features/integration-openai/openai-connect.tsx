@@ -25,19 +25,19 @@ import { OpenAIConnectDialog } from "./openai-connect-dialog"
 import type { findIntegrationOpenAI } from "./queries"
 
 type OpenAIConnectProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof findIntegrationOpenAI>>]>
 }
 
 export const OpenAIConnect = (props: OpenAIConnectProps) => {
-  const { chatbotId, promises } = props
+  const { workspaceId, promises } = props
 
   const [{ data: integrationOpenAI }] = use(promises)
   const router = useRouter()
   const t = useTranslations()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectOpenAIAction.bind(null, chatbotId), {
+    useAction(disconnectOpenAIAction.bind(null, workspaceId), {
       onSuccess: () => {
         router.refresh()
       },
@@ -94,7 +94,7 @@ export const OpenAIConnect = (props: OpenAIConnectProps) => {
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <OpenAIConnectDialog chatbotId={chatbotId} />
+          <OpenAIConnectDialog workspaceId={workspaceId} />
         )}
       </SettingRow>
 

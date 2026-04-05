@@ -6,10 +6,10 @@ import {
   spreadsheetMappingSchema,
   spreadsheetSchema,
 } from "./spreadsheet"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(StepType.spreadsheetGetRow),
+  stepType: z.literal(stepTypes.enum.spreadsheetGetRow),
   lookup: spreadsheetColumnFilterSchema,
   map: z.array(spreadsheetMappingSchema).min(1),
 })
@@ -17,7 +17,7 @@ export type SpreadsheetGetRowSchema = z.infer<typeof spreadsheetGetRowSchema>
 
 export const spreadsheetGetRowDefaultFn = (): SpreadsheetGetRowSchema => ({
   ...spreadsheetDefaultFn(),
-  stepType: StepType.spreadsheetGetRow,
+  stepType: stepTypes.enum.spreadsheetGetRow,
   lookup: spreadsheetColumnFilterDefaultFn(),
   map: [],
 })

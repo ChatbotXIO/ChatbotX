@@ -20,14 +20,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
-import { z } from "zod"
-
 import { updateWebhookSettingsAction } from "../actions/update-webhook-settings-action"
-
-const updateWebhookSettingsSchema = z.object({
-  name: z.optional(z.string().trim().min(1).max(255)),
-  active: z.optional(z.boolean()),
-})
+import { updateWebhookSettingsRequest } from "../schemas/update-webhook-schema"
 
 export function RenameWebhookDialog({
   webhook,
@@ -49,10 +43,10 @@ export function RenameWebhookDialog({
   } = useHookFormAction(
     updateWebhookSettingsAction.bind(
       null,
-      webhook?.chatbotId ?? "",
+      webhook?.workspaceId ?? "",
       webhook?.id ?? "",
     ),
-    zodResolver(updateWebhookSettingsSchema),
+    zodResolver(updateWebhookSettingsRequest),
     {
       actionProps: {
         onSuccess: () => {

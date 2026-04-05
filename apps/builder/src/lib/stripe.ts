@@ -2,7 +2,7 @@ import Stripe from "stripe"
 
 export const getStripeClient = (
   publishableKey: string,
-  options?: Stripe.StripeConfig,
+  options?: Record<string, unknown>,
 ) => {
   return new Stripe(publishableKey, options)
 }

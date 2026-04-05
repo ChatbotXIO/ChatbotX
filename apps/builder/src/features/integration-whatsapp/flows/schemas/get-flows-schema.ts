@@ -5,6 +5,6 @@ export const listWhatsappFlowsRequest = createSearchParamsCache({})
 export type ListWhatsappFlowsRequest = Awaited<
   ReturnType<typeof listWhatsappFlowsRequest.parse>
 > & {
-  chatbotId: bigint
-  id: bigint
+  workspaceId: string
+  id: string
 }

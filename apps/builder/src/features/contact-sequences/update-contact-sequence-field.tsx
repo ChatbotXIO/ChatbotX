@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useSequenceOptions } from "@/features/sequences/provider/sequence-hook"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { updateContactSequenceAction } from "./actions/update-contact-sequence.action"
 import {
@@ -29,7 +29,7 @@ export default function UpdateContactSequenceField({
   sequences: ContactOnSequenceWithRelations[]
   onSuccess?: (updatedSequences: ContactOnSequenceWithRelations[]) => void
 }) {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const t = useTranslations()
 
@@ -39,12 +39,12 @@ export default function UpdateContactSequenceField({
     value: sequence.id,
   }))
 
-  const [currentSequencesIds, setCurrentSequencesIds] = useState<bigint[]>(
+  const [currentSequencesIds, setCurrentSequencesIds] = useState<string[]>(
     () => sequences?.map((cos) => cos.sequence.id).filter(Boolean) ?? [],
   )
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateContactSequenceAction.bind(null, chatbotId),
+    updateContactSequenceAction.bind(null, workspaceId),
     zodResolver(updateContactSequenceRequest),
     {
       actionProps: {
@@ -88,7 +88,7 @@ export default function UpdateContactSequenceField({
           label=""
           name="sequences"
           onSelect={(selectedTags) => {
-            const ids = selectedTags.map((tag) => BigInt(tag.value))
+            const ids = selectedTags.map((tag) => tag.value)
             setCurrentSequencesIds(ids)
             handleSubmitWithAction()
           }}

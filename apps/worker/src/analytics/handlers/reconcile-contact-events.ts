@@ -7,12 +7,12 @@ import { logger } from "../../lib/logger"
 const BATCH_SIZE = 1000
 
 export const reconcileContactEvents = async (job: {
-  data: { chatbotId: bigint; fromDate: string; toDate: string }
+  data: { workspaceId: string; fromDate: string; toDate: string }
 }) => {
-  const { chatbotId, fromDate, toDate } = job.data
+  const { workspaceId, fromDate, toDate } = job.data
 
   // logger.info(
-  //   `Starting reconciliation for chatbot ${chatbotId} from ${fromDate} to ${toDate}`,
+  //   `Starting reconciliation for workspace ${workspaceId} from ${fromDate} to ${toDate}`,
   // )
 
   const from = new Date(fromDate)
@@ -21,17 +21,17 @@ export const reconcileContactEvents = async (job: {
   const fromTimestamp = Math.floor(from.getTime() / 1000)
   const toTimestamp = Math.floor(to.getTime() / 1000)
 
-  const existingContactIds = await query<{ contact_id: bigint }>(
+  const existingContactIds = await query<{ contact_id: string }>(
     `
     SELECT DISTINCT contact_id
     FROM contact_events
-    WHERE chatbot_id = {chatbotId:String}
+    WHERE chatbot_id = {workspaceId:String}
       AND event_type = 'contact_created'
       AND occurred_at >= {from:UInt32}
       AND occurred_at < {to:UInt32}
   `,
     {
-      chatbotId,
+      workspaceId,
       from: fromTimestamp,
       to: toTimestamp,
     },
@@ -49,7 +49,7 @@ export const reconcileContactEvents = async (job: {
     const contacts = await db
       .select({
         id: contactModel.id,
-        chatbotId: contactModel.chatbotId,
+        workspaceId: contactModel.workspaceId,
         createdAt: contactModel.createdAt,
         source: contactModel.source,
         sourceId: contactModel.sourceId,
@@ -57,7 +57,7 @@ export const reconcileContactEvents = async (job: {
       .from(contactModel)
       .where(
         and(
-          eq(contactModel.chatbotId, chatbotId),
+          eq(contactModel.workspaceId, workspaceId),
           gte(contactModel.createdAt, from),
           lt(contactModel.createdAt, to),
         ),
@@ -76,7 +76,7 @@ export const reconcileContactEvents = async (job: {
 
     if (missingContacts.length > 0) {
       const events = missingContacts.map((contact) => ({
-        chatbotId: contact.chatbotId,
+        workspaceId: contact.workspaceId,
         contactId: contact.id,
         eventType: "contact_created" as const,
         occurredAt: contact.createdAt,
@@ -87,12 +87,12 @@ export const reconcileContactEvents = async (job: {
       try {
         await contactTrackingService.trackEvents(events)
         // logger.info(
-        //   `Reconciled ${missingContacts.length} missing contacts for chatbot ${chatbotId}`,
+        //   `Reconciled ${missingContacts.length} missing contacts for workspace ${workspaceId}`,
         // )
       } catch (error) {
         logger.error(
           error,
-          `Failed to reconcile contacts for chatbot ${chatbotId}`,
+          `Failed to reconcile contacts for workspace ${workspaceId}`,
         )
       }
     }
@@ -103,6 +103,6 @@ export const reconcileContactEvents = async (job: {
   }
 
   // logger.info(
-  //   `Reconciliation completed for chatbot ${chatbotId}`,
+  //   `Reconciliation completed for workspace ${workspaceId}`,
   // )
 }

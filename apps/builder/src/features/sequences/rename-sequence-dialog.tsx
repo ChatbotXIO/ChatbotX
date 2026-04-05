@@ -19,8 +19,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { updateSequenceAction } from "./actions/update-sequence.action"
-import type { SequenceResource } from "./schema"
-import { updateSequenceSchema } from "./schema"
+import { updateSequenceSchema } from "./schema/action"
+import type { SequenceResource } from "./schema/resource"
 
 export function RenameSequenceDialog({
   sequence,
@@ -42,7 +42,7 @@ export function RenameSequenceDialog({
   } = useHookFormAction(
     updateSequenceAction.bind(
       null,
-      sequence?.chatbotId ?? "",
+      sequence?.workspaceId ?? "",
       sequence?.id ?? "",
     ),
     zodResolver(updateSequenceSchema),

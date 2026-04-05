@@ -15,7 +15,7 @@ export function* convertFlowStepText(
   } = props
   if (step.buttons.length === 0) {
     yield {
-      text: step.message,
+      text: step.text,
     }
   } else {
     const buttons = convertFacebookButtons({
@@ -29,7 +29,7 @@ export function* convertFlowStepText(
         type: "template",
         payload: {
           template_type: "button",
-          text: step.message,
+          text: step.text,
           buttons,
         },
       },

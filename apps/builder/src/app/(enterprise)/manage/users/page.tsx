@@ -3,7 +3,7 @@ import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import OrganizationMembersTable from "@/enterprise/features/organization-members/organization-members-table"
 import { listOrganizationMembersRSC } from "@/enterprise/features/organization-members/queries"
-import { listOrganizationMembersSearchParamsCache } from "@/enterprise/features/organization-members/schema"
+import { listOrganizationMembersSearchParamsCache } from "@/enterprise/features/organization-members/schema/mutation"
 
 type ManageUsersPageProps = {
   searchParams: Promise<SearchParams>

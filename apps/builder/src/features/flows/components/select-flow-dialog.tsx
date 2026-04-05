@@ -71,8 +71,8 @@ export function SelectFlowDialog({
     useHookFormAction(
       createMessageAction.bind(
         null,
-        conversation?.chatbotId ?? BigInt(0),
-        conversation?.id ?? BigInt(0),
+        conversation?.workspaceId ?? "",
+        conversation?.id ?? "",
       ),
       zodResolver(createMessageRequest),
       {

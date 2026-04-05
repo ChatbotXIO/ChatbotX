@@ -2,34 +2,44 @@ import {
   contactsOnSequenceModel,
   conversationModel,
   createSelectSchema,
-  sequenceModel,
 } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
+import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
 import { contactResource } from "@/features/contacts/schemas/resource"
-import { inboxResource } from "@/features/inboxes/schema/resource"
 import { messageResource } from "@/features/messages/schema/resource"
+import { sequenceResource } from "@/features/sequences/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
 
-export const conversationResource = createSelectSchema(conversationModel)
+export const conversationResource = createSelectSchema(conversationModel, {
+  id: z.string(),
+  contactId: z.string(),
+  workspaceId: z.string(),
+})
 export type ConversationResource = z.infer<typeof conversationResource>
 
-const contactsOnSequenceResource = createSelectSchema(contactsOnSequenceModel)
-const sequenceResourceSchema = createSelectSchema(sequenceModel)
+const contactsOnSequenceResource = createSelectSchema(contactsOnSequenceModel, {
+  id: z.string(),
+  contactId: z.string(),
+  sequenceId: z.string(),
+  workspaceId: z.string(),
+})
 
 export const listConversationsItemResource = conversationResource.and(
   z.object({
+    contactInboxes: z.array(contactInboxResource),
     messages: z.array(messageResource),
     contact: contactResource
       .extend({
         contactsOnSequences: z.array(
           contactsOnSequenceResource.extend({
-            sequence: sequenceResourceSchema,
+            sequence: sequenceResource,
           }),
         ),
       })
       .nullable(),
-    inbox: inboxResource.nullable(),
+    // inbox: inboxResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),
   }),
@@ -48,8 +58,8 @@ export type ListConversationsResponse = z.infer<
 >
 
 export const findConversationRequest = z.object({
-  id: z.bigint(),
-  chatbotId: z.bigint(),
+  id: zodBigintAsString(),
+  workspaceId: zodBigintAsString(),
 })
 export type FindConversationRequest = z.infer<typeof findConversationRequest>
 

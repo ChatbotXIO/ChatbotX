@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl"
 import type { ComponentPropsWithoutRef } from "react"
 import { toast } from "sonner"
 import { deleteSequenceAction } from "./actions/delete-sequence.action"
-import type { SequenceResource } from "./schema"
+import type { SequenceResource } from "./schema/resource"
 
 type BulkDeleteSequenceDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
   sequences: SequenceResource[]
@@ -38,7 +38,7 @@ export function BulkDeleteSequenceDialog({
     try {
       await Promise.all(
         sequences.map((sequence) =>
-          deleteSequenceAction(sequence.chatbotId, sequence.id),
+          deleteSequenceAction(sequence.workspaceId, sequence.id),
         ),
       )
       toast.success(

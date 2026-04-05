@@ -51,7 +51,7 @@ export class DispatchProcessorService {
       .where(
         and(
           eq(sequenceDispatchModel.id, dispatch.id),
-          eq(sequenceDispatchModel.chatbotId, dispatch.chatbotId),
+          eq(sequenceDispatchModel.workspaceId, dispatch.workspaceId),
           eq(sequenceDispatchModel.status, "pending"),
         ),
       )

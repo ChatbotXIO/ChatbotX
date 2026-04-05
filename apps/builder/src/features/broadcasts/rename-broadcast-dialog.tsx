@@ -43,8 +43,8 @@ export function RenameBroadcastDialog({
   } = useHookFormAction(
     updateBroadcastAction.bind(
       null,
-      broadcast?.chatbotId ?? BigInt(0),
-      broadcast?.id ?? BigInt(0),
+      broadcast?.workspaceId ?? "",
+      broadcast?.id ?? "",
     ),
     zodResolver(updateBroadcastSchema),
     {

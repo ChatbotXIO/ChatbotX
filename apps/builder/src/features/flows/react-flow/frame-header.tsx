@@ -15,7 +15,7 @@ export function FrameHeader({ flow }: { flow: FlowResource }) {
           items={[
             {
               label: t("fields.flows.label"),
-              href: `/chatbots/${flow.chatbotId}/flows`,
+              href: `/space/${flow.workspaceId}/flows`,
             },
             { label: flow.name, href: "" },
           ]}
@@ -23,7 +23,7 @@ export function FrameHeader({ flow }: { flow: FlowResource }) {
       </div>
       {/* <ThemeSwitcher /> */}
 
-      <FlowEditToolbar chatbotId={flow.chatbotId} flow={flow} />
+      <FlowEditToolbar flow={flow} workspaceId={flow.workspaceId} />
     </header>
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -45,13 +46,13 @@ import type { BotFieldResource } from "./schemas/resource"
 import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 type FieldsTableProps = {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
   promises: Promise<[Awaited<ReturnType<typeof listBotFields>>]>
 }
 
 export function BotFieldsTable({
-  chatbotId,
+  workspaceId,
   folderId,
   promises,
 }: FieldsTableProps) {
@@ -141,7 +142,9 @@ export function BotFieldsTable({
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Type" />
         ),
-        cell: ({ row }) => <CustomFieldTypeLabel type={row.original.type} />,
+        cell: ({ row }) => (
+          <CustomFieldTypeLabel type={row.original.type as CustomFieldType} />
+        ),
         enableSorting: false,
       },
       {
@@ -181,7 +184,7 @@ export function BotFieldsTable({
                 {t("actions.edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => copyToClipboard(row.original.id.toString())}
+                onClick={() => copyToClipboard(row.original.id)}
               >
                 <FingerprintIcon />
                 {t("actions.getID")}
@@ -213,7 +216,7 @@ export function BotFieldsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -230,15 +233,14 @@ export function BotFieldsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <BotFieldToolbarActions
-              chatbotId={chatbotId}
               folderId={folderId}
               table={table}
+              workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>
 
         <DeleteBotFieldsDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             rowAction?.row.toggleSelected(false)
@@ -247,16 +249,17 @@ export function BotFieldsTable({
           open={rowAction?.variant === "delete"}
           records={rowAction?.row.original ? [rowAction?.row.original] : []}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
 
         <UpdateBotFieldDialog
           botField={rowAction?.row.original || null}
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
           }}
           open={rowAction?.variant === "update"}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

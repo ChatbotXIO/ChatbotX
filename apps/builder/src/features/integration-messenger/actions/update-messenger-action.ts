@@ -8,8 +8,8 @@ import {
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
-  ChatbotModel,
   IntegrationMessengerModel,
+  WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
@@ -20,70 +20,79 @@ import type {
   FacebookButton,
   MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger/schemas"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
 import {
   type UpdateMessengerRequest,
   updateMessengerRequest,
 } from "../schema/action"
 
-export const updateMessengerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateMessengerAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateMessengerRequest)
-  .action(
-    async ({
-      ctx,
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [_, id],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      ctx: { chatbot: ChatbotModel }
-      parsedInput: UpdateMessengerRequest
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      const { addLanguage, ...rest } = parsedInput
+      ctx: { workspace },
+    } = props
 
-      try {
-        await db.transaction(async (tx) => {
-          const integrationMessengerData = await findIntegrationMessenger({
-            chatbotId: ctx.chatbot.id,
-            id,
-          })
-          const updatedPersonas = await updatePersonas(
-            ctx.chatbot,
-            integrationMessengerData,
-          )
+    return await updateMessenger(
+      {
+        workspace,
+        id,
+      },
+      parsedInput,
+    )
+  })
 
-          await tx
-            .update(integrationMessengerModel)
-            .set({
-              ...rest,
-              personas: updatedPersonas,
-            })
-            .where(eq(integrationMessengerModel.id, id))
+export const updateMessenger = async (
+  ctx: {
+    workspace: WorkspaceModel
+    id: string
+  },
+  parsedInput: UpdateMessengerRequest,
+) => {
+  const { addLanguage, ...rest } = parsedInput
 
-          integrationMessenger.actions.updateMessengerProfile({
-            ctx: {
-              chatbot: ctx.chatbot,
-              auth: integrationMessengerData?.auth as MessengerAuthValue,
-            },
-            params: await getMessengerProfileParams(integrationMessengerData),
-          })
+  try {
+    await db.transaction(async (tx) => {
+      const integrationMessengerData = await findIntegrationMessenger({
+        workspaceId: ctx.workspace.id,
+        id: ctx.id,
+      })
+      const updatedPersonas = await updatePersonas(
+        ctx.workspace,
+        integrationMessengerData,
+      )
 
-          revalidateCacheTags([`chatbots:${chatbotId}#messenger`])
+      await tx
+        .update(integrationMessengerModel)
+        .set({
+          ...rest,
+          personas: updatedPersonas,
         })
-      } catch (error) {
-        logger.debug(error, "Failed to update Facebook page")
-        throw new ChatbotXException("Failed to update Facebook page")
-      }
-    },
-  )
+        .where(eq(integrationMessengerModel.id, ctx.id))
+
+      integrationMessenger.actions.updateMessengerProfile({
+        ctx: {
+          workspace: ctx.workspace,
+          auth: integrationMessengerData?.auth as MessengerAuthValue,
+        },
+        params: await getMessengerProfileParams(integrationMessengerData),
+      })
+
+      revalidateCacheTags([`workspaces:${ctx.workspace.id}#messenger`])
+    })
+  } catch (error) {
+    logger.debug(error, "Failed to update Facebook page")
+    throw new ChatbotXException("Failed to update Facebook page")
+  }
+}
 
 const parseFacebookButtons = (
   persistentMenus: MessengerPersistentMenu[],
@@ -152,14 +161,14 @@ const getMessengerProfileParams = (
 }
 
 const updatePersonas = async (
-  chatbot: ChatbotModel,
+  workspace: WorkspaceModel,
   model: IntegrationMessengerModel,
 ): Promise<MessengerPersona[]> => {
   const defaultPersona = model.personas.find((persona) => persona.isDefault)
 
   const newPersona = await integrationMessenger.actions.updatePersona({
     ctx: {
-      chatbot,
+      workspace,
       auth: model?.auth as MessengerAuthValue,
     },
     persona: defaultPersona

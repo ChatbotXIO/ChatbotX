@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { deleteAIAgentAction } from "@/features/ai-agents/actions/delete.action"
 
 type DeleteAIAgentsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
-  chatbotId: bigint
+  workspaceId: string
   agents: Row<AIAgentModel>["original"][]
   showTrigger?: boolean
   onSuccess?: () => void
@@ -29,7 +29,7 @@ type DeleteAIAgentsDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
 }
 
 export function DeleteAIAgentsDialog({
-  chatbotId,
+  workspaceId,
   agents,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteAIAgentsDialog({
   const t = useTranslations()
 
   const { execute, isExecuting } = useAction(
-    deleteAIAgentAction.bind(null, chatbotId),
+    deleteAIAgentAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

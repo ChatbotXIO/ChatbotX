@@ -2,9 +2,9 @@
 
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
-  chatbotMemberModel,
   invitationModel,
   organizationMemberModel,
+  workspaceMemberModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -20,32 +20,34 @@ export const acceptInvitationAction = authActionClient
   .action(async ({ ctx, parsedInput }) => {
     const { code } = parsedInput
 
-    const invitation = await findOrFail(
-      invitationModel,
-      {
+    const invitation = await findOrFail({
+      table: invitationModel,
+      where: {
         code,
       },
-      "Invitation not found",
-    )
+      message: "Invitation not found",
+    })
 
     if (invitation.expiresAt < new Date()) {
       throw new ChatbotXException("Invitation expired")
     }
 
-    if (invitation.chatbotId) {
-      const existingMember = await db.query.chatbotMemberModel.findFirst({
+    if (invitation.workspaceId) {
+      const existingMember = await db.query.workspaceMemberModel.findFirst({
         where: {
-          chatbotId: invitation.chatbotId,
+          workspaceId: invitation.workspaceId,
           userId: ctx.user.id,
         },
       })
       if (existingMember) {
-        throw new ChatbotXException("You are already a member of this chatbot")
+        throw new ChatbotXException(
+          "You are already a member of this workspace",
+        )
       }
 
-      await db.insert(chatbotMemberModel).values({
+      await db.insert(workspaceMemberModel).values({
         id: createId(),
-        chatbotId: invitation.chatbotId,
+        workspaceId: invitation.workspaceId,
         userId: ctx.user.id,
         role: "agent",
         permissions: invitation.permissions,

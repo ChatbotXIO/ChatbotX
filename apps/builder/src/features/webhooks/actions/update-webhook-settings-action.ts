@@ -3,47 +3,34 @@
 import { updateWebhookCache } from "@chatbotx/events"
 import { db, eq } from "@chatbotx.io/database/client"
 import { webhookModel } from "@chatbotx.io/database/schema"
-import { z } from "zod"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceActionClient } from "@/lib/safe-action"
+import { updateWebhookSettingsRequest } from "../schemas/update-webhook-schema"
 
-const updateWebhookSettingsSchema = z.object({
-  name: z.optional(z.string().trim().min(1).max(255)),
-  active: z.optional(z.boolean()),
-})
-
-type UpdateWebhookSettingsSchema = z.infer<typeof updateWebhookSettingsSchema>
-
-export const updateWebhookSettingsAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .inputSchema(updateWebhookSettingsSchema)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+export const updateWebhookSettingsAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .inputSchema(updateWebhookSettingsRequest)
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateWebhookSettingsSchema
-    }) => {
-      const webhook = await db.query.webhookModel.findFirst({
-        where: {
-          id,
-          chatbotId,
-        },
-      })
+    } = props
 
-      if (!webhook) {
-        throw new Error("Webhook not found")
-      }
+    const webhook = await db.query.webhookModel.findFirst({
+      where: {
+        id,
+        workspaceId,
+      },
+    })
 
-      await db
-        .update(webhookModel)
-        .set(parsedInput)
-        .where(eq(webhookModel.id, webhook.id))
+    if (!webhook) {
+      throw new Error("Webhook not found")
+    }
 
-      await updateWebhookCache(chatbotId)
-    },
-  )
+    await db
+      .update(webhookModel)
+      .set(parsedInput)
+      .where(eq(webhookModel.id, webhook.id))
+
+    await updateWebhookCache(workspaceId)
+  })

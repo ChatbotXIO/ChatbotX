@@ -10,7 +10,7 @@ import {
 } from "@chatbotx.io/database/client"
 import {
   aiEmbeddingModel,
-  integrationOpenAIModel,
+  integrationOpenaiModel,
 } from "@chatbotx.io/database/schema"
 import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { embed } from "ai"
@@ -22,22 +22,22 @@ import type {
   SimilaritySearchResult,
 } from "./types"
 
-async function getOpenAIIntegration(chatbotId: bigint) {
-  return await findOrFail(
-    integrationOpenAIModel,
-    {
-      chatbotId,
+async function getOpenAIIntegration(workspaceId: string) {
+  return await findOrFail({
+    table: integrationOpenaiModel,
+    where: {
+      workspaceId,
       autoReply: true,
     },
-    "OpenAI integration not found",
-  )
+    message: "OpenAI integration not found",
+  })
 }
 
 async function createQueryEmbedding(
   query: string,
-  chatbotId: bigint,
+  workspaceId: string,
 ): Promise<number[]> {
-  const integrationOpenAI = await getOpenAIIntegration(chatbotId)
+  const integrationOpenAI = await getOpenAIIntegration(workspaceId)
 
   const openai = createOpenAI({
     apiKey: (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText,
@@ -68,7 +68,7 @@ async function searchSimilarEmbeddings(
     .from(aiEmbeddingModel)
     .where(
       and(
-        eq(aiEmbeddingModel.chatbotId, config.chatbotId),
+        eq(aiEmbeddingModel.workspaceId, config.workspaceId),
         inArray(aiEmbeddingModel.aiFileId, config.selectedFileIds),
       ),
     )
@@ -82,7 +82,7 @@ async function searchSimilarEmbeddings(
   //     "aiFileId",
   //     1 - ("embedding" <=> ${embeddingString}::vector) as distance
   //   FROM "AIEmbedding"
-  //   WHERE "chatbotId" = ${config.chatbotId}
+  //   WHERE "workspaceId" = ${config.workspaceId}
   //     AND "aiFileId" = ANY(${config.selectedFileIds})
   //   ORDER BY "embedding" <=> ${embeddingString}::vector
   //   LIMIT ${config.maxResults}
@@ -114,7 +114,7 @@ export async function performFileSearch(
   try {
     const queryEmbedding = await createQueryEmbedding(
       args.query,
-      config.chatbotId,
+      config.workspaceId,
     )
     const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
@@ -136,7 +136,7 @@ export async function performFileSearch(
   } catch (error) {
     logger.error(
       error,
-      `[automated-response] performFileSearch failed for chatbotId: ${config.chatbotId}`,
+      `[automated-response] performFileSearch failed for workspaceId: ${config.workspaceId}`,
     )
     return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
   }

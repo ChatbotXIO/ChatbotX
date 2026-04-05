@@ -2,28 +2,43 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { aiFunctionModel } from "@chatbotx.io/database/schema"
-import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
-import { updateAIFunctionRequest } from "../schema/action"
+import { workspaceActionClient } from "@/lib/safe-action"
+import {
+  type UpdateAIFunctionRequest,
+  updateAIFunctionRequest,
+} from "../schema/action"
 
-export const updateAIFunctionAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateAIFunctionAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateAIFunctionRequest)
-  .action(async ({ bindArgsParsedInputs: [chatbotId, id], parsedInput }) => {
-    const aiFunction = await findOrFail(
-      aiFunctionModel,
-      {
-        id,
-        chatbotId,
-      },
-      `AIFunction with id ${id} not found`,
-    )
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+      parsedInput,
+    } = props
 
-    await db
-      .update(aiFunctionModel)
-      .set(parsedInput)
-      .where(eq(aiFunctionModel.id, aiFunction.id))
-
-    revalidateCacheTags(`chatbots:${chatbotId}#aiFunctions`)
+    return await updateAIFunction({ workspaceId, id }, parsedInput)
   })
+
+export const updateAIFunction = async (
+  ctx: { workspaceId: string; id: string },
+  parsedInput: UpdateAIFunctionRequest,
+) => {
+  const aiFunction = await findOrFail({
+    table: aiFunctionModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
+    },
+    message: `AIFunction with id ${ctx.id} not found`,
+  })
+
+  await db
+    .update(aiFunctionModel)
+    .set(parsedInput)
+    .where(eq(aiFunctionModel.id, aiFunction.id))
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiFunctions`)
+}

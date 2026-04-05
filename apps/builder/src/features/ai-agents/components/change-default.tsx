@@ -41,8 +41,8 @@ export function ChangeDefault(props: ChangeDefaultProps) {
   const { execute, isPending } = useAction(
     updateAIAgentAction.bind(
       null,
-      aiAgent?.chatbotId ?? BigInt(0),
-      aiAgent?.id ?? BigInt(0),
+      aiAgent?.workspaceId ?? "",
+      aiAgent?.id ?? "",
     ),
     {
       onSuccess: () => {

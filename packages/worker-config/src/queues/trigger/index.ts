@@ -12,9 +12,9 @@ export const TriggerJobAction = {
 } as const
 
 export type TriggerEvent = {
-  chatbotId: bigint
-  contactId: bigint
-  eventType: number
+  workspaceId: string
+  contactId: string
+  eventType: string
   eventData: Record<string, unknown>
   timestamp: Date
   source?: string
@@ -23,9 +23,9 @@ export type TriggerEvent = {
 export type TriggerJobExecute = {
   type: typeof TriggerJobAction.executeTrigger
   data: {
-    triggerId: bigint
-    contactId: bigint
-    chatbotId: bigint
+    triggerId: string
+    contactId: string
+    workspaceId: string
     eventData: Record<string, unknown>
   }
 }

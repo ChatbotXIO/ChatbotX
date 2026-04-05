@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import type { FileType } from "@chatbotx.io/sdk"
 import type { FacebookMessageAttachment } from "../schemas"
 
@@ -17,12 +17,12 @@ export function getAttachmentTemplate(
 
 export function convertMediaType(stepType: string): FileType {
   switch (stepType) {
-    case StepType.sendImage:
-    case StepType.sendGif:
+    case stepTypes.enum.sendImage:
+    case stepTypes.enum.sendGif:
       return "image"
-    case StepType.sendAudio:
+    case stepTypes.enum.sendAudio:
       return "audio"
-    case StepType.sendVideo:
+    case stepTypes.enum.sendVideo:
       return "video"
     default:
       return "file"

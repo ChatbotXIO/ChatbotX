@@ -6,41 +6,41 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteFieldsAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteFieldsAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await deleteCustomFields({ chatbotId, ids: parsedInput.ids })
+      await deleteCustomFields({ workspaceId, ids: parsedInput.ids })
     },
   )
 
 export const deleteCustomFields = async ({
-  chatbotId,
+  workspaceId,
   ids,
 }: {
-  chatbotId: bigint
-  ids: bigint[]
+  workspaceId: string
+  ids: string[]
 }) => {
   await db
     .delete(customFieldModel)
     .where(
       and(
-        eq(customFieldModel.chatbotId, chatbotId),
+        eq(customFieldModel.workspaceId, workspaceId),
         inArray(customFieldModel.id, ids),
       ),
     )
 
-  revalidateCacheTags(`chatbots:${chatbotId}#customFields`)
+  revalidateCacheTags(`workspaces:${workspaceId}#customFields`)
 }

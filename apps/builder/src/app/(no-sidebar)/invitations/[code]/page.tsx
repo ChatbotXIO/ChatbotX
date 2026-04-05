@@ -7,17 +7,17 @@ type InvitationsPageProps = {
 
 export default async function InvitationsPage(props: InvitationsPageProps) {
   const params = await props.params
-  const { invitation, user, chatbot, organization } = await findInvitation({
+  const { invitation, user, workspace, organization } = await findInvitation({
     code: params.code,
   })
 
   return (
     <div className="flex h-screen w-screen items-center justify-center">
       <InvitationCard
-        chatbot={chatbot}
         invitation={invitation}
         organization={organization}
         user={user}
+        workspace={workspace}
       />
     </div>
   )

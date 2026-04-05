@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { type NextRequest, NextResponse } from "next/server"
 import { handleCreateWebchatMessage } from "@/features/messages/actions/create-webchat-message.action"
 import { listMessages } from "@/features/messages/queries"
@@ -11,14 +12,17 @@ export async function GET(req: NextRequest) {
     const searchParams = Object.fromEntries(req.nextUrl.searchParams)
     const data = listGuestMessagesRequest.parse(searchParams)
 
-    const conversation = await db.query.conversationModel.findFirst({
+    const contactInbox = await db.query.contactInboxModel.findFirst({
       where: {
-        channel: "webchat",
+        channel: channelTypes.enum.webchat,
         sourceId: data.guestConversationId,
+      },
+      with: {
+        conversation: true,
       },
     })
 
-    if (!conversation) {
+    if (!contactInbox) {
       return NextResponse.json({
         data: [],
         nextCursor: null,
@@ -26,9 +30,11 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    const conversation = contactInbox.conversation
+
     const result = await listMessages({
       ...data,
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
     })
 

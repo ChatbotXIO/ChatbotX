@@ -6,10 +6,10 @@ import {
   spreadsheetMappingSchema,
   spreadsheetSchema,
 } from "./spreadsheet"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const spreadsheetGetRandomRowSchema = spreadsheetSchema.extend({
-  stepType: z.literal(StepType.spreadsheetGetRandomRow),
+  stepType: z.literal(stepTypes.enum.spreadsheetGetRandomRow),
   lookup: spreadsheetColumnFilterSchema,
   map: z.array(spreadsheetMappingSchema).min(1),
 })
@@ -20,7 +20,7 @@ export type SpreadsheetGetRandomRowSchema = z.infer<
 export const spreadsheetGetRandomRowDefaultFn =
   (): SpreadsheetGetRandomRowSchema => ({
     ...spreadsheetDefaultFn(),
-    stepType: StepType.spreadsheetGetRandomRow,
+    stepType: stepTypes.enum.spreadsheetGetRandomRow,
     lookup: spreadsheetColumnFilterDefaultFn(),
     map: [],
   })

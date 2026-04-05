@@ -6,7 +6,7 @@ import {
 } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import type { FieldValues } from "react-hook-form"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 
 type SpreadsheetSelectProps = SelectFieldProps<FieldValues> & {
   allowCreate?: boolean
@@ -16,10 +16,10 @@ export const SpreadsheetSelect = ({
   allowCreate = false,
   ...props
 }: SpreadsheetSelectProps) => {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const t = useTranslations()
 
-  const url = `/api/chatbots/${chatbotId}/spreadsheets?perPage=9999`
+  const url = `/api/workspaces/${workspaceId}/spreadsheets?perPage=9999`
 
   return (
     <SelectField
@@ -42,7 +42,7 @@ export const SpreadsheetSelect = ({
     //       </FormLabel>
     //       {allowCreate && (
     //         <CreateSpreadsheetDialog
-    //           chatbotId={params.chatbotId}
+    //           workspaceId={params.workspaceId}
     //           triggerButton={
     //             <Button
     //               size="sm"

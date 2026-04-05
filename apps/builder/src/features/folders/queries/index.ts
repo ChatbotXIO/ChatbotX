@@ -1,15 +1,16 @@
 import { db } from "@chatbotx.io/database/client"
-import type { FolderModel, FolderType } from "@chatbotx.io/database/types"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   GetCurrentFolderSchema,
   ListFoldersSearchParams,
 } from "../schema/query"
+import type { FolderResource, ListFoldersResponse } from "../schema/resource"
 
 export const listFolders = async (
   input: ListFoldersSearchParams,
-): Promise<{ data: FolderModel[] }> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+): Promise<{ data: ListFoldersResponse["data"] }> => {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
   const { folderId, ...rest } = input
 
   const data = await db.query.folderModel.findMany({
@@ -28,8 +29,8 @@ export const listFolders = async (
 
 export const getCurrentFolder = async (
   input: GetCurrentFolderSchema,
-): Promise<{ folder: FolderModel | null; parents: FolderModel[] }> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+): Promise<{ folder: FolderResource | null; parents: FolderResource[] }> => {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const folder = await db.query.folderModel.findFirst({
     where: input,
@@ -38,7 +39,7 @@ export const getCurrentFolder = async (
     return { folder: null, parents: [] }
   }
 
-  let parents: FolderModel[] = []
+  let parents: FolderResource[] = []
   if (folder.paths.length > 0) {
     const tempParents = await db.query.folderModel.findMany({
       where: {
@@ -52,7 +53,7 @@ export const getCurrentFolder = async (
         result[value.toString()] = null
         return result
       },
-      {} as Record<string, FolderModel | null>,
+      {} as Record<string, FolderResource | null>,
     )
 
     for (const temp of tempParents) {
@@ -60,7 +61,9 @@ export const getCurrentFolder = async (
     }
 
     // Remove null value
-    parents = Object.values(orderedPaths).filter((v) => v?.id) as FolderModel[]
+    parents = Object.values(orderedPaths).filter(
+      (v) => v?.id,
+    ) as FolderResource[]
   }
 
   return { folder, parents }

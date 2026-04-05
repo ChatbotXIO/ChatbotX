@@ -4,50 +4,67 @@ import {
   and,
   db,
   eq,
+  findOrFail,
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import { reflinkModel } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateReflinkRequest,
   updateReflinkRequest,
 } from "../schemas/action"
 
-export const updateReflinkAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateReflinkAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateReflinkRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateReflinkRequest
-    }) => {
-      try {
-        await db
-          .update(reflinkModel)
-          .set(parsedInput)
-          .where(
-            and(eq(reflinkModel.id, id), eq(reflinkModel.chatbotId, chatbotId)),
-          )
+    } = props
 
-        revalidateCacheTags(`chatbots:${chatbotId}#reflinks`)
-      } catch (error) {
-        if (isUniqueViolationError(error)) {
-          return returnValidationErrors(updateReflinkRequest, {
-            _errors: ["Validation Exception"],
-            name: { _errors: ["Name is already taken"] },
-          })
-        }
+    return await updateReflink(
+      {
+        workspaceId,
+        id,
+      },
+      parsedInput,
+    )
+  })
 
-        throw error
-      }
+export const updateReflink = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: UpdateReflinkRequest,
+) => {
+  const reflink = await findOrFail({
+    table: reflinkModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Reflink not found",
+  })
+  try {
+    await db
+      .update(reflinkModel)
+      .set(parsedInput)
+      .where(and(eq(reflinkModel.id, reflink.id)))
+
+    revalidateCacheTags(`workspaces:${ctx.workspaceId}#reflinks`)
+  } catch (error) {
+    if (isUniqueViolationError(error)) {
+      return returnValidationErrors(updateReflinkRequest, {
+        _errors: ["Validation Exception"],
+        name: { _errors: ["Name is already taken"] },
+      })
+    }
+
+    throw error
+  }
+}

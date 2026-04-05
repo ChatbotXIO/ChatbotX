@@ -1,8 +1,8 @@
-import flowChatbotTokenAPIs from "./chatbot-token"
 import privateFlowsAPI from "./private"
+import flowWorkspaceTokenAPIs from "./workspace-token"
 
 const flowsAPI = {
-  ...flowChatbotTokenAPIs,
+  ...flowWorkspaceTokenAPIs,
   ...privateFlowsAPI,
 }
 

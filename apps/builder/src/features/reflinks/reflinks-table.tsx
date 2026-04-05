@@ -41,11 +41,11 @@ import type { ListReflinkItem, ListReflinksResponse } from "./schemas/query"
 import { UpdateReflinkDialog } from "./update-reflink"
 
 type ReflinksTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ListReflinksResponse>]>
 }
 
-export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
+export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
   const t = useTranslations()
   const router = useRouter()
   const [{ data, pageCount }] = use(promises)
@@ -192,7 +192,7 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -207,7 +207,10 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
-            <ReflinksTableToolbarActions chatbotId={chatbotId} table={table} />
+            <ReflinksTableToolbarActions
+              table={table}
+              workspaceId={workspaceId}
+            />
           </DataTableToolbar>
         </DataTable>
 
@@ -218,14 +221,13 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
         />
 
         <UpdateReflinkDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "update"}
           reflink={rowAction?.row.original ?? null}
+          workspaceId={workspaceId}
         />
 
         <DeleteReflinksDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()
@@ -233,6 +235,7 @@ export function ReflinksTable({ chatbotId, promises }: ReflinksTableProps) {
           open={rowAction?.variant === "delete"}
           reflinks={rowAction?.row.original ? [rowAction?.row.original] : []}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

@@ -3,34 +3,29 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteAITriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteAITriggerAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput: { ids },
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      await db
-        .delete(aiTriggerModel)
-        .where(
-          and(
-            eq(aiTriggerModel.chatbotId, chatbotId),
-            inArray(aiTriggerModel.id, ids),
-          ),
-        )
+    } = props
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
-    },
-  )
+    await db
+      .delete(aiTriggerModel)
+      .where(
+        and(
+          eq(aiTriggerModel.workspaceId, workspaceId),
+          inArray(aiTriggerModel.id, ids),
+        ),
+      )
+
+    revalidateCacheTags(`workspaces:${workspaceId}#aiTriggers`)
+  })

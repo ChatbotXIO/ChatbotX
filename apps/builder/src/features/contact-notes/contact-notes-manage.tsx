@@ -5,7 +5,7 @@ import { PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { z } from "zod"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ContactResource } from "../contacts/schemas/resource"
 import { AddContactForm } from "./add-contact-note-form"
@@ -23,7 +23,7 @@ export function ContactNotesManage({
   contactNotes: ContactNoteResource[]
 }) {
   const t = useTranslations()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const [mode, setMode] = useState<ContactNoteMode>(contactNoteModes.enum.list)
 
@@ -72,18 +72,17 @@ export function ContactNotesManage({
 
       {mode === contactNoteModes.enum.add && (
         <AddContactForm
-          chatbotId={chatbotId}
           contactId={contact?.id}
           onCancel={() => setMode(contactNoteModes.enum.list)}
           onSuccess={(value: ContactNoteModel) => {
             setAllContactNotes([value, ...allContactNotes])
             resetAction()
           }}
+          workspaceId={workspaceId}
         />
       )}
       {contactNote && contact && mode === contactNoteModes.enum.edit && (
         <EditContactForm
-          chatbotId={chatbotId}
           contactId={contact.id}
           contactNote={contactNote}
           onCancel={() => setMode(contactNoteModes.enum.list)}
@@ -95,11 +94,11 @@ export function ContactNotesManage({
             )
             resetAction()
           }}
+          workspaceId={workspaceId}
         />
       )}
       {mode === contactNoteModes.enum.delete && contact && contactNote && (
         <DeleteContactNoteDialog
-          chatbotId={chatbotId}
           contactId={contact.id}
           contactNoteId={contactNote.id}
           onCancel={() => setMode(contactNoteModes.enum.list)}
@@ -117,6 +116,7 @@ export function ContactNotesManage({
             resetAction()
           }}
           open={Boolean(contactNote)}
+          workspaceId={workspaceId}
         />
       )}
       {mode === contactNoteModes.enum.list && (

@@ -5,71 +5,71 @@ import {
   inboxTeamMemberModel,
   inboxTeamModel,
 } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddInboxTeamMemberRequest,
   addInboxTeamMemberRequest,
 } from "../schema/action"
 
-export const addInboxTeamMemberAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const addInboxTeamMemberAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(addInboxTeamMemberRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsClientInputs: [workspaceId, inboxTeamId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: AddInboxTeamMemberRequest
-    }) => {
-      await db.transaction(async (tx) => {
-        const inboxTeam = await findOrFail(
-          inboxTeamModel,
-          {
-            id,
-            chatbotId,
-          },
-          "Inbox team not found",
-        )
+    } = props
 
-        const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
-          where: {
-            userId: {
-              in: parsedInput.userIds,
-            },
-            inboxTeamId: inboxTeam.id,
-          },
-          columns: {
-            userId: true,
-          },
-        })
+    return await addInboxTeamMember({ workspaceId, inboxTeamId }, parsedInput)
+  })
 
-        const existingUserIds = new Set(
-          existingMembers.map((member) => member.userId),
-        )
-
-        const newUserIds = parsedInput.userIds.filter(
-          (userId) => !existingUserIds.has(userId),
-        )
-
-        if (newUserIds.length > 0) {
-          await tx.insert(inboxTeamMemberModel).values(
-            newUserIds.map((userId) => ({
-              id: createId(),
-              userId,
-              chatbotId,
-              inboxTeamId: id,
-            })),
-          )
-        }
-      })
-
-      revalidateCacheTags(`chatbots:${chatbotId}#inboxTeams`)
+export const addInboxTeamMember = async (
+  ctx: { workspaceId: string; inboxTeamId: string; userId?: string },
+  parsedInput: AddInboxTeamMemberRequest,
+) => {
+  const inboxTeam = await findOrFail({
+    table: inboxTeamModel,
+    where: {
+      id: ctx.inboxTeamId,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Inbox team not found",
+  })
+
+  await db.transaction(async (tx) => {
+    const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
+      where: {
+        userId: {
+          in: parsedInput.userIds,
+        },
+        inboxTeamId: inboxTeam.id,
+      },
+      columns: {
+        userId: true,
+      },
+    })
+
+    const existingUserIds = new Set(
+      existingMembers.map((member) => member.userId),
+    )
+
+    const newUserIds = parsedInput.userIds.filter(
+      (userId) => !existingUserIds.has(userId),
+    )
+
+    if (newUserIds.length > 0) {
+      await tx.insert(inboxTeamMemberModel).values(
+        newUserIds.map((userId) => ({
+          id: createId(),
+          userId,
+          workspaceId: ctx.workspaceId,
+          inboxTeamId: ctx.inboxTeamId,
+        })),
+      )
+    }
+  })
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#inboxTeams`)
+}

@@ -1,3 +1,4 @@
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -13,9 +14,9 @@ export const WebhookJobAction = {
 export type WebhookJobEvaluate = {
   type: "evaluateWebhooks"
   data: {
-    chatbotId: bigint
-    contactId: bigint
-    eventType: number
+    workspaceId: string
+    contactId: string
+    eventType: TriggerEventType
     eventData: Record<string, unknown>
     timestamp: Date
   }

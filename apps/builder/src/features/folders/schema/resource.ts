@@ -1,17 +1,18 @@
-import {
-  createSelectSchema,
-  folderModel,
-  folderType,
-} from "@chatbotx.io/database/schema"
+import { createSelectSchema, folderModel } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
-export const folderResource = createSelectSchema(folderModel)
+export const folderResource = createSelectSchema(folderModel, {
+  id: z.string(),
+  workspaceId: z.string(),
+  parentId: z.string().nullish(),
+})
 export type FolderResource = z.infer<typeof folderResource>
 
 export const listFoldersRequest = z.object({
-  chatbotId: z.bigint(),
-  folderType: z.enum(folderType.enumValues).optional(),
-  parentId: z.bigint().optional(),
+  workspaceId: zodBigintAsString(),
+  folderType: z.string(),
+  folderId: zodBigintAsString().nullish(),
   isTrash: z.boolean().nullish(),
 })
 export type ListFoldersRequest = z.infer<typeof listFoldersRequest>

@@ -25,18 +25,18 @@ import { createTriggerAction } from "./actions/create-trigger-action"
 import { createTriggerSchema } from "./schema/mutation"
 
 export function CreateTriggerDialog({
-  chatbotId,
+  workspaceId,
   folderId,
 }: {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const [open, onOpenChange] = useState(false)
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createTriggerAction.bind(null, chatbotId),
+    createTriggerAction.bind(null, workspaceId),
     zodResolver(createTriggerSchema),
     {
       actionProps: {

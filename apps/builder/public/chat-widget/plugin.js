@@ -29,8 +29,8 @@
 
       const url = new URL("/webchat", csmChatWidget.webchatUrl)
 
-      if (config.chatbotId) {
-        url.searchParams.set("chatbotId", config.chatbotId)
+      if (config.workspaceId) {
+        url.searchParams.set("workspaceId", config.workspaceId)
       }
       if (config.webchatId) {
         url.searchParams.set("webchatId", config.webchatId)

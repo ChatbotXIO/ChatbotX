@@ -1,8 +1,9 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { aiFunctionResource } from "./resource"
 
 export const listAIFunctionsRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
 })
 export type ListAIFunctionsRequest = z.infer<typeof listAIFunctionsRequest>
 
@@ -21,7 +22,7 @@ export const createAIFunctionRequest = z.object({
     }),
   ),
   outputMessage: z.string().trim().nullish(),
-  triggerFlowId: z.bigint().nullish(),
+  triggerFlowId: zodBigintAsString().nullish(),
 })
 export type CreateAIFunctionRequest = z.infer<typeof createAIFunctionRequest>
 

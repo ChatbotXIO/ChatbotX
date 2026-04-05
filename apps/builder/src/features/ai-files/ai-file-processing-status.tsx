@@ -1,12 +1,12 @@
 "use client"
 
-import type { AIEmbeddingStatus } from "@chatbotx.io/database/types"
+import type { AIEmbeddingStatus } from "@chatbotx.io/database/partials"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useMemo } from "react"
 
 type AIFileProcessingStatusProps = {
-  aiFileId: bigint
+  aiFileId: string
   chunksCount?: number
   processingStatus: AIEmbeddingStatus
 }

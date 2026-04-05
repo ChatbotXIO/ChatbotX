@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const aiProviders = z.enum(["openai", "gemini", "claude", "deepseek"])
 export type AIProvider = z.infer<typeof aiProviders>
@@ -13,8 +13,8 @@ export const defaultAIModelIds = {
 } as const
 
 export const aiGenerateTextSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.aiGenerateText),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.aiGenerateText),
   provider: aiProviders,
   model: z.string().trim().min(1),
   system: z.string().trim().optional(),
@@ -48,6 +48,6 @@ export const aiGenerateTextDefaultFn = (
     temperature: 1.0,
     maxOutputTokens: 250,
     ...props,
-    stepType: StepType.aiGenerateText,
+    stepType: stepTypes.enum.aiGenerateText,
   }
 }

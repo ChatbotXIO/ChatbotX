@@ -18,28 +18,28 @@ import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
+import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
 import { addInboxTeamMemberAction } from "./actions/add-inbox-team-member.action"
 import { addInboxTeamMemberRequest } from "./schema/action"
 
 export function AddInboxTeamMemberDialog({
   open,
   onOpenChange,
-  chatbotId,
+  workspaceId,
   inboxTeam,
-  chatbotMembers,
+  workspaceMembers,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   inboxTeam: InboxTeamModel | null
-  chatbotMembers: ListChatbotMembersResponse["data"]
+  workspaceMembers: ListWorkspaceMembersResponse["data"]
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    addInboxTeamMemberAction.bind(null, chatbotId, inboxTeam?.id ?? BigInt(0)),
+    addInboxTeamMemberAction.bind(null, workspaceId, inboxTeam?.id ?? ""),
     zodResolver(addInboxTeamMemberRequest),
     {
       actionProps: {
@@ -68,8 +68,8 @@ export function AddInboxTeamMemberDialog({
     },
   )
 
-  const userOptions = chatbotMembers.map((cm) => ({
-    value: cm.user.id.toString(),
+  const userOptions = workspaceMembers.map((cm) => ({
+    value: cm.user.id,
     label: cm.user.name ?? "",
   }))
 

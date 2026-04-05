@@ -18,14 +18,14 @@ import { updateAutomatedResponseAction } from "./actions/update-automated-respon
 import { updateAutomatedResponseRequest } from "./schema/action"
 
 type EditAutomatedResponseFormProps = {
-  chatbotId: bigint
+  workspaceId: string
   automatedResponse: AutomatedResponseModel
 }
 
 export default function EditAutomatedResponseForm(
   props: EditAutomatedResponseFormProps,
 ) {
-  const { chatbotId, automatedResponse } = props
+  const { workspaceId, automatedResponse } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -36,7 +36,7 @@ export default function EditAutomatedResponseForm(
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    updateAutomatedResponseAction.bind(null, chatbotId, automatedResponse.id),
+    updateAutomatedResponseAction.bind(null, workspaceId, automatedResponse.id),
     zodResolver(updateAutomatedResponseRequest),
     {
       actionProps: {

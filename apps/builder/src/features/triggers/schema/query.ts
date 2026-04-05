@@ -1,5 +1,6 @@
 import type { TriggerModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -24,15 +25,15 @@ export const getTriggersSearchParamsCache = createSearchParamsCache({
 export type GetTriggersSchema = Awaited<
   ReturnType<typeof getTriggersSearchParamsCache.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export const listTriggersRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
   page: z.number().optional(),
   perPage: z.number().optional(),
   name: z.string().optional(),
-  folderId: z.bigint().optional(),
+  folderId: zodBigintAsString().optional(),
 })
 export type ListTriggersRequest = z.infer<typeof listTriggersRequest>
 

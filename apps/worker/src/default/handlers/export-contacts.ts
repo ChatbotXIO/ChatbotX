@@ -21,7 +21,7 @@ const headerNames: Record<string, string> = {
   gender: "Gender",
   source: "Source",
   lastReadAt: "Last Read At",
-  blockedAt: "Blocked At",
+  blockedAt: "Blocked Atfr",
 }
 
 type SelectedField =
@@ -97,7 +97,7 @@ const buildCsvChunk = (
 export const loopableExportContacts = async (
   data: JobExportContacts["data"],
 ) => {
-  const { chatbotId, fields, contactIds, outputPath, outputFormat, cursor } =
+  const { workspaceId, fields, contactIds, outputPath, outputFormat, cursor } =
     data
 
   if (outputFormat !== "csv") {
@@ -107,7 +107,7 @@ export const loopableExportContacts = async (
   const contacts = await db.query.contactModel.findMany({
     where: {
       id: { in: contactIds },
-      chatbotId,
+      workspaceId,
       ...(cursor
         ? {
             createdAt: {
@@ -175,7 +175,7 @@ export const loopableExportContacts = async (
           .findMany({
             where: {
               id: { in: requestedTagIds },
-              chatbotId,
+              workspaceId,
             },
           })
           .then((tags) =>
@@ -199,7 +199,7 @@ export const loopableExportContacts = async (
           .findMany({
             where: {
               id: { in: requestedCustomFieldIds },
-              chatbotId,
+              workspaceId,
             },
           })
           .then((customFields) =>

@@ -21,7 +21,7 @@ const FlowActionContext = createContext<FlowActionStoreApi | undefined>(
 
 export type FlowActionProviderProps = {
   children: ReactNode
-  chatbotId: bigint
+  workspaceId: string
   data?: Record<string, unknown>
   beforeStep?: { channel?: string; [key: string]: unknown }
   autoInitialize?: boolean
@@ -29,7 +29,7 @@ export type FlowActionProviderProps = {
 
 export function FlowActionProvider({
   children,
-  chatbotId,
+  workspaceId,
   data,
   beforeStep,
   autoInitialize = true,
@@ -37,7 +37,7 @@ export function FlowActionProvider({
   const storeRef = useRef<FlowActionStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowActionStore({
-      chatbotId,
+      workspaceId,
       data,
       beforeStep,
     })

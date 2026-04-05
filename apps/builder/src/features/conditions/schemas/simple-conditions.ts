@@ -1,59 +1,65 @@
-import { Condition } from "@chatbotx.io/database/enums"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 
 // Simple conditions without additional fields
-const createSimpleCondition = (type: Condition) =>
+const createSimpleCondition = (type: TriggerEventType) =>
   z.object({
-    id: z.bigint().optional(),
+    id: zodBigintAsString().optional(),
     type: z.literal(type),
   })
 
 // Simple conditions
 export const conversationTransferredToHuman = createSimpleCondition(
-  Condition.conversationTransferredToHuman,
+  triggerEventTypes.enum.conversationTransferredToHuman,
 )
 export const conversationTransferredToBot = createSimpleCondition(
-  Condition.conversationTransferredToBot,
+  triggerEventTypes.enum.conversationTransferredToBot,
 )
-export const newContact = createSimpleCondition(Condition.newContact)
+export const newContact = createSimpleCondition(
+  triggerEventTypes.enum.newContact,
+)
 export const contactUnsubscribedFormBroadcast = createSimpleCondition(
-  Condition.contactUnsubscribedFormBroadcast,
+  triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
 )
-export const archived = createSimpleCondition(Condition.archived)
-export const followUp = createSimpleCondition(Condition.followUp)
+export const archived = createSimpleCondition(triggerEventTypes.enum.archived)
+export const followUp = createSimpleCondition(triggerEventTypes.enum.followUp)
 export const conversationAssigned = createSimpleCondition(
-  Condition.conversationAssigned,
+  triggerEventTypes.enum.conversationAssigned,
 )
 export const conversationUnassigned = createSimpleCondition(
-  Condition.conversationUnassigned,
+  triggerEventTypes.enum.conversationUnassigned,
 )
 export const contactReferredANewContact = createSimpleCondition(
-  Condition.contactReferredANewContact,
+  triggerEventTypes.enum.contactReferredANewContact,
 )
 export const contactReferredExistingContact = createSimpleCondition(
-  Condition.contactReferredExistingContact,
+  triggerEventTypes.enum.contactReferredExistingContact,
 )
 
 // Conditions with sourceId
-const createConditionWithSourceId = (type: Condition) =>
+const createConditionWithSourceId = (type: TriggerEventType) =>
   z.object({
-    id: z.bigint().optional(),
+    id: zodBigintAsString().optional(),
     type: z.literal(type),
     sourceId: z.string().min(1, "Required"),
   })
 
 export const subscribedToSequence = createConditionWithSourceId(
-  Condition.subscribedToSequence,
+  triggerEventTypes.enum.subscribedToSequence,
 )
 export const unsubscribedFromSequence = createConditionWithSourceId(
-  Condition.unsubscribedFromSequence,
+  triggerEventTypes.enum.unsubscribedFromSequence,
 )
 
 // Default functions
 export const createDefaultFn =
-  <T extends Condition>(type: T) =>
+  <T extends TriggerEventType>(type: T) =>
   () => ({ type })
 
 export const createDefaultFnWithSourceId =
-  <T extends Condition>(type: T) =>
+  <T extends TriggerEventType>(type: T) =>
   () => ({ type, sourceId: "" })

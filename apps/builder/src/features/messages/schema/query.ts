@@ -1,15 +1,16 @@
 import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { attachmentResource } from "@/features/attachments/schemas"
+import { attachmentResource } from "@/features/attachments/schema/resource"
 import { contactResource } from "@/features/contacts/schemas/resource"
 import { userResource } from "@/features/users/schemas/resource"
 import { messageResource } from "./resource"
 
 export const listMessagesRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
   perPage: z.coerce.number().optional().default(20),
   cursor: z.string().optional(),
-  conversationId: z.bigint().optional(),
+  conversationId: zodBigintAsString().optional(),
 })
 export type ListMessagesRequest = z.infer<typeof listMessagesRequest>
 
@@ -30,8 +31,8 @@ export const listMessagesResponse = z.object({
 export type ListMessagesResponse = z.infer<typeof listMessagesResponse>
 
 export const findMessageRequest = z.object({
-  id: z.bigint(),
-  chatbotId: z.bigint(),
+  id: zodBigintAsString(),
+  workspaceId: zodBigintAsString(),
 })
 export type FindMessageRequest = z.infer<typeof findMessageRequest>
 

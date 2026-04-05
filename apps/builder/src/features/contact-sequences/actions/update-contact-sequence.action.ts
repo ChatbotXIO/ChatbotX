@@ -16,22 +16,16 @@ import {
   cancelPendingDispatches,
   enrollContactInSequence,
 } from "@chatbotx.io/sequence-scheduler"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type UpdateContactSequenceRequest,
-  updateContactSequenceRequest,
-} from "../schema"
+import { workspaceActionClient } from "@/lib/safe-action"
+import { updateContactSequenceRequest } from "../schema"
 import { calculateNextRunAtBulk } from "../utils/calculate-next-run-at"
 
 async function getCurrentSequenceIds(
   tx: DatabaseClient,
-  contactId: bigint,
-  chatbotId: bigint,
+  contactId: string,
+  workspaceId: string,
 ) {
   const sequences = await tx
     .select({ sequenceId: contactsOnSequenceModel.sequenceId })
@@ -39,16 +33,16 @@ async function getCurrentSequenceIds(
     .where(
       and(
         eq(contactsOnSequenceModel.contactId, contactId),
-        eq(contactsOnSequenceModel.chatbotId, chatbotId),
+        eq(contactsOnSequenceModel.workspaceId, workspaceId),
       ),
     )
   return sequences.map((s) => s.sequenceId)
 }
 
 function calculateSequenceDiff(
-  currentIds: bigint[],
-  newIds: bigint[],
-): { toAdd: bigint[]; toRemove: bigint[] } {
+  currentIds: string[],
+  newIds: string[],
+): { toAdd: string[]; toRemove: string[] } {
   const currentSet = new Set(currentIds)
   const newSet = new Set(newIds)
 
@@ -60,9 +54,9 @@ function calculateSequenceDiff(
 
 async function removeContactSequences(
   tx: DatabaseClient,
-  contactId: bigint,
-  sequenceIds: bigint[],
-  chatbotId: bigint,
+  contactId: string,
+  sequenceIds: string[],
+  workspaceId: string,
 ) {
   if (sequenceIds.length === 0) {
     return
@@ -75,7 +69,7 @@ async function removeContactSequences(
       and(
         eq(contactsOnSequenceModel.contactId, contactId),
         inArray(contactsOnSequenceModel.sequenceId, sequenceIds),
-        eq(contactsOnSequenceModel.chatbotId, chatbotId),
+        eq(contactsOnSequenceModel.workspaceId, workspaceId),
       ),
     )
   if (enrollments.length === 0) {
@@ -83,24 +77,24 @@ async function removeContactSequences(
   }
 
   await Promise.all(
-    enrollments.map((enrollment: { id: bigint }) =>
+    enrollments.map((enrollment: { id: string }) =>
       cancelPendingDispatches({
         client: tx,
         enrollmentId: enrollment.id,
-        chatbotId,
+        workspaceId,
         reason: "enrollment_removed",
       }),
     ),
   )
 
-  const enrollmentIds = enrollments.map((e: { id: bigint }) => e.id)
+  const enrollmentIds = enrollments.map((e: { id: string }) => e.id)
   if (enrollmentIds.length > 0) {
     await tx
       .delete(contactsOnSequenceModel)
       .where(
         and(
           inArray(contactsOnSequenceModel.id, enrollmentIds),
-          eq(contactsOnSequenceModel.chatbotId, chatbotId),
+          eq(contactsOnSequenceModel.workspaceId, workspaceId),
         ),
       )
   }
@@ -108,9 +102,9 @@ async function removeContactSequences(
 
 async function addContactSequences(
   tx: DatabaseClient,
-  contactId: bigint,
-  sequenceIds: bigint[],
-  chatbotId: bigint,
+  contactId: string,
+  sequenceIds: string[],
+  workspaceId: string,
 ) {
   if (sequenceIds.length === 0) {
     return
@@ -126,7 +120,7 @@ async function addContactSequences(
     }
 
     await enrollContactInSequence({
-      chatbotId,
+      workspaceId,
       contactId,
       sequenceId,
       nextRunAt: result.nextRunAt,
@@ -137,52 +131,49 @@ async function addContactSequences(
   }
 }
 
-export const updateContactSequenceAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const updateContactSequenceAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(updateContactSequenceRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: UpdateContactSequenceRequest
-    }) => {
-      const contact = await findOrFail(
-        contactModel,
-        {
-          id: parsedInput.contactId,
-          chatbotId,
-        },
-        "Contact not found",
+    } = props
+
+    const contact = await findOrFail({
+      table: contactModel,
+      where: {
+        id: parsedInput.contactId,
+        workspaceId,
+      },
+      message: "Contact not found",
+    })
+
+    const currentIds = await getCurrentSequenceIds(db, contact.id, workspaceId)
+
+    const returnedSequences = await db.transaction(async (tx) => {
+      const { toAdd, toRemove } = calculateSequenceDiff(
+        currentIds,
+        parsedInput.sequences,
       )
 
-      const currentIds = await getCurrentSequenceIds(db, contact.id, chatbotId)
+      await removeContactSequences(tx, contact.id, toRemove, workspaceId)
+      await addContactSequences(tx, contact.id, toAdd, workspaceId)
 
-      const returnedSequences = await db.transaction(async (tx) => {
-        const { toAdd, toRemove } = calculateSequenceDiff(
-          currentIds,
-          parsedInput.sequences,
-        )
-
-        await removeContactSequences(tx, contact.id, toRemove, chatbotId)
-        await addContactSequences(tx, contact.id, toAdd, chatbotId)
-
-        return await tx.query.contactsOnSequenceModel.findMany({
-          where: {
-            contactId: contact.id,
-            chatbotId,
-          },
-          with: { sequence: true },
-        })
+      return await tx.query.contactsOnSequenceModel.findMany({
+        where: {
+          contactId: contact.id,
+          workspaceId,
+        },
+        with: { sequence: true },
       })
+    })
 
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-        `chatbots:${chatbotId}#sequences`,
-      ])
+    revalidateCacheTags([
+      `workspaces:${workspaceId}#contacts`,
+      `workspaces:${workspaceId}#conversations`,
+      `workspaces:${workspaceId}#sequences`,
+    ])
 
-      return returnedSequences
-    },
-  )
+    return returnedSequences
+  })

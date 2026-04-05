@@ -8,22 +8,22 @@ import type {
 import slugify from "@sindresorhus/slugify"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageTemplateRequest,
   createMessageTemplateRequest,
 } from "../schemas/create-message-templates-schema"
 import { parseComponents } from "./utils"
 
-export const createMessageTemplateAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createMessageTemplateAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createMessageTemplateRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -31,7 +31,7 @@ export const createMessageTemplateAction = chatbotActionClient
     }) => {
       const integrationWhatsapp =
         await findOrFail(integrationWhatsappModel, {
-          chatbotId,
+          workspaceId,
         })
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
@@ -66,6 +66,6 @@ export const createMessageTemplateAction = chatbotActionClient
         sourceId: res.id,
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#whatsapp#messageTemplates`)
+      revalidateCacheTags(`workspaces:${workspaceId}#whatsapp#messageTemplates`)
     },
   )

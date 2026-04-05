@@ -1,6 +1,6 @@
 import { db } from "@chatbotx.io/database/client"
-import { Condition as ConditionEnum } from "@chatbotx.io/database/enums"
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { logger } from "../../lib/logger"
 import { ConditionEvaluator } from "../../trigger/services/condition-evaluator"
 import type { WebhookEventData, WebhookWithConditions } from "../types"
@@ -16,7 +16,7 @@ export class WebhookMatcherService {
   }
 
   async findAndExecuteWebhooks(eventData: WebhookEventData): Promise<void> {
-    const { chatbotId, eventType, eventData: metadata } = eventData
+    const { workspaceId, eventType, eventData: metadata } = eventData
 
     const conditionTypes = this.mapEventTypeToConditionTypes(eventType)
     if (conditionTypes.length === 0) {
@@ -27,7 +27,7 @@ export class WebhookMatcherService {
 
     const webhooks = await db.query.webhookModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         active: true,
       },
       with: {
@@ -48,13 +48,13 @@ export class WebhookMatcherService {
       return
     }
 
-    const chatbot = await db.query.chatbotModel.findFirst({
+    const workspace = await db.query.workspaceModel.findFirst({
       where: {
-        id: chatbotId,
+        id: workspaceId,
       },
     })
 
-    if (!chatbot) {
+    if (!workspace) {
       return
     }
 
@@ -62,7 +62,7 @@ export class WebhookMatcherService {
       const isMatch = await this.evaluateWebhookConditions(
         webhook,
         eventData,
-        chatbot,
+        workspace,
       )
 
       if (isMatch) {
@@ -74,7 +74,7 @@ export class WebhookMatcherService {
         } catch (error) {
           logger.error(
             error,
-            `Failed to execute webhook ${webhook.id} for chatbot ${chatbotId}`,
+            `Failed to execute webhook ${webhook.id} for workspace ${workspaceId}`,
           )
         }
       }
@@ -84,7 +84,7 @@ export class WebhookMatcherService {
   private async evaluateWebhookConditions(
     webhook: WebhookWithConditions,
     eventData: WebhookEventData,
-    chatbot: ChatbotModel,
+    workspace: WorkspaceModel,
   ): Promise<boolean> {
     const { conditions } = webhook
 
@@ -96,15 +96,15 @@ export class WebhookMatcherService {
       const isMatch = await this.conditionEvaluator.evaluate({
         condition,
         eventData: {
-          chatbotId: webhook.chatbotId,
+          workspaceId: webhook.workspaceId,
           contactId: eventData.contactId,
           eventType: eventData.eventType,
           eventData: eventData.eventData,
           timestamp: eventData.timestamp,
         },
-        chatbotId: webhook.chatbotId,
+        workspaceId: webhook.workspaceId,
         contactId: eventData.contactId,
-        chatbot,
+        workspace,
       })
 
       if (isMatch) {
@@ -115,36 +115,36 @@ export class WebhookMatcherService {
     return false
   }
 
-  private mapEventTypeToConditionTypes(eventType: number): number[] {
-    const mapping: Record<number, number[]> = {
-      [ConditionEnum.tagApplied]: [ConditionEnum.tagApplied],
-      [ConditionEnum.tagRemoved]: [ConditionEnum.tagRemoved],
-      [ConditionEnum.customFieldValueChanged]: [
-        ConditionEnum.customFieldValueChanged,
+  private mapEventTypeToConditionTypes(eventType: string): string[] {
+    const mapping: Record<string, string[]> = {
+      [triggerEventTypes.enum.tagApplied]: [triggerEventTypes.enum.tagApplied],
+      [triggerEventTypes.enum.tagRemoved]: [triggerEventTypes.enum.tagRemoved],
+      [triggerEventTypes.enum.customFieldValueChanged]: [
+        triggerEventTypes.enum.customFieldValueChanged,
       ],
-      [ConditionEnum.conversationTransferredToHuman]: [
-        ConditionEnum.conversationTransferredToHuman,
+      [triggerEventTypes.enum.conversationTransferredToHuman]: [
+        triggerEventTypes.enum.conversationTransferredToHuman,
       ],
-      [ConditionEnum.conversationTransferredToBot]: [
-        ConditionEnum.conversationTransferredToBot,
+      [triggerEventTypes.enum.conversationTransferredToBot]: [
+        triggerEventTypes.enum.conversationTransferredToBot,
       ],
-      [ConditionEnum.newContact]: [ConditionEnum.newContact],
-      [ConditionEnum.contactUnsubscribedFormBroadcast]: [
-        ConditionEnum.contactUnsubscribedFormBroadcast,
+      [triggerEventTypes.enum.newContact]: [triggerEventTypes.enum.newContact],
+      [triggerEventTypes.enum.contactUnsubscribedFormBroadcast]: [
+        triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
       ],
-      [ConditionEnum.archived]: [ConditionEnum.archived],
-      [ConditionEnum.followUp]: [ConditionEnum.followUp],
-      [ConditionEnum.conversationAssigned]: [
-        ConditionEnum.conversationAssigned,
+      [triggerEventTypes.enum.archived]: [triggerEventTypes.enum.archived],
+      [triggerEventTypes.enum.followUp]: [triggerEventTypes.enum.followUp],
+      [triggerEventTypes.enum.conversationAssigned]: [
+        triggerEventTypes.enum.conversationAssigned,
       ],
-      [ConditionEnum.conversationUnassigned]: [
-        ConditionEnum.conversationUnassigned,
+      [triggerEventTypes.enum.conversationUnassigned]: [
+        triggerEventTypes.enum.conversationUnassigned,
       ],
-      [ConditionEnum.subscribedToSequence]: [
-        ConditionEnum.subscribedToSequence,
+      [triggerEventTypes.enum.subscribedToSequence]: [
+        triggerEventTypes.enum.subscribedToSequence,
       ],
-      [ConditionEnum.unsubscribedFromSequence]: [
-        ConditionEnum.unsubscribedFromSequence,
+      [triggerEventTypes.enum.unsubscribedFromSequence]: [
+        triggerEventTypes.enum.unsubscribedFromSequence,
       ],
     }
 

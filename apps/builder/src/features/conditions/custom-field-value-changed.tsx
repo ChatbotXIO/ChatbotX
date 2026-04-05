@@ -1,4 +1,8 @@
-import { CustomFieldType, Operator } from "@chatbotx.io/database/enums"
+import {
+  type CustomFieldType,
+  customFieldTypes,
+  operatorTypes,
+} from "@chatbotx.io/database/partials"
 import { DateTimePicker } from "@chatbotx.io/ui/components/ui/date-picker"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import {
@@ -33,7 +37,9 @@ export const CustomFieldValueChanged = ({
   const customFieldId = form.watch(`${parentName}.sourceId`)
 
   const customFieldType = useMemo(
-    () => customFields.find((field) => field.id === customFieldId)?.type,
+    () =>
+      customFields.find((field) => field.id === customFieldId)
+        ?.type as CustomFieldType,
     [customFieldId, customFields],
   )
 
@@ -90,7 +96,8 @@ export const CustomFieldValueChanged = ({
               ))}
             </SelectContent>
           </Select>
-          {customFieldType === CustomFieldType.longText && (
+
+          {customFieldType === customFieldTypes.enum.longText && (
             <Controller
               control={form.control}
               name={`${parentName}.value`}
@@ -105,7 +112,7 @@ export const CustomFieldValueChanged = ({
             />
           )}
 
-          {customFieldType === CustomFieldType.shortText && (
+          {customFieldType === customFieldTypes.enum.shortText && (
             <Controller
               control={form.control}
               name={`${parentName}.value`}
@@ -120,7 +127,7 @@ export const CustomFieldValueChanged = ({
             />
           )}
 
-          {customFieldType === CustomFieldType.number && (
+          {customFieldType === customFieldTypes.enum.number && (
             <Controller
               control={form.control}
               name={`${parentName}.value`}
@@ -136,7 +143,7 @@ export const CustomFieldValueChanged = ({
             />
           )}
 
-          {customFieldType === CustomFieldType.date && (
+          {customFieldType === customFieldTypes.enum.date && (
             <Controller
               control={form.control}
               name={`${parentName}.value`}
@@ -155,7 +162,7 @@ export const CustomFieldValueChanged = ({
             />
           )}
 
-          {customFieldType === CustomFieldType.datetime && (
+          {customFieldType === customFieldTypes.enum.datetime && (
             <Controller
               control={form.control}
               name={`${parentName}.value`}
@@ -172,8 +179,9 @@ export const CustomFieldValueChanged = ({
             />
           )}
 
-          {customFieldType === CustomFieldType.boolean &&
-            form.getValues(`${parentName}.operator`) === Operator.is && (
+          {customFieldType === customFieldTypes.enum.boolean &&
+            form.getValues(`${parentName}.operator`) ===
+              operatorTypes.enum.is && (
               <Controller
                 control={form.control}
                 name={`${parentName}.value`}

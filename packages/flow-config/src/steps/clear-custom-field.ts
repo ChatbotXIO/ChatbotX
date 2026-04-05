@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const clearCustomFieldStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.clearCustomField),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.clearCustomField),
   inputCfId: z.string().trim(),
 })
 
@@ -16,7 +16,7 @@ export const clearCustomFieldStepDefaultFn = (
   props?: Partial<ClearCustomFieldStepSchema>,
 ): ClearCustomFieldStepSchema => ({
   id: createId(),
-  stepType: StepType.clearCustomField,
+  stepType: stepTypes.enum.clearCustomField,
   inputCfId: "",
   ...props,
 })

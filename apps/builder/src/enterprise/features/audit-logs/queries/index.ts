@@ -12,10 +12,10 @@ import type { ListAuditLogsRequest } from "../schemas/query"
 export async function listAuditLogs(
   input: ListAuditLogsRequest,
 ): Promise<PaginatedResponse<AuditLogResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     // userId: input.userId !== null ? input.userId : undefined,
   }
 

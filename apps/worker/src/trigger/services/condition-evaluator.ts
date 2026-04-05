@@ -1,6 +1,6 @@
 import { db } from "@chatbotx.io/database/client"
-import { Condition as ConditionEnum } from "@chatbotx.io/database/enums"
-import type { ChatbotModel } from "@chatbotx.io/database/types"
+import { triggerEventTypes } from "@chatbotx.io/database/partials"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import type { ConditionEvaluationContext } from "../types"
 import { parseDateTimeValue } from "../utils/datetime-calculator"
 
@@ -8,49 +8,49 @@ const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
 
 export class ConditionEvaluator {
   async evaluate(context: ConditionEvaluationContext): Promise<boolean> {
-    const { condition, eventData, chatbotId, contactId, chatbot } = context
+    const { condition, eventData, workspaceId, contactId, workspace } = context
     const { type, sourceId, operator, value } = condition
 
     switch (type) {
-      case ConditionEnum.tagApplied:
-      case ConditionEnum.tagRemoved:
+      case triggerEventTypes.enum.tagApplied:
+      case triggerEventTypes.enum.tagRemoved:
         return this.evaluateTagCondition(
           type,
           sourceId,
           eventData.eventData.tagId as string,
         )
 
-      case ConditionEnum.customFieldValueChanged:
+      case triggerEventTypes.enum.customFieldValueChanged:
         return await this.evaluateCustomFieldCondition(
           sourceId,
           operator,
           value,
           eventData.eventData,
           contactId,
-          chatbot,
+          workspace,
         )
 
-      case ConditionEnum.conversationTransferredToHuman:
-      case ConditionEnum.conversationTransferredToBot:
-      case ConditionEnum.newContact:
-      case ConditionEnum.contactUnsubscribedFormBroadcast:
-      case ConditionEnum.archived:
-      case ConditionEnum.followUp:
-      case ConditionEnum.conversationAssigned:
-      case ConditionEnum.conversationUnassigned:
-      case ConditionEnum.subscribedToSequence:
-      case ConditionEnum.unsubscribedFromSequence:
-      case ConditionEnum.contactReferredANewContact:
-      case ConditionEnum.contactReferredExistingContact:
+      case triggerEventTypes.enum.conversationTransferredToHuman:
+      case triggerEventTypes.enum.conversationTransferredToBot:
+      case triggerEventTypes.enum.newContact:
+      case triggerEventTypes.enum.contactUnsubscribedFormBroadcast:
+      case triggerEventTypes.enum.archived:
+      case triggerEventTypes.enum.followUp:
+      case triggerEventTypes.enum.conversationAssigned:
+      case triggerEventTypes.enum.conversationUnassigned:
+      case triggerEventTypes.enum.subscribedToSequence:
+      case triggerEventTypes.enum.unsubscribedFromSequence:
+      case triggerEventTypes.enum.contactReferredANewContact:
+      case triggerEventTypes.enum.contactReferredExistingContact:
         return true
 
-      case ConditionEnum.dateTimeBasedTrigger:
+      case triggerEventTypes.enum.dateTimeBasedTrigger:
         return await this.evaluateDateTimeCondition(
           sourceId,
           value,
-          chatbotId,
+          workspaceId,
           contactId,
-          chatbot,
+          workspace,
         )
 
       default:
@@ -59,7 +59,7 @@ export class ConditionEvaluator {
   }
 
   private evaluateTagCondition(
-    _conditionType: number,
+    _conditionType: string,
     expectedTagId: string | null,
     actualTagId: string,
   ): boolean {
@@ -75,7 +75,7 @@ export class ConditionEvaluator {
     expectedValue: unknown,
     metadata: Record<string, unknown>,
     contactId: string,
-    chatbot: ChatbotModel,
+    workspace: WorkspaceModel,
   ): Promise<boolean> {
     if (!customFieldId) {
       return false
@@ -112,7 +112,7 @@ export class ConditionEvaluator {
       actualValue,
       expectedValue,
       customField?.type,
-      chatbot.accountTimezone || "UTC",
+      workspace.timezone || "UTC",
     )
   }
 
@@ -328,9 +328,9 @@ export class ConditionEvaluator {
   private async evaluateDateTimeCondition(
     customFieldId: string | null,
     triggerConfig: unknown,
-    _chatbotId: string,
+    _workspaceId: string,
     contactId: string,
-    chatbot: ChatbotModel,
+    workspace: WorkspaceModel,
   ): Promise<boolean> {
     if (!(customFieldId && triggerConfig)) {
       return false
@@ -365,7 +365,7 @@ export class ConditionEvaluator {
       return false
     }
 
-    const timezone = chatbot?.accountTimezone || "UTC"
+    const timezone = workspace?.timezone || "UTC"
 
     const isDateOnly = DATE_ONLY_REGEX.test(customFieldValue.trim())
     let targetDate: Date

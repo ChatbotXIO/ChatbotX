@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const DelayType = {
   duration: "D01",
@@ -17,8 +17,8 @@ export const DelayUnit = {
 
 export const waitStepSchema = z
   .object({
-    id: z.bigint(),
-    stepType: z.literal(StepType.wait),
+    id: zodBigintAsString(),
+    stepType: z.literal(stepTypes.enum.wait),
   })
   .and(
     z.discriminatedUnion("delayType", [
@@ -36,7 +36,7 @@ export const waitStepSchema = z
       }),
       z.object({
         delayType: z.literal(DelayType.customField),
-        outputCfId: z.bigint(),
+        outputCfId: zodBigintAsString(),
       }),
     ]),
   )
@@ -45,7 +45,7 @@ export type WaitStepSchema = z.infer<typeof waitStepSchema>
 
 export const waitStepDefaultFn = (): WaitStepSchema => ({
   id: createId(),
-  stepType: StepType.wait,
+  stepType: stepTypes.enum.wait,
   delayType: DelayType.duration,
   ...delayTypeDurationDefaultFn(),
 })

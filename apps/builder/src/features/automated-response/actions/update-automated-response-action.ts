@@ -2,70 +2,71 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateAutomatedResponseRequest,
   updateAutomatedResponseRequest,
 } from "../schema/action"
 
-export const updateAutomatedResponseAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateAutomatedResponseAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateAutomatedResponseRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateAutomatedResponseRequest
-    }) => {
-      const automatedResponse = await findOrFail(
-        automatedResponseModel,
-        {
-          chatbotId,
-          id,
-        },
-        "Automated response not found",
-      )
+    } = props
 
-      // validate flow id if text is not provided
-      if (parsedInput.text) {
-        parsedInput.flowId = null
-      } else if (parsedInput.flowId) {
-        const exists = await db.query.flowModel.findFirst({
-          columns: {
-            id: true,
-          },
-          where: {
-            id: parsedInput.flowId,
-            chatbotId,
-          },
-        })
-        if (!exists) {
-          return returnValidationErrors(updateAutomatedResponseRequest, {
-            _errors: ["Validation Exception"],
-            flowId: {
-              _errors: ["Flow not found"],
-            },
-          })
-        }
-        parsedInput.text = null
-      }
+    return await updateAutomatedResponse({ workspaceId, id }, parsedInput)
+  })
 
-      await db
-        .update(automatedResponseModel)
-        .set({
-          ...parsedInput,
-          userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
-        })
-        .where(eq(automatedResponseModel.id, automatedResponse.id))
-
-      revalidateCacheTags(`chatbots:${chatbotId}#automatedResponses`)
+export const updateAutomatedResponse = async (
+  ctx: { workspaceId: string; id: string },
+  parsedInput: UpdateAutomatedResponseRequest,
+) => {
+  const automatedResponse = await findOrFail({
+    table: automatedResponseModel,
+    where: {
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
     },
-  )
+    message: "Automated response not found",
+  })
+
+  // validate flow id if text is not provided
+  if (parsedInput.text) {
+    parsedInput.flowId = null
+  } else if (parsedInput.flowId) {
+    const exists = await db.query.flowModel.findFirst({
+      columns: {
+        id: true,
+      },
+      where: {
+        id: parsedInput.flowId,
+        workspaceId: ctx.workspaceId,
+      },
+    })
+    if (!exists) {
+      return returnValidationErrors(updateAutomatedResponseRequest, {
+        _errors: ["Validation Exception"],
+        flowId: {
+          _errors: ["Flow not found"],
+        },
+      })
+    }
+    parsedInput.text = null
+  }
+
+  await db
+    .update(automatedResponseModel)
+    .set({
+      ...parsedInput,
+      userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
+    })
+    .where(eq(automatedResponseModel.id, automatedResponse.id))
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#automatedResponses`)
+}

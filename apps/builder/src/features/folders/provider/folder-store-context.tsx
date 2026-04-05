@@ -1,6 +1,6 @@
 "use client"
 
-import type { FolderType } from "@chatbotx.io/database/types"
+import type { FolderType } from "@chatbotx.io/database/partials"
 import {
   createContext,
   type ReactNode,
@@ -18,7 +18,7 @@ export const FolderStoreContext = createContext<FolderStoreApi | undefined>(
 )
 
 export type FolderStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   folderType: FolderType
   children: ReactNode
   autoInitialize?: boolean

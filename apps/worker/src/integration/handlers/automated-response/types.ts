@@ -15,9 +15,9 @@ export type ReplyByAIProps = {
 }
 
 export type SimilaritySearchResult = {
-  id: bigint
+  id: string
   content: string
-  aiFileId: bigint
+  aiFileId: string
   distance: number
 }
 
@@ -26,8 +26,8 @@ export type FileSearchArgs = {
 }
 
 export type FileSearchConfig = {
-  chatbotId: bigint
-  selectedFileIds: bigint[]
+  workspaceId: string
+  selectedFileIds: string[]
   similarityThreshold: number
   maxResults: number
 }

@@ -29,12 +29,12 @@ import {
 } from "./schemas/action"
 
 export function ExportContactDialog({
-  chatbotId,
+  workspaceId,
   contactIds,
   trigger,
 }: {
-  chatbotId: bigint
-  contactIds: bigint[]
+  workspaceId: string
+  contactIds: string[]
   trigger: React.ReactElement
 }) {
   const t = useTranslations()
@@ -78,7 +78,7 @@ export function ExportContactDialog({
   ]
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    exportContactsAction.bind(null, chatbotId),
+    exportContactsAction.bind(null, workspaceId),
     zodResolver(exportContactsRequest),
     {
       actionProps: {

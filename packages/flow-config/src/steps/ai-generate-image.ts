@@ -1,6 +1,6 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 const AIGenerateImageQuality = {
   Auto: "auto",
@@ -10,13 +10,13 @@ const AIGenerateImageQuality = {
 } as const
 
 export const aiGenerateImageSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.aiGenerateImage),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.aiGenerateImage),
   model: z.string().trim().min(1),
   prompt: z.string().trim().optional(),
   quality: z.enum(AIGenerateImageQuality),
   size: z.string().trim().min(1),
-  outputCfId: z.bigint(),
+  outputCfId: zodBigintAsString(),
 })
 
 export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>
@@ -25,7 +25,7 @@ export const AIGenerateImageDefaultFn = (
   props?: Partial<AIGenerateImageSchema>,
 ): AIGenerateImageSchema => ({
   id: createId(),
-  stepType: StepType.aiGenerateImage,
+  stepType: stepTypes.enum.aiGenerateImage,
   model: "",
   prompt: "",
   size: "auto",

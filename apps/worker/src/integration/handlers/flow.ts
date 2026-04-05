@@ -9,7 +9,8 @@ import {
   type EdgeSchema,
   type FlowNode,
   type SendQuickReplyStepSchema,
-  StepType,
+  type StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { initVariables, SdkException, type Variables } from "@chatbotx.io/sdk"
 import {
@@ -155,7 +156,7 @@ export async function runStepsAndQuickReplies(
       ...props,
       steps: [
         {
-          stepType: StepType.sendQuickReply,
+          stepType: stepTypes.enum.sendQuickReply,
           message: "Please select an option",
           buttons: details.quickReplies,
         } as SendQuickReplyStepSchema,

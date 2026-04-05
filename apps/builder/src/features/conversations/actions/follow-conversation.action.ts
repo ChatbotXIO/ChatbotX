@@ -2,89 +2,84 @@
 
 import { emitConversationFollowUp } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
-import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const followConversationAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+export const followConversationAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       ctx,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      ctx: { user: UserModel }
-    }) => {
-      // Get conversation before updating to emit event
-      const conversation = await db.query.conversationModel.findFirst({
-        where: {
-          id,
-          chatbotId,
-        },
-        columns: {
-          id: true,
-          contactId: true,
-          channel: true,
-        },
-      })
+    } = props
 
-      if (!conversation) {
-        throw new Error("Conversation not found")
-      }
+    await followConversation({ workspaceId, id, userId: ctx.user.id })
+  })
 
-      await db
-        .update(conversationModel)
-        .set({
-          followed: true,
-        })
-        .where(
-          and(
-            eq(conversationModel.id, id),
-            eq(conversationModel.chatbotId, chatbotId),
-          ),
-        )
-
-      try {
-        await emitConversationFollowUp(
-          chatbotId,
-          conversation.contactId,
-          conversation.id,
-          ctx.user.id,
-        )
-      } catch (error) {
-        console.error("Failed to emit conversationFollowUp event:", error)
-      }
-
-      await conversationTrackingService.trackEvent(
-        {
-          chatbotId,
-          conversationId: conversation.id,
-          eventType: "conversation_followed",
-          eventId: createId(),
-          channel: conversation.channel,
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "api",
-              triggerHandler: "followConversationAction",
-              triggerType: "conversation_followed",
-            },
-          },
-        },
-        { skipSpooler: true },
-      )
-
-      revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
-      ])
+export const followConversation = async (ctx: {
+  workspaceId: string
+  id: string
+  userId: string
+}) => {
+  // Get conversation before updating to emit event
+  const conversation = await db.query.conversationModel.findFirst({
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
+    columns: {
+      id: true,
+      contactId: true,
+      channel: true,
+    },
+  })
+
+  if (!conversation) {
+    throw new Error("Conversation not found")
+  }
+
+  await db
+    .update(conversationModel)
+    .set({
+      followed: true,
+    })
+    .where(eq(conversationModel.id, ctx.id))
+
+  try {
+    await emitConversationFollowUp(
+      ctx.workspaceId,
+      conversation.contactId,
+      conversation.id,
+      ctx.userId,
+    )
+  } catch (error) {
+    console.error("Failed to emit conversationFollowUp event:", error)
+  }
+
+  await conversationTrackingService.trackEvent(
+    {
+      workspaceId: ctx.workspaceId,
+      conversationId: conversation.id,
+      eventType: "conversation_followed",
+      eventId: createId(),
+      channel: "webchat", // TODO: replace correct channel from contact inbox
+      occurredAt: new Date(),
+      metadata: {
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "followConversationAction",
+          triggerType: "conversation_followed",
+        },
+      },
+    },
+    { skipSpooler: true },
   )
+
+  revalidateCacheTags([
+    `workspaces:${ctx.workspaceId}#contacts`,
+    `workspaces:${ctx.workspaceId}#conversations`,
+  ])
+}

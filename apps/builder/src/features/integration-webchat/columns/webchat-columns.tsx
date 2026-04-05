@@ -100,7 +100,7 @@ export function getWebchatColumns({
               aria-label={t("actions.openWebchat")}
               onClick={() => {
                 // Open webchat in new tab
-                const url = `/webchat?chatbotId=${webchat.chatbotId}&webchatId=${webchat.id}`
+                const url = `/webchat?workspaceId=${webchat.workspaceId}&webchatId=${webchat.id}`
                 window.open(url, "_blank")
               }}
               size="sm"
@@ -136,7 +136,7 @@ export function getWebchatColumns({
                     variant="ghost"
                   >
                     <Link
-                      href={`/chatbots/${webchat.chatbotId}/webchats/${webchat.id}/edit`}
+                      href={`/space/${webchat.workspaceId}/webchats/${webchat.id}/edit`}
                     >
                       {t("actions.edit")}
                     </Link>

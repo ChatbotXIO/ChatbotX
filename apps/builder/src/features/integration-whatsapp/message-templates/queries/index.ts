@@ -7,17 +7,17 @@ import type { MessageTemplateWithComponents } from "../schema/resource"
 export const getMessageTemplates = async (
   input: ListMessageTemplatesRequest,
 ) => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   if (input.id) {
-    const integrationWhatsapp = await findOrFail(
-      integrationWhatsappModel,
-      {
-        chatbotId: input.chatbotId,
+    const integrationWhatsapp = await findOrFail({
+      table: integrationWhatsappModel,
+      where: {
+        workspaceId: input.workspaceId,
         id: input.id,
       },
-      "Whatsapp integration not found",
-    )
+      message: "Whatsapp integration not found",
+    })
 
     return await db.query.whatsappMessageTemplateModel.findMany({
       where: {
@@ -30,7 +30,7 @@ export const getMessageTemplates = async (
   return await db.query.whatsappMessageTemplateModel.findMany({
     where: {
       integrationWhatsapp: {
-        chatbotId: input.chatbotId,
+        workspaceId: input.workspaceId,
       },
     },
     orderBy: { createdAt: "asc" },
@@ -38,16 +38,16 @@ export const getMessageTemplates = async (
 }
 
 export const getTemplatesForChatbot = async (
-  chatbotId: bigint,
+  workspaceId: string,
   status?: string,
 ): Promise<MessageTemplateWithComponents[]> => {
-  await assertCurrentUserCanAccessChatbot(chatbotId)
+  await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const filter: {
-    integrationWhatsapp: { chatbotId: bigint }
+    integrationWhatsapp: { workspaceId: string }
     status?: string
   } = {
-    integrationWhatsapp: { chatbotId },
+    integrationWhatsapp: { workspaceId },
   }
 
   if (status) {

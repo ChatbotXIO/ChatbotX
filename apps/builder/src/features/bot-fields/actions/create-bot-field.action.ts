@@ -3,43 +3,34 @@
 import { db } from "@chatbotx.io/database/client"
 import { botFieldModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import {
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
-} from "@/features/common/schemas"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
-import {
-  type CreateBotFieldRequest,
-  createBotFieldRequest,
-} from "../schemas/action"
+import { workspaceActionClient } from "@/lib/safe-action"
+import { createBotFieldRequest } from "../schemas/action"
 
-export const createBotFieldAction = chatbotActionClient
+export const createBotFieldAction = workspaceActionClient
   .inputSchema(createBotFieldRequest)
-  .bindArgsSchemas(chatbotIdRequestParams)
-  .action(
-    async ({
+  .bindArgsSchemas(workspaceIdrequestParams)
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
-    }: {
-      parsedInput: CreateBotFieldRequest
-      bindArgsParsedInputs: ChatbotIdRequestParams
-    }) => {
-      if (parsedInput.folderId) {
-        await ensureFolderIsExists(
-          parsedInput.folderId,
-          chatbotId,
-          "customField",
-        )
-      }
+    } = props
 
-      await db.insert(botFieldModel).values({
-        ...parsedInput,
-        id: createId(),
-        chatbotId,
-      })
+    if (parsedInput.folderId) {
+      await ensureFolderIsExists(
+        parsedInput.folderId,
+        workspaceId,
+        "customField",
+      )
+    }
 
-      revalidateCacheTags(`chatbots:${chatbotId}#botFields`)
-    },
-  )
+    await db.insert(botFieldModel).values({
+      ...parsedInput,
+      id: createId(),
+      workspaceId,
+    })
+
+    revalidateCacheTags(`workspaces:${workspaceId}#botFields`)
+  })

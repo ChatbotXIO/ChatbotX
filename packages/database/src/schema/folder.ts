@@ -1,50 +1,36 @@
 import { sql } from "drizzle-orm"
-import {
-  bigint,
-  boolean,
-  index,
-  pgEnum,
-  pgTable,
-  text,
-} from "drizzle-orm/pg-core"
-import { sharedColumns } from "../partials/shared"
-import { chatbotModel } from "./chatbot"
+import { boolean, index, pgEnum, pgTable, text } from "drizzle-orm/pg-core"
+import { folderTypes } from "../partials"
+import { bigintAsString, sharedColumns } from "../partials/shared"
+import { workspaceModel } from "./workspace"
 
-export const folderType = pgEnum("folder_type", [
-  "tag",
-  "flow",
-  "customField",
-  "automatedResponse",
-  "trigger",
-  "webhook",
-  "sequence",
-])
+const folderType = pgEnum(
+  "folderType",
+  folderTypes.options as [string, ...string[]],
+)
 
 export const folderModel = pgTable(
-  "folders",
+  "Folder",
   {
     ...sharedColumns,
-    name: text("name").notNull(),
-    folderType: folderType("folder_type").notNull(),
-    parentId: bigint("parent_id", { mode: "bigint" }),
-    chatbotId: bigint("chatbot_id", { mode: "bigint" })
+    name: text().notNull(),
+    folderType: folderType("folderType").notNull(),
+    parentId: bigintAsString(),
+    workspaceId: bigintAsString()
       .notNull()
-      .references(() => chatbotModel.id, {
+      .references(() => workspaceModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    isTrash: boolean("is_trash").default(false).notNull(),
-    paths: bigint("paths", { mode: "bigint" })
-      .array()
-      .notNull()
-      .default(sql`[]`),
+    isTrash: boolean().default(false).notNull(),
+    paths: bigintAsString().array().notNull().default(sql`[]`),
   },
   (table) => [
-    index("folders_chatbot_id_idx").using(
+    index("Folder_workspaceId_idx").using(
       "btree",
-      table.chatbotId.asc().nullsLast(),
+      table.workspaceId.asc().nullsLast(),
     ),
-    index("folders_parent_id_idx").using(
+    index("Folder_parentId_idx").using(
       "btree",
       table.parentId.asc().nullsLast(),
     ),

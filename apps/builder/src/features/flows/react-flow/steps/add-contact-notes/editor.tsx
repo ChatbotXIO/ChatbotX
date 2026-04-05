@@ -17,7 +17,7 @@ const AddContactNotesStepEditor = (props: AddContactNotesStepEditorProps) => {
     <BaseStepEditor icon={TextIcon} title={t("flows.actions.addContactNotes")}>
       <InputField
         label={t("fields.notes.label")}
-        name={`${parentName}.content`}
+        name={`${parentName}.text`}
         required
       />
     </BaseStepEditor>

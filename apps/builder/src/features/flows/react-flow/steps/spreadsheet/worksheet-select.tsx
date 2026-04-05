@@ -1,7 +1,7 @@
 "use client"
 
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
 type WorksheetSelectProps = {
@@ -17,9 +17,9 @@ export const WorksheetSelect = ({
   label = "Worksheet",
   required = true,
 }: WorksheetSelectProps) => {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
-  const url = `/api/chatbots/${chatbotId}/worksheets?spreadsheetId=${spreadsheetId}`
+  const url = `/api/workspaces/${workspaceId}/worksheets?spreadsheetId=${spreadsheetId}`
   const { data } = callAPI<{ data: string[] }>(url)
   const worksheetOptions = (data?.data ?? []).map((v) => ({
     label: v,

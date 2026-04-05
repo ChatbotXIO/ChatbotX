@@ -8,7 +8,7 @@ import { getAuditColumns } from "./audit-logs-table-columns"
 import type { listAuditLogs } from "./queries"
 
 type AuditLogsTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listAuditLogs>>]>
 }
 
@@ -26,7 +26,7 @@ export function AuditLogsTable({ promises }: AuditLogsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })

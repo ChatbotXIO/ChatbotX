@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { LRUCache } from "lru-cache"
 
@@ -24,17 +25,17 @@ export abstract class BaseCache {
     return this._ramCache
   }
 
-  protected getCacheKey(chatbotId: bigint): string {
-    return `${this.cachePrefix}${chatbotId}`
+  protected getCacheKey(workspaceId: string): string {
+    return `${this.cachePrefix}${workspaceId}`
   }
 
   protected async getCachedData(
-    chatbotId: bigint,
-  ): Promise<Record<number, string[]> | null> {
-    const cacheKey = this.getCacheKey(chatbotId)
+    workspaceId: string,
+  ): Promise<Record<TriggerEventType, string[]> | null> {
+    const cacheKey = this.getCacheKey(workspaceId)
     const cached = this.ramCache.get(cacheKey)
     if (cached && Date.now() - cached.timestamp < this.ramTTL) {
-      return cached.data
+      return cached.data as Record<TriggerEventType, string[]>
     }
 
     try {
@@ -42,7 +43,7 @@ export abstract class BaseCache {
       const data = await redis.get(cacheKey)
 
       if (data) {
-        const parsed = JSON.parse(data) as Record<number, string[]>
+        const parsed = JSON.parse(data) as Record<TriggerEventType, string[]>
         this.ramCache.set(cacheKey, { data: parsed, timestamp: Date.now() })
         return parsed
       }
@@ -54,14 +55,14 @@ export abstract class BaseCache {
   }
 
   protected async buildCacheData(
-    chatbotId: bigint,
-  ): Promise<Record<number, string[]>> {
+    workspaceId: string,
+  ): Promise<Record<TriggerEventType, string[]>> {
     const tableName = this.getTableName()
 
     // biome-ignore lint/suspicious/noExplicitAny: Dynamic table access
     const items = await (db.query as Record<string, any>)[tableName].findMany({
       where: {
-        chatbotId,
+        workspaceId,
         active: true,
       },
       with: {
@@ -88,12 +89,12 @@ export abstract class BaseCache {
       }
     }
 
-    return chatbotMap
+    return chatbotMap as Record<TriggerEventType, string[]>
   }
 
   protected checkEventTypes(
-    chatbotMap: Record<number, string[]>,
-    eventTypes: number[],
+    chatbotMap: Record<TriggerEventType, string[]>,
+    eventTypes: TriggerEventType[],
     sourceId?: string,
   ): boolean {
     for (const eventType of eventTypes) {
@@ -115,20 +116,20 @@ export abstract class BaseCache {
   }
 
   async hasActive(
-    chatbotId: bigint,
-    eventTypes: number[],
+    workspaceId: string,
+    eventTypes: TriggerEventType[],
     sourceId?: string,
   ): Promise<boolean> {
-    const cached = await this.getCachedData(chatbotId)
+    const cached = await this.getCachedData(workspaceId)
 
     if (!cached) {
-      const chatbotMap = await this.buildCacheData(chatbotId)
+      const chatbotMap = await this.buildCacheData(workspaceId)
 
       if (Object.keys(chatbotMap).length === 0) {
         return false
       }
 
-      const cacheKey = this.getCacheKey(chatbotId)
+      const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {
@@ -144,16 +145,16 @@ export abstract class BaseCache {
     return this.checkEventTypes(cached, eventTypes, sourceId)
   }
 
-  async updateCache(chatbotId: bigint): Promise<void> {
+  async updateCache(workspaceId: string): Promise<void> {
     try {
-      const chatbotMap = await this.buildCacheData(chatbotId)
+      const chatbotMap = await this.buildCacheData(workspaceId)
 
       if (Object.keys(chatbotMap).length === 0) {
-        await this.removeCache(chatbotId)
+        await this.removeCache(workspaceId)
         return
       }
 
-      const cacheKey = this.getCacheKey(chatbotId)
+      const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       const redis = getRedisConnection()
@@ -163,9 +164,9 @@ export abstract class BaseCache {
     }
   }
 
-  async removeCache(chatbotId: bigint): Promise<void> {
+  async removeCache(workspaceId: string): Promise<void> {
     try {
-      const cacheKey = this.getCacheKey(chatbotId)
+      const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.delete(cacheKey)
 
       const redis = getRedisConnection()
@@ -175,17 +176,17 @@ export abstract class BaseCache {
     }
   }
 
-  async getCacheData(chatbotId: bigint): Promise<Record<number, string[]>> {
-    const cached = await this.getCachedData(chatbotId)
+  async getCacheData(workspaceId: string): Promise<Record<number, string[]>> {
+    const cached = await this.getCachedData(workspaceId)
 
     if (cached) {
       return cached
     }
 
-    const chatbotMap = await this.buildCacheData(chatbotId)
+    const chatbotMap = await this.buildCacheData(workspaceId)
 
     if (Object.keys(chatbotMap).length > 0) {
-      const cacheKey = this.getCacheKey(chatbotId)
+      const cacheKey = this.getCacheKey(workspaceId)
       this.ramCache.set(cacheKey, { data: chatbotMap, timestamp: Date.now() })
 
       try {

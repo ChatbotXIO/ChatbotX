@@ -11,15 +11,15 @@
     "check:unused": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
+    "@biomejs/biome": "^2.4.10",
     "@types/node": "^24.10.4",
-    "dependency-cruiser": "^17.3.9",
-    "knip": "^5.88.1",
+    "dependency-cruiser": "^17.3.10",
+    "knip": "^6.3.0",
     "lefthook": "^2.1.4",
     "tsx": "^4.21.0",
-    "turbo": "^2.9.1",
-    "typescript": "5.9.3",
-    "ultracite": "7.3.2"
+    "turbo": "^2.9.3",
+    "typescript": "6.0.2",
+    "ultracite": "7.4.2"
   },
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
   "engines": {
@@ -35,7 +35,6 @@
   "pnpm": {
     "overrides": {
       "@types/node": "24.x",
-      "ioredis": "5.9.3",
       "@types/react": "19.2.14",
       "@types/react-dom": "19.2.3"
     },

@@ -37,7 +37,7 @@ export function DeleteAIFileDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteAIFileAction.bind(null, aiFile.chatbotId, aiFile.id),
+    deleteAIFileAction.bind(null, aiFile.workspaceId, aiFile.id),
     {
       onSuccess: () => {
         toast.success(

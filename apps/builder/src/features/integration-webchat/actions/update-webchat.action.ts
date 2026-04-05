@@ -2,32 +2,36 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
-import { chatbotIdAndIdRequestParams } from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWebchatRequest } from "../schema/mutation"
 
-export const updateWebchatAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateWebchatAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateWebchatRequest)
-  .action(async ({ parsedInput, bindArgsParsedInputs: [chatbotId, id] }) => {
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+      parsedInput,
+    } = props
     const { authorizedDomains, welcomeFlowId, ...rest } = parsedInput
 
-    const integration = await findOrFail(
-      integrationWebchatModel,
-      {
+    const integration = await findOrFail({
+      table: integrationWebchatModel,
+      where: {
         id,
-        chatbotId,
+        workspaceId,
       },
-      "Webchat integration not found",
-    )
+      message: "Webchat integration not found",
+    })
 
     await db.transaction(async (tx) => {
       await tx
         .update(integrationWebchatModel)
         .set({
           ...rest,
-          chatbotId,
+          workspaceId,
           welcomeFlowId: welcomeFlowId?.length ? welcomeFlowId : null,
           authorizedDomains: authorizedDomains
             ? authorizedDomains.map((domain) => domain.value)
@@ -36,5 +40,5 @@ export const updateWebchatAction = chatbotActionClient
         .where(eq(integrationWebchatModel.id, integration.id))
     })
 
-    revalidateCacheTags(`chatbots:${chatbotId}#webchats`)
+    revalidateCacheTags(`workspaces:${workspaceId}#webchats`)
   })

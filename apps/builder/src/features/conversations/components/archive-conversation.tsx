@@ -16,12 +16,12 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { archiveConversationAction } from "../actions/archive-conversation.action"
 
 type ArchiveConversationDialogProps = {
   trigger: ReactElement
-  ids: bigint[]
+  ids: string[]
 }
 
 export default function ArchiveConversationDialog({
@@ -30,10 +30,10 @@ export default function ArchiveConversationDialog({
 }: ArchiveConversationDialogProps) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const { execute, isPending } = useAction(
-    archiveConversationAction.bind(null, chatbotId),
+    archiveConversationAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

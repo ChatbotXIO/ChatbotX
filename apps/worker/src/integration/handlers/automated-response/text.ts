@@ -117,7 +117,7 @@ export function processTextForImagesAndLinks(text: string): string[] {
 }
 
 export async function sendMessageWithRender(
-  conversationId: bigint,
+  conversationId: string,
   message: string,
   trackingContext?: BotResponseTrackingContext,
 ): Promise<void> {
@@ -166,7 +166,7 @@ export async function sendProcessedTextParts(
 
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
-  conversationId: bigint,
+  conversationId: string,
   options?: {
     sendParts?: boolean
     trackingContext?: BotResponseTrackingContext

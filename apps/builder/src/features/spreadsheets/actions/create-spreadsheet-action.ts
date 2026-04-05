@@ -5,39 +5,39 @@ import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
   createSpreadsheetRequest,
-} from "../schemas/mutation"
+} from "../schema/mutation"
 import { verifyGoogleSheetsUrl } from "./util"
 
-export const createSpreadsheetAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createSpreadsheetAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createSpreadsheetRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: CreateSpreadsheetRequest
     }) => {
       const spreadsheetId = await verifyGoogleSheetsUrl(
-        chatbotId,
+        workspaceId,
         parsedInput.url,
       )
 
       await db.insert(spreadsheetModel).values({
         ...parsedInput,
         id: createId(),
-        chatbotId,
+        workspaceId,
         spreadsheetId,
       })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#spreadsheets`)
+      revalidateCacheTags(`workspaces:${workspaceId}#spreadsheets`)
     },
   )

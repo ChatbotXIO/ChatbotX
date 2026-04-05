@@ -7,7 +7,7 @@ import {
   getPaginationWithDefaults,
   getPublicUrl,
 } from "@chatbotx.io/database/utils"
-import type { AttachmentResource } from "@/features/attachments/schemas"
+import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { encodeCursor } from "@/lib/pagination"
 import type {
@@ -20,8 +20,8 @@ import type { MessageResource } from "../schema/resource"
 export const listMessages = async (
   input: ListMessagesRequest,
 ): Promise<ListMessagesResponse> => {
-  // await assertCurrentUserCanAccessChatbot(chatbotId)
-  const where = [eq(messageModel.chatbotId, input.chatbotId)]
+  // await assertCurrentUserCanAccessChatbot(workspaceId)
+  const where = [eq(messageModel.workspaceId, input.workspaceId)]
   if (input.conversationId) {
     where.push(eq(messageModel.conversationId, input.conversationId))
   }
@@ -80,7 +80,7 @@ export const listMessages = async (
 export const findMessage = async (
   input: FindMessageRequest,
 ): Promise<MessageResource> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const message = await db.query.messageModel.findFirst({
     with: {

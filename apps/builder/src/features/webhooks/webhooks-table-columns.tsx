@@ -32,7 +32,7 @@ import { updateWebhookSettingsAction } from "./actions/update-webhook-settings-a
 import type { WebhookResource } from "./schemas"
 
 type GetColumnsProps = {
-  chatbotId: bigint
+  workspaceId: string
   t: ReturnType<typeof useTranslations>
   setRowAction: Dispatch<
     SetStateAction<DataTableRowAction<WebhookResource> | null>
@@ -40,7 +40,7 @@ type GetColumnsProps = {
 }
 
 export function getColumns({
-  chatbotId,
+  workspaceId,
   t,
   setRowAction,
 }: GetColumnsProps): ColumnDef<WebhookResource>[] {
@@ -83,7 +83,7 @@ export function getColumns({
           <TooltipTrigger asChild>
             <div className="max-w-[400px] truncate">
               <Link
-                href={`/chatbots/${chatbotId}/webhooks/${row.original.id}/edit`}
+                href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
               >
                 <div className="max-w-[400px] truncate">
                   {row.original.name}
@@ -118,7 +118,7 @@ export function getColumns({
         const { execute, isPending } = useAction(
           updateWebhookSettingsAction.bind(
             null,
-            row.original.chatbotId,
+            row.original.workspaceId,
             row.original.id,
           ),
           {
@@ -159,7 +159,7 @@ export function getColumns({
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
               <Link
-                href={`/chatbots/${chatbotId}/webhooks/${row.original.id}/edit`}
+                href={`/space/${workspaceId}/webhooks/${row.original.id}/edit`}
               >
                 <PencilIcon />
                 {t("actions.edit")}

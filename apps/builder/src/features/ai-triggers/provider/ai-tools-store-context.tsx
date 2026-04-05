@@ -17,20 +17,20 @@ export const AIToolsStoreContext = createContext<AIToolsStoreApi | undefined>(
 )
 
 export type AIToolsStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const AIToolsStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: AIToolsStoreProviderProps) => {
   const storeRef = useRef<AIToolsStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createAIToolsStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

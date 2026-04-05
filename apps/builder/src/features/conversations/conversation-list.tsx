@@ -2,9 +2,9 @@
 
 import {
   assignerFilterTypes,
-  ConversationType,
-} from "@chatbotx.io/database/enums"
-import { channelTypes } from "@chatbotx.io/database/partials"
+  channelTypes,
+  conversationTypes,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -23,7 +23,11 @@ import { CreateContactDialog } from "../contacts/create-contact-dialog"
 import { ConversationFilter } from "./conversation-filter"
 import ConversationItem from "./conversation-item"
 
-export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
+export default function ConversationList({
+  workspaceId,
+}: {
+  workspaceId: string
+}) {
   const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -47,7 +51,7 @@ export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
   const [page, setPage] = useState(1)
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
-    loadMoreConversations(chatbotId)
+    loadMoreConversations(workspaceId)
   }, [page])
 
   // Load more items when reaching the end of the list
@@ -59,13 +63,13 @@ export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
 
   const handleChange = useDebouncedCallback(() => {
     resetState()
-    loadMoreConversations(chatbotId)
+    loadMoreConversations(workspaceId)
   }, 300)
 
   const form = useForm<ConversationFilters>({
     defaultValues: {
       keyword: "",
-      liveChatEnabled: undefined,
+      botEnabled: undefined,
       channel: channelTypes.enum.omnichannel,
       assignedId: assignerFilterTypes.enum.all,
       status: [],
@@ -91,9 +95,9 @@ export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
           <SelectField
             name="conversationType"
             options={[
-              { label: "Human", value: ConversationType.human },
-              { label: "Bot", value: ConversationType.bot },
-              { label: "All", value: ConversationType.all },
+              { label: "Human", value: conversationTypes.enum.human },
+              { label: "Bot", value: conversationTypes.enum.bot },
+              { label: "All", value: conversationTypes.enum.all },
             ]}
           />
 
@@ -110,12 +114,12 @@ export default function ConversationList({ chatbotId }: { chatbotId: bigint }) {
           </Button>
 
           <CreateContactDialog
-            chatbotId={chatbotId}
             trigger={
               <Button className="px-2" size="sm" variant="outline">
                 <UserPlusIcon />
               </Button>
             }
+            workspaceId={workspaceId}
           />
 
           <ConversationFilter />

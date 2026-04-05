@@ -25,14 +25,14 @@ import { updateReflinkRequest } from "./schemas/action"
 import type { ReflinkResource } from "./schemas/resource"
 
 type UpdateReflinkFormProps = {
-  chatbotId: bigint
+  workspaceId: string
   reflink: ReflinkResource | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
 export function UpdateReflinkDialog({
-  chatbotId,
+  workspaceId,
   reflink,
   open,
   onOpenChange,
@@ -57,9 +57,9 @@ export function UpdateReflinkDialog({
 
         {reflink ? (
           <UpdateReflinkForm
-            chatbotId={chatbotId}
             onCompletedForm={onCompletedForm}
             reflink={reflink}
+            workspaceId={workspaceId}
           />
         ) : null}
       </DialogContent>
@@ -69,16 +69,16 @@ export function UpdateReflinkDialog({
 
 export function UpdateReflinkForm(props: {
   reflink: ReflinkResource
-  chatbotId: bigint
+  workspaceId: string
   onCompletedForm: () => void
 }) {
-  const { chatbotId, reflink, onCompletedForm } = props
+  const { workspaceId, reflink, onCompletedForm } = props
   const t = useTranslations()
 
   const flowOptions = useFlowSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateReflinkAction.bind(null, chatbotId, reflink.id),
+    updateReflinkAction.bind(null, workspaceId, reflink.id),
     zodResolver(updateReflinkRequest),
     {
       actionProps: {
@@ -100,8 +100,8 @@ export function UpdateReflinkForm(props: {
         mode: "onChange",
         defaultValues: {
           name: "",
-          flowId: BigInt(0),
-          customFieldId: BigInt(0),
+          flowId: "",
+          customFieldId: "",
         },
       },
     },

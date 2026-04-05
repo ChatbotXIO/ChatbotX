@@ -1,7 +1,7 @@
 import { authMiddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listSavedReplies } from "../queries"
-import { listSavedReplyResponse } from "../schema"
+import { listSavedReplyResponse } from "../schema/mutation"
 
 export const savedRepliesAuthorizedAPI = {
   listSavedRepliesAuthorizedAPI: authorizedAPI

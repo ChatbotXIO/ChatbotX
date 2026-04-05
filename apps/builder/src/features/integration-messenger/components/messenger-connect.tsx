@@ -33,12 +33,12 @@ const MESSENGER_SCOPE = [
 ]
 
 export type MessengerConnectProps = {
-  chatbotId?: string | null
+  workspaceId?: string | null
   settings: NonNullable<OrganizationSettings["messenger"]>
 }
 
 export function MessengerConnect({
-  chatbotId,
+  workspaceId,
   settings,
 }: MessengerConnectProps) {
   const t = useTranslations()
@@ -65,7 +65,7 @@ export function MessengerConnect({
           />
         )}
         {pages.length > 0 && (
-          <FacebookPages chatbotId={chatbotId} pages={pages} />
+          <FacebookPages pages={pages} workspaceId={workspaceId} />
         )}
       </CardContent>
     </Card>

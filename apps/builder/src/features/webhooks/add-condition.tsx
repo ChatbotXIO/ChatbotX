@@ -1,6 +1,9 @@
 "use client"
 
-import { Condition } from "@chatbotx.io/database/enums"
+import {
+  type TriggerEventType,
+  triggerEventTypes,
+} from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -24,7 +27,7 @@ import { defaultFn as addTagRemovedCondition } from "../conditions/schemas/tag-r
 
 type ConditionOption = {
   label: string
-  value: Condition
+  value: TriggerEventType
   defaultFn: () => unknown
 }
 
@@ -41,12 +44,12 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.tagApplied"),
-            value: Condition.tagApplied,
+            value: triggerEventTypes.enum.tagApplied,
             defaultFn: addTagAppliedCondition,
           },
           {
             label: t("trigger.conditions.tagRemoved"),
-            value: Condition.tagRemoved,
+            value: triggerEventTypes.enum.tagRemoved,
             defaultFn: addTagRemovedCondition,
           },
         ],
@@ -56,57 +59,63 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.customFieldValueChanged"),
-            value: Condition.customFieldValueChanged,
+            value: triggerEventTypes.enum.customFieldValueChanged,
             defaultFn: addCustomFieldValueChangedCondition,
           },
           {
             label: t("trigger.conditions.dateTimeBasedTrigger"),
-            value: Condition.dateTimeBasedTrigger,
+            value: triggerEventTypes.enum.dateTimeBasedTrigger,
             defaultFn: addDateTimeBaseTriggerCondition,
           },
           {
             label: t("trigger.conditions.conversationTransferredToHuman"),
-            value: Condition.conversationTransferredToHuman,
+            value: triggerEventTypes.enum.conversationTransferredToHuman,
             defaultFn: createDefaultFn(
-              Condition.conversationTransferredToHuman,
+              triggerEventTypes.enum.conversationTransferredToHuman,
             ),
           },
           {
             label: t("trigger.conditions.conversationTransferredToBot"),
-            value: Condition.conversationTransferredToBot,
-            defaultFn: createDefaultFn(Condition.conversationTransferredToBot),
+            value: triggerEventTypes.enum.conversationTransferredToBot,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.conversationTransferredToBot,
+            ),
           },
           {
             label: t("trigger.conditions.newContact"),
-            value: Condition.newContact,
-            defaultFn: createDefaultFn(Condition.newContact),
+            value: triggerEventTypes.enum.newContact,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.newContact),
           },
           {
             label: t("trigger.conditions.contactUnsubscribedFormBroadcast"),
-            value: Condition.contactUnsubscribedFormBroadcast,
+            value: triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
             defaultFn: createDefaultFn(
-              Condition.contactUnsubscribedFormBroadcast,
+              triggerEventTypes.enum.contactUnsubscribedFormBroadcast,
             ),
           },
           {
             label: t("trigger.conditions.archived"),
-            value: Condition.archived,
-            defaultFn: createDefaultFn(Condition.archived),
+            value: triggerEventTypes.enum.archived,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.archived),
           },
           {
             label: t("trigger.conditions.followUp"),
-            value: Condition.followUp,
-            defaultFn: createDefaultFn(Condition.followUp),
+            value: triggerEventTypes.enum.followUp,
+            defaultFn: createDefaultFn(triggerEventTypes.enum.followUp),
           },
           {
             label: t("trigger.conditions.conversationAssigned"),
-            value: Condition.conversationAssigned,
-            defaultFn: createDefaultFn(Condition.conversationAssigned),
+            value: triggerEventTypes.enum.conversationAssigned,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.conversationAssigned,
+            ),
           },
           {
             label: t("trigger.conditions.conversationUnassigned"),
-            value: Condition.conversationUnassigned,
-            defaultFn: createDefaultFn(Condition.conversationUnassigned),
+            value: triggerEventTypes.enum.conversationUnassigned,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.conversationUnassigned,
+            ),
           },
         ],
       },
@@ -116,23 +125,23 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.incomingCall"),
-      //       value: Condition.incomingCall,
+      //       value: triggerEventTypes.enum.incomingCall,
       //       defaultFn: () => ({
-      //         type: Condition.incomingCall,
+      //         type: triggerEventTypes.enum.incomingCall,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.missedAudioCall"),
-      //       value: Condition.missedAudioCall,
+      //       value: triggerEventTypes.enum.missedAudioCall,
       //       defaultFn: () => ({
-      //         type: Condition.missedAudioCall,
+      //         type: triggerEventTypes.enum.missedAudioCall,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.callEnded"),
-      //       value: Condition.callEnded,
+      //       value: triggerEventTypes.enum.callEnded,
       //       defaultFn: () => ({
-      //         type: Condition.callEnded,
+      //         type: triggerEventTypes.enum.callEnded,
       //       }),
       //     },
       //   ],
@@ -143,37 +152,37 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.ticketCreated"),
-      //       value: Condition.ticketCreated,
+      //       value: triggerEventTypes.enum.ticketCreated,
       //       defaultFn: () => ({
-      //         type: Condition.ticketCreated,
+      //         type: triggerEventTypes.enum.ticketCreated,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketMovedToStage"),
-      //       value: Condition.ticketMovedToStage,
+      //       value: triggerEventTypes.enum.ticketMovedToStage,
       //       defaultFn: () => ({
-      //         type: Condition.ticketMovedToStage,
+      //         type: triggerEventTypes.enum.ticketMovedToStage,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketValueChanged"),
-      //       value: Condition.ticketValueChanged,
+      //       value: triggerEventTypes.enum.ticketValueChanged,
       //       defaultFn: () => ({
-      //         type: Condition.ticketValueChanged,
+      //         type: triggerEventTypes.enum.ticketValueChanged,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketStatusChanged"),
-      //       value: Condition.ticketStatusChanged,
+      //       value: triggerEventTypes.enum.ticketStatusChanged,
       //       defaultFn: () => ({
-      //         type: Condition.ticketStatusChanged,
+      //         type: triggerEventTypes.enum.ticketStatusChanged,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.ticketPriorityChanged"),
-      //       value: Condition.ticketPriorityChanged,
+      //       value: triggerEventTypes.enum.ticketPriorityChanged,
       //       defaultFn: () => ({
-      //         type: Condition.ticketPriorityChanged,
+      //         type: triggerEventTypes.enum.ticketPriorityChanged,
       //       }),
       //     },
       //   ],
@@ -184,16 +193,16 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.subscribedToSequence"),
-            value: Condition.subscribedToSequence,
+            value: triggerEventTypes.enum.subscribedToSequence,
             defaultFn: createDefaultFnWithSourceId(
-              Condition.subscribedToSequence,
+              triggerEventTypes.enum.subscribedToSequence,
             ),
           },
           {
             label: t("trigger.conditions.unsubscribedFromSequence"),
-            value: Condition.unsubscribedFromSequence,
+            value: triggerEventTypes.enum.unsubscribedFromSequence,
             defaultFn: createDefaultFnWithSourceId(
-              Condition.unsubscribedFromSequence,
+              triggerEventTypes.enum.unsubscribedFromSequence,
             ),
           },
         ],
@@ -204,86 +213,86 @@ export function AddCondition({
       //   children: [
       //     {
       //       label: t("trigger.conditions.WhatsappShoppingCartSent"),
-      //       value: Condition.WhatsappShoppingCartSent,
+      //       value: triggerEventTypes.enum.WhatsappShoppingCartSent,
       //       defaultFn: () => ({
-      //         type: Condition.WhatsappShoppingCartSent,
+      //         type: triggerEventTypes.enum.WhatsappShoppingCartSent,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.userAskedAboutProduct"),
-      //       value: Condition.userAskedAboutProduct,
+      //       value: triggerEventTypes.enum.userAskedAboutProduct,
       //       defaultFn: () => ({
-      //         type: Condition.userAskedAboutProduct,
+      //         type: triggerEventTypes.enum.userAskedAboutProduct,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.cartAbandoned"),
-      //       value: Condition.cartAbandoned,
+      //       value: triggerEventTypes.enum.cartAbandoned,
       //       defaultFn: () => ({
-      //         type: Condition.cartAbandoned,
+      //         type: triggerEventTypes.enum.cartAbandoned,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.newOrder"),
-      //       value: Condition.newOrder,
+      //       value: triggerEventTypes.enum.newOrder,
       //       defaultFn: () => ({
-      //         type: Condition.newOrder,
+      //         type: triggerEventTypes.enum.newOrder,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderAccepted"),
-      //       value: Condition.orderAccepted,
+      //       value: triggerEventTypes.enum.orderAccepted,
       //       defaultFn: () => ({
-      //         type: Condition.orderAccepted,
+      //         type: triggerEventTypes.enum.orderAccepted,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderShipped"),
-      //       value: Condition.orderShipped,
+      //       value: triggerEventTypes.enum.orderShipped,
       //       defaultFn: () => ({
-      //         type: Condition.orderShipped,
+      //         type: triggerEventTypes.enum.orderShipped,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderConcluded"),
-      //       value: Condition.orderConcluded,
+      //       value: triggerEventTypes.enum.orderConcluded,
       //       defaultFn: () => ({
-      //         type: Condition.orderConcluded,
+      //         type: triggerEventTypes.enum.orderConcluded,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.orderCancelled"),
-      //       value: Condition.orderCancelled,
+      //       value: triggerEventTypes.enum.orderCancelled,
       //       defaultFn: () => ({
-      //         type: Condition.orderCancelled,
+      //         type: triggerEventTypes.enum.orderCancelled,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.categoryAddedToCart"),
-      //       value: Condition.categoryAddedToCart,
+      //       value: triggerEventTypes.enum.categoryAddedToCart,
       //       defaultFn: () => ({
-      //         type: Condition.categoryAddedToCart,
+      //         type: triggerEventTypes.enum.categoryAddedToCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productAddedToCart"),
-      //       value: Condition.productAddedToCart,
+      //       value: triggerEventTypes.enum.productAddedToCart,
       //       defaultFn: () => ({
-      //         type: Condition.productAddedToCart,
+      //         type: triggerEventTypes.enum.productAddedToCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productRemovedFromCart"),
-      //       value: Condition.productRemovedFromCart,
+      //       value: triggerEventTypes.enum.productRemovedFromCart,
       //       defaultFn: () => ({
-      //         type: Condition.productRemovedFromCart,
+      //         type: triggerEventTypes.enum.productRemovedFromCart,
       //       }),
       //     },
       //     {
       //       label: t("trigger.conditions.productOrdered"),
-      //       value: Condition.productOrdered,
+      //       value: triggerEventTypes.enum.productOrdered,
       //       defaultFn: () => ({
-      //         type: Condition.productOrdered,
+      //         type: triggerEventTypes.enum.productOrdered,
       //       }),
       //     },
       //   ],
@@ -294,14 +303,16 @@ export function AddCondition({
         children: [
           {
             label: t("trigger.conditions.contactReferredANewContact"),
-            value: Condition.contactReferredANewContact,
-            defaultFn: createDefaultFn(Condition.contactReferredANewContact),
+            value: triggerEventTypes.enum.contactReferredANewContact,
+            defaultFn: createDefaultFn(
+              triggerEventTypes.enum.contactReferredANewContact,
+            ),
           },
           {
             label: t("trigger.conditions.contactReferredExistingContact"),
-            value: Condition.contactReferredExistingContact,
+            value: triggerEventTypes.enum.contactReferredExistingContact,
             defaultFn: createDefaultFn(
-              Condition.contactReferredExistingContact,
+              triggerEventTypes.enum.contactReferredExistingContact,
             ),
           },
         ],

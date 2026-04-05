@@ -234,7 +234,7 @@ export const contactCommands = {
         required: true,
       },
       {
-        key: "content",
+        key: "text",
         description: "Message content",
         required: false,
       },
@@ -262,7 +262,7 @@ export const contactCommands = {
           | "messenger"
           | "whatsapp"
           | "zalo",
-        content: params.content,
+        text: params.text,
         files: params.files
           ?.split(",")
           .map((f) => f.trim())

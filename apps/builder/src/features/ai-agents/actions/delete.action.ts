@@ -2,37 +2,30 @@
 
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { aiAgentModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
 import {
-  type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
 export const deleteAIAgentAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId],
       parsedInput: { ids },
-    }: {
-      ctx: { user: UserModel }
-      bindArgsParsedInputs: ChatbotIdRequestParams
-      parsedInput: BulkUpdateIdsRequest
-    }) => {
-      await db
-        .delete(aiAgentModel)
-        .where(
-          and(
-            eq(aiAgentModel.chatbotId, chatbotId),
-            inArray(aiAgentModel.id, ids),
-          ),
-        )
+    } = props
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiAgents`)
-    },
-  )
+    await db
+      .delete(aiAgentModel)
+      .where(
+        and(
+          eq(aiAgentModel.workspaceId, workspaceId),
+          inArray(aiAgentModel.id, ids),
+        ),
+      )
+
+    revalidateCacheTags(`workspaces:${workspaceId}#aiAgents`)
+  })

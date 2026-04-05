@@ -1,10 +1,10 @@
 import {
-  ContentType,
   type Context,
+  contentTypes,
   type ExternalMediaResult,
   type IncomingConversation,
   type IncomingMessage,
-  MessageType,
+  messageTypes,
   type ReceivedMessageResult,
   SdkException,
 } from "@chatbotx.io/sdk"
@@ -46,12 +46,12 @@ export const receiveMessage = async (props: {
 
   const message: IncomingMessage = {
     sourceId: data.message.id,
-    messageType: MessageType.incoming,
-    contentType: ContentType.text,
+    messageType: messageTypes.enum.incoming,
+    contentType: contentTypes.enum.text,
   }
   const conversation: IncomingConversation = {
     sourceId: data.from,
-    conversationAttributes: {
+    additionalAttributes: {
       phoneNumberId: data.phoneID,
     },
     contact: {
@@ -63,7 +63,7 @@ export const receiveMessage = async (props: {
 
   switch (data.message.type) {
     case "text":
-      message.content = (data.message as ServerTextMessage).text.body
+      message.text = (data.message as ServerTextMessage).text.body
       break
     case "audio": {
       const attached = (data.message as ServerAudioMessage).audio
@@ -83,7 +83,7 @@ export const receiveMessage = async (props: {
       const attached = (data.message as ServerDocumentMessage).document
       const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
-      message.content = attached.caption
+      message.text = attached.caption
       message.attachments = [
         {
           name: attached.filename,
@@ -99,7 +99,7 @@ export const receiveMessage = async (props: {
       const attached = (data.message as ServerImageMessage).image
       const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
 
-      message.content = attached.caption
+      message.text = attached.caption
       message.attachments = [
         {
           sourceId: attached.id,
@@ -142,7 +142,7 @@ export const receiveMessage = async (props: {
     case "location": {
       const attached = (data.message as ServerLocationMessage).location
       // message.contentType = ContentType.location
-      message.content =
+      message.text =
         [attached.name, attached.address]
           .filter((v) => Boolean(v))
           .join(": ") ?? "Received location"
@@ -150,7 +150,7 @@ export const receiveMessage = async (props: {
       break
     }
     case "contacts": {
-      message.content = "Received contacts"
+      message.text = "Received contacts"
       message.contentAttributes = {
         contacts: (data.message as ServerContactsMessage).contacts,
       }
@@ -159,25 +159,28 @@ export const receiveMessage = async (props: {
     case "interactive": {
       switch (data.message.interactive.type) {
         case "button_reply": {
-          message.content = data.message.interactive.button_reply.title
+          message.text = data.message.interactive.button_reply.title
           postbackAction = data.message.interactive.button_reply.id
           break
         }
-        case "list_reply":
+        case "list_reply": {
           message.contentAttributes = data.message.interactive.list_reply
           break
-        case "nfm_reply":
-          message.content = data.message.interactive.nfm_reply.body
+        }
+        case "nfm_reply": {
+          message.text = data.message.interactive.nfm_reply.body ?? ""
           break
-        default:
-          message.content = "Received interactive (coming soon)"
+        }
+        default: {
+          message.text = "Received interactive (coming soon)"
           break
+        }
       }
       break
     }
     case "button": {
       const attached = (data.message as ServerButtonMessage).button
-      message.content = attached.text
+      message.text = attached.text
       break
     }
     case "order": {
@@ -188,7 +191,7 @@ export const receiveMessage = async (props: {
     // case "reaction": do nothing
     // case "system": do nothing
     default:
-      message.content = `Received ${data.message.type}`
+      message.text = `Received ${data.message.type}`
       break
   }
 
@@ -219,7 +222,7 @@ export const fetchMedia = async (
       })
       if (response.ok && response.body) {
         const result: ExternalMediaResult = {
-          originPath: `public/chatbots/${ctx.chatbot?.id ?? ""}/${createId()}`,
+          originPath: `public/space/${ctx.workspace?.id ?? ""}/${createId()}`,
           size: Number.parseInt(
             response.headers.get("content-length") ?? "0",
             10,

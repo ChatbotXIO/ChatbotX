@@ -1,21 +1,22 @@
 import {
+  broadcastScheduleTypes,
   broadcastSubactions,
   channelTypes,
 } from "@chatbotx.io/database/partials"
-import { broadcastSchedulesType } from "@chatbotx.io/database/schema"
 import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 
 export const createBroadcastRequest = z
   .object({
     channel: channelTypes,
-    flowId: z.bigint().optional(),
-    templateId: z.bigint().optional(),
-    integrationWhatsappId: z.bigint().optional(),
+    flowId: zodBigintAsString().optional(),
+    templateId: zodBigintAsString().optional(),
+    integrationWhatsappId: zodBigintAsString().optional(),
     templateData: waTemplateParamsSchema.optional(),
     subaction: broadcastSubactions,
-    schedulesType: z.enum(broadcastSchedulesType.enumValues),
+    schedulesType: broadcastScheduleTypes,
     schedulesAt: z
       .string()
       .refine(

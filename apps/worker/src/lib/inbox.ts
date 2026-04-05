@@ -1,5 +1,5 @@
 import { db, sql } from "@chatbotx.io/database/client"
-import type { ChatbotModel, InboxModel } from "@chatbotx.io/database/types"
+import type { InboxModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
 
 export const getIntegrationAuth = async (
@@ -27,7 +27,7 @@ export const getIntegrationAuth = async (
 export const getInboxWithAuthFromInboxId = async (
   inboxId: string,
 ): Promise<{
-  inbox: InboxModel & { chatbot: ChatbotModel }
+  inbox: InboxModel & { workspace: WorkspaceModel }
   auth: AuthValue
 }> => {
   const inbox = await db.query.inboxModel.findFirst({
@@ -35,7 +35,7 @@ export const getInboxWithAuthFromInboxId = async (
       id: inboxId,
     },
     with: {
-      chatbot: true,
+      workspace: true,
     },
   })
   if (!inbox) {

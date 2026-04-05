@@ -1,15 +1,15 @@
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListTagsResponse } from "../schemas/query"
-import type { TagResource } from "../schemas/resource"
+import type { ListTagsResponse } from "../schema/query"
+import type { TagResource } from "../schema/resource"
 
 export type TagState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   tags: TagResource[]
 }
 
@@ -26,7 +26,7 @@ export const createTagStore = (props: Partial<TagState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     tags: [],
     ...props,
 
@@ -42,9 +42,9 @@ export const createTagStore = (props: Partial<TagState>) =>
     },
 
     getAllActiveTags: async () => {
-      const { chatbotId, loading } = get()
+      const { workspaceId, loading } = get()
 
-      if (loading || !chatbotId) {
+      if (loading || !workspaceId) {
         return
       }
 
@@ -52,7 +52,7 @@ export const createTagStore = (props: Partial<TagState>) =>
 
       try {
         const { data } = await ky
-          .get<ListTagsResponse>(`/api/chatbots/${chatbotId}/tags`, {
+          .get<ListTagsResponse>(`/api/workspaces/${workspaceId}/tags`, {
             searchParams: {
               perPage: maxPerPageString,
             },

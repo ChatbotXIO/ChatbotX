@@ -1,4 +1,3 @@
-import url from "node:url"
 import { type HandleRequestProps, SdkException } from "@chatbotx.io/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
@@ -28,9 +27,8 @@ export const webhookHandler = async (
   })
 
   if (props.req.method === "GET") {
-    const parsedUrl = url.parse(props.req.url, true) // true to parse query string into an object
-
-    return await middleware.get(parsedUrl.query as GetParams)
+    const url = new URL(props.req.url)
+    return await middleware.get(url.searchParams as unknown as GetParams)
   }
 
   if (props.req.method === "POST") {

@@ -16,11 +16,11 @@ import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import type { MessageResource } from "../schema/resource"
+import type { MessageResourceWithRelations } from "../schema/resource"
 import { MessageBubble } from "./message-bubble"
 
 type MessageItemProps = {
-  message: MessageResource
+  message: MessageResourceWithRelations
   guestDisplay?: boolean
   onPostback?: (button: MessageButtonTemplate) => void
 }
@@ -53,10 +53,10 @@ export const MessageItem = (props: MessageItemProps) => {
       variant={variant}
     >
       <div className="mx-3 flex min-h-11 max-w-[70%] flex-col gap-1">
-        {message.content && message.content.length > 0 && (
+        {message.text && message.text.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
             <pre className="break-word whitespace-pre-line font-sans">
-              {message.content}
+              {message.text}
             </pre>
           </div>
         )}
@@ -69,7 +69,9 @@ export const MessageItem = (props: MessageItemProps) => {
   )
 }
 
-const RenderAttachments = (props: { message: MessageResource }) => {
+const RenderAttachments = (props: {
+  message: MessageResourceWithRelations
+}) => {
   const { message } = props
 
   return (

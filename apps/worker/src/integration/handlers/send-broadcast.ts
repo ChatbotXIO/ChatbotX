@@ -8,9 +8,9 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 
-export const sendBroadcast = async (broadcastId: bigint) => {
+export const sendBroadcast = async (broadcastId: string) => {
   async function updateBroadcastStatus(
-    broadcastId: bigint,
+    broadcastId: string,
     status: "sent" | "scheduled",
   ) {
     return await db
@@ -21,14 +21,14 @@ export const sendBroadcast = async (broadcastId: bigint) => {
       .where(eq(broadcastModel.id, broadcastId))
   }
 
-  const broadcast = await findOrFail(
-    broadcastModel,
-    {
+  const broadcast = await findOrFail({
+    table: broadcastModel,
+    where: {
       id: broadcastId,
       status: "scheduled",
     },
-    "Broadcast not found",
-  )
+    message: "Broadcast not found",
+  })
 
   const contactsOnBroadcasts =
     await db.query.contactsOnBroadcastsModel.findMany({
@@ -41,7 +41,7 @@ export const sendBroadcast = async (broadcastId: bigint) => {
     return
   }
 
-  let validInboxIds: bigint[] | undefined
+  let validInboxIds: string[] | undefined
   if (broadcast.templateId) {
     const template = await db.query.whatsappMessageTemplateModel.findFirst({
       where: { id: broadcast.templateId },

@@ -8,13 +8,13 @@ import type {
 
 const env = keys()
 
-export async function broadcastToChatbotParty(
-  chatbotId: bigint,
+export async function broadcastToWorkspaceParty(
+  workspaceId: string,
   json: RealtimeEventData,
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/chatbots/${chatbotId}`,
+      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/space/${workspaceId}`,
       {
         headers: {
           "X-API-KEY": env.PARTYSOCKET_API_KEY,
@@ -23,7 +23,7 @@ export async function broadcastToChatbotParty(
       },
     )
   } catch (error) {
-    logger.error(error, `Failed to broadcast to chatbot ${chatbotId} party`)
+    logger.error(error, `Failed to broadcast to workspace ${workspaceId} party`)
     return null
   }
 }

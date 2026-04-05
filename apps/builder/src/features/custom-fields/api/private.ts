@@ -1,6 +1,7 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { withChatbotIdSchema } from "@/features/chatbots/schemas/resource"
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { createCustomField } from "../actions/create-custom-field.action"
 import { deleteCustomFields } from "../actions/delete-custom-field.action"
@@ -20,73 +21,76 @@ export const privateCustomFieldsAPI = {
   privateListCustomFieldsAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/custom-fields",
+      path: "/workspaces/{workspaceId}/custom-fields",
       summary: "List custom fields",
       tags: ["Custom Fields"],
     })
-    .input(listCustomFieldsRequest.and(withChatbotIdSchema))
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(listCustomFieldsRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listCustomFieldsResponse)
     .handler(async ({ input }) => {
-      const { chatbotId, ...rest } = input
-      return await listCustomFields({ ...rest, chatbotId })
+      const { workspaceId, ...rest } = input
+      return await listCustomFields({ ...rest, workspaceId })
     }),
 
   privateCreateCustomFieldAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/chatbots/{chatbotId}/custom-fields",
+      path: "/workspaces/{workspaceId}/custom-fields",
       summary: "Create custom field",
       tags: ["Custom Fields"],
     })
-    .input(createCustomFieldRequest.and(withChatbotIdSchema))
+    .input(createCustomFieldRequest.and(withWorkspaceIdSchema))
     .output(createCustomFieldResponse)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, ...rest } = input
-      return await createCustomField(chatbotId, rest)
+      const { workspaceId, ...rest } = input
+      const customField = await createCustomField(workspaceId, rest)
+      return { id: customField.id }
     }),
 
   privateUpdateCustomFieldAPI: authorizedAPI
     .route({
       method: "PUT",
-      path: "/chatbots/{chatbotId}/custom-fields/{id}",
+      path: "/workspaces/{workspaceId}/custom-fields/{id}",
       summary: "Update custom field",
       tags: ["Custom Fields"],
     })
     .input(
       updateCustomFieldRequest
-        .and(withChatbotIdSchema)
-        .and(z.object({ id: z.bigint() })),
+        .and(withWorkspaceIdSchema)
+        .and(z.object({ id: zodBigintAsString() })),
     )
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { id, chatbotId, ...rest } = input
-      return await updateCustomField({
-        chatbotId,
-        id,
-        parsedInput: rest,
-      })
+      const { id, workspaceId, ...rest } = input
+      return await updateCustomField(
+        {
+          workspaceId,
+          id,
+        },
+        rest,
+      )
     }),
 
   privateDeleteCustomFieldsAPI: authorizedAPI
     .route({
       method: "DELETE",
-      path: "/chatbots/{chatbotId}/custom-fields/{customFieldId}",
+      path: "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
       summary: "Delete custom field",
       tags: ["Custom Fields"],
     })
     .input(
       z.object({
-        chatbotId: z.bigint(),
-        customFieldId: z.bigint(),
+        workspaceId: zodBigintAsString(),
+        customFieldId: zodBigintAsString(),
       }),
     )
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(async ({ input }) => {
-      const { chatbotId, customFieldId } = input
+      const { workspaceId, customFieldId } = input
       return await deleteCustomFields({
-        chatbotId,
+        workspaceId,
         ids: [customFieldId],
       })
     }),

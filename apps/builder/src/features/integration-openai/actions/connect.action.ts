@@ -3,13 +3,13 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationModel,
-  integrationOpenAIModel,
+  integrationOpenaiModel,
 } from "@chatbotx.io/database/schema"
 import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { openaiModels } from "@/features/openai/models"
 import { authActionClient } from "@/lib/safe-action"
@@ -19,20 +19,20 @@ import {
 } from "../schemas/request"
 
 export const connectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(connectOpenAISchema)
   .action(
     async ({
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: ConnectOpenAISchema
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst(
+      const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst(
         {
           where: {
-            chatbotId,
+            workspaceId,
           },
         },
       )
@@ -40,9 +40,9 @@ export const connectOpenAIAction = authActionClient
       await db.transaction(async (tx) => {
         if (integrationOpenAI) {
           await tx
-            .update(integrationOpenAIModel)
+            .update(integrationOpenaiModel)
             .set({
-              model: openaiModels.gpt4oMini,
+              model: openaiModels.enum["openai/gpt-4o-mini"],
               auth: {
                 authType: AuthType.secretText,
                 secretText: parsedInput.apiKey,
@@ -50,23 +50,23 @@ export const connectOpenAIAction = authActionClient
               temperature: parsedInput.temperature,
               maxOutputTokens: parsedInput.maxOutputTokens,
             })
-            .where(eq(integrationOpenAIModel.id, integrationOpenAI.id))
+            .where(eq(integrationOpenaiModel.id, integrationOpenAI.id))
         } else {
           const integration = await tx
             .insert(integrationModel)
             .values({
               id: createId(),
-              chatbotId,
+              workspaceId,
               integrationType: "openai",
             })
             .returning()
             .then((result) => result[0])
 
-          await tx.insert(integrationOpenAIModel).values({
+          await tx.insert(integrationOpenaiModel).values({
             id: createId(),
             integrationId: integration.id,
-            chatbotId,
-            model: openaiModels.gpt4oMini,
+            workspaceId,
+            model: openaiModels.enum["openai/gpt-4o-mini"],
             auth: {
               authType: AuthType.secretText,
               secretText: parsedInput.apiKey,

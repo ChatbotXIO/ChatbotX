@@ -2,12 +2,13 @@ import {
   webchatConversationStarter,
   webchatPersistentMenu,
 } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createWebchatRequest = z.object({
   name: z.string().min(1).max(40),
-  chatbotId: z.bigint().nullish(),
-  welcomeFlowId: z.bigint().nullish(),
+  workspaceId: zodBigintAsString().nullish(),
+  welcomeFlowId: zodBigintAsString().nullish(),
   authorizedDomains: z.array(
     z.object({
       value: z.hostname(),

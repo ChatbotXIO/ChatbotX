@@ -4,24 +4,24 @@ import {
 } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, findOrFail } from "@chatbotx.io/database/client"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   attachmentModel,
-  chatbotUsageModel,
   contactModel,
   conversationModel,
   messageModel,
+  workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import type {
   ContentType,
   ConversationModel,
   Gender,
-  IntegrationType,
   MessageModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
-  broadcastToChatbotParty,
+  broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import {
@@ -62,9 +62,9 @@ export const receiveMessage = async (
     integrationType as IntegrationType,
     integrationIdentifier,
   )
-  const { chatbot, chatbotId, inboxId, auth, inbox } = dbIntegration
+  const { workspace, workspaceId, inboxId, auth, inbox } = dbIntegration
   const ctx = {
-    chatbot,
+    workspace,
     auth: auth as AuthValue,
     uploader,
   }
@@ -85,7 +85,7 @@ export const receiveMessage = async (
   const result = await db.transaction(async (tx) => {
     let newContact = await tx.query.contactModel.findFirst({
       where: {
-        chatbotId,
+        workspaceId,
         sourceId: conversation.contact.sourceId,
       },
     })
@@ -107,12 +107,12 @@ export const receiveMessage = async (
         }
       }
 
-      const chatbotUsage = await findOrFail(
-        chatbotUsageModel,
-        { chatbotId },
-        "Chatbot usage not found",
-      )
-      if (chatbotUsage.contactsCount >= chatbotUsage.maxContacts) {
+      const workspaceUsage = await findOrFail({
+        table: workspaceUsageModel,
+        where: { workspaceId },
+        message: "Workspace usage not found",
+      })
+      if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
         throw new Error("Max contacts reached")
       }
 
@@ -120,7 +120,7 @@ export const receiveMessage = async (
         .insert(contactModel)
         .values({
           id: createId(),
-          chatbotId,
+          workspaceId,
           sourceId: conversation.contact.sourceId,
           phoneNumber: conversation.contact.phoneNumber,
           email: conversation.contact.email,
@@ -145,10 +145,10 @@ export const receiveMessage = async (
       .values({
         id: createId(),
         sourceId: conversation.sourceId,
-        conversationAttributes: conversation.conversationAttributes,
+        additionalAttributes: conversation.additionalAttributes,
         channel: inbox.channel,
         inboxId,
-        chatbotId,
+        workspaceId,
         contactId: newContact.id,
       })
       .onConflictDoUpdate({
@@ -172,19 +172,19 @@ export const receiveMessage = async (
         conversationId: newConversation.id,
         inboxId,
         senderType: message.messageType === "outgoing" ? "user" : "contact",
-        chatbotId,
+        workspaceId,
         sourceId: message.sourceId ?? "",
         senderId:
           message.messageType === "outgoing" ? null : (newContact?.id ?? ""),
         messageType: message.messageType,
-        content: message.content,
+        text: message.text,
         contentType: message.contentType as ContentType,
         contentAttributes: message.contentAttributes,
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
-        target: [messageModel.chatbotId, messageModel.sourceId],
+        target: [messageModel.workspaceId, messageModel.sourceId],
         set: {
           updatedAt: now,
         },
@@ -202,7 +202,7 @@ export const receiveMessage = async (
           id: createId(),
           ...attachment,
           messageId: newMessage.id,
-          chatbotId: newConversation.chatbotId,
+          workspaceId: newConversation.workspaceId,
           conversationId: newConversation.id,
           url: getPublicUrl(attachment.originPath),
         })),
@@ -210,7 +210,7 @@ export const receiveMessage = async (
     }
 
     try {
-      broadcastToChatbotParty(newConversation.chatbotId, {
+      broadcastToWorkspaceParty(newConversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
@@ -237,7 +237,7 @@ export const receiveMessage = async (
   if (result.isNewContact && result.contactData) {
     try {
       await emitContactCreated(
-        chatbotId,
+        workspaceId,
         result.contactId,
         result.contactData.name || undefined,
         result.contactData.phone || undefined,
@@ -248,7 +248,7 @@ export const receiveMessage = async (
     }
     contactTrackingService
       .trackEvent({
-        chatbotId,
+        workspaceId,
         contactId: conversation.contact.sourceId,
         eventType: "contact_created",
         occurredAt: result.message.createdAt,
@@ -271,7 +271,7 @@ export const receiveMessage = async (
   if (conversation.contact.sourceId) {
     contactTrackingService
       .trackEvent({
-        chatbotId,
+        workspaceId,
         contactId: conversation.contact.sourceId,
         eventType: "contact_message_in",
         senderType: "human",
@@ -319,7 +319,7 @@ export const receiveMessage = async (
 
   if (result.isNewContact && conversation.contact.sourceId) {
     await contactTrackingService.trackEvent({
-      chatbotId,
+      workspaceId,
       contactId: conversation.contact.sourceId,
       eventType: "contact_created",
       occurredAt: new Date(),
@@ -335,7 +335,7 @@ export const receiveMessage = async (
 
   if (conversation.contact.sourceId && message.messageType === "incoming") {
     await contactTrackingService.trackEvent({
-      chatbotId,
+      workspaceId,
       contactId: conversation.contact.sourceId,
       eventType: "contact_message_in",
       occurredAt: new Date(),

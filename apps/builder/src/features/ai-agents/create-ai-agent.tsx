@@ -51,7 +51,7 @@ import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import { openaiChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
-  chatbotId: bigint
+  workspaceId: string
   files: AIFileModel[]
   functions: AIFunctionModel[]
   mcpServers: AIMCPServerModel[]
@@ -59,7 +59,7 @@ type CreateAIAgentDialogProps = {
 }
 
 export function CreateAIAgentDialog({
-  chatbotId,
+  workspaceId,
   files,
   functions,
   mcpServers,
@@ -109,7 +109,7 @@ export function CreateAIAgentDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAIAgentAction.bind(null, chatbotId),
+      createAIAgentAction.bind(null, workspaceId),
       zodResolver(createAIAgentRequest),
       {
         actionProps: {
@@ -214,7 +214,7 @@ export function CreateAIAgentDialog({
                     </div>
                     <TextareaField
                       className="flex-1"
-                      name={`messages.${index}.content`}
+                      name={`messages.${index}.text`}
                     />
                     <Button
                       onClick={() => remove(index)}

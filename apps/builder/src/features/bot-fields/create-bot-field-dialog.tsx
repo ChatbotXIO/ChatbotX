@@ -1,6 +1,9 @@
 "use client"
 
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import {
+  type CustomFieldType,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -33,13 +36,13 @@ import { createBotFieldAction } from "./actions/create-bot-field.action"
 import { createBotFieldRequest } from "./schemas/action"
 
 type CreateBotFieldDialogProps = {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
   onSuccess?: () => void
 }
 
 export function CreateBotFieldDialog({
-  chatbotId,
+  workspaceId,
   folderId,
   onSuccess,
 }: CreateBotFieldDialogProps) {
@@ -50,7 +53,7 @@ export function CreateBotFieldDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createBotFieldAction.bind(null, chatbotId),
+      createBotFieldAction.bind(null, workspaceId),
       zodResolver(createBotFieldRequest),
       {
         actionProps: {
@@ -136,7 +139,9 @@ export function CreateBotFieldDialog({
               render={() => (
                 <FormItem>
                   <FormLabel>{t("fields.value.label")}</FormLabel>
-                  <BotFieldValueInput type={watchCustomFieldType} />
+                  <BotFieldValueInput
+                    type={watchCustomFieldType as CustomFieldType}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

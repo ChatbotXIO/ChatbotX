@@ -20,19 +20,19 @@ import { deleteInboxTeamAction } from "./actions/delete-inbox-team.action"
 export function DeleteInboxTeamDialog({
   open,
   onOpenChange,
-  chatbotId,
+  workspaceId,
   inboxTeam,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
-  chatbotId: bigint
+  workspaceId: string
   inboxTeam: InboxTeamModel | null
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const { execute, isPending } = useAction(
-    deleteInboxTeamAction.bind(null, chatbotId),
+    deleteInboxTeamAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(
@@ -78,7 +78,7 @@ export function DeleteInboxTeamDialog({
           </Button>
           <Button
             disabled={isPending}
-            onClick={() => execute({ ids: [inboxTeam?.id ?? BigInt(0)] })}
+            onClick={() => execute({ ids: [inboxTeam?.id ?? ""] })}
             size="sm"
             type="submit"
           >

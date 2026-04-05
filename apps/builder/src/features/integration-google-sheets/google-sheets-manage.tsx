@@ -25,12 +25,12 @@ import { disconnectGoogleSheets } from "./actions/disconnect.action"
 import type { getGoogleSheetsIntegration } from "./queries"
 
 type GoogleSheetsConnectProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof getGoogleSheetsIntegration>>]>
 }
 
 export function GoogleSheetsManage({
-  chatbotId,
+  workspaceId,
   promises,
 }: GoogleSheetsConnectProps) {
   const [{ data: integrationGoogleSheets }] = use(promises)
@@ -38,7 +38,7 @@ export function GoogleSheetsManage({
   const t = useTranslations()
 
   const { executeAsync: onConnect, isPending: isPendingConnect } = useAction(
-    connectGoogleSheets.bind(null, chatbotId),
+    connectGoogleSheets.bind(null, workspaceId),
     {
       onError: ({ error }) => {
         if (error.serverError) {
@@ -48,7 +48,7 @@ export function GoogleSheetsManage({
     },
   )
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
-    useAction(disconnectGoogleSheets.bind(null, chatbotId), {
+    useAction(disconnectGoogleSheets.bind(null, workspaceId), {
       onSuccess: () => {
         router.refresh()
       },

@@ -1,4 +1,5 @@
-import { chatbotAuthMiddleware } from "@/middlewares/auth"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listIntegrationWebchats } from "../queries"
 import {
@@ -10,12 +11,12 @@ export const integrationWebchatAuthenticatedAPI = {
   listIntegrationWebchatsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/chatbots/{chatbotId}/integration-webchats",
+      path: "/workspaces/{workspaceId}/integration-webchats",
       summary: "List Integration Webchats",
       tags: ["Integration Webchats"],
     })
-    .input(listIntegrationWebchatsRequest)
-    .use(chatbotAuthMiddleware, (input) => input.chatbotId)
+    .input(listIntegrationWebchatsRequest.and(withWorkspaceIdSchema))
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listIntegrationWebchatsResponse)
     .handler(async ({ input }) => {
       return await listIntegrationWebchats(input)

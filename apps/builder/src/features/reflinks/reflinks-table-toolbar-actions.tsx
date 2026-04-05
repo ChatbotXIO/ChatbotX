@@ -7,28 +7,28 @@ import type { ListReflinkItem } from "./schemas/query"
 
 type ReflinksTableToolbarActionsProps = {
   table: Table<ListReflinkItem>
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export function ReflinksTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
 }: ReflinksTableToolbarActionsProps) {
   return (
     <>
       <div className="flex items-center gap-2">
         {table.getFilteredSelectedRowModel().rows.length > 0 ? (
           <DeleteReflinksDialog
-            chatbotId={chatbotId}
             onSuccess={() => table.toggleAllRowsSelected(false)}
             reflinks={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original)}
+            workspaceId={workspaceId}
           />
         ) : null}
       </div>
 
-      <CreateReflinkDialog chatbotId={chatbotId} />
+      <CreateReflinkDialog workspaceId={workspaceId} />
     </>
   )
 }

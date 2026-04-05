@@ -1,19 +1,19 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const filterContactStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.filterContact),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.filterContact),
   cases: z.array(
     z.object({
       field: z.string(),
       operator: z.string(),
       value: z.string(),
-      nodeId: z.bigint().nullish(),
+      nodeId: zodBigintAsString().nullish(),
     }),
   ),
-  otherwiseNodeId: z.bigint().nullish(),
+  otherwiseNodeId: zodBigintAsString().nullish(),
 })
 
 export type FilterContactStepSchema = z.infer<typeof filterContactStepSchema>
@@ -22,7 +22,7 @@ export const filterContactStepDefaultFn = (
   props?: Partial<FilterContactStepSchema>,
 ): FilterContactStepSchema => ({
   id: createId(),
-  stepType: StepType.filterContact,
+  stepType: stepTypes.enum.filterContact,
   cases: [],
   otherwiseNodeId: null,
   ...props,

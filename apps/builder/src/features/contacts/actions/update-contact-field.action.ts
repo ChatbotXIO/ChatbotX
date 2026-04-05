@@ -2,62 +2,54 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
+  type FillableContactKey,
+  fillableContactKeys,
+} from "@chatbotx.io/database/partials"
+import {
   contactCustomFieldModel,
   contactModel,
 } from "@chatbotx.io/database/schema"
-import {
-  type ContactModel,
-  type FillableContactKeys,
-  fillableContactKeys,
-} from "@chatbotx.io/database/types"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import type { ContactModel } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { listCustomFields } from "@/features/custom-fields/queries"
 import { listCustomFieldsSearchParams } from "@/features/custom-fields/schemas/query"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { maxPerPageString } from "@/lib/shared-request"
 import {
   type UpdateContactFieldRequest,
   updateContactFieldRequest,
 } from "../schemas/action"
 
-export const updateContactFieldAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateContactFieldAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateContactFieldRequest)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateContactFieldRequest
-    }) => {
-      await updateContactFields({ chatbotId, id, parsedInput })
-    },
-  )
+    } = props
 
-export const updateContactFields = async ({
-  chatbotId,
-  id,
-  parsedInput,
-}: {
-  chatbotId: bigint
-  id: bigint
-  parsedInput: UpdateContactFieldRequest
-}) => {
-  const contact = await findOrFail(
-    contactModel,
-    {
-      chatbotId,
-      id,
+    await updateContactFields({ workspaceId, id }, parsedInput)
+  })
+
+export const updateContactFields = async (
+  ctx: {
+    workspaceId: string
+    id: string
+  },
+  parsedInput: UpdateContactFieldRequest,
+) => {
+  const contact = await findOrFail({
+    table: contactModel,
+    where: {
+      workspaceId: ctx.workspaceId,
+      id: ctx.id,
     },
-    "Contact not found",
-  )
+    message: "Contact not found",
+  })
 
   const allCustomFields = await listCustomFields({
-    chatbotId,
+    workspaceId: ctx.workspaceId,
     ...listCustomFieldsSearchParams.parse({
       perPage: maxPerPageString,
     }),
@@ -71,7 +63,7 @@ export const updateContactFields = async ({
   const customFields: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(parsedInput)) {
-    if (fillableContactKeys.includes(key as FillableContactKeys)) {
+    if (fillableContactKeys.includes(key as FillableContactKey)) {
       // biome-ignore lint/suspicious/noExplicitAny: we know the key is a valid field
       ;(contactFields as any)[key] = value
     } else if (allCustomFieldsMap.has(key)) {
@@ -92,8 +84,8 @@ export const updateContactFields = async ({
         await tx
           .insert(contactCustomFieldModel)
           .values({
-            contactId: id,
-            customFieldId: BigInt(key),
+            contactId: ctx.id,
+            customFieldId: key,
             value: value as string,
           })
           .onConflictDoUpdate({

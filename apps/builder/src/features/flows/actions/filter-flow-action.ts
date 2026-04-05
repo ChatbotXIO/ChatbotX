@@ -1,4 +1,5 @@
-import type { FlowNode, FlowWithVersions } from "../schemas/flow-node"
+import type { FlowNode } from "../schemas/flow-node"
+import type { FlowWithVersionsResource } from "../schemas/resource"
 
 export function hasStartNode(nodes: FlowNode[], stepType: string): boolean {
   if (!Array.isArray(nodes)) {
@@ -12,16 +13,19 @@ export function hasStartNode(nodes: FlowNode[], stepType: string): boolean {
     )
 }
 
-export function filterFlowsByStartStepType<T extends FlowWithVersions>(
-  flows: T[],
+export function filterFlowsByStartStepType(
+  flows: FlowWithVersionsResource[],
   stepType: string,
-): T[] {
+): FlowWithVersionsResource[] {
   return flows.filter((flow) =>
-    flow.flowVersions.some((version) => hasStartNode(version.nodes, stepType)),
+    flow.flowVersions.some((version) =>
+      // biome-ignore lint/suspicious/noExplicitAny: temporary any
+      hasStartNode(version.nodes as any[], stepType),
+    ),
   )
 }
 
-export function filterFlowsByTemplateIds<T extends FlowWithVersions>(
+export function filterFlowsByTemplateIds<T extends FlowWithVersionsResource>(
   flows: T[],
   templateIds: string[],
 ): T[] {
@@ -36,7 +40,8 @@ export function filterFlowsByTemplateIds<T extends FlowWithVersions>(
       }
 
       return version.nodes.some((node) => {
-        const steps = node?.data?.details?.steps
+        // biome-ignore lint/suspicious/noExplicitAny: temporary any
+        const steps = (node as any)?.data?.details?.steps
         if (!Array.isArray(steps)) {
           return false
         }

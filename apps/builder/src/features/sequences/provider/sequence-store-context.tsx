@@ -17,19 +17,19 @@ export const SequenceStoreContext = createContext<SequenceStoreApi | undefined>(
 )
 
 export type SequenceStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const SequenceStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: SequenceStoreProviderProps) => {
   const storeRef = useRef<SequenceStoreApi>(null)
   if (!storeRef.current) {
-    storeRef.current = createSequenceStore({ chatbotId })
+    storeRef.current = createSequenceStore({ workspaceId })
   }
 
   useEffect(() => {

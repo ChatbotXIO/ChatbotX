@@ -1,6 +1,6 @@
 "use client"
 
-import type { CustomFieldType } from "@chatbotx.io/database/types"
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import {
   DatePickerField,
   DateTimePickerField,

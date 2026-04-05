@@ -4,30 +4,30 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationGeminiModel } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateGeminiRequest,
   updateGeminiRequest,
 } from "../schemas/request"
 
-export const updateGeminiAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const updateGeminiAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(updateGeminiRequest)
   .action(
     async ({
       parsedInput,
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: UpdateGeminiRequest
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationGemini = await findOrFail(
-        integrationGeminiModel,
-        { chatbotId },
-        "Integration Gemini not found",
-      )
+      const integrationGemini = await findOrFail({
+        table: integrationGeminiModel,
+        where: { workspaceId },
+        message: "Integration Gemini not found",
+      })
 
       await db
         .update(integrationGeminiModel)

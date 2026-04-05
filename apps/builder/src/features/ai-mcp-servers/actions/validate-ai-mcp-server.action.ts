@@ -6,12 +6,12 @@ import {
 } from "@ai-sdk/mcp"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { chatbotIdRequestParams } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { validateAIMcpServerRequest } from "../schema/action"
 
-export const validateAIMcpServerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const validateAIMcpServerAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(validateAIMcpServerRequest)
   .action(async ({ parsedInput }) => {
     const headers: Record<string, string> = {}

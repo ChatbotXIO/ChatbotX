@@ -2,36 +2,34 @@
 
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { sequenceModel } from "@chatbotx.io/database/schema"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteSequenceAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
-  .action(
-    async ({
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-    }) => {
-      await findOrFail(
-        sequenceModel,
-        {
-          id,
-          chatbotId,
-        },
-        "Sequence not found",
-      )
+export const deleteSequenceAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
+    } = props
 
-      await db
-        .delete(sequenceModel)
-        .where(
-          and(eq(sequenceModel.id, id), eq(sequenceModel.chatbotId, chatbotId)),
-        )
+    await deleteSequence({ workspaceId, id })
+  })
 
-      revalidateCacheTags([`chatbots:${chatbotId}#sequences`])
+export const deleteSequence = async (ctx: {
+  workspaceId: string
+  id: string
+}) => {
+  await findOrFail({
+    table: sequenceModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "Sequence not found",
+  })
+
+  await db.delete(sequenceModel).where(and(eq(sequenceModel.id, ctx.id)))
+
+  revalidateCacheTags([`workspaces:${ctx.workspaceId}#sequences`])
+}

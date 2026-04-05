@@ -21,15 +21,15 @@ import { deleteSpreadsheetAction } from "./actions/delete-spreadsheet-action"
 
 interface DeleteSpreadsheetsDialogProps
   extends React.ComponentPropsWithoutRef<typeof Dialog> {
-  chatbotId: bigint
   onOpenChange: (val: boolean) => void
   onSuccess?: () => void
   showTrigger?: boolean
   spreadsheets: Row<SpreadsheetModel>["original"][]
+  workspaceId: string
 }
 
 export function DeleteSpreadsheetsDialog({
-  chatbotId,
+  workspaceId,
   spreadsheets,
   showTrigger = true,
   onSuccess,
@@ -39,7 +39,7 @@ export function DeleteSpreadsheetsDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteSpreadsheetAction.bind(null, chatbotId),
+    deleteSpreadsheetAction.bind(null, workspaceId),
     {
       onSuccess: () => {
         toast.success(

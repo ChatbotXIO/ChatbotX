@@ -28,12 +28,12 @@ import { createAIFunctionAction } from "./actions/create-ai-function.action"
 import { createAIFunctionRequest } from "./schema/action"
 
 type AIFunctionsCreateProps = {
-  chatbotId: bigint
+  workspaceId: string
   onSuccess?: () => void
 }
 
 export function AIFunctionsCreate({
-  chatbotId,
+  workspaceId,
   onSuccess,
 }: AIFunctionsCreateProps) {
   const t = useTranslations()
@@ -44,7 +44,7 @@ export function AIFunctionsCreate({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAIFunctionAction.bind(null, chatbotId),
+      createAIFunctionAction.bind(null, workspaceId),
       zodResolver(createAIFunctionRequest),
       {
         formProps: {

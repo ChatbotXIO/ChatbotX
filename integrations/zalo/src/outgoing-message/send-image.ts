@@ -1,7 +1,7 @@
 import {
   type SendGifStepSchema,
   type SendImageStepSchema,
-  StepType,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../api/message"
@@ -24,7 +24,7 @@ export async function* convertFlowStepImage(
       throw new Error("Image URL is required")
     }
 
-    const mediaType = step.stepType === StepType.sendGif ? "gif" : "image"
+    const mediaType = step.stepType === stepTypes.enum.sendGif ? "gif" : "image"
     const {
       data: { attachment_id, width, height },
     } = await uploadAttachment(props.ctx.auth, mediaType, step.url)
@@ -34,7 +34,7 @@ export async function* convertFlowStepImage(
     }
 
     const buttons =
-      step.stepType === StepType.sendImage
+      step.stepType === stepTypes.enum.sendImage
         ? await convertZaloButtons({
             flowId: props.data.flowId,
             flowVersionId: props.data.flowVersionId,

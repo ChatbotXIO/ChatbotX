@@ -1,23 +1,25 @@
 import { db } from "@chatbotx.io/database/client"
-import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import type {
+  IntegrationType,
+  OrganizationSettings,
+} from "@chatbotx.io/database/partials"
 import {
-  type IntegrationType,
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@chatbotx.io/database/schema"
 import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
-import { findChatbotOrFail } from "@/features/chatbot/queries"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { findOrganization } from "@/features/organization/queries"
+import { findChatbotOrFail } from "@/features/workspaces/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
   referer: z.url(),
 })
 
@@ -29,7 +31,7 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // Parse state params to get chatbot info
+  // Parse state params to get workspace info
   const url = new URL(req.url)
   const rawState = JSON.parse(atob(url.searchParams.get("state") || ""))
   const { data: stateParams } = stateValidationSchema.safeParse(rawState)
@@ -45,9 +47,9 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // find chatbot and organization config
-  const chatbot = await findChatbotOrFail({ id: stateParams.chatbotId })
-  const organization = await findOrganization({ id: chatbot.organizationId })
+  // find workspace and organization config
+  const workspace = await findChatbotOrFail({ id: stateParams.workspaceId })
+  const organization = await findOrganization({ id: workspace.organizationId })
   const organizationSettings =
     organization?.settings as unknown as OrganizationSettings
 
@@ -61,7 +63,7 @@ export const handleCallback = async (
 
       await connectZaloHandler({
         zaloSettings: organizationSettings.zalo,
-        chatbotId: stateParams.chatbotId,
+        workspaceId: stateParams.workspaceId,
         req,
       })
 
@@ -102,13 +104,13 @@ export const handleCallback = async (
 
     await tx.insert(integrationModel).values({
       id: integrationId,
-      chatbotId: stateParams.chatbotId,
+      workspaceId: stateParams.workspaceId,
       integrationType,
     })
 
     if (integrationType === "googleSheets" && googleSheetsAuth) {
       await tx.insert(integrationGoogleSheetsModel).values({
-        chatbotId: stateParams.chatbotId,
+        workspaceId: stateParams.workspaceId,
         integrationId,
         auth: googleSheetsAuth,
       })

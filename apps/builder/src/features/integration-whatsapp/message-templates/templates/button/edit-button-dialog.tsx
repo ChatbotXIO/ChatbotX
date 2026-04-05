@@ -17,8 +17,8 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import {
-  ButtonActionType,
   type ButtonStepProps,
+  buttonActionTypes,
   buttonStepSchema,
 } from "./schema"
 
@@ -46,18 +46,18 @@ export function EditButtonDialog({
 
   const buttonOptions = useMemo(
     () => [
-      { label: t("fields.url.label"), value: ButtonActionType.Url },
+      { label: t("fields.url.label"), value: buttonActionTypes.enum.url },
       {
         label: t("fields.quickReply.label"),
-        value: ButtonActionType.QuickReply,
+        value: buttonActionTypes.enum.quickReply,
       },
       {
         label: t("fields.phoneNumber.label"),
-        value: ButtonActionType.PhoneNumber,
+        value: buttonActionTypes.enum.phoneNumber,
       },
       {
         label: t("fields.whatsappFlow.label"),
-        value: ButtonActionType.Flow,
+        value: buttonActionTypes.enum.flow,
       },
     ],
     [t],
@@ -90,10 +90,10 @@ export function EditButtonDialog({
                 options={buttonOptions}
               />
             )}
-            {type === ButtonActionType.Url && (
+            {type === buttonActionTypes.enum.url && (
               <InputField label={t("fields.url.label")} name="url" />
             )}
-            {type === ButtonActionType.PhoneNumber && (
+            {type === buttonActionTypes.enum.phoneNumber && (
               <InputField
                 label={t("fields.phoneNumber.label")}
                 name="phone_number"

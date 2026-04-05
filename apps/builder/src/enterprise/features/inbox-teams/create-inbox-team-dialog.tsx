@@ -20,16 +20,16 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
-import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
+import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
 import { createInboxTeamAction } from "./actions/create-inbox-team.action"
 import { createInboxTeamRequest } from "./schema/action"
 
 export function CreateInboxTeamDialog({
-  chatbotId,
-  chatbotMembers,
+  workspaceId,
+  workspaceMembers,
 }: {
-  chatbotId: bigint
-  chatbotMembers: ListChatbotMembersResponse["data"]
+  workspaceId: string
+  workspaceMembers: ListWorkspaceMembersResponse["data"]
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -38,7 +38,7 @@ export function CreateInboxTeamDialog({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createInboxTeamAction.bind(null, chatbotId),
+      createInboxTeamAction.bind(null, workspaceId),
       zodResolver(createInboxTeamRequest),
       {
         actionProps: {
@@ -70,8 +70,8 @@ export function CreateInboxTeamDialog({
       },
     )
 
-  const userOptions = chatbotMembers.map((cm) => ({
-    value: cm.user.id.toString(),
+  const userOptions = workspaceMembers.map((cm) => ({
+    value: cm.user.id,
     label: cm.user.name ?? "",
   }))
 

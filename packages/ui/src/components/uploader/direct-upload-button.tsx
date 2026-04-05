@@ -33,7 +33,7 @@ export type DirectUploadButtonProps = FileUploadProps & {
  * @example
  * ```tsx
  * <DirectUploadButton
- *   uploadPath="public/chatbots/123/images"
+ *   uploadPath="public/space/123/images"
  *   onUploadSuccess={(filePath, file) => {
  *     console.log(`File uploaded to: ${filePath}`)
  *   }}

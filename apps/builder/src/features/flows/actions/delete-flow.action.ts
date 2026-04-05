@@ -6,17 +6,17 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteFlowAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteFlowAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -26,11 +26,11 @@ export const deleteFlowAction = chatbotActionClient
         .delete(flowModel)
         .where(
           and(
-            eq(flowModel.chatbotId, chatbotId),
+            eq(flowModel.workspaceId, workspaceId),
             inArray(flowModel.id, parsedInput.ids),
           ),
         )
 
-      revalidateCacheTags(`chatbots:${chatbotId}#flows`)
+      revalidateCacheTags(`workspaces:${workspaceId}#flows`)
     },
   )

@@ -18,5 +18,5 @@ export const listErrorLogsSearchParamsCache = createSearchParamsCache({
 export type ListErrorLogsRequest = Awaited<
   ReturnType<typeof listErrorLogsSearchParamsCache.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }

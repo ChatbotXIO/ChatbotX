@@ -25,18 +25,18 @@ import { createWebhookAction } from "./actions/create-webhook-action"
 import { createWebhookSchema } from "./schemas/create-webhook-schema"
 
 export function CreateWebhookDialog({
-  chatbotId,
+  workspaceId,
   folderId,
 }: {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }) {
   const t = useTranslations()
   const router = useRouter()
 
   const [open, onOpenChange] = useState(false)
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createWebhookAction.bind(null, chatbotId),
+    createWebhookAction.bind(null, workspaceId),
     zodResolver(createWebhookSchema),
     {
       actionProps: {

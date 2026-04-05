@@ -14,14 +14,14 @@ export const useContactAssigneeOptions = (props?: {
     includeUnassigned = false,
   } = props || {}
 
-  const { chatbotMembers, inboxTeams } = useUserStore((state) => state)
+  const { workspaceMembers, inboxTeams } = useUserStore((state) => state)
 
   return useMemo(() => {
     const result: SelectOption[] = [
       {
         label: "Agents",
         value: "agents",
-        children: chatbotMembers.map((v) => ({
+        children: workspaceMembers.map((v) => ({
           label: v.user?.name ?? "--",
           value: `u_${v.user?.id}`,
         })),
@@ -56,17 +56,17 @@ export const useContactAssigneeOptions = (props?: {
     return result
       .flatMap((v) => v.children ?? [])
       .filter(Boolean) as SelectOption[]
-  }, [chatbotMembers, inboxTeams, autoGroup, includeAll, includeUnassigned])
+  }, [workspaceMembers, inboxTeams, autoGroup, includeAll, includeUnassigned])
 }
 
 export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
-  const { chatbotMembers, inboxTeams } = useUserStore((state) => state)
+  const { workspaceMembers, inboxTeams } = useUserStore((state) => state)
 
   return useMemo(
     () => [
       {
         heading: "Agents",
-        options: chatbotMembers.map((v) => ({
+        options: workspaceMembers.map((v) => ({
           label: v.user?.name ?? "--",
           value: `u_${v.user?.id}`,
         })),
@@ -79,6 +79,6 @@ export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
         })),
       },
     ],
-    [chatbotMembers, inboxTeams],
+    [workspaceMembers, inboxTeams],
   )
 }

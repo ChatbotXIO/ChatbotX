@@ -19,7 +19,7 @@ import { ZaloDisconnect } from "./components/zalo-disconnect"
 import type { listIntegrationZalo } from "./queries"
 
 type ZaloManageProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<
     [
       Awaited<ReturnType<typeof listIntegrationZalo>>,
@@ -28,7 +28,7 @@ type ZaloManageProps = {
   >
 }
 
-export function ZaloManage({ chatbotId, promises }: ZaloManageProps) {
+export function ZaloManage({ workspaceId, promises }: ZaloManageProps) {
   const [{ data: integrationZalos }, organization] = use(promises)
   const t = useTranslations()
 
@@ -51,7 +51,7 @@ export function ZaloManage({ chatbotId, promises }: ZaloManageProps) {
         <Button size="sm" variant="secondary">
           <Link
             className="flex items-center gap-2"
-            href={`/channels/create?channel=zalo&chatbotId=${chatbotId}`}
+            href={`/channels/create?channel=zalo&workspaceId=${workspaceId}`}
           >
             <PlusCircleIcon className="h-4 w-4" />
             {t("actions.addFeature", { feature: t("fields.zalo.label") })}

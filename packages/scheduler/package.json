@@ -9,10 +9,10 @@
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
-    "ioredis": "5.9.3"
+    "ioredis": "5.10.1"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

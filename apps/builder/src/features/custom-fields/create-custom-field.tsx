@@ -1,5 +1,5 @@
 "use client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -24,8 +24,8 @@ import { createCustomFieldAction } from "./actions/create-custom-field.action"
 import { createCustomFieldRequest } from "./schemas/action"
 
 type CreateCustomFieldDialogProps = {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
   triggerButton?: ReactNode
   onSuccess?: () => void
 }
@@ -35,7 +35,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
   const t = useTranslations()
 
   const {
-    chatbotId,
+    workspaceId,
     folderId,
     triggerButton,
     onSuccess = () => {
@@ -70,13 +70,13 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
         </DialogHeader>
 
         <CreateCustomFieldForm
-          chatbotId={chatbotId}
           folderId={folderId}
           onClose={() => setOpen(false)}
           onSuccess={() => {
             setOpen(false)
             onSuccess()
           }}
+          workspaceId={workspaceId}
         />
       </DialogContent>
     </Dialog>
@@ -84,13 +84,13 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
 }
 
 function CreateCustomFieldForm({
-  chatbotId,
+  workspaceId,
   folderId,
   onSuccess,
   onClose,
 }: {
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
   onSuccess?: () => void
   onClose?: () => void
 }) {
@@ -128,7 +128,7 @@ function CreateCustomFieldForm({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createCustomFieldAction.bind(null, chatbotId),
+      createCustomFieldAction.bind(null, workspaceId),
       zodResolver(createCustomFieldRequest),
       {
         actionProps: {

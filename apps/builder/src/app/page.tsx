@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import ChatbotList from "@/features/chatbots/components/chatbot-list"
+import WorkspacesList from "@/features/workspaces/components/chatbot-list"
 import { getCurrentUserAndAllLinkedChatbots } from "@/lib/auth/utils"
 
 export default async function MainPage() {
@@ -8,5 +8,5 @@ export default async function MainPage() {
     return notFound()
   }
 
-  return <ChatbotList chatbots={userAndChatbots.allChatbots} />
+  return <WorkspacesList workspaces={userAndChatbots.allChatbots} />
 }

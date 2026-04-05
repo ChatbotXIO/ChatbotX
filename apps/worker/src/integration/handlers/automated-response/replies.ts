@@ -19,7 +19,7 @@ import type { ReplyByAIProps } from "./types"
 
 export async function replaceCustomFieldAttributes(
   message: string,
-  conversationId: bigint,
+  conversationId: string,
 ): Promise<string> {
   try {
     const conversation = await db.query.conversationModel.findFirst({
@@ -66,12 +66,12 @@ export async function replaceCustomFieldAttributes(
 }
 
 async function listAllEnabledAutomatedResponses({
-  chatbotId,
+  workspaceId,
 }: {
-  chatbotId: bigint
+  workspaceId: string
 }) {
   return await db.query.automatedResponseModel.findMany({
-    where: { chatbotId, status: true },
+    where: { workspaceId, status: true },
     orderBy: { createdAt: "desc" },
   })
 }
@@ -85,7 +85,7 @@ export async function replyByAutomatedResponse(
   let replied = false
 
   const allAutomatedResponses = await listAllEnabledAutomatedResponses({
-    chatbotId: message.chatbotId,
+    workspaceId: message.workspaceId,
   })
   if (allAutomatedResponses.length === 0) {
     return false
@@ -141,9 +141,9 @@ export function replyByGemini(
     props,
     {
       provider: aiProviders.enum.gemini,
-      fetchIntegration: async (chatbotId: bigint) => {
+      fetchIntegration: async (workspaceId: string) => {
         const integration = await db.query.integrationGeminiModel.findFirst({
-          where: { chatbotId, autoReply: true },
+          where: { workspaceId, autoReply: true },
         })
         return integration?.auth
       },
@@ -162,9 +162,9 @@ export function replyByOpenAI(
     props,
     {
       provider: aiProviders.enum.openai,
-      fetchIntegration: async (chatbotId: bigint) => {
-        const integration = await db.query.integrationOpenAIModel.findFirst({
-          where: { chatbotId, autoReply: true },
+      fetchIntegration: async (workspaceId: string) => {
+        const integration = await db.query.integrationOpenaiModel.findFirst({
+          where: { workspaceId, autoReply: true },
         })
         return integration?.auth
       },
@@ -185,10 +185,10 @@ export function replyByOpenAI(
 
 type ProviderRunnerConfig = {
   provider: (typeof aiProviders)[keyof typeof aiProviders]
-  fetchIntegration: (chatbotId: bigint) => Promise<unknown>
+  fetchIntegration: (workspaceId: string) => Promise<unknown>
   createClient: (apiKey: string) => (modelName: string) => LanguageModel
   onFollowUpError: (ctx: {
-    conversationId: bigint
+    conversationId: string
     toolResultsText: string
   }) => Promise<boolean>
 }
@@ -200,7 +200,7 @@ async function runAIReply(
 ): Promise<boolean> {
   const { message, lastAIMessages, aiAgent, tools } = props
   try {
-    const auth = await cfg.fetchIntegration(message.chatbotId)
+    const auth = await cfg.fetchIntegration(message.workspaceId)
     if (!auth) {
       return false
     }

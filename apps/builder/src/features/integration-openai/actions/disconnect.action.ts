@@ -3,29 +3,29 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationModel,
-  integrationOpenAIModel,
+  integrationOpenaiModel,
 } from "@chatbotx.io/database/schema"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectOpenAIAction = authActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+  .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
     }) => {
-      const integrationOpenAI = await findOrFail(
-        integrationOpenAIModel,
-        {
-          chatbotId,
+      const integrationOpenAI = await findOrFail({
+        table: integrationOpenaiModel,
+        where: {
+          workspaceId,
         },
-        "Integration OpenAI not found",
-      )
+        message: "Integration OpenAI not found",
+      })
 
       await db.transaction(async (tx) => {
         await tx

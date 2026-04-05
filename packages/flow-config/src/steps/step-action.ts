@@ -1,116 +1,118 @@
-export const StepType = {
-  landingPage: "L01",
+import { z } from "zod"
+
+export const stepTypes = z.enum([
+  "landingPage",
 
   // Channel (H_)
-  chooseChannel: "H01",
+  "chooseChannel",
 
   // Send Messages (S_)
-  sendText: "S01",
-  sendImage: "S02",
-  sendCard: "S03",
-  sendCarousel: "S04",
-  sendVideo: "S05",
-  sendGif: "S06",
-  sendMessengerOtn: "S07", // One time notification
-  sendAudio: "S08",
-  sendFile: "S09",
-  sendQuickReply: "S10",
+  "sendText",
+  "sendImage",
+  "sendCard",
+  "sendCarousel",
+  "sendVideo",
+  "sendGif",
+  "sendMessengerOtn",
+  "sendAudio",
+  "sendFile",
+  "sendQuickReply",
 
   // Wait/Timing (W_)
-  waitUserReply: "W01",
-  setDebounce: "W02",
-  wait: "W03",
-  getUserData: "W04",
-  typing: "W05",
+  "waitUserReply",
+  "setDebounce",
+  "wait",
+  "getUserData",
+  "typing",
 
   // Contact Operations (C_)
-  addContactTag: "C01",
-  removeContactTag: "C02",
-  deleteContact: "C03",
-  blockContact: "C04",
-  addContactNotes: "C05",
-  setCustomField: "C06",
-  clearCustomField: "C07",
-  cancelContactInput: "C08",
-  filterContact: "C09",
+  "addContactTag",
+  "removeContactTag",
+  "deleteContact",
+  "blockContact",
+  "addContactNotes",
+  "setCustomField",
+  "clearCustomField",
+  "cancelContactInput",
+  "filterContact",
 
   // Inbox Operations (I_)
-  disableBot: "I01",
-  enableBot: "I02",
-  assignConversation: "I03",
-  autoAssignConversation: "I04",
-  unassignConversation: "I05",
-  followConversation: "I06",
-  unfollowConversation: "I07",
-  archiveConversation: "I08",
-  unarchiveConversation: "I09",
-  notifyAgent: "I10",
+  "disableBot",
+  "enableBot",
+  "assignConversation",
+  "autoAssignConversation",
+  "unassignConversation",
+  "followConversation",
+  "unfollowConversation",
+  "archiveConversation",
+  "unarchiveConversation",
+  "notifyAgent",
 
   // AI/OpenAI Operations (A_)
-  aiGenerateText: "A01",
-  aiGenerateTextAgent: "A02",
-  aiAnalyzeImage: "A03",
-  aiGenerateImage: "A04",
-  aiSpeechToText: "A05",
-  aiTextToSpeech: "A06",
-  aiDeleteMessageHistory: "A07",
+  "aiGenerateText",
+  "aiGenerateTextAgent",
+  "aiAnalyzeImage",
+  "aiGenerateImage",
+  "aiSpeechToText",
+  "aiTextToSpeech",
+  "aiDeleteMessageHistory",
 
   // Email Operations (E_)
-  markEmailVerified: "E01",
-  optInEmail: "E02",
-  optOutEmail: "E03",
+  "markEmailVerified",
+  "optInEmail",
+  "optOutEmail",
 
   // Utilities/Tools (U_)
-  getDataFromJson: "U01",
-  formatDate: "U02",
-  generateCode: "U03",
-  countCharacters: "U04",
-  performAction: "U05",
-  callApi: "U06",
-  splitTraffic: "U07",
+  "getDataFromJson",
+  "formatDate",
+  "generateCode",
+  "countCharacters",
+  "performAction",
+  "callApi",
+  "splitTraffic",
 
   // Flow Operations (F_)
-  startAnotherNode: "F01",
-  startExternalFlow: "F02",
-  startExternalNode: "F03",
+  "startAnotherNode",
+  "startExternalFlow",
+  "startExternalNode",
 
   // External/Others (X_)
-  openWebsite: "X01",
-  addNotes: "X02",
+  "openWebsite",
+  "addNotes",
 
   // Broadcast Operations (B_)
-  subscribeBroadcast: "B01",
-  unsubscribeBroadcast: "B02",
+  "subscribeBroadcast",
+  "unsubscribeBroadcast",
 
   // Google Sheets Operations (G_)
-  spreadsheetSendData: "G01",
-  spreadsheetGetRow: "G02",
-  spreadsheetGetRandomRow: "G03",
-  spreadsheetUpdateRow: "G04",
-  spreadsheetClearRow: "G05",
+  "spreadsheetSendData",
+  "spreadsheetGetRow",
+  "spreadsheetGetRandomRow",
+  "spreadsheetUpdateRow",
+  "spreadsheetClearRow",
 
   // Sequence Operations (Q_)
-  subscribeSequence: "Q01",
-  unsubscribeSequence: "Q02",
+  "subscribeSequence",
+  "unsubscribeSequence",
 
   // Eamil
-  emailText: "M01",
-  emailH3: "M02",
-  emailImage: "M03",
-  emailButton: "M04",
-  emailSpacing: "M05",
-  emailCode: "M06",
-  emailLine: "M07",
-  emailHeader: "M08",
+  "emailText",
+  "emailH3",
+  "emailImage",
+  "emailButton",
+  "emailSpacing",
+  "emailCode",
+  "emailLine",
+  "emailHeader",
 
   // WhatsApp Template Message
-  sendWaTemplateMessage: "WA_TM01",
-} as const
+  "sendWaTemplateMessage",
+])
 
-export type StepType = (typeof StepType)[keyof typeof StepType]
+export type StepType = z.infer<typeof stepTypes>
 
 export const disabledCopyActionTypes = [
-  StepType.markEmailVerified,
-  StepType.optInEmail,
-  StepType.optOutEmail,
+  stepTypes.enum.markEmailVerified,
+  stepTypes.enum.optInEmail,
+  stepTypes.enum.optOutEmail,
 ]

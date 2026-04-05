@@ -5,10 +5,10 @@ import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 
 export function AddAutomatedResponseButton() {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const searchParams = useSearchParams()
   const t = useTranslations()
@@ -16,7 +16,7 @@ export function AddAutomatedResponseButton() {
   return (
     <Button asChild size={"sm"}>
       <Link
-        href={`/chatbots/${chatbotId}/automated-responses/create?${searchParams.toString()}`}
+        href={`/space/${workspaceId}/automated-responses/create?${searchParams.toString()}`}
       >
         <PlusIcon />
         {t("actions.createFeature", {

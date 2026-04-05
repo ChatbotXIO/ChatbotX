@@ -1,17 +1,20 @@
-import { ConversationStatus } from "@chatbotx.io/database/enums"
-import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  conversationStatuses,
+} from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/query"
 
 export const listConversationsRequest = z.object({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
   perPage: z.coerce.number().optional(),
   cursor: z.string().optional(),
   assignedId: z.string().nullable().optional(),
   channel: z.union([channelTypes]).optional(),
-  status: z.array(z.enum(ConversationStatus)).optional(),
+  status: z.array(conversationStatuses).optional(),
   keyword: z.string().optional(),
-  liveChatEnabled: z.boolean().nullish(),
+  botEnabled: z.boolean().nullish(),
   tags: z
     .array(
       z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),

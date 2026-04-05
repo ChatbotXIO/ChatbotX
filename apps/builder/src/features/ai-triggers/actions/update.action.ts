@@ -2,44 +2,43 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   type UpdateAITriggerRequest,
   updateAITriggerRequest,
 } from "@/features/ai-triggers/schemas/action"
-import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
-} from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const updateAITriggerAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateAITriggerAction = workspaceActionClient
+  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
   .inputSchema(updateAITriggerRequest)
-  .action(
-    async ({
+  .action(async (props) => {
+    const {
+      bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, id],
-    }: {
-      ctx: { user: UserModel }
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
-      parsedInput: UpdateAITriggerRequest
-    }) => {
-      const aiTrigger = await findOrFail(
-        aiTriggerModel,
-        {
-          id,
-          chatbotId,
-        },
-        "AITrigger not found",
-      )
+    } = props
 
-      await db
-        .update(aiTriggerModel)
-        .set(parsedInput)
-        .where(eq(aiTriggerModel.id, aiTrigger.id))
+    return await updateAITrigger({ workspaceId, id }, parsedInput)
+  })
 
-      revalidateCacheTags(`chatbots:${chatbotId}#aiTriggers`)
+export const updateAITrigger = async (
+  ctx: { workspaceId: string; id: string },
+  parsedInput: UpdateAITriggerRequest,
+) => {
+  const aiTrigger = await findOrFail({
+    table: aiTriggerModel,
+    where: {
+      id: ctx.id,
+      workspaceId: ctx.workspaceId,
     },
-  )
+    message: "AITrigger not found",
+  })
+
+  await db
+    .update(aiTriggerModel)
+    .set(parsedInput)
+    .where(eq(aiTriggerModel.id, aiTrigger.id))
+
+  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiTriggers`)
+}

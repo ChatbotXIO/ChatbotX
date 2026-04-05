@@ -7,18 +7,18 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
-import type { TagResource } from "@/features/tags/schemas/resource"
+import type { TagResource } from "@/features/tags/schema/resource"
 import { updateContactTagAction } from "../actions/update-contact-tag.action"
 import { updateContactTagRequest } from "../schemas/contact-tag"
 import type { ContactResource } from "../schemas/resource"
 
 export default function UpdateContactTagField({
-  chatbotId,
+  workspaceId,
   contact,
   tags,
   onSuccess,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   contact: ContactResource
   tags: TagResource[]
   onSuccess: (updatedTags: TagResource[]) => void
@@ -30,7 +30,7 @@ export default function UpdateContactTagField({
   const tagOptions = useTagOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateContactTagAction.bind(null, chatbotId),
+    updateContactTagAction.bind(null, workspaceId),
     zodResolver(updateContactTagRequest),
     {
       actionProps: {

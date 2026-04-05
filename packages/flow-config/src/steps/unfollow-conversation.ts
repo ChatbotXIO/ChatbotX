@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const unfollowConversationStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.unfollowConversation),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.unfollowConversation),
 })
 
 export type UnfollowConversationStepSchema = z.infer<
@@ -14,5 +14,5 @@ export type UnfollowConversationStepSchema = z.infer<
 export const unfollowConversationStepDefaultFn =
   (): UnfollowConversationStepSchema => ({
     id: createId(),
-    stepType: StepType.unfollowConversation,
+    stepType: stepTypes.enum.unfollowConversation,
   })

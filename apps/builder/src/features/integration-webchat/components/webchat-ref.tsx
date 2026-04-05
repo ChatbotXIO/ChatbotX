@@ -5,13 +5,13 @@ import { useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
 
 type WebchatRefProps = {
-  chatbotId: bigint
-  webchatId: bigint
+  workspaceId: string
+  webchatId: string
   guestConversationId: string
 }
 
 export default function WebchatRef({
-  chatbotId,
+  workspaceId,
   webchatId,
   guestConversationId,
 }: WebchatRefProps) {
@@ -30,7 +30,7 @@ export default function WebchatRef({
     if (ref) {
       execute({
         clientId: createId(),
-        chatbotId,
+        workspaceId,
         webchatId,
         guestConversationId,
         initRef: ref,
@@ -40,7 +40,7 @@ export default function WebchatRef({
     searchParams,
     initialized,
     execute,
-    chatbotId,
+    workspaceId,
     webchatId,
     guestConversationId,
   ])

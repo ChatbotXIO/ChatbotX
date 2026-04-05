@@ -41,9 +41,9 @@ export type ChatJobSendExternalMessage = {
 export type ChatJobSendFlowStep = {
   type: typeof ChatJobAction.sendFlowMessage
   data: {
-    conversationId: bigint
-    flowId: bigint
-    flowVersionId?: bigint
+    conversationId: string
+    flowId: string
+    flowVersionId?: string
     step:
       | SendTextStepSchema
       | SendImageStepSchema
@@ -69,7 +69,7 @@ export type ChatJobSendChatMessage = {
         trackingContext?: BotResponseTrackingContext
       }
     | {
-        conversationId: bigint
+        conversationId: string
         text?: string
         url?: string
         trackingContext?: BotResponseTrackingContext
@@ -79,9 +79,9 @@ export type ChatJobSendChatMessage = {
 export type ChatJobSendWhatsappTemplateMessage = {
   type: typeof ChatJobAction.sendWhatsappTemplateMessage
   data: {
-    conversationId: bigint
-    templateId: bigint
-    broadcastId: bigint
+    conversationId: string
+    templateId: string
+    broadcastId: string
     templateData?: WaTemplateParams
   }
 }
@@ -97,8 +97,8 @@ export type ChatJobSendTyping = {
 export type ChatJobNotifyExportResult = {
   type: typeof ChatJobAction.notifyExportResult
   data: {
-    chatbotId: bigint
-    userId: bigint
+    workspaceId: string
+    userId: string
     status: "pending" | "completed" | "failed"
     outputPath: string
   }

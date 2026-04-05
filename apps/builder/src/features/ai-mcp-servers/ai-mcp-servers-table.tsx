@@ -35,12 +35,12 @@ import type { listAIMcpServers } from "./queries"
 import type { AIMcpServerResource } from "./schema/resource"
 
 type AIMcpServersTableProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listAIMcpServers>>]>
 }
 
 export default function AIMcpServersTable({
-  chatbotId,
+  workspaceId,
   promises,
 }: AIMcpServersTableProps) {
   const [{ data }] = use(promises)
@@ -169,7 +169,7 @@ export default function AIMcpServersTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -186,10 +186,10 @@ export default function AIMcpServersTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <AIMcpServersCreate
-              chatbotId={chatbotId}
               onSuccess={() => {
                 router.refresh()
               }}
+              workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>

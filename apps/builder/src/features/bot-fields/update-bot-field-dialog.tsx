@@ -22,7 +22,7 @@ import { updateBotFieldRequest } from "./schemas/action"
 import type { BotFieldResource } from "./schemas/resource"
 
 type UpdateBotFieldDialogProps = {
-  chatbotId: bigint
+  workspaceId: string
   botField: BotFieldResource | null
   open: boolean
   onOpenChange: (val: boolean) => void
@@ -30,7 +30,7 @@ type UpdateBotFieldDialogProps = {
 }
 
 export function UpdateBotFieldDialog({
-  chatbotId,
+  workspaceId,
   botField,
   open,
   onOpenChange,
@@ -44,7 +44,7 @@ export function UpdateBotFieldDialog({
     resetFormAndAction,
     form: { setValue },
   } = useHookFormAction(
-    updateBotFieldAction.bind(null, chatbotId, botField?.id ?? BigInt(0)),
+    updateBotFieldAction.bind(null, workspaceId, botField?.id ?? ""),
     zodResolver(updateBotFieldRequest),
     {
       actionProps: {

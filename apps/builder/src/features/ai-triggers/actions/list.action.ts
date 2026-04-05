@@ -13,10 +13,10 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 export const listAITriggers = async (
   input: ListAITriggersRequest,
 ): Promise<AITriggerCollection> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     name: input.name
       ? {
           ilike: `%${input.name.toLowerCase()}%`,

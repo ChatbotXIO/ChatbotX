@@ -1,7 +1,7 @@
-import botFieldChatbotTokenAPIs from "./chatbot-token"
+import botFieldWorkspaceTokenAPIs from "./workspace-token"
 
 const botFieldAPIs = {
-  ...botFieldChatbotTokenAPIs,
+  ...botFieldWorkspaceTokenAPIs,
 }
 
 export default botFieldAPIs

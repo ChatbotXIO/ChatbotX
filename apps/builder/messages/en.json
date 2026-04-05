@@ -137,11 +137,11 @@
   },
   "aiAgent": {
     "defaultAgent": "Default Agent",
-    "description": "Manage and configure AI Agents to enhance your chatbot's capabilities with intelligent automation and responses.",
+    "description": "Manage and configure AI Agents to enhance your workspace's capabilities with intelligent automation and responses.",
     "setting": {
       "label": "AI Agents"
     },
-    "subtitle": "Manage your AI agents and tools to enhance your chatbot capabilities.",
+    "subtitle": "Manage your AI agents and tools to enhance your workspace capabilities.",
     "title": "AI Agents",
     "name": "Agents"
   },
@@ -161,7 +161,7 @@
     }
   },
   "aiTool": {
-    "subtitle": "Manage your AI tools to enhance your chatbot capabilities.",
+    "subtitle": "Manage your AI tools to enhance your workspace capabilities.",
     "title": "AI Tools"
   },
   "aiTrigger": {
@@ -400,9 +400,9 @@
     "title": "Channels",
     "allChannels": "All Channels"
   },
-  "chatbots": {
+  "workspaces": {
     "create": {
-      "title": "Create Chatbot"
+      "title": "Create Workspace"
     },
     "list": {
       "title": "Chatbots List"
@@ -505,10 +505,6 @@
     "botField": {
       "label": "Bot Field"
     },
-    "accountTimezone": {
-      "description": "The timezone of your chatbot.",
-      "label": "Account Timezone"
-    },
     "agent": {
       "label": "Agent"
     },
@@ -589,12 +585,12 @@
     "category": {
       "label": "Category"
     },
-    "chatbot": {
-      "label": "Chatbot"
+    "workspace": {
+      "label": "Workspace"
     },
-    "chatbotId": {
-      "description": "Unique identifier for your chatbot.",
-      "label": "Chatbot ID"
+    "workspaceId": {
+      "description": "Unique identifier for your workspace.",
+      "label": "Workspace ID"
     },
     "contact": {
       "label": "Contact"
@@ -633,12 +629,8 @@
       "label": "Data Collect",
       "placeholder": "What data is collected?"
     },
-    "defaultLanguage": {
-      "description": "The language of your chatbot.",
-      "label": "Default Language"
-    },
     "defaultReply": {
-      "description": "It is the default response that your chatbot will send to users when the chatbot doesn't know how to respond to the user message.",
+      "description": "It is the default response that your workspace will send to users when the workspace doesn't know how to respond to the user message.",
       "label": "Default Reply"
     },
     "delayType": {
@@ -1043,8 +1035,8 @@
       "datetime": "Datetime",
       "location": "Location"
     },
-    "chatbotMember": {
-      "label": "Chatbot Member"
+    "workspaceMember": {
+      "label": "Workspace Member"
     },
     "permissions": {
       "label": "Permissions",
@@ -1108,7 +1100,7 @@
     "newPassword": {
       "label": "New Password"
     },
-    "chatbotToken": {
+    "developerAccessToken": {
       "label": "API Access Token"
     },
     "fullName": {
@@ -1327,7 +1319,7 @@
       "specificDateValue": "{date}"
     },
     "formatTimezone": {
-      "accountTimezone": "Account Timezone",
+      "timezone": "Account Timezone",
       "contactTimezone": "Contact Timezone"
     },
     "fields": {
@@ -1527,7 +1519,7 @@
   },
   "settings": {
     "title": "Settings",
-    "description": "Configure your chatbot settings.",
+    "description": "Configure your workspace settings.",
     "agents": {
       "description": "AI Agents description",
       "title": "AI Agents"
@@ -1601,7 +1593,7 @@
     "minValue": "Minimum value is {min}",
     "passwordMismatch": "Passwords do not match",
     "required": "This field is required",
-    "maxItemsReached": "Maximum {max} {feature} allowed per chatbot"
+    "maxItemsReached": "Maximum {max} {feature} allowed per workspace"
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",
@@ -1837,9 +1829,9 @@
   "errorLogs": {
     "title": "Error Logs"
   },
-  "chatbotToken": {
+  "developerAccessToken": {
     "title": "ChatbotX API Access Token",
-    "description": "Generate a token to allow your chatbot to access ChatbotX APIs. Keep this token secret and do not share it with anyone."
+    "description": "Generate a token to allow your workspace to access ChatbotX APIs. Keep this token secret and do not share it with anyone."
   },
   "contacts": {
     "title": "Contacts"
@@ -1920,7 +1912,7 @@
     "sendTime": "Send time",
     "sendTimeDescription": "Messages will only be sent during this time range",
     "timezone": "Timezone",
-    "timezoneDescription": "All times are in your chatbot's timezone",
+    "timezoneDescription": "All times are in your workspace's timezone",
     "enableSchedule": "Enable schedule",
     "startTime": "Start time",
     "endTime": "End time",
@@ -2030,7 +2022,7 @@
     "newPassword": {
       "label": "New Password"
     },
-    "chatbotToken": {
+    "developerAccessToken": {
       "label": "API Access Token"
     },
     "fullName": {

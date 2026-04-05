@@ -1,4 +1,4 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   skipStateDefaultFn,
@@ -6,7 +6,7 @@ import {
   successStateDefaultFn,
   successStateSchema,
 } from "../states"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 import { DelayUnit } from "./wait"
 
 export const ReplyFormat = {
@@ -24,8 +24,8 @@ export const ReplyFormat = {
 export type ReplyFormat = (typeof ReplyFormat)[keyof typeof ReplyFormat]
 
 export const getUserDataStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.getUserData),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.getUserData),
   message: z.string().trim().min(1).max(255),
   replyFormat: z.string().pipe(z.enum(ReplyFormat)),
   outputCfId: z.string().trim(),
@@ -41,7 +41,7 @@ export type GetUserDataStepSchema = z.infer<typeof getUserDataStepSchema>
 
 export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
   id: createId(),
-  stepType: StepType.getUserData,
+  stepType: stepTypes.enum.getUserData,
   message: "",
   replyFormat: ReplyFormat.text,
   outputCfId: "",

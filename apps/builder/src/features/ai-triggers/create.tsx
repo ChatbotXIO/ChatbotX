@@ -29,11 +29,11 @@ import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-fi
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 
 type CreateAITriggerDialogProps = {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export function CreateAITriggerDialog({
-  chatbotId,
+  workspaceId,
 }: CreateAITriggerDialogProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -49,7 +49,7 @@ export function CreateAITriggerDialog({
     resetFormAndAction,
     form: { control },
   } = useHookFormAction(
-    createAITriggerAction.bind(null, chatbotId),
+    createAITriggerAction.bind(null, workspaceId),
     zodResolver(createAITriggerRequest),
     {
       actionProps: {
@@ -91,7 +91,7 @@ export function CreateAITriggerDialog({
   const onAddDataCollection = () => {
     append({
       name: "",
-      customFieldId: BigInt(0),
+      customFieldId: "",
     })
   }
 

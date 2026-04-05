@@ -49,7 +49,7 @@ export function RenameTriggerDialog({
   } = useHookFormAction(
     updateTriggerSettingsAction.bind(
       null,
-      trigger?.chatbotId ?? "",
+      trigger?.workspaceId ?? "",
       trigger?.id ?? "",
     ),
     zodResolver(updateTriggerSettingsSchema),

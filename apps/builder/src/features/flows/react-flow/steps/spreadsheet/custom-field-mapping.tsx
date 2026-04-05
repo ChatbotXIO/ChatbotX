@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { useCallback, useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 import { callAPI } from "@/lib/swr"
 
 type FieldAction = "get" | "update"
@@ -22,7 +22,7 @@ export const SpreadsheetCustomFieldMapping = ({
   type,
 }: ISpreadsheetCustomFieldMappingProps) => {
   const t = useTranslations()
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
 
   const getFieldName = useCallback(
     (field: string) => {
@@ -46,7 +46,7 @@ export const SpreadsheetCustomFieldMapping = ({
   })
   const map = getValues(getFieldName("map"))
 
-  const worksheetHeadersUrl = `/api/chatbots/${chatbotId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
+  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
   const headers = headersData?.data ?? []
 

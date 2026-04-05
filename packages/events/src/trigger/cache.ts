@@ -1,5 +1,5 @@
+import type { TriggerEventType } from "@chatbotx.io/database/partials"
 import { BaseCache } from "../base-cache"
-import type { TriggerEventType } from "./types"
 
 class TriggerCache extends BaseCache {
   protected cachePrefix = "trigger:cache:"
@@ -14,25 +14,25 @@ class TriggerCache extends BaseCache {
 const triggerCache = new TriggerCache()
 
 export async function hasActiveTriggers(
-  chatbotId: bigint,
+  workspaceId: string,
   eventTypes: TriggerEventType[],
   sourceId?: string,
 ): Promise<boolean> {
-  return await triggerCache.hasActive(chatbotId, eventTypes, sourceId)
+  return await triggerCache.hasActive(workspaceId, eventTypes, sourceId)
 }
 
-export async function updateTriggerCache(chatbotId: bigint): Promise<void> {
-  return await triggerCache.updateCache(chatbotId)
+export async function updateTriggerCache(workspaceId: string): Promise<void> {
+  return await triggerCache.updateCache(workspaceId)
 }
 
 export async function getCacheData(
-  chatbotId: bigint,
+  workspaceId: string,
 ): Promise<Record<number, string[]>> {
-  return await triggerCache.getCacheData(chatbotId)
+  return await triggerCache.getCacheData(workspaceId)
 }
 
-export async function removeTriggerCache(chatbotId: bigint): Promise<void> {
-  return await triggerCache.removeCache(chatbotId)
+export async function removeTriggerCache(workspaceId: string): Promise<void> {
+  return await triggerCache.removeCache(workspaceId)
 }
 
 setInterval(() => triggerCache.cleanupExpiredCache(), 30_000)

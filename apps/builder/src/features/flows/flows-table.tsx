@@ -24,11 +24,15 @@ import type { FlowResource } from "./schemas/resource"
 
 type FlowsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listFlowsRSC>>]>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
-export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
+export function FlowsTable({
+  promises,
+  workspaceId,
+  folderId,
+}: FlowsTableProps) {
   const t = useTranslations()
   const router = useRouter()
 
@@ -46,7 +50,7 @@ export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -60,16 +64,15 @@ export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <FlowsTableToolbarActions
-              chatbotId={chatbotId}
               setRowAction={setRowAction}
               table={table}
+              workspaceId={workspaceId}
             />
-            <CreateFlowDialog chatbotId={chatbotId} folderId={folderId} />
+            <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>
 
         <DeleteFlowsDialog
-          chatbotId={chatbotId}
           flows={rowAction?.row.original ? [rowAction?.row.original] : []}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
@@ -78,6 +81,7 @@ export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
           }}
           open={rowAction?.variant === "delete"}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
 
         <RenameFlowDialog
@@ -87,7 +91,6 @@ export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
         />
 
         <ChangeFolderDialog
-          chatbotId={chatbotId}
           currentFolderId={rowAction?.row.original?.folderId || null}
           folderType="flow"
           modelIds={
@@ -95,6 +98,7 @@ export function FlowsTable({ promises, chatbotId, folderId }: FlowsTableProps) {
           }
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "move"}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

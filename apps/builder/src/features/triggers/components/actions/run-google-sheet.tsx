@@ -1,4 +1,4 @@
-import { StepType } from "@chatbotx.io/flow-config"
+import { stepTypes } from "@chatbotx.io/flow-config"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useMemo, useRef } from "react"
@@ -31,23 +31,23 @@ export const GoogleSheetAction = ({ parentName }: { parentName: string }) => {
     () => [
       {
         label: t("flows.actions.spreadsheetGetRow"),
-        value: StepType.spreadsheetGetRow,
+        value: stepTypes.enum.spreadsheetGetRow,
       },
       {
         label: t("flows.actions.spreadsheetGetRandomRow"),
-        value: StepType.spreadsheetGetRandomRow,
+        value: stepTypes.enum.spreadsheetGetRandomRow,
       },
       {
         label: t("flows.actions.spreadsheetUpdateRow"),
-        value: StepType.spreadsheetUpdateRow,
+        value: stepTypes.enum.spreadsheetUpdateRow,
       },
       {
         label: t("flows.actions.spreadsheetSendData"),
-        value: StepType.spreadsheetSendData,
+        value: stepTypes.enum.spreadsheetSendData,
       },
       {
         label: t("flows.actions.spreadsheetClearRow"),
-        value: StepType.spreadsheetClearRow,
+        value: stepTypes.enum.spreadsheetClearRow,
       },
     ],
     [t],
@@ -85,12 +85,12 @@ export const GoogleSheetAction = ({ parentName }: { parentName: string }) => {
       )}
       {spreadsheetId &&
         sheetName &&
-        action !== StepType.spreadsheetClearRow && (
+        action !== stepTypes.enum.spreadsheetClearRow && (
           <SpreadsheetCustomFieldMapping
             parentName={parentName}
             type={
-              action === StepType.spreadsheetGetRow ||
-              action === StepType.spreadsheetGetRandomRow
+              action === stepTypes.enum.spreadsheetGetRow ||
+              action === stepTypes.enum.spreadsheetGetRandomRow
                 ? "get"
                 : "update"
             }

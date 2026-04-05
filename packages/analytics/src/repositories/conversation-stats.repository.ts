@@ -14,7 +14,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getHandoffsByDay(
     props: TimeRangeQuery,
   ): Promise<ConversationHandoffStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const dayGroup = this.buildDayGroupFromHourly(props)
@@ -32,7 +32,7 @@ export class ConversationStatsRepository extends BaseRepository {
           direction,
           countMerge(handoff_count_state) as count
         FROM conversation_handoffs_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, day_group, direction
       )
@@ -46,12 +46,12 @@ export class ConversationStatsRepository extends BaseRepository {
       direction: "to_human" | "to_bot"
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId: row.chatbot_id,
+      workspaceId: row.chatbot_id,
       timestamp: new Date(row.day),
       direction: row.direction,
       count: Number(row.count),
@@ -61,7 +61,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getFollowUpsByDay(
     props: TimeRangeQuery,
   ): Promise<ConversationFollowUpStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const dayGroup = this.buildDayGroupFromHourly(props)
@@ -77,7 +77,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ${dayGroup} as day_group,
           countMerge(followup_count_state) as count
         FROM conversation_followups_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, day_group
       )
@@ -90,12 +90,12 @@ export class ConversationStatsRepository extends BaseRepository {
       day: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId: row.chatbot_id,
+      workspaceId: row.chatbot_id,
       timestamp: new Date(row.day),
       count: Number(row.count),
     }))
@@ -104,7 +104,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getArchivedByDay(
     props: TimeRangeQuery,
   ): Promise<ConversationArchivedStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const dayGroup = this.buildDayGroupFromHourly(props)
@@ -120,7 +120,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ${dayGroup} as day_group,
           countMerge(archived_count_state) as count
         FROM conversation_archived_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, day_group
       )
@@ -133,12 +133,12 @@ export class ConversationStatsRepository extends BaseRepository {
       day: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId: row.chatbot_id,
+      workspaceId: row.chatbot_id,
       timestamp: new Date(row.day),
       count: Number(row.count),
     }))
@@ -147,7 +147,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getAssignedByDay(
     props: TimeRangeQuery,
   ): Promise<ConversationAssignedStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const dayGroup = this.buildDayGroupFromHourly(props)
@@ -163,7 +163,7 @@ export class ConversationStatsRepository extends BaseRepository {
           ${dayGroup} as day_group,
           countMerge(assigned_count_state) as count
         FROM conversation_assigned_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, day_group
       )
@@ -176,12 +176,12 @@ export class ConversationStatsRepository extends BaseRepository {
       day: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
     return result.map((row) => ({
-      chatbotId: row.chatbot_id,
+      workspaceId: row.chatbot_id,
       timestamp: new Date(row.day),
       count: Number(row.count),
     }))
@@ -190,7 +190,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getAssignedByAdmin(
     props: TimeRangeQuery,
   ): Promise<ConversationAssignedByAdminStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
 
@@ -205,7 +205,7 @@ export class ConversationStatsRepository extends BaseRepository {
           to_assignee,
           countMerge(assigned_count_state) as count
         FROM conversation_assigned_by_admin_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, to_assignee
       )
@@ -218,12 +218,12 @@ export class ConversationStatsRepository extends BaseRepository {
       to_assignee: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
-    const members = await db.query.chatbotMemberModel.findMany({
-      where: { chatbotId },
+    const members = await db.query.workspaceMemberModel.findMany({
+      where: { workspaceId },
       with: {
         user: {
           columns: {
@@ -241,7 +241,7 @@ export class ConversationStatsRepository extends BaseRepository {
     }
 
     return members.map((member) => ({
-      chatbotId,
+      workspaceId,
       toAssignee: member.userId,
       count: assignmentsByUserId.get(member.userId) || 0,
       userName: member.user?.name || undefined,
@@ -252,7 +252,7 @@ export class ConversationStatsRepository extends BaseRepository {
   async getUniqueConversationsByAdmin(
     props: TimeRangeQuery,
   ): Promise<UniqueConversationsByAdminStats[]> {
-    const { chatbotId } = props
+    const { workspaceId } = props
 
     const timeFilter = this.buildHourlyTimestampFilter(props)
 
@@ -267,7 +267,7 @@ export class ConversationStatsRepository extends BaseRepository {
           to_assignee,
           uniqMerge(unique_conversation_state) as count
         FROM unique_conversations_by_admin_hourly
-        WHERE chatbot_id = {chatbotId:String}
+        WHERE chatbot_id = {workspaceId:String}
           AND ${timeFilter.sql}
         GROUP BY chatbot_id, to_assignee
       )
@@ -280,12 +280,12 @@ export class ConversationStatsRepository extends BaseRepository {
       to_assignee: string
       count: string
     }>(sql, {
-      chatbotId,
+      workspaceId,
       ...timeFilter.params,
     })
 
-    const members = await db.query.chatbotMemberModel.findMany({
-      where: { chatbotId },
+    const members = await db.query.workspaceMemberModel.findMany({
+      where: { workspaceId },
       with: {
         user: {
           columns: {
@@ -303,7 +303,7 @@ export class ConversationStatsRepository extends BaseRepository {
     }
 
     return members.map((member) => ({
-      chatbotId,
+      workspaceId,
       toAssignee: member.userId,
       count: countByUserId.get(member.userId) || 0,
       userName: member.user?.name || undefined,

@@ -2,7 +2,7 @@ import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
 
 export type IntegrationWhatsapp = {
-  id: bigint
+  id: string
   name: string
 }
 
@@ -11,7 +11,7 @@ export type IntegrationState = {
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   integrations: IntegrationWhatsapp[]
 }
 
@@ -28,7 +28,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     integrations: [],
     ...props,
 
@@ -54,9 +54,9 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
     },
 
     getAllIntegrations: async () => {
-      const { chatbotId, loading } = get()
+      const { workspaceId, loading } = get()
 
-      if (loading || !chatbotId) {
+      if (loading || !workspaceId) {
         return
       }
 
@@ -65,7 +65,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
 
         const integrations =
           await client.integrationWhatsappAPIs.listIntegrationWhatsapp({
-            chatbotId,
+            workspaceId,
           })
 
         set({ integrations })

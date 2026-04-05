@@ -18,13 +18,13 @@ import { AddCondition } from "./add-condition"
 import { BaseEditor } from "./base-editor"
 import {
   type UpdateWebhookSchema,
-  updateWebhookSchema,
+  updateWebhookRequest,
 } from "./schemas/update-webhook-schema"
 
 type WebhookWithConditions = WebhookModel & {
   conditions?: Array<{
     id: string
-    type: number
+    type: string
     sourceId: string | null
     operator: string | null
     value: unknown
@@ -32,12 +32,12 @@ type WebhookWithConditions = WebhookModel & {
 }
 
 type UpdateWebhookFormProps = {
-  chatbotId: bigint
+  workspaceId: string
   webhook: WebhookWithConditions
 }
 
 export default function UpdateWebhookForm(props: UpdateWebhookFormProps) {
-  const { chatbotId, webhook } = props
+  const { workspaceId, webhook } = props
   const t = useTranslations()
   const router = useRouter()
 
@@ -46,8 +46,8 @@ export default function UpdateWebhookForm(props: UpdateWebhookFormProps) {
     handleSubmitWithAction,
     form: { control },
   } = useHookFormAction(
-    updateWebhookAction.bind(null, chatbotId, webhook.id),
-    zodResolver(updateWebhookSchema),
+    updateWebhookAction.bind(null, workspaceId, webhook.id),
+    zodResolver(updateWebhookRequest),
     {
       actionProps: {
         onSuccess: () => {

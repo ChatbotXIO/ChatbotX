@@ -13,13 +13,13 @@ import { DeleteFlowsDialog } from "./delete-flow-dialog"
 
 type FlowsTableToolbarActionsProps = {
   table: Table<FlowModel>
-  chatbotId: bigint
+  workspaceId: string
   setRowAction: Dispatch<SetStateAction<DataTableRowAction<FlowModel> | null>>
 }
 
 export function FlowsTableToolbarActions({
   table,
-  chatbotId,
+  workspaceId,
   setRowAction,
 }: FlowsTableToolbarActionsProps) {
   const t = useTranslations()
@@ -31,7 +31,6 @@ export function FlowsTableToolbarActions({
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <>
           <DeleteFlowsDialog
-            chatbotId={chatbotId}
             flows={table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original)}
@@ -40,9 +39,9 @@ export function FlowsTableToolbarActions({
               table.toggleAllRowsSelected(false)
               router.refresh()
             }}
+            workspaceId={workspaceId}
           />
           <ChangeFolderDialog
-            chatbotId={chatbotId}
             currentFolderId={null}
             folderType="flow"
             modelIds={table
@@ -56,6 +55,7 @@ export function FlowsTableToolbarActions({
                 {t("actions.move")}
               </Button>
             }
+            workspaceId={workspaceId}
           />
         </>
       ) : null}

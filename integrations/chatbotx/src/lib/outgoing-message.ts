@@ -2,12 +2,12 @@ import type { Context, OutgoingMessage } from "@chatbotx.io/sdk"
 import type { ChatbotxAuthValue } from "../auth"
 import { getRealtimeClient } from "./client"
 
-export const broadcastMessageToChatbotParty = async (
+export const broadcastMessageToWorkspaceParty = async (
   ctx: Context<ChatbotxAuthValue>,
   message: OutgoingMessage,
 ) => {
   const websocketClient = getRealtimeClient(ctx)
-  await websocketClient.post(`/parties/chatbots/${message.chatbotId}`, {
+  await websocketClient.post(`/parties/space/${message.workspaceId}`, {
     json: {
       eventType: "messageCreated",
       data: message,

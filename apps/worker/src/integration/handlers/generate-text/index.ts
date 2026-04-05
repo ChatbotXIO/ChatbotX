@@ -36,13 +36,16 @@ export async function handleAIGenerateText({
     const messages = await buildAIMessages(conversation, step)
 
     const aiConfig = await getAIIntegrationInDB({
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       provider: step.provider,
     })
 
     const model = getAIModel(aiConfig, aiConfig.model)
 
-    const toolSet = await getAIToolset(conversation.chatbotId, step.tools || [])
+    const toolSet = await getAIToolset(
+      conversation.workspaceId,
+      step.tools || [],
+    )
 
     const result = streamText({
       model: "openai:gpt-4o-mini",
@@ -80,7 +83,7 @@ export async function handleAIGenerateText({
         customFieldName: step.outputCfId,
         fullText,
         messageCount,
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
       })
     }
   } catch (error) {
@@ -154,7 +157,7 @@ async function handleToolCallsFollowUp({
       customFieldName: stepConfig.outputCfId,
       fullText: followUpFullText,
       messageCount: followUpMessageCount,
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
     })
   } catch (followUpError) {
     logger.error(
@@ -171,7 +174,7 @@ async function handleToolCallsFollowUp({
       customFieldName: stepConfig.outputCfId,
       fullText,
       messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
     })
   }
 }
@@ -181,13 +184,13 @@ async function saveResultToCustomField({
   customFieldName,
   fullText,
   messageCount,
-  chatbotId,
+  workspaceId,
 }: {
-  contactId: bigint | null
+  contactId: string | null
   customFieldName: string
   fullText: string
   messageCount: number
-  chatbotId: bigint
+  workspaceId: string
 }): Promise<void> {
   if (!contactId) {
     return
@@ -270,7 +273,7 @@ async function saveResultToCustomField({
   const customField = await db.query.customFieldModel.findFirst({
     where: {
       id: customFieldId,
-      chatbotId,
+      workspaceId,
     },
   })
 

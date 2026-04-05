@@ -27,10 +27,10 @@ import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { createAIMcpServerRequest } from "./schema/action"
 
 export function AIMcpServersCreate({
-  chatbotId,
+  workspaceId,
   onSuccess,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   onSuccess?: () => void
 }) {
   const t = useTranslations()
@@ -62,7 +62,7 @@ export function AIMcpServersCreate({
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      createAIMcpServerAction.bind(null, chatbotId),
+      createAIMcpServerAction.bind(null, workspaceId),
       zodResolver(createAIMcpServerRequest),
       {
         formProps: {

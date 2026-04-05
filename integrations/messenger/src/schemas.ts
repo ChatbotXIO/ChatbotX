@@ -16,7 +16,7 @@ export type MessengerConfig = Oauth2Config & {
   verifyToken?: string
   version: string
   stateParams: {
-    chatbotId: bigint
+    workspaceId: string
   }
 }
 

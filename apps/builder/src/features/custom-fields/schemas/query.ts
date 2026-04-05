@@ -1,8 +1,5 @@
-import {
-  createSelectSchema,
-  customFieldModel,
-} from "@chatbotx.io/database/schema"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -30,12 +27,12 @@ export const listCustomFieldsSearchParams = createSearchParamsCache({
 export type ListCustomFieldsSearchParams = Awaited<
   ReturnType<typeof listCustomFieldsSearchParams.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export const listCustomFieldsRequest = basePaginationRequest.extend({
   name: z.string().nullish(),
-  folderId: z.bigint().nullish(),
+  folderId: zodBigintAsString().nullish(),
 })
 export type ListCustomFieldsRequest = z.infer<typeof listCustomFieldsRequest>
 
@@ -45,8 +42,8 @@ export const listCustomFieldsResponse = z.object({
 })
 export type ListCustomFieldsResponse = z.infer<typeof listCustomFieldsResponse>
 
-export const findCustomFieldRequest = createSelectSchema(customFieldModel)
-  .pick({ id: true, chatbotId: true, name: true })
+export const findCustomFieldRequest = customFieldResource
+  .pick({ id: true, workspaceId: true, name: true })
   .partial()
 export type FindCustomFieldRequest = z.infer<typeof findCustomFieldRequest>
 

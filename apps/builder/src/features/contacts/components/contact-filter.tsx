@@ -1,12 +1,14 @@
 "use client"
 
 import {
-  ConditionField,
-  type ConditionFieldType,
-  ConditionType,
-  Operator,
-} from "@chatbotx.io/database/enums"
-import type { CustomFieldType } from "@chatbotx.io/database/types"
+  type CustomFieldType,
+  type FormFieldType,
+  formFieldTypes,
+  type OperatorType,
+  operatorTypes,
+  type SystemFieldType,
+  systemFieldTypes,
+} from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -45,14 +47,13 @@ import {
   useWatch,
 } from "react-hook-form"
 import z from "zod"
-
-import {
-  allContinentOptions,
-  allCountryOptions,
-} from "@/features/chatbot/schemas/types"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
+import {
+  allContinentOptions,
+  allCountryOptions,
+} from "@/features/workspaces/schema/types"
 import {
   type ContactFilterRequest,
   contactFilterRequest,
@@ -63,81 +64,85 @@ type ContactFilterProps = {
 }
 
 type ConditionOption = {
-  value: Operator
+  value: OperatorType
   label: string
   disabled: boolean
 }
 
 type FieldConfig = {
-  name: ConditionFieldType
-  conditionType: ConditionType
+  name: SystemFieldType
+  formField: FormFieldType
   options?: SelectOption[]
 }
 
-export const MAPPING_CONDITIONS: Record<ConditionType, Operator[]> = {
-  [ConditionType.multiSelect]: [
-    Operator.is,
-    Operator.isNot,
-    Operator.hasNoValue,
+export const MAPPING_CONDITIONS: Record<FormFieldType, OperatorType[]> = {
+  [formFieldTypes.enum.multiSelect]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.isNot,
+    operatorTypes.enum.hasNoValue,
   ],
-  [ConditionType.select]: [Operator.is, Operator.isNot, Operator.hasNoValue],
-  [ConditionType.text]: [
-    Operator.is,
-    Operator.isNot,
-    Operator.hasAnyValue,
-    Operator.hasNoValue,
-    Operator.contains,
-    Operator.doesNotContain,
-    Operator.startsWith,
-    Operator.endsWith,
+  [formFieldTypes.enum.select]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.isNot,
+    operatorTypes.enum.hasNoValue,
   ],
-  [ConditionType.boolean]: [
-    Operator.is,
-    Operator.hasNoValue,
-    Operator.hasAnyValue,
+  [formFieldTypes.enum.text]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.isNot,
+    operatorTypes.enum.hasAnyValue,
+    operatorTypes.enum.hasNoValue,
+    operatorTypes.enum.contains,
+    operatorTypes.enum.doesNotContain,
+    operatorTypes.enum.startsWith,
+    operatorTypes.enum.endsWith,
   ],
-  [ConditionType.datetime]: [
-    Operator.is,
-    Operator.isNot,
-    Operator.hasAnyValue,
-    Operator.hasNoValue,
-    Operator.greaterThan,
-    Operator.lessThan,
-    Operator.greaterThanOrEqualTo,
-    Operator.lessThanOrEqualTo,
-    Operator.interval,
-    Operator.notInterval,
+  [formFieldTypes.enum.boolean]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.hasNoValue,
+    operatorTypes.enum.hasAnyValue,
   ],
-  [ConditionType.number]: [
-    Operator.is,
-    Operator.isNot,
-    Operator.hasNoValue,
-    Operator.greaterThan,
-    Operator.lessThan,
-    Operator.greaterThanOrEqualTo,
-    Operator.lessThanOrEqualTo,
-    Operator.contains,
-    Operator.doesNotContain,
-    Operator.startsWith,
-    Operator.endsWith,
-    Operator.interval,
-    Operator.notInterval,
+  [formFieldTypes.enum.datetime]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.isNot,
+    operatorTypes.enum.hasAnyValue,
+    operatorTypes.enum.hasNoValue,
+    operatorTypes.enum.greaterThan,
+    operatorTypes.enum.lessThan,
+    operatorTypes.enum.greaterThanOrEqualTo,
+    operatorTypes.enum.lessThanOrEqualTo,
+    operatorTypes.enum.interval,
+    operatorTypes.enum.notInterval,
+  ],
+  [formFieldTypes.enum.number]: [
+    operatorTypes.enum.is,
+    operatorTypes.enum.isNot,
+    operatorTypes.enum.hasNoValue,
+    operatorTypes.enum.greaterThan,
+    operatorTypes.enum.lessThan,
+    operatorTypes.enum.greaterThanOrEqualTo,
+    operatorTypes.enum.lessThanOrEqualTo,
+    operatorTypes.enum.contains,
+    operatorTypes.enum.doesNotContain,
+    operatorTypes.enum.startsWith,
+    operatorTypes.enum.endsWith,
+    operatorTypes.enum.interval,
+    operatorTypes.enum.notInterval,
   ],
 }
 
 export const convertCustomFieldTypeToConditionType = (
   type?: CustomFieldType,
-): ConditionType => {
+): FormFieldType => {
   switch (type) {
     case "number":
-      return ConditionType.number
+      return formFieldTypes.enum.number
     case "date":
     case "datetime":
-      return ConditionType.datetime
+      return formFieldTypes.enum.datetime
     case "boolean":
-      return ConditionType.boolean
+      return formFieldTypes.enum.boolean
     default:
-      return ConditionType.text
+      return formFieldTypes.enum.text
   }
 }
 
@@ -160,27 +165,27 @@ const getFieldConfigs = ({
   flowVersionOptions: SelectOption[]
 }): FieldConfig[] => [
   {
-    name: ConditionField.language,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.language,
+    formField: formFieldTypes.enum.multiSelect,
     options: allCountryOptions,
   },
   {
-    name: ConditionField.fullName,
-    conditionType: ConditionType.text,
+    name: systemFieldTypes.enum.fullName,
+    formField: formFieldTypes.enum.text,
   },
   {
-    name: ConditionField.country,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.country,
+    formField: formFieldTypes.enum.multiSelect,
     options: allCountryOptions,
   },
   {
-    name: ConditionField.continent,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.continent,
+    formField: formFieldTypes.enum.multiSelect,
     options: allContinentOptions,
   },
   {
-    name: ConditionField.gender,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.gender,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: t("fields.gender.male"),
@@ -197,8 +202,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.subscribedToBroadcast,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.subscribedToBroadcast,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: t("condition.yes"),
@@ -211,16 +216,16 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.contactCreatedDate,
-    conditionType: ConditionType.datetime,
+    name: systemFieldTypes.enum.contactCreatedDate,
+    formField: formFieldTypes.enum.datetime,
   },
   {
-    name: ConditionField.contactCreatedDateMinutesAgo,
-    conditionType: ConditionType.number,
+    name: systemFieldTypes.enum.contactCreatedDateMinutesAgo,
+    formField: formFieldTypes.enum.number,
   },
   {
-    name: ConditionField.source,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.source,
+    formField: formFieldTypes.enum.multiSelect,
     options: [
       {
         label: "Webchat",
@@ -241,8 +246,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.conversationTransferredToHuman,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.conversationTransferredToHuman,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: "Yes",
@@ -255,8 +260,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.interactedInLast24H,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.interactedInLast24H,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: "Yes",
@@ -269,8 +274,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.archived,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.archived,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: "Yes",
@@ -283,8 +288,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.blocked,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.blocked,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: "Yes",
@@ -297,8 +302,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.existingContact,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.existingContact,
+    formField: formFieldTypes.enum.select,
     options: [
       {
         label: "Yes",
@@ -311,8 +316,8 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.currentChannel,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.currentChannel,
+    formField: formFieldTypes.enum.multiSelect,
     options: [
       {
         label: "Webchat",
@@ -333,26 +338,26 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: ConditionField.email,
-    conditionType: ConditionType.text,
+    name: systemFieldTypes.enum.email,
+    formField: formFieldTypes.enum.text,
   },
   {
-    name: ConditionField.phone,
-    conditionType: ConditionType.text,
+    name: systemFieldTypes.enum.phone,
+    formField: formFieldTypes.enum.text,
   },
   {
-    name: ConditionField.tags,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.tags,
+    formField: formFieldTypes.enum.multiSelect,
     options: tagOptions,
   },
   {
-    name: ConditionField.customFields,
-    conditionType: ConditionType.multiSelect,
+    name: systemFieldTypes.enum.customFields,
+    formField: formFieldTypes.enum.multiSelect,
     options: customFieldOptions,
   },
   {
-    name: ConditionField.executedFlow,
-    conditionType: ConditionType.select,
+    name: systemFieldTypes.enum.executedFlow,
+    formField: formFieldTypes.enum.select,
     options: flowVersionOptions,
   },
 ]
@@ -361,72 +366,72 @@ export const getConditionOptions = (
   t: (key: string) => string,
 ): ConditionOption[] => [
   {
-    value: Operator.is,
+    value: operatorTypes.enum.is,
     label: t("fields.operator.is"),
     disabled: true,
   },
   {
-    value: Operator.isNot,
+    value: operatorTypes.enum.isNot,
     label: t("fields.operator.isNot"),
     disabled: true,
   },
   {
-    value: Operator.hasNoValue,
+    value: operatorTypes.enum.hasNoValue,
     label: t("fields.operator.hasNoValue"),
     disabled: true,
   },
   {
-    value: Operator.hasAnyValue,
+    value: operatorTypes.enum.hasAnyValue,
     label: t("fields.operator.hasAnyValue"),
     disabled: true,
   },
   {
-    value: Operator.greaterThan,
+    value: operatorTypes.enum.greaterThan,
     label: t("fields.operator.greaterThan"),
     disabled: true,
   },
   {
-    value: Operator.lessThan,
+    value: operatorTypes.enum.lessThan,
     label: t("fields.operator.lessThan"),
     disabled: true,
   },
   {
-    value: Operator.greaterThanOrEqualTo,
+    value: operatorTypes.enum.greaterThanOrEqualTo,
     label: t("fields.operator.greaterThanOrEqualTo"),
     disabled: true,
   },
   {
-    value: Operator.lessThanOrEqualTo,
+    value: operatorTypes.enum.lessThanOrEqualTo,
     label: t("fields.operator.lessThanOrEqualTo"),
     disabled: true,
   },
   {
-    value: Operator.contains,
+    value: operatorTypes.enum.contains,
     label: t("fields.operator.contains"),
     disabled: true,
   },
   {
-    value: Operator.doesNotContain,
+    value: operatorTypes.enum.doesNotContain,
     label: t("fields.operator.doesNotContain"),
     disabled: true,
   },
   {
-    value: Operator.startsWith,
+    value: operatorTypes.enum.startsWith,
     label: t("fields.operator.startsWith"),
     disabled: true,
   },
   {
-    value: Operator.endsWith,
+    value: operatorTypes.enum.endsWith,
     label: t("fields.operator.endsWith"),
     disabled: true,
   },
   {
-    value: Operator.interval,
+    value: operatorTypes.enum.interval,
     label: t("fields.operator.interval"),
     disabled: true,
   },
   {
-    value: Operator.notInterval,
+    value: operatorTypes.enum.notInterval,
     label: t("fields.operator.notInterval"),
     disabled: true,
   },
@@ -635,7 +640,7 @@ function ContactFilterCondition({
     [t, tagOptions, customFieldOptions, flowVersionOptions],
   )
 
-  const [valueType, setValueType] = useState<ConditionType | null>(null)
+  const [valueType, setValueType] = useState<FormFieldType | null>(null)
   const [valueOptions, setValueOptions] = useState<
     { value: string; label: string }[]
   >([])
@@ -660,7 +665,7 @@ function ContactFilterCondition({
 
     const activeConfig = configs.find((c) => c.name === watchField)
     const enableOperators = activeConfig
-      ? MAPPING_CONDITIONS[activeConfig.conditionType]
+      ? MAPPING_CONDITIONS[activeConfig.formField]
       : []
 
     return conditionOptions.map((option) => ({
@@ -699,13 +704,13 @@ function ContactFilterCondition({
 
     if (activeConfig) {
       if (
-        watchOperator === Operator.hasNoValue ||
-        watchOperator === Operator.hasAnyValue
+        watchOperator === operatorTypes.enum.hasNoValue ||
+        watchOperator === operatorTypes.enum.hasAnyValue
       ) {
         setValueType(null)
         setValueOptions([])
       } else {
-        setValueType(activeConfig.conditionType)
+        setValueType(activeConfig.formField)
         setValueOptions(activeConfig.options || [])
       }
     } else {
@@ -760,19 +765,19 @@ function ContactFilterCondition({
               />
               <SelectField name="operator" options={activeOperationsList} />
               <div className="overflow-hidden truncate">
-                {valueType === ConditionType.text && (
+                {valueType === formFieldTypes.enum.text && (
                   <InputField name="value" />
                 )}
-                {valueType === ConditionType.number && (
+                {valueType === formFieldTypes.enum.number && (
                   <InputField name="value" type="number" />
                 )}
-                {valueType === ConditionType.select && (
+                {valueType === formFieldTypes.enum.select && (
                   <SelectField name="value" options={valueOptions} />
                 )}
-                {valueType === ConditionType.multiSelect && (
+                {valueType === formFieldTypes.enum.multiSelect && (
                   <MultiSelectField name="value" options={valueOptions} />
                 )}
-                {valueType === ConditionType.datetime && (
+                {valueType === formFieldTypes.enum.datetime && (
                   <DateTimePickerField
                     dateTimeFormat="yyyy-MM-dd HH:mm"
                     granularity="minute"

@@ -1,5 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
 import {
@@ -18,10 +18,10 @@ import type { AutomatedResponseResource } from "../schema/resource"
 export async function listAutomatedResponses(
   input: ListAutomatedResponsesRequest,
 ): Promise<PaginatedResponse<AutomatedResponseResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     userMessages: input.keyword
       ? { ilike: `%${input.keyword.toLowerCase()}%` }
       : undefined,
@@ -56,11 +56,11 @@ export async function listAutomatedResponses(
 export const findAutomatedResponse = async (
   input: FindAutomatedResponseRequest,
 ): Promise<AutomatedResponseResource | undefined> => {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   return await db.query.automatedResponseModel.findFirst({
     where: {
-      chatbotId: input.chatbotId,
+      workspaceId: input.workspaceId,
       id: input.id,
     },
   })

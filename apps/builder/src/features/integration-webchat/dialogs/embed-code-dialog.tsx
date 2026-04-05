@@ -34,7 +34,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
 <script src="${baseUrl}/chat-widget/plugin.js" crossorigin="anonymous" async
   type="module" onload="window.csmChatWidget?.init({
     webchatId: '${webchat.id}',
-    chatbotId: '${webchat.chatbotId}',
+    workspaceId: '${webchat.workspaceId}',
     brandColor: '${webchat.brandColor}',
     hideHeader: ${webchat.hideHeader},
     showLogo: ${webchat.showLogo},

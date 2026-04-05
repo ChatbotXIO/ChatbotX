@@ -1,4 +1,4 @@
-import { sequencesChatbotAuthAPI } from "./chatbot-auth"
+import { sequencesChatbotAuthAPI } from "./authorized"
 
 export const sequencesAPI = {
   ...sequencesChatbotAuthAPI,

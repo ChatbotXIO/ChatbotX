@@ -12,7 +12,7 @@ export function* convertFlowStepText(
   } = props
   if (step.buttons.length === 0) {
     yield {
-      text: step.message,
+      text: step.text,
     }
   } else {
     const buttons: ButtonPayload[] | undefined = convertZaloButtons({
@@ -22,7 +22,7 @@ export function* convertFlowStepText(
     })
 
     yield {
-      text: step.message,
+      text: step.text,
       attachment: buttons
         ? {
             type: "template",

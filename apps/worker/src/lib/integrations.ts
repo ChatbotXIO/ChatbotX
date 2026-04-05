@@ -34,7 +34,7 @@ export const getDBIntegration = async (
             phoneNumberId: integrationIdentifier,
           },
           with: {
-            chatbot: true,
+            workspace: true,
             inbox: true,
           },
         })
@@ -52,7 +52,7 @@ export const getDBIntegration = async (
             pageId: integrationIdentifier,
           },
           with: {
-            chatbot: true,
+            workspace: true,
             inbox: true,
           },
         })
@@ -67,7 +67,7 @@ export const getDBIntegration = async (
           oaId: integrationIdentifier,
         },
         with: {
-          chatbot: true,
+          workspace: true,
           inbox: true,
         },
       })

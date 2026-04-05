@@ -17,21 +17,21 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import { createSequenceAction } from "@/features/sequences/actions/create-sequence.action"
-import { createSequenceRequest } from "@/features/sequences/schema"
+import { createSequenceRequest } from "@/features/sequences/schema/action"
 
 export function CreateSequenceForm({
-  chatbotId,
+  workspaceId,
   defaultFolderId,
 }: {
-  chatbotId: bigint
-  defaultFolderId?: bigint
+  workspaceId: string
+  defaultFolderId?: string
 }) {
   const t = useTranslations()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    createSequenceAction.bind(null, chatbotId),
+    createSequenceAction.bind(null, workspaceId),
     zodResolver(createSequenceRequest),
     {
       actionProps: {
@@ -42,7 +42,7 @@ export function CreateSequenceForm({
             }),
           )
           if (data?.sequenceId) {
-            router.push(`/chatbots/${chatbotId}/sequences/${data.sequenceId}`)
+            router.push(`/space/${workspaceId}/sequences/${data.sequenceId}`)
           }
         },
         onError: ({ error }) => {
@@ -67,7 +67,7 @@ export function CreateSequenceForm({
 
   const handleCancel = () => {
     if (!isSubmitting) {
-      router.push(`/chatbots/${chatbotId}/sequences`)
+      router.push(`/space/${workspaceId}/sequences`)
     }
   }
 

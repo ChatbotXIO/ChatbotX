@@ -93,12 +93,12 @@ function usePhoneNumbers() {
 }
 
 type WhatsappCreateProps = {
-  chatbotId?: string | null
+  workspaceId?: string | null
   settings: NonNullable<OrganizationSettings["whatsapp"]>
 }
 
 export default function WhatsappCreate({
-  chatbotId,
+  workspaceId,
   settings,
 }: WhatsappCreateProps) {
   const t = useTranslations()
@@ -129,7 +129,7 @@ export default function WhatsappCreate({
           transferPhoneNumber: false,
           manualConnect: false,
           marketingMessageLite: false,
-          chatbotId: chatbotId ?? "",
+          workspaceId: workspaceId ?? "",
 
           // Main fields
           wabaId: "",

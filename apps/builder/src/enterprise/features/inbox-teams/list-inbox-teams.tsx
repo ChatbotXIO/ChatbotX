@@ -31,8 +31,8 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useState } from "react"
-import type { listChatbotMembers } from "@/features/chatbot-members/queries"
-import type { ListChatbotMembersResponse } from "@/features/chatbot-members/schema/query"
+import type { listWorkspaceMembers } from "@/features/workspace-members/queries"
+import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
 import type { InboxTeamMemberResource } from "../inbox-team-members/schema/resource"
 import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
@@ -44,23 +44,23 @@ import type { ListInboxTeamsResponse } from "./schema/action"
 import type { InboxTeamResource } from "./schema/resource"
 
 type ListInboxTeamsProps = {
-  chatbotId: bigint
+  workspaceId: string
   promises: Promise<
     [
       Awaited<ReturnType<typeof listInboxTeams>>,
-      Awaited<ReturnType<typeof listChatbotMembers>>,
+      Awaited<ReturnType<typeof listWorkspaceMembers>>,
     ]
   >
 }
 
 function ListInboxTeamsDetail({
-  chatbotId,
+  workspaceId,
   inboxTeams,
-  chatbotMembers,
+  workspaceMembers,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   inboxTeams: ListInboxTeamsResponse["data"]
-  chatbotMembers: ListChatbotMembersResponse["data"]
+  workspaceMembers: ListWorkspaceMembersResponse["data"]
 }) {
   const t = useTranslations()
   const [renameInboxTeam, setRenameInboxTeam] =
@@ -79,7 +79,7 @@ function ListInboxTeamsDetail({
   }> = []
   for (const team of inboxTeams) {
     rows.push({ showMembers: true, team })
-    if (openTeams[team.id.toString()]) {
+    if (openTeams[team.id]) {
       rows.push({ showMembers: false, team })
     }
   }
@@ -108,14 +108,13 @@ function ListInboxTeamsDetail({
                           onClick={() =>
                             setOpenTeams((prev) => ({
                               ...prev,
-                              [row.team.id.toString()]:
-                                !prev[row.team.id.toString()],
+                              [row.team.id]: !prev[row.team.id],
                             }))
                           }
                           type="button"
                           variant="ghost"
                         >
-                          {openTeams[row.team.id.toString()] ? (
+                          {openTeams[row.team.id] ? (
                             <ChevronDownIcon size={16} />
                           ) : (
                             <ChevronRightIcon size={16} />
@@ -128,8 +127,7 @@ function ListInboxTeamsDetail({
                           onClick={() =>
                             setOpenTeams((prev) => ({
                               ...prev,
-                              [row.team.id.toString()]:
-                                !prev[row.team.id.toString()],
+                              [row.team.id]: !prev[row.team.id],
                             }))
                           }
                           type="button"
@@ -217,37 +215,37 @@ function ListInboxTeamsDetail({
       </div>
 
       <RenameInboxTeamDialog
-        chatbotId={chatbotId}
         inboxTeam={renameInboxTeam}
         onOpenChange={() => setRenameInboxTeam(null)}
         open={Boolean(renameInboxTeam)}
+        workspaceId={workspaceId}
       />
       <AddInboxTeamMemberDialog
-        chatbotId={chatbotId}
-        chatbotMembers={chatbotMembers}
         inboxTeam={addInboxTeamMember}
         onOpenChange={() => setAddInboxTeamMember(null)}
         open={Boolean(addInboxTeamMember)}
+        workspaceId={workspaceId}
+        workspaceMembers={workspaceMembers}
       />
       <DeleteInboxTeamDialog
-        chatbotId={chatbotId}
         inboxTeam={deleteInboxTeam}
         onOpenChange={() => setDeleteInboxTeam(null)}
         open={Boolean(deleteInboxTeam)}
+        workspaceId={workspaceId}
       />
       <DeleteInboxTeamMembersDialog
-        chatbotId={chatbotId}
         onOpenChange={() => setDeleteInboxTeamMember(null)}
         open={Boolean(deleteInboxTeamMember)}
         teamMember={deleteInboxTeamMember}
+        workspaceId={workspaceId}
       />
     </>
   )
 }
 
-export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
+export function ListInboxTeams({ workspaceId, promises }: ListInboxTeamsProps) {
   const t = useTranslations()
-  const [{ data: allInboxTeams }, { data: allChatbotMembers }] = use(promises)
+  const [{ data: allInboxTeams }, { data: allWorkspaceMembers }] = use(promises)
 
   return (
     <Card>
@@ -259,14 +257,14 @@ export function ListInboxTeams({ chatbotId, promises }: ListInboxTeamsProps) {
       <CardContent>
         <div className="mb-4 flex justify-end">
           <CreateInboxTeamDialog
-            chatbotId={chatbotId}
-            chatbotMembers={allChatbotMembers}
+            workspaceId={workspaceId}
+            workspaceMembers={allWorkspaceMembers}
           />
         </div>
         <ListInboxTeamsDetail
-          chatbotId={chatbotId}
-          chatbotMembers={allChatbotMembers || []}
           inboxTeams={allInboxTeams || []}
+          workspaceId={workspaceId}
+          workspaceMembers={allWorkspaceMembers || []}
         />
       </CardContent>
     </Card>

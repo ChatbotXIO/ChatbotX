@@ -1,6 +1,6 @@
 "use client"
 
-import type { CustomFieldModel } from "@chatbotx.io/database/types"
+import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -46,19 +46,19 @@ import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
 type FieldsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listCustomFieldsRSC>>]>
-  chatbotId: bigint
-  folderId: bigint | null
+  workspaceId: string
+  folderId: string | null
 }
 
 export function CustomFieldsTable({
   promises,
-  chatbotId,
+  workspaceId,
   folderId,
 }: FieldsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
-    useState<DataTableRowAction<CustomFieldModel> | null>(null)
+    useState<DataTableRowAction<CustomFieldResource> | null>(null)
   // const [_, copyFieldId] = useCopyToClipboard()
 
   // const handleCopy = (id: string) => {
@@ -165,7 +165,9 @@ export function CustomFieldsTable({
             title={t("fields.type.label")}
           />
         ),
-        cell: ({ row }) => <CustomFieldTypeLabel type={row.original.type} />,
+        cell: ({ row }) => (
+          <CustomFieldTypeLabel type={row.original.type as CustomFieldType} />
+        ),
         meta: {
           label: t("fields.type.label"),
         },
@@ -239,7 +241,7 @@ export function CustomFieldsTable({
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
@@ -255,35 +257,34 @@ export function CustomFieldsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <CustomFieldsTableToolbarActions
-              chatbotId={chatbotId}
               table={table}
+              workspaceId={workspaceId}
               // setRowAction={setRowAction}
             />
             <CreateCustomFieldDialog
-              chatbotId={chatbotId}
               folderId={folderId}
+              workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>
 
         <DeleteFieldsDialog
-          chatbotId={chatbotId}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => rowAction?.row.toggleSelected(false)}
           open={rowAction?.variant === "delete"}
           records={rowAction?.row.original ? [rowAction?.row.original] : []}
           showTrigger={false}
+          workspaceId={workspaceId}
         />
 
         <UpdateCustomFieldDialog
-          chatbotId={chatbotId}
           customField={rowAction?.row.original || null}
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "update"}
+          workspaceId={workspaceId}
         />
 
         <ChangeFolderDialog
-          chatbotId={chatbotId}
           currentFolderId={rowAction?.row.original?.folderId || null}
           folderType="customField"
           modelIds={
@@ -291,6 +292,7 @@ export function CustomFieldsTable({
           }
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "move"}
+          workspaceId={workspaceId}
         />
       </CardContent>
     </Card>

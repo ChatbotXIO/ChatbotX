@@ -4,7 +4,7 @@ import type { useTranslations } from "next-intl"
 
 export type MenuItem = {
   label: string
-  icon: LucideIcon
+  icon: LucideIcon | React.FC<{ className?: string; fill?: string }>
   stepType: StepType | null
   children?: MenuItem[]
   // biome-ignore lint/suspicious/noExplicitAny: save additional props for onAdd

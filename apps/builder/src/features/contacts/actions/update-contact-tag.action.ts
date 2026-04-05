@@ -16,46 +16,46 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import type { TagResource } from "@/features/tags/schemas/resource"
+import type { TagResource } from "@/features/tags/schema/resource"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactTagRequest,
   updateContactTagRequest,
 } from "../schemas/contact-tag"
 
-export const updateContactTagAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const updateContactTagAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(updateContactTagRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
       parsedInput: UpdateContactTagRequest
     }) => {
-      return await updateContactTags({ chatbotId, parsedInput })
+      return await updateContactTags({ workspaceId, parsedInput })
     },
   )
 
 export const updateContactTags = async ({
-  chatbotId,
+  workspaceId,
   parsedInput,
 }: {
-  chatbotId: bigint
+  workspaceId: string
   parsedInput: UpdateContactTagRequest
 }): Promise<TagResource[]> => {
-  const contact = await findOrFail(
-    contactModel,
-    {
+  const contact = await findOrFail({
+    table: contactModel,
+    where: {
       id: parsedInput.contactId,
-      chatbotId,
+      workspaceId,
     },
-    "Contact not found",
-  )
+    message: "Contact not found",
+  })
 
   // Get old tags before update
   const oldTags = await db.query.contactsToTagsModel.findMany({
@@ -76,17 +76,17 @@ export const updateContactTags = async ({
           parsedInput.tags.map((name) => ({
             id: createId(),
             name,
-            chatbotId,
+            workspaceId,
           })),
         )
         .onConflictDoNothing({
-          target: [tagModel.chatbotId, tagModel.name],
+          target: [tagModel.workspaceId, tagModel.name],
         })
     }
 
     const tags = await tx.query.tagModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         name: { in: parsedInput.tags },
       },
     })
@@ -126,7 +126,7 @@ export const updateContactTags = async ({
   // Emit tagApplied for newly added tags
   for (const tag of newlyAppliedTags) {
     try {
-      await emitTagApplied(chatbotId, contact.id, tag.id)
+      await emitTagApplied(workspaceId, contact.id, tag.id)
     } catch (error) {
       console.error("Failed to emit tagApplied event:", error)
     }
@@ -135,16 +135,16 @@ export const updateContactTags = async ({
   // Emit tagRemoved for removed tags
   for (const tagId of removedTagIds) {
     try {
-      await emitTagRemoved(chatbotId, contact.id, tagId)
+      await emitTagRemoved(workspaceId, contact.id, tagId)
     } catch (error) {
       console.error("Failed to emit tagRemoved event:", error)
     }
   }
 
   revalidateCacheTags([
-    `chatbots:${chatbotId}#contacts`,
-    `chatbots:${chatbotId}#conversations`,
-    `chatbots:${chatbotId}#tags`,
+    `workspaces:${workspaceId}#contacts`,
+    `workspaces:${workspaceId}#conversations`,
+    `workspaces:${workspaceId}#tags`,
   ])
 
   return returnedTags

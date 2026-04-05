@@ -78,7 +78,7 @@ export async function countCharacters({
   // Emit custom field changed event
   try {
     await emitCustomFieldChanged(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       step.outputCfId,
       customField?.name || step.outputCfId,
@@ -142,7 +142,7 @@ export async function formatDate({
   // Emit custom field changed event
   try {
     await emitCustomFieldChanged(
-      conversation.chatbotId,
+      conversation.workspaceId,
       conversation.contactId,
       step.outputCfId,
       customField?.name || step.outputCfId,
@@ -214,7 +214,7 @@ export async function generateCode({
     // Emit custom field changed event
     try {
       await emitCustomFieldChanged(
-        conversation.chatbotId,
+        conversation.workspaceId,
         conversation.contactId,
         step.outputCfId,
         customField?.name || step.outputCfId,
@@ -250,7 +250,7 @@ export async function getDataFromJSON({
   // Find valid custom fields
   const validCustomFields = await db.query.customFieldModel.findMany({
     where: {
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       id: {
         in: mapping.map((m) => m.outputCfId),
       },
@@ -323,7 +323,7 @@ export async function getDataFromJSON({
   for (const field of updatedFields) {
     try {
       await emitCustomFieldChanged(
-        conversation.chatbotId,
+        conversation.workspaceId,
         conversation.contactId,
         field.customFieldId,
         field.customFieldName,

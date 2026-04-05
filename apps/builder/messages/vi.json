@@ -48,7 +48,7 @@
     "countCharacters": "Đếm ký tự",
     "create": "Tạo",
     "createFeature": "Tạo {feature}",
-    "createNewChatbot": "Tạo chatbot mới",
+    "createNewChatbot": "Tạo workspace mới",
     "delete": "Xóa",
     "deleteContact": "Xóa liên hệ",
     "deleteProject": "Xóa dự án",
@@ -196,11 +196,11 @@
   },
   "aiAgent": {
     "defaultAgent": "Agent mặc định",
-    "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng chatbot của bạn với tự động hóa và phản hồi thông minh.",
+    "description": "Quản lý và cấu hình AI Agents để nâng cao khả năng workspace của bạn với tự động hóa và phản hồi thông minh.",
     "setting": {
       "label": "AI Agents"
     },
-    "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng chatbot của bạn.",
+    "subtitle": "Quản lý AI agents và công cụ để nâng cao khả năng workspace của bạn.",
     "title": "AI Agents",
     "name": "Agents"
   },
@@ -220,7 +220,7 @@
     }
   },
   "aiTool": {
-    "subtitle": "Quản lý AI tools để nâng cao khả năng chatbot của bạn.",
+    "subtitle": "Quản lý AI tools để nâng cao khả năng workspace của bạn.",
     "title": "AI Tools"
   },
   "aiTrigger": {
@@ -462,12 +462,12 @@
     "title": "Kênh",
     "allChannels": "Tất cả kênh"
   },
-  "chatbots": {
+  "workspaces": {
     "create": {
-      "title": "Tạo chatbot"
+      "title": "Tạo workspace"
     },
     "list": {
-      "title": "Danh sách chatbot"
+      "title": "Danh sách workspace"
     }
   },
   "customField": {
@@ -582,10 +582,6 @@
     "botField": {
       "label": "Trường tài khoản"
     },
-    "accountTimezone": {
-      "description": "Múi giờ của chatbot của bạn.",
-      "label": "Múi giờ tài khoản"
-    },
     "agent": {
       "label": "Đại lý"
     },
@@ -694,12 +690,12 @@
     "category": {
       "label": "Danh mục"
     },
-    "chatbot": {
-      "label": "Chatbot"
+    "workspace": {
+      "label": "Workspace"
     },
-    "chatbotId": {
-      "description": "Định danh duy nhất cho chatbot của bạn.",
-      "label": "ID Chatbot"
+    "workspaceId": {
+      "description": "Định danh duy nhất cho workspace của bạn.",
+      "label": "ID Workspace"
     },
     "color": {
       "label": "Màu sắc",
@@ -747,12 +743,8 @@
       "label": "Thu thập dữ liệu",
       "placeholder": "Dữ liệu nào được thu thập?"
     },
-    "defaultLanguage": {
-      "description": "Ngôn ngữ của chatbot của bạn.",
-      "label": "Ngôn ngữ mặc định"
-    },
     "defaultReply": {
-      "description": "Đây là phản hồi mặc định mà chatbot của bạn sẽ gửi cho người dùng khi chatbot không biết cách trả lời tin nhắn của người dùng.",
+      "description": "Đây là phản hồi mặc định mà workspace của bạn sẽ gửi cho người dùng khi workspace không biết cách trả lời tin nhắn của người dùng.",
       "label": "Trả lời mặc định"
     },
     "delayType": {
@@ -1210,8 +1202,8 @@
       "datetime": "Ngày giờ",
       "location": "Vị trí"
     },
-    "chatbotMember": {
-      "label": "Thành viên chatbot"
+    "workspaceMember": {
+      "label": "Thành viên workspace"
     },
     "permissions": {
       "label": "Quyền",
@@ -1282,7 +1274,7 @@
     "newPassword": {
       "label": "Mật khẩu mới"
     },
-    "chatbotToken": {
+    "developerAccessToken": {
       "label": "Token truy cập API"
     },
     "fullName": {
@@ -1566,7 +1558,7 @@
       "specificDateValue": "{date}"
     },
     "formatTimezone": {
-      "accountTimezone": "Múi giờ tài khoản",
+      "timezone": "Múi giờ tài khoản",
       "contactTimezone": "Múi giờ liên hệ"
     },
     "fields": {
@@ -1690,7 +1682,7 @@
     "loadingData": "Đang tải dữ liệu...",
     "magicLinkSent": "Chúng tôi đã gửi URL xác minh đến email của bạn",
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
-    "noChatbotsFound": "Không tìm thấy chatbot nào",
+    "noChatbotsFound": "Không tìm thấy workspace nào",
     "noDataAvailable": "Không có dữ liệu",
     "pleaseWait": "Vui lòng đợi...",
     "processingRequest": "Đang xử lý yêu cầu của bạn...",
@@ -1789,7 +1781,7 @@
   },
   "settings": {
     "title": "Cài đặt",
-    "description": "Cấu hình cài đặt chatbot của bạn.",
+    "description": "Cấu hình cài đặt workspace của bạn.",
     "agents": {
       "description": "Mô tả AI Agents",
       "title": "AI Agents"
@@ -1863,7 +1855,7 @@
     "minValue": "Giá trị tối thiểu là {min}",
     "passwordMismatch": "Mật khẩu không khớp",
     "required": "Trường này là bắt buộc",
-    "maxItemsReached": "Tối đa {max} {feature} cho mỗi chatbot"
+    "maxItemsReached": "Tối đa {max} {feature} cho mỗi workspace"
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",
@@ -2044,9 +2036,9 @@
       "title": "Tạo nhóm hộp thư"
     }
   },
-  "chatbotToken": {
+  "developerAccessToken": {
     "title": "Token truy cập API ChatbotX",
-    "description": "Tạo token để cho phép chatbot của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
+    "description": "Tạo token để cho phép workspace của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
   },
   "contacts": {
     "title": "Liên hệ"
@@ -2177,7 +2169,7 @@
     "sendTime": "Thời gian gửi",
     "sendTimeDescription": "Tin nhắn chỉ được gửi trong khoảng thời gian này",
     "timezone": "Múi giờ",
-    "timezoneDescription": "Tất cả thời gian theo múi giờ của chatbot",
+    "timezoneDescription": "Tất cả thời gian theo múi giờ của workspace",
     "enableSchedule": "Bật lịch trình",
     "startTime": "Thời gian bắt đầu",
     "endTime": "Thời gian kết thúc",

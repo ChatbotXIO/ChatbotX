@@ -71,33 +71,33 @@ export class SchedulerClient {
 
   async addToSchedule(
     bucket: number,
-    dispatchId: bigint,
+    dispatchId: string,
     runAtMs: number,
   ): Promise<void> {
     const key = this.getScheduleKey(bucket)
-    await this.redis.zadd(key, runAtMs, dispatchId.toString())
+    await this.redis.zadd(key, runAtMs, dispatchId)
   }
 
   async addToRetry(
     bucket: number,
-    dispatchId: bigint,
+    dispatchId: string,
     retryAtMs: number,
   ): Promise<void> {
     const key = this.getRetryKey(bucket)
-    await this.redis.zadd(key, retryAtMs, dispatchId.toString())
+    await this.redis.zadd(key, retryAtMs, dispatchId)
   }
 
-  async removeFromSchedule(bucket: number, dispatchId: bigint): Promise<void> {
+  async removeFromSchedule(bucket: number, dispatchId: string): Promise<void> {
     const key = this.getScheduleKey(bucket)
-    await this.redis.zrem(key, dispatchId.toString())
+    await this.redis.zrem(key, dispatchId)
   }
 
-  async removeFromRetry(bucket: number, dispatchId: bigint): Promise<void> {
+  async removeFromRetry(bucket: number, dispatchId: string): Promise<void> {
     const key = this.getRetryKey(bucket)
-    await this.redis.zrem(key, dispatchId.toString())
+    await this.redis.zrem(key, dispatchId)
   }
 
-  async removeFromAll(bucket: number, dispatchId: bigint): Promise<void> {
+  async removeFromAll(bucket: number, dispatchId: string): Promise<void> {
     await Promise.all([
       this.removeFromSchedule(bucket, dispatchId),
       this.removeFromRetry(bucket, dispatchId),
@@ -108,7 +108,7 @@ export class SchedulerClient {
     const result = await this.redis.zrangebyscore(
       key,
       "-inf",
-      nowMs.toString(),
+      nowMs,
       "LIMIT",
       0,
       limit,
@@ -127,7 +127,7 @@ export class SchedulerClient {
   }
 
   async batchAddToSchedule(
-    items: Array<{ bucket: number; dispatchId: bigint; runAtMs: number }>,
+    items: Array<{ bucket: number; dispatchId: string; runAtMs: number }>,
   ): Promise<void> {
     if (items.length === 0) {
       return
@@ -135,7 +135,7 @@ export class SchedulerClient {
     const pipeline = this.redis.pipeline()
     for (const { bucket, dispatchId, runAtMs } of items) {
       const key = this.getScheduleKey(bucket)
-      pipeline.zadd(key, runAtMs, dispatchId.toString())
+      pipeline.zadd(key, runAtMs, dispatchId)
     }
     await pipeline.exec()
   }

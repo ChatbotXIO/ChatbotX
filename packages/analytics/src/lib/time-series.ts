@@ -5,12 +5,14 @@ import {
   endOfMonth,
   startOfMonth,
 } from "date-fns"
-import type {
-  BotMessageStats,
-  ContactCountsSchema,
-  ContactEventType,
-  ContactStats,
-  TimeRangeQuery,
+import {
+  type BotMessageResult,
+  type BotMessageStats,
+  botMessageResponseTypes,
+  type ContactCountsSchema,
+  type ContactEventType,
+  type ContactStats,
+  type TimeRangeQuery,
 } from "../schemas"
 
 export function getUtcMonthKey(date: Date): string {
@@ -66,7 +68,7 @@ export function fillDailyContactStats(
     eventTypes: ContactEventType[]
   },
 ): ContactStats[] {
-  const { chatbotId, from, to, rows, eventTypes } = props
+  const { workspaceId, from, to, rows, eventTypes } = props
   const keyOf = (day: string, eventType: string) => `${day}::${eventType}`
 
   const byKey = new Map<string, ContactStats>()
@@ -82,7 +84,7 @@ export function fillDailyContactStats(
       const existing = byKey.get(keyOf(dayKey, et))
       filled.push(
         existing ?? {
-          chatbotId,
+          workspaceId,
           timestamp: getUtcDayStart(d),
           eventType: et,
           count: 0,
@@ -148,7 +150,7 @@ export function fillContactStatsMonthlySeries(
       const existing = byKey.get(keyOf(monthKey, et))
       filled.push(
         existing ?? {
-          chatbotId: props.chatbotId,
+          workspaceId: props.workspaceId,
           timestamp: getUtcMonthStart(m),
           eventType: et,
           count: 0,
@@ -195,10 +197,10 @@ export function fillTotalContactsMonthlySeries(
 export function fillBotMessageStatsDaySeries(
   props: TimeRangeQuery & {
     rows: BotMessageStats[]
-    results: Array<"SUCCESS" | "FALLBACK">
+    results: BotMessageResult[]
   },
 ): BotMessageStats[] {
-  const { chatbotId, from, to, rows, results } = props
+  const { workspaceId, from, to, rows, results } = props
   const keyOf = (day: string, result: string) => `${day}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -222,12 +224,12 @@ export function fillBotMessageStatsDaySeries(
       const existing = byKey.get(keyOf(dayKey, result))
       filled.push(
         existing ?? {
-          chatbotId,
+          workspaceId,
           timestamp: getUtcDayStart(d),
           hasResponse: true,
-          responseType: "NONE",
+          responseType: botMessageResponseTypes.enum.none,
           result,
-          aiProvider: "NONE",
+          aiProvider: "none",
           count: 0,
         },
       )
@@ -240,10 +242,10 @@ export function fillBotMessageStatsDaySeries(
 export function fillBotMessageStatsMonthSeries(
   props: TimeRangeQuery & {
     rows: BotMessageStats[]
-    results: Array<"SUCCESS" | "FALLBACK">
+    results: BotMessageResult[]
   },
 ): BotMessageStats[] {
-  const { chatbotId, from, to, rows, results } = props
+  const { workspaceId, from, to, rows, results } = props
   const keyOf = (month: string, result: string) => `${month}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -267,12 +269,12 @@ export function fillBotMessageStatsMonthSeries(
       const existing = byKey.get(keyOf(monthKey, result))
       filled.push(
         existing ?? {
-          chatbotId,
+          workspaceId,
           timestamp: getUtcMonthStart(m),
           hasResponse: true,
-          responseType: "NONE",
+          responseType: "none",
           result,
-          aiProvider: "NONE",
+          aiProvider: "none",
           count: 0,
         },
       )

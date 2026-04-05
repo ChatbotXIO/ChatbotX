@@ -1,3 +1,4 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 import { integrationMessengerResource } from "@/features/integration-messenger/schema/resource"
@@ -13,7 +14,7 @@ export const listInboxesNuqs = createSearchParamsCache({
 })
 
 export const listInboxesRequest = basePaginationRequest.extend({
-  chatbotId: z.bigint(),
+  workspaceId: zodBigintAsString(),
   includes: z.array(z.literal("integration")).optional(),
 })
 export type ListInboxesRequest = z.infer<typeof listInboxesRequest>

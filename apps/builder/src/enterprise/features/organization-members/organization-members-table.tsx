@@ -10,7 +10,7 @@ import { use, useMemo } from "react"
 import type {
   ListOrganizationMemberItem,
   ListOrganizationMembersResponse,
-} from "./schema"
+} from "./schema/mutation"
 
 type OrganizationMembersTableProps = {
   promises: Promise<[ListOrganizationMembersResponse]>
@@ -116,7 +116,7 @@ const OrganizationMembersTable = (props: OrganizationMembersTableProps) => {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
     },
-    getRowId: (originalRow) => originalRow.id.toString(),
+    getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })

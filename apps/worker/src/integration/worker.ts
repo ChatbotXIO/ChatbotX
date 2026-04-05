@@ -68,18 +68,18 @@ async function startIntegrationWorker() {
             // Track no response for messages without content or not from contact
             // (postback/quickReply are tracked in their own handlers)
             await trackBotResponse({
-              chatbotId: message.chatbotId,
+              workspaceId: message.workspaceId,
               conversationId: message.conversationId,
               messageId: message.id,
               hasResponse: false,
-              responseType: "NONE",
-              routeType: "FALLBACK",
-              result: "FALLBACK",
+              responseType: "none",
+              routeType: "fallback",
+              result: "fallback",
               aiProvider: "none",
               metadata: {
                 fallbackReason: message.text
-                  ? "NOT_FROM_CONTACT"
-                  : "NO_CONTENT",
+                  ? "not_from_contact"
+                  : "no_content",
               },
               startTime: Date.now(),
             })

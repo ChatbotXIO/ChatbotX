@@ -1,20 +1,20 @@
-import { TriggerAction } from "@chatbotx.io/database/enums"
+import { triggerActions } from "@chatbotx.io/database/partials"
 import {
   FilterMode,
-  StepType,
   spreadsheetColumnFilterSchema,
   spreadsheetMappingSchema,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import z from "zod"
 
 export const runGoogleSheet = z.object({
-  type: z.literal(TriggerAction.runGoogleSheet),
+  type: z.literal(triggerActions.enum.runGoogleSheet),
   action: z.union([
-    z.literal(StepType.spreadsheetGetRandomRow),
-    z.literal(StepType.spreadsheetClearRow),
-    z.literal(StepType.spreadsheetGetRow),
-    z.literal(StepType.spreadsheetSendData),
-    z.literal(StepType.spreadsheetUpdateRow),
+    z.literal(stepTypes.enum.spreadsheetGetRandomRow),
+    z.literal(stepTypes.enum.spreadsheetClearRow),
+    z.literal(stepTypes.enum.spreadsheetGetRow),
+    z.literal(stepTypes.enum.spreadsheetSendData),
+    z.literal(stepTypes.enum.spreadsheetUpdateRow),
   ]),
   spreadsheetId: z.string(),
   sheetName: z.string(),
@@ -24,8 +24,8 @@ export const runGoogleSheet = z.object({
 export type RunGoogleSheet = z.infer<typeof runGoogleSheet>
 
 export const defaultFn = (): RunGoogleSheet => ({
-  type: TriggerAction.runGoogleSheet,
-  action: StepType.spreadsheetGetRow,
+  type: triggerActions.enum.runGoogleSheet,
+  action: stepTypes.enum.spreadsheetGetRow,
   spreadsheetId: "",
   sheetName: "",
   lookup: {

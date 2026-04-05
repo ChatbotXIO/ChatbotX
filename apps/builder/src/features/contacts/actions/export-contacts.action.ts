@@ -7,21 +7,21 @@ import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ExportContactsRequest,
   exportContactsRequest,
 } from "../schemas/action"
 
-export const exportContactsAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const exportContactsAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(exportContactsRequest)
   .action(
     async ({
       ctx: { user },
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       ctx: { user: UserModel }
@@ -34,7 +34,7 @@ export const exportContactsAction = chatbotActionClient
       const contactsCount = await db.$count(
         contactModel,
         and(
-          eq(contactModel.chatbotId, chatbotId),
+          eq(contactModel.workspaceId, workspaceId),
           inArray(contactModel.id, contactIds),
         ),
       )
@@ -51,7 +51,7 @@ export const exportContactsAction = chatbotActionClient
         defaultQueue.add(DefaultJobAction.exportContacts, {
           type: DefaultJobAction.exportContacts,
           data: {
-            chatbotId,
+            workspaceId,
             requestedUserId: user.id,
             contactIds,
             fields,
@@ -63,7 +63,7 @@ export const exportContactsAction = chatbotActionClient
           type: DefaultJobAction.sendAuditLog,
           data: {
             userId: user.id,
-            chatbotId,
+            workspaceId,
             action: "export",
             detail: "Contacts",
           },

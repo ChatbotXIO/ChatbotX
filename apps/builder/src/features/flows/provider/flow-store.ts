@@ -3,14 +3,14 @@ import { createStore } from "zustand/vanilla"
 import { maxPerPageString } from "@/lib/shared-request"
 import type { ListFlowsResponse } from "../schemas/query"
 
-type FlowStateFilter = { startType?: string; integrationWhatsappId?: bigint }
+type FlowStateFilter = { startType?: string; integrationWhatsappId?: string }
 
 export type FlowState = {
   loading: boolean
   error: string | null
   initialized: boolean
 
-  chatbotId: bigint
+  workspaceId: string
   filter: FlowStateFilter
   flows: ListFlowsResponse["data"]
 }
@@ -30,7 +30,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
     error: null,
     initialized: false,
 
-    chatbotId: BigInt(0),
+    workspaceId: "",
     filter: {},
     flows: [],
     ...props,
@@ -66,9 +66,9 @@ export const createFlowStore = (props: Partial<FlowState>) =>
     },
 
     getAllActiveFlows: async () => {
-      const { chatbotId, loading, filter } = get()
+      const { workspaceId, loading, filter } = get()
 
-      if (loading || !chatbotId) {
+      if (loading || !workspaceId) {
         return
       }
 
@@ -76,7 +76,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
         set({ loading: true, error: null })
 
         const { data } = await ky
-          .get<ListFlowsResponse>(`/api/chatbots/${chatbotId}/flows`, {
+          .get<ListFlowsResponse>(`/api/workspaces/${workspaceId}/flows`, {
             searchParams: {
               perPage: maxPerPageString,
               active: "true",

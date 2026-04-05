@@ -17,20 +17,20 @@ export const FlowStoreContext = createContext<FlowStoreApi | undefined>(
 )
 
 export type FlowStoreProviderProps = {
-  chatbotId: bigint
+  workspaceId: string
   children: ReactNode
   autoInitialize?: boolean
 }
 
 export const FlowStoreProvider = ({
-  chatbotId,
+  workspaceId,
   autoInitialize = true,
   children,
 }: FlowStoreProviderProps) => {
   const storeRef = useRef<FlowStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowStore({
-      chatbotId,
+      workspaceId,
     })
   }
 

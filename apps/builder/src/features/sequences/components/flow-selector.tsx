@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 
 type FlowSelectorSimpleProps = {
-  value: bigint
+  value: string
   onChange: (value: string) => void
   showError?: boolean
 }

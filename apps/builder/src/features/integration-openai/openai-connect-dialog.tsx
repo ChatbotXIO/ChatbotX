@@ -29,7 +29,11 @@ import { toast } from "sonner"
 import { connectOpenAIAction } from "./actions/connect.action"
 import { connectOpenAISchema } from "./schemas/request"
 
-export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: bigint }) => {
+export const OpenAIConnectDialog = ({
+  workspaceId,
+}: {
+  workspaceId: string
+}) => {
   const [open, setOpen] = useState(false)
   const [isOpenOptions, setIsOpenOptions] = useState<boolean>(false)
 
@@ -37,7 +41,7 @@ export const OpenAIConnectDialog = ({ chatbotId }: { chatbotId: bigint }) => {
   const router = useRouter()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    connectOpenAIAction.bind(null, chatbotId),
+    connectOpenAIAction.bind(null, workspaceId),
     zodResolver(connectOpenAISchema),
     {
       actionProps: {

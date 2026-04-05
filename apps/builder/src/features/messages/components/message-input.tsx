@@ -38,7 +38,7 @@ export const MessageInput = () => {
     useHookFormAction(
       createMessageAction.bind(
         null,
-        conversation?.chatbotId ?? "",
+        conversation?.workspaceId ?? "",
         conversation?.id ?? "",
       ),
       zodResolver(createMessageRequest),
@@ -49,18 +49,18 @@ export const MessageInput = () => {
             if (
               typeof input === "object" &&
               input !== null &&
-              "content" in input &&
-              input.content
+              "text" in input &&
+              input.text
             ) {
-              const typedInput = input as { content: string; clientId: string }
+              const typedInput = input as { text: string; clientId: string }
               appendMessage({
-                content: typedInput.content,
+                text: typedInput.text,
                 id: createId(),
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                chatbotId: conversation?.chatbotId ?? "",
-                inboxId: conversation?.inboxId ?? "",
+                workspaceId: conversation?.workspaceId ?? "",
                 sourceId: null,
+                contactInboxId: "",
                 conversationId: conversation?.id ?? "",
                 contentAttributes: null,
                 messageType: "outgoing",
@@ -82,7 +82,7 @@ export const MessageInput = () => {
         },
         formProps: {
           defaultValues: {
-            content: "",
+            text: "",
             files: [],
             clientId: createId(),
           },
@@ -100,7 +100,7 @@ export const MessageInput = () => {
       }
 
       if (!insert) {
-        form.setValue("content", value, {
+        form.setValue("text", value, {
           shouldValidate: true,
         })
         return
@@ -110,7 +110,7 @@ export const MessageInput = () => {
       const before = text.slice(0, element.selectionStart)
       const after = text.slice(element.selectionStart)
 
-      form.setValue("content", `${before}${value}${after}`, {
+      form.setValue("text", `${before}${value}${after}`, {
         shouldValidate: true,
       })
     },
@@ -140,7 +140,7 @@ export const MessageInput = () => {
   )
 
   // Memoize inbox type and icon for current conversation
-  const currentInboxType = conversation?.channel ?? "webchat"
+  const currentInboxType = "webchat"
 
   // Check if files are attached
   const files = useWatch({
@@ -165,7 +165,7 @@ export const MessageInput = () => {
           <div className="mb-1 w-full px-2.5 py-1">
             <Controller
               control={form.control}
-              name="content"
+              name="text"
               render={({ field }) => (
                 <QuickRepliesPopover
                   inputValue={field.value ?? ""}

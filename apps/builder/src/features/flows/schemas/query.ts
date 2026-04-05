@@ -1,4 +1,5 @@
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   createSearchParamsCache,
   parseAsBoolean,
@@ -25,15 +26,15 @@ export const listFlowsSearchParams = createSearchParamsCache({
 export type ListFlowsSearchParams = Awaited<
   ReturnType<typeof listFlowsSearchParams.parse>
 > & {
-  chatbotId: bigint
+  workspaceId: string
 }
 
 export const listFlowsRequest = basePaginationRequest.extend({
   name: z.string().nullish(),
-  folderId: z.bigint().nullish(),
+  folderId: zodBigintAsString().nullish(),
   active: z.boolean().nullish(),
   startType: z.string().nullish(),
-  integrationWhatsappId: z.bigint().nullish(),
+  integrationWhatsappId: zodBigintAsString().nullish(),
 })
 export type ListFlowsRequest = z.infer<typeof listFlowsRequest>
 
@@ -50,6 +51,6 @@ export const listFlowsResponse = z.object({
 export type ListFlowsResponse = z.infer<typeof listFlowsResponse>
 
 export type FindFlowParams = {
-  id: bigint
-  chatbotId: bigint
+  id: string
+  workspaceId: string
 }

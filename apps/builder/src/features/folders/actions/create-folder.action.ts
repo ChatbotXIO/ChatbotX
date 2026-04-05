@@ -6,21 +6,21 @@ import type { FolderModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import {
   type CreateFolderSchema,
   createFolderSchema,
 } from "@/features/folders/schema/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const createFolderAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const createFolderAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(createFolderSchema)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -42,12 +42,12 @@ export const createFolderAction = chatbotActionClient
       await db.insert(folderModel).values({
         ...parsedInput,
         id: createId(),
-        chatbotId,
+        workspaceId,
         paths,
       })
 
       revalidateCacheTags(
-        `chatbots:${chatbotId}#folders:${parsedInput.folderType}`,
+        `workspaces:${workspaceId}#folders:${parsedInput.folderType}`,
       )
     },
   )

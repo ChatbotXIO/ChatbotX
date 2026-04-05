@@ -2,12 +2,12 @@ import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { buttonStepSchema } from "./button"
 import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const sendCardStepSchema = z
   .object({
     id: z.string(),
-    stepType: z.literal(StepType.sendCard),
+    stepType: z.literal(stepTypes.enum.sendCard),
     title: z.string().trim().min(1).max(255),
   })
   .and(
@@ -28,7 +28,7 @@ export type SendCardStepSchema = z.infer<typeof sendCardStepSchema>
 
 export const sendCardStepDefaultFn = (): SendCardStepSchema => ({
   id: createId(),
-  stepType: StepType.sendCard,
+  stepType: stepTypes.enum.sendCard,
   title: "",
   subtitle: "",
   image: sendImageStepDefaultFn(),

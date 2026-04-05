@@ -20,7 +20,7 @@ type InboxModule = {
   readonly content: ReactNode
 }
 
-export const ContactInboxPanel = ({ chatbotId }: { chatbotId: bigint }) => {
+export const ContactInboxPanel = ({ workspaceId }: { workspaceId: string }) => {
   const t = useTranslations()
 
   const { activeConversationId, conversations } = useChatStore((state) => state)
@@ -52,19 +52,19 @@ export const ContactInboxPanel = ({ chatbotId }: { chatbotId: bigint }) => {
             {
               keyName: t("fields.tags.label"),
               content: (
-                <TagStoreProvider chatbotId={chatbotId}>
+                <TagStoreProvider workspaceId={workspaceId}>
                   <UpdateContactTagField
-                    chatbotId={chatbotId}
                     contact={contact}
                     onSuccess={setTags}
                     tags={tags}
+                    workspaceId={workspaceId}
                   />
                 </TagStoreProvider>
               ),
             },
           ]
         : [],
-    [chatbotId, t, contact, tags],
+    [workspaceId, t, contact, tags],
   )
 
   return (

@@ -13,6 +13,7 @@ import type { AuthValue } from "./auth"
 import type {
   Context,
   OutgoingContact,
+  OutgoingContactInbox,
   OutgoingConversation,
   OutgoingMessage,
 } from "./shared"
@@ -22,6 +23,7 @@ export type SendMessageProps<TAuth extends AuthValue> = {
   data: {
     contact: OutgoingContact
     conversation: OutgoingConversation
+    contactInbox: OutgoingContactInbox
     message: OutgoingMessage
   }
 }
@@ -30,6 +32,7 @@ export type SendTypingProps<TAuth extends AuthValue> = {
   ctx: Context<TAuth>
   data: {
     conversation: OutgoingConversation
+    contactInbox: OutgoingContactInbox
     typing: boolean
   }
 }
@@ -38,6 +41,7 @@ export type AgentMarkAsReadProps<TAuth extends AuthValue> = {
   ctx: Context<TAuth>
   data: {
     conversation: OutgoingConversation
+    contactInbox: OutgoingContactInbox
   }
 }
 
@@ -71,6 +75,7 @@ export type SendFlowStepProps<TAuth extends AuthValue, S = SendFlowStepData> = {
   data: {
     contact: OutgoingContact
     conversation: OutgoingConversation
+    contactInbox: OutgoingContactInbox
     flowId: string
     flowVersionId?: string
     step: S

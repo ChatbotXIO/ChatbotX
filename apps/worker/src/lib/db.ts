@@ -15,27 +15,27 @@ export async function findConversationAndFlowVersion(props: {
   flowVersion: FlowVersionModel
   useLatestFlowVersion: boolean
 }> {
-  const conversation = await findOrFail(
-    conversationModel,
-    {
+  const conversation = await findOrFail({
+    table: conversationModel,
+    where: {
       id: props.conversationId,
     },
-    "Conversation not found",
-  )
+    message: "Conversation not found",
+  })
 
   let flowVersion: FlowVersionModel | null | undefined = null
   if (props.flowVersionId) {
     flowVersion = await db.query.flowVersionModel.findFirst({
       where: {
         id: props.flowVersionId,
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
       },
     })
   } else if (props.flowId) {
     const flow = await db.query.flowModel.findFirst({
       where: {
         id: props.flowId,
-        chatbotId: conversation.chatbotId,
+        workspaceId: conversation.workspaceId,
         active: true,
       },
     })
@@ -43,7 +43,7 @@ export async function findConversationAndFlowVersion(props: {
       flowVersion = await db.query.flowVersionModel.findFirst({
         where: {
           id: flow.currentVersionId,
-          chatbotId: conversation.chatbotId,
+          workspaceId: conversation.workspaceId,
         },
       })
     }

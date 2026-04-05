@@ -1,10 +1,10 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const typingStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.typing),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.typing),
   seconds: z.coerce.number().min(1).max(60),
 })
 
@@ -16,5 +16,5 @@ export const typingStepDefaultFn = (
   id: createId(),
   seconds: 2,
   ...props,
-  stepType: StepType.typing,
+  stepType: stepTypes.enum.typing,
 })

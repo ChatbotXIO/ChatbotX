@@ -2,21 +2,21 @@
 
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ImportContactsRequest,
   importContactsRequest,
 } from "../schemas/action"
 
-export const importContactsAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const importContactsAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(importContactsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -27,8 +27,8 @@ export const importContactsAction = chatbotActionClient
       await Promise.resolve(parsedInput)
 
       revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#conversations`,
+        `workspaces:${workspaceId}#contacts`,
+        `workspaces:${workspaceId}#conversations`,
       ])
     },
   )

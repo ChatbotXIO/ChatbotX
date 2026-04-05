@@ -2,14 +2,14 @@ import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import { parsePagination } from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import type { ListSpreadsheetsRequest } from "../schemas/list-spreadsheets.request"
-import type { SpreadsheetResource } from "../schemas/resource"
+import type { ListSpreadsheetsRequest } from "../schema/query"
+import type { SpreadsheetResource } from "../schema/resource"
 
 export const listSpreadsheets = async (
   input: ListSpreadsheetsRequest,
 ): Promise<PaginatedResponse<SpreadsheetResource>> => {
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
   }
 
   const pagination = parsePagination(input)

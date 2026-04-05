@@ -5,17 +5,17 @@ import { PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useChatbotId } from "@/hooks/routing"
+import { useWorkspaceId } from "@/hooks/routing"
 
 export function AddSequenceButton() {
-  const chatbotId = useChatbotId()
+  const workspaceId = useWorkspaceId()
   const searchParams = useSearchParams()
   const t = useTranslations()
 
   return (
     <Button asChild size={"sm"}>
       <Link
-        href={`/chatbots/${chatbotId}/sequences/create?${searchParams.toString()}`}
+        href={`/space/${workspaceId}/sequences/create?${searchParams.toString()}`}
       >
         <PlusIcon />
         {t("actions.createFeature", {

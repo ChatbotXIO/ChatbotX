@@ -6,6 +6,9 @@ import { z } from "zod"
 
 export const whatsappMessageTemplateResouce = createSelectSchema(
   whatsappMessageTemplateModel,
+  {
+    id: z.string(),
+  },
 )
   .pick({
     id: true,

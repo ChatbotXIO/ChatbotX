@@ -1,11 +1,11 @@
-import { createId } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "../types"
-import { StepType } from "./step-action"
+import { stepTypes } from "./step-action"
 
 export const emailImageStepSchema = z.object({
-  id: z.bigint(),
-  stepType: z.literal(StepType.emailImage),
+  id: zodBigintAsString(),
+  stepType: z.literal(stepTypes.enum.emailImage),
   mode: uploadModes,
   url: z.url(),
 })
@@ -18,6 +18,6 @@ export const emailImageStepDefaultFn = (
   url: "",
   ...props,
   id: createId(),
-  stepType: StepType.emailImage,
+  stepType: stepTypes.enum.emailImage,
   mode: uploadModes.enum.file,
 })

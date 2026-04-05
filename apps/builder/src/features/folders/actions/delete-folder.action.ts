@@ -6,17 +6,17 @@ import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const deleteFolderAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const deleteFolderAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -26,7 +26,7 @@ export const deleteFolderAction = chatbotActionClient
         for (const id of parsedInput.ids) {
           const folder = await tx.query.folderModel.findFirst({
             where: {
-              chatbotId,
+              workspaceId,
               id,
             },
           })
@@ -38,7 +38,7 @@ export const deleteFolderAction = chatbotActionClient
             .delete(folderModel)
             .where(
               and(
-                eq(folderModel.chatbotId, chatbotId),
+                eq(folderModel.workspaceId, workspaceId),
                 or(
                   eq(folderModel.id, id),
                   arrayContains(folderModel.paths, [id]),
@@ -47,8 +47,8 @@ export const deleteFolderAction = chatbotActionClient
             )
 
           revalidateCacheTags([
-            `chatbots:${chatbotId}#folders:${folder.folderType}`,
-            `chatbots:${chatbotId}#folders:${folder.id}`,
+            `workspaces:${workspaceId}#folders:${folder.folderType}`,
+            `workspaces:${workspaceId}#folders:${folder.id}`,
           ])
         }
       })

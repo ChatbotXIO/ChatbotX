@@ -5,10 +5,10 @@ import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { cancelPendingDispatches } from "@chatbotx.io/sequence-scheduler"
 import {
   type ChatbotIdRequestParams,
-  chatbotIdRequestParams,
+  workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type RemoveContactSequenceRequest,
   removeContactSequenceRequest,
@@ -16,12 +16,12 @@ import {
 
 const CHUNK_SIZE = 1000
 
-export const removeContactSequenceAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdRequestParams)
+export const removeContactSequenceAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(removeContactSequenceRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: ChatbotIdRequestParams
@@ -34,7 +34,7 @@ export const removeContactSequenceAction = chatbotActionClient
           where: {
             contactId: { in: contactIdChunk },
             sequenceId: { in: parsedInput.sequences },
-            chatbotId,
+            workspaceId,
           },
           columns: {
             id: true,
@@ -45,7 +45,7 @@ export const removeContactSequenceAction = chatbotActionClient
           enrollments.map((enrollment) =>
             cancelPendingDispatches({
               enrollmentId: enrollment.id,
-              chatbotId,
+              workspaceId,
               reason: "enrollment_removed",
             }),
           ),
@@ -58,15 +58,15 @@ export const removeContactSequenceAction = chatbotActionClient
             .where(
               and(
                 inArray(contactsOnSequenceModel.id, enrollmentIds),
-                eq(contactsOnSequenceModel.chatbotId, chatbotId),
+                eq(contactsOnSequenceModel.workspaceId, workspaceId),
               ),
             )
         }
       }
 
       revalidateCacheTags([
-        `chatbots:${chatbotId}#contacts`,
-        `chatbots:${chatbotId}#sequences`,
+        `workspaces:${workspaceId}#contacts`,
+        `workspaces:${workspaceId}#sequences`,
       ])
     },
   )

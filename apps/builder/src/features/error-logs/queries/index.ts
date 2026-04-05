@@ -12,10 +12,10 @@ import type { ListErrorLogsRequest } from "../schemas/query"
 export async function listErrorLogs(
   input: ListErrorLogsRequest,
 ): Promise<PaginatedResponse<ErrorLogResource>> {
-  await assertCurrentUserCanAccessChatbot(input.chatbotId)
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {
-    chatbotId: input.chatbotId,
+    workspaceId: input.workspaceId,
     ...(input.keyword
       ? {
           OR: [

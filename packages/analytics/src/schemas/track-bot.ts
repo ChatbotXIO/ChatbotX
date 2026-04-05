@@ -1,29 +1,30 @@
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
-  botMessageFallbackReasonSchema,
-  botMessageResponseTypeSchema,
-  botMessageResultSchema,
-  botMessageRouteTypeSchema,
+  botMessageFallbackReasons,
+  botMessageResponseTypes,
+  botMessageResults,
+  botMessageRouteTypes,
 } from "./bot-message"
 import { triggerContextSchema } from "./trigger-context"
 
 const trackBotRequestSchema = z.object({
   aiProvider: z.string(),
-  chatbotId: z.bigint(),
-  conversationId: z.bigint(),
+  workspaceId: zodBigintAsString(),
+  conversationId: zodBigintAsString(),
   hasResponse: z.boolean(),
-  messageId: z.bigint(),
+  messageId: zodBigintAsString(),
   metadata: z
     .object({
-      flowId: z.bigint().optional(),
+      flowId: zodBigintAsString().optional(),
       intentId: z.string().optional(),
       intentConfidence: z.number().optional(),
-      fallbackReason: botMessageFallbackReasonSchema.optional(),
+      fallbackReason: botMessageFallbackReasons.optional(),
     })
     .optional(),
-  responseType: botMessageResponseTypeSchema,
-  result: botMessageResultSchema.optional(),
-  routeType: botMessageRouteTypeSchema.optional(),
+  responseType: botMessageResponseTypes,
+  result: botMessageResults.optional(),
+  routeType: botMessageRouteTypes.optional(),
   startTime: z.number(),
   triggerContext: triggerContextSchema.optional(),
 })

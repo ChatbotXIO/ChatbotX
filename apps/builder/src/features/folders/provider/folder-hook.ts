@@ -1,4 +1,4 @@
-import { rootFolderId } from "@chatbotx.io/database/enums"
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useMemo } from "react"
 import { useFolderStore } from "./folder-store-context"

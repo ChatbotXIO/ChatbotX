@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { ButtonActionType, buttonStepSchema } from "../button/schema"
+import { buttonActionTypes, buttonStepSchema } from "../button/schema"
 
 export const templateProductSchema = z
   .object({
@@ -40,5 +40,5 @@ export const templateProductDefaultValue = (): TemplateProductSchema => ({
     variables: [],
   },
   footer: "",
-  buttons: [{ type: ButtonActionType.QuickReply, text: "View Items" }],
+  buttons: [{ type: buttonActionTypes.enum.quickReply, text: "View Items" }],
 })
