@@ -5,13 +5,13 @@ import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
-  GetWorkspaceMembersSchema,
+  ListWorkspaceMembersRequest,
   ListWorkspaceMembersResponse,
 } from "../schema/query"
 import type { WorkspaceMemberResource } from "../schema/resource"
 
 export async function listWorkspaceMembers(
-  input: GetWorkspaceMembersSchema,
+  input: ListWorkspaceMembersRequest,
 ): Promise<ListWorkspaceMembersResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 

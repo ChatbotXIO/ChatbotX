@@ -1,5 +1,5 @@
 import { sequencesChatbotAuthAPI } from "./authorized"
-import chatbotTokenSequencesAPIs from "./chatbot-token"
+import chatbotTokenSequencesAPIs from "./workspace-token"
 
 export const sequencesAPI = {
   ...sequencesChatbotAuthAPI,

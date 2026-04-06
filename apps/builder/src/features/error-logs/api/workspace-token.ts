@@ -1,4 +1,4 @@
-import { chatbotTokenAPI } from "@/orpc"
+import { workspaceTokenAuthAPI } from "@/orpc"
 import { listErrorLogs } from "../queries"
 import {
   listErrorLogsRequest,
@@ -6,7 +6,7 @@ import {
 } from "../schemas/query"
 
 export const chatbotTokenErrorLogsAPIs = {
-  listErrorLogsChatbotTokenAPI: chatbotTokenAPI
+  listErrorLogsChatbotTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/error-logs",

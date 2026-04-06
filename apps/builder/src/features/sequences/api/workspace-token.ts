@@ -1,11 +1,12 @@
 import z from "zod"
 import { basePaginationRequest } from "@/lib/pagination"
-import { chatbotTokenAPI } from "@/orpc"
+import { workspaceTokenAuthAPI } from "@/orpc"
 import { getSequence, listSequences } from "../queries"
-import { listSequencesResponse, sequenceResource } from "../schema"
+import { listSequencesResponse } from "../schema/action"
+import { sequenceResource } from "../schema/resource"
 
 export const chatbotTokenSequencesAPIs = {
-  listSequencesChatbotTokenAPI: chatbotTokenAPI
+  listSequencesChatbotTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/sequences",
@@ -18,7 +19,7 @@ export const chatbotTokenSequencesAPIs = {
       return await listSequences({ ...input, chatbotId: context.chatbot.id })
     }),
 
-  getSequenceChatbotTokenAPI: chatbotTokenAPI
+  getSequenceChatbotTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/sequences/{id}",
