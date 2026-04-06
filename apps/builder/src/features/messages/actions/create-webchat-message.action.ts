@@ -118,9 +118,8 @@ export async function handleCreateWebchatMessage({
           conversationId: conversation.id,
           senderType: "contact",
           senderId: conversation.contactId,
-          // inboxId: conversation.inboxId,
           contentType: "text",
-          contactInboxId: "",
+          contactInboxId: contactInbox.id,
         })
         .returning()
         .then((result) => result[0])
@@ -295,9 +294,10 @@ async function getConversationFromInput(
     }
 
     // Create new contact
-    const [contact] = await tx
+    contact = await tx
       .insert(contactModel)
       .values({
+        id: createId(),
         workspaceId: parsedInput.workspaceId,
         email: parsedInput.guestConversationId,
         gender: "unknown",
@@ -305,6 +305,10 @@ async function getConversationFromInput(
         lastName: randomString(10),
       })
       .returning()
+      .then((result) => result[0])
+    if (!contact) {
+      throw new ChatbotXException("Contact not found")
+    }
 
     isNewContact = true
 
@@ -312,6 +316,7 @@ async function getConversationFromInput(
     contactInbox = await tx
       .insert(contactInboxModel)
       .values({
+        id: createId(),
         inboxId: integrationWebchat.inboxId,
         contactId: contact.id,
         originalContactId: contact.id,

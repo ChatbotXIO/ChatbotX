@@ -19,10 +19,7 @@ import {
   inboxModel,
   messageModel,
 } from "@chatbotx.io/database/schema"
-import {
-  type AttachmentModel,
-  WEBCHAT_SOURCE_PREFIX,
-} from "@chatbotx.io/database/types"
+import type { AttachmentModel } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
 import {
@@ -469,7 +466,7 @@ export const sendChatMessage = async (
         data: message,
       }),
     ]
-    if (conversation.sourceId?.startsWith(WEBCHAT_SOURCE_PREFIX)) {
+    if (conversation.sourceId) {
       promises.push(
         broadcastToGuestParty(conversation.sourceId, {
           eventType: RealtimeEventType.messageCreated,

@@ -8,11 +8,9 @@ export const analyticsStatus = pgEnum(
 )
 
 export const analyticsManifestStatusModel = pgTable("AnalyticsManifestStatus", {
-  id: text().primaryKey(),
+  ...sharedColumns,
   status: analyticsStatus().notNull(),
   attempts: integer().notNull().default(0),
   ingestedAt: timestamp(),
   lastError: text(),
-  createdAt: sharedColumns.createdAt,
-  updatedAt: sharedColumns.updatedAt,
 })

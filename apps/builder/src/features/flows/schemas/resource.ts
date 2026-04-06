@@ -7,6 +7,7 @@ export const flowResource = createSelectSchema(flowModel, {
   workspaceId: z.string(),
   folderId: z.string().nullable(),
   currentVersionId: z.string().nullable(),
+  draftVersionId: z.string().nullable(),
 })
 export type FlowResource = z.infer<typeof flowResource>
 

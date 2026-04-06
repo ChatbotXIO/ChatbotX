@@ -7,7 +7,7 @@ export const broadcastMessageToWorkspaceParty = async (
   message: OutgoingMessage,
 ) => {
   const websocketClient = getRealtimeClient(ctx)
-  await websocketClient.post(`/parties/space/${message.workspaceId}`, {
+  await websocketClient.post(`/parties/workspaces/${message.workspaceId}`, {
     json: {
       eventType: "messageCreated",
       data: message,

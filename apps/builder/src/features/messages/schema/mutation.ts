@@ -1,5 +1,4 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
-import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -63,13 +62,9 @@ export const createWebchatMessageRequest = z
   .and(
     z.object({
       clientId: z.string().optional(),
-      workspaceId: z.string(),
-      webchatId: z.string(),
-      guestConversationId: z
-        .string()
-        .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
-          message: "Invalid guest conversation ID",
-        }),
+      workspaceId: zodBigintAsString(),
+      webchatId: zodBigintAsString(),
+      guestConversationId: zodBigintAsString(),
       ref: z.string().optional(),
     }),
   )

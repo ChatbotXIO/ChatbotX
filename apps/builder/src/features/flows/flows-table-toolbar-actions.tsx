@@ -1,6 +1,5 @@
 "use client"
 
-import type { FlowModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { Table } from "@tanstack/react-table"
@@ -10,11 +9,14 @@ import { useTranslations } from "next-intl"
 import { type Dispatch, type SetStateAction, useState } from "react"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { DeleteFlowsDialog } from "./delete-flow-dialog"
+import type { FlowResource } from "./schemas/resource"
 
 type FlowsTableToolbarActionsProps = {
-  table: Table<FlowModel>
+  table: Table<FlowResource>
   workspaceId: string
-  setRowAction: Dispatch<SetStateAction<DataTableRowAction<FlowModel> | null>>
+  setRowAction: Dispatch<
+    SetStateAction<DataTableRowAction<FlowResource> | null>
+  >
 }
 
 export function FlowsTableToolbarActions({

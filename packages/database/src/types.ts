@@ -71,5 +71,3 @@ export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type OrganizationMember =
   typeof schema.organizationMemberModel.$inferSelect
-
-export const WEBCHAT_SOURCE_PREFIX = "cw:"

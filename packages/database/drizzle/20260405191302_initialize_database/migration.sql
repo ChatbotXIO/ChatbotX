@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS "vector";--> statement-breakpoint
 CREATE TYPE "aiEmbeddingStatus" AS ENUM('pending', 'success', 'error', 'processing');--> statement-breakpoint
 CREATE TYPE "analyticsStatus" AS ENUM('processing', 'ingested', 'failed');--> statement-breakpoint
 CREATE TYPE "fileType" AS ENUM('image', 'video', 'audio', 'gif', 'file');--> statement-breakpoint
@@ -104,13 +104,13 @@ CREATE TABLE "AITriggerToIntegrationOpenai" (
 );
 --> statement-breakpoint
 CREATE TABLE "AnalyticsManifestStatus" (
-	"id" text PRIMARY KEY,
+	"id" bigint PRIMARY KEY,
+	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
+	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"status" "analyticsStatus" NOT NULL,
 	"attempts" integer DEFAULT 0 NOT NULL,
 	"ingestedAt" timestamp,
-	"lastError" text,
-	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL
+	"lastError" text
 );
 --> statement-breakpoint
 CREATE TABLE "Attachment" (
@@ -280,9 +280,9 @@ CREATE TABLE "ContactInbox" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"originalContactId" text NOT NULL,
-	"contactId" text NOT NULL,
-	"inboxId" text NOT NULL,
+	"originalContactId" bigint NOT NULL,
+	"contactId" bigint NOT NULL,
+	"inboxId" bigint NOT NULL,
 	"channel" text NOT NULL,
 	"source" text NOT NULL,
 	"sourceId" text NOT NULL,
@@ -444,7 +444,7 @@ CREATE TABLE "Flow" (
 	"active" boolean DEFAULT true NOT NULL,
 	"enableInInbox" boolean DEFAULT true NOT NULL,
 	"currentVersionId" bigint,
-	"draftVersionId" text,
+	"draftVersionId" bigint,
 	"workspaceId" bigint NOT NULL,
 	"folderId" bigint
 );

@@ -1,4 +1,3 @@
-import { WEBCHAT_SOURCE_PREFIX } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { attachmentResource } from "@/features/attachments/schema/resource"
@@ -39,10 +38,6 @@ export type FindMessageRequest = z.infer<typeof findMessageRequest>
 export const listGuestMessagesRequest = z.object({
   perPage: z.coerce.number().optional().default(20),
   cursor: z.string().optional(),
-  guestConversationId: z
-    .string()
-    .refine((id) => id.startsWith(WEBCHAT_SOURCE_PREFIX), {
-      message: "Invalid guest conversation ID",
-    }),
+  guestConversationId: zodBigintAsString(),
 })
 export type ListGuestMessagesRequest = z.infer<typeof listGuestMessagesRequest>

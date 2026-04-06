@@ -9,7 +9,7 @@ export const flowModel = pgTable("Flow", {
   active: boolean().default(true).notNull(),
   enableInInbox: boolean().default(true).notNull(),
   currentVersionId: bigintAsString(),
-  draftVersionId: text(),
+  draftVersionId: bigintAsString(),
   workspaceId: bigintAsString()
     .notNull()
     .references(() => workspaceModel.id, {

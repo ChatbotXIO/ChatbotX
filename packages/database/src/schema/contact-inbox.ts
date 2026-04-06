@@ -1,13 +1,17 @@
 import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
-import { sharedColumns, timestampConfig } from "../partials/shared"
+import {
+  bigintAsString,
+  sharedColumns,
+  timestampConfig,
+} from "../partials/shared"
 
 export const contactInboxModel = pgTable(
   "ContactInbox",
   {
     ...sharedColumns,
-    originalContactId: text().notNull(),
-    contactId: text().notNull(),
-    inboxId: text().notNull(),
+    originalContactId: bigintAsString().notNull(),
+    contactId: bigintAsString().notNull(),
+    inboxId: bigintAsString().notNull(),
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),

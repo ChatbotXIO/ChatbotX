@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "42c1c820-7a5d-4aad-8b86-ec8e23a31dea",
+  "id": "1f84963d-4b61-432b-bef3-f2a515ed10d0",
   "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
@@ -1389,7 +1389,7 @@
       "table": "AITriggerToIntegrationOpenai"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -1397,6 +1397,32 @@
       "generated": null,
       "identity": null,
       "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsManifestStatus"
@@ -1449,32 +1475,6 @@
       "generated": null,
       "identity": null,
       "name": "lastError",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsManifestStatus"
@@ -3170,7 +3170,7 @@
       "table": "ContactInbox"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -3183,7 +3183,7 @@
       "table": "ContactInbox"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -3196,7 +3196,7 @@
       "table": "ContactInbox"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -4808,7 +4808,7 @@
       "table": "Flow"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,

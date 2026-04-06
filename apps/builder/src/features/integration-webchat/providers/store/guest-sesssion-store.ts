@@ -1,8 +1,5 @@
 import type { WebchatPersistentMenu } from "@chatbotx.io/database/partials"
-import {
-  type IntegrationWebchatModel,
-  WEBCHAT_SOURCE_PREFIX,
-} from "@chatbotx.io/database/types"
+import type { IntegrationWebchatModel } from "@chatbotx.io/database/types"
 import type { MessageButtonTemplate } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import ky from "ky"
@@ -71,7 +68,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
 
       let guestId = localStorage.getItem(GUEST_CONVERSATION_ID_KEY)
       if (!guestId) {
-        guestId = `${WEBCHAT_SOURCE_PREFIX}${createId()}`
+        guestId = createId()
         localStorage.setItem(GUEST_CONVERSATION_ID_KEY, guestId)
       }
       set({ guestConversationId: guestId })

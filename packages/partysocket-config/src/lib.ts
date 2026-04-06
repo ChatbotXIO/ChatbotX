@@ -14,7 +14,7 @@ export async function broadcastToWorkspaceParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/space/${workspaceId}`,
+      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/workspaces/${workspaceId}`,
       {
         headers: {
           "X-API-KEY": env.PARTYSOCKET_API_KEY,

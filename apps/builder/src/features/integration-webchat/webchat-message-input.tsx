@@ -44,7 +44,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
     form,
     handleSubmitWithAction,
     resetFormAndAction,
-    form: { control, setValue, resetField, reset },
+    form: { control, setValue, reset },
   } = useHookFormAction(
     createWebchatMessageAction,
     zodResolver(createWebchatMessageRequest),
@@ -56,7 +56,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
             sendMessage(input.text)
           }
 
-          resetField("text")
+          setValue("text", "")
           textareaRef.current?.focus()
         },
         onSuccess: () => {
@@ -88,9 +88,9 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
 
   useEffect(() => {
     if (files.length > 0) {
-      resetField("text")
+      setValue("text", "")
     }
-  }, [files, resetField])
+  }, [files, setValue])
 
   const onSelectEmoji = (emoji: string) => {
     if (files.length > 0) {
