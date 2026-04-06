@@ -9,7 +9,7 @@ DROP VIEW IF EXISTS conversation_handoffs_hourly_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS conversation_handoffs_hourly_mv
 TO conversation_handoffs_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     multiIf(
         event_type IN ('conversation_assigned', 'conversation_transferred_to_human'), 'to_human',
@@ -23,12 +23,12 @@ WHERE event_type IN (
     'conversation_transferred_to_human',
     'conversation_transferred_to_bot'
 )
-GROUP BY chatbot_id, hour, direction;
+GROUP BY workspace_id, hour, direction;
 
 -- Step 3: Backfill conversation_handoffs_hourly for new transfer events (if any exist)
 INSERT INTO conversation_handoffs_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     multiIf(
         event_type IN ('conversation_assigned', 'conversation_transferred_to_human'), 'to_human',
@@ -37,4 +37,4 @@ SELECT
     countState() as handoff_count_state
 FROM conversation_events
 WHERE event_type IN ('conversation_transferred_to_human', 'conversation_transferred_to_bot')
-GROUP BY chatbot_id, hour, direction;
+GROUP BY workspace_id, hour, direction;

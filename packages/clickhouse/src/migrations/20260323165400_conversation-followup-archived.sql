@@ -6,12 +6,12 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS conversation_followups_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     followup_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour)
+ORDER BY (workspace_id, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -20,12 +20,12 @@ SETTINGS index_granularity = 8192;
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS conversation_archived_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     archived_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour)
+ORDER BY (workspace_id, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -36,12 +36,12 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS conversation_followups_hourly_mv
 TO conversation_followups_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as followup_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_followed'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- ============================================================
 -- PART 4: Create materialized view for conversation_archived
@@ -50,12 +50,12 @@ GROUP BY chatbot_id, hour;
 CREATE MATERIALIZED VIEW IF NOT EXISTS conversation_archived_hourly_mv
 TO conversation_archived_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as archived_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_archived'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- ============================================================
 -- PART 5: Backfill conversation_followups_hourly (if any exist)
@@ -63,12 +63,12 @@ GROUP BY chatbot_id, hour;
 
 INSERT INTO conversation_followups_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as followup_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_followed'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- ============================================================
 -- PART 6: Backfill conversation_archived_hourly (if any exist)
@@ -76,9 +76,9 @@ GROUP BY chatbot_id, hour;
 
 INSERT INTO conversation_archived_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as archived_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_archived'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;

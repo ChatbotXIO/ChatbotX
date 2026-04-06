@@ -2,7 +2,6 @@ import { clickhouseEventWriter } from "./clickhouse-event-writer"
 
 export interface EventRow {
   channel: string | null
-  chatbot_id: string
   contact_id: string
   country: string | null
   event_id: string
@@ -13,12 +12,12 @@ export interface EventRow {
   sender_type: string
   source: string | null
   source_id: string | null
+  workspace_id: string
 }
 
 export interface BotMessageEventRow {
   ai_provider: string
   channel: string | null
-  chatbot_id: string
   conversation_id: string
   event_id: string
   has_response: number
@@ -30,11 +29,11 @@ export interface BotMessageEventRow {
   result: string
   route_type: string
   source: string | null
+  workspace_id: string
 }
 
 export interface ConversationEventRow {
   channel: string
-  chatbot_id: string
   conversation_id: string
   event_id: string
   event_type: string
@@ -43,6 +42,7 @@ export interface ConversationEventRow {
   metadata: string
   occurred_at: number
   to_assignee: string
+  workspace_id: string
 }
 
 export interface EventWriter {

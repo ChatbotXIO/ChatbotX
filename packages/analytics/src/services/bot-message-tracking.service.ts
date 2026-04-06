@@ -22,7 +22,7 @@ export class BotMessageTrackingService extends BaseService {
     const row = {
       event_id: this.getEventId(event),
       event_type: "bot_message_received",
-      chatbot_id: event.workspaceId,
+      workspace_id: event.workspaceId,
       message_id: event.messageId,
       conversation_id: event.conversationId,
       occurred_at: Math.floor(event.occurredAt.getTime() / 1000),

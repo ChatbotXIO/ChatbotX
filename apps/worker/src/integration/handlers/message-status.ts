@@ -1,4 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
+import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type { IntegrationType } from "@chatbotx.io/database/types"
 import { emit, MessageEventType } from "@chatbotx.io/event-bus"
 import { uploader } from "@chatbotx.io/filesystem"
@@ -55,7 +56,6 @@ export const handleMessageStatus = async (
       where: {
         sourceId: conversation.sourceId,
         workspaceId: ctx.chatbot.id,
-        inboxId: ctx.inbox.id,
       },
       with: {
         contact: true,
@@ -65,6 +65,17 @@ export const handleMessageStatus = async (
     if (!chatConversation) {
       throw new SdkException("Unable to find conversation")
     }
+
+    const contactInbox = await db
+      .select({ id: contactInboxModel.id })
+      .from(contactInboxModel)
+      .where(
+        and(
+          eq(contactInboxModel.contactId, chatConversation.contact.id),
+          eq(contactInboxModel.inboxId, ctx.inbox.id),
+        ),
+      )
+      .then((rows) => rows[0])
 
     const message = await db.query.messageModel.findFirst({
       where: {
@@ -79,6 +90,7 @@ export const handleMessageStatus = async (
       contactId: chatConversation.contact.id,
       conversationId: chatConversation.id,
       channel: inbox.channel,
+      contactInboxId: contactInbox?.id ?? "",
       messageId: message?.id,
       occurredAt: new Date(),
       metadata: {},
@@ -133,6 +145,7 @@ export const handleMessageStatus = async (
       conversationId: message.conversationId,
       action: button.postback,
       ref: null,
+      inboxId: ctx.inbox.id,
     })
   } catch (error) {
     logger.error(

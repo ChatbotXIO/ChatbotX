@@ -2,11 +2,14 @@
 
 CREATE TABLE IF NOT EXISTS broadcast_events (
   event_id String,
-  chatbot_id String,
+  workspace_id String,
   broadcast_id String,
 
   contact_id String,
+  contact_inbox_id String,
   conv_id String,
+  source_id String,
+  channel LowCardinality(String),
 
   event_type LowCardinality(String),
 
@@ -17,5 +20,5 @@ CREATE TABLE IF NOT EXISTS broadcast_events (
   inserted_at DateTime('UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(occurred_at)
-ORDER BY (chatbot_id, broadcast_id, batch_id, event_type, contact_id)
+ORDER BY (workspace_id, broadcast_id, batch_id, event_type, contact_id)
 TTL occurred_at + INTERVAL 10 YEAR;

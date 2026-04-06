@@ -1,5 +1,5 @@
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
-import { broadcastModel, conversationModel } from "@chatbotx.io/database/schema"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { broadcastModel } from "@chatbotx.io/database/schema"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
 import {
   ChatJobAction,
@@ -65,34 +65,44 @@ export const sendBroadcast = async (broadcastId: string) => {
     }
   }
 
-  const whereConditions = [
-    inArray(
-      conversationModel.contactId,
-      contactsOnBroadcasts.map((cb) => cb.contactId),
-    ),
-  ]
-
-  if (validInboxIds && validInboxIds.length > 0) {
-    whereConditions.push(inArray(conversationModel.inboxId, validInboxIds))
+  const where = {
+    contactId: {
+      in: contactsOnBroadcasts.map((cb) => cb.contactId),
+    },
+    ...(validInboxIds?.length && {
+      inboxId: { in: validInboxIds },
+    }),
   }
 
-  const conversations = await db
-    .select({ id: conversationModel.id })
-    .from(conversationModel)
-    .where(and(...whereConditions))
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where,
+    columns: {
+      id: true,
+      inboxId: true,
+    },
+    with: {
+      conversation: {
+        columns: {
+          id: true,
+          contactId: true,
+        },
+      },
+    },
+  })
 
   try {
     await Promise.allSettled(
-      conversations.map(async (cvst) => {
+      contactInboxes.map(async (cvst) => {
         if (broadcast.flowId) {
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
             type: IntegrationJobAction.sendFlow,
             data: {
               flowId: broadcast.flowId,
-              conversationId: cvst.id,
+              conversationId: cvst.conversation.id,
               metadata: {
                 type: "broadcast",
                 broadcastId: broadcast.id,
+                contactInboxId: cvst.id,
               },
             },
           })
@@ -102,7 +112,7 @@ export const sendBroadcast = async (broadcastId: string) => {
           await chatQueue.add(ChatJobAction.sendWhatsappTemplateMessage, {
             type: ChatJobAction.sendWhatsappTemplateMessage,
             data: {
-              conversationId: cvst.id,
+              conversationId: cvst.conversation.id,
               templateId: broadcast.templateId,
               broadcastId: broadcast.id,
               templateData: broadcast.templateData as
@@ -111,6 +121,7 @@ export const sendBroadcast = async (broadcastId: string) => {
               metadata: {
                 type: "broadcast",
                 broadcastId: broadcast.id,
+                contactInboxId: cvst.id,
               },
             },
           })

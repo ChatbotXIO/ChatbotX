@@ -6,12 +6,12 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS conversation_assigned_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     assigned_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour)
+ORDER BY (workspace_id, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -22,12 +22,12 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS conversation_assigned_hourly_mv
 TO conversation_assigned_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as assigned_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_assigned'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- ============================================================
 -- PART 3: Backfill conversation_assigned_hourly (if any exist)
@@ -35,9 +35,9 @@ GROUP BY chatbot_id, hour;
 
 INSERT INTO conversation_assigned_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     countState() as assigned_count_state
 FROM conversation_events
 WHERE event_type = 'conversation_assigned'
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;

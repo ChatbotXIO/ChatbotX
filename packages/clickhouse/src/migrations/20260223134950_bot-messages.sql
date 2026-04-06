@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS bot_message_events;
 CREATE TABLE IF NOT EXISTS bot_message_events (
     event_id String,
     event_type LowCardinality(String),
-    chatbot_id String,
+    workspace_id String,
     message_id String,
     conversation_id String,
     occurred_at UInt32,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS bot_message_events (
     inserted_at DateTime('UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(toDateTime(occurred_at, 'UTC'))
-ORDER BY (chatbot_id, occurred_at, has_response, result)
+ORDER BY (workspace_id, occurred_at, has_response, result)
 TTL toDateTime(occurred_at, 'UTC') + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -47,7 +47,7 @@ SETTINGS index_granularity = 8192;
 
 -- Minute-level stats (30 days retention)
 CREATE TABLE IF NOT EXISTS bot_messages_minute (
-    chatbot_id String,
+    workspace_id String,
     minute DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
@@ -57,13 +57,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_minute (
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(minute)
-ORDER BY (chatbot_id, minute, has_response, response_type, route_type, result, ai_provider)
+ORDER BY (workspace_id, minute, has_response, response_type, route_type, result, ai_provider)
 TTL minute + INTERVAL 30 DAY
 SETTINGS index_granularity = 8192;
 
 -- Hourly stats (12 months retention)
 CREATE TABLE IF NOT EXISTS bot_messages_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
@@ -73,13 +73,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_hourly (
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, has_response, response_type, route_type, result, ai_provider)
+ORDER BY (workspace_id, hour, has_response, response_type, route_type, result, ai_provider)
 TTL hour + INTERVAL 12 MONTH
 SETTINGS index_granularity = 8192;
 
 -- Daily stats (3 years retention)
 CREATE TABLE IF NOT EXISTS bot_messages_daily (
-    chatbot_id String,
+    workspace_id String,
     day Date,
     has_response UInt8,
     response_type LowCardinality(String),
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS bot_messages_daily (
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYear(day)
-ORDER BY (chatbot_id, day, has_response, response_type, route_type, result, ai_provider)
+ORDER BY (workspace_id, day, has_response, response_type, route_type, result, ai_provider)
 TTL day + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -98,7 +98,7 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_minute_mv
 TO bot_messages_minute
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfMinute(toDateTime(occurred_at, 'UTC')) as minute,
     has_response,
     response_type,
@@ -107,12 +107,12 @@ AS SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, minute, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, minute, has_response, response_type, route_type, result, ai_provider;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_hourly_mv
 TO bot_messages_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     has_response,
     response_type,
@@ -121,12 +121,12 @@ AS SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, hour, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, hour, has_response, response_type, route_type, result, ai_provider;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_daily_mv
 TO bot_messages_daily
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toDate(toDateTime(occurred_at, 'UTC')) as day,
     has_response,
     response_type,
@@ -135,7 +135,7 @@ AS SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, day, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, day, has_response, response_type, route_type, result, ai_provider;
 
 -- Create indexes for better query performance
 ALTER TABLE bot_message_events ADD INDEX IF NOT EXISTS idx_event_id event_id TYPE bloom_filter GRANULARITY 1;

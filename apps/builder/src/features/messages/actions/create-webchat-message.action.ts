@@ -88,6 +88,7 @@ export async function handleCreateWebchatMessage({
       data: {
         conversationId: conversation.id,
         action: parsedInput.postback,
+        inboxId: contactInbox.inboxId,
       },
     })
   }

@@ -23,7 +23,7 @@ export class ContactTrackingService extends BaseService {
 
       const row = {
         event_id: this.getEventId(event),
-        chatbot_id: event.workspaceId,
+        workspace_id: event.workspaceId,
         contact_id: event.contactId,
         event_type: event.eventType,
         sender_type: event.senderType || "",

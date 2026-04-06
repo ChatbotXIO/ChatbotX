@@ -1,30 +1,16 @@
+import { metadataSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 import { MessageEventType } from "./types"
 
-const broadcastMetadata = z.object({
-  type: z.literal("broadcast"),
-  broadcastId: z.string(),
-})
-
-const sequenceScheduleMetadata = z.object({
-  type: z.literal("sequenceSchedule"),
-  stepId: z.string(),
-  sequenceId: z.string(),
-  dispatchId: z.string(),
-})
-
-export const messageSourceMetadataSchema = z.discriminatedUnion("type", [
-  broadcastMetadata,
-  sequenceScheduleMetadata,
-])
-
 const basePayloadSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   contactId: z.string(),
   conversationId: z.string(),
   channel: z.string(),
+  contactInboxId: z.string().optional(),
+  sourceId: z.string().optional(),
   occurredAt: z.date(),
-  metadata: messageSourceMetadataSchema.optional(),
+  metadata: metadataSchema.optional(),
   messageId: z.string().optional(),
   messageDetail: z.record(z.string(), z.unknown()).optional(),
 })

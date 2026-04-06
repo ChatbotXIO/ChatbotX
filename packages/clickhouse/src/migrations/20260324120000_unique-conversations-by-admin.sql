@@ -6,13 +6,13 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS unique_conversations_by_admin_hourly (
-    chatbot_id String,
+    workspace_id String,
     to_assignee String,
     hour DateTime,
     unique_conversation_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, to_assignee, hour)
+ORDER BY (workspace_id, to_assignee, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -23,14 +23,14 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS unique_conversations_by_admin_hourly_mv
 TO unique_conversations_by_admin_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     to_assignee,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(conversation_id) as unique_conversation_state
 FROM conversation_events
 WHERE event_type = 'conversation_assigned'
     AND to_assignee != ''
-GROUP BY chatbot_id, to_assignee, hour;
+GROUP BY workspace_id, to_assignee, hour;
 
 -- ============================================================
 -- PART 3: Backfill unique_conversations_by_admin_hourly (if any exist)
@@ -38,11 +38,11 @@ GROUP BY chatbot_id, to_assignee, hour;
 
 INSERT INTO unique_conversations_by_admin_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     to_assignee,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(conversation_id) as unique_conversation_state
 FROM conversation_events
 WHERE event_type = 'conversation_assigned'
     AND to_assignee != ''
-GROUP BY chatbot_id, to_assignee, hour;
+GROUP BY workspace_id, to_assignee, hour;

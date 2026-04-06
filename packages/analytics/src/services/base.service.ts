@@ -175,7 +175,7 @@ export abstract class BaseService {
   }
 
   protected async canWrite(row: {
-    chatbot_id: string
+    workspace_id: string
     contact_id?: string
     message_id?: string
     event_type: string
@@ -192,7 +192,7 @@ export abstract class BaseService {
 
     const hourTimestamp = Math.floor(Date.now() / (3600 * 1000)) * 3600
     const identifier = row.contact_id || row.message_id || "unknown"
-    const key = `dedup:${row.chatbot_id}:${identifier}:${eventType}:${hourTimestamp}`
+    const key = `dedup:${row.workspace_id}:${identifier}:${eventType}:${hourTimestamp}`
 
     const result = await this.redis.set(key, "1", "EX", this.dedupTTL, "NX")
 

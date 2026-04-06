@@ -6,13 +6,13 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS contacts_by_admin_hourly (
-    chatbot_id String,
+    workspace_id String,
     admin_id String,
     hour DateTime,
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, admin_id, hour)
+ORDER BY (workspace_id, admin_id, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -23,14 +23,14 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS contacts_by_admin_hourly_mv
 TO contacts_by_admin_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     admin_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(contact_id) as unique_contacts_state
 FROM contact_events
 WHERE sender_type = 'human'
     AND admin_id != ''
-GROUP BY chatbot_id, admin_id, hour;
+GROUP BY workspace_id, admin_id, hour;
 
 -- ============================================================
 -- PART 3: Backfill contacts_by_admin_hourly from existing data
@@ -38,11 +38,11 @@ GROUP BY chatbot_id, admin_id, hour;
 
 INSERT INTO contacts_by_admin_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     admin_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(contact_id) as unique_contacts_state
 FROM contact_events
 WHERE sender_type = 'human'
     AND admin_id != ''
-GROUP BY chatbot_id, admin_id, hour;
+GROUP BY workspace_id, admin_id, hour;

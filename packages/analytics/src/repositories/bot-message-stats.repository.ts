@@ -34,7 +34,7 @@ export class BotMessageStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         month_group as month,
         result,
         response_type,
@@ -42,24 +42,24 @@ export class BotMessageStatsRepository extends BaseRepository {
         sum(count) as count
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           ${monthGroup} as month_group,
           result,
           response_type,
           ai_provider,
           uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND result != ''
           AND ${timeFilter.sql}
-        GROUP BY chatbot_id, month_group, result, response_type, ai_provider
+        GROUP BY workspace_id, month_group, result, response_type, ai_provider
       )
-      GROUP BY chatbot_id, month_group, result, response_type, ai_provider
+      GROUP BY workspace_id, month_group, result, response_type, ai_provider
       ORDER BY month ASC, result ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       month: string
       result: string
       response_type: string
@@ -71,7 +71,7 @@ export class BotMessageStatsRepository extends BaseRepository {
     })
 
     const rows = result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.month),
       hasResponse: true,
       responseType: row.response_type as BotMessageStats["responseType"],
@@ -117,7 +117,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ai_provider,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {workspaceId:String}
+          WHERE workspace_id = {workspaceId:String}
             AND result != ''
             AND ${timeFilter.sql}
           GROUP BY day_group, result, response_type, ai_provider
@@ -169,7 +169,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND result != ''
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, result, response_type, ai_provider
@@ -221,7 +221,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             response_type,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {workspaceId:String}
+          WHERE workspace_id = {workspaceId:String}
             AND has_response = 0
             AND ${timeFilter.sql}
           GROUP BY day_group, has_response, response_type
@@ -263,7 +263,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         response_type,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND has_response = 0
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, has_response, response_type
@@ -315,7 +315,7 @@ export class BotMessageStatsRepository extends BaseRepository {
             ai_provider,
             uniqExactMerge(unique_messages_state) as count
           FROM bot_messages_hourly
-          WHERE chatbot_id = {workspaceId:String}
+          WHERE workspace_id = {workspaceId:String}
             AND has_response = 1
             AND ${timeFilter.sql}
           GROUP BY day_group, response_type, result, ai_provider
@@ -384,7 +384,7 @@ export class BotMessageStatsRepository extends BaseRepository {
         ai_provider,
         uniqExactMerge(unique_messages_state) as count
       FROM ${table}
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND has_response = 1
         AND ${timeFilter.sql}
       GROUP BY ${timeColumn}, response_type, result, ai_provider
@@ -428,7 +428,7 @@ export class BotMessageStatsRepository extends BaseRepository {
           ai_provider,
           uniqExactMerge(unique_messages_state) as count
         FROM bot_messages_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND has_response = 1
           AND response_type = 'ai_agent'
           AND ai_provider != 'none'

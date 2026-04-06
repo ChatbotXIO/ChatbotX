@@ -21,7 +21,7 @@ export class ConversationTrackingService extends BaseService {
 
     const row = {
       event_id: this.getEventId(event),
-      chatbot_id: event.workspaceId,
+      workspace_id: event.workspaceId,
       conversation_id: event.conversationId,
       event_type: event.eventType,
       occurred_at: Math.floor(event.occurredAt.getTime() / 1000),

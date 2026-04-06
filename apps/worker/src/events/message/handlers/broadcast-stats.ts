@@ -31,10 +31,13 @@ export const broadcastStathandler = {
       ) {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "delivered",
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -79,10 +82,13 @@ export const broadcastStathandler = {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "failed",
           content: JSON.stringify({
             error: payload.errorData,
@@ -107,10 +113,13 @@ export const broadcastStathandler = {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "delivered",
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -173,12 +182,21 @@ export const broadcastStathandler = {
         continue
       }
 
+      const contactInboxMap = new Map(
+        chatbotPayloads
+          .filter((p) => p.contactInboxId)
+          .map((p) => [p.contactId, p.contactInboxId as string]),
+      )
+
       const insertedData: BroadcastStatsType[] = filtered.map((b) => ({
         event_id: createId(),
-        chatbot_id: workspaceId,
+        workspace_id: workspaceId,
         broadcast_id: b.broadcastId,
+        contact_inbox_id: contactInboxMap.get(b.contactId) ?? "",
         contact_id: b.contactId,
         conv_id: "",
+        source_id: "",
+        channel: "",
         event_type: "seen",
         content: JSON.stringify({}),
         occurred_at: toClickHouseDateTime(seenAt),
@@ -200,10 +218,13 @@ export const broadcastStathandler = {
       const insertedData: BroadcastStatsType[] = broadcastClicks.map(
         (payload) => ({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           broadcast_id: payload.broadcastId as string,
+          contact_inbox_id: payload.contactInboxId ?? "",
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: "",
+          channel: payload.channel ?? "",
           event_type: "clicked",
           content: JSON.stringify({
             buttonId: payload.buttonId,

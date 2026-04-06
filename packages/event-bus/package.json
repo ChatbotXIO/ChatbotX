@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@chatbotx.io/worker-config": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "zod": "^4.3.6"
   },

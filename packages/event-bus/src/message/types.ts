@@ -4,7 +4,6 @@ import type {
   deliveredPayloadSchema,
   failedPayloadSchema,
   messageEventSchemas,
-  messageSourceMetadataSchema,
   seenPayloadSchema,
   sentPayloadSchema,
 } from "./schemas"
@@ -18,8 +17,6 @@ export const MessageEventType: BaseEventType = {
 
 export type MessageEventType =
   (typeof MessageEventType)[keyof typeof MessageEventType]
-
-export type MessageSourceMetadata = z.infer<typeof messageSourceMetadataSchema>
 
 export type MessageEventMap = InferEventMap<typeof messageEventSchemas>
 export type MessagePayload = MessageEventMap[MessageEventType]

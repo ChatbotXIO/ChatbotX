@@ -25,7 +25,7 @@ export const reconcileContactEvents = async (job: {
     `
     SELECT DISTINCT contact_id
     FROM contact_events
-    WHERE chatbot_id = {workspaceId:String}
+    WHERE workspace_id = {workspaceId:String}
       AND event_type = 'contact_created'
       AND occurred_at >= {from:UInt32}
       AND occurred_at < {to:UInt32}

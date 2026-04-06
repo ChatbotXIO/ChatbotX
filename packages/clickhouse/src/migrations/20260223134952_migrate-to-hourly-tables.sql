@@ -61,7 +61,7 @@ DROP TABLE IF EXISTS conversation_handoffs_daily;
 
 -- Minute-level stats (30 days retention)
 CREATE TABLE IF NOT EXISTS contact_stats_minute (
-    chatbot_id String,
+    workspace_id String,
     minute DateTime,
     event_type LowCardinality(String),
     channel LowCardinality(String),
@@ -70,13 +70,13 @@ CREATE TABLE IF NOT EXISTS contact_stats_minute (
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(minute)
-ORDER BY (chatbot_id, minute, event_type, channel, sender_type)
+ORDER BY (workspace_id, minute, event_type, channel, sender_type)
 TTL minute + INTERVAL 30 DAY
 SETTINGS index_granularity = 8192;
 
 -- Hourly stats (3 years retention)
 CREATE TABLE IF NOT EXISTS contact_stats_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     event_type LowCardinality(String),
     channel LowCardinality(String),
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS contact_stats_hourly (
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, event_type, channel, sender_type)
+ORDER BY (workspace_id, hour, event_type, channel, sender_type)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -94,48 +94,48 @@ SETTINGS index_granularity = 8192;
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS contacts_by_channel_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     channel LowCardinality(String),
     event_count_state AggregateFunction(count),
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, channel)
+ORDER BY (workspace_id, hour, channel)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
 CREATE TABLE IF NOT EXISTS contacts_by_country_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     country LowCardinality(String),
     event_count_state AggregateFunction(count),
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, country)
+ORDER BY (workspace_id, hour, country)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
 CREATE TABLE IF NOT EXISTS contacts_by_source_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     source LowCardinality(String),
     event_count_state AggregateFunction(count),
     unique_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, source)
+ORDER BY (workspace_id, hour, source)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
 CREATE TABLE IF NOT EXISTS active_contacts_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     active_contacts_state AggregateFunction(uniq, String)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour)
+ORDER BY (workspace_id, hour)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -145,7 +145,7 @@ SETTINGS index_granularity = 8192;
 
 -- Minute-level stats (30 days retention)
 CREATE TABLE IF NOT EXISTS bot_messages_minute (
-    chatbot_id String,
+    workspace_id String,
     minute DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
@@ -155,13 +155,13 @@ CREATE TABLE IF NOT EXISTS bot_messages_minute (
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(minute)
-ORDER BY (chatbot_id, minute, has_response, response_type, route_type, result, ai_provider)
+ORDER BY (workspace_id, minute, has_response, response_type, route_type, result, ai_provider)
 TTL minute + INTERVAL 30 DAY
 SETTINGS index_granularity = 8192;
 
 -- Hourly stats (3 years retention)
 CREATE TABLE IF NOT EXISTS bot_messages_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     has_response UInt8,
     response_type LowCardinality(String),
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS bot_messages_hourly (
     event_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, has_response, response_type, route_type, result, ai_provider)
+ORDER BY (workspace_id, hour, has_response, response_type, route_type, result, ai_provider)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -180,13 +180,13 @@ SETTINGS index_granularity = 8192;
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS conversation_handoffs_hourly (
-    chatbot_id String,
+    workspace_id String,
     hour DateTime,
     direction LowCardinality(String),
     handoff_count_state AggregateFunction(count)
 ) ENGINE = AggregatingMergeTree()
 PARTITION BY toYYYYMM(hour)
-ORDER BY (chatbot_id, hour, direction)
+ORDER BY (workspace_id, hour, direction)
 TTL hour + INTERVAL 3 YEAR
 SETTINGS index_granularity = 8192;
 
@@ -197,7 +197,7 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS contact_stats_minute_mv
 TO contact_stats_minute
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfMinute(toDateTime(occurred_at, 'UTC')) as minute,
     event_type,
     channel,
@@ -205,12 +205,12 @@ AS SELECT
     countState() as event_count_state,
     uniqState(contact_id) as unique_contacts_state
 FROM contact_events
-GROUP BY chatbot_id, minute, event_type, channel, sender_type;
+GROUP BY workspace_id, minute, event_type, channel, sender_type;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS contact_stats_hourly_mv
 TO contact_stats_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     event_type,
     channel,
@@ -218,12 +218,12 @@ AS SELECT
     countState() as event_count_state,
     uniqState(contact_id) as unique_contacts_state
 FROM contact_events
-GROUP BY chatbot_id, hour, event_type, channel, sender_type;
+GROUP BY workspace_id, hour, event_type, channel, sender_type;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS contacts_by_channel_hourly_mv
 TO contacts_by_channel_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     channel,
     countState() as event_count_state,
@@ -231,12 +231,12 @@ AS SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND channel != ''
-GROUP BY chatbot_id, hour, channel;
+GROUP BY workspace_id, hour, channel;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS contacts_by_country_hourly_mv
 TO contacts_by_country_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     country,
     countState() as event_count_state,
@@ -244,12 +244,12 @@ AS SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND country != ''
-GROUP BY chatbot_id, hour, country;
+GROUP BY workspace_id, hour, country;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS contacts_by_source_hourly_mv
 TO contacts_by_source_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     source,
     countState() as event_count_state,
@@ -257,17 +257,17 @@ AS SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND source != ''
-GROUP BY chatbot_id, hour, source;
+GROUP BY workspace_id, hour, source;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS active_contacts_hourly_mv
 TO active_contacts_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(contact_id) as active_contacts_state
 FROM contact_events
 WHERE event_type IN ('contact_message_in', 'contact_message_out')
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- ============================================================
 -- PART 7: Create materialized views for bot_messages
@@ -276,7 +276,7 @@ GROUP BY chatbot_id, hour;
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_minute_mv
 TO bot_messages_minute
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfMinute(toDateTime(occurred_at, 'UTC')) as minute,
     has_response,
     response_type,
@@ -285,12 +285,12 @@ AS SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, minute, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, minute, has_response, response_type, route_type, result, ai_provider;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS bot_messages_hourly_mv
 TO bot_messages_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     has_response,
     response_type,
@@ -299,7 +299,7 @@ AS SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, hour, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, hour, has_response, response_type, route_type, result, ai_provider;
 
 -- ============================================================
 -- PART 8: Create materialized view for conversation_handoffs
@@ -308,13 +308,13 @@ GROUP BY chatbot_id, hour, has_response, response_type, route_type, result, ai_p
 CREATE MATERIALIZED VIEW IF NOT EXISTS conversation_handoffs_hourly_mv
 TO conversation_handoffs_hourly
 AS SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     if(to_assignee != '', 'to_human', 'to_bot') as direction,
     countState() as handoff_count_state
 FROM conversation_events
 WHERE event_type IN ('conversation_assigned', 'conversation_unassigned')
-GROUP BY chatbot_id, hour, direction;
+GROUP BY workspace_id, hour, direction;
 
 -- ============================================================
 -- PART 9: Backfill data from source tables to new aggregated tables
@@ -324,7 +324,7 @@ GROUP BY chatbot_id, hour, direction;
 -- Backfill contact_stats_hourly
 INSERT INTO contact_stats_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     event_type,
     channel,
@@ -332,12 +332,12 @@ SELECT
     countState() as event_count_state,
     uniqState(contact_id) as unique_contacts_state
 FROM contact_events
-GROUP BY chatbot_id, hour, event_type, channel, sender_type;
+GROUP BY workspace_id, hour, event_type, channel, sender_type;
 
 -- Backfill contacts_by_channel_hourly
 INSERT INTO contacts_by_channel_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     channel,
     countState() as event_count_state,
@@ -345,12 +345,12 @@ SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND channel != ''
-GROUP BY chatbot_id, hour, channel;
+GROUP BY workspace_id, hour, channel;
 
 -- Backfill contacts_by_country_hourly
 INSERT INTO contacts_by_country_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     country,
     countState() as event_count_state,
@@ -358,12 +358,12 @@ SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND country != ''
-GROUP BY chatbot_id, hour, country;
+GROUP BY workspace_id, hour, country;
 
 -- Backfill contacts_by_source_hourly
 INSERT INTO contacts_by_source_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     source,
     countState() as event_count_state,
@@ -371,22 +371,22 @@ SELECT
 FROM contact_events
 WHERE event_type = 'contact_created'
   AND source != ''
-GROUP BY chatbot_id, hour, source;
+GROUP BY workspace_id, hour, source;
 
 -- Backfill active_contacts_hourly
 INSERT INTO active_contacts_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     uniqState(contact_id) as active_contacts_state
 FROM contact_events
 WHERE event_type IN ('contact_message_in', 'contact_message_out')
-GROUP BY chatbot_id, hour;
+GROUP BY workspace_id, hour;
 
 -- Backfill bot_messages_hourly
 INSERT INTO bot_messages_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     has_response,
     response_type,
@@ -395,15 +395,15 @@ SELECT
     ai_provider,
     countState() as event_count_state
 FROM bot_message_events
-GROUP BY chatbot_id, hour, has_response, response_type, route_type, result, ai_provider;
+GROUP BY workspace_id, hour, has_response, response_type, route_type, result, ai_provider;
 
 -- Backfill conversation_handoffs_hourly
 INSERT INTO conversation_handoffs_hourly
 SELECT
-    chatbot_id,
+    workspace_id,
     toStartOfHour(toDateTime(occurred_at, 'UTC')) as hour,
     if(to_assignee != '', 'to_human', 'to_bot') as direction,
     countState() as handoff_count_state
 FROM conversation_events
 WHERE event_type IN ('conversation_assigned', 'conversation_unassigned')
-GROUP BY chatbot_id, hour, direction;
+GROUP BY workspace_id, hour, direction;

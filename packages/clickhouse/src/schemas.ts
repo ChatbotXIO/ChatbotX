@@ -2,10 +2,13 @@ import z from "zod"
 
 export const BroadcastStatsModel = z.object({
   event_id: z.string(),
-  chatbot_id: z.string(),
+  workspace_id: z.string(),
   broadcast_id: z.string(),
+  contact_inbox_id: z.string(),
   contact_id: z.string(),
   conv_id: z.string(),
+  source_id: z.string().default(""),
+  channel: z.string().default(""),
   event_type: z.string(),
   content: z.string().optional(),
   occurred_at: z.string(),
@@ -21,9 +24,12 @@ export type ClickHouseContactResponseRow = Pick<
 
 export const SequenceScheduleEventModel = z.object({
   event_id: z.string(),
-  chatbot_id: z.string(),
+  workspace_id: z.string(),
+  contact_inbox_id: z.string(),
   contact_id: z.string(),
   conv_id: z.string(),
+  source_id: z.string().default(""),
+  channel: z.string().default(""),
   event_type: z.string(),
   sequence_id: z.string(),
   step_id: z.string(),

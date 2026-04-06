@@ -12,7 +12,7 @@ import type {
   MessageSeenPayload,
   MessageSentPayload,
 } from "@chatbotx.io/event-bus"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { format } from "date-fns"
 
 function toClickHouseDateTime(date: Date): string {
@@ -31,12 +31,15 @@ export const sequenceStathandler = {
       ) {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
-          sequence_id: payload.metadata.sequenceId,
-          step_id: payload.metadata.stepId,
+          workspace_id: payload.workspaceId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "delivered",
+          sequence_id: payload.metadata.sequenceId,
+          step_id: payload.metadata.stepId,
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
@@ -81,11 +84,14 @@ export const sequenceStathandler = {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "failed",
           content: JSON.stringify({
             error: payload.errorData,
@@ -110,11 +116,14 @@ export const sequenceStathandler = {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
+          contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
+          source_id: payload.sourceId ?? "",
+          channel: payload.channel ?? "",
           event_type: "delivered",
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -165,13 +174,22 @@ export const sequenceStathandler = {
         continue
       }
 
+      const contactInboxMap = new Map(
+        chatbotPayloads
+          .filter((p) => p.contactInboxId)
+          .map((p) => [p.contactId, p.contactInboxId as string]),
+      )
+
       const insertedData: SequenceScheduleEventType[] = filtered.map((s) => ({
         event_id: createId(),
-        chatbot_id: workspaceId,
+        workspace_id: workspaceId,
         sequence_id: s.sequenceId,
         step_id: s.lastStepId || "",
         contact_id: s.contactId,
+        contact_inbox_id: contactInboxMap.get(s.contactId) ?? "",
         conv_id: "",
+        source_id: "",
+        channel: "",
         event_type: "seen",
         content: JSON.stringify({}),
         occurred_at: toClickHouseDateTime(seenAt),
@@ -193,11 +211,14 @@ export const sequenceStathandler = {
       const insertedData: SequenceScheduleEventType[] = sequenceClicks.map(
         (payload) => ({
           event_id: createId(),
-          chatbot_id: payload.workspaceId,
+          workspace_id: payload.workspaceId,
           sequence_id: payload.sequenceId as string,
           step_id: payload.stepId || "",
           contact_id: payload.contactId,
+          contact_inbox_id: payload.contactInboxId ?? "",
           conv_id: payload.conversationId,
+          source_id: "",
+          channel: payload.channel ?? "",
           event_type: "clicked",
           content: JSON.stringify({
             buttonId: payload.buttonId,

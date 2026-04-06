@@ -35,21 +35,21 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         minute,
         event_type,
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contact_stats_minute
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
         ${eventTypeFilter}
-      GROUP BY chatbot_id, minute, event_type
+      GROUP BY workspace_id, minute, event_type
       ORDER BY minute ASC, event_type ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       minute: string
       event_type: ContactEventType
       count: string
@@ -60,7 +60,7 @@ export class ContactStatsRepository extends BaseRepository {
     })
 
     return result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.minute),
       eventType: row.event_type,
       count: Number(row.count),
@@ -81,21 +81,21 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         hour,
         event_type,
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contact_stats_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
         ${eventTypeFilter}
-      GROUP BY chatbot_id, hour, event_type
+      GROUP BY workspace_id, hour, event_type
       ORDER BY hour ASC, event_type ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       hour: string
       event_type: ContactEventType
       count: string
@@ -106,7 +106,7 @@ export class ContactStatsRepository extends BaseRepository {
     })
 
     return result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.hour),
       eventType: row.event_type,
       count: Number(row.count),
@@ -127,30 +127,30 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         month_group as month,
         event_type,
         sum(count) as count,
         sum(unique_contacts) as unique_contacts
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           ${monthGroup} as month_group,
           event_type,
           countMerge(event_count_state) as count,
           uniqMerge(unique_contacts_state) as unique_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
           ${eventTypeFilter}
-        GROUP BY chatbot_id, month_group, event_type
+        GROUP BY workspace_id, month_group, event_type
       )
-      GROUP BY chatbot_id, month_group, event_type
+      GROUP BY workspace_id, month_group, event_type
       ORDER BY month ASC, event_type ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       month: string
       event_type: ContactEventType
       count: string
@@ -161,7 +161,7 @@ export class ContactStatsRepository extends BaseRepository {
     })
 
     const rows = result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.month),
       eventType: row.event_type,
       count: Number(row.count),
@@ -198,30 +198,30 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         day_group as day,
         event_type,
         sum(count) as count,
         sum(unique_contacts) as unique_contacts
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           ${dayGroup} as day_group,
           event_type,
           countMerge(event_count_state) as count,
           uniqMerge(unique_contacts_state) as unique_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
           ${eventTypeFilter}
-        GROUP BY chatbot_id, day_group, event_type
+        GROUP BY workspace_id, day_group, event_type
       )
-      GROUP BY chatbot_id, day_group, event_type
+      GROUP BY workspace_id, day_group, event_type
       ORDER BY day ASC, event_type ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       day: string
       event_type: ContactEventType
       count: string
@@ -232,7 +232,7 @@ export class ContactStatsRepository extends BaseRepository {
     })
 
     const rows = result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.day),
       eventType: row.event_type,
       count: Number(row.count),
@@ -262,7 +262,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS created_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_created'
         GROUP BY hour
@@ -272,7 +272,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS deleted_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_deleted'
         GROUP BY hour
@@ -289,7 +289,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS created_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_created'
         GROUP BY hour
@@ -321,7 +321,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS deleted_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_deleted'
         GROUP BY hour
@@ -413,7 +413,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS created_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_created'
         GROUP BY hour
@@ -423,7 +423,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS deleted_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
           AND event_type = 'contact_deleted'
         GROUP BY hour
@@ -440,7 +440,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS created_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_created'
         GROUP BY hour
@@ -472,7 +472,7 @@ export class ContactStatsRepository extends BaseRepository {
           hour,
           countMerge(event_count_state) AS deleted_contacts
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
           AND event_type = 'contact_deleted'
         GROUP BY hour
@@ -554,7 +554,7 @@ export class ContactStatsRepository extends BaseRepository {
       SELECT
         uniqMerge(unique_contacts_state) AS new_contacts
       FROM contact_stats_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
         AND event_type = 'contact_created'
     `
@@ -592,7 +592,7 @@ export class ContactStatsRepository extends BaseRepository {
   //     SELECT
   //       countMerge(event_count_state) as count
   //     FROM contact_stats_hourly
-  //     WHERE chatbot_id = {workspaceId:String}
+  //     WHERE workspace_id = {workspaceId:String}
   //       AND ${timeFilter.sql}
   //   `
 
@@ -620,7 +620,7 @@ export class ContactStatsRepository extends BaseRepository {
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contacts_by_${dimension}_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
       GROUP BY dimension
       ORDER BY count DESC
@@ -660,7 +660,7 @@ export class ContactStatsRepository extends BaseRepository {
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contacts_by_channel_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
       GROUP BY channel
       ORDER BY count DESC
@@ -689,7 +689,7 @@ export class ContactStatsRepository extends BaseRepository {
       SELECT
         uniqMerge(active_contacts_state) as active_contacts
       FROM active_contacts_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
     `
 
@@ -712,7 +712,7 @@ export class ContactStatsRepository extends BaseRepository {
         countMerge(event_count_state) as count,
         uniqMerge(unique_contacts_state) as unique_contacts
       FROM contacts_by_source_hourly
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
       GROUP BY source
       ORDER BY count DESC
@@ -751,31 +751,31 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         time_group as timestamp,
         channel,
         sender_type,
         sum(count) as count
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           ${timeGroup} as time_group,
           channel,
           sender_type,
           countMerge(event_count_state) as count
         FROM contact_stats_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
           AND event_type IN ('contact_message_out')
           AND sender_type != ''
-        GROUP BY chatbot_id, time_group, channel, sender_type
+        GROUP BY workspace_id, time_group, channel, sender_type
       )
-      GROUP BY chatbot_id, time_group, channel, sender_type
+      GROUP BY workspace_id, time_group, channel, sender_type
       ORDER BY timestamp ASC, channel ASC, sender_type ASC
     `
 
     const result = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       timestamp: string
       channel: string
       sender_type: "bot" | "human"
@@ -786,7 +786,7 @@ export class ContactStatsRepository extends BaseRepository {
     })
 
     return result.map((row) => ({
-      workspaceId: row.chatbot_id,
+      workspaceId: row.workspace_id,
       timestamp: new Date(row.timestamp),
       channel: row.channel,
       senderType: row.sender_type,
@@ -802,25 +802,25 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         admin_id,
         sum(count) as count
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           admin_id,
           countMerge(message_count_state) as count
         FROM messages_by_admin_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
-        GROUP BY chatbot_id, admin_id
+        GROUP BY workspace_id, admin_id
       )
-      GROUP BY chatbot_id, admin_id
+      GROUP BY workspace_id, admin_id
       ORDER BY count DESC
     `
 
     const clickhouseResult = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       admin_id: string
       count: string
     }>(sql, {
@@ -863,25 +863,25 @@ export class ContactStatsRepository extends BaseRepository {
 
     const sql = `
       SELECT
-        chatbot_id,
+        workspace_id,
         admin_id,
         sum(count) as count
       FROM (
         SELECT
-          chatbot_id,
+          workspace_id,
           admin_id,
           uniqMerge(unique_contacts_state) as count
         FROM contacts_by_admin_hourly
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
-        GROUP BY chatbot_id, admin_id
+        GROUP BY workspace_id, admin_id
       )
-      GROUP BY chatbot_id, admin_id
+      GROUP BY workspace_id, admin_id
       ORDER BY count DESC
     `
 
     const clickhouseResult = await this.query<{
-      chatbot_id: string
+      workspace_id: string
       admin_id: string
       count: string
     }>(sql, {

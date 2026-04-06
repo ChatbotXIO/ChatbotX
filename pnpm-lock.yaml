@@ -1225,6 +1225,9 @@ importers:
 
   packages/event-bus:
     dependencies:
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../flow-config
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis

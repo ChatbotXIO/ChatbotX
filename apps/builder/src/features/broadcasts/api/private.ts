@@ -5,8 +5,7 @@ import {
   listBroadcastContactsRequest,
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -43,14 +42,20 @@ export const broadcastPrivateAPIs = {
         input
       const totalValue = total || 0
 
-      const { contactIds, errorContentMap, occurredAtMap } =
-        await broadcastAnalyticsService.getContactsFromClickHouse({
-          workspaceId,
-          broadcastId,
-          eventType,
-          page,
-          perPage,
-        })
+      const {
+        contactIds,
+        errorContentMap,
+        occurredAtMap,
+        sourceIdMap,
+        channelMap,
+        conversationIdMap,
+      } = await broadcastAnalyticsService.getContactsFromClickHouse({
+        workspaceId,
+        broadcastId,
+        eventType,
+        page,
+        perPage,
+      })
 
       if (contactIds.length === 0) {
         return {
@@ -72,54 +77,18 @@ export const broadcastPrivateAPIs = {
           lastName: true,
           avatar: true,
         },
-        with: {
-          contactInboxes: {
-            columns: {
-              contactId: true,
-              inboxId: true,
-              channel: true,
-              sourceId: true,
-            },
-          },
-        },
       })
 
-      const conversations = await db
-        .select({
-          id: conversationModel.id,
-          contactId: conversationModel.contactId,
-        })
-        .from(conversationModel)
-        .where(
-          and(
-            inArray(conversationModel.contactId, contactIds),
-            eq(conversationModel.workspaceId, workspaceId),
-          ),
-        )
-
-      const contactMap = new Map(
-        contacts.map((c) => [
-          c.id,
-          {
-            id: c.id,
-            firstName: c.firstName,
-            lastName: c.lastName,
-            sourceId: c.contactInboxes[0]?.sourceId,
-            avatar: c.avatar,
-            channel: c.contactInboxes[0]?.channel,
-          },
-        ]),
-      )
-      const conversationMap = new Map(
-        conversations.map((c) => [c.contactId, c.id]),
-      )
+      const contactMap = new Map(contacts.map((c) => [c.id, c]))
 
       return broadcastAnalyticsService.buildContactsResponse({
         contactIds,
         errorContentMap,
         occurredAtMap,
+        sourceIdMap,
+        channelMap,
+        conversationIdMap,
         contactMap,
-        conversationMap,
         total: totalValue,
         page,
         perPage,

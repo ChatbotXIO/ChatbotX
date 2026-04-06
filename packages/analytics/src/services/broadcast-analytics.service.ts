@@ -23,6 +23,9 @@ export class BroadcastAnalyticsService {
     contactIds: string[]
     errorContentMap: Map<string, string | null>
     occurredAtMap: Map<string, string>
+    sourceIdMap: Map<string, string>
+    channelMap: Map<string, string>
+    conversationIdMap: Map<string, string>
   }> {
     return broadcastStatsRepository.getContactsFromClickHouse(input)
   }
@@ -31,18 +34,18 @@ export class BroadcastAnalyticsService {
     contactIds: string[]
     errorContentMap: Map<string, string | null>
     occurredAtMap: Map<string, string>
+    sourceIdMap: Map<string, string>
+    channelMap: Map<string, string>
+    conversationIdMap: Map<string, string>
     contactMap: Map<
       string,
       {
         id: string
         firstName: string | null
         lastName: string | null
-        sourceId: string | null
         avatar: string | null
-        channel: string
       }
     >
-    conversationMap: Map<string, string>
     total: number
     page: number
     perPage: number

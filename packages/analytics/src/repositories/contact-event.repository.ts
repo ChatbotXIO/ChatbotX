@@ -44,7 +44,7 @@ export class ContactEventRepository extends BaseRepository {
   private mapRow(event: ContactEvent): Record<string, unknown> {
     return {
       event_id: event.eventId,
-      chatbot_id: event.workspaceId,
+      workspace_id: event.workspaceId,
       contact_id: event.contactId,
       event_type: event.eventType,
       occurred_at: Math.floor(event.occurredAt.getTime() / 1000),

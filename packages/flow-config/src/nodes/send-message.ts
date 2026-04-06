@@ -69,18 +69,33 @@ export const sendMessageNodeDefaultFn = (
   },
 })
 
-export type BroadcastMetadataPayload = {
-  type: "broadcast"
-  broadcastId: string
-}
+export const shareMetadataPayload = z.object({
+  contactInboxId: z.string(),
+})
 
-export type SequenceScheduleMetadataPayload = {
-  type: "sequenceSchedule"
-  stepId: string
-  sequenceId: string
-  dispatchId: string
-}
+export const broadcastMetadataPayload = shareMetadataPayload.extend({
+  type: z.literal("broadcast"),
+  broadcastId: z.string(),
+})
 
-export type MetadataPayload =
-  | BroadcastMetadataPayload
-  | SequenceScheduleMetadataPayload
+export const sequenceScheduleMetadataPayload = shareMetadataPayload.extend({
+  type: z.literal("sequenceSchedule"),
+  stepId: z.string(),
+  sequenceId: z.string(),
+  dispatchId: z.string(),
+})
+
+export type SharedMetadataPayload = z.infer<typeof shareMetadataPayload>
+
+export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>
+
+export type SequenceScheduleMetadataPayload = z.infer<
+  typeof sequenceScheduleMetadataPayload
+>
+
+export const metadataSchema = z.discriminatedUnion("type", [
+  broadcastMetadataPayload,
+  sequenceScheduleMetadataPayload,
+])
+
+export type MetadataPayload = z.infer<typeof metadataSchema>

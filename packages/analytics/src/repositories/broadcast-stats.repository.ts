@@ -15,6 +15,9 @@ type ClickHouseContactRow = {
   contact_id: string
   content: string | null
   max_occurred_at: string
+  source_id: string
+  channel: string
+  conv_id: string
 }
 
 export class BroadcastStatsRepository extends BaseRepository {
@@ -27,7 +30,7 @@ export class BroadcastStatsRepository extends BaseRepository {
         event_type,
         uniq(contact_id) as count
       FROM broadcast_events
-      WHERE chatbot_id = {workspaceId:String}
+      WHERE workspace_id = {workspaceId:String}
         AND broadcast_id = {broadcastId:String}
         AND batch_id = 1
         AND event_type IN ('delivered', 'seen', 'clicked', 'failed')
@@ -82,6 +85,9 @@ export class BroadcastStatsRepository extends BaseRepository {
     contactIds: string[]
     errorContentMap: Map<string, string | null>
     occurredAtMap: Map<string, string>
+    sourceIdMap: Map<string, string>
+    channelMap: Map<string, string>
+    conversationIdMap: Map<string, string>
   }> {
     const { workspaceId, broadcastId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
@@ -98,9 +104,12 @@ export class BroadcastStatsRepository extends BaseRepository {
         SELECT
           contact_id,
           argMax(content, occurred_at) as content,
-          max(occurred_at) as max_occurred_at
+          max(occurred_at) as max_occurred_at,
+          argMax(source_id, occurred_at) as source_id,
+          argMax(channel, occurred_at) as channel,
+          argMax(conv_id, occurred_at) as conv_id
         FROM broadcast_events
-        WHERE chatbot_id = {workspaceId:String}
+        WHERE workspace_id = {workspaceId:String}
           AND broadcast_id = {broadcastId:String}
           AND batch_id = 1
           AND event_type in {eventTypeFilter:Array(String)}
@@ -120,9 +129,21 @@ export class BroadcastStatsRepository extends BaseRepository {
     const contactIds = contactRows.map((row) => row.contact_id)
     const errorContentMap = new Map<string, string | null>()
     const occurredAtMap = new Map<string, string>()
+    const sourceIdMap = new Map<string, string>()
+    const channelMap = new Map<string, string>()
+    const conversationIdMap = new Map<string, string>()
 
     for (const row of contactRows) {
       occurredAtMap.set(row.contact_id, row.max_occurred_at)
+      if (row.source_id) {
+        sourceIdMap.set(row.contact_id, row.source_id)
+      }
+      if (row.channel) {
+        channelMap.set(row.contact_id, row.channel)
+      }
+      if (row.conv_id) {
+        conversationIdMap.set(row.contact_id, row.conv_id)
+      }
       if (row.content) {
         try {
           const parsed = JSON.parse(row.content)
@@ -139,25 +160,32 @@ export class BroadcastStatsRepository extends BaseRepository {
       }
     }
 
-    return { contactIds, errorContentMap, occurredAtMap }
+    return {
+      contactIds,
+      errorContentMap,
+      occurredAtMap,
+      sourceIdMap,
+      channelMap,
+      conversationIdMap,
+    }
   }
 
   buildContactsResponse(input: {
     contactIds: string[]
     errorContentMap: Map<string, string | null>
     occurredAtMap: Map<string, string>
+    sourceIdMap: Map<string, string>
+    channelMap: Map<string, string>
+    conversationIdMap: Map<string, string>
     contactMap: Map<
       string,
       {
         id: string
         firstName: string | null
         lastName: string | null
-        sourceId: string | null
         avatar: string | null
-        channel: string
       }
     >
-    conversationMap: Map<string, string>
     total: number
     page: number
     perPage: number
@@ -166,8 +194,10 @@ export class BroadcastStatsRepository extends BaseRepository {
       contactIds,
       errorContentMap,
       occurredAtMap,
+      sourceIdMap,
+      channelMap,
+      conversationIdMap,
       contactMap,
-      conversationMap,
       total,
       page,
       perPage,
@@ -181,7 +211,7 @@ export class BroadcastStatsRepository extends BaseRepository {
         if (!contact) {
           return null
         }
-        const conversationId = conversationMap.get(contact.id)
+        const conversationId = conversationIdMap.get(contactId)
         if (!conversationId) {
           return null
         }
@@ -190,9 +220,9 @@ export class BroadcastStatsRepository extends BaseRepository {
           contactId: contact.id,
           firstName: contact.firstName,
           lastName: contact.lastName,
-          sourceId: contact.sourceId,
+          sourceId: sourceIdMap.get(contactId) ?? null,
           avatar: contact.avatar,
-          channel: contact.channel,
+          channel: channelMap.get(contactId) ?? null,
           conversationId,
           errorContent: errorContentMap.get(contactId) ?? null,
           occurredAt: occurredAtMap.get(contactId) ?? null,
