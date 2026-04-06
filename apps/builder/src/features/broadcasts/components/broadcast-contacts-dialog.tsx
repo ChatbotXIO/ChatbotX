@@ -97,7 +97,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
-        <DialogHeader className="mb-20">
+        <DialogHeader className="mb-2">
           <DialogTitle>
             {t(`broadcasts.stats.${eventType}`)} ({total.toLocaleString()})
           </DialogTitle>

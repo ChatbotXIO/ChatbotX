@@ -25,7 +25,7 @@ export const sendBroadcast = async (broadcastId: string) => {
     table: broadcastModel,
     where: {
       id: broadcastId,
-      status: "scheduled",
+      // status: "scheduled",
     },
     message: "Broadcast not found",
   })

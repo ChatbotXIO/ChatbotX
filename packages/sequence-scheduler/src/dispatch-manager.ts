@@ -9,7 +9,6 @@ import {
 import {
   contactsOnSequenceModel,
   sequenceDispatchModel,
-  sequenceEventModel,
 } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
@@ -136,20 +135,6 @@ export async function cancelPendingDispatches(
       ),
     )
 
-  await client.insert(sequenceEventModel).values(
-    pendingDispatches.map((d) => ({
-      id: createId(),
-      workspaceId,
-      sequenceId: d.sequenceId,
-      contactId: d.contactId,
-      stepId: d.stepId,
-      dispatchId: d.id,
-      eventType: "dispatch_canceled" as const,
-      payload: { reason },
-      occurredAt: new Date(),
-    })),
-  )
-
   const redisClient = await sequenceConnections.useExisting()
   const scheduler = new SchedulerClient(redisClient)
   for (const dispatch of pendingDispatches) {
@@ -228,18 +213,6 @@ export async function rescheduleEnrollment(
             eq(sequenceDispatchModel.status, "pending"),
           ),
         )
-
-      await tx.insert(sequenceEventModel).values({
-        id: createId(),
-        workspaceId,
-        sequenceId: currentDispatch.sequenceId,
-        contactId: currentDispatch.contactId,
-        stepId: currentDispatch.stepId,
-        dispatchId: currentDispatch.id,
-        eventType: "dispatch_canceled" as const,
-        payload: { reason: "reschedule" },
-        occurredAt: new Date(),
-      })
 
       canceled = [
         {

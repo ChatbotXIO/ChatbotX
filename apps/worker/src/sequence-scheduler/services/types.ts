@@ -37,8 +37,3 @@ export type DispatchMessage = {
 export type ValidationResult =
   | { valid: true }
   | { valid: false; reason: string }
-
-export type SequenceEventType =
-  | "dispatch_completed"
-  | "dispatch_failed"
-  | "dispatch_retry_scheduled"

@@ -161,25 +161,23 @@ class DispatchConsumer {
         )
         return
       }
-
       const sentAt = await this.stepExecutor.sendFlowMessage(
         dispatch,
         step as StepWithRelations,
+        {
+          metadata: {
+            type: "sequenceSchedule",
+            stepId: step?.id ?? "",
+            sequenceId: step?.sequenceId ?? "",
+            dispatchId: dispatch.contactId,
+          },
+        },
       )
 
       await this.stepExecutor.markDispatchCompleted(
         dispatch.id,
         dispatch.workspaceId,
         sentAt,
-      )
-
-      await this.stepExecutor.recordDispatchEvent(
-        dispatch,
-        "dispatch_completed",
-        {
-          attempt: dispatch.attempt,
-          duration: Date.now() - Number(dispatch.runAtMs),
-        },
       )
 
       await this.advanceEnrollment(dispatch, step as StepWithRelations, sentAt)
@@ -201,15 +199,6 @@ class DispatchConsumer {
             dispatch.id,
             dispatch.workspaceId,
             error instanceof Error ? error.message : "Unknown error",
-          )
-
-          await this.stepExecutor.recordDispatchEvent(
-            dispatch,
-            "dispatch_failed",
-            {
-              attempt: dispatch.attempt,
-              error: error instanceof Error ? error.message : "Unknown error",
-            },
           )
         }
       } catch (retryError) {

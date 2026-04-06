@@ -1,10 +1,10 @@
 import { and, db, eq, inArray } from "@aha.chat/database/client"
 import {
   contactModel,
-  contactsOnBroadcastsModel,
+  contactsOnSequenceModel,
 } from "@aha.chat/database/schema"
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
-import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
+import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
 import type {
   FlowClickedPayload,
   MessageDeliveredPayload,
@@ -12,7 +12,7 @@ import type {
   MessageSeenPayload,
   MessageSentPayload,
 } from "@chatbotx.io/event-bus"
-import { createId } from "@chatbotx.io/utils"
+import { createId } from "@paralleldrive/cuid2"
 import { format } from "date-fns"
 
 function toClickHouseDateTime(date: Date): string {
@@ -20,19 +20,20 @@ function toClickHouseDateTime(date: Date): string {
   return format(utcDate, "yyyy-MM-dd HH:mm:ss")
 }
 
-export const broadcastStathandler = {
+export const sequenceStathandler = {
   async onMessageSent(payloads: MessageSentPayload[]) {
-    const insertedData: BroadcastStatsType[] = []
+    const insertedData: SequenceScheduleEventType[] = []
 
     for (const payload of payloads) {
       if (
-        payload.metadata?.type === "broadcast" &&
+        payload.metadata?.type === "sequenceSchedule" &&
         payload.channel !== "whatsapp"
       ) {
         insertedData.push({
           event_id: createId(),
           chatbot_id: payload.chatbotId,
-          broadcast_id: payload.metadata.broadcastId,
+          sequence_id: payload.metadata.sequenceId,
+          step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
           event_type: "delivered",
@@ -49,23 +50,24 @@ export const broadcastStathandler = {
 
     await this.saveToClickhouse(insertedData)
 
-    const broadcastContacts = payloads
-      .filter((p) => p.metadata?.type === "broadcast")
+    const sequenceContacts = payloads
+      .filter((p) => p.metadata?.type === "sequenceSchedule")
       .map((p) => ({
-        broadcastId: (p.metadata as { type: "broadcast"; broadcastId: string })
-          .broadcastId,
+        sequenceId: (
+          p.metadata as { type: "sequenceSchedule"; sequenceId: string }
+        ).sequenceId,
         contactId: p.contactId,
       }))
 
-    if (broadcastContacts.length > 0) {
-      for (const bc of broadcastContacts) {
+    if (sequenceContacts.length > 0) {
+      for (const sc of sequenceContacts) {
         await db
-          .update(contactsOnBroadcastsModel)
-          .set({ sent: true })
+          .update(contactsOnSequenceModel)
+          .set({ status: "sent" })
           .where(
             and(
-              eq(contactsOnBroadcastsModel.broadcastId, bc.broadcastId),
-              eq(contactsOnBroadcastsModel.contactId, bc.contactId),
+              eq(contactsOnSequenceModel.sequenceId, sc.sequenceId),
+              eq(contactsOnSequenceModel.contactId, sc.contactId),
             ),
           )
       }
@@ -73,14 +75,15 @@ export const broadcastStathandler = {
   },
 
   async onFailed(payloads: MessageFailedPayload[]) {
-    const insertedData: BroadcastStatsType[] = []
+    const insertedData: SequenceScheduleEventType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "broadcast") {
+      if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
           chatbot_id: payload.chatbotId,
-          broadcast_id: payload.metadata.broadcastId,
+          sequence_id: payload.metadata.sequenceId,
+          step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
           event_type: "failed",
@@ -101,14 +104,15 @@ export const broadcastStathandler = {
   },
 
   async onDelivered(payloads: MessageDeliveredPayload[]) {
-    const insertedData: BroadcastStatsType[] = []
+    const insertedData: SequenceScheduleEventType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "broadcast") {
+      if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
           chatbot_id: payload.chatbotId,
-          broadcast_id: payload.metadata.broadcastId,
+          sequence_id: payload.metadata.sequenceId,
+          step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
           event_type: "delivered",
@@ -133,35 +137,23 @@ export const broadcastStathandler = {
       const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
       const seenAt = new Date()
 
-      const contacts = await db
-        .select({ id: contactModel.id, lastReadAt: contactModel.lastReadAt })
-        .from(contactModel)
-        .where(inArray(contactModel.id, contactIds))
-
-      const sentBroadcasts = await db.query.contactsOnBroadcastsModel.findMany({
+      const activeSequences = await db.query.contactsOnSequenceModel.findMany({
         where: {
           contactId: { in: contactIds },
-          sent: true,
+          status: { in: ["active", "sent"] },
         },
         with: {
-          broadcast: {
-            columns: { id: true, chatbotId: true, schedulesAt: true },
+          sequence: {
+            columns: { id: true, chatbotId: true },
           },
         },
       })
 
-      const contactLastReadMap = new Map(
-        contacts.map((c) => [c.id, c.lastReadAt]),
-      )
-      const filtered = sentBroadcasts.filter((b) => {
-        if (b.broadcast.chatbotId !== chatbotId) {
+      const filtered = activeSequences.filter((s) => {
+        if (s.sequence.chatbotId !== chatbotId) {
           return false
         }
-        const lastReadAt = contactLastReadMap.get(b.contactId)
-        return (
-          !lastReadAt ||
-          (b.broadcast.schedulesAt && b.broadcast.schedulesAt > lastReadAt)
-        )
+        return true
       })
 
       await db
@@ -173,11 +165,12 @@ export const broadcastStathandler = {
         continue
       }
 
-      const insertedData: BroadcastStatsType[] = filtered.map((b) => ({
+      const insertedData: SequenceScheduleEventType[] = filtered.map((s) => ({
         event_id: createId(),
         chatbot_id: chatbotId,
-        broadcast_id: b.broadcastId,
-        contact_id: b.contactId,
+        sequence_id: s.sequenceId,
+        step_id: s.lastStepId || "",
+        contact_id: s.contactId,
         conv_id: "",
         event_type: "seen",
         content: JSON.stringify({}),
@@ -191,17 +184,18 @@ export const broadcastStathandler = {
 
   async onClicked(payloads: FlowClickedPayload[]) {
     try {
-      const broadcastClicks = payloads.filter((p) => p.broadcastId)
+      const sequenceClicks = payloads.filter((p) => p.sequenceId)
 
-      if (broadcastClicks.length === 0) {
+      if (sequenceClicks.length === 0) {
         return
       }
 
-      const insertedData: BroadcastStatsType[] = broadcastClicks.map(
+      const insertedData: SequenceScheduleEventType[] = sequenceClicks.map(
         (payload) => ({
           event_id: createId(),
           chatbot_id: payload.chatbotId,
-          broadcast_id: payload.broadcastId as string,
+          sequence_id: payload.sequenceId as string,
+          step_id: payload.stepId || "",
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
           event_type: "clicked",
@@ -215,7 +209,7 @@ export const broadcastStathandler = {
       )
 
       await clickhouse.insert({
-        table: "broadcast_events",
+        table: "sequence_schedule_events",
         values: insertedData,
         format: "JSONEachRow",
       })
@@ -238,21 +232,21 @@ export const broadcastStathandler = {
     )
   },
 
-  async saveToClickhouse(data: BroadcastStatsType[]) {
+  async saveToClickhouse(data: SequenceScheduleEventType[]) {
     if (data.length === 0) {
       return
     }
 
     try {
       const _result = await clickhouse.insert({
-        table: "broadcast_events",
+        table: "sequence_schedule_events",
         values: data,
         format: "JSONEachRow",
       })
 
       // console.log({ _result })
     } catch (error) {
-      console.error("Failed to save broadcast stats to ClickHouse:", error)
+      console.error("Failed to save sequence stats to ClickHouse:", error)
     }
   },
 }

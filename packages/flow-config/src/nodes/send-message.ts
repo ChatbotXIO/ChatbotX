@@ -76,7 +76,9 @@ export type BroadcastMetadataPayload = {
 
 export type SequenceScheduleMetadataPayload = {
   type: "sequenceSchedule"
-  sequenceScheduleId: string
+  stepId: string
+  sequenceId: string
+  dispatchId: string
 }
 
 export type MetadataPayload =

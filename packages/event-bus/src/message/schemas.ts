@@ -8,7 +8,9 @@ const broadcastMetadata = z.object({
 
 const sequenceScheduleMetadata = z.object({
   type: z.literal("sequenceSchedule"),
-  sequenceScheduleId: z.string(),
+  stepId: z.string(),
+  sequenceId: z.string(),
+  dispatchId: z.string(),
 })
 
 export const messageSourceMetadataSchema = z.discriminatedUnion("type", [

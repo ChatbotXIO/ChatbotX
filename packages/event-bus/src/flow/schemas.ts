@@ -14,6 +14,8 @@ export const clickedPayloadSchema = basePayloadSchema.extend({
   buttonId: z.string().optional(),
   nodeId: z.string().optional(),
   broadcastId: z.string().optional(),
+  sequenceId: z.string().optional(),
+  stepId: z.string().optional(),
   clickType: z.enum(["button", "quick_reply"]),
 })
 

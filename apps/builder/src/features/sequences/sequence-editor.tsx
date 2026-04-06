@@ -100,6 +100,29 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
           <CardHeader />
 
           <CardContent>
+            {sequence.steps.length > 0 && (
+              <div>
+                <div className="grid">
+                  <div className="space-y-4 pl-4">
+                    <div className="flex flex-col gap-6 rounded-xl py-2 text-card-foreground shadow-none">
+                      <div className="flex items-center gap-4 px-6 pl-4 text-muted-foreground text-xs">
+                        <div className="min-w-[320px] flex-1" />
+                        <div className="w-[280px]" />
+                        <div className="ml-2 flex w-[300px] items-center justify-between gap-4 text-xs">
+                          <span className="w-12 text-center">Sent</span>
+                          <span className="w-12 text-center">Delivered</span>
+                          <span className="w-12 text-center">Seen</span>
+                          <span className="w-12 text-center">Clicked</span>
+                          <span className="w-12 text-center">Failed</span>
+                        </div>
+                        <div className="w-[68px]" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {sequence.steps.length === 0 && !isAddingStep && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-muted-foreground">

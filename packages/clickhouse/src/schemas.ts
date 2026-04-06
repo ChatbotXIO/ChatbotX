@@ -18,3 +18,20 @@ export type ClickHouseContactResponseRow = Pick<
   BroadcastStatsType,
   "contact_id" | "content"
 >
+
+export const SequenceScheduleEventModel = z.object({
+  event_id: z.string(),
+  chatbot_id: z.string(),
+  contact_id: z.string(),
+  conv_id: z.string(),
+  event_type: z.string(),
+  sequence_id: z.string(),
+  step_id: z.string(),
+  content: z.string().optional(),
+  occurred_at: z.string(),
+  inserted_at: z.string(),
+})
+
+export type SequenceScheduleEventType = z.infer<
+  typeof SequenceScheduleEventModel
+>

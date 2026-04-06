@@ -63,7 +63,7 @@ async function startScheduleWorker() {
   })
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error(err, "Failed to start schedule worker")
-  process.exit(1)
-})
+// startScheduleWorker().catch((err) => {
+//   logger.error(err, "Failed to start schedule worker")
+//   process.exit(1)
+// })

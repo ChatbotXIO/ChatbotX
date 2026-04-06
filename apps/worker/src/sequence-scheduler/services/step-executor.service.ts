@@ -1,13 +1,9 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
-import {
-  sequenceDispatchModel,
-  sequenceEventModel,
-} from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import { sendFlowDirect } from "../../integration/handlers/send-flow-direct"
 import type {
   DispatchWithRelations,
-  SequenceEventType,
   StepWithRelations,
   ValidationResult,
 } from "./types"
@@ -45,6 +41,9 @@ export class StepExecutorService {
   async sendFlowMessage(
     dispatch: DispatchWithRelations,
     step: StepWithRelations,
+    options?: {
+      metadata?: MetadataPayload
+    },
   ): Promise<Date> {
     if (!step.flow) {
       throw new Error(`Step ${step.id} has no flow configured`)
@@ -54,6 +53,7 @@ export class StepExecutorService {
       flowId: step.flow.id,
       workspaceId: dispatch.workspaceId,
       contactId: dispatch.contactId,
+      metadata: options?.metadata,
     })
 
     return sentAt
@@ -77,23 +77,5 @@ export class StepExecutorService {
           eq(sequenceDispatchModel.workspaceId, workspaceId),
         ),
       )
-  }
-
-  async recordDispatchEvent(
-    dispatch: DispatchWithRelations,
-    eventType: SequenceEventType,
-    payload: Record<string, unknown>,
-  ): Promise<void> {
-    await db.insert(sequenceEventModel).values({
-      id: createId(),
-      workspaceId: dispatch.workspaceId,
-      sequenceId: dispatch.sequenceId,
-      contactId: dispatch.contactId,
-      stepId: dispatch.stepId,
-      dispatchId: dispatch.id,
-      eventType,
-      payload,
-      occurredAt: new Date(),
-    })
   }
 }

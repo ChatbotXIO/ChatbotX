@@ -1,10 +1,6 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
-import {
-  sequenceDispatchModel,
-  sequenceEventModel,
-} from "@chatbotx.io/database/schema"
+import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
 import type { SchedulerClient } from "@chatbotx.io/scheduler"
-import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import { RETRY_BASE_DELAY_MS } from "./constants"
 import type { DispatchWithRelations } from "./types"
@@ -39,14 +35,6 @@ export class RetrySchedulerService {
       )
 
     await scheduler.addToRetry(dispatch.bucket, dispatch.id, retryAtMs)
-
-    await this.recordRetryEvent(
-      dispatch,
-      nextAttempt,
-      retryAtMs,
-      retryDelayMs,
-      error,
-    )
   }
 
   async markDispatchFailed(
@@ -88,31 +76,5 @@ export class RetrySchedulerService {
           eq(sequenceDispatchModel.workspaceId, workspaceId),
         ),
       )
-  }
-
-  private async recordRetryEvent(
-    dispatch: DispatchWithRelations,
-    nextAttempt: number,
-    retryAtMs: number,
-    retryDelayMs: number,
-    error: unknown,
-  ): Promise<void> {
-    await db.insert(sequenceEventModel).values({
-      id: createId(),
-      workspaceId: dispatch.workspaceId,
-      sequenceId: dispatch.sequenceId,
-      contactId: dispatch.contactId,
-      stepId: dispatch.stepId,
-      dispatchId: dispatch.id,
-      eventType: "dispatch_retry_scheduled",
-      payload: {
-        attempt: dispatch.attempt,
-        nextAttempt,
-        retryAtMs,
-        retryDelayMs,
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      occurredAt: new Date(),
-    })
   }
 }

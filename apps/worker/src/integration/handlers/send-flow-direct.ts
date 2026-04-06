@@ -1,17 +1,19 @@
 import { db } from "@chatbotx.io/database/client"
 import { IntegrationJobAction } from "@chatbotx.io/worker-config"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
   contactId: string
   flowId: string
   workspaceId: string
+  metadata?: MetadataPayload
 }
 
 export async function sendFlowDirect(
   params: SendFlowDirectParams,
 ): Promise<Date> {
-  const { flowId, workspaceId, contactId } = params
+  const { flowId, workspaceId, contactId, metadata } = params
 
   const conversation = await db.query.conversationModel.findFirst({
     where: {
@@ -29,6 +31,7 @@ export async function sendFlowDirect(
     data: {
       flowId,
       conversationId: conversation.id,
+      metadata,
     },
   })
 

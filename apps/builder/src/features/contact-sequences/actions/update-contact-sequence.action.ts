@@ -76,17 +76,22 @@ async function removeContactSequences(
     return
   }
 
+  <<<<<<< HEAD
   await Promise.all(
-    enrollments.map((enrollment: { id: string }) =>
-      cancelPendingDispatches({
-        client: tx,
-        enrollmentId: enrollment.id,
+    enrollments.map((enrollment:
+  id: string
+  ) =>
+      cancelPendingDispatches(
+  client: tx, enrollmentId
+  : enrollment.id,
         workspaceId,
         reason: "enrollment_removed",
-      }),
+  ),
     ),
   )
 
+=======
+>>>>>>> cfbb44fb (Feat/sequence channel statistics (#324))
   const enrollmentIds = enrollments.map((e: { id: string }) => e.id)
   if (enrollmentIds.length > 0) {
     await tx
@@ -98,6 +103,17 @@ async function removeContactSequences(
         ),
       )
   }
+
+  await Promise.all(
+    enrollments.map((enrollment: { id: string }) =>
+      cancelPendingDispatches({
+        client: tx,
+        enrollmentId: enrollment.id,
+        chatbotId,
+        reason: "enrollment_removed",
+      }),
+    ),
+  )
 }
 
 async function addContactSequences(
@@ -151,22 +167,20 @@ export const updateContactSequenceAction = workspaceActionClient
 
     const currentIds = await getCurrentSequenceIds(db, contact.id, workspaceId)
 
-    const returnedSequences = await db.transaction(async (tx) => {
-      const { toAdd, toRemove } = calculateSequenceDiff(
-        currentIds,
-        parsedInput.sequences,
-      )
+    const { toAdd, toRemove } = calculateSequenceDiff(
+      currentIds,
+      parsedInput.sequences,
+    )
 
-      await removeContactSequences(tx, contact.id, toRemove, workspaceId)
-      await addContactSequences(tx, contact.id, toAdd, workspaceId)
+    await removeContactSequences(db, contact.id, toRemove, workspaceId)
+    await addContactSequences(db, contact.id, toAdd, workspaceId)
 
-      return await tx.query.contactsOnSequenceModel.findMany({
-        where: {
-          contactId: contact.id,
-          workspaceId,
-        },
-        with: { sequence: true },
-      })
+    const returnedSequences = await db.query.contactsOnSequenceModel.findMany({
+      where: {
+        contactId: contact.id,
+        workspaceId,
+      },
+      with: { sequence: true },
     })
 
     revalidateCacheTags([

@@ -719,20 +719,6 @@ CREATE TABLE "SequenceDispatch" (
 	"enrollmentId" bigint NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "SequenceEvent" (
-	"id" bigint PRIMARY KEY,
-	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"occurredAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
-	"eventType" text NOT NULL,
-	"payload" jsonb,
-	"workspaceId" bigint NOT NULL,
-	"sequenceId" bigint NOT NULL,
-	"contactId" bigint NOT NULL,
-	"stepId" bigint NOT NULL,
-	"dispatchId" bigint
-);
---> statement-breakpoint
 CREATE TABLE "SequenceStep" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -963,9 +949,6 @@ CREATE INDEX "SequenceDispatch_workspaceId_status_runAtMs_idx" ON "SequenceDispa
 CREATE UNIQUE INDEX "SequenceDispatch_idempotencyKey_key" ON "SequenceDispatch" ("idempotencyKey","workspaceId");--> statement-breakpoint
 CREATE INDEX "SequenceDispatch_enrollmentId_idx" ON "SequenceDispatch" ("enrollmentId");--> statement-breakpoint
 CREATE INDEX "SequenceDispatch_bucket_status_runAtMs_idx" ON "SequenceDispatch" ("bucket","status","runAtMs");--> statement-breakpoint
-CREATE INDEX "SequenceEvent_workspaceId_occurredAt_idx" ON "SequenceEvent" ("workspaceId","occurredAt");--> statement-breakpoint
-CREATE INDEX "SequenceEvent_contactId_occurredAt_idx" ON "SequenceEvent" ("contactId","occurredAt");--> statement-breakpoint
-CREATE INDEX "SequenceEvent_sequenceId_eventType_idx" ON "SequenceEvent" ("sequenceId","eventType");--> statement-breakpoint
 CREATE INDEX "SequenceStep_sequenceId_idx" ON "SequenceStep" ("sequenceId");--> statement-breakpoint
 CREATE INDEX "SequenceStep_flowId_idx" ON "SequenceStep" ("flowId");--> statement-breakpoint
 CREATE INDEX "Spreadsheet_workspaceId_idx" ON "Spreadsheet" ("workspaceId");--> statement-breakpoint
@@ -1099,11 +1082,6 @@ ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_sequenceId_Seque
 ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_contactId_Contact_id_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_stepId_SequenceStep_id_fkey" FOREIGN KEY ("stepId") REFERENCES "SequenceStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_enrollmentId_ContactOnSequence_id_fkey" FOREIGN KEY ("enrollmentId") REFERENCES "ContactOnSequence"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "SequenceEvent" ADD CONSTRAINT "SequenceEvent_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "SequenceEvent" ADD CONSTRAINT "SequenceEvent_sequenceId_Sequence_id_fkey" FOREIGN KEY ("sequenceId") REFERENCES "Sequence"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "SequenceEvent" ADD CONSTRAINT "SequenceEvent_contactId_Contact_id_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "SequenceEvent" ADD CONSTRAINT "SequenceEvent_stepId_SequenceStep_id_fkey" FOREIGN KEY ("stepId") REFERENCES "SequenceStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
-ALTER TABLE "SequenceEvent" ADD CONSTRAINT "SequenceEvent_dispatchId_SequenceDispatch_id_fkey" FOREIGN KEY ("dispatchId") REFERENCES "SequenceDispatch"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "SequenceStep" ADD CONSTRAINT "SequenceStep_flowId_Flow_id_fkey" FOREIGN KEY ("flowId") REFERENCES "Flow"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "SequenceStep" ADD CONSTRAINT "SequenceStep_sequenceId_Sequence_id_fkey" FOREIGN KEY ("sequenceId") REFERENCES "Sequence"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Spreadsheet" ADD CONSTRAINT "Spreadsheet_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
