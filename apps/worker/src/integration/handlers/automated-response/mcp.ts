@@ -1,7 +1,7 @@
 import ky, { type Options } from "ky"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
-import { ensureRecord, isRecord } from "../../../lib/utils"
+import { isRecord } from "../../../lib/utils"
 import { JSON_TYPE, TEXT } from "./constants"
 
 type MCPSuccess = { content: unknown; success: true }
@@ -99,7 +99,7 @@ export async function callMCPTool(props: {
       },
     }
     switch (auth.type) {
-      case mcpAuthTypes.header:
+      case mcpAuthTypes.enum.header:
         {
           const headers: Record<string, string> = {}
           for (const h of auth.headers) {
@@ -108,7 +108,7 @@ export async function callMCPTool(props: {
           requestOptions.headers = headers
         }
         break
-      case mcpAuthTypes.token:
+      case mcpAuthTypes.enum.token:
         requestOptions.headers = {
           Authorization: `Bearer ${auth.token}`,
         }
@@ -239,52 +239,6 @@ export function cleanSchemaForGemini(schema: unknown): unknown {
           nextProp.required
         ) {
           const { required: _omit, ...rest } = nextProp
-          nextProp = rest
-        }
-
-        if (nextProp.properties) {
-          nextProp.properties = cleanSchemaForGemini(nextProp.properties)
-        }
-
-        if (nextProp.items) {
-          nextProp.items = cleanSchemaForGemini(nextProp.items)
-        }
-
-        cleanedProperties[key] = nextProp
-      }
-    }
-
-    cleaned.properties = cleanedProperties
-  }
-
-  return cleaned
-}
-
-export function cleanSchemaForGemini(schema: unknown): unknown {
-  if (!schema || typeof schema !== JSON_TYPE.object) {
-    return schema
-  }
-
-  const cleaned: Record<string, unknown> = {
-    ...ensureRecord(schema),
-  }
-
-  if (cleaned.properties && typeof cleaned.properties === JSON_TYPE.object) {
-    const cleanedProperties: Record<string, unknown> = {
-      ...ensureRecord(cleaned.properties),
-    }
-
-    for (const [key, prop] of Object.entries(cleanedProperties)) {
-      if (prop && typeof prop === JSON_TYPE.object) {
-        const original = ensureRecord(prop)
-        let nextProp: JsonSchemaLike = { ...original }
-
-        if (
-          typeof nextProp.type === "string" &&
-          nextProp.type !== JSON_TYPE.object &&
-          nextProp.required
-        ) {
-          const { required: _, ...rest } = nextProp
           nextProp = rest
         }
 

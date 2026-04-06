@@ -1,9 +1,11 @@
 import { db } from "@chatbotx.io/database/client"
+import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import type { OutgoingConversation } from "@chatbotx.io/sdk"
 import type { IntegrationJobTriggerAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
 import { getAIToolset } from "../generate-text/tools"
-import { replyByAutomatedResponse } from "./replies"
+import { replyByAI, replyByAutomatedResponse } from "./replies"
 import { createTrackingContext, trackBotResponse } from "./track-bot-response"
 
 export async function triggerAutomatedResponse(
@@ -65,7 +67,7 @@ export async function triggerAutomatedResponse(
 
     const aiAgent = await db.query.aiAgentModel.findFirst({
       where: {
-        chatbotId: message.chatbotId,
+        workspaceId: message.workspaceId,
         isDefault: true,
       },
     })
@@ -98,27 +100,29 @@ export async function triggerAutomatedResponse(
       limit: 100,
     })
     const lastAIMessages: ModelMessage[] = []
-    for (const msg of last100Messages) {
-      if (!msg.content) {
+    for (const message of last100Messages) {
+      if (!message.text) {
         continue
       }
-      if (msg.senderType === "contact") {
+      if (message.senderType === "contact") {
         lastAIMessages.push({
-          role: AIMessageRole.user,
-          content: msg.content,
+          role: aiMessageRoles.enum.user,
+          content: message.text,
         })
-      } else if (msg.senderType === "user" || msg.senderType === "bot") {
-        lastAIMessages.push({ role: "assistant", content: msg.content })
+      } else if (
+        message.senderType === "user" ||
+        message.senderType === "bot"
+      ) {
+        lastAIMessages.push({ role: "assistant", content: message.text })
       }
     }
     lastAIMessages.reverse()
 
-    const toolset = await getAIToolset(aiAgent.chatbotId, aiAgent.tools)
+    const toolset = await getAIToolset(aiAgent.workspaceId, aiAgent.tools)
 
     if (
       await replyByAI({
         message,
-        conversation: conversation as OutgoingConversation,
         lastAIMessages,
         aiAgent,
         tools: toolset,
@@ -170,7 +174,7 @@ export async function triggerAutomatedResponse(
       {
         error,
         conversationId: message.conversationId,
-        chatbotId: message.chatbotId,
+        workspaceId: message.workspaceId,
       },
       "[automated-response] triggerAutomatedResponse failed",
     )

@@ -1,9 +1,9 @@
 "use client"
 
-import { aiGenerateTextSchema } from "@aha.chat/flow-config"
-import { SwitchField } from "@aha.chat/ui/components/form/switch-field"
+import { aiGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,

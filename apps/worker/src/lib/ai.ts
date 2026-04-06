@@ -1,14 +1,14 @@
-import { db } from "@aha.chat/database/client"
-import type {
-  IntegrationGeminiModel,
-  IntegrationOpenAIModel,
-} from "@aha.chat/database/types"
-import { aiProviders } from "@aha.chat/flow-config"
-import type { SecretTextAuthValue } from "@aha.chat/sdk"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
+import { db } from "@chatbotx.io/database/client"
+import type {
+  IntegrationGeminiModel,
+  IntegrationOpenAIModel,
+} from "@chatbotx.io/database/types"
+import { aiProviders } from "@chatbotx.io/flow-config"
+import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { type ToolSet, tool } from "ai"
 import { z } from "zod"
 import {
@@ -21,7 +21,6 @@ import {
 } from "../integration/handlers/automated-response/mcp"
 import { performFileSearch } from "../integration/handlers/automated-response/search"
 import { logger } from "./logger"
-
 import { ensureRecord, isRecord } from "./utils"
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
@@ -234,23 +233,23 @@ export function normalizeAIModelId(modelId: string): string {
 }
 
 export async function getAIIntegrationInDB(props: {
-  chatbotId: string
+  workspaceId: string
   provider: string
   autoReply?: boolean
 }) {
-  const { chatbotId, provider, autoReply } = props
+  const { workspaceId, provider, autoReply } = props
 
   const where = {
-    chatbotId,
+    workspaceId,
     ...(autoReply === undefined ? {} : { autoReply }),
   }
 
   switch (provider) {
-    case aiProviders.openai:
-      return await db.query.integrationOpenAIModel.findFirst({
+    case aiProviders.enum.openai:
+      return await db.query.integrationOpenaiModel.findFirst({
         where,
       })
-    case aiProviders.gemini:
+    case aiProviders.enum.gemini:
       return await db.query.integrationGeminiModel.findFirst({
         where,
       })
@@ -272,16 +271,16 @@ export function getAIModel(
   }
 
   switch (provider) {
-    case aiProviders.openai: {
+    case aiProviders.enum.openai: {
       return createOpenAI(commonSettings)
     }
-    case aiProviders.gemini: {
+    case aiProviders.enum.gemini: {
       return createGoogleGenerativeAI(commonSettings)
     }
-    case aiProviders.claude: {
+    case aiProviders.enum.claude: {
       return createAnthropic(commonSettings)
     }
-    case aiProviders.deepseek: {
+    case aiProviders.enum.deepseek: {
       return createDeepSeek(commonSettings)
     }
     default:
@@ -304,7 +303,7 @@ export function createAIModelInstance(props: {
 }
 
 export async function getAIFileTools(
-  chatbotId: string,
+  workspaceId: string,
   selectedFileIds: string[],
 ): Promise<ToolSet> {
   try {
@@ -316,7 +315,7 @@ export async function getAIFileTools(
 
     const allFiles = await db.query.aiFileModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         id: { in: selectedFileIds },
       },
     })
@@ -329,7 +328,7 @@ export async function getAIFileTools(
         }),
         execute: async ({ query }) => {
           const config = {
-            chatbotId,
+            workspaceId,
             selectedFileIds,
             similarityThreshold: 0.7,
             maxResults: 5,
@@ -344,7 +343,7 @@ export async function getAIFileTools(
     logger.error(
       {
         error,
-        chatbotId,
+        workspaceId,
       },
       "[automated-response] getAIFileTools failed",
     )
@@ -353,7 +352,7 @@ export async function getAIFileTools(
 }
 
 export async function getAIFunctionTools(
-  chatbotId: string,
+  workspaceId: string,
   selectedFunctionIds: string[],
 ): Promise<ToolSet> {
   try {
@@ -365,7 +364,7 @@ export async function getAIFunctionTools(
 
     const aiFunctions = await db.query.aiFunctionModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         id: {
           in: selectedFunctionIds,
         },
@@ -390,7 +389,7 @@ export async function getAIFunctionTools(
     logger.error(
       {
         error,
-        chatbotId,
+        workspaceId,
       },
       "[automated-response] getAIFunctionTools failed",
     )
@@ -399,7 +398,7 @@ export async function getAIFunctionTools(
 }
 
 export async function getMCPServerTools(
-  chatbotId: string,
+  workspaceId: string,
   selectedMcpIds: string[],
 ): Promise<ToolSet> {
   try {
@@ -412,7 +411,7 @@ export async function getMCPServerTools(
     // Find MCP servers from DB
     const mcpServers = await db.query.aiMCPServerModel.findMany({
       where: {
-        chatbotId,
+        workspaceId,
         id: { in: selectedMcpIds },
       },
     })
@@ -477,7 +476,7 @@ export async function getMCPServerTools(
     logger.error(
       {
         error,
-        chatbotId,
+        workspaceId,
       },
       "[automated-response] getMCPServerTools failed",
     )

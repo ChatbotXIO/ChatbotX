@@ -2,7 +2,7 @@ const MAX_SUMMARY_CHARS = 10_000
 
 export function summarizeToolResult(rawContent: unknown): string | null {
   const unwrapped = tryUnwrapMcpResult(rawContent)
-  const content = unwrapped !== null ? unwrapped : rawContent
+  const content = unwrapped === null ? rawContent : unwrapped
 
   if (content === null || content === undefined) {
     return null

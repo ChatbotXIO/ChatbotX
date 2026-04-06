@@ -22,10 +22,10 @@ function getSecretTextFromAuth(auth: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-async function getOpenAIIntegration(chatbotId: string) {
+async function getOpenAIIntegration(workspaceId: string) {
   const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst({
     where: {
-      chatbotId,
+      workspaceId,
       autoReply: true,
     },
   })
@@ -39,9 +39,9 @@ async function getOpenAIIntegration(chatbotId: string) {
 
 async function createQueryEmbedding(
   query: string,
-  chatbotId: string,
+  workspaceId: string,
 ): Promise<number[]> {
-  const integrationOpenAI = await getOpenAIIntegration(chatbotId)
+  const integrationOpenAI = await getOpenAIIntegration(workspaceId)
 
   const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
   if (!apiKey) {
@@ -74,7 +74,7 @@ async function searchSimilarEmbeddings(
       "aiFileId",
       1 - ("embedding" <=> ${embeddingString}::vector) as distance
     FROM "AIEmbedding"
-    WHERE "chatbotId" = ${config.chatbotId}
+    WHERE "workspaceId" = ${config.workspaceId}
       AND "aiFileId" = ANY(${config.selectedFileIds})
     ORDER BY "embedding" <=> ${embeddingString}::vector
     LIMIT ${config.maxResults}
@@ -109,7 +109,7 @@ export async function performFileSearch(
   try {
     const queryEmbedding = await createQueryEmbedding(
       args.query,
-      config.chatbotId,
+      config.workspaceId,
     )
     const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
@@ -132,7 +132,7 @@ export async function performFileSearch(
     logger.error(
       {
         error,
-        chatbotId: config.chatbotId,
+        workspaceId: config.workspaceId,
       },
       "[automated-response] performFileSearch failed",
     )
