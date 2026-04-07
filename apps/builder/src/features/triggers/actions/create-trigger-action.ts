@@ -1,9 +1,9 @@
 "use server"
 
-import { updateTriggerCache } from "@chatbotx/events"
 import { db, eq } from "@chatbotx.io/database/client"
 import { folderTypes } from "@chatbotx.io/database/partials"
 import { triggerModel } from "@chatbotx.io/database/schema"
+import { updateTriggerCache } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {

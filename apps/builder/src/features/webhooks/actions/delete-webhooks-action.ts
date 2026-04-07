@@ -1,8 +1,8 @@
 "use server"
 
-import { removeWebhookCache } from "@chatbotx/events"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { webhookModel } from "@chatbotx.io/database/schema"
+import { removeWebhookCache } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

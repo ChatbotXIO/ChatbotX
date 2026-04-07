@@ -1,4 +1,4 @@
-import type { ChatbotXConfig } from "@chatbotx/public-apis"
+import type { ChatbotXConfig } from "@chatbotx.io/public-apis"
 import { env } from "./env"
 
 const trailingSlashRegex = /\/$/

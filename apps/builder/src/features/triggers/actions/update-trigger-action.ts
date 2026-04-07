@@ -1,8 +1,8 @@
 "use server"
 
-import { updateTriggerCache } from "@chatbotx/events"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conditionModel, triggerModel } from "@chatbotx.io/database/schema"
+import { updateTriggerCache } from "@chatbotx.io/events"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateTriggerSchema } from "../schema/mutation"

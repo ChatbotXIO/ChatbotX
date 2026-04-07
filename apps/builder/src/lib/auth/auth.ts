@@ -88,7 +88,7 @@ export const auth = betterAuth({
     }),
     oneTimeToken(),
     anonymous({
-      emailDomainName: "anonymous.aha.chat",
+      emailDomainName: "anonymous.example.com",
       generateName: () => `Anonymous ${createId()}`,
     }),
   ],

@@ -1,8 +1,8 @@
-import { emitConversationTransferredToBot } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { emitConversationTransferredToBot } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
   type BulkUpdateIdsRequest,
@@ -33,11 +33,6 @@ export const disableLiveChatConversationAction = workspaceActionClient
           id: {
             in: parsedInput.ids,
           },
-        },
-        columns: {
-          id: true,
-          contactId: true,
-          channel: true,
         },
       })
 

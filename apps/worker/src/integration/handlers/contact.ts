@@ -1,8 +1,3 @@
-import {
-  emitCustomFieldChanged,
-  emitTagApplied,
-  emitTagRemoved,
-} from "@chatbotx/events"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -13,6 +8,11 @@ import {
   conversationModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
+import {
+  emitCustomFieldChanged,
+  emitTagApplied,
+  emitTagRemoved,
+} from "@chatbotx.io/events"
 import type {
   AddContactTagStepSchema,
   AddNotesStepSchema,

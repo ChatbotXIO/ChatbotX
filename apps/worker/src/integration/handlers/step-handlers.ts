@@ -1,10 +1,3 @@
-import {
-  emitConversationArchived,
-  emitConversationAssigned,
-  emitConversationTransferredToBot,
-  emitConversationTransferredToHuman,
-  emitConversationUnassigned,
-} from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
 import {
   and,
@@ -17,6 +10,13 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import { contactModel, conversationModel } from "@chatbotx.io/database/schema"
+import {
+  emitConversationArchived,
+  emitConversationAssigned,
+  emitConversationTransferredToBot,
+  emitConversationTransferredToHuman,
+  emitConversationUnassigned,
+} from "@chatbotx.io/events"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,

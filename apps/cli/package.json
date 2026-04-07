@@ -22,7 +22,7 @@
     "command-line"
   ],
   "dependencies": {
-    "@chatbotx/public-apis": "workspace:*",
+    "@chatbotx.io/public-apis": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "ky": "^1.14.3",
     "yargs": "^18.0.0",

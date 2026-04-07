@@ -1,12 +1,12 @@
 "use server"
 
-import { emitTagApplied, emitTagRemoved } from "@chatbotx/events"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsToTagsModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
+import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
   type ChatbotIdRequestParams,

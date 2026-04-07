@@ -1,5 +1,5 @@
 {
-  "name": "@chatbotx/public-apis",
+  "name": "@chatbotx.io/public-apis",
   "version": "0.1.0",
   "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
@@ -16,6 +16,6 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "generate:chatbotx": "openapi-typescript https://builder-dev.aha.chat/api/public-spec.json --output src/generated/chatbotx.ts"
+    "generate:chatbotx": "openapi-typescript ${DOMAIN:-https://cloud.chatbotx.io}/api/public-spec.json --output src/generated/chatbotx.ts"
   }
 }

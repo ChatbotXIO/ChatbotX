@@ -48,7 +48,7 @@
     "@chatbotx.io/sequence-scheduler": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
-    "@chatbotx/events": "workspace:*",
+    "@chatbotx.io/events": "workspace:*",
     "@faker-js/faker": "^10.4.0",
     "@platformatic/kafka": "^1.31.0",
     "@t3-oss/env-core": "^0.13.11",

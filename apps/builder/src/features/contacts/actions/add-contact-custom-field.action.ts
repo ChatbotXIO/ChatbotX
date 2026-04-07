@@ -1,11 +1,11 @@
 "use server"
 
-import { emitCustomFieldChanged } from "@chatbotx/events"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@chatbotx.io/database/schema"
+import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {

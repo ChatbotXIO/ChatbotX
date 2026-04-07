@@ -37,7 +37,7 @@
     "@chatbotx.io/ui": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
-    "@chatbotx/events": "workspace:*",
+    "@chatbotx.io/events": "workspace:*",
     "@floating-ui/dom": "^1.7.6",
     "@giphy/js-types": "^5.1.0",
     "@giphy/react-components": "^10.1.1",

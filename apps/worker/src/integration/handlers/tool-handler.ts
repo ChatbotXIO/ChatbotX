@@ -1,9 +1,9 @@
-import { emitCustomFieldChanged } from "@chatbotx/events"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   customFieldModel,
 } from "@chatbotx.io/database/schema"
+import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
   type CountCharactersStepSchema,
   type FormatDateStepSchema,

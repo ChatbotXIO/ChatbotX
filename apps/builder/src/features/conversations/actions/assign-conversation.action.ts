@@ -1,10 +1,10 @@
 "use server"
 
-import { emitConversationAssigned } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { db, inArray } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { emitConversationAssigned } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,

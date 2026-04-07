@@ -1,6 +1,6 @@
-# Aha.Chat
+# ChatbotX.io
 
-This is offical source code for Aha.Chat
+This is offical source code for ChatbotX.io
 
 ### Prerequisites
 
