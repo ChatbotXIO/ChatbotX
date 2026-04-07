@@ -69,3 +69,13 @@ export const listBroadcastContactsResponse = z.object({
 export type ListBroadcastContactsResponse = z.infer<
   typeof listBroadcastContactsResponse
 >
+
+export const broadcastUpdateItem = z.object({
+  workspaceId: z.string(),
+  broadcastId: z.string(),
+  contactId: z.string(),
+  contactInboxId: z.string(),
+  occurredAt: z.number(),
+})
+
+export type BroadcastUpdateItem = z.infer<typeof broadcastUpdateItem>

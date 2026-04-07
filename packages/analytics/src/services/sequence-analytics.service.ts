@@ -1,7 +1,6 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
+import { db, sql } from "@chatbotx.io/database/client"
 import {
   type FlowClickedPayload,
   FlowEventType,
@@ -120,17 +119,14 @@ export class SequenceAnalyticsService {
       }))
 
     if (sequenceContacts.length > 0) {
-      for (const sc of sequenceContacts) {
-        await db
-          .update(contactsOnSequenceModel)
-          .set({ status: "sent" })
-          .where(
-            and(
-              eq(contactsOnSequenceModel.sequenceId, sc.sequenceId),
-              eq(contactsOnSequenceModel.contactId, sc.contactId),
-            ),
-          )
-      }
+      const tuples = sequenceContacts.map(
+        (sc) => sql`(${sc.sequenceId}, ${sc.contactId})`,
+      )
+      await db.execute(sql`
+        UPDATE "ContactOnSequence"
+        SET "status" = 'sent'
+        WHERE ("sequenceId", "contactId") IN (${sql.join(tuples, sql`, `)})
+      `)
     }
   }
 
