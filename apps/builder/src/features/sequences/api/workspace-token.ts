@@ -16,7 +16,10 @@ export const chatbotTokenSequencesAPIs = {
     .input(basePaginationRequest)
     .output(listSequencesResponse)
     .handler(async ({ context, input }) => {
-      return await listSequences({ ...input, chatbotId: context.chatbot.id })
+      return await listSequences({
+        ...input,
+        workspaceId: context.workspace.id,
+      })
     }),
 
   getSequenceChatbotTokenAPI: workspaceTokenAuthAPI
@@ -29,7 +32,7 @@ export const chatbotTokenSequencesAPIs = {
     .input(z.object({ id: z.string() }))
     .output(sequenceResource)
     .handler(async ({ context, input }) => {
-      return await getSequence(context.chatbot.id, input.id)
+      return await getSequence(context.workspace.id, input.id)
     }),
 }
 

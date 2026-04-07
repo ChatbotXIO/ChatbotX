@@ -18,7 +18,7 @@ export const workspaceMembersAPIs = {
     .handler(async ({ context, input }) => {
       return await listWorkspaceMembers({
         ...input,
-        chatbotId: context.chatbot.id,
+        workspaceId: context.workspace.id,
       })
     }),
 }

@@ -18,7 +18,7 @@ export const chatbotTokenErrorLogsAPIs = {
     .handler(async ({ context, input }) => {
       return await listErrorLogs({
         ...input,
-        chatbotId: context.chatbot.id,
+        workspaceId: context.workspace.id,
       })
     }),
 }

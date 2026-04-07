@@ -18,16 +18,12 @@ export const listErrorLogsSearchParamsCache = createSearchParamsCache({
   ]),
 })
 
-export type ListErrorLogsRequest = Awaited<
-  ReturnType<typeof listErrorLogsSearchParamsCache.parse>
-> & {
-  workspaceId: string
-}
-
 export const listErrorLogsRequest = basePaginationRequest.extend({
   keyword: z.string().optional(),
-  chatbotId: z.string(),
+  workspaceId: z.string(),
 })
+
+export type ListErrorLogsRequest = z.infer<typeof listErrorLogsRequest>
 
 export const publicErrorLogResource = createSelectSchema(errorLogModel)
 export type PublicErrorLogResource = z.infer<typeof publicErrorLogResource>

@@ -4,6 +4,7 @@ import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiFilesAPI } from "@/features/ai-files/api"
 import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
 import botFieldsAPIs from "@/features/bot-fields/api"
+import { channelsAPI } from "@/features/channels/api"
 import contactsAPIs from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
@@ -19,6 +20,7 @@ import { sequencesAPI } from "@/features/sequences/api"
 import { spreadsheetsAPI } from "@/features/spreadsheets/api"
 import tagsAPI from "@/features/tags/api"
 import { workspaceMembersAPI } from "@/features/workspace-members/api"
+import { workspacesAPI } from "@/features/workspaces/api"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -47,4 +49,6 @@ export const router = {
   foldersAPI,
   messagesAPI,
   errorLogsAPI,
+  workspacesAPI,
+  channelsAPI,
 }
