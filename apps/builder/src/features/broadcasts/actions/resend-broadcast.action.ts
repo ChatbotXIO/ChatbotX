@@ -56,6 +56,8 @@ export const resendBroadcast = async (ctx: {
     const linkedContacts = await tx.query.contactsOnBroadcastsModel.findMany({
       columns: {
         contactId: true,
+        conversationId: true,
+        contactInboxId: true,
       },
       where: {
         broadcastId: broadcast.id,
@@ -66,6 +68,8 @@ export const resendBroadcast = async (ctx: {
       linkedContacts.map((contact) => ({
         broadcastId: newBroadcast.id,
         contactId: contact.contactId,
+        conversationId: contact.conversationId,
+        contactInboxId: contact.contactInboxId,
       })),
     )
 
