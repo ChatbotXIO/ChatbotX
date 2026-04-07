@@ -113,15 +113,14 @@ class SchedulerWorker {
       ),
     ])
 
-    const candidates = [...scheduleCandidates, ...retryCandidates]
-    if (candidates.length === 0) {
+    if (scheduleCandidates.length + retryCandidates.length === 0) {
       return
     }
 
     const claimed: { dispatchId: string; bucket: number }[] = []
 
-    await Promise.all(
-      candidates.map(async (dispatchId) => {
+    await Promise.all([
+      ...scheduleCandidates.map(async (dispatchId) => {
         try {
           await this.scheduler.withLock(
             bucket,
@@ -139,7 +138,25 @@ class SchedulerWorker {
           // Lock not acquired, skip this dispatch
         }
       }),
-    )
+      ...retryCandidates.map(async (dispatchId) => {
+        try {
+          await this.scheduler.withLock(
+            bucket,
+            dispatchId,
+            this.config.lockTtlMs / 1000,
+            async () => {
+              await this.scheduler.removeFromRetry(bucket, dispatchId)
+              claimed.push({
+                dispatchId,
+                bucket,
+              })
+            },
+          )
+        } catch {
+          // Lock not acquired, skip this dispatch
+        }
+      }),
+    ])
 
     if (claimed.length > 0) {
       await this.publishDispatches(claimed)

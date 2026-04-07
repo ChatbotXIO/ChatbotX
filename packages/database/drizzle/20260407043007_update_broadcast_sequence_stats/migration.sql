@@ -1,3 +1,8 @@
+ALTER TABLE "SequenceDispatch" ALTER COLUMN "runAtMs" SET DATA TYPE bigint USING "runAtMs"::bigint;--> statement-breakpoint
+ALTER TABLE "AnalyticsManifestStatus" ADD COLUMN IF NOT EXISTS "objectKey" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "AnalyticsManifestStatus" DROP COLUMN IF EXISTS "id"--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "AnalyticsManifestStatus_objectKey_key" ON "AnalyticsManifestStatus" ("objectKey");--> statement-breakpoint
+
 DROP TABLE IF EXISTS "SequenceEvent" CASCADE;
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "sentAt" bigint;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "readAt" bigint;--> statement-breakpoint

@@ -67,7 +67,7 @@ async function createAndScheduleDispatch(
     await scheduler.addToSchedule(
       dispatch.bucket,
       dispatch.id,
-      dispatch.runAtMs,
+      Number(dispatch.runAtMs),
     )
   }
 }

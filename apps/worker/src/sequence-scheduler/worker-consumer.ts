@@ -122,6 +122,14 @@ class DispatchConsumer {
             payload.dispatchId,
           )
 
+          if (!dispatch || dispatch === null) {
+            await this.scheduler.removeFromSchedule(
+              payload.bucket,
+              payload.dispatchId,
+            )
+            return
+          }
+
           if (!this.dispatchProcessor.validateDispatch(dispatch)) {
             return
           }
@@ -169,7 +177,7 @@ class DispatchConsumer {
             type: "sequenceSchedule",
             stepId: step?.id ?? "",
             sequenceId: step?.sequenceId ?? "",
-            dispatchId: dispatch.contactId,
+            dispatchId: dispatch.id,
             contactInboxId: dispatch.contactInboxId,
           },
         },

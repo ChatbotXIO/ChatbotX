@@ -4,28 +4,29 @@ import type { DispatchWithRelations } from "./types"
 
 export class DispatchProcessorService {
   async fetchDispatch(dispatchId: string) {
-    const dispatch = await db.query.sequenceDispatchModel.findFirst({
-      where: {
-        id: dispatchId,
-      },
-      with: {
-        sequence: true,
-        contact: true,
-        enrollment: true,
-      },
-    })
+    try {
+      const dispatch = await db.query.sequenceDispatchModel.findFirst({
+        where: {
+          id: dispatchId,
+        },
+        with: {
+          sequence: true,
+          contact: true,
+          enrollment: true,
+        },
+      })
 
-    return dispatch ?? null
+      return dispatch ?? null
+    } catch (error) {
+      console.error("[ERROR fetchDispatch] Query failed:", error)
+      return null
+    }
   }
 
   validateDispatch(
     dispatch: Awaited<ReturnType<typeof this.fetchDispatch>>,
   ): dispatch is DispatchWithRelations {
-    if (!dispatch) {
-      return false
-    }
-
-    if (dispatch.status !== "pending") {
+    if (dispatch && dispatch.status !== "pending") {
       return false
     }
 

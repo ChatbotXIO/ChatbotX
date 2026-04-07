@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "96c82016-6157-41f0-bafb-d8be478e5d81",
+  "id": "038283ea-41bf-4a9f-bfdb-ae00b2a88a6e",
   "prevIds": ["1f84963d-4b61-432b-bef3-f2a515ed10d0"],
   "ddl": [
     {
@@ -1383,40 +1383,14 @@
       "table": "AITriggerToIntegrationOpenai"
     },
     {
-      "type": "bigint",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
+      "name": "objectKey",
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsManifestStatus"
@@ -3467,7 +3441,7 @@
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
-      "default": "false",
+      "default": null,
       "generated": {
         "as": "case when \"sentAt\" is null then false when \"readAt\" is null then false else \"readAt\" >= \"sentAt\" end",
         "type": "stored"
@@ -7353,7 +7327,7 @@
       "table": "SequenceDispatch"
     },
     {
-      "type": "integer",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -9192,6 +9166,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "AIEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "objectKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsManifestStatus_objectKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
     },
     {
       "nameExplicit": true,
@@ -13181,14 +13176,6 @@
       "name": "AITrigger_pkey",
       "schema": "public",
       "table": "AITrigger",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "AnalyticsManifestStatus_pkey",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus",
       "entityType": "pks"
     },
     {

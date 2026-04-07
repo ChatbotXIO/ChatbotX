@@ -81,7 +81,7 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
     await scheduler.addToSchedule(
       dispatch.bucket,
       dispatch.id,
-      dispatch.runAtMs,
+      Number(dispatch.runAtMs),
     )
   }
 }
@@ -161,7 +161,7 @@ export async function enrollContactsInSequenceBulk(
       await scheduler.addToSchedule(
         dispatch.bucket,
         dispatch.id,
-        dispatch.runAtMs,
+        Number(dispatch.runAtMs),
       )
     }
   }

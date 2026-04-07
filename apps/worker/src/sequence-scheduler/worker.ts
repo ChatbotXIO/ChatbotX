@@ -76,7 +76,7 @@ class ReconcileJob {
         const dispatches = await db.query.sequenceDispatchModel.findMany({
           where: {
             status: "pending",
-            runAtMs: { lte: windowEnd.getTime() },
+            runAtMs: { lte: String(windowEnd.getTime()) },
           },
           columns: {
             id: true,

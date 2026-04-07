@@ -22,7 +22,7 @@ export const sequenceDispatchModel = pgTable(
   "SequenceDispatch",
   {
     ...sharedColumns,
-    runAtMs: integer().notNull(),
+    runAtMs: bigintAsString().notNull(),
     bucket: integer().notNull().default(0),
     status: text(),
     idempotencyKey: text().notNull(),

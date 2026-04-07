@@ -130,7 +130,7 @@ export class EnrollmentAdvancerService {
         await scheduler.addToSchedule(
           nextDispatch.bucket,
           nextDispatch.id,
-          nextDispatch.runAtMs,
+          Number(nextDispatch.runAtMs),
         )
       }
     })

@@ -43,7 +43,7 @@ export interface CreateDispatchParams {
 }
 export async function createDispatch(
   params: CreateDispatchParams,
-): Promise<{ id: string; bucket: number; runAtMs: number }> {
+): Promise<{ id: string; bucket: number; runAtMs: string }> {
   const {
     workspaceId,
     sequenceId,
@@ -55,13 +55,14 @@ export async function createDispatch(
     client = db,
   } = params
   const bucket = calculateBucket(workspaceId, contactId)
-  const runAtMs = runAt.getTime()
+  const runAtMs = String(runAt.getTime())
   const idempotencyKey = generateIdempotencyKey(
     workspaceId,
     enrollmentId,
     stepId,
     runAt,
   )
+
   const [dispatch] = await client
     .insert(sequenceDispatchModel)
     .values({
