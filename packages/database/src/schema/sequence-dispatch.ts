@@ -12,6 +12,7 @@ import {
   timestampConfig,
 } from "../partials/shared"
 import { contactModel } from "./contact"
+import { contactInboxModel } from "./contact-inbox"
 import { contactsOnSequenceModel } from "./contact-on-sequence"
 import { sequenceModel } from "./sequence"
 import { sequenceStepModel } from "./sequence-step"
@@ -45,6 +46,12 @@ export const sequenceDispatchModel = pgTable(
     contactId: bigintAsString()
       .notNull()
       .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    contactInboxId: bigintAsString()
+      .notNull()
+      .references(() => contactInboxModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),

@@ -170,6 +170,7 @@ class DispatchConsumer {
             stepId: step?.id ?? "",
             sequenceId: step?.sequenceId ?? "",
             dispatchId: dispatch.contactId,
+            contactInboxId: dispatch.contactInboxId,
           },
         },
       )

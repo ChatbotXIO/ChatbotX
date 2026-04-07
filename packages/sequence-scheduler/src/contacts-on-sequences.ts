@@ -1,5 +1,6 @@
-import { type DatabaseClient, inArray } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, inArray } from "@chatbotx.io/database/client"
 import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
+import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { cancelPendingDispatches } from "./dispatch-manager"
 
 export const contactsOnSequencesUtils = {
@@ -75,3 +76,28 @@ export const contactsOnSequencesUtils = {
 }
 
 export type ContactsOnSequencesUtils = typeof contactsOnSequencesUtils
+
+export async function getContactInboxes(
+  workspaceId: string,
+  contactId: string,
+): Promise<ContactInboxModel[]> {
+  const inboxes = await db.query.inboxModel.findMany({
+    where: {
+      workspaceId,
+    },
+    columns: {
+      id: true,
+    },
+  })
+
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId,
+      inboxId: {
+        in: inboxes.map((inbox) => inbox.id),
+      },
+    },
+  })
+
+  return contactInboxes
+}

@@ -3,6 +3,7 @@ import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { createId } from "@chatbotx.io/utils"
+import { getContactInboxes } from "./contacts-on-sequences"
 import { createDispatch } from "./dispatch-manager"
 
 type DrizzleClient = typeof db | Transaction
@@ -60,19 +61,29 @@ export async function enrollContactInSequence(params: EnrollContactParams) {
   if (!(nextStepId && enrollment)) {
     return
   }
-  const dispatch = await createDispatch({
-    workspaceId,
-    sequenceId,
-    contactId,
-    stepId: nextStepId,
-    enrollmentId: enrollment.id,
-    runAt: nextRunAt,
-    client,
-  })
 
-  const redisClient = await sequenceConnections.useExisting()
-  const scheduler = new SchedulerClient(redisClient)
-  await scheduler.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
+  const contactInboxes = await getContactInboxes(workspaceId, contactId)
+
+  for (const contactInbox of contactInboxes) {
+    const dispatch = await createDispatch({
+      workspaceId,
+      sequenceId,
+      contactId,
+      contactInboxId: contactInbox.id,
+      stepId: nextStepId,
+      enrollmentId: enrollment.id,
+      runAt: nextRunAt,
+      client,
+    })
+
+    const redisClient = await sequenceConnections.useExisting()
+    const scheduler = new SchedulerClient(redisClient)
+    await scheduler.addToSchedule(
+      dispatch.bucket,
+      dispatch.id,
+      dispatch.runAtMs,
+    )
+  }
 }
 export interface EnrollContactsBulkParams {
   enrolledAt?: Date
@@ -130,18 +141,28 @@ export async function enrollContactsInSequenceBulk(
     if (!(enrollment.nextStepId && enrollment.nextRunAt)) {
       continue
     }
-    const dispatch = await createDispatch({
+
+    const contactInboxes = await getContactInboxes(
       workspaceId,
-      sequenceId: enrollment.sequenceId,
-      contactId: enrollment.contactId,
-      stepId: enrollment.nextStepId,
-      enrollmentId: enrollment.id,
-      runAt: enrollment.nextRunAt,
-    })
-    await scheduler.addToSchedule(
-      dispatch.bucket,
-      dispatch.id,
-      dispatch.runAtMs,
+      enrollment.contactId,
     )
+
+    for (const contactInbox of contactInboxes) {
+      const dispatch = await createDispatch({
+        workspaceId,
+        sequenceId: enrollment.sequenceId,
+        contactId: enrollment.contactId,
+        contactInboxId: contactInbox.id,
+        stepId: enrollment.nextStepId,
+        enrollmentId: enrollment.id,
+        runAt: enrollment.nextRunAt,
+      })
+
+      await scheduler.addToSchedule(
+        dispatch.bucket,
+        dispatch.id,
+        dispatch.runAtMs,
+      )
+    }
   }
 }

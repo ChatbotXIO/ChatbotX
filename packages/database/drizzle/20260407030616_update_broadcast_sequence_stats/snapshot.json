@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e1c8587b-dc32-4c54-b483-c50ae20a9a3a",
+  "id": "96c82016-6157-41f0-bafb-d8be478e5d81",
   "prevIds": ["1f84963d-4b61-432b-bef3-f2a515ed10d0"],
   "ddl": [
     {
@@ -3432,6 +3432,48 @@
       "generated": null,
       "identity": null,
       "name": "failed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sentAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "readAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": {
+        "as": "case when \"sentAt\" is null then false when \"readAt\" is null then false else \"readAt\" >= \"sentAt\" end",
+        "type": "stored"
+      },
+      "identity": null,
+      "name": "isRead",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnBroadcast"
@@ -7474,6 +7516,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "stepId",
       "entityType": "columns",
       "schema": "public",
@@ -9438,6 +9493,48 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactInbox"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_on_broadcast_contact_id",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "isRead",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_on_broadcast_is_read",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
     },
     {
       "nameExplicit": true,
@@ -12630,6 +12727,19 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "SequenceDispatch_contactInboxId_ContactInbox_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "SequenceDispatch"

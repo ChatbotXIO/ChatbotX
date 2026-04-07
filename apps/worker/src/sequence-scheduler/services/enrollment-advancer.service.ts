@@ -5,6 +5,7 @@ import {
   calculateNextRunAtFromStep,
   calculateNextValidSendTime,
   createDispatch,
+  getContactInboxes,
 } from "@chatbotx.io/sequence-scheduler"
 import type { DispatchWithRelations, StepWithRelations } from "./types"
 
@@ -109,21 +110,29 @@ export class EnrollmentAdvancerService {
           ),
         )
 
-      const nextDispatch = await createDispatch({
-        workspaceId: dispatch.workspaceId,
-        sequenceId: dispatch.sequenceId,
-        contactId: dispatch.contactId,
-        stepId: nextStep.id,
-        enrollmentId: dispatch.enrollmentId,
-        runAt: nextRunAt,
-        client: tx,
-      })
-
-      await scheduler.addToSchedule(
-        nextDispatch.bucket,
-        nextDispatch.id,
-        nextDispatch.runAtMs,
+      const contactInboxes = await getContactInboxes(
+        dispatch.workspaceId,
+        dispatch.contactId,
       )
+
+      for (const contactInbox of contactInboxes) {
+        const nextDispatch = await createDispatch({
+          workspaceId: dispatch.workspaceId,
+          sequenceId: dispatch.sequenceId,
+          contactId: dispatch.contactId,
+          stepId: nextStep.id,
+          enrollmentId: dispatch.enrollmentId,
+          runAt: nextRunAt,
+          client: tx,
+          contactInboxId: contactInbox.id,
+        })
+
+        await scheduler.addToSchedule(
+          nextDispatch.bucket,
+          nextDispatch.id,
+          nextDispatch.runAtMs,
+        )
+      }
     })
   }
 }

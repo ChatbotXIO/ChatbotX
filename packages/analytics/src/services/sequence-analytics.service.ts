@@ -1,10 +1,7 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  contactsOnSequenceModel,
-} from "@chatbotx.io/database/schema"
+import { and, db, eq } from "@chatbotx.io/database/client"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import {
   type FlowClickedPayload,
   FlowEventType,
@@ -204,12 +201,14 @@ export class SequenceAnalyticsService {
 
     for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
       const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
-      const seenAt = new Date()
+      const mapContactInboxes = new Map(
+        chatbotPayloads.map((p) => [p.contactInboxId, p]),
+      )
 
-      const activeSequences = await db.query.contactsOnSequenceModel.findMany({
+      const sequenceDispatches = await db.query.sequenceDispatchModel.findMany({
         where: {
           contactId: { in: contactIds },
-          status: { in: ["active", "sent"] },
+          status: { in: ["completed"] },
         },
         with: {
           sequence: {
@@ -218,17 +217,22 @@ export class SequenceAnalyticsService {
         },
       })
 
-      const filtered = activeSequences.filter((s) => {
+      const filtered = sequenceDispatches.filter((s) => {
         if (s.sequence.workspaceId !== workspaceId) {
           return false
         }
-        return true
-      })
 
-      await db
-        .update(contactModel)
-        .set({ lastReadAt: seenAt })
-        .where(inArray(contactModel.id, contactIds))
+        const payload = mapContactInboxes.get(s.contactInboxId)
+        if (
+          payload?.occurredAt &&
+          s.completedAt &&
+          payload.occurredAt <= s.completedAt
+        ) {
+          return true
+        }
+
+        return false
+      })
 
       if (filtered.length === 0) {
         continue
@@ -240,21 +244,27 @@ export class SequenceAnalyticsService {
           .map((p) => [p.contactId, p.contactInboxId as string]),
       )
 
-      const insertedData: SequenceScheduleEventType[] = filtered.map((s) => ({
-        event_id: createId(),
-        workspace_id: workspaceId,
-        sequence_id: s.sequenceId,
-        step_id: s.lastStepId || "",
-        contact_id: s.contactId,
-        contact_inbox_id: contactInboxMap.get(s.contactId) ?? "",
-        conv_id: "",
-        source_id: "",
-        channel: "",
-        event_type: MessageEventType["message:seen"],
-        content: JSON.stringify({}),
-        occurred_at: toClickHouseDateTime(seenAt),
-        inserted_at: toClickHouseDateTime(new Date()),
-      }))
+      const insertedData: SequenceScheduleEventType[] = filtered.map((s) => {
+        const payload = mapContactInboxes.get(s.contactInboxId)
+
+        return {
+          event_id: createId(),
+          workspace_id: workspaceId,
+          sequence_id: s.sequenceId,
+          step_id: s.stepId,
+          contact_id: s.contactId,
+          contact_inbox_id: contactInboxMap.get(s.contactId) ?? "",
+          conv_id: "",
+          source_id: "",
+          channel: "",
+          event_type: MessageEventType["message:seen"],
+          content: JSON.stringify({}),
+          occurred_at: toClickHouseDateTime(
+            new Date(payload ? payload.occurredAt : new Date()),
+          ),
+          inserted_at: toClickHouseDateTime(new Date()),
+        }
+      })
 
       await saveToClickhouse(insertedData)
     }

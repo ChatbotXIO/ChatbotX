@@ -10,7 +10,10 @@ import {
 import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
-import { createDispatch } from "@chatbotx.io/sequence-scheduler"
+import {
+  createDispatch,
+  getContactInboxes,
+} from "@chatbotx.io/sequence-scheduler"
 
 type SequenceStepForDelay = {
   id: string
@@ -46,15 +49,27 @@ async function createAndScheduleDispatch(
   },
   client: DatabaseClient,
 ) {
-  const dispatch = await createDispatch({
-    ...params,
-    client,
-  })
+  const contactInboxes = await getContactInboxes(
+    params.workspaceId,
+    params.contactId,
+  )
 
-  // biome-ignore lint/correctness/useHookAtTopLevel: useExisting is not a React hook
-  const redisClient = await sequenceConnections.useExisting()
-  const scheduler = new SchedulerClient(redisClient)
-  await scheduler.addToSchedule(dispatch.bucket, dispatch.id, dispatch.runAtMs)
+  for (const contactInbox of contactInboxes) {
+    const dispatch = await createDispatch({
+      ...params,
+      contactInboxId: contactInbox.id,
+      client,
+    })
+
+    // biome-ignore lint/correctness/useHookAtTopLevel: useExisting is not a React hook
+    const redisClient = await sequenceConnections.useExisting()
+    const scheduler = new SchedulerClient(redisClient)
+    await scheduler.addToSchedule(
+      dispatch.bucket,
+      dispatch.id,
+      dispatch.runAtMs,
+    )
+  }
 }
 
 export async function calculateNextRunAtBulk(
