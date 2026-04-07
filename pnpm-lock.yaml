@@ -62,6 +62,9 @@ importers:
       '@aha.chat/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@aha.chat/integration-telegram':
+        specifier: workspace:*
+        version: link:../../integrations/telegram
       '@aha.chat/integration-webchat':
         specifier: workspace:*
         version: link:../../integrations/webchat
@@ -480,6 +483,9 @@ importers:
       '@aha.chat/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@aha.chat/integration-telegram':
+        specifier: workspace:*
+        version: link:../../integrations/telegram
       '@aha.chat/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
@@ -731,6 +737,40 @@ importers:
       '@types/node':
         specifier: 24.x
         version: 24.12.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  integrations/telegram:
+    dependencies:
+      '@aha.chat/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@aha.chat/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@aha.chat/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@paralleldrive/cuid2':
+        specifier: ^3.3.0
+        version: 3.3.0
+      '@types/node':
+        specifier: 24.x
+        version: 24.12.0
+      ky:
+        specifier: ^1.14.3
+        version: 1.14.3
+      remeda:
+        specifier: ^2.33.6
+        version: 2.33.6
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@aha.chat/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       typescript:
         specifier: 5.9.3
         version: 5.9.3

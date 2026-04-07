@@ -4,6 +4,7 @@ import {
 } from "@aha.chat/database/types"
 import { integrationQueue } from "@aha.chat/worker-config"
 import type { NextRequest } from "next/server"
+import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
 import { findOrganization } from "@/features/organization/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getDomainFromHeader } from "@/lib/domain"
@@ -13,6 +14,11 @@ export const handleWebhook = async (
   integrationType: string,
   req: NextRequest,
 ) => {
+  // Telegram uses per-bot config (not org-level settings)
+  if (integrationType === "telegram") {
+    return handleTelegramWebhook(req)
+  }
+
   const domain = await getDomainFromHeader()
   const organization = await findOrganization({
     domain,
@@ -74,6 +80,56 @@ export const handleWebhook = async (
           chatbotId: req.nextUrl.searchParams.get("chatbotId") ?? "",
           referer: req.nextUrl.toString(),
         },
+        // biome-ignore lint/suspicious/noExplicitAny: safe pass value
+      } as any,
+      req,
+      queue: integrationQueue,
+    })
+
+    return new Response(result as BodyInit)
+  } catch (e: unknown) {
+    return new Response(JSON.stringify({ message: (e as Error).message }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+const handleTelegramWebhook = async (req: NextRequest) => {
+  const botId = req.nextUrl.searchParams.get("botId")
+  if (!botId) {
+    return new Response(
+      JSON.stringify({ message: "Missing botId query param" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  const integration = integrations.telegram
+  if (!integration?.handleRequest) {
+    return new Response(
+      JSON.stringify({ message: "Method is not implemented" }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  const integrationTelegram = await findIntegrationTelegramByBotId({ botId })
+  if (!integrationTelegram) {
+    return new Response(JSON.stringify({ message: "Bot not found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+
+  const auth = integrationTelegram.auth as {
+    secretText: string
+    metadata?: { botId?: string; webhookSecretToken?: string }
+  }
+
+  try {
+    const result = await integration.handleRequest({
+      config: {
+        botId: integrationTelegram.botId,
+        webhookSecretToken: auth.metadata?.webhookSecretToken,
         // biome-ignore lint/suspicious/noExplicitAny: safe pass value
       } as any,
       req,

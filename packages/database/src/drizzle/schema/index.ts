@@ -2189,3 +2189,43 @@ export const whatsappMessageTemplateModel = pgTable(
     ),
   ],
 )
+
+export const integrationTelegramModel = pgTable(
+  "IntegrationTelegram",
+  {
+    ...sharedColumns,
+    auth: jsonb().$type<{ [x: string]: unknown }>().notNull(),
+    botId: text().notNull(),
+    botUsername: text().notNull(),
+    name: text().notNull(),
+    chatbotId: text()
+      .notNull()
+      .references(() => chatbotModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "IntegrationTelegram_chatbotId_fkey",
+      }),
+    inboxId: text()
+      .notNull()
+      .references(() => inboxModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+        name: "IntegrationTelegram_inboxId_fkey",
+      }),
+  },
+  (table) => [
+    index("IntegrationTelegram_chatbotId_idx").using(
+      "btree",
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+    uniqueIndex("IntegrationTelegram_inboxId_key").using(
+      "btree",
+      table.inboxId.asc().nullsLast().op("text_ops"),
+    ),
+    uniqueIndex("IntegrationTelegram_botId_chatbotId_key").using(
+      "btree",
+      table.botId.asc().nullsLast().op("text_ops"),
+      table.chatbotId.asc().nullsLast().op("text_ops"),
+    ),
+  ],
+)

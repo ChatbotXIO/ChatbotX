@@ -3,6 +3,7 @@ import type { IntegrationType } from "@aha.chat/database/types"
 import { integration as integrationChatbotx } from "@aha.chat/integration-chatbotx"
 import { integration as integrationGoogleSheets } from "@aha.chat/integration-google-sheets"
 import { integration as integrationMessenger } from "@aha.chat/integration-messenger"
+import { integration as integrationTelegram } from "@aha.chat/integration-telegram"
 import { integration as integrationWhatsapp } from "@aha.chat/integration-whatsapp"
 import { integration as integrationZalo } from "@aha.chat/integration-zalo"
 import type { Integration, IntegrationDefinition } from "@aha.chat/sdk"
@@ -15,6 +16,7 @@ export const allIntegrations: Record<
   gemini: undefined,
   googleSheets: integrationGoogleSheets,
   messenger: integrationMessenger,
+  telegram: integrationTelegram,
   openai: undefined,
   webchat: undefined,
   whatsapp: integrationWhatsapp,
@@ -75,6 +77,22 @@ export const getDBIntegration = async (
         throw new Error("Zalo OA integration not found")
       }
       return integrationZalo
+    }
+    case "telegram": {
+      const integrationTelegram =
+        await db.query.integrationTelegramModel.findFirst({
+          where: {
+            botId: integrationIdentifier,
+          },
+          with: {
+            chatbot: true,
+            inbox: true,
+          },
+        })
+      if (!integrationTelegram) {
+        throw new Error("Telegram integration not found")
+      }
+      return integrationTelegram
     }
     default:
       throw new Error(`Unsupported integration: ${integrationType}`)

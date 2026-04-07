@@ -2,7 +2,7 @@ export class SdkException extends Error {
   code: string
   httpStatusCode: number
 
-  constructor(message: string, code = "sysmtemError", httpStatusCode = 400) {
+  constructor(message: string, code = "systemError", httpStatusCode = 400) {
     super(message)
 
     this.name = this.constructor.name

@@ -18,6 +18,10 @@ export const allInboxConfigs = {
     label: "Zalo OA",
     value: "zalo",
   },
+  telegram: {
+    label: "Telegram",
+    value: "telegram",
+  },
   webchat: {
     label: "Webchat",
     value: "webchat",

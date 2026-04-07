@@ -184,6 +184,7 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.inboxModel.id.through(r.integrationWhatsappModel.inboxId),
       alias: "chatbot_id_inbox_id_via_integrationWhatsapp",
     }),
+    integrationTelegrams: r.many.integrationTelegramModel(),
     integrationZalos: r.many.integrationZaloModel(),
     invitations: r.many.invitationModel(),
     errorLogs: r.many.errorLogModel(),
@@ -379,6 +380,7 @@ export const relations = defineRelations(schema, (r) => ({
       alias: "chatbot_id_inbox_id_via_integrationWhatsapp",
     }),
     integrationZalo: r.one.integrationZaloModel(),
+    integrationTelegram: r.one.integrationTelegramModel(),
     messages: r.many.messageModel(),
     integrationWhatsapp: r.one.integrationWhatsappModel(),
     contactStats: r.one.inboxContactStatsModel(),
@@ -482,6 +484,18 @@ export const relations = defineRelations(schema, (r) => ({
     flow: r.one.flowModel({
       from: r.integrationWebchatModel.welcomeFlowId,
       to: r.flowModel.id,
+    }),
+  },
+  integrationTelegramModel: {
+    chatbot: r.one.chatbotModel({
+      from: r.integrationTelegramModel.chatbotId,
+      to: r.chatbotModel.id,
+      optional: false,
+    }),
+    inbox: r.one.inboxModel({
+      from: r.integrationTelegramModel.inboxId,
+      to: r.inboxModel.id,
+      optional: false,
     }),
   },
   integrationZaloModel: {

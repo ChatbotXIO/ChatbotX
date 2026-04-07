@@ -2,6 +2,7 @@ import type { OrganizationSettings } from "@aha.chat/database/types"
 import { Suspense } from "react"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
+import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { ZaloConnect } from "@/features/integration-zalo/components/zalo-connect"
 import { findOrganizationSettings } from "@/features/organization/queries"
@@ -37,6 +38,9 @@ export default async function CreateChannelPage({
       )}
       {selectedChannel === "zalo" && settings.zalo && (
         <ZaloConnect chatbotId={chatbotId} settings={settings.zalo} />
+      )}
+      {selectedChannel === "telegram" && (
+        <TelegramConnect chatbotId={chatbotId} />
       )}
       {selectedChannel === "webchat" && (
         <SimpleCreateWebchat chatbotId={chatbotId} />

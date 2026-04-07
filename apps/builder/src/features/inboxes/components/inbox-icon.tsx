@@ -3,6 +3,8 @@ import { cn } from "@aha.chat/ui/lib/utils"
 import {
   SiMessenger,
   SiMessengerHex,
+  SiTelegram,
+  SiTelegramHex,
   SiWhatsapp,
   SiWhatsappHex,
   SiZalo,
@@ -48,6 +50,11 @@ const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
     Icon: SiZalo,
     fill: SiZaloHex,
     defaultLabel: "Zalo OA",
+  },
+  telegram: {
+    Icon: SiTelegram,
+    fill: SiTelegramHex,
+    defaultLabel: "Telegram",
   },
   webchat: {
     Icon: AppWindowIcon,

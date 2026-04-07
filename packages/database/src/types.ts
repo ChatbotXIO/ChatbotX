@@ -10,6 +10,7 @@ export const integrationType = {
   gemini: "gemini",
   whatsapp: "whatsapp",
   zalo: "zalo",
+  telegram: "telegram",
   chatbotX: "chatbotX",
 } as const
 
@@ -19,6 +20,7 @@ export const channelType = {
   messenger: "messenger",
   whatsapp: "whatsapp",
   zalo: "zalo",
+  telegram: "telegram",
 } as const
 export type ChannelType = (typeof channelType)[keyof typeof channelType]
 
@@ -64,6 +66,8 @@ export type IntegrationWhatsappModel =
   typeof schema.integrationWhatsappModel.$inferSelect
 export type IntegrationZaloModel =
   typeof schema.integrationZaloModel.$inferSelect
+export type IntegrationTelegramModel =
+  typeof schema.integrationTelegramModel.$inferSelect
 export type MessageModel = typeof schema.messageModel.$inferSelect
 export type AttachmentModel = typeof schema.attachmentModel.$inferSelect
 export type SpreadsheetModel = typeof schema.spreadsheetModel.$inferSelect

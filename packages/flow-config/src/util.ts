@@ -29,6 +29,14 @@ export const decodeButtonPayload = (payload: string): ButtonPayload | null => {
   try {
     return buttonPayloadSchema.parse(JSON.parse(atob(payload)))
   } catch (error) {
+    // Compact format used by Telegram to stay within the 64-byte callback_data limit.
+    // Format: "{flowId}.{buttonId}" — split on the first ".".
+    const dotIndex = payload.indexOf(".")
+    if (dotIndex > 0 && dotIndex < payload.length - 1) {
+      const flowId = payload.slice(0, dotIndex)
+      const buttonId = payload.slice(dotIndex + 1)
+      return { flowId, buttonId }
+    }
     console.error("Unable to decode button payload", { error })
     return null
   }

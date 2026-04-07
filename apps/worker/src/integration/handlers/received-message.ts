@@ -360,4 +360,6 @@ export const receiveMessage = async (
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === "messenger" || integrationType === "zalo"
+  integrationType === "messenger" ||
+  integrationType === "zalo" ||
+  integrationType === "telegram"

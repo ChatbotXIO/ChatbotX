@@ -28,6 +28,7 @@ export async function listInboxes(
             integrationWebchat: true,
             integrationMessenger: true,
             integrationZalo: true,
+            integrationTelegram: true,
           }
         : undefined,
     }),

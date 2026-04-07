@@ -7,8 +7,8 @@
     "build": "dotenv  -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
     "i18n:check": "i18n-check --source en --locales messages",
-    "dev": "dotenv -e .env -e ../../.env -- next dev -H builder.example.com -p 3123",
-    "https": "dotenv -e .env -e ../../.env -- next dev -H builder.example.com -p 3123 --experimental-https",
+    "dev": "dotenv -e .env -e ../../.env -- next dev -H 0.0.0.0 -p 3123",
+    "https": "dotenv -e .env -e ../../.env -- next dev -H 0.0.0.0 -p 3123 --experimental-https",
     "lint": "pnpm i18n:check && biome check .",
     "start": "next start"
   },
@@ -21,6 +21,7 @@
     "@aha.chat/integration-messenger": "workspace:*",
     "@aha.chat/integration-webchat": "workspace:*",
     "@aha.chat/integration-whatsapp": "workspace:*",
+    "@aha.chat/integration-telegram": "workspace:*",
     "@aha.chat/integration-zalo": "workspace:*",
     "@aha.chat/logger": "workspace:*",
     "@aha.chat/mail": "workspace:*",

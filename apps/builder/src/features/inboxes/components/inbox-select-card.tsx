@@ -35,6 +35,9 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
         value: "zalo",
       },
       {
+        value: "telegram",
+      },
+      {
         value: "webchat",
       },
     ],
@@ -68,7 +71,9 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
               </div>
               <Button
                 disabled={
-                  inbox.value !== "webchat" && !(inbox.value in settings)
+                  inbox.value !== "webchat" &&
+                  inbox.value !== "telegram" &&
+                  !(inbox.value in settings)
                 }
                 onClick={() => handleInboxSelect(inbox.value)}
                 type="button"
