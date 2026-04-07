@@ -6,7 +6,7 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -25,7 +25,7 @@ export const exportContactsAction = workspaceActionClient
       parsedInput,
     }: {
       ctx: { user: UserModel }
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: ExportContactsRequest
     }) => {
       const { contactIds, fields } = parsedInput

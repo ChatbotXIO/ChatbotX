@@ -38,6 +38,7 @@ import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
 import { integrationMessengerRelations } from "./integration-messenger"
 import { integrationOpenaiRelations } from "./integration-openai"
 import { integrationSmtpRelations } from "./integration-smtp"
+import { integrationTelegramRelations } from "./integration-telegram"
 import { integrationWebchatRelations } from "./integration-webchat"
 import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
@@ -138,4 +139,5 @@ export const relations = {
   ...botFieldRelations,
   ...savedReplyRelations,
   ...userRelations,
+  ...integrationTelegramRelations,
 }

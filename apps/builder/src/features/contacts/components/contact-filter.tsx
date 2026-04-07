@@ -243,6 +243,10 @@ const getFieldConfigs = ({
         label: "Zalo OA",
         value: "zalo",
       },
+      {
+        label: "Telegram",
+        value: "telegram",
+      },
     ],
   },
   {

@@ -13,8 +13,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@ai-sdk/mcp": "^1.0.32",
-    "@better-auth/stripe": "^1.5.6",
+    "@ai-sdk/mcp": "^1.0.30",
+    "@better-auth/stripe": "^1.5.5",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
@@ -28,6 +28,7 @@
     "@chatbotx.io/integration-google-sheets": "workspace:*",
     "@chatbotx.io/integration-messenger": "workspace:*",
     "@chatbotx.io/integration-smtp": "workspace:*",
+    "@chatbotx.io/integration-telegram": "workspace:*",
     "@chatbotx.io/integration-webchat": "workspace:*",
     "@chatbotx.io/integration-whatsapp": "workspace:*",
     "@chatbotx.io/integration-zalo": "workspace:*",

@@ -12,7 +12,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import {
@@ -31,7 +31,7 @@ export const assignConversationAction = workspaceActionClient
       parsedInput,
       ctx,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: AssignConversationSchema
       ctx: { user: UserModel }
     }) => {

@@ -5,7 +5,7 @@ import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
@@ -24,7 +24,7 @@ export const updateWhatsappIceBreakerAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: UpdateWhatsappIceBreakerSchema
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       const integrationWhatsapp = await findOrFail({
         table: integrationWhatsappModel,

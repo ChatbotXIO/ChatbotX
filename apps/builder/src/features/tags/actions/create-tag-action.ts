@@ -5,7 +5,7 @@ import { tagModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
@@ -25,7 +25,7 @@ export const createTagAction = authActionClient
     }: {
       ctx: { user: UserModel }
       parsedInput: CreateTagRequest
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       await findChatbotOrFail(ctx.user.id, workspaceId)
 

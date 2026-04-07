@@ -6,7 +6,7 @@ import {
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
@@ -18,7 +18,7 @@ export const createWebchatAction = authActionClient
     const { authorizedDomains, ...rest } = parsedInput
 
     let workspaceId = parsedInput.workspaceId
-    const { organization } = await identifyChatbotAndOrganizationFromRequest(
+    const { organization } = await identifyWorkspaceAndOrganizationFromRequest(
       parsedInput.workspaceId,
     )
 

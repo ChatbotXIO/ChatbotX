@@ -14,7 +14,7 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -36,7 +36,7 @@ export const selectPageAction = authActionClient
       try {
         let workspaceId = parsedInput.workspaceId
         const { organization } =
-          await identifyChatbotAndOrganizationFromRequest(
+          await identifyWorkspaceAndOrganizationFromRequest(
             parsedInput.workspaceId,
           )
         const settings = await verifyOrganizationSettings(organization)

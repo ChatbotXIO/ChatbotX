@@ -4,7 +4,7 @@ import { db, eq } from "@chatbotx.io/database/client"
 import { workspaceModel } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -43,7 +43,7 @@ export const updateWorkspaceTokenAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateWorkspaceTokenRequest
     }) => {
       await updateWorkspaceToken({ workspaceId, token: parsedInput.token })

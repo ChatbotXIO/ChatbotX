@@ -9,7 +9,7 @@ import {
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -27,7 +27,7 @@ export const addContactTagAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: AddContactTagRequest
     }) => {
       await addContactTags({

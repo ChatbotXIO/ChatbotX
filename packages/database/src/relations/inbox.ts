@@ -25,6 +25,10 @@ export const inboxRelations = defineRelationsPart(schema, (r) => ({
       from: r.inboxModel.id,
       to: r.integrationWhatsappModel.inboxId,
     }),
+    integrationTelegram: r.one.integrationTelegramModel({
+      from: r.inboxModel.id,
+      to: r.integrationTelegramModel.inboxId,
+    }),
     contactInboxes: r.many.contactInboxModel({
       from: r.inboxModel.id,
       to: r.contactInboxModel.inboxId,

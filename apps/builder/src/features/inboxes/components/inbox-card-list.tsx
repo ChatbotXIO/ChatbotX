@@ -6,6 +6,7 @@ import { memo, useMemo } from "react"
 import type { InboxResource } from "../schema/resource"
 import { InboxMessengerCard } from "./inbox-messenger-card"
 import InboxNewCard from "./inbox-new-card"
+import { InboxTelegramCard } from "./inbox-telegram-card"
 import { InboxWebchatCard } from "./inbox-webchat-card"
 import { InboxWhatsappCard } from "./inbox-whatsapp-card"
 import { InboxZaloCard } from "./inbox-zalo-card"
@@ -33,6 +34,7 @@ export const cardConfigs: Record<
   messenger: InboxMessengerCard,
   zalo: InboxZaloCard,
   smtp: undefined,
+  telegram: InboxTelegramCard,
 }
 
 export const InboxCardList = memo(function InboxCardList({

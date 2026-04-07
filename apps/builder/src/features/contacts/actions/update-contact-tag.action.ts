@@ -15,7 +15,7 @@ import {
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import type { TagResource } from "@/features/tags/schema/resource"
@@ -34,7 +34,7 @@ export const updateContactTagAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateContactTagRequest
     }) => {
       return await updateContactTags({ workspaceId, parsedInput })

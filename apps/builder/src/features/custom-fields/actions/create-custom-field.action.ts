@@ -4,7 +4,7 @@ import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
@@ -25,7 +25,7 @@ export const createCustomFieldAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateCustomFieldRequest
     }) => {
       await createCustomField(workspaceId, parsedInput)

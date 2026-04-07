@@ -5,7 +5,7 @@ import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { recalculateAllContactsInSequence } from "@/features/contact-sequences/utils/calculate-next-run-at"
@@ -62,7 +62,7 @@ export const deleteSequenceStepAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: DeleteSequenceStepRequest
     }) => {
       const { stepId, sequenceId } = parsedInput

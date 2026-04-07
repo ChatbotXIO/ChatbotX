@@ -20,7 +20,7 @@ import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
 import { env } from "@/env"
-import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { verifyOrganizationSettings } from "@/features/organization/queries"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -41,7 +41,7 @@ export const connectWhatsappAction = authActionClient
       try {
         let workspaceId = parsedInput.workspaceId
         const { organization } =
-          await identifyChatbotAndOrganizationFromRequest(
+          await identifyWorkspaceAndOrganizationFromRequest(
             parsedInput.workspaceId,
           )
         const settings = await verifyOrganizationSettings(organization)

@@ -9,7 +9,7 @@ import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -28,7 +28,7 @@ export const connectGeminiAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: ConnectGeminiRequest
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       if (!(await verifyGeminiApiKey(parsedInput.apiKey))) {
         return returnValidationErrors(connectGeminiRequest, {

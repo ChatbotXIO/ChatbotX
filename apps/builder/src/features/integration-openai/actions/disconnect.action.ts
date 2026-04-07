@@ -6,7 +6,7 @@ import {
   integrationOpenaiModel,
 } from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
@@ -17,7 +17,7 @@ export const disconnectOpenAIAction = authActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       const integrationOpenAI = await findOrFail({
         table: integrationOpenaiModel,

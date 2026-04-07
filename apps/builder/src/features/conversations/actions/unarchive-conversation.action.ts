@@ -7,7 +7,7 @@ import { createId } from "@chatbotx.io/utils"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -21,7 +21,7 @@ export const unarchiveConversationAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
       const conversations = await db.query.conversationModel.findMany({

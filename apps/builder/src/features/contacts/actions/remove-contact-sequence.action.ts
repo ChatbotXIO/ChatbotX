@@ -4,7 +4,7 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import { cancelPendingDispatches } from "@chatbotx.io/sequence-scheduler"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -24,7 +24,7 @@ export const removeContactSequenceAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: RemoveContactSequenceRequest
     }) => {
       for (let i = 0; i < parsedInput.ids.length; i += CHUNK_SIZE) {

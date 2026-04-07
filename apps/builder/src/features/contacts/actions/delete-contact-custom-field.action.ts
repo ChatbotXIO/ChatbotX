@@ -2,7 +2,7 @@
 
 import { db } from "@chatbotx.io/database/client"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -20,7 +20,7 @@ export const deleteContactCustomFieldAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: DeleteContactCustomFieldsRequest
     }) => {
       await deleteContactCustomFields({

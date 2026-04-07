@@ -128,7 +128,14 @@ export async function runStepsAndQuickReplies(
   } = props
 
   // run before step
-  if (details.beforeStep && !props.startFromStepIndex) {
+  // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
+  // already navigates to the same target node, so running beforeStep would execute it twice.
+  const skipBeforeStep =
+    (targetType === "button" || targetType === "quickReply") &&
+    details.beforeStep != null &&
+    (details.beforeStep as BaseStepSchema).stepType ===
+      stepTypes.enum.startAnotherNode
+  if (details.beforeStep && !props.startFromStepIndex && !skipBeforeStep) {
     await executeMultipleSteps({
       ...props,
       steps: [details.beforeStep],

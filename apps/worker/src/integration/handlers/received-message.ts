@@ -371,4 +371,6 @@ const detectContactAndConversation = async (props: {
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>
-  integrationType === "messenger" || integrationType === "zalo"
+  integrationType === "messenger" ||
+  integrationType === "zalo" ||
+  integrationType === "telegram"

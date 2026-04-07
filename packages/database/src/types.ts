@@ -37,6 +37,8 @@ export type IntegrationWhatsappModel =
   typeof schema.integrationWhatsappModel.$inferSelect
 export type IntegrationZaloModel =
   typeof schema.integrationZaloModel.$inferSelect
+export type IntegrationTelegramModel =
+  typeof schema.integrationTelegramModel.$inferSelect
 export type MessageModel = typeof schema.messageModel.$inferSelect
 export type AttachmentModel = typeof schema.attachmentModel.$inferSelect
 export type SpreadsheetModel = typeof schema.spreadsheetModel.$inferSelect

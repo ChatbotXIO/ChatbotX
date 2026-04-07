@@ -8,30 +8,27 @@ import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 
-export async function findOrganizationByDomain(): Promise<OrganizationModel | null> {
-  const domain = await getDomainFromHeader()
+type OrganizationWhere = Partial<{ domain: string; id: string }>
 
-  return (
-    (await db.query.organizationModel.findFirst({
-      where: {
-        domain,
-      },
-    })) ?? null
-  )
+export async function findOrganizationByDomain(): Promise<
+  OrganizationModel | undefined
+> {
+  const domain = await getDomainFromHeader()
+  return await db.query.organizationModel.findFirst({
+    where: { domain },
+  })
 }
 
 export async function findOrganization(
-  where: Record<string, unknown>,
-): Promise<OrganizationModel | null> {
-  return (
-    (await db.query.organizationModel.findFirst({
-      where,
-    })) ?? null
-  )
+  where: OrganizationWhere,
+): Promise<OrganizationModel | undefined> {
+  return await db.query.organizationModel.findFirst({
+    where,
+  })
 }
 
 export async function findOrganizationSettings(
-  where: Record<string, unknown>,
+  where: OrganizationWhere,
 ): Promise<OrganizationSettings> {
   const organization = await findOrganization(where)
   if (!organization) {

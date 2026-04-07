@@ -35,6 +35,7 @@
     "@chatbotx.io/integration-smtp": "workspace:*",
     "@chatbotx.io/integration-whatsapp": "workspace:*",
     "@chatbotx.io/integration-zalo": "workspace:*",
+    "@chatbotx.io/integration-telegram": "workspace:*",
     "@chatbotx.io/kafka": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",

@@ -3,7 +3,7 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationGeminiModel } from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -21,7 +21,7 @@ export const updateGeminiAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: UpdateGeminiRequest
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       const integrationGemini = await findOrFail({
         table: integrationGeminiModel,

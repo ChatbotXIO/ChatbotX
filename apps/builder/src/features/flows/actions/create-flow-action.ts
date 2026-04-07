@@ -5,7 +5,7 @@ import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import { sendMessageNodeDefaultFn } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
@@ -21,7 +21,7 @@ export const createFlowAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateFlowSchema
     }) => {
       if (parsedInput.folderId) {

@@ -4,7 +4,7 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import { emitTagRemoved } from "@chatbotx.io/events"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -22,7 +22,7 @@ export const removeContactTagAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: RemoveContactTagsRequest
     }) => {
       await removeContactTags({

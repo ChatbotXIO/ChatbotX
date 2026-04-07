@@ -9,7 +9,7 @@ import {
 import { AuthType, type SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { authActionClient } from "@/lib/safe-action"
@@ -27,7 +27,7 @@ export const connectOpenAIAction = authActionClient
       bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: ConnectOpenAISchema
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst(
         {

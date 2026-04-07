@@ -4,7 +4,7 @@ import { z } from "zod"
 export const workspaceIdrequestParams: [z.ZodString] = [
   zodBigintAsString().describe("workspaceId"),
 ]
-export type ChatbotIdRequestParams = [string]
+export type WorkspaceIdRequestParams = [string]
 
 export const workspaceIdAndIdRequestParams: [z.ZodString, z.ZodString] = [
   zodBigintAsString().describe("workspaceId"),

@@ -7,7 +7,7 @@ import type {
 } from "@chatbotx.io/integration-whatsapp"
 import slugify from "@sindresorhus/slugify"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
@@ -26,7 +26,7 @@ export const createMessageTemplateAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateMessageTemplateRequest
     }) => {
       const integrationWhatsapp =

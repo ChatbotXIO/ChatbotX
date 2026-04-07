@@ -10,7 +10,7 @@ import {
   integration as integrationGoogleSheets,
 } from "@chatbotx.io/integration-google-sheets"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { logger } from "@/lib/log"
@@ -22,7 +22,7 @@ export const disconnectGoogleSheets = authActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
       const googleSheets = await findOrFail({
         table: integrationGoogleSheetsModel,

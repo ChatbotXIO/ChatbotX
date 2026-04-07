@@ -3,7 +3,7 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import { workspaceModel } from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -22,7 +22,7 @@ export const updateChatbotBasicAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateChatbotBasicRequest
     }) => {
       await db
@@ -40,7 +40,7 @@ export const updateChatbotAdvancedAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateChatbotAdvancedRequest
     }) => {
       await db

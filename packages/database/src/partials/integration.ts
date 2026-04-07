@@ -1,14 +1,16 @@
 import { z } from "zod"
 
 export const integrationTypes = z.enum([
-  "webchat",
+  "chatbotx",
+  "gemini",
   "googleSheets",
+  "instagram",
   "messenger",
   "openai",
-  "gemini",
+  "smtp",
+  "telegram",
+  "webchat",
   "whatsapp",
   "zalo",
-  "chatbotx",
-  "smtp",
 ])
 export type IntegrationType = z.infer<typeof integrationTypes>

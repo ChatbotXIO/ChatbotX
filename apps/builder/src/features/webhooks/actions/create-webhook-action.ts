@@ -7,7 +7,7 @@ import { updateWebhookCache } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
@@ -27,7 +27,7 @@ export const createWebhookAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateWebhookSchema
     }) => {
       const t = await getTranslations()

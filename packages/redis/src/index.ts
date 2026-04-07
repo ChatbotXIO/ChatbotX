@@ -1,3 +1,4 @@
+import { cacheFactory } from "./cache"
 import { cacheConnections } from "./connections/cache-connection"
 import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
@@ -9,6 +10,8 @@ export const distributedLock = distributedLockFactory(cacheConnections.create)
 export const distributedStore = distributedStoreFactory(
   cacheConnections.useExisting,
 )
+export const cache = cacheFactory(cacheConnections.useExisting)
+export type { Cache } from "./cache"
 
 export { queueConnections } from "./connections/queue-connection"
 export { sequenceConnections } from "./connections/sequence-connection"

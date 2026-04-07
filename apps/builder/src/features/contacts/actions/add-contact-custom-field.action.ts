@@ -9,7 +9,7 @@ import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import { FieldOperationType } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -38,7 +38,7 @@ export const addContactCustomFields = async ({
   bindArgsParsedInputs: [workspaceId],
   parsedInput,
 }: {
-  bindArgsParsedInputs: ChatbotIdRequestParams
+  bindArgsParsedInputs: WorkspaceIdRequestParams
   parsedInput: AddContactCustomFieldRequest
 }) => {
   const contacts = await db.query.contactModel.findMany({

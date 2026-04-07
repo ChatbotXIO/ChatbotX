@@ -14,36 +14,22 @@ export async function uploadFileFromUrl(
 ): Promise<UploadedFile> {
   const response = await fetch(url, { redirect: "follow" as const })
   if (!(response.ok && response.body)) {
-    throw new Error(`Failed to download image: ${response.status}`)
+    throw new Error(`Failed to download file: ${response.status}`)
   }
+
+  const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
+    .split(";")[0]
+    .trim()
+  const contentLength = Number.parseInt(
+    response.headers.get("content-length") ?? "0",
+    10,
+  )
+  const isImage = mimeType.startsWith("image/")
 
   const nodeStream = Readable.fromWeb(
     response.body as unknown as ReadableStream<Uint8Array>,
   )
 
-  // 1. Create two PassThrough streams to "split" the incoming data
-  const s3Stream = new PassThrough()
-  const probeStream = new PassThrough()
-  nodeStream.pipe(s3Stream)
-  nodeStream.pipe(probeStream)
-
-  // 2. Start the S3 Upload immediately
-  const upload = uploader.putObject(path, s3Stream, {
-    ACL: acl as ObjectCannedACL,
-    ContentType: response.headers.get("content-type") || DEFAULT_MIME_TYPE,
-    ContentLength: Number.parseInt(
-      response.headers.get("content-length") ?? "0",
-      10,
-    ),
-  })
-
-  // 3. Probe the stream for dimensions simultaneously
-  // probe() will resolve as soon as the first few KB are processed
-  const dimensionsPromise = probe(probeStream)
-
-  // Wait for both tasks to complete
-
-  const [dimensions] = await Promise.all([dimensionsPromise, upload])
   // Detect filename from URL if possible
   let name = createId()
   try {
@@ -57,13 +43,44 @@ export async function uploadFileFromUrl(
     // safe return
   }
 
+  if (isImage) {
+    // For images: split the stream to probe dimensions in parallel with the S3 upload
+    const s3Stream = new PassThrough()
+    const probeStream = new PassThrough()
+    nodeStream.pipe(s3Stream)
+    nodeStream.pipe(probeStream)
+
+    const upload = uploader.putObject(path, s3Stream, {
+      ACL: acl as ObjectCannedACL,
+      ContentType: mimeType,
+      ContentLength: contentLength,
+    })
+
+    const [dimensions] = await Promise.all([probe(probeStream), upload])
+
+    return {
+      name,
+      mimeType: dimensions.mime ?? mimeType,
+      originPath: path,
+      size: contentLength,
+      fileType: guessFileTypeFromMimeType(dimensions.mime ?? mimeType),
+      width: dimensions.width,
+      height: dimensions.height,
+    }
+  }
+
+  // For non-image files (video, audio, documents): upload directly without probing
+  await uploader.putObject(path, nodeStream, {
+    ACL: acl as ObjectCannedACL,
+    ContentType: mimeType,
+    ContentLength: contentLength,
+  })
+
   return {
     name,
-    mimeType: dimensions.mime,
+    mimeType,
     originPath: path,
-    size: dimensions.length,
-    fileType: guessFileTypeFromMimeType(dimensions.mime),
-    width: dimensions.width,
-    height: dimensions.height,
+    size: contentLength,
+    fileType: guessFileTypeFromMimeType(mimeType),
   }
 }

@@ -45,6 +45,12 @@ export const getInboxLink = (props: {
         reflinkData ? `/${reflinkData}` : undefined,
       )
     }
+    case "telegram":
+      return buildUrlWithParam(
+        `https://t.me/${inbox.name.slice(1) ?? inbox.sourceId}`,
+        "start",
+        reflinkData,
+      )
     case "webchat":
       return buildUrlWithParam(
         `${env.NEXT_PUBLIC_BUILDER_URL}/webchat?workspaceId=${inbox.workspaceId}&webchatId=${inbox.sourceId}`,

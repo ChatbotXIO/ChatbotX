@@ -6,7 +6,7 @@ import { removeTriggerCache } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -19,7 +19,7 @@ export const deleteTriggersAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
       await db

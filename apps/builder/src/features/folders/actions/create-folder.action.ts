@@ -5,7 +5,7 @@ import { folderModel } from "@chatbotx.io/database/schema"
 import type { FolderModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import {
@@ -23,7 +23,7 @@ export const createFolderAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateFolderSchema
     }) => {
       let paths: string[] = []

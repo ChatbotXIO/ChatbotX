@@ -9,7 +9,7 @@ import { createId } from "@chatbotx.io/utils"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -24,7 +24,7 @@ export const disableBotAction = workspaceActionClient
       parsedInput,
       ctx,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {

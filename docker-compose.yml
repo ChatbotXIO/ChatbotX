@@ -40,7 +40,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${ADMINER_PORT:-8080}:8080"
 
   mailhog:
     <<: *network

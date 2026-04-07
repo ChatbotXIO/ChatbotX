@@ -10,8 +10,10 @@ import { integration as integrationChatbotx } from "@chatbotx.io/integration-cha
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import { integration as integrationSmtp } from "@chatbotx.io/integration-smtp"
+import { integration as integrationTelegram } from "@chatbotx.io/integration-telegram"
 import { integration as integrationWhatsapp } from "@chatbotx.io/integration-whatsapp"
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
+
 import {
   type AuthValue,
   type Integration,
@@ -30,6 +32,7 @@ export const allIntegrations: Record<
   openai: undefined,
   webchat: undefined,
   whatsapp: integrationWhatsapp,
+  telegram: integrationTelegram,
   zalo: integrationZalo,
   chatbotx: integrationChatbotx,
   smtp: integrationSmtp,
@@ -51,6 +54,11 @@ export const integrationService = {
       case "whatsapp": {
         modelName = "IntegrationWhatsapp"
         columnName = "phoneNumberId"
+        break
+      }
+      case "telegram": {
+        modelName = "IntegrationTelegram"
+        columnName = "botId"
         break
       }
       case "messenger": {

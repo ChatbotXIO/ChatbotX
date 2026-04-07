@@ -4,7 +4,7 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { sequenceModel, sequenceStepModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import {
@@ -311,7 +311,7 @@ export const upsertSequenceStepAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpsertSequenceStepRequest
     }) => {
       const { stepId, sequenceId } = parsedInput

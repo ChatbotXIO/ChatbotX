@@ -318,6 +318,11 @@
     "zalo": {
       "label": "Zalo OA"
     },
+    "telegram": {
+      "label": "Telegram",
+      "botToken": "Bot Token",
+      "botUsername": "Bot Username"
+    },
     "matchAll": {
       "label": "Match all the conditions below"
     },
@@ -1478,6 +1483,10 @@
   "zalo": {
     "title": "Zalo OA",
     "refreshPermissions": "Refresh permissions"
+  },
+  "telegram": {
+    "description": "This integration lets you create Telegram bots.",
+    "title": "Telegram"
   },
   "invitation": {
     "chatbotInvitationDescription1": "Join {chatbotName} on {organizationName}",

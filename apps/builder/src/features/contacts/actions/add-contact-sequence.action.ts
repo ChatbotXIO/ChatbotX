@@ -3,7 +3,7 @@
 import { db } from "@chatbotx.io/database/client"
 import { enrollContactsInSequenceBulk } from "@chatbotx.io/sequence-scheduler"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { calculateNextRunAtBulk } from "@/features/contact-sequences/utils/calculate-next-run-at"
@@ -88,7 +88,7 @@ export const addContactSequenceAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: AddContactSequenceRequest
     }) => {
       const now = new Date()

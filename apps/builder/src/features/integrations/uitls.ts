@@ -6,7 +6,7 @@ import { getDomainFromHeader } from "@/lib/domain"
 import { findOrganization } from "../organization/queries"
 import { findChatbotOrFail } from "../workspaces/queries"
 
-export async function identifyChatbotAndOrganizationFromRequest(
+export async function identifyWorkspaceAndOrganizationFromRequest(
   workspaceId?: string | null,
 ): Promise<{ workspace?: WorkspaceModel; organization: OrganizationModel }> {
   const domain = await getDomainFromHeader()

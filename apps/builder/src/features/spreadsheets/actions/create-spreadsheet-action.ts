@@ -4,7 +4,7 @@ import { db } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -23,7 +23,7 @@ export const createSpreadsheetAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateSpreadsheetRequest
     }) => {
       const spreadsheetId = await verifyGoogleSheetsUrl(
