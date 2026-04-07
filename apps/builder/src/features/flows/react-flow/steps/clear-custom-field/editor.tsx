@@ -20,7 +20,7 @@ const ClearCustomFieldStepEditor = (props: ClearCustomFieldStepEditorProps) => {
     >
       <CustomFieldSelect
         includeReserved={false}
-        name={`${parentName}.inputCfId`}
+        name={`${parentName}.inputFieldId`}
       />
     </BaseStepEditor>
   )

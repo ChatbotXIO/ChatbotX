@@ -81,7 +81,7 @@ export async function handleAIGenerateText({
     } else {
       await saveResultToCustomField({
         contactId: conversation.contactId,
-        customFieldName: step.outputCfId,
+        customFieldName: step.outputFieldId,
         fullText,
         messageCount,
         workspaceId: conversation.workspaceId,
@@ -155,7 +155,7 @@ async function handleToolCallsFollowUp({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldName: stepConfig.outputCfId,
+      customFieldName: stepConfig.outputFieldId,
       fullText: followUpFullText,
       messageCount: followUpMessageCount,
       workspaceId: conversation.workspaceId,
@@ -172,7 +172,7 @@ async function handleToolCallsFollowUp({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldName: stepConfig.outputCfId,
+      customFieldName: stepConfig.outputFieldId,
       fullText,
       messageCount: MAGIC_NUMBERS.ZERO_MESSAGE_COUNT,
       workspaceId: conversation.workspaceId,

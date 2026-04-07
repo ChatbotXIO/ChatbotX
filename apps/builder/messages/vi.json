@@ -926,10 +926,10 @@
       "now": "Ngay bây giờ",
       "scheduled": "Lên lịch cho sau"
     },
-    "inputCfId": {
+    "inputFieldId": {
       "label": "Trường tùy chỉnh đầu vào"
     },
-    "outputCfId": {
+    "outputFieldId": {
       "label": "Lưu kết quả vào trường tùy chỉnh"
     },
     "jsonPath": {

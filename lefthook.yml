@@ -3,3 +3,20 @@ pre-commit:
     - run: pnpm ultracite fix
       glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
       stage_fixed: true
+
+commit-msg:
+  jobs:
+    - run: |
+        MSG=$(cat {1})
+        PATTERN='^(feat|fix|bugfix|refactor|docs|style|test|chore|ci|perf|build|revert)(\(.+\))?: .{1,100}$'
+        if ! echo "$MSG" | grep -qE "$PATTERN"; then
+          echo "❌ Invalid commit message format."
+          echo ""
+          echo "Expected: <type>(<scope>): <subject>"
+          echo "  Types: feat, fix, bugfix, refactor, docs, style, test, chore, ci, perf, build, revert"
+          echo "  Example: feat(auth): add OAuth2 login"
+          echo "  Example: fix: handle null response from API"
+          echo ""
+          echo "Got: $MSG"
+          exit 1
+        fi

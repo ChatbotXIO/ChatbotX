@@ -5,8 +5,8 @@ import { stepTypes } from "./step-action"
 export const AISpeechToTextSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiSpeechToText),
-  inputCfId: zodBigintAsString(),
-  outputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
+  outputFieldId: z.string().trim().min(1),
 })
 export type AISpeechToTextSchema = z.infer<typeof AISpeechToTextSchema>
 
@@ -15,7 +15,7 @@ export const AISpeechToTextDefaultFn = (
 ): AISpeechToTextSchema => ({
   id: createId(),
   stepType: stepTypes.enum.aiSpeechToText,
-  inputCfId: "",
-  outputCfId: "",
+  inputFieldId: "",
+  outputFieldId: "",
   ...props,
 })

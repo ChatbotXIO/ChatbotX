@@ -21,7 +21,7 @@ export async function countCharacters({
   conversation,
   step,
 }: ExecuteStepProps<CountCharactersStepSchema>) {
-  const customFieldIds = [step.inputCfId, step.outputCfId]
+  const customFieldIds = [step.inputFieldId, step.outputFieldId]
   const customFieldsCount = await db.$count(
     customFieldModel,
     and(inArray(customFieldModel.id, customFieldIds)),
@@ -34,7 +34,7 @@ export async function countCharacters({
   const targetContactCustomField =
     await db.query.contactCustomFieldModel.findFirst({
       where: {
-        customFieldId: step.inputCfId,
+        customFieldId: step.inputFieldId,
       },
     })
   if (!targetContactCustomField) {
@@ -47,13 +47,13 @@ export async function countCharacters({
   const existing = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
+      customFieldId: step.outputFieldId,
     },
     columns: { value: true },
   })
 
   const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.outputCfId },
+    where: { id: step.outputFieldId },
     columns: { name: true },
   })
 
@@ -63,7 +63,7 @@ export async function countCharacters({
       id: createId(),
       value,
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
+      customFieldId: step.outputFieldId,
     })
     .onConflictDoUpdate({
       target: [
@@ -80,8 +80,8 @@ export async function countCharacters({
     await emitCustomFieldChanged(
       conversation.workspaceId,
       conversation.contactId,
-      step.outputCfId,
-      customField?.name || step.outputCfId,
+      step.outputFieldId,
+      customField?.name || step.outputFieldId,
       existing?.value || null,
       value,
     )
@@ -97,7 +97,7 @@ export async function formatDate({
   const inputContactCustomField =
     await db.query.contactCustomFieldModel.findFirst({
       where: {
-        customFieldId: step.inputCfId,
+        customFieldId: step.inputFieldId,
         contactId: conversation.contactId,
       },
     })
@@ -111,13 +111,13 @@ export async function formatDate({
   const existing = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
+      customFieldId: step.outputFieldId,
     },
     columns: { value: true },
   })
 
   const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.outputCfId },
+    where: { id: step.outputFieldId },
     columns: { name: true },
   })
 
@@ -127,7 +127,7 @@ export async function formatDate({
       id: createId(),
       value: newValue,
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
+      customFieldId: step.outputFieldId,
     })
     .onConflictDoUpdate({
       target: [
@@ -144,8 +144,8 @@ export async function formatDate({
     await emitCustomFieldChanged(
       conversation.workspaceId,
       conversation.contactId,
-      step.outputCfId,
-      customField?.name || step.outputCfId,
+      step.outputFieldId,
+      customField?.name || step.outputFieldId,
       existing?.value || null,
       newValue,
     )
@@ -183,13 +183,13 @@ export async function generateCode({
     const existing = await db.query.contactCustomFieldModel.findFirst({
       where: {
         contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
+        customFieldId: step.outputFieldId,
       },
       columns: { value: true },
     })
 
     const customField = await db.query.customFieldModel.findFirst({
-      where: { id: step.outputCfId },
+      where: { id: step.outputFieldId },
       columns: { name: true },
     })
 
@@ -199,7 +199,7 @@ export async function generateCode({
         id: createId(),
         value,
         contactId: conversation.contactId,
-        customFieldId: step.outputCfId,
+        customFieldId: step.outputFieldId,
       })
       .onConflictDoUpdate({
         target: [
@@ -216,8 +216,8 @@ export async function generateCode({
       await emitCustomFieldChanged(
         conversation.workspaceId,
         conversation.contactId,
-        step.outputCfId,
-        customField?.name || step.outputCfId,
+        step.outputFieldId,
+        customField?.name || step.outputFieldId,
         existing?.value || null,
         value,
       )
@@ -234,7 +234,7 @@ export async function getDataFromJSON({
   const inputValue = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.inputCfId,
+      customFieldId: step.inputFieldId,
     },
   })
   if (!inputValue) {
@@ -244,7 +244,7 @@ export async function getDataFromJSON({
   const dataJSON = JSON.parse(inputValue.value)
   const mapping = step.mapping as {
     jsonPath: string
-    outputCfId: string
+    outputFieldId: string
   }[]
 
   // Find valid custom fields
@@ -252,7 +252,7 @@ export async function getDataFromJSON({
     where: {
       workspaceId: conversation.workspaceId,
       id: {
-        in: mapping.map((m) => m.outputCfId),
+        in: mapping.map((m) => m.outputFieldId),
       },
     },
     columns: {
@@ -272,7 +272,7 @@ export async function getDataFromJSON({
     }> = []
 
     for (const data of mapping) {
-      if (validCustomFieldIds.includes(data.outputCfId)) {
+      if (validCustomFieldIds.includes(data.outputFieldId)) {
         const value = getProperty(dataJSON, data.jsonPath)
 
         if (value) {
@@ -282,7 +282,7 @@ export async function getDataFromJSON({
           const existing = await tx.query.contactCustomFieldModel.findFirst({
             where: {
               contactId: conversation.contactId,
-              customFieldId: data.outputCfId,
+              customFieldId: data.outputFieldId,
             },
             columns: { value: true },
           })
@@ -293,7 +293,7 @@ export async function getDataFromJSON({
               id: createId(),
               value: encodedValue,
               contactId: conversation.contactId,
-              customFieldId: data.outputCfId,
+              customFieldId: data.outputFieldId,
             })
             .onConflictDoUpdate({
               target: [
@@ -306,9 +306,9 @@ export async function getDataFromJSON({
             })
 
           updated.push({
-            customFieldId: data.outputCfId,
+            customFieldId: data.outputFieldId,
             customFieldName:
-              customFieldMap.get(data.outputCfId) || data.outputCfId,
+              customFieldMap.get(data.outputFieldId) || data.outputFieldId,
             oldValue: existing?.value || null,
             newValue: encodedValue,
           })

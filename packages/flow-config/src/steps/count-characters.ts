@@ -5,8 +5,8 @@ import { stepTypes } from "./step-action"
 export const countCharactersStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.countCharacters),
-  inputCfId: zodBigintAsString(),
-  outputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
+  outputFieldId: z.string().trim().min(1),
 })
 export type CountCharactersStepSchema = z.infer<
   typeof countCharactersStepSchema
@@ -17,7 +17,7 @@ export const countCharactersStepDefaultFn = (
 ): CountCharactersStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.countCharacters,
-  inputCfId: "",
-  outputCfId: "",
+  inputFieldId: "",
+  outputFieldId: "",
   ...props,
 })

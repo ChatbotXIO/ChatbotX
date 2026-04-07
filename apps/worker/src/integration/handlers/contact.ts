@@ -50,7 +50,7 @@ export async function setContactCustomField({
   const existingField = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.inputCfId,
+      customFieldId: step.inputFieldId,
     },
   })
   const oldValue = existingField?.value ?? null
@@ -59,7 +59,7 @@ export async function setContactCustomField({
     .insert(contactCustomFieldModel)
     .values({
       contactId: conversation.contactId,
-      customFieldId: step.inputCfId,
+      customFieldId: step.inputFieldId,
       value: step.value,
       id: createId(),
     })
@@ -75,14 +75,14 @@ export async function setContactCustomField({
 
   // Emit custom field changed event
   const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.inputCfId },
+    where: { id: step.inputFieldId },
   })
   if (customField) {
     try {
       await emitCustomFieldChanged(
         conversation.workspaceId,
         conversation.contactId,
-        step.inputCfId,
+        step.inputFieldId,
         customField.name,
         oldValue,
         step.value,
@@ -101,7 +101,7 @@ export async function clearContactCustomField({
   const existingField = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
-      customFieldId: step.inputCfId,
+      customFieldId: step.inputFieldId,
     },
   })
   const oldValue = existingField?.value ?? null
@@ -111,20 +111,20 @@ export async function clearContactCustomField({
     .where(
       and(
         eq(contactCustomFieldModel.contactId, conversation.contactId),
-        eq(contactCustomFieldModel.customFieldId, step.inputCfId),
+        eq(contactCustomFieldModel.customFieldId, step.inputFieldId),
       ),
     )
 
   // Emit custom field changed event
   const customField = await db.query.customFieldModel.findFirst({
-    where: { id: step.inputCfId },
+    where: { id: step.inputFieldId },
   })
   if (customField) {
     try {
       await emitCustomFieldChanged(
         conversation.workspaceId,
         conversation.contactId,
-        step.inputCfId,
+        step.inputFieldId,
         customField.name,
         oldValue,
         null,

@@ -54,7 +54,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
   })
 
   const onSubmit = (data: GetDataFromJsonStepSchema) => {
-    setValue(`${parentName}.inputCfId`, data.inputCfId)
+    setValue(`${parentName}.inputFieldId`, data.inputFieldId)
     setValue(`${parentName}.mapping`, data.mapping)
     setOpen(false)
   }
@@ -81,7 +81,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
           >
             <CustomFieldSelect
               label={t("fields.inputCustomField.label")}
-              name="inputCfId"
+              name="inputFieldId"
               required
             />
 
@@ -104,7 +104,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
                     <div className="w-[45%]">
                       <CustomFieldSelect
                         label=""
-                        name={`mapping.${index}.outputCfId`}
+                        name={`mapping.${index}.outputFieldId`}
                       />
                     </div>
                     <Button
@@ -121,7 +121,7 @@ const GetDataFromJsonDialog = ({ parentName }: { parentName: string }) => {
                 <div className="flex w-full justify-between">
                   <Button
                     className="w-full"
-                    onClick={() => append({ jsonPath: "", outputCfId: "" })}
+                    onClick={() => append({ jsonPath: "", outputFieldId: "" })}
                     size="sm"
                     type="button"
                     variant="outline"

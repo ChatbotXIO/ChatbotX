@@ -95,7 +95,7 @@ const GetUserDataStepForm = ({
 
         <CustomFieldField
           label={t("fields.outputCustomField.label")}
-          name="outputCfId"
+          name="outputFieldId"
           required
         />
 

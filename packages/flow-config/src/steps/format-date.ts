@@ -10,9 +10,9 @@ export const FormatTimezone = {
 export const formatDateStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.formatDate),
-  inputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
   format: z.string().trim().min(1),
-  outputCfId: zodBigintAsString(),
+  outputFieldId: z.string().trim().min(1),
   timezone: z.enum(FormatTimezone),
 })
 export type FormatDateStepSchema = z.infer<typeof formatDateStepSchema>
@@ -22,9 +22,9 @@ export const formatDateStepDefaultFn = (
 ): FormatDateStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.formatDate,
-  inputCfId: "",
+  inputFieldId: "",
   format: "",
-  outputCfId: "",
+  outputFieldId: "",
   timezone: FormatTimezone.contact,
   ...props,
 })

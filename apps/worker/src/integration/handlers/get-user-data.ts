@@ -69,11 +69,11 @@ async function handleSkipOrError(
 
   // if user data is valid, save to custom field if configured
   if (validUserData.valid && validUserData.userInput) {
-    if (step.outputCfId) {
+    if (step.outputFieldId) {
       await findOrFail({
         table: customFieldModel,
         where: {
-          id: step.outputCfId,
+          id: step.outputFieldId,
           workspaceId: props.conversation.workspaceId,
         },
         message: "Field not found",
@@ -85,7 +85,7 @@ async function handleSkipOrError(
           .values({
             id: createId(),
             contactId: props.conversation.contactId,
-            customFieldId: step.outputCfId,
+            customFieldId: step.outputFieldId,
             value: validUserData.userInput ?? "",
           })
           .onConflictDoUpdate({

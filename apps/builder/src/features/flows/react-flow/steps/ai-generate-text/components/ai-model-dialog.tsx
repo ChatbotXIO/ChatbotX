@@ -79,8 +79,8 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
               <CustomFieldSelect
                 allowCreate={true}
                 includeReserved={true}
-                label={t("fields.outputCfId.label")}
-                name="outputCfId"
+                label={t("fields.outputFieldId.label")}
+                name="outputFieldId"
                 required
               />
 

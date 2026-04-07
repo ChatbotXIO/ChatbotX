@@ -19,7 +19,7 @@ export const generateCodeStepSchema = z
       .min(0)
       .max(Number.MAX_SAFE_INTEGER - 1),
     max: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-    outputCfId: zodBigintAsString(),
+    outputFieldId: z.string().trim().min(1),
   })
   .refine((data) => data.min <= data.max, {
     message: "Max must be larger than Min",
@@ -33,5 +33,5 @@ export const generateCodeStepDefaultFn = (): GenerateCodeStepSchema => ({
   type: GenerateCodeType.NUMERIC_LENGTH,
   min: 0,
   max: 100,
-  outputCfId: "",
+  outputFieldId: "",
 })

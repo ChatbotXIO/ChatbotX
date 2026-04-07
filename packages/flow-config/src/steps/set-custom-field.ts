@@ -15,7 +15,7 @@ export type FieldOperationType =
 export const setCustomFieldStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.setCustomField),
-  inputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
   operation: z.enum(FieldOperationType),
   value: z.string().trim(),
 })
@@ -26,6 +26,6 @@ export const setCustomFieldStepDefaultFn = (): SetCustomFieldStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.setCustomField,
   value: "",
-  inputCfId: "",
+  inputFieldId: "",
   operation: FieldOperationType.set,
 })

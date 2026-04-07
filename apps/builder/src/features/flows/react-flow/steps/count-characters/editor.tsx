@@ -52,8 +52,8 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
   })
 
   const onSubmit = (data: CountCharactersStepSchema) => {
-    setValue(`${parentName}.inputCfId`, data.inputCfId)
-    setValue(`${parentName}.outputCfId`, data.outputCfId)
+    setValue(`${parentName}.inputFieldId`, data.inputFieldId)
+    setValue(`${parentName}.outputFieldId`, data.outputFieldId)
     setOpen(false)
   }
 
@@ -78,16 +78,16 @@ function CountCharactersDialog({ parentName }: { parentName: string }) {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <CustomFieldSelect
-              label={t("fields.inputCfId.label")}
-              name="inputCfId"
+              label={t("fields.inputFieldId.label")}
+              name="inputFieldId"
               required
             />
 
             <CustomFieldSelect
               allowCreate={true}
               customFieldTypes={["number"]}
-              label={t("fields.outputCfId.label")}
-              name="outputCfId"
+              label={t("fields.outputFieldId.label")}
+              name="outputFieldId"
               required
             />
 

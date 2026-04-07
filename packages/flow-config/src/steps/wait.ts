@@ -36,7 +36,7 @@ export const waitStepSchema = z
       }),
       z.object({
         delayType: z.literal(DelayType.customField),
-        outputCfId: zodBigintAsString(),
+        outputFieldId: z.string().trim().min(1),
       }),
     ]),
   )

@@ -16,7 +16,7 @@ export const aiGenerateImageSchema = z.object({
   prompt: z.string().trim().optional(),
   quality: z.enum(AIGenerateImageQuality),
   size: z.string().trim().min(1),
-  outputCfId: zodBigintAsString(),
+  outputFieldId: z.string().trim().min(1),
 })
 
 export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>
@@ -30,6 +30,6 @@ export const AIGenerateImageDefaultFn = (
   prompt: "",
   size: "auto",
   quality: AIGenerateImageQuality.Auto,
-  outputCfId: "",
+  outputFieldId: "",
   ...props,
 })

@@ -955,10 +955,10 @@
       "now": "Now",
       "scheduled": "Schedule for later"
     },
-    "inputCfId": {
+    "inputFieldId": {
       "label": "Input Custom Field"
     },
-    "outputCfId": {
+    "outputFieldId": {
       "label": "Save result to a custom field"
     },
     "jsonPath": {
