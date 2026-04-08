@@ -2,14 +2,8 @@
 
 import { openaiModelOptions } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
-import type {
-  AIAgentModel,
-  AIFileModel,
-  AIFunctionModel,
-  AIMCPServerModel,
-} from "@chatbotx.io/database/types"
+import type { AIAgentModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -29,14 +23,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/popover"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import {
-  FileIcon,
-  FunctionSquareIcon,
-  Loader2Icon,
-  ServerIcon,
-  SlidersHorizontalIcon,
-  XIcon,
-} from "lucide-react"
+import { Loader2Icon, SlidersHorizontalIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
@@ -44,6 +31,7 @@ import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/action"
+import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 import type { CreateAIAgentRequest } from "./schemas/action"
 
@@ -51,9 +39,6 @@ export function UpdateAIAgentDialog({
   workspaceId,
   agent,
   open,
-  files,
-  functions,
-  mcpServers,
   onOpenChange,
   onSuccess,
 }: {
@@ -62,9 +47,6 @@ export function UpdateAIAgentDialog({
   workspaceId: string
   agent: AIAgentModel | null
   onSuccess?: () => void
-  files: AIFileModel[]
-  functions: AIFunctionModel[]
-  mcpServers: AIMCPServerModel[]
 }) {
   const t = useTranslations()
 
@@ -111,36 +93,6 @@ export function UpdateAIAgentDialog({
       { label: "Assistant", value: aiMessageRoles.enum.assistant },
     ],
     [],
-  )
-
-  const toolOptions = useMemo(
-    () => [
-      {
-        heading: t("fields.file.label"),
-        options: files.map((file) => ({
-          label: file.name,
-          value: `file:${file.id}`,
-          icon: FileIcon,
-        })),
-      },
-      {
-        heading: t("fields.function.label"),
-        options: functions.map((fn) => ({
-          label: fn.name,
-          value: `fn:${fn.id}`,
-          icon: FunctionSquareIcon,
-        })),
-      },
-      {
-        heading: t("fields.mcpServer.label"),
-        options: mcpServers.map((mcpServer) => ({
-          label: mcpServer.name,
-          value: `mcp:${mcpServer.id}`,
-          icon: ServerIcon,
-        })),
-      },
-    ],
-    [files, functions, mcpServers, t],
   )
 
   const addOptions = () => {
@@ -281,11 +233,7 @@ export function UpdateAIAgentDialog({
                   </div>
                 </div>
               </Card>
-              <MultiSelectField
-                label={t("fields.tools.label")}
-                name="tools"
-                options={toolOptions}
-              />
+              <AIToolMultiSelect name="tools" />
 
               <div className="flex justify-end gap-4">
                 <Button

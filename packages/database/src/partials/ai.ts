@@ -22,6 +22,15 @@ export type AIEmbeddingStatus = z.infer<typeof aiEmbeddingStatuses>
 export const aiAgentProviders = z.enum(["openai", "gemini"])
 export type AIAgentProvider = z.infer<typeof aiAgentProviders>
 
+export const aiAgentProviderModel = z.object({
+  provider: aiAgentProviders,
+  model: z.string().trim().min(1),
+})
+export type AIAgentProviderModel = z.infer<typeof aiAgentProviderModel>
+
+export const aiAgentProviderModels = z.array(aiAgentProviderModel).catch([])
+export type AIAgentProviderModels = z.infer<typeof aiAgentProviderModels>
+
 export const aiMcpServerAuth = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(aiMcpServerAuthTypes.enum.none),

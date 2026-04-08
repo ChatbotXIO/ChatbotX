@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
+import { AIToolsStoreProvider } from "@/features/ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { NoAIIntegrationFound } from "@/features/integrations/components/no-ai-integration-found"
 import { hasAIIntegration } from "@/features/integrations/queries/get-ai-integrations"
@@ -24,7 +25,9 @@ export default async function AILayout({
 
   return (
     <CustomFieldStoreProvider workspaceId={workspaceId}>
-      {children}
+      <AIToolsStoreProvider workspaceId={workspaceId}>
+        {children}
+      </AIToolsStoreProvider>
     </CustomFieldStoreProvider>
   )
 }

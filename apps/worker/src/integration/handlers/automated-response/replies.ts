@@ -1,67 +1,79 @@
+import { aiTimeouts, helpTexts, toolPrefixes } from "@chatbotx.io/ai"
+import {
+  createAIModelInstance,
+  getAIIntegrationInDB,
+  getAIToolset,
+  McpClient,
+  normalizeMcpContent,
+} from "@chatbotx.io/ai/server"
+import { processStreamingText } from "@chatbotx.io/ai/utils"
+import type {
+  AIAgentProvider,
+  AIAgentProviderModel,
+  AIAgentProviderModels,
+} from "@chatbotx.io/database/partials"
 import { contactVariableService } from "@chatbotx.io/variables"
-import { streamText, type ToolSet, tool } from "ai"
-import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
+import { stepCountIs, streamText, type ToolSet } from "ai"
 import { logger } from "../../../lib/logger"
-import { isRecord } from "../../../lib/utils"
-import { helpTexts } from "./constants"
-import { summarizeToolResult } from "./summarizer"
-import { processStreamingText, sendMessageWithRender } from "./text"
+import { sendMessageWithRender } from "../../utils/message"
 import type { ReplyByAIProps } from "./types"
 
-type ParsedAIAgentProvider = {
-  provider: string
-  model: string
-}
-
-function parseAIAgentProviders(value: unknown): ParsedAIAgentProvider[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  const parsed: ParsedAIAgentProvider[] = []
-  for (const item of value) {
-    if (!isRecord(item)) {
-      continue
-    }
-    const provider = item.provider
-    const model = item.model
-    if (typeof provider !== "string" || typeof model !== "string") {
-      continue
-    }
-    const trimmedProvider = provider.trim()
-    const trimmedModel = model.trim()
-    if (!(trimmedProvider && trimmedModel)) {
-      continue
-    }
-    parsed.push({ provider: trimmedProvider, model: trimmedModel })
-  }
-  return parsed
-}
-
-export async function replyByAI(props: ReplyByAIProps): Promise<boolean> {
+export async function replyByAI(
+  props: ReplyByAIProps,
+): Promise<null | ReplyByAIExecutionResult> {
   const { aiAgent } = props
-  const providers = parseAIAgentProviders(aiAgent.models)
+  const providers = aiAgent.models as AIAgentProviderModels
 
-  for (const providerInfo of providers) {
-    const success = await runAIReply(props, providerInfo)
-    if (success) {
-      return true
+  const { tools, cleanup } = await getAIToolset({
+    workspaceId: aiAgent.workspaceId,
+    tools: aiAgent.tools,
+    toolPrefixes: {
+      file: toolPrefixes.enum.file,
+      fn: toolPrefixes.enum.fn,
+      mcp: toolPrefixes.enum.mcp,
+    },
+    fileSearch: {
+      fileSearchDescription: helpTexts.fileSearchDescription,
+      fileSearchQueryDescription: helpTexts.fileSearchQueryDescription,
+      fileSearchNoResult: helpTexts.fileSearchNoResult,
+      fileSearchFoundPrefix: helpTexts.fileSearchFoundPrefix,
+    },
+    mcp: {
+      McpClient,
+      normalizeMcpContent,
+    },
+  })
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
+
+  try {
+    for (const providerInfo of providers) {
+      const result = await runAIReply(
+        props,
+        providerInfo,
+        tools,
+        controller.signal,
+      )
+      if (result?.responded) {
+        return result
+      }
     }
+  } finally {
+    clearTimeout(timeoutId)
+    await cleanup()
   }
 
-  return false
+  return null
 }
 
 async function runAIReply(
   props: ReplyByAIProps,
-  providerInfo: ParsedAIAgentProvider,
-): Promise<boolean> {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 120_000)
-
-  const { conversation, lastAIMessages, aiAgent, tools } = props
-  const variables = await contactVariableService.getAll(conversation.contactId)
-
+  providerInfo: AIAgentProviderModel,
+  tools: ToolSet,
+  abortSignal: AbortSignal,
+): Promise<null | ReplyByAIExecutionResult> {
+  const { conversation, lastAIMessages, aiAgent } = props
   const provider = providerInfo.provider
   try {
     const selectedModelId = providerInfo.model
@@ -73,17 +85,20 @@ async function runAIReply(
     })
 
     if (!integration) {
-      return false
+      return null
     }
 
     const model = createAIModelInstance({
       model: integration,
       provider,
       modelId: selectedModelId,
-      abortSignal: controller.signal,
+      abortSignal,
       traceId: conversation.id,
     })
 
+    const variables = await contactVariableService.getAll(
+      conversation.contactId,
+    )
     const completePrompt = aiAgent.prompt
       ? await contactVariableService.replaceAll({
           text: aiAgent.prompt,
@@ -92,15 +107,16 @@ async function runAIReply(
       : ""
     const systemPrompt = appendToolOutputGuard(completePrompt)
 
-    const toolExecutions: ToolExecutionLog[] = []
-    const toolsWithLogging = wrapToolsWithLogging(tools, {
-      conversationId: conversation.id,
-      workspaceId: conversation.workspaceId,
-      provider,
-      onToolResult: (toolName, result, toolCallId) => {
-        toolExecutions.push({ toolName, result, toolCallId })
-      },
-    })
+    const toolNamesSet = new Set<string>()
+    const finishReasons: Array<{
+      stepNumber: number
+      finishReason: string
+      rawFinishReason?: string
+    }> = []
+    let stepCount = 0
+    let toolCallsCount = 0
+    let toolResultsCount = 0
+    let toolErrorsCount = 0
 
     const result = await streamText({
       model,
@@ -108,61 +124,136 @@ async function runAIReply(
       messages: lastAIMessages,
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
-      tools: toolsWithLogging,
-      toolChoice: Object.keys(toolsWithLogging).length > 0 ? "auto" : undefined,
-      // @ts-expect-error - maxSteps is supported in AI SDK v6
-      maxSteps: 5,
-      abortSignal: controller.signal,
+      tools,
+      toolChoice: Object.keys(tools).length > 0 ? "auto" : "none",
+      stopWhen: stepCountIs(5),
+      timeout: {
+        totalMs: aiTimeouts.aiTotal,
+        stepMs: aiTimeouts.aiStep,
+        chunkMs: aiTimeouts.aiChunk,
+      },
+      onStepFinish: ({
+        stepNumber,
+        finishReason,
+        rawFinishReason,
+        toolCalls,
+        toolResults,
+      }) => {
+        stepCount = Math.max(stepCount, stepNumber + 1)
+        finishReasons.push({
+          stepNumber,
+          finishReason,
+          rawFinishReason,
+        })
+
+        toolCallsCount += toolCalls.length
+        for (const call of toolCalls) {
+          if (call?.toolName) {
+            toolNamesSet.add(call.toolName)
+          }
+        }
+
+        toolResultsCount += toolResults.length
+        for (const tr of toolResults as unknown as Array<{
+          isError?: boolean
+        }>) {
+          if (tr?.isError) {
+            toolErrorsCount += 1
+          }
+        }
+      },
+      experimental_onToolCallFinish: ({
+        toolCall,
+        durationMs,
+        success,
+        error,
+      }) => {
+        if (!success) {
+          logger.warn(
+            {
+              provider,
+              modelId: selectedModelId,
+              conversationId: conversation.id,
+              workspaceId: conversation.workspaceId,
+              toolName: toolCall?.toolName,
+              toolCallId: toolCall?.toolCallId,
+              durationMs,
+              error,
+              errorMessage:
+                error instanceof Error ? error.message : String(error),
+              errorCause: error instanceof Error ? error.cause : undefined,
+              errorStack: error instanceof Error ? error.stack : undefined,
+            },
+            "[automated-response] tool execution failed",
+          )
+        }
+      },
+      abortSignal,
     })
 
     const { messageCount } = await processStreamingText(
       result.textStream,
-      conversation.id,
+      async (_segment, parts) => {
+        for (const part of parts) {
+          await sendMessageWithRender(conversation.id, part)
+        }
+      },
       { sendParts: true },
-    )
+    ).catch((streamError) => {
+      logger.error(
+        {
+          provider,
+          modelId: selectedModelId,
+          conversationId: conversation.id,
+          error: streamError,
+          errorMessage:
+            streamError instanceof Error
+              ? streamError.message
+              : String(streamError),
+        },
+        "[automated-response] processStreamingText threw error",
+      )
+      return { messageCount: 0 }
+    })
 
     if (messageCount > 0) {
-      return true
-    }
-
-    const toolSummary = buildToolSummaryForFollowUp(toolExecutions)
-    if (toolSummary) {
-      const followUpResult = await streamText({
-        model,
-        system: systemPrompt,
-        messages: [
-          ...lastAIMessages,
-          {
-            role: "user",
-            content: `${helpTexts.followUpInstruction}\n\n${toolSummary}`,
-          },
-        ],
-        maxOutputTokens: aiAgent.maxOutputTokens,
-        temperature: aiAgent.temperature,
-        toolChoice: "none",
-        // @ts-expect-error - maxSteps is supported in AI SDK v6
-        maxSteps: 5,
-        abortSignal: controller.signal,
-      })
-
-      const { messageCount: followUpCount } = await processStreamingText(
-        followUpResult.textStream,
-        conversation.id,
-        { sendParts: true },
-      )
-
-      if (followUpCount > 0) {
-        return true
+      return {
+        responded: true,
+        provider: provider as AIAgentProvider,
+        modelId: selectedModelId,
+        usedFallbackText: false,
+        toolStats: {
+          steps: stepCount,
+          toolCallsCount,
+          toolResultsCount,
+          toolErrorsCount,
+          toolNames: Array.from(toolNamesSet).slice(0, 10),
+          finishReasons: finishReasons.slice(0, 10),
+        },
       }
     }
 
-    const fallbackText = buildFallbackTextFromTools(toolExecutions)
-    if (fallbackText) {
-      await sendMessageWithRender(conversation.id, fallbackText)
-      return true
+    // Last-resort fallback: loop finished but no assistant text was produced.
+    // Do NOT leak raw tool outputs; ask a clarifying question instead.
+    if (toolCallsCount > 0 || toolResultsCount > 0) {
+      await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
+      return {
+        responded: true,
+        provider: provider as AIAgentProvider,
+        modelId: selectedModelId,
+        usedFallbackText: true,
+        toolStats: {
+          steps: stepCount,
+          toolCallsCount,
+          toolResultsCount,
+          toolErrorsCount,
+          toolNames: Array.from(toolNamesSet).slice(0, 10),
+          finishReasons: finishReasons.slice(0, 10),
+        },
+      }
     }
 
-    return false
+    return null
   } catch (error) {
     logger.error(
       {
@@ -173,103 +264,31 @@ async function runAIReply(
       },
       "[automated-response] runAIReply failed",
     )
-    return false
+    return null
   } finally {
-    clearTimeout(timeoutId)
+    // Parent replyByAI handles global timeout and signal cleanup
   }
-}
-
-type ToolExecutionLog = {
-  toolName: string
-  result: unknown
-  toolCallId?: string
-}
-
-function wrapToolsWithLogging(
-  tools: ToolSet,
-  ctx: {
-    conversationId: string
-    workspaceId: string
-    provider: string
-    onToolResult?: (
-      toolName: string,
-      result: unknown,
-      toolCallId?: string,
-    ) => void
-  },
-): ToolSet {
-  const wrapped: ToolSet = {}
-
-  for (const [toolName, originalTool] of Object.entries(tools)) {
-    wrapped[toolName] = tool({
-      description: originalTool.description,
-      inputSchema: originalTool.inputSchema,
-      execute: async (input, options) => {
-        const startedAt = Date.now()
-
-        try {
-          if (!originalTool.execute) {
-            throw new Error("Tool execute() is not defined")
-          }
-
-          const result = await originalTool.execute(input, options)
-          ctx.onToolResult?.(toolName, result, options.toolCallId)
-          return result
-        } catch (error) {
-          logger.error(
-            {
-              toolName,
-              provider: ctx.provider,
-              conversationId: ctx.conversationId,
-              workspaceId: ctx.workspaceId,
-              ms: Date.now() - startedAt,
-              error,
-            },
-            "[automated-response] tool failed",
-          )
-          throw error
-        }
-      },
-    })
-  }
-
-  return wrapped
-}
-
-function buildToolSummaryForFollowUp(
-  executions: ToolExecutionLog[],
-): string | null {
-  const summaries: string[] = []
-  for (const exec of executions) {
-    const text = summarizeToolResult(exec.result)
-    if (text) {
-      summaries.push(`Tool ${exec.toolName} result:\n${text}`)
-    }
-  }
-
-  const result = summaries.length > 0 ? summaries.join("\n\n") : null
-
-  return result
-}
-
-function buildFallbackTextFromTools(
-  executions: ToolExecutionLog[],
-): string | null {
-  for (let i = executions.length - 1; i >= 0; i--) {
-    const exec = executions[i]
-    const text = summarizeToolResult(exec.result)
-    if (text) {
-      return text
-    }
-  }
-
-  if (executions.length > 0) {
-    return helpTexts.fallbackLookup
-  }
-
-  return null
 }
 
 function appendToolOutputGuard(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
+}
+
+export type ReplyByAIExecutionResult = {
+  responded: boolean
+  provider: AIAgentProvider
+  modelId: string
+  usedFallbackText: boolean
+  toolStats: {
+    steps: number
+    toolCallsCount: number
+    toolResultsCount: number
+    toolErrorsCount: number
+    toolNames: string[]
+    finishReasons: Array<{
+      stepNumber: number
+      finishReason: string
+      rawFinishReason?: string
+    }>
+  }
 }

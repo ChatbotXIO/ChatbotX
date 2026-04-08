@@ -1,4 +1,4 @@
-import z from "zod"
+import { z } from "zod"
 
 export const helpTexts = {
   assistantFoundPrefix: "I've found some information for you:",
@@ -31,6 +31,27 @@ export const helpTexts = {
   ].join("\n"),
   extractFieldValuePrompt:
     'Extract the following information for the field "{{customFieldId}}" from this text: "{{fullText}}"',
+} as const
+
+export const mcpConstants = {
+  protocolVersion: "2024-11-05",
+  clientInfo: { name: "AhaChat-Worker", version: "1.0.0" },
+  /** MCP JSON-RPC method names (Model Context Protocol) */
+  jsonRpcMethods: {
+    initialize: "initialize",
+    notificationsInitialized: "notifications/initialized",
+    toolsList: "tools/list",
+    toolsCall: "tools/call",
+  },
+} as const
+
+export const aiTimeouts = {
+  aiTotal: 120_000,
+  aiStep: 60_000,
+  aiChunk: 30_000,
+  httpDefault: 30_000,
+  mcpList: 30_000,
+  mcpCall: 60_000,
 } as const
 
 export const toolPrefixes = z.enum(["file", "fn", "mcp"])

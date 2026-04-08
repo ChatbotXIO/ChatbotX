@@ -2,7 +2,6 @@
 
 import { aiGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
-import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -21,7 +20,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useForm, useFormContext, useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
-import { useAIToolOptions } from "@/features/ai-triggers/use-ai-tools"
+import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { AIModelSelect } from "./ai-model-select"
 
@@ -32,7 +31,6 @@ type AIModelDialogProps = {
 export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
-  const toolOptions = useAIToolOptions()
 
   const { control, getValues, setValue } = useFormContext()
   const provider = useWatch({ name: `${parentName}.provider`, control })
@@ -96,11 +94,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
                 required
               />
 
-              <MultiSelectField
-                label={t("fields.tools.label")}
-                name="tools"
-                options={toolOptions}
-              />
+              <AIToolMultiSelect name="tools" />
 
               <SwitchField
                 formItemClassName="flex flex-row items-center justify-between rounded-lg border p-3"

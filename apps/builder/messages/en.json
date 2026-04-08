@@ -764,6 +764,9 @@
       "label": "Prompt",
       "placeholder": "Enter prompt"
     },
+    "userMessage": {
+      "label": "User message"
+    },
     "purpose": {
       "label": "Purpose",
       "placeholder": "What does this Function do?"

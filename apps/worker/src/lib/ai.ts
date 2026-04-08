@@ -3,231 +3,22 @@ import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { db } from "@chatbotx.io/database/client"
+import { aiMcpServerAuth } from "@chatbotx.io/database/partials"
 import type {
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
 } from "@chatbotx.io/database/types"
 import { aiProviders } from "@chatbotx.io/flow-config"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
-import { type ToolSet, tool } from "ai"
+import { secretTextAuthSchema } from "@chatbotx.io/sdk"
+import { jsonSchema, type ToolSet, tool } from "ai"
+import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { helpTexts } from "../integration/handlers/automated-response/constants"
-import {
-  callMCPTool,
-  type MCPAuthSchema,
-} from "../integration/handlers/automated-response/mcp"
 import { performFileSearch } from "../integration/handlers/automated-response/search"
 import { logger } from "./logger"
-import { ensureRecord, isRecord } from "./utils"
+import { McpClient, normalizeMcpContent } from "./mcp-client"
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
-
-function jsonSchemaToZodObject(schema: unknown, depth = 0): z.ZodTypeAny {
-  if (depth > 6) {
-    return z.object({}).passthrough()
-  }
-
-  if (!isRecord(schema)) {
-    return z.object({}).passthrough()
-  }
-
-  const schemaDescription =
-    typeof schema.description === "string" ? schema.description : undefined
-
-  const withDescription = (zodType: z.ZodTypeAny) =>
-    schemaDescription ? zodType.describe(schemaDescription) : zodType
-
-  const properties = isRecord(schema.properties) ? schema.properties : {}
-  const required = Array.isArray(schema.required)
-    ? schema.required.filter((v): v is string => typeof v === "string")
-    : []
-  const requiredSet = new Set(required)
-
-  const shape: Record<string, z.ZodTypeAny> = {}
-  for (const [key, propSchema] of Object.entries(properties)) {
-    const propZod = jsonSchemaToZodValue(propSchema, depth + 1)
-    shape[key] = requiredSet.has(key) ? propZod : propZod.optional()
-  }
-
-  return withDescription(z.object(shape).passthrough())
-}
-
-function jsonSchemaToZodValue(schema: unknown, depth = 0): z.ZodTypeAny {
-  if (depth > 6) {
-    return z.unknown()
-  }
-  if (!isRecord(schema)) {
-    return z.unknown()
-  }
-
-  const schemaType = schema.type
-
-  if (schemaType === "string") {
-    return z.string()
-  }
-  if (schemaType === "number" || schemaType === "integer") {
-    return z.number()
-  }
-  if (schemaType === "boolean") {
-    return z.boolean()
-  }
-  if (schemaType === "array") {
-    return z.array(jsonSchemaToZodValue(schema.items, depth + 1))
-  }
-  if (schemaType === "object" || isRecord(schema.properties)) {
-    return jsonSchemaToZodObject(schema, depth + 1)
-  }
-
-  return z.unknown()
-}
-
-const OMIT_NORMALIZED_FIELD = Symbol("omit-normalized-field")
-
-function getRequiredSchemaFields(schema: unknown): Set<string> {
-  if (!(isRecord(schema) && Array.isArray(schema.required))) {
-    return new Set()
-  }
-  return new Set(
-    schema.required.filter(
-      (field): field is string => typeof field === "string",
-    ),
-  )
-}
-
-function normalizeValueBySchema(
-  value: unknown,
-  schema: unknown,
-  isRequired: boolean,
-): unknown | typeof OMIT_NORMALIZED_FIELD {
-  if (!isRecord(schema)) {
-    return value
-  }
-
-  const schemaType = schema.type
-
-  if (value === null) {
-    return OMIT_NORMALIZED_FIELD
-  }
-
-  if (typeof value === "string" && schemaType === "string") {
-    const trimmed = value.trim()
-    if (trimmed.length === 0 && !isRequired) {
-      return OMIT_NORMALIZED_FIELD
-    }
-    return trimmed
-  }
-
-  if (Array.isArray(value) && schemaType === "array") {
-    const normalizedItems = value
-      .map((item) => {
-        const normalizedItem = normalizeValueBySchema(item, schema.items, false)
-        return normalizedItem === OMIT_NORMALIZED_FIELD ? null : normalizedItem
-      })
-      .filter((item): item is Exclude<typeof item, null> => item !== null)
-
-    if (normalizedItems.length === 0 && !isRequired) {
-      return OMIT_NORMALIZED_FIELD
-    }
-
-    return normalizedItems
-  }
-
-  if (typeof value === "string") {
-    const trimmed = value.trim()
-    if (trimmed.length === 0 && !isRequired) {
-      return OMIT_NORMALIZED_FIELD
-    }
-    return trimmed
-  }
-
-  if (!isRecord(value)) {
-    return value
-  }
-
-  if (schemaType !== "object" && !isRecord(schema.properties)) {
-    return value
-  }
-
-  const properties = ensureRecord(schema.properties)
-  const requiredFields = getRequiredSchemaFields(schema)
-  const normalizedObject: Record<string, unknown> = {}
-  let missingRequiredField = false
-
-  for (const [key, rawValue] of Object.entries(value)) {
-    const childIsRequired = requiredFields.has(key)
-    const normalizedValue = normalizeValueBySchema(
-      rawValue,
-      properties[key],
-      childIsRequired,
-    )
-
-    if (normalizedValue === OMIT_NORMALIZED_FIELD) {
-      if (childIsRequired) {
-        missingRequiredField = true
-      }
-      continue
-    }
-
-    normalizedObject[key] = normalizedValue
-  }
-
-  for (const requiredField of requiredFields) {
-    if (!(requiredField in normalizedObject)) {
-      missingRequiredField = true
-    }
-  }
-
-  if (missingRequiredField && !isRequired) {
-    return OMIT_NORMALIZED_FIELD
-  }
-
-  if (Object.keys(normalizedObject).length === 0 && !isRequired) {
-    return OMIT_NORMALIZED_FIELD
-  }
-
-  return normalizedObject
-}
-
-function normalizeMCPToolArgsBySchema(
-  args: Record<string, unknown>,
-  schema: unknown,
-): Record<string, unknown> {
-  const normalized = normalizeValueBySchema(args, schema, true)
-  return isRecord(normalized) ? normalized : args
-}
-
-const mcpAvailableToolsSchema = z.record(
-  z.string(),
-  z
-    .object({
-      description: z.string().default(""),
-      inputSchema: z
-        .object({
-          jsonSchema: z.unknown(),
-        })
-        .optional(),
-    })
-    .passthrough(),
-)
-
-export function normalizeAIModelId(modelId: string): string {
-  const trimmed = modelId.trim()
-  if (!trimmed) {
-    return trimmed
-  }
-
-  const lastSlash = trimmed.lastIndexOf("/")
-  if (lastSlash >= 0 && lastSlash < trimmed.length - 1) {
-    return trimmed.slice(lastSlash + 1)
-  }
-
-  const lastColon = trimmed.lastIndexOf(":")
-  if (lastColon >= 0 && lastColon < trimmed.length - 1) {
-    return trimmed.slice(lastColon + 1)
-  }
-
-  return trimmed
-}
 
 export async function getAIIntegrationInDB(props: {
   workspaceId: string
@@ -258,12 +49,15 @@ export async function getAIIntegrationInDB(props: {
 export function getAIModel(
   model: IntegrationOpenAIModel | IntegrationGeminiModel,
   provider: string,
+  _options?: { abortSignal?: AbortSignal },
 ) {
-  const auth = model.auth as SecretTextAuthValue
+  const authParsed = secretTextAuthSchema.safeParse(model.auth)
+  if (!authParsed.success) {
+    throw new Error("Invalid AI integration auth configuration")
+  }
 
   const commonSettings = {
-    apiKey: auth.secretText,
-    fetch: globalThis.fetch,
+    apiKey: authParsed.data.secretText,
     maxRetries: 3,
   }
 
@@ -292,11 +86,10 @@ export function createAIModelInstance(props: {
   abortSignal?: AbortSignal
   traceId?: string
 }) {
-  const { model, provider, modelId } = props
-  const providerInstance = getAIModel(model, provider)
-  const normalizedModelId = normalizeAIModelId(modelId)
+  const { model, provider, modelId, abortSignal } = props
+  const providerInstance = getAIModel(model, provider, { abortSignal })
 
-  return providerInstance(normalizedModelId)
+  return providerInstance(modelId)
 }
 
 export async function getAIFileTools(
@@ -397,15 +190,15 @@ export async function getAIFunctionTools(
 export async function getMCPServerTools(
   workspaceId: string,
   selectedMcpIds: string[],
-): Promise<ToolSet> {
+): Promise<{ tools: ToolSet; clients: McpClient[] }> {
   try {
     const tools: ToolSet = {}
+    const clients: McpClient[] = []
 
     if (selectedMcpIds.length === 0) {
-      return tools
+      return { tools, clients }
     }
 
-    // Find MCP servers from DB
     const mcpServers = await db.query.aiMCPServerModel.findMany({
       where: {
         workspaceId,
@@ -413,70 +206,89 @@ export async function getMCPServerTools(
       },
     })
     if (mcpServers.length === 0) {
-      return tools
+      return { tools, clients }
     }
 
-    for (const mcpServer of mcpServers) {
-      const availableToolsParsed = mcpAvailableToolsSchema.safeParse(
-        mcpServer.availableTools,
-      )
-      if (!availableToolsParsed.success) {
-        continue
-      }
-
-      const availableTools = availableToolsParsed.data
-      if (!availableTools || typeof availableTools !== "object") {
-        continue
-      }
-
-      for (const toolName of mcpServer.selectedTools) {
-        const toolDef = availableTools[toolName]
-        if (!toolDef) {
-          continue
-        }
-
-        const cleanToolName = toolName.replace(/[^a-zA-Z0-9_-]/g, "_")
-        const cleanServerName = mcpServer.name.replace(/[^a-zA-Z0-9_-]/g, "_")
-        const uniqueToolName = `${cleanServerName}_${cleanToolName}`
-
-        if (!toolNamePattern.test(uniqueToolName)) {
-          continue
-        }
-
-        const jsonSchema = toolDef.inputSchema?.jsonSchema
-        const inputSchema = jsonSchema
-          ? jsonSchemaToZodObject(jsonSchema)
-          : z.looseObject({})
-
-        tools[uniqueToolName] = tool({
-          description: `${toolDef.description} (from ${mcpServer.name})`,
-          inputSchema,
-          execute: async (args) => {
-            const safeArgs = ensureRecord(args)
-            const normalizedArgs = normalizeMCPToolArgsBySchema(
-              safeArgs,
-              jsonSchema,
-            )
-            return await callMCPTool({
-              url: mcpServer.url,
-              auth: mcpServer.auth as MCPAuthSchema,
-              toolName,
-              args: normalizedArgs,
-            })
-          },
+    const results = await Promise.allSettled(
+      mcpServers.map(async (mcpServer) => {
+        const auth = aiMcpServerAuth.parse(mcpServer.auth)
+        const client = new McpClient({
+          url: mcpServer.url,
+          auth,
+          name: mcpServer.name,
         })
+
+        const serverToolList = await client.listTools()
+        const selectedToolNames = new Set(mcpServer.selectedTools)
+        const cleanServerName = mcpServer.name.replace(/[^a-zA-Z0-9_-]/g, "_")
+        const filteredTools: ToolSet = {}
+
+        for (const toolDef of serverToolList) {
+          if (!selectedToolNames.has(toolDef.name)) {
+            continue
+          }
+
+          const cleanToolName = toolDef.name.replace(/[^a-zA-Z0-9_-]/g, "_")
+          const uniqueToolName = `${cleanServerName}_${cleanToolName}`
+          if (!toolNamePattern.test(uniqueToolName)) {
+            continue
+          }
+
+          const originalToolName = toolDef.name
+
+          filteredTools[uniqueToolName] = tool({
+            description: toolDef.description ?? "",
+            inputSchema: toolDef.inputSchema
+              ? jsonSchema(toolDef.inputSchema)
+              : z.looseObject({}),
+            execute: async (args) => {
+              const result = await client.callTool(
+                originalToolName,
+                args as Record<string, unknown>,
+              )
+              if (result.isError) {
+                const errorContent = result.content
+                let errorMessage = "MCP tool returned an error"
+                if (typeof errorContent === "string") {
+                  errorMessage = errorContent
+                } else if (
+                  Array.isArray(errorContent) &&
+                  errorContent[0]?.type === "text"
+                ) {
+                  errorMessage = errorContent[0].text
+                }
+                throw new Error(errorMessage)
+              }
+
+              return normalizeMcpContent(result.content)
+            },
+          })
+        }
+
+        return { tools: filteredTools, client }
+      }),
+    )
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        Object.assign(tools, result.value.tools)
+        clients.push(result.value.client)
+      } else {
+        const normalized = normalizeError(result.reason)
+        logger.error(
+          { error: normalized, workspaceId },
+          "[automated-response] Failed to load MCP server tools",
+        )
       }
     }
 
-    return tools
+    return { tools, clients }
   } catch (error) {
+    const normalized = normalizeError(error)
     logger.error(
-      {
-        error,
-        workspaceId,
-      },
+      { error: normalized, workspaceId },
       "[automated-response] getMCPServerTools failed",
     )
-    return {}
+    return { tools: {}, clients: [] }
   }
 }

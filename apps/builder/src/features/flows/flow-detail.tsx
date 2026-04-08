@@ -2,7 +2,7 @@
 
 import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import { ReactFlowProvider } from "@xyflow/react"
-import { AIToolsStoreProvider } from "../ai-triggers/provider/ai-tools-store-context"
+import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
 import { InboxStoreProvider } from "../inboxes/provider/inbox-store-context"

@@ -1,8 +1,10 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { db, sql } from "@chatbotx.io/database/client"
+import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { embed } from "ai"
+import { normalizeError } from "universal-error-normalizer"
+import { z } from "zod"
 import { logger } from "../../../lib/logger"
-import { isRecord } from "../../../lib/utils"
 import { helpTexts, openaiEmbeddingModels } from "./constants"
 import type {
   FileSearchArgs,
@@ -10,17 +12,28 @@ import type {
   SimilaritySearchResult,
 } from "./types"
 
-function getSecretTextFromAuth(auth: unknown): string | null {
-  if (!isRecord(auth)) {
-    return null
-  }
-  const secretText = auth.secretText
-  if (typeof secretText !== "string") {
-    return null
-  }
-  const trimmed = secretText.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
+const distanceSchema = z
+  .union([z.number(), z.string()])
+  .transform((value, ctx) => {
+    const parsed = typeof value === "string" ? Number(value) : value
+    if (!Number.isFinite(parsed)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid distance",
+      })
+      return z.NEVER
+    }
+    return parsed
+  })
+
+const similaritySearchResultSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  aiFileId: z.string(),
+  distance: distanceSchema,
+})
+
+const similaritySearchResultsSchema = z.array(similaritySearchResultSchema)
 
 async function getOpenAIIntegration(workspaceId: string) {
   const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst({
@@ -43,7 +56,7 @@ async function createQueryEmbedding(
 ): Promise<number[]> {
   const integrationOpenAI = await getOpenAIIntegration(workspaceId)
 
-  const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
+  const apiKey = (integrationOpenAI.auth as SecretTextAuthValue).secretText
   if (!apiKey) {
     throw new Error("Missing OpenAI API key")
   }
@@ -82,7 +95,19 @@ async function searchSimilarEmbeddings(
     LIMIT ${config.maxResults}
   `)
 
-  return results.rows as unknown as SimilaritySearchResult[]
+  const parsed = similaritySearchResultsSchema.safeParse(results.rows)
+  if (!parsed.success) {
+    logger.warn(
+      {
+        workspaceId: config.workspaceId,
+        issues: parsed.error.issues,
+      },
+      "[automated-response] Invalid similarity search results",
+    )
+    return []
+  }
+
+  return parsed.data
 }
 
 function filterRelevantResults(
@@ -131,9 +156,10 @@ export async function performFileSearch(
     const result = formatSearchResults(relevantResults)
     return result
   } catch (error) {
+    const parsedError = normalizeError(error)
     logger.error(
       {
-        error,
+        error: parsedError,
         workspaceId: config.workspaceId,
       },
       "[automated-response] performFileSearch failed",

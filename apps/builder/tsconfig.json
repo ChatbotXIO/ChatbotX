@@ -3,6 +3,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
+      "@chatbotx.io/ai": ["../../packages/ai/src/index.ts"],
+      "@chatbotx.io/ai/*": ["../../packages/ai/src/*"],
       "@chatbotx.io/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [

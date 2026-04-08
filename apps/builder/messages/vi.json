@@ -750,6 +750,9 @@
       "label": "Prompt",
       "placeholder": "Nhập prompt"
     },
+    "userMessage": {
+      "label": "Tin nhắn người dùng"
+    },
     "purpose": {
       "label": "Mục đích",
       "placeholder": "Chức năng này làm gì?"

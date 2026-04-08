@@ -4,7 +4,6 @@ import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
-import { getAIToolset } from "../generate-text/tools"
 import { replyByAI } from "./replies"
 import { trackBotResponse } from "./track-bot-response"
 
@@ -43,6 +42,7 @@ export async function processAutomatedResponse(
         isDefault: true,
       },
     })
+
     if (!aiAgent) {
       await trackBotResponse({
         workspaceId: conversation.workspaceId,
@@ -90,21 +90,20 @@ export async function processAutomatedResponse(
     }
     lastAIMessages.reverse()
 
-    const toolset = await getAIToolset(aiAgent.workspaceId, aiAgent.tools)
+    const startTime = Date.now()
+    const aiResult = await replyByAI({
+      conversation,
+      lastAIMessages,
+      aiAgent,
+      tools: {}, // This will be ignored as replyByAI now handles toolset internally
+      availableTools: {
+        fileTools: [],
+        functionTools: [],
+        mcpTools: [],
+      },
+    })
 
-    if (
-      await replyByAI({
-        conversation,
-        lastAIMessages,
-        aiAgent,
-        tools: toolset,
-        availableTools: {
-          fileTools: [],
-          functionTools: [],
-          mcpTools: [],
-        },
-      })
-    ) {
+    if (aiResult) {
       // Step 3: AI Agent exists → Route to AGENT
       await trackBotResponse({
         workspaceId: conversation.workspaceId,
@@ -114,8 +113,9 @@ export async function processAutomatedResponse(
         responseType: "ai_agent",
         routeType: "agent",
         result: "success",
-        aiProvider: "openai",
-        startTime: Date.now(),
+        aiProvider: aiResult.provider,
+        metadata: {},
+        startTime,
       })
       return
     }
@@ -150,6 +150,5 @@ export async function processAutomatedResponse(
       },
       "[automated-response] triggerAutomatedResponse failed",
     )
-    return
   }
 }

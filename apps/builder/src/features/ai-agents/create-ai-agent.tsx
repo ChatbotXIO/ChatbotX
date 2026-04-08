@@ -9,7 +9,6 @@ import type {
 } from "@chatbotx.io/database/types"
 import { aiProviders } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
 import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
@@ -33,21 +32,14 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import {
-  FileIcon,
-  FunctionSquareIcon,
-  Loader2Icon,
-  MoveRightIcon,
-  PlusIcon,
-  ServerIcon,
-  TrashIcon,
-} from "lucide-react"
+import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/action"
+import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
 
 type CreateAIAgentDialogProps = {
@@ -60,44 +52,11 @@ type CreateAIAgentDialogProps = {
 
 export function CreateAIAgentDialog({
   workspaceId,
-  files,
-  functions,
-  mcpServers,
   onSuccess,
-}: CreateAIAgentDialogProps) {
+}: Omit<CreateAIAgentDialogProps, "files" | "functions" | "mcpServers">) {
   const [open, setOpen] = useState(false)
 
   const t = useTranslations()
-
-  const toolOptions = useMemo(
-    () => [
-      {
-        heading: t("fields.file.label"),
-        options: files.map((file) => ({
-          label: file.name,
-          value: `file:${file.id}`,
-          icon: FileIcon,
-        })),
-      },
-      {
-        heading: t("fields.function.label"),
-        options: functions.map((fn) => ({
-          label: fn.name,
-          value: `fn:${fn.id}`,
-          icon: FunctionSquareIcon,
-        })),
-      },
-      {
-        heading: t("fields.mcpServer.label"),
-        options: mcpServers.map((mcpServer) => ({
-          label: mcpServer.name,
-          value: `mcp:${mcpServer.id}`,
-          icon: ServerIcon,
-        })),
-      },
-    ],
-    [files, functions, mcpServers, t],
-  )
 
   const messageRoleOptions = useMemo(
     () => [
@@ -231,11 +190,7 @@ export function CreateAIAgentDialog({
                 </Button>
               </div>
 
-              <MultiSelectField
-                label={t("fields.tools.label")}
-                name="tools"
-                options={toolOptions}
-              />
+              <AIToolMultiSelect name="tools" />
 
               <SwitchField
                 label={t("fields.isDefault.label")}

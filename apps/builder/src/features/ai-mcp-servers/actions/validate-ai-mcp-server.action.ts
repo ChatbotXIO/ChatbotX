@@ -22,16 +22,26 @@ export const validateAIMcpServerAction = workspaceActionClient
         headers[header.header] = header.value
       }
     }
+
     let httpClient: experimental_MCPClient | null = null
 
     try {
       const httpTransport = new StreamableHTTPClientTransport(
         new URL(parsedInput.url),
+        { requestInit: { headers } },
       )
       httpClient = await experimental_createMCPClient({
         transport: httpTransport,
       })
-      return await httpClient.tools()
+
+      const tools = await httpClient.tools()
+      const toolKeys = Object.keys(tools)
+
+      return JSON.parse(
+        JSON.stringify(
+          Object.fromEntries(toolKeys.map((key) => [key, tools[key]])),
+        ),
+      )
     } finally {
       if (httpClient) {
         await httpClient.close()
