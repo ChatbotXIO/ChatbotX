@@ -5,11 +5,11 @@ import { stepTypes } from "./step-action"
 export const aiProviders = z.enum(["openai", "gemini", "claude", "deepseek"])
 export type AIProvider = z.infer<typeof aiProviders>
 
-export const defaultAIModelIds = {
-  openai: "openai/gpt-4o-mini",
-  gemini: "gemini/gemini-2.5-pro",
-  claude: "claude/claude-3-5-sonnet-20241022",
-  deepseek: "deepseek/deepseek-chat",
+export const defaultAIModels = {
+  openai: "gpt-4o-mini",
+  gemini: "gemini-2.5-pro",
+  claude: "claude-3-5-sonnet-20241022",
+  deepseek: "deepseek-chat",
 } as const
 
 export const aiGenerateTextSchema = z.object({
@@ -19,7 +19,7 @@ export const aiGenerateTextSchema = z.object({
   model: z.string().trim().min(1),
   system: z.string().trim().optional(),
   text: z.string().trim().min(1),
-  outputCfId: z.string().trim().min(1),
+  outputFieldId: z.string().trim().min(1),
   tools: z.array(z.string()).optional(),
   remember: z.boolean(),
   temperature: z.number().min(0).max(2),
@@ -31,9 +31,9 @@ export type AIGenerateTextSchema = z.infer<typeof aiGenerateTextSchema>
 export const aiGenerateTextDefaultFn = (
   props: Partial<AIGenerateTextSchema> = {},
 ): AIGenerateTextSchema => {
-  let model: string = defaultAIModelIds.openai
+  let model: string = defaultAIModels.openai
   if (props.provider && !props.model) {
-    model = defaultAIModelIds[props.provider as AIProvider]
+    model = defaultAIModels[props.provider as AIProvider]
   }
 
   return {
@@ -42,7 +42,7 @@ export const aiGenerateTextDefaultFn = (
     model,
     system: "",
     text: "",
-    outputCfId: "",
+    outputFieldId: "",
     tools: [],
     remember: false,
     temperature: 1.0,

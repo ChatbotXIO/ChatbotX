@@ -9,7 +9,7 @@ export const AITextToSpeechSchema = z.object({
   message: z.string().trim().min(1),
   voiceType: z.string().trim().min(1),
   voiceTone: z.string().optional(),
-  outputCfId: zodBigintAsString(),
+  outputFieldId: z.string().trim().min(1),
 })
 
 export type AITextToSpeechSchema = z.infer<typeof AITextToSpeechSchema>
@@ -23,6 +23,6 @@ export const AITextToSpeechDefaultFn = (
   message: "",
   voiceType: "",
   voiceTone: "",
-  outputCfId: "",
+  outputFieldId: "",
   ...props,
 })

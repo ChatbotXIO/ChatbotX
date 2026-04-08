@@ -2,63 +2,256 @@ import { createAnthropic } from "@ai-sdk/anthropic"
 import { createDeepSeek } from "@ai-sdk/deepseek"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  integrationGeminiModel,
-  integrationOpenaiModel,
-} from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
 import type {
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
 } from "@chatbotx.io/database/types"
 import { aiProviders } from "@chatbotx.io/flow-config"
 import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
-import { jsonSchema, type ToolSet, tool } from "ai"
-import {
-  JSON_TYPE,
-  TEXT,
-} from "../integration/handlers/automated-response/constants"
+import { type ToolSet, tool } from "ai"
+import { z } from "zod"
+import { helpTexts } from "../integration/handlers/automated-response/constants"
 import {
   callMCPTool,
-  cleanSchemaForGemini,
   type MCPAuthSchema,
 } from "../integration/handlers/automated-response/mcp"
 import { performFileSearch } from "../integration/handlers/automated-response/search"
 import { logger } from "./logger"
-
-type DataField = {
-  type?: string
-  description?: string
-  required?: boolean
-}
+import { ensureRecord, isRecord } from "./utils"
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
+
+function jsonSchemaToZodObject(schema: unknown, depth = 0): z.ZodTypeAny {
+  if (depth > 6) {
+    return z.object({}).passthrough()
+  }
+
+  if (!isRecord(schema)) {
+    return z.object({}).passthrough()
+  }
+
+  const schemaDescription =
+    typeof schema.description === "string" ? schema.description : undefined
+
+  const withDescription = (zodType: z.ZodTypeAny) =>
+    schemaDescription ? zodType.describe(schemaDescription) : zodType
+
+  const properties = isRecord(schema.properties) ? schema.properties : {}
+  const required = Array.isArray(schema.required)
+    ? schema.required.filter((v): v is string => typeof v === "string")
+    : []
+  const requiredSet = new Set(required)
+
+  const shape: Record<string, z.ZodTypeAny> = {}
+  for (const [key, propSchema] of Object.entries(properties)) {
+    const propZod = jsonSchemaToZodValue(propSchema, depth + 1)
+    shape[key] = requiredSet.has(key) ? propZod : propZod.optional()
+  }
+
+  return withDescription(z.object(shape).passthrough())
+}
+
+function jsonSchemaToZodValue(schema: unknown, depth = 0): z.ZodTypeAny {
+  if (depth > 6) {
+    return z.unknown()
+  }
+  if (!isRecord(schema)) {
+    return z.unknown()
+  }
+
+  const schemaType = schema.type
+
+  if (schemaType === "string") {
+    return z.string()
+  }
+  if (schemaType === "number" || schemaType === "integer") {
+    return z.number()
+  }
+  if (schemaType === "boolean") {
+    return z.boolean()
+  }
+  if (schemaType === "array") {
+    return z.array(jsonSchemaToZodValue(schema.items, depth + 1))
+  }
+  if (schemaType === "object" || isRecord(schema.properties)) {
+    return jsonSchemaToZodObject(schema, depth + 1)
+  }
+
+  return z.unknown()
+}
+
+const OMIT_NORMALIZED_FIELD = Symbol("omit-normalized-field")
+
+function getRequiredSchemaFields(schema: unknown): Set<string> {
+  if (!(isRecord(schema) && Array.isArray(schema.required))) {
+    return new Set()
+  }
+  return new Set(
+    schema.required.filter(
+      (field): field is string => typeof field === "string",
+    ),
+  )
+}
+
+function normalizeValueBySchema(
+  value: unknown,
+  schema: unknown,
+  isRequired: boolean,
+): unknown | typeof OMIT_NORMALIZED_FIELD {
+  if (!isRecord(schema)) {
+    return value
+  }
+
+  const schemaType = schema.type
+
+  if (value === null) {
+    return OMIT_NORMALIZED_FIELD
+  }
+
+  if (typeof value === "string" && schemaType === "string") {
+    const trimmed = value.trim()
+    if (trimmed.length === 0 && !isRequired) {
+      return OMIT_NORMALIZED_FIELD
+    }
+    return trimmed
+  }
+
+  if (Array.isArray(value) && schemaType === "array") {
+    const normalizedItems = value
+      .map((item) => {
+        const normalizedItem = normalizeValueBySchema(item, schema.items, false)
+        return normalizedItem === OMIT_NORMALIZED_FIELD ? null : normalizedItem
+      })
+      .filter((item): item is Exclude<typeof item, null> => item !== null)
+
+    if (normalizedItems.length === 0 && !isRequired) {
+      return OMIT_NORMALIZED_FIELD
+    }
+
+    return normalizedItems
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    if (trimmed.length === 0 && !isRequired) {
+      return OMIT_NORMALIZED_FIELD
+    }
+    return trimmed
+  }
+
+  if (!isRecord(value)) {
+    return value
+  }
+
+  if (schemaType !== "object" && !isRecord(schema.properties)) {
+    return value
+  }
+
+  const properties = ensureRecord(schema.properties)
+  const requiredFields = getRequiredSchemaFields(schema)
+  const normalizedObject: Record<string, unknown> = {}
+  let missingRequiredField = false
+
+  for (const [key, rawValue] of Object.entries(value)) {
+    const childIsRequired = requiredFields.has(key)
+    const normalizedValue = normalizeValueBySchema(
+      rawValue,
+      properties[key],
+      childIsRequired,
+    )
+
+    if (normalizedValue === OMIT_NORMALIZED_FIELD) {
+      if (childIsRequired) {
+        missingRequiredField = true
+      }
+      continue
+    }
+
+    normalizedObject[key] = normalizedValue
+  }
+
+  for (const requiredField of requiredFields) {
+    if (!(requiredField in normalizedObject)) {
+      missingRequiredField = true
+    }
+  }
+
+  if (missingRequiredField && !isRequired) {
+    return OMIT_NORMALIZED_FIELD
+  }
+
+  if (Object.keys(normalizedObject).length === 0 && !isRequired) {
+    return OMIT_NORMALIZED_FIELD
+  }
+
+  return normalizedObject
+}
+
+function normalizeMCPToolArgsBySchema(
+  args: Record<string, unknown>,
+  schema: unknown,
+): Record<string, unknown> {
+  const normalized = normalizeValueBySchema(args, schema, true)
+  return isRecord(normalized) ? normalized : args
+}
+
+const mcpAvailableToolsSchema = z.record(
+  z.string(),
+  z
+    .object({
+      description: z.string().default(""),
+      inputSchema: z
+        .object({
+          jsonSchema: z.unknown(),
+        })
+        .optional(),
+    })
+    .passthrough(),
+)
+
+export function normalizeAIModelId(modelId: string): string {
+  const trimmed = modelId.trim()
+  if (!trimmed) {
+    return trimmed
+  }
+
+  const lastSlash = trimmed.lastIndexOf("/")
+  if (lastSlash >= 0 && lastSlash < trimmed.length - 1) {
+    return trimmed.slice(lastSlash + 1)
+  }
+
+  const lastColon = trimmed.lastIndexOf(":")
+  if (lastColon >= 0 && lastColon < trimmed.length - 1) {
+    return trimmed.slice(lastColon + 1)
+  }
+
+  return trimmed
+}
 
 export async function getAIIntegrationInDB(props: {
   workspaceId: string
   provider: string
+  autoReply?: boolean
 }) {
-  const { workspaceId, provider } = props
+  const { workspaceId, provider, autoReply } = props
+
+  const where = {
+    workspaceId,
+    ...(autoReply === undefined ? {} : { autoReply }),
+  }
 
   switch (provider) {
-    case aiProviders.openai:
-      return await findOrFail({
-        table: integrationOpenaiModel,
-        where: {
-          workspaceId,
-        },
-        message: `IntegrationOpenAI not found for workspaceId: ${workspaceId}`,
+    case aiProviders.enum.openai:
+      return await db.query.integrationOpenaiModel.findFirst({
+        where,
       })
-    case aiProviders.gemini:
-      return await findOrFail({
-        table: integrationGeminiModel,
-        where: {
-          workspaceId,
-        },
-        message: `IntegrationGemini not found for workspaceId: ${workspaceId}`,
+    case aiProviders.enum.gemini:
+      return await db.query.integrationGeminiModel.findFirst({
+        where,
       })
     default:
-      throw new Error(`Unsupported provider: ${provider}`)
+      return null
   }
 }
 
@@ -68,22 +261,42 @@ export function getAIModel(
 ) {
   const auth = model.auth as SecretTextAuthValue
 
+  const commonSettings = {
+    apiKey: auth.secretText,
+    fetch: globalThis.fetch,
+    maxRetries: 3,
+  }
+
   switch (provider) {
-    case aiProviders.openai: {
-      return createOpenAI({ apiKey: auth.secretText })
+    case aiProviders.enum.openai: {
+      return createOpenAI(commonSettings)
     }
-    case aiProviders.gemini: {
-      return createGoogleGenerativeAI({ apiKey: auth.secretText })
+    case aiProviders.enum.gemini: {
+      return createGoogleGenerativeAI(commonSettings)
     }
-    case aiProviders.claude: {
-      return createAnthropic({ apiKey: auth.secretText })
+    case aiProviders.enum.claude: {
+      return createAnthropic(commonSettings)
     }
-    case aiProviders.deepseek: {
-      return createDeepSeek({ apiKey: auth.secretText })
+    case aiProviders.enum.deepseek: {
+      return createDeepSeek(commonSettings)
     }
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
+}
+
+export function createAIModelInstance(props: {
+  model: IntegrationOpenAIModel | IntegrationGeminiModel
+  provider: string
+  modelId: string
+  abortSignal?: AbortSignal
+  traceId?: string
+}) {
+  const { model, provider, modelId } = props
+  const providerInstance = getAIModel(model, provider)
+  const normalizedModelId = normalizeAIModelId(modelId)
+
+  return providerInstance(normalizedModelId)
 }
 
 export async function getAIFileTools(
@@ -98,30 +311,26 @@ export async function getAIFileTools(
     }
 
     const allFiles = await db.query.aiFileModel.findMany({
-      where: { workspaceId, id: { in: selectedFileIds } },
+      where: {
+        workspaceId,
+        id: { in: selectedFileIds },
+      },
     })
 
     if (allFiles.length > 0) {
-      tools.file_search = tool({
-        description: TEXT.fileSearchDescription,
-        inputSchema: jsonSchema({
-          type: JSON_TYPE.object,
-          properties: {
-            query: {
-              type: JSON_TYPE.string,
-              description: TEXT.fileSearchQueryDescription,
-            },
-          },
-          required: ["query"],
-        } as Parameters<typeof jsonSchema>[0]),
-        execute: async (args: { query: string }) => {
+      tools.search_knowledge_base = tool({
+        description: helpTexts.fileSearchDescription,
+        inputSchema: z.object({
+          query: z.string().describe(helpTexts.fileSearchQueryDescription),
+        }),
+        execute: async ({ query }) => {
           const config = {
             workspaceId,
             selectedFileIds,
             similarityThreshold: 0.7,
             maxResults: 5,
           }
-          return await performFileSearch(args, config)
+          return await performFileSearch({ query }, config)
         },
       })
     }
@@ -129,8 +338,11 @@ export async function getAIFileTools(
     return tools
   } catch (error) {
     logger.error(
-      error,
-      `[automated-response] getAIFileTools failed for workspaceId: ${workspaceId}`,
+      {
+        error,
+        workspaceId,
+      },
+      "[automated-response] getAIFileTools failed",
     )
     return {}
   }
@@ -159,46 +371,24 @@ export async function getAIFunctionTools(
     for (const aiFunction of aiFunctions) {
       const functionName = aiFunction.name
       const functionPurpose = aiFunction.purpose || ""
-      const dataCollect =
-        (aiFunction.dataCollect as Record<string, unknown>) || {}
       const outputMessage = aiFunction.outputMessage || ""
-
-      const properties: Record<string, unknown> = {}
-      const required: string[] = []
-
-      if (dataCollect && typeof dataCollect === JSON_TYPE.object) {
-        for (const [key, value] of Object.entries(dataCollect)) {
-          if (value && typeof value === JSON_TYPE.object) {
-            const v = value as DataField
-            const typeName =
-              typeof v.type === JSON_TYPE.string ? v.type : JSON_TYPE.string
-            properties[key] = {
-              type: typeName,
-              description:
-                typeof v.description === JSON_TYPE.string ? v.description : "",
-            }
-            if (v.required) {
-              required.push(key)
-            }
-          }
-        }
-      }
 
       tools[functionName] = tool({
         description: functionPurpose,
-        inputSchema: jsonSchema({
-          type: JSON_TYPE.object,
-          properties,
-          required,
-        } as Parameters<typeof jsonSchema>[0]),
-        execute: async () => await Promise.resolve(outputMessage),
+
+        inputSchema: z.looseObject({}),
+        execute: async (_args: Record<string, unknown>) =>
+          await Promise.resolve(outputMessage),
       })
     }
     return tools
   } catch (error) {
     logger.error(
-      error,
-      `[automated-response] getAIFunctionTools failed for workspaceId: ${workspaceId}`,
+      {
+        error,
+        workspaceId,
+      },
+      "[automated-response] getAIFunctionTools failed",
     )
     return {}
   }
@@ -217,18 +407,25 @@ export async function getMCPServerTools(
 
     // Find MCP servers from DB
     const mcpServers = await db.query.aiMCPServerModel.findMany({
-      where: { workspaceId, id: { in: selectedMcpIds } },
+      where: {
+        workspaceId,
+        id: { in: selectedMcpIds },
+      },
     })
     if (mcpServers.length === 0) {
       return tools
     }
 
     for (const mcpServer of mcpServers) {
-      const availableTools = mcpServer.availableTools as Record<
-        string,
-        { description: string; inputSchema: { jsonSchema: unknown } }
-      >
-      if (!availableTools || typeof availableTools !== JSON_TYPE.object) {
+      const availableToolsParsed = mcpAvailableToolsSchema.safeParse(
+        mcpServer.availableTools,
+      )
+      if (!availableToolsParsed.success) {
+        continue
+      }
+
+      const availableTools = availableToolsParsed.data
+      if (!availableTools || typeof availableTools !== "object") {
         continue
       }
 
@@ -246,21 +443,25 @@ export async function getMCPServerTools(
           continue
         }
 
-        const cleanedSchema = cleanSchemaForGemini(
-          toolDef.inputSchema.jsonSchema,
-        )
+        const jsonSchema = toolDef.inputSchema?.jsonSchema
+        const inputSchema = jsonSchema
+          ? jsonSchemaToZodObject(jsonSchema)
+          : z.looseObject({})
 
         tools[uniqueToolName] = tool({
           description: `${toolDef.description} (from ${mcpServer.name})`,
-          inputSchema: jsonSchema(
-            cleanedSchema as Parameters<typeof jsonSchema>[0],
-          ),
-          execute: async (args: Record<string, unknown>) => {
+          inputSchema,
+          execute: async (args) => {
+            const safeArgs = ensureRecord(args)
+            const normalizedArgs = normalizeMCPToolArgsBySchema(
+              safeArgs,
+              jsonSchema,
+            )
             return await callMCPTool({
               url: mcpServer.url,
               auth: mcpServer.auth as MCPAuthSchema,
               toolName,
-              args,
+              args: normalizedArgs,
             })
           },
         })
@@ -270,8 +471,11 @@ export async function getMCPServerTools(
     return tools
   } catch (error) {
     logger.error(
-      error,
-      `[automated-response] getMCPServerTools failed for workspaceId: ${workspaceId}`,
+      {
+        error,
+        workspaceId,
+      },
+      "[automated-response] getMCPServerTools failed",
     )
     return {}
   }

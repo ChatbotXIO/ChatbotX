@@ -1,4 +1,6 @@
-export const TEXT = {
+import z from "zod"
+
+export const helpTexts = {
   assistantFoundPrefix: "I've found some information for you:",
   followUpUserInstruction:
     "Based on the search results, please answer the customer's question in a natural and helpful way. Search results:",
@@ -19,83 +21,38 @@ export const TEXT = {
   fileSearchDescription:
     "Search uploaded files for information about products, policies, and company details. Do NOT use for greetings or casual salutations.",
   fileSearchQueryDescription: "Search keywords to find relevant information",
+  fallbackLookup:
+    "I've found some data, but I couldn't generate a complete answer yet. Could you please specify what you're looking for (price, size, color)?",
+  toolOutputGuard: [
+    "IMPORTANT RULES (REQUIRED):",
+    "- Never send raw JSON or tool outputs directly to the user.",
+    "- If you use a tool, summarize the result concisely in natural language.",
+    "- Only provide the most relevant information the customer is asking for.",
+  ].join("\n"),
+  extractFieldValuePrompt:
+    'Extract the following information for the field "{{customFieldId}}" from this text: "{{fullText}}"',
 } as const
 
-export const toolPrefix = {
-  file: "file:",
-  fn: "fn:",
-  mcp: "mcp:",
-} as const
+export const toolPrefixes = z.enum(["file", "fn", "mcp"])
 
-export const JSON_TYPE = {
-  object: "object",
-  string: "string",
-  number: "number",
-  integer: "integer",
-  boolean: "boolean",
-  array: "array",
-  null: "null",
-} as const
-export type JsonType = (typeof JSON_TYPE)[keyof typeof JSON_TYPE]
+export const openaiEmbeddingModels = z.enum([
+  "text-embedding-3-large",
+  "text-embedding-3-small",
+  "text-embedding-ada-002",
+])
+export type OpenAIEmbeddingModel = z.infer<typeof openaiEmbeddingModels>
 
-export const AUTH_TYPES = {
-  TOKEN: "TOKEN",
-  HEADERS: "HEADERS",
-  NONE: "NONE",
-} as const
+export const geminiEmbeddingModels = z.enum(["text-embedding-004"])
+export type GeminiEmbeddingModel = z.infer<typeof geminiEmbeddingModels>
 
-export type AuthType = (typeof AUTH_TYPES)[keyof typeof AUTH_TYPES]
+export const supportedImageExtensions = z.enum([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".svg",
+])
+export type SupportedImageExtension = z.infer<typeof supportedImageExtensions>
 
-export const OPENAI_EMBEDDING_MODELS = {
-  TEXT_EMBEDDING_3_LARGE: "text-embedding-3-large",
-  TEXT_EMBEDDING_3_SMALL: "text-embedding-3-small",
-  TEXT_EMBEDDING_ADA_002: "text-embedding-ada-002",
-} as const
-
-export type OpenAIEmbeddingModel =
-  (typeof OPENAI_EMBEDDING_MODELS)[keyof typeof OPENAI_EMBEDDING_MODELS]
-
-export const DEFAULT_OPENAI_EMBEDDING_MODEL =
-  OPENAI_EMBEDDING_MODELS.TEXT_EMBEDDING_ADA_002
-
-export const GEMINI_EMBEDDING_MODELS = {
-  TEXT_EMBEDDING_004: "text-embedding-004",
-} as const
-
-export type GeminiEmbeddingModel =
-  (typeof GEMINI_EMBEDDING_MODELS)[keyof typeof GEMINI_EMBEDDING_MODELS]
-
-export const DEFAULT_GEMINI_EMBEDDING_MODEL =
-  GEMINI_EMBEDDING_MODELS.TEXT_EMBEDDING_004
-
-export const IMAGE_EXTENSIONS = {
-  PNG: ".png",
-  JPG: ".jpg",
-  JPEG: ".jpeg",
-  GIF: ".gif",
-  WEBP: ".webp",
-  SVG: ".svg",
-} as const
-
-export type ImageExtension =
-  (typeof IMAGE_EXTENSIONS)[keyof typeof IMAGE_EXTENSIONS]
-
-export const SUPPORTED_IMAGE_EXTENSIONS = [
-  IMAGE_EXTENSIONS.PNG,
-  IMAGE_EXTENSIONS.JPG,
-  IMAGE_EXTENSIONS.JPEG,
-  IMAGE_EXTENSIONS.GIF,
-  IMAGE_EXTENSIONS.WEBP,
-  IMAGE_EXTENSIONS.SVG,
-] as const
-
-export const DEFAULT_MAX_TOKENS = 250
-export const GEMINI_MIN_TOKENS = 500
-export const maxConversationHistory = 100
-
-export const TOOL_RESULT_PREFIX = "Tool "
-export const TOOL_RESULT_SUFFIX = " result: "
-
-export const MAGIC_NUMBERS = {
-  ZERO_MESSAGE_COUNT: 0,
-} as const
+export const MAX_CONVERSATION_HISTORY = 100

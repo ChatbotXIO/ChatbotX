@@ -7,8 +7,8 @@ export const AIAnalyzeImageSchema = z.object({
   stepType: z.literal(stepTypes.enum.aiAnalyzeImage),
   model: z.string().trim().min(1),
   prompt: z.string().trim().optional(),
-  inputCfId: zodBigintAsString(),
-  outputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
+  outputFieldId: z.string().trim().min(1),
 })
 export type AIAnalyzeImageSchema = z.infer<typeof AIAnalyzeImageSchema>
 
@@ -18,8 +18,8 @@ export const AIAnalyzeImageDefaultFn = (
   id: createId(),
   stepType: stepTypes.enum.aiAnalyzeImage,
   model: "",
-  inputCfId: "",
+  inputFieldId: "",
   prompt: "",
-  outputCfId: "",
+  outputFieldId: "",
   ...props,
 })

@@ -35,13 +35,17 @@ export const createFlowAction = workspaceActionClient
         },
       })
 
-      await db.transaction(async (tx) => {
+      const flow = await db.transaction(async (tx) => {
         const flowId = createId()
-        await tx.insert(flowModel).values({
-          ...parsedInput,
-          id: flowId,
-          workspaceId,
-        })
+        const flow = await tx
+          .insert(flowModel)
+          .values({
+            ...parsedInput,
+            id: flowId,
+            workspaceId,
+          })
+          .returning()
+          .then((result) => result[0])
 
         await tx.insert(flowVersionModel).values({
           id: createId(),
@@ -53,8 +57,12 @@ export const createFlowAction = workspaceActionClient
           isDraft: true,
           startNodeId: defaultNode.id,
         })
+
+        return flow
       })
 
       revalidateCacheTags(`workspaces:${workspaceId}#flows`)
+
+      return { id: flow.id }
     },
   )

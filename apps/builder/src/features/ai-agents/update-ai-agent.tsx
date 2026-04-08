@@ -1,5 +1,6 @@
 "use client"
 
+import { openaiModelOptions } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type {
   AIAgentModel,
@@ -44,7 +45,6 @@ import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { updateAIAgentAction } from "@/features/ai-agents/actions/update.action"
 import { updateAIAgentRequest } from "@/features/ai-agents/schemas/action"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openaiChatModelOptions } from "../openai/models"
 import type { CreateAIAgentRequest } from "./schemas/action"
 
 export function UpdateAIAgentDialog({
@@ -209,7 +209,7 @@ export function UpdateAIAgentDialog({
                         <SelectField
                           label={t("fields.model.label")}
                           name="models.1.model"
-                          options={openaiChatModelOptions}
+                          options={openaiModelOptions}
                           required
                         />
 

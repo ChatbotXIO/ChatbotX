@@ -1,4 +1,4 @@
-import { createChatbotXAPI } from "@chatbotx/public-apis"
+import { createChatbotXAPI } from "@chatbotx.io/public-apis"
 import { getChatbotXConfigFromEnv } from "./config"
 
 export const formatResult = (value: unknown): string => {

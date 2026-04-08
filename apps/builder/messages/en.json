@@ -872,8 +872,8 @@
     "userId": {
       "label": "User ID"
     },
-    "userMessage": {
-      "label": "User Message"
+    "keywords": {
+      "label": "Keywords"
     },
     "value": {
       "label": "Value"
@@ -955,10 +955,10 @@
       "now": "Now",
       "scheduled": "Schedule for later"
     },
-    "inputCfId": {
+    "inputFieldId": {
       "label": "Input Custom Field"
     },
-    "outputCfId": {
+    "outputFieldId": {
       "label": "Save result to a custom field"
     },
     "jsonPath": {
@@ -1598,5 +1598,11 @@
   },
   "tools": {
     "title": "Tools"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek"
   }
 }

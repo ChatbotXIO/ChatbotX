@@ -1,5 +1,5 @@
 import { aiMcpServersAuthenticatedAPI } from "./authenticated"
 
-export const aiMcpServerApi = {
+export const aiMcpServerAPIs = {
   ...aiMcpServersAuthenticatedAPI,
 }

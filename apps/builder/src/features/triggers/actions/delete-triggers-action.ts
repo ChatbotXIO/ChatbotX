@@ -1,8 +1,8 @@
 "use server"
 
-import { removeTriggerCache } from "@chatbotx/events"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerModel } from "@chatbotx.io/database/schema"
+import { removeTriggerCache } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,

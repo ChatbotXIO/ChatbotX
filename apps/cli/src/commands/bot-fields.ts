@@ -1,9 +1,9 @@
-import type { ChatbotXAPI } from "@chatbotx/public-apis"
+import type { ChatbotXAPI } from "@chatbotx.io/public-apis"
 import {
   deleteBotField as deleteBotFieldApi,
   getBotField as getBotFieldApi,
   updateBotField as updateBotFieldApi,
-} from "@chatbotx/public-apis"
+} from "@chatbotx.io/public-apis"
 import { createApiClient } from "../config"
 import { type CommandArg, printResult, validateCommandArgs } from "./utils"
 

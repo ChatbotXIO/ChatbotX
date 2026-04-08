@@ -5,7 +5,7 @@ import { stepTypes } from "./step-action"
 export const clearCustomFieldStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.clearCustomField),
-  inputCfId: z.string().trim(),
+  inputFieldId: z.string().trim().min(1),
 })
 
 export type ClearCustomFieldStepSchema = z.infer<
@@ -17,6 +17,6 @@ export const clearCustomFieldStepDefaultFn = (
 ): ClearCustomFieldStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.clearCustomField,
-  inputCfId: "",
+  inputFieldId: "",
   ...props,
 })

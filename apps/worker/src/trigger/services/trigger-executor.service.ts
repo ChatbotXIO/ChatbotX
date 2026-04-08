@@ -1,9 +1,9 @@
-import { setTriggerExecutionContext } from "@chatbotx/events"
 import { db, sql } from "@chatbotx.io/database/client"
 import {
   triggerContactHistoryModel,
   triggerStatsModel,
 } from "@chatbotx.io/database/schema"
+import { setTriggerExecutionContext } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 import type { TriggerWithConditions } from "../types"

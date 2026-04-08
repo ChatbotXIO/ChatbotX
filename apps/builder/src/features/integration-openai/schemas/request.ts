@@ -1,12 +1,12 @@
+import { openaiModels } from "@chatbotx.io/ai"
 import type { IntegrationOpenAIModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
-import { openaiModels } from "@/features/openai/models"
 
 export type IntegrationOpenAIResource = IntegrationOpenAIModel
 
 export const connectOpenAISchema = z.object({
   apiKey: z.string(),
-  model: openaiModels.default(openaiModels.enum["openai/gpt-4o-mini"]),
+  model: openaiModels.default(openaiModels.enum["gpt-4o-mini"]),
   temperature: z.coerce.number().min(0).max(2),
   maxOutputTokens: z.coerce.number().int().min(1).max(8192),
 })

@@ -1,21 +1,53 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import { createOpenAI } from "@ai-sdk/openai"
 import { db } from "@chatbotx.io/database/client"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
-import { type AIProvider, aiProviders } from "@chatbotx.io/flow-config"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
+import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
+import type {
+  BotResponseTrackingContext,
+  IntegrationJobTriggerAutomatedResponse,
+} from "@chatbotx.io/worker-config"
 import {
-  type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
   IntegrationJobAction,
-  type IntegrationJobTriggerAutomatedResponse,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { type LanguageModel, type ModelMessage, streamText } from "ai"
-import { TEXT } from "./constants"
+import { streamText, type ToolSet, tool } from "ai"
+import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
+import { logger } from "../../../lib/logger"
+import { isRecord } from "../../../lib/utils"
+import { helpTexts } from "./constants"
+import { summarizeToolResult } from "./summarizer"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
+
+type ParsedAIAgentProvider = {
+  provider: string
+  model: string
+}
+
+function parseAIAgentProviders(value: unknown): ParsedAIAgentProvider[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const parsed: ParsedAIAgentProvider[] = []
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue
+    }
+    const provider = item.provider
+    const model = item.model
+    if (typeof provider !== "string" || typeof model !== "string") {
+      continue
+    }
+    const trimmedProvider = provider.trim()
+    const trimmedModel = model.trim()
+    if (!(trimmedProvider && trimmedModel)) {
+      continue
+    }
+    parsed.push({ provider: trimmedProvider, model: trimmedModel })
+  }
+  return parsed
+}
 
 export async function replaceCustomFieldAttributes(
   message: string,
@@ -69,11 +101,14 @@ async function listAllEnabledAutomatedResponses({
   workspaceId,
 }: {
   workspaceId: string
-}) {
-  return await db.query.automatedResponseModel.findMany({
-    where: { workspaceId, status: true },
-    orderBy: { createdAt: "desc" },
-  })
+}): Promise<AutomatedResponseModel[]> {
+  try {
+    return await db.query.automatedResponseModel.findMany({
+      where: { workspaceId, status: true },
+    })
+  } catch {
+    return []
+  }
 }
 
 export async function replyByAutomatedResponse(
@@ -82,27 +117,30 @@ export async function replyByAutomatedResponse(
 ): Promise<boolean> {
   const { message, conversation } = props
 
-  let replied = false
+  try {
+    let replied = false
+    const allAutomatedResponses = await listAllEnabledAutomatedResponses({
+      workspaceId: message.workspaceId,
+    })
+    if (allAutomatedResponses.length === 0) {
+      return false
+    }
 
-  const allAutomatedResponses = await listAllEnabledAutomatedResponses({
-    workspaceId: message.workspaceId,
-  })
-  if (allAutomatedResponses.length === 0) {
-    return false
-  }
+    for (const automatedResponse of allAutomatedResponses) {
+      const text = (message.text ?? "").toLowerCase()
+      const matched = (automatedResponse.keywords as string[])
+        .map((v) => v.toLowerCase())
+        .some((v) => text.includes(v))
 
-  for (const automatedResponse of allAutomatedResponses) {
-    const matched = automatedResponse.userMessages
-      .map((v) => v.toLowerCase())
-      .some((v) => (message.text ?? "").toLowerCase().includes(v))
+      if (!matched) {
+        continue
+      }
 
-    if (matched) {
       if (automatedResponse.text) {
         const stepMessage = await replaceCustomFieldAttributes(
           automatedResponse.text,
           message.conversationId,
         )
-
         await chatQueue.add(ChatJobAction.sendChatMessage, {
           type: ChatJobAction.sendChatMessage,
           data: {
@@ -114,7 +152,10 @@ export async function replyByAutomatedResponse(
         replied = true
       } else if (automatedResponse.flowId) {
         const flow = await db.query.flowModel.findFirst({
-          where: { id: automatedResponse.flowId },
+          where: {
+            id: automatedResponse.flowId,
+            currentVersionId: { isNotNull: true },
+          },
         })
         if (flow) {
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -129,173 +170,247 @@ export async function replyByAutomatedResponse(
         }
       }
     }
+    return replied
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        props,
+      },
+      "[automated-response] replyByAutomatedResponse failed",
+    )
+    return false
   }
-  return replied
 }
 
-export function replyByGemini(
-  props: ReplyByAIProps,
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  return runAIReply(
-    props,
-    {
-      provider: aiProviders.enum.gemini,
-      fetchIntegration: async (workspaceId: string) => {
-        const integration = await db.query.integrationGeminiModel.findFirst({
-          where: { workspaceId, autoReply: true },
-        })
-        return integration?.auth
-      },
-      createClient: (apiKey: string) => createGoogleGenerativeAI({ apiKey }),
-      onFollowUpError: async () => true,
-    },
-    trackingContext,
-  )
-}
+export async function replyByAI(props: ReplyByAIProps): Promise<boolean> {
+  const { aiAgent } = props
+  const providers = parseAIAgentProviders(aiAgent.models)
 
-export function replyByOpenAI(
-  props: ReplyByAIProps,
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  return runAIReply(
-    props,
-    {
-      provider: aiProviders.enum.openai,
-      fetchIntegration: async (workspaceId: string) => {
-        const integration = await db.query.integrationOpenaiModel.findFirst({
-          where: { workspaceId, autoReply: true },
-        })
-        return integration?.auth
-      },
-      createClient: (apiKey: string) => createOpenAI({ apiKey }),
-      onFollowUpError: async (ctx) => {
-        const fallbackMessage = `${TEXT.foundProductsFallbackPrefix}\n\n${ctx.toolResultsText}`
-        await sendMessageWithRender(
-          ctx.conversationId,
-          fallbackMessage,
-          trackingContext,
-        )
-        return true
-      },
-    },
-    trackingContext,
-  )
-}
+  for (const providerInfo of providers) {
+    const success = await runAIReply(props, providerInfo)
+    if (success) {
+      return true
+    }
+  }
 
-type ProviderRunnerConfig = {
-  provider: (typeof aiProviders)[keyof typeof aiProviders]
-  fetchIntegration: (workspaceId: string) => Promise<unknown>
-  createClient: (apiKey: string) => (modelName: string) => LanguageModel
-  onFollowUpError: (ctx: {
-    conversationId: string
-    toolResultsText: string
-  }) => Promise<boolean>
+  return false
 }
 
 async function runAIReply(
   props: ReplyByAIProps,
-  cfg: ProviderRunnerConfig,
-  trackingContext: BotResponseTrackingContext,
+  providerInfo: ParsedAIAgentProvider,
 ): Promise<boolean> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 120_000)
+
   const { message, lastAIMessages, aiAgent, tools } = props
+  const provider = providerInfo.provider
   try {
-    const auth = await cfg.fetchIntegration(message.workspaceId)
-    if (!auth) {
+    const selectedModelId = providerInfo.model
+
+    const integration = await getAIIntegrationInDB({
+      workspaceId: message.workspaceId,
+      provider,
+      autoReply: true,
+    })
+
+    if (!integration) {
       return false
     }
 
-    const apiKey = (auth as SecretTextAuthValue)?.secretText
-
-    if (!apiKey || apiKey.length === 0) {
-      return false
-    }
-
-    const clientFactory = cfg.createClient(apiKey)
-
-    const selectedModel = (
-      aiAgent.models as { provider: AIProvider; model: string }[]
-    ).find((v) => v.provider === cfg.provider)
-    if (!selectedModel) {
-      return false
-    }
-    const selectedModelValue = selectedModel.model
-    if (
-      typeof selectedModelValue !== "string" ||
-      selectedModelValue.length === 0
-    ) {
-      return false
-    }
-    const modelName = selectedModelValue
+    const model = createAIModelInstance({
+      model: integration,
+      provider,
+      modelId: selectedModelId,
+      abortSignal: controller.signal,
+      traceId: message.conversationId,
+    })
 
     const completePrompt = await replaceCustomFieldAttributes(
       aiAgent.prompt || "",
       message.conversationId,
     )
+    const systemPrompt = appendToolOutputGuard(completePrompt)
+
+    const toolExecutions: ToolExecutionLog[] = []
+    const toolsWithLogging = wrapToolsWithLogging(tools, {
+      conversationId: message.conversationId,
+      workspaceId: message.workspaceId,
+      provider,
+      onToolResult: (toolName, result, toolCallId) => {
+        toolExecutions.push({ toolName, result, toolCallId })
+      },
+    })
 
     const result = await streamText({
-      model: clientFactory(modelName),
-      system: completePrompt,
+      model,
+      system: systemPrompt,
       messages: lastAIMessages,
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
-      tools,
-      toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
+      tools: toolsWithLogging,
+      toolChoice: Object.keys(toolsWithLogging).length > 0 ? "auto" : undefined,
+      // @ts-expect-error - maxSteps is supported in AI SDK v6
+      maxSteps: 5,
+      abortSignal: controller.signal,
     })
 
-    const toolCalls = await result.toolCalls
-    const toolResults = await result.toolResults
-    const { messageCount, fullText } = await processStreamingText(
+    const { messageCount } = await processStreamingText(
       result.textStream,
       message.conversationId,
-      { sendParts: true, trackingContext },
+      { sendParts: true },
     )
-
-    if (toolCalls && toolCalls.length > 0) {
-      const toolResultsText = toolResults
-        .map((r) => `Tool ${r.toolName} result: ${r.output}`)
-        .join("\n\n")
-      const followUpMessages: ModelMessage[] = [
-        ...lastAIMessages,
-        {
-          role: aiMessageRoles.enum.assistant,
-          content: fullText || TEXT.assistantFoundPrefix,
-        },
-        {
-          role: aiMessageRoles.enum.user,
-          content: `${TEXT.followUpInstruction}\n\n${toolResultsText}`,
-        },
-      ]
-      try {
-        const followUpResult = await streamText({
-          model: clientFactory(modelName),
-          system: completePrompt,
-          messages: followUpMessages,
-          maxOutputTokens: aiAgent.maxOutputTokens,
-          temperature: aiAgent.temperature,
-        })
-        const { messageCount: followUpMessageCount } =
-          await processStreamingText(
-            followUpResult.textStream,
-            message.conversationId,
-            { sendParts: true, trackingContext },
-          )
-        if (followUpMessageCount > 0) {
-          return true
-        }
-      } catch (_error) {
-        return await cfg.onFollowUpError({
-          conversationId: message.conversationId,
-          toolResultsText,
-        })
-      }
-    }
 
     if (messageCount > 0) {
       return true
     }
+
+    const toolSummary = buildToolSummaryForFollowUp(toolExecutions)
+    if (toolSummary) {
+      const followUpResult = await streamText({
+        model,
+        system: systemPrompt,
+        messages: [
+          ...lastAIMessages,
+          {
+            role: "user",
+            content: `${helpTexts.followUpInstruction}\n\n${toolSummary}`,
+          },
+        ],
+        maxOutputTokens: aiAgent.maxOutputTokens,
+        temperature: aiAgent.temperature,
+        toolChoice: "none",
+        // @ts-expect-error - maxSteps is supported in AI SDK v6
+        maxSteps: 5,
+        abortSignal: controller.signal,
+      })
+
+      const { messageCount: followUpCount } = await processStreamingText(
+        followUpResult.textStream,
+        message.conversationId,
+        { sendParts: true },
+      )
+
+      if (followUpCount > 0) {
+        return true
+      }
+    }
+
+    const fallbackText = buildFallbackTextFromTools(toolExecutions)
+    if (fallbackText) {
+      await sendMessageWithRender(message.conversationId, fallbackText)
+      return true
+    }
+
     return false
-  } catch (_error) {
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        provider,
+        conversationId: message.conversationId,
+        workspaceId: message.workspaceId,
+      },
+      "[automated-response] runAIReply failed",
+    )
     return false
+  } finally {
+    clearTimeout(timeoutId)
   }
+}
+
+type ToolExecutionLog = {
+  toolName: string
+  result: unknown
+  toolCallId?: string
+}
+
+function wrapToolsWithLogging(
+  tools: ToolSet,
+  ctx: {
+    conversationId: string
+    workspaceId: string
+    provider: string
+    onToolResult?: (
+      toolName: string,
+      result: unknown,
+      toolCallId?: string,
+    ) => void
+  },
+): ToolSet {
+  const wrapped: ToolSet = {}
+
+  for (const [toolName, originalTool] of Object.entries(tools)) {
+    wrapped[toolName] = tool({
+      description: originalTool.description,
+      inputSchema: originalTool.inputSchema,
+      execute: async (input, options) => {
+        const startedAt = Date.now()
+
+        try {
+          if (!originalTool.execute) {
+            throw new Error("Tool execute() is not defined")
+          }
+
+          const result = await originalTool.execute(input, options)
+          ctx.onToolResult?.(toolName, result, options.toolCallId)
+          return result
+        } catch (error) {
+          logger.error(
+            {
+              toolName,
+              provider: ctx.provider,
+              conversationId: ctx.conversationId,
+              workspaceId: ctx.workspaceId,
+              ms: Date.now() - startedAt,
+              error,
+            },
+            "[automated-response] tool failed",
+          )
+          throw error
+        }
+      },
+    })
+  }
+
+  return wrapped
+}
+
+function buildToolSummaryForFollowUp(
+  executions: ToolExecutionLog[],
+): string | null {
+  const summaries: string[] = []
+  for (const exec of executions) {
+    const text = summarizeToolResult(exec.result)
+    if (text) {
+      summaries.push(`Tool ${exec.toolName} result:\n${text}`)
+    }
+  }
+
+  const result = summaries.length > 0 ? summaries.join("\n\n") : null
+
+  return result
+}
+
+function buildFallbackTextFromTools(
+  executions: ToolExecutionLog[],
+): string | null {
+  for (let i = executions.length - 1; i >= 0; i--) {
+    const exec = executions[i]
+    const text = summarizeToolResult(exec.result)
+    if (text) {
+      return text
+    }
+  }
+
+  if (executions.length > 0) {
+    return helpTexts.fallbackLookup
+  }
+
+  return null
+}
+
+function appendToolOutputGuard(systemPrompt: string): string {
+  return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
 }

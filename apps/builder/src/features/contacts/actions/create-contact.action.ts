@@ -1,6 +1,5 @@
 "use server"
 
-import { emitContactCreated } from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
@@ -11,6 +10,7 @@ import {
   inboxModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
+import { emitContactCreated } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import { randomString } from "remeda"

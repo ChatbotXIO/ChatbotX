@@ -51,9 +51,9 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
   })
 
   const onSubmit = (data: FormatDateStepSchema) => {
-    setValue(`${parentName}.inputCfId`, data.inputCfId)
+    setValue(`${parentName}.inputFieldId`, data.inputFieldId)
     setValue(`${parentName}.format`, data.format)
-    setValue(`${parentName}.outputCfId`, data.outputCfId)
+    setValue(`${parentName}.outputFieldId`, data.outputFieldId)
     setValue(`${parentName}.timezone`, data.timezone)
     setOpen(false)
   }
@@ -81,7 +81,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               customFieldTypes={["date", "datetime"]}
               label={t("fields.inputCustomField.label")}
-              name="inputCfId"
+              name="inputFieldId"
               required
             />
 
@@ -94,7 +94,7 @@ const FormatDateDialog = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.outputCustomField.label")}
-              name="outputCfId"
+              name="outputFieldId"
               required
             />
 

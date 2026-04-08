@@ -19,7 +19,7 @@ export const automatedResponseModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    userMessages: text().array().notNull().default(sql`[]`),
+    keywords: text().array().notNull().default(sql`[]`),
     status: boolean().notNull(),
     text: text(),
     flowId: bigintAsString().references(() => flowModel.id, {

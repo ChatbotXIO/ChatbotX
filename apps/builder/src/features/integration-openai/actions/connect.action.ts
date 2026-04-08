@@ -1,5 +1,6 @@
 "use server"
 
+import { openaiModels } from "@chatbotx.io/ai"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationModel,
@@ -11,7 +12,6 @@ import {
   type ChatbotIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { openaiModels } from "@/features/openai/models"
 import { authActionClient } from "@/lib/safe-action"
 import {
   type ConnectOpenAISchema,
@@ -42,7 +42,7 @@ export const connectOpenAIAction = authActionClient
           await tx
             .update(integrationOpenaiModel)
             .set({
-              model: openaiModels.enum["openai/gpt-4o-mini"],
+              model: openaiModels.enum["gpt-4o-mini"],
               auth: {
                 authType: AuthType.secretText,
                 secretText: parsedInput.apiKey,
@@ -66,7 +66,7 @@ export const connectOpenAIAction = authActionClient
             id: createId(),
             integrationId: integration.id,
             workspaceId,
-            model: openaiModels.enum["openai/gpt-4o-mini"],
+            model: openaiModels.enum["gpt-4o-mini"],
             auth: {
               authType: AuthType.secretText,
               secretText: parsedInput.apiKey,

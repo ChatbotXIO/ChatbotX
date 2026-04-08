@@ -9,13 +9,18 @@ import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
-import { validateAIMcpServerRequest } from "../schema/action"
+import { listAIMcpServers } from "../queries"
+import {
+  listAIMcpServersRequest,
+  listAIMcpServersResponse,
+  validateAIMcpServerRequest,
+} from "../schema/action"
 
 export const aiMcpServersAuthenticatedAPI = {
   validateAIMcpServerAuthenticatedAPI: authorizedAPI
     .route({
       method: "POST",
-      path: "/workspaces//{workspaceId}/ai-mcp-servers/validate",
+      path: "/workspaces/{workspaceId}/ai-mcp-servers/validate",
       summary: "Validate an MCP server",
       tags: ["AI"],
     })
@@ -49,5 +54,18 @@ export const aiMcpServersAuthenticatedAPI = {
           await httpClient.close()
         }
       }
+    }),
+  listAIMcpServersAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/ai-mcp-servers",
+      summary: "List AI MCP servers",
+      tags: ["AI MCP Servers"],
+    })
+    .input(listAIMcpServersRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(listAIMcpServersResponse)
+    .handler(async ({ input }) => {
+      return await listAIMcpServers(input)
     }),
 }

@@ -13,7 +13,7 @@ chatbotx config set --apiKey <yourApiKey>
 You can also save a custom API URL:
 
 ```bash
-chatbotx config set --apiUrl https://builder-dev.aha.chat
+chatbotx config set --apiUrl https://cloud.chatbotx.io
 ```
 
 Save both API key and API URL in one command:
@@ -43,7 +43,7 @@ NODE_EXTRA_CA_CERTS=/path/to/ca.pem chatbotx tags list
 Notes:
 
 - The CLI supports the global option `--apiUrl` if you want to override the stored base URL for a single run.
-- The default base URL is `https://builder-dev.aha.chat`.
+- The default base URL is `https://cloud.chatbotx.io`.
 
 ## 2. Commands: `tags`
 

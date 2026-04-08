@@ -64,7 +64,7 @@ export const updateAutomatedResponse = async (
     .update(automatedResponseModel)
     .set({
       ...parsedInput,
-      userMessages: parsedInput.userMessages?.map((m) => m.value) ?? [],
+      keywords: parsedInput.keywords?.map((m) => m.value) ?? [],
     })
     .where(eq(automatedResponseModel.id, automatedResponse.id))
 

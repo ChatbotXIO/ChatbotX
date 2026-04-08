@@ -5,11 +5,11 @@ import { stepTypes } from "./step-action"
 export const getDataFromJsonStepSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.getDataFromJson),
-  inputCfId: zodBigintAsString(),
+  inputFieldId: z.string().trim().min(1),
   mapping: z.array(
     z.object({
       jsonPath: z.string().trim().min(1),
-      outputCfId: zodBigintAsString(),
+      outputFieldId: z.string().trim().min(1),
     }),
   ),
 })
@@ -20,11 +20,11 @@ export type GetDataFromJsonStepSchema = z.infer<
 export const getDataFromJsonStepDefaultFn = (): GetDataFromJsonStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.getDataFromJson,
-  inputCfId: "",
+  inputFieldId: "",
   mapping: [
     {
       jsonPath: "",
-      outputCfId: "",
+      outputFieldId: "",
     },
   ],
 })

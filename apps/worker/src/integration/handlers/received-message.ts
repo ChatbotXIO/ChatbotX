@@ -1,7 +1,3 @@
-import {
-  emitContactCreated,
-  setWebhookExecutionContext,
-} from "@chatbotx/events"
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
@@ -19,6 +15,10 @@ import type {
   MessageModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
+import {
+  emitContactCreated,
+  setWebhookExecutionContext,
+} from "@chatbotx.io/events"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   broadcastToWorkspaceParty,

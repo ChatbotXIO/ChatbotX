@@ -1,9 +1,9 @@
 "use client"
 
-import { aiGenerateImageSchema } from "@chatbotx.io/flow-config"
-import { CheckboxGroupField } from "@chatbotx.io/ui/components/form/checkbox-field"
+import { aiGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -34,12 +34,24 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
   const [open, setOpen] = useState(false)
   const toolOptions = useAIToolOptions()
 
-  const { getValues, control } = useFormContext()
+  const { control, getValues, setValue } = useFormContext()
   const provider = useWatch({ name: `${parentName}.provider`, control })
 
   const form = useForm({
-    resolver: zodResolver(aiGenerateImageSchema),
+    resolver: zodResolver(aiGenerateTextSchema),
     defaultValues: getValues(parentName),
+  })
+
+  const handleSubmit = form.handleSubmit((values) => {
+    const currentValues = getValues(parentName)
+
+    setValue(parentName, {
+      ...currentValues,
+      ...values,
+      provider: provider ?? currentValues.provider,
+    })
+
+    setOpen(false)
   })
 
   return (
@@ -53,20 +65,20 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
         <DialogHeader>
           <DialogTitle className="capitalize">
             {t("fields.flows.aiGenerateText.label", {
-              aiName: "OpenAI",
+              aiName: t(`aiProviders.${provider}`),
             })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>
-          <form className="flex flex-col space-y-4">
-            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-4 overflow-y-auto">
+          <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
+            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto">
               <AIModelSelect name="model" provider={provider} required />
 
               <TiptapEditorField
                 label={t("fields.prompt.label")}
-                name="prompt"
+                name="system"
                 placeholder={t("fields.prompt.placeholder")}
               />
 
@@ -78,9 +90,9 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
               <CustomFieldSelect
                 allowCreate={true}
-                includeReserved={true}
-                label={t("fields.outputCfId.label")}
-                name="outputCfId"
+                includeReserved={false}
+                label={t("fields.outputFieldId.label")}
+                name="outputFieldId"
                 required
               />
 
@@ -90,11 +102,10 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
                 options={toolOptions}
               />
 
-              <CheckboxGroupField
-                name="rememberConversation"
-                options={[
-                  { value: "1", label: t("fields.rememberConversation.label") },
-                ]}
+              <SwitchField
+                formItemClassName="flex flex-row items-center justify-between rounded-lg border p-3"
+                label={t("fields.rememberConversation.label")}
+                name="remember"
               />
 
               <InputNumberField

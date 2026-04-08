@@ -1,7 +1,7 @@
 import {
   type CustomFieldType,
-  type ReservedCustomFieldName,
-  reservedCustomFieldNames,
+  type SystemFieldType,
+  systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import {
@@ -10,6 +10,8 @@ import {
   CheckIcon,
   HashIcon,
   type LucideIcon,
+  MailIcon,
+  PhoneIcon,
   TextIcon,
 } from "lucide-react"
 import { useMemo } from "react"
@@ -22,91 +24,93 @@ export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
   date: CalendarDaysIcon,
   datetime: CalendarClockIcon,
   boolean: CheckIcon,
+  email: MailIcon,
+  phoneNumber: PhoneIcon,
 }
 
 export const reservedCustomFieldOptions: {
   name: string
   type: CustomFieldType
-  id: ReservedCustomFieldName
+  id: SystemFieldType
 }[] = [
   {
     name: "First Name",
-    id: reservedCustomFieldNames.enum.first_name,
+    id: systemFieldTypes.enum.firstName,
     type: "shortText",
   },
   {
     name: "Last Name",
-    id: reservedCustomFieldNames.enum.last_name,
+    id: systemFieldTypes.enum.lastName,
     type: "shortText",
   },
   {
     name: "Full Name",
-    id: reservedCustomFieldNames.enum.full_name,
+    id: systemFieldTypes.enum.fullName,
     type: "shortText",
   },
   {
     name: "Email",
-    id: reservedCustomFieldNames.enum.email,
+    id: systemFieldTypes.enum.email,
     type: "shortText",
   },
   {
     name: "Phone Number",
-    id: reservedCustomFieldNames.enum.phone_number,
+    id: systemFieldTypes.enum.phoneNumber,
     type: "shortText",
   },
   {
     name: "Avatar",
-    id: reservedCustomFieldNames.enum.avatar,
+    id: systemFieldTypes.enum.avatar,
     type: "shortText",
   },
   {
     name: "Locale",
-    id: reservedCustomFieldNames.enum.locale,
+    id: systemFieldTypes.enum.locale,
     type: "shortText",
   },
   {
     name: "Gender",
-    id: reservedCustomFieldNames.enum.gender,
+    id: systemFieldTypes.enum.gender,
     type: "shortText",
   },
   {
     name: "Timezone",
-    id: reservedCustomFieldNames.enum.timezone,
+    id: systemFieldTypes.enum.timezone,
     type: "shortText",
   },
   {
     name: "User ID",
-    id: reservedCustomFieldNames.enum.user_id,
+    id: systemFieldTypes.enum.userId,
     type: "shortText",
   },
   {
     name: "User Tags",
-    id: reservedCustomFieldNames.enum.user_tags,
+    id: systemFieldTypes.enum.userTags,
     type: "shortText",
   },
   {
     name: "Account Name",
-    id: reservedCustomFieldNames.enum.account_name,
+    id: systemFieldTypes.enum.accountName,
     type: "shortText",
   },
   {
     name: "Account ID",
-    id: reservedCustomFieldNames.enum.account_id,
+    id: systemFieldTypes.enum.accountId,
     type: "shortText",
   },
   {
     name: "Page User Name",
-    id: reservedCustomFieldNames.enum.page_user_name,
+    id: systemFieldTypes.enum.pageUserName,
     type: "shortText",
   },
   {
     name: "Last Input",
-    id: reservedCustomFieldNames.enum.last_input,
+    id: systemFieldTypes.enum.lastInput,
     type: "shortText",
   },
   {
     name: "Current Time",
-    id: reservedCustomFieldNames.enum.current_time,
+    id: systemFieldTypes.enum.currentTime,
     type: "shortText",
   },
 ]
@@ -143,7 +147,7 @@ export const useCustomFieldSelectOptions = (
 
     return allFields.map((customField) => ({
       label: customField.name,
-      value: prefix ? `${prefix}:${customField.id}` : customField.id.toString(),
+      value: customField.id,
       Icon: customFieldIconsMap[customField.type as CustomFieldType],
     }))
   }, [customFieldTypes, includeReserved, customFields, prefix])

@@ -1,36 +1,40 @@
 import { createOpenAI } from "@ai-sdk/openai"
-import {
-  and,
-  db,
-  desc,
-  eq,
-  findOrFail,
-  inArray,
-  sql,
-} from "@chatbotx.io/database/client"
-import {
-  aiEmbeddingModel,
-  integrationOpenaiModel,
-} from "@chatbotx.io/database/schema"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
+import { db, sql } from "@chatbotx.io/database/client"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
-import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
+import { isRecord } from "../../../lib/utils"
+import { helpTexts, openaiEmbeddingModels } from "./constants"
 import type {
   FileSearchArgs,
   FileSearchConfig,
   SimilaritySearchResult,
 } from "./types"
 
+function getSecretTextFromAuth(auth: unknown): string | null {
+  if (!isRecord(auth)) {
+    return null
+  }
+  const secretText = auth.secretText
+  if (typeof secretText !== "string") {
+    return null
+  }
+  const trimmed = secretText.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
 async function getOpenAIIntegration(workspaceId: string) {
-  return await findOrFail({
-    table: integrationOpenaiModel,
+  const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst({
     where: {
       workspaceId,
       autoReply: true,
     },
-    message: "OpenAI integration not found",
   })
+
+  if (!integrationOpenAI) {
+    throw new Error("OpenAI integration not found")
+  }
+
+  return integrationOpenAI
 }
 
 async function createQueryEmbedding(
@@ -39,11 +43,18 @@ async function createQueryEmbedding(
 ): Promise<number[]> {
   const integrationOpenAI = await getOpenAIIntegration(workspaceId)
 
+  const apiKey = getSecretTextFromAuth(integrationOpenAI.auth)
+  if (!apiKey) {
+    throw new Error("Missing OpenAI API key")
+  }
+
   const openai = createOpenAI({
-    apiKey: (integrationOpenAI.auth as SecretTextAuthValue | null)?.secretText,
+    apiKey,
   })
 
-  const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
+  const embeddingModel = openai.embedding(
+    openaiEmbeddingModels.enum["text-embedding-ada-002"],
+  )
   const { embedding } = await embed({
     model: embeddingModel,
     value: query,
@@ -58,34 +69,20 @@ async function searchSimilarEmbeddings(
 ): Promise<SimilaritySearchResult[]> {
   const embeddingString = `[${queryEmbedding.join(",")}]`
 
-  return await db
-    .select({
-      id: aiEmbeddingModel.id,
-      content: aiEmbeddingModel.content,
-      aiFileId: aiEmbeddingModel.aiFileId,
-      distance: sql<number>`(1 - ("embedding" <=> ${embeddingString}::vector))`,
-    })
-    .from(aiEmbeddingModel)
-    .where(
-      and(
-        eq(aiEmbeddingModel.workspaceId, config.workspaceId),
-        inArray(aiEmbeddingModel.aiFileId, config.selectedFileIds),
-      ),
-    )
-    .orderBy(desc(aiEmbeddingModel.embedding))
-    .limit(config.maxResults)
+  const results = await db.execute(sql`
+    SELECT
+      "id",
+      "content",
+      "aiFileId",
+      1 - ("embedding" <=> ${embeddingString}::vector) as distance
+    FROM "AIEmbedding"
+    WHERE "workspaceId" = ${config.workspaceId}
+      AND "aiFileId" = ANY(${config.selectedFileIds})
+    ORDER BY "embedding" <=> ${embeddingString}::vector
+    LIMIT ${config.maxResults}
+  `)
 
-  // const results = await db.$queryRaw<SimilaritySearchResult[]>`
-  //   SELECT
-  //     "id",
-  //     "content",
-  //     "aiFileId",
-  //     1 - ("embedding" <=> ${embeddingString}::vector) as distance
-  //   FROM "AIEmbedding"
-  //   WHERE "workspaceId" = ${config.workspaceId}
-  //     AND "aiFileId" = ANY(${config.selectedFileIds})
-  //   ORDER BY "embedding" <=> ${embeddingString}::vector
-  //   LIMIT ${config.maxResults}
+  return results.rows as unknown as SimilaritySearchResult[]
 }
 
 function filterRelevantResults(
@@ -97,14 +94,14 @@ function filterRelevantResults(
 
 function formatSearchResults(results: SimilaritySearchResult[]): string {
   if (results.length === 0) {
-    return TEXT.fileSearchNoResult
+    return helpTexts.fileSearchNoResult
   }
 
   const formattedResults = results
     .map((item, index) => `${index + 1}. ${item.content}`)
     .join("\n\n")
 
-  return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+  return `${helpTexts.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
 }
 
 export async function performFileSearch(
@@ -119,7 +116,7 @@ export async function performFileSearch(
     const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
     if (searchResults.length === 0) {
-      return TEXT.fileSearchNoResult
+      return helpTexts.fileSearchNoResult
     }
 
     const relevantResults = filterRelevantResults(
@@ -128,16 +125,19 @@ export async function performFileSearch(
     )
 
     if (relevantResults.length === 0) {
-      return TEXT.fileSearchNoResult
+      return helpTexts.fileSearchNoResult
     }
 
     const result = formatSearchResults(relevantResults)
     return result
   } catch (error) {
     logger.error(
-      error,
-      `[automated-response] performFileSearch failed for workspaceId: ${config.workspaceId}`,
+      {
+        error,
+        workspaceId: config.workspaceId,
+      },
+      "[automated-response] performFileSearch failed",
     )
-    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : "Unknown error"}`
+    return `${helpTexts.fileSearchErrorPrefix} ${error instanceof Error ? error.message : helpTexts.unknownError}`
   }
 }

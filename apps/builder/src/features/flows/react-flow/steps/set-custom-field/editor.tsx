@@ -41,7 +41,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
   })
 
   function onSubmit(values: SetCustomFieldStepSchema) {
-    setValue(`${parentName}.inputCfId`, values.inputCfId)
+    setValue(`${parentName}.inputFieldId`, values.inputFieldId)
     setValue(`${parentName}.operation`, values.operation)
     setValue(`${parentName}.value`, values.value)
 
@@ -68,7 +68,7 @@ const SetCustomFieldStepEditor = ({ parentName }: { parentName: string }) => {
             <CustomFieldSelect
               allowCreate={true}
               label={t("fields.customField.label")}
-              name="inputCfId"
+              name="inputFieldId"
               required
             />
             <SelectField

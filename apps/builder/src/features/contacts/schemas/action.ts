@@ -2,9 +2,9 @@ import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const contactPrefix = "ct"
-export const contactFieldPrefix = "cf"
-export const contactTagPrefix = "tg"
+export const contactPrefix = "sys"
+export const contactFieldPrefix = "cus"
+export const contactTagPrefix = "tag"
 
 export const createContactRequest = z.object({
   phoneNumber: z

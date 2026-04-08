@@ -1,9 +1,9 @@
 "use server"
 
-import { emitConversationFollowUp } from "@chatbotx/events"
 import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
+import { emitConversationFollowUp } from "@chatbotx.io/events"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -29,11 +29,6 @@ export const followConversation = async (ctx: {
     where: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
-    },
-    columns: {
-      id: true,
-      contactId: true,
-      channel: true,
     },
   })
 

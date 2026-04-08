@@ -3,7 +3,7 @@ import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import type { ModelMessage } from "ai"
-import { maxConversationHistory } from "../automated-response/constants"
+import { MAX_CONVERSATION_HISTORY } from "../automated-response/constants"
 
 export async function buildAIMessages(
   conversation: ConversationModel,
@@ -23,7 +23,7 @@ export async function buildAIMessages(
         },
       },
       orderBy: { createdAt: "desc" },
-      limit: maxConversationHistory,
+      limit: MAX_CONVERSATION_HISTORY,
     })
 
     for (const message of lastMessages) {

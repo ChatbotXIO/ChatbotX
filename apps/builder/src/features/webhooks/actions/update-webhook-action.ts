@@ -1,8 +1,8 @@
 "use server"
 
-import { updateWebhookCache } from "@chatbotx/events"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conditionModel, webhookModel } from "@chatbotx.io/database/schema"
+import { updateWebhookCache } from "@chatbotx.io/events"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWebhookRequest } from "../schemas/update-webhook-schema"

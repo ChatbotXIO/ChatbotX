@@ -15,7 +15,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@chatbotx/public-apis": "workspace:*",
+    "@chatbotx.io/public-apis": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@t3-oss/env-core": "^0.13.11",
     "dotenv": "^17.4.0",

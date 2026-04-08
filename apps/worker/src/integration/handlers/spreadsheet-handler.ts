@@ -1,4 +1,3 @@
-import { emitCustomFieldChanged } from "@chatbotx/events"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -10,6 +9,7 @@ import type {
   ConversationModel,
   SpreadsheetModel,
 } from "@chatbotx.io/database/types"
+import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import type {
   EdgeSchema,
   FilterMode,
