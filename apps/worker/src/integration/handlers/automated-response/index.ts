@@ -15,29 +15,29 @@ export async function triggerAutomatedResponse(
   const messageId = (message as { id?: string }).id ?? ""
   const startTime = Date.now()
   try {
-    if (!message.text) {
-      await trackBotResponse({
-        workspaceId: message.workspaceId,
-        conversationId: message.conversationId,
-        messageId,
-        hasResponse: false,
-        responseType: "none",
-        routeType: "fallback",
-        result: "fallback",
-        aiProvider: "none",
-        startTime: Date.now(),
-        metadata: {
-          fallbackReason: "no_content",
-        },
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "triggerAutomatedResponse",
-          triggerType: "bot_response_fallback_no_content",
-        },
-      })
+    // if (!message.text) {
+    //   await trackBotResponse({
+    //     workspaceId: message.workspaceId,
+    //     conversationId: message.conversationId,
+    //     messageId,
+    //     hasResponse: false,
+    //     responseType: "none",
+    //     routeType: "fallback",
+    //     result: "fallback",
+    //     aiProvider: "none",
+    //     startTime: Date.now(),
+    //     metadata: {
+    //       fallbackReason: "no_content",
+    //     },
+    //     triggerContext: {
+    //       triggerSource: "worker",
+    //       triggerHandler: "triggerAutomatedResponse",
+    //       triggerType: "bot_response_fallback_no_content",
+    //     },
+    //   })
 
-      return
-    }
+    //   return
+    // }
 
     const conversation = await db.query.conversationModel.findFirst({
       where: { id: message.conversationId },

@@ -2,42 +2,38 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { db } from "@chatbotx.io/database/client"
 import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
+import type { EmbeddingModel } from "ai"
 import {
-  DEFAULT_GEMINI_EMBEDDING_MODEL,
-  OPENAI_EMBEDDING_MODELS,
+  geminiEmbeddingModels,
+  openaiEmbeddingModels,
 } from "../../integration/handlers/automated-response/constants"
-
-export type EmbeddingModel =
-  | ReturnType<ReturnType<typeof createOpenAI>["embedding"]>
-  | ReturnType<
-      ReturnType<typeof createGoogleGenerativeAI>["textEmbeddingModel"]
-    >
 
 export async function resolveEmbeddingModel(
   workspaceId: string,
 ): Promise<EmbeddingModel> {
-  const [integrationOpenAI, integrationGemini] = await Promise.all([
-    db.query.integrationOpenaiModel.findFirst({
-      where: { workspaceId },
-    }),
-    db.query.integrationGeminiModel.findFirst({
-      where: { workspaceId },
-    }),
-  ])
-
-  if (integrationOpenAI) {
-    const apiKey = (integrationOpenAI.auth as SecretTextAuthValue | null)
-      ?.secretText
+  // Find openAI
+  const integrationOpenai = await db.query.integrationOpenaiModel.findFirst({
+    where: { workspaceId },
+  })
+  if (integrationOpenai) {
+    const apiKey = (integrationOpenai.auth as SecretTextAuthValue).secretText
     const openai = createOpenAI({ apiKey })
-    return openai.embedding(OPENAI_EMBEDDING_MODELS.TEXT_EMBEDDING_ADA_002)
+
+    return openai.embedding(
+      openaiEmbeddingModels.enum["text-embedding-ada-002"],
+    )
   }
 
+  // Find gemini
+  const integrationGemini = await db.query.integrationGeminiModel.findFirst({
+    where: { workspaceId },
+  })
   if (integrationGemini) {
-    const apiKey = (integrationGemini.auth as SecretTextAuthValue | null)
-      ?.secretText
+    const apiKey = (integrationGemini.auth as SecretTextAuthValue).secretText
     const gemini = createGoogleGenerativeAI({ apiKey })
-    return gemini.textEmbeddingModel(DEFAULT_GEMINI_EMBEDDING_MODEL)
+
+    return gemini.embedding(geminiEmbeddingModels.enum["text-embedding-004"])
   }
 
-  throw new Error("No embedding provider configured (OpenAI/Gemini)")
+  throw new Error("No embedding provider configured")
 }

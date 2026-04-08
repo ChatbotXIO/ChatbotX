@@ -62,7 +62,7 @@ export function CreateAutomatedResponseForm(
         mode: "onChange",
         defaultValues: {
           folderId: folderId ?? null,
-          userMessages: [{ value: "" }],
+          keywords: [{ value: "" }],
           text: "",
           flowId: null,
         },
@@ -79,35 +79,35 @@ export function CreateAutomatedResponseForm(
   }, [setValue, folderId])
 
   const {
-    fields: userMessages,
-    append: appendUserMessages,
-    remove: removeUserMessages,
+    fields: keywords,
+    append: appendKeywords,
+    remove: removeKeywords,
   } = useFieldArray({
     control,
-    name: "userMessages",
+    name: "keywords",
   })
 
   return (
     <Form {...form}>
       <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
         <div className="flex flex-col gap-2">
-          <Label className="flex-1" htmlFor="userMessages">
-            {t("fields.userMessage.label")}
+          <Label className="flex-1" htmlFor="keywords">
+            {t("fields.keywords.label")}
           </Label>
 
-          {userMessages.map((_, index) => (
+          {keywords.map((_, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: wip
             <div className="flex gap-2" key={index}>
               <InputField
                 formItemClassName="w-1/2"
-                name={`userMessages.${index}.value`}
+                name={`keywords.${index}.value`}
               />
               {index === 0 ? (
                 <div className="w-12">&nbsp;</div>
               ) : (
                 <Button
                   onClick={() => {
-                    removeUserMessages(index)
+                    removeKeywords(index)
                   }}
                   variant="ghost"
                 >
@@ -120,7 +120,7 @@ export function CreateAutomatedResponseForm(
           <div>
             <Button
               onClick={() => {
-                appendUserMessages({ value: "" })
+                appendKeywords({ value: "" })
               }}
               variant="ghost"
             >

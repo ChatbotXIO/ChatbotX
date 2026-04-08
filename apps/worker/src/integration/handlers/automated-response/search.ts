@@ -1,9 +1,9 @@
-import { db, sql } from "@aha.chat/database/client"
 import { createOpenAI } from "@ai-sdk/openai"
+import { db, sql } from "@chatbotx.io/database/client"
 import { embed } from "ai"
 import { logger } from "../../../lib/logger"
 import { isRecord } from "../../../lib/utils"
-import { DEFAULT_OPENAI_EMBEDDING_MODEL, TEXT } from "./constants"
+import { helpTexts, openaiEmbeddingModels } from "./constants"
 import type {
   FileSearchArgs,
   FileSearchConfig,
@@ -23,7 +23,7 @@ function getSecretTextFromAuth(auth: unknown): string | null {
 }
 
 async function getOpenAIIntegration(workspaceId: string) {
-  const integrationOpenAI = await db.query.integrationOpenAIModel.findFirst({
+  const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst({
     where: {
       workspaceId,
       autoReply: true,
@@ -52,7 +52,9 @@ async function createQueryEmbedding(
     apiKey,
   })
 
-  const embeddingModel = openai.embedding(DEFAULT_OPENAI_EMBEDDING_MODEL)
+  const embeddingModel = openai.embedding(
+    openaiEmbeddingModels.enum["text-embedding-ada-002"],
+  )
   const { embedding } = await embed({
     model: embeddingModel,
     value: query,
@@ -92,14 +94,14 @@ function filterRelevantResults(
 
 function formatSearchResults(results: SimilaritySearchResult[]): string {
   if (results.length === 0) {
-    return TEXT.fileSearchNoResult
+    return helpTexts.fileSearchNoResult
   }
 
   const formattedResults = results
     .map((item, index) => `${index + 1}. ${item.content}`)
     .join("\n\n")
 
-  return `${TEXT.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+  return `${helpTexts.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
 }
 
 export async function performFileSearch(
@@ -114,7 +116,7 @@ export async function performFileSearch(
     const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
     if (searchResults.length === 0) {
-      return TEXT.fileSearchNoResult
+      return helpTexts.fileSearchNoResult
     }
 
     const relevantResults = filterRelevantResults(
@@ -123,7 +125,7 @@ export async function performFileSearch(
     )
 
     if (relevantResults.length === 0) {
-      return TEXT.fileSearchNoResult
+      return helpTexts.fileSearchNoResult
     }
 
     const result = formatSearchResults(relevantResults)
@@ -136,6 +138,6 @@ export async function performFileSearch(
       },
       "[automated-response] performFileSearch failed",
     )
-    return `${TEXT.fileSearchErrorPrefix} ${error instanceof Error ? error.message : TEXT.unknownError}`
+    return `${helpTexts.fileSearchErrorPrefix} ${error instanceof Error ? error.message : helpTexts.unknownError}`
   }
 }

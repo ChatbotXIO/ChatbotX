@@ -17,7 +17,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -33,6 +33,7 @@ export function CreateFlowDialog({
 }) {
   const t = useTranslations()
   const router = useRouter()
+  const pathname = usePathname()
 
   const [open, setOpen] = useState(false)
 
@@ -42,7 +43,7 @@ export function CreateFlowDialog({
       zodResolver(createFlowSchema),
       {
         actionProps: {
-          onSuccess: () => {
+          onSuccess: ({ data: newFlow }) => {
             toast.success(
               t("messages.createdSuccess", {
                 feature: t("fields.flow.label"),
@@ -51,7 +52,8 @@ export function CreateFlowDialog({
 
             setOpen(false)
             resetFormAndAction()
-            router.refresh()
+
+            router.push(`${pathname}/${newFlow.id}`)
           },
           onError: ({ error }) => {
             if (error.serverError) {

@@ -2,7 +2,8 @@ import { analyticsRoutes } from "@chatbotx.io/analytics-nextjs/routes"
 import { inboxTeamsAPI } from "@/enterprise/features/inbox-teams/api"
 import aiAgentsAPI from "@/features/ai-agents/api"
 import { aiFilesAPI } from "@/features/ai-files/api"
-import { aiMcpServerApi } from "@/features/ai-mcp-servers/api"
+import { aiFunctionsAPI } from "@/features/ai-functions/api"
+import { aiMcpServerAPIs } from "@/features/ai-mcp-servers/api"
 import botFieldsAPIs from "@/features/bot-fields/api"
 import contactsAPIs from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
@@ -22,7 +23,7 @@ import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
 export const router = {
-  aiMcpServerApi,
+  aiMcpServerAPIs,
   aiAgentsAPI,
   conversationsAPI,
   tagsAPI,
@@ -45,4 +46,5 @@ export const router = {
   inboxTeamsAPI,
   foldersAPI,
   messagesAPI,
+  aiFunctionsAPI,
 }

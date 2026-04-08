@@ -1,5 +1,11 @@
 "use client"
 
+import {
+  claudeModelOptions,
+  deepseekModelOptions,
+  geminiModelOptions,
+  openaiModelOptions,
+} from "@chatbotx.io/ai"
 import type { AIProvider } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import type {
@@ -9,13 +15,9 @@ import type {
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import type { FieldValues } from "react-hook-form"
-import { claudeModelOptions } from "@/features/claude/models"
-import { deepseekModelOptions } from "@/features/deepseek/models"
-import { geminiModelOptions } from "@/features/integration-gemini/schemas/models"
-import { openaiChatModelOptions } from "@/features/openai/models"
 
 const modelOptions: Record<AIProvider, SelectOption[]> = {
-  openai: openaiChatModelOptions,
+  openai: openaiModelOptions,
   claude: claudeModelOptions,
   gemini: geminiModelOptions,
   deepseek: deepseekModelOptions,

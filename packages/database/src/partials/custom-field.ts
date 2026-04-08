@@ -2,6 +2,8 @@ import z from "zod"
 
 export const customFieldTypes = z.enum([
   "shortText",
+  "email",
+  "phoneNumber",
   "number",
   "date",
   "datetime",

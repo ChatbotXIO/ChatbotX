@@ -45,15 +45,11 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
   const handleSubmit = form.handleSubmit((values) => {
     const currentValues = getValues(parentName)
 
-    setValue(
-      parentName,
-      {
-        ...currentValues,
-        ...values,
-        provider: provider ?? currentValues.provider,
-      },
-      { shouldDirty: true, shouldTouch: true, shouldValidate: true },
-    )
+    setValue(parentName, {
+      ...currentValues,
+      ...values,
+      provider: provider ?? currentValues.provider,
+    })
 
     setOpen(false)
   })
@@ -69,15 +65,15 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
         <DialogHeader>
           <DialogTitle className="capitalize">
             {t("fields.flows.aiGenerateText.label", {
-              aiName: "OpenAI",
+              aiName: t(`aiProviders.${provider}`),
             })}
           </DialogTitle>
           <DialogDescription />
         </DialogHeader>
 
         <Form {...form}>
-          <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-4 overflow-y-auto">
+          <form className="flex flex-col space-y-6" onSubmit={handleSubmit}>
+            <div className="flex max-h-[calc(100vh-200px)] flex-col space-y-6 overflow-y-auto">
               <AIModelSelect name="model" provider={provider} required />
 
               <TiptapEditorField
@@ -94,7 +90,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
 
               <CustomFieldSelect
                 allowCreate={true}
-                includeReserved={true}
+                includeReserved={false}
                 label={t("fields.outputFieldId.label")}
                 name="outputFieldId"
                 required

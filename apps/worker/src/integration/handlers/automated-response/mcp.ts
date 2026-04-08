@@ -1,8 +1,9 @@
 import ky, { type Options } from "ky"
+import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
 import { isRecord } from "../../../lib/utils"
-import { JSON_TYPE, TEXT } from "./constants"
+import { helpTexts } from "./constants"
 
 type MCPSuccess = { content: unknown; success: true }
 type MCPFailure = { error: string; success: false }
@@ -28,7 +29,7 @@ const jsonRpcErrorSchema = z.object({
 })
 
 const mcpJsonRpcSuccessSchema = z.object({
-  jsonrpc: z.literal(TEXT.jsonRpcVersion),
+  jsonrpc: z.literal(helpTexts.jsonRpcVersion),
   id: jsonRpcIdSchema,
   result: z.object({
     content: z.unknown().optional(),
@@ -38,7 +39,7 @@ const mcpJsonRpcSuccessSchema = z.object({
 
 const mcpJsonRpcErrorResponseSchema = z
   .object({
-    jsonrpc: z.literal(TEXT.jsonRpcVersion),
+    jsonrpc: z.literal(helpTexts.jsonRpcVersion),
     id: jsonRpcIdSchema,
     error: jsonRpcErrorSchema,
   })
@@ -89,7 +90,7 @@ export async function callMCPTool(props: {
       throwHttpErrors: false,
       timeout: 120_000,
       json: {
-        jsonrpc: TEXT.jsonRpcVersion,
+        jsonrpc: helpTexts.jsonRpcVersion,
         id: requestId,
         method: "tools/call",
         params: {
@@ -118,25 +119,17 @@ export async function callMCPTool(props: {
     }
 
     requestOptions.headers = {
-      Accept: TEXT.contentType,
+      Accept: helpTexts.contentType,
       ...(requestOptions.headers ?? {}),
-    }
-
-    const response = await ky.post(url, requestOptions)
-    const responseText = await response.text()
-    const status = response.status
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `MCP server error: HTTP ${status}`,
-      }
     }
 
     let parsed: unknown = null
     try {
-      parsed = JSON.parse(responseText)
-    } catch {
+      parsed = await ky.post(url, requestOptions).json()
+    } catch (error) {
+      const parsedError = normalizeError(error)
+      logger.error(parsedError, "[automated-response] callMCPTool failed")
+
       return {
         success: false,
         error: "MCP response is not valid JSON",
@@ -191,7 +184,7 @@ export async function callMCPTool(props: {
   } catch (error) {
     logger.error(error, "[automated-response] callMCPTool failed")
     return {
-      error: error instanceof Error ? error.message : TEXT.unknownError,
+      error: error instanceof Error ? error.message : helpTexts.unknownError,
       success: false,
     }
   }
@@ -212,58 +205,4 @@ function normalizeMcpContent(content: unknown): unknown {
   }
 
   return content
-}
-
-export function cleanSchemaForGemini(schema: unknown): unknown {
-  if (!schema || typeof schema !== JSON_TYPE.object) {
-    return schema
-  }
-
-  const cleaned: Record<string, unknown> = {
-    ...(schema as Record<string, unknown>),
-  }
-
-  if (cleaned.properties && typeof cleaned.properties === JSON_TYPE.object) {
-    const cleanedProperties: Record<string, unknown> = {
-      ...(cleaned.properties as Record<string, unknown>),
-    }
-
-    for (const [key, prop] of Object.entries(cleanedProperties)) {
-      if (prop && typeof prop === JSON_TYPE.object) {
-        const original = prop as JsonSchemaLike
-        let nextProp: JsonSchemaLike = { ...original }
-
-        if (
-          typeof nextProp.type === "string" &&
-          nextProp.type !== JSON_TYPE.object &&
-          nextProp.required
-        ) {
-          const { required: _omit, ...rest } = nextProp
-          nextProp = rest
-        }
-
-        if (nextProp.properties) {
-          nextProp.properties = cleanSchemaForGemini(nextProp.properties)
-        }
-
-        if (nextProp.items) {
-          nextProp.items = cleanSchemaForGemini(nextProp.items)
-        }
-
-        cleanedProperties[key] = nextProp
-      }
-    }
-
-    cleaned.properties = cleanedProperties
-  }
-
-  return cleaned
-}
-
-type JsonSchemaLike = {
-  type?: unknown
-  required?: unknown
-  properties?: unknown
-  items?: unknown
-  [key: string]: unknown
 }

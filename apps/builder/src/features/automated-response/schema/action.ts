@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const createAutomatedResponseRequest = z.object({
   folderId: zodBigintAsString().nullish(),
-  userMessages: z
+  keywords: z
     .array(
       z.object({
         value: z.string().min(1).max(255),

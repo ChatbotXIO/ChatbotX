@@ -55,7 +55,7 @@ export const createAutomatedResponseAction = workspaceActionClient
       ...parsedInput,
       workspaceId,
       status: true,
-      userMessages: parsedInput.userMessages.map((m) => m.value),
+      keywords: parsedInput.keywords.map((m) => m.value),
       id: createId(),
     })
 

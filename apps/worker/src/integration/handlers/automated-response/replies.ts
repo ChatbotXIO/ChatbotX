@@ -14,7 +14,7 @@ import { streamText, type ToolSet, tool } from "ai"
 import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
 import { isRecord } from "../../../lib/utils"
-import { TEXT } from "./constants"
+import { helpTexts } from "./constants"
 import { summarizeToolResult } from "./summarizer"
 import { processStreamingText, sendMessageWithRender } from "./text"
 import type { ReplyByAIProps } from "./types"
@@ -128,7 +128,7 @@ export async function replyByAutomatedResponse(
 
     for (const automatedResponse of allAutomatedResponses) {
       const text = (message.text ?? "").toLowerCase()
-      const matched = (automatedResponse.userMessages as string[])
+      const matched = (automatedResponse.keywords as string[])
         .map((v) => v.toLowerCase())
         .some((v) => text.includes(v))
 
@@ -152,21 +152,12 @@ export async function replyByAutomatedResponse(
         replied = true
       } else if (automatedResponse.flowId) {
         const flow = await db.query.flowModel.findFirst({
-          where: { id: automatedResponse.flowId },
-          with: {
-            flowVersions: {
-              where: {
-                isDraft: false,
-                isLatest: true,
-              },
-              orderBy: {
-                createdAt: "desc",
-              },
-              limit: 1,
-            },
+          where: {
+            id: automatedResponse.flowId,
+            currentVersionId: { isNotNull: true },
           },
         })
-        if (flow?.currentVersionId) {
+        if (flow) {
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
             type: IntegrationJobAction.sendFlow,
             data: {
@@ -184,8 +175,7 @@ export async function replyByAutomatedResponse(
     logger.error(
       {
         error,
-        conversationId: message.conversationId,
-        workspaceId: message.workspaceId,
+        props,
       },
       "[automated-response] replyByAutomatedResponse failed",
     )
@@ -285,7 +275,7 @@ async function runAIReply(
           ...lastAIMessages,
           {
             role: "user",
-            content: `${TEXT.followUpInstruction}\n\n${toolSummary}`,
+            content: `${helpTexts.followUpInstruction}\n\n${toolSummary}`,
           },
         ],
         maxOutputTokens: aiAgent.maxOutputTokens,
@@ -415,12 +405,12 @@ function buildFallbackTextFromTools(
   }
 
   if (executions.length > 0) {
-    return TEXT.fallbackLookup
+    return helpTexts.fallbackLookup
   }
 
   return null
 }
 
 function appendToolOutputGuard(systemPrompt: string): string {
-  return `${systemPrompt}\n\n${TEXT.toolOutputGuard}`.trim()
+  return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
 }

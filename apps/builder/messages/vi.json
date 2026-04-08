@@ -846,8 +846,8 @@
     "userId": {
       "label": "ID Người dùng"
     },
-    "userMessage": {
-      "label": "Tin nhắn người dùng"
+    "keywords": {
+      "label": "Từ khóa"
     },
     "value": {
       "label": "Giá trị"

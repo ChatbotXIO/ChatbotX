@@ -18,12 +18,12 @@ const config: IntegrationDefinition<
   name: "openai",
   actions: {
     generateText: async ({ ctx, props }): Promise<string> => {
-      const openai = createOpenAI({
+      const _openai = createOpenAI({
         apiKey: ctx.auth.secretText,
       })
 
       const { text } = await generateText({
-        model: openai(props.model),
+        model: props.model,
         messages: [
           {
             role: "user",

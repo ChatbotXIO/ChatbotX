@@ -49,6 +49,9 @@ importers:
       '@better-auth/stripe':
         specifier: ^1.5.6
         version: 1.6.0(@better-auth/core@1.6.0(@better-auth/utils@0.4.0)(@better-fetch/fetch@1.1.21)(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.0)(better-call@1.3.5(zod@4.3.6))(jose@6.2.2)(kysely@0.28.15)(nanostores@1.2.0))(better-auth@1.6.0(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.0)(@prisma/client@7.4.2(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2))(typescript@6.0.2))(mongodb@7.1.0)(mysql2@3.15.3)(next@16.2.2(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(pg@8.20.0)(prisma@7.4.2(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@6.0.2))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(better-call@1.3.5(zod@4.3.6))(stripe@22.0.0(@types/node@24.12.0))
+      '@chatbotx.io/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@chatbotx.io/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -187,6 +190,9 @@ importers:
       '@tiptap/suggestion':
         specifier: ^3.22.1
         version: 3.22.2(@tiptap/core@3.22.2(@tiptap/pm@3.22.2))(@tiptap/pm@3.22.2)
+      '@types/html-to-text':
+        specifier: ^9.0.4
+        version: 9.0.4
       '@xyflow/react':
         specifier: ^12.10.2
         version: 12.10.2(@types/react@19.2.14)(immer@11.1.4)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -214,6 +220,9 @@ importers:
       emoji-picker-react:
         specifier: ^4.18.0
         version: 4.18.0(react@19.2.4)
+      html-to-text:
+        specifier: ^9.0.5
+        version: 9.0.5
       ky:
         specifier: ^1.14.3
         version: 1.14.3
@@ -587,6 +596,9 @@ importers:
       remove-markdown:
         specifier: ^0.6.3
         version: 0.6.3
+      universal-error-normalizer:
+        specifier: ^1.0.0
+        version: 1.0.0
       xlsx:
         specifier: ^0.18.5
         version: 0.18.5
@@ -834,6 +846,28 @@ importers:
         version: 24.12.0
       typescript:
         specifier: 6.0.2
+        version: 6.0.2
+
+  packages/ai:
+    dependencies:
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../database
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
+      ai:
+        specifier: ^6.0.145
+        version: 6.0.149(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^6.0.2
         version: 6.0.2
 
   packages/analytics:
@@ -9633,6 +9667,10 @@ packages:
   unenv@2.0.0-rc.0:
     resolution: {integrity: sha512-H0kl2w8jFL/FAk0xvjVing4bS3jd//mbg1QChDnn58l9Sc5RtduaKmLAL8n+eBw5jJo8ZjYV7CrEGage5LAOZQ==}
 
+  universal-error-normalizer@1.0.0:
+    resolution: {integrity: sha512-H1vCPybK3DK8QWFDKI4SKzXhPi6eLzB3DWKvfXRUR+OeLHmmM/cbe1PPmah9aCPsHpiskiNi+LZUBh42p7azlA==}
+    engines: {node: '>=16.0.0'}
+
   universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
@@ -18059,6 +18097,8 @@ snapshots:
       ohash: 1.1.6
       pathe: 1.1.2
       ufo: 1.6.3
+
+  universal-error-normalizer@1.0.0: {}
 
   universalify@2.0.1: {}
 

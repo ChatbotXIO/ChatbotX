@@ -22,7 +22,7 @@ export async function listAutomatedResponses(
 
   const where = {
     workspaceId: input.workspaceId,
-    userMessages: input.keyword
+    keywords: input.keyword
       ? { ilike: `%${input.keyword.toLowerCase()}%` }
       : undefined,
     folderId: input.folderId

@@ -11,10 +11,7 @@ import { aiProviders } from "@chatbotx.io/flow-config"
 import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import { type ToolSet, tool } from "ai"
 import { z } from "zod"
-import {
-  JSON_TYPE,
-  TEXT,
-} from "../integration/handlers/automated-response/constants"
+import { helpTexts } from "../integration/handlers/automated-response/constants"
 import {
   callMCPTool,
   type MCPAuthSchema,
@@ -322,9 +319,9 @@ export async function getAIFileTools(
 
     if (allFiles.length > 0) {
       tools.search_knowledge_base = tool({
-        description: TEXT.fileSearchDescription,
+        description: helpTexts.fileSearchDescription,
         inputSchema: z.object({
-          query: z.string().describe(TEXT.fileSearchQueryDescription),
+          query: z.string().describe(helpTexts.fileSearchQueryDescription),
         }),
         execute: async ({ query }) => {
           const config = {
@@ -428,7 +425,7 @@ export async function getMCPServerTools(
       }
 
       const availableTools = availableToolsParsed.data
-      if (!availableTools || typeof availableTools !== JSON_TYPE.object) {
+      if (!availableTools || typeof availableTools !== "object") {
         continue
       }
 
@@ -449,7 +446,7 @@ export async function getMCPServerTools(
         const jsonSchema = toolDef.inputSchema?.jsonSchema
         const inputSchema = jsonSchema
           ? jsonSchemaToZodObject(jsonSchema)
-          : z.looseObject({}).passthrough()
+          : z.looseObject({})
 
         tools[uniqueToolName] = tool({
           description: `${toolDef.description} (from ${mcpServer.name})`,

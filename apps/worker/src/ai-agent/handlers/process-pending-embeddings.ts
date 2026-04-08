@@ -1,6 +1,6 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { aiEmbeddingStatuses } from "@chatbotx.io/database/partials"
 import { aiEmbeddingModel } from "@chatbotx.io/database/schema"
-import type { AIEmbeddingStatus } from "@chatbotx.io/database/types"
 import type { AIJobProcessPendingEmbedding } from "@chatbotx.io/worker-config"
 import { embed } from "ai"
 import { resolveEmbeddingModel } from "../../ai-agent/lib/embedding-model"
@@ -33,7 +33,7 @@ export async function processPendingEmbedding(
       .set({
         embedding: embedding as number[],
         updatedAt: new Date(),
-        status: "success" as AIEmbeddingStatus,
+        status: aiEmbeddingStatuses.enum.success,
       })
       .where(eq(aiEmbeddingModel.id, aiEmbedding.id))
   } catch (error) {
@@ -45,7 +45,7 @@ export async function processPendingEmbedding(
     await db
       .update(aiEmbeddingModel)
       .set({
-        status: "error" as AIEmbeddingStatus,
+        status: aiEmbeddingStatuses.enum.error,
       })
       .where(eq(aiEmbeddingModel.id, aiEmbedding.id))
   }

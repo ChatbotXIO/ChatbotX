@@ -1,44 +1,25 @@
-import { db, eq } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
-  type GenderType,
-  type ReservedCustomFieldName,
-  reservedCustomFieldNames,
+  type CustomFieldType,
+  customFieldTypes,
+  type SystemFieldType,
+  systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import {
   contactCustomFieldModel,
   contactModel,
+  customFieldModel,
 } from "@chatbotx.io/database/schema"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { createId, parseBigIntId } from "@chatbotx.io/utils"
-import { generateText, type LanguageModel, Output, streamText } from "ai"
-import { z } from "zod"
+import { streamText } from "ai"
+import { normalizeError } from "universal-error-normalizer"
 import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
-import { AI_GENERATE_TEXT } from "../automated-response/constants"
 import { processStreamingText } from "../automated-response/text"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
 import { getAIToolset } from "./tools"
-
-const contactSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  fullName: z.string(),
-  email: z.string(),
-  phoneNumber: z.string(),
-  gender: z.enum(["male", "female", "unknown"]),
-})
-
-type ContactSchemaOutput = z.infer<typeof contactSchema>
-
-type ContactData = {
-  firstName?: string
-  lastName?: string
-  fullName?: string
-  email?: string
-  phoneNumber?: string
-  gender?: GenderType
-}
 
 export async function handleAIGenerateText({
   conversation,
@@ -80,9 +61,12 @@ export async function handleAIGenerateText({
       toolChoice: Object.keys(toolSet).length > 0 ? "auto" : undefined,
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
+      onError: (error) => {
+        throw error.error
+      },
     })
 
-    const { messageCount, fullText } = await processStreamingText(
+    const { fullText } = await processStreamingText(
       result.textStream,
       conversation.id,
       { sendParts: true },
@@ -90,173 +74,151 @@ export async function handleAIGenerateText({
 
     await saveResultToCustomField({
       contactId: conversation.contactId,
-      customFieldId: step.outputCfId,
-      fullText,
-      messageCount,
-      workspaceId: conversation.workspaceId,
-      model,
+      customFieldId: step.outputFieldId,
+      text: fullText,
       abortSignal: controller.signal,
     })
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      logger.warn(
-        {
-          conversationId: conversation.id,
-          stepId: step.id,
-        },
-        "[ai-generate-text] Step timed out or aborted",
-      )
-    } else {
-      logger.error(
-        {
-          error,
-          conversationId: conversation.id,
-          stepId: step.id,
-          stepType: step.stepType,
-        },
-        "[ai-generate-text] Step failed",
-      )
-    }
+    const parsedError = normalizeError(error)
+    logger.error(parsedError, "[ai-generate-text] Step failed")
     throw error
   } finally {
     clearTimeout(timeoutId)
   }
 }
 
-const REGEX_ONLY_NUMBERS = /^\d+$/
+// async function validateExtractedData(
+//   data: ContactSchemaOutput,
+// ): Promise<ContactData> {
+//   const validated: ContactData = {}
 
-async function validateExtractedData(
-  data: ContactSchemaOutput,
-): Promise<ContactData> {
-  const validated: ContactData = {}
+//   if (data.email?.includes("@")) {
+//     validated.email = data.email
+//   }
 
-  if (data.email?.includes("@")) {
-    validated.email = data.email
+//   if (
+//     data.firstName &&
+//     data.firstName.length >= 2 &&
+//     !REGEX_ONLY_NUMBERS.test(data.firstName)
+//   ) {
+//     validated.firstName = data.firstName
+//   }
+
+//   if (data.lastName) {
+//     validated.lastName = data.lastName
+//   }
+
+//   if (data.fullName) {
+//     validated.fullName = data.fullName
+//   }
+
+//   if (data.phoneNumber) {
+//     validated.phoneNumber = data.phoneNumber
+//   }
+
+//   if (data.gender) {
+//     validated.gender = data.gender as GenderType
+//   }
+
+//   return await Promise.resolve(validated)
+// }
+
+function validateValue(fieldType: CustomFieldType, value: string) {
+  switch (fieldType) {
+    case customFieldTypes.enum.shortText: {
+      return value
+    }
+    case customFieldTypes.enum.longText: {
+      return value
+    }
+    case customFieldTypes.enum.number: {
+      return value
+    }
+    case customFieldTypes.enum.date: {
+      return value
+    }
+    case customFieldTypes.enum.datetime: {
+      return value
+    }
+    case customFieldTypes.enum.boolean: {
+      return value
+    }
+    default: {
+      return value
+    }
   }
-
-  if (
-    data.firstName &&
-    data.firstName.length >= 2 &&
-    !REGEX_ONLY_NUMBERS.test(data.firstName)
-  ) {
-    validated.firstName = data.firstName
-  }
-
-  if (data.lastName) {
-    validated.lastName = data.lastName
-  }
-
-  if (data.fullName) {
-    validated.fullName = data.fullName
-  }
-
-  if (data.phoneNumber) {
-    validated.phoneNumber = data.phoneNumber
-  }
-
-  if (data.gender) {
-    validated.gender = data.gender as GenderType
-  }
-
-  return await Promise.resolve(validated)
 }
 
-async function saveResultToCustomField({
-  contactId,
-  customFieldId,
-  fullText,
-  messageCount,
-  workspaceId,
-  model,
-  abortSignal,
-}: {
-  contactId: string | null
+async function saveResultToCustomField(props: {
+  contactId: string
   customFieldId: string
-  fullText: string
-  messageCount: number
-  workspaceId: string
-  model: LanguageModel
+  text: string
   abortSignal: AbortSignal
 }): Promise<void> {
-  if (!(contactId && customFieldId.trim()) || messageCount === 0 || !fullText) {
-    return
-  }
+  const { contactId, customFieldId, text } = props
+  const contact = await findOrFail({
+    table: contactModel,
+    where: {
+      id: contactId,
+    },
+    message: "Contact not found",
+  })
 
-  const isReservedField = Object.values(reservedCustomFieldNames).includes(
-    customFieldId as ReservedCustomFieldName,
+  // const { output: extractedDataRaw } = await generateText({
+  //   model,
+  //   output: Output.object({ schema: contactSchema }),
+  //   prompt: AI_GENERATE_TEXT.RESERVED_FIELD_EXTRACTION_PROMPT.replace(
+  //     "{{customFieldId}}",
+  //     customFieldId,
+  //   ).replace("{{fullText}}", fullText),
+  //   temperature: 0,
+  //   abortSignal,
+  // })
+
+  const isSystemField = systemFieldTypes.options.includes(
+    customFieldId as SystemFieldType,
   )
-
-  if (isReservedField) {
-    const { output: extractedDataRaw } = await generateText({
-      model,
-      output: Output.object({ schema: contactSchema }),
-      prompt: AI_GENERATE_TEXT.RESERVED_FIELD_EXTRACTION_PROMPT.replace(
-        "{{customFieldId}}",
-        customFieldId,
-      ).replace("{{fullText}}", fullText),
-      temperature: 0,
-      abortSignal,
-    })
-
-    const extractedData = await validateExtractedData(extractedDataRaw)
-
-    const updateData: Partial<{
-      firstName: string
-      lastName: string
-      email: string
-      phoneNumber: string
-      avatar: string
-      gender: GenderType
-    }> = {}
+  if (isSystemField) {
+    const updateContactData: Partial<typeof contactModel.$inferInsert> = {}
 
     switch (customFieldId) {
-      case reservedCustomFieldNames.enum.first_name: {
-        if (extractedData.firstName) {
-          updateData.firstName = extractedData.firstName
-        }
+      case systemFieldTypes.enum.firstName: {
+        updateContactData.firstName = validateValue(
+          customFieldTypes.enum.shortText,
+          text,
+        )
         break
       }
-      case reservedCustomFieldNames.enum.last_name: {
-        if (extractedData.lastName) {
-          updateData.lastName = extractedData.lastName
-        }
+      case systemFieldTypes.enum.lastName: {
+        updateContactData.lastName = validateValue(
+          customFieldTypes.enum.shortText,
+          text,
+        )
         break
       }
-      case reservedCustomFieldNames.enum.full_name: {
-        if (extractedData.firstName) {
-          updateData.firstName = extractedData.firstName
-        }
-        if (extractedData.lastName) {
-          updateData.lastName = extractedData.lastName
-        }
+      case systemFieldTypes.enum.email: {
+        updateContactData.email = validateValue(
+          customFieldTypes.enum.email,
+          text,
+        )
         break
       }
-      case reservedCustomFieldNames.enum.email: {
-        if (extractedData.email) {
-          updateData.email = extractedData.email
-        }
+      case systemFieldTypes.enum.phoneNumber: {
+        updateContactData.phoneNumber = validateValue(
+          customFieldTypes.enum.phoneNumber,
+          text,
+        )
         break
       }
-      case reservedCustomFieldNames.enum.phone_number: {
-        if (extractedData.phoneNumber) {
-          updateData.phoneNumber = extractedData.phoneNumber
-        }
+      default: {
         break
       }
-      case reservedCustomFieldNames.enum.gender: {
-        if (extractedData.gender) {
-          updateData.gender = extractedData.gender as GenderType
-        }
-        break
-      }
-      default:
-        return
     }
 
-    if (Object.keys(updateData).length > 0) {
+    if (Object.keys(updateContactData).length > 0) {
       await db
         .update(contactModel)
-        .set(updateData)
+        .set(updateContactData)
         .where(eq(contactModel.id, contactId))
     }
     return
@@ -266,23 +228,22 @@ async function saveResultToCustomField({
   if (!customFieldIdInt) {
     return
   }
-  const customField = await db.query.customFieldModel.findFirst({
-    where: {
-      id: customFieldId,
-      workspaceId,
-    },
-  })
 
-  if (!customField) {
-    return
-  }
+  const customField = await findOrFail({
+    table: customFieldModel,
+    where: {
+      id: customFieldIdInt,
+      workspaceId: contact.workspaceId,
+    },
+    message: "Custom field not found",
+  })
 
   await db
     .insert(contactCustomFieldModel)
     .values({
       contactId,
-      customFieldId,
-      value: fullText,
+      customFieldId: customField.id,
+      value: text,
       id: createId(),
     })
     .onConflictDoUpdate({
@@ -291,7 +252,7 @@ async function saveResultToCustomField({
         contactCustomFieldModel.customFieldId,
       ],
       set: {
-        value: fullText,
+        value: text,
       },
     })
 }

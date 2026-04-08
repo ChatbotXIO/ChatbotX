@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react"
+import { htmlToText } from "html-to-text"
 import { CodeXml, Smile } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
@@ -58,6 +59,14 @@ export const TiptapEditor = ({
     ],
     parseOptions: {
       preserveWhitespace: "full",
+    },
+    editorProps: {
+      transformPastedText(text) {
+        return text.replace(/\xA0/g, " ")
+      },
+      transformPastedHTML(html) {
+        return htmlToText(html)
+      },
     },
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,

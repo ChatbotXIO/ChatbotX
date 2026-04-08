@@ -89,31 +89,31 @@ export function AutomatedResponsesTable({
         enableHiding: false,
       },
       {
-        id: "userMessages",
-        accessorKey: "userMessages",
+        id: "keywords",
+        accessorKey: "keywords",
         size: 100,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.userMessage.label")}
+            title={t("fields.keywords.label")}
           />
         ),
         cell: ({ row }) => {
-          const { id, userMessages } = row.original
+          const { id, keywords } = row.original
           return (
             <div className="max-w-[200px] truncate">
               <Link
                 className="truncate"
                 href={`/space/${workspaceId}/automated-responses/${id}/edit?${searchParams.toString()}`}
-                title={userMessages.join(",")}
+                title={keywords.join(",")}
               >
-                {userMessages.join(",")}
+                {keywords.join(",")}
               </Link>
             </div>
           )
         },
         meta: {
-          label: t("fields.userMessage.label"),
+          label: t("fields.keywords.label"),
         },
         enableHiding: false,
       },

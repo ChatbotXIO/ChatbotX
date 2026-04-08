@@ -1,12 +1,13 @@
 "use client"
 
+import { geminiModels, openaiModelOptions, openaiModels } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type {
   AIFileModel,
   AIFunctionModel,
   AIMCPServerModel,
 } from "@chatbotx.io/database/types"
-import { aiProviders, defaultAIModelIds } from "@chatbotx.io/flow-config"
+import { aiProviders } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -48,7 +49,6 @@ import { toast } from "sonner"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
 import { createAIAgentRequest } from "@/features/ai-agents/schemas/action"
 import { geminiModelOptions } from "../integration-gemini/schemas/models"
-import { openaiChatModelOptions } from "../openai/models"
 
 type CreateAIAgentDialogProps = {
   workspaceId: string
@@ -140,11 +140,11 @@ export function CreateAIAgentDialog({
             models: [
               {
                 provider: aiProviders.enum.gemini,
-                model: defaultAIModelIds.gemini,
+                model: geminiModels.enum["gemini-2.5-pro"],
               },
               {
                 provider: aiProviders.enum.openai,
-                model: defaultAIModelIds.openai,
+                model: openaiModels.enum["gpt-4o-mini"],
               },
             ],
             temperature: 0.4,
@@ -259,7 +259,7 @@ export function CreateAIAgentDialog({
                   <SelectField
                     label={t("fields.model.label")}
                     name="models.1.model"
-                    options={openaiChatModelOptions}
+                    options={openaiModelOptions}
                     required
                   />
 
