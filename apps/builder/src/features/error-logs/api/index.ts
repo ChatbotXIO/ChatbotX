@@ -1,7 +1,7 @@
-import chatbotTokenErrorLogsAPIs from "./workspace-token"
+import errorLogsWorkspaceTokenAPIs from "./workspace-token"
 
 const errorLogsAPI = {
-  ...chatbotTokenErrorLogsAPIs,
+  ...errorLogsWorkspaceTokenAPIs,
 }
 
 export default errorLogsAPI

@@ -1,6 +1,5 @@
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { findChatbotOrFail } from "../queries"
-import { chatbotResource } from "../schema/resource"
+import { getWorkspacePublicResource } from "../schema/action"
 
 export const workspaceWorkspaceTokenAPIs = {
   getWorkspaceWorkspaceTokenAPI: workspaceTokenAuthAPI
@@ -10,9 +9,9 @@ export const workspaceWorkspaceTokenAPIs = {
       summary: "Get workspace",
       tags: ["Workspace"],
     })
-    .output(chatbotResource.omit({ token: true }))
-    .handler(async ({ context }) => {
-      return await findChatbotOrFail({ id: context.workspace.id })
+    .output(getWorkspacePublicResource)
+    .handler(({ context }) => {
+      return context.workspace
     }),
 }
 

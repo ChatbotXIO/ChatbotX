@@ -19,6 +19,11 @@ export const listInboxesRequest = basePaginationRequest.extend({
 })
 export type ListInboxesRequest = z.infer<typeof listInboxesRequest>
 
+export const publishInboxesRequest = listInboxesRequest.omit({
+  workspaceId: true,
+})
+export type PublishInboxesRequest = z.infer<typeof publishInboxesRequest>
+
 export const listInboxesResponse = z.object({
   data: z.array(
     inboxResource.extend({
@@ -31,3 +36,18 @@ export const listInboxesResponse = z.object({
   pageCount: z.number(),
 })
 export type ListInboxesResponse = z.infer<typeof listInboxesResponse>
+
+export const publicListInboxesResponse = z.object({
+  data: z.array(
+    inboxResource.pick({
+      id: true,
+      name: true,
+      channel: true,
+      status: true,
+    }),
+  ),
+  pageCount: z.number(),
+})
+export type PublicListInboxesResponse = z.infer<
+  typeof publicListInboxesResponse
+>

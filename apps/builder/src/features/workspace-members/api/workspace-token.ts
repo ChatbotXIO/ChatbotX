@@ -6,7 +6,7 @@ import {
 } from "../schema/query"
 
 export const workspaceMembersAPIs = {
-  listChatbotMembersChatbotTokenAPI: workspaceTokenAuthAPI
+  listMembersWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/workspace-members",

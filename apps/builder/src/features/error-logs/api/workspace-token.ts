@@ -5,8 +5,8 @@ import {
   publicListErrorLogsResponse,
 } from "../schemas/query"
 
-export const chatbotTokenErrorLogsAPIs = {
-  listErrorLogsChatbotTokenAPI: workspaceTokenAuthAPI
+export const errorLogsWorkspaceTokenAPIs = {
+  listErrorLogsWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/v1/error-logs",
@@ -23,4 +23,4 @@ export const chatbotTokenErrorLogsAPIs = {
     }),
 }
 
-export default chatbotTokenErrorLogsAPIs
+export default errorLogsWorkspaceTokenAPIs

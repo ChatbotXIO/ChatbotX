@@ -1,4 +1,3 @@
-import { createSelectSchema, errorLogModel } from "@chatbotx.io/database/schema"
 import type { ErrorLogModel } from "@chatbotx.io/database/types"
 import { getSortingStateParser } from "@chatbotx.io/ui/lib/parsers"
 import {
@@ -7,7 +6,9 @@ import {
   parseAsString,
 } from "nuqs/server"
 import z from "zod"
+import { contactResource } from "@/features/contacts/schemas/resource"
 import { basePaginationRequest } from "@/lib/pagination"
+import { errorLogResource } from "./resource"
 
 export const listErrorLogsSearchParamsCache = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -25,11 +26,20 @@ export const listErrorLogsRequest = basePaginationRequest.extend({
 
 export type ListErrorLogsRequest = z.infer<typeof listErrorLogsRequest>
 
-export const publicErrorLogResource = createSelectSchema(errorLogModel)
-export type PublicErrorLogResource = z.infer<typeof publicErrorLogResource>
+export const listErrorLogsResponse = z.object({
+  data: z.array(
+    errorLogResource.and(
+      z.object({
+        contact: contactResource.nullable(),
+      }),
+    ),
+  ),
+  pageCount: z.number(),
+})
+export type ListErrorLogsResponse = z.infer<typeof listErrorLogsResponse>
 
 export const publicListErrorLogsResponse = z.object({
-  data: z.array(publicErrorLogResource),
+  data: z.array(errorLogResource),
   pageCount: z.number(),
 })
 export type PublicListErrorLogsResponse = z.infer<

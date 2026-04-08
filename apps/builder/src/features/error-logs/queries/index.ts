@@ -4,14 +4,15 @@ import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { ErrorLogResource } from "../schemas"
-import type { ListErrorLogsRequest } from "../schemas/query"
+import type {
+  ListErrorLogsRequest,
+  ListErrorLogsResponse,
+} from "../schemas/query"
 
 export async function listErrorLogs(
   input: ListErrorLogsRequest,
-): Promise<PaginatedResponse<ErrorLogResource>> {
+): Promise<ListErrorLogsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const where = {

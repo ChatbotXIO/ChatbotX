@@ -5,8 +5,8 @@ import { getSequence, listSequences } from "../queries"
 import { listSequencesResponse } from "../schema/action"
 import { sequenceResource } from "../schema/resource"
 
-export const chatbotTokenSequencesAPIs = {
-  listSequencesChatbotTokenAPI: workspaceTokenAuthAPI
+export const sequencesWorkspaceTokenAPIs = {
+  listSequencesWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/sequences",
@@ -22,7 +22,7 @@ export const chatbotTokenSequencesAPIs = {
       })
     }),
 
-  getSequenceChatbotTokenAPI: workspaceTokenAuthAPI
+  getSequenceWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
       path: "/sequences/{id}",
@@ -36,4 +36,4 @@ export const chatbotTokenSequencesAPIs = {
     }),
 }
 
-export default chatbotTokenSequencesAPIs
+export default sequencesWorkspaceTokenAPIs

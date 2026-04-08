@@ -5,7 +5,6 @@ import { aiFilesAPI } from "@/features/ai-files/api"
 import { aiFunctionsAPI } from "@/features/ai-functions/api"
 import { aiMcpServerAPIs } from "@/features/ai-mcp-servers/api"
 import botFieldsAPIs from "@/features/bot-fields/api"
-import { channelsAPI } from "@/features/channels/api"
 import contactsAPIs from "@/features/contacts/api"
 import { conversationsAPI } from "@/features/conversations/api"
 import customFieldsAPI from "@/features/custom-fields/api"
@@ -51,6 +50,5 @@ export const router = {
   messagesAPI,
   errorLogsAPI,
   workspacesAPI,
-  channelsAPI,
   aiFunctionsAPI,
 }
