@@ -6,6 +6,7 @@ import {
 } from "nuqs/server"
 import { z } from "zod"
 import { userResource } from "@/features/users/schemas/resource"
+import { basePaginationRequest } from "@/lib/pagination"
 import { workspaceMemberResource } from "./resource"
 
 export const getWorkspaceMembersSearchParamsCache = createSearchParamsCache({
@@ -20,10 +21,8 @@ export type GetWorkspaceMembersSchema = Awaited<
   workspaceId: string
 }
 
-export const listWorkspaceMembersRequest = z.object({
+export const listWorkspaceMembersRequest = basePaginationRequest.extend({
   workspaceId: zodBigintAsString(),
-  page: z.coerce.number().int().min(1).default(1),
-  perPage: z.coerce.number().int().min(1).default(10),
   keyword: z.string().nullish().default(null),
 })
 export type ListWorkspaceMembersRequest = z.infer<
