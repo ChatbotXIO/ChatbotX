@@ -13,7 +13,7 @@ export const workspaceMembersAPIs = {
       summary: "List workspace members",
       tags: ["Members"],
     })
-    .input(listWorkspaceMembersRequest)
+    .input(listWorkspaceMembersRequest.omit({ workspaceId: true }))
     .output(listWorkspaceMembersResponse)
     .handler(async ({ context, input }) => {
       return await listWorkspaceMembers({
