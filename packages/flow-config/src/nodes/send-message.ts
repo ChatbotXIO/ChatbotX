@@ -69,14 +69,18 @@ export const sendMessageNodeDefaultFn = (
   },
 })
 
+export const BROADCAST_PAYLOAD_TYPE = "broadcast"
+export const SEQUENCE_SCHEDULE_PAYLOAD_TYPE = "sequenceSchedule"
+export const UPDATE_STATUS_PAYLOAD_TYPE = "updateStatus"
+
 export const broadcastMetadataPayload = z.object({
-  type: z.literal("broadcast"),
+  type: z.literal(BROADCAST_PAYLOAD_TYPE),
   broadcastId: z.string(),
   contactInboxId: z.string(),
 })
 
 export const sequenceScheduleMetadataPayload = z.object({
-  type: z.literal("sequenceSchedule"),
+  type: z.literal(SEQUENCE_SCHEDULE_PAYLOAD_TYPE),
   stepId: z.string(),
   sequenceId: z.string(),
   dispatchId: z.string(),
@@ -84,7 +88,7 @@ export const sequenceScheduleMetadataPayload = z.object({
 })
 
 export const updateStatusPayload = z.object({
-  type: z.literal("updateStatus"),
+  type: z.literal(UPDATE_STATUS_PAYLOAD_TYPE),
 })
 
 export type BroadcastMetadataPayload = z.infer<typeof broadcastMetadataPayload>

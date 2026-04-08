@@ -1,7 +1,9 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { db, sql } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
+  BROADCAST_PAYLOAD_TYPE,
   type BroadcastMetadataPayload,
   type FlowClickedPayload,
   FlowEventType,
@@ -196,7 +198,8 @@ export class BroadcastAnalyticsService {
   async onMessageSent(payloads: MessageSentPayload[]) {
     const broadcastPayloads = payloads.filter(
       (p) =>
-        p.metadata?.type === "broadcast" && p.context.channel !== "whatsapp",
+        p.metadata?.type === BROADCAST_PAYLOAD_TYPE &&
+        p.context.channel !== channelTypes.enum.whatsapp,
     )
 
     if (broadcastPayloads.length === 0) {
@@ -243,7 +246,7 @@ export class BroadcastAnalyticsService {
     const insertedData: BroadcastStatsType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "broadcast") {
+      if (payload.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,
@@ -274,7 +277,7 @@ export class BroadcastAnalyticsService {
     const insertedData: BroadcastStatsType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "broadcast") {
+      if (payload.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,

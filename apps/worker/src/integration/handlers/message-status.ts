@@ -2,8 +2,11 @@ import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType as DbIntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploader } from "@chatbotx.io/filesystem"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import { MessageEventType } from "@chatbotx.io/flow-config"
+import {
+  MessageEventType,
+  type MetadataPayload,
+  UPDATE_STATUS_PAYLOAD_TYPE,
+} from "@chatbotx.io/flow-config"
 import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
 import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
@@ -87,7 +90,7 @@ export const handleMessageStatus = async (
       },
       occurredAt: new Date(),
       metadata: {
-        type: "updateStatus",
+        type: UPDATE_STATUS_PAYLOAD_TYPE,
       } as MetadataPayload,
     }
 

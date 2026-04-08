@@ -1,4 +1,4 @@
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import { GlobeIcon, type LucideIcon } from "lucide-react"
 import { INBOX_ICON_CONFIG } from "@/features/inboxes/components/inbox-icon"
 import type { MenuData, MenuItem, TranslationFn } from "../../types"
@@ -32,7 +32,7 @@ export const integrationMenus = (
   return inboxes.map((inbox) => {
     let children: MenuItem[] | null = null
 
-    if (inboxChannel === "whatsapp") {
+    if (inboxChannel === channelTypes.enum.whatsapp) {
       children = waTemplateMenus(t, menuData, inbox)
     }
 

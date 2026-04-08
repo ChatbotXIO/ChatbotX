@@ -250,7 +250,10 @@ function CreateBroadcastChooseChannel() {
   const handleChooseChannel = useCallback(
     (channel: ChannelType) => {
       setValue("channel", channel)
-      if (channel === "messenger" || channel === "whatsapp") {
+      if (
+        channel === channelTypes.enum.messenger ||
+        channel === channelTypes.enum.whatsapp
+      ) {
         setValue("subaction", null)
       } else {
         setValue("subaction", broadcastSubactions.enum.allContacts)

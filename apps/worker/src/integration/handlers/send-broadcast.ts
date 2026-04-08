@@ -1,6 +1,9 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { broadcastModel } from "@chatbotx.io/database/schema"
-import type { WaTemplateParams } from "@chatbotx.io/flow-config"
+import {
+  BROADCAST_PAYLOAD_TYPE,
+  type WaTemplateParams,
+} from "@chatbotx.io/flow-config"
 import {
   ChatJobAction,
   chatQueue,
@@ -55,7 +58,7 @@ export const sendBroadcast = async (broadcastId: string) => {
               flowId: broadcast.flowId,
               conversationId: contactOnBroadcast.conversationId,
               metadata: {
-                type: "broadcast",
+                type: BROADCAST_PAYLOAD_TYPE,
                 broadcastId: broadcast.id,
                 contactInboxId: contactOnBroadcast.contactInboxId,
               },
@@ -75,7 +78,7 @@ export const sendBroadcast = async (broadcastId: string) => {
                 | WaTemplateParams
                 | undefined,
               metadata: {
-                type: "broadcast",
+                type: BROADCAST_PAYLOAD_TYPE,
                 broadcastId: broadcast.id,
                 contactInboxId: contactOnBroadcast.contactInboxId,
               },

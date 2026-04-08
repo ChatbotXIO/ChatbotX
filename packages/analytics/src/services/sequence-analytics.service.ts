@@ -10,6 +10,7 @@ import {
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
+  SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { format } from "date-fns"
@@ -86,7 +87,7 @@ export class SequenceAnalyticsService {
 
     for (const payload of payloads) {
       if (
-        payload.metadata?.type === "sequenceSchedule" &&
+        payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE &&
         payload.context.channel !== channelTypes.enum.whatsapp
       ) {
         insertedData.push({
@@ -114,10 +115,13 @@ export class SequenceAnalyticsService {
     await saveToClickhouse(insertedData)
 
     const sequenceContacts = payloads
-      .filter((p) => p.metadata?.type === "sequenceSchedule")
+      .filter((p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE)
       .map((p) => ({
         sequenceId: (
-          p.metadata as { type: "sequenceSchedule"; sequenceId: string }
+          p.metadata as {
+            type: typeof SEQUENCE_SCHEDULE_PAYLOAD_TYPE
+            sequenceId: string
+          }
         ).sequenceId,
         contactId: p.context.contactId,
       }))
@@ -138,7 +142,7 @@ export class SequenceAnalyticsService {
     const insertedData: SequenceScheduleEventType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "sequenceSchedule") {
+      if (payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,
@@ -170,7 +174,7 @@ export class SequenceAnalyticsService {
     const insertedData: SequenceScheduleEventType[] = []
 
     for (const payload of payloads) {
-      if (payload.metadata?.type === "sequenceSchedule") {
+      if (payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,

@@ -1,4 +1,5 @@
 import type { Readable } from "node:stream"
+import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import {
   type Consumer,
   createConsumer,
@@ -174,7 +175,7 @@ class DispatchConsumer {
         step as StepWithRelations,
         {
           metadata: {
-            type: "sequenceSchedule",
+            type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
             stepId: step?.id ?? "",
             sequenceId: step?.sequenceId ?? "",
             dispatchId: dispatch.id,
