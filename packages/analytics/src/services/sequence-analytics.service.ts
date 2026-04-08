@@ -1,6 +1,7 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
 import { db, sql } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   type FlowClickedPayload,
   FlowEventType,
@@ -86,7 +87,7 @@ export class SequenceAnalyticsService {
     for (const payload of payloads) {
       if (
         payload.metadata?.type === "sequenceSchedule" &&
-        payload.context.channel !== "whatsapp"
+        payload.context.channel !== channelTypes.enum.whatsapp
       ) {
         insertedData.push({
           event_id: createId(),
@@ -270,7 +271,9 @@ export class SequenceAnalyticsService {
         }
       })
 
-      await saveToClickhouse(insertedData)
+      if (insertedData.length) {
+        await saveToClickhouse(insertedData)
+      }
     }
   }
 
