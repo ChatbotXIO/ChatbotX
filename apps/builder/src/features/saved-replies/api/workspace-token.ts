@@ -1,4 +1,3 @@
-import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { workspaceTokenAuthAPI } from "@/orpc"
 import { listSavedReplies } from "../queries"
@@ -12,14 +11,10 @@ export const savedReplyWorkspaceTokenAPIs = {
       summary: "List saved replies",
       tags: ["Saved Replies"],
     })
-    .input(
-      z.object({
-        userId: zodBigintAsString(),
-      }),
-    )
+    .input(z.object({}))
     .output(listSavedReplyResponse)
-    .handler(async ({ input }) => {
-      return await listSavedReplies({ userId: input.userId })
+    .handler(async ({ context }) => {
+      return await listSavedReplies({ workspaceId: context.workspace.id })
     }),
 }
 

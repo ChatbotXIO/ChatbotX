@@ -6,6 +6,6 @@ import { z } from "zod"
 
 export const savedReplyResource = createSelectSchema(savedReplyModel, {
   id: z.string(),
-  userId: z.string(),
+  workspaceId: z.string(),
 })
 export type SavedReplyResource = z.infer<typeof savedReplyResource>

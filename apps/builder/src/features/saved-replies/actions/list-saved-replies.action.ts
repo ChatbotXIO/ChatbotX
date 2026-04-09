@@ -1,10 +1,11 @@
 "use server"
 
-import { authActionClient } from "@/lib/safe-action"
+import { workspaceIdrequestParams } from "@/features/common/schemas"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { listSavedReplies } from "../queries"
 
-export const listSavedRepliesAction = authActionClient.action(
-  async ({ ctx }: { ctx: { user: { id: string } } }) => {
-    return await listSavedReplies({ userId: ctx.user.id })
-  },
-)
+export const listSavedRepliesAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdrequestParams)
+  .action(async ({ bindArgsParsedInputs: [workspaceId] }) => {
+    return await listSavedReplies({ workspaceId })
+  })

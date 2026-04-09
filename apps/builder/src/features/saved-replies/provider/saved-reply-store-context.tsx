@@ -21,17 +21,19 @@ export const SavedReplyStoreContext = createContext<
 
 export type SavedReplyStoreProviderProps = {
   children: ReactNode
+  workspaceId: string
   autoInitialize?: boolean
 }
 
 export const SavedReplyStoreProvider = ({
   children,
+  workspaceId,
   autoInitialize = true,
 }: SavedReplyStoreProviderProps) => {
   const storeRef = useRef<SavedReplyStoreApi>(null)
 
   if (!storeRef.current) {
-    storeRef.current = createSavedReplyStore()
+    storeRef.current = createSavedReplyStore({ workspaceId })
   }
 
   useEffect(() => {

@@ -1,21 +1,23 @@
-import { authMiddleware } from "@/middlewares/auth"
+import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listSavedReplies } from "../queries"
-import { listSavedReplyResponse } from "../schema/mutation"
+import {
+  listSavedRepliesRequest,
+  listSavedReplyResponse,
+} from "../schema/mutation"
 
 export const savedRepliesAuthorizedAPI = {
   listSavedRepliesAuthorizedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/saved-replies",
+      path: "/workspaces/{workspaceId}/saved-replies",
       summary: "List saved replies",
       tags: ["Saved Replies"],
     })
-    .use(authMiddleware)
+    .input(listSavedRepliesRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSavedReplyResponse)
-    .handler(async ({ context }) => {
-      return await listSavedReplies({
-        userId: context.user.id,
-      })
+    .handler(async ({ input }) => {
+      return await listSavedReplies({ workspaceId: input.workspaceId })
     }),
 }

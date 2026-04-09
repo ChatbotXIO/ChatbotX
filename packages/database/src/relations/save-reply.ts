@@ -4,9 +4,9 @@ import * as schema from "../schema"
 
 export const savedReplyRelations = defineRelationsPart(schema, (r) => ({
   savedReplyModel: {
-    user: r.one.userModel({
-      from: r.savedReplyModel.userId,
-      to: r.userModel.id,
+    workspace: r.one.workspaceModel({
+      from: r.savedReplyModel.workspaceId,
+      to: r.workspaceModel.id,
       optional: false,
     }),
   },

@@ -1,6 +1,11 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import z from "zod"
+import { z } from "zod"
 import { savedReplyResource } from "./resource"
+
+export const listSavedRepliesRequest = z.object({
+  workspaceId: zodBigintAsString(),
+})
+export type ListSavedRepliesRequest = z.infer<typeof listSavedRepliesRequest>
 
 export const createSavedReplyRequest = z.object({
   shortcut: z.string().trim().min(1).max(100),

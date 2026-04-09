@@ -15,12 +15,14 @@ import { editSavedReplyRequest } from "./schema/mutation"
 import type { SavedReplyResource } from "./schema/resource"
 
 type SavedReplyEditFormProps = {
+  workspaceId: string
   editingSavedReply: SavedReplyResource
   onCancel: () => void
   onSaved: (item: SavedReplyResource) => void
 }
 
 const SavedReplyEditForm = ({
+  workspaceId,
   editingSavedReply,
   onCancel,
   onSaved,
@@ -32,7 +34,7 @@ const SavedReplyEditForm = ({
     handleSubmitWithAction,
     resetFormAndAction: resetForm,
   } = useHookFormAction(
-    editSavedReplyAction.bind(null, editingSavedReply.id),
+    editSavedReplyAction.bind(null, workspaceId, editingSavedReply.id),
     zodResolver(editSavedReplyRequest),
     {
       actionProps: {

@@ -38,9 +38,5 @@ export const userRelations = defineRelationsPart(schema, (r) => ({
       from: r.userModel.id,
       to: r.organizationMemberModel.userId,
     }),
-    savedReplies: r.many.savedReplyModel({
-      from: r.userModel.id,
-      to: r.savedReplyModel.userId,
-    }),
   },
 }))

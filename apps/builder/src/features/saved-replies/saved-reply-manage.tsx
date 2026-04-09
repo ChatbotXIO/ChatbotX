@@ -72,6 +72,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
           <SavedReplyCreateForm
             onCancel={() => setView({ type: "list" })}
             onSaved={upsertSavedReply}
+            workspaceId={workspaceId}
           />
         ) : null}
         {view.type === "edit" && editingSavedReply ? (
@@ -79,6 +80,7 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
             editingSavedReply={editingSavedReply}
             onCancel={() => setView({ type: "list" })}
             onSaved={upsertSavedReply}
+            workspaceId={workspaceId}
           />
         ) : null}
 

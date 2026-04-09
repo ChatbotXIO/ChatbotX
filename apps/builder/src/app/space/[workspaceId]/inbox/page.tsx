@@ -28,7 +28,10 @@ export default async function InboxPage({ params }: InboxPageProps) {
         <InboxStoreProvider workspaceId={workspaceId}>
           <UserStoreProvider workspaceId={workspaceId}>
             <CustomFieldStoreProvider workspaceId={workspaceId}>
-              <SavedReplyStoreProvider autoInitialize={false}>
+              <SavedReplyStoreProvider
+                autoInitialize={false}
+                workspaceId={workspaceId}
+              >
                 <FlowStoreProvider workspaceId={workspaceId}>
                   <ChatLayout layout={savedLayout} workspaceId={workspaceId} />
                 </FlowStoreProvider>

@@ -7,6 +7,7 @@ import type { SavedReplyResource } from "../schema/resource"
 export type SavedReplyStoreState = {
   initialized: boolean
   isLoading: boolean
+  workspaceId: string
   savedReplies: SavedReplyResource[]
   error: string | null
 }
@@ -20,10 +21,11 @@ export type SavedReplyStoreActions = {
 
 export type SavedReplyStore = SavedReplyStoreState & SavedReplyStoreActions
 
-export const createSavedReplyStore = () =>
+export const createSavedReplyStore = (props: { workspaceId: string }) =>
   createStore<SavedReplyStore>((set, get) => ({
     initialized: false,
     isLoading: false,
+    workspaceId: props.workspaceId,
     savedReplies: [],
     error: null,
 
@@ -49,7 +51,7 @@ export const createSavedReplyStore = () =>
     },
 
     getAllSavedReplies: async () => {
-      const { isLoading } = get()
+      const { isLoading, workspaceId } = get()
 
       // Skip if already initialized for the same workspaceId or currently loading
       if (isLoading) {
@@ -60,11 +62,14 @@ export const createSavedReplyStore = () =>
 
       try {
         const { data } = await ky
-          .get<ListSavedReplyResponse>("/api/saved-replies", {
-            searchParams: {
-              perPage: maxPerPageString,
+          .get<ListSavedReplyResponse>(
+            `/api/workspaces/${workspaceId}/saved-replies`,
+            {
+              searchParams: {
+                perPage: maxPerPageString,
+              },
             },
-          })
+          )
           .json()
 
         set({

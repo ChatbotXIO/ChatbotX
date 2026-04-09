@@ -1,0 +1,3 @@
+ALTER TABLE "SavedReply" RENAME COLUMN "userId" TO "workspaceId";--> statement-breakpoint
+ALTER TABLE "SavedReply" RENAME CONSTRAINT "SavedReply_userId_User_id_fkey" TO "SavedReply_workspaceId_Workspace_id_fkey";--> statement-breakpoint
+ALTER TABLE "SavedReply" DROP CONSTRAINT "SavedReply_workspaceId_Workspace_id_fkey", ADD CONSTRAINT "SavedReply_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
