@@ -2,7 +2,7 @@ import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { broadcastModel, conversationModel } from "@chatbotx.io/database/schema"
 import type { WaTemplateParams } from "@chatbotx.io/flow-config"
 import {
-  ChatJobAction,
+  chatJobActions,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -95,8 +95,8 @@ export const sendBroadcast = async (broadcastId: string) => {
         }
 
         if (broadcast.templateId) {
-          await chatQueue.add(ChatJobAction.sendWhatsappTemplateMessage, {
-            type: ChatJobAction.sendWhatsappTemplateMessage,
+          await chatQueue.add(chatJobActions.enum.sendWhatsappTemplateMessage, {
+            type: chatJobActions.enum.sendWhatsappTemplateMessage,
             data: {
               conversationId: cvst.id,
               templateId: broadcast.templateId,

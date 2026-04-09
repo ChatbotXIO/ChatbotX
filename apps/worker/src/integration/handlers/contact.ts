@@ -27,7 +27,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import {
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import {
   cancelPendingDispatches,
@@ -319,7 +319,7 @@ export const broadcastBlockContactEvent = async ({
       },
     }),
     broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.contactBlocked,
+      eventType: realtimeEventTypes.enum.contactBlocked,
       data: {
         contactId: contact.id,
       },
@@ -354,7 +354,7 @@ export const broadcastUnblockContactEvent = async ({
       },
     }),
     broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.contactUnblocked,
+      eventType: realtimeEventTypes.enum.contactUnblocked,
       data: {
         contactId: contact.id,
       },

@@ -26,7 +26,7 @@ import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import type { OutgoingMessage } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -159,7 +159,7 @@ export async function handleCreateWebchatMessage({
       const promises: Promise<unknown>[] = []
       promises.push(
         broadcastToWorkspaceParty(newMessage.workspaceId, {
-          eventType: RealtimeEventType.messageCreated,
+          eventType: realtimeEventTypes.enum.messageCreated,
           data: {
             ...newMessage,
             clientId: parsedInput.clientId,
@@ -170,7 +170,7 @@ export async function handleCreateWebchatMessage({
       if (uploadedFiles.length > 0 && contactInbox.sourceId) {
         promises.push(
           broadcastToGuestParty(contactInbox.sourceId, {
-            eventType: RealtimeEventType.messageCreated,
+            eventType: realtimeEventTypes.enum.messageCreated,
             data: {
               ...newMessage,
               clientId: parsedInput.clientId,

@@ -6,25 +6,48 @@ import { createId } from "@chatbotx.io/utils"
 import { addDays } from "date-fns"
 import { randomString } from "remeda"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
+import {
+  canAccessWorkspace,
+  workspacePermissions,
+} from "@/lib/auth/permissions"
+import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
 
 export const inviteWorkspaceMemberAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(inviteWorkspaceMemberRequest)
-  .action(
-    async ({ ctx, parsedInput, bindArgsParsedInputs: [workspaceId] }) =>
-      await db
-        .insert(invitationModel)
-        .values({
-          id: createId(),
-          code: `${randomString()}${createId()}`,
-          permissions: parsedInput.permissions,
-          expiresAt: addDays(new Date(), 1),
-          workspaceId,
-          organizationId: ctx.workspace.organizationId,
-          invitedBy: ctx.user.id,
-        })
-        .returning()
-        .then((result) => result[0]),
-  )
+  .action(async ({ ctx, parsedInput, bindArgsParsedInputs: [workspaceId] }) => {
+    const currentUserAndTargetChatbot =
+      await getCurrentUserAndTargetChatbot(workspaceId)
+    if (!currentUserAndTargetChatbot) {
+      throw new ChatbotXException(
+        "You are not authorized to invite members to this workspace.",
+      )
+    }
+
+    const canInviteMember = canAccessWorkspace(
+      currentUserAndTargetChatbot.targetWorkspaceMember,
+      workspacePermissions.inviteMember,
+    )
+    if (!canInviteMember) {
+      throw new ChatbotXException(
+        "You do not have permission to invite members to this workspace.",
+      )
+    }
+
+    return await db
+      .insert(invitationModel)
+      .values({
+        id: createId(),
+        code: `${randomString()}${createId()}`,
+        permissions: parsedInput.permissions,
+        expiresAt: addDays(new Date(), 1),
+        workspaceId,
+        organizationId: ctx.workspace.organizationId,
+        invitedBy: ctx.user.id,
+      })
+      .returning()
+      .then((result) => result[0])
+  })

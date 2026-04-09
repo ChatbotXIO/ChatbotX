@@ -3,6 +3,10 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import {
+  canAccessWorkspace,
+  workspacePermissions,
+} from "@/lib/auth/permissions"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
@@ -40,11 +44,13 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
       )
     }
 
-    const permissions =
-      currentUserAndTargetChatbot.targetWorkspaceMember.permissions
-    if (!permissions.superAdmin) {
+    const canRemoveMember = canAccessWorkspace(
+      currentUserAndTargetChatbot.targetWorkspaceMember,
+      workspacePermissions.removeMember,
+    )
+    if (!canRemoveMember) {
       throw new ChatbotXException(
-        "You are not authorized to delete this workspace member. You need to be a super admin to do this.",
+        "You are not authorized to delete this workspace member.",
       )
     }
 

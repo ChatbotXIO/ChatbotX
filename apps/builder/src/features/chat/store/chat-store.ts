@@ -53,7 +53,7 @@ export type ChatActions = {
     conversationId: string,
     data: Partial<ConversationResource>,
   ) => void
-  updateConversations: (
+  bulkUpdateConversations: (
     conversationIds: string[],
     data: Partial<ConversationResource>,
   ) => void
@@ -333,7 +333,7 @@ export const createChatStore = () => {
       }
     },
 
-    updateConversations: (
+    bulkUpdateConversations: (
       conversationIds: string[],
       data: Partial<ConversationResource>,
     ) => {

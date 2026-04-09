@@ -6,8 +6,8 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
-  ChatJobAction,
   type ChatJobSendFlowStep,
+  chatJobActions,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -59,8 +59,8 @@ export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
   const { conversation, flowVersion, step, trackingContext } = props
-  await chatQueue.add(ChatJobAction.sendFlowMessage, {
-    type: ChatJobAction.sendFlowMessage,
+  await chatQueue.add(chatJobActions.enum.sendFlowMessage, {
+    type: chatJobActions.enum.sendFlowMessage,
     data: {
       conversationId: conversation.id,
       flowId: flowVersion.flowId,

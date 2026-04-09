@@ -31,6 +31,6 @@ const worker = new Worker(
 
 worker.on("failed", (job, err) => {
   if (job) {
-    logger.error(`Webhook job ${job.id} has failed`, err)
+    logger.error(err, `Webhook job ${job.id} has failed`)
   }
 })

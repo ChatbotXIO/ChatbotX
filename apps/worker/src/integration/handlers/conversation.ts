@@ -2,7 +2,7 @@ import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import {
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import type {
   IntegrationJobAgentMarkAsRead,
@@ -18,7 +18,7 @@ export const broadcastAssignConversation = async (
   const { inbox } = await getInboxWithAuthFromInboxId(conversations[0].inboxId)
 
   await broadcastToWorkspaceParty(inbox.workspaceId, {
-    eventType: RealtimeEventType.conversationAssigned,
+    eventType: realtimeEventTypes.enum.conversationAssigned,
     data: {
       conversationIds: conversations.map((c) => c.id),
       assignedUserId: conversations[0].assignedUserId,

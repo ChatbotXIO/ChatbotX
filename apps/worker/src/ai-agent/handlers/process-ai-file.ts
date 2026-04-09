@@ -1,6 +1,6 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
+import { aiEmbeddingStatuses } from "@chatbotx.io/database/partials"
 import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
-import type { AIEmbeddingStatus } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
 import {
   AIJobAction,
@@ -68,7 +68,7 @@ export async function processAIFile(
       content: c.content,
       workspaceId: aiFile.workspaceId,
       aiFileId: aiFile.id,
-      status: "pending" as AIEmbeddingStatus,
+      status: aiEmbeddingStatuses.enum.pending,
     })),
   )
 

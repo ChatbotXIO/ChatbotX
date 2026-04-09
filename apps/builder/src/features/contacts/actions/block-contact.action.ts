@@ -1,13 +1,16 @@
 "use server"
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import type { RequestMetadata } from "@chatbotx.io/database/partials"
 import { contactModel } from "@chatbotx.io/database/schema"
+import type { ContactModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const blockContactAction = workspaceActionClient
@@ -17,21 +20,39 @@ export const blockContactAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    await blockContact({ workspaceId, id })
+    await blockContact(
+      { workspaceId, id },
+      {
+        platform: "web",
+      },
+    )
   })
 
-export const blockContact = async (ctx: {
-  workspaceId: string
-  id: string
-}) => {
+export const blockContact = async (
+  props: {
+    workspaceId: string
+    id: string
+  },
+  metadata: RequestMetadata,
+) => {
+  const { workspaceId, id } = props
+
   const existingContact = await findOrFail({
     table: contactModel,
     where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
+      workspaceId,
+      id,
     },
     message: "Contact not found",
   })
+
+  if (existingContact.blockedAt) {
+    logger.info({ metadata }, `Contact ${id} is already blocked`)
+
+    return {
+      id: existingContact.id,
+    }
+  }
 
   const contact = await db
     .update(contactModel)
@@ -43,14 +64,36 @@ export const blockContact = async (ctx: {
     .then((result) => result[0])
 
   revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#contacts`,
-    `workspaces:${ctx.workspaceId}#conversations`,
+    `workspaces:${workspaceId}#contacts`,
+    `workspaces:${workspaceId}#conversations`,
   ])
+
+  // 1- trigger realtime event
+  // 2- trigger audit log
+
+  await onBlockedContact(contact, metadata)
+
+  return {
+    id: contact.id,
+  }
+}
+
+const onBlockedContact = async (
+  contact: ContactModel,
+  metadata: RequestMetadata,
+) => {
+  const { workspaceId, id } = props
+
+  const contact = await findOrFail({
+    table: contactModel,
+    where: { workspaceId, id },
+  })
 
   await integrationQueue.add(IntegrationJobAction.blockContact, {
     type: IntegrationJobAction.blockContact,
     data: {
       contact,
+      platform,
     },
   })
 }

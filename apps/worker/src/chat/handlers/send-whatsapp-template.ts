@@ -9,7 +9,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import {
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import type {
@@ -119,7 +119,7 @@ export async function processWhatsappTemplate(
   )
 
   broadcastToWorkspaceParty(conversation.workspaceId, {
-    eventType: RealtimeEventType.messageCreated,
+    eventType: realtimeEventTypes.enum.messageCreated,
     data: newMessage,
   })
 

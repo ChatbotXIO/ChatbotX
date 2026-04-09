@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  type RealtimeEventData,
-  RealtimeEventType,
+  realtimeEvents,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
@@ -14,9 +14,8 @@ import { useChatStore } from "./store/chat-store-provider"
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
 
-  const { handleNewMessage, updateContact, updateConversations } = useChatStore(
-    (state) => state,
-  )
+  const { handleNewMessage, updateContact, bulkUpdateConversations } =
+    useChatStore((state) => state)
 
   usePartySocket({
     host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
@@ -35,23 +34,23 @@ export function ChatRealtime() {
     // onOpen() {},
     onMessage(e) {
       try {
-        const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
+        const { eventType, data } = realtimeEvents.parse(JSON.parse(e.data))
         switch (eventType) {
-          case RealtimeEventType.messageCreated:
+          case realtimeEventTypes.enum.messageCreated:
             handleNewMessage(data as MessageResourceWithRelations)
             break
-          case RealtimeEventType.contactBlocked:
+          case realtimeEventTypes.enum.contactBlocked:
             updateContact(data.contactId, {
               blockedAt: new Date(),
             })
             break
-          case RealtimeEventType.contactUnblocked:
+          case realtimeEventTypes.enum.contactUnblocked:
             updateContact(data.contactId, {
               blockedAt: null,
             })
             break
-          case RealtimeEventType.conversationAssigned:
-            updateConversations(data.conversationIds, {
+          case realtimeEventTypes.enum.conversationAssigned:
+            bulkUpdateConversations(data.conversationIds, {
               assignedUserId: data.assignedUserId,
               assignedInboxTeamId: data.assignedInboxTeamId,
             })

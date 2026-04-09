@@ -5,7 +5,7 @@ import type {
   IntegrationJobTriggerAutomatedResponse,
 } from "@chatbotx.io/worker-config"
 import {
-  ChatJobAction,
+  chatJobActions,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -141,8 +141,8 @@ export async function replyByAutomatedResponse(
           automatedResponse.text,
           message.conversationId,
         )
-        await chatQueue.add(ChatJobAction.sendChatMessage, {
-          type: ChatJobAction.sendChatMessage,
+        await chatQueue.add(chatJobActions.enum.sendChatMessage, {
+          type: chatJobActions.enum.sendChatMessage,
           data: {
             conversation,
             text: stepMessage,

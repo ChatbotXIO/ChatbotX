@@ -32,7 +32,7 @@ import {
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import type {
   AuthValue,
@@ -239,14 +239,14 @@ export async function sendFlowStep({
 
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
+        eventType: realtimeEventTypes.enum.messageCreated,
         data: message,
       }),
     ]
     if (targetContactInbox.channel === channelTypes.enum.webchat) {
       promises.push(
         broadcastToGuestParty(targetContactInbox.sourceId, {
-          eventType: RealtimeEventType.messageCreated,
+          eventType: realtimeEventTypes.enum.messageCreated,
           data: message,
         }),
       )
@@ -462,14 +462,14 @@ export const sendChatMessage = async (
 
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
+        eventType: realtimeEventTypes.enum.messageCreated,
         data: message,
       }),
     ]
     if (conversation.sourceId) {
       promises.push(
         broadcastToGuestParty(conversation.sourceId, {
-          eventType: RealtimeEventType.messageCreated,
+          eventType: realtimeEventTypes.enum.messageCreated,
           data: message,
         }),
       )

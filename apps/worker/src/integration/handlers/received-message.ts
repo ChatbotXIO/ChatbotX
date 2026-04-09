@@ -22,7 +22,7 @@ import {
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import {
   type AuthValue,
@@ -211,7 +211,7 @@ export const receiveMessage = async (
 
     try {
       broadcastToWorkspaceParty(newConversation.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
+        eventType: realtimeEventTypes.enum.messageCreated,
         data: newMessage,
       })
     } catch (error) {

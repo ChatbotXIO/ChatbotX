@@ -86,7 +86,7 @@ const manifestStore: NdjsonIngestManifestStore = {
         ingestedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
+      .where(eq(analyticsManifestStatusModel.id, objectKey))
     ingestedCache.set(objectKey, Date.now())
   },
 
@@ -98,7 +98,7 @@ const manifestStore: NdjsonIngestManifestStore = {
         lastError: errorMessage,
         updatedAt: new Date(),
       })
-      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
+      .where(eq(analyticsManifestStatusModel.id, objectKey))
   },
 }
 

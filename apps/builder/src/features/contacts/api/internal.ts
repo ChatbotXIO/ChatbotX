@@ -25,7 +25,7 @@ import {
 } from "../schemas/contact-tag"
 import { listContactsRequest, listContactsResponse } from "../schemas/query"
 
-export const contactsAuthenticatedAPI = {
+export const contactsInternalAPI = {
   listContactsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
@@ -184,5 +184,3 @@ export const contactsAuthenticatedAPI = {
       })
     }),
 }
-
-export default contactsAuthenticatedAPI

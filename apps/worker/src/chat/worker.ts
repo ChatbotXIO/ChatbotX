@@ -1,7 +1,7 @@
 import { SdkException } from "@chatbotx.io/sdk"
 import {
-  ChatJobAction,
   type ChatJobData,
+  chatJobActions,
   defaultWorkerOptions,
   getRedisConnection,
   queueName,
@@ -26,20 +26,20 @@ async function startChatWorker() {
     queueName.chat,
     async (job: Job<ChatJobData>) => {
       switch (job.data.type) {
-        case ChatJobAction.sendExternalMessage:
+        case chatJobActions.enum.sendExternalMessage:
           await sendMessageToExternal(job.data.data)
           return
-        case ChatJobAction.sendFlowMessage:
+        case chatJobActions.enum.sendFlowMessage:
           await sendFlowStep(job.data.data)
           return
-        case ChatJobAction.sendChatMessage:
+        case chatJobActions.enum.sendChatMessage:
           await sendChatMessage(job.data.data)
           return
-        case ChatJobAction.sendWhatsappTemplateMessage:
+        case chatJobActions.enum.sendWhatsappTemplateMessage:
           await sendWhatsappTemplateMessage(job.data.data)
           return
         default:
-          throw new SdkException("ChatJobAction action is not defined")
+          throw new SdkException("Chat Queue action is not defined")
       }
     },
     {

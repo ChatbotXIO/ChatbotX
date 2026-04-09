@@ -18,12 +18,12 @@ import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
-  RealtimeEventType,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import {
-  ChatJobAction,
+  chatJobActions,
   chatQueue,
   IntegrationJobAction,
   integrationQueue,
@@ -171,7 +171,7 @@ export const createMessage = async (props: {
 
   const promises: Promise<unknown>[] = [
     broadcastToWorkspaceParty(message.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
+      eventType: realtimeEventTypes.enum.messageCreated,
       data: {
         ...message,
         clientId: parsedInput.clientId,
@@ -182,7 +182,7 @@ export const createMessage = async (props: {
   if (contactInbox.channel === channelTypes.enum.webchat) {
     promises.push(
       broadcastToGuestParty(contactInbox.sourceId, {
-        eventType: RealtimeEventType.messageCreated,
+        eventType: realtimeEventTypes.enum.messageCreated,
         data: {
           ...message,
           clientId: parsedInput.clientId,
@@ -191,8 +191,8 @@ export const createMessage = async (props: {
     )
   } else {
     promises.push(
-      chatQueue.add(ChatJobAction.sendExternalMessage, {
-        type: ChatJobAction.sendExternalMessage,
+      chatQueue.add(chatJobActions.enum.sendExternalMessage, {
+        type: chatJobActions.enum.sendExternalMessage,
         data: {
           conversation: conversation as OutgoingConversation,
           message: {

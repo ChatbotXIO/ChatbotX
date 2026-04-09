@@ -3,6 +3,10 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
+import {
+  canAccessWorkspace,
+  workspacePermissions,
+} from "@/lib/auth/permissions"
 import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
@@ -27,11 +31,13 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       )
     }
 
-    const permissions =
-      currentUserAndTargetChatbot.targetWorkspaceMember.permissions
-    if (!permissions.superAdmin) {
+    const canUpdateMember = canAccessWorkspace(
+      currentUserAndTargetChatbot.targetWorkspaceMember,
+      workspacePermissions.updateMember,
+    )
+    if (!canUpdateMember) {
       throw new ChatbotXException(
-        "You are not authorized to update this workspace member. You need to be a super admin to do this.",
+        "You are not authorized to update this workspace member.",
       )
     }
 

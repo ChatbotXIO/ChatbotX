@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { IntegrationException, type Variable } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
+import { chatJobActions, chatQueue } from "@chatbotx.io/worker-config"
 import { add, isBefore } from "date-fns"
 import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
@@ -246,8 +246,8 @@ async function sendMessage(
 ) {
   const { conversation, flowVersion, step } = props
 
-  await chatQueue.add(ChatJobAction.sendChatMessage, {
-    type: ChatJobAction.sendChatMessage,
+  await chatQueue.add(chatJobActions.enum.sendChatMessage, {
+    type: chatJobActions.enum.sendChatMessage,
     data: {
       conversation,
       text,

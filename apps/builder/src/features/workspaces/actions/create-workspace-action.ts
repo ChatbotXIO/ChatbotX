@@ -9,6 +9,11 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import {
+  canAccessOrganization,
+  organizationPermissions,
+} from "@/lib/auth/permissions"
+import { ChatbotXException } from "@/lib/errors/exception"
 
 export async function createSimpleWorkspace(
   tx: Transaction,
@@ -16,6 +21,28 @@ export async function createSimpleWorkspace(
   organization: OrganizationModel,
   chatbotData: Pick<WorkspaceModel, "name" | "organizationId" | "timezone">,
 ): Promise<WorkspaceModel> {
+  const organizationMember = await tx.query.organizationMemberModel.findFirst({
+    where: {
+      organizationId: organization.id,
+      userId,
+    },
+  })
+  if (!organizationMember) {
+    throw new ChatbotXException(
+      "You are not a member of this organization and cannot create a workspace.",
+    )
+  }
+
+  const canCreateWorkspace = canAccessOrganization(
+    organizationMember.role,
+    organizationPermissions.createWorkspace,
+  )
+  if (!canCreateWorkspace) {
+    throw new ChatbotXException(
+      "You do not have permission to create workspaces in this organization.",
+    )
+  }
+
   const newChatbot = await tx
     .insert(workspaceModel)
     .values({

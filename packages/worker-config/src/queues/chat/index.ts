@@ -13,6 +13,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
+import z from "zod"
 import {
   defaultJobOptions,
   fakeQueue,
@@ -21,17 +22,16 @@ import {
 import { queueName } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
-export const ChatJobAction = {
-  sendExternalMessage: "sendExternalMessage",
-  sendFlowMessage: "sendFlowMessage",
-  sendChatMessage: "sendChatMessage",
-  sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
-  sendTyping: "sendTyping",
-  notifyExportResult: "notifyExportResult",
-} as const
+export const chatJobActions = z.enum([
+  "sendExternalMessage",
+  "sendFlowMessage",
+  "sendChatMessage",
+  "sendWhatsappTemplateMessage",
+  "sendTyping",
+])
 
 export type ChatJobSendExternalMessage = {
-  type: typeof ChatJobAction.sendExternalMessage
+  type: typeof chatJobActions.enum.sendExternalMessage
   data: {
     conversation: OutgoingConversation
     message: OutgoingMessage
@@ -39,7 +39,7 @@ export type ChatJobSendExternalMessage = {
 }
 
 export type ChatJobSendFlowStep = {
-  type: typeof ChatJobAction.sendFlowMessage
+  type: typeof chatJobActions.enum.sendFlowMessage
   data: {
     conversationId: string
     flowId: string
@@ -60,24 +60,17 @@ export type ChatJobSendFlowStep = {
 }
 
 export type ChatJobSendChatMessage = {
-  type: typeof ChatJobAction.sendChatMessage
-  data:
-    | {
-        conversation: OutgoingConversation
-        text?: string
-        url?: string
-        trackingContext?: BotResponseTrackingContext
-      }
-    | {
-        conversationId: string
-        text?: string
-        url?: string
-        trackingContext?: BotResponseTrackingContext
-      }
+  type: typeof chatJobActions.enum.sendChatMessage
+  data: {
+    conversation: OutgoingConversation
+    text?: string
+    url?: string
+    trackingContext?: BotResponseTrackingContext
+  }
 }
 
 export type ChatJobSendWhatsappTemplateMessage = {
-  type: typeof ChatJobAction.sendWhatsappTemplateMessage
+  type: typeof chatJobActions.enum.sendWhatsappTemplateMessage
   data: {
     conversationId: string
     templateId: string
@@ -87,20 +80,10 @@ export type ChatJobSendWhatsappTemplateMessage = {
 }
 
 export type ChatJobSendTyping = {
-  type: typeof ChatJobAction.sendTyping
+  type: typeof chatJobActions.enum.sendTyping
   data: {
     conversation: OutgoingConversation
     typing: boolean
-  }
-}
-
-export type ChatJobNotifyExportResult = {
-  type: typeof ChatJobAction.notifyExportResult
-  data: {
-    workspaceId: string
-    userId: string
-    status: "pending" | "completed" | "failed"
-    outputPath: string
   }
 }
 
@@ -110,7 +93,6 @@ export type ChatJobData =
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage
   | ChatJobSendTyping
-  | ChatJobNotifyExportResult
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"

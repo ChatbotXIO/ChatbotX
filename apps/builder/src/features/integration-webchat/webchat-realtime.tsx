@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  type RealtimeEventData,
-  RealtimeEventType,
+  realtimeEvents,
+  realtimeEventTypes,
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import { env } from "@/env"
@@ -34,12 +34,12 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
     // onOpen() {},
     onMessage(e) {
       try {
-        const { eventType, data } = JSON.parse(e.data) as RealtimeEventData
+        const { eventType, data } = realtimeEvents.parse(JSON.parse(e.data))
         switch (eventType) {
-          case RealtimeEventType.messageCreated:
+          case realtimeEventTypes.enum.messageCreated:
             handleNewMessage(data as MessageResource)
             break
-          case RealtimeEventType.typing:
+          case realtimeEventTypes.enum.typing:
             setIsTyping(data.typing)
             break
           default:

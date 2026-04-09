@@ -1,6 +1,6 @@
 import {
   type BotResponseTrackingContext,
-  ChatJobAction,
+  chatJobActions,
   chatQueue,
 } from "@chatbotx.io/worker-config"
 import { supportedImageExtensions } from "./constants"
@@ -111,8 +111,8 @@ export async function sendMessageWithRender(
     ? { conversationId, url: text, trackingContext }
     : { conversationId, text, trackingContext }
 
-  await chatQueue.add(ChatJobAction.sendChatMessage, {
-    type: ChatJobAction.sendChatMessage,
+  await chatQueue.add(chatJobActions.enum.sendChatMessage, {
+    type: chatJobActions.enum.sendChatMessage,
     data,
   })
 }

@@ -141,7 +141,6 @@ export class ActionExecutor {
             active: true,
           },
         })
-
         if (!flow?.currentVersionId) {
           baseLogger.warn(
             `Flow ${flowId} not found or not active, skipping startAnotherFlow action`,
@@ -153,7 +152,7 @@ export class ActionExecutor {
           type: IntegrationJobAction.sendFlow,
           data: {
             conversationId: conversation.id,
-            flowId,
+            flowId: flow?.currentVersionId,
           },
         })
         break
@@ -329,6 +328,8 @@ export class ActionExecutor {
             }
             await getSpreadsheetRow({
               conversation,
+              flowVersion,
+              useLatestFlowVersion: true,
               step,
             })
             break
@@ -346,6 +347,7 @@ export class ActionExecutor {
             }
             await clearSpreadsheetRow({
               conversation,
+              flowVersion,
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -364,6 +366,7 @@ export class ActionExecutor {
             }
             await getSpreadsheetRandomRow({
               conversation,
+              flowVersion,
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -381,6 +384,7 @@ export class ActionExecutor {
             }
             await sendSpreadsheetData({
               conversation,
+              flowVersion,
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break
@@ -399,6 +403,7 @@ export class ActionExecutor {
             }
             await updateSpreadsheetRow({
               conversation,
+              flowVersion,
               step: step as unknown as SpreadsheetGetRowSchema,
             })
             break

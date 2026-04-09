@@ -1,7 +1,7 @@
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { query } from "@chatbotx.io/clickhouse/client"
 import { and, db, eq, gte, lt } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { contactInboxModel, contactModel } from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
 
 const BATCH_SIZE = 1000
@@ -51,8 +51,8 @@ export const reconcileContactEvents = async (job: {
         id: contactModel.id,
         workspaceId: contactModel.workspaceId,
         createdAt: contactModel.createdAt,
-        source: contactModel.source,
-        sourceId: contactModel.sourceId,
+        sourceId: contactInboxModel.sourceId,
+        source: contactInboxModel.source,
       })
       .from(contactModel)
       .where(
@@ -61,6 +61,10 @@ export const reconcileContactEvents = async (job: {
           gte(contactModel.createdAt, from),
           lt(contactModel.createdAt, to),
         ),
+      )
+      .leftJoin(
+        contactInboxModel,
+        eq(contactModel.id, contactInboxModel.contactId),
       )
       .orderBy(contactModel.createdAt)
       .limit(BATCH_SIZE)
@@ -81,7 +85,7 @@ export const reconcileContactEvents = async (job: {
         eventType: "contact_created" as const,
         occurredAt: contact.createdAt,
         source: contact.source,
-        sourceId: contact.sourceId as string,
+        sourceId: contact.sourceId,
       }))
 
       try {
