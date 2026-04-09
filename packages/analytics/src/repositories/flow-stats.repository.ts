@@ -56,6 +56,7 @@ export class FlowStatsRepository extends BaseRepository {
       (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
     )
 
+    // should be redis to check exist first
     const existing = await db.execute<{
       analyticsId: string
       nodeId: string
@@ -114,9 +115,16 @@ export class FlowStatsRepository extends BaseRepository {
       (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
     )
 
+    const cases = items
+      .map(
+        (item) =>
+          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
+      )
+      .join(" ")
+
     await db.execute(sql`
       UPDATE "FlowNodeStat"
-      SET ${sql.raw(`"${field}"`)} = NOW()
+      SET ${sql.raw(`"${field}"`)} = (CASE ${sql.raw(cases)} ELSE ${sql.raw(`"${field}"`)} END)::text
       WHERE ("analyticsId", "nodeId", "contactId") IN (${sql.join(tuples, sql`, `)})
         AND ${sql.raw(`"${field}"`)} IS NULL
     `)
@@ -133,9 +141,16 @@ export class FlowStatsRepository extends BaseRepository {
       (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
     )
 
+    const cases = items
+      .map(
+        (item) =>
+          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
+      )
+      .join(" ")
+
     await db.execute(sql`
       UPDATE "FlowNodeStat"
-      SET "clickedAt" = NOW(),
+      SET "clickedAt" = (CASE ${sql.raw(cases)} ELSE "clickedAt" END)::text,
           "buttonId" = CASE
             ${sql.join(
               items.map(
@@ -147,7 +162,6 @@ export class FlowStatsRepository extends BaseRepository {
             ELSE "buttonId"
           END
       WHERE ("analyticsId", "nodeId", "contactId") IN (${sql.join(tuples, sql`, `)})
-        AND "clickedAt" IS NULL
     `)
   }
 
@@ -159,7 +173,7 @@ export class FlowStatsRepository extends BaseRepository {
     const cases = items
       .map(
         (item) =>
-          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt.getTime()}`,
+          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
       )
       .join(" ")
 

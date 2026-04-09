@@ -159,6 +159,7 @@ export const flowNodeStatUpdateItemSchema = z.object({
   nodeId: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
+  occurredAt: z.date(),
 })
 export type FlowNodeStatUpdateItem = z.infer<
   typeof flowNodeStatUpdateItemSchema
