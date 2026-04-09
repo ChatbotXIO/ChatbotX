@@ -31,7 +31,7 @@ export const flowAnalyticsSessionModel = pgTable(
     deletedAt: timestamp(timestampConfig),
   },
   (table) => [
-    uniqueIndex("FlowAnalyticsSession_workspaceId_chatbotId_key")
+    uniqueIndex("FlowAnalyticsSession_workspaceId_flowId_key")
       .using(
         "btree",
         table.flowId.asc().nullsLast().op("text_ops"),

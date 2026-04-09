@@ -24,7 +24,7 @@ CREATE TABLE "FlowNodeStat" (
 	"clickedAt" timestamp(6) with time zone
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX "FlowAnalyticsSession_workspaceId_chatbotId_key" ON "FlowAnalyticsSession" ("flowId" text_ops,"workspaceId" text_ops) WHERE "deletedAt" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "FlowAnalyticsSession_workspaceId_flowId_key" ON "FlowAnalyticsSession" ("flowId" text_ops,"workspaceId" text_ops) WHERE "deletedAt" IS NULL;--> statement-breakpoint
 CREATE INDEX "FlowAnalyticsSession_flowId_idx" ON "FlowAnalyticsSession" ("flowId");--> statement-breakpoint
 CREATE INDEX "FlowNodeStat_contactInboxId_seenAt_idx" ON "FlowNodeStat" ("contactInboxId","seenAt");--> statement-breakpoint
 CREATE INDEX "FlowNodeStat_analyticsId_nodeId_idx" ON "FlowNodeStat" ("analyticsId","nodeId");--> statement-breakpoint

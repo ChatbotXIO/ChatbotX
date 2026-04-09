@@ -10150,7 +10150,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "FlowAnalyticsSession_workspaceId_chatbotId_key",
+      "name": "FlowAnalyticsSession_workspaceId_flowId_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "FlowAnalyticsSession"
