@@ -18,12 +18,11 @@ import {
   type MetadataPayload,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { flowStatsRepository } from "../repositories/flow-stats.repository"
-import type { ContactEventData } from "../schemas/common"
+import { flowStatsRepository } from "../repositories"
 import type {
-  FlowNodeEventType,
-  FlowNodeStats,
+  FlowNodeStatsResponse,
   FlowNodeStatUpdateItem,
+  FlowStatsRequest,
 } from "../schemas/flow-stats"
 
 type ExtractedPayload<T extends MessagePayload> = {
@@ -469,38 +468,12 @@ export class FlowAnalyticsService {
     ])
   }
 
-  getNodeStats(input: {
-    workspaceId: string
-    flowId: string
-    analyticsId: string
-    stepId: string
-  }): Promise<FlowNodeStats> {
-    return flowStatsRepository.getNodeStats(input)
+  resetStatsSession(input: FlowStatsRequest): Promise<void> {
+    return flowStatsRepository.resetStatsSession(input)
   }
 
-  getButtonStats(input: {
-    workspaceId: string
-    flowId: string
-    analyticsId: string
-    stepId: string
-  }): Promise<Array<{ buttonId: string; clicks: number }>> {
-    return flowStatsRepository.getButtonStats(input)
-  }
-
-  getContactsFromClickHouse(input: {
-    workspaceId: string
-    flowId: string
-    analyticsId: string
-    stepId: string
-    eventType: FlowNodeEventType
-    buttonId?: string
-    page: number
-    perPage: number
-  }): Promise<{
-    contactInboxIds: string[]
-    contactEventMap: Map<string, ContactEventData>
-  }> {
-    return flowStatsRepository.getContactsFromClickHouse(input)
+  getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
+    return flowStatsRepository.getFlowStats(input)
   }
 }
 

@@ -2,9 +2,18 @@ import type {
   FlowNodeContactStateType,
   FlowStatEventType,
 } from "@chatbotx.io/clickhouse/schemas"
-import { db, sql } from "@chatbotx.io/database/client"
-import { flowNodeStatModel } from "@chatbotx.io/database/schema"
-import { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
+import { and, db, eq, sql } from "@chatbotx.io/database/client"
+import {
+  flowAnalyticsSessionModel,
+  flowNodeStatModel,
+} from "@chatbotx.io/database/schema"
+import {
+  FlowEventType,
+  type FlowNode,
+  MessageEventType,
+  NodeType,
+  type SendMessageNodeSchema,
+} from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import type { ContactEventData } from "../schemas/common"
 import type {
@@ -15,8 +24,11 @@ import type {
   FlowNodeStatClickedItem,
   FlowNodeStatSeenItem,
   FlowNodeStats,
+  FlowNodeStatsResponse,
   FlowNodeStatTimestampField,
   FlowNodeStatUpdateItem,
+  FlowStatsRequest,
+  RemoveFlowStatsRequest,
 } from "../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
 
@@ -356,6 +368,191 @@ export class FlowStatsRepository extends BaseRepository {
     }
 
     return { contactInboxIds, contactEventMap }
+  }
+
+  async resetStatsSession(input: RemoveFlowStatsRequest): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(flowAnalyticsSessionModel)
+        .set({
+          deletedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(flowAnalyticsSessionModel.workspaceId, input.workspaceId),
+            eq(flowAnalyticsSessionModel.flowId, input.flowId),
+          ),
+        )
+
+      await tx.insert(flowAnalyticsSessionModel).values({
+        id: createId(),
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+      })
+    })
+  }
+
+  async getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
+    const analyticsSession = await db.query.flowAnalyticsSessionModel.findFirst(
+      {
+        where: {
+          workspaceId: input.workspaceId,
+          flowId: input.flowId,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true },
+      },
+    )
+
+    if (!analyticsSession) {
+      return {}
+    }
+
+    const flow = await db.query.flowModel.findFirst({
+      where: { id: input.flowId, workspaceId: input.workspaceId },
+      with: { flowVersion: true },
+      columns: { id: true, currentVersionId: true },
+    })
+
+    if (!flow?.flowVersion) {
+      return {}
+    }
+
+    const nodes = flow.flowVersion.nodes as unknown as FlowNode[]
+    const sendMessageNodes = nodes.filter(
+      (n): n is FlowNode & { data: SendMessageNodeSchema["data"] } =>
+        n.type === NodeType.sendMessage,
+    )
+
+    if (sendMessageNodes.length === 0) {
+      return {}
+    }
+
+    const nodeIds = sendMessageNodes.map((n) => n.id)
+    const analyticsId = analyticsSession.id
+
+    const nodeButtonMap = new Map<string, string[]>()
+    for (const node of sendMessageNodes) {
+      const quickReplies = node.data?.details?.quickReplies ?? []
+      const buttonIds = quickReplies.map((qr) => qr.id)
+      if (buttonIds.length > 0) {
+        nodeButtonMap.set(node.id, buttonIds)
+      }
+    }
+
+    const eventTypes = [
+      ...Object.values(MessageEventType),
+      ...Object.values(FlowEventType),
+    ]
+    const nodeStatsQuery = `
+      SELECT
+        node_id,
+        event_type,
+        uniq(contact_id) as count
+      FROM flow_stat_events
+      WHERE workspace_id = {workspaceId:String}
+        AND flow_id = {flowId:String}
+        AND analytics_id = {analyticsId:String}
+        AND node_id IN (${nodeIds.map((id) => `'${id}'`).join(", ")})
+        AND event_type IN (${eventTypes.map((t) => `'${t}'`).join(", ")})
+      GROUP BY node_id, event_type
+    `
+
+    const nodeStatsRows = await this.query<
+      ClickHouseStatsRow & { node_id: string }
+    >(nodeStatsQuery, {
+      workspaceId: input.workspaceId,
+      flowId: input.flowId,
+      analyticsId,
+    })
+
+    const allButtonIds = Array.from(nodeButtonMap.values()).flat()
+    let buttonStatsRows: (ClickHouseButtonStatsRow & { node_id: string })[] = []
+
+    if (allButtonIds.length > 0) {
+      const buttonStatsQuery = `
+        SELECT
+          node_id,
+          button_id,
+          uniq(contact_id) as clicks
+        FROM flow_stat_events
+        WHERE workspace_id = {workspaceId:String}
+          AND flow_id = {flowId:String}
+          AND analytics_id = {analyticsId:String}
+          AND node_id IN (${Array.from(nodeButtonMap.keys())
+            .map((id) => `'${id}'`)
+            .join(", ")})
+          AND event_type = {eventType:String}
+          AND button_id IN (${allButtonIds.map((id) => `'${id}'`).join(", ")})
+        GROUP BY node_id, button_id
+      `
+
+      buttonStatsRows = await this.query<
+        ClickHouseButtonStatsRow & { node_id: string }
+      >(buttonStatsQuery, {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        analyticsId,
+        eventType: FlowEventType["flow:clicked"],
+      })
+    }
+
+    const result: FlowNodeStatsResponse = {}
+
+    for (const nodeId of nodeIds) {
+      result[nodeId] = {
+        step: {
+          "message:sent": 0,
+          "message:delivered": 0,
+          "message:seen": 0,
+          "flow:clicked": 0,
+          "message:failed": 0,
+        },
+        buttons: {},
+      }
+    }
+
+    for (const row of nodeStatsRows) {
+      const nodeStats = result[row.node_id]
+      if (!nodeStats) {
+        continue
+      }
+
+      const count = Number.parseInt(row.count, 10)
+      switch (row.event_type) {
+        case MessageEventType["message:sent"]:
+          nodeStats.step["message:sent"] = count
+          break
+        case MessageEventType["message:delivered"]:
+          nodeStats.step["message:delivered"] = count
+          break
+        case MessageEventType["message:seen"]:
+          nodeStats.step["message:seen"] = count
+          break
+        case FlowEventType["flow:clicked"]:
+          nodeStats.step["flow:clicked"] = count
+          break
+        case MessageEventType["message:failed"]:
+          nodeStats.step["message:failed"] = count
+          break
+        default:
+          break
+      }
+    }
+
+    for (const row of buttonStatsRows) {
+      const nodeStats = result[row.node_id]
+      if (!nodeStats) {
+        continue
+      }
+
+      nodeStats.buttons[row.button_id] = {
+        buttonId: row.button_id,
+        clicks: Number.parseInt(row.clicks, 10),
+      }
+    }
+
+    return result
   }
 }
 

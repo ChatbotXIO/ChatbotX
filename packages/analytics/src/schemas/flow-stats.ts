@@ -2,6 +2,21 @@ import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
+export const flowStatsRequest = z.object({
+  workspaceId: z.string(),
+  flowId: z.string(),
+})
+export type FlowStatsRequest = z.infer<typeof flowStatsRequest>
+
+export const getFlowStatsResponse = z.object({
+  "message:sent": z.number(),
+  "message:delivered": z.number(),
+  "message:seen": z.number(),
+  "flow:clicked": z.number(),
+  "message:failed": z.number(),
+})
+export type GetFlowStatsResponse = z.infer<typeof getFlowStatsResponse>
+
 export const flowNodeEventType = z.union([messageEventType, flowEventType])
 export type FlowNodeEventType = MessageEventType | FlowEventType
 
@@ -13,15 +28,28 @@ export const getFlowNodeStatsRequest = z.object({
 })
 export type GetFlowNodeStatsRequest = z.infer<typeof getFlowNodeStatsRequest>
 
-export const getFlowNodeStatsResponse = z.object({
-  "message:sent": z.number(),
-  "message:delivered": z.number(),
-  "message:seen": z.number(),
-  "flow:clicked": z.number(),
-  "message:failed": z.number(),
+export const buttonResponse = z.object({
+  buttonId: z.string(),
+  clicks: z.number(),
 })
-export type GetFlowNodeStatsResponse = z.infer<typeof getFlowNodeStatsResponse>
-export type FlowNodeStats = GetFlowNodeStatsResponse
+
+export const stepResponse = z.object({
+  step: z.object({
+    "message:sent": z.number(),
+    "message:delivered": z.number(),
+    "message:seen": z.number(),
+    "flow:clicked": z.number(),
+    "message:failed": z.number(),
+  }),
+  buttons: z.record(z.string(), buttonResponse),
+})
+export type StepResponse = z.infer<typeof stepResponse>
+
+export const flowNodeStatsResponse = z.record(z.string(), stepResponse)
+export type FlowNodeStatsResponse = z.infer<typeof flowNodeStatsResponse>
+
+export type FlowNodeStats = GetFlowStatsResponse
+export type RemoveFlowStatsRequest = FlowStatsRequest
 
 export const getFlowNodeButtonStatsRequest = z.object({
   workspaceId: z.string(),

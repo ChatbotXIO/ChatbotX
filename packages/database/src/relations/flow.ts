@@ -12,6 +12,10 @@ export const flowRelations = defineRelationsPart(schema, (r) => ({
       from: r.flowModel.id,
       to: r.flowVersionModel.flowId,
     }),
+    flowVersion: r.one.flowVersionModel({
+      from: r.flowModel.currentVersionId,
+      to: r.flowVersionModel.id,
+    }),
     workspace: r.one.workspaceModel({
       from: r.flowModel.workspaceId,
       to: r.workspaceModel.id,

@@ -2,6 +2,7 @@ import { os } from "@orpc/server"
 import { analyticsBroadcastRoutes } from "./broadcast"
 import { analyticsContactRoutes } from "./contact"
 import { analyticsConversationRoutes } from "./conversation"
+import { analyticsFlowRoutes } from "./flow"
 import { analyticsMessageRoutes } from "./message"
 import { analyticsSequenceRoutes } from "./sequence"
 
@@ -11,4 +12,5 @@ export const analyticsRoutes = os.router({
   ...analyticsConversationRoutes,
   ...analyticsMessageRoutes,
   ...analyticsSequenceRoutes,
+  ...analyticsFlowRoutes,
 })
