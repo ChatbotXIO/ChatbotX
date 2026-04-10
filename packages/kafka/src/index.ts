@@ -1,4 +1,5 @@
-export type { Consumer, Producer } from "@platformatic/kafka"
+export type { Admin, Consumer, Producer } from "@platformatic/kafka"
+export { createAdmin, ensureTopicExists } from "./admin"
 export { createConsumer } from "./consumer"
 export { keys } from "./keys"
 export { createProducer } from "./producer"

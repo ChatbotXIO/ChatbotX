@@ -3,6 +3,8 @@ import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
 
+export type * from "ioredis"
+
 export { cacheConnections } from "./connections/cache-connection"
 export { distributedLockFactory } from "./distributed-lock"
 export const distributedLock = distributedLockFactory(cacheConnections.create)

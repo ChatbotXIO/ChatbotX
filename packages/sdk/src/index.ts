@@ -1,5 +1,6 @@
 export * from "./lib/action"
 export * from "./lib/auth"
+export * from "./lib/channel"
 export * from "./lib/exception"
 export * from "./lib/flow-step-data"
 export * from "./lib/integration"

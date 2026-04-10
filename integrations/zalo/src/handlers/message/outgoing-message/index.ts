@@ -39,6 +39,7 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return {
@@ -158,6 +159,7 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return {

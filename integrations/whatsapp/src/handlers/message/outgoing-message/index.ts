@@ -142,6 +142,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return {
@@ -236,6 +237,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return { messageIds }

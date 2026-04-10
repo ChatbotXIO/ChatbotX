@@ -20,6 +20,7 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./migrate": "./src/migrate.ts",
-    "./keys": "./src/keys.ts"
+    "./keys": "./src/keys.ts",
+    "./schemas": "./src/schemas.ts"
   }
 }

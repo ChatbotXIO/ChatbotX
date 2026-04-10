@@ -5,7 +5,6 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
-import type { SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
@@ -77,6 +76,23 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   })
 }
 
+async function updateMessageSourceId(
+  messageId: string | undefined,
+  result: { messageIds?: string[] },
+) {
+  try {
+    const firstMessageId = result?.messageIds?.[0]
+    if (messageId && firstMessageId) {
+      await db
+        .update(messageModel)
+        .set({ sourceId: firstMessageId })
+        .where(eq(messageModel.id, messageId))
+    }
+  } catch (err) {
+    logger.error(err, "Failed to update message sourceId with provider id")
+  }
+}
+
 export async function sendFlowStepToExternal({
   conversation,
   contactInbox,
@@ -125,17 +141,7 @@ export async function sendFlowStepToExternal({
       },
     })
 
-  try {
-    const firstMessageId = result?.messageIds?.[0]
-    if (messageId && firstMessageId) {
-      await db
-        .update(messageModel)
-        .set({ sourceId: firstMessageId })
-        .where(eq(messageModel.id, messageId))
-    }
-  } catch (err) {
-    logger.error(err, "Failed to update message sourceId with provider id")
-  }
+  await updateMessageSourceId(messageId, result)
 
   return result || {}
 }

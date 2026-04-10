@@ -50,6 +50,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return {
@@ -82,6 +83,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw error
     }
 
     return {

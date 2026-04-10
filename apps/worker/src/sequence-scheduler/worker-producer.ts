@@ -2,6 +2,7 @@ import { createProducer, type Producer } from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { logger } from "../lib/logger"
+import { KAFKA_TOPIC } from "./services/constants"
 
 const TOTAL_BUCKETS = 256
 const CLAIM_LIMIT = 100
@@ -149,7 +150,7 @@ class SchedulerWorker {
     dispatches: { dispatchId: string; bucket: number }[],
   ) {
     const messages = dispatches.map((dispatch) => ({
-      topic: "seq.dispatch.run",
+      topic: KAFKA_TOPIC,
       key: dispatch.dispatchId,
       value: JSON.stringify({
         dispatchId: dispatch.dispatchId,

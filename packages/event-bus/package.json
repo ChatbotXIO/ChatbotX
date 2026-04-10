@@ -1,0 +1,17 @@
+{
+  "name": "@chatbotx.io/event-bus",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@chatbotx.io/worker-config": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "^24.10.1"
+  }
+}

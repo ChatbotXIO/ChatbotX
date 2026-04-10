@@ -1,4 +1,9 @@
-import { type Consumer, createConsumer } from "@chatbotx.io/kafka"
+import type { Readable } from "node:stream"
+import {
+  type Consumer,
+  createConsumer,
+  ensureTopicExists,
+} from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import pLimit, { type LimitFunction } from "p-limit"
@@ -7,6 +12,8 @@ import {
   CONSUMER_CLIENT_ID,
   CONSUMER_GROUP_ID,
   HEARTBEAT_INTERVAL_IN_MS,
+  KAFKA_PARTITIONS,
+  KAFKA_REPLICATION_FACTOR,
   KAFKA_TOPIC,
   MAX_PROCESS,
   MAX_RETRIES,
@@ -27,6 +34,7 @@ import type {
 class DispatchConsumer {
   private running = false
   private consumer: Consumer<string, string, string, string> | null = null
+  private stream: Readable | null = null
   private _scheduler: SchedulerClient | null = null
   private readonly config: ConsumerConfig
   private readonly limitProcess: LimitFunction
@@ -70,12 +78,20 @@ class DispatchConsumer {
 
     this.consumer = createConsumer(CONSUMER_CLIENT_ID, this.config.groupId)
 
-    const stream = await this.consumer.consume({
+    await ensureTopicExists(
+      CONSUMER_CLIENT_ID,
+      KAFKA_TOPIC,
+      KAFKA_PARTITIONS,
+      KAFKA_REPLICATION_FACTOR,
+    )
+
+    this.stream = await this.consumer.consume({
       topics: [KAFKA_TOPIC],
       autocommit: true,
       sessionTimeout: this.config.sessionTimeout,
       heartbeatInterval: this.config.heartbeatInterval,
     })
+    const stream = this.stream
 
     this.running = true
 
@@ -91,6 +107,8 @@ class DispatchConsumer {
         logger.error({ error, message }, "Error processing dispatch message")
       }
     }
+
+    this.stream = null
   }
 
   private async processDispatch(payload: DispatchMessage) {
@@ -255,6 +273,11 @@ class DispatchConsumer {
     }
 
     this.running = false
+
+    if (this.stream) {
+      this.stream.destroy()
+      this.stream = null
+    }
 
     if (this.consumer) {
       await this.consumer.close()
