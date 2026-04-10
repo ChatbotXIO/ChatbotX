@@ -41,7 +41,9 @@ export async function startWorker(
     await stopWorker()
   }
 
-  const name = consumerName ?? `worker-${process.env.HOSTNAME || process.pid}`
+  const name =
+    consumerName ??
+    `worker-${process.env.HOSTNAME || "chatbotx"}-${process.pid}-${Date.now()}`
 
   for (const mod of modules) {
     activeModules.push(mod)
