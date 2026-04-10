@@ -56,7 +56,6 @@ export class FlowStatsRepository extends BaseRepository {
       (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
     )
 
-    // should be redis to check exist first
     const existing = await db.execute<{
       analyticsId: string
       nodeId: string

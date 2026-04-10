@@ -185,6 +185,7 @@ export class FlowAnalyticsService {
           nodeId: p.stepId,
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
+          occurredAt: p.occurredAt,
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -229,6 +230,7 @@ export class FlowAnalyticsService {
           nodeId: p.stepId,
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
+          occurredAt: p.occurredAt,
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -273,6 +275,7 @@ export class FlowAnalyticsService {
           nodeId: p.stepId,
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
+          occurredAt: p.occurredAt,
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -419,6 +422,7 @@ export class FlowAnalyticsService {
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           buttonId: p.action.buttonId ?? "",
+          occurredAt: p.occurredAt,
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
