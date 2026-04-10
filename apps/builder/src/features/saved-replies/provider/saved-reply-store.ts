@@ -21,13 +21,15 @@ export type SavedReplyStoreActions = {
 
 export type SavedReplyStore = SavedReplyStoreState & SavedReplyStoreActions
 
-export const createSavedReplyStore = (props: { workspaceId: string }) =>
+export const createSavedReplyStore = (props: Partial<SavedReplyStoreState>) =>
   createStore<SavedReplyStore>((set, get) => ({
     initialized: false,
     isLoading: false,
-    workspaceId: props.workspaceId,
     savedReplies: [],
+    workspaceId: "",
     error: null,
+
+    ...props,
 
     initialize: async () => {
       const { initialized } = get()

@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -13,14 +13,18 @@ export const deleteSavedReplyAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
+    const savedReply = await findOrFail({
+      table: savedReplyModel,
+      where: {
+        id,
+        workspaceId,
+      },
+      message: "Saved reply not found",
+    })
+
     await db
       .delete(savedReplyModel)
-      .where(
-        and(
-          eq(savedReplyModel.workspaceId, workspaceId),
-          eq(savedReplyModel.id, id),
-        ),
-      )
+      .where(eq(savedReplyModel.id, savedReply.id))
 
     revalidateCacheTags(`workspaces:${workspaceId}#savedReplies`)
   })

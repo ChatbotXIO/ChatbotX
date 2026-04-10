@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "aebecc51-845b-4a48-9f9e-c3920d1ee84a",
-  "prevIds": ["372eb9aa-5e5f-45fa-aed6-d92b96df32ae"],
+  "id": "79a482c9-21be-4450-baf0-d658a801fccc",
+  "prevIds": ["dea78692-0267-4821-8e8c-570df3fd3864"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -9963,7 +9963,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Inbox_workspaceId_channel_sourceId_key",
+      "name": "Inbox_channel_sourceId_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "Inbox"
@@ -11954,6 +11954,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "ContactInbox_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactInbox_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactInbox"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "ContactNote_contactId_Contact_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -13855,7 +13881,6 @@
     }
   ],
   "renames": [
-    "public.SavedReply.userId->public.SavedReply.workspaceId",
-    "public.SavedReply.SavedReply_userId_User_id_fkey->public.SavedReply.SavedReply_workspaceId_Workspace_id_fkey"
+    "public.Inbox.Inbox_workspaceId_channel_sourceId_key->public.Inbox.Inbox_channel_sourceId_key"
   ]
 }

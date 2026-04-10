@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -15,26 +15,25 @@ export const editSavedReplyAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
     } = props
-    const savedReply = await db
+
+    const savedReply = await findOrFail({
+      table: savedReplyModel,
+      where: {
+        id,
+        workspaceId,
+      },
+      message: "Saved reply not found",
+    })
+    const [updatedSavedReply] = await db
       .update(savedReplyModel)
       .set({
         shortcut: parsedInput.shortcut,
         text: parsedInput.text,
       })
-      .where(
-        and(
-          eq(savedReplyModel.id, id),
-          eq(savedReplyModel.workspaceId, workspaceId),
-        ),
-      )
-      .returning({
-        id: savedReplyModel.id,
-        shortcut: savedReplyModel.shortcut,
-        text: savedReplyModel.text,
-      })
-      .then((result) => result[0])
+      .where(eq(savedReplyModel.id, savedReply.id))
+      .returning()
 
     revalidateCacheTags(`workspaces:${workspaceId}#savedReplies`)
 
-    return savedReply
+    return updatedSavedReply
   })
