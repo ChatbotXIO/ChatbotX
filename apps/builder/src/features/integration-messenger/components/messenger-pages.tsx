@@ -1,6 +1,6 @@
 "use client"
 
-import type { FacebookPage } from "@chatbotx.io/integration-messenger/schemas"
+import type { FacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -76,7 +76,7 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        <div className="mt-2">
+        <div className="">
           <RadioGroupField
             label={t("messenger.selectFacebookPage")}
             name="pageId"

@@ -5,8 +5,8 @@ import {
   type IntegrationDefinition,
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
-import { sendTyping } from "./lib/outgoing-message"
-import type { WebchatActions, WebchatAuthValue } from "./schemas"
+import { conversationHandlers } from "./handlers/conversation"
+import type { WebchatActions, WebchatAuthValue } from "./schema"
 
 const config: IntegrationDefinition<
   BaseConfig,
@@ -16,9 +16,7 @@ const config: IntegrationDefinition<
   name: "webchat",
   channels: {
     channel: {
-      conversation: {
-        sendTyping,
-      },
+      conversation: conversationHandlers,
     },
   },
   actions: {},

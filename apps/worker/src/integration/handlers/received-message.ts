@@ -3,15 +3,17 @@ import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   attachmentModel,
+  contactInboxModel,
   contactModel,
   conversationModel,
   messageModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import type {
-  ContentType,
+  ContactInboxModel,
+  ContactModel,
   ConversationModel,
-  Gender,
+  InboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
@@ -19,15 +21,15 @@ import {
   emitContactCreated,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
-import { uploader } from "@chatbotx.io/filesystem"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import {
   type AuthValue,
-  type Context,
   type IncomingAttachment,
+  type IncomingContact,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -36,8 +38,11 @@ import {
   type IntegrationJobReceiveMessage,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
+import {
+  allIntegrations,
+  integrationService,
+} from "../../services/integrations"
 
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
@@ -52,21 +57,20 @@ export const receiveMessage = async (
 
   const { integrationType, integrationIdentifier } = props
 
-  setWebhookExecutionContext({ source: "webhook" })
-
   if (!Object.hasOwn(allIntegrations, integrationType)) {
     throw new Error(`Unsupported integration: ${integrationType}`)
   }
 
-  const dbIntegration = await getDBIntegration(
-    integrationType as IntegrationType,
-    integrationIdentifier,
-  )
-  const { workspace, workspaceId, inboxId, auth, inbox } = dbIntegration
+  const dbIntegration =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      integrationType as IntegrationType,
+      integrationIdentifier,
+    )
+  const { inbox, integrationAuth } = dbIntegration
   const ctx = {
-    workspace,
-    auth: auth as AuthValue,
+    auth: integrationAuth,
     uploader,
+    storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
   }
 
   const parsedMessage = await allIntegrations[
@@ -79,138 +83,74 @@ export const receiveMessage = async (
     throw new SdkException("Unable to parse received message")
   }
 
-  const { message, conversation, postbackAction, quickReplyAction, ref } =
-    parsedMessage
+  const {
+    message: incomingMessage,
+    contact: incomingContact,
+    postbackAction,
+    quickReplyAction,
+    ref,
+  } = parsedMessage
 
-  const result = await db.transaction(async (tx) => {
-    let newContact = await tx.query.contactModel.findFirst({
-      where: {
-        workspaceId,
-        sourceId: conversation.contact.sourceId,
-      },
-    })
+  const { contactInbox, conversation } = await detectContactAndConversation({
+    incomingContact,
+    inbox,
+    integrationAuth,
+  })
 
-    let isNewContact = false
-    if (!newContact) {
-      if (canGetUserProfileIfNeeded(integrationType)) {
-        const integration = allIntegrations[integrationType]
-        if (integration && "getUserProfile" in integration.actions) {
-          const userProfile = await integration.actions.getUserProfile({
-            // biome-ignore lint/suspicious/noExplicitAny: safe pass value
-            ctx: ctx as Context<any>,
-            psid: conversation.contact.sourceId,
-          })
-          conversation.contact = {
-            ...conversation.contact,
-            ...userProfile,
-          }
-        }
-      }
-
-      const workspaceUsage = await findOrFail({
-        table: workspaceUsageModel,
-        where: { workspaceId },
-        message: "Workspace usage not found",
-      })
-      if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
-        throw new Error("Max contacts reached")
-      }
-
-      newContact = await tx
-        .insert(contactModel)
-        .values({
-          id: createId(),
-          workspaceId,
-          sourceId: conversation.contact.sourceId,
-          phoneNumber: conversation.contact.phoneNumber,
-          email: conversation.contact.email,
-          firstName: conversation.contact.firstName,
-          lastName: conversation.contact.lastName,
-          gender: (conversation.contact.gender as Gender) || "unknown",
-          channel: integrationType,
-          avatar: conversation.contact.avatar,
-        })
-        .returning()
-        .then((result) => result[0])
-
-      isNewContact = true
-    }
-
-    if (!newContact) {
-      throw new Error("Contact not found")
-    }
-
-    const newConversation = await tx
-      .insert(conversationModel)
-      .values({
-        id: createId(),
-        sourceId: conversation.sourceId,
-        additionalAttributes: conversation.additionalAttributes,
-        channel: inbox.channel,
-        inboxId,
-        workspaceId,
-        contactId: newContact.id,
-      })
-      .onConflictDoUpdate({
-        target: [conversationModel.contactId],
-        set: {
-          updatedAt: new Date(),
-          contactRepliedAt: new Date(),
-          lastActivityAt: new Date(),
-        },
-      })
-      .returning()
-      .then((result) => result[0])
-
-    const now = new Date()
-
+  const { newMessage, isNewMessage } = await db.transaction(async (tx) => {
     // Create message and attachments
+    const now = new Date()
     const newMessage = await tx
       .insert(messageModel)
       .values({
         id: createId(),
-        conversationId: newConversation.id,
-        inboxId,
-        senderType: message.messageType === "outgoing" ? "user" : "contact",
-        workspaceId,
-        sourceId: message.sourceId ?? "",
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        senderType:
+          incomingMessage.messageType === "outgoing" ? "user" : "contact",
+        workspaceId: inbox.workspaceId,
+        sourceId: incomingMessage.sourceId,
         senderId:
-          message.messageType === "outgoing" ? null : (newContact?.id ?? ""),
-        messageType: message.messageType,
-        text: message.text,
-        contentType: message.contentType as ContentType,
-        contentAttributes: message.contentAttributes,
+          incomingMessage.messageType === "outgoing"
+            ? null
+            : contactInbox.contactId,
+        messageType: incomingMessage.messageType,
+        text: incomingMessage.text,
+        contentType: incomingMessage.contentType,
+        contentAttributes: incomingMessage.contentAttributes,
         createdAt: now,
         updatedAt: now,
       })
       .onConflictDoUpdate({
-        target: [messageModel.workspaceId, messageModel.sourceId],
+        target: [messageModel.contactInboxId, messageModel.sourceId],
         set: {
-          updatedAt: now,
+          updatedAt: new Date(),
         },
       })
       .returning()
       .then((result) => result[0])
 
+    const isNewMessage = newMessage.createdAt.getTime() === now.getTime()
+
     if (
-      message.attachments &&
-      message.attachments.length > 0 &&
-      newMessage.createdAt.getTime() === now.getTime()
+      isNewMessage &&
+      incomingMessage.attachments &&
+      incomingMessage.attachments.length > 0
     ) {
       await tx.insert(attachmentModel).values(
-        message.attachments.map((attachment: IncomingAttachment) => ({
+        incomingMessage.attachments.map((attachment: IncomingAttachment) => ({
           id: createId(),
           ...attachment,
           messageId: newMessage.id,
-          workspaceId: newConversation.workspaceId,
-          conversationId: newConversation.id,
+          workspaceId: inbox.workspaceId,
+          conversationId: conversation.id,
           url: getPublicUrl(attachment.originPath),
         })),
       )
     }
 
     try {
-      broadcastToWorkspaceParty(newConversation.workspaceId, {
+      broadcastToWorkspaceParty(inbox.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: newMessage,
       })
@@ -219,65 +159,21 @@ export const receiveMessage = async (
     }
 
     return {
-      message: newMessage,
-      conversation: newConversation,
-      isNewContact,
-      contactId: newContact.id,
-      contactData: isNewContact
-        ? {
-            name: newContact.firstName,
-            phone: newContact.phoneNumber,
-            email: newContact.email,
-          }
-        : undefined,
+      newMessage,
+      isNewMessage,
     }
   })
 
-  // Emit contact created event if new contact
-  if (result.isNewContact && result.contactData) {
-    try {
-      await emitContactCreated(
-        workspaceId,
-        result.contactId,
-        result.contactData.name || undefined,
-        result.contactData.phone || undefined,
-        result.contactData.email || undefined,
-      )
-    } catch (error) {
-      console.error("Failed to emit contactCreated event:", error)
-    }
+  if (isNewMessage) {
     contactTrackingService
       .trackEvent({
-        workspaceId,
-        contactId: conversation.contact.sourceId,
-        eventType: "contact_created",
-        occurredAt: result.message.createdAt,
-        source: integrationType,
-        sourceId: conversation.contact.sourceId,
-        channel: inbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "receiveMessage",
-            triggerType: "contact_created",
-          },
-        },
-      })
-      .catch((error) => {
-        logger.error(error, "[receiveMessage] Failed to track contact_created")
-      })
-  }
-
-  if (conversation.contact.sourceId) {
-    contactTrackingService
-      .trackEvent({
-        workspaceId,
-        contactId: conversation.contact.sourceId,
+        workspaceId: inbox.workspaceId,
+        contactId: contactInbox.contactId,
         eventType: "contact_message_in",
         senderType: "human",
-        occurredAt: result.message.createdAt,
+        occurredAt: newMessage.createdAt,
         source: integrationType,
-        sourceId: conversation.contact.sourceId,
+        sourceId: newMessage.sourceId,
         channel: inbox.channel,
         metadata: {
           triggerContext: {
@@ -293,70 +189,185 @@ export const receiveMessage = async (
           "[receiveMessage] Failed to track contact_message_in",
         )
       })
-  }
 
-  if (postbackAction) {
-    await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
-      type: IntegrationJobAction.runFlowPostback,
-      data: {
-        conversationId: result.conversation.id,
-        action: postbackAction,
-        ref,
-      },
-    })
-  }
+    if (postbackAction) {
+      await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
+        type: IntegrationJobAction.runFlowPostback,
+        data: {
+          conversationId: conversation.id,
+          action: postbackAction,
+          ref,
+        },
+      })
+    }
 
-  if (quickReplyAction) {
-    await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
-      type: IntegrationJobAction.runFlowQuickReply,
-      data: {
-        conversationId: result.conversation.id,
-        action: quickReplyAction,
-        ref,
-      },
-    })
-  }
-
-  if (result.isNewContact && conversation.contact.sourceId) {
-    await contactTrackingService.trackEvent({
-      workspaceId,
-      contactId: conversation.contact.sourceId,
-      eventType: "contact_created",
-      occurredAt: new Date(),
-      source: integrationType,
-      sourceId: conversation.contact.sourceId,
-      channel: inbox.channel,
-      country: undefined,
-      metadata: {
-        inboxId,
-      },
-    })
-  }
-
-  if (conversation.contact.sourceId && message.messageType === "incoming") {
-    await contactTrackingService.trackEvent({
-      workspaceId,
-      contactId: conversation.contact.sourceId,
-      eventType: "contact_message_in",
-      occurredAt: new Date(),
-      source: integrationType,
-      sourceId: conversation.contact.sourceId,
-      channel: inbox.channel,
-      country: undefined,
-      metadata: {
-        inboxId,
-        messageId: result.message.id,
-      },
-    })
+    if (quickReplyAction) {
+      await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
+        type: IntegrationJobAction.runFlowQuickReply,
+        data: {
+          conversationId: conversation.id,
+          action: quickReplyAction,
+          ref,
+        },
+      })
+    }
   }
 
   return {
-    message: result.message,
-    conversation: result.conversation,
+    message: newMessage,
+    conversation,
     postbackAction,
     quickReplyAction,
     ref,
   }
+}
+
+const detectContactAndConversation = async (props: {
+  inbox: InboxModel
+  incomingContact: IncomingContact
+  integrationAuth: AuthValue
+}): Promise<{
+  contactInbox: ContactInboxModel
+  conversation: ConversationModel
+}> => {
+  const { incomingContact, inbox, integrationAuth } = props
+  let contactData: typeof contactModel.$inferInsert = {
+    ...incomingContact,
+    workspaceId: inbox.workspaceId,
+  }
+
+  const { contactInbox, conversation, newContact } = await db.transaction(
+    async (tx) => {
+      let contactInbox: ContactInboxModel | null | undefined = null
+      let conversation: ConversationModel | null | undefined = null
+      let newContact: ContactModel | null | undefined = null
+
+      contactInbox = await tx.query.contactInboxModel.findFirst({
+        where: {
+          channel: inbox.channel,
+          sourceId: incomingContact.sourceId,
+        },
+      })
+
+      if (contactInbox) {
+        conversation = await findOrFail({
+          table: conversationModel,
+          where: {
+            workspaceId: inbox.workspaceId,
+            contactId: contactInbox.contactId,
+          },
+        })
+      } else {
+        if (canGetUserProfileIfNeeded(inbox.channel)) {
+          const integration = allIntegrations[inbox.channel]
+          if (integration && "getUserProfile" in integration.actions) {
+            const userProfile = await integration.actions.getUserProfile({
+              ctx: {
+                storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
+                auth: integrationAuth,
+                uploader,
+              },
+              psid: incomingContact.sourceId,
+            })
+            contactData = {
+              ...contactData,
+              ...userProfile,
+            }
+          }
+        }
+
+        const workspaceUsage = await findOrFail({
+          table: workspaceUsageModel,
+          where: { workspaceId: inbox.workspaceId },
+          message: "Workspace usage not found",
+        })
+        if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
+          throw new Error("Max contacts reached")
+        }
+
+        newContact = await tx
+          .insert(contactModel)
+          .values({
+            id: createId(),
+            ...contactData,
+            lastActivityAt: new Date(),
+          })
+          .returning()
+          .then((result) => result[0])
+        if (!newContact) {
+          throw new Error("Contact not found")
+        }
+
+        contactInbox = await tx
+          .insert(contactInboxModel)
+          .values({
+            id: createId(),
+            inboxId: inbox.id,
+            contactId: newContact.id,
+            originalContactId: newContact.id,
+            source: inbox.channel,
+            sourceId: incomingContact.sourceId,
+            channel: inbox.channel,
+          })
+          .returning()
+          .then((result) => result[0])
+
+        conversation = await tx
+          .insert(conversationModel)
+          .values({
+            id: createId(),
+            workspaceId: inbox.workspaceId,
+            contactId: newContact.id,
+          })
+          .returning()
+          .then((result) => result[0])
+      }
+      if (!contactInbox) {
+        throw new Error("Contact inbox not found")
+      }
+      if (!conversation) {
+        throw new Error("Conversation not found")
+      }
+
+      return { contactInbox, conversation, newContact }
+    },
+  )
+
+  if (newContact) {
+    try {
+      await emitContactCreated(
+        newContact.workspaceId,
+        newContact.id,
+        newContact.firstName || undefined,
+        newContact.phoneNumber || undefined,
+        newContact.email || undefined,
+      )
+    } catch (error) {
+      console.error("Failed to emit contactCreated event:", error)
+    }
+    contactTrackingService
+      .trackEvent({
+        workspaceId: inbox.workspaceId,
+        contactId: newContact.id,
+        eventType: "contact_created",
+        occurredAt: newContact.createdAt,
+        source: contactInbox.channel,
+        sourceId: contactInbox.sourceId,
+        channel: contactInbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "receiveMessage",
+            triggerType: "contact_created",
+          },
+        },
+      })
+      .catch((error) => {
+        logger.error(error, "[receiveMessage] Failed to track contact_created")
+      })
+  }
+
+  return { contactInbox, conversation }
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>

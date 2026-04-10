@@ -2,7 +2,7 @@ import type {
   ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
+import type { IncomingContact, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -84,7 +84,7 @@ export type IntegrationJobTriggerAutomatedResponse = {
   type: typeof IntegrationJobAction.triggerAutomatedResponse
   data: {
     message: OutgoingMessage
-    conversation: OutgoingConversation
+    conversation: ConversationModel
   }
 }
 
@@ -98,7 +98,7 @@ export type IntegrationJobSendBroadcast = {
 export type IntegrationJobAgentMarkAsRead = {
   type: typeof IntegrationJobAction.agentMarkAsRead
   data: {
-    conversation: OutgoingConversation
+    conversation: ConversationModel
   }
 }
 
@@ -107,7 +107,7 @@ export type IntegrationJobContactMarkAsRead = {
   data: {
     integrationType: string
     integrationIdentifier: string
-    sourceConversationId: string
+    contact: IncomingContact
     payload: unknown
   }
 }

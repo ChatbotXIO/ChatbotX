@@ -1,4 +1,5 @@
 import { db, eq } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { messageModel } from "@chatbotx.io/database/schema"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import {
@@ -56,6 +57,18 @@ export async function processWhatsappTemplate(
     trackingContext,
   } = params
 
+  const contactInbox = await db.query.contactInboxModel.findFirst({
+    where: {
+      contactId: conversation.contactId,
+      channel: channelTypes.enum.whatsapp,
+    },
+  })
+  if (!contactInbox) {
+    throw new Error(
+      `Whatsapp contact inbox not found for conversation: ${conversation.id}`,
+    )
+  }
+
   const isValid = await validateWhatsappTemplate(
     {
       id: templateId,
@@ -63,12 +76,12 @@ export async function processWhatsappTemplate(
       languageCode: templateLanguage,
       params: templateParams,
     },
-    conversation.inboxId,
+    contactInbox.inboxId,
   )
 
   if (!isValid) {
     logger.error(
-      { templateId, inboxId: conversation.inboxId },
+      { templateId, inboxId: contactInbox.inboxId },
       "Template validation failed - not approved or not found",
     )
     throw new Error(`Template validation failed: ${templateId}`)
@@ -81,14 +94,14 @@ export async function processWhatsappTemplate(
 
   const messageData: typeof messageModel.$inferInsert = {
     id: createId(),
-    inboxId: conversation.inboxId,
+    contactInboxId: contactInbox.id,
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
     messageType: "outgoing",
     contentType: "text",
     senderType: "bot",
     sourceId: null,
-    content: `Template: ${templateName}`,
+    text: `Template: ${templateName}`,
     contentAttributes: {
       type: "whatsapp_template",
       templateName,
@@ -126,6 +139,7 @@ export async function processWhatsappTemplate(
   try {
     const result = await sendFlowStepToExternal({
       conversation,
+      contactInbox,
       flowId: flowId || "",
       flowVersionId,
       step: {
@@ -181,17 +195,9 @@ export async function processWhatsappTemplate(
 export async function sendWhatsappTemplateMessage(
   data: ChatJobSendWhatsappTemplateMessage["data"],
 ) {
-  const { conversationId, templateId, broadcastId, templateData } = data
+  const { conversation, templateId, broadcastId, templateData } = data
 
   try {
-    const conversation = await db.query.conversationModel.findFirst({
-      where: { id: conversationId },
-    })
-
-    if (!conversation) {
-      throw new Error(`Conversation not found: ${conversationId}`)
-    }
-
     const template = await db.query.whatsappMessageTemplateModel.findFirst({
       where: { id: templateId },
     })
@@ -220,7 +226,7 @@ export async function sendWhatsappTemplateMessage(
     logger.error(
       {
         error,
-        conversationId,
+        conversationId: conversation.id,
         templateId,
         broadcastId,
       },

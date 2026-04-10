@@ -1,4 +1,9 @@
 import type {
+  ContactInboxModel,
+  ConversationModel,
+  MessageModel,
+} from "@chatbotx.io/database/types"
+import type {
   SendAudioStepSchema,
   SendCardStepSchema,
   SendCarouselStepSchema,
@@ -11,7 +16,6 @@ import type {
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
-import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -33,8 +37,9 @@ export const ChatJobAction = {
 export type ChatJobSendExternalMessage = {
   type: typeof ChatJobAction.sendExternalMessage
   data: {
-    conversation: OutgoingConversation
-    message: OutgoingMessage
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    message: MessageModel & { clientId?: string | undefined }
   }
 }
 
@@ -61,25 +66,20 @@ export type ChatJobSendFlowStep = {
 
 export type ChatJobSendChatMessage = {
   type: typeof ChatJobAction.sendChatMessage
-  data:
-    | {
-        conversation: OutgoingConversation
-        text?: string
-        url?: string
-        trackingContext?: BotResponseTrackingContext
-      }
-    | {
-        conversationId: string
-        text?: string
-        url?: string
-        trackingContext?: BotResponseTrackingContext
-      }
+  data: {
+    conversation: ConversationModel
+    contactInbox?: ContactInboxModel
+    text?: string
+    url?: string
+    trackingContext?: BotResponseTrackingContext
+  }
 }
 
 export type ChatJobSendWhatsappTemplateMessage = {
   type: typeof ChatJobAction.sendWhatsappTemplateMessage
   data: {
-    conversationId: string
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
     templateId: string
     broadcastId: string
     templateData?: WaTemplateParams
@@ -89,18 +89,10 @@ export type ChatJobSendWhatsappTemplateMessage = {
 export type ChatJobSendTyping = {
   type: typeof ChatJobAction.sendTyping
   data: {
-    conversation: OutgoingConversation
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
     typing: boolean
-  }
-}
-
-export type ChatJobNotifyExportResult = {
-  type: typeof ChatJobAction.notifyExportResult
-  data: {
-    workspaceId: string
-    userId: string
-    status: "pending" | "completed" | "failed"
-    outputPath: string
+    seconds?: number
   }
 }
 
@@ -110,7 +102,6 @@ export type ChatJobData =
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage
   | ChatJobSendTyping
-  | ChatJobNotifyExportResult
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"

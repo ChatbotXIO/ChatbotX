@@ -4,14 +4,26 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { contactModel } from "./contact"
+import { inboxModel } from "./inbox"
 
 export const contactInboxModel = pgTable(
   "ContactInbox",
   {
     ...sharedColumns,
     originalContactId: bigintAsString().notNull(),
-    contactId: bigintAsString().notNull(),
-    inboxId: bigintAsString().notNull(),
+    contactId: bigintAsString()
+      .notNull()
+      .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    inboxId: bigintAsString()
+      .notNull()
+      .references(() => inboxModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),

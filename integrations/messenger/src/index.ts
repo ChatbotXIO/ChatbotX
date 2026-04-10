@@ -5,4 +5,4 @@ export type {
   MessengerMessagingEvent,
   MessengerProfileRequest,
   MessengerWebhookEvent,
-} from "./schemas"
+} from "./schema"

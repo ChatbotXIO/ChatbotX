@@ -16,12 +16,8 @@ export type ContextQueue = {
   add(name: string, payload: any, opts?: any): Promise<any>
 }
 
-export type ChatbotEntity = {
-  id: string
-}
-
 export type Context<AO extends AuthValue> = {
-  workspace?: ChatbotEntity
+  storagePrefix: string
   uploader?: ContextUploader
   auth: AO
   queue?: ContextQueue

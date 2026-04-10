@@ -9,8 +9,10 @@ import {
   messageModel,
 } from "@chatbotx.io/database/schema"
 import type {
+  AttachmentModel,
   ContactInboxModel,
   ConversationModel,
+  MessageModel,
   UserModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
@@ -20,7 +22,6 @@ import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
-import type { OutgoingConversation, OutgoingMessage } from "@chatbotx.io/sdk"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
@@ -28,7 +29,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -36,7 +36,6 @@ import {
   type CreateMessageRequest,
   createMessageRequest,
 } from "../schema/mutation"
-import type { MessageResource } from "../schema/resource"
 
 export const createMessageAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -117,7 +116,7 @@ export const createMessage = async (props: {
   // }
 
   const message = await db.transaction(async (tx) => {
-    const newMessage: MessageResource & { attachments?: AttachmentResource[] } =
+    const newMessage: MessageModel & { attachments?: AttachmentModel[] } =
       await tx
         .insert(messageModel)
         .values({
@@ -154,7 +153,7 @@ export const createMessage = async (props: {
           })),
         )
 
-      newMessage.attachments = attachments as AttachmentResource[]
+      newMessage.attachments = attachments
     }
 
     await tx
@@ -194,11 +193,12 @@ export const createMessage = async (props: {
       chatQueue.add(ChatJobAction.sendExternalMessage, {
         type: ChatJobAction.sendExternalMessage,
         data: {
-          conversation: conversation as OutgoingConversation,
+          conversation,
+          contactInbox,
           message: {
             ...message,
             clientId: parsedInput.clientId,
-          } as OutgoingMessage,
+          },
         },
       }),
     )

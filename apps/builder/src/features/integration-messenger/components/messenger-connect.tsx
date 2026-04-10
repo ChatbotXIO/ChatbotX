@@ -1,7 +1,7 @@
 "use client"
 
 import type { OrganizationSettings } from "@chatbotx.io/database/partials"
-import type { FacebookPage } from "@chatbotx.io/integration-messenger/schemas"
+import type { FacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import {
   Card,
   CardContent,

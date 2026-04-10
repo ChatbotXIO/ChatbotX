@@ -7,17 +7,17 @@ import { createId } from "@chatbotx.io/utils"
 import { fetch } from "cross-fetch"
 import imageSize from "image-size"
 import { ZALO_API_ENDPOINTS } from "../constants"
-import { handleZaloError, ZaloException } from "../libs/exception"
-import { ZaloHttpClient } from "../libs/http-client"
-import type { ZaloAuthValue } from "../schemas/definition"
+import { handleZaloError, ZaloException } from "../lib/exception"
+import { ZaloHttpClient } from "../lib/http-client"
+import type { ZaloAuthValue } from "../schema/definition"
 import type {
   MessageAttachment,
   UploadAttachmentResponse,
   ZaloSendMessageRequest,
   ZaloSendMessageResponse,
-} from "../schemas/webhook"
+} from "../schema/webhook"
 
-export const sendMessage = (
+export const sendMessageToZaloOA = (
   auth: ZaloAuthValue,
   payload: ZaloSendMessageRequest,
 ): Promise<ZaloSendMessageResponse> =>
@@ -61,7 +61,7 @@ export const getMessageAttachmentEntity = ({
       throw new ZaloException("No response body received")
     }
 
-    const originPath = `public/workspaces${ctx.workspace?.id ?? ""}/${createId()}`
+    const originPath = `${ctx.storagePrefix}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
     const fileType = guessFileTypeFromMimeType(mimeType)

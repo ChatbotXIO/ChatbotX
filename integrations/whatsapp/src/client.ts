@@ -5,7 +5,7 @@ import type {
   WhatsappPhoneNumberResponse,
 } from "./api/phone-number"
 import { API_URL, DEFAULT_API_VERSION } from "./constants"
-import type { WhatsappAuthValue } from "./schemas"
+import type { WhatsappAuthValue } from "./schema"
 
 export const getWhatsappClient = (auth: WhatsappAuthValue) =>
   new WhatsAppAPI({

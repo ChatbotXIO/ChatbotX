@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
@@ -42,6 +43,7 @@ export async function verifyGoogleSheetsUrl(
   try {
     await integrations.googleSheets.actions.listSheetNames({
       ctx: {
+        storagePrefix: getStoragePrefix(workspaceId, dbIntegration.id),
         auth: dbIntegration.integrationGoogleSheet
           .auth as unknown as GoogleSheetsAuthValue,
       },

@@ -5,7 +5,7 @@ import {
   integrationWhatsappModel,
   whatsappMessageTemplateModel,
 } from "@chatbotx.io/database/schema"
-import { uploader } from "@chatbotx.io/filesystem"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
@@ -31,6 +31,7 @@ export const syncMessageTemplateAction = workspaceActionClient
     const ctx = {
       auth: integrationWhatsapp.auth as WhatsappAuthValue,
       uploader,
+      storagePrefix: getStoragePrefix(workspaceId, integrationWhatsapp.inboxId),
     }
 
     const res = await integrations.whatsapp.runAction("listMessageTemplates", {

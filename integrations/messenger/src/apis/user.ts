@@ -1,56 +1,59 @@
-import type { Context, IncomingContact } from "@chatbotx.io/sdk"
+import type {
+  ContactHandlers,
+  Context,
+  IncomingContact,
+} from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
 import { MessengerAPIException } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
-import type { FacebookUserProfile, MessengerAuthValue } from "../schemas"
+import type { FacebookUserProfile, MessengerAuthValue } from "../schema"
 
-export const getUserProfile = async ({
-  ctx,
-  psid,
-}: {
-  ctx: Context<MessengerAuthValue>
-  psid: string
-}): Promise<IncomingContact> => {
-  try {
-    const response = await facebookGraphClient.get<FacebookUserProfile>(
-      `${ctx.auth.metadata.version}/${psid}`,
-      {
-        headers: {
-          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
+  async (props) => {
+    const {
+      data: { sourceId },
+      ctx,
+    } = props
+    try {
+      const response = await facebookGraphClient.get<FacebookUserProfile>(
+        `${ctx.auth.metadata.version}/${sourceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+          },
         },
-      },
-    )
+      )
 
-    const result: IncomingContact = {
-      sourceId: psid,
-      firstName: response.first_name,
-      lastName: response.last_name,
-    }
-
-    if (response.profile_pic) {
-      try {
-        result.avatar = await getUserProfilePicture({
-          ctx,
-          pictureUrl: response.profile_pic,
-        })
-      } catch (error) {
-        logger.error(error, "getUserProfilePicture error")
+      const result: IncomingContact = {
+        sourceId,
+        firstName: response.first_name,
+        lastName: response.last_name,
       }
+
+      if (response.profile_pic) {
+        try {
+          result.avatar = await getContactProfilePicture({
+            ctx,
+            pictureUrl: response.profile_pic,
+          })
+        } catch (error) {
+          logger.error(error, "getContactProfilePicture error")
+        }
+      }
+
+      return result
+    } catch (error) {
+      logger.error(error, "getUserProfile error")
+      throw new MessengerAPIException(
+        "Failed to fetch user profile",
+        `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`,
+      )
     }
-
-    return result
-  } catch (error) {
-    logger.error(error, "getUserProfile error")
-    throw new MessengerAPIException(
-      "Failed to fetch user profile",
-      `${API_URL}/${ctx.auth.metadata.version}/${psid}`,
-    )
   }
-}
 
-export const getUserProfilePicture = async ({
+const getContactProfilePicture = async ({
   ctx,
   pictureUrl,
 }: {
@@ -64,7 +67,7 @@ export const getUserProfilePicture = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `public/space/${ctx.workspace?.id}/avatars/${createId()}`
+    const originPath = `public/space/${ctx.storagePrefix}/avatars/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
 

@@ -1,6 +1,7 @@
 export * from "./lib/action"
 export * from "./lib/auth"
 export * from "./lib/exception"
+export * from "./lib/flow-step-data"
 export * from "./lib/integration"
 export * from "./lib/property"
 export * from "./lib/shared"

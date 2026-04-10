@@ -1,87 +1,134 @@
 import type { AuthValue, Oauth2AuthValue } from "./auth"
+import type { SendFlowStepData } from "./flow-step-data"
 import type {
   BaseConfig,
   Context,
   HandleRequestProps,
   Handler,
+  IncomingContact,
   OutgoingContact,
-  OutgoingContactInbox,
-  OutgoingConversation,
   OutgoingMessage,
   ReceivedMessageResult,
 } from "./shared"
 
-type IChannel<IAuth extends AuthValue> = {
-  message?: {
-    sendMessage?: Handler<
-      {
-        ctx: Context<IAuth>
-        data: {
-          contact: OutgoingContact
-          conversation: OutgoingConversation
-          contactInbox: OutgoingContactInbox
-          message: OutgoingMessage
-        }
-      },
-      void
-    >
-    receiveMessage?: Handler<
-      {
-        ctx: Context<IAuth>
-        data: {
-          integrationType: string
-          integrationIdentifier: string
-          payload: unknown
-        }
-      },
-      ReceivedMessageResult | null
-    >
+/** Base props for channel `sendFlowStep`; use {@link SendFlowStepProps} to narrow `data.step`. */
+export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
+  ctx: Context<IAuth>
+  data: {
+    contact: OutgoingContact
+    flowId: string
+    flowVersionId?: string
+    step: SendFlowStepData
   }
-  conversation?: {
-    sendTyping?: Handler<
-      {
-        ctx: Context<IAuth>
-        data: {
-          conversation: OutgoingConversation
-          contactInbox: OutgoingContactInbox
-          typing: boolean
-          seconds: number
-        }
-      },
-      void
-    >
-    contactMarkAsRead?: Handler<
-      {
-        ctx: Context<IAuth>
-        data: {
-          integrationType: string
-          integrationIdentifier: string
-          payload: unknown
-        }
-      },
-      void
-    >
-    agentMarkAsRead?: Handler<
-      {
-        ctx: Context<IAuth>
-        data: {
-          conversation: OutgoingConversation
-          contactInbox: OutgoingContactInbox
-        }
-      },
-      void
-    >
-  }
-  contact?: {
-    block?: Handler<
-      { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
-      void
-    >
-    unblock?: Handler<
-      { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
-      void
-    >
-  }
+}
+
+export type MessageHandlers<
+  IAuth extends AuthValue,
+  TStep extends SendFlowStepData = SendFlowStepData,
+> = {
+  sendMessage: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        message: OutgoingMessage
+      }
+    },
+    {
+      messageIds: string[]
+    }
+  >
+  receiveMessage: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        integrationType: string
+        integrationIdentifier: string
+        payload: unknown
+      }
+    },
+    ReceivedMessageResult | null
+  >
+  sendFlowStep: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        flowId: string
+        flowVersionId?: string
+        step: TStep
+      }
+    },
+    {
+      messageIds: string[]
+    }
+  >
+}
+
+export type ConversationHandlers<IAuth extends AuthValue> = {
+  sendTyping: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        typing: boolean
+        seconds?: number
+      }
+    },
+    void
+  >
+  contactMarkAsRead: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        integrationType: string
+        integrationIdentifier: string
+        payload: unknown
+      }
+    },
+    void
+  >
+  agentMarkAsRead: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+      }
+    },
+    void
+  >
+}
+
+export type ContactHandlers<IAuth extends AuthValue> = {
+  getProfile: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    IncomingContact
+  >
+  block: Handler<
+    { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
+    void
+  >
+  unblock: Handler<
+    { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
+    void
+  >
+}
+
+export type BotHandlers<IAuth extends AuthValue> = {
+  getProfile: Handler<
+    { ctx: Context<IAuth>; data: { sourceId: string } },
+    IncomingContact
+  >
+}
+
+export type IChannel<
+  IAuth extends AuthValue,
+  TStep extends SendFlowStepData = SendFlowStepData,
+> = {
+  message?: Partial<MessageHandlers<IAuth, TStep>>
+  conversation?: Partial<ConversationHandlers<IAuth>>
+  contact?: Partial<ContactHandlers<IAuth>>
+  bot?: Partial<BotHandlers<IAuth>>
 }
 
 export type IntegrationDefinition<

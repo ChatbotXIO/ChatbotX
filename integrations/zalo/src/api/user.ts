@@ -1,9 +1,9 @@
 import type { Context, IncomingContact } from "@chatbotx.io/sdk"
 import { ZALO_API_ENDPOINTS } from "../constants"
-import { handleZaloError, ZaloException } from "../libs/exception"
-import { ZaloHttpClient } from "../libs/http-client"
-import { fetchAndReuploadImage } from "../libs/image"
-import type { ZaloAuthValue } from "../schemas/definition"
+import { handleZaloError, ZaloException } from "../lib/exception"
+import { ZaloHttpClient } from "../lib/http-client"
+import { fetchAndReuploadImage } from "../lib/image"
+import type { ZaloAuthValue } from "../schema/definition"
 
 export type ZaloUserProfileResponse = {
   error: number

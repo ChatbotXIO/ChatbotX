@@ -6,7 +6,7 @@ import {
   MESSENGER_MESSAGE_METADATA,
   type MessengerConfig,
   messengerWebhookEventSchema,
-} from "../schemas"
+} from "../schema"
 
 const verifyWebhookSignature = (
   payload: string,

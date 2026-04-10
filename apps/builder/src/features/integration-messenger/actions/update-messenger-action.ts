@@ -11,6 +11,7 @@ import type {
   IntegrationMessengerModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
@@ -19,7 +20,7 @@ import {
 import type {
   FacebookButton,
   MessengerAuthValue,
-} from "@chatbotx.io/integration-messenger/schemas"
+} from "@chatbotx.io/integration-messenger/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
@@ -80,7 +81,11 @@ export const updateMessenger = async (
 
       integrationMessenger.actions.updateMessengerProfile({
         ctx: {
-          workspace: ctx.workspace,
+          uploader,
+          storagePrefix: getStoragePrefix(
+            ctx.workspace.id,
+            integrationMessengerData.inboxId,
+          ),
           auth: integrationMessengerData?.auth as MessengerAuthValue,
         },
         params: await getMessengerProfileParams(integrationMessengerData),
@@ -168,7 +173,8 @@ const updatePersonas = async (
 
   const newPersona = await integrationMessenger.actions.updatePersona({
     ctx: {
-      workspace,
+      storagePrefix: getStoragePrefix(workspace.id, model.inboxId),
+      uploader,
       auth: model?.auth as MessengerAuthValue,
     },
     persona: defaultPersona

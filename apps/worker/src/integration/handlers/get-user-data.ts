@@ -244,11 +244,33 @@ async function sendMessage(
   text: string,
   attempts = 1,
 ) {
-  const { conversation, flowVersion, step } = props
+  const {
+    conversation,
+    contactInbox: targetContactInbox,
+    flowVersion,
+    step,
+  } = props
+
+  const contactInbox =
+    targetContactInbox ??
+    (await db.query.contactInboxModel.findFirst({
+      where: {
+        contactId: conversation.contactId,
+      },
+      orderBy: {
+        lastMessageAt: "desc",
+      },
+    }))
+  if (!contactInbox) {
+    throw new IntegrationException(
+      `getUserData: contact inbox not found for conversation ${conversation.id}`,
+    )
+  }
 
   await chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
+      contactInbox,
       conversation,
       text,
     },

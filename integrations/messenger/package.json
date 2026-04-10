@@ -23,6 +23,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./apis/*": "./src/apis/*.ts",
-    "./schemas": "./src/schemas.ts"
+    "./schema": "./src/schema.ts"
   }
 }

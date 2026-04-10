@@ -5,7 +5,7 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import { convertCodeToTokens, getZaloOAProfile } from "../api/auth"
-import type { ZaloAuthValue } from "../schemas/definition"
+import type { ZaloAuthValue } from "../schema/definition"
 
 export const callbackHandler = async (
   props: HandleRequestProps<Oauth2Config>,

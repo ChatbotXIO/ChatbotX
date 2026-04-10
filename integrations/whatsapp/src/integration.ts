@@ -10,15 +10,14 @@ import {
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
 import { uploadMedia, verifyAccessToken } from "./client"
-import { agentMarkAsRead, sendTyping } from "./conversation"
+import { conversationHandlers } from "./handlers/conversation"
+import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
-import { receiveMessage } from "./incomming-message"
-import { sendFlowStep, sendMessage } from "./outgoing-message"
 import type {
   WhatsappActions,
   WhatsappAuthValue,
   WhatsappConfig,
-} from "./schemas"
+} from "./schema"
 
 const config: IntegrationDefinition<
   WhatsappConfig,
@@ -28,22 +27,13 @@ const config: IntegrationDefinition<
   name: "whatsapp",
   channels: {
     channel: {
-      message: {
-        receiveMessage,
-        sendMessage,
-      },
-      conversation: {
-        sendTyping,
-        agentMarkAsRead,
-      },
+      message: messageHandlers,
+      conversation: conversationHandlers,
     },
   },
   actions: {
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
-    sendFlowStep: async (props) => {
-      return await sendFlowStep(props)
-    },
     listMessageTemplates: async ({ ctx }) =>
       await listMessageTemplates(ctx.auth),
     listFlows: async ({ ctx }) => await listFlows(ctx),

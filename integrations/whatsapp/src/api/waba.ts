@@ -2,7 +2,7 @@ import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
 import { logger } from "../lib/logger"
-import type { WhatsappAuthValue, WhatsappPagination } from "../schemas"
+import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
 export type WhatsappWabaDetailResponse = {

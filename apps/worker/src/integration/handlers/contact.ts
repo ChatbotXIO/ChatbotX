@@ -1,4 +1,4 @@
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
@@ -26,20 +26,10 @@ import type {
   UnsubscribeSequenceStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
-  broadcastToWorkspaceParty,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
-import {
   cancelPendingDispatches,
   enrollContactInSequence,
 } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
-import type {
-  IntegrationJobBlockContact,
-  IntegrationJobUnblockContact,
-} from "@chatbotx.io/worker-config"
-import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
-import { allIntegrations } from "../../lib/integrations"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -292,76 +282,6 @@ export async function deleteContact({
       .delete(contactModel)
       .where(eq(contactModel.id, conversation.contactId))
   })
-}
-
-export const broadcastBlockContactEvent = async ({
-  contact,
-}: IntegrationJobBlockContact["data"]) => {
-  const firstConversation = await findOrFail({
-    table: conversationModel,
-    where: {
-      contactId: contact.id,
-    },
-    message: "Conversation not found",
-  })
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    firstConversation.inboxId,
-  )
-
-  const promises = [
-    allIntegrations[inbox.channel]?.channels?.channel?.contact?.block?.({
-      ctx: {
-        workspace: inbox.workspace,
-        auth,
-      },
-      data: {
-        contact,
-      },
-    }),
-    broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.contactBlocked,
-      data: {
-        contactId: contact.id,
-      },
-    }),
-  ]
-
-  await Promise.all(promises)
-}
-
-export const broadcastUnblockContactEvent = async ({
-  contact,
-}: IntegrationJobUnblockContact["data"]) => {
-  const firstConversation = await findOrFail({
-    table: conversationModel,
-    where: {
-      contactId: contact.id,
-    },
-    message: "Conversation not found",
-  })
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    firstConversation.inboxId,
-  )
-
-  const promises = [
-    allIntegrations[inbox.channel]?.channels?.channel?.contact?.unblock?.({
-      ctx: {
-        workspace: inbox.workspace,
-        auth,
-      },
-      data: {
-        contact,
-      },
-    }),
-    broadcastToWorkspaceParty(inbox.workspaceId, {
-      eventType: RealtimeEventType.contactUnblocked,
-      data: {
-        contactId: contact.id,
-      },
-    }),
-  ]
-
-  await Promise.all(promises)
 }
 
 export async function addContactSequence({

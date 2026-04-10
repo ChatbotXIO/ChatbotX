@@ -4,34 +4,21 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
-import { getUserProfile } from "./api/user"
 import { callbackHandler } from "./handlers/callback"
+import { contactHandlers } from "./handlers/handler"
+import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
-import { receiveMessage } from "./incoming-message"
-import { sendFlowStep, sendOutgoingMessage } from "./outgoing-message"
-import type {
-  ZaloActions,
-  ZaloAuthValue,
-  ZaloConfig,
-} from "./schemas/definition"
+import type { ZaloAuthValue, ZaloConfig } from "./schema/definition"
 
-const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
+const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue> = {
   name: "zalo",
   channels: {
     channel: {
-      message: {
-        sendMessage: sendOutgoingMessage,
-        receiveMessage,
-      },
+      message: messageHandlers,
+      contact: contactHandlers,
     },
   },
-  actions: {
-    sendFlowStep: async (props) => {
-      await sendFlowStep(props)
-    },
-    getUserProfile: async ({ ctx, psid }) =>
-      await getUserProfile({ ctx, psid }),
-  },
+  actions: {},
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const method = segments.pop()
@@ -53,5 +40,5 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions> = {
 }
 
 export const integration = new Integration<
-  IntegrationDefinition<ZaloConfig, ZaloAuthValue, ZaloActions>
+  IntegrationDefinition<ZaloConfig, ZaloAuthValue>
 >(config)

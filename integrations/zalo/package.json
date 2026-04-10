@@ -22,6 +22,6 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./schemas": "./src/schemas/*.ts"
+    "./schema": "./src/schema/index.ts"
   }
 }

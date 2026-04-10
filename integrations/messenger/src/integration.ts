@@ -4,17 +4,16 @@ import {
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import { updateMessengerProfile, updatePersona } from "./apis/page"
-import { getUserProfile } from "./apis/user"
-import { agentMarkAsRead, sendTyping } from "./conversation"
 import { MessengerAPIException } from "./exception"
+import { contactHandlers } from "./handlers/contact"
+import { conversationHandlers } from "./handlers/conversation"
+import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
-import { receiveMessage } from "./incomming-message"
-import { sendFlowStep, sendMessage } from "./outgoing-message"
 import type {
   MessengerActions,
   MessengerAuthValue,
   MessengerConfig,
-} from "./schemas"
+} from "./schema"
 
 const config: IntegrationDefinition<
   MessengerConfig,
@@ -24,29 +23,12 @@ const config: IntegrationDefinition<
   name: "messenger",
   channels: {
     channel: {
-      message: {
-        sendMessage,
-        receiveMessage,
-      },
-      conversation: {
-        sendTyping,
-        agentMarkAsRead,
-      },
+      message: messageHandlers,
+      conversation: conversationHandlers,
+      contact: contactHandlers,
     },
   },
   actions: {
-    receiveMessage: async ({ ctx, data }) =>
-      await receiveMessage({
-        ctx,
-        data: {
-          integrationType: "messenger",
-          integrationIdentifier: ctx.auth.metadata.pageId,
-          payload: data,
-        },
-      }),
-    sendMessage,
-    sendFlowStep,
-    getUserProfile,
     updateMessengerProfile,
     updatePersona,
   },

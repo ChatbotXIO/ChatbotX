@@ -22,7 +22,7 @@ export const inboxModel = pgTable(
       "btree",
       table.workspaceId.asc().nullsLast(),
     ),
-    uniqueIndex("Inbox_workspaceId_channel_sourceId_key").using(
+    uniqueIndex("Inbox_channel_sourceId_key").using(
       "btree",
       table.channel.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),

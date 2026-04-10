@@ -1,5 +1,5 @@
 import type { ContextQueue } from "./context"
-import type { IncomingConversation, IncomingMessage } from "./message"
+import type { IncomingContact, IncomingMessage } from "./message"
 
 export * from "./context"
 export * from "./message"
@@ -15,6 +15,12 @@ export type HandleRequestProps<IConfig extends BaseConfig> = {
   queue?: ContextQueue
 }
 
+export type ReceivedMessageProps = {
+  integrationType: string
+  integrationIdentifier: string
+  payload: unknown
+}
+
 export const HandleRequestType = {
   callback: "callback",
   webhook: "webhook",
@@ -23,7 +29,7 @@ export const HandleRequestType = {
 
 export type ReceivedMessageResult = {
   message: IncomingMessage
-  conversation: IncomingConversation
+  contact: IncomingContact
   postbackAction: string | null
   quickReplyAction: string | null
   ref: string | null

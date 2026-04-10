@@ -6,19 +6,14 @@ import {
   contactEventTypes,
   contactTrackingService,
 } from "@chatbotx.io/analytics"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   contentTypes,
   messageTypes,
   senderTypes,
 } from "@chatbotx.io/database/partials"
-import {
-  attachmentModel,
-  contactModel,
-  inboxModel,
-  messageModel,
-} from "@chatbotx.io/database/schema"
+import { attachmentModel, messageModel } from "@chatbotx.io/database/schema"
 import type { AttachmentModel } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
@@ -34,14 +29,12 @@ import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
-import type {
-  AuthValue,
-  MessageButtonTemplate,
-  MessageCardTemplate,
-  MessageTemplateEntity,
-  OutgoingMessage,
-  SendFlowStepData,
-  SendTypingProps,
+import {
+  IntegrationException,
+  type MessageButtonTemplate,
+  type MessageCardTemplate,
+  type MessageTemplateEntity,
+  type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import type {
@@ -49,8 +42,6 @@ import type {
   ChatJobSendFlowStep,
 } from "@chatbotx.io/worker-config"
 import { trackBotResponse } from "../../integration/handlers/automated-response/track-bot-response"
-import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
-import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
@@ -254,6 +245,7 @@ export async function sendFlowStep({
       promises.push(
         sendFlowStepToExternal({
           conversation,
+          contactInbox: targetContactInbox,
           flowId,
           flowVersionId,
           step: step as SendFlowStepData,
@@ -346,35 +338,28 @@ export async function sendFlowStep({
 export const sendChatMessage = async (
   props: ChatJobSendChatMessage["data"],
 ) => {
-  const { text, url, trackingContext } = props
+  const {
+    conversation,
+    contactInbox: targetContactInbox,
+    text,
+    url,
+    trackingContext,
+  } = props
 
-  const conversationId =
-    "conversation" in props ? props.conversation.id : props.conversationId
-  const conversation =
-    "conversation" in props
-      ? props.conversation
-      : await db.query.conversationModel.findFirst({
-          where: { id: props.conversationId },
-        })
-
-  if (!conversation) {
-    logger.error(`Conversation not found for conversationId: ${conversationId}`)
-    return
-  }
-
-  const targetContactInbox = await db.query.contactInboxModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-    },
-    orderBy: {
-      lastMessageAt: "desc",
-    },
-  })
-  if (!targetContactInbox) {
-    logger.error(
-      `Contact inbox not found for conversationId: ${conversationId}`,
+  const contactInbox =
+    targetContactInbox ??
+    (await db.query.contactInboxModel.findFirst({
+      where: {
+        contactId: conversation.contactId,
+      },
+      orderBy: {
+        lastMessageAt: "desc",
+      },
+    }))
+  if (!contactInbox) {
+    throw new IntegrationException(
+      `sendChatMessage: contact inbox not found for conversation ${conversation.id}`,
     )
-    return
   }
 
   try {
@@ -383,7 +368,7 @@ export const sendChatMessage = async (
         .insert(messageModel)
         .values({
           id: createId(),
-          contactInboxId: targetContactInbox.id,
+          contactInboxId: contactInbox.id,
           workspaceId: conversation.workspaceId,
           conversationId: conversation.id,
           messageType: "outgoing",
@@ -424,51 +409,15 @@ export const sendChatMessage = async (
       return newMessage
     })
 
-    const { inbox, auth } = await getInboxWithAuthFromInboxId(
-      targetContactInbox.inboxId,
-    )
-
-    const contact = await findOrFail({
-      table: contactModel,
-      where: { id: targetContactInbox.contactId },
-      message: `Contact not found for conversationId: ${conversation.id}`,
-    })
-
-    await allIntegrations[
-      inbox.channel
-    ]?.channels?.channel?.message?.sendMessage?.({
-      ctx: {
-        workspace: inbox.workspace,
-        auth,
-      },
-      data: {
-        contact,
-        conversation,
-        message: message as OutgoingMessage,
-      },
-    })
-
-    await allIntegrations.chatbotx?.channels?.channel?.message?.sendMessage?.({
-      ctx: {
-        workspace: inbox.workspace,
-        auth,
-      },
-      data: {
-        contact,
-        conversation,
-        message: message as OutgoingMessage,
-      },
-    })
-
     const promises: Promise<unknown>[] = [
       broadcastToWorkspaceParty(conversation.workspaceId, {
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
     ]
-    if (conversation.sourceId) {
+    if (contactInbox.sourceId) {
       promises.push(
-        broadcastToGuestParty(conversation.sourceId, {
+        broadcastToGuestParty(contactInbox.sourceId, {
           eventType: RealtimeEventType.messageCreated,
           data: message,
         }),
@@ -477,39 +426,38 @@ export const sendChatMessage = async (
       promises.push(
         sendMessageToExternal({
           conversation,
-          message: message as OutgoingMessage,
+          contactInbox,
+          message,
         }),
       )
     }
 
     await Promise.all(promises)
 
-    if (contact.sourceId) {
-      contactTrackingService
-        .trackEvent({
-          workspaceId: conversation.workspaceId,
-          contactId: contact.sourceId,
-          eventType: "contact_message_out",
-          senderType: "bot",
-          occurredAt: new Date(),
-          source: contact.source,
-          sourceId: contact.sourceId,
-          channel: inbox.channel,
-          metadata: {
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "sendChatMessage",
-              triggerType: "bot_message_out_chat",
-            },
+    contactTrackingService
+      .trackEvent({
+        workspaceId: conversation.workspaceId,
+        contactId: contactInbox.contactId,
+        eventType: "contact_message_out",
+        senderType: "bot",
+        occurredAt: new Date(),
+        source: contactInbox.source,
+        sourceId: contactInbox.sourceId,
+        channel: contactInbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "sendChatMessage",
+            triggerType: "bot_message_out_chat",
           },
-        })
-        .catch((error) => {
-          logger.error(
-            error,
-            "[sendChatMessage] Failed to track contact_message_out",
-          )
-        })
-    }
+        },
+      })
+      .catch((error) => {
+        logger.error(
+          error,
+          "[sendChatMessage] Failed to track contact_message_out",
+        )
+      })
 
     if (trackingContext) {
       await trackBotResponse({
@@ -556,28 +504,4 @@ export const sendChatMessage = async (
       })
     }
   }
-}
-
-export const sendTyping = async (
-  props: SendTypingProps<AuthValue>,
-): Promise<void> => {
-  const {
-    ctx,
-    data: { conversation, typing },
-  } = props
-
-  const inbox = await findOrFail({
-    table: inboxModel,
-    where: {
-      id: conversation.inboxId,
-    },
-    message: `Inbox ${conversation.inboxId} not found for conversationId: ${conversation.id}`,
-  })
-
-  await allIntegrations[
-    inbox.channel
-  ]?.channels?.channel?.conversation?.sendTyping?.({
-    ctx,
-    data: { conversation, typing },
-  })
 }

@@ -1,4 +1,5 @@
 import type {
+  ContactInboxModel,
   ConversationModel,
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
@@ -27,6 +28,7 @@ import { flowStepHandlers } from "./step"
 
 export type ExecuteMultipleStepsProps = {
   conversation: ConversationModel
+  contactInbox?: ContactInboxModel
   flowVersion: FlowVersionModel
   useLatestFlowVersion?: boolean
   targetType?: "node" | "button" | "step" | "quickReply"

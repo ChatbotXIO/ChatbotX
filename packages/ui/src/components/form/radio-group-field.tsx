@@ -30,7 +30,7 @@ export function RadioGroupField<T extends FieldValues>({
     >
       {(field) => (
         <RadioGroup
-          className="flex flex-col"
+          className="mt-2 flex flex-col"
           defaultValue={field.value}
           onValueChange={field.onChange}
         >

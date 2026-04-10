@@ -2,7 +2,7 @@
 
 import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import { uploader } from "@chatbotx.io/filesystem"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type ChatbotIdRequestParams,
@@ -37,6 +37,10 @@ export const updateWhatsappIceBreakerAction = workspaceActionClient
       const ctx = {
         auth: integrationWhatsapp.auth as WhatsappAuthValue,
         uploader,
+        storagePrefix: getStoragePrefix(
+          workspaceId,
+          integrationWhatsapp.inboxId,
+        ),
       }
 
       await integrations.whatsapp.runAction("updateConversationalAutomation", {

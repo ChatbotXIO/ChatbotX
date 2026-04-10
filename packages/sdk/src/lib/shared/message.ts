@@ -11,39 +11,13 @@ export type IncomingContact = {
 }
 
 export type OutgoingContact = {
-  id: string
-  sourceId: string | null
-  phoneNumber: string | null
-  firstName: string | null
-  lastName: string | null
-  email: string | null
-  avatar: string | null
-  gender?: string
-}
-
-export type IncomingConversation = {
-  sourceId: string
-  additionalAttributes: { [x: string]: unknown }
-  contact: IncomingContact
-}
-
-export type OutgoingConversation = {
-  id: string
-  workspaceId: string
-  additionalAttributes: { [x: string]: unknown } | null
-  contactId: string
-  contact?: OutgoingContact
-}
-
-export type OutgoingContactInbox = {
-  id: string
-  channel: string
   sourceId: string
 }
 
 export type OutgoingMessage = {
   id: string
   workspaceId: string
+  additionalAttributes?: { [x: string]: unknown }
   conversationId: string
   contentType: ContentType
   text: string | null

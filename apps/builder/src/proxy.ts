@@ -2,21 +2,20 @@ import { getSessionCookie } from "better-auth/cookies"
 import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
+import { getPublicOriginFromRequest } from "@/lib/domain"
 
 const publicRoutes = ["/integrations"]
+const signinPath = "/auth/sign-in"
 
 export async function proxy(request: NextRequest) {
-  if (isPublicRoute(request.nextUrl.pathname)) {
+  const { pathname, search } = request.nextUrl
+  if (isPublicRoute(pathname)) {
     return attachProxyUrl(request)
   }
 
   const cookies = getSessionCookie(request)
-
-  const fallbackSigninUrl = new URL("/auth/sign-in", request.url)
-  fallbackSigninUrl.searchParams.set("callbackURL", request.url)
-
-  if (!(cookies || request.nextUrl.pathname.includes("/auth/sign-in"))) {
-    return NextResponse.redirect(fallbackSigninUrl)
+  if (!cookies) {
+    return NextResponse.redirect(buildSigninUrl(request, pathname, search))
   }
 
   // Verify the session is valid
@@ -24,18 +23,15 @@ export async function proxy(request: NextRequest) {
     headers: await headers(),
   })
   if (!session) {
-    return NextResponse.redirect(fallbackSigninUrl)
+    return NextResponse.redirect(buildSigninUrl(request, pathname, search))
   }
 
   return attachProxyUrl(request)
 }
 
 function attachProxyUrl(request: NextRequest): NextResponse {
-  // Calculate proxy url
-  const host =
-    request.headers.get("x-forwarded-host") || request.headers.get("host")
-  const protocol = request.headers.get("x-forwarded-proto") || "https"
-  const proxyUrl = `${protocol}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`
+  const { pathname, search } = request.nextUrl
+  const proxyUrl = `${getPublicOriginFromRequest(request)}${pathname}${search}`
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", proxyUrl)
@@ -45,6 +41,20 @@ function attachProxyUrl(request: NextRequest): NextResponse {
       headers: requestHeaders,
     },
   })
+}
+
+function buildSigninUrl(
+  request: NextRequest,
+  pathname: string,
+  search: string,
+): URL {
+  const publicOrigin = getPublicOriginFromRequest(request)
+  const signinUrl = new URL(signinPath, publicOrigin)
+  signinUrl.searchParams.set(
+    "callbackURL",
+    `${publicOrigin}${pathname}${search}`,
+  )
+  return signinUrl
 }
 
 function isPublicRoute(pathname: string) {

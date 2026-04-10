@@ -1,0 +1,2 @@
+ALTER TABLE "ContactInbox" ADD CONSTRAINT "ContactInbox_contactId_Contact_id_fkey" FOREIGN KEY ("contactId") REFERENCES "Contact"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "ContactInbox" ADD CONSTRAINT "ContactInbox_inboxId_Inbox_id_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;

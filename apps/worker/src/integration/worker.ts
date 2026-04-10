@@ -12,15 +12,7 @@ import { logger } from "../lib/logger"
 import { triggerAutomatedResponse } from "./handlers/automated-response"
 import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
 import { runChallenge } from "./handlers/challenge"
-import {
-  broadcastBlockContactEvent,
-  broadcastUnblockContactEvent,
-} from "./handlers/contact"
-import {
-  agentMarkAsRead,
-  broadcastAssignConversation,
-  contactMarkAsRead,
-} from "./handlers/conversation"
+import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
   runFlowNode,
   runFlowPostback,
@@ -123,15 +115,15 @@ async function startIntegrationWorker() {
           return
         }
         case IntegrationJobAction.blockContact: {
-          await broadcastBlockContactEvent(job.data.data)
+          // await broadcastBlockContactEvent(job.data.data)
           return
         }
         case IntegrationJobAction.unblockContact: {
-          await broadcastUnblockContactEvent(job.data.data)
+          // await broadcastUnblockContactEvent(job.data.data)
           return
         }
         case IntegrationJobAction.assignConversation: {
-          await broadcastAssignConversation(job.data.data)
+          // await broadcastAssignConversation(job.data.data)
           return
         }
         default:

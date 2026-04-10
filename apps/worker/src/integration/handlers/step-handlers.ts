@@ -17,6 +17,7 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
+import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -31,11 +32,12 @@ import {
   type UnassignConversationStepSchema,
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
-import type { OutgoingConversation } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { subHours } from "date-fns"
-import { getIntegrationAuth } from "../../lib/inbox"
-import { allIntegrations } from "../../lib/integrations"
+import {
+  allIntegrations,
+  integrationService,
+} from "../../services/integrations"
 import type { ExecuteStepProps } from "./flow"
 
 export async function stepBlockContact({
@@ -590,41 +592,40 @@ export async function stepEnableBot({
 export const stepSendTyping = async (
   props: ExecuteStepProps<TypingStepSchema>,
 ) => {
-  const { conversation } = props
+  const { conversation, contactInbox: baseContactInbox } = props
 
-  const contactInboxes = await db.query.contactInboxModel.findMany({
-    where: {
-      contactId: conversation.contactId,
-    },
-    with: {
-      inbox: {
-        with: {
-          workspace: true,
-        },
+  const contactInbox =
+    baseContactInbox ||
+    (await db.query.contactInboxModel.findFirst({
+      where: {
+        contactId: conversation.contactId,
       },
-    },
-  })
+      orderBy: {
+        lastMessageAt: "desc",
+      },
+    }))
 
-  const promises: (Promise<unknown> | undefined)[] = []
-  for (const contactInbox of contactInboxes) {
-    const auth = await getIntegrationAuth(contactInbox.inbox)
-
-    promises.push(
-      allIntegrations[
-        contactInbox.channel
-      ]?.channels.channel?.conversation?.sendTyping?.({
-        ctx: {
-          workspace: contactInbox.inbox.workspace,
-          auth,
-        },
-        data: {
-          conversation: conversation as OutgoingConversation,
-          typing: true,
-          seconds: props.step.seconds,
-        },
-      }),
-    )
+  if (!contactInbox) {
+    return
   }
 
-  await Promise.all(promises)
+  const auth =
+    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+
+  await allIntegrations[
+    contactInbox.channel
+  ]?.channels.channel?.conversation?.sendTyping?.({
+    ctx: {
+      storagePrefix: getStoragePrefix(
+        conversation.workspaceId,
+        contactInbox.inboxId,
+      ),
+      auth,
+    },
+    data: {
+      contact: contactInbox,
+      typing: true,
+      seconds: props.step.seconds,
+    },
+  })
 }

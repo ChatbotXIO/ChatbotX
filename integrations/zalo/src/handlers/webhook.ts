@@ -4,11 +4,11 @@ import {
   SdkException,
 } from "@chatbotx.io/sdk"
 import crypto from "crypto"
-import type { ZaloConfig } from "../schemas/definition"
+import type { ZaloConfig } from "../schema/definition"
 import {
   type ZaloWebhookEvent,
   zaloWebhookEventSchema,
-} from "../schemas/webhook"
+} from "../schema/webhook"
 
 const _verifyWebhookSignature = (
   payload: ZaloWebhookEvent,

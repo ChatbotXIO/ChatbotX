@@ -3,6 +3,7 @@ import {
   integrationGoogleSheetsModel,
   spreadsheetModel,
 } from "@chatbotx.io/database/schema"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { integration } from "@chatbotx.io/integration-google-sheets"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -37,6 +38,11 @@ export const listWorksheets = async (
 
   const ctx = {
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
+    storagePrefix: getStoragePrefix(
+      input.workspaceId,
+      integrationGoogleSheets.id,
+    ),
+    uploader,
   }
 
   const sheets = await integration.actions.listSheetNames({
@@ -74,6 +80,11 @@ export const listWorksheetHeaders = async (
   })
 
   const ctx = {
+    storagePrefix: getStoragePrefix(
+      input.workspaceId,
+      integrationGoogleSheets.id,
+    ),
+    uploader,
     auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
   }
 

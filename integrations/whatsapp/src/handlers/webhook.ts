@@ -1,9 +1,13 @@
-import { type HandleRequestProps, SdkException } from "@chatbotx.io/sdk"
+import {
+  type HandleRequestProps,
+  type ReceivedMessageProps,
+  SdkException,
+} from "@chatbotx.io/sdk"
 import type { OnMessageArgs } from "whatsapp-api-js/emitters"
 import { WhatsAppAPI as Middleware } from "whatsapp-api-js/middleware/next"
 import type { GetParams } from "whatsapp-api-js/types"
 import { DEFAULT_API_VERSION } from "../constants"
-import type { WhatsappConfig } from "../schemas"
+import type { WhatsappConfig } from "../schema"
 
 type StatusEvent = {
   phoneID: string
@@ -65,13 +69,8 @@ export const webhookHandler = async (
           data: {
             integrationType: "whatsapp",
             integrationIdentifier: result.data.phoneID,
-            payload: {
-              phoneID: result.data.phoneID,
-              from: result.data.from,
-              message: result.data.message,
-              name: result.data.name,
-            },
-          },
+            payload: result.data,
+          } as ReceivedMessageProps,
         })
       }
 

@@ -9,6 +9,7 @@ export const messageResource = createSelectSchema(messageModel, {
   id: z.string(),
   conversationId: z.string(),
   workspaceId: z.string(),
+  contactInboxId: z.string(),
 }).and(
   z.object({
     clientId: zodBigintAsString().optional(),

@@ -8,13 +8,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   FieldOperationType,
-  type SpreadsheetClearRowSchema,
-  type SpreadsheetColumnFilterSchema,
-  type SpreadsheetGetRandomRowSchema,
-  type SpreadsheetGetRowSchema,
-  type SpreadsheetMappingSchema,
-  type SpreadsheetSendDataSchema,
-  type SpreadsheetUpdateRowSchema,
   type StepType,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -24,13 +17,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import {
-  clearSpreadsheetRow,
-  getSpreadsheetRandomRow,
-  getSpreadsheetRow,
-  sendSpreadsheetData,
-  updateSpreadsheetRow,
-} from "../../integration/handlers/spreadsheet-handler"
 import type { ActionExecutionContext } from "../types"
 
 export class ActionExecutor {
@@ -310,97 +296,97 @@ export class ActionExecutor {
 
       case triggerActions.enum.runGoogleSheet: {
         const spreadsheetAction = action.action as StepType
-        const spreadsheetId = action.spreadsheetId as string
-        const sheetName = action.sheetName as string
-        const lookup = action.lookup as SpreadsheetColumnFilterSchema
-        const map = action.map as SpreadsheetMappingSchema[]
+        // const spreadsheetId = action.spreadsheetId as string
+        // const sheetName = action.sheetName as string
+        // const lookup = action.lookup as SpreadsheetColumnFilterSchema
+        // const map = action.map as SpreadsheetMappingSchema[]
 
         switch (spreadsheetAction) {
           case stepTypes.enum.spreadsheetGetRow: {
-            const step: SpreadsheetGetRowSchema = {
-              id: "",
-              stepType: stepTypes.enum.spreadsheetGetRow,
-              spreadsheetId,
-              sheetName,
-              lookup,
-              map,
-              successNodeId: "",
-              errorNodeId: "",
-            }
-            await getSpreadsheetRow({
-              conversation,
-              step,
-            })
+            // const step: SpreadsheetGetRowSchema = {
+            //   id: "",
+            //   stepType: stepTypes.enum.spreadsheetGetRow,
+            //   spreadsheetId,
+            //   sheetName,
+            //   lookup,
+            //   map,
+            //   successNodeId: "",
+            //   errorNodeId: "",
+            // }
+            // await getSpreadsheetRow({
+            //   conversation,
+            //   step,
+            // })
             break
           }
 
           case stepTypes.enum.spreadsheetClearRow: {
-            const step: SpreadsheetClearRowSchema = {
-              id: "",
-              stepType: stepTypes.enum.spreadsheetClearRow,
-              spreadsheetId,
-              sheetName,
-              lookup,
-              successNodeId: "",
-              errorNodeId: "",
-            }
-            await clearSpreadsheetRow({
-              conversation,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            // const step: SpreadsheetClearRowSchema = {
+            //   id: "",
+            //   stepType: stepTypes.enum.spreadsheetClearRow,
+            //   spreadsheetId,
+            //   sheetName,
+            //   lookup,
+            //   successNodeId: "",
+            //   errorNodeId: "",
+            // }
+            // await clearSpreadsheetRow({
+            //   conversation,
+            //   step: step as unknown as SpreadsheetGetRowSchema,
+            // })
             break
           }
 
           case stepTypes.enum.spreadsheetGetRandomRow: {
-            const step: SpreadsheetGetRandomRowSchema = {
-              id: "",
-              stepType: stepTypes.enum.spreadsheetGetRandomRow,
-              spreadsheetId,
-              sheetName,
-              lookup,
-              map,
-              successNodeId: "",
-              errorNodeId: "",
-            }
-            await getSpreadsheetRandomRow({
-              conversation,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            // const step: SpreadsheetGetRandomRowSchema = {
+            //   id: "",
+            //   stepType: stepTypes.enum.spreadsheetGetRandomRow,
+            //   spreadsheetId,
+            //   sheetName,
+            //   lookup,
+            //   map,
+            //   successNodeId: "",
+            //   errorNodeId: "",
+            // }
+            // await getSpreadsheetRandomRow({
+            //   conversation,
+            //   step: step as unknown as SpreadsheetGetRowSchema,
+            // })
             break
           }
 
           case stepTypes.enum.spreadsheetSendData: {
-            const step: SpreadsheetSendDataSchema = {
-              id: "",
-              stepType: stepTypes.enum.spreadsheetSendData,
-              spreadsheetId,
-              sheetName,
-              map,
-              successNodeId: "",
-              errorNodeId: "",
-            }
-            await sendSpreadsheetData({
-              conversation,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            // const step: SpreadsheetSendDataSchema = {
+            //   id: "",
+            //   stepType: stepTypes.enum.spreadsheetSendData,
+            //   spreadsheetId,
+            //   sheetName,
+            //   map,
+            //   successNodeId: "",
+            //   errorNodeId: "",
+            // }
+            // await sendSpreadsheetData({
+            //   conversation,
+            //   step: step as unknown as SpreadsheetGetRowSchema,
+            // })
             break
           }
 
           case stepTypes.enum.spreadsheetUpdateRow: {
-            const step: SpreadsheetUpdateRowSchema = {
-              id: "",
-              stepType: stepTypes.enum.spreadsheetUpdateRow,
-              spreadsheetId,
-              sheetName,
-              lookup,
-              map,
-              successNodeId: "",
-              errorNodeId: "",
-            }
-            await updateSpreadsheetRow({
-              conversation,
-              step: step as unknown as SpreadsheetGetRowSchema,
-            })
+            // const step: SpreadsheetUpdateRowSchema = {
+            //   id: "",
+            //   stepType: stepTypes.enum.spreadsheetUpdateRow,
+            //   spreadsheetId,
+            //   sheetName,
+            //   lookup,
+            //   map,
+            //   successNodeId: "",
+            //   errorNodeId: "",
+            // }
+            // await updateSpreadsheetRow({
+            //   conversation,
+            //   step: step as unknown as SpreadsheetGetRowSchema,
+            // })
             break
           }
 

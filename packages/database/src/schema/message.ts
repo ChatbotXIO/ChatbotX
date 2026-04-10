@@ -6,7 +6,14 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { contentTypes, messageTypes, senderTypes } from "../partials"
+import {
+  type ContentType,
+  contentTypes,
+  type MessageType,
+  messageTypes,
+  type SenderType,
+  senderTypes,
+} from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { contactInboxModel } from "./contact-inbox"
 import { conversationModel } from "./conversation"
@@ -51,9 +58,9 @@ export const messageModel = pgTable(
     contentAttributes: jsonb().$type<{
       [x: string]: unknown
     }>(),
-    messageType: messageType().notNull(),
-    contentType: contentType().notNull(),
-    senderType: senderType().notNull(),
+    messageType: messageType().$type<MessageType>().notNull(),
+    contentType: contentType().$type<ContentType>().notNull(),
+    senderType: senderType().$type<SenderType>().notNull(),
     senderId: bigintAsString(),
     sourceId: text(),
   },
