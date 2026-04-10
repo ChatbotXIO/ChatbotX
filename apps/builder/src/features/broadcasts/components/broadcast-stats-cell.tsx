@@ -1,13 +1,7 @@
 "use client"
 
 import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@aha.chat/ui/components/ui/tooltip"
 import { useParams } from "next/navigation"
-import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
 import type { BroadcastEventType } from "../schemas/broadcast-contacts"
@@ -24,7 +18,6 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   field,
 }: Props) {
   const { chatbotId } = useParams<{ chatbotId: string }>()
-  const t = useTranslations()
   const [stats, setStats] = useState<GetBroadcastStatsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -78,22 +71,16 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
 
   return (
     <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            className="cursor-pointer tabular-nums hover:underline"
-            onClick={handleClick}
-            type="button"
-          >
-            {value.toLocaleString()}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>
-            {t(`broadcasts.stats.${field}`)}: {value.toLocaleString()}
-          </p>
-        </TooltipContent>
-      </Tooltip>
+      <button
+        className={
+          value ? "cursor-pointer tabular-nums hover:underline" : "tabular-nums"
+        }
+        disabled={!value}
+        onClick={handleClick}
+        type="button"
+      >
+        {value ? value.toLocaleString() : "----"}
+      </button>
 
       <BroadcastContactsDialog
         broadcastId={broadcastId}

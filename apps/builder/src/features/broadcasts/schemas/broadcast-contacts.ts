@@ -14,6 +14,7 @@ export const listBroadcastContactsRequest = z.object({
   chatbotId: z.string(),
   broadcastId: z.string(),
   eventType: broadcastEventType,
+  total: z.number().optional(),
   page: z.number().default(1),
   perPage: z.number().default(20),
 })
@@ -30,6 +31,7 @@ export const broadcastContactResource = z.object({
   avatar: z.string().nullable(),
   channel: z.string(),
   errorContent: z.string().nullable(),
+  occurredAt: z.string().nullable(),
 })
 
 export type BroadcastContactResource = z.infer<typeof broadcastContactResource>

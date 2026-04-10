@@ -44,6 +44,7 @@ export const broadcastPrivateAPIs = {
         chatbotId: input.chatbotId,
         broadcastId: input.broadcastId,
         eventType: input.eventType,
+        total: input.total,
         page: input.page,
         perPage: input.perPage,
       })

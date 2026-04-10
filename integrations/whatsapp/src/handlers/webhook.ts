@@ -70,7 +70,8 @@ export const webhookHandler = async (
 
         if (
           statusData.status === "delivered" ||
-          statusData.status === "failed"
+          statusData.status === "failed" ||
+          statusData.status === "read"
         ) {
           await props.queue?.add("messageStatus", {
             type: "messageStatus",

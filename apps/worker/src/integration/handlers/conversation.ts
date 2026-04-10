@@ -1,5 +1,6 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
+import { emit, MessageEventType } from "@chatbotx.io/event-bus"
 import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobContactMarkAsRead,
@@ -29,6 +30,14 @@ export const contactMarkAsRead = async (
       contactLastReadAt: new Date(),
     })
     .where(eq(conversationModel.id, contactInbox.conversation.id))
+
+  emit(MessageEventType.SEEN, {
+    workspaceId: contactInbox.conversation.workspaceId,
+    contactId: contactInbox.contactId,
+    conversationId: contactInbox.conversation.id,
+    channel: integrationType,
+    occurredAt: new Date(),
+  })
 }
 
 export const agentMarkAsRead = async (

@@ -86,14 +86,19 @@ export const handleMessageStatus = async (
       metadata: {},
     }
 
-    if (eventStatus === "delivered") {
-      if (message?.contentAttributes?.metadata) {
-        eventLog.metadata = message.contentAttributes
-          .metadata as IntegrationJobMetadata
-      }
+    if (message?.contentAttributes?.metadata) {
+      eventLog.metadata = message.contentAttributes
+        .metadata as IntegrationJobMetadata
+    }
 
+    if (eventStatus === "delivered") {
       emit(MessageEventType.DELIVERED, eventLog)
     }
+
+    if (eventStatus === "read") {
+      emit(MessageEventType.SEEN, eventLog)
+    }
+
     console.log({ eventLog, payload })
 
     if (!message) {

@@ -65,6 +65,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
           chatbotId,
           broadcastId,
           eventType,
+          total,
           page,
           perPage,
         },
@@ -76,7 +77,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
     } finally {
       setIsLoading(false)
     }
-  }, [open, chatbotId, broadcastId, eventType, page])
+  }, [open, chatbotId, broadcastId, eventType, total, page])
 
   useEffect(() => {
     fetchContacts()
@@ -98,7 +99,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-lg">
+      <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {t(`broadcasts.stats.${eventType}`)} ({total.toLocaleString()})
@@ -177,27 +178,42 @@ const ContactItem = memo(function ContactItem({
   } as Parameters<typeof getFullName>[0])
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border p-3">
-      <Avatar className="size-10">
+    <div className="flex items-start gap-3 rounded-lg p-0 transition-colors hover:bg-muted/50">
+      <Avatar className="size-8 shrink-0">
         <AvatarImage src={avatarUrl} />
         <AvatarFallback>
           {contact.firstName?.[0]?.toUpperCase() ?? "?"}
         </AvatarFallback>
       </Avatar>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-medium">{fullName}</span>
-          <InboxIcon channel={contact.channel} showLabel={false} size="small" />
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate font-medium text-sm leading-tight">
+              {fullName}
+            </span>
+            <InboxIcon
+              channel={contact.channel}
+              showLabel={false}
+              size="small"
+            />
+            {contact.errorContent && (
+              <AlertTriangleIcon className="size-3 shrink-0 text-destructive" />
+            )}
+          </div>
+          {contact.occurredAt && (
+            <div className="mt-1 block text-muted-foreground text-sm">
+              {new Date(contact.occurredAt).toLocaleString()}
+            </div>
+          )}
         </div>
         {contact.sourceId && (
-          <span className="block truncate text-muted-foreground text-sm">
+          <span className="block truncate text-muted-foreground text-xs">
             {contact.sourceId}
           </span>
         )}
         {contact.errorContent && (
-          <div className="mt-1 flex items-center gap-1 text-destructive text-sm">
-            <AlertTriangleIcon className="size-3 shrink-0" />
-            <span className="truncate">{contact.errorContent}</span>
+          <div className="mt-1 flex items-start gap-1 text-destructive text-xs">
+            <span className="flex-1">{contact.errorContent}</span>
           </div>
         )}
       </div>
@@ -207,11 +223,15 @@ const ContactItem = memo(function ContactItem({
 
 function ContactItemSkeleton() {
   return (
-    <div className="flex items-start gap-3 rounded-lg border p-3">
-      <Skeleton className="size-10 rounded-full" />
-      <div className="min-w-0 flex-1 space-y-2">
-        <Skeleton className="h-4 w-32" />
+    <div className="flex items-start gap-3 rounded-lg p-0">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-start justify-between gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-4" />
+        </div>
         <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 w-20" />
       </div>
     </div>
   )

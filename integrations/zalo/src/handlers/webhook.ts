@@ -69,10 +69,12 @@ const handleWebhookEvent = async (
     }
 
     if (webhookData.event_name === "user_seen_message") {
-      await queue.add("readMessage", {
-        type: "readMessage",
+      await queue.add("contactMarkAsRead", {
+        type: "contactMarkAsRead",
         data: {
           integrationType: "zalo",
+          integrationIdentifier: webhookData.recipient.id,
+          sourceConversationId: webhookData.sender.id,
           payload: webhookData,
         },
       })

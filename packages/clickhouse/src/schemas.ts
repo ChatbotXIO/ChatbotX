@@ -7,9 +7,14 @@ export const BroadcastStatsModel = z.object({
   contact_id: z.string(),
   conv_id: z.string(),
   event_type: z.string(),
-  content: z.string(),
+  content: z.string().optional(),
   occurred_at: z.string(),
   inserted_at: z.string(),
 })
 
 export type BroadcastStatsType = z.infer<typeof BroadcastStatsModel>
+
+export type ClickHouseContactResponseRow = Pick<
+  BroadcastStatsType,
+  "contact_id" | "content"
+>

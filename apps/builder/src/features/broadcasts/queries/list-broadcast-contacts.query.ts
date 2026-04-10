@@ -1,6 +1,7 @@
 import { db, inArray } from "@aha.chat/database/client"
 import { contactModel } from "@aha.chat/database/schema"
 import { query } from "@chatbotx.io/clickhouse/client"
+import type { ClickHouseContactResponseRow } from "@chatbotx.io/clickhouse/schemas"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   BroadcastContactResource,
@@ -8,74 +9,52 @@ import type {
   ListBroadcastContactsResponse,
 } from "../schemas/broadcast-contacts"
 
-type ClickHouseContactRow = {
-  contact_id: string
-  content: string | null
-}
-
-type ClickHouseCountRow = {
-  total: string
-}
-
 export async function listBroadcastContacts(input: {
   chatbotId: string
   broadcastId: string
   eventType: BroadcastEventType
+  total?: number
   page: number
   perPage: number
 }): Promise<ListBroadcastContactsResponse> {
   await assertCurrentUserCanAccessChatbot(input.chatbotId)
 
-  const { chatbotId, broadcastId, eventType, page, perPage } = input
+  // set default total to 0 if not provided
+  const { chatbotId, broadcastId, eventType, page, total, perPage } = input
+  const totalValue: number = total || 0
   const offset = (page - 1) * perPage
 
-  const [contactRows, countRows] = await Promise.all([
-    query<ClickHouseContactRow>(
-      `
-      SELECT 
+  const contactRows = await query<
+    ClickHouseContactResponseRow & { max_occurred_at: string }
+  >(
+    `
+      SELECT
         contact_id,
-        argMax(content, occurred_at) as content
+        argMax(content, occurred_at) as content,
+        max(occurred_at) as max_occurred_at
       FROM broadcast_events
       WHERE chatbot_id = {chatbotId:String}
         AND broadcast_id = {broadcastId:String}
         AND batch_id = 1
         AND event_type = {eventType:String}
       GROUP BY contact_id
-      ORDER BY max(occurred_at) DESC
+      ORDER BY max_occurred_at DESC
       LIMIT {limit:UInt32} OFFSET {offset:UInt32}
       `,
-      {
-        chatbotId,
-        broadcastId,
-        eventType,
-        limit: perPage,
-        offset,
-      },
-    ),
-    query<ClickHouseCountRow>(
-      `
-      SELECT uniq(contact_id) as total
-      FROM broadcast_events
-      WHERE chatbot_id = {chatbotId:String}
-        AND broadcast_id = {broadcastId:String}
-        AND batch_id = 1
-        AND event_type = {eventType:String}
-      `,
-      {
-        chatbotId,
-        broadcastId,
-        eventType,
-      },
-    ),
-  ])
-
-  const total = Number.parseInt(countRows[0]?.total ?? "0", 10)
-  const pageCount = Math.ceil(total / perPage)
+    {
+      chatbotId,
+      broadcastId,
+      eventType,
+      limit: perPage,
+      offset,
+    },
+  )
+  const pageCount = Math.ceil(totalValue / perPage)
 
   if (contactRows.length === 0) {
     return {
       data: [],
-      total,
+      total: totalValue,
       page,
       pageCount,
     }
@@ -83,8 +62,10 @@ export async function listBroadcastContacts(input: {
 
   const contactIds = contactRows.map((row) => row.contact_id)
   const errorContentMap = new Map<string, string | null>()
+  const occurredAtMap = new Map<string, string>()
 
   for (const row of contactRows) {
+    occurredAtMap.set(row.contact_id, row.max_occurred_at)
     if (row.content) {
       try {
         const parsed = JSON.parse(row.content)
@@ -129,13 +110,14 @@ export async function listBroadcastContacts(input: {
         avatar: contact.avatar,
         channel: contact.channel,
         errorContent: errorContentMap.get(row.contact_id) ?? null,
+        occurredAt: occurredAtMap.get(row.contact_id) ?? null,
       }
     })
     .filter((c): c is BroadcastContactResource => c !== null)
 
   return {
     data,
-    total,
+    total: totalValue,
     page,
     pageCount,
   }

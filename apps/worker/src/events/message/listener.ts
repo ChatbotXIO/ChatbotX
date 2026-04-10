@@ -23,4 +23,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       handler: broadcastStathandler.onDelivered.bind(broadcastStathandler),
     },
   ],
+  [MessageEventType.SEEN]: [
+    {
+      name: "broadcast-stats",
+      handler: broadcastStathandler.onSeen.bind(broadcastStathandler),
+    },
+  ],
 }
