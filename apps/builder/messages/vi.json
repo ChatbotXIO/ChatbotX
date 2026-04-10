@@ -222,6 +222,15 @@
       "scheduled": "Đã lên lịch",
       "sent": "Đã gửi"
     },
+    "stats": {
+      "sent": "Đã gửi",
+      "delivered": "Đã giao",
+      "seen": "Đã xem",
+      "clicked": "Đã nhấp",
+      "failed": "Thất bại",
+      "noContacts": "Không có liên hệ nào",
+      "pageInfo": "Trang {page} / {pageCount}"
+    },
     "messengerList": {
       "title": "Danh sách Messenger",
       "description": "Có thể chứa khuyến mãi và sẽ chỉ gửi cho những người đã đăng ký danh sách Messenger của bạn."

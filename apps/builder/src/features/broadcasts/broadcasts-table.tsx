@@ -32,6 +32,7 @@ import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
+import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
@@ -136,6 +137,91 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         meta: {
           label: t("fields.estimatedContacts.label"),
         },
+        enableHiding: false,
+      },
+      {
+        id: "sent",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.sent")}
+          />
+        ),
+        cell: ({ row }) => (
+          <BroadcastStatsCell broadcastId={row.original.id} field="sent" />
+        ),
+        meta: {
+          label: t("broadcasts.stats.sent"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "delivered",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.delivered")}
+          />
+        ),
+        cell: ({ row }) => (
+          <BroadcastStatsCell broadcastId={row.original.id} field="delivered" />
+        ),
+        meta: {
+          label: t("broadcasts.stats.delivered"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "seen",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.seen")}
+          />
+        ),
+        cell: ({ row }) => (
+          <BroadcastStatsCell broadcastId={row.original.id} field="seen" />
+        ),
+        meta: {
+          label: t("broadcasts.stats.seen"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "clicked",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.clicked")}
+          />
+        ),
+        cell: ({ row }) => (
+          <BroadcastStatsCell broadcastId={row.original.id} field="clicked" />
+        ),
+        meta: {
+          label: t("broadcasts.stats.clicked"),
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "failed",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("broadcasts.stats.failed")}
+          />
+        ),
+        cell: ({ row }) => (
+          <BroadcastStatsCell broadcastId={row.original.id} field="failed" />
+        ),
+        meta: {
+          label: t("broadcasts.stats.failed"),
+        },
+        enableSorting: false,
         enableHiding: false,
       },
       {

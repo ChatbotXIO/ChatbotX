@@ -222,6 +222,15 @@
       "scheduled": "Scheduled",
       "sent": "Sent"
     },
+    "stats": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "seen": "Seen",
+      "clicked": "Clicked",
+      "failed": "Failed",
+      "noContacts": "No contacts found",
+      "pageInfo": "Page {page} of {pageCount}"
+    },
     "messengerList": {
       "title": "Messenger List",
       "description": "May contain promotions, and it will send only to people that subscribed to your Messenger list."

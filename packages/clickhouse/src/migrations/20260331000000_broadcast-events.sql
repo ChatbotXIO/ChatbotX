@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS broadcast_events (
   inserted_at DateTime('UTC') DEFAULT now()
 ) ENGINE = MergeTree()
 PARTITION BY toYYYYMM(occurred_at)
-ORDER BY (chatbot_id, broadcast_id, event_type, contact_id)
+ORDER BY (chatbot_id, broadcast_id, batch_id, event_type, contact_id)
 TTL occurred_at + INTERVAL 1 YEAR;
