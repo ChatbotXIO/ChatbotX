@@ -1,6 +1,5 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { contactInboxModel } from "@chatbotx.io/database/schema"
-import type { IntegrationType } from "@chatbotx.io/database/types"
+import { db } from "@chatbotx.io/database/client"
+import type { IntegrationType as DbIntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploader } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
@@ -15,21 +14,20 @@ export const handleMessageStatus = async (
   job: IntegrationJobMessageStatus["data"],
 ) => {
   const { integrationType, integrationIdentifier, payload } = job
-  console.log({ payload })
 
   const dbIntegration = await getDBIntegration(
-    integrationType as IntegrationType,
+    integrationType as DbIntegrationType,
     integrationIdentifier,
   )
-  const { chatbot, auth, inbox } = dbIntegration
+  const { workspace, auth, inbox } = dbIntegration
   const ctx = {
-    chatbot,
+    workspace,
     auth: auth as AuthValue,
     uploader,
     inbox,
   }
 
-  if (!ctx.chatbot?.id) {
+  if (!ctx.workspace?.id) {
     throw new Error("Unable to handle message status")
   }
 
@@ -53,48 +51,40 @@ export const handleMessageStatus = async (
   const eventStatus = String(payload.status).toLowerCase()
 
   try {
-    const chatConversation = await db.query.conversationModel.findFirst({
+    const contactInbox = await db.query.contactInboxModel.findFirst({
       where: {
         sourceId: conversation.sourceId,
-        workspaceId: ctx.chatbot.id,
+        inboxId: ctx.inbox.id,
       },
       with: {
+        conversation: true,
         contact: true,
       },
     })
 
-    if (!chatConversation) {
+    if (!contactInbox?.conversation) {
       throw new SdkException("Unable to find conversation")
     }
-
-    const contactInbox = await db
-      .select({ id: contactInboxModel.id })
-      .from(contactInboxModel)
-      .where(
-        and(
-          eq(contactInboxModel.contactId, chatConversation.contact.id),
-          eq(contactInboxModel.inboxId, ctx.inbox.id),
-        ),
-      )
-      .then((rows) => rows[0])
 
     const message = await db.query.messageModel.findFirst({
       where: {
         sourceId: payload.messageId,
-        conversationId: chatConversation.id,
-        workspaceId: ctx.chatbot.id,
+        conversationId: contactInbox?.conversation.id,
+        workspaceId: ctx.workspace.id,
       },
     })
 
     const eventLog = {
       workspaceId: inbox.workspaceId,
-      contactId: chatConversation.contact.id,
-      conversationId: chatConversation.id,
+      contactId: contactInbox.contact.id,
+      conversationId: contactInbox.conversation.id,
       channel: inbox.channel,
-      contactInboxId: contactInbox?.id ?? "",
+      contactInboxId: contactInbox.id,
       messageId: message?.id,
       occurredAt: new Date(),
-      metadata: {},
+      metadata: {
+        type: "updateStatus",
+      } as MetadataPayload,
     }
 
     if (message?.contentAttributes?.metadata) {
@@ -102,11 +92,11 @@ export const handleMessageStatus = async (
     }
 
     if (eventStatus === "delivered") {
-      emit(MessageEventType["message:delivered"], eventLog)
+      await emit(MessageEventType["message:delivered"], eventLog)
     }
 
     if (eventStatus === "read") {
-      emit(MessageEventType["message:seen"], eventLog)
+      await emit(MessageEventType["message:seen"], eventLog)
     }
 
     if (!message) {

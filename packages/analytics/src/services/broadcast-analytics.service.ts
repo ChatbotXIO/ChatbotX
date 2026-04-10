@@ -1,10 +1,7 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
+import { and, db, eq } from "@chatbotx.io/database/client"
+import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
 import {
   type FlowClickedPayload,
   FlowEventType,
@@ -15,7 +12,7 @@ import {
   type MessageSentPayload,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { format } from "date-fns"
+import { format, getTime } from "date-fns"
 import { broadcastStatsRepository } from "../repositories/broadcast-stats.repository"
 import type {
   BroadcastEventType,
@@ -116,13 +113,17 @@ export class BroadcastAnalyticsService {
         broadcastId: (p.metadata as { type: "broadcast"; broadcastId: string })
           .broadcastId,
         contactId: p.contactId,
+        occurredAt: p.occurredAt,
       }))
 
     if (broadcastContacts.length > 0) {
       for (const bc of broadcastContacts) {
         await db
           .update(contactsOnBroadcastsModel)
-          .set({ sent: true })
+          .set({
+            sent: true,
+            sentAt: getTime(new Date(bc.occurredAt)).toString(),
+          })
           .where(
             and(
               eq(contactsOnBroadcastsModel.broadcastId, bc.broadcastId),
@@ -131,6 +132,8 @@ export class BroadcastAnalyticsService {
           )
       }
     }
+
+    // check readat again
   }
 
   async onFailed(payloads: MessageFailedPayload[]) {
@@ -197,60 +200,103 @@ export class BroadcastAnalyticsService {
     const grouped = groupBy(payloads, "workspaceId")
 
     for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
-      const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
+      const contactInboxIds = [
+        ...new Set(chatbotPayloads.map((p) => p.contactInboxId)),
+      ]
+      const mappedChatbotPayloads = new Map(
+        chatbotPayloads.map((p) => [p.contactId, p]),
+      )
       const seenAt = new Date()
 
-      const contacts = await db
-        .select({ id: contactModel.id, lastReadAt: contactModel.lastReadAt })
-        .from(contactModel)
-        .where(inArray(contactModel.id, contactIds))
+      const contactInboxes = await db.query.contactInboxModel.findMany({
+        where: {
+          id: { in: contactInboxIds as string[] },
+        },
+        columns: {
+          id: true,
+          contactId: true,
+          inboxId: true,
+          channel: true,
+        },
+        with: {
+          contact: {
+            columns: {
+              id: true,
+              lastReadAt: true,
+            },
+          },
+          conversation: {
+            columns: {
+              id: true,
+              contactLastReadAt: true,
+            },
+          },
+        },
+      })
+
+      const contactToContactInboxMap = new Map(
+        contactInboxes.map((ci) => [ci.contactId, ci]),
+      )
 
       const sentBroadcasts = await db.query.contactsOnBroadcastsModel.findMany({
         where: {
-          contactId: { in: contactIds },
-          sent: true,
+          contactId: { in: contactInboxes.map((ci) => ci.contactId) },
+          isRead: false,
         },
         with: {
           broadcast: {
             columns: { id: true, workspaceId: true, schedulesAt: true },
           },
         },
+        columns: {
+          broadcastId: true,
+          contactId: true,
+        },
       })
 
-      const contactLastReadMap = new Map(
-        contacts.map((c) => [c.id, c.lastReadAt]),
-      )
-      const filtered = sentBroadcasts.filter((b) => {
-        if (b.broadcast.workspaceId !== workspaceId) {
-          return false
-        }
-        const lastReadAt = contactLastReadMap.get(b.contactId)
-        return (
-          !lastReadAt ||
-          (b.broadcast.schedulesAt && b.broadcast.schedulesAt > lastReadAt)
-        )
-      })
-
-      await db
-        .update(contactModel)
-        .set({ lastReadAt: seenAt })
-        .where(inArray(contactModel.id, contactIds))
-
-      if (filtered.length === 0) {
+      if (sentBroadcasts.length === 0) {
         continue
       }
 
-      const contactInboxMap = new Map(
-        chatbotPayloads
-          .filter((p) => p.contactInboxId)
-          .map((p) => [p.contactId, p.contactInboxId as string]),
-      )
+      const sendBroadcastIds = sentBroadcasts.map((bc) => [
+        bc.broadcastId,
+        bc.contactId,
+      ])
 
-      const insertedData: BroadcastStatsType[] = filtered.map((b) => ({
+      if (sentBroadcasts.length > 0) {
+        for (const bc of sentBroadcasts) {
+          const chatbotPayload = mappedChatbotPayloads.get(bc.contactId)
+          if (!chatbotPayload) {
+            continue
+          }
+
+          await db
+            .update(contactsOnBroadcastsModel)
+            .set({
+              sentAt: getTime(new Date(chatbotPayload.occurredAt)).toString(),
+            })
+            .where(
+              and(
+                eq(contactsOnBroadcastsModel.broadcastId, bc.broadcastId),
+                eq(contactsOnBroadcastsModel.contactId, bc.contactId),
+              ),
+            )
+        }
+      }
+
+      const readBroadcasts = await db.query.contactsOnBroadcastsModel.findMany({
+        where: {
+          broadcastId: { in: sendBroadcastIds.map(([, bid]) => bid) },
+          contactId: { in: sendBroadcastIds.map(([_, cid]) => cid) },
+          isRead: true,
+        },
+      })
+
+      const insertedData: BroadcastStatsType[] = readBroadcasts.map((b) => ({
         event_id: createId(),
         workspace_id: workspaceId,
         broadcast_id: b.broadcastId,
-        contact_inbox_id: contactInboxMap.get(b.contactId) ?? "",
+        contact_inbox_id: contactToContactInboxMap.get(b.contactId)?.id ?? "",
         contact_id: b.contactId,
         conv_id: "",
         source_id: "",
