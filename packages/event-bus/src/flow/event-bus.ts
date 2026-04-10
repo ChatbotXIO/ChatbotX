@@ -1,11 +1,11 @@
-import { getRedisConnection } from "@chatbotx.io/worker-config"
-import { BaseEventBus } from "../event-bus"
-import { flowEventSchemas } from "./schemas"
 import {
   type FlowEventListener,
   type FlowEventMap,
   FlowEventType,
-} from "./types"
+  flowEventSchemas,
+} from "@chatbotx.io/flow-config"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
+import { BaseEventBus } from "../event-bus"
 
 const MAX_MESSAGE_EVENTS = 100_000
 
@@ -19,8 +19,6 @@ export const flowEventBus = new BaseEventBus<FlowEventMap, FlowEventListener>(
   },
 )
 
-export const FlowEventBusByType = {
-  ...Object.fromEntries(
-    Object.values(FlowEventType).map((type) => [type, flowEventBus]),
-  ),
-}
+export const FlowEventBusByType = Object.fromEntries(
+  Object.values(FlowEventType).map((type) => [type, flowEventBus]),
+) as Record<FlowEventType, typeof flowEventBus>

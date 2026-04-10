@@ -1,6 +1,6 @@
+import { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
+import type { ContactEventData } from "../schemas/common"
 import type {
-  ListSequenceStepContactsResponse,
-  SequenceStepContactData,
   SequenceStepEventType,
   SequenceStepStats,
 } from "../schemas/sequence-stats"
@@ -26,6 +26,10 @@ export class SequenceStatsRepository extends BaseRepository {
     sequenceId: string
     stepId: string
   }): Promise<SequenceStepStats> {
+    const eventTypes = [
+      ...Object.values(MessageEventType),
+      ...Object.values(FlowEventType),
+    ]
     const sql = `
       SELECT
         event_type,
@@ -34,7 +38,7 @@ export class SequenceStatsRepository extends BaseRepository {
       WHERE workspace_id = {workspaceId:String}
         AND sequence_id = {sequenceId:String}
         AND step_id = {stepId:String}
-        AND event_type IN ('delivered', 'seen', 'clicked', 'failed')
+        AND event_type IN (${eventTypes.map((t) => `'${t}'`).join(", ")})
       GROUP BY event_type
     `
 
@@ -45,34 +49,37 @@ export class SequenceStatsRepository extends BaseRepository {
     })
 
     const stats: SequenceStepStats = {
-      sent: 0,
-      delivered: 0,
-      seen: 0,
-      clicked: 0,
-      failed: 0,
+      "message:sent": 0,
+      "message:delivered": 0,
+      "message:seen": 0,
+      "flow:clicked": 0,
+      "message:failed": 0,
     }
 
     for (const row of rows) {
       const count = Number.parseInt(row.count, 10)
       switch (row.event_type) {
-        case "delivered":
-          stats.delivered = count
+        case MessageEventType["message:sent"]:
+          stats["message:delivered"] = count
           break
-        case "seen":
-          stats.seen = count
+        case MessageEventType["message:delivered"]:
+          stats["message:delivered"] = count
           break
-        case "clicked":
-          stats.clicked = count
+        case MessageEventType["message:seen"]:
+          stats["message:seen"] = count
           break
-        case "failed":
-          stats.failed = count
+        case FlowEventType["flow:clicked"]:
+          stats["flow:clicked"] = count
+          break
+        case MessageEventType["message:failed"]:
+          stats["message:failed"] = count
           break
         default:
           break
       }
     }
 
-    stats.sent = stats.delivered + stats.failed
+    stats["message:sent"] = stats["message:delivered"] + stats["message:failed"]
 
     return stats
   }
@@ -86,21 +93,12 @@ export class SequenceStatsRepository extends BaseRepository {
     perPage: number
   }): Promise<{
     contactIds: string[]
-    errorContentMap: Map<string, string | null>
-    occurredAtMap: Map<string, string>
-    sourceIdMap: Map<string, string>
-    channelMap: Map<string, string>
-    conversationIdMap: Map<string, string>
+    contactEventMap: Map<string, ContactEventData>
   }> {
     const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
 
-    let eventTypeFilter: string[]
-    if (eventType === "sent") {
-      eventTypeFilter = ["delivered", "failed"]
-    } else {
-      eventTypeFilter = [eventType]
-    }
+    const eventTypeFilter = [eventType]
 
     const contactRows = await this.query<ClickHouseContactRow>(
       `
@@ -131,115 +129,34 @@ export class SequenceStatsRepository extends BaseRepository {
     )
 
     const contactIds = contactRows.map((row) => row.contact_id)
-    const errorContentMap = new Map<string, string | null>()
-    const occurredAtMap = new Map<string, string>()
-    const sourceIdMap = new Map<string, string>()
-    const channelMap = new Map<string, string>()
-    const conversationIdMap = new Map<string, string>()
+    const contactEventMap = new Map<string, ContactEventData>()
 
     for (const row of contactRows) {
-      occurredAtMap.set(row.contact_id, row.max_occurred_at)
-      if (row.source_id) {
-        sourceIdMap.set(row.contact_id, row.source_id)
-      }
-      if (row.channel) {
-        channelMap.set(row.contact_id, row.channel)
-      }
-      if (row.conv_id) {
-        conversationIdMap.set(row.contact_id, row.conv_id)
-      }
+      let errorContent: string | null | undefined
       if (row.content) {
         try {
           const parsed = JSON.parse(row.content)
           if (parsed.error) {
-            const errorMsg =
+            errorContent =
               typeof parsed.error === "string"
                 ? parsed.error
                 : (parsed.error.message ?? JSON.stringify(parsed.error))
-            errorContentMap.set(row.contact_id, errorMsg)
           }
         } catch {
-          errorContentMap.set(row.contact_id, null)
+          errorContent = null
         }
       }
-    }
 
-    return {
-      contactIds,
-      errorContentMap,
-      occurredAtMap,
-      sourceIdMap,
-      channelMap,
-      conversationIdMap,
-    }
-  }
-
-  buildContactsResponse(input: {
-    contactIds: string[]
-    errorContentMap: Map<string, string | null>
-    occurredAtMap: Map<string, string>
-    sourceIdMap: Map<string, string>
-    channelMap: Map<string, string>
-    conversationIdMap: Map<string, string>
-    contactMap: Map<
-      string,
-      {
-        id: string
-        firstName: string | null
-        lastName: string | null
-        avatar: string | null
-      }
-    >
-    total: number
-    page: number
-    perPage: number
-  }): ListSequenceStepContactsResponse {
-    const {
-      contactIds,
-      errorContentMap,
-      occurredAtMap,
-      sourceIdMap,
-      channelMap,
-      conversationIdMap,
-      contactMap,
-      total,
-      page,
-      perPage,
-    } = input
-
-    const pageCount = Math.ceil(total / perPage)
-
-    const data: SequenceStepContactData[] = contactIds
-      .map((contactId) => {
-        const contact = contactMap.get(contactId)
-        if (!contact) {
-          return null
-        }
-        const conversationId = conversationIdMap.get(contactId)
-        if (!conversationId) {
-          return null
-        }
-
-        return {
-          contactId: contact.id,
-          firstName: contact.firstName,
-          lastName: contact.lastName,
-          sourceId: sourceIdMap.get(contactId) ?? null,
-          avatar: contact.avatar,
-          channel: channelMap.get(contactId) ?? null,
-          conversationId,
-          errorContent: errorContentMap.get(contactId) ?? null,
-          occurredAt: occurredAtMap.get(contactId) ?? null,
-        }
+      contactEventMap.set(row.contact_id, {
+        occurredAt: row.max_occurred_at,
+        sourceId: row.source_id ?? undefined,
+        channel: row.channel ?? undefined,
+        conversationId: row.conv_id ?? undefined,
+        errorContent,
       })
-      .filter((c): c is SequenceStepContactData => c !== null)
-
-    return {
-      data,
-      total,
-      page,
-      pageCount,
     }
+
+    return { contactIds, contactEventMap }
   }
 }
 

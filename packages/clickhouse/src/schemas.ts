@@ -1,4 +1,9 @@
+import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import z from "zod"
+
+export const BroadcastEventType = z.union([messageEventType, flowEventType])
+
+export const SequenceEventType = z.union([messageEventType, flowEventType])
 
 export const BroadcastStatsModel = z.object({
   event_id: z.string(),
@@ -9,7 +14,7 @@ export const BroadcastStatsModel = z.object({
   conv_id: z.string(),
   source_id: z.string().default(""),
   channel: z.string().default(""),
-  event_type: z.string(),
+  event_type: BroadcastEventType,
   content: z.string().optional(),
   occurred_at: z.string(),
   inserted_at: z.string(),
@@ -30,7 +35,7 @@ export const SequenceScheduleEventModel = z.object({
   conv_id: z.string(),
   source_id: z.string().default(""),
   channel: z.string().default(""),
-  event_type: z.string(),
+  event_type: SequenceEventType,
   sequence_id: z.string(),
   step_id: z.string(),
   content: z.string().optional(),

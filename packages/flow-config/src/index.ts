@@ -1,5 +1,6 @@
 // Export all definitions
 export * from "./definition"
+export * from "./event"
 // Export all nodes
 export * from "./nodes/add-notes"
 export * from "./nodes/base"
@@ -11,7 +12,6 @@ export * from "./nodes/send-message"
 export * from "./nodes/split-traffic"
 export * from "./nodes/start-flow"
 export * from "./nodes/wait"
-
 // Export all shared
 export * from "./shared"
 export * from "./states"
@@ -87,5 +87,4 @@ export * from "./steps/unsubscribe-broadcast"
 export * from "./steps/unsubscribe-sequence"
 export * from "./steps/wa-template-utils"
 export * from "./steps/wait"
-
 export * from "./util"

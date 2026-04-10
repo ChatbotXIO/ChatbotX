@@ -1,16 +1,23 @@
-import { type FlowEvenTypeMap, FlowEventType } from "@chatbotx.io/event-bus"
-import { broadcastStathandler } from "../message/handlers/broadcast-stats"
-import { sequenceStathandler } from "../message/handlers/sequence-stat"
+import {
+  broadcastAnalyticsService,
+  sequenceAnalyticsService,
+} from "@chatbotx.io/analytics"
+import type { FlowEvenTypeMap } from "@chatbotx.io/event-bus"
+import { FlowEventType } from "@chatbotx.io/flow-config"
 
 export const flowListeners: Partial<FlowEvenTypeMap> = {
-  [FlowEventType.CLICKED]: [
+  [FlowEventType["flow:clicked"]]: [
     {
       name: "flow-stats",
-      handler: broadcastStathandler.onClicked.bind(broadcastStathandler),
+      handler: broadcastAnalyticsService.onClicked.bind(
+        broadcastAnalyticsService,
+      ),
     },
     {
       name: "sequence-stats",
-      handler: sequenceStathandler.onClicked.bind(sequenceStathandler),
+      handler: sequenceAnalyticsService.onClicked.bind(
+        sequenceAnalyticsService,
+      ),
     },
   ],
 }

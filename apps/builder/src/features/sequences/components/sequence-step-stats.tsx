@@ -24,7 +24,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedEventType, setSelectedEventType] =
-    useState<SequenceStepEventType>("sent")
+    useState<SequenceStepEventType>("message:sent")
   const [selectedTotal, setSelectedTotal] = useState(0)
 
   useEffect(() => {
@@ -95,11 +95,11 @@ export const SequenceStepStats = memo(function SequenceStepStats({
     )
   }
 
-  const sent = stats?.sent ?? 0
-  const delivered = stats?.delivered ?? 0
-  const seen = stats?.seen ?? 0
-  const clicked = stats?.clicked ?? 0
-  const failed = stats?.failed ?? 0
+  const sent = stats?.["message:sent"] ?? 0
+  const delivered = stats?.["message:delivered"] ?? 0
+  const seen = stats?.["message:seen"] ?? 0
+  const clicked = stats?.["flow:clicked"] ?? 0
+  const failed = stats?.["message:failed"] ?? 0
 
   return (
     <>
@@ -111,7 +111,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
               : "w-12 cursor-pointer text-center tabular-nums transition-colors hover:text-primary disabled:cursor-default disabled:hover:text-current"
           }
           disabled={sent === 0}
-          onClick={() => handleStatClick("sent", sent)}
+          onClick={() => handleStatClick("message:sent", sent)}
           type="button"
         >
           {formatValue(sent)}
@@ -123,7 +123,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
               : "w-12 cursor-pointer text-center tabular-nums transition-colors hover:text-primary disabled:cursor-default disabled:hover:text-current"
           }
           disabled={delivered === 0}
-          onClick={() => handleStatClick("delivered", delivered)}
+          onClick={() => handleStatClick("message:delivered", delivered)}
           type="button"
         >
           {formatValue(delivered)}
@@ -135,7 +135,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
               : "w-12 cursor-pointer text-center tabular-nums transition-colors hover:text-primary disabled:cursor-default disabled:hover:text-current"
           }
           disabled={seen === 0}
-          onClick={() => handleStatClick("seen", seen)}
+          onClick={() => handleStatClick("message:seen", seen)}
           type="button"
         >
           {formatValue(seen)}
@@ -152,7 +152,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
               : "w-12 cursor-pointer text-center tabular-nums transition-colors hover:text-primary disabled:cursor-default disabled:hover:text-current"
           }
           disabled={clicked === 0}
-          onClick={() => handleStatClick("clicked", clicked)}
+          onClick={() => handleStatClick("flow:clicked", clicked)}
           type="button"
         >
           {formatValue(clicked)}
@@ -169,7 +169,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
               : "w-12 cursor-pointer text-center tabular-nums transition-colors hover:text-primary disabled:cursor-default disabled:hover:text-current"
           }
           disabled={failed === 0}
-          onClick={() => handleStatClick("failed", failed)}
+          onClick={() => handleStatClick("message:failed", failed)}
           type="button"
         >
           {formatValue(failed)}

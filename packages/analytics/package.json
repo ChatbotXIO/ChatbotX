@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@chatbotx.io/clickhouse": "workspace:*",
+    "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",

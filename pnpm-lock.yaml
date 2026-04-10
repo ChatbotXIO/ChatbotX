@@ -1040,6 +1040,9 @@ importers:
       '@chatbotx.io/filesystem':
         specifier: workspace:*
         version: link:../filesystem
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../flow-config
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
@@ -1169,6 +1172,9 @@ importers:
 
   packages/clickhouse:
     dependencies:
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../flow-config
       '@clickhouse/client':
         specifier: ^1.18.2
         version: 1.18.2

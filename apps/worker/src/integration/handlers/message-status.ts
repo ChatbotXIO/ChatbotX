@@ -1,9 +1,10 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type { IntegrationType } from "@chatbotx.io/database/types"
-import { emit, MessageEventType } from "@chatbotx.io/event-bus"
+import { emit } from "@chatbotx.io/event-bus"
 import { uploader } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import { MessageEventType } from "@chatbotx.io/flow-config"
 import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
 import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
 import { allIntegrations, getDBIntegration } from "../../lib/integrations"
@@ -101,14 +102,12 @@ export const handleMessageStatus = async (
     }
 
     if (eventStatus === "delivered") {
-      emit(MessageEventType.DELIVERED, eventLog)
+      emit(MessageEventType["message:delivered"], eventLog)
     }
 
     if (eventStatus === "read") {
-      emit(MessageEventType.SEEN, eventLog)
+      emit(MessageEventType["message:seen"], eventLog)
     }
-
-    console.log({ eventLog, payload })
 
     if (!message) {
       return

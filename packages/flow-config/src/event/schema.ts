@@ -1,0 +1,69 @@
+import { z } from "zod"
+import type { MetadataPayload } from "../nodes/send-message"
+
+export const messageEventType = z.enum([
+  "message:sent",
+  "message:delivered",
+  "message:seen",
+  "message:failed",
+])
+
+export const flowEventType = z.enum(["flow:clicked"])
+
+export const MessageEventType = messageEventType.enum
+
+export type MessageEventType = z.infer<typeof messageEventType>
+
+export const FlowEventType = flowEventType.enum
+
+export type FlowEventType = z.infer<typeof flowEventType>
+
+const baseMessagePayloadSchema = z.object({
+  workspaceId: z.string(),
+  contactId: z.string(),
+  conversationId: z.string(),
+  channel: z.string(),
+  contactInboxId: z.string().optional(),
+  sourceId: z.string().optional(),
+  occurredAt: z.date(),
+  metadata: z.custom<MetadataPayload>().optional(),
+  messageId: z.string().optional(),
+  messageDetail: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const sentPayloadSchema = baseMessagePayloadSchema.extend({})
+export const failedPayloadSchema = baseMessagePayloadSchema.extend({
+  errorData: z.unknown(),
+})
+export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({})
+export const seenPayloadSchema = baseMessagePayloadSchema.extend({})
+
+export const messageEventSchemas = {
+  [MessageEventType["message:sent"]]: sentPayloadSchema,
+  [MessageEventType["message:failed"]]: failedPayloadSchema,
+  [MessageEventType["message:delivered"]]: deliveredPayloadSchema,
+  [MessageEventType["message:seen"]]: seenPayloadSchema,
+} as const
+
+const baseFlowPayloadSchema = z.object({
+  workspaceId: z.string(),
+  contactId: z.string(),
+  conversationId: z.string(),
+  channel: z.string(),
+  occurredAt: z.date(),
+})
+
+export const clickedPayloadSchema = baseFlowPayloadSchema.extend({
+  flowId: z.string(),
+  buttonId: z.string().optional(),
+  nodeId: z.string().optional(),
+  broadcastId: z.string().optional(),
+  sequenceId: z.string().optional(),
+  contactInboxId: z.string().optional(),
+  stepId: z.string().optional(),
+  clickType: z.enum(["button", "quick_reply"]),
+})
+
+export const flowEventSchemas = {
+  [FlowEventType["flow:clicked"]]: clickedPayloadSchema,
+} as const

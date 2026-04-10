@@ -1,49 +1,59 @@
 import {
-  type MessageEvenTypeMap,
-  MessageEventType,
-} from "@chatbotx.io/event-bus"
-import { broadcastStathandler } from "./handlers/broadcast-stats"
-import { sequenceStathandler } from "./handlers/sequence-stat"
+  broadcastAnalyticsService,
+  sequenceAnalyticsService,
+} from "@chatbotx.io/analytics"
+import type { MessageEvenTypeMap } from "@chatbotx.io/event-bus"
+import { MessageEventType } from "@chatbotx.io/flow-config"
 
 export const messageListeners: Partial<MessageEvenTypeMap> = {
-  [MessageEventType.SENT]: [
+  [MessageEventType["message:sent"]]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onMessageSent.bind(broadcastStathandler),
+      handler: broadcastAnalyticsService.onMessageSent.bind(
+        broadcastAnalyticsService,
+      ),
     },
     {
       name: "sequence-stats",
-      handler: sequenceStathandler.onMessageSent.bind(sequenceStathandler),
+      handler: sequenceAnalyticsService.onMessageSent.bind(
+        sequenceAnalyticsService,
+      ),
     },
   ],
-  [MessageEventType.FAILED]: [
+  [MessageEventType["message:failed"]]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onFailed.bind(broadcastStathandler),
+      handler: broadcastAnalyticsService.onFailed.bind(
+        broadcastAnalyticsService,
+      ),
     },
     {
       name: "sequence-stats",
-      handler: sequenceStathandler.onFailed.bind(sequenceStathandler),
+      handler: sequenceAnalyticsService.onFailed.bind(sequenceAnalyticsService),
     },
   ],
-  [MessageEventType.DELIVERED]: [
+  [MessageEventType["message:delivered"]]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onDelivered.bind(broadcastStathandler),
+      handler: broadcastAnalyticsService.onDelivered.bind(
+        broadcastAnalyticsService,
+      ),
     },
     {
       name: "sequence-stats",
-      handler: sequenceStathandler.onDelivered.bind(sequenceStathandler),
+      handler: sequenceAnalyticsService.onDelivered.bind(
+        sequenceAnalyticsService,
+      ),
     },
   ],
-  [MessageEventType.SEEN]: [
+  [MessageEventType["message:seen"]]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onSeen.bind(broadcastStathandler),
+      handler: broadcastAnalyticsService.onSeen.bind(broadcastAnalyticsService),
     },
     {
       name: "sequence-stats",
-      handler: sequenceStathandler.onSeen.bind(sequenceStathandler),
+      handler: sequenceAnalyticsService.onSeen.bind(sequenceAnalyticsService),
     },
   ],
 }

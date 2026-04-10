@@ -1,14 +1,10 @@
+import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
+import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
-export const broadcastEventType = z.enum([
-  "sent",
-  "delivered",
-  "seen",
-  "clicked",
-  "failed",
-])
+export const broadcastEventType = z.union([messageEventType, flowEventType])
 
-export type BroadcastEventType = z.infer<typeof broadcastEventType>
+export type BroadcastEventType = MessageEventType | FlowEventType
 
 export const getBroadcastStatsRequest = z.object({
   workspaceId: z.string(),
@@ -18,11 +14,11 @@ export const getBroadcastStatsRequest = z.object({
 export type GetBroadcastStatsRequest = z.infer<typeof getBroadcastStatsRequest>
 
 export const getBroadcastStatsResponse = z.object({
-  sent: z.number(),
-  delivered: z.number(),
-  seen: z.number(),
-  clicked: z.number(),
-  failed: z.number(),
+  "message:sent": z.number(),
+  "message:delivered": z.number(),
+  "message:seen": z.number(),
+  "flow:clicked": z.number(),
+  "message:failed": z.number(),
 })
 
 export type GetBroadcastStatsResponse = z.infer<
@@ -51,7 +47,7 @@ export const broadcastContactResource = z.object({
   avatar: z.string().nullable(),
   channel: z.string(),
   errorContent: z.string().nullable(),
-  occurredAt: z.string().nullable(),
+  occurredAt: z.string(),
 })
 
 export type BroadcastContactResource = z.infer<typeof broadcastContactResource>

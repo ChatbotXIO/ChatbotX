@@ -148,7 +148,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatsCell broadcastId={row.original.id} field="sent" />
+          <BroadcastStatsCell
+            broadcastId={row.original.id}
+            field="message:sent"
+          />
         ),
         meta: {
           label: t("broadcasts.stats.sent"),
@@ -165,7 +168,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatsCell broadcastId={row.original.id} field="delivered" />
+          <BroadcastStatsCell
+            broadcastId={row.original.id}
+            field="message:delivered"
+          />
         ),
         meta: {
           label: t("broadcasts.stats.delivered"),
@@ -182,7 +188,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatsCell broadcastId={row.original.id} field="seen" />
+          <BroadcastStatsCell
+            broadcastId={row.original.id}
+            field="message:seen"
+          />
         ),
         meta: {
           label: t("broadcasts.stats.seen"),
@@ -199,7 +208,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatsCell broadcastId={row.original.id} field="clicked" />
+          <BroadcastStatsCell
+            broadcastId={row.original.id}
+            field="flow:clicked"
+          />
         ),
         meta: {
           label: t("broadcasts.stats.clicked"),
@@ -216,7 +228,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <BroadcastStatsCell broadcastId={row.original.id} field="failed" />
+          <BroadcastStatsCell
+            broadcastId={row.original.id}
+            field="message:failed"
+          />
         ),
         meta: {
           label: t("broadcasts.stats.failed"),

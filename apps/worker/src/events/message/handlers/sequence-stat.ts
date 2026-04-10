@@ -12,6 +12,7 @@ import type {
   MessageSeenPayload,
   MessageSentPayload,
 } from "@chatbotx.io/event-bus"
+import { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { format } from "date-fns"
 
@@ -37,7 +38,7 @@ export const sequenceStathandler = {
           conv_id: payload.conversationId,
           source_id: payload.sourceId ?? "",
           channel: payload.channel ?? "",
-          event_type: "delivered",
+          event_type: MessageEventType["message:sent"],
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           content: JSON.stringify({}),
@@ -92,7 +93,7 @@ export const sequenceStathandler = {
           conv_id: payload.conversationId,
           source_id: payload.sourceId ?? "",
           channel: payload.channel ?? "",
-          event_type: "failed",
+          event_type: MessageEventType["message:failed"],
           content: JSON.stringify({
             error: payload.errorData,
           }),
@@ -124,7 +125,7 @@ export const sequenceStathandler = {
           conv_id: payload.conversationId,
           source_id: payload.sourceId ?? "",
           channel: payload.channel ?? "",
-          event_type: "delivered",
+          event_type: MessageEventType["message:delivered"],
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
@@ -190,7 +191,7 @@ export const sequenceStathandler = {
         conv_id: "",
         source_id: "",
         channel: "",
-        event_type: "seen",
+        event_type: MessageEventType["message:seen"],
         content: JSON.stringify({}),
         occurred_at: toClickHouseDateTime(seenAt),
         inserted_at: toClickHouseDateTime(new Date()),
@@ -219,7 +220,7 @@ export const sequenceStathandler = {
           conv_id: payload.conversationId,
           source_id: "",
           channel: payload.channel ?? "",
-          event_type: "clicked",
+          event_type: FlowEventType["flow:clicked"],
           content: JSON.stringify({
             buttonId: payload.buttonId,
             clickType: payload.clickType,

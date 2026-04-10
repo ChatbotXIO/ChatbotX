@@ -5,12 +5,13 @@ import type {
   ConversationModel,
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
-import { emit, FlowEventType } from "@chatbotx.io/event-bus"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   type BaseStepSchema,
   type ButtonStepProps,
   decodeButtonPayload,
   type EdgeSchema,
+  FlowEventType,
   type FlowNode,
   type MetadataPayload,
   type SendQuickReplyStepSchema,
@@ -314,7 +315,7 @@ export async function runFlowPostback(
         .then((rows) => rows[0])
     }
 
-    emit(FlowEventType.CLICKED, {
+    emit(FlowEventType["flow:clicked"], {
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       conversationId: data.conversationId,
@@ -388,7 +389,7 @@ export async function runFlowQuickReply(
         .then((rows) => rows[0])
     }
 
-    emit(FlowEventType.CLICKED, {
+    emit(FlowEventType["flow:clicked"], {
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       conversationId: data.conversationId,

@@ -26,6 +26,14 @@ import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { client } from "@/lib/orpc/orpc"
 
+const eventTypeToLabel: Record<BroadcastEventType, string> = {
+  "message:sent": "sent",
+  "message:delivered": "delivered",
+  "message:seen": "seen",
+  "message:failed": "failed",
+  "flow:clicked": "clicked",
+}
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -99,7 +107,8 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
       <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
         <DialogHeader className="mb-2">
           <DialogTitle>
-            {t(`broadcasts.stats.${eventType}`)} ({total.toLocaleString()})
+            {t(`broadcasts.stats.${eventTypeToLabel[eventType]}`)} (
+            {total.toLocaleString()})
           </DialogTitle>
         </DialogHeader>
 

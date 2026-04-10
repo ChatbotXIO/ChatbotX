@@ -1,9 +1,6 @@
 "use client"
 
-import type {
-  BroadcastEventType,
-  GetBroadcastStatsResponse,
-} from "@chatbotx.io/analytics/schemas"
+import type { GetBroadcastStatsResponse } from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useParams } from "next/navigation"
 import { memo, useCallback, useEffect, useState } from "react"
@@ -70,10 +67,10 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   }
 
   const value = stats[field]
-  const sent = stats.sent
+  const sent = stats["message:sent"]
 
   const getPercentage = () => {
-    if (field === "sent" || !value || !sent) {
+    if (field === "message:sent" || !value || !sent) {
       return null
     }
     const percentage = (value / sent) * 100
@@ -100,7 +97,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
 
       <BroadcastContactsDialog
         broadcastId={broadcastId}
-        eventType={field as BroadcastEventType}
+        eventType={field}
         onOpenChange={handleDialogChange}
         open={dialogOpen}
         total={value}

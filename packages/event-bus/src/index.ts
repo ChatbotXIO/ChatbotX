@@ -1,24 +1,34 @@
-import { FlowEventBusByType } from "./flow/event-bus"
-import { MessageEventBusByType } from "./message"
-import type { BaseEventType, EventMap } from "./types"
+import {
+  type FlowEventMap,
+  flowEventSchemas,
+  type MessageEventMap,
+  messageEventSchemas,
+} from "@chatbotx.io/flow-config"
+import { flowEventBus } from "./flow"
+import { messageEventBus } from "./message"
 
+export type {
+  BaseEventListener,
+  InferEventMap,
+} from "@chatbotx.io/flow-config"
 export * from "./event-bus"
 export * from "./flow"
 export * from "./message"
-export * from "./types"
 
-export const EventTypeMap = {
-  ...MessageEventBusByType,
-  ...FlowEventBusByType,
-}
+export type EventMap = MessageEventMap & FlowEventMap
 
-export async function emit<K extends keyof BaseEventType>(
-  type: K,
-  payload: EventMap[K],
-) {
-  const bus = EventTypeMap[type]
-  if (bus) {
-    // console.log("Emitting event:", type, payload)
-    await bus.emit(type, payload)
+export function emit<K extends keyof EventMap>(type: K, payload: EventMap[K]) {
+  if (type in messageEventSchemas) {
+    return messageEventBus.emit(
+      type as keyof MessageEventMap,
+      payload as MessageEventMap[keyof MessageEventMap],
+    )
   }
+  if (type in flowEventSchemas) {
+    return flowEventBus.emit(
+      type as keyof FlowEventMap,
+      payload as FlowEventMap[keyof FlowEventMap],
+    )
+  }
+  return Promise.resolve("")
 }

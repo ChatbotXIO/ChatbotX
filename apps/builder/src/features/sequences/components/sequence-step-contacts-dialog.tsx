@@ -26,6 +26,14 @@ import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { client } from "@/lib/orpc/orpc"
 
+const eventTypeToLabel: Record<SequenceStepEventType, string> = {
+  "message:sent": "sent",
+  "message:delivered": "delivered",
+  "message:seen": "seen",
+  "message:failed": "failed",
+  "flow:clicked": "clicked",
+}
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -102,7 +110,8 @@ export const SequenceStepContactsDialog = memo(
         <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
           <DialogHeader className="mb-2">
             <DialogTitle>
-              {t(`sequences.stats.${eventType}`)} ({total.toLocaleString()})
+              {t(`sequences.stats.${eventTypeToLabel[eventType]}`)} (
+              {total.toLocaleString()})
             </DialogTitle>
           </DialogHeader>
 

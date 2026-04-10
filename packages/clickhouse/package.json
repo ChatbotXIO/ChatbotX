@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@chatbotx.io/flow-config": "workspace:*",
     "@clickhouse/client": "^1.18.2",
     "@t3-oss/env-core": "^0.13.11",
     "zod": "^4.3.6"

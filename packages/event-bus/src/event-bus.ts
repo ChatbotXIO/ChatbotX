@@ -1,6 +1,8 @@
+import type { BaseEventListener } from "@chatbotx.io/flow-config"
 import type { Redis } from "@chatbotx.io/redis"
 import type { z } from "zod"
-import type { BaseEventListener, EventMap } from "./types"
+
+type EventMap = Record<string, unknown>
 
 export interface EventBusConfig<TEventMap extends EventMap> {
   consumerGroup: string

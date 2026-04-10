@@ -1,14 +1,10 @@
+import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
+import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
-export const sequenceStepEventType = z.enum([
-  "sent",
-  "delivered",
-  "seen",
-  "clicked",
-  "failed",
-])
+export const sequenceStepEventType = z.union([messageEventType, flowEventType])
 
-export type SequenceStepEventType = z.infer<typeof sequenceStepEventType>
+export type SequenceStepEventType = MessageEventType | FlowEventType
 
 export const getSequenceStepStatsRequest = z.object({
   workspaceId: z.string(),
@@ -21,11 +17,11 @@ export type GetSequenceStepStatsRequest = z.infer<
 >
 
 export const getSequenceStepStatsResponse = z.object({
-  sent: z.number(),
-  delivered: z.number(),
-  seen: z.number(),
-  clicked: z.number(),
-  failed: z.number(),
+  "message:sent": z.number(),
+  "message:delivered": z.number(),
+  "message:seen": z.number(),
+  "flow:clicked": z.number(),
+  "message:failed": z.number(),
 })
 
 export type GetSequenceStepStatsResponse = z.infer<
@@ -55,7 +51,7 @@ export const sequenceStepContactResource = z.object({
   avatar: z.string().nullable(),
   channel: z.string(),
   errorContent: z.string().nullable(),
-  occurredAt: z.string().nullable(),
+  occurredAt: z.string(),
 })
 
 export type SequenceStepContactResource = z.infer<
