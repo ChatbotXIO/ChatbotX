@@ -24,10 +24,13 @@ function toClickHouseDateTime(date: Date): string {
   return format(utcDate, "yyyy-MM-dd HH:mm:ss")
 }
 
-function groupBy<T>(arr: T[], key: keyof T): Record<string, T[]> {
+function groupBy<T>(
+  arr: T[],
+  keySelector: (item: T) => string,
+): Record<string, T[]> {
   return arr.reduce(
     (acc, item) => {
-      const k = String(item[key])
+      const k = keySelector(item)
       if (!acc[k]) {
         acc[k] = []
       }
@@ -83,16 +86,16 @@ export class SequenceAnalyticsService {
     for (const payload of payloads) {
       if (
         payload.metadata?.type === "sequenceSchedule" &&
-        payload.channel !== "whatsapp"
+        payload.context.channel !== "whatsapp"
       ) {
         insertedData.push({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           contact_inbox_id: payload.metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:sent"],
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
@@ -115,7 +118,7 @@ export class SequenceAnalyticsService {
         sequenceId: (
           p.metadata as { type: "sequenceSchedule"; sequenceId: string }
         ).sequenceId,
-        contactId: p.contactId,
+        contactId: p.context.contactId,
       }))
 
     if (sequenceContacts.length > 0) {
@@ -137,14 +140,14 @@ export class SequenceAnalyticsService {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           contact_inbox_id: payload.metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:failed"],
           content: JSON.stringify({
             error: payload.errorData,
@@ -169,14 +172,14 @@ export class SequenceAnalyticsService {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           contact_inbox_id: payload.metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:delivered"],
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -193,12 +196,14 @@ export class SequenceAnalyticsService {
   }
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = groupBy(payloads, "workspaceId")
+    const grouped = groupBy(payloads, (p) => p.context.workspaceId)
 
     for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
-      const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
+      const contactIds = [
+        ...new Set(chatbotPayloads.map((p) => p.context.contactId)),
+      ]
       const mapContactInboxes = new Map(
-        chatbotPayloads.map((p) => [p.contactInboxId, p]),
+        chatbotPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
       const sequenceDispatches = await db.query.sequenceDispatchModel.findMany({
@@ -236,8 +241,11 @@ export class SequenceAnalyticsService {
 
       const contactInboxMap = new Map(
         chatbotPayloads
-          .filter((p) => p.contactInboxId)
-          .map((p) => [p.contactId, p.contactInboxId as string]),
+          .filter((p) => p.context.contactInboxId)
+          .map((p) => [
+            p.context.contactId,
+            p.context.contactInboxId as string,
+          ]),
       )
 
       const insertedData: SequenceScheduleEventType[] = filtered.map((s) => {
@@ -268,7 +276,7 @@ export class SequenceAnalyticsService {
 
   async onClicked(payloads: FlowClickedPayload[]) {
     try {
-      const sequenceClicks = payloads.filter((p) => p.sequenceId)
+      const sequenceClicks = payloads.filter((p) => p.action.sequenceId)
 
       if (sequenceClicks.length === 0) {
         return
@@ -277,18 +285,18 @@ export class SequenceAnalyticsService {
       const insertedData: SequenceScheduleEventType[] = sequenceClicks.map(
         (payload) => ({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
-          sequence_id: payload.sequenceId as string,
-          step_id: payload.stepId || "",
-          contact_id: payload.contactId,
-          contact_inbox_id: payload.contactInboxId ?? "",
-          conv_id: payload.conversationId,
+          workspace_id: payload.context.workspaceId,
+          sequence_id: payload.action.sequenceId as string,
+          step_id: payload.action.stepId || "",
+          contact_id: payload.context.contactId,
+          contact_inbox_id: payload.context.contactInboxId ?? "",
+          conv_id: payload.context.conversationId,
           source_id: "",
-          channel: payload.channel ?? "",
+          channel: payload.context.channel ?? "",
           event_type: FlowEventType["flow:clicked"],
           content: JSON.stringify({
-            buttonId: payload.buttonId,
-            clickType: payload.clickType,
+            buttonId: payload.action.buttonId,
+            clickType: payload.action.clickType,
           }),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),

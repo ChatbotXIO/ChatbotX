@@ -75,12 +75,16 @@ export const handleMessageStatus = async (
     })
 
     const eventLog = {
-      workspaceId: inbox.workspaceId,
-      contactId: contactInbox.contact.id,
-      conversationId: contactInbox.conversation.id,
-      channel: inbox.channel,
-      contactInboxId: contactInbox.id,
-      messageId: message?.id,
+      context: {
+        workspaceId: inbox.workspaceId,
+        contactId: contactInbox.contact.id,
+        conversationId: contactInbox.conversation.id,
+        channel: inbox.channel,
+        contactInboxId: contactInbox.id,
+      },
+      action: {
+        messageId: message?.id,
+      },
       occurredAt: new Date(),
       metadata: {
         type: "updateStatus",

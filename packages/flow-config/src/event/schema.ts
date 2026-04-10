@@ -18,17 +18,41 @@ export const FlowEventType = flowEventType.enum
 
 export type FlowEventType = z.infer<typeof flowEventType>
 
-const baseMessagePayloadSchema = z.object({
+export const eventContextSchema = z.object({
   workspaceId: z.string(),
   contactId: z.string(),
   conversationId: z.string(),
   channel: z.string(),
   contactInboxId: z.string().optional(),
+})
+
+export type EventContext = z.infer<typeof eventContextSchema>
+
+export const messageActionSchema = z.object({
   sourceId: z.string().optional(),
-  occurredAt: z.date(),
-  metadata: z.custom<MetadataPayload>().optional(),
   messageId: z.string().optional(),
   messageDetail: z.record(z.string(), z.unknown()).optional(),
+})
+
+export type MessageAction = z.infer<typeof messageActionSchema>
+
+export const flowActionSchema = z.object({
+  flowId: z.string(),
+  buttonId: z.string().optional(),
+  nodeId: z.string().optional(),
+  broadcastId: z.string().optional(),
+  sequenceId: z.string().optional(),
+  stepId: z.string().optional(),
+  clickType: z.enum(["button", "quick_reply"]),
+})
+
+export type FlowAction = z.infer<typeof flowActionSchema>
+
+const baseMessagePayloadSchema = z.object({
+  context: eventContextSchema,
+  action: messageActionSchema,
+  occurredAt: z.date(),
+  metadata: z.custom<MetadataPayload>().optional(),
 })
 
 export const sentPayloadSchema = baseMessagePayloadSchema.extend({})
@@ -45,23 +69,10 @@ export const messageEventSchemas = {
   [MessageEventType["message:seen"]]: seenPayloadSchema,
 } as const
 
-const baseFlowPayloadSchema = z.object({
-  workspaceId: z.string(),
-  contactId: z.string(),
-  conversationId: z.string(),
-  channel: z.string(),
+export const clickedPayloadSchema = z.object({
+  context: eventContextSchema,
+  action: flowActionSchema,
   occurredAt: z.date(),
-})
-
-export const clickedPayloadSchema = baseFlowPayloadSchema.extend({
-  flowId: z.string(),
-  buttonId: z.string().optional(),
-  nodeId: z.string().optional(),
-  broadcastId: z.string().optional(),
-  sequenceId: z.string().optional(),
-  contactInboxId: z.string().optional(),
-  stepId: z.string().optional(),
-  clickType: z.enum(["button", "quick_reply"]),
 })
 
 export const flowEventSchemas = {

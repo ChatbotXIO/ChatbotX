@@ -26,10 +26,13 @@ function toClickHouseDateTime(date: Date): string {
   return format(utcDate, "yyyy-MM-dd HH:mm:ss")
 }
 
-function groupBy<T>(arr: T[], key: keyof T): Record<string, T[]> {
+function groupBy<T>(
+  arr: T[],
+  keySelector: (item: T) => string,
+): Record<string, T[]> {
   return arr.reduce(
     (acc, item) => {
-      const k = String(item[key])
+      const k = keySelector(item)
       if (!acc[k]) {
         acc[k] = []
       }
@@ -192,7 +195,8 @@ export class BroadcastAnalyticsService {
 
   async onMessageSent(payloads: MessageSentPayload[]) {
     const broadcastPayloads = payloads.filter(
-      (p) => p.metadata?.type === "broadcast" && p.channel !== "whatsapp",
+      (p) =>
+        p.metadata?.type === "broadcast" && p.context.channel !== "whatsapp",
     )
 
     if (broadcastPayloads.length === 0) {
@@ -204,13 +208,13 @@ export class BroadcastAnalyticsService {
         const metadata = payload.metadata as BroadcastMetadataPayload
         return {
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           broadcast_id: metadata.broadcastId,
           contact_inbox_id: metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:sent"],
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -224,9 +228,9 @@ export class BroadcastAnalyticsService {
     const updateItems: BroadcastUpdateItem[] = broadcastPayloads.map((p) => {
       const metadata = p.metadata as BroadcastMetadataPayload
       return {
-        workspaceId: p.workspaceId,
+        workspaceId: p.context.workspaceId,
         broadcastId: metadata.broadcastId,
-        contactId: p.contactId,
+        contactId: p.context.contactId,
         contactInboxId: metadata.contactInboxId,
         occurredAt: getTime(new Date(p.occurredAt)),
       }
@@ -242,13 +246,13 @@ export class BroadcastAnalyticsService {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
           contact_inbox_id: payload.metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:failed"],
           content: JSON.stringify({
             error: payload.errorData,
@@ -273,13 +277,13 @@ export class BroadcastAnalyticsService {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          workspace_id: payload.workspaceId,
+          workspace_id: payload.context.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
           contact_inbox_id: payload.metadata.contactInboxId,
-          contact_id: payload.contactId,
-          conv_id: payload.conversationId,
-          source_id: payload.sourceId ?? "",
-          channel: payload.channel ?? "",
+          contact_id: payload.context.contactId,
+          conv_id: payload.context.conversationId,
+          source_id: payload.action.sourceId ?? "",
+          channel: payload.context.channel ?? "",
           event_type: MessageEventType["message:delivered"],
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -296,12 +300,14 @@ export class BroadcastAnalyticsService {
   }
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = groupBy(payloads, "workspaceId")
+    const grouped = groupBy(payloads, (p) => p.context.workspaceId)
 
     for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
-      const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
+      const contactIds = [
+        ...new Set(chatbotPayloads.map((p) => p.context.contactId)),
+      ]
       const mappedChatbotPayloads = new Map(
-        chatbotPayloads.map((p) => [p.contactId, p]),
+        chatbotPayloads.map((p) => [p.context.contactId, p]),
       )
 
       const unreadBroadcasts =
@@ -351,7 +357,7 @@ export class BroadcastAnalyticsService {
   }
 
   async onClicked(payloads: FlowClickedPayload[]) {
-    const broadcastClicks = payloads.filter((p) => p.broadcastId)
+    const broadcastClicks = payloads.filter((p) => p.action.broadcastId)
 
     if (broadcastClicks.length === 0) {
       return
@@ -360,17 +366,17 @@ export class BroadcastAnalyticsService {
     const insertedData: BroadcastStatsType[] = broadcastClicks.map(
       (payload) => ({
         event_id: createId(),
-        workspace_id: payload.workspaceId,
-        broadcast_id: payload.broadcastId as string,
-        contact_inbox_id: payload.contactInboxId ?? "",
-        contact_id: payload.contactId,
-        conv_id: payload.conversationId,
+        workspace_id: payload.context.workspaceId,
+        broadcast_id: payload.action.broadcastId as string,
+        contact_inbox_id: payload.context.contactInboxId ?? "",
+        contact_id: payload.context.contactId,
+        conv_id: payload.context.conversationId,
         source_id: "",
-        channel: payload.channel ?? "",
+        channel: payload.context.channel ?? "",
         event_type: FlowEventType["flow:clicked"],
         content: JSON.stringify({
-          buttonId: payload.buttonId,
-          clickType: payload.clickType,
+          buttonId: payload.action.buttonId,
+          clickType: payload.action.clickType,
         }),
         occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
         inserted_at: toClickHouseDateTime(new Date()),

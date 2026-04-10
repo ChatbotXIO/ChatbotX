@@ -316,16 +316,20 @@ export async function runFlowPostback(
     }
 
     await emit(FlowEventType["flow:clicked"], {
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      conversationId: data.conversationId,
-      channel: contactInbox?.channel ?? "",
-      contactInboxId: contactInbox?.id ?? "",
+      context: {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: data.conversationId,
+        channel: contactInbox?.channel ?? "",
+        contactInboxId: contactInbox?.id ?? "",
+      },
+      action: {
+        flowId: parsedAction.flowId,
+        buttonId: parsedAction.buttonId,
+        broadcastId: parsedAction.broadcastId,
+        clickType: "button",
+      },
       occurredAt: new Date(),
-      flowId: parsedAction.flowId,
-      buttonId: parsedAction.buttonId,
-      broadcastId: parsedAction.broadcastId,
-      clickType: "button",
     })
   }
 
@@ -390,16 +394,20 @@ export async function runFlowQuickReply(
     }
 
     await emit(FlowEventType["flow:clicked"], {
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      conversationId: data.conversationId,
-      channel: contactInbox?.channel ?? "",
-      contactInboxId: contactInbox?.id ?? "",
+      context: {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: data.conversationId,
+        channel: contactInbox?.channel ?? "",
+        contactInboxId: contactInbox?.id ?? "",
+      },
+      action: {
+        flowId: parsedAction.flowId,
+        buttonId: parsedAction.buttonId,
+        broadcastId: parsedAction.broadcastId,
+        clickType: "quick_reply",
+      },
       occurredAt: new Date(),
-      flowId: parsedAction.flowId,
-      buttonId: parsedAction.buttonId,
-      broadcastId: parsedAction.broadcastId,
-      clickType: "quick_reply",
     })
   }
 

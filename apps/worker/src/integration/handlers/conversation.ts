@@ -31,11 +31,14 @@ export const contactMarkAsRead = async (
     })
     .where(eq(conversationModel.id, contactInbox.conversation.id))
 
-  emit(MessageEventType.SEEN, {
-    workspaceId: contactInbox.conversation.workspaceId,
-    contactId: contactInbox.contactId,
-    conversationId: contactInbox.conversation.id,
-    channel: integrationType,
+  await emit(MessageEventType["message:seen"], {
+    context: {
+      workspaceId: contactInbox.conversation.workspaceId,
+      contactId: contactInbox.contactId,
+      conversationId: contactInbox.conversation.id,
+      channel: integrationType,
+    },
+    action: {},
     occurredAt: new Date(),
   })
 }
