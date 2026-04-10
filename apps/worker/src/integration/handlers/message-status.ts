@@ -1,16 +1,19 @@
 import { db } from "@chatbotx.io/database/client"
-import type { IntegrationType as DbIntegrationType } from "@chatbotx.io/database/partials"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { uploader } from "@chatbotx.io/filesystem"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   MessageEventType,
   type MetadataPayload,
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
-import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
+import { SdkException } from "@chatbotx.io/sdk"
 import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
-import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
+import {
+  allIntegrations,
+  integrationService,
+} from "../../services/integrations"
 import { runFlowPostback } from "./flow"
 
 export const handleMessageStatus = async (
@@ -18,15 +21,17 @@ export const handleMessageStatus = async (
 ) => {
   const { integrationType, integrationIdentifier, payload } = job
 
-  const dbIntegration = await getDBIntegration(
-    integrationType as DbIntegrationType,
-    integrationIdentifier,
-  )
-  const { workspace, auth, inbox } = dbIntegration
+  const dbIntegration =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      integrationType as IntegrationType,
+      integrationIdentifier,
+    )
+  const { workspace, inbox, integrationAuth } = dbIntegration
   const ctx = {
     workspace,
-    auth: auth as AuthValue,
+    auth: integrationAuth,
     uploader,
+    storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
     inbox,
   }
 
@@ -49,14 +54,14 @@ export const handleMessageStatus = async (
     throw new SdkException("Unable to parse received message")
   }
 
-  const { conversation } = parsedMessage
+  const { contact } = parsedMessage
 
   const eventStatus = String(payload.status).toLowerCase()
 
   try {
     const contactInbox = await db.query.contactInboxModel.findFirst({
       where: {
-        sourceId: conversation.sourceId,
+        sourceId: contact.sourceId,
         inboxId: ctx.inbox.id,
       },
       with: {

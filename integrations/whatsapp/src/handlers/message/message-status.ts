@@ -1,12 +1,14 @@
 import {
   type Context,
   contentTypes,
-  type IncomingConversation,
   type IncomingMessage,
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
-import type { WhatsappAuthValue, WhatsappStatusWebhookEvent } from "./schemas"
+import type {
+  WhatsappAuthValue,
+  WhatsappStatusWebhookEvent,
+} from "../../schema"
 
 export const handleMessageStatus = async (props: {
   ctx: Context<WhatsappAuthValue>
@@ -22,16 +24,6 @@ export const handleMessageStatus = async (props: {
   } = props
   const data = payload as WhatsappStatusWebhookEvent
 
-  const conversation: IncomingConversation = {
-    sourceId: data.phone,
-    additionalAttributes: {
-      phoneNumberId: data.phoneID,
-    },
-    contact: {
-      sourceId: data.phone,
-    },
-  }
-
   const message: IncomingMessage = {
     sourceId: data.messageId,
     messageType: messageTypes.enum.incoming,
@@ -40,9 +32,13 @@ export const handleMessageStatus = async (props: {
 
   return await Promise.resolve({
     message,
-    conversation,
     postbackAction: null,
     quickReplyAction: null,
     ref: null,
+    contact: {
+      sourceId: data.phone,
+      phoneNumber: data.phone,
+      phoneNumberId: data.phoneID,
+    },
   })
 }

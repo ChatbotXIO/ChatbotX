@@ -1,7 +1,7 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { createSearchParamsCache } from "nuqs/server"
 import z from "zod"
-import { whatsappMessageTemplateResouce } from "./resource"
+import { whatsappMessageTemplateResource } from "./resource"
 
 export const listMessageTemplatesRequest = createSearchParamsCache({})
 
@@ -15,7 +15,7 @@ export const listMessageTemplatesInputSchema = z.object({
 })
 
 export const listWhatsappMessageTemplatesResponse = z.array(
-  whatsappMessageTemplateResouce,
+  whatsappMessageTemplateResource,
 )
 export type ListWhatsappMessageTemplatesResponse = z.infer<
   typeof listWhatsappMessageTemplatesResponse

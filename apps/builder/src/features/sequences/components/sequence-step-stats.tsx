@@ -1,13 +1,14 @@
 "use client"
 
 import type {
+  GetSequenceStepStatsRequest,
   GetSequenceStepStatsResponse,
   SequenceStepEventType,
 } from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import ky from "ky"
 import { useParams } from "next/navigation"
 import { memo, useEffect, useState } from "react"
-import { client } from "@/lib/orpc/orpc"
 import { SequenceStepContactsDialog } from "./sequence-step-contacts-dialog"
 
 type Props = {
@@ -37,13 +38,11 @@ export const SequenceStepStats = memo(function SequenceStepStats({
 
     async function fetchStats() {
       try {
-        const result = await client.sequencesAPI.privateGetSequenceStepStatsAPI(
-          {
-            workspaceId,
-            sequenceId,
-            stepId: stepId as string,
-          },
-        )
+        const result = await ky
+          .get<GetSequenceStepStatsRequest>(
+            `/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/stats`,
+          )
+          .json<GetSequenceStepStatsResponse>()
 
         if (isMounted) {
           setStats(result)

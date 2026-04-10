@@ -1,6 +1,7 @@
 "use client"
 
 import type {
+  ListSequenceStepContactsResponse,
   SequenceStepContactData,
   SequenceStepEventType,
 } from "@chatbotx.io/analytics/schemas"
@@ -18,13 +19,13 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import ky from "ky"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useState } from "react"
 import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { client } from "@/lib/orpc/orpc"
 
 const eventTypeToLabel: Record<SequenceStepEventType, string> = {
   "message:sent": "sent",
@@ -68,16 +69,20 @@ export const SequenceStepContactsDialog = memo(
 
       setIsLoading(true)
       try {
-        const result =
-          await client.sequencesAPI.privateListSequenceStepContactsAPI({
-            workspaceId,
-            sequenceId,
-            stepId,
-            eventType,
-            total,
-            page,
-            perPage,
-          })
+        const result = await ky
+          .get<ListSequenceStepContactsResponse>(
+            `/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/contacts`,
+            {
+              searchParams: {
+                eventType,
+                total,
+                page,
+                perPage,
+              },
+            },
+          )
+          .json()
+
         setContacts(result.data)
         setPageCount(result.pageCount)
       } catch (error) {
@@ -107,7 +112,7 @@ export const SequenceStepContactsDialog = memo(
 
     return (
       <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
+        <DialogContent className="flex max-h-screen flex-col sm:max-w-2xl">
           <DialogHeader className="mb-2">
             <DialogTitle>
               {t(`sequences.stats.${eventTypeToLabel[eventType]}`)} (

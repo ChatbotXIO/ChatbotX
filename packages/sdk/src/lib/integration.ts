@@ -20,7 +20,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowId: string
     flowVersionId?: string
     step: SendFlowStepData
-    metadata: MetadataPayload
+    metadata?: MetadataPayload
   }
 }
 
