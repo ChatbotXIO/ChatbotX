@@ -423,7 +423,15 @@ export class FlowStatsRepository extends BaseRepository {
 
     const flow = await db.query.flowModel.findFirst({
       where: { id: input.flowId, workspaceId: input.workspaceId },
-      with: { flowVersion: true },
+      with: {
+        flowVersion: {
+          columns: {
+            id: true,
+            nodes: true,
+            flowId: true,
+          },
+        },
+      },
       columns: { id: true, currentVersionId: true },
     })
 
@@ -447,7 +455,11 @@ export class FlowStatsRepository extends BaseRepository {
     const nodeButtonMap = new Map<string, string[]>()
     for (const node of sendMessageNodes) {
       const quickReplies = node.data?.details?.quickReplies ?? []
-      const buttonIds = quickReplies.map((qr) => qr.id)
+      const buttons =
+        node.data?.details?.steps?.flatMap((step) =>
+          "buttons" in step ? (step.buttons ?? []) : [],
+        ) ?? []
+      const buttonIds = [...quickReplies, ...buttons].map((qr) => qr.id)
       if (buttonIds.length > 0) {
         nodeButtonMap.set(node.id, buttonIds)
       }
@@ -492,11 +504,9 @@ export class FlowStatsRepository extends BaseRepository {
         WHERE workspace_id = {workspaceId:String}
           AND flow_id = {flowId:String}
           AND analytics_id = {analyticsId:String}
-          AND node_id IN (${Array.from(nodeButtonMap.keys())
-            .map((id) => `'${id}'`)
-            .join(", ")})
+          AND node_id IN {nodeIdList:Array(String)}
           AND event_type = {eventType:String}
-          AND button_id IN (${allButtonIds.map((id) => `'${id}'`).join(", ")})
+          AND button_id IN {buttonIdList:Array(String)}
         GROUP BY node_id, button_id
       `
 
@@ -506,7 +516,9 @@ export class FlowStatsRepository extends BaseRepository {
         workspaceId: input.workspaceId,
         flowId: input.flowId,
         analyticsId,
+        nodeIdList: nodeIds,
         eventType: FlowEventType["flow:clicked"],
+        buttonIdList: allButtonIds,
       })
     }
 
@@ -521,7 +533,12 @@ export class FlowStatsRepository extends BaseRepository {
           "flow:clicked": 0,
           "message:failed": 0,
         },
-        buttons: {},
+        buttons: Object.fromEntries(
+          (nodeButtonMap.get(nodeId) || []).map((buttonId) => [
+            buttonId,
+            { buttonId, clicks: 0 },
+          ]),
+        ),
       }
     }
 

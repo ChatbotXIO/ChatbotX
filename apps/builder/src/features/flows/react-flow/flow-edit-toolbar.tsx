@@ -32,6 +32,7 @@ import { toast } from "sonner"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { updateFlowVersionSchema } from "../schemas/action"
+import AnalyticsFlow from "./components/analytics-flow"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
 import GetFlowLinkDialog from "./components/get-flow-link"
 import { RenameFlowDialog } from "./components/rename-flow"
@@ -139,7 +140,7 @@ export function FlowEditToolbar({
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem>
               <ChartNoAxesCombinedIcon />
               {t("actions.analytics")}
             </DropdownMenuItem>
@@ -198,6 +199,8 @@ export function FlowEditToolbar({
         onOpenChange={() => setAction(null)}
         open={action === "getPublishedLink"}
       />
+
+      {action === "analytics" && <AnalyticsFlow flow={flow} />}
     </div>
   )
 }
