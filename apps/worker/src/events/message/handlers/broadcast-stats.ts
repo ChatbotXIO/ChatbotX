@@ -1,10 +1,10 @@
-import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { clickhouse } from "@chatbotx.io/clickhouse/client"
+import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsOnBroadcastsModel,
-} from "@aha.chat/database/schema"
-import { clickhouse } from "@chatbotx.io/clickhouse/client"
-import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
+} from "@chatbotx.io/database/schema"
 import type {
   FlowClickedPayload,
   MessageDeliveredPayload,
@@ -31,7 +31,7 @@ export const broadcastStathandler = {
       ) {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
@@ -79,7 +79,7 @@ export const broadcastStathandler = {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
@@ -107,7 +107,7 @@ export const broadcastStathandler = {
       if (payload.metadata?.type === "broadcast") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           broadcast_id: payload.metadata.broadcastId,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
@@ -127,9 +127,9 @@ export const broadcastStathandler = {
   },
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = this.groupBy(payloads, "chatbotId")
+    const grouped = this.groupBy(payloads, "workspaceId")
 
-    for (const [chatbotId, chatbotPayloads] of Object.entries(grouped)) {
+    for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
       const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
       const seenAt = new Date()
 
@@ -145,7 +145,7 @@ export const broadcastStathandler = {
         },
         with: {
           broadcast: {
-            columns: { id: true, chatbotId: true, schedulesAt: true },
+            columns: { id: true, workspaceId: true, schedulesAt: true },
           },
         },
       })
@@ -154,7 +154,7 @@ export const broadcastStathandler = {
         contacts.map((c) => [c.id, c.lastReadAt]),
       )
       const filtered = sentBroadcasts.filter((b) => {
-        if (b.broadcast.chatbotId !== chatbotId) {
+        if (b.broadcast.workspaceId !== workspaceId) {
           return false
         }
         const lastReadAt = contactLastReadMap.get(b.contactId)
@@ -175,7 +175,7 @@ export const broadcastStathandler = {
 
       const insertedData: BroadcastStatsType[] = filtered.map((b) => ({
         event_id: createId(),
-        chatbot_id: chatbotId,
+        chatbot_id: workspaceId,
         broadcast_id: b.broadcastId,
         contact_id: b.contactId,
         conv_id: "",
@@ -200,7 +200,7 @@ export const broadcastStathandler = {
       const insertedData: BroadcastStatsType[] = broadcastClicks.map(
         (payload) => ({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           broadcast_id: payload.broadcastId as string,
           contact_id: payload.contactId,
           conv_id: payload.conversationId,

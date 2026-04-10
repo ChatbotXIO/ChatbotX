@@ -1,4 +1,4 @@
-import { getRedisConnection } from "@aha.chat/worker-config"
+import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { BaseEventBus } from "../event-bus"
 import { flowEventSchemas } from "./schemas"
 import {

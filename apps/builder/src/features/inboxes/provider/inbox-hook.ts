@@ -1,5 +1,5 @@
-import { channelType } from "@aha.chat/database/types"
-import type { SelectOption } from "@aha.chat/ui/components/form/select-field"
+import { channelTypes } from "@chatbotx.io/database/partials"
+import type { SelectOption } from "@chatbotx.io/ui/components/form/select-field"
 import { useEffect, useMemo, useState } from "react"
 import { useInboxStore } from "./inbox-store-context"
 
@@ -62,7 +62,7 @@ export const useWhatsappInboxOptions = (): SelectOption[] => {
   return useMemo(
     () =>
       inboxes
-        .filter((inbox) => inbox.channel === channelType.whatsapp)
+        .filter((inbox) => inbox.channel === channelTypes.enum.whatsapp)
         .map((inbox) => ({
           label: inbox.name,
           value: inbox.integrationWhatsapp?.id ?? inbox.id,

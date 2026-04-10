@@ -4,7 +4,7 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
-import type { InboxResource } from "@/features/inboxes/schemas/resource"
+import type { InboxResource } from "@/features/inboxes/schema/resource"
 import type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 export type MenuItem = {

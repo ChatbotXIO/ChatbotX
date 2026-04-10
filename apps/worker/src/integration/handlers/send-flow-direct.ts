@@ -1,13 +1,13 @@
 import { db } from "@chatbotx.io/database/client"
-import { IntegrationJobAction } from "@chatbotx.io/worker-config"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import { IntegrationJobAction } from "@chatbotx.io/worker-config"
 import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
   contactId: string
   flowId: string
-  workspaceId: string
   metadata?: MetadataPayload
+  workspaceId: string
 }
 
 export async function sendFlowDirect(

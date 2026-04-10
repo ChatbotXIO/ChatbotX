@@ -1,11 +1,13 @@
 "use client"
 
-import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
+import type {
+  BroadcastEventType,
+  GetBroadcastStatsResponse,
+} from "@chatbotx.io/analytics/schemas"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { useParams } from "next/navigation"
 import { memo, useCallback, useEffect, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
-import type { BroadcastEventType } from "../schemas/broadcast-contacts"
-import type { GetBroadcastStatsResponse } from "../schemas/broadcast-stats"
 import { BroadcastContactsDialog } from "./broadcast-contacts-dialog"
 
 type Props = {
@@ -17,7 +19,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   broadcastId,
   field,
 }: Props) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { workspaceId } = useParams<{ workspaceId: string }>()
   const [stats, setStats] = useState<GetBroadcastStatsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -28,7 +30,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
     async function fetchStats() {
       try {
         const result = await client.broadcastAPIs.privateGetBroadcastStatsAPI({
-          chatbotId,
+          workspaceId,
           broadcastId,
         })
 
@@ -49,7 +51,7 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
     return () => {
       isMounted = false
     }
-  }, [chatbotId, broadcastId])
+  }, [workspaceId, broadcastId])
 
   const handleClick = useCallback(() => {
     setDialogOpen(true)
@@ -98,11 +100,11 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
 
       <BroadcastContactsDialog
         broadcastId={broadcastId}
-        chatbotId={chatbotId}
         eventType={field as BroadcastEventType}
         onOpenChange={handleDialogChange}
         open={dialogOpen}
         total={value}
+        workspaceId={workspaceId}
       />
     </>
   )

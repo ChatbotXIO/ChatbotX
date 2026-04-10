@@ -1,19 +1,23 @@
 "use client"
 
+import type {
+  SequenceStepContactData,
+  SequenceStepEventType,
+} from "@chatbotx.io/analytics/schemas"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@aha.chat/ui/components/ui/avatar"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/avatar"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@aha.chat/ui/components/ui/dialog"
-import { ScrollArea } from "@aha.chat/ui/components/ui/scroll-area"
-import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
@@ -21,15 +25,11 @@ import { memo, useCallback, useEffect, useState } from "react"
 import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { client } from "@/lib/orpc/orpc"
-import type {
-  SequenceStepContactData,
-  SequenceStepEventType,
-} from "../schema"
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  chatbotId: string
+  workspaceId: string
   sequenceId: string
   stepId: string
   eventType: SequenceStepEventType
@@ -40,7 +40,7 @@ export const SequenceStepContactsDialog = memo(
   function SequenceStepContactsDialog({
     open,
     onOpenChange,
-    chatbotId,
+    workspaceId,
     sequenceId,
     stepId,
     eventType,
@@ -62,7 +62,7 @@ export const SequenceStepContactsDialog = memo(
       try {
         const result =
           await client.sequencesAPI.privateListSequenceStepContactsAPI({
-            chatbotId,
+            workspaceId,
             sequenceId,
             stepId,
             eventType,
@@ -77,7 +77,7 @@ export const SequenceStepContactsDialog = memo(
       } finally {
         setIsLoading(false)
       }
-    }, [open, chatbotId, sequenceId, stepId, eventType, total, page])
+    }, [open, workspaceId, sequenceId, stepId, eventType, total, page])
 
     useEffect(() => {
       fetchContacts()
@@ -125,9 +125,9 @@ export const SequenceStepContactsDialog = memo(
               <div className="space-y-2 pr-4">
                 {contacts.map((contact) => (
                   <ContactItem
-                    chatbotId={chatbotId}
                     contact={contact}
                     key={contact.contactId}
+                    workspaceId={workspaceId}
                   />
                 ))}
               </div>
@@ -166,10 +166,10 @@ export const SequenceStepContactsDialog = memo(
 )
 
 const ContactItem = memo(function ContactItem({
-  chatbotId,
+  workspaceId,
   contact,
 }: {
-  chatbotId: string
+  workspaceId: string
   contact: SequenceStepContactData
 }) {
   const avatarUrl = getAvatarUrl({
@@ -197,7 +197,7 @@ const ContactItem = memo(function ContactItem({
         <div className="flex items-center gap-1.5">
           <Link
             className="max-w-[200px] truncate text-blue-500"
-            href={`/chatbots/${chatbotId}/inbox?conversationId=${contact.conversationId}`}
+            href={`/chatbots/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
             target="_blank"
           >
             <span className="truncate font-medium text-sm leading-tight">

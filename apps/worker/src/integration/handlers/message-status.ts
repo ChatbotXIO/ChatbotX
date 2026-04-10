@@ -54,7 +54,7 @@ export const handleMessageStatus = async (
     const chatConversation = await db.query.conversationModel.findFirst({
       where: {
         sourceId: conversation.sourceId,
-        chatbotId: ctx.chatbot.id,
+        workspaceId: ctx.chatbot.id,
         inboxId: ctx.inbox.id,
       },
       with: {
@@ -70,12 +70,12 @@ export const handleMessageStatus = async (
       where: {
         sourceId: payload.messageId,
         conversationId: chatConversation.id,
-        chatbotId: ctx.chatbot.id,
+        workspaceId: ctx.chatbot.id,
       },
     })
 
     const eventLog = {
-      chatbotId: inbox.chatbotId,
+      workspaceId: inbox.workspaceId,
       contactId: chatConversation.contact.id,
       conversationId: chatConversation.id,
       channel: inbox.channel,

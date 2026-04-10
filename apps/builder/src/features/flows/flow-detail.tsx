@@ -35,13 +35,13 @@ export function FlowDetail({
           activeFlowId: flow.id,
         }}
       >
-        <FlowTemplateStoreProvider chatbotId={flow.chatbotId}>
-          <InboxStoreProvider chatbotId={flow.chatbotId}>
-            <FlowStoreProvider chatbotId={flow.chatbotId}>
-              <TagStoreProvider chatbotId={flow.chatbotId}>
-                <UserStoreProvider chatbotId={flow.chatbotId}>
-                  <CustomFieldStoreProvider chatbotId={flow.chatbotId}>
-                    <AIToolsStoreProvider chatbotId={flow.chatbotId}>
+        <FlowTemplateStoreProvider workspaceId={flow.workspaceId}>
+          <InboxStoreProvider workspaceId={flow.workspaceId}>
+            <FlowStoreProvider workspaceId={flow.workspaceId}>
+              <TagStoreProvider workspaceId={flow.workspaceId}>
+                <UserStoreProvider workspaceId={flow.workspaceId}>
+                  <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
+                    <AIToolsStoreProvider workspaceId={flow.workspaceId}>
                       <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
                     </AIToolsStoreProvider>
                   </CustomFieldStoreProvider>

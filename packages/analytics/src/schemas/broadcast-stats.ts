@@ -1,4 +1,4 @@
-import z from "zod"
+import { z } from "zod"
 
 export const broadcastEventType = z.enum([
   "sent",
@@ -10,8 +10,28 @@ export const broadcastEventType = z.enum([
 
 export type BroadcastEventType = z.infer<typeof broadcastEventType>
 
+export const getBroadcastStatsRequest = z.object({
+  workspaceId: z.string(),
+  broadcastId: z.string(),
+})
+
+export type GetBroadcastStatsRequest = z.infer<typeof getBroadcastStatsRequest>
+
+export const getBroadcastStatsResponse = z.object({
+  sent: z.number(),
+  delivered: z.number(),
+  seen: z.number(),
+  clicked: z.number(),
+  failed: z.number(),
+})
+
+export type GetBroadcastStatsResponse = z.infer<
+  typeof getBroadcastStatsResponse
+>
+export type BroadcastStats = GetBroadcastStatsResponse
+
 export const listBroadcastContactsRequest = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   broadcastId: z.string(),
   eventType: broadcastEventType,
   total: z.number().optional(),
@@ -36,14 +56,14 @@ export const broadcastContactResource = z.object({
 
 export type BroadcastContactResource = z.infer<typeof broadcastContactResource>
 
-export const BroadcastContactData = broadcastContactResource.extend({
+export const broadcastContactData = broadcastContactResource.extend({
   conversationId: z.string(),
 })
 
-export type BroadcastContactData = z.infer<typeof BroadcastContactData>
+export type BroadcastContactData = z.infer<typeof broadcastContactData>
 
 export const listBroadcastContactsResponse = z.object({
-  data: z.array(BroadcastContactData),
+  data: z.array(broadcastContactData),
   total: z.number(),
   page: z.number(),
   pageCount: z.number(),

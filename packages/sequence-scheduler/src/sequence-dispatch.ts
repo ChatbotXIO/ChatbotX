@@ -4,9 +4,7 @@ import {
   eq,
   inArray,
 } from "@chatbotx.io/database/client"
-import {
-  sequenceDispatchModel,
-} from "@chatbotx.io/database/schema"
+import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
 
 export const sequenceDispatchUtils = {
   bulkCancelPendingDispatches: async (props: {
@@ -15,7 +13,7 @@ export const sequenceDispatchUtils = {
     enrollmentId: string
     reason?: "canceled"
   }) => {
-    const { dbClient, workspaceId, enrollmentId, reason } = props
+    const { dbClient, workspaceId, enrollmentId } = props
 
     // Find all pending dispatches for the enrollment
     const pendingDispatches =

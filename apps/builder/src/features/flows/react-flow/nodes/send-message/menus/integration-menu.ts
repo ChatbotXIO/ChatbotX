@@ -1,4 +1,4 @@
-import type { ChannelType } from "@aha.chat/database/types"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { GlobeIcon, type LucideIcon } from "lucide-react"
 import { INBOX_ICON_CONFIG } from "@/features/inboxes/components/inbox-icon"
 import type { MenuData, MenuItem, TranslationFn } from "../../types"

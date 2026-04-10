@@ -76,22 +76,6 @@ async function removeContactSequences(
     return
   }
 
-  <<<<<<< HEAD
-  await Promise.all(
-    enrollments.map((enrollment:
-  id: string
-  ) =>
-      cancelPendingDispatches(
-  client: tx, enrollmentId
-  : enrollment.id,
-        workspaceId,
-        reason: "enrollment_removed",
-  ),
-    ),
-  )
-
-=======
->>>>>>> cfbb44fb (Feat/sequence channel statistics (#324))
   const enrollmentIds = enrollments.map((e: { id: string }) => e.id)
   if (enrollmentIds.length > 0) {
     await tx
@@ -109,7 +93,7 @@ async function removeContactSequences(
       cancelPendingDispatches({
         client: tx,
         enrollmentId: enrollment.id,
-        chatbotId,
+        workspaceId,
         reason: "enrollment_removed",
       }),
     ),

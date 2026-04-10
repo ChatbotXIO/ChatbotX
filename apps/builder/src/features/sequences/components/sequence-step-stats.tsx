@@ -1,13 +1,13 @@
 "use client"
 
-import { Skeleton } from "@aha.chat/ui/components/ui/skeleton"
-import { useParams } from "next/navigation"
-import { memo, useEffect, useState } from "react"
-import { client } from "@/lib/orpc/orpc"
 import type {
   GetSequenceStepStatsResponse,
   SequenceStepEventType,
-} from "../schema"
+} from "@chatbotx.io/analytics/schemas"
+import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { useParams } from "next/navigation"
+import { memo, useEffect, useState } from "react"
+import { client } from "@/lib/orpc/orpc"
 import { SequenceStepContactsDialog } from "./sequence-step-contacts-dialog"
 
 type Props = {
@@ -19,7 +19,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
   sequenceId,
   stepId,
 }: Props) {
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { workspaceId } = useParams<{ workspaceId: string }>()
   const [stats, setStats] = useState<GetSequenceStepStatsResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -39,7 +39,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
       try {
         const result = await client.sequencesAPI.privateGetSequenceStepStatsAPI(
           {
-            chatbotId,
+            workspaceId,
             sequenceId,
             stepId: stepId as string,
           },
@@ -62,7 +62,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
     return () => {
       isMounted = false
     }
-  }, [chatbotId, sequenceId, stepId])
+  }, [workspaceId, sequenceId, stepId])
 
   const formatValue = (value: number) => {
     return value ? value.toLocaleString() : "----"
@@ -178,13 +178,13 @@ export const SequenceStepStats = memo(function SequenceStepStats({
 
       {stepId && (
         <SequenceStepContactsDialog
-          chatbotId={chatbotId}
           eventType={selectedEventType}
           onOpenChange={setDialogOpen}
           open={dialogOpen}
           sequenceId={sequenceId}
           stepId={stepId}
           total={selectedTotal}
+          workspaceId={workspaceId}
         />
       )}
     </>

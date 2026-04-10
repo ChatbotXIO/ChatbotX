@@ -2,7 +2,7 @@ import { z } from "zod"
 import { FlowEventType } from "./types"
 
 const basePayloadSchema = z.object({
-  chatbotId: z.string(),
+  workspaceId: z.string(),
   contactId: z.string(),
   conversationId: z.string(),
   channel: z.string(),

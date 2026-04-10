@@ -1,10 +1,10 @@
-import { and, db, eq, inArray } from "@aha.chat/database/client"
+import { clickhouse } from "@chatbotx.io/clickhouse/client"
+import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
+import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsOnSequenceModel,
-} from "@aha.chat/database/schema"
-import { clickhouse } from "@chatbotx.io/clickhouse/client"
-import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
+} from "@chatbotx.io/database/schema"
 import type {
   FlowClickedPayload,
   MessageDeliveredPayload,
@@ -31,7 +31,7 @@ export const sequenceStathandler = {
       ) {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
@@ -81,7 +81,7 @@ export const sequenceStathandler = {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
@@ -110,7 +110,7 @@ export const sequenceStathandler = {
       if (payload.metadata?.type === "sequenceSchedule") {
         insertedData.push({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           sequence_id: payload.metadata.sequenceId,
           step_id: payload.metadata.stepId,
           contact_id: payload.contactId,
@@ -131,9 +131,9 @@ export const sequenceStathandler = {
   },
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = this.groupBy(payloads, "chatbotId")
+    const grouped = this.groupBy(payloads, "workspaceId")
 
-    for (const [chatbotId, chatbotPayloads] of Object.entries(grouped)) {
+    for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
       const contactIds = [...new Set(chatbotPayloads.map((p) => p.contactId))]
       const seenAt = new Date()
 
@@ -144,13 +144,13 @@ export const sequenceStathandler = {
         },
         with: {
           sequence: {
-            columns: { id: true, chatbotId: true },
+            columns: { id: true, workspaceId: true },
           },
         },
       })
 
       const filtered = activeSequences.filter((s) => {
-        if (s.sequence.chatbotId !== chatbotId) {
+        if (s.sequence.workspaceId !== workspaceId) {
           return false
         }
         return true
@@ -167,7 +167,7 @@ export const sequenceStathandler = {
 
       const insertedData: SequenceScheduleEventType[] = filtered.map((s) => ({
         event_id: createId(),
-        chatbot_id: chatbotId,
+        chatbot_id: workspaceId,
         sequence_id: s.sequenceId,
         step_id: s.lastStepId || "",
         contact_id: s.contactId,
@@ -193,7 +193,7 @@ export const sequenceStathandler = {
       const insertedData: SequenceScheduleEventType[] = sequenceClicks.map(
         (payload) => ({
           event_id: createId(),
-          chatbot_id: payload.chatbotId,
+          chatbot_id: payload.workspaceId,
           sequence_id: payload.sequenceId as string,
           step_id: payload.stepId || "",
           contact_id: payload.contactId,

@@ -9,7 +9,6 @@
   "dependencies": {
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
-    "@chatbotx.io/worker-config": "workspace:*",
     "@types/node": "^24.10.4",
     "zod": "^4.3.6"
   },

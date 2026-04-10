@@ -99,7 +99,7 @@ export interface CancelPendingDispatchesParams {
 export async function cancelPendingDispatches(
   params: CancelPendingDispatchesParams,
 ): Promise<Array<{ id: string; bucket: number }>> {
-  const { enrollmentId, workspaceId, reason = "canceled", client = db } = params
+  const { enrollmentId, workspaceId, client = db } = params
 
   const pendingDispatches = await client.query.sequenceDispatchModel.findMany({
     where: {

@@ -24,7 +24,7 @@ const FlowActionContext = createContext<FlowTemplateStoreApi | undefined>(
 
 export type FlowTemplateProviderProps = {
   children: ReactNode
-  chatbotId: string
+  workspaceId: string
   templates?: FlowTemplateMenuData
   beforeStep?: { channel?: string; [key: string]: unknown }
   autoInitialize?: boolean
@@ -32,7 +32,7 @@ export type FlowTemplateProviderProps = {
 
 export function FlowTemplateStoreProvider({
   children,
-  chatbotId,
+  workspaceId,
   templates,
   beforeStep,
   autoInitialize = true,
@@ -40,7 +40,7 @@ export function FlowTemplateStoreProvider({
   const storeRef = useRef<FlowTemplateStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowTemplateStore({
-      chatbotId,
+      workspaceId,
       templates,
       beforeStep,
     })

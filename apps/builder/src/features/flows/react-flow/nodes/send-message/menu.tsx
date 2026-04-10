@@ -1,4 +1,4 @@
-import { channelType } from "@aha.chat/database/types"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { stepTypes } from "@chatbotx.io/flow-config"
 import {
   CreditCardIcon,
@@ -61,7 +61,7 @@ const ALL_MENU_ITEMS = (
     label: t("flows.actions.sendWaTemplateMessage"),
     icon: MessageSquareIcon,
     stepType: stepTypes.enum.sendWaTemplateMessage,
-    children: integrationMenus(t, menuData, channelType.whatsapp),
+    children: integrationMenus(t, menuData, channelTypes.enum.whatsapp),
   },
   typing: {
     label: t("flows.actions.typing"),

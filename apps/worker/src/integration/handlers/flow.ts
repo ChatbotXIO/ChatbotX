@@ -296,10 +296,10 @@ export async function runFlowPostback(
 
   if (conversation.contactId) {
     emit(FlowEventType.CLICKED, {
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       conversationId: data.conversationId,
-      channel: conversation.channel,
+      channel: conversation.inbox?.channel,
       occurredAt: new Date(),
       flowId: parsedAction.flowId,
       buttonId: parsedAction.buttonId,
@@ -352,7 +352,7 @@ export async function runFlowQuickReply(
 
   if (conversation.contactId) {
     emit(FlowEventType.CLICKED, {
-      chatbotId: conversation.chatbotId,
+      workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,
       conversationId: data.conversationId,
       channel: conversation.channel,
