@@ -41,11 +41,12 @@ export type ListBroadcastContactsRequest = z.infer<
 
 export const broadcastContactResource = z.object({
   contactId: z.string(),
+  contactInboxId: z.string(),
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
   sourceId: z.string().nullable(),
   avatar: z.string().nullable(),
-  channel: z.string(),
+  channel: z.string().nullable(),
   errorContent: z.string().nullable(),
   occurredAt: z.string(),
 })

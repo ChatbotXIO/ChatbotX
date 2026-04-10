@@ -35,74 +35,29 @@ export const sendBroadcast = async (broadcastId: string) => {
       where: {
         broadcastId,
       },
+      with: {
+        conversation: true,
+        contactInbox: true,
+      },
     })
   if (contactsOnBroadcasts.length === 0) {
     await updateBroadcastStatus(broadcastId, "sent")
     return
   }
 
-  let validInboxIds: string[] | undefined
-  if (broadcast.templateId) {
-    const template = await db.query.whatsappMessageTemplateModel.findFirst({
-      where: { id: broadcast.templateId },
-      columns: {
-        integrationWhatsappId: true,
-      },
-    })
-
-    if (template?.integrationWhatsappId) {
-      const integration = await db.query.integrationWhatsappModel.findFirst({
-        where: { id: template.integrationWhatsappId },
-        columns: {
-          inboxId: true,
-        },
-      })
-
-      validInboxIds = integration?.inboxId ? [integration.inboxId] : undefined
-    } else {
-      await updateBroadcastStatus(broadcastId, "sent")
-      return
-    }
-  }
-
-  const where = {
-    contactId: {
-      in: contactsOnBroadcasts.map((cb) => cb.contactId),
-    },
-    ...(validInboxIds?.length && {
-      inboxId: { in: validInboxIds },
-    }),
-  }
-
-  const contactInboxes = await db.query.contactInboxModel.findMany({
-    where,
-    columns: {
-      id: true,
-      inboxId: true,
-    },
-    with: {
-      conversation: {
-        columns: {
-          id: true,
-          contactId: true,
-        },
-      },
-    },
-  })
-
   try {
     await Promise.allSettled(
-      contactInboxes.map(async (cvst) => {
+      contactsOnBroadcasts.map(async (contactOnBroadcast) => {
         if (broadcast.flowId) {
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
             type: IntegrationJobAction.sendFlow,
             data: {
               flowId: broadcast.flowId,
-              conversationId: cvst.conversation.id,
+              conversationId: contactOnBroadcast.conversationId,
               metadata: {
                 type: "broadcast",
                 broadcastId: broadcast.id,
-                contactInboxId: cvst.id,
+                contactInboxId: contactOnBroadcast.contactInboxId,
               },
             },
           })
@@ -112,7 +67,8 @@ export const sendBroadcast = async (broadcastId: string) => {
           await chatQueue.add(ChatJobAction.sendWhatsappTemplateMessage, {
             type: ChatJobAction.sendWhatsappTemplateMessage,
             data: {
-              conversationId: cvst.conversation.id,
+              conversation: contactOnBroadcast.conversation,
+              contactInbox: contactOnBroadcast.contactInbox,
               templateId: broadcast.templateId,
               broadcastId: broadcast.id,
               templateData: broadcast.templateData as
@@ -121,7 +77,7 @@ export const sendBroadcast = async (broadcastId: string) => {
               metadata: {
                 type: "broadcast",
                 broadcastId: broadcast.id,
-                contactInboxId: cvst.id,
+                contactInboxId: contactOnBroadcast.contactInboxId,
               },
             },
           })

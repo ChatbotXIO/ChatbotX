@@ -209,7 +209,11 @@ const ContactItem = memo(function ContactItem({
               {fullName}
             </span>
           </Link>
-          <InboxIcon channel={contact.channel} showLabel={false} size="small" />
+          <InboxIcon
+            channel={contact.channel || ""}
+            showLabel={false}
+            size="small"
+          />
         </div>
         {contact.occurredAt && (
           <div className="text-left text-muted-foreground text-xs">

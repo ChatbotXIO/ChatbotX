@@ -12,11 +12,10 @@ type ClickHouseStatsRow = {
 }
 
 type ClickHouseContactRow = {
+  contact_inbox_id: string
   contact_id: string
   content: string | null
   max_occurred_at: string
-  source_id: string
-  channel: string
   conv_id: string
 }
 
@@ -33,7 +32,7 @@ export class SequenceStatsRepository extends BaseRepository {
     const sql = `
       SELECT
         event_type,
-        uniq(contact_id) as count
+        uniq(contact_inbox_id) as count
       FROM sequence_schedule_events
       WHERE workspace_id = {workspaceId:String}
         AND sequence_id = {sequenceId:String}
@@ -92,29 +91,32 @@ export class SequenceStatsRepository extends BaseRepository {
     page: number
     perPage: number
   }): Promise<{
-    contactIds: string[]
+    contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
   }> {
     const { workspaceId, sequenceId, stepId, eventType, page, perPage } = input
     const offset = (page - 1) * perPage
 
-    const eventTypeFilter = [eventType]
+    let eventTypeFilter = [eventType]
+
+    if (eventType === "message:sent") {
+      eventTypeFilter = ["message:delivered", "message:failed"]
+    }
 
     const contactRows = await this.query<ClickHouseContactRow>(
       `
         SELECT
+          contact_inbox_id,
           contact_id,
           argMax(content, occurred_at) as content,
           max(occurred_at) as max_occurred_at,
-          argMax(source_id, occurred_at) as source_id,
-          argMax(channel, occurred_at) as channel,
           argMax(conv_id, occurred_at) as conv_id
         FROM sequence_schedule_events
         WHERE workspace_id = {workspaceId:String}
           AND sequence_id = {sequenceId:String}
           AND step_id = {stepId:String}
           AND event_type in {eventTypeFilter:Array(String)}
-        GROUP BY contact_id
+        GROUP BY contact_inbox_id, contact_id
         ORDER BY max_occurred_at DESC
         LIMIT {limit:UInt32} OFFSET {offset:UInt32}
       `,
@@ -128,7 +130,7 @@ export class SequenceStatsRepository extends BaseRepository {
       },
     )
 
-    const contactIds = contactRows.map((row) => row.contact_id)
+    const contactInboxIds = contactRows.map((row) => row.contact_inbox_id)
     const contactEventMap = new Map<string, ContactEventData>()
 
     for (const row of contactRows) {
@@ -147,16 +149,15 @@ export class SequenceStatsRepository extends BaseRepository {
         }
       }
 
-      contactEventMap.set(row.contact_id, {
+      contactEventMap.set(row.contact_inbox_id, {
+        contactId: row.contact_id,
         occurredAt: row.max_occurred_at,
-        sourceId: row.source_id ?? undefined,
-        channel: row.channel ?? undefined,
         conversationId: row.conv_id ?? undefined,
         errorContent,
       })
     }
 
-    return { contactIds, contactEventMap }
+    return { contactInboxIds, contactEventMap }
   }
 }
 

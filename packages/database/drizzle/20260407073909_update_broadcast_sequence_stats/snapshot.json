@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "038283ea-41bf-4a9f-bfdb-ae00b2a88a6e",
+  "id": "1e437d42-0e3c-46cb-90f6-3d760d3dc385",
   "prevIds": ["1f84963d-4b61-432b-bef3-f2a515ed10d0"],
   "ddl": [
     {
@@ -3341,6 +3341,32 @@
       "generated": null,
       "identity": null,
       "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnBroadcast"
@@ -11851,6 +11877,32 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnBroadcast_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnBroadcast_conversationId_Conversation_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "ContactOnBroadcast"

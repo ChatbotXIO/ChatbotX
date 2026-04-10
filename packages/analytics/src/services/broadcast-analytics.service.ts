@@ -3,6 +3,7 @@ import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
 import {
+  type BroadcastMetadataPayload,
   type FlowClickedPayload,
   FlowEventType,
   type MessageDeliveredPayload,
@@ -70,7 +71,7 @@ export class BroadcastAnalyticsService {
     page: number
     perPage: number
   }): Promise<{
-    contactIds: string[]
+    contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
   }> {
     return broadcastStatsRepository.getContactsFromClickHouse(input)
@@ -109,12 +110,16 @@ export class BroadcastAnalyticsService {
 
     const broadcastContacts = payloads
       .filter((p) => p.metadata?.type === "broadcast")
-      .map((p) => ({
-        broadcastId: (p.metadata as { type: "broadcast"; broadcastId: string })
-          .broadcastId,
-        contactId: p.contactId,
-        occurredAt: p.occurredAt,
-      }))
+      .map((p) => {
+        const metadata = p.metadata as BroadcastMetadataPayload
+
+        return {
+          broadcastId: metadata.broadcastId,
+          contactId: p.contactId,
+          contactInboxId: metadata.contactInboxId,
+          occurredAt: p.occurredAt,
+        }
+      })
 
     if (broadcastContacts.length > 0) {
       for (const bc of broadcastContacts) {
@@ -128,6 +133,7 @@ export class BroadcastAnalyticsService {
             and(
               eq(contactsOnBroadcastsModel.broadcastId, bc.broadcastId),
               eq(contactsOnBroadcastsModel.contactId, bc.contactId),
+              eq(contactsOnBroadcastsModel.contactInboxId, bc.contactInboxId),
             ),
           )
       }
@@ -273,7 +279,7 @@ export class BroadcastAnalyticsService {
           await db
             .update(contactsOnBroadcastsModel)
             .set({
-              sentAt: getTime(new Date(chatbotPayload.occurredAt)).toString(),
+              readAt: getTime(new Date(chatbotPayload.occurredAt)).toString(),
             })
             .where(
               and(

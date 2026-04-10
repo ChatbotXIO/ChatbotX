@@ -72,7 +72,7 @@ export class SequenceAnalyticsService {
     page: number
     perPage: number
   }): Promise<{
-    contactIds: string[]
+    contactInboxIds: string[]
     contactEventMap: Map<string, ContactEventData>
   }> {
     return sequenceStatsRepository.getContactsFromClickHouse(input)

@@ -1,6 +1,7 @@
 "use server"
 
 import { db } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
@@ -61,7 +62,7 @@ export const createBroadcastAction = workspaceActionClient
       broadcastName = template.name
     }
 
-    let inboxId: string | undefined
+    let inboxIds: string[] = []
     if (parsedInput.integrationWhatsappId) {
       const integrationWhatsapp =
         await db.query.integrationWhatsappModel.findFirst({
@@ -71,7 +72,20 @@ export const createBroadcastAction = workspaceActionClient
           },
         })
       if (integrationWhatsapp) {
-        inboxId = integrationWhatsapp.inboxId
+        inboxIds = [integrationWhatsapp.inboxId]
+      }
+    } else {
+      const inboxes = await db.query.inboxModel.findMany({
+        where: {
+          workspaceId,
+          ...(parsedInput.channel &&
+            parsedInput.channel !== channelTypes.enum.omnichannel && {
+              channel: parsedInput.channel,
+            }),
+        },
+      })
+      if (inboxes.length > 0) {
+        inboxIds = inboxes.map((inbox) => inbox.id)
       }
     }
 
@@ -84,17 +98,29 @@ export const createBroadcastAction = workspaceActionClient
       templateData: parsedInput.templateData ?? "{}",
     }
 
-    const contacts = await db.query.contactModel.findMany({
-      columns: { id: true },
+    if (inboxIds.length === 0) {
+      data.status = "sent"
+    }
+
+    const contactInboxes = await db.query.contactInboxModel.findMany({
       where: {
-        workspaceId,
-        ...(inboxId && {
-          contactInboxes: {
-            inboxId,
+        inboxId: {
+          in: inboxIds,
+        },
+      },
+      with: {
+        conversation: {
+          columns: {
+            id: true,
+            contactId: true,
           },
-        }),
+        },
       },
     })
+
+    if (contactInboxes.length === 0) {
+      data.status = "sent"
+    }
 
     await db.transaction(async (tx) => {
       const newBroadcast = await tx
@@ -103,11 +129,13 @@ export const createBroadcastAction = workspaceActionClient
         .returning()
         .then((result) => result[0])
 
-      if (contacts.length > 0) {
+      if (contactInboxes.length > 0) {
         await tx.insert(contactsOnBroadcastsModel).values(
-          contacts.map((contact) => ({
+          contactInboxes.map((contactInbox) => ({
             broadcastId: newBroadcast.id,
-            contactId: contact.id,
+            contactId: contactInbox.contactId,
+            contactInboxId: contactInbox.id,
+            conversationId: contactInbox.conversation?.id || "",
           })),
         )
       }

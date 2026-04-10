@@ -98,7 +98,6 @@ export type ChatJobSendTyping = {
     contactInbox: ContactInboxModel
     typing: boolean
     seconds?: number
-    metadata?: IntegrationJobMetadata
     metadata?: MetadataPayload
   }
 }

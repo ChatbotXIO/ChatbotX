@@ -16,6 +16,16 @@ export const contactsOnBroadcastsRelations = defineRelationsPart(
         to: r.contactModel.id,
         optional: false,
       }),
+      contactInbox: r.one.contactInboxModel({
+        from: r.contactsOnBroadcastsModel.contactInboxId,
+        to: r.contactInboxModel.id,
+        optional: false,
+      }),
+      conversation: r.one.conversationModel({
+        from: r.contactsOnBroadcastsModel.conversationId,
+        to: r.conversationModel.id,
+        optional: false,
+      }),
     },
   }),
 )

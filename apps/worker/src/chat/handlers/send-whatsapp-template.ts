@@ -1,10 +1,14 @@
 import { db, eq } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
 import { messageModel } from "@chatbotx.io/database/schema"
-import type { ConversationModel } from "@chatbotx.io/database/types"
+import type {
+  ContactInboxModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
+import { emit } from "@chatbotx.io/event-bus"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   extractTemplateParams,
+  MessageEventType,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
@@ -14,7 +18,7 @@ import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
-import type { MessageTemplateEntity } from "@chatbotx.io/sdk"
+import { type MessageTemplateEntity, parseSdkError } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
@@ -31,6 +35,7 @@ import { sendFlowStepToExternal } from "./send-message"
 
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
+  contactInbox: ContactInboxModel
   conversation: ConversationModel
   flow?: {
     id: string
@@ -58,24 +63,13 @@ export async function processWhatsappTemplate(
 ): Promise<ProcessWhatsappTemplateResult> {
   const {
     conversation,
+    contactInbox,
     template,
     broadcastId,
     flow,
     trackingContext,
     metadata,
   } = params
-
-  const contactInbox = await db.query.contactInboxModel.findFirst({
-    where: {
-      contactId: conversation.contactId,
-      channel: channelTypes.enum.whatsapp,
-    },
-  })
-  if (!contactInbox) {
-    throw new Error(
-      `Whatsapp contact inbox not found for conversation: ${conversation.id}`,
-    )
-  }
 
   const isValid = await validateWhatsappTemplate(template, contactInbox.inboxId)
 
@@ -144,6 +138,15 @@ export async function processWhatsappTemplate(
     data: newMessage,
   })
 
+  const eventLogData = {
+    workspaceId: conversation.workspaceId,
+    contactId: conversation.contactId,
+    conversationId: conversation.id,
+    channel: contactInbox.channel,
+    contactInboxId: contactInbox.id,
+    metadata,
+  }
+
   try {
     const result = await sendFlowStepToExternal({
       conversation,
@@ -158,6 +161,12 @@ export async function processWhatsappTemplate(
       },
       metadata,
       messageId: newMessage.id,
+    })
+
+    await emit(MessageEventType["message:sent"], {
+      ...eventLogData,
+      messageId: "",
+      occurredAt: new Date(),
     })
 
     const providerMessageId = result?.messageIds?.[0]
@@ -184,6 +193,12 @@ export async function processWhatsappTemplate(
       },
       "Failed to send WhatsApp template to provider",
     )
+    await emit(MessageEventType["message:failed"], {
+      ...eventLogData,
+      errorData: await parseSdkError(error),
+      occurredAt: new Date(),
+    })
+
     throw error
   }
 }
@@ -209,6 +224,7 @@ export async function sendWhatsappTemplateMessage(
 
     const result = await processWhatsappTemplate({
       conversation,
+      contactInbox: data.contactInbox,
       template: {
         id: template.id,
         name: template.name,

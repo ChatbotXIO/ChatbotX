@@ -3,6 +3,8 @@ import { boolean, index, pgTable, primaryKey } from "drizzle-orm/pg-core"
 import { bigintAsString } from "../partials/shared"
 import { broadcastModel } from "./broadcast"
 import { contactModel } from "./contact"
+import { contactInboxModel } from "./contact-inbox"
+import { conversationModel } from "./conversation"
 
 export const contactsOnBroadcastsModel = pgTable(
   "ContactOnBroadcast",
@@ -16,6 +18,18 @@ export const contactsOnBroadcastsModel = pgTable(
     contactId: bigintAsString()
       .notNull()
       .references(() => contactModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    contactInboxId: bigintAsString()
+      .notNull()
+      .references(() => contactInboxModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    conversationId: bigintAsString()
+      .notNull()
+      .references(() => conversationModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),

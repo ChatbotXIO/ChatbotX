@@ -4,6 +4,8 @@ ALTER TABLE "AnalyticsManifestStatus" DROP COLUMN IF EXISTS "id"--> statement-br
 CREATE UNIQUE INDEX IF NOT EXISTS "AnalyticsManifestStatus_objectKey_key" ON "AnalyticsManifestStatus" ("objectKey");--> statement-breakpoint
 
 DROP TABLE IF EXISTS "SequenceEvent" CASCADE;
+ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "contactInboxId" bigint NOT NULL;--> statement-breakpoint
+ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "conversationId" bigint NOT NULL;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "sentAt" bigint;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "readAt" bigint;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "isRead" boolean GENERATED ALWAYS AS (case when "sentAt" is null then false when "readAt" is null then false else "readAt" >= "sentAt" end) STORED;--> statement-breakpoint
@@ -11,7 +13,11 @@ ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "contactInboxId" bigint 
 CREATE INDEX IF NOT EXISTS "idx_contact_on_broadcast_contact_id" ON "ContactOnBroadcast" ("contactId");--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "idx_contact_on_broadcast_is_read" ON "ContactOnBroadcast" ("isRead");--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" DROP CONSTRAINT IF EXISTS "SequenceDispatch_contactInboxId_ContactInbox_id_fkey";--> statement-breakpoint
-ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ContactOnBroadcast" DROP CONSTRAINT IF EXISTS "ContactOnBroadcast_contactInboxId_ContactInbox_id_fkey";--> statement-breakpoint
+ALTER TABLE "ContactOnBroadcast" DROP CONSTRAINT IF EXISTS "ContactOnBroadcast_conversationId_Conversation_id_fkey";--> statement-breakpoint
+ALTER TABLE "SequenceDispatch" ADD CONSTRAINT "SequenceDispatch_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "ContactOnBroadcast" ADD CONSTRAINT "ContactOnBroadcast_contactInboxId_ContactInbox_id_fkey" FOREIGN KEY ("contactInboxId") REFERENCES "ContactInbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "ContactOnBroadcast" ADD CONSTRAINT "ContactOnBroadcast_conversationId_Conversation_id_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 
 CREATE OR REPLACE FUNCTION increment_contact_stats()
 RETURNS TRIGGER AS $$

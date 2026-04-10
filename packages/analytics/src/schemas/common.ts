@@ -31,6 +31,7 @@ export const contactInfoSchema = z.object({
 export type ContactInfo = z.infer<typeof contactInfoSchema>
 
 export type ContactEventData = {
+  contactId: string
   occurredAt: string
   sourceId?: string
   channel?: string

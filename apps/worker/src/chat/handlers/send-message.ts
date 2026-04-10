@@ -6,12 +6,16 @@ import type {
 } from "@chatbotx.io/database/types"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
-import { allIntegrations, integrationService } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
+import {
+  allIntegrations,
+  integrationService,
+} from "../../services/integrations"
 
 export async function sendMessageToExternal(
   data: ChatJobSendExternalMessage["data"],
@@ -138,7 +142,7 @@ export async function sendFlowStepToExternal({
       },
     })
 
-  await updateMessageSourceId(messageId, result)
+  await updateMessageSourceId(messageId, result ?? {})
 
   return result || {}
 }

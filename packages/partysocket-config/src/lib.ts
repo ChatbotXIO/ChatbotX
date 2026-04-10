@@ -44,7 +44,7 @@ export async function broadcastToGuestParty(
     )
   } catch (error) {
     logger.error(error, "Failed to broadcast to guest party")
-    return null
+    throw error
   }
 }
 

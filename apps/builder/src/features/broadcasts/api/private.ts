@@ -42,7 +42,7 @@ export const broadcastPrivateAPIs = {
         input
       const totalValue = total || 0
 
-      const { contactIds, contactEventMap } =
+      const { contactInboxIds, contactEventMap } =
         await broadcastAnalyticsService.getContactsFromClickHouse({
           workspaceId,
           broadcastId,
@@ -51,7 +51,7 @@ export const broadcastPrivateAPIs = {
           perPage,
         })
 
-      if (contactIds.length === 0) {
+      if (contactInboxIds.length === 0) {
         return {
           data: [],
           total: totalValue,
@@ -59,6 +59,15 @@ export const broadcastPrivateAPIs = {
           pageCount: Math.ceil(totalValue / perPage),
         }
       }
+
+      // Get unique contactIds from event map
+      const contactIds = [
+        ...new Set(
+          contactInboxIds
+            .map((id) => contactEventMap.get(id)?.contactId)
+            .filter((id): id is string => id !== undefined),
+        ),
+      ]
 
       const contacts = await db.query.contactModel.findMany({
         where: {
@@ -76,20 +85,25 @@ export const broadcastPrivateAPIs = {
       const contactMap = new Map(contacts.map((c) => [c.id, c]))
       const pageCount = Math.ceil(totalValue / perPage)
 
-      const data = contactIds
-        .map((contactId) => {
-          const contact = contactMap.get(contactId)
-          const eventData = contactEventMap.get(contactId)
-          if (!(contact && eventData?.conversationId && eventData.channel)) {
+      const data = contactInboxIds
+        .map((contactInboxId) => {
+          const eventData = contactEventMap.get(contactInboxId)
+          if (!eventData) {
+            return null
+          }
+
+          const contact = contactMap.get(eventData.contactId)
+          if (!(contact && eventData.conversationId)) {
             return null
           }
           return {
             contactId: contact.id,
+            contactInboxId,
             firstName: contact.firstName,
             lastName: contact.lastName,
             sourceId: eventData.sourceId ?? null,
             avatar: contact.avatar,
-            channel: eventData.channel,
+            channel: eventData.channel ?? null,
             conversationId: eventData.conversationId,
             errorContent: eventData.errorContent ?? null,
             occurredAt: eventData.occurredAt,
