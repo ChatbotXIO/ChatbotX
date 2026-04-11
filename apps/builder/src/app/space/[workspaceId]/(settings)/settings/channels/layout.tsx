@@ -16,6 +16,7 @@ type SettingsChannelsPageProps = {
   readonly messenger: ReactNode
   readonly zalo: ReactNode
   readonly webchat: ReactNode
+  readonly email: ReactNode
 }
 
 type IntegrationItem = {
@@ -28,6 +29,7 @@ export default function SettingsChannelsPage({
   messenger,
   zalo,
   webchat,
+  email,
 }: SettingsChannelsPageProps) {
   const queriesParams = useSearchParams()
   const selectedChannel = queriesParams.get("channel") ?? ""
@@ -48,6 +50,10 @@ export default function SettingsChannelsPage({
     {
       value: "webchat",
       content: webchat,
+    },
+    {
+      value: "email",
+      content: email,
     },
   ]
 

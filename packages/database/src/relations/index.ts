@@ -33,6 +33,7 @@ import { inboxContactStatsRelations } from "./inbox-contact-stats"
 import { inboxTeamRelations } from "./inbox-team"
 import { inboxTeamMemberRelations } from "./inbox-team-member"
 import { integrationRelations } from "./integration"
+import { integrationEmailRelations } from "./integration-email"
 import { integrationGeminiRelations } from "./integration-gemini"
 import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
 import { integrationMessengerRelations } from "./integration-messenger"
@@ -111,6 +112,7 @@ export const relations = {
   ...contactNoteRelations,
   ...aiEmbeddingRelations,
   ...integrationGoogleSheetsRelations,
+  ...integrationEmailRelations,
   ...integrationGeminiRelations,
   ...contactsOnBroadcastsRelations,
   ...contactsToTagsRelations,

@@ -9,5 +9,6 @@ export const integrationTypes = z.enum([
   "whatsapp",
   "zalo",
   "chatbotx",
+  "email",
 ])
 export type IntegrationType = z.infer<typeof integrationTypes>

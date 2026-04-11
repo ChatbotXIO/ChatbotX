@@ -1,4 +1,5 @@
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
+import { integration as integrationEmail } from "@chatbotx.io/integration-email"
 import { integration as integrationGoogleSheets } from "@chatbotx.io/integration-google-sheets"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import { integration as integrationWebchat } from "@chatbotx.io/integration-webchat"
@@ -12,6 +13,7 @@ export const integrations = {
   zalo: integrationZalo,
   webchat: integrationWebchat,
   chatbotx: integrationChatbotx,
+  email: integrationEmail,
 }
 
 export type IntegrationKey = keyof typeof integrations

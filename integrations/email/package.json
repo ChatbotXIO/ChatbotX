@@ -1,0 +1,20 @@
+{
+  "name": "@chatbotx.io/integration-email",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "dependencies": {
+    "@chatbotx.io/sdk": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "6.0.2"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./**/*": "./src/**/*.ts"
+  }
+}

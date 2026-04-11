@@ -8,7 +8,12 @@ import {
   SiZalo,
   SiZaloHex,
 } from "@icons-pack/react-simple-icons"
-import { AppWindowIcon, GlobeIcon, type LucideIcon } from "lucide-react"
+import {
+  AppWindowIcon,
+  GlobeIcon,
+  type LucideIcon,
+  MailIcon,
+} from "lucide-react"
 import type { ComponentType, SVGProps } from "react"
 import { memo } from "react"
 
@@ -53,6 +58,11 @@ const INBOX_ICON_CONFIG: Record<ChannelType, InboxIconConfig> = {
     Icon: AppWindowIcon,
     iconClassName: "fill-zinc-100 dark:stroke-zinc-800",
     defaultLabel: "Webchat",
+  },
+  email: {
+    Icon: MailIcon,
+    iconClassName: "fill-zinc-100 dark:stroke-zinc-800",
+    defaultLabel: "Email",
   },
   omnichannel: {
     Icon: GlobeIcon,
