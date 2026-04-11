@@ -13,6 +13,7 @@ import {
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
+import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
@@ -87,10 +88,11 @@ export async function processWhatsappTemplate(
     throw new Error(`Template validation failed: ${templateId}`)
   }
 
-  const replacedParams = await replaceWhatsappTemplateVariables(
+  const variables = await contactVariableService.getAll(conversation.id)
+  const replacedParams = await replaceWhatsappTemplateVariables({
     templateParams,
-    conversation.id,
-  )
+    variables,
+  })
 
   const messageData: typeof messageModel.$inferInsert = {
     id: createId(),

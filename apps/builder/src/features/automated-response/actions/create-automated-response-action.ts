@@ -27,16 +27,16 @@ export const createAutomatedResponseAction = workspaceActionClient
       )
     }
 
-    // validate flow id if text is not provided
-    if (parsedInput.text) {
-      parsedInput.flowId = null
-    } else if (parsedInput.flowId) {
+    let flowId: string | undefined = parsedInput.flowId ?? undefined
+
+    // validate flow id if provided
+    if (flowId) {
       const exists = await db.query.flowModel.findFirst({
         columns: {
           id: true,
         },
         where: {
-          id: parsedInput.flowId,
+          id: flowId,
           workspaceId,
         },
       })
@@ -48,11 +48,16 @@ export const createAutomatedResponseAction = workspaceActionClient
           },
         })
       }
-      parsedInput.text = null
+
+      parsedInput.text = undefined
+    } else if (parsedInput.text) {
+      flowId = undefined
     }
 
     await db.insert(automatedResponseModel).values({
-      ...parsedInput,
+      text: parsedInput.text,
+      flowId,
+      folderId: parsedInput.folderId,
       workspaceId,
       status: true,
       keywords: parsedInput.keywords.map((m) => m.value),

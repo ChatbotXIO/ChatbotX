@@ -1,9 +1,11 @@
-import type { AIAgentModel } from "@chatbotx.io/database/types"
-import type { OutgoingMessage } from "@chatbotx.io/sdk"
+import type {
+  AIAgentModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
 import type { ModelMessage, ToolSet } from "ai"
 
 export type ReplyByAIProps = {
-  message: OutgoingMessage
+  conversation: ConversationModel
   lastAIMessages: ModelMessage[]
   aiAgent: AIAgentModel
   tools: ToolSet

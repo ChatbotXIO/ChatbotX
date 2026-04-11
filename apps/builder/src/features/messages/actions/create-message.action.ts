@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -204,24 +203,24 @@ export const createMessage = async (props: {
     )
   }
 
-  promises.push(
-    contactTrackingService.trackEvent({
-      workspaceId: message.workspaceId,
-      contactId: contactInbox.contactId,
-      eventType: "contact_message_out",
-      senderType: "human",
-      adminId: user?.id,
-      occurredAt: new Date(),
-      source: contactInbox.source,
-      sourceId: contactInbox.sourceId,
-      channel: contactInbox.channel,
-      country: undefined,
-      metadata: {
-        messageId: message.id,
-        conversationId: message.conversationId,
-      },
-    }),
-  )
+  // promises.push(
+  //   contactTrackingService.trackEvent({
+  //     workspaceId: message.workspaceId,
+  //     contactId: contactInbox.contactId,
+  //     eventType: "contact_message_out",
+  //     senderType: "human",
+  //     adminId: user?.id,
+  //     occurredAt: new Date(),
+  //     source: contactInbox.source,
+  //     sourceId: contactInbox.sourceId,
+  //     channel: contactInbox.channel,
+  //     country: undefined,
+  //     metadata: {
+  //       messageId: message.id,
+  //       conversationId: message.conversationId,
+  //     },
+  //   }),
+  // )
 
   // Broadcast and send
   await Promise.all(promises)

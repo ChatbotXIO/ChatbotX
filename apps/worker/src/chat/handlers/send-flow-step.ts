@@ -1,10 +1,10 @@
 import {
   botMessageFallbackReasons,
-  botMessageResponseTypes,
   botMessageResults,
   botMessageRouteTypes,
   contactEventTypes,
   contactTrackingService,
+  trackingResponseTypes,
 } from "@chatbotx.io/analytics"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -415,7 +415,7 @@ export const sendChatMessage = async (
         data: message,
       }),
     ]
-    if (contactInbox.sourceId) {
+    if (contactInbox.channel === channelTypes.enum.webchat) {
       promises.push(
         broadcastToGuestParty(contactInbox.sourceId, {
           eventType: RealtimeEventType.messageCreated,
@@ -465,7 +465,7 @@ export const sendChatMessage = async (
         hasResponse: true,
         routeType:
           trackingContext.responseType ===
-          botMessageResponseTypes.enum.automated_response
+          trackingResponseTypes.enum.automated_response
             ? botMessageRouteTypes.enum.flow
             : botMessageRouteTypes.enum.agent,
         result: botMessageResults.enum.success,
@@ -488,7 +488,7 @@ export const sendChatMessage = async (
         hasResponse: false,
         routeType:
           trackingContext.responseType ===
-          botMessageResponseTypes.enum.automated_response
+          trackingResponseTypes.enum.automated_response
             ? botMessageRouteTypes.enum.flow
             : botMessageRouteTypes.enum.agent,
         result: botMessageResults.enum.fallback,

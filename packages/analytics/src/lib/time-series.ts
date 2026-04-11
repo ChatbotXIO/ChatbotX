@@ -8,11 +8,11 @@ import {
 import {
   type BotMessageResult,
   type BotMessageStats,
-  botMessageResponseTypes,
   type ContactCountsSchema,
   type ContactEventType,
   type ContactStats,
   type TimeRangeQuery,
+  trackingResponseTypes,
 } from "../schemas"
 
 export function getUtcMonthKey(date: Date): string {
@@ -227,7 +227,7 @@ export function fillBotMessageStatsDaySeries(
           workspaceId,
           timestamp: getUtcDayStart(d),
           hasResponse: true,
-          responseType: botMessageResponseTypes.enum.none,
+          responseType: trackingResponseTypes.enum.none,
           result,
           aiProvider: "none",
           count: 0,

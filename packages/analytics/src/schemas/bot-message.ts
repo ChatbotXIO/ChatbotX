@@ -2,13 +2,13 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { triggerContextSchema } from "./trigger-context"
 
-export const botMessageResponseTypes = z.enum([
+export const trackingResponseTypes = z.enum([
   "automated_response",
   "ai_agent",
   "flow",
   "none",
 ])
-export type BotMessageResponseType = z.infer<typeof botMessageResponseTypes>
+export type TrackingResponseType = z.infer<typeof trackingResponseTypes>
 
 export const botMessageRouteTypes = z.enum(["flow", "agent", "fallback"])
 export type BotMessageRouteType = z.infer<typeof botMessageRouteTypes>
@@ -52,7 +52,7 @@ export const botMessageEventSchema = z.object({
   messageId: zodBigintAsString(),
   metadata: botMessageMetadataSchema.optional(),
   occurredAt: z.coerce.date(),
-  responseType: botMessageResponseTypes,
+  responseType: trackingResponseTypes,
   result: botMessageResults.optional(),
   routeType: botMessageRouteTypes.optional(),
   source: z.string().optional(),
@@ -69,7 +69,7 @@ export const botMessageStatsSchema = z.object({
   workspaceId: z.string(),
   count: z.number(),
   hasResponse: z.boolean(),
-  responseType: botMessageResponseTypes,
+  responseType: trackingResponseTypes,
   result: botMessageResults.optional(),
   routeType: botMessageRouteTypes.optional(),
   timestamp: z.coerce.date(),

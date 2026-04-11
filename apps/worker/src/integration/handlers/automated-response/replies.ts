@@ -1,15 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
-import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
-import type {
-  BotResponseTrackingContext,
-  IntegrationJobTriggerAutomatedResponse,
-} from "@chatbotx.io/worker-config"
-import {
-  ChatJobAction,
-  chatQueue,
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
+import { contactVariableService } from "@chatbotx.io/variables"
 import { streamText, type ToolSet, tool } from "ai"
 import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
 import { logger } from "../../../lib/logger"
@@ -49,140 +38,6 @@ function parseAIAgentProviders(value: unknown): ParsedAIAgentProvider[] {
   return parsed
 }
 
-export async function replaceCustomFieldAttributes(
-  message: string,
-  conversationId: string,
-): Promise<string> {
-  try {
-    const conversation = await db.query.conversationModel.findFirst({
-      where: { id: conversationId },
-      with: {
-        contact: {
-          with: {
-            contactCustomFields: {
-              with: {
-                customField: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (!conversation?.contact) {
-      return message
-    }
-
-    const fieldMap = new Map<string, string>()
-    for (const customField of conversation.contact.contactCustomFields) {
-      if (customField.customField?.name && customField.value) {
-        fieldMap.set(customField.customField.name, customField.value)
-      }
-    }
-
-    let processedMessage = message
-    const attributeRegex = /\{\{(\w+)\}\}/g
-
-    processedMessage = processedMessage.replace(
-      attributeRegex,
-      (match, fieldName) => {
-        const value = fieldMap.get(fieldName)
-        return value || match
-      },
-    )
-
-    return processedMessage
-  } catch {
-    return message
-  }
-}
-
-async function listAllEnabledAutomatedResponses({
-  workspaceId,
-}: {
-  workspaceId: string
-}): Promise<AutomatedResponseModel[]> {
-  try {
-    return await db.query.automatedResponseModel.findMany({
-      where: { workspaceId, status: true },
-    })
-  } catch {
-    return []
-  }
-}
-
-export async function replyByAutomatedResponse(
-  props: IntegrationJobTriggerAutomatedResponse["data"],
-  trackingContext: BotResponseTrackingContext,
-): Promise<boolean> {
-  const { message, conversation } = props
-
-  try {
-    let replied = false
-    const allAutomatedResponses = await listAllEnabledAutomatedResponses({
-      workspaceId: message.workspaceId,
-    })
-    if (allAutomatedResponses.length === 0) {
-      return false
-    }
-
-    for (const automatedResponse of allAutomatedResponses) {
-      const text = (message.text ?? "").toLowerCase()
-      const matched = (automatedResponse.keywords as string[])
-        .map((v) => v.toLowerCase())
-        .some((v) => text.includes(v))
-
-      if (!matched) {
-        continue
-      }
-
-      if (automatedResponse.text) {
-        const stepMessage = await replaceCustomFieldAttributes(
-          automatedResponse.text,
-          message.conversationId,
-        )
-        await chatQueue.add(ChatJobAction.sendChatMessage, {
-          type: ChatJobAction.sendChatMessage,
-          data: {
-            conversation,
-            text: stepMessage,
-            trackingContext,
-          },
-        })
-        replied = true
-      } else if (automatedResponse.flowId) {
-        const flow = await db.query.flowModel.findFirst({
-          where: {
-            id: automatedResponse.flowId,
-            currentVersionId: { isNotNull: true },
-          },
-        })
-        if (flow) {
-          await integrationQueue.add(IntegrationJobAction.sendFlow, {
-            type: IntegrationJobAction.sendFlow,
-            data: {
-              conversationId: message.conversationId,
-              flowId: flow.id,
-              trackingContext,
-            },
-          })
-          replied = true
-        }
-      }
-    }
-    return replied
-  } catch (error) {
-    logger.error(
-      {
-        error,
-        props,
-      },
-      "[automated-response] replyByAutomatedResponse failed",
-    )
-    return false
-  }
-}
-
 export async function replyByAI(props: ReplyByAIProps): Promise<boolean> {
   const { aiAgent } = props
   const providers = parseAIAgentProviders(aiAgent.models)
@@ -204,13 +59,15 @@ async function runAIReply(
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
 
-  const { message, lastAIMessages, aiAgent, tools } = props
+  const { conversation, lastAIMessages, aiAgent, tools } = props
+  const variables = await contactVariableService.getAll(conversation.contactId)
+
   const provider = providerInfo.provider
   try {
     const selectedModelId = providerInfo.model
 
     const integration = await getAIIntegrationInDB({
-      workspaceId: message.workspaceId,
+      workspaceId: conversation.workspaceId,
       provider,
       autoReply: true,
     })
@@ -224,19 +81,21 @@ async function runAIReply(
       provider,
       modelId: selectedModelId,
       abortSignal: controller.signal,
-      traceId: message.conversationId,
+      traceId: conversation.id,
     })
 
-    const completePrompt = await replaceCustomFieldAttributes(
-      aiAgent.prompt || "",
-      message.conversationId,
-    )
+    const completePrompt = aiAgent.prompt
+      ? await contactVariableService.replaceAll({
+          text: aiAgent.prompt,
+          variables,
+        })
+      : ""
     const systemPrompt = appendToolOutputGuard(completePrompt)
 
     const toolExecutions: ToolExecutionLog[] = []
     const toolsWithLogging = wrapToolsWithLogging(tools, {
-      conversationId: message.conversationId,
-      workspaceId: message.workspaceId,
+      conversationId: conversation.id,
+      workspaceId: conversation.workspaceId,
       provider,
       onToolResult: (toolName, result, toolCallId) => {
         toolExecutions.push({ toolName, result, toolCallId })
@@ -258,7 +117,7 @@ async function runAIReply(
 
     const { messageCount } = await processStreamingText(
       result.textStream,
-      message.conversationId,
+      conversation.id,
       { sendParts: true },
     )
 
@@ -288,7 +147,7 @@ async function runAIReply(
 
       const { messageCount: followUpCount } = await processStreamingText(
         followUpResult.textStream,
-        message.conversationId,
+        conversation.id,
         { sendParts: true },
       )
 
@@ -299,7 +158,7 @@ async function runAIReply(
 
     const fallbackText = buildFallbackTextFromTools(toolExecutions)
     if (fallbackText) {
-      await sendMessageWithRender(message.conversationId, fallbackText)
+      await sendMessageWithRender(conversation.id, fallbackText)
       return true
     }
 
@@ -309,8 +168,8 @@ async function runAIReply(
       {
         error,
         provider,
-        conversationId: message.conversationId,
-        workspaceId: message.workspaceId,
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
       },
       "[automated-response] runAIReply failed",
     )

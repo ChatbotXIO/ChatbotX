@@ -1,13 +1,13 @@
 "use client"
 
 import {
+  type ContactFilterField,
   type CustomFieldType,
+  contactFilterFields,
   type FormFieldType,
   formFieldTypes,
   type OperatorType,
   operatorTypes,
-  type SystemFieldType,
-  systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
@@ -70,7 +70,7 @@ type ConditionOption = {
 }
 
 type FieldConfig = {
-  name: SystemFieldType
+  name: ContactFilterField
   formField: FormFieldType
   options?: SelectOption[]
 }
@@ -165,26 +165,26 @@ const getFieldConfigs = ({
   flowVersionOptions: SelectOption[]
 }): FieldConfig[] => [
   {
-    name: systemFieldTypes.enum.language,
+    name: contactFilterFields.enum.language,
     formField: formFieldTypes.enum.multiSelect,
     options: allCountryOptions,
   },
   {
-    name: systemFieldTypes.enum.fullName,
+    name: contactFilterFields.enum.fullName,
     formField: formFieldTypes.enum.text,
   },
   {
-    name: systemFieldTypes.enum.country,
+    name: contactFilterFields.enum.country,
     formField: formFieldTypes.enum.multiSelect,
     options: allCountryOptions,
   },
   {
-    name: systemFieldTypes.enum.continent,
+    name: contactFilterFields.enum.continent,
     formField: formFieldTypes.enum.multiSelect,
     options: allContinentOptions,
   },
   {
-    name: systemFieldTypes.enum.gender,
+    name: contactFilterFields.enum.gender,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -202,7 +202,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.subscribedToBroadcast,
+    name: contactFilterFields.enum.subscribedToBroadcast,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -216,15 +216,15 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.contactCreatedDate,
+    name: contactFilterFields.enum.contactCreatedAt,
     formField: formFieldTypes.enum.datetime,
   },
   {
-    name: systemFieldTypes.enum.contactCreatedDateMinutesAgo,
+    name: contactFilterFields.enum.contactCreatedDateMinutesAgo,
     formField: formFieldTypes.enum.number,
   },
   {
-    name: systemFieldTypes.enum.source,
+    name: contactFilterFields.enum.source,
     formField: formFieldTypes.enum.multiSelect,
     options: [
       {
@@ -246,7 +246,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.conversationTransferredToHuman,
+    name: contactFilterFields.enum.conversationTransferredToHuman,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -260,7 +260,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.interactedInLast24H,
+    name: contactFilterFields.enum.interactedInLast24h,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -274,7 +274,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.archived,
+    name: contactFilterFields.enum.archived,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -288,7 +288,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.blocked,
+    name: contactFilterFields.enum.blocked,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -302,7 +302,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.existingContact,
+    name: contactFilterFields.enum.existingContact,
     formField: formFieldTypes.enum.select,
     options: [
       {
@@ -316,7 +316,7 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.currentChannel,
+    name: contactFilterFields.enum.currentChannel,
     formField: formFieldTypes.enum.multiSelect,
     options: [
       {
@@ -338,25 +338,25 @@ const getFieldConfigs = ({
     ],
   },
   {
-    name: systemFieldTypes.enum.email,
+    name: contactFilterFields.enum.email,
     formField: formFieldTypes.enum.text,
   },
   {
-    name: systemFieldTypes.enum.phone,
+    name: contactFilterFields.enum.phone,
     formField: formFieldTypes.enum.text,
   },
   {
-    name: systemFieldTypes.enum.tags,
+    name: contactFilterFields.enum.tags,
     formField: formFieldTypes.enum.multiSelect,
     options: tagOptions,
   },
   {
-    name: systemFieldTypes.enum.customFields,
+    name: contactFilterFields.enum.customFields,
     formField: formFieldTypes.enum.multiSelect,
     options: customFieldOptions,
   },
   {
-    name: systemFieldTypes.enum.executedFlow,
+    name: contactFilterFields.enum.executedFlow,
     formField: formFieldTypes.enum.select,
     options: flowVersionOptions,
   },

@@ -1,21 +1,26 @@
 "use client"
 
 import type { AutomatedResponseModel } from "@chatbotx.io/database/types"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@chatbotx.io/ui/components/ui/toggle-group"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
-import { updateAutomatedResponseRequest } from "./schema/action"
+import { responseModes, updateAutomatedResponseRequest } from "./schema/action"
 
 type EditAutomatedResponseFormProps = {
   workspaceId: string
@@ -29,12 +34,13 @@ export default function EditAutomatedResponseForm(
   const t = useTranslations()
   const router = useRouter()
 
-  const _flowOptions = useFlowSelectOptions()
+  const flowOptions = useFlowSelectOptions()
+  const [responseMode, setResponseMode] = useState("flowId")
 
   const {
     form,
     handleSubmitWithAction,
-    form: { control },
+    form: { control, setValue },
   } = useHookFormAction(
     updateAutomatedResponseAction.bind(null, workspaceId, automatedResponse.id),
     zodResolver(updateAutomatedResponseRequest),
@@ -60,7 +66,7 @@ export default function EditAutomatedResponseForm(
         defaultValues: {
           keywords: [{ value: "" }],
           text: "",
-          flowId: null,
+          flowId: "",
         },
       },
       errorMapProps: {},
@@ -69,6 +75,9 @@ export default function EditAutomatedResponseForm(
 
   useEffect(() => {
     if (automatedResponse) {
+      if (automatedResponse.text?.length) {
+        setResponseMode("text")
+      }
       form.reset({
         ...automatedResponse,
         text: automatedResponse.text,
@@ -130,78 +139,57 @@ export default function EditAutomatedResponseForm(
         </div>
 
         {/* Bot response block */}
-        <div className="mt-4">
-          <Label className="mt-5 font-bold" htmlFor="replies.0">
+        {/* Bot response block */}
+        <div className="mt-4 flex items-center gap-4">
+          <Label className="font-bold" htmlFor="replyMode">
             {t("fields.botResponse.label")}
           </Label>
-        </div>
-        {/* {replies.map((reply, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: wip
-          <div className="flex w-full gap-2" key={index}>
-            <div className="flex w-1/2 items-center gap-2">
-              {reply.type === replyTypes.enum.text ? (
-                <>
-                  <MessageSquareMoreIcon />
-                  <InputField
-                    className="flex-1"
-                    name={`replies.${index}.message`}
-                    placeholder="Type a message"
-                  />
-                </>
-              ) : (
-                <>
-                  <ZapIcon />
-                  <ComboboxField
-                    className="flex-1"
-                    name={`replies.${index}.flowId`}
-                    options={flowOptions}
-                    placeholder="Please select flow"
-                    required={true}
-                  />
-                </>
-              )}
-            </div>
-            <Button
-              onClick={() => {
-                removeReplies(index)
-              }}
-              type="button"
-              variant="ghost"
-            >
-              <XIcon />
-            </Button>
-          </div>
-        ))}
-        <div className="flex gap-2">
-          <Button
-            onClick={(e) => {
-              e.preventDefault()
-              appendReplies({
-                type: replyTypes.enum.text,
-                message: "",
-                buttons: [],
-              })
-            }}
-            type="button"
-            variant="ghost"
-          >
-            <PlusCircleIcon /> {t("actions.addTextReply")}
-          </Button>
 
-          <Button
-            onClick={(e) => {
-              e.preventDefault()
-              appendReplies({
-                type: replyTypes.enum.flow,
-                flowId: "",
-              })
+          <ToggleGroup
+            defaultValue={responseMode}
+            onValueChange={(val) => {
+              if (val) {
+                setResponseMode(val)
+                if (val === responseModes.enum.flowId) {
+                  setValue("text", "")
+                }
+                if (val === responseModes.enum.text) {
+                  setValue("flowId", "")
+                }
+              }
             }}
-            type="button"
-            variant="ghost"
+            type="single"
+            value={responseMode}
+            variant="outline"
           >
-            <PlusCircleIcon /> {t("actions.addFlowReply")}
-          </Button>
-        </div> */}
+            <ToggleGroupItem
+              aria-label="Send flow"
+              value={responseModes.enum.flowId}
+            >
+              {t("fields.flow.label")}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              aria-label="Send text"
+              value={responseModes.enum.text}
+            >
+              {t("fields.text.label")}
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        {responseMode === responseModes.enum.flowId && (
+          <ComboboxField
+            label={t("fields.flowId.label")}
+            name="flowId"
+            options={flowOptions}
+            required
+          />
+        )}
+
+        {responseMode === responseModes.enum.text && (
+          <InputField label={t("fields.text.label")} name="text" required />
+        )}
+
         <div className="flex justify-end gap-4">
           <Button onClick={() => router.back()} type="button" variant="ghost">
             {t("actions.cancel")}

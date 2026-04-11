@@ -156,6 +156,23 @@ export const distributedStoreFactory = (
     const redisClient = await getRedisClient()
     return await redisClient.zrangebyscore(key, min, max)
   },
+
+  async rpush(key: string, value: unknown) {
+    const redisClient = await getRedisClient()
+    return await redisClient.rpush(key, JSON.stringify(value))
+  },
+
+  async expire(key: string, ttlSeconds: number) {
+    const redisClient = await getRedisClient()
+    return await redisClient.expire(key, ttlSeconds)
+  },
+
+  async lrange(key: string, start: number | string, stop: number | string) {
+    const redisClient = await getRedisClient()
+    const items = await redisClient.lrange(key, start, stop)
+
+    return items.map((item) => JSON.parse(item))
+  },
 })
 
 export type DistributedStore = ReturnType<typeof distributedStoreFactory>

@@ -1,0 +1,21 @@
+{
+  "name": "@chatbotx.io/variables",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "~24.12.2",
+    "typescript": "^6.0.2"
+  }
+}

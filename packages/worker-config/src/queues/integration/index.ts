@@ -19,7 +19,7 @@ export const IntegrationJobAction = {
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
-  triggerAutomatedResponse: "triggerAutomatedResponse",
+  processAutomatedResonse: "processAutomatedResponse",
   sendBroadcast: "sendBroadcast",
   agentMarkAsRead: "agentMarkAsRead",
   contactMarkAsRead: "contactMarkAsRead",
@@ -55,6 +55,7 @@ export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
     conversationId: string
+    contactInboxId?: string
     flowId?: string
     flowVersionId?: string
     nodeId?: string
@@ -80,11 +81,11 @@ export type IntegrationJobSendFlowQuickReply = {
   }
 }
 
-export type IntegrationJobTriggerAutomatedResponse = {
-  type: typeof IntegrationJobAction.triggerAutomatedResponse
+export type IntegrationJobProcessAutomatedResponse = {
+  type: typeof IntegrationJobAction.processAutomatedResonse
   data: {
-    message: OutgoingMessage
-    conversation: ConversationModel
+    conversationId: string
+    contactInboxId: string
   }
 }
 
@@ -172,7 +173,6 @@ export type IntegrationJobData =
   | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback
   | IntegrationJobSendFlowQuickReply
-  | IntegrationJobTriggerAutomatedResponse
   | IntegrationJobSendBroadcast
   | IntegrationJobAgentMarkAsRead
   | IntegrationJobContactMarkAsRead
@@ -182,6 +182,7 @@ export type IntegrationJobData =
   | IntegrationJobUnblockContact
   | IntegrationJobAssignConversation
   | IntegrationJobCreateMessage
+  | IntegrationJobProcessAutomatedResponse
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

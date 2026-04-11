@@ -1,7 +1,7 @@
 import {
-  type BotMessageResponseType,
   botMessageTrackingService,
   type TrackBotRequest,
+  type TrackingResponseType,
 } from "@chatbotx.io/analytics"
 import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
 
@@ -9,7 +9,7 @@ export function createTrackingContext(params: {
   messageId: string
   workspaceId: string
   conversationId: string
-  responseType: BotMessageResponseType
+  responseType: TrackingResponseType
   aiProvider: string
   triggerType: string
 }): BotResponseTrackingContext {

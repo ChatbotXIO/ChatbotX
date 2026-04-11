@@ -1,6 +1,7 @@
 "use server"
 
 import { contactTrackingService } from "@chatbotx.io/analytics"
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   db,
   eq,
@@ -28,7 +29,6 @@ import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
-import type { OutgoingMessage } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -205,14 +205,11 @@ export async function handleCreateWebchatMessage({
         newMessage.text &&
         !("postback" in parsedInput && parsedInput.postback)
       ) {
-        // trigger automated response if the message is not a postback
         promises.push(
-          integrationQueue.add(IntegrationJobAction.triggerAutomatedResponse, {
-            type: IntegrationJobAction.triggerAutomatedResponse,
-            data: {
-              message: newMessage as OutgoingMessage,
-              conversation,
-            },
+          automatedResponseService.enqueue({
+            conversationId: conversation.id,
+            contactInboxId: contactInbox.id,
+            messageId: newMessage.id,
           }),
         )
       }

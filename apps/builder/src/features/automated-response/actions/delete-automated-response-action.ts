@@ -1,5 +1,6 @@
 "use server"
 
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import {
@@ -26,6 +27,8 @@ export const deleteAutomatedResponseAction = workspaceActionClient
           inArray(automatedResponseModel.id, parsedInput.ids),
         ),
       )
+
+    await automatedResponseService.invalidateCache(workspaceId)
 
     revalidateCacheTags(`workspaces:${workspaceId}#automatedResponses`)
   })

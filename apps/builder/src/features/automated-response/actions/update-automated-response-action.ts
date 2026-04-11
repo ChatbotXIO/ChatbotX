@@ -1,5 +1,6 @@
 "use server"
 
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -37,8 +38,8 @@ export const updateAutomatedResponse = async (
   })
 
   // validate flow id if text is not provided
-  if (parsedInput.text) {
-    parsedInput.flowId = null
+  if (parsedInput.text?.length) {
+    parsedInput.flowId = undefined
   } else if (parsedInput.flowId) {
     const exists = await db.query.flowModel.findFirst({
       columns: {
@@ -68,5 +69,6 @@ export const updateAutomatedResponse = async (
     })
     .where(eq(automatedResponseModel.id, automatedResponse.id))
 
+  await automatedResponseService.invalidateCache(ctx.workspaceId)
   revalidateCacheTags(`workspaces:${ctx.workspaceId}#automatedResponses`)
 }

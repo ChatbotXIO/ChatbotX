@@ -1,20 +1,25 @@
 "use client"
 
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form, FormMessage } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@chatbotx.io/ui/components/ui/toggle-group"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, PlusCircleIcon, XIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAutomatedResponseAction } from "./actions/create-automated-response-action"
-import { createAutomatedResponseRequest } from "./schema/action"
+import { createAutomatedResponseRequest, responseModes } from "./schema/action"
 
 type CreateAutomatedResponseFormProps = {
   workspaceId: string
@@ -31,7 +36,8 @@ export function CreateAutomatedResponseForm(
   const t = useTranslations()
   const router = useRouter()
 
-  const _flowOptions = useFlowSelectOptions()
+  const flowOptions = useFlowSelectOptions()
+  const [responseMode, setResponseMode] = useState("flowId")
 
   const {
     form,
@@ -64,7 +70,7 @@ export function CreateAutomatedResponseForm(
           folderId: folderId ?? null,
           keywords: [{ value: "" }],
           text: "",
-          flowId: null,
+          flowId: "",
         },
       },
       errorMapProps: {},
@@ -89,19 +95,19 @@ export function CreateAutomatedResponseForm(
 
   return (
     <Form {...form}>
-      <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+      <form
+        className="w-1/2 flex-1 space-y-4"
+        onSubmit={handleSubmitWithAction}
+      >
         <div className="flex flex-col gap-2">
-          <Label className="flex-1" htmlFor="keywords">
+          <Label className="flex-1 font-bold" htmlFor="keywords">
             {t("fields.keywords.label")}
           </Label>
 
           {keywords.map((_, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: wip
             <div className="flex gap-2" key={index}>
-              <InputField
-                formItemClassName="w-1/2"
-                name={`keywords.${index}.value`}
-              />
+              <InputField name={`keywords.${index}.value`} />
               {index === 0 ? (
                 <div className="w-12">&nbsp;</div>
               ) : (
@@ -130,78 +136,55 @@ export function CreateAutomatedResponseForm(
         </div>
 
         {/* Bot response block */}
-        <div className="mt-4">
-          <Label className="mt-5 font-bold" htmlFor="replies.0">
+        <div className="mt-4 flex items-center gap-4">
+          <Label className="font-bold" htmlFor="replyMode">
             {t("fields.botResponse.label")}
           </Label>
+
+          <ToggleGroup
+            defaultValue={responseMode}
+            onValueChange={(val) => {
+              if (val) {
+                setResponseMode(val)
+                if (val === responseModes.enum.flowId) {
+                  setValue("text", "")
+                }
+                if (val === responseModes.enum.text) {
+                  setValue("flowId", "")
+                }
+              }
+            }}
+            type="single"
+            value={responseMode}
+            variant="outline"
+          >
+            <ToggleGroupItem
+              aria-label="Send flow"
+              value={responseModes.enum.flowId}
+            >
+              {t("fields.flow.label")}
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              aria-label="Send text"
+              value={responseModes.enum.text}
+            >
+              {t("fields.text.label")}
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
-        {/* {replies.map((reply, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: wip
-          <div className="flex w-full gap-2" key={index}>
-            <div className="flex w-1/2 items-start gap-2">
-              {reply.type === ReplyType.Message ? (
-                <>
-                  <MessageSquareMoreIcon className="mt-1.5" />
-                  <InputField
-                    className="flex-1"
-                    name={`replies.${index}.message`}
-                    placeholder="Type a message"
-                  />
-                </>
-              ) : (
-                <>
-                  <ZapIcon />
-                  <ComboboxField
-                    className="flex-1"
-                    name={`replies.${index}.flowId`}
-                    options={flowOptions}
-                    placeholder="Please select flow"
-                    required={true}
-                  />
-                </>
-              )}
-            </div>
-            <Button
-              onClick={() => {
-                removeReplies(index)
-              }}
-              variant="ghost"
-            >
-              <XIcon />
-            </Button>
-          </div>
-        ))}
-        <div className="flex gap-2">
-          <Button
-            onClick={(e) => {
-              e.preventDefault()
-              appendReplies({
-                type: ReplyType.Message,
-                message: "",
-                buttons: [],
-              })
-            }}
-            type="button"
-            variant="ghost"
-          >
-            <PlusCircleIcon /> {t("actions.addTextReply")}
-          </Button>
+        {responseMode === responseModes.enum.flowId && (
+          <ComboboxField
+            label={t("fields.flowId.label")}
+            name="flowId"
+            options={flowOptions}
+            required
+          />
+        )}
 
-          <Button
-            onClick={(e) => {
-              e.preventDefault()
-              appendReplies({
-                type: ReplyType.Flow,
-                flowId: "",
-              })
-            }}
-            type="button"
-            variant="ghost"
-          >
-            <PlusCircleIcon /> {t("actions.addFlowReply")}
-          </Button>
-        </div> */}
+        {responseMode === responseModes.enum.text && (
+          <InputField label={t("fields.text.label")} name="text" required />
+        )}
 
         <div className="flex justify-end gap-4">
           <Button

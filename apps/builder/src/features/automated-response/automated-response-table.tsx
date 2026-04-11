@@ -36,7 +36,7 @@ import React, { use, useMemo } from "react"
 import { toast } from "sonner"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
-import { updateAutomatedResponseAction } from "./actions/update-automated-response-action"
+import { enableAutomatedResponseAction } from "./actions/enable-automated-response-action"
 import { AddAutomatedResponseButton } from "./components/add-automated-response-button"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { listAutomatedResponses } from "./queries"
@@ -291,13 +291,18 @@ const AutomatedResponseStatusCell = (props: {
   workspaceId: string
   checked: boolean
 }) => {
+  const router = useRouter()
+
   const { execute, isPending } = useAction(
-    updateAutomatedResponseAction.bind(null, props.workspaceId, props.id),
+    enableAutomatedResponseAction.bind(null, props.workspaceId, props.id),
     {
       onError: ({ error }) => {
         if (error.serverError) {
           toast.error(error.serverError)
         }
+      },
+      onSuccess: () => {
+        router.refresh()
       },
     },
   )

@@ -2,9 +2,9 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import {
   botMessageFallbackReasons,
-  botMessageResponseTypes,
   botMessageResults,
   botMessageRouteTypes,
+  trackingResponseTypes,
 } from "./bot-message"
 import { triggerContextSchema } from "./trigger-context"
 
@@ -22,7 +22,7 @@ const trackBotRequestSchema = z.object({
       fallbackReason: botMessageFallbackReasons.optional(),
     })
     .optional(),
-  responseType: botMessageResponseTypes,
+  responseType: trackingResponseTypes,
   result: botMessageResults.optional(),
   routeType: botMessageRouteTypes.optional(),
   startTime: z.number(),

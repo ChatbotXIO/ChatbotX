@@ -14,7 +14,6 @@ import { logger } from "./log"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
-    console.log("error", error)
     if (isDatabaseError(error)) {
       logger.error(error)
       return DEFAULT_SERVER_ERROR_MESSAGE

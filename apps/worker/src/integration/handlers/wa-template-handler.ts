@@ -1,11 +1,15 @@
 import { db } from "@chatbotx.io/database/client"
 import type { SendWaTemplateMessageStepSchema } from "@chatbotx.io/flow-config"
-import { replaceCustomFieldAttributes } from "./automated-response/replies"
+import {
+  contactVariableService,
+  type ReplaceVariableProps,
+} from "@chatbotx.io/variables"
 
-export async function replaceWhatsappTemplateVariables(
-  templateParams: SendWaTemplateMessageStepSchema["template"]["params"],
-  conversationId: string,
-): Promise<SendWaTemplateMessageStepSchema["template"]["params"]> {
+export async function replaceWhatsappTemplateVariables(props: {
+  templateParams: SendWaTemplateMessageStepSchema["template"]["params"]
+  variables: ReplaceVariableProps
+}): Promise<SendWaTemplateMessageStepSchema["template"]["params"]> {
+  const { variables, templateParams } = props
   const replacedParams = { ...templateParams }
 
   if (templateParams.header) {
@@ -14,10 +18,10 @@ export async function replaceWhatsappTemplateVariables(
         if (param.type === "text" && param.text) {
           return {
             ...param,
-            text: await replaceCustomFieldAttributes(
-              param.text,
-              conversationId,
-            ),
+            text: await contactVariableService.replaceAll({
+              variables,
+              text: param.text,
+            }),
           }
         }
         return param
@@ -29,7 +33,10 @@ export async function replaceWhatsappTemplateVariables(
     replacedParams.body = await Promise.all(
       templateParams.body.map(async (param) => ({
         ...param,
-        text: await replaceCustomFieldAttributes(param.text, conversationId),
+        text: await contactVariableService.replaceAll({
+          text: param.text,
+          variables,
+        }),
       })),
     )
   }
@@ -38,7 +45,10 @@ export async function replaceWhatsappTemplateVariables(
     replacedParams.button = await Promise.all(
       templateParams.button.map(async (param) => ({
         ...param,
-        text: await replaceCustomFieldAttributes(param.text, conversationId),
+        text: await contactVariableService.replaceAll({
+          text: param.text,
+          variables,
+        }),
       })),
     )
   }

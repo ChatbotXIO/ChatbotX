@@ -35,17 +35,17 @@ export const reservedCustomFieldOptions: {
 }[] = [
   {
     name: "First Name",
-    id: systemFieldTypes.enum.firstName,
+    id: systemFieldTypes.enum.first_name,
     type: "shortText",
   },
   {
     name: "Last Name",
-    id: systemFieldTypes.enum.lastName,
+    id: systemFieldTypes.enum.last_name,
     type: "shortText",
   },
   {
     name: "Full Name",
-    id: systemFieldTypes.enum.fullName,
+    id: systemFieldTypes.enum.full_name,
     type: "shortText",
   },
   {
@@ -55,7 +55,7 @@ export const reservedCustomFieldOptions: {
   },
   {
     name: "Phone Number",
-    id: systemFieldTypes.enum.phoneNumber,
+    id: systemFieldTypes.enum.phone_number,
     type: "shortText",
   },
   {
@@ -80,37 +80,37 @@ export const reservedCustomFieldOptions: {
   },
   {
     name: "User ID",
-    id: systemFieldTypes.enum.userId,
+    id: systemFieldTypes.enum.user_id,
     type: "shortText",
   },
   {
     name: "User Tags",
-    id: systemFieldTypes.enum.userTags,
+    id: systemFieldTypes.enum.user_tags,
     type: "shortText",
   },
   {
     name: "Account Name",
-    id: systemFieldTypes.enum.accountName,
+    id: systemFieldTypes.enum.workspace_name,
     type: "shortText",
   },
   {
     name: "Account ID",
-    id: systemFieldTypes.enum.accountId,
+    id: systemFieldTypes.enum.workspace_id,
     type: "shortText",
   },
   {
     name: "Page User Name",
-    id: systemFieldTypes.enum.pageUserName,
+    id: systemFieldTypes.enum.page_user_name,
     type: "shortText",
   },
   {
     name: "Last Input",
-    id: systemFieldTypes.enum.lastInput,
+    id: systemFieldTypes.enum.last_input,
     type: "shortText",
   },
   {
     name: "Current Time",
-    id: systemFieldTypes.enum.currentTime,
+    id: systemFieldTypes.enum.current_time,
     type: "shortText",
   },
 ]

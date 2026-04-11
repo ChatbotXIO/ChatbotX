@@ -18,6 +18,7 @@
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
+    "@chatbotx.io/automated-response": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/events": "workspace:*",

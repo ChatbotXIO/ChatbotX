@@ -1,81 +1,53 @@
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { db } from "@chatbotx.io/database/client"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
-import type { OutgoingConversation } from "@chatbotx.io/sdk"
-import type { IntegrationJobTriggerAutomatedResponse } from "@chatbotx.io/worker-config"
+import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { logger } from "../../../lib/logger"
 import { getAIToolset } from "../generate-text/tools"
-import { replyByAI, replyByAutomatedResponse } from "./replies"
-import { createTrackingContext, trackBotResponse } from "./track-bot-response"
+import { replyByAI } from "./replies"
+import { trackBotResponse } from "./track-bot-response"
 
-export async function triggerAutomatedResponse(
-  props: IntegrationJobTriggerAutomatedResponse["data"],
+export async function processAutomatedResponse(
+  props: IntegrationJobProcessAutomatedResponse["data"],
 ) {
-  const { message } = props
-  const messageId = (message as { id?: string }).id ?? ""
-  const startTime = Date.now()
+  const { conversationId, contactInboxId } = props
+  const conversation = await db.query.conversationModel.findFirst({
+    where: { id: conversationId },
+  })
+  if (!conversation?.botEnabled) {
+    logger.debug(props, "Conversation is not enable bot")
+    return
+  }
+
+  const contactInbox = await db.query.contactInboxModel.findFirst({
+    where: { id: contactInboxId, contactId: conversation.contactId },
+  })
+  if (!contactInbox) {
+    logger.debug(props, "Contact inbox not found")
+    return
+  }
+
+  const repliedByAutomatedResponse = await automatedResponseService.process({
+    conversation,
+    contactInbox,
+  })
+  if (repliedByAutomatedResponse) {
+    return
+  }
+
   try {
-    // if (!message.text) {
-    //   await trackBotResponse({
-    //     workspaceId: message.workspaceId,
-    //     conversationId: message.conversationId,
-    //     messageId,
-    //     hasResponse: false,
-    //     responseType: "none",
-    //     routeType: "fallback",
-    //     result: "fallback",
-    //     aiProvider: "none",
-    //     startTime: Date.now(),
-    //     metadata: {
-    //       fallbackReason: "no_content",
-    //     },
-    //     triggerContext: {
-    //       triggerSource: "worker",
-    //       triggerHandler: "triggerAutomatedResponse",
-    //       triggerType: "bot_response_fallback_no_content",
-    //     },
-    //   })
-
-    //   return
-    // }
-
-    const conversation = await db.query.conversationModel.findFirst({
-      where: { id: message.conversationId },
-    })
-    if (!conversation) {
-      return
-    }
-
-    if (
-      await replyByAutomatedResponse(
-        {
-          message,
-          conversation: conversation as OutgoingConversation,
-        },
-        createTrackingContext({
-          messageId,
-          workspaceId: message.workspaceId,
-          conversationId: message.conversationId,
-          responseType: "automated_response",
-          aiProvider: "none",
-          triggerType: "bot_response_automated_response",
-        }),
-      )
-    ) {
-      return
-    }
-
     const aiAgent = await db.query.aiAgentModel.findFirst({
       where: {
-        workspaceId: message.workspaceId,
+        workspaceId: conversation.workspaceId,
         isDefault: true,
       },
     })
     if (!aiAgent) {
       await trackBotResponse({
-        workspaceId: message.workspaceId,
-        conversationId: message.conversationId,
-        messageId,
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: "",
         hasResponse: false,
         responseType: "none",
         routeType: "fallback",
@@ -84,7 +56,7 @@ export async function triggerAutomatedResponse(
         metadata: {
           fallbackReason: "no_ai_agent",
         },
-        startTime,
+        startTime: Date.now(),
         triggerContext: {
           triggerSource: "worker",
           triggerHandler: "triggerAutomatedResponse",
@@ -95,7 +67,7 @@ export async function triggerAutomatedResponse(
     }
 
     const last100Messages = await db.query.messageModel.findMany({
-      where: { conversationId: message.conversationId },
+      where: { conversationId: conversation.id },
       orderBy: (table, { desc }) => [desc(table.createdAt)],
       limit: 100,
     })
@@ -122,7 +94,7 @@ export async function triggerAutomatedResponse(
 
     if (
       await replyByAI({
-        message,
+        conversation,
         lastAIMessages,
         aiAgent,
         tools: toolset,
@@ -135,15 +107,15 @@ export async function triggerAutomatedResponse(
     ) {
       // Step 3: AI Agent exists → Route to AGENT
       await trackBotResponse({
-        workspaceId: message.workspaceId,
-        conversationId: message.conversationId,
-        messageId,
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: "",
         hasResponse: true,
         responseType: "ai_agent",
         routeType: "agent",
         result: "success",
         aiProvider: "openai",
-        startTime,
+        startTime: Date.now(),
       })
       return
     }
@@ -151,9 +123,9 @@ export async function triggerAutomatedResponse(
     // Step 4: AI Agent failed to respond → Still routed to AGENT, but response failed
     // This is NOT fallback - routing decision was AGENT, but execution failed
     await trackBotResponse({
-      workspaceId: message.workspaceId,
-      conversationId: message.conversationId,
-      messageId,
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      messageId: "",
       hasResponse: false,
       responseType: "ai_agent",
       routeType: "agent",
@@ -162,7 +134,7 @@ export async function triggerAutomatedResponse(
       metadata: {
         fallbackReason: "no_intent_match",
       },
-      startTime,
+      startTime: Date.now(),
       triggerContext: {
         triggerSource: "worker",
         triggerHandler: "triggerAutomatedResponse",
@@ -173,8 +145,8 @@ export async function triggerAutomatedResponse(
     logger.error(
       {
         error,
-        conversationId: message.conversationId,
-        workspaceId: message.workspaceId,
+        conversationId: conversation.id,
+        workspaceId: conversation.workspaceId,
       },
       "[automated-response] triggerAutomatedResponse failed",
     )
