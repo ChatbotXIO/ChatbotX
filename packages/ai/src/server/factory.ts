@@ -8,6 +8,7 @@ import type {
   IntegrationOpenAIModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
+import type { ImageModel } from "ai"
 import { aiProviders } from "../schemas"
 
 export async function getAIIntegrationInDB(props: {
@@ -80,4 +81,22 @@ export function createAIModelInstance(props: {
   const providerInstance = getAIModel(model, provider, { abortSignal })
 
   return providerInstance(modelId)
+}
+
+export function createAIImageModelInstance(props: {
+  model: IntegrationOpenAIModel | IntegrationGeminiModel
+  provider: string
+  modelId: string
+  abortSignal?: AbortSignal
+}) {
+  const { model, provider, modelId, abortSignal } = props
+  const providerInstance = getAIModel(model, provider, {
+    abortSignal,
+  })
+
+  if ("image" in providerInstance) {
+    return providerInstance.image(modelId) as ImageModel
+  }
+
+  throw new Error(`Provider ${provider} does not support image generation`)
 }

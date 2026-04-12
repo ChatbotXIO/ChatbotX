@@ -1006,6 +1006,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../sdk

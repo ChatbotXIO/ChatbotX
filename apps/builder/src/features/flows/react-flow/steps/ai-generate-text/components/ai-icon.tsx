@@ -1,4 +1,4 @@
-import { type AIProvider, aiProviders } from "@chatbotx.io/ai"
+import { type AIProvider, aiProviders } from "@chatbotx.io/ai/schemas"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiClaude,

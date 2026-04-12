@@ -5,8 +5,8 @@ import {
   toolPrefixes,
 } from "@chatbotx.io/ai"
 import {
+  aiIntegrationService,
   createAIModelInstance,
-  getAIIntegrationInDB,
   getAIToolset,
   McpClient,
   normalizeMcpContent,
@@ -110,7 +110,7 @@ async function runAIReply(
   try {
     const selectedModelId = providerInfo.model
 
-    const integration = await getAIIntegrationInDB({
+    const integration = await aiIntegrationService.getCached({
       workspaceId: conversation.workspaceId,
       provider,
       autoReply: true,

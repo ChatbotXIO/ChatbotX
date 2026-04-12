@@ -1,20 +1,14 @@
 import { helpTexts, processStreamingText, toolPrefixes } from "@chatbotx.io/ai"
 import {
+  aiIntegrationService,
   createAIModelInstance,
-  getAIIntegrationInDB,
   getAIToolset,
   McpClient,
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  contactCustomFieldModel,
-  contactModel,
-  customFieldModel,
-} from "@chatbotx.io/database/schema"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import { streamText } from "ai"
+import { saveResultToCustomField } from "../../utils/contact"
 import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
@@ -31,7 +25,7 @@ export async function handleAIGenerateText({
   try {
     const messages = await buildAIMessages(conversation, step)
 
-    const aiConfig = await getAIIntegrationInDB({
+    const aiConfig = await aiIntegrationService.getCached({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
     })
@@ -95,8 +89,9 @@ export async function handleAIGenerateText({
     await saveResultToCustomField({
       contactId: conversation.contactId,
       customFieldId: step.outputFieldId,
-      text: fullText,
-      abortSignal: controller.signal,
+      fullText,
+      messageCount: 1,
+      workspaceId: conversation.workspaceId,
     })
   } finally {
     clearTimeout(timeoutId)
@@ -104,48 +99,4 @@ export async function handleAIGenerateText({
       await cleanupToolset()
     }
   }
-}
-
-async function saveResultToCustomField(props: {
-  contactId: string
-  customFieldId: string
-  text: string
-  abortSignal: AbortSignal
-}): Promise<void> {
-  const { contactId, customFieldId, text } = props
-
-  const contact = await findOrFail({
-    table: contactModel,
-    where: {
-      id: contactId,
-    },
-    message: "Contact not found",
-  })
-
-  const customField = await findOrFail({
-    table: customFieldModel,
-    where: {
-      id: customFieldId,
-      workspaceId: contact.workspaceId,
-    },
-    message: "Custom field not found",
-  })
-
-  await db
-    .insert(contactCustomFieldModel)
-    .values({
-      contactId,
-      customFieldId: customField.id,
-      value: text,
-      id: createId(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        contactCustomFieldModel.contactId,
-        contactCustomFieldModel.customFieldId,
-      ],
-      set: {
-        value: text,
-      },
-    })
 }

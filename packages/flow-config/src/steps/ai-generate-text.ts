@@ -28,14 +28,14 @@ export type AIGenerateTextSchema = z.infer<typeof aiGenerateTextSchema>
 export const aiGenerateTextDefaultFn = (
   props: Partial<AIGenerateTextSchema> = {},
 ): AIGenerateTextSchema => {
-  let model: string = defaultAIModels.openai
-  if (props.provider && !props.model) {
-    model = defaultAIModels[props.provider as keyof typeof defaultAIModels]
-  }
+  const provider = props.provider ?? "openai"
+
+  const model: string =
+    props.model ?? defaultAIModels[provider as keyof typeof defaultAIModels]
 
   return {
     id: createId(),
-    provider: "openai",
+    provider,
     model,
     system: "",
     text: "",
