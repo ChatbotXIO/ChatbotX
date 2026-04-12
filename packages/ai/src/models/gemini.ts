@@ -34,3 +34,16 @@ export const geminiModelOptions: { label: string; value: GeminiModel }[] = [
     value: geminiModels.enum["gemini-2.0-flash-thinking-exp"],
   },
 ]
+
+export const geminiImageModels = z.enum(["gemini-3.1-flash-image-preview"])
+export type GeminiImageModel = z.infer<typeof geminiImageModels>
+
+export const geminiImageModelOptions: {
+  label: string
+  value: GeminiImageModel
+}[] = [
+  {
+    label: "Imagen 3",
+    value: geminiImageModels.enum["gemini-3.1-flash-image-preview"],
+  },
+]

@@ -1,6 +1,7 @@
 "use server"
 
-import { openaiModels } from "@chatbotx.io/ai"
+import { aiProviders, openaiModels } from "@chatbotx.io/ai"
+import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   integrationModel,
@@ -89,6 +90,11 @@ export const connectOpenAIAction = authActionClient
           })
         }
       })
+
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.openai,
+      )
 
       return
     },

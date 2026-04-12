@@ -114,3 +114,24 @@ export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
     value: openaiModels.enum["gpt-4-turbo"],
   },
 ]
+
+export const openaiImageModels = z.enum(["gpt-image-1", "dall-e-3", "dall-e-2"])
+export type OpenAIImageModel = z.infer<typeof openaiImageModels>
+
+export const openaiImageModelOptions: {
+  label: string
+  value: OpenAIImageModel
+}[] = [
+  {
+    label: "GPT Image 1",
+    value: openaiImageModels.enum["gpt-image-1"],
+  },
+  {
+    label: "DALL-E 3",
+    value: openaiImageModels.enum["dall-e-3"],
+  },
+  {
+    label: "DALL-E 2",
+    value: openaiImageModels.enum["dall-e-2"],
+  },
+]

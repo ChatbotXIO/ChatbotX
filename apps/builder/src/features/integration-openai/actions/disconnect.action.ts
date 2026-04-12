@@ -1,5 +1,6 @@
 "use server"
-
+import { aiProviders } from "@chatbotx.io/ai/schemas"
+import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationModel,
@@ -32,6 +33,11 @@ export const disconnectOpenAIAction = authActionClient
           .delete(integrationModel)
           .where(eq(integrationModel.id, integrationOpenAI.integrationId))
       })
+
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.openai,
+      )
 
       return
     },

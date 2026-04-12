@@ -1,5 +1,6 @@
 "use server"
-
+import { aiProviders } from "@chatbotx.io/ai/schemas"
+import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationGeminiModel } from "@chatbotx.io/database/schema"
 import {
@@ -33,5 +34,10 @@ export const updateGeminiAction = workspaceActionClient
         .update(integrationGeminiModel)
         .set(parsedInput)
         .where(eq(integrationGeminiModel.id, integrationGemini.id))
+
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.gemini,
+      )
     },
   )

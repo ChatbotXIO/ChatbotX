@@ -1,29 +1,30 @@
 "use client"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
+import { BotIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useFormContext } from "react-hook-form"
+import { BaseStepEditor } from "../base/editor"
+import { AIModelDialog } from "./components/ai-model-dialog"
 
-const AIGenerateImageEditor = () => {
-  const t = useTranslations()
-
-  return (
-    <Dialog>
-      <DialogTrigger>{t("actions.edit")}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("flows.actions.aiGenerateImage")}</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-2">wip</div>
-      </DialogContent>
-    </Dialog>
-  )
+type AIGenerateImageEditorProps = {
+  parentName: string
 }
 
-export default AIGenerateImageEditor
+export const AIGenerateImageEditor = (props: AIGenerateImageEditorProps) => {
+  const { parentName } = props
+  const t = useTranslations()
+
+  const { getValues } = useFormContext()
+  const provider = getValues(`${parentName}.provider`)
+
+  return (
+    <BaseStepEditor
+      icon={BotIcon}
+      title={t("fields.flows.aiGenerateImage.label", {
+        aiName: t(`aiProviders.${provider}`),
+      })}
+    >
+      <AIModelDialog parentName={parentName} />
+    </BaseStepEditor>
+  )
+}

@@ -1,5 +1,6 @@
 "use server"
-
+import { aiProviders } from "@chatbotx.io/ai/schemas"
+import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationOpenaiModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -37,10 +38,17 @@ export const updateIntegrationOpenAI = async (
     message: "Integration OpenAI not found",
   })
 
-  return await db
+  const result = await db
     .update(integrationOpenaiModel)
     .set(parsedInput)
     .where(eq(integrationOpenaiModel.id, integrationOpenAI.id))
     .returning()
     .then((result) => result[0])
+
+  await aiIntegrationService.invalidateCache(
+    ctx.workspaceId,
+    aiProviders.enum.openai,
+  )
+
+  return result
 }
