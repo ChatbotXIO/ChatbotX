@@ -1,6 +1,13 @@
 import { type SQL, sql } from "drizzle-orm"
-import { boolean, index, pgTable, primaryKey } from "drizzle-orm/pg-core"
-import { bigintAsString } from "../partials/shared"
+import {
+  boolean,
+  index,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core"
+import { bigintAsString, timestampConfig } from "../partials/shared"
 import { broadcastModel } from "./broadcast"
 import { contactModel } from "./contact"
 import { contactInboxModel } from "./contact-inbox"
@@ -38,11 +45,14 @@ export const contactsOnBroadcastsModel = pgTable(
     seen: boolean().default(false).notNull(),
     clicked: boolean().default(false).notNull(),
     failed: boolean().default(false).notNull(),
-    sentAt: bigintAsString(),
-    readAt: bigintAsString(),
+    seenAt: timestamp(timestampConfig),
+    deliveredAt: timestamp(timestampConfig),
+    clickedAt: timestamp(timestampConfig),
+    failedAt: timestamp(timestampConfig),
+    errorContent: text(),
     isRead: boolean().generatedAlwaysAs(
       (): SQL =>
-        sql`case when "sentAt" is null then false when "readAt" is null then false else "readAt" >= "sentAt" end`,
+        sql`case when "seenAt" is null then false when "deliveredAt" is null then false else "seenAt" >= "deliveredAt" end`,
     ),
   },
   (table) => [

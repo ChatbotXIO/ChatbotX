@@ -82,8 +82,27 @@ export type ListSequenceStepContactsResponse = z.infer<
 
 export const sequenceSchemaPayload = clickedPayloadSchema.extend({
   metadata: z.object({
-    sequenceStepId: z.string(),
+    sequenceStepId: z.string().optional(),
   }),
 })
 
 export type SequenceSchemaPayload = z.infer<typeof sequenceSchemaPayload>
+
+// Bulk update schemas - use contactInboxId as key
+export const sequenceBulkUpdateItemSchema = z.object({
+  sequenceId: z.string(),
+  stepId: z.string(),
+  contactInboxId: z.string(),
+  occurredAt: z.date(),
+})
+export type SequenceBulkUpdateItem = z.infer<
+  typeof sequenceBulkUpdateItemSchema
+>
+
+export const sequenceFailedBulkUpdateItemSchema =
+  sequenceBulkUpdateItemSchema.extend({
+    errorContent: z.string(),
+  })
+export type SequenceFailedBulkUpdateItem = z.infer<
+  typeof sequenceFailedBulkUpdateItemSchema
+>

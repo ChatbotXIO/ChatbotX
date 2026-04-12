@@ -1,77 +1,74 @@
-import type {
-  FlowNodeContactStateType,
-  FlowStatEventType,
-} from "@chatbotx.io/clickhouse/schemas"
+import type { FlowNodeStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { and, db, eq, sql } from "@chatbotx.io/database/client"
 import {
   flowAnalyticsSessionModel,
   flowNodeStatModel,
 } from "@chatbotx.io/database/schema"
 import {
-  FlowEventType,
   type FlowNode,
-  MessageEventType,
   NodeType,
   type SendMessageNodeSchema,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import type { ContactEventData } from "../schemas/common"
 import type {
-  ClickHouseButtonStatsRow,
-  ClickHouseContactRow,
-  ClickHouseStatsRow,
   FlowNodeEventType,
   FlowNodeStatClickedItem,
+  FlowNodeStatFailedItem,
+  FlowNodeStatItem,
   FlowNodeStatSeenItem,
   FlowNodeStats,
   FlowNodeStatsResponse,
   FlowNodeStatTimestampField,
-  FlowNodeStatUpdateItem,
   FlowStatsRequest,
   RemoveFlowStatsRequest,
 } from "../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
 
 export class FlowStatsRepository extends BaseRepository {
-  async insertEvents(events: FlowStatEventType[]): Promise<void> {
-    if (events.length === 0) {
+  async insertPgNodeStats(data: FlowNodeStatItem[]): Promise<void> {
+    if (data.length === 0) {
       return
     }
-    await this.insert("flow_stat_events", events)
+
+    await db.insert(flowNodeStatModel).values(data).onConflictDoNothing()
   }
 
-  async insertState(states: FlowNodeContactStateType[]): Promise<void> {
-    if (states.length === 0) {
+  async insertClickhouseNodeStats(data: FlowNodeStatsType[]): Promise<void> {
+    if (data.length === 0) {
       return
     }
-    await this.insert("flow_node_contact_state", states)
+    await this.insert("flow_node_events", data)
   }
 
-  private async upsertRecords(items: FlowNodeStatUpdateItem[]): Promise<void> {
+  private async upsertRecords(items: FlowNodeStatItem[]): Promise<void> {
     if (items.length === 0) {
       return
     }
 
     const tuples = items.map(
-      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
+      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactInboxId})`,
     )
 
     const existing = await db.execute<{
       analyticsId: string
       nodeId: string
-      contactId: string
+      contactInboxId: string
     }>(sql`
-      SELECT "analyticsId", "nodeId", "contactId"
+      SELECT "analyticsId", "nodeId", "contactInboxId"
       FROM "FlowNodeStat"
-      WHERE ("analyticsId", "nodeId", "contactId") IN (${sql.join(tuples, sql`, `)})
+      WHERE ("analyticsId", "nodeId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
 
     const existingSet = new Set(
-      existing.rows.map((r) => `${r.analyticsId}:${r.nodeId}:${r.contactId}`),
+      existing.rows.map(
+        (r) => `${r.analyticsId}:${r.nodeId}:${r.contactInboxId}`,
+      ),
     )
 
     const newItems = items.filter(
-      (i) => !existingSet.has(`${i.analyticsId}:${i.nodeId}:${i.contactId}`),
+      (i) =>
+        !existingSet.has(`${i.analyticsId}:${i.nodeId}:${i.contactInboxId}`),
     )
 
     if (newItems.length === 0) {
@@ -86,23 +83,15 @@ export class FlowStatsRepository extends BaseRepository {
       nodeId: r.nodeId,
       contactId: r.contactId,
       contactInboxId: r.contactInboxId,
+      eventType: r.eventType,
     }))
 
-    await db
-      .insert(flowNodeStatModel)
-      .values(values)
-      .onConflictDoNothing({
-        target: [
-          flowNodeStatModel.analyticsId,
-          flowNodeStatModel.nodeId,
-          flowNodeStatModel.contactId,
-        ],
-      })
+    await db.insert(flowNodeStatModel).values(values).onConflictDoNothing()
   }
 
   async updateTimestamp(
     field: FlowNodeStatTimestampField,
-    items: FlowNodeStatUpdateItem[],
+    items: FlowNodeStatItem[],
   ): Promise<void> {
     if (items.length === 0) {
       return
@@ -111,21 +100,18 @@ export class FlowStatsRepository extends BaseRepository {
     await this.upsertRecords(items)
 
     const tuples = items.map(
-      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
+      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactInboxId})`,
     )
 
-    const cases = items
-      .map(
-        (item) =>
-          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
-      )
-      .join(" ")
+    const caseWhen = items.map(
+      (item) =>
+        sql`WHEN "contactInboxId" = ${item.contactInboxId} THEN greatest(${sql.identifier(field)}, ${item.occurredAt})`,
+    )
 
     await db.execute(sql`
       UPDATE "FlowNodeStat"
-      SET ${sql.raw(`"${field}"`)} = (CASE ${sql.raw(cases)} ELSE ${sql.raw(`"${field}"`)} END)::text
-      WHERE ("analyticsId", "nodeId", "contactId") IN (${sql.join(tuples, sql`, `)})
-        AND ${sql.raw(`"${field}"`)} IS NULL
+      SET ${sql.identifier(field)} = CASE ${sql.join(caseWhen, sql` `)} ELSE ${sql.identifier(field)} END
+      WHERE ("analyticsId", "nodeId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
   }
 
@@ -137,30 +123,28 @@ export class FlowStatsRepository extends BaseRepository {
     await this.upsertRecords(items)
 
     const tuples = items.map(
-      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactId})`,
+      (i) => sql`(${i.analyticsId}, ${i.nodeId}, ${i.contactInboxId})`,
     )
 
-    const cases = items
-      .map(
-        (item) =>
-          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
-      )
-      .join(" ")
+    const clickedCases = items.map(
+      (item) =>
+        sql`WHEN "analyticsId" = ${item.analyticsId} AND "nodeId" = ${item.nodeId} AND "contactInboxId" = ${item.contactInboxId} THEN ${item.occurredAt}`,
+    )
 
     await db.execute(sql`
       UPDATE "FlowNodeStat"
-      SET "clickedAt" = (CASE ${sql.raw(cases)} ELSE "clickedAt" END)::text,
+      SET "clickedAt" = (CASE ${sql.join(clickedCases, sql` `)} ELSE "clickedAt" END)::text,
           "buttonId" = CASE
             ${sql.join(
               items.map(
                 (i) =>
-                  sql`WHEN "analyticsId" = ${i.analyticsId} AND "nodeId" = ${i.nodeId} AND "contactId" = ${i.contactId} THEN ${i.buttonId}`,
+                  sql`WHEN "analyticsId" = ${i.analyticsId} AND "nodeId" = ${i.nodeId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.buttonId}`,
               ),
               sql` `,
             )}
             ELSE "buttonId"
           END
-      WHERE ("analyticsId", "nodeId", "contactId") IN (${sql.join(tuples, sql`, `)})
+      WHERE ("analyticsId", "nodeId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
   }
 
@@ -169,20 +153,42 @@ export class FlowStatsRepository extends BaseRepository {
       return
     }
 
-    const cases = items
-      .map(
-        (item) =>
-          `WHEN "contactInboxId" = '${item.contactInboxId}' THEN ${item.occurredAt}`,
-      )
-      .join(" ")
+    const seenCases = items.map(
+      (item) =>
+        sql`WHEN "id" = ${item.id} THEN greatest("seenAt", ${item.seenAt})`,
+    )
+
+    const idTuples = items.map((i) => sql`${i.id}`)
+
+    await db.execute(sql`
+      UPDATE "FlowNodeStat"
+      SET "seenAt" = CASE ${sql.join(seenCases, sql` `)} ELSE "seenAt" END
+      WHERE "id" IN (${sql.join(idTuples, sql`, `)})
+    `)
+  }
+
+  async updateFailedAt(items: FlowNodeStatFailedItem[]): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+
+    const failedCases = items.map(
+      (item) =>
+        sql`WHEN "contactInboxId" = ${item.contactInboxId} THEN greatest("failedAt", ${item.occurredAt})`,
+    )
+
+    const errorContentCases = items.map(
+      (item) =>
+        sql`WHEN "contactInboxId" = ${item.contactInboxId} THEN ${item.errorContent}`,
+    )
 
     const contactInboxIdTuples = items.map((i) => sql`${i.contactInboxId}`)
 
     await db.execute(sql`
       UPDATE "FlowNodeStat"
-      SET "seenAt" = (CASE ${sql.raw(cases)} ELSE "seenAt" END)::text
+      SET "failedAt" = CASE ${sql.join(failedCases, sql` `)} ELSE "failedAt" END,
+          "errorContent" = CASE ${sql.join(errorContentCases, sql` `)} ELSE "errorContent" END
       WHERE "contactInboxId" IN (${sql.join(contactInboxIdTuples, sql`, `)})
-        AND "seenAt" IS NULL
     `)
   }
 
@@ -192,100 +198,102 @@ export class FlowStatsRepository extends BaseRepository {
     analyticsId: string
     stepId: string
   }): Promise<FlowNodeStats> {
-    const eventTypes = [
-      ...Object.values(MessageEventType),
-      ...Object.values(FlowEventType),
-    ]
-    const sql = `
+    console.log({
+      input: JSON.stringify(input, null, "\t"),
+    })
+    const nodeStatsSql = `
       SELECT
         event_type,
-        uniq(contact_id) as count
-      FROM flow_stat_events
+        sum(total_count) as total
+      FROM flow_node_agg
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
         AND node_id = {stepId:String}
-        AND event_type IN (${eventTypes.map((t) => `'${t}'`).join(", ")})
+        AND event_type IN ('message:delivered', 'message:failed', 'message:seen')
       GROUP BY event_type
     `
 
-    const rows = await this.query<ClickHouseStatsRow>(sql, {
-      workspaceId: input.workspaceId,
-      flowId: input.flowId,
-      analyticsId: input.analyticsId,
-      stepId: input.stepId,
-    })
+    const uniqueDeliveredSql = `
+      SELECT uniqMerge(uniq_contact) AS unique_delivered
+      FROM flow_node_agg
+      WHERE workspace_id = {workspaceId:String}
+        AND flow_id = {flowId:String}
+        AND analytics_id = {analyticsId:String}
+        AND node_id = {stepId:String}
+        AND event_type = 'message:delivered'
+    `
 
-    const stats: FlowNodeStats = {
-      "message:sent": 0,
-      "message:delivered": 0,
-      "message:seen": 0,
-      "flow:clicked": 0,
-      "message:failed": 0,
-    }
+    const buttonStatsSql = `
+      SELECT uniqMerge(uniq_user) AS unique_clicked
+      FROM flow_button_stats
+      WHERE workspace_id = {workspaceId:String}
+        AND flow_id = {flowId:String}
+        AND analytics_id = {analyticsId:String}
+        AND node_id = {stepId:String}
+    `
 
-    for (const row of rows) {
-      const count = Number.parseInt(row.count, 10)
+    const [nodeRows, uniqueDeliveredRows, buttonRows] = await Promise.all([
+      this.query<{ event_type: string; total: string }>(nodeStatsSql, {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        analyticsId: input.analyticsId,
+        stepId: input.stepId,
+      }),
+      this.query<{ unique_delivered: string }>(uniqueDeliveredSql, {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        analyticsId: input.analyticsId,
+        stepId: input.stepId,
+      }),
+      this.query<{ unique_clicked: string }>(buttonStatsSql, {
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        analyticsId: input.analyticsId,
+        stepId: input.stepId,
+      }),
+    ])
+
+    let delivered = 0
+    let failed = 0
+    let seen = 0
+
+    for (const row of nodeRows) {
+      const count = Number.parseInt(row.total, 10)
       switch (row.event_type) {
-        case MessageEventType["message:sent"]:
-          stats["message:sent"] = count
+        case "message:delivered":
+          delivered = count
           break
-        case MessageEventType["message:delivered"]:
-          stats["message:delivered"] = count
+        case "message:failed":
+          failed = count
           break
-        case MessageEventType["message:seen"]:
-          stats["message:seen"] = count
-          break
-        case FlowEventType["flow:clicked"]:
-          stats["flow:clicked"] = count
-          break
-        case MessageEventType["message:failed"]:
-          stats["message:failed"] = count
+        case "message:seen":
+          seen = count
           break
         default:
           break
       }
     }
 
-    return stats
+    const clicked = buttonRows[0]
+      ? Number.parseInt(buttonRows[0].unique_clicked, 10)
+      : 0
+    const uniqueDelivered = uniqueDeliveredRows[0]
+      ? Number.parseInt(uniqueDeliveredRows[0].unique_delivered, 10)
+      : 0
+
+    return {
+      "message:sent": delivered + failed,
+      "message:seen": seen,
+      "flow:clicked": {
+        clicked,
+        totalUsers: uniqueDelivered,
+      },
+      "message:failed": failed,
+    }
   }
 
-  async getButtonStats(input: {
-    workspaceId: string
-    flowId: string
-    analyticsId: string
-    stepId: string
-  }): Promise<Array<{ buttonId: string; clicks: number }>> {
-    const sql = `
-      SELECT
-        button_id,
-        uniq(contact_id) as clicks
-      FROM flow_stat_events
-      WHERE workspace_id = {workspaceId:String}
-        AND flow_id = {flowId:String}
-        AND analytics_id = {analyticsId:String}
-        AND node_id = {stepId:String}
-        AND event_type = {eventType:String}
-        AND button_id != ''
-      GROUP BY button_id
-      ORDER BY clicks DESC
-    `
-
-    const rows = await this.query<ClickHouseButtonStatsRow>(sql, {
-      workspaceId: input.workspaceId,
-      flowId: input.flowId,
-      analyticsId: input.analyticsId,
-      stepId: input.stepId,
-      eventType: FlowEventType["flow:clicked"],
-    })
-
-    return rows.map((row) => ({
-      buttonId: row.button_id,
-      clicks: Number.parseInt(row.clicks, 10),
-    }))
-  }
-
-  async getContactsFromClickHouse(input: {
+  async getContacts(input: {
     workspaceId: string
     flowId: string
     analyticsId: string
@@ -300,7 +308,6 @@ export class FlowStatsRepository extends BaseRepository {
   }> {
     const {
       workspaceId,
-      flowId,
       analyticsId,
       stepId,
       eventType,
@@ -309,78 +316,103 @@ export class FlowStatsRepository extends BaseRepository {
       perPage,
     } = input
     const offset = (page - 1) * perPage
+    const t = flowNodeStatModel
 
-    let eventTypeFilter = [eventType]
-    if (eventType === "message:sent") {
-      eventTypeFilter = ["message:delivered", "message:failed"]
-    }
+    const { eventCondition, orderColumn } = this.buildFlowEventFilter(eventType)
 
-    let buttonFilter = ""
-    if (buttonId) {
-      buttonFilter = "AND button_id = {buttonId:String}"
-    }
+    const baseCondition = sql`${t.workspaceId} = ${workspaceId} AND ${t.analyticsId} = ${analyticsId} AND ${t.nodeId} = ${stepId} AND ${eventCondition}`
+    const fullCondition = buttonId
+      ? sql`${baseCondition} AND ${t.buttonId} = ${buttonId}`
+      : baseCondition
 
-    const contactRows = await this.query<ClickHouseContactRow>(
-      `
-        SELECT
-          contact_inbox_id,
-          contact_id,
-          argMax(content, occurred_at) as content,
-          max(occurred_at) as max_occurred_at,
-          argMax(source_id, occurred_at) as source_id,
-          any(channel) as channel
-        FROM flow_stat_events
-        WHERE workspace_id = {workspaceId:String}
-          AND flow_id = {flowId:String}
-          AND analytics_id = {analyticsId:String}
-          AND node_id = {stepId:String}
-          AND event_type in {eventTypeFilter:Array(String)}
-          ${buttonFilter}
-        GROUP BY contact_inbox_id, contact_id
-        ORDER BY max_occurred_at DESC
-        LIMIT {limit:UInt32} OFFSET {offset:UInt32}
-      `,
-      {
-        workspaceId,
-        flowId,
-        analyticsId,
-        stepId,
-        eventTypeFilter,
-        buttonId: buttonId ?? "",
-        limit: perPage,
-        offset,
-      },
-    )
+    const rows = await db
+      .select({
+        contactInboxId: t.contactInboxId,
+        contactId: t.contactId,
+        eventType: t.eventType,
+        occurredAt: t.occurredAt,
+        seenAt: t.seenAt,
+        errorContent: t.errorContent,
+      })
+      .from(t)
+      .where(fullCondition)
+      .orderBy(sql`${orderColumn} DESC NULLS LAST`)
+      .limit(perPage)
+      .offset(offset)
 
-    const contactInboxIds = contactRows.map((row) => row.contact_inbox_id)
+    const contactInboxIds = rows.map((r) => r.contactInboxId as string)
     const contactEventMap = new Map<string, ContactEventData>()
 
-    for (const row of contactRows) {
-      let errorContent: string | null | undefined
-      if (row.content) {
-        try {
-          const parsed = JSON.parse(row.content)
-          if (parsed.error) {
-            errorContent =
-              typeof parsed.error === "string"
-                ? parsed.error
-                : (parsed.error.message ?? JSON.stringify(parsed.error))
-          }
-        } catch {
-          errorContent = null
-        }
-      }
-
-      contactEventMap.set(row.contact_inbox_id, {
-        contactId: row.contact_id,
-        occurredAt: row.max_occurred_at,
-        sourceId: row.source_id,
-        channel: row.channel,
-        errorContent,
+    for (const row of rows) {
+      contactEventMap.set(row.contactInboxId, {
+        contactId: row.contactId,
+        contactInboxId: row.contactInboxId,
+        occurredAt: this.getFlowOccurredAt(row, eventType),
+        errorContent: row.errorContent ?? undefined,
       })
     }
 
     return { contactInboxIds, contactEventMap }
+  }
+
+  private buildFlowEventFilter(eventType: FlowNodeEventType) {
+    const t = flowNodeStatModel
+    switch (eventType) {
+      case "message:sent":
+        return {
+          eventCondition: sql`${t.eventType} IN ('message:delivered', 'message:failed')`,
+          orderColumn: t.occurredAt,
+        }
+      case "message:delivered":
+        return {
+          eventCondition: sql`${t.eventType} = 'message:delivered'`,
+          orderColumn: t.occurredAt,
+        }
+      case "message:seen":
+        return {
+          eventCondition: sql`${t.eventType} = 'message:delivered' AND ${t.seenAt} IS NOT NULL`,
+          orderColumn: t.seenAt,
+        }
+      case "message:failed":
+        return {
+          eventCondition: sql`${t.eventType} = 'message:failed'`,
+          orderColumn: t.occurredAt,
+        }
+      case "flow:clicked":
+        return {
+          eventCondition: sql`${t.eventType} = 'flow:clicked'`,
+          orderColumn: t.occurredAt,
+        }
+      default:
+        return {
+          eventCondition: sql`${t.eventType} = 'message:delivered'`,
+          orderColumn: t.occurredAt,
+        }
+    }
+  }
+
+  private getFlowOccurredAt(
+    row: {
+      eventType: string
+      occurredAt: Date | null
+      seenAt: Date | null
+    },
+    eventType: FlowNodeEventType,
+  ): string {
+    switch (eventType) {
+      case "message:sent":
+        return (row.occurredAt ?? new Date()).toISOString()
+      case "message:delivered":
+        return (row.occurredAt ?? new Date()).toISOString()
+      case "message:seen":
+        return (row.seenAt ?? new Date()).toISOString()
+      case "message:failed":
+        return (row.occurredAt ?? new Date()).toISOString()
+      case "flow:clicked":
+        return (row.occurredAt ?? new Date()).toISOString()
+      default:
+        return new Date().toISOString()
+    }
   }
 
   async resetStatsSession(input: RemoveFlowStatsRequest): Promise<void> {
@@ -449,136 +481,104 @@ export class FlowStatsRepository extends BaseRepository {
       return {}
     }
 
-    const nodeIds = sendMessageNodes.map((n) => n.id)
     const analyticsId = analyticsSession.id
 
-    const nodeButtonMap = new Map<string, string[]>()
+    // Extract step IDs and button IDs from each node
+    const stepIds: string[] = []
+    const stepButtonMap = new Map<string, string[]>()
+
     for (const node of sendMessageNodes) {
+      const steps = node.data?.details?.steps ?? []
       const quickReplies = node.data?.details?.quickReplies ?? []
-      const buttons =
-        node.data?.details?.steps?.flatMap((step) =>
-          "buttons" in step ? (step.buttons ?? []) : [],
-        ) ?? []
-      const buttonIds = [...quickReplies, ...buttons].map((qr) => qr.id)
-      if (buttonIds.length > 0) {
-        nodeButtonMap.set(node.id, buttonIds)
+
+      for (const step of steps) {
+        stepIds.push(step.id)
+
+        const buttons = "buttons" in step ? (step.buttons ?? []) : []
+        const buttonIds = [...quickReplies, ...buttons].map((b) => b.id)
+        if (buttonIds.length > 0) {
+          stepButtonMap.set(step.id, buttonIds)
+        }
       }
     }
 
-    const eventTypes = [
-      ...Object.values(MessageEventType),
-      ...Object.values(FlowEventType),
-    ]
-    const nodeStatsQuery = `
+    if (stepIds.length === 0) {
+      return {}
+    }
+    console.log({ stepIds })
+
+    // Get stats for each step using getNodeStats method
+    const stepStatsPromises = stepIds.map((stepId) =>
+      this.getNodeStats({
+        workspaceId: input.workspaceId,
+        flowId: input.flowId,
+        analyticsId,
+        stepId,
+      }),
+    )
+
+    const stepStatsResults = await Promise.all(stepStatsPromises)
+    console.log({
+      stepStatsResults: JSON.stringify(stepStatsResults, null, "\t"),
+    })
+
+    const result: FlowNodeStatsResponse = {}
+
+    for (let i = 0; i < stepIds.length; i++) {
+      const stepId = stepIds[i]
+      const stepStat = stepStatsResults[i]
+      const buttonIds = stepButtonMap.get(stepId) || []
+
+      result[stepId] = {
+        step: {
+          "message:sent": stepStat["message:sent"],
+          "message:seen": stepStat["message:seen"],
+          "flow:clicked": {
+            clicked: stepStat["flow:clicked"].clicked,
+            totalUsers: stepStat["flow:clicked"].totalUsers,
+          },
+          "message:failed": stepStat["message:failed"],
+        },
+        buttons: Object.fromEntries(
+          buttonIds.map((buttonId) => [buttonId, { buttonId, clicks: 0 }]),
+        ),
+      }
+    }
+
+    // Get button stats for all steps
+    const buttonStatsQuery = `
       SELECT
         node_id,
-        event_type,
-        uniq(contact_id) as count
-      FROM flow_stat_events
+        button_id,
+        uniqMerge(uniq_user) AS unique_clicks
+      FROM flow_button_stats
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
-        AND node_id IN (${nodeIds.map((id) => `'${id}'`).join(", ")})
-        AND event_type IN (${eventTypes.map((t) => `'${t}'`).join(", ")})
-      GROUP BY node_id, event_type
+        AND node_id IN (${stepIds.map((id) => `'${id}'`).join(", ")})
+      GROUP BY node_id, button_id
     `
 
-    const nodeStatsRows = await this.query<
-      ClickHouseStatsRow & { node_id: string }
-    >(nodeStatsQuery, {
+    const buttonStatsRows = await this.query<{
+      node_id: string
+      button_id: string
+      unique_clicks: string
+    }>(buttonStatsQuery, {
       workspaceId: input.workspaceId,
       flowId: input.flowId,
       analyticsId,
     })
 
-    const allButtonIds = Array.from(nodeButtonMap.values()).flat()
-    let buttonStatsRows: (ClickHouseButtonStatsRow & { node_id: string })[] = []
-
-    if (allButtonIds.length > 0) {
-      const buttonStatsQuery = `
-        SELECT
-          node_id,
-          button_id,
-          uniq(contact_id) as clicks
-        FROM flow_stat_events
-        WHERE workspace_id = {workspaceId:String}
-          AND flow_id = {flowId:String}
-          AND analytics_id = {analyticsId:String}
-          AND node_id IN {nodeIdList:Array(String)}
-          AND event_type = {eventType:String}
-          AND button_id IN {buttonIdList:Array(String)}
-        GROUP BY node_id, button_id
-      `
-
-      buttonStatsRows = await this.query<
-        ClickHouseButtonStatsRow & { node_id: string }
-      >(buttonStatsQuery, {
-        workspaceId: input.workspaceId,
-        flowId: input.flowId,
-        analyticsId,
-        nodeIdList: nodeIds,
-        eventType: FlowEventType["flow:clicked"],
-        buttonIdList: allButtonIds,
-      })
-    }
-
-    const result: FlowNodeStatsResponse = {}
-
-    for (const nodeId of nodeIds) {
-      result[nodeId] = {
-        step: {
-          "message:sent": 0,
-          "message:delivered": 0,
-          "message:seen": 0,
-          "flow:clicked": 0,
-          "message:failed": 0,
-        },
-        buttons: Object.fromEntries(
-          (nodeButtonMap.get(nodeId) || []).map((buttonId) => [
-            buttonId,
-            { buttonId, clicks: 0 },
-          ]),
-        ),
-      }
-    }
-
-    for (const row of nodeStatsRows) {
-      const nodeStats = result[row.node_id]
-      if (!nodeStats) {
-        continue
-      }
-
-      const count = Number.parseInt(row.count, 10)
-      switch (row.event_type) {
-        case MessageEventType["message:sent"]:
-          nodeStats.step["message:sent"] = count
-          break
-        case MessageEventType["message:delivered"]:
-          nodeStats.step["message:delivered"] = count
-          break
-        case MessageEventType["message:seen"]:
-          nodeStats.step["message:seen"] = count
-          break
-        case FlowEventType["flow:clicked"]:
-          nodeStats.step["flow:clicked"] = count
-          break
-        case MessageEventType["message:failed"]:
-          nodeStats.step["message:failed"] = count
-          break
-        default:
-          break
-      }
-    }
-
+    // Process button stats
     for (const row of buttonStatsRows) {
-      const nodeStats = result[row.node_id]
-      if (!nodeStats) {
+      const stepStats = result[row.node_id]
+      if (!stepStats) {
         continue
       }
 
-      nodeStats.buttons[row.button_id] = {
+      stepStats.buttons[row.button_id] = {
         buttonId: row.button_id,
-        clicks: Number.parseInt(row.clicks, 10),
+        clicks: Number.parseInt(row.unique_clicks, 10),
       }
     }
 

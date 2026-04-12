@@ -1,3 +1,4 @@
+import { BaseEventType } from "@chatbotx.io/clickhouse/schemas"
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
@@ -10,9 +11,11 @@ export type FlowStatsRequest = z.infer<typeof flowStatsRequest>
 
 export const getFlowStatsResponse = z.object({
   "message:sent": z.number(),
-  "message:delivered": z.number(),
   "message:seen": z.number(),
-  "flow:clicked": z.number(),
+  "flow:clicked": z.object({
+    clicked: z.number(),
+    totalUsers: z.number(),
+  }),
   "message:failed": z.number(),
 })
 export type GetFlowStatsResponse = z.infer<typeof getFlowStatsResponse>
@@ -34,13 +37,7 @@ export const buttonResponse = z.object({
 })
 
 export const stepResponse = z.object({
-  step: z.object({
-    "message:sent": z.number(),
-    "message:delivered": z.number(),
-    "message:seen": z.number(),
-    "flow:clicked": z.number(),
-    "message:failed": z.number(),
-  }),
+  step: getFlowStatsResponse,
   buttons: z.record(z.string(), buttonResponse),
 })
 export type StepResponse = z.infer<typeof stepResponse>
@@ -147,34 +144,42 @@ export const flowNodeStatTimestampField = z.enum([
   "deliveredAt",
   "failedAt",
   "clickedAt",
+  "seenAt",
 ])
 export type FlowNodeStatTimestampField = z.infer<
   typeof flowNodeStatTimestampField
 >
 
-export const flowNodeStatUpdateItemSchema = z.object({
+// Bulk update schemas - use contactInboxId as key for updates
+export const FlowNodeStatItemSchema = z.object({
+  id: z.string().optional(),
   workspaceId: z.string(),
   flowId: z.string(),
   analyticsId: z.string(),
   nodeId: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
-  occurredAt: z.date(),
+  eventType: BaseEventType,
+  occurredAt: z.union([z.date()]),
 })
-export type FlowNodeStatUpdateItem = z.infer<
-  typeof flowNodeStatUpdateItemSchema
->
+export type FlowNodeStatItem = z.infer<typeof FlowNodeStatItemSchema>
 
-export const flowNodeStatClickedItemSchema =
-  flowNodeStatUpdateItemSchema.extend({
-    buttonId: z.string(),
-  })
+export const flowNodeStatClickedItemSchema = FlowNodeStatItemSchema.extend({
+  buttonId: z.string(),
+})
 export type FlowNodeStatClickedItem = z.infer<
   typeof flowNodeStatClickedItemSchema
 >
 
 export const flowNodeStatSeenItemSchema = z.object({
-  contactInboxId: z.string(),
-  occurredAt: z.date(),
+  id: z.string(),
+  seenAt: z.date(),
 })
 export type FlowNodeStatSeenItem = z.infer<typeof flowNodeStatSeenItemSchema>
+
+export const FlowNodeStatFailedItemSchema = FlowNodeStatItemSchema.extend({
+  errorContent: z.string(),
+})
+export type FlowNodeStatFailedItem = z.infer<
+  typeof FlowNodeStatFailedItemSchema
+>

@@ -71,7 +71,7 @@ export const SequenceStepContactsDialog = memo(
       try {
         const result = await ky
           .get<ListSequenceStepContactsResponse>(
-            `/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/contacts`,
+            `/api/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/contacts`,
             {
               searchParams: {
                 eventType,

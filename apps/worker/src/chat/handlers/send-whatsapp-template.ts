@@ -168,7 +168,7 @@ export async function processWhatsappTemplate(
 
     await emit(MessageEventType["message:sent"], {
       ...eventLogData,
-      action: { messageId: "" },
+      action: { messageId: "", flowId: flow?.id || "" },
       occurredAt: new Date(),
     })
 
@@ -198,7 +198,10 @@ export async function processWhatsappTemplate(
     )
     await emit(MessageEventType["message:failed"], {
       ...eventLogData,
-      action: {},
+      action: {
+        messageId: "",
+        flowId: flow?.id || "",
+      },
       errorData: await parseSdkError(error),
       occurredAt: new Date(),
     })

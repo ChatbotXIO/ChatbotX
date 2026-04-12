@@ -1,4 +1,6 @@
+import { type SQL, sql } from "drizzle-orm"
 import {
+  boolean,
   index,
   integer,
   pgTable,
@@ -31,6 +33,11 @@ export const sequenceDispatchModel = pgTable(
     lockedAt: timestamp(timestampConfig),
     lockOwner: text(),
     completedAt: timestamp(timestampConfig),
+    deliveredAt: timestamp(timestampConfig),
+    seenAt: timestamp(timestampConfig),
+    clickedAt: timestamp(timestampConfig),
+    failedAt: timestamp(timestampConfig),
+    errorContent: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
@@ -67,6 +74,10 @@ export const sequenceDispatchModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    isRead: boolean().generatedAlwaysAs(
+      (): SQL =>
+        sql`case when "seenAt" is null then false when "deliveredAt" is null then false else "seenAt" >= "deliveredAt" end`,
+    ),
   },
   (table) => [
     index("SequenceDispatch_status_runAtMs_idx").on(

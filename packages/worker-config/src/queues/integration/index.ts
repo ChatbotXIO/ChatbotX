@@ -3,7 +3,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import type { IncomingContact, OutgoingMessage } from "@chatbotx.io/sdk"
+import type { OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
   defaultJobOptions,
@@ -113,7 +113,7 @@ export type IntegrationJobContactMarkAsRead = {
   data: {
     integrationType: string
     integrationIdentifier: string
-    contact: IncomingContact
+    sourceConversationId: string
     payload: unknown
   }
 }

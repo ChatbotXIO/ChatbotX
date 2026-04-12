@@ -95,6 +95,7 @@ class DispatchConsumer {
     const stream = this.stream
 
     this.running = true
+    console.log("Dispatch consumer fully operational")
 
     for await (const message of stream) {
       if (!this.running) {
@@ -293,7 +294,6 @@ async function startDispatchConsumer() {
 
   try {
     await consumer.start()
-    console.log("Dispatch consumer fully operational")
   } catch (error) {
     console.error("Error starting dispatch consumer:", error)
     throw error

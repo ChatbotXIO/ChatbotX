@@ -43,7 +43,7 @@ export const broadcastPrivateAPIs = {
       const totalValue = total || 0
 
       const { contactInboxIds, contactEventMap } =
-        await broadcastAnalyticsService.getContactsFromClickHouse({
+        await broadcastAnalyticsService.getContacts({
           workspaceId,
           broadcastId,
           eventType,
@@ -60,29 +60,34 @@ export const broadcastPrivateAPIs = {
         }
       }
 
-      // Get unique contactIds from event map
-      const contactIds = [
-        ...new Set(
-          contactInboxIds
-            .map((id) => contactEventMap.get(id)?.contactId)
-            .filter((id): id is string => id !== undefined),
-        ),
-      ]
-
-      const contacts = await db.query.contactModel.findMany({
+      const contactInboxes = await db.query.contactInboxModel.findMany({
         where: {
-          workspaceId,
-          id: { in: contactIds },
+          id: { in: contactInboxIds },
         },
         columns: {
           id: true,
-          firstName: true,
-          lastName: true,
-          avatar: true,
+          contactId: true,
+          sourceId: true,
+          channel: true,
+        },
+        with: {
+          contact: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+            },
+          },
+          conversation: {
+            columns: {
+              id: true,
+            },
+          },
         },
       })
 
-      const contactMap = new Map(contacts.map((c) => [c.id, c]))
+      const contactMap = new Map(contactInboxes.map((c) => [c.id, c]))
       const pageCount = Math.ceil(totalValue / perPage)
 
       const data = contactInboxIds
@@ -92,19 +97,19 @@ export const broadcastPrivateAPIs = {
             return null
           }
 
-          const contact = contactMap.get(eventData.contactId)
-          if (!(contact && eventData.conversationId)) {
+          const contact = contactMap.get(contactInboxId)
+          if (!contact) {
             return null
           }
           return {
             contactId: contact.id,
             contactInboxId,
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            sourceId: eventData.sourceId ?? null,
-            avatar: contact.avatar,
-            channel: eventData.channel ?? null,
-            conversationId: eventData.conversationId,
+            firstName: contact.contact?.firstName ?? null,
+            lastName: contact.contact?.lastName ?? null,
+            sourceId: contact.sourceId ?? null,
+            avatar: contact.contact?.avatar ?? null,
+            channel: contact.channel ?? null,
+            conversationId: contact.conversation?.id ?? null,
             errorContent: eventData.errorContent ?? null,
             occurredAt: eventData.occurredAt,
           }

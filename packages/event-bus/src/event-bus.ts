@@ -267,9 +267,13 @@ export class BaseEventBus<
           }),
         )
 
-        const failed = handlerResults.filter(
-          (r) => r.status === "rejected",
-        ).length
+        const failed = handlerResults.filter((r) => {
+          if (r.status === "rejected") {
+            console.log({ error: r.reason })
+          }
+          return r.status === "rejected"
+        }).length
+
         const success = failed === 0
 
         for (const msg of typeMessages) {

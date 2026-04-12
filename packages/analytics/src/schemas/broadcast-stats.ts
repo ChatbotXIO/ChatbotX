@@ -75,7 +75,25 @@ export const broadcastUpdateItem = z.object({
   broadcastId: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
-  occurredAt: z.number(),
+  occurredAt: z.date(),
 })
 
 export type BroadcastUpdateItem = z.infer<typeof broadcastUpdateItem>
+
+// Bulk update schemas - use contactInboxId as key
+export const broadcastBulkUpdateItemSchema = z.object({
+  broadcastId: z.string(),
+  contactInboxId: z.string(),
+  occurredAt: z.date(),
+})
+export type BroadcastBulkUpdateItem = z.infer<
+  typeof broadcastBulkUpdateItemSchema
+>
+
+export const broadcastFailedBulkUpdateItemSchema =
+  broadcastBulkUpdateItemSchema.extend({
+    errorContent: z.string(),
+  })
+export type BroadcastFailedBulkUpdateItem = z.infer<
+  typeof broadcastFailedBulkUpdateItemSchema
+>

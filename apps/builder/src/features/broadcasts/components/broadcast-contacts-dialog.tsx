@@ -3,6 +3,8 @@
 import type {
   BroadcastContactData,
   BroadcastEventType,
+  ListBroadcastContactsRequest,
+  ListBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import {
   Avatar,
@@ -18,13 +20,13 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import ky from "ky"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useState } from "react"
 import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { client } from "@/lib/orpc/orpc"
 
 const eventTypeToLabel: Record<BroadcastEventType, string> = {
   "message:sent": "sent",
@@ -65,16 +67,20 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 
     setIsLoading(true)
     try {
-      const result = await client.broadcastAPIs.privateListBroadcastContactsAPI(
-        {
-          workspaceId,
-          broadcastId,
-          eventType,
-          total,
-          page,
-          perPage,
-        },
-      )
+      const result = await ky
+        .get<ListBroadcastContactsRequest>(
+          `/api/workspaces/${workspaceId}/broadcasts/${broadcastId}/contacts`,
+          {
+            searchParams: {
+              eventType,
+              total,
+              page,
+              perPage,
+            },
+          },
+        )
+        .json<ListBroadcastContactsResponse>()
+
       setContacts(result.data)
       setPageCount(result.pageCount)
     } catch (error) {
@@ -104,7 +110,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[100vh] flex-col sm:max-w-2xl">
+      <DialogContent className="flex max-h-screen flex-col sm:max-w-2xl">
         <DialogHeader className="mb-2">
           <DialogTitle>
             {t(`broadcasts.stats.${eventTypeToLabel[eventType]}`)} (
@@ -202,7 +208,7 @@ const ContactItem = memo(function ContactItem({
         <div className="flex items-center gap-1.5">
           <Link
             className="max-w-[200px] truncate text-blue-500"
-            href={`/chatbots/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
+            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
             target="_blank"
           >
             <span className="truncate font-medium text-sm leading-tight">

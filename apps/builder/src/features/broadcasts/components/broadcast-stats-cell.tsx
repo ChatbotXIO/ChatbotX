@@ -1,10 +1,13 @@
 "use client"
 
-import type { GetBroadcastStatsResponse } from "@chatbotx.io/analytics/schemas"
+import type {
+  GetBroadcastStatsRequest,
+  GetBroadcastStatsResponse,
+} from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import ky from "ky"
 import { useParams } from "next/navigation"
 import { memo, useCallback, useEffect, useState } from "react"
-import { client } from "@/lib/orpc/orpc"
 import { BroadcastContactsDialog } from "./broadcast-contacts-dialog"
 
 type Props = {
@@ -26,10 +29,11 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
 
     async function fetchStats() {
       try {
-        const result = await client.broadcastAPIs.privateGetBroadcastStatsAPI({
-          workspaceId,
-          broadcastId,
-        })
+        const result = await ky
+          .get<GetBroadcastStatsRequest>(
+            `/api/workspaces/${workspaceId}/broadcasts/${broadcastId}/stats`,
+          )
+          .json<GetBroadcastStatsResponse>()
 
         if (isMounted) {
           setStats(result)

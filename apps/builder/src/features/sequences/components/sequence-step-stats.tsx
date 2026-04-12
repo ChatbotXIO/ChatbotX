@@ -40,7 +40,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
       try {
         const result = await ky
           .get<GetSequenceStepStatsRequest>(
-            `/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/stats`,
+            `/api/workspaces/${workspaceId}/sequences/${sequenceId}/steps/${stepId}/stats`,
           )
           .json<GetSequenceStepStatsResponse>()
 

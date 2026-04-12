@@ -1,10 +1,5 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-} from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
+import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core"
 import {
   bigintAsString,
   sharedColumns,
@@ -28,24 +23,23 @@ export const flowNodeStatModel = pgTable(
     buttonId: text(),
     contactId: bigintAsString().notNull(),
     contactInboxId: bigintAsString().notNull(),
-    failedAt: timestamp(timestampConfig),
-    deliveredAt: timestamp(timestampConfig),
+    eventType: text().notNull(),
+    errorContent: text(),
+    occurredAt: timestamp(timestampConfig),
     seenAt: timestamp(timestampConfig),
-    clickedAt: timestamp(timestampConfig),
+    refId: text(),
+    refType: integer(),
   },
   (table) => [
-    index("FlowNodeStat_contactInboxId_seenAt_idx").on(
-      table.contactInboxId,
-      table.seenAt,
-    ),
-    index("FlowNodeStat_analyticsId_nodeId_idx").on(
+    index("FlowNodeStat_filter_1_idx").on(
+      table.workspaceId,
       table.analyticsId,
       table.nodeId,
+      table.eventType,
+      table.buttonId,
     ),
-    uniqueIndex("FlowNodeStat_analyticsId_nodeId_contactId_key").on(
-      table.analyticsId,
-      table.nodeId,
-      table.contactId,
-    ),
+    index("FlowNodeStat_filter_2_idx")
+      .on(table.workspaceId, table.analyticsId, table.nodeId)
+      .where(sql`${table.eventType} = 'seen' AND ${table.seenAt} IS NOT NULL`),
   ],
 )

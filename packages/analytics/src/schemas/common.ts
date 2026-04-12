@@ -30,11 +30,14 @@ export const contactInfoSchema = z.object({
 })
 export type ContactInfo = z.infer<typeof contactInfoSchema>
 
-export type ContactEventData = {
-  contactId: string
-  occurredAt: string
-  sourceId?: string
-  channel?: string
-  conversationId?: string
-  errorContent?: string | null
-}
+export const contactEventData = z.object({
+  contactId: z.string(),
+  contactInboxId: z.string(),
+  occurredAt: z.string(),
+  sourceId: z.string().optional(),
+  channel: z.string().optional(),
+  conversationId: z.string().optional(),
+  errorContent: z.string().nullable().optional(),
+})
+
+export type ContactEventData = z.infer<typeof contactEventData>
