@@ -1,12 +1,12 @@
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
+import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"
 import { sendImageStepDefaultFn, sendImageStepSchema } from "./send-image"
 import { stepTypes } from "./step-action"
 
-export const sendCardStepSchema = z
-  .object({
-    id: z.string(),
+export const sendCardStepSchema = baseStepSchema
+  .extend({
     stepType: z.literal(stepTypes.enum.sendCard),
     title: z.string().trim().min(1).max(255),
   })

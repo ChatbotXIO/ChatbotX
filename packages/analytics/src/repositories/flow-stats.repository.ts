@@ -196,11 +196,8 @@ export class FlowStatsRepository extends BaseRepository {
     workspaceId: string
     flowId: string
     analyticsId: string
-    stepId: string
+    nodeId: string
   }): Promise<FlowNodeStats> {
-    console.log({
-      input: JSON.stringify(input, null, "\t"),
-    })
     const nodeStatsSql = `
       SELECT
         event_type,
@@ -209,7 +206,7 @@ export class FlowStatsRepository extends BaseRepository {
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
-        AND node_id = {stepId:String}
+        AND node_id = {nodeId:String}
         AND event_type IN ('message:delivered', 'message:failed', 'message:seen')
       GROUP BY event_type
     `
@@ -220,7 +217,7 @@ export class FlowStatsRepository extends BaseRepository {
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
-        AND node_id = {stepId:String}
+        AND node_id = {nodeId:String}
         AND event_type = 'message:delivered'
     `
 
@@ -230,7 +227,7 @@ export class FlowStatsRepository extends BaseRepository {
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
-        AND node_id = {stepId:String}
+        AND node_id = {nodeId:String}
     `
 
     const [nodeRows, uniqueDeliveredRows, buttonRows] = await Promise.all([
@@ -238,19 +235,19 @@ export class FlowStatsRepository extends BaseRepository {
         workspaceId: input.workspaceId,
         flowId: input.flowId,
         analyticsId: input.analyticsId,
-        stepId: input.stepId,
+        nodeId: input.nodeId,
       }),
       this.query<{ unique_delivered: string }>(uniqueDeliveredSql, {
         workspaceId: input.workspaceId,
         flowId: input.flowId,
         analyticsId: input.analyticsId,
-        stepId: input.stepId,
+        nodeId: input.nodeId,
       }),
       this.query<{ unique_clicked: string }>(buttonStatsSql, {
         workspaceId: input.workspaceId,
         flowId: input.flowId,
         analyticsId: input.analyticsId,
-        stepId: input.stepId,
+        nodeId: input.nodeId,
       }),
     ])
 
@@ -297,7 +294,7 @@ export class FlowStatsRepository extends BaseRepository {
     workspaceId: string
     flowId: string
     analyticsId: string
-    stepId: string
+    nodeId: string
     eventType: FlowNodeEventType
     buttonId?: string
     page: number
@@ -309,7 +306,7 @@ export class FlowStatsRepository extends BaseRepository {
     const {
       workspaceId,
       analyticsId,
-      stepId,
+      nodeId,
       eventType,
       buttonId,
       page,
@@ -320,7 +317,7 @@ export class FlowStatsRepository extends BaseRepository {
 
     const { eventCondition, orderColumn } = this.buildFlowEventFilter(eventType)
 
-    const baseCondition = sql`${t.workspaceId} = ${workspaceId} AND ${t.analyticsId} = ${analyticsId} AND ${t.nodeId} = ${stepId} AND ${eventCondition}`
+    const baseCondition = sql`${t.workspaceId} = ${workspaceId} AND ${t.analyticsId} = ${analyticsId} AND ${t.nodeId} = ${nodeId} AND ${eventCondition}`
     const fullCondition = buttonId
       ? sql`${baseCondition} AND ${t.buttonId} = ${buttonId}`
       : baseCondition
@@ -483,37 +480,34 @@ export class FlowStatsRepository extends BaseRepository {
 
     const analyticsId = analyticsSession.id
 
-    // Extract step IDs and button IDs from each node
-    const stepIds: string[] = []
+    const nodeIds: string[] = []
     const stepButtonMap = new Map<string, string[]>()
 
     for (const node of sendMessageNodes) {
       const steps = node.data?.details?.steps ?? []
       const quickReplies = node.data?.details?.quickReplies ?? []
+      nodeIds.push(node.id)
 
       for (const step of steps) {
-        stepIds.push(step.id)
-
         const buttons = "buttons" in step ? (step.buttons ?? []) : []
         const buttonIds = [...quickReplies, ...buttons].map((b) => b.id)
         if (buttonIds.length > 0) {
-          stepButtonMap.set(step.id, buttonIds)
+          stepButtonMap.set(node.id, buttonIds)
         }
       }
     }
 
-    if (stepIds.length === 0) {
+    if (nodeIds.length === 0) {
       return {}
     }
-    console.log({ stepIds })
 
     // Get stats for each step using getNodeStats method
-    const stepStatsPromises = stepIds.map((stepId) =>
+    const stepStatsPromises = nodeIds.map((nodeId) =>
       this.getNodeStats({
         workspaceId: input.workspaceId,
         flowId: input.flowId,
         analyticsId,
-        stepId,
+        nodeId,
       }),
     )
 
@@ -524,13 +518,13 @@ export class FlowStatsRepository extends BaseRepository {
 
     const result: FlowNodeStatsResponse = {}
 
-    for (let i = 0; i < stepIds.length; i++) {
-      const stepId = stepIds[i]
+    for (let i = 0; i < nodeIds.length; i++) {
+      const nodeId = nodeIds[i]
       const stepStat = stepStatsResults[i]
-      const buttonIds = stepButtonMap.get(stepId) || []
+      const buttonIds = stepButtonMap.get(nodeId) || []
 
-      result[stepId] = {
-        step: {
+      result[nodeId] = {
+        node: {
           "message:sent": stepStat["message:sent"],
           "message:seen": stepStat["message:seen"],
           "flow:clicked": {
@@ -555,7 +549,7 @@ export class FlowStatsRepository extends BaseRepository {
       WHERE workspace_id = {workspaceId:String}
         AND flow_id = {flowId:String}
         AND analytics_id = {analyticsId:String}
-        AND node_id IN (${stepIds.map((id) => `'${id}'`).join(", ")})
+        AND node_id IN (${nodeIds.map((id) => `'${id}'`).join(", ")})
       GROUP BY node_id, button_id
     `
 
@@ -569,14 +563,13 @@ export class FlowStatsRepository extends BaseRepository {
       analyticsId,
     })
 
-    // Process button stats
     for (const row of buttonStatsRows) {
-      const stepStats = result[row.node_id]
-      if (!stepStats) {
+      const nodeStats = result[row.node_id]
+      if (!nodeStats) {
         continue
       }
 
-      stepStats.buttons[row.button_id] = {
+      nodeStats.buttons[row.button_id] = {
         buttonId: row.button_id,
         clicks: Number.parseInt(row.unique_clicks, 10),
       }

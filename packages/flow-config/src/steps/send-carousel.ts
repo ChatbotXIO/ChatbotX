@@ -1,11 +1,11 @@
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { cardLayouts } from "../types"
+import { baseStepSchema } from "./base"
 import { sendCardStepDefaultFn, sendCardStepSchema } from "./send-card"
 import { stepTypes } from "./step-action"
 
-export const sendCarouselStepSchema = z.object({
-  id: zodBigintAsString(),
+export const sendCarouselStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendCarousel),
   layout: cardLayouts,
   cards: z.array(sendCardStepSchema),

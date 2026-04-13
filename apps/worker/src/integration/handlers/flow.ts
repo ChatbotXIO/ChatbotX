@@ -134,6 +134,7 @@ export async function runStepsAndQuickReplies(
     flowVersion,
     triggerNextNode = true,
   } = props
+  console.log({ targetId })
 
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
@@ -233,7 +234,7 @@ async function* executeMultipleStepsGenerator(
     logger.debug({ step }, "executing step")
     const result = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,
-      step,
+      step: { ...step, nodeId: props.targetId },
     })
 
     // Try to send nested step based on state of action
@@ -328,7 +329,7 @@ export async function runFlowPostback(
 
     if (data.webhookType !== IntegrationJobAction.messageStatus) {
       await emit(FlowEventType["flow:clicked"], {
-        stepId: foundedButton.id,
+        nodeId: foundedButton.id,
         context: {
           workspaceId: conversation.workspaceId,
           contactId: conversation.contactId,
@@ -407,7 +408,7 @@ export async function runFlowQuickReply(
         .then((rows) => rows[0])
 
       await emit(FlowEventType["flow:clicked"], {
-        stepId: found.id,
+        nodeId: found.id,
         context: {
           workspaceId: conversation.workspaceId,
           contactId: conversation.contactId,

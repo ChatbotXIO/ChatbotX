@@ -16,11 +16,14 @@ import type {
 } from "@chatbotx.io/flow-config"
 import { flowStatsRepository } from "../repositories"
 import type {
+  FlowContactStatsRequest,
+  FlowNodeContactData,
   FlowNodeStatFailedItem,
   FlowNodeStatItem,
   FlowNodeStatSeenItem,
   FlowNodeStatsResponse,
   FlowStatsRequest,
+  ListFlowNodeContactsResponse,
 } from "../schemas/flow-stats"
 
 type ExtractedPayload<T extends MessagePayload> = {
@@ -56,7 +59,7 @@ export class FlowAnalyticsService {
 
     for (const payload of payloads) {
       if (!options?.all) {
-        if (!(payload.stepId && payload.action?.flowId)) {
+        if (!(payload.nodeId && payload.action?.flowId)) {
           continue
         }
         if (
@@ -104,7 +107,7 @@ export class FlowAnalyticsService {
           workspaceId: p.context.workspaceId,
           flowId: p.action?.flowId ?? "",
           analyticsId,
-          nodeId: p.stepId ?? "",
+          nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           eventType: BaseEventType.enum["message:delivered"],
@@ -127,7 +130,7 @@ export class FlowAnalyticsService {
           analytics_id: analyticsMap.get(
             payload.action?.flowId ?? "",
           ) as string,
-          node_id: payload.stepId as string,
+          node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
           event_type: BaseEventType.enum["message:delivered"],
@@ -157,7 +160,7 @@ export class FlowAnalyticsService {
           workspaceId: p.context.workspaceId,
           flowId: p.action?.flowId ?? "",
           analyticsId,
-          nodeId: p.stepId as "",
+          nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           eventType: BaseEventType.enum["message:delivered"],
@@ -180,7 +183,7 @@ export class FlowAnalyticsService {
           analytics_id: analyticsMap.get(
             payload.action?.flowId ?? "",
           ) as string,
-          node_id: payload.stepId as string,
+          node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
           event_type: BaseEventType.enum["message:delivered"],
@@ -210,7 +213,7 @@ export class FlowAnalyticsService {
           workspaceId: p.context.workspaceId,
           flowId: p.action?.flowId ?? "",
           analyticsId,
-          nodeId: p.stepId ?? "",
+          nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           errorContent: (p.errorData ?? "") as string,
@@ -234,7 +237,7 @@ export class FlowAnalyticsService {
           analytics_id: analyticsMap.get(
             payload.action?.flowId ?? "",
           ) as string,
-          node_id: payload.stepId as string,
+          node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
           event_type: BaseEventType.enum["message:failed"],
@@ -355,7 +358,7 @@ export class FlowAnalyticsService {
           workspaceId: p.context.workspaceId,
           flowId: p.action.flowId,
           analyticsId,
-          nodeId: p.stepId ?? "",
+          nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           buttonId: p.action.buttonId ?? "",
@@ -382,7 +385,7 @@ export class FlowAnalyticsService {
           analytics_id: analyticsMap.get(
             payload.action?.flowId ?? "",
           ) as string,
-          node_id: payload.stepId as string,
+          node_id: payload.nodeId as string,
           button_id: payload.action?.buttonId ?? "",
           contact_inbox_id: payload.context.contactInboxId as string,
           event_type: BaseEventType.enum["flow:clicked"],
@@ -401,6 +404,95 @@ export class FlowAnalyticsService {
 
   getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
     return flowStatsRepository.getFlowStats(input)
+  }
+
+  async getContactStats(
+    input: FlowContactStatsRequest,
+  ): Promise<ListFlowNodeContactsResponse> {
+    const { workspaceId, flowId, eventType, nodeId } = input
+    console.log({ eventType, nodeId, input })
+
+    if (!(eventType && nodeId)) {
+      return { data: [], total: 0, page: 1, pageCount: 0 }
+    }
+
+    const analyticsSession = await db.query.flowAnalyticsSessionModel.findFirst(
+      {
+        where: {
+          workspaceId,
+          flowId,
+          deletedAt: { isNull: true },
+        },
+        columns: { id: true },
+      },
+    )
+
+    if (!analyticsSession) {
+      return { data: [], total: 0, page: 1, pageCount: 0 }
+    }
+
+    const analyticsId = analyticsSession.id
+
+    // Get contacts for the specific node and event type
+    const { contactInboxIds, contactEventMap } =
+      await flowStatsRepository.getContacts({
+        workspaceId,
+        flowId,
+        analyticsId,
+        nodeId,
+        eventType,
+        page: 1,
+        perPage: 1000,
+      })
+
+    if (contactInboxIds.length === 0) {
+      return { data: [], total: 0, page: 1, pageCount: 0 }
+    }
+
+    // Fetch contact details
+    const contactInboxes = await db.query.contactInboxModel.findMany({
+      where: { id: { in: contactInboxIds } },
+      with: {
+        contact: {
+          columns: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+        conversation: {
+          columns: { id: true },
+        },
+      },
+      columns: {
+        id: true,
+        sourceId: true,
+        channel: true,
+      },
+    })
+
+    const data: FlowNodeContactData[] = contactInboxes.map((ci) => {
+      const eventData = contactEventMap.get(ci.id)
+      return {
+        contactId: ci.contact?.id ?? "",
+        contactInboxId: ci.id,
+        firstName: ci.contact?.firstName ?? null,
+        lastName: ci.contact?.lastName ?? null,
+        sourceId: ci.sourceId ?? null,
+        avatar: ci.contact?.avatar ?? null,
+        channel: ci.channel ?? null,
+        conversationId: ci.conversation?.id ?? "",
+        occurredAt: eventData?.occurredAt ?? new Date().toISOString(),
+      }
+    })
+
+    return {
+      data,
+      total: data.length,
+      page: 1,
+      pageCount: 1,
+    }
   }
 }
 

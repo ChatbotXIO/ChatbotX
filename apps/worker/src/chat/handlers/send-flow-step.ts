@@ -185,6 +185,7 @@ export async function sendFlowStep({
     },
     metadata,
     stepId: step.id,
+    nodeId: step.nodeId,
   }
 
   try {
@@ -234,6 +235,7 @@ export async function sendFlowStep({
         ...messageData.contentAttributes,
         metadata,
         stepId: step.id,
+        nodeId: step.nodeId,
         flowId,
         flowVersionId,
       }

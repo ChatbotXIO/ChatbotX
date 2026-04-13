@@ -53,6 +53,7 @@ const baseMessagePayloadSchema = z.object({
   context: eventContextSchema,
   action: messageActionSchema,
   stepId: z.string().optional(),
+  nodeId: z.string().optional(),
   occurredAt: z.date(),
   metadata: z.custom<MetadataPayload>().optional(),
 })
@@ -75,6 +76,7 @@ export const clickedPayloadSchema = z.object({
   context: eventContextSchema,
   action: flowActionSchema,
   stepId: z.string().optional(),
+  nodeId: z.string().optional(),
   occurredAt: z.date(),
 })
 export type ClickedPayload = z.infer<typeof clickedPayloadSchema>

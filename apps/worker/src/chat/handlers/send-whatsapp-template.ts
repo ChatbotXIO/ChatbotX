@@ -92,6 +92,7 @@ export async function processWhatsappTemplate(
       params: replacedParams,
     },
     stepId: step?.id,
+    nodeId: step?.nodeId,
     ...(broadcastId && { broadcastId }),
     ...(flow && { flowId: flow.id }),
     ...(flow && { flowVersionId: flow.versionId }),
@@ -148,6 +149,7 @@ export async function processWhatsappTemplate(
       flowVersionId: flow?.versionId || "",
     },
     stepId: step?.id || "",
+    nodeId: step?.nodeId || "",
     metadata,
   }
 
@@ -158,7 +160,8 @@ export async function processWhatsappTemplate(
       flowId: flow?.id || "",
       flowVersionId: flow?.versionId || "",
       step: {
-        id: createId(),
+        id: step?.id ?? createId(),
+        nodeId: step?.nodeId ?? createId(),
         stepType: stepTypes.enum.sendWaTemplateMessage,
         buttons: [],
         template,

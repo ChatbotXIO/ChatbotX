@@ -23,6 +23,14 @@ export type GetFlowStatsResponse = z.infer<typeof getFlowStatsResponse>
 export const flowNodeEventType = z.union([messageEventType, flowEventType])
 export type FlowNodeEventType = MessageEventType | FlowEventType
 
+export const flowContactStatsRequest = z.object({
+  workspaceId: z.string(),
+  flowId: z.string(),
+  eventType: flowNodeEventType.optional(),
+  nodeId: z.string().optional(),
+})
+export type FlowContactStatsRequest = z.infer<typeof flowContactStatsRequest>
+
 export const getFlowNodeStatsRequest = z.object({
   workspaceId: z.string(),
   flowId: z.string(),
@@ -36,13 +44,13 @@ export const buttonResponse = z.object({
   clicks: z.number(),
 })
 
-export const stepResponse = z.object({
-  step: getFlowStatsResponse,
+export const nodeResponse = z.object({
+  node: getFlowStatsResponse,
   buttons: z.record(z.string(), buttonResponse),
 })
-export type StepResponse = z.infer<typeof stepResponse>
+export type NodeResponse = z.infer<typeof nodeResponse>
 
-export const flowNodeStatsResponse = z.record(z.string(), stepResponse)
+export const flowNodeStatsResponse = z.record(z.string(), nodeResponse)
 export type FlowNodeStatsResponse = z.infer<typeof flowNodeStatsResponse>
 
 export type FlowNodeStats = GetFlowStatsResponse

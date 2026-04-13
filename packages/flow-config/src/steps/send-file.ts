@@ -1,11 +1,11 @@
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "../types"
+import { baseStepSchema } from "./base"
 import { buttonStepSchema } from "./button"
 import { stepTypes } from "./step-action"
 
-export const sendFileStepSchema = z.object({
-  id: zodBigintAsString(),
+export const sendFileStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendFile),
   mode: uploadModes,
   url: z.url(),
