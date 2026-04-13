@@ -41,6 +41,7 @@ import { integrationSmtpRelations } from "./integration-smtp"
 import { integrationWebchatRelations } from "./integration-webchat"
 import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
+import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { organizationRelations } from "./organization"
 import { organizationMemberRelations } from "./organization-member"
@@ -117,6 +118,7 @@ export const relations = {
   ...contactsOnBroadcastsRelations,
   ...contactsToTagsRelations,
   ...reflinkRelations,
+  ...magicLinkRelations,
   ...sequenceRelations,
   ...sequenceStepRelations,
   ...contactsOnSequenceRelations,

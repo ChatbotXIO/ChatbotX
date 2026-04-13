@@ -76,6 +76,15 @@ export default async function ItemsPage(props: {
 - Client components unwrap with `React.use(promises)`
 - URL state via **nuqs** (`listItemsSearchParamsCache.parse()`)
 
+### Public routes (short links, webhooks, open redirects)
+
+Some features expose **unauthenticated** URLs (tracking links, asset callbacks, etc.):
+
+- Implement the handler as a **Route Handler** under `apps/builder/src/app/<public-prefix>/.../route.ts` (or `page.tsx` when appropriate).
+- Add the URL prefix to `publicRoutes` in `apps/builder/src/proxy.ts` so the middleware does not force sign-in for those paths.
+- Put redirect rules, URL templating, and validation in a small `lib/*` module when the same logic might be reused or tested.
+- Register new **Tools** entries in `apps/builder/src/features/tools/tools-list.tsx` (with `getLink`) and add **i18n** keys under `apps/builder/messages/*.json`.
+
 ## Client Component Pattern
 
 ```typescript

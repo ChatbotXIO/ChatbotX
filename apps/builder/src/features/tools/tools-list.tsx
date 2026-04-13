@@ -13,6 +13,7 @@ import {
   MapIcon,
   QrCodeIcon,
   UserCheck2Icon,
+  Wand2Icon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -38,6 +39,13 @@ const TOOLS_CONFIG = [
     descriptionKey: "reflinks.description",
     icon: LinkIcon,
     getLink: (id: string) => `/space/${id}/reflinks`,
+  },
+  {
+    id: "magic-links",
+    labelKey: "magicLinks.title",
+    descriptionKey: "magicLinks.description",
+    icon: Wand2Icon,
+    getLink: (id: string) => `/space/${id}/magic-links`,
   },
   {
     id: "qr-code",

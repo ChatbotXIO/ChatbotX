@@ -16,5 +16,9 @@ export const workspaceRelations = defineRelationsPart(schema, (r) => ({
       from: r.workspaceModel.id,
       to: r.savedReplyModel.workspaceId,
     }),
+    magicLinks: r.many.magicLinkModel({
+      from: r.workspaceModel.id,
+      to: r.magicLinkModel.workspaceId,
+    }),
   },
 }))

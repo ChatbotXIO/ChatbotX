@@ -124,6 +124,9 @@ importers:
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@chatbotx.io/variables':
+        specifier: workspace:*
+        version: link:../../packages/variables
       '@chatbotx.io/worker-config':
         specifier: workspace:*
         version: link:../../packages/worker-config

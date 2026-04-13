@@ -2,6 +2,7 @@
 
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,10 +20,12 @@ export type TiptapEditorFieldProps = {
   placeholder?: string
   formItemClassName?: string
   showEmojiPicker?: boolean
+  description?: string
 }
 
 export const TiptapEditorField = ({
   name,
+  description,
   label,
   required = false,
   formItemClassName,
@@ -62,6 +65,9 @@ export const TiptapEditorField = ({
               showEmojiPicker={showEmojiPicker}
             />
           </FormControl>
+          {description ? (
+            <FormDescription>{description}</FormDescription>
+          ) : null}
           <FormMessage />
         </FormItem>
       )}

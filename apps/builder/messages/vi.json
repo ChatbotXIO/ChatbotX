@@ -1127,6 +1127,11 @@
     },
     "verifyToken": {
       "label": "Webhook Verify Token"
+    },
+    "magicLink": {
+      "label": "Magic Link",
+      "nameHint": "Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only.",
+      "urlHint": "Use double braces in the URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come from the tracking link query string."
     }
   },
   "flows": {
@@ -1569,7 +1574,20 @@
     "title": "Webhooks"
   },
   "reflinks": {
-    "title": "Liên kết giới thiệu"
+    "title": "Liên kết giới thiệu",
+    "description": "Liên kết từ khóa để mở kịch bản và nhận ref từ kênh."
+  },
+  "magicLinks": {
+    "title": "Magic Link",
+    "description": "Liên kết rút gọn: chèn biến từ query vào URL đích.",
+    "createDescription": "Người dùng mở /ml/{workspaceId}/ten-ban; hệ thống chuyển hướng tới URL của bạn.",
+    "pathName": "Đường dẫn (tên)",
+    "pathHint": "Đoạn này nối sau /ml/{workspaceId}/ trong URL công khai. Chỉ dùng chữ, số, gạch dưới và gạch ngang.",
+    "variableHint": "Dùng hai dấu ngoặc trong URL, ví dụ https://example.com/?x={{utm_source}}. Giá trị lấy từ chuỗi query của liên kết theo dõi.",
+    "copyTrackingLink": "Sao chép liên kết theo dõi",
+    "showQr": "Hiện mã QR",
+    "qrTitle": "Mã QR",
+    "qrDescription": "Chia sẻ mã này để mở liên kết theo dõi."
   },
   "sequences": {
     "subscribers": "Người đăng ký",
@@ -1631,5 +1649,9 @@
       "description": "Gửi email bằng máy chủ SMTP của bạn.",
       "label": "(Email) SMTP"
     }
+  },
+  "QRCode": {
+    "title": "QR Code",
+    "description": "Share this code so people open your tracking link."
   }
 }

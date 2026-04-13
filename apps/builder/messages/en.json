@@ -1121,6 +1121,11 @@
     },
     "topicId": {
       "label": "Topic ID"
+    },
+    "magicLink": {
+      "label": "Magic Link",
+      "nameHint": "Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only.",
+      "urlHint": "Use double braces in the URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come from the tracking link query string."
     }
   },
   "flows": {
@@ -1483,7 +1488,16 @@
     "title": "Webhooks"
   },
   "reflinks": {
-    "title": "Entry Point Links"
+    "title": "Entry Point Links",
+    "description": "Keyword links that start flows and capture ref payloads from channels."
+  },
+  "magicLinks": {
+    "title": "Magic Links",
+    "description": "Create deep links that redirect to your URL with query parameters."
+  },
+  "QRCode": {
+    "title": "QR Code",
+    "description": "Share this code so people open your tracking link."
   },
   "trigger": {
     "when": "When this happens",
