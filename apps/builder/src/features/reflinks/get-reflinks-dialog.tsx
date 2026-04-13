@@ -1,5 +1,6 @@
 "use client"
 
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -69,7 +70,7 @@ export function GetReflinksList({ reflinkData }: { reflinkData: string }) {
             key={inbox.id}
           >
             <div className="flex flex-1 flex-col gap-1">
-              <InboxIcon channel={inbox.channel} size="large" />
+              <InboxIcon channel={inbox.channel as ChannelType} size="large" />
               <div className="text-muted-foreground text-xs">{inbox.name}</div>
             </div>
             <Button

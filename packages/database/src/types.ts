@@ -22,8 +22,8 @@ export type ChatbotUsageModel = typeof schema.workspaceUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
-export type IntegrationEmailModel =
-  typeof schema.integrationEmailModel.$inferSelect
+export type IntegrationSmtpModel =
+  typeof schema.integrationSmtpModel.$inferSelect
 export type IntegrationGeminiModel =
   typeof schema.integrationGeminiModel.$inferSelect
 export type IntegrationModel = typeof schema.integrationModel.$inferSelect

@@ -107,9 +107,9 @@
     "removeSequence": "Xóa chăm sóc",
     "activate": "Kích hoạt",
     "deactivate": "Tắt",
-    "onFailure": "On failure",
-    "onSkip": "On skip",
-    "onSuccess": "On success"
+    "onFailure": "Khi thất bại",
+    "onSkip": "Khi bỏ qua",
+    "onSuccess": "Khi thành công"
   },
   "states": {
     "success": "Thành công",
@@ -622,6 +622,10 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
+    "host": {
+      "label": "Máy chủ",
+      "placeholder": "smtp.example.com"
+    },
     "hideHeader": {
       "label": "Hiển thị tiêu đề"
     },
@@ -735,6 +739,13 @@
       "label": "Số điện thoại",
       "noPhoneNumbersFound": "Không tìm thấy số điện thoại cho tài khoản này"
     },
+    "port": {
+      "label": "Cổng",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Nhà cung cấp"
+    },
     "prompt": {
       "label": "Prompt",
       "placeholder": "Nhập prompt"
@@ -845,6 +856,10 @@
     },
     "userId": {
       "label": "ID Người dùng"
+    },
+    "username": {
+      "label": "Tên đăng nhập",
+      "placeholder": "user@example.com"
     },
     "keywords": {
       "label": "Từ khóa"
@@ -960,7 +975,8 @@
       "label": "Nguồn"
     },
     "password": {
-      "label": "Mật khẩu"
+      "label": "Mật khẩu",
+      "placeholder": "••••••••"
     },
     "passwordConfirmation": {
       "label": "Nhập lại mật khẩu"
@@ -1061,7 +1077,11 @@
       "suffix": "days"
     },
     "from": {
-      "label": "From"
+      "label": "Từ"
+    },
+    "fromAddress": {
+      "label": "Địa chỉ gửi",
+      "placeholder": "noreply@example.com"
     },
     "limitContacts": {
       "label": "Maximum of Contacts"
@@ -1264,6 +1284,7 @@
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
     "disconnectFeature": "Ngắt kết nối {feature}",
     "disconnectFeatureDescription": "Bạn có chắc chắn muốn ngắt kết nối {feature}?",
+    "disconnectSuccess": "Đã ngắt kết nối {feature} thành công",
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
@@ -1597,6 +1618,18 @@
     "title": "Subscriptions"
   },
   "users": {
-    "title": "Users"
+    "title": "Người dùng"
+  },
+  "aiProviders": {
+    "openai": "OpenAI",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "deepseek": "DeepSeek"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Gửi email bằng máy chủ SMTP của bạn.",
+      "label": "(Email) SMTP"
+    }
   }
 }

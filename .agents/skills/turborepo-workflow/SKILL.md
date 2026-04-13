@@ -112,6 +112,16 @@ pnpm check:unused
 - Cross-workspace imports: `@chatbotx.io/database/client`, `@chatbotx.io/ui/button`, etc.
 - Package exports are defined in each `package.json` `exports` field
 
+### Adding a New Workspace Package
+
+When creating a new package (e.g. `integrations/<channel>/`):
+
+1. Create `package.json` with `"name": "@chatbotx.io/<name>"`
+2. Add `"@chatbotx.io/<name>": "workspace:*"` to consumer `package.json` dependencies
+3. Run `CI=true pnpm install --no-frozen-lockfile` to link the package
+   - **MUST** use `CI=true` to avoid TTY confirmation prompt in non-interactive shells
+   - Without this step, imports of the new package will fail with `Cannot find module`
+
 ## Turbo Pipeline
 
 Defined in `turbo.json`:

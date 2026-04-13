@@ -1,37 +1,29 @@
 "use server"
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { integrationEmailModel } from "@chatbotx.io/database/schema"
+import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { updateEmailRequest } from "../schema/mutation"
 
-export const updateEmailAction = workspaceActionClient
+export const deleteSmtpAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
-  .inputSchema(updateEmailRequest)
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],
-      parsedInput,
     } = props
-
     const integration = await findOrFail({
-      table: integrationEmailModel,
+      table: integrationSmtpModel,
       where: {
         id,
         workspaceId,
       },
-      message: "Email integration not found",
+      message: "SMTP integration not found",
     })
 
     await db
-      .update(integrationEmailModel)
-      .set({
-        ...parsedInput,
-        workspaceId,
-      })
-      .where(eq(integrationEmailModel.id, integration.id))
+      .delete(integrationSmtpModel)
+      .where(eq(integrationSmtpModel.id, integration.id))
 
-    revalidateCacheTags(`workspaces:${workspaceId}#emails`)
+    revalidateCacheTags(`workspaces:${workspaceId}#smtps`)
   })

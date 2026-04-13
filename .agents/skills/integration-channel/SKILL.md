@@ -15,55 +15,68 @@ Integrations are standalone packages under `integrations/` that implement the `I
 
 **Flow:** External platform → webhook → builder route → BullMQ queue → worker → integration handler
 
-## Integration Contract
+## Pre-Creation Confirmation (MANDATORY)
 
-Defined in `packages/sdk/src/lib/integration.ts`:
+Before writing any code, you **MUST** resolve the 3 questions below. Analyze the user's request first, ask only what's missing, then present a confirmation summary and wait.
 
-```typescript
-type IntegrationDefinition<IConfig, IAuth, IActions> = {
-  name: string
-  channels?: {
-    channel: {
-      message?: MessageHandlers<IAuth>     // sendMessage, receiveMessage, sendFlowStep
-      conversation?: ConversationHandlers   // createConversation, resolveConversation
-      contact?: ContactHandlers             // createContact, updateContact
-    }
-  }
-  actions: IActions
-  handleRequest: Handler<HandleRequestProps<IConfig>, ...>
-  disconnect: Handler<IAuth, void>
-}
+### Question 1: Integration name
+
+Channel name → determines package name (`@chatbotx.io/integration-<channel>`), DB table (`Integration<Channel>`), all file paths.
+
+### Question 2: Auth fields
+
+| Base | When to use | Examples |
+|------|-------------|---------|
+| `customAuthSchema` (from SDK) | User provides credentials directly. No OAuth. | email, webchat |
+| `Oauth2AuthValue` (from SDK) | Platform uses OAuth2 with clientId/clientSecret + tokens. | messenger, whatsapp, zalo |
+
+For EACH field: name, Zod type, required or optional. Infer types from context (e.g. "port" → `z.number().int().positive()`).
+
+### Question 3: Organization settings
+
+| Scenario | Org settings? | Examples |
+|----------|--------------|---------|
+| OAuth app (clientId/clientSecret shared across workspaces) | YES | messenger, whatsapp, zalo |
+| Per-workspace credentials only | NO | email, webchat, smtp |
+| Shared third-party API key | YES | giphy, stripe |
+
+### Confirmation Summary
+
+```
+Integration: <channel>
+Auth type: custom / oauth2
+Auth fields:
+  - fieldA: z.string().min(1)        [required]
+  - fieldB: z.number().int()          [required]
+Organization settings: YES / NO
 ```
 
-### Handler Types
+Wait for user confirmation before proceeding.
 
-- **`receiveMessage`**: Parse incoming webhook → `ReceivedMessageResult`
-- **`sendMessage`**: Send outgoing message to platform (text, image, etc.)
-- **`sendFlowStep`**: Send flow step content (buttons, cards, etc.)
-- **`handleRequest`**: HTTP webhook/callback handler
+---
 
-## Creating a New Integration — Full Checklist
+## Creating a New Integration — Execution Plan
 
-Follow these steps **in order**. Each step lists every file that must be touched.
+After confirmation, execute these 4 phases **in order**. Each phase ends with a verification step.
 
-### Step 1. Integration Package (`integrations/<channel>/`)
+### Phase 1: Integration Package (create `integrations/<channel>/`)
 
-Create the directory and files:
+Create 5 files. All are boilerplate — write them in a single batch.
 
+**Directory structure:**
 ```
 integrations/<channel>/
   package.json
   tsconfig.json
   src/
-    index.ts             → re-exports from integration.ts
-    integration.ts       → Main IntegrationDefinition
-    schema.ts            → Auth, config, action types (NOT types.ts)
+    index.ts
+    schema.ts
+    integration.ts
     handlers/
-      webhook.ts         → Webhook processing
+      webhook.ts
 ```
 
 **`package.json`:**
-
 ```json
 {
   "name": "@chatbotx.io/integration-<channel>",
@@ -87,7 +100,6 @@ integrations/<channel>/
 ```
 
 **`tsconfig.json`:**
-
 ```json
 {
   "extends": "@chatbotx.io/typescript-config/base.json",
@@ -97,30 +109,27 @@ integrations/<channel>/
 ```
 
 **`src/index.ts`:**
-
 ```typescript
 export * from "./integration"
 ```
 
-**`src/schema.ts`** (use `schema.ts`, not `types.ts` — this is the project convention):
-
+**`src/schema.ts`** — fill in auth fields from confirmation:
 ```typescript
+import type { BaseConfig } from "@chatbotx.io/sdk"
 import { customAuthSchema } from "@chatbotx.io/sdk"
-import type { BaseConfig, CustomAuthValue } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
-export type MyChannelConfig = BaseConfig
+export type <Channel>Config = BaseConfig
 
-export const myChannelAuthSchema = customAuthSchema.extend({
-  // channel-specific auth fields
+export const <channel>AuthSchema = customAuthSchema.extend({
+  // confirmed auth fields here
 })
-export type MyChannelAuthValue = z.infer<typeof myChannelAuthSchema>
+export type <Channel>AuthValue = z.infer<typeof <channel>AuthSchema>
 
-export type MyChannelActions = Record<string, never>
+export type <Channel>Actions = Record<string, never>
 ```
 
 **`src/integration.ts`:**
-
 ```typescript
 import {
   type BaseConfig,
@@ -130,15 +139,11 @@ import {
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
 import { webhookHandler } from "./handlers/webhook"
-import type { MyChannelActions, MyChannelAuthValue } from "./schema"
+import type { <Channel>Actions, <Channel>AuthValue } from "./schema"
 
-const config: IntegrationDefinition<BaseConfig, MyChannelAuthValue, MyChannelActions> = {
+const config: IntegrationDefinition<BaseConfig, <Channel>AuthValue, <Channel>Actions> = {
   name: "<channel>",
-  channels: {
-    channel: {
-      message: {},
-    },
-  },
+  channels: { channel: { message: {} } },
   actions: {},
   async handleRequest(props: HandleRequestProps<BaseConfig>): Promise<string | number | Oauth2AuthValue> {
     const segments = new URL(props.req.url).pathname.split("/")
@@ -150,7 +155,7 @@ const config: IntegrationDefinition<BaseConfig, MyChannelAuthValue, MyChannelAct
         throw new Error(`Not implemented: ${props.req.method} ${props.req.url}`)
     }
   },
-  disconnect(_props: MyChannelAuthValue): Promise<void> {
+  disconnect(_props: <Channel>AuthValue): Promise<void> {
     throw new Error("Method is not implemented.")
   },
 }
@@ -158,10 +163,30 @@ const config: IntegrationDefinition<BaseConfig, MyChannelAuthValue, MyChannelAct
 export const integration = new Integration(config)
 ```
 
-### Step 2. Database Schema
+**`src/handlers/webhook.ts`:**
+```typescript
+import type { HandleRequestProps } from "@chatbotx.io/sdk"
+import type { <Channel>Config } from "../schema"
 
-**`packages/database/src/schema/integration-<channel>.ts`:**
+export const webhookHandler = async (props: HandleRequestProps<<Channel>Config>) => {
+  const payload = await props.req.json()
+  await props.queue?.add("incomingMessage", {
+    type: "incomingMessage",
+    data: {
+      integrationType: "<channel>",
+      integrationIdentifier: payload.identifier,
+      payload,
+    },
+  })
+  return "OK"
+}
+```
 
+### Phase 2: Database (create schema + register in 7 files)
+
+Create 2 new files, edit 5 existing files. Do all edits in a single batch.
+
+**Create `packages/database/src/schema/integration-<channel>.ts`:**
 ```typescript
 import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
@@ -175,26 +200,22 @@ export const integration<Channel>Model = pgTable(
     ...sharedColumns,
     auth: jsonb().notNull(),
     name: text().notNull(),
-    // ... channel-specific columns
     workspaceId: bigintAsString().notNull()
       .references(() => workspaceModel.id, { onDelete: "cascade", onUpdate: "cascade" }),
     inboxId: bigintAsString().notNull()
       .references(() => inboxModel.id, { onDelete: "cascade", onUpdate: "cascade" }),
-    welcomeFlowId: bigintAsString()
-      .references(() => flowModel.id, { onDelete: "set null", onUpdate: "cascade" }),
   },
   (table) => [
     index("Integration<Channel>_workspaceId_idx").using("btree", table.workspaceId.asc().nullsLast()),
     uniqueIndex("Integration<Channel>_inboxId_key").using("btree", table.inboxId.asc().nullsLast()),
-    index("Integration<Channel>_welcomeFlowId_idx").using("btree", table.welcomeFlowId.asc().nullsLast()),
   ],
 )
 ```
 
-**`packages/database/src/relations/integration-<channel>.ts`:**
-
+**Create `packages/database/src/relations/integration-<channel>.ts`:**
 ```typescript
 import { defineRelationsPart } from "drizzle-orm"
+// biome-ignore lint/performance/noNamespaceImport: drizzle schema
 import * as schema from "../schema"
 
 export const integration<Channel>Relations = defineRelationsPart(schema, (r) => ({
@@ -205,81 +226,146 @@ export const integration<Channel>Relations = defineRelationsPart(schema, (r) => 
     inbox: r.one.inboxModel({
       from: r.integration<Channel>Model.inboxId, to: r.inboxModel.id, optional: false,
     }),
-    flow: r.one.flowModel({
-      from: r.integration<Channel>Model.welcomeFlowId, to: r.flowModel.id,
-    }),
   },
 }))
 ```
 
-### Step 3. Database Registration (5 files)
+**Edit 5 registration files (all in one batch):**
 
-All 5 files below MUST be updated:
-
-| # | File | What to add |
-|---|------|-------------|
-| 1 | `packages/database/src/partials/channel.ts` | Add `"<channel>"` to `channelTypes` z.enum |
-| 2 | `packages/database/src/partials/integration.ts` | Add `"<channel>"` to `integrationTypes` z.enum |
+| # | File | Edit |
+|---|------|------|
+| 1 | `packages/database/src/partials/channel.ts` | Add `"<channel>"` to `channelTypes` z.enum array |
+| 2 | `packages/database/src/partials/integration.ts` | Add `"<channel>"` to `integrationTypes` z.enum array |
 | 3 | `packages/database/src/schema/index.ts` | Add `export * from "./integration-<channel>"` |
-| 4 | `packages/database/src/relations/index.ts` | **Both** `import { ... }` at top **and** `...integration<Channel>Relations` in the `relations` object |
+| 4 | `packages/database/src/relations/index.ts` | Add import at top AND spread in `relations` object |
 | 5 | `packages/database/src/types.ts` | Add `export type Integration<Channel>Model = typeof schema.integration<Channel>Model.$inferSelect` |
 
-> **GOTCHA**: `relations/index.ts` requires TWO edits (import + spread). It is very easy to add only one and miss the other. Always verify both.
+**CRITICAL — `relations/index.ts` needs TWO edits:**
+1. Import: `import { integration<Channel>Relations } from "./integration-<channel>"`
+2. Spread: `...integration<Channel>Relations,` in the relations object
 
-### Step 4. Integration Registration (4 files)
+After editing, immediately read back each file to verify both import AND spread are present.
 
-| # | File | What to add |
-|---|------|-------------|
-| 1 | `apps/builder/src/integration.ts` | `import` **and** entry in `integrations` object |
-| 2 | `apps/worker/src/services/integrations.ts` | `import` **and** entry in `allIntegrations` object |
-| 3 | `apps/builder/package.json` | `"@chatbotx.io/integration-<channel>": "workspace:*"` in dependencies |
-| 4 | `apps/worker/package.json` | `"@chatbotx.io/integration-<channel>": "workspace:*"` in dependencies |
+### Phase 3: Registration (edit 6 files)
 
-> **GOTCHA**: When adding both `import` and usage entry, always verify the `import` statement was actually written. A common mistake is adding the usage (`"<channel>": integrationX`) but forgetting or failing to add the `import` line.
+**Integration registration (4 files, single batch):**
 
-### Step 5. UI Registration (3 files)
+| # | File | Edit |
+|---|------|------|
+| 1 | `apps/builder/src/integration.ts` | Add `import { integration as integration<Channel> } from "@chatbotx.io/integration-<channel>"` AND `<channel>: integration<Channel>` in object |
+| 2 | `apps/worker/src/services/integrations.ts` | Add `import ...` AND `<channel>: integration<Channel>` in `allIntegrations` |
+| 3 | `apps/builder/package.json` | Add `"@chatbotx.io/integration-<channel>": "workspace:*"` to dependencies |
+| 4 | `apps/worker/package.json` | Add `"@chatbotx.io/integration-<channel>": "workspace:*"` to dependencies |
 
-| # | File | What to add |
-|---|------|-------------|
-| 1 | `apps/builder/src/features/inboxes/components/inbox-icon.tsx` | Add icon config to `INBOX_ICON_CONFIG` + import the icon |
-| 2 | `apps/builder/src/features/inboxes/components/inbox-card-list.tsx` | Add entry to `cardConfigs` (can be `undefined` initially) |
-| 3 | **All `Record<ChannelType, ...>` usages** | Search `Record<ChannelType` across the codebase and add the new key |
+**CRITICAL — verify imports:** After each StrReplace on `integration.ts` and `integrations.ts`, immediately read back lines 1-10 to confirm the import line is actually present. The `import` and the usage are TWO separate edits.
 
-> **GOTCHA**: Adding a value to `ChannelType` Zod enum causes **compile errors** in every `Record<ChannelType, ...>` that doesn't include the new key. Always grep for `Record<ChannelType` or `Record<\n\s*ChannelType` (multiline) and fix all hits.
+**UI registration (2 files):**
 
-### Step 6. Builder Feature (`apps/builder/src/features/integration-<channel>/`)
+| # | File | Edit |
+|---|------|------|
+| 5 | `apps/builder/src/features/inboxes/components/inbox-icon.tsx` | Add icon to lucide import AND entry in `INBOX_ICON_CONFIG` |
+| 6 | `apps/builder/src/features/inboxes/components/inbox-card-list.tsx` | Add `<channel>: undefined` to `cardConfigs` |
 
-Create the feature directory:
+**CRITICAL — `ChannelType` cascade:** Adding a value to the `channelTypes` enum causes compile errors in every `Record<ChannelType, ...>` that doesn't include the new key. Grep for `Record<ChannelType` and `Record<\n\s*ChannelType` (multiline) to find and fix ALL hits.
 
+**Phase 3 checkpoint:** Run `ReadLints` on all modified files. Fix any undeclared variable or missing import errors before continuing.
+
+### Phase 4: Builder Feature + Settings Page
+
+Create the feature directory and settings page. This is standard feature-scaffold work.
+
+**Directory structure:**
 ```
 apps/builder/src/features/integration-<channel>/
   schema/
-    mutation.ts          → Zod schemas for create/update requests
-    resource.ts          → Select schema for API responses
+    mutation.ts
+    resource.ts
   actions/
     create-<channel>.action.ts
     update-<channel>.action.ts
     delete-<channel>.action.ts
   queries/
-    index.ts             → Server-side query functions
+    index.ts
   components/
     create-<channel>-form.tsx
     <channel>-disconnect.tsx
-  <channel>-manage.tsx   → Table + add button for settings page
+  <channel>-manage.tsx
 ```
 
-**Key patterns:**
+**Key patterns for integration features:**
 
-- **Create action**: uses `authActionClient.inputSchema(schema).action(...)`, creates `Inbox` + `Integration<Channel>` in a transaction
-- **Update action**: uses `workspaceActionClient.bindArgsSchemas([zodBigintAsString(), zodBigintAsString()]).inputSchema(schema).action(...)`
-- **Delete action**: uses `workspaceActionClient.bindArgsSchemas([zodBigintAsString(), zodBigintAsString()]).action(...)` — **no input schema**
-- **Disconnect component**: when calling `execute()` on an action without input schema, pass **no arguments** (`execute()`, NOT `execute({})`)
-- **Manage component**: uses `use(promises)` pattern to unwrap server promises in a client component
+**`schema/mutation.ts`** — Zod schemas for create/update:
+```typescript
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { z } from "zod"
 
-### Step 7. Settings Page (Parallel Route)
+export const create<Channel>Request = z.object({
+  name: z.string().min(1).max(40),
+  workspaceId: zodBigintAsString().nullish(),
+  // auth fields from confirmation
+})
+export type Create<Channel>Request = z.infer<typeof create<Channel>Request>
 
-Create `apps/builder/src/app/space/[workspaceId]/(settings)/settings/channels/@<channel>/page.tsx`:
+export const update<Channel>Request = create<Channel>Request.partial()
+export type Update<Channel>Request = z.infer<typeof update<Channel>Request>
+```
 
+**`schema/resource.ts`** — Select schema for responses:
+```typescript
+import { createSelectSchema, integration<Channel>Model } from "@chatbotx.io/database/schema"
+import type { z } from "zod"
+
+export const integration<Channel>Resource = createSelectSchema(integration<Channel>Model).pick({
+  id: true,
+  name: true,
+})
+export type Integration<Channel>Resource = z.infer<typeof integration<Channel>Resource>
+```
+
+**`actions/create-<channel>.action.ts`** — Create action pattern:
+- Uses `workspaceActionClient.bindArgsSchemas(workspaceIdrequestParams).inputSchema(schema).action(...)`
+- Creates `Inbox` + `Integration<Channel>` in a DB transaction
+- The inbox `channel` value must match the enum value added in Phase 2: `channelTypes.enum.<channel>`
+- The inbox `name` should be set from `parsedInput.name`
+- All auth fields go into the `auth` JSONB column
+
+**`actions/delete-<channel>.action.ts`** — Delete action pattern:
+- Uses `workspaceActionClient.bindArgsSchemas([zodBigintAsString(), zodBigintAsString()]).action(...)`
+- **No `.inputSchema()`** — delete has no input
+- Disconnect component calls `execute()` with NO arguments (not `execute({})`)
+
+**`queries/index.ts`** — Server-side queries:
+```typescript
+"use server"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integration<Channel>Model } from "@chatbotx.io/database/schema"
+import type { Integration<Channel>Model } from "@chatbotx.io/database/types"
+import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+
+export const listIntegration<Channel>s = async (input: { workspaceId: string }) => {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  const data = await db.query.integration<Channel>Model.findMany({
+    where: { workspaceId: input.workspaceId },
+    orderBy: { createdAt: "desc" },
+  })
+  return { data }
+}
+```
+
+**`components/create-<channel>-form.tsx`** — Form pattern:
+- Uses `useHookFormAction(createAction.bind(null, workspaceId), zodResolver(schema), ...)`
+- **CRITICAL:** Must call `.bind(null, workspaceId)` because the action uses `bindArgsSchemas`
+
+**`components/<channel>-disconnect.tsx`** — Disconnect pattern:
+- Uses `useAction(deleteAction.bind(null, workspaceId, integrationId), ...)`
+- Calls `execute()` with NO arguments
+
+**`<channel>-manage.tsx`** — Manage table:
+- Uses `use(promises)` to unwrap server promises
+- Shows table with integration data
+- Add button links to `/channels/create?channel=<channel>&workspaceId=...`
+
+**Settings page — create `@<channel>/page.tsx`:**
 ```typescript
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
@@ -291,60 +377,62 @@ export default async function SettingChannel<Channel>Page(props: {
 }) {
   const workspaceId = getIdFromParams(await props.params, "workspaceId")
   if (!workspaceId) return notFound()
-
   const promises = listIntegration<Channel>s({ workspaceId })
   return <<Channel>Manage promises={promises} workspaceId={workspaceId} />
 }
 ```
 
-Update **`layout.tsx`** in the same directory — **3 places**:
-1. Add `readonly <channel>: ReactNode` to `SettingsChannelsPageProps`
-2. Add `<channel>` to the destructured props
-3. Add `{ value: "<channel>", content: <channel> }` to `integrationItems` array
+**Settings layout — edit `layout.tsx`:**
+Add `"<channel>"` to the `CHANNELS` array. That's the only edit needed — the type and props are derived automatically from the array.
 
-## Post-Creation Verification Checklist
+## Post-Creation Verification
 
-After completing all steps above, run the following checks **in order**:
+Run these checks **in order**:
 
-1. **Run `ReadLints`** on ALL modified files — catch undeclared variables, missing imports, and type errors
-2. **Run `pnpm fix`** — auto-fix syntax/formatting issues (import ordering, trailing commas, etc.)
-3. **Run `pnpm install --no-frozen-lockfile`** — link the new workspace package (required for new integration packages)
-4. **Run `pnpm turbo build`** — final verification. If it fails, read the error output, fix the issues, and re-run until green
+1. **`ReadLints`** on ALL modified files
+2. **`pnpm fix`** — auto-fix formatting (ignore pre-existing errors in other files)
+3. **`CI=true pnpm install --no-frozen-lockfile`** — link new workspace package (use `CI=true` to avoid TTY prompt)
+4. **`pnpm turbo build`** — if it fails, read errors, fix, re-run
 
 ### Common Build Errors
 
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `Cannot find module '@chatbotx.io/integration-<channel>'` | Package not linked | Run `pnpm install --no-frozen-lockfile` |
-| `Property '<channel>' is missing in type ... Record<ChannelType, ...>` | Enum value added but not all Records updated | Search `Record<ChannelType` and add missing entry |
-| `Argument of type '{}' is not assignable to parameter of type 'void'` | Calling `execute({})` on action without input schema | Use `execute()` with no arguments |
-| `The ... variable is undeclared` | Import statement missing | Add the import — always verify **both** import and usage were written |
+| `Property '<channel>' is missing in type ... Record<ChannelType, ...>` | Enum value added but not all Records updated | Grep `Record<ChannelType` and add missing entry |
+| `The ... variable is undeclared` | Import missing | Read back file to verify import line exists, re-add if missing |
+| `Target signature provides too few arguments` | Action uses `bindArgsSchemas` but form didn't `.bind()` | Use `action.bind(null, workspaceId)` in useHookFormAction |
+| `Type 'string' is not assignable to type ChannelType` | Passing untyped string to InboxIcon | Cast with `as ChannelType` and add import |
+| `Argument of type '{}' ... parameter of type 'void'` | Calling `execute({})` on no-input action | Use `execute()` with no arguments |
+
+## Organization Settings (only if needed)
+
+If org settings ARE needed, also update:
+
+| # | File | What to add |
+|---|------|-------------|
+| 1 | `packages/database/src/partials/organization.ts` | New `<channel>SettingsSchema` + add to `organizationSettingsSchema` |
+| 2 | `apps/builder/src/enterprise/features/organization-settings/` | Settings panel component + action |
+| 3 | `manage-organization-settings.tsx` | Import and render new panel |
+| 4 | `<channel>-manage.tsx` | Gate "Add" button on `organizationSettings.<channel>` |
 
 ## Webhook Flow
 
-1. **External platform** sends webhook to `/integrations/<channel>/webhook`
-2. **Builder route** (`app/integrations/[...integration]/route.ts`) resolves integration config
-3. **`handleRequest`** receives `{ config, req, queue }` — `queue` is BullMQ `integrationQueue`
+1. External platform sends webhook to `/integrations/<channel>/webhook`
+2. Builder route resolves integration config
+3. `handleRequest` receives `{ config, req, queue }`
 4. Handler enqueues job: `queue.add("incomingMessage", { type, data })`
-5. **Integration worker** picks up job, calls `allIntegrations[type].channels.channel.message.receiveMessage`
-6. Worker processes message → creates/updates contact, conversation, runs flows
-
-## Outbound Message Flow
-
-1. **Chat worker** picks up outbound job from `chatQueue`
-2. Resolves integration: `allIntegrations[contactInbox.channel]`
-3. Calls `channels.channel.message.sendMessage` or `sendFlowStep`
-4. Integration sends to platform API
+5. Integration worker calls `allIntegrations[type].channels.channel.message.receiveMessage`
 
 ## Existing Integrations Reference
 
-| Integration | Webhook | Send | Receive | Notes |
-|-------------|---------|------|---------|-------|
-| messenger   | Yes     | Yes  | Yes     | Full Facebook Messenger |
-| whatsapp    | Yes     | Yes  | Yes     | WhatsApp Business API |
-| zalo        | Yes     | Yes  | Yes     | Zalo Official Account |
-| webchat     | No      | No   | No      | PartySocket-based, in-app |
-| chatbotx    | Yes     | Yes  | Yes     | Internal chatbot |
-| email       | Yes     | No   | No      | SMTP email integration |
-| google-sheets | No   | No   | No      | Spreadsheet integration |
-| openai      | No      | No   | No      | AI provider |
+| Integration | Auth type | Org settings? | Notes |
+|-------------|-----------|---------------|-------|
+| messenger | OAuth2 | YES | clientId/clientSecret in org |
+| whatsapp | OAuth2 | YES | clientId/clientSecret + systemUser in org |
+| zalo | OAuth2 | YES | clientId/clientSecret in org |
+| google-sheets | OAuth2 | YES | clientId/clientSecret in org |
+| email | Custom | NO | SMTP credentials per workspace |
+| smtp | Custom | NO | SMTP with provider presets |
+| webchat | Custom | NO | PartySocket-based |
+| chatbotx | Custom | NO | Internal chatbot |

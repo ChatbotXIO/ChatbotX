@@ -76,15 +76,15 @@ importers:
       '@chatbotx.io/integration-chatbotx':
         specifier: workspace:*
         version: link:../../integrations/chatbotx
-      '@chatbotx.io/integration-email':
-        specifier: workspace:*
-        version: link:../../integrations/email
       '@chatbotx.io/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
       '@chatbotx.io/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@chatbotx.io/integration-smtp':
+        specifier: workspace:*
+        version: link:../../integrations/smtp
       '@chatbotx.io/integration-webchat':
         specifier: workspace:*
         version: link:../../integrations/webchat
@@ -506,15 +506,15 @@ importers:
       '@chatbotx.io/integration-chatbotx':
         specifier: workspace:*
         version: link:../../integrations/chatbotx
-      '@chatbotx.io/integration-email':
-        specifier: workspace:*
-        version: link:../../integrations/email
       '@chatbotx.io/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
       '@chatbotx.io/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
+      '@chatbotx.io/integration-smtp':
+        specifier: workspace:*
+        version: link:../../integrations/smtp
       '@chatbotx.io/integration-whatsapp':
         specifier: workspace:*
         version: link:../../integrations/whatsapp
@@ -662,25 +662,6 @@ importers:
         specifier: 6.0.2
         version: 6.0.2
 
-  integrations/email:
-    dependencies:
-      '@chatbotx.io/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@chatbotx.io/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
-      '@types/node':
-        specifier: 24.x
-        version: 24.12.2
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
-
   integrations/google-sheets:
     dependencies:
       '@chatbotx.io/logger':
@@ -764,6 +745,28 @@ importers:
       '@types/node':
         specifier: 24.x
         version: 24.12.0
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
+
+  integrations/smtp:
+    dependencies:
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      nodemailer:
+        specifier: ^8.0.4
+        version: 8.0.4
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.12.2
       typescript:
         specifier: 6.0.2
         version: 6.0.2

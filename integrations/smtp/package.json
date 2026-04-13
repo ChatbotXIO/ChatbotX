@@ -1,20 +1,20 @@
 {
-  "name": "@chatbotx.io/integration-email",
+  "name": "@chatbotx.io/integration-smtp",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "author": "Michael Truong <realcodesiman@gmail.com>",
+  "exports": {
+    ".": "./src/index.ts",
+    "./**/*": "./src/**/*.ts"
+  },
   "dependencies": {
     "@chatbotx.io/sdk": "workspace:*",
+    "nodemailer": "^8.0.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
     "typescript": "6.0.2"
-  },
-  "exports": {
-    ".": "./src/index.ts",
-    "./**/*": "./src/**/*.ts"
   }
 }

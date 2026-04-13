@@ -1,3 +1,4 @@
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -64,7 +65,7 @@ export default function GetFlowLinkDialog({
           <div className="flex w-full items-center" key={inbox.id}>
             <div className="flex-1">
               <InboxIcon
-                channel={inbox.channel}
+                channel={inbox.channel as ChannelType}
                 iconClassName="size-6"
                 label={inbox.channel}
               />

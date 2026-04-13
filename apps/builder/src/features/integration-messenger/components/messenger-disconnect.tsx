@@ -66,7 +66,7 @@ export function MessengerDisconnect({
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: integrationMessenger.name,
             })}
           </AlertDialogDescription>

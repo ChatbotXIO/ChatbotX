@@ -153,7 +153,7 @@ Use React Hook Form + Zod + next-safe-action adapter:
 ```typescript
 "use client"
 
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form"
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createItemAction } from "../actions/create-item-action"
 import { createItemRequest } from "../schema/action"
@@ -171,6 +171,28 @@ export const CreateItemForm = ({ workspaceId }: { workspaceId: string }) => {
     </form>
   )
 }
+```
+
+### CRITICAL — `.bind()` for actions with `bindArgsSchemas`
+
+When an action uses `bindArgsSchemas` (e.g. for workspaceId), you **MUST** call `.bind(null, workspaceId)` before passing to `useHookFormAction`. Without `.bind()`, TypeScript will error: "Target signature provides too few arguments."
+
+```typescript
+// WRONG — will cause type error
+useHookFormAction(createItemAction, zodResolver(schema), ...)
+
+// CORRECT — bind the workspaceId first
+useHookFormAction(createItemAction.bind(null, workspaceId), zodResolver(schema), ...)
+```
+
+Similarly for `useAction` with delete actions:
+```typescript
+const { execute } = useAction(
+  deleteItemAction.bind(null, workspaceId, itemId),
+  { onSuccess: ..., onError: ... },
+)
+// Call execute() with NO arguments (not execute({}))
+execute()
 ```
 
 ## State Management (Zustand)
@@ -224,6 +246,166 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 - Server layouts: auth checks, data loading
 - Client layouts: tabs, accordions, interactive navigation
 
+## Internationalization (i18n) — next-intl
+
+All user-facing text **MUST** be internationalized using `next-intl`. Never hardcode labels, placeholders, messages, or button text.
+
+### Setup
+
+```typescript
+import { useTranslations } from "next-intl"
+
+const t = useTranslations()
+```
+
+### Translation File Structure
+
+Translations live in `apps/builder/messages/en.json`. The file is organized into namespaces:
+
+| Namespace | Purpose | Example |
+|-----------|---------|---------|
+| `fields.*` | Reusable field labels, placeholders, descriptions | `fields.name.label`, `fields.email.placeholder` |
+| `actions.*` | Button/action labels | `actions.cancel`, `actions.create`, `actions.save` |
+| `messages.*` | Toast messages, confirmations, descriptions | `messages.createdSuccess`, `messages.deleteConfirmation` |
+| `<feature>.*` | Feature-specific text (titles, descriptions, unique labels) | `smtp.setting.label`, `webchat.title` |
+
+### Form Fields — Reuse `fields.*` Definitions
+
+Form field `label` and `placeholder` props **MUST** use translations from the `fields` namespace in `en.json`. This ensures consistency across the entire app.
+
+**Pattern:**
+```typescript
+<InputField
+  label={t("fields.name.label")}
+  name="name"
+  placeholder={t("fields.name.placeholder")}
+  required
+/>
+
+<SelectField
+  label={t("fields.type.label")}
+  name="type"
+  options={options}
+  required
+/>
+```
+
+**Reusable fields already defined** (check `en.json` → `fields` before creating new ones):
+- `fields.name` — Name
+- `fields.email` — Email
+- `fields.password` — Password
+- `fields.description` — Description
+- `fields.type` — Type
+- `fields.url` — URL
+- `fields.status` — Status
+- `fields.provider` — Provider
+- `fields.host` — Host
+- `fields.port` — Port
+- `fields.username` — Username
+- `fields.fromAddress` — From Address
+- ... and many more (always check `en.json` first)
+
+**Adding new field definitions** — When a field doesn't exist in `en.json`, add it to the `fields` object:
+```json
+{
+  "fields": {
+    "myNewField": {
+      "label": "My New Field",
+      "placeholder": "Enter value"
+    }
+  }
+}
+```
+
+Each field entry can have: `label` (required), `placeholder` (optional), `description` (optional).
+
+### CRITICAL — Never Hardcode Labels in Forms
+
+```typescript
+// WRONG — hardcoded label strings
+<InputField label="Username" name="username" placeholder="user@example.com" />
+<InputField label="Password" name="password" />
+
+// CORRECT — use t() with fields namespace
+<InputField
+  label={t("fields.username.label")}
+  name="username"
+  placeholder={t("fields.username.placeholder")}
+/>
+<InputField
+  label={t("fields.password.label")}
+  name="password"
+/>
+```
+
+### Actions (Buttons)
+
+Use `actions.*` for all button labels:
+
+```typescript
+<Button onClick={onCancel} type="button" variant="ghost">
+  {t("actions.cancel")}
+</Button>
+<Button type="submit">
+  {t("actions.create")}
+</Button>
+```
+
+Common actions: `actions.cancel`, `actions.create`, `actions.save`, `actions.delete`, `actions.update`, `actions.confirm`, `actions.connect`, `actions.disconnect`.
+
+Parametric actions with `{feature}` interpolation:
+```typescript
+t("actions.createFeature", { feature: t("fields.sequences.label") })
+t("actions.connectFeature", { feature: "WhatsApp" })
+```
+
+### Toast Messages
+
+Use `messages.*` with `{feature}` interpolation:
+
+```typescript
+// Success
+toast.success(t("messages.createdSuccess", { feature: "SMTP" }))
+toast.success(t("messages.updatedSuccess", { feature: t("fields.webhook.label") }))
+
+// Error — prefer translated messages, fallback to serverError
+toast.error(error.serverError || t("messages.unknownError"))
+```
+
+### Feature-Specific Translations
+
+For text unique to a feature (not reusable), add a feature namespace:
+
+```json
+{
+  "smtp": {
+    "setting": {
+      "description": "Send emails using your SMTP server.",
+      "label": "(Email) SMTP"
+    }
+  }
+}
+```
+
+Access: `t("smtp.setting.label")`, `t("smtp.setting.description")`
+
+### Dialog / Confirmation Text
+
+Use `messages.*`:
+```typescript
+t("messages.deleteConfirmation", { feature: "contact" })
+t("messages.disconnectFeatureDescription", { feature: "SMTP" })
+```
+
+### i18n Checklist
+
+Before submitting any feature:
+1. **No hardcoded user-facing strings** — every label, placeholder, button, message uses `t()`
+2. **Reuse `fields.*`** — check existing field definitions before creating new ones
+3. **Add missing translations** — if a field key doesn't exist in `en.json`, add it
+4. **Use interpolation** — for dynamic text, use `{feature}`, `{name}` params
+5. **Feature namespace** — feature-specific text goes under `<featureName>.*`
+
 ## Checklist for New Feature
 
 1. Create feature directory under `src/features/<name>/`
@@ -234,3 +416,5 @@ Wrap with React context provider (`provider/item-store-provider.tsx`).
 6. Register router in `src/routers/index.ts`
 7. Create page(s) under `src/app/space/[workspaceId]/...`
 8. Build UI components (server page → client table/form)
+9. **Add i18n translations** to `apps/builder/messages/en.json` — reuse `fields.*` for form labels, add feature-specific text under `<featureName>.*`
+10. **Verify no hardcoded strings** — all user-facing text uses `useTranslations()` + `t()`

@@ -109,10 +109,39 @@ Migrations output to `packages/database/drizzle/<timestamp>_<name>/migration.sql
 
 ## Schema Registration
 
-After creating a new table:
-1. Export from `src/schema/index.ts`: `export * from "./<file>"`
-2. Add type alias in `src/types.ts`: `export type MyModel = typeof myModel.$inferSelect`
-3. Add relations in `src/relations/<domain>.ts` and re-export in `src/relations/index.ts`
+After creating a new table, update **3 files** (do all in one batch):
+
+| # | File | Edit |
+|---|------|------|
+| 1 | `src/schema/index.ts` | `export * from "./<file>"` |
+| 2 | `src/types.ts` | `export type MyModel = typeof schema.myModel.$inferSelect` |
+| 3 | `src/relations/index.ts` | **TWO** edits: import at top + spread in `relations` object |
+
+### CRITICAL — `relations/index.ts` requires TWO edits:
+
+```typescript
+// 1. Add import at top of file (near other imports)
+import { myModelRelations } from "./<file>"
+
+// 2. Add spread inside the relations object
+export const relations = {
+  ...existingRelations,
+  ...myModelRelations,  // ← add this
+}
+```
+
+After editing, always **read back the file** to verify both the import line AND the spread exist. It is very common for one to be added but not the other.
+
+### Enum Registration (channel/integration types)
+
+When adding a new channel or integration type:
+
+| File | Edit |
+|------|------|
+| `src/partials/channel.ts` | Add value to `channelTypes` z.enum |
+| `src/partials/integration.ts` | Add value to `integrationTypes` z.enum |
+
+**CRITICAL cascade:** Adding a value to `channelTypes` causes compile errors in every `Record<ChannelType, ...>` that doesn't include the new key. Always grep `Record<ChannelType` across the codebase and fix ALL hits.
 
 ## Query Patterns
 

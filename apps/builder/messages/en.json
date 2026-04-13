@@ -302,17 +302,11 @@
   },
   "workspaces": {
     "list": {
-      "title": "Chatbots List"
+      "title": "Workspaces List"
     }
   },
   "workspaceToken": {
     "title": "Workspace token"
-  },
-  "dialog": {
-    "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
-    "disconnect": {
-      "description": "Are you sure to disconnect {feature}?"
-    }
   },
   "fields": {
     "omnichannel": {
@@ -630,6 +624,10 @@
     "googleSheets": {
       "label": "Google Sheets"
     },
+    "host": {
+      "label": "Host",
+      "placeholder": "smtp.example.com"
+    },
     "hideHeader": {
       "label": "Show Header"
     },
@@ -755,6 +753,13 @@
       "label": "Phone number",
       "noPhoneNumbersFound": "No phone numbers found for this account"
     },
+    "port": {
+      "label": "Port",
+      "placeholder": "587"
+    },
+    "provider": {
+      "label": "Provider"
+    },
     "prompt": {
       "label": "Prompt",
       "placeholder": "Enter prompt"
@@ -871,6 +876,10 @@
     },
     "userId": {
       "label": "User ID"
+    },
+    "username": {
+      "label": "Username",
+      "placeholder": "user@example.com"
     },
     "keywords": {
       "label": "Keywords"
@@ -989,7 +998,8 @@
       "label": "Source"
     },
     "password": {
-      "label": "Password"
+      "label": "Password",
+      "placeholder": "••••••••"
     },
     "passwordConfirmation": {
       "label": "Re-enter password"
@@ -1092,6 +1102,10 @@
     },
     "from": {
       "label": "From"
+    },
+    "fromAddress": {
+      "label": "From Address",
+      "placeholder": "noreply@example.com"
     },
     "messageTemplate": {
       "label": "Message Template"
@@ -1264,6 +1278,7 @@
     "deleteFileComingSoon": "Delete file functionality coming soon",
     "disconnectFeature": "Disconnect {feature}",
     "disconnectFeatureDescription": "Are you sure you want to disconnect the {feature}?",
+    "disconnectSuccess": "{feature} disconnected successfully",
     "failedToCopy": "Failed to copy",
     "failedToPreviewImage": "Failed to preview image",
     "loadingData": "Loading data...",
@@ -1604,5 +1619,11 @@
     "gemini": "Gemini",
     "claude": "Claude",
     "deepseek": "DeepSeek"
+  },
+  "smtp": {
+    "setting": {
+      "description": "Send emails using your SMTP server.",
+      "label": "(Email) SMTP"
+    }
   }
 }
