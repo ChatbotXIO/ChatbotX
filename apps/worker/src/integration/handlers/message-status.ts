@@ -8,7 +8,10 @@ import {
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"
-import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
+import {
+  IntegrationJobAction,
+  type IntegrationJobMessageStatus,
+} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -92,6 +95,10 @@ export const handleMessageStatus = async (
       },
       action: {
         messageId: message?.id,
+        flowId: message?.contentAttributes?.flowId as string | undefined,
+        flowVersionId: message?.contentAttributes?.flowVersionId as
+          | string
+          | undefined,
       },
       occurredAt: new Date(),
       stepId: (message?.contentAttributes?.stepId ?? "") as string,
@@ -104,6 +111,11 @@ export const handleMessageStatus = async (
       eventLog.metadata = message.contentAttributes.metadata as MetadataPayload
     }
 
+    console.log({
+      eventStatus,
+      eventLog: JSON.stringify(eventLog, null, 2),
+      message: JSON.stringify(message, null, 2),
+    })
     if (eventStatus === "delivered") {
       await emit(MessageEventType["message:delivered"], eventLog)
     }
@@ -112,7 +124,7 @@ export const handleMessageStatus = async (
       await emit(MessageEventType["message:seen"], eventLog)
     }
 
-    if (!message) {
+    if (!message || (eventStatus !== "delivered" && eventStatus !== "failed")) {
       return
     }
 
@@ -148,6 +160,7 @@ export const handleMessageStatus = async (
       action: button.postback,
       ref: null,
       inboxId: ctx.inbox.id,
+      webhookType: IntegrationJobAction.messageStatus,
     })
   } catch (error) {
     logger.error(

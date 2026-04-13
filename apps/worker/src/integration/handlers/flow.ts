@@ -326,24 +326,26 @@ export async function runFlowPostback(
       )
       .then((rows) => rows[0])
 
-    await emit(FlowEventType["flow:clicked"], {
-      stepId: foundedButton.id,
-      context: {
-        workspaceId: conversation.workspaceId,
-        contactId: conversation.contactId,
-        conversationId: data.conversationId,
-        channel: contactInbox?.channel ?? "",
-        contactInboxId: contactInbox?.id ?? "",
-        sequenceStepId: parsedAction.sequenceStepId ?? "",
-      },
-      action: {
-        flowId: parsedAction.flowId,
-        buttonId: parsedAction.buttonId,
-        broadcastId: parsedAction.broadcastId,
-        clickType: "button",
-      },
-      occurredAt: new Date(),
-    })
+    if (data.webhookType !== IntegrationJobAction.messageStatus) {
+      await emit(FlowEventType["flow:clicked"], {
+        stepId: foundedButton.id,
+        context: {
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          conversationId: data.conversationId,
+          channel: contactInbox?.channel ?? "",
+          contactInboxId: contactInbox?.id ?? "",
+          sequenceStepId: parsedAction.sequenceStepId ?? "",
+        },
+        action: {
+          flowId: parsedAction.flowId,
+          buttonId: parsedAction.buttonId,
+          broadcastId: parsedAction.broadcastId,
+          clickType: "button",
+        },
+        occurredAt: new Date(),
+      })
+    }
   }
 
   await runStepsAndQuickReplies({

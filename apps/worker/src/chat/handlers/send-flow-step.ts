@@ -154,6 +154,7 @@ export async function sendFlowStep({
         },
         flow: {
           id: flowId,
+          versionId: flowVersionId,
           buttons: step?.buttons ?? [],
         },
         step,
@@ -233,6 +234,8 @@ export async function sendFlowStep({
         ...messageData.contentAttributes,
         metadata,
         stepId: step.id,
+        flowId,
+        flowVersionId,
       }
 
       const newMessage = await tx

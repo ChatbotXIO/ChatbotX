@@ -21,8 +21,8 @@ import { useWhatsappInboxOptions } from "@/features/inboxes/provider/inbox-hook"
 import { TemplateParamsForm } from "@/features/integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
 import {
+  type FlowTemplateResource,
   useFlowTemplate,
-  type WhatsappMessageTemplateResource,
 } from "../../stores/flow-template-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
@@ -37,23 +37,21 @@ function SendWaTemplateMessageStepEditor(
   const t = useTranslations()
   const { setValue, watch } = useFormContext()
   const [selectedTemplate, setSelectedTemplate] =
-    useState<WhatsappMessageTemplateResource | null>(null)
+    useState<FlowTemplateResource | null>(null)
   const [parameters, setParameters] = useState<ParameterInfo[]>([])
-  const prevIntegrationWhatsappIdRef = useRef<string | undefined>(undefined)
+  const prevInboxIdRef = useRef<string | undefined>(undefined)
 
   const whatsappInboxOptions = useWhatsappInboxOptions()
   const templates = useFlowTemplate((s) => s.templates)
 
-  const integrationWhatsappId = watch(
-    `${parentName}.template.integrationWhatsappId`,
-  )
+  const integrationInboxId = watch(`${parentName}.template.inboxId`)
   const templateId = watch(`${parentName}.template.id`)
   const templateParams = watch(`${parentName}.template.params`) || {}
 
   useEffect(() => {
     if (
-      prevIntegrationWhatsappIdRef.current !== undefined &&
-      prevIntegrationWhatsappIdRef.current !== integrationWhatsappId
+      prevInboxIdRef.current !== undefined &&
+      prevInboxIdRef.current !== integrationInboxId
     ) {
       setValue(`${parentName}.template.id`, "")
       setValue(`${parentName}.template.name`, "")
@@ -62,8 +60,8 @@ function SendWaTemplateMessageStepEditor(
       setSelectedTemplate(null)
       setParameters([])
     }
-    prevIntegrationWhatsappIdRef.current = integrationWhatsappId
-  }, [integrationWhatsappId, parentName, setValue])
+    prevInboxIdRef.current = integrationInboxId
+  }, [integrationInboxId, parentName, setValue])
 
   useEffect(() => {
     if (
@@ -74,20 +72,23 @@ function SendWaTemplateMessageStepEditor(
       const template = templates.waTemplates.find((t) => t.id === templateId)
       if (template) {
         setSelectedTemplate(template)
+        setValue(`${parentName}.template.name`, template.name)
+        setValue(`${parentName}.template.language`, template.language)
         const params = extractParameterInfos(
           template.components as TemplateComponent[],
         )
         setParameters(params)
       }
     }
-  }, [templateId, templates])
+  }, [templateId, templates, parentName, setValue])
 
   const filteredTemplates = useMemo(
     () =>
       (templates.waTemplates ?? []).filter(
-        (template) => template.integrationWhatsappId === integrationWhatsappId,
+        (template) =>
+          template.integrationWhatsapp?.inboxId === integrationInboxId,
       ),
-    [templates.waTemplates, integrationWhatsappId],
+    [templates.waTemplates, integrationInboxId],
   )
 
   const handleTemplateChange = (value: string) => {
@@ -112,7 +113,7 @@ function SendWaTemplateMessageStepEditor(
     <BaseStepEditor>
       <div className="space-y-3">
         <ComboboxField
-          name={`${parentName}.template.integrationWhatsappId`}
+          name={`${parentName}.template.inboxId`}
           options={whatsappInboxOptions}
           required={true}
         />

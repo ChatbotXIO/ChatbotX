@@ -2,7 +2,6 @@ import { db, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { MessageTemplateWithComponents } from "../schema/resource"
 
 export const getMessageTemplates = async (
   input: ListMessageTemplatesRequest,
@@ -40,7 +39,7 @@ export const getMessageTemplates = async (
 export const getTemplatesForChatbot = async (
   workspaceId: string,
   status?: string,
-): Promise<MessageTemplateWithComponents[]> => {
+) => {
   await assertCurrentUserCanAccessChatbot(workspaceId)
 
   const filter: {
@@ -57,5 +56,13 @@ export const getTemplatesForChatbot = async (
   return await db.query.whatsappMessageTemplateModel.findMany({
     where: filter,
     orderBy: { name: "asc" },
+    with: {
+      integrationWhatsapp: {
+        columns: {
+          id: true,
+          inboxId: true,
+        },
+      },
+    },
   })
 }

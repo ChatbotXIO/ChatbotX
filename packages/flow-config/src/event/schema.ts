@@ -31,6 +31,7 @@ export type EventContext = z.infer<typeof eventContextSchema>
 
 export const messageActionSchema = z.object({
   flowId: z.string().optional(),
+  flowVersionId: z.string().optional(),
   sourceId: z.string().optional(),
   messageId: z.string().optional(),
   messageDetail: z.record(z.string(), z.unknown()).optional(),

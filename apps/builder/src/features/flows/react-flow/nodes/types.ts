@@ -5,7 +5,7 @@ import type {
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { InboxResource } from "@/features/inboxes/schema/resource"
-import type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
+import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 export type MenuItem = {
   label: string
@@ -19,7 +19,7 @@ export type MenuItem = {
 export type TranslationFn = ReturnType<typeof useTranslations>
 
 export type FlowTemplateMenuData = {
-  waTemplates?: WhatsappMessageTemplateResource[]
+  waTemplates?: FlowTemplateResource[]
 }
 
 export type MenuData = {

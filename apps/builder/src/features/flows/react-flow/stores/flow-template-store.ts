@@ -1,7 +1,7 @@
 import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { getTemplatesForFlow } from "@/features/integration-whatsapp/message-templates/actions/get-templates-for-flow"
-import type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
+import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 import type { FlowTemplateMenuData } from "../nodes/types"
 
 export type FlowTemplateState = {
@@ -17,7 +17,7 @@ export type FlowTemplateState = {
 export type FlowTemplateActions = {
   initialize: () => Promise<void>
   fetchWaTemplates: () => Promise<void>
-  setWaTemplates: (templates: WhatsappMessageTemplateResource[]) => void
+  setWaTemplates: (templates: FlowTemplateResource[]) => void
 }
 
 export type FlowTemplateStore = FlowTemplateState & FlowTemplateActions
@@ -82,7 +82,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
       }
     },
 
-    setWaTemplates: (waTemplates: WhatsappMessageTemplateResource[]) =>
+    setWaTemplates: (waTemplates: FlowTemplateResource[]) =>
       set((state) => ({
         templates: { ...state.templates, waTemplates },
       })),

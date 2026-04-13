@@ -12,8 +12,7 @@ export const waTemplateMenus = (
 
   if (inbox) {
     templates = templates.filter(
-      (template) =>
-        template.integrationWhatsappId === inbox.integrationWhatsapp?.id,
+      (template) => template.integrationWhatsapp?.inboxId === inbox.id,
     )
   }
 
@@ -35,6 +34,7 @@ export const waTemplateMenus = (
       template: {
         id: template.id,
         integrationWhatsappId: template.integrationWhatsappId,
+        inboxId: template.integrationWhatsapp?.inboxId,
       },
     },
   }))

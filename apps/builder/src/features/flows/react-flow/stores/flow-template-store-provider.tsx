@@ -14,7 +14,10 @@ import {
   type FlowTemplateStore,
 } from "./flow-template-store"
 
-export type { WhatsappMessageTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
+export type {
+  FlowTemplateResource,
+  WhatsappMessageTemplateResource,
+} from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 export type FlowTemplateStoreApi = ReturnType<typeof createFlowTemplateStore>
 
