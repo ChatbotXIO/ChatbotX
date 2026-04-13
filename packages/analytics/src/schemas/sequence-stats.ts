@@ -1,3 +1,4 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import {
   clickedPayloadSchema,
@@ -54,7 +55,7 @@ export const sequenceStepContactResource = z.object({
   lastName: z.string().nullable(),
   sourceId: z.string().nullable(),
   avatar: z.string().nullable(),
-  channel: z.string().nullable(),
+  channel: z.enum(channelTypes.enum),
   errorContent: z.string().nullable(),
   occurredAt: z.string(),
 })

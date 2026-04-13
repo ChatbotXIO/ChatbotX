@@ -6,6 +6,7 @@ import {
   listSequenceStepContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { db } from "@chatbotx.io/database/client"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -117,7 +118,7 @@ export const sequencesPrivateAPI = {
             lastName: contact.contact?.lastName ?? null,
             sourceId: contact.sourceId ?? null,
             avatar: contact.contact?.avatar ?? null,
-            channel: contact.channel ?? null,
+            channel: contact.channel as ChannelType,
             conversationId: contact.conversation?.id ?? null,
             errorContent: eventData.errorContent ?? null,
             occurredAt: eventData.occurredAt,

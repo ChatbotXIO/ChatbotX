@@ -6,6 +6,7 @@ import {
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { db } from "@chatbotx.io/database/client"
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
@@ -40,7 +41,11 @@ export const broadcastPrivateAPIs = {
     .handler(async ({ input }) => {
       const { workspaceId, broadcastId, eventType, total, page, perPage } =
         input
-      const totalValue = total || 0
+      const totalValue = total ?? 0
+
+      if (!eventType) {
+        return { data: [], total: totalValue, page, pageCount: 0 }
+      }
 
       const { contactInboxIds, contactEventMap } =
         await broadcastAnalyticsService.getContacts({
@@ -108,8 +113,8 @@ export const broadcastPrivateAPIs = {
             lastName: contact.contact?.lastName ?? null,
             sourceId: contact.sourceId ?? null,
             avatar: contact.contact?.avatar ?? null,
-            channel: contact.channel ?? null,
-            conversationId: contact.conversation?.id ?? null,
+            channel: contact.channel as ChannelType,
+            conversationId: contact.conversation?.id ?? "",
             errorContent: eventData.errorContent ?? null,
             occurredAt: eventData.occurredAt,
           }

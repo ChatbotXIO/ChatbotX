@@ -1,3 +1,4 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
 import { z } from "zod"
@@ -29,7 +30,7 @@ export type BroadcastStats = GetBroadcastStatsResponse
 export const listBroadcastContactsRequest = z.object({
   workspaceId: z.string(),
   broadcastId: z.string(),
-  eventType: broadcastEventType,
+  eventType: broadcastEventType.optional(),
   total: z.number().optional(),
   page: z.number().default(1),
   perPage: z.number().default(20),
@@ -46,7 +47,7 @@ export const broadcastContactResource = z.object({
   lastName: z.string().nullable(),
   sourceId: z.string().nullable(),
   avatar: z.string().nullable(),
-  channel: z.string().nullable(),
+  channel: z.enum(channelTypes.enum),
   errorContent: z.string().nullable(),
   occurredAt: z.string(),
 })
