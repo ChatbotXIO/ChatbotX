@@ -7,7 +7,6 @@
     "https": "dotenv -e ../../.env -- partykit dev --https --https-key-path certificates/partysocket.pem --https-cert-path certificates/partysocket.pem"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.11",

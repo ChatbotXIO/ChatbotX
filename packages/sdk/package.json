@@ -1,7 +1,6 @@
 {
   "name": "@chatbotx.io/sdk",
   "version": "0.1.0",
-  "author": "Michael Truong <realcodesiman@gmail.com>",
   "type": "module",
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

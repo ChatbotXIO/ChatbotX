@@ -14,7 +14,6 @@
     "test:domains": "tsx scripts/test-domains.ts"
   },
   "keywords": [],
-  "author": "",
   "license": "ISC",
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.66",

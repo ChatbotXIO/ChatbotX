@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "author": "Michael Truong <realcodesiman@gmail.com>",
   "dependencies": {
     "@chatbotx.io/partysocket-config": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",

@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "author": "Michael Truong <realcodesiman@gmail.com>",
   "exports": {
     ".": "./src/index.ts"
   },
