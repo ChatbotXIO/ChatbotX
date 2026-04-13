@@ -1,4 +1,5 @@
 import { createId } from "@chatbotx.io/utils"
+import { env } from "../key"
 import type { CreateContactEvent } from "../schemas"
 
 type Redis = {
@@ -180,6 +181,10 @@ export abstract class BaseService {
     message_id?: string
     event_type: string
   }): Promise<boolean> {
+    if (!env.ANALYTICS_ENABLED) {
+      return false
+    }
+
     if (!this.redis) {
       return true
     }

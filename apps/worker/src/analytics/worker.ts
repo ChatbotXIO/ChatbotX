@@ -1,3 +1,4 @@
+import { env } from "@chatbotx.io/analytics/key"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   AnalyticsJobData,
@@ -14,6 +15,11 @@ import { registerSchedules } from "./handlers/register-schedules"
 import { syncEvents } from "./handlers/sync-events"
 
 async function startScheduleWorker() {
+  if (!env.ANALYTICS_ENABLED) {
+    logger.info("Analytics is disabled via ANALYTICS_ENABLED=false")
+    return
+  }
+
   try {
     await ensureBootstrapped()
     // logger.info("Analytics bootstrapped successfully")
