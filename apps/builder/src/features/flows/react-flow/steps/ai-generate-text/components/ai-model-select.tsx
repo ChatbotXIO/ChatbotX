@@ -1,12 +1,12 @@
 "use client"
 
+import type { AIProvider } from "@chatbotx.io/ai"
 import {
   claudeModelOptions,
   deepseekModelOptions,
   geminiModelOptions,
   openaiModelOptions,
 } from "@chatbotx.io/ai"
-import type { AIProvider } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import type {
   SelectFieldProps,

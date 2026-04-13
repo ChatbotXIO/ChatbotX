@@ -1,12 +1,9 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
+import { geminiEmbeddingModels, openaiEmbeddingModels } from "@chatbotx.io/ai"
 import { db } from "@chatbotx.io/database/client"
 import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
 import type { EmbeddingModel } from "ai"
-import {
-  geminiEmbeddingModels,
-  openaiEmbeddingModels,
-} from "../../integration/handlers/automated-response/constants"
 
 export async function resolveEmbeddingModel(
   workspaceId: string,

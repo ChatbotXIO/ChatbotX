@@ -7,7 +7,6 @@ import type {
   AIFunctionModel,
   AIMCPServerModel,
 } from "@chatbotx.io/database/types"
-import { aiProviders } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
@@ -30,6 +29,7 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { aiProviders } from "@chatbotx.io/utils/ai"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"

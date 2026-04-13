@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+export const openaiEmbeddingModels = z.enum(["text-embedding-ada-002"])
+export type OpenAIEmbeddingModel = z.infer<typeof openaiEmbeddingModels>
+
 export const openaiModels = z.enum([
   "gpt-4-turbo",
   "gpt-4.1-mini",

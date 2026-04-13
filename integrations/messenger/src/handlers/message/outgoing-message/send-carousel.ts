@@ -1,4 +1,7 @@
-import type { SendCarouselStepSchema } from "@chatbotx.io/flow-config"
+import type {
+  SendCardStepSchema,
+  SendCarouselStepSchema,
+} from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { chunk } from "remeda"
 import type { MessengerAuthValue } from "../../../schema"
@@ -20,7 +23,7 @@ export function* convertFlowStepCarousel(
         type: "template",
         payload: {
           template_type: "generic",
-          elements: chunk.map((card) => ({
+          elements: chunk.map((card: SendCardStepSchema) => ({
             title: card.title,
             subtitle: "subtitle" in card ? card.subtitle : undefined,
             image_url: "image" in card ? card.image?.url : undefined,

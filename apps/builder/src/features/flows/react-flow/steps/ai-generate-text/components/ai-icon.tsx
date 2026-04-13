@@ -1,5 +1,5 @@
-import { type AIProvider, aiProviders } from "@chatbotx.io/flow-config"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import { type AIProvider, aiProviders } from "@chatbotx.io/utils/ai"
 import {
   SiClaude,
   SiClaudeHex,

@@ -1,16 +1,10 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { db, sql } from "@chatbotx.io/database/client"
-import type { SecretTextAuthValue } from "@chatbotx.io/sdk"
+import { secretTextAuthSchema } from "@chatbotx.io/sdk"
 import { embed } from "ai"
-import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
-import { logger } from "../../../lib/logger"
-import { helpTexts, openaiEmbeddingModels } from "./constants"
-import type {
-  FileSearchArgs,
-  FileSearchConfig,
-  SimilaritySearchResult,
-} from "./types"
+import { logger } from "../logger"
+import { openaiEmbeddingModels } from "../models"
 
 const distanceSchema = z
   .union([z.number(), z.string()])
@@ -35,6 +29,17 @@ const similaritySearchResultSchema = z.object({
 
 const similaritySearchResultsSchema = z.array(similaritySearchResultSchema)
 
+export type SimilaritySearchResult = z.infer<
+  typeof similaritySearchResultSchema
+>
+
+export type FileSearchConfig = {
+  workspaceId: string
+  selectedFileIds: string[]
+  similarityThreshold: number
+  maxResults: number
+}
+
 async function getOpenAIIntegration(workspaceId: string) {
   const integrationOpenAI = await db.query.integrationOpenaiModel.findFirst({
     where: {
@@ -56,7 +61,12 @@ async function createQueryEmbedding(
 ): Promise<number[]> {
   const integrationOpenAI = await getOpenAIIntegration(workspaceId)
 
-  const apiKey = (integrationOpenAI.auth as SecretTextAuthValue).secretText
+  const authParsed = secretTextAuthSchema.safeParse(integrationOpenAI.auth)
+  if (!authParsed.success) {
+    throw new Error("Invalid OpenAI integration auth configuration")
+  }
+
+  const apiKey = authParsed.data.secretText
   if (!apiKey) {
     throw new Error("Missing OpenAI API key")
   }
@@ -102,7 +112,7 @@ async function searchSimilarEmbeddings(
         workspaceId: config.workspaceId,
         issues: parsed.error.issues,
       },
-      "[automated-response] Invalid similarity search results",
+      "[ai-package] Invalid similarity search results",
     )
     return []
   }
@@ -110,60 +120,17 @@ async function searchSimilarEmbeddings(
   return parsed.data
 }
 
-function filterRelevantResults(
-  results: SimilaritySearchResult[],
-  threshold: number,
-): SimilaritySearchResult[] {
-  return results.filter((result) => result.distance > threshold)
-}
-
-function formatSearchResults(results: SimilaritySearchResult[]): string {
-  if (results.length === 0) {
-    return helpTexts.fileSearchNoResult
-  }
-
-  const formattedResults = results
-    .map((item, index) => `${index + 1}. ${item.content}`)
-    .join("\n\n")
-
-  return `${helpTexts.fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
-}
-
 export async function performFileSearch(
-  args: FileSearchArgs,
+  args: { query: string },
   config: FileSearchConfig,
-): Promise<string> {
-  try {
-    const queryEmbedding = await createQueryEmbedding(
-      args.query,
-      config.workspaceId,
-    )
-    const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
+): Promise<SimilaritySearchResult[]> {
+  const queryEmbedding = await createQueryEmbedding(
+    args.query,
+    config.workspaceId,
+  )
+  const searchResults = await searchSimilarEmbeddings(queryEmbedding, config)
 
-    if (searchResults.length === 0) {
-      return helpTexts.fileSearchNoResult
-    }
-
-    const relevantResults = filterRelevantResults(
-      searchResults,
-      config.similarityThreshold,
-    )
-
-    if (relevantResults.length === 0) {
-      return helpTexts.fileSearchNoResult
-    }
-
-    const result = formatSearchResults(relevantResults)
-    return result
-  } catch (error) {
-    const parsedError = normalizeError(error)
-    logger.error(
-      {
-        error: parsedError,
-        workspaceId: config.workspaceId,
-      },
-      "[automated-response] performFileSearch failed",
-    )
-    return `${helpTexts.fileSearchErrorPrefix} ${error instanceof Error ? error.message : helpTexts.unknownError}`
-  }
+  return searchResults.filter(
+    (result) => result.distance > config.similarityThreshold,
+  )
 }

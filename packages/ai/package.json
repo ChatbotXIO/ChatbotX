@@ -4,16 +4,29 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./models": "./src/models/index.ts",
+    "./server": "./src/server.ts",
+    "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/deepseek": "^2.0.29",
+    "@ai-sdk/google": "^3.0.62",
+    "@ai-sdk/openai": "^3.0.52",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
-    "ai": "^6.0.145",
+    "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
+    "ai": "^6.0.158",
+    "ky": "^2.0.0",
+    "mime-types": "^2.1.35",
+    "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/mime-types": "^3.0.1",
     "typescript": "^6.0.2"
   }
 }

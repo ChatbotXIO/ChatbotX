@@ -15,21 +15,3 @@ export type ReplyByAIProps = {
     mcpTools: string[]
   }
 }
-
-export type SimilaritySearchResult = {
-  id: string
-  content: string
-  aiFileId: string
-  distance: number
-}
-
-export type FileSearchArgs = {
-  query: string
-}
-
-export type FileSearchConfig = {
-  workspaceId: string
-  selectedFileIds: string[]
-  similarityThreshold: number
-  maxResults: number
-}

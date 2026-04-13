@@ -1,9 +1,9 @@
+import { MAX_CONVERSATION_HISTORY } from "@chatbotx.io/ai"
 import { db } from "@chatbotx.io/database/client"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import type { ModelMessage } from "ai"
-import { MAX_CONVERSATION_HISTORY } from "../automated-response/constants"
 
 export async function buildAIMessages(
   conversation: ConversationModel,

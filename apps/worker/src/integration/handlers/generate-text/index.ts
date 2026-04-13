@@ -1,3 +1,11 @@
+import { helpTexts, processStreamingText, toolPrefixes } from "@chatbotx.io/ai"
+import {
+  createAIModelInstance,
+  getAIIntegrationInDB,
+  getAIToolset,
+  McpClient,
+  normalizeMcpContent,
+} from "@chatbotx.io/ai/server"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -7,11 +15,9 @@ import {
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { streamText } from "ai"
-import { createAIModelInstance, getAIIntegrationInDB } from "../../../lib/ai"
-import { processStreamingText } from "../automated-response/text"
+import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import { buildAIMessages } from "./messages"
-import { getAIToolset } from "./tools"
 
 export async function handleAIGenerateText({
   conversation,
@@ -42,10 +48,25 @@ export async function handleAIGenerateText({
       traceId: conversation.id,
     })
 
-    const { tools, cleanup } = await getAIToolset(
-      conversation.workspaceId,
-      step.tools || [],
-    )
+    const { tools, cleanup } = await getAIToolset({
+      workspaceId: conversation.workspaceId,
+      tools: step.tools || [],
+      toolPrefixes: {
+        file: toolPrefixes.enum.file,
+        fn: toolPrefixes.enum.fn,
+        mcp: toolPrefixes.enum.mcp,
+      },
+      fileSearch: {
+        fileSearchDescription: helpTexts.fileSearchDescription,
+        fileSearchQueryDescription: helpTexts.fileSearchQueryDescription,
+        fileSearchNoResult: helpTexts.fileSearchNoResult,
+        fileSearchFoundPrefix: helpTexts.fileSearchFoundPrefix,
+      },
+      mcp: {
+        McpClient,
+        normalizeMcpContent,
+      },
+    })
     cleanupToolset = cleanup
 
     const result = streamText({
@@ -63,7 +84,11 @@ export async function handleAIGenerateText({
 
     const { fullText } = await processStreamingText(
       result.textStream,
-      conversation.id,
+      async (_segment, parts) => {
+        for (const part of parts) {
+          await sendMessageWithRender(conversation.id, part)
+        }
+      },
       { sendParts: true },
     )
 

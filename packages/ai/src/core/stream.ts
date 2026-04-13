@@ -1,9 +1,4 @@
-import {
-  type BotResponseTrackingContext,
-  ChatJobAction,
-  chatQueue,
-} from "@chatbotx.io/worker-config"
-import { supportedImageExtensions } from "./constants"
+import { supportedImageExtensions } from "../constants"
 
 const REGEX_ANY_TOKEN =
   /!\[[^\]]*\]\(\s*([^)\s\r\n]+)\s*\)|\[[^\]]+\]\(\s*([^)\s\r\n]+)\s*\)|(https?:\/\/[^\s)\]]+(?:\?[^\s)\]]*)?)/g
@@ -12,6 +7,11 @@ const REGEX_ONLY_EMOJI = /^[\u{1F300}-\u{1F9FF}]+$/u
 const REGEX_STARS_OR_DASHES = /^[-*]\s*/u
 const REGEX_NOISY_CHARS = /^[-*.\s]+$/
 const PARAGRAPH_SEPARATOR = "\n\n"
+
+export interface StreamProcessingOptions {
+  sendParts?: boolean
+  trackingContext?: unknown
+}
 
 function isMeaningfulPart(part: string): boolean {
   if (!part) {
@@ -47,7 +47,7 @@ function cleanText(value: string): string {
     .trim()
 }
 
-function isImageUrl(url: string): boolean {
+export function isImageUrl(url: string): boolean {
   const s = url.trim().toLowerCase()
   if (!(s.startsWith("http://") || s.startsWith("https://"))) {
     return false
@@ -102,62 +102,25 @@ export function processTextForImagesAndLinks(text: string): string[] {
   return getMeaningfulParts(parts)
 }
 
-export async function sendMessageWithRender(
-  conversationId: string,
-  text: string,
-  trackingContext?: BotResponseTrackingContext,
-): Promise<void> {
-  const data = isImageUrl(text)
-    ? { conversationId, url: text, trackingContext }
-    : { conversationId, text, trackingContext }
-
-  await chatQueue.add(ChatJobAction.sendChatMessage, {
-    type: ChatJobAction.sendChatMessage,
-    data,
-  })
-}
-
-export async function sendProcessedTextParts(
-  conversationId: string,
-  text: string,
-): Promise<number> {
-  const parts = processTextForImagesAndLinks(text)
-  for (const part of parts) {
-    await sendMessageWithRender(conversationId, part)
-  }
-  return parts.length
-}
-
-async function processSegmentParts(
-  segment: string,
-  conversationId: string,
-  sendParts: boolean,
-  trackingContext?: BotResponseTrackingContext,
-): Promise<number> {
-  const parts = processTextForImagesAndLinks(segment)
-  if (!sendParts) {
-    return parts.length
-  }
-
-  for (const part of parts) {
-    await sendMessageWithRender(conversationId, part, trackingContext)
-  }
-
-  return parts.length
-}
-
 export async function processStreamingText(
   textStream: AsyncIterable<string>,
-  conversationId: string,
-  options?: {
-    sendParts?: boolean
-    trackingContext?: BotResponseTrackingContext
-  },
+  onSegment: (segment: string, parts: string[]) => Promise<void>,
+  options?: StreamProcessingOptions,
 ): Promise<{ messageCount: number; fullText: string }> {
   let fullText = ""
   let messageCount = 0
   const sendParts = options?.sendParts !== false
   let currentSegment = ""
+
+  const handleSegment = async (segment: string) => {
+    const parts = processTextForImagesAndLinks(segment)
+    if (sendParts) {
+      await onSegment(segment, parts)
+      messageCount += parts.length
+    } else {
+      messageCount += parts.length
+    }
+  }
 
   for await (const delta of textStream) {
     fullText += delta
@@ -167,12 +130,7 @@ export async function processStreamingText(
     while (separatorIndex !== -1) {
       const segment = currentSegment.slice(0, separatorIndex).trim()
       if (segment) {
-        messageCount += await processSegmentParts(
-          segment,
-          conversationId,
-          sendParts,
-          options?.trackingContext,
-        )
+        await handleSegment(segment)
       }
       currentSegment = currentSegment.slice(
         separatorIndex + PARAGRAPH_SEPARATOR.length,
@@ -183,12 +141,7 @@ export async function processStreamingText(
 
   const tailSegment = currentSegment.trim()
   if (tailSegment) {
-    messageCount += await processSegmentParts(
-      tailSegment,
-      conversationId,
-      sendParts,
-      options?.trackingContext,
-    )
+    await handleSegment(tailSegment)
   }
 
   return { messageCount, fullText }

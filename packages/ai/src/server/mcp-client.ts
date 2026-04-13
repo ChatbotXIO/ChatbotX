@@ -4,13 +4,15 @@ import {
 } from "@chatbotx.io/database/partials"
 import ky, { type Options } from "ky"
 import { normalizeError } from "universal-error-normalizer"
-import { z } from "zod"
+import { aiTimeouts, helpTexts, mcpConstants } from "../constants"
+import { logger } from "../logger"
 import {
-  aiTimeouts,
-  helpTexts,
-  mcpConstants,
-} from "../integration/handlers/automated-response/constants"
-import { logger } from "./logger"
+  type MCPTool,
+  mcpContentArraySchema,
+  mcpJsonRpcErrorResponseSchema,
+  mcpJsonRpcSuccessSchema,
+} from "../schemas/mcp"
+import type { JsonObject, JsonValue } from "../utils"
 
 const mcpKy = ky.create({
   throwHttpErrors: false,
@@ -18,50 +20,13 @@ const mcpKy = ky.create({
   retry: { limit: 0 },
 })
 
-const jsonRpcIdSchema = z.union([z.string(), z.number(), z.null()]).optional()
-
-const jsonRpcErrorSchema = z.object({
-  code: z.number(),
-  message: z.string(),
-  data: z.unknown().optional(),
-})
-
-const mcpToolSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  inputSchema: z.record(z.string(), z.unknown()).optional(),
-})
-
-const mcpJsonRpcSuccessSchema = z.object({
-  jsonrpc: z.literal(helpTexts.jsonRpcVersion),
-  id: jsonRpcIdSchema,
-  result: z.record(z.string(), z.unknown()),
-})
-
-const mcpJsonRpcErrorResponseSchema = z.object({
-  jsonrpc: z.literal(helpTexts.jsonRpcVersion),
-  id: jsonRpcIdSchema,
-  error: jsonRpcErrorSchema,
-})
-
-export type MCPTool = z.infer<typeof mcpToolSchema>
-
 export interface McpClientOptions {
   auth: AIMcpServerAuth
   name?: string
   url: string
 }
 
-const mcpTextContentSchema = z.object({
-  type: z.literal("text"),
-  text: z.string(),
-})
-
-const mcpContentArraySchema = z.array(
-  z.union([mcpTextContentSchema, z.unknown()]),
-)
-
-export const normalizeMcpContent = (content: unknown): unknown => {
+export const normalizeMcpContent = (content: JsonValue): JsonValue => {
   const parsed = mcpContentArraySchema.safeParse(content)
   if (!parsed.success || parsed.data.length === 0) {
     return content
@@ -152,8 +117,8 @@ export class McpClient {
       if (trimmed.includes("data:")) {
         const dataLines = trimmed
           .split("\n")
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.slice("data:".length).trim())
+          .filter((line: string) => line.startsWith("data:"))
+          .map((line: string) => line.slice("data:".length).trim())
         const lastData = dataLines.at(-1) ?? "{}"
         parsed = JSON.parse(lastData)
       } else {
@@ -247,10 +212,10 @@ export class McpClient {
     return result?.tools ?? []
   }
 
-  async callTool(toolName: string, args: Record<string, unknown>) {
+  async callTool(toolName: string, args: JsonObject) {
     await this.ensureInitialized()
 
-    const result = await this.request<Record<string, unknown>>(
+    const result = await this.request<JsonObject>(
       mcpConstants.jsonRpcMethods.toolsCall,
       {
         name: toolName,
@@ -265,7 +230,10 @@ export class McpClient {
       )
     }
 
-    return result
+    return {
+      isError: false,
+      content: result.content as JsonValue,
+    }
   }
 
   getLegacyStatus() {
@@ -273,8 +241,6 @@ export class McpClient {
   }
 
   async close() {
-    // For HTTP transport, there's no persistent connection to close.
-    // This method is provided for compatibility with the cleanup logic.
     await Promise.resolve()
   }
 }

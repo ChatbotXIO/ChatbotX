@@ -1,7 +1,7 @@
 import { db } from "@chatbotx.io/database/client"
 import { integrationTypes } from "@chatbotx.io/database/partials"
 import type { IntegrationModel } from "@chatbotx.io/database/types"
-import { type AIProvider, aiProviders } from "./models"
+import { type AIProvider, aiProviders } from "@chatbotx.io/utils/ai"
 
 export async function getAllWorkspaceAIIntegrations(
   workspaceId: string,

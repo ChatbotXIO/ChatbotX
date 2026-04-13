@@ -1,3 +1,4 @@
+import { getAIFileExtensionsAccept } from "@chatbotx.io/ai/utils"
 import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import { getMimeTypeFromFile } from "@chatbotx.io/ui/lib/file-types"
 import { useTranslations } from "next-intl"
@@ -5,7 +6,6 @@ import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { createAIFileAction } from "./actions/create-ai-file.action"
-import { getAIFileExtensionsAccept } from "./constants"
 
 export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
   const workspaceId = useWorkspaceId()
@@ -35,7 +35,7 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <DirectUploadButton
-      accept={getAIFileExtensionsAccept()}
+      accept={Object.values(getAIFileExtensionsAccept()).join(",")}
       disabled={isPending}
       label={t("actions.uploadFile")}
       maxSize={26_214_400} // 25MB
