@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS "FlowNodeStat" (
 	"refType" integer
 );
 --> statement-breakpoint
-DROP TABLE IF EXISTS "SequenceEvent" CASCADE;--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" DROP CONSTRAINT IF EXISTS "AnalyticsManifestStatus_pkey";--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" ADD COLUMN IF NOT EXISTS "objectKey" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "contactInboxId" bigint NOT NULL;--> statement-breakpoint
