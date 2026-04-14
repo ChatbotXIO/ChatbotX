@@ -41,13 +41,13 @@ ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "clickedAt" timestamp(
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "failedAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "errorContent" text;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN IF NOT EXISTS "isRead" boolean GENERATED ALWAYS AS (case when "seenAt" is null then false when "deliveredAt" is null then false else "seenAt" >= "deliveredAt" end) STORED;--> statement-breakpoint
-ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "isRead" boolean GENERATED ALWAYS AS (case when "seenAt" is null then false when "deliveredAt" is null then false else "seenAt" >= "deliveredAt" end) STORED;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "deliveredAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "seenAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "clickedAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "failedAt" timestamp(6) with time zone;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "errorContent" text;--> statement-breakpoint
 ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "contactInboxId" bigint NOT NULL;--> statement-breakpoint
+ALTER TABLE "SequenceDispatch" ADD COLUMN IF NOT EXISTS "isRead" boolean GENERATED ALWAYS AS (case when "seenAt" is null then false when "deliveredAt" is null then false else "seenAt" >= "deliveredAt" end) STORED;--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" DROP COLUMN IF EXISTS "id";--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" DROP COLUMN IF EXISTS "createdAt";--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" DROP COLUMN IF EXISTS "updatedAt";--> statement-breakpoint
