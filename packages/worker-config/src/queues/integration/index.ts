@@ -84,6 +84,7 @@ export type IntegrationJobSendFlowQuickReply = {
     action: string
     ref?: string | null
     inboxId?: string
+    webhookType?: string
   }
 }
 

@@ -108,6 +108,7 @@ export async function processWhatsappTemplate(
         flowId: flow.id,
         flowVersionId: flow.versionId,
         buttons: flow.buttons,
+        contactInboxId: contactInbox.id,
       }),
     }
   }

@@ -410,7 +410,6 @@ export class FlowAnalyticsService {
     input: FlowContactStatsRequest,
   ): Promise<ListFlowNodeContactsResponse> {
     const { workspaceId, flowId, eventType, nodeId } = input
-    console.log({ eventType, nodeId, input })
 
     if (!(eventType && nodeId)) {
       return { data: [], total: 0, page: 1, pageCount: 0 }

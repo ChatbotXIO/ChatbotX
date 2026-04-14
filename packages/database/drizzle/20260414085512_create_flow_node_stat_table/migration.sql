@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS "FlowAnalyticsSession";--> statement-breakpoint
-DROP TABLE IF EXISTS "FlowNodeStat";--> statement-breakpoint
+-- DROP TABLE IF EXISTS "FlowAnalyticsSession";--> statement-breakpoint
+-- DROP TABLE IF EXISTS "FlowNodeStat";--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "FlowAnalyticsSession" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,

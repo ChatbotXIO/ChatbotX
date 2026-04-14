@@ -1,6 +1,5 @@
-import { format } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 
 export function toClickHouseDateTime(date: Date): string {
-  const utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-  return format(utcDate, "yyyy-MM-dd HH:mm:ss")
+  return formatInTimeZone(date, "UTC", "yyyy-MM-dd HH:mm:ss")
 }

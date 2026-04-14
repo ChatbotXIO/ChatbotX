@@ -1,4 +1,5 @@
 import {
+  appendCodeToMagicLink,
   type ButtonStepProps,
   buttonTypes,
   encodeButtonPayload,
@@ -14,28 +15,33 @@ export function getButtonTemplate(props: {
   flowVersionId?: string
   button: ButtonStepProps
   metadata?: MetadataPayload
+  contactInboxId?: string
 }): ButtonPayload {
-  const { button, metadata } = props
+  const { button, metadata, contactInboxId } = props
+
+  const buttonPayload = encodeButtonPayload({
+    flowId: props.flowId,
+    flowVersionId: props.flowVersionId,
+    buttonId: button.id,
+    broadcastId: extractMetadata("broadcastId", metadata),
+    sequenceStepId: extractMetadata("sequenceStepId", metadata),
+    contactInboxId,
+  })
+
   switch (button.buttonType) {
     case buttonTypes.enum.openWebsite:
       return {
         type: "oa.open.url",
         title: button.label,
         payload: {
-          url: button.beforeStep.url,
+          url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
         },
       }
     default:
       return {
         type: "oa.query.hide",
         title: button.label,
-        payload: `postback_${encodeButtonPayload({
-          flowId: props.flowId,
-          flowVersionId: props.flowVersionId,
-          buttonId: button.id,
-          broadcastId: extractMetadata("broadcastId", metadata),
-          sequenceStepId: extractMetadata("sequenceStepId", metadata),
-        })}`,
+        payload: `postback_${buttonPayload}`,
       }
   }
 }
@@ -45,6 +51,7 @@ export function convertZaloButtons(props: {
   flowVersionId?: string
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
+  contactInboxId?: string
 }): ButtonPayload[] | undefined {
   const chunks = chunk(props.buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {
@@ -54,6 +61,7 @@ export function convertZaloButtons(props: {
         flowVersionId: props.flowVersionId,
         button,
         metadata: props.metadata,
+        contactInboxId: props.contactInboxId,
       }),
     )
   }

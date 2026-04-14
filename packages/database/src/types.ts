@@ -82,3 +82,6 @@ export type WhatsappMessageTemplateModel =
 export type FlowAnalyticsSessionModel =
   typeof schema.flowAnalyticsSessionModel.$inferSelect
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect
+export type MagicLinkContactStatModel =
+  typeof schema.magicLinkContactStatModel.$inferSelect
+export type MagicLinkStatModel = typeof schema.magicLinkStatModel.$inferSelect

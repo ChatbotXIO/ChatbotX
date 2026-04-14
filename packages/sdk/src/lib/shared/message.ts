@@ -13,6 +13,7 @@ export type IncomingContact = {
 
 export type OutgoingContact = {
   sourceId: string
+  id: string
 }
 
 export type OutgoingMessage = {

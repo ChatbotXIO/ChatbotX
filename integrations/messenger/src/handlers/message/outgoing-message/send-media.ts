@@ -26,6 +26,7 @@ export async function* convertFlowStepMedia(
       flowId,
       flowVersionId,
       buttons: step.buttons,
+      contactInboxId: props.data.contact.id,
     })
     yield {
       attachment: {

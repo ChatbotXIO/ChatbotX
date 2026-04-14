@@ -7,6 +7,7 @@
     "@clickhouse/client": "^1.18.2",
     "@t3-oss/env-core": "^0.13.11",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 import {
   broadcastAnalyticsService,
   flowAnalyticsService,
+  magicLinkAnalyticsService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import type { FlowEvenTypeMap } from "@chatbotx.io/event-bus"
@@ -23,6 +24,12 @@ export const flowListeners: Partial<FlowEvenTypeMap> = {
     {
       name: "flow-stats",
       handler: flowAnalyticsService.onClicked.bind(flowAnalyticsService),
+    },
+    {
+      name: "magic-link-stats",
+      handler: magicLinkAnalyticsService.onClicked.bind(
+        magicLinkAnalyticsService,
+      ),
     },
   ],
 }

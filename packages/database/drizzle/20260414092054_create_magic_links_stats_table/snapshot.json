@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "c81ae424-4108-47ea-8bd6-d417f87e81e6",
-  "prevIds": ["e6ddd3dc-945b-47bf-9f22-e318cc38c524"],
+  "id": "335e876f-2946-494d-b7fa-c4891a07e1ed",
+  "prevIds": ["dc9dc2b1-afd5-413c-96d7-51ab1986a2f2"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -383,6 +383,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "IntegrationSmtp",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "IntegrationWebchat",
       "entityType": "tables",
       "schema": "public"
@@ -396,6 +402,24 @@
     {
       "isRlsEnabled": false,
       "name": "IntegrationZalo",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MagicLink",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MagicLinkContactStat",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MagicLinkStat",
       "entityType": "tables",
       "schema": "public"
     },
@@ -3451,20 +3475,7 @@
       "table": "ContactOnBroadcast"
     },
     {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sentAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactOnBroadcast"
-    },
-    {
-      "type": "bigint",
+      "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
@@ -3535,7 +3546,7 @@
       "dimensions": 0,
       "default": null,
       "generated": {
-        "as": "case when \"sentAt\" is null then false when \"readAt\" is null then false else \"readAt\" >= \"sentAt\" end",
+        "as": "case when \"seenAt\" is null then false when \"deliveredAt\" is null then false else \"seenAt\" >= \"deliveredAt\" end",
         "type": "stored"
       },
       "identity": null,
@@ -5157,53 +5168,14 @@
       "table": "FlowNodeStat"
     },
     {
-      "type": "timestamp(6) with time zone",
+      "type": "text",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "failedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FlowNodeStat"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "deliveredAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FlowNodeStat"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "seenAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "FlowNodeStat"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "clickedAt",
+      "name": "eventType",
       "entityType": "columns",
       "schema": "public",
       "table": "FlowNodeStat"
@@ -5217,6 +5189,32 @@
       "generated": null,
       "identity": null,
       "name": "errorContent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seenAt",
       "entityType": "columns",
       "schema": "public",
       "table": "FlowNodeStat"
@@ -6519,6 +6517,97 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "IntegrationWebchat"
     },
     {
@@ -6975,6 +7064,240 @@
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationZalo"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "linkId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "linkId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
     },
     {
       "type": "bigint",
@@ -7973,6 +8296,22 @@
       "generated": null,
       "identity": null,
       "name": "enrollmentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": {
+        "as": "case when \"seenAt\" is null then false when \"deliveredAt\" is null then false else \"seenAt\" >= \"deliveredAt\" end",
+        "type": "stored"
+      },
+      "identity": null,
+      "name": "isRead",
       "entityType": "columns",
       "schema": "public",
       "table": "SequenceDispatch"
@@ -10327,14 +10666,35 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "contactInboxId",
+          "value": "workspaceId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         },
         {
-          "value": "seenAt",
+          "value": "analyticsId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "nodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "eventType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "buttonId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -10346,7 +10706,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "FlowNodeStat_contactInboxId_seenAt_idx",
+      "name": "FlowNodeStat_filter_1_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "FlowNodeStat"
@@ -10354,6 +10714,13 @@
     {
       "nameExplicit": true,
       "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
         {
           "value": "analyticsId",
           "isExpression": false,
@@ -10370,46 +10737,11 @@
         }
       ],
       "isUnique": false,
-      "where": null,
+      "where": "\"eventType\" = 'seen' AND \"seenAt\" IS NOT NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "FlowNodeStat_analyticsId_nodeId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "FlowNodeStat"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "analyticsId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "nodeId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        },
-        {
-          "value": "contactId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "FlowNodeStat_analyticsId_nodeId_contactId_key",
+      "name": "FlowNodeStat_filter_2_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "FlowNodeStat"
@@ -10733,6 +11065,27 @@
           "opclass": null
         }
       ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationSmtp_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
       "isUnique": false,
       "where": null,
       "with": "",
@@ -10889,6 +11242,55 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationZalo"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MagicLink_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MagicLink_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MagicLink"
     },
     {
       "nameExplicit": true,
@@ -13109,6 +13511,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IntegrationSmtp_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationSmtp_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "IntegrationWebchat_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -13204,6 +13632,71 @@
       "entityType": "fks",
       "schema": "public",
       "table": "IntegrationZalo"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLink_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLink"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkContactStat_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["linkId"],
+      "schemaTo": "public",
+      "tableTo": "MagicLink",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkContactStat_linkId_MagicLink_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkStat_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["linkId"],
+      "schemaTo": "public",
+      "tableTo": "MagicLink",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkStat_linkId_MagicLink_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkStat"
     },
     {
       "nameExplicit": false,
@@ -14138,6 +14631,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "IntegrationSmtp_pkey",
+      "schema": "public",
+      "table": "IntegrationSmtp",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "IntegrationWebchat_pkey",
       "schema": "public",
       "table": "IntegrationWebchat",
@@ -14157,6 +14658,14 @@
       "name": "IntegrationZalo_pkey",
       "schema": "public",
       "table": "IntegrationZalo",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "MagicLink_pkey",
+      "schema": "public",
+      "table": "MagicLink",
       "entityType": "pks"
     },
     {
@@ -14318,6 +14827,24 @@
       "schema": "public",
       "table": "WorkspaceUsage",
       "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["workspaceId", "linkId", "contactInboxId"],
+      "nullsNotDistinct": false,
+      "name": "MagicLinkContactStat_workspaceId_linkId_contactInboxId_idx",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "MagicLinkContactStat"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["workspaceId", "linkId", "contactInboxId", "occurredAt"],
+      "nullsNotDistinct": false,
+      "name": "MagicLinkStat_workspaceId_linkId_contactInboxId_occurredAt_idx",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "MagicLinkStat"
     }
   ],
   "renames": []

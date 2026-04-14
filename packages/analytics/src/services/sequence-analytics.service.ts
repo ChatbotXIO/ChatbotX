@@ -356,7 +356,7 @@ export class SequenceAnalyticsService {
 
   async onClicked(payloads: SequenceSchemaPayload[]) {
     try {
-      const sequenceClicks = payloads.filter((p) => p.context?.sequenceStepId)
+      const sequenceClicks = payloads.filter((p) => p.action?.sequenceStepId)
 
       if (sequenceClicks.length === 0) {
         return
@@ -365,7 +365,7 @@ export class SequenceAnalyticsService {
       const sequenceStepIds = [
         ...new Set<string>(
           sequenceClicks
-            .map((p) => p.context.sequenceStepId)
+            .map((p) => p.action.sequenceStepId)
             .filter((id): id is string => id !== undefined),
         ),
       ]
@@ -389,8 +389,8 @@ export class SequenceAnalyticsService {
         (payload) => ({
           workspace_id: payload.context.workspaceId,
           sequence_id:
-            sequenceStepsMap.get(payload.context.sequenceStepId ?? "") ?? "",
-          step_id: payload.context.sequenceStepId || "",
+            sequenceStepsMap.get(payload.action.sequenceStepId ?? "") ?? "",
+          step_id: payload.action.sequenceStepId || "",
           contact_inbox_id: payload.context.contactInboxId ?? "",
           event_type: FlowEventType["flow:clicked"],
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
@@ -402,8 +402,8 @@ export class SequenceAnalyticsService {
 
       const updateItems: SequenceUpdateItem[] = sequenceClicks.map((p) => ({
         workspaceId: p.context.workspaceId,
-        sequenceId: sequenceStepsMap.get(p.context.sequenceStepId ?? "") ?? "",
-        stepId: p.context.sequenceStepId || "",
+        sequenceId: sequenceStepsMap.get(p.action.sequenceStepId ?? "") ?? "",
+        stepId: p.action.sequenceStepId || "",
         contactInboxId: p.context.contactInboxId ?? "",
         occurredAt: new Date(p.occurredAt),
       }))

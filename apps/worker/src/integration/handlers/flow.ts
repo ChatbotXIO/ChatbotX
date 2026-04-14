@@ -13,6 +13,7 @@ import {
   type EdgeSchema,
   FlowEventType,
   type FlowNode,
+  getNodeFromButton,
   type MetadataPayload,
   type SendQuickReplyStepSchema,
   type StepType,
@@ -299,14 +300,10 @@ export async function runFlowPostback(
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 
-  const foundedButton = nodes
-    .flatMap((n) =>
-      "steps" in n.data.details && n.data.details.steps
-        ? (n.data.details.steps as BaseStepSchema[])
-        : [],
-    )
-    .flatMap((s) => ("buttons" in s ? (s.buttons as ButtonStepProps[]) : []))
-    .find((b) => b.id === parsedAction.buttonId)
+  const { button: foundedButton, nodeId: foundedNodeId } = getNodeFromButton(
+    nodes,
+    parsedAction.buttonId,
+  )
 
   if (!foundedButton) {
     return
@@ -329,19 +326,19 @@ export async function runFlowPostback(
 
     if (data.webhookType !== IntegrationJobAction.messageStatus) {
       await emit(FlowEventType["flow:clicked"], {
-        nodeId: foundedButton.id,
+        nodeId: foundedNodeId ?? "",
         context: {
           workspaceId: conversation.workspaceId,
           contactId: conversation.contactId,
           conversationId: data.conversationId,
           channel: contactInbox?.channel ?? "",
           contactInboxId: contactInbox?.id ?? "",
-          sequenceStepId: parsedAction.sequenceStepId ?? "",
         },
         action: {
           flowId: parsedAction.flowId,
           buttonId: parsedAction.buttonId,
           broadcastId: parsedAction.broadcastId,
+          sequenceStepId: parsedAction.sequenceStepId ?? "",
           clickType: "button",
         },
         occurredAt: new Date(),
@@ -378,13 +375,23 @@ export async function runFlowQuickReply(
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
 
-  const found = nodes
-    .flatMap((n) =>
-      "quickReplies" in n.data.details && n.data.details.quickReplies
-        ? n.data.details.quickReplies
-        : [],
+  let found: ButtonStepProps | null = null
+  let foundedNodeId: string | null = null
+  for (const node of nodes) {
+    if (
+      !("quickReplies" in node.data.details && node.data.details.quickReplies)
+    ) {
+      continue
+    }
+    const quickReply = node.data.details.quickReplies.find(
+      (qr) => qr.id === parsedAction.buttonId,
     )
-    .find((b) => b.id === parsedAction.buttonId)
+    if (quickReply) {
+      found = quickReply
+      foundedNodeId = node.id
+      break
+    }
+  }
 
   if (!found) {
     return
@@ -407,24 +414,26 @@ export async function runFlowQuickReply(
         )
         .then((rows) => rows[0])
 
-      await emit(FlowEventType["flow:clicked"], {
-        nodeId: found.id,
-        context: {
-          workspaceId: conversation.workspaceId,
-          contactId: conversation.contactId,
-          conversationId: data.conversationId,
-          channel: contactInbox?.channel ?? "",
-          contactInboxId: contactInbox?.id ?? "",
-          sequenceStepId: parsedAction.sequenceStepId ?? "",
-        },
-        action: {
-          flowId: parsedAction.flowId,
-          buttonId: parsedAction.buttonId,
-          broadcastId: parsedAction.broadcastId,
-          clickType: "quick_reply",
-        },
-        occurredAt: new Date(),
-      })
+      if (data.webhookType !== IntegrationJobAction.messageStatus) {
+        await emit(FlowEventType["flow:clicked"], {
+          nodeId: foundedNodeId ?? "",
+          context: {
+            workspaceId: conversation.workspaceId,
+            contactId: conversation.contactId,
+            conversationId: data.conversationId,
+            channel: contactInbox?.channel ?? "",
+            contactInboxId: contactInbox?.id ?? "",
+          },
+          action: {
+            flowId: parsedAction.flowId,
+            buttonId: parsedAction.buttonId,
+            broadcastId: parsedAction.broadcastId,
+            sequenceStepId: parsedAction.sequenceStepId ?? "",
+            clickType: "quick_reply",
+          },
+          occurredAt: new Date(),
+        })
+      }
     }
   }
 

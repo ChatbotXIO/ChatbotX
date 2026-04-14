@@ -20,6 +20,7 @@ import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
+  appendCodeToMagicLink,
   type ButtonStepProps,
   buttonTypes,
   encodeButtonPayload,
@@ -56,15 +57,25 @@ export const convertButtonsToTemplate = (props: {
   flowVersionId?: string
   buttons: ButtonStepProps[]
   metadata?: MetadataPayload
+  contactInboxId?: string
 }): MessageButtonTemplate[] => {
-  const { flowId, flowVersionId, buttons, metadata } = props
+  const { flowId, flowVersionId, buttons, metadata, contactInboxId } = props
   return buttons.map((button) => {
+    const buttonPayload = encodeButtonPayload({
+      flowId,
+      flowVersionId,
+      buttonId: button.id,
+      broadcastId: extractMetadata("broadcastId", metadata),
+      sequenceStepId: extractMetadata("sequenceStepId", metadata),
+      contactInboxId,
+    })
+
     if (button.buttonType === buttonTypes.enum.openWebsite) {
       return {
         id: button.id,
         label: button.label,
         buttonType: "url",
-        url: button.beforeStep.url,
+        url: appendCodeToMagicLink(button.beforeStep.url, buttonPayload),
       }
     }
 
@@ -72,13 +83,7 @@ export const convertButtonsToTemplate = (props: {
       id: button.id,
       buttonType: "postback",
       label: button.label,
-      postback: encodeButtonPayload({
-        flowId,
-        flowVersionId,
-        buttonId: button.id,
-        broadcastId: extractMetadata("broadcastId", metadata),
-        sequenceStepId: extractMetadata("sequenceStepId", metadata),
-      }),
+      postback: buttonPayload,
     }
   })
 }
@@ -88,8 +93,9 @@ const convertCardsToTemplate = (props: {
   flowVersionId?: string
   cards: SendCardStepSchema[]
   metadata?: MetadataPayload
+  contactInboxId?: string
 }): MessageCardTemplate[] => {
-  const { flowId, flowVersionId, cards, metadata } = props
+  const { flowId, flowVersionId, cards, metadata, contactInboxId } = props
 
   return cards.map((card) => ({
     id: card.id,
@@ -103,6 +109,7 @@ const convertCardsToTemplate = (props: {
             flowVersionId,
             buttons: card.buttons,
             metadata,
+            contactInboxId,
           })
         : undefined,
   }))
@@ -212,6 +219,7 @@ export async function sendFlowStep({
               flowVersionId,
               buttons: step.buttons,
               metadata,
+              contactInboxId: targetContactInbox.id,
             }),
           },
         } satisfies MessageTemplateEntity
@@ -226,6 +234,7 @@ export async function sendFlowStep({
               flowVersionId,
               cards: step.cards,
               metadata,
+              contactInboxId: targetContactInbox.id,
             }),
           },
         } satisfies MessageTemplateEntity

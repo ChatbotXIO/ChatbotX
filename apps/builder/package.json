@@ -36,6 +36,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
+    "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",

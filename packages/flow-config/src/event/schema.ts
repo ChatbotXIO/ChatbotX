@@ -39,12 +39,17 @@ export const messageActionSchema = z.object({
 
 export type MessageAction = z.infer<typeof messageActionSchema>
 
+export const clickTypeSchema = z.enum(["button", "quick_reply", "magic_link"])
+export type ClickType = z.infer<typeof clickTypeSchema>
+
 export const flowActionSchema = z.object({
   flowId: z.string(),
   buttonId: z.string().optional(),
   nodeId: z.string().optional(),
   broadcastId: z.string().optional(),
-  clickType: z.enum(["button", "quick_reply"]),
+  sequenceStepId: z.string().optional(),
+  magicLinkId: z.string().optional(),
+  clickType: clickTypeSchema,
 })
 
 export type FlowAction = z.infer<typeof flowActionSchema>
