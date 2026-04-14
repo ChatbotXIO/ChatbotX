@@ -35,7 +35,7 @@ export function* convertFlowStepCarousel(
                       flowVersionId: props.data.flowVersionId,
                       button,
                       metadata: props.data.metadata,
-                      contactInboxId: props.contactInbox.id,
+                      contactInboxId: props.data.contact.id,
                     }),
                   )
                 : undefined,

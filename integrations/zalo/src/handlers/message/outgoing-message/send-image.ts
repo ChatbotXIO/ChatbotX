@@ -40,8 +40,7 @@ export async function* convertFlowStepImage(
             flowVersionId: props.data.flowVersionId,
             buttons: step.buttons,
             metadata: props.data.metadata,
-            nodeId: step.nodeId,
-            contactInboxId: props.contactInbox.id,
+            contactInboxId: props.data.contact.id,
           })
         : undefined
     yield {
