@@ -512,9 +512,6 @@ export class FlowStatsRepository extends BaseRepository {
     )
 
     const stepStatsResults = await Promise.all(stepStatsPromises)
-    console.log({
-      stepStatsResults: JSON.stringify(stepStatsResults, null, "\t"),
-    })
 
     const result: FlowNodeStatsResponse = {}
 

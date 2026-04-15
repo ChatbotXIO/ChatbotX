@@ -13,7 +13,7 @@ import {
   type FlowClickedPayload,
   type MessagePayload,
 } from "@chatbotx.io/flow-config"
-import { startOfHour } from "date-fns"
+import { startOfSecond } from "date-fns"
 import { magicLinkStatsRepository } from "../repositories/magic-link-stats.repository"
 import type {
   FlowNodeContactData,
@@ -63,7 +63,7 @@ export class MagicLinkAnalyticsService {
         linkId: p.action.magicLinkId ?? "",
         contactId: p.context.contactId,
         contactInboxId: p.context.contactInboxId ?? "",
-        occurredAt: startOfHour(new Date(p.occurredAt)),
+        occurredAt: startOfSecond(new Date(p.occurredAt)),
         createdAt: new Date(),
       }
     })

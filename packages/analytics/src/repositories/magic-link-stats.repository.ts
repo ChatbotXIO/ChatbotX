@@ -1,8 +1,5 @@
 import { and, db, eq, gte, lte, sql } from "@chatbotx.io/database/client"
-import {
-  magicLinkContactStatModel,
-  magicLinkStatModel,
-} from "@chatbotx.io/database/schema"
+import { magicLinkStatModel } from "@chatbotx.io/database/schema"
 import { fromZonedTime } from "date-fns-tz"
 import type { MagicLinkStatsInput } from "../schemas"
 import type { ContactEventData } from "../schemas/common"
@@ -59,7 +56,7 @@ export class MagicLinkStatsRepository extends BaseRepository {
   }> {
     const { workspaceId, linkId, page, perPage } = input
     const offset = (page - 1) * perPage
-    const t = magicLinkContactStatModel
+    const t = magicLinkStatModel
 
     const rows = await db
       .select({
@@ -68,8 +65,8 @@ export class MagicLinkStatsRepository extends BaseRepository {
         occurredAt: t.occurredAt,
       })
       .from(t)
-      .where(sql`${t.workspaceId} = ${workspaceId} AND ${t.linkId} = ${linkId}`)
-      .orderBy(sql`${t.occurredAt} DESC NULLS LAST`)
+      .where(and(eq(t.workspaceId, workspaceId), eq(t.linkId, linkId)))
+      .orderBy(sql`${t.occurredAt} DESC`)
       .limit(perPage)
       .offset(offset)
 
@@ -80,7 +77,7 @@ export class MagicLinkStatsRepository extends BaseRepository {
       contactEventMap.set(row.contactInboxId, {
         contactId: row.contactId ?? "",
         contactInboxId: row.contactInboxId,
-        occurredAt: (row.occurredAt ?? new Date()).toISOString(),
+        occurredAt: row.occurredAt.toISOString(),
       })
     }
 
