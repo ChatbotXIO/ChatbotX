@@ -20,8 +20,6 @@ export const handleReferral = async (props: IntegrationJobReferral["data"]) => {
 
   const { ref } = await receiveMessage(props)
 
-  console.log({ ref })
-
   if (!ref) {
     logger.warn("Referral ref is empty")
     return
