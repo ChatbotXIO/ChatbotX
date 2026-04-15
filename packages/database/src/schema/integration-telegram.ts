@@ -9,7 +9,6 @@ export const integrationTelegramModel = pgTable(
     ...sharedColumns,
     auth: jsonb().$type<{ [x: string]: unknown }>().notNull(),
     botId: text().notNull(),
-    botUsername: text().notNull(),
     name: text().notNull(),
     workspaceId: bigintAsString()
       .notNull()

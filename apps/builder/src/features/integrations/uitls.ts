@@ -3,27 +3,21 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
-import { findOrganization } from "../organization/queries"
-import { findChatbotOrFail } from "../workspaces/queries"
+import { organizationService } from "../organization/organization-service"
+import { workspaceService } from "../workspaces/workspace-service"
 
 export async function identifyWorkspaceAndOrganizationFromRequest(
   workspaceId?: string | null,
 ): Promise<{ workspace?: WorkspaceModel; organization: OrganizationModel }> {
   const domain = await getDomainFromHeader()
-  const organization = await findOrganization({
-    domain,
-  })
-  if (!organization) {
-    throw new Error("Organization not found")
-  }
+  const organization = await organizationService.findByDomain(domain)
 
   if (!workspaceId) {
     return { organization }
   }
 
-  const workspace = await findChatbotOrFail({
-    id: workspaceId,
-    organizationId: organization.id,
+  const workspace = await workspaceService.findOrFail({
+    where: { id: workspaceId, organizationId: organization.id },
   })
 
   return { workspace, organization }

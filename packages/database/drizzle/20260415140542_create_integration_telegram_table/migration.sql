@@ -4,7 +4,6 @@ CREATE TABLE "IntegrationTelegram" (
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"auth" jsonb NOT NULL,
 	"botId" text NOT NULL,
-	"botUsername" text NOT NULL,
 	"name" text NOT NULL,
 	"workspaceId" bigint NOT NULL,
 	"inboxId" bigint NOT NULL

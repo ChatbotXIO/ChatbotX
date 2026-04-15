@@ -1,9 +1,9 @@
-import { db } from "@chatbotx.io/database/client"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { listIntegrationMessengers } from "@/features/integration-messenger/queries"
-import { findOrganization } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
+import { workspaceService } from "@/features/workspaces/workspace-service"
 
 export default async function SettingChannelMessengerPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -13,23 +13,27 @@ export default async function SettingChannelMessengerPage(props: {
     return notFound()
   }
 
-  const workspace = await db.query.workspaceModel.findFirst({
-    where: {
-      id: workspaceId,
-    },
+  const workspace = await workspaceService.findOrFail({
+    where: { id: workspaceId },
   })
-  if (!workspace) {
-    return notFound()
-  }
+  const organization = await organizationService.findOrFail({
+    where: { id: workspace.organizationId },
+  })
+  const hasMessengerSettings = Boolean(
+    organization.settings?.messenger?.clientId,
+  )
 
   const promises = Promise.all([
     listIntegrationMessengers({
       workspaceId,
     }),
-    findOrganization({
-      id: workspace.organizationId,
-    }),
   ])
 
-  return <MessengerManage promises={promises} workspaceId={workspaceId} />
+  return (
+    <MessengerManage
+      isEnabled={hasMessengerSettings}
+      promises={promises}
+      workspaceId={workspaceId}
+    />
+  )
 }

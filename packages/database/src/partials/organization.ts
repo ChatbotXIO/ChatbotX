@@ -36,12 +36,6 @@ export const zaloSettingsSchema = z.object({
 })
 export type ZaloSettingsSchema = z.infer<typeof zaloSettingsSchema>
 
-export const telegramSettingsSchema = z.object({
-  botToken: z.string(),
-  chatId: z.string(),
-})
-export type TelegramSettingsSchema = z.infer<typeof telegramSettingsSchema>
-
 export const giphySettingsSchema = z.object({
   apiKey: z.string(),
 })
@@ -59,7 +53,6 @@ export const organizationSettingsSchema = z.object({
   messenger: messengerSettingsSchema.optional(),
   google: googleSettingsSchema.optional(),
   zalo: zaloSettingsSchema.optional(),
-  telegram: telegramSettingsSchema.optional(),
   giphy: giphySettingsSchema.optional(),
   stripe: stripeSettingsSchema.optional(),
 })

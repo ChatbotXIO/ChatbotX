@@ -8,18 +8,17 @@
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@paralleldrive/cuid2": "^3.3.0",
-    "@types/node": "^24.10.4",
+    "@chatbotx.io/utils": "workspace:*",
     "ky": "^1.14.3",
     "remeda": "^2.33.6",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
     "typescript": "5.9.3"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./schemas": "./src/schemas.ts"
+    ".": "./src/index.ts"
   }
 }

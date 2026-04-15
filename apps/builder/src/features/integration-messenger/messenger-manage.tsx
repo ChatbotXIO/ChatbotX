@@ -1,6 +1,5 @@
 "use client"
 
-import { organizationSettingsSchema } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
@@ -14,31 +13,24 @@ import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
-import type { findOrganization } from "../organization/queries"
 import { MessengerDisconnect } from "./components/messenger-disconnect"
 import type { listIntegrationMessengers } from "./queries"
 
 type WhatsappManageProps = {
+  isEnabled: boolean
   workspaceId: string
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof listIntegrationMessengers>>,
-      Awaited<ReturnType<typeof findOrganization>>,
-    ]
-  >
+  promises: Promise<[Awaited<ReturnType<typeof listIntegrationMessengers>>]>
 }
 
 export function MessengerManage({
+  isEnabled,
   workspaceId,
   promises,
 }: WhatsappManageProps) {
-  const [{ data: integrationMessengers }, organization] = use(promises)
+  const [{ data: integrationMessengers }] = use(promises)
   const t = useTranslations()
 
-  const { data: settings } = organizationSettingsSchema.safeParse(
-    organization?.settings,
-  )
-  if (!(organization && settings?.messenger)) {
+  if (!isEnabled) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">

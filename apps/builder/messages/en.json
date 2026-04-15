@@ -320,8 +320,7 @@
     },
     "telegram": {
       "label": "Telegram",
-      "botToken": "Bot Token",
-      "botUsername": "Bot Username"
+      "botToken": "Bot Token"
     },
     "matchAll": {
       "label": "Match all the conditions below"
@@ -1336,7 +1335,8 @@
     "deleteSuccess": "{feature} deleted successfully",
     "error": "Error",
     "moveFolderDescription": "Move {feature} to folder",
-    "noData": "No data"
+    "noData": "No data",
+    "featureNotFound": "{feature} not found"
   },
   "messenger": {
     "greeting": "Greeting",

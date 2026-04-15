@@ -23,7 +23,7 @@ import {
 
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { type ComponentProps, use } from "react"
+import type { ComponentProps } from "react"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -33,14 +33,13 @@ import { authClient } from "@/lib/auth/auth-client"
 
 export function AppSidebar({
   workspaceId,
-  allChatbotsPromise,
+  allWorkspaces,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
-  allChatbotsPromise: Promise<{ workspaces: WorkspaceResource[] }>
+  allWorkspaces: WorkspaceResource[]
 }) {
   const t = useTranslations()
-  const { workspaces } = use(allChatbotsPromise)
   const { data: session } = authClient.useSession()
 
   const data = {
@@ -123,7 +122,7 @@ export function AppSidebar({
           <BrandIcon alt="Brand" />
         </Link>
         <div className="border-b px-1">
-          <WorkspaceSwitcher workspaces={workspaces} />
+          <WorkspaceSwitcher workspaces={allWorkspaces} />
         </div>
       </SidebarHeader>
       <SidebarContent>

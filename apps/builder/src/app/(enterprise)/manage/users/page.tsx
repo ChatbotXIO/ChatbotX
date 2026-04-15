@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
-import OrganizationMembersTable from "@/enterprise/features/organization-members/organization-members-table"
+import OrganizationMembersTable from "@/enterprise/features/organization-members/components/organization-members-table"
 import { listOrganizationMembersRSC } from "@/enterprise/features/organization-members/queries"
 import { listOrganizationMembersSearchParamsCache } from "@/enterprise/features/organization-members/schema/mutation"
 

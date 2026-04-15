@@ -8,7 +8,7 @@ import {
   messageTypes,
   type ReceivedMessageResult,
 } from "@chatbotx.io/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import { createId } from "@chatbotx.io/utils"
 import { getTelegramFileUrl } from "../../apis/bot"
 import { TelegramException } from "../../exception"
 import { logger } from "../../lib/logger"

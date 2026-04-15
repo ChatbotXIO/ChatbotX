@@ -41,17 +41,15 @@ export const connectTelegramAction = authActionClient
           await identifyWorkspaceAndOrganizationFromRequest(workspaceId)
 
         // Validate bot token and fetch bot info from Telegram
-        const {
-          botId,
-          botUsername,
-          firstName: first_name,
-        } = await integrations.telegram.runAction("connect", { botToken })
+        const botData = await integrations.telegram.runAction("connect", {
+          botToken,
+        })
 
         // Make sure the bot is not already connected
         await throwIfExists({
           table: integrationTelegramModel,
           where: {
-            botId,
+            botId: botData.id,
           },
           message: "Bot is already connected",
         })
@@ -60,10 +58,6 @@ export const connectTelegramAction = authActionClient
           const auth: TelegramAuthValue = {
             authType: "secretText",
             secretText: botToken,
-            metadata: {
-              botId,
-              botUsername,
-            },
           }
 
           if (!workspaceId) {
@@ -72,7 +66,7 @@ export const connectTelegramAction = authActionClient
               ctx.user.id,
               organization,
               {
-                name: botUsername,
+                name: botData.username,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
@@ -85,9 +79,9 @@ export const connectTelegramAction = authActionClient
             .values({
               id: createId(),
               workspaceId,
-              name: botUsername,
+              name: botData.username,
               channel: integrationTypes.enum.telegram,
-              sourceId: botId,
+              sourceId: botData.id,
             })
             .onConflictDoUpdate({
               target: [inboxModel.channel, inboxModel.sourceId],
@@ -104,9 +98,8 @@ export const connectTelegramAction = authActionClient
             id: createId(),
             inboxId: inbox.id,
             workspaceId,
-            botId,
-            botUsername,
-            name: first_name,
+            botId: botData.id,
+            name: botData.username,
             auth,
           })
 
@@ -114,7 +107,7 @@ export const connectTelegramAction = authActionClient
           const headersList = await headers()
           const requestUrl = new URL(headersList.get("x-url") ?? "")
           const webhookUrl = new URL(
-            `/integrations/telegram/webhook?botId=${botId}`,
+            `/integrations/telegram/webhook?botId=${botData.id}`,
             requestUrl.origin,
           ).toString()
           await integrations.telegram.runAction("registerWebhook", {

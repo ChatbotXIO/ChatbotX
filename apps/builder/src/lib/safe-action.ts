@@ -6,9 +6,10 @@ import {
   createSafeActionClient,
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action"
-import { findOrganizationByDomain } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { getDomainFromHeader } from "./domain"
 import { ChatbotXException } from "./errors/exception"
 import { logger } from "./log"
 
@@ -63,10 +64,8 @@ export const workspaceActionClient = authActionClient.use(
 
 export const organizationActionClient = authActionClient.use(
   async ({ next }) => {
-    const organization = await findOrganizationByDomain()
-    if (!organization) {
-      throw new Error("Organization not found")
-    }
+    const domain = await getDomainFromHeader()
+    const organization = await organizationService.findByDomain(domain)
 
     return next({ ctx: { organization } })
   },

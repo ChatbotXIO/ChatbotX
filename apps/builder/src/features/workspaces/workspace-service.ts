@@ -1,9 +1,6 @@
-"use server"
-
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import {
-  workspaceMemberModel,
   workspaceModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
@@ -15,30 +12,15 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { notFoundException } from "@/lib/errors/exception"
-
-export const findChatbotOrFail = async (
-  where: Record<string, unknown>,
-): Promise<WorkspaceModel> => {
-  const workspace = await db.query.workspaceModel.findFirst({
-    where,
-  })
-  if (!workspace) {
-    throw notFoundException("Workspace not found")
-  }
-  return workspace
-}
+import { workspaceMemberService } from "../workspace-members/workspace-member-service"
 
 type WorkspaceWhere = Partial<{ id: string; organizationId: string }>
 
 export const workspaceService = {
-  find: async (props: { where: WorkspaceWhere; tx?: DatabaseClient }) => {
-    const { where, tx = db } = props
-    return await tx.query.workspaceModel.findFirst({
-      where,
-    })
-  },
-
-  findOrFail: async (props: { where: WorkspaceWhere; tx?: DatabaseClient }) => {
+  findOrFail: async (props: {
+    where: WorkspaceWhere
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel> => {
     const t = await getTranslations()
     const workspace = await workspaceService.find(props)
     if (!workspace) {
@@ -49,20 +31,28 @@ export const workspaceService = {
     return workspace
   },
 
-  findWithCache: async (props: {
+  findById: (id: string): Promise<WorkspaceModel> => {
+    return workspaceService.findOrFail({ where: { id } })
+  },
+
+  find: (props: {
     where: WorkspaceWhere
     tx?: DatabaseClient
-  }) => {
-    return await withCache(
+  }): Promise<WorkspaceModel | undefined> => {
+    const { where, tx = db } = props
+    return withCache(
       `workspaces:${JSON.stringify(props.where)}`,
       async () => {
-        return await workspaceService.find(props)
+        return await tx.query.workspaceModel.findFirst({
+          where,
+        })
       },
       {
         tags: ["workspaces"],
       },
     )
   },
+
   create: async (props: {
     data: typeof workspaceModel.$inferInsert
     organization: OrganizationModel
@@ -84,31 +74,33 @@ export const workspaceService = {
     })
 
     // Create workspace member
-    await tx.insert(workspaceMemberModel).values({
-      id: createId(),
-      userId: props.createdBy,
-      workspaceId: newWorkspace.id,
-      role: workspaceMemberRoles.enum.owner,
-      permissions: {
-        superAdmin: true,
-        analytics: true,
-        flows: true,
-        contacts: true,
-        onlyAssignedContacts: true,
-        emailAndPhone: true,
-        broadcast: true,
-        ecommerce: true,
-      },
-      notificationTypes: {
-        notifyAdmin: true,
-        newMessageToHuman: true,
-        newOrder: true,
-      },
-      notificationChannels: {
-        messenger: true,
-        email: true,
-        telegram: true,
-        browser: true,
+    await workspaceMemberService.create({
+      tx,
+      data: {
+        userId: props.createdBy,
+        workspaceId: newWorkspace.id,
+        role: workspaceMemberRoles.enum.owner,
+        permissions: {
+          superAdmin: true,
+          analytics: true,
+          flows: true,
+          contacts: true,
+          onlyAssignedContacts: true,
+          emailAndPhone: true,
+          broadcast: true,
+          ecommerce: true,
+        },
+        notificationTypes: {
+          notifyAdmin: true,
+          newMessageToHuman: true,
+          newOrder: true,
+        },
+        notificationChannels: {
+          messenger: true,
+          email: true,
+          telegram: true,
+          browser: true,
+        },
       },
     })
 

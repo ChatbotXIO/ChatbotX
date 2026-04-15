@@ -13,9 +13,9 @@ export const listOrganizationMembersSearchParams = {
   page: parseAsInteger,
   perPage: parseAsInteger,
   name: parseAsString,
-  sort: getSortingStateParser<ListOrganizationMemberItem>().withDefault([
-    { id: "createdAt", desc: true },
-  ]),
+  sort: getSortingStateParser<
+    ListOrganizationMembersResponse["data"][number]
+  >().withDefault([{ id: "createdAt", desc: true }]),
 }
 export const listOrganizationMembersSearchParamsCache = createSearchParamsCache(
   listOrganizationMembersSearchParams,
@@ -30,14 +30,10 @@ export type ListOrganizationMembersRequest = Awaited<
   ReturnType<typeof listOrganizationMembersRequest.parse>
 >
 
-export const listOrganizationMemberItemResponse =
-  organizationMemberResource.and(z.object({ user: userResource }))
-export type ListOrganizationMemberItem = z.infer<
-  typeof listOrganizationMemberItemResponse
->
-
 export const listOrganizationMembersResponse = z.object({
-  data: z.array(listOrganizationMemberItemResponse),
+  data: z.array(
+    organizationMemberResource.and(z.object({ user: userResource })),
+  ),
   pageCount: z.number(),
 })
 export type ListOrganizationMembersResponse = z.infer<

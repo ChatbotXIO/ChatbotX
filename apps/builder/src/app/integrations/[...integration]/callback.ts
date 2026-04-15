@@ -1,8 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import type {
-  IntegrationType,
-  OrganizationSettings,
-} from "@chatbotx.io/database/partials"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   integrationGoogleSheetsModel,
   integrationModel,
@@ -13,8 +10,8 @@ import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
-import { findOrganization } from "@/features/organization/queries"
-import { findChatbotOrFail } from "@/features/workspaces/queries"
+import { organizationService } from "@/features/organization/organization-service"
+import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
@@ -48,10 +45,11 @@ export const handleCallback = async (
   }
 
   // find workspace and organization config
-  const workspace = await findChatbotOrFail({ id: stateParams.workspaceId })
-  const organization = await findOrganization({ id: workspace.organizationId })
-  const organizationSettings =
-    organization?.settings as unknown as OrganizationSettings
+  const workspace = await workspaceService.findById(stateParams.workspaceId)
+  const organization = await organizationService.findById(
+    workspace.organizationId,
+  )
+  const organizationSettings = organization.settings
 
   let authResult: AuthValue
   let googleSheetsAuth: Oauth2AuthValue | null = null

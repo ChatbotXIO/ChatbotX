@@ -41,15 +41,13 @@ export function TelegramManage({ workspaceId, promises }: TelegramManageProps) {
           <TableHeader>
             <TableRow>
               <TableHead>{t("fields.name.label")}</TableHead>
-              <TableHead>{t("fields.telegram.botUsername")}</TableHead>
               <TableHead className="w-[200px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {integrationTelegrams.map((integrationTelegram) => (
               <TableRow key={integrationTelegram.id}>
-                <TableCell>{integrationTelegram.name}</TableCell>
-                <TableCell>@{integrationTelegram.botUsername}</TableCell>
+                <TableCell>@{integrationTelegram.name}</TableCell>
                 <TableCell className="flex w-[200px] justify-end gap-2">
                   <TelegramDisconnect
                     integrationTelegram={integrationTelegram}

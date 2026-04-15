@@ -5,7 +5,7 @@ import { magicLinkModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
-  type ChatbotIdRequestParams,
+  type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -23,7 +23,7 @@ export const createMagicLinkAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
-      bindArgsParsedInputs: ChatbotIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateMagicLinkRequest
     }) => {
       try {

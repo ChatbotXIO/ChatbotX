@@ -6,7 +6,7 @@ import { inboxModel, integrationSmtpModel } from "@chatbotx.io/database/schema"
 import { smtpHostMap } from "@chatbotx.io/integration-smtp"
 import { createId } from "@chatbotx.io/utils"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
+import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createSmtpRequest } from "../schemas/mutation"
@@ -19,7 +19,7 @@ export const createSmtpAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     } = props
-    await identifyChatbotAndOrganizationFromRequest(workspaceId)
+    await identifyWorkspaceAndOrganizationFromRequest(workspaceId)
 
     let { host, port, ...rest } = parsedInput
     if (parsedInput.provider !== "other") {

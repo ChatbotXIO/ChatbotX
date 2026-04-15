@@ -9,19 +9,12 @@ export type TelegramConfig = BaseConfig & {
   }
 }
 
-export type TelegramAuthValue = SecretTextAuthValue & {
-  metadata: {
-    botId: string
-    botUsername: string
-    webhookSecretToken?: string
-  }
-}
+export type TelegramAuthValue = SecretTextAuthValue
 
 export type TelegramActions = {
   connect: (props: { botToken: string }) => Promise<{
-    botId: string
-    botUsername: string
-    firstName: string
+    id: string
+    username: string
   }>
   registerWebhook: (props: {
     botToken: string
@@ -172,9 +165,8 @@ export type TelegramApiResponse<T> = {
 
 export type TelegramBotInfo = {
   id: number
-  is_bot: boolean
   first_name: string
-  username: string
+  username?: string
 }
 
 export type TelegramGetFileResponse = {

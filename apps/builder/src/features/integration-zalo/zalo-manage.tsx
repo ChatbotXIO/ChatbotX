@@ -1,6 +1,5 @@
 "use client"
 
-import { organizationSettingsSchema } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
@@ -14,28 +13,24 @@ import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
-import type { findOrganization } from "../organization/queries"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
 import type { listIntegrationZalo } from "./queries"
 
 type ZaloManageProps = {
+  isEnabled: boolean
   workspaceId: string
-  promises: Promise<
-    [
-      Awaited<ReturnType<typeof listIntegrationZalo>>,
-      Awaited<ReturnType<typeof findOrganization>>,
-    ]
-  >
+  promises: Promise<[Awaited<ReturnType<typeof listIntegrationZalo>>]>
 }
 
-export function ZaloManage({ workspaceId, promises }: ZaloManageProps) {
-  const [{ data: integrationZalos }, organization] = use(promises)
+export function ZaloManage({
+  isEnabled,
+  workspaceId,
+  promises,
+}: ZaloManageProps) {
+  const [{ data: integrationZalos }] = use(promises)
   const t = useTranslations()
 
-  const { data: settings } = organizationSettingsSchema.safeParse(
-    organization?.settings,
-  )
-  if (!(organization && settings?.zalo)) {
+  if (!isEnabled) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">

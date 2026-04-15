@@ -326,8 +326,7 @@
     },
     "telegram": {
       "label": "Telegram",
-      "botToken": "Bot Token",
-      "botUsername": "Tên người dùng bot"
+      "botToken": "Bot Token"
     },
     "matchAll": {
       "label": "Khớp tất cả các điều kiện bên dưới"

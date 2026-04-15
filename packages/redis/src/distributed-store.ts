@@ -173,6 +173,16 @@ export const distributedStoreFactory = (
 
     return items.map((item) => JSON.parse(item))
   },
+
+  async sadd(key: string, member: string): Promise<number> {
+    const redisClient = await getRedisClient()
+    return await redisClient.sadd(key, member)
+  },
+
+  async smembers(key: string): Promise<string[]> {
+    const redisClient = await getRedisClient()
+    return await redisClient.smembers(key)
+  },
 })
 
 export type DistributedStore = ReturnType<typeof distributedStoreFactory>

@@ -1,18 +1,13 @@
-import { type ButtonStepProps, ButtonType } from "@chatbotx.io/flow-config"
+import {
+  type ButtonStepProps,
+  ButtonType,
+  encodeButtonPayload,
+} from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
 import type {
   TelegramInlineKeyboardButton,
   TelegramInlineKeyboardMarkup,
 } from "../../../schema"
-
-/**
- * Encodes button payload compactly for Telegram's 64-byte callback_data limit.
- * Format: "{flowId}.{buttonId}" — e.g. two cuid2 IDs (24 chars each) + separator = 49 chars.
- */
-export const encodeTelegramCallbackData = (
-  flowId: string,
-  buttonId: string,
-): string => `${flowId}.${buttonId}`
 
 export const buildInlineButton = (props: {
   flowId: string
@@ -29,7 +24,7 @@ export const buildInlineButton = (props: {
     default:
       return {
         text: button.label,
-        callback_data: encodeTelegramCallbackData(flowId, button.id),
+        callback_data: encodeButtonPayload({ flowId, buttonId: button.id }),
       }
   }
 }

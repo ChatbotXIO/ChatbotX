@@ -14,10 +14,10 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
-import { verifyOrganizationSettings } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -35,14 +35,12 @@ export const selectPageAction = authActionClient
     }) => {
       try {
         let workspaceId = parsedInput.workspaceId
-        const { organization } =
-          await identifyWorkspaceAndOrganizationFromRequest(
-            parsedInput.workspaceId,
-          )
-        const settings = await verifyOrganizationSettings(organization)
-        const messengerSettings = settings.messenger
+
+        const domain = await getDomainFromHeader()
+        const organization = await organizationService.findByDomain(domain)
+        const messengerSettings = organization.settings.messenger
         if (!messengerSettings) {
-          throw new ChatbotXException("Messenger settings not found")
+          throw new ChatbotXException("Messenger App settings not found")
         }
 
         // make sure the page is unique

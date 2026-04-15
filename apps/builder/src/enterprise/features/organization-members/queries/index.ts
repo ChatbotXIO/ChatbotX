@@ -4,8 +4,8 @@ import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import { findOrganizationByDomain } from "@/features/organization/queries"
-import { notFoundException } from "@/lib/errors/exception"
+import { organizationService } from "@/features/organization/organization-service"
+import { getDomainFromHeader } from "@/lib/domain"
 import type {
   ListOrganizationMembersRequest,
   ListOrganizationMembersResponse,
@@ -14,10 +14,8 @@ import type {
 export const listOrganizationMembersRSC = async (
   input: ListOrganizationMembersRequest,
 ): Promise<ListOrganizationMembersResponse> => {
-  const organization = await findOrganizationByDomain()
-  if (!organization) {
-    throw notFoundException("Organization not found")
-  }
+  const domain = await getDomainFromHeader()
+  const organization = await organizationService.findByDomain(domain)
 
   return await listOrganizationMembers({
     ...input,

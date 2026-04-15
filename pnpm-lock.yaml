@@ -806,12 +806,9 @@ importers:
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
-      '@paralleldrive/cuid2':
-        specifier: ^3.3.0
-        version: 3.3.0
-      '@types/node':
-        specifier: 24.x
-        version: 24.12.2
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       ky:
         specifier: ^1.14.3
         version: 1.14.3
@@ -825,6 +822,9 @@ importers:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.12.2
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -4036,10 +4036,6 @@ packages:
     resolution: {integrity: sha512-6hIU3RQu45B+VNTY4Ru8ppFwjVS/S5qwYyGhBotmjxfEKk41I2DlGtRfGJndZ5+6lneE2pwloqunlOyZuX/XAw==}
     cpu: [x64]
     os: [win32]
-
-  '@paralleldrive/cuid2@3.3.0':
-    resolution: {integrity: sha512-OqiFvSOF0dBSesELYY2CAMa4YINvlLpvKOz/rv6NeZEqiyttlHgv98Juwv4Ch+GrEV7IZ8jfI2VcEoYUjXXCjw==}
-    hasBin: true
 
   '@parcel/watcher-android-arm64@2.5.6':
     resolution: {integrity: sha512-YQxSS34tPF/6ZG7r/Ih9xy+kP/WwediEUsqmtf0cuCV5TPPKw/PQHRhueUo6JdeFJaqV3pyjm0GdYjZotbRt/A==}
@@ -7275,9 +7271,6 @@ packages:
   env-paths@3.0.0:
     resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  error-causes@3.0.2:
-    resolution: {integrity: sha512-i0B8zq1dHL6mM85FGoxaJnVtx6LD5nL2v0hlpGdntg5FOSyzQ46c9lmz5qx0xRS2+PWHGOHcYxGIBC5Le2dRMw==}
 
   error-stack-parser@2.1.4:
     resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
@@ -12274,12 +12267,6 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.19.1':
     optional: true
 
-  '@paralleldrive/cuid2@3.3.0':
-    dependencies:
-      '@noble/hashes': 2.0.1
-      bignumber.js: 9.3.1
-      error-causes: 3.0.2
-
   '@parcel/watcher-android-arm64@2.5.6':
     optional: true
 
@@ -15390,8 +15377,6 @@ snapshots:
   entities@4.5.0: {}
 
   env-paths@3.0.0: {}
-
-  error-causes@3.0.2: {}
 
   error-stack-parser@2.1.4:
     dependencies:

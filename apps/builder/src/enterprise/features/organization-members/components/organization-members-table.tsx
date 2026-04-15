@@ -7,10 +7,7 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
-import type {
-  ListOrganizationMemberItem,
-  ListOrganizationMembersResponse,
-} from "./schema/mutation"
+import type { ListOrganizationMembersResponse } from "../schema/mutation"
 
 type OrganizationMembersTableProps = {
   promises: Promise<[ListOrganizationMembersResponse]>
@@ -20,7 +17,7 @@ const getOrganizationMembersColumns = ({
   t,
 }: {
   t: ReturnType<typeof useTranslations>
-}): ColumnDef<ListOrganizationMemberItem>[] => {
+}): ColumnDef<ListOrganizationMembersResponse["data"][number]>[] => {
   return [
     {
       id: "select",

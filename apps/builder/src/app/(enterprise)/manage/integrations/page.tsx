@@ -2,11 +2,14 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { ManageOrganizationSettings } from "@/enterprise/features/organization-settings/manage-organization-settings"
-import { findOrganizationByDomain } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
+import { getDomainFromHeader } from "@/lib/domain"
 
 export default async function ManageIntegrationsPage() {
   const t = await getTranslations()
-  const organization = await findOrganizationByDomain()
+
+  const domain = await getDomainFromHeader()
+  const organization = await organizationService.findByDomain(domain)
   if (!organization) {
     return notFound()
   }

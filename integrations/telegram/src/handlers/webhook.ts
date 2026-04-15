@@ -8,11 +8,6 @@ export const webhookHandler = async (
 ): Promise<string> => {
   const { req, config, queue } = props
 
-  // const secretToken = req.headers.get("x-telegram-bot-api-secret-token")
-  // if (config.webhookSecretToken && secretToken !== config.webhookSecretToken) {
-  //   throw new TelegramWebhookException("Invalid webhook secret token")
-  // }
-
   const body = await req.text()
   if (!body) {
     throw new TelegramWebhookException("Empty webhook payload")

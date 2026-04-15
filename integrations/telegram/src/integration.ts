@@ -29,7 +29,14 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
-    connect: async ({ botToken }) => connect({ botToken }),
+    connect: async ({ botToken }) => {
+      const botData = await connect({ botToken })
+
+      return {
+        id: botData.id.toString(),
+        username: botData.first_name ?? botData.username,
+      }
+    },
     registerWebhook: async ({ botToken, webhookUrl }) =>
       registerWebhook({ botToken, webhookUrl }),
   },

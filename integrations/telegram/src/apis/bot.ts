@@ -130,17 +130,11 @@ export const setWebhook = async (
   })
 }
 
-export type ConnectResult = {
-  botId: string
-  botUsername: string
-  firstName: string
-}
-
 export const connect = async ({
   botToken,
 }: {
   botToken: string
-}): Promise<ConnectResult> => {
+}): Promise<TelegramBotInfo> => {
   const client = createTelegramClient(botToken)
   const response =
     await client.get<TelegramApiResponse<TelegramBotInfo>>("getMe")
@@ -149,15 +143,7 @@ export const connect = async ({
     throw new Error("Invalid bot token")
   }
 
-  const { id, first_name, username } = response.result
-
-  logger.debug(`Connected Telegram bot @${username} (id=${id})`)
-
-  return {
-    botId: String(id),
-    botUsername: username ?? String(id),
-    firstName: first_name,
-  }
+  return response.result
 }
 
 export const registerWebhook = async ({

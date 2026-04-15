@@ -1,9 +1,10 @@
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { type NextRequest, NextResponse } from "next/server"
 import { listPhoneNumbersRequest } from "@/features/integration-whatsapp/schemas"
-import { findOrganizationSettingsByKey } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "@/lib/domain"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function POST(request: NextRequest) {
@@ -11,12 +12,11 @@ export async function POST(request: NextRequest) {
     await getCurrentUserId()
 
     const domain = await getDomainFromHeader()
-    const whatsappSettings = await findOrganizationSettingsByKey(
-      {
-        domain,
-      },
-      "whatsapp",
-    )
+    const organization = await organizationService.findByDomain(domain)
+    const whatsappSettings = organization.settings.whatsapp
+    if (!whatsappSettings) {
+      throw new ChatbotXException("Whatsapp App settings is not valid")
+    }
 
     const body = await request.json()
     const parsedBody = listPhoneNumbersRequest.parse(body)

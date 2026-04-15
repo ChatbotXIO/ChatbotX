@@ -5,7 +5,7 @@ import {
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
-import { findOrganization } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
@@ -20,15 +20,7 @@ export const handleWebhook = async (
   }
 
   const domain = await getDomainFromHeader()
-  const organization = await findOrganization({
-    domain,
-  })
-  if (!organization) {
-    return new Response(JSON.stringify({ message: "Organization not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    })
-  }
+  const organization = await organizationService.findByDomain(domain)
 
   // Verify organization settings
   const orgSettings = organizationSettingsSchema.parse(organization?.settings)

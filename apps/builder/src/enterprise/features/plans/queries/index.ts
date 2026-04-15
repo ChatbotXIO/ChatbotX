@@ -1,13 +1,11 @@
 import { db } from "@chatbotx.io/database/client"
-import { findOrganizationByDomain } from "@/features/organization/queries"
-import { notFoundException } from "@/lib/errors/exception"
+import { organizationService } from "@/features/organization/organization-service"
+import { getDomainFromHeader } from "@/lib/domain"
 import type { ListPlansRequest, ListPlansResponse } from "../schemas/query"
 
 export const listPlansRSC = async (input: ListPlansRequest) => {
-  const organization = await findOrganizationByDomain()
-  if (!organization) {
-    throw notFoundException("Organization not found")
-  }
+  const domain = await getDomainFromHeader()
+  const organization = await organizationService.findByDomain(domain)
 
   return listPlans({
     ...input,

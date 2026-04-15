@@ -5,7 +5,7 @@ import { TelegramConnect } from "@/features/integration-telegram/components/tele
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { ZaloConnect } from "@/features/integration-zalo/components/zalo-connect"
-import { findOrganizationSettings } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { getDomainFromHeader } from "@/lib/domain"
 
 export const dynamic = "force-dynamic"
@@ -31,7 +31,8 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   const domain = await getDomainFromHeader()
-  const settings = await findOrganizationSettings({ domain })
+  const organization = await organizationService.findByDomain(domain)
+  const settings = organization.settings
 
   if (selectedChannel === "whatsapp" && settings.whatsapp) {
     return (

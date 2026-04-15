@@ -45,8 +45,6 @@ export const disconnectTelegramAction = workspaceActionClient
           integrationTelegram.auth as TelegramAuthValue,
         )
 
-        console.log("11111212131231321321312312312312312312312312")
-
         revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
       } catch (error) {
         logger.error(error, "Failed to disconnect Telegram")

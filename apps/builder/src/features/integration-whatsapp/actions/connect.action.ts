@@ -20,10 +20,10 @@ import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
 import { env } from "@/env"
-import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
-import { verifyOrganizationSettings } from "@/features/organization/queries"
+import { organizationService } from "@/features/organization/organization-service"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
@@ -40,14 +40,12 @@ export const connectWhatsappAction = authActionClient
     }) => {
       try {
         let workspaceId = parsedInput.workspaceId
-        const { organization } =
-          await identifyWorkspaceAndOrganizationFromRequest(
-            parsedInput.workspaceId,
-          )
-        const settings = await verifyOrganizationSettings(organization)
-        const whatsappSettings = settings.whatsapp
+
+        const domain = await getDomainFromHeader()
+        const organization = await organizationService.findByDomain(domain)
+        const whatsappSettings = organization.settings.whatsapp
         if (!whatsappSettings) {
-          throw new ChatbotXException("Whatsapp settings not found")
+          throw new ChatbotXException("Whatsapp App settings not found")
         }
 
         // Trying to exchange code to access token
