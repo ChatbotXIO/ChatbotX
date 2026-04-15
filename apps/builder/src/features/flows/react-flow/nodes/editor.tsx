@@ -32,11 +32,12 @@ import {
   useWatch,
 } from "react-hook-form"
 import { funnel } from "remeda"
+import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import RecursiveDropdownMenu from "../components/recursive-dropdown-menu"
 import { allSteps, DynamicStepEditor } from "../steps"
 import { ButtonStepEditor } from "../steps/button/editor"
 import { ErrorAlert } from "../steps/error-alert"
-import { useFlowAction } from "../stores/flow-action-store-provider"
+import { useFlowTemplate } from "../stores/flow-template-store-provider"
 import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
 import type { MenuItem } from "./types"
@@ -106,7 +107,8 @@ const NodeEditorMenu = memo(
     onClick: (menuItem: MenuItem) => void
   }) => {
     const t = useTranslations()
-    const menuData = useFlowAction((s) => s)
+    const inboxes = useInboxStore((s) => s.inboxes)
+    const templates = useFlowTemplate((s) => s.templates)
     const beforeStep = useWatch({ name: "beforeStep" })
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
@@ -114,11 +116,11 @@ const NodeEditorMenu = memo(
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
-        setNodeMenus(nodeConfig.menus(t, { ...menuData, beforeStep }))
+        setNodeMenus(nodeConfig.menus(t, { inboxes, templates, beforeStep }))
       } else {
         setNodeMenus([])
       }
-    }, [nodeType, t, menuData, beforeStep])
+    }, [nodeType, t, inboxes, templates, beforeStep])
 
     return (
       nodeMenus.length > 0 && (

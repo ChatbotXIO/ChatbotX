@@ -1,19 +1,21 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { MessageSquareIcon } from "lucide-react"
-import type { FlowActionState } from "../../../stores/flow-action-store"
-import type { MenuItem, TranslationFn } from "../../types"
-
-type Template = {
-  id: string
-  name: string
-  language: string
-}
+import type { InboxResource } from "@/features/inboxes/schemas/resource"
+import type { MenuData, MenuItem, TranslationFn } from "../../types"
 
 export const waTemplateMenus = (
   t: TranslationFn,
-  menuData?: FlowActionState,
+  menuData?: MenuData,
+  inbox?: InboxResource,
 ): MenuItem[] => {
-  const templates = menuData?.data?.["wa.templates"] as Template[] | undefined
+  let templates = menuData?.templates.waTemplates ?? []
+
+  if (inbox) {
+    templates = templates.filter(
+      (template) =>
+        template.integrationWhatsappId === inbox.integrationWhatsapp?.id,
+    )
+  }
 
   if (!templates || templates.length === 0) {
     return [
@@ -32,9 +34,7 @@ export const waTemplateMenus = (
     props: {
       template: {
         id: template.id,
-        name: template.name,
-        languageCode: template.language,
-        params: {},
+        integrationWhatsappId: template.integrationWhatsappId,
       },
     },
   }))

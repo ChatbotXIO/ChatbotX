@@ -5,7 +5,8 @@ import {
   type ParameterInfo,
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
+import { useFormContext } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 
 type TemplateParamsFormProps = {
@@ -17,10 +18,26 @@ export function TemplateParamsForm({
   components,
   parentName,
 }: TemplateParamsFormProps) {
+  const { setValue } = useFormContext()
   const parameters = useMemo(
     () => extractParameterInfos(components),
     [components],
   )
+
+  useEffect(() => {
+    for (const param of parameters) {
+      const fieldName = `${parentName}.${param.type}[${param.type === "button" ? param.buttonIndex : param.index}]`
+
+      if (
+        param.format &&
+        ["image", "video", "document"].includes(param.format)
+      ) {
+        setValue(`${fieldName}.type`, param.format)
+      } else {
+        setValue(`${fieldName}.type`, "text")
+      }
+    }
+  }, [parameters, parentName, setValue])
 
   if (parameters.length === 0) {
     return null

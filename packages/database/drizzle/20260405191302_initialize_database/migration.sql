@@ -1129,3 +1129,49 @@ ALTER TABLE "Workspace" ADD CONSTRAINT "Workspace_organizationId_Organization_id
 ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WorkspaceMember" ADD CONSTRAINT "WorkspaceMember_userId_User_id_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "WorkspaceUsage" ADD CONSTRAINT "WorkspaceUsage_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "InboxContactStat" ADD CONSTRAINT "InboxContactStat_inboxId_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+--> statement-breakpoint
+CREATE OR REPLACE FUNCTION increment_contact_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO "InboxContactStat" ("inboxId", "totalContacts", "updatedAt")
+    VALUES (NEW."inboxId", 1, CURRENT_TIMESTAMP)
+    ON CONFLICT ("inboxId") DO UPDATE SET
+        "totalContacts" = "InboxContactStat"."totalContacts" + 1,
+        "updatedAt" = CURRENT_TIMESTAMP;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+--> statement-breakpoint
+CREATE TRIGGER conversation_insert_stats_trigger
+    AFTER INSERT ON "Conversation"
+    FOR EACH ROW
+    EXECUTE FUNCTION increment_contact_stats();
+--> statement-breakpoint
+CREATE OR REPLACE FUNCTION decrement_contact_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "InboxContactStat"
+    SET "totalContacts" = GREATEST("totalContacts" - 1, 0),
+        "updatedAt" = CURRENT_TIMESTAMP
+    WHERE "inboxId" = OLD."inboxId";
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+--> statement-breakpoint
+CREATE TRIGGER conversation_delete_stats_trigger
+    AFTER DELETE ON "Conversation"
+    FOR EACH ROW
+    EXECUTE FUNCTION decrement_contact_stats();
+--> statement-breakpoint
+INSERT INTO "InboxContactStat" ("inboxId", "totalContacts", "updatedAt")
+SELECT c."inboxId", COUNT(DISTINCT co."id")::integer, CURRENT_TIMESTAMP
+FROM "Conversation" c
+INNER JOIN "Contact" co ON co."id" = c."contactId"
+GROUP BY c."inboxId"
+ON CONFLICT ("inboxId") DO UPDATE SET
+    "totalContacts" = EXCLUDED."totalContacts",
+    "updatedAt" = CURRENT_TIMESTAMP;

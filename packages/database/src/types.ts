@@ -78,3 +78,5 @@ export type OrganizationMember =
   typeof schema.organizationMemberModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect
+export type WhatsappMessageTemplateModel =
+  typeof schema.whatsappMessageTemplateModel.$inferSelect
