@@ -8,7 +8,7 @@ import type {
   IntegrationOpenAIModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
-import { aiProviders } from "@chatbotx.io/utils/ai"
+import { aiProviders } from "../schemas"
 
 export async function getAIIntegrationInDB(props: {
   workspaceId: string

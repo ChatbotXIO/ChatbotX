@@ -17,7 +17,6 @@
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "@chatbotx.io/utils": "workspace:*",
     "ai": "^6.0.158",
     "ky": "^2.0.0",
     "mime-types": "^2.1.35",

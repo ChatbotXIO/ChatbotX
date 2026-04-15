@@ -5,10 +5,7 @@ import { Suspense } from "react"
 import { AIAgentsTable } from "@/features/ai-agents/ai-agent-table"
 import { listAIAgents } from "@/features/ai-agents/queries"
 import { listAIAgentsRequest } from "@/features/ai-agents/schemas/query"
-import { listAIFiles } from "@/features/ai-files/queries"
-import { listAIFunctions } from "@/features/ai-functions/queries"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
-import { listAIMcpServers } from "@/features/ai-mcp-servers/queries"
 
 type AIAgentsPageProps = {
   params: Promise<{ workspaceId: string }>
@@ -30,28 +27,12 @@ export default async function AIAgentsPage(props: AIAgentsPageProps) {
     }),
   ])
 
-  const aiCreatePromises = Promise.all([
-    listAIFiles({
-      workspaceId,
-    }),
-    listAIFunctions({
-      workspaceId,
-    }),
-    listAIMcpServers({
-      workspaceId,
-    }),
-  ])
-
   return (
     <div className="space-y-6">
       <AITab />
 
       <Suspense>
-        <AIAgentsTable
-          createPromises={aiCreatePromises}
-          listPromises={aiAgentPromises}
-          workspaceId={workspaceId}
-        />
+        <AIAgentsTable promises={aiAgentPromises} workspaceId={workspaceId} />
       </Suspense>
     </div>
   )

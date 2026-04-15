@@ -1,5 +1,5 @@
 import { z } from "zod"
-import type { JsonObject } from "../utils"
+import type { JsonObject } from "."
 
 export type JsonPrimitive = string | number | boolean | null
 

@@ -1,4 +1,9 @@
-import { aiTimeouts, helpTexts, toolPrefixes } from "@chatbotx.io/ai"
+import {
+  aiTimeouts,
+  helpTexts,
+  processStreamingText,
+  toolPrefixes,
+} from "@chatbotx.io/ai"
 import {
   createAIModelInstance,
   getAIIntegrationInDB,
@@ -6,17 +11,44 @@ import {
   McpClient,
   normalizeMcpContent,
 } from "@chatbotx.io/ai/server"
-import { processStreamingText } from "@chatbotx.io/ai/utils"
 import type {
   AIAgentProvider,
   AIAgentProviderModel,
   AIAgentProviderModels,
 } from "@chatbotx.io/database/partials"
+import type {
+  AIAgentModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
-import { stepCountIs, streamText, type ToolSet } from "ai"
+import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { logger } from "../../../lib/logger"
 import { sendMessageWithRender } from "../../utils/message"
-import type { ReplyByAIProps } from "./types"
+
+type ReplyByAIProps = {
+  conversation: ConversationModel
+  messages: ModelMessage[]
+  aiAgent: AIAgentModel
+}
+
+export type ReplyByAIExecutionResult = {
+  responded: boolean
+  provider: AIAgentProvider
+  modelId: string
+  usedFallbackText: boolean
+  toolStats: {
+    steps: number
+    toolCallsCount: number
+    toolResultsCount: number
+    toolErrorsCount: number
+    toolNames: string[]
+    finishReasons: Array<{
+      stepNumber: number
+      finishReason: string
+      rawFinishReason?: string
+    }>
+  }
+}
 
 export async function replyByAI(
   props: ReplyByAIProps,
@@ -73,7 +105,7 @@ async function runAIReply(
   tools: ToolSet,
   abortSignal: AbortSignal,
 ): Promise<null | ReplyByAIExecutionResult> {
-  const { conversation, lastAIMessages, aiAgent } = props
+  const { conversation, messages, aiAgent } = props
   const provider = providerInfo.provider
   try {
     const selectedModelId = providerInfo.model
@@ -121,7 +153,7 @@ async function runAIReply(
     const result = await streamText({
       model,
       system: systemPrompt,
-      messages: lastAIMessages,
+      messages,
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
@@ -272,23 +304,4 @@ async function runAIReply(
 
 function appendToolOutputGuard(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
-}
-
-export type ReplyByAIExecutionResult = {
-  responded: boolean
-  provider: AIAgentProvider
-  modelId: string
-  usedFallbackText: boolean
-  toolStats: {
-    steps: number
-    toolCallsCount: number
-    toolResultsCount: number
-    toolErrorsCount: number
-    toolNames: string[]
-    finishReasons: Array<{
-      stepNumber: number
-      finishReason: string
-      rawFinishReason?: string
-    }>
-  }
 }

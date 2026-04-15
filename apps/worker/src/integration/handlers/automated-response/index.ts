@@ -71,13 +71,13 @@ export async function processAutomatedResponse(
       orderBy: (table, { desc }) => [desc(table.createdAt)],
       limit: 100,
     })
-    const lastAIMessages: ModelMessage[] = []
+    const messages: ModelMessage[] = []
     for (const message of last100Messages) {
       if (!message.text) {
         continue
       }
       if (message.senderType === "contact") {
-        lastAIMessages.push({
+        messages.push({
           role: aiMessageRoles.enum.user,
           content: message.text,
         })
@@ -85,22 +85,16 @@ export async function processAutomatedResponse(
         message.senderType === "user" ||
         message.senderType === "bot"
       ) {
-        lastAIMessages.push({ role: "assistant", content: message.text })
+        messages.push({ role: "assistant", content: message.text })
       }
     }
-    lastAIMessages.reverse()
+    messages.reverse()
 
     const startTime = Date.now()
     const aiResult = await replyByAI({
       conversation,
-      lastAIMessages,
+      messages,
       aiAgent,
-      tools: {}, // This will be ignored as replyByAI now handles toolset internally
-      availableTools: {
-        fileTools: [],
-        functionTools: [],
-        mcpTools: [],
-      },
     })
 
     if (aiResult) {

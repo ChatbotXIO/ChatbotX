@@ -17,9 +17,6 @@ import { use, useMemo, useState } from "react"
 import { DeleteAIAgentsDialog } from "@/features/ai-agents/delete-ai-agent"
 import type { listAIAgents } from "@/features/ai-agents/queries"
 import { UpdateAIAgentDialog } from "@/features/ai-agents/update-ai-agent"
-import type { listAIFiles } from "../ai-files/queries"
-import type { listAIFunctions } from "../ai-functions/queries"
-import type { listAIMcpServers } from "../ai-mcp-servers/queries"
 import { ChangeDefault } from "./components/change-default"
 import { CreateAIAgentDialog } from "./create-ai-agent"
 import {
@@ -29,24 +26,11 @@ import {
 
 type AIAgentsTableProps = {
   workspaceId: string
-  listPromises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
-  createPromises: Promise<
-    [
-      Awaited<ReturnType<typeof listAIFiles>>,
-      Awaited<ReturnType<typeof listAIFunctions>>,
-      Awaited<ReturnType<typeof listAIMcpServers>>,
-    ]
-  >
+  promises: Promise<[Awaited<ReturnType<typeof listAIAgents>>]>
 }
 
-export function AIAgentsTable({
-  workspaceId,
-  listPromises,
-  createPromises,
-}: AIAgentsTableProps) {
-  const [{ data, pageCount }] = use(listPromises)
-  const [{ data: files }, { data: functions }, { data: mcpServers }] =
-    use(createPromises)
+export function AIAgentsTable({ workspaceId, promises }: AIAgentsTableProps) {
+  const [{ data, pageCount }] = use(promises)
 
   const t = useTranslations()
   const router = useRouter()
@@ -86,9 +70,6 @@ export function AIAgentsTable({
         <DataTable table={table}>
           <DataTableToolbar table={table}>
             <CreateAIAgentDialog
-              files={files}
-              functions={functions}
-              mcpServers={mcpServers}
               onSuccess={() => {
                 router.refresh()
               }}
@@ -111,9 +92,6 @@ export function AIAgentsTable({
 
         <UpdateAIAgentDialog
           agent={rowAction?.row.original || null}
-          files={files}
-          functions={functions}
-          mcpServers={mcpServers}
           onOpenChange={() => setRowAction(null)}
           onSuccess={() => {
             router.refresh()

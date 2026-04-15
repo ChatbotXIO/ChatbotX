@@ -1,6 +1,5 @@
-import { geminiModels, openaiModels } from "@chatbotx.io/ai"
+import { aiProviders, geminiModels, openaiModels } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
-import { aiProviders } from "@chatbotx.io/utils/ai"
 import { z } from "zod"
 
 export const createAIAgentRequest = z.object({

@@ -310,6 +310,9 @@ importers:
       tippy.js:
         specifier: ^6.3.7
         version: 6.3.7
+      universal-error-normalizer:
+        specifier: ^1.0.0
+        version: 1.0.0
       use-debounce:
         specifier: ^10.1.1
         version: 10.1.1(react@19.2.4)

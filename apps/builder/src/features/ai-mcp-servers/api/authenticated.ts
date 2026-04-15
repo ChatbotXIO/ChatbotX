@@ -1,14 +1,10 @@
-import {
-  experimental_createMCPClient,
-  type experimental_MCPClient,
-} from "@ai-sdk/mcp"
-import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
+import { normalizeError } from "universal-error-normalizer"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
-import { serverErrorHandler } from "@/lib/errors/server-handler"
+import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
+import { validateAIMcpServer } from "../actions/validate-ai-mcp-server.action"
 import { listAIMcpServers } from "../queries"
 import {
   listAIMcpServersRequest,
@@ -28,33 +24,14 @@ export const aiMcpServersAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.any())
     .handler(async ({ input }) => {
-      const headers: Record<string, string> = {}
-      if (input.auth.type === aiMcpServerAuthTypes.enum.token) {
-        headers.Authorization = `Bearer ${input.auth.token}`
-      } else if (input.auth.type === aiMcpServerAuthTypes.enum.header) {
-        for (const header of input.auth.headers) {
-          headers[header.header] = header.value
-        }
-      }
-      let httpClient: experimental_MCPClient | null = null
-
       try {
-        const httpTransport = new StreamableHTTPClientTransport(
-          new URL(input.url),
-        )
-        httpClient = await experimental_createMCPClient({
-          transport: httpTransport,
-        })
-
-        return await httpClient.tools()
-      } catch (error) {
-        return serverErrorHandler(error)
-      } finally {
-        if (httpClient) {
-          await httpClient.close()
-        }
+        return await validateAIMcpServer({ parsedInput: input })
+      } catch (err) {
+        const error = normalizeError(err)
+        throw new ChatbotXException(error.message, error.code)
       }
     }),
+
   listAIMcpServersAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",

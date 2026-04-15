@@ -842,7 +842,8 @@
       "label": "Today"
     },
     "tools": {
-      "label": "Tools"
+      "label": "Tools",
+      "placeholder": "Select tools"
     },
     "triggerFlowId": {
       "label": "Trigger Flow ID",

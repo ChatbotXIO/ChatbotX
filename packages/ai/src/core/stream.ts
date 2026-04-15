@@ -1,4 +1,4 @@
-import { supportedImageExtensions } from "../constants"
+import { supportedImageExtensions } from "../schemas"
 
 const REGEX_ANY_TOKEN =
   /!\[[^\]]*\]\(\s*([^)\s\r\n]+)\s*\)|\[[^\]]+\]\(\s*([^)\s\r\n]+)\s*\)|(https?:\/\/[^\s)\]]+(?:\?[^\s)\]]*)?)/g
@@ -8,7 +8,7 @@ const REGEX_STARS_OR_DASHES = /^[-*]\s*/u
 const REGEX_NOISY_CHARS = /^[-*.\s]+$/
 const PARAGRAPH_SEPARATOR = "\n\n"
 
-export interface StreamProcessingOptions {
+type StreamProcessingOptions = {
   sendParts?: boolean
   trackingContext?: unknown
 }

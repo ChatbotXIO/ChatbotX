@@ -1,17 +1,5 @@
 import { z } from "zod"
 
-export { type AIProvider, aiProviders } from "@chatbotx.io/utils/ai"
-
-export const supportedImageExtensions = z.enum([
-  "png",
-  "jpg",
-  "jpeg",
-  "gif",
-  "webp",
-  "svg",
-])
-export type SupportedImageExtension = z.infer<typeof supportedImageExtensions>
-
 export const helpTexts = {
   fileSearchNoResult: "No files matching the search query were found.",
   fileSearchFoundPrefix: (count: number) => `Found ${count} matching file(s):`,
