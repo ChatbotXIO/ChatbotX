@@ -1,4 +1,4 @@
-import { pgTable, timestamp, unique } from "drizzle-orm/pg-core"
+import { index, pgTable, timestamp } from "drizzle-orm/pg-core"
 import { bigintAsString, timestampConfig } from "../partials/shared"
 import { magicLinkModel } from "./magic-link"
 import { workspaceModel } from "./workspace"
@@ -24,10 +24,9 @@ export const magicLinkStatModel = pgTable(
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
   },
   (table) => [
-    unique("MagicLinkStat_workspaceId_linkId_contactInboxId_occurredAt_idx").on(
+    index("MagicLinkStat_workspaceId_linkId_occurredAt_idx").on(
       table.workspaceId,
       table.linkId,
-      table.contactInboxId,
       table.occurredAt,
     ),
   ],

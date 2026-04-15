@@ -122,7 +122,7 @@ export class MagicLinkAnalyticsService {
       return { data: [], total: 0, page: 1, pageCount: 0 }
     }
 
-    const { contactInboxIds, contactEventMap } =
+    const { contactInboxIds, rows } =
       await magicLinkStatsRepository.getMagicLinkContactStats({
         workspaceId,
         linkId,
@@ -157,18 +157,23 @@ export class MagicLinkAnalyticsService {
       },
     })
 
-    const data: FlowNodeContactData[] = contactInboxes.map((ci) => {
-      const eventData = contactEventMap.get(ci.id)
+    const contactInboxesMap = new Map<string, (typeof contactInboxes)[0]>()
+    for (const ci of contactInboxes) {
+      contactInboxesMap.set(ci.id, ci)
+    }
+
+    const data: FlowNodeContactData[] = rows.map((row) => {
+      const ci = contactInboxesMap.get(row.contactInboxId)
       return {
-        contactId: ci.contact?.id ?? "",
-        contactInboxId: ci.id,
-        firstName: ci.contact?.firstName ?? null,
-        lastName: ci.contact?.lastName ?? null,
-        sourceId: ci.sourceId ?? null,
-        avatar: ci.contact?.avatar ?? null,
-        channel: ci.channel ?? null,
-        conversationId: ci.conversation?.id ?? "",
-        occurredAt: eventData?.occurredAt ?? new Date().toISOString(),
+        contactId: ci?.contact?.id ?? "",
+        contactInboxId: ci?.id ?? "",
+        firstName: ci?.contact?.firstName ?? null,
+        lastName: ci?.contact?.lastName ?? null,
+        sourceId: ci?.sourceId ?? null,
+        avatar: ci?.contact?.avatar ?? null,
+        channel: ci?.channel ?? null,
+        conversationId: ci?.conversation?.id ?? "",
+        occurredAt: row.occurredAt.toISOString(),
       }
     })
 

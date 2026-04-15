@@ -2,7 +2,6 @@ import { and, db, eq, gte, lte, sql } from "@chatbotx.io/database/client"
 import { magicLinkStatModel } from "@chatbotx.io/database/schema"
 import { fromZonedTime } from "date-fns-tz"
 import type { MagicLinkStatsInput } from "../schemas"
-import type { ContactEventData } from "../schemas/common"
 import { BaseRepository } from "./base.repository"
 
 export type MagicLinkTimeseriesRow = {
@@ -52,7 +51,10 @@ export class MagicLinkStatsRepository extends BaseRepository {
     perPage: number
   }): Promise<{
     contactInboxIds: string[]
-    contactEventMap: Map<string, ContactEventData>
+    rows: Pick<
+      typeof magicLinkStatModel.$inferSelect,
+      "contactInboxId" | "contactId" | "occurredAt"
+    >[]
   }> {
     const { workspaceId, linkId, page, perPage } = input
     const offset = (page - 1) * perPage
@@ -71,17 +73,8 @@ export class MagicLinkStatsRepository extends BaseRepository {
       .offset(offset)
 
     const contactInboxIds = rows.map((r) => r.contactInboxId as string)
-    const contactEventMap = new Map<string, ContactEventData>()
 
-    for (const row of rows) {
-      contactEventMap.set(row.contactInboxId, {
-        contactId: row.contactId ?? "",
-        contactInboxId: row.contactInboxId,
-        occurredAt: row.occurredAt.toISOString(),
-      })
-    }
-
-    return { contactInboxIds, contactEventMap }
+    return { contactInboxIds, rows }
   }
 }
 
