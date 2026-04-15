@@ -30,7 +30,7 @@ async function startScheduleWorker() {
         logger.info("Schedules registered")
       })
       .catch((err) => {
-        logger.error("Error registering schedules", err)
+        logger.error(err, "Error registering schedules")
       })
   }
 
@@ -39,7 +39,7 @@ async function startScheduleWorker() {
     async (job: Job<ScheduleJobData>) => {
       switch (job.data.type) {
         case ScheduleJobData.sendBroadcast:
-          await sendBroadcast(job.data.data.schedulesAt)
+          await sendBroadcast()
           return
 
         case ScheduleJobData.evaluateTriggers:

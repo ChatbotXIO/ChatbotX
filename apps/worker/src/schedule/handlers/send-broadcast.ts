@@ -3,14 +3,16 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { startOfMinute } from "date-fns"
 
 const ENQUEUE_BULK_SIZE = 500
 
-export const sendBroadcast = async (schedulesAt: Date) => {
+export const sendBroadcast = async () => {
+  const startTime = startOfMinute(new Date().toString())
   const broadcasts = await db.query.broadcastModel.findMany({
     where: {
       schedulesAt: {
-        lte: schedulesAt,
+        lte: startTime,
       },
       status: "scheduled",
     },

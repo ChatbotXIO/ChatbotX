@@ -4,6 +4,7 @@ import { messageModel } from "@chatbotx.io/database/schema"
 import type { ConversationModel } from "@chatbotx.io/database/types"
 import {
   extractTemplateParams,
+  type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
   type WaTemplateParams,
@@ -12,28 +13,37 @@ import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
+import type { MessageTemplateEntity } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   BotResponseTrackingContext,
   ChatJobSendWhatsappTemplateMessage,
+  IntegrationJobMetadata,
 } from "@chatbotx.io/worker-config"
 import {
   replaceWhatsappTemplateVariables,
   validateWhatsappTemplate,
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
+import { convertButtonsToTemplate } from "./send-flow-step"
 import { sendFlowStepToExternal } from "./send-message"
 
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
   conversation: ConversationModel
-  flowId?: string
-  flowVersionId?: string
-  templateId: string
-  templateLanguage: string
-  templateName: string
-  templateParams?: WaTemplateParams
+  flow?: {
+    id: string
+    versionId?: string
+    buttons: SendWaTemplateMessageStepSchema["buttons"]
+  }
+  metadata?: IntegrationJobMetadata
+  template: {
+    id: string
+    name: string
+    language: string
+    params: WaTemplateParams
+  }
   trackingContext?: BotResponseTrackingContext
 }
 
@@ -48,14 +58,11 @@ export async function processWhatsappTemplate(
 ): Promise<ProcessWhatsappTemplateResult> {
   const {
     conversation,
-    templateId,
-    templateName,
-    templateLanguage,
-    templateParams = { header: [], body: [], button: [] },
+    template,
     broadcastId,
-    flowId,
-    flowVersionId,
+    flow,
     trackingContext,
+    metadata,
   } = params
 
   const contactInbox = await db.query.contactInboxModel.findFirst({
@@ -70,29 +77,47 @@ export async function processWhatsappTemplate(
     )
   }
 
-  const isValid = await validateWhatsappTemplate(
-    {
-      id: templateId,
-      name: templateName,
-      languageCode: templateLanguage,
-      params: templateParams,
-    },
-    contactInbox.inboxId,
-  )
+  const isValid = await validateWhatsappTemplate(template, contactInbox.inboxId)
 
   if (!isValid) {
     logger.error(
-      { templateId, inboxId: contactInbox.inboxId },
+      { templateId: template.id, inboxId: contactInbox.inboxId },
       "Template validation failed - not approved or not found",
     )
-    throw new Error(`Template validation failed: ${templateId}`)
+    throw new Error(`Template validation failed: ${template.id}`)
   }
 
   const variables = await contactVariableService.getAll(conversation.id)
   const replacedParams = await replaceWhatsappTemplateVariables({
-    templateParams,
+    params: template.params,
     variables,
   })
+
+  const contentAttributes = {
+    type: "whatsapp_template",
+    template: {
+      name: template.name,
+      language: template.language,
+      id: template.id,
+      params: replacedParams,
+    },
+    ...(broadcastId && { broadcastId }),
+    // ...(flow && { flowId: flow.id }),
+    // ...(flow && { flowVersionId: flow.versionId }),
+    ...(trackingContext && { trackingContext }),
+    payload: {} as MessageTemplateEntity["payload"],
+  }
+
+  if (flow?.buttons && flow.buttons.length > 0) {
+    contentAttributes.payload = {
+      templateType: "button",
+      buttons: convertButtonsToTemplate({
+        flowId: flow.id,
+        flowVersionId: flow.versionId,
+        buttons: flow.buttons,
+      }),
+    }
+  }
 
   const messageData: typeof messageModel.$inferInsert = {
     id: createId(),
@@ -103,18 +128,8 @@ export async function processWhatsappTemplate(
     contentType: "text",
     senderType: "bot",
     sourceId: null,
-    text: `Template: ${templateName}`,
-    contentAttributes: {
-      type: "whatsapp_template",
-      templateName,
-      templateLanguage,
-      templateId,
-      params: replacedParams,
-      ...(broadcastId && { broadcastId }),
-      ...(flowId && { flowId }),
-      ...(flowVersionId && { flowVersionId }),
-      ...(trackingContext && { trackingContext }),
-    },
+    text: `Template: ${template.name}`,
+    contentAttributes,
   }
 
   const newMessage = await db
@@ -122,16 +137,6 @@ export async function processWhatsappTemplate(
     .values(messageData)
     .returning()
     .then((result) => result[0])
-
-  logger.info(
-    {
-      messageId: newMessage.id,
-      conversationId: conversation.id,
-      templateId,
-      broadcastId,
-    },
-    "WhatsApp template message created in DB",
-  )
 
   broadcastToWorkspaceParty(conversation.workspaceId, {
     eventType: RealtimeEventType.messageCreated,
@@ -142,19 +147,16 @@ export async function processWhatsappTemplate(
     const result = await sendFlowStepToExternal({
       conversation,
       contactInbox,
-      flowId: flowId || "",
-      flowVersionId,
+      flowId: flow?.id || "",
+      flowVersionId: flow?.versionId || "",
       step: {
         id: createId(),
         stepType: stepTypes.enum.sendWaTemplateMessage,
         buttons: [],
-        template: {
-          id: templateId,
-          name: templateName,
-          languageCode: templateLanguage,
-          params: replacedParams,
-        },
+        template,
       },
+      metadata,
+      messageId: newMessage.id,
     })
 
     const providerMessageId = result?.messageIds?.[0]
@@ -164,15 +166,6 @@ export async function processWhatsappTemplate(
         .update(messageModel)
         .set({ sourceId: providerMessageId })
         .where(eq(messageModel.id, newMessage.id))
-
-      logger.info(
-        {
-          messageId: newMessage.id,
-          providerMessageId,
-          templateId,
-        },
-        "WhatsApp template sent successfully",
-      )
     }
 
     return {
@@ -186,7 +179,7 @@ export async function processWhatsappTemplate(
         error,
         messageId: newMessage.id,
         conversationId: conversation.id,
-        templateId,
+        templateId: template.id,
       },
       "Failed to send WhatsApp template to provider",
     )
@@ -197,7 +190,7 @@ export async function processWhatsappTemplate(
 export async function sendWhatsappTemplateMessage(
   data: ChatJobSendWhatsappTemplateMessage["data"],
 ) {
-  const { conversation, templateId, broadcastId, templateData } = data
+  const { conversation, templateId, broadcastId, templateData, metadata } = data
 
   try {
     const template = await db.query.whatsappMessageTemplateModel.findFirst({
@@ -215,11 +208,14 @@ export async function sendWhatsappTemplateMessage(
 
     const result = await processWhatsappTemplate({
       conversation,
-      templateId: template.id,
-      templateName: template.name,
-      templateLanguage: template.language,
-      templateParams,
+      template: {
+        id: template.id,
+        name: template.name,
+        language: template.language,
+        params: templateParams,
+      },
       broadcastId,
+      metadata,
     })
 
     return result

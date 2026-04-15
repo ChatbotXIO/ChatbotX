@@ -18,6 +18,7 @@ import {
   runFlowPostback,
   runFlowQuickReply,
 } from "./handlers/flow"
+import { handleMessageStatus } from "./handlers/message-status"
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { sendBroadcast } from "./handlers/send-broadcast"
@@ -120,6 +121,10 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.assignConversation: {
           // await broadcastAssignConversation(job.data.data)
+          return
+        }
+        case IntegrationJobAction.messageStatus: {
+          await handleMessageStatus(job.data.data)
           return
         }
         default:

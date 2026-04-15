@@ -1490,6 +1490,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@aha.chat/worker-config':
+        specifier: workspace:*
+        version: link:../worker-config
       '@types/node':
         specifier: 24.x
         version: 24.12.2

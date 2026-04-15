@@ -51,6 +51,20 @@ export type IntegrationJobMessageStatus = {
   }
 }
 
+export type BroadcastMetadata = {
+  type: "broadcast"
+  broadcastId: string
+}
+
+export type SequenceScheduleMetadata = {
+  type: "sequenceSchedule"
+  sequenceScheduleId: string
+}
+
+export type IntegrationJobMetadata =
+  | BroadcastMetadata
+  | SequenceScheduleMetadata
+
 export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
@@ -60,6 +74,7 @@ export type IntegrationJobRunFlowNode = {
     flowVersionId?: string
     nodeId?: string
     trackingContext?: BotResponseTrackingContext
+    metadata?: IntegrationJobMetadata
   }
 }
 

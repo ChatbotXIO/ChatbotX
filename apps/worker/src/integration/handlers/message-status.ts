@@ -4,8 +4,10 @@ import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import { runFlowPostback } from "./flow"
 
-export const handleMessageStatus = async (job: IntegrationJobMessageStatus) => {
-  const { payload } = job.data
+export const handleMessageStatus = async (
+  job: IntegrationJobMessageStatus["data"],
+) => {
+  const { payload } = job
 
   try {
     const message = await db
@@ -31,11 +33,7 @@ export const handleMessageStatus = async (job: IntegrationJobMessageStatus) => {
       [key: string]: unknown
     }
 
-    if (
-      !contentAttributes ||
-      (contentAttributes.type !== "template" &&
-        contentAttributes.type !== "whatsapp_template")
-    ) {
+    if (!contentAttributes || contentAttributes.type !== "whatsapp_template") {
       return
     }
 

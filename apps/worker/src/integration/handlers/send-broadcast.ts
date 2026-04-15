@@ -90,6 +90,10 @@ export const sendBroadcast = async (broadcastId: string) => {
             data: {
               flowId: broadcast.flowId,
               conversationId: cvst.id,
+              metadata: {
+                type: "broadcast",
+                broadcastId: broadcast.id,
+              },
             },
           })
         }
@@ -104,6 +108,10 @@ export const sendBroadcast = async (broadcastId: string) => {
               templateData: broadcast.templateData as
                 | WaTemplateParams
                 | undefined,
+              metadata: {
+                type: "broadcast",
+                broadcastId: broadcast.id,
+              },
             },
           })
         }

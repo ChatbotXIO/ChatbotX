@@ -120,7 +120,7 @@ export const sendWaTemplateMessageStepSchema = z.object({
   template: z.object({
     id: z.string().trim().min(1),
     name: z.string(),
-    languageCode: z.string(),
+    language: z.string(),
     params: waTemplateParamsSchema,
   }),
   buttons: z
@@ -156,7 +156,7 @@ export const sendWaTemplateMessageStepDefaultFn = (
   template: {
     id: "",
     name: "",
-    languageCode: "",
+    language: "",
     params: {},
   },
   buttons: [

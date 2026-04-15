@@ -23,6 +23,7 @@ import {
   getRedisConnection,
 } from "../../lib/connection"
 import { queueName } from "../../lib/types"
+import type { IntegrationJobMetadata } from "../integration"
 import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
@@ -40,6 +41,7 @@ export type ChatJobSendExternalMessage = {
     conversation: ConversationModel
     contactInbox: ContactInboxModel
     message: MessageModel & { clientId?: string | undefined }
+    metadata?: IntegrationJobMetadata
   }
 }
 
@@ -61,6 +63,7 @@ export type ChatJobSendFlowStep = {
       | SendQuickReplyStepSchema
       | SendWaTemplateMessageStepSchema
     trackingContext?: BotResponseTrackingContext
+    metadata?: IntegrationJobMetadata
   }
 }
 
@@ -72,6 +75,7 @@ export type ChatJobSendChatMessage = {
     text?: string
     url?: string
     trackingContext?: BotResponseTrackingContext
+    metadata?: IntegrationJobMetadata
   }
 }
 
@@ -83,6 +87,7 @@ export type ChatJobSendWhatsappTemplateMessage = {
     templateId: string
     broadcastId: string
     templateData?: WaTemplateParams
+    metadata?: IntegrationJobMetadata
   }
 }
 
@@ -93,6 +98,7 @@ export type ChatJobSendTyping = {
     contactInbox: ContactInboxModel
     typing: boolean
     seconds?: number
+    metadata?: IntegrationJobMetadata
   }
 }
 

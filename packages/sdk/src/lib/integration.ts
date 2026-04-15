@@ -1,3 +1,4 @@
+import type { IntegrationJobMetadata } from "@chatbotx.io/worker-config"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
 import type { SendFlowStepData } from "./flow-step-data"
 import type {
@@ -19,6 +20,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowId: string
     flowVersionId?: string
     step: SendFlowStepData
+    metadata?: IntegrationJobMetadata
   }
 }
 
@@ -32,6 +34,7 @@ export type MessageHandlers<
       data: {
         contact: OutgoingContact
         message: OutgoingMessage
+        metadata?: IntegrationJobMetadata
       }
     },
     {
@@ -57,6 +60,7 @@ export type MessageHandlers<
         flowId: string
         flowVersionId?: string
         step: TStep
+        metadata?: IntegrationJobMetadata
       }
     },
     {

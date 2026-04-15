@@ -26,9 +26,9 @@ export const SendWaTemplateMessageStepViewer = (
               {data.template.name || "Template Message"}
             </span>
           </div>
-          {data.template.languageCode && (
+          {data.template.language && (
             <div className="text-muted-foreground text-xs">
-              {data.template.languageCode}
+              {data.template.language}
             </div>
           )}
         </div>

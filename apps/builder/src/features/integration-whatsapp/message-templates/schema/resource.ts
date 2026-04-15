@@ -4,7 +4,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { z } from "zod"
 
-export const whatsappMessageTemplateResouce = createSelectSchema(
+export const whatsappMessageTemplateResource = createSelectSchema(
   whatsappMessageTemplateModel,
   {
     id: z.string(),
@@ -17,12 +17,13 @@ export const whatsappMessageTemplateResouce = createSelectSchema(
     category: true,
     status: true,
     components: true,
+    integrationWhatsappId: true,
   })
   .extend({
     components: z.any(),
   })
 export type WhatsappMessageTemplateResource = z.infer<
-  typeof whatsappMessageTemplateResouce
+  typeof whatsappMessageTemplateResource
 >
 
 export type MessageTemplateWithComponents = WhatsappMessageTemplateResource & {

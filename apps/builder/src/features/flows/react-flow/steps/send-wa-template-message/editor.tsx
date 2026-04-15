@@ -57,7 +57,7 @@ function SendWaTemplateMessageStepEditor(
     ) {
       setValue(`${parentName}.template.id`, "")
       setValue(`${parentName}.template.name`, "")
-      setValue(`${parentName}.template.languageCode`, "")
+      setValue(`${parentName}.template.language`, "")
       setValue(`${parentName}.template.params`, {})
       setSelectedTemplate(null)
       setParameters([])
@@ -95,7 +95,7 @@ function SendWaTemplateMessageStepEditor(
     if (template) {
       setValue(`${parentName}.template.id`, template.id)
       setValue(`${parentName}.template.name`, template.name)
-      setValue(`${parentName}.template.languageCode`, template.language)
+      setValue(`${parentName}.template.language`, template.language)
       const initialParams = extractTemplateParams(
         template.components as TemplateComponent[],
       )

@@ -105,7 +105,7 @@ export type MessageCardTemplate = {
 }
 
 export type MessageTemplateEntity = {
-  type: "template"
+  type: "template" | "whatsapp_template"
   payload:
     | {
         templateType: "button"

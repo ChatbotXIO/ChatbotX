@@ -6,7 +6,7 @@ import {
   contactTrackingService,
   trackingResponseTypes,
 } from "@chatbotx.io/analytics"
-import { db, eq } from "@chatbotx.io/database/client"
+import { db } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   contentTypes,
@@ -46,7 +46,7 @@ import { logger } from "../../lib/logger"
 import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
-const convertButtonsToTemplate = (props: {
+export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
@@ -104,6 +104,7 @@ export async function sendFlowStep({
   flowVersionId,
   step,
   trackingContext,
+  metadata,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -134,13 +135,18 @@ export async function sendFlowStep({
     try {
       await processWhatsappTemplate({
         conversation,
-        templateId: step.template.id,
-        templateName: step.template.name,
-        templateLanguage: step.template.languageCode,
-        templateParams: step.template.params,
-        flowId,
-        flowVersionId,
+        template: {
+          id: step.template.id,
+          name: step.template.name,
+          language: step.template.language,
+          params: step.template.params,
+        },
+        flow: {
+          id: flowId,
+          buttons: step?.buttons ?? [],
+        },
         trackingContext,
+        metadata,
       })
     } catch (error) {
       logger.error(
@@ -249,17 +255,8 @@ export async function sendFlowStep({
           flowId,
           flowVersionId,
           step: step as SendFlowStepData,
-        }).then(async (result) => {
-          const firstMessageId = result?.messageIds?.[0]
-
-          if (firstMessageId && message && typeof message !== "string") {
-            await db
-              .update(messageModel)
-              .set({
-                sourceId: firstMessageId,
-              })
-              .where(eq(messageModel.id, message.id))
-          }
+          metadata,
+          messageId: message?.id,
         }),
       )
     }
@@ -344,6 +341,7 @@ export const sendChatMessage = async (
     text,
     url,
     trackingContext,
+    metadata,
   } = props
 
   const contactInbox =
@@ -428,11 +426,13 @@ export const sendChatMessage = async (
           conversation,
           contactInbox,
           message,
+          metadata,
         }),
       )
     }
 
     await Promise.all(promises)
+    console.log(message, metadata)
 
     contactTrackingService
       .trackEvent({
