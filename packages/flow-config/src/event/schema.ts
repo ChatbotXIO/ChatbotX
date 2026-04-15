@@ -97,7 +97,6 @@ export const refLinkPayloadSchema = z.object({
   action: refLinkActionSchema,
   occurredAt: z.date(),
 })
-export type RefLinkPayload = z.infer<typeof refLinkPayloadSchema>
 
 export const flowEventSchemas = {
   [FlowEventType["flow:clicked"]]: clickedPayloadSchema,

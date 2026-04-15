@@ -34,6 +34,7 @@ const eventTypeToLabel: Record<BroadcastEventType, string> = {
   "message:seen": "seen",
   "message:failed": "failed",
   "flow:clicked": "clicked",
+  "flow:ref": "ref",
 }
 
 type Props = {
