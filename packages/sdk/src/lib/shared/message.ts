@@ -119,7 +119,7 @@ export type MessageTemplateEntity = {
       }
 }
 
-export const contentTypes = z.enum(["text", "location"])
+export const contentTypes = z.enum(["text", "location", "refLink"])
 export type ContentType = z.infer<typeof contentTypes>
 
 export const fileTypes = z.enum(["image", "audio", "video", "file"])

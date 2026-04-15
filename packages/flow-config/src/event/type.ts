@@ -7,6 +7,7 @@ import type {
   flowEventSchemas,
   MessageEventType,
   messageEventSchemas,
+  refLinkPayloadSchema,
   seenPayloadSchema,
   sentPayloadSchema,
 } from "./schema"
@@ -45,8 +46,9 @@ export type MessageEvenTypeMap = Record<
 export type FlowEventMap = InferEventMap<typeof flowEventSchemas>
 
 export type FlowClickedPayload = z.infer<typeof clickedPayloadSchema>
+export type RefLinkPayload = z.infer<typeof refLinkPayloadSchema>
 
-export type FlowPayload = FlowClickedPayload
+export type FlowPayload = FlowClickedPayload | RefLinkPayload
 
 export interface FlowEventListener extends BaseEventListener<FlowPayload> {}
 

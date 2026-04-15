@@ -61,11 +61,11 @@ export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage
     }
 
     const messaging = entry.messaging[0]
-    if (!(messaging.message || messaging.postback)) {
+    if (!(messaging.message || messaging.postback || messaging.referral)) {
       throw new MessengerException("No message found")
     }
 
-    const { message, postbackAction, quickReplyAction } =
+    const { message, postbackAction, quickReplyAction, ref } =
       await getMessageEntity(ctx, messaging)
 
     const sourceId =
@@ -81,7 +81,7 @@ export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage
       contact,
       postbackAction,
       quickReplyAction,
-      ref: null,
+      ref,
     }
   }
 
@@ -120,6 +120,12 @@ const getMessageEntity = async (
 
   if (messaging.referral) {
     ref = messaging.referral.ref
+    message = {
+      sourceId: messaging.referral.ref,
+      messageType: messageTypes.enum.incoming,
+      text: messaging.referral.ref,
+      contentType: contentTypes.enum.refLink,
+    }
   }
 
   if (message) {

@@ -29,6 +29,7 @@ export const IntegrationJobAction = {
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
   createMessage: "createMessage",
+  referral: "referral",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -120,6 +121,16 @@ export type IntegrationJobContactMarkAsRead = {
   }
 }
 
+export type IntegrationJobReferral = {
+  type: typeof IntegrationJobAction.referral
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    sourceConversationId: string
+    payload: unknown
+  }
+}
+
 export type IntegrationJobRunRef = {
   type: typeof IntegrationJobAction.runRef
   data: {
@@ -190,6 +201,7 @@ export type IntegrationJobData =
   | IntegrationJobAssignConversation
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
+  | IntegrationJobReferral
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

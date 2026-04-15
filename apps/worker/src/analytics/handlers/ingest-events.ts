@@ -62,10 +62,10 @@ const manifestStore: NdjsonIngestManifestStore = {
         ON CONFLICT ("objectKey") DO UPDATE
         SET status = 'processing',
             attempts = "AnalyticsManifestStatus".attempts + 1,
-            "updatedAt" = CURRENT_TIMESTAMP
+            "ingestedAt" = CURRENT_TIMESTAMP
         WHERE "AnalyticsManifestStatus".status NOT IN ('processing', 'ingested')
            OR ("AnalyticsManifestStatus".status = 'processing'
-               AND "AnalyticsManifestStatus"."updatedAt" < CURRENT_TIMESTAMP - INTERVAL '60 minutes')
+               AND "AnalyticsManifestStatus"."ingestedAt" < CURRENT_TIMESTAMP - INTERVAL '60 minutes')
         RETURNING attempts, status
       `,
     )
@@ -84,9 +84,8 @@ const manifestStore: NdjsonIngestManifestStore = {
       .set({
         status: "ingested",
         ingestedAt: new Date(),
-        updatedAt: new Date(),
       })
-      .where(eq(analyticsManifestStatusModel.id, objectKey))
+      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
     ingestedCache.set(objectKey, Date.now())
   },
 
@@ -96,9 +95,9 @@ const manifestStore: NdjsonIngestManifestStore = {
       .set({
         status: "failed",
         lastError: errorMessage,
-        updatedAt: new Date(),
+        ingestedAt: new Date(),
       })
-      .where(eq(analyticsManifestStatusModel.id, objectKey))
+      .where(eq(analyticsManifestStatusModel.objectKey, objectKey))
   },
 }
 

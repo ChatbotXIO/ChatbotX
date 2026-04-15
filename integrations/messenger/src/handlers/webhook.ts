@@ -79,6 +79,19 @@ const handleWebhookEvent = async (
       return
     }
 
+    if (webhookData.entry[0].messaging[0]?.referral) {
+      await queue?.add("referral", {
+        type: "referral",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier: webhookData.entry[0].id,
+          sourceConversationId: webhookData.entry[0].messaging[0].sender.id,
+          payload: webhookData,
+        },
+      })
+      return
+    }
+
     // Calculate integration identifier
     const integrationIdentifier = webhookData.entry[0].messaging[0].message
       ?.is_echo

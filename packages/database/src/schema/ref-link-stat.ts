@@ -1,10 +1,10 @@
-import { pgTable, timestamp, unique } from "drizzle-orm/pg-core"
+import { index, pgTable, timestamp } from "drizzle-orm/pg-core"
 import { bigintAsString, timestampConfig } from "../partials/shared"
-import { magicLinkModel } from "./magic-link"
+import { reflinkModel } from "./reflink"
 import { workspaceModel } from "./workspace"
 
-export const magicLinkContactStatModel = pgTable(
-  "MagicLinkContactStat",
+export const refLinkStatModel = pgTable(
+  "RefLinkStat",
   {
     workspaceId: bigintAsString()
       .notNull()
@@ -14,20 +14,20 @@ export const magicLinkContactStatModel = pgTable(
       }),
     linkId: bigintAsString()
       .notNull()
-      .references(() => magicLinkModel.id, {
+      .references(() => reflinkModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    contactId: bigintAsString(),
+    contactId: bigintAsString().notNull(),
     contactInboxId: bigintAsString().notNull(),
     occurredAt: timestamp(timestampConfig).notNull(),
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
   },
   (table) => [
-    unique("MagicLinkContactStat_workspaceId_linkId_contactInboxId_idx").on(
+    index("RefLinkStat_workspaceId_linkId_occurredAt_idx").on(
       table.workspaceId,
       table.linkId,
-      table.contactInboxId,
+      table.occurredAt,
     ),
   ],
 )

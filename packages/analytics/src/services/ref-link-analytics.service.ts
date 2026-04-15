@@ -1,14 +1,9 @@
 import { db } from "@chatbotx.io/database/client"
-import { magicLinkStatModel } from "@chatbotx.io/database/schema"
-import type { MagicLinkStatModel } from "@chatbotx.io/database/types"
-import {
-  type ClickedPayload,
-  clickTypeSchema,
-  type FlowClickedPayload,
-  type MessagePayload,
-} from "@chatbotx.io/flow-config"
+import { refLinkStatModel } from "@chatbotx.io/database/schema"
+import type { RefLinkStatModel } from "@chatbotx.io/database/types"
+import type { RefLinkPayload } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
-import { magicLinkStatsRepository } from "../repositories/magic-link-stats.repository"
+import { refLinkStatsRepository } from "../repositories/ref-link-stats.repository"
 import type {
   FlowNodeContactData,
   ListFlowNodeContactsResponse,
@@ -18,43 +13,38 @@ import type {
   MagicLinkStatsInput,
 } from "../schemas/magic-link"
 
-type ExtractedPayload<T extends MessagePayload> = {
-  clickedPayloads: T[]
+type ExtractedPayload<T extends RefLinkPayload> = {
+  refLinkPayloads: T[]
 }
 
-export class MagicLinkAnalyticsService {
-  private extractPayload<T extends ClickedPayload>(
+export class RefLinkAnalyticsService {
+  private extractPayload<T extends RefLinkPayload>(
     payloads: T[],
   ): ExtractedPayload<T> {
-    const clickedPayloads: T[] = []
+    const refLinkPayloads: T[] = []
 
     for (const payload of payloads) {
-      if (
-        !(
-          payload.action.magicLinkId &&
-          payload.action?.clickType === clickTypeSchema.enum.magic_link
-        )
-      ) {
+      if (!payload.action.refId) {
         continue
       }
 
-      clickedPayloads.push(payload)
+      refLinkPayloads.push(payload)
     }
 
-    return { clickedPayloads }
+    return { refLinkPayloads }
   }
 
-  async onClicked(payloads: FlowClickedPayload[]) {
-    const { clickedPayloads } = this.extractPayload(payloads)
+  async handler(payloads: RefLinkPayload[]) {
+    const { refLinkPayloads } = this.extractPayload(payloads)
 
-    if (clickedPayloads.length === 0) {
+    if (refLinkPayloads.length === 0) {
       return
     }
 
-    const items: MagicLinkStatModel[] = clickedPayloads.map((p) => {
+    const items: RefLinkStatModel[] = refLinkPayloads.map((p) => {
       return {
         workspaceId: p.context.workspaceId,
-        linkId: p.action.magicLinkId ?? "",
+        linkId: p.action.refId,
         contactId: p.context.contactId,
         contactInboxId: p.context.contactInboxId ?? "",
         occurredAt: startOfSecond(new Date(p.occurredAt)),
@@ -63,12 +53,12 @@ export class MagicLinkAnalyticsService {
     })
 
     await Promise.all([
-      db.insert(magicLinkStatModel).values(items).onConflictDoNothing(),
+      db.insert(refLinkStatModel).values(items).onConflictDoNothing(),
     ])
   }
 
-  async getMagicLinkStatsByDateRange(input: MagicLinkStatsInput) {
-    const rows = await magicLinkStatsRepository.getMagicLinkStatsByDateRange({
+  async getRefLinkStatsByDateRange(input: MagicLinkStatsInput) {
+    const rows = await refLinkStatsRepository.getRefLinkStatsByDateRange({
       workspaceId: input.workspaceId,
       startDate: input.startDate,
       endDate: input.endDate,
@@ -79,7 +69,7 @@ export class MagicLinkAnalyticsService {
     return rows.sort((a, b) => a.dateReport.localeCompare(b.dateReport))
   }
 
-  async getMagicLinkContactStats(
+  async getRefLinkContactStats(
     input: MagicLinkContactStatsInput,
   ): Promise<ListFlowNodeContactsResponse> {
     const { workspaceId, linkId, page, perPage } = input
@@ -88,7 +78,7 @@ export class MagicLinkAnalyticsService {
       return { data: [], total: 0, page: 1, pageCount: 0 }
     }
 
-    const row = await db.query.magicLinkModel.findFirst({
+    const row = await db.query.reflinkModel.findFirst({
       where: {
         workspaceId,
         id: linkId,
@@ -100,7 +90,7 @@ export class MagicLinkAnalyticsService {
     }
 
     const { contactInboxIds, rows } =
-      await magicLinkStatsRepository.getMagicLinkContactStats({
+      await refLinkStatsRepository.getRefLinkContactStats({
         workspaceId,
         linkId,
         page,
@@ -163,4 +153,4 @@ export class MagicLinkAnalyticsService {
   }
 }
 
-export const magicLinkAnalyticsService = new MagicLinkAnalyticsService()
+export const refLinkAnalyticsService = new RefLinkAnalyticsService()

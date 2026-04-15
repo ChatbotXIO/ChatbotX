@@ -1,0 +1,1 @@
+ALTER TYPE "contentType" ADD VALUE 'refLink';

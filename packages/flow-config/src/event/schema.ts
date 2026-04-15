@@ -8,7 +8,7 @@ export const messageEventType = z.enum([
   "message:failed",
 ])
 
-export const flowEventType = z.enum(["flow:clicked"])
+export const flowEventType = z.enum(["flow:clicked", "flow:ref"])
 
 export const MessageEventType = messageEventType.enum
 
@@ -42,7 +42,7 @@ export type MessageAction = z.infer<typeof messageActionSchema>
 export const clickTypeSchema = z.enum(["button", "quick_reply", "magic_link"])
 export type ClickType = z.infer<typeof clickTypeSchema>
 
-export const flowActionSchema = z.object({
+export const flowClickActionSchema = z.object({
   flowId: z.string(),
   buttonId: z.string().optional(),
   nodeId: z.string().optional(),
@@ -51,8 +51,14 @@ export const flowActionSchema = z.object({
   magicLinkId: z.string().optional(),
   clickType: clickTypeSchema,
 })
+export type FlowClickAction = z.infer<typeof flowClickActionSchema>
 
-export type FlowAction = z.infer<typeof flowActionSchema>
+export const refLinkActionSchema = z.object({
+  refId: z.string(),
+  refType: z.enum(["entryPoint"]),
+})
+
+export type RefLinkAction = z.infer<typeof refLinkActionSchema>
 
 const baseMessagePayloadSchema = z.object({
   context: eventContextSchema,
@@ -79,13 +85,21 @@ export const messageEventSchemas = {
 
 export const clickedPayloadSchema = z.object({
   context: eventContextSchema,
-  action: flowActionSchema,
+  action: flowClickActionSchema,
   stepId: z.string().optional(),
   nodeId: z.string().optional(),
   occurredAt: z.date(),
 })
 export type ClickedPayload = z.infer<typeof clickedPayloadSchema>
 
+export const refLinkPayloadSchema = z.object({
+  context: eventContextSchema,
+  action: refLinkActionSchema,
+  occurredAt: z.date(),
+})
+export type RefLinkPayload = z.infer<typeof refLinkPayloadSchema>
+
 export const flowEventSchemas = {
   [FlowEventType["flow:clicked"]]: clickedPayloadSchema,
+  [FlowEventType["flow:ref"]]: refLinkPayloadSchema,
 } as const

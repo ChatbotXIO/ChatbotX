@@ -21,6 +21,7 @@ import {
 import { handleMessageStatus } from "./handlers/message-status"
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
+import { handleReferral } from "./handlers/referral"
 import { sendBroadcast } from "./handlers/send-broadcast"
 
 async function startIntegrationWorker() {
@@ -97,6 +98,10 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.contactMarkAsRead: {
           await contactMarkAsRead(job.data.data)
+          return
+        }
+        case IntegrationJobAction.referral: {
+          await handleReferral(job.data.data)
           return
         }
         case IntegrationJobAction.sendBroadcast: {
