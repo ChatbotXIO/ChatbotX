@@ -5,16 +5,13 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
-  IntegrationJobMetadata,
 } from "@chatbotx.io/worker-config"
+import { allIntegrations, integrationService } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
-import {
-  allIntegrations,
-  integrationService,
-} from "../../services/integrations"
 
 export async function sendMessageToExternal(
   data: ChatJobSendExternalMessage["data"],
@@ -107,7 +104,7 @@ export async function sendFlowStepToExternal({
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
   messageId?: string
 }): Promise<{ messageIds?: string[] }> {
   // Find integration auth

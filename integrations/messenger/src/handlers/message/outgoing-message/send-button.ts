@@ -3,9 +3,8 @@ import {
   buttonTypes,
   encodeButtonPayload,
   extractMetadata,
+  type MetadataPayload,
 } from "@chatbotx.io/flow-config"
-import type { IntegrationJobMetadata } from "@chatbotx.io/sdk"
-
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
 import type { FacebookButton } from "../../../schema"
@@ -14,7 +13,7 @@ export function getButtonTemplate(props: {
   flowId: string
   flowVersionId?: string
   button: ButtonStepProps
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): FacebookButton {
   const { flowId, flowVersionId, button, metadata } = props
 
@@ -50,7 +49,7 @@ export function convertFacebookButtons({
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): FacebookButton[] | undefined {
   const chunks = chunk(buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {

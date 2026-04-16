@@ -10,6 +10,7 @@ import {
   decodeButtonPayload,
   type EdgeSchema,
   type FlowNode,
+  type MetadataPayload,
   type SendQuickReplyStepSchema,
   type StepType,
   stepTypes,
@@ -18,7 +19,6 @@ import { initVariables, SdkException, type Variables } from "@chatbotx.io/sdk"
 import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
-  type IntegrationJobMetadata,
   type IntegrationJobRunFlowNode,
   type IntegrationJobSendFlowPostback,
   type IntegrationJobSendFlowQuickReply,
@@ -40,7 +40,7 @@ export type ExecuteMultipleStepsProps = {
   }
   steps: BaseStepSchema[]
   trackingContext?: BotResponseTrackingContext
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -64,7 +64,7 @@ type ExecuteStepsAndQuickRepliesProps = {
     variables: Variables
   }
   trackingContext?: BotResponseTrackingContext
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }
 
 export const seekConnectedNode = (

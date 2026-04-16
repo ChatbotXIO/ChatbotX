@@ -68,3 +68,17 @@ export const sendMessageNodeDefaultFn = (
     },
   },
 })
+
+export type BroadcastMetadataPayload = {
+  type: "broadcast"
+  broadcastId: string
+}
+
+export type SequenceScheduleMetadataPayload = {
+  type: "sequenceSchedule"
+  sequenceScheduleId: string
+}
+
+export type MetadataPayload =
+  | BroadcastMetadataPayload
+  | SequenceScheduleMetadataPayload

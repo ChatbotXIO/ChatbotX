@@ -1,19 +1,19 @@
 import { z } from "zod"
 import { MessageEventType } from "./types"
 
-const broadcastMetadataSchema = z.object({
+const broadcastMetadata = z.object({
   type: z.literal("broadcast"),
   broadcastId: z.string(),
 })
 
-const sequenceScheduleMetadataSchema = z.object({
+const sequenceScheduleMetadata = z.object({
   type: z.literal("sequenceSchedule"),
   sequenceScheduleId: z.string(),
 })
 
 export const messageSourceMetadataSchema = z.discriminatedUnion("type", [
-  broadcastMetadataSchema,
-  sequenceScheduleMetadataSchema,
+  broadcastMetadata,
+  sequenceScheduleMetadata,
 ])
 
 const basePayloadSchema = z.object({

@@ -2,12 +2,10 @@ import {
   type ButtonStepProps,
   encodeButtonPayload,
   extractMetadata,
+  type MetadataPayload,
   type SendQuickReplyStepSchema,
 } from "@chatbotx.io/flow-config"
-import type {
-  IntegrationJobMetadata,
-  SendFlowStepProps,
-} from "@chatbotx.io/sdk"
+import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import type {
   FacebookMessage,
   FacebookMessageAttachment,
@@ -44,7 +42,7 @@ export function convertFacebookQuickReplies(props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): FacebookQuickReply[] {
   return props.buttons.map((button) => ({
     content_type: "text",

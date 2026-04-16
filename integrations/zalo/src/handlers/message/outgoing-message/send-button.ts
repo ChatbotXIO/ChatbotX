@@ -3,9 +3,8 @@ import {
   buttonTypes,
   encodeButtonPayload,
   extractMetadata,
+  type MetadataPayload,
 } from "@chatbotx.io/flow-config"
-import type { IntegrationJobMetadata } from "@chatbotx.io/sdk"
-
 import { chunk } from "remeda"
 import { MAX_BUTTONS } from "../../../constants"
 import type { ButtonPayload } from "../../../schema/webhook"
@@ -14,7 +13,7 @@ export function getButtonTemplate(props: {
   flowId: string
   flowVersionId?: string
   button: ButtonStepProps
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): ButtonPayload {
   const { button, metadata } = props
   switch (button.buttonType) {
@@ -44,7 +43,7 @@ export function convertZaloButtons(props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): ButtonPayload[] | undefined {
   const chunks = chunk(props.buttons, MAX_BUTTONS)
   if (chunks.length > 0 && chunks[0]) {

@@ -17,6 +17,7 @@ import { attachmentModel, messageModel } from "@chatbotx.io/database/schema"
 import type { AttachmentModel } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   type ButtonStepProps,
   buttonTypes,
@@ -41,7 +42,6 @@ import { createId } from "@chatbotx.io/utils"
 import type {
   ChatJobSendChatMessage,
   ChatJobSendFlowStep,
-  IntegrationJobMetadata,
 } from "@chatbotx.io/worker-config"
 import { trackBotResponse } from "../../integration/handlers/automated-response/track-bot-response"
 import { logger } from "../../lib/logger"
@@ -52,7 +52,7 @@ export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
   buttons: ButtonStepProps[]
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): MessageButtonTemplate[] => {
   const { flowId, flowVersionId, buttons, metadata } = props
   return buttons.map((button) => {
@@ -83,7 +83,7 @@ const convertCardsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
   cards: SendCardStepSchema[]
-  metadata?: IntegrationJobMetadata
+  metadata?: MetadataPayload
 }): MessageCardTemplate[] => {
   const { flowId, flowVersionId, cards, metadata } = props
 

@@ -2,6 +2,7 @@ import type {
   ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
+import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { IncomingContact, OutgoingMessage } from "@chatbotx.io/sdk"
 import { Queue } from "bullmq"
 import {
@@ -52,20 +53,6 @@ export type IntegrationJobMessageStatus = {
   }
 }
 
-export type BroadcastMetadata = {
-  type: "broadcast"
-  broadcastId: string
-}
-
-export type SequenceScheduleMetadata = {
-  type: "sequenceSchedule"
-  sequenceScheduleId: string
-}
-
-export type IntegrationJobMetadata =
-  | BroadcastMetadata
-  | SequenceScheduleMetadata
-
 export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
@@ -75,7 +62,7 @@ export type IntegrationJobRunFlowNode = {
     flowVersionId?: string
     nodeId?: string
     trackingContext?: BotResponseTrackingContext
-    metadata?: IntegrationJobMetadata
+    metadata?: MetadataPayload
   }
 }
 
