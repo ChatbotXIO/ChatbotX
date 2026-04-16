@@ -1137,6 +1137,9 @@ importers:
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@t3-oss/env-core':
+        specifier: ^0.13.11
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       ai:
         specifier: ^6.0.170
         version: 6.0.170(zod@4.3.6)

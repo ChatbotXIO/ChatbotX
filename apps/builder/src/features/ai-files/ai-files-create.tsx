@@ -1,4 +1,4 @@
-import { getAllowableKnowledgeExtensions } from "@chatbotx.io/ai/schemas"
+import { getAllowableKnowledgeExtensions } from "@chatbotx.io/ai"
 import { DirectUploadButton } from "@chatbotx.io/ui/components/uploader/direct-upload-button"
 import { getMimeTypeFromFile } from "@chatbotx.io/ui/lib/file-types"
 import { useTranslations } from "next-intl"

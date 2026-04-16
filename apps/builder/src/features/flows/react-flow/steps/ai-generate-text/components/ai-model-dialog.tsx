@@ -62,7 +62,7 @@ export const AIModelDialog = ({ parentName }: AIModelDialogProps) => {
       <DialogContent aria-describedby={undefined} className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="capitalize">
-            {t("fields.flows.aiGenerateText.label", {
+            {t("fields.flows.aiGenerateText", {
               aiName: t(`aiProviders.${provider}`),
             })}
           </DialogTitle>

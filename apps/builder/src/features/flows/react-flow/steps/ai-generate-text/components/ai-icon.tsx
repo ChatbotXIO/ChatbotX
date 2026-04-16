@@ -1,4 +1,4 @@
-import { type AIProvider, aiProviders } from "@chatbotx.io/ai/schemas"
+import type { AIProvider } from "@chatbotx.io/ai"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import {
   SiClaude,
@@ -21,11 +21,11 @@ const AIIconInner = (props: AIIconProps) => {
   const fullClassName = cn("size-4", className)
 
   switch (provider) {
-    case aiProviders.enum.claude:
+    case "claude":
       return <SiClaude className={fullClassName} fill={SiClaudeHex} />
-    case aiProviders.enum.openai:
+    case "openai":
       return <OpenAIIcon className={fullClassName} fill={OpenAIIconHex} />
-    case aiProviders.enum.gemini:
+    case "gemini":
       return (
         <SiGooglegemini className={fullClassName} fill={SiGooglegeminiHex} />
       )

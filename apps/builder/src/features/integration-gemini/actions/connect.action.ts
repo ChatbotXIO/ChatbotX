@@ -1,5 +1,4 @@
 "use server"
-import { aiProviders } from "@chatbotx.io/ai/schemas"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -90,10 +89,7 @@ export const connectGeminiAction = workspaceActionClient
         }
       })
 
-      await aiIntegrationService.invalidateCache(
-        workspaceId,
-        aiProviders.enum.gemini,
-      )
+      await aiIntegrationService.invalidateCache(workspaceId, "gemini")
 
       return
     },
