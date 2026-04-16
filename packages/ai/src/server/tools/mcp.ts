@@ -7,22 +7,16 @@ import { jsonSchema, type ToolSet, tool } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../logger"
-import type { JsonObject, JsonValue } from "../../schemas"
+import {
+  type JsonObject,
+  type JsonValue,
+  type MCPTool,
+  mcpTextContentSchema,
+} from "../../schemas/mcp"
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
 
 export type JsonPrimitive = string | number | boolean | null
-
-export type McpTextContent = {
-  type: "text"
-  text: string
-}
-
-export type McpToolDefinition = {
-  name: string
-  description?: string
-  inputSchema?: JsonObject
-}
 
 export type McpCallToolResult = {
   isError: boolean
@@ -30,7 +24,7 @@ export type McpCallToolResult = {
 }
 
 export type McpClientLike = {
-  listTools: () => Promise<McpToolDefinition[]>
+  listTools: () => Promise<MCPTool[]>
   callTool: (toolName: string, args: JsonObject) => Promise<McpCallToolResult>
 }
 
@@ -40,13 +34,10 @@ export type McpClientConstructor = new (params: {
   name: string
 }) => McpClientLike
 
-const isMcpTextContent = (value: JsonValue): value is McpTextContent => {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false
-  }
-
-  return value.type === "text" && typeof value.text === "string"
-}
+const isMcpTextContent = (
+  value: JsonValue,
+): value is z.infer<typeof mcpTextContentSchema> =>
+  mcpTextContentSchema.safeParse(value).success
 
 export async function getMCPServerTools(
   workspaceId: string,

@@ -1,5 +1,4 @@
 "use server"
-import { aiProviders } from "@chatbotx.io/ai/schemas"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationOpenaiModel } from "@chatbotx.io/database/schema"
@@ -45,10 +44,7 @@ export const updateIntegrationOpenAI = async (
     .returning()
     .then((result) => result[0])
 
-  await aiIntegrationService.invalidateCache(
-    ctx.workspaceId,
-    aiProviders.enum.openai,
-  )
+  await aiIntegrationService.invalidateCache(ctx.workspaceId, "openai")
 
   return result
 }

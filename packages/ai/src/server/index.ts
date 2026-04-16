@@ -1,14 +1,15 @@
 export * from "./cache"
 export * from "./factory"
+export * from "./knowledge-base"
 export * from "./mcp-client"
 export * from "./tools"
 export * from "./toolset"
 
 import { getCachedAIIntegration, invalidateAIIntegrationCache } from "./cache"
-import { getAIIntegrationInDB } from "./factory"
+import { createAIModelInstance } from "./factory"
 
 export const aiIntegrationService = {
-  getInDB: getAIIntegrationInDB,
-  getCached: getCachedAIIntegration,
+  findBy: getCachedAIIntegration,
+  createAIInstance: createAIModelInstance,
   invalidateCache: invalidateAIIntegrationCache,
 }

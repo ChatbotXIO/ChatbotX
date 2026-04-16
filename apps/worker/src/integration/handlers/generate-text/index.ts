@@ -25,7 +25,7 @@ export async function handleAIGenerateText({
   try {
     const messages = await buildAIMessages(conversation, step)
 
-    const aiConfig = await aiIntegrationService.getCached({
+    const aiConfig = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
     })

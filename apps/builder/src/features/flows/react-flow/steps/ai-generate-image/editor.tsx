@@ -20,7 +20,7 @@ export const AIGenerateImageEditor = (props: AIGenerateImageEditorProps) => {
   return (
     <BaseStepEditor
       icon={BotIcon}
-      title={t("fields.flows.aiGenerateImage.label", {
+      title={t("fields.flows.aiGenerateImage", {
         aiName: t(`aiProviders.${provider}`),
       })}
     >

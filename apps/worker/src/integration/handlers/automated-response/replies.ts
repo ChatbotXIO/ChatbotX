@@ -110,7 +110,7 @@ async function runAIReply(
   try {
     const selectedModelId = providerInfo.model
 
-    const integration = await aiIntegrationService.getCached({
+    const integration = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,
       provider,
       autoReply: true,

@@ -1,7 +1,33 @@
 import { z } from "zod"
-import type { JsonObject } from "../utils"
 
 export type JsonPrimitive = string | number | boolean | null
+export const jsonPrimitiveSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+])
+
+export type JsonValue =
+  | JsonPrimitive
+  | { [key: string]: JsonValue }
+  | JsonValue[]
+
+export const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    jsonPrimitiveSchema,
+    z.array(z.lazy(() => jsonValueSchema)),
+    z.record(
+      z.string(),
+      z.lazy(() => jsonValueSchema),
+    ),
+  ]),
+)
+
+export const jsonObjectSchema: z.ZodType<JsonObject> = z.lazy(() =>
+  z.record(z.string(), jsonValueSchema),
+)
+export type JsonObject = { [key: string]: JsonValue }
 
 export const jsonRpcIdSchema = z
   .union([z.string(), z.number(), z.null()])
@@ -16,9 +42,7 @@ export const jsonRpcErrorSchema = z.object({
 export const mcpToolSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
-  inputSchema: z.record(z.string(), z.unknown()).optional() as z.ZodType<
-    JsonObject | undefined
-  >,
+  inputSchema: jsonObjectSchema.optional(),
 })
 
 export type MCPTool = z.infer<typeof mcpToolSchema>
@@ -26,7 +50,7 @@ export type MCPTool = z.infer<typeof mcpToolSchema>
 export const mcpJsonRpcSuccessSchema = z.object({
   jsonrpc: z.string(),
   id: jsonRpcIdSchema,
-  result: z.record(z.string(), z.unknown()) as z.ZodType<JsonObject>,
+  result: jsonObjectSchema,
 })
 
 export const mcpJsonRpcErrorResponseSchema = z.object({

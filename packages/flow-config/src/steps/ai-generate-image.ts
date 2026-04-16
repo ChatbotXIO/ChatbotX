@@ -40,17 +40,20 @@ export const aiGenerateImageSchema = z.object({
   prompt: z.string().trim().min(1),
   quality: aiGenerateImageQuality,
   size: z.string().trim().min(1),
-  outputCfId: z.string().trim().min(1),
+  outputFieldId: z.string().trim().min(1),
 })
 
 export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>
 
-export const getAIGeneratedImagePath = (
-  workspaceId: string,
-  conversationId: string,
-  fileName: string,
-): string =>
-  `public/space/${workspaceId}/conversations/${conversationId}/${fileName}`
+export type GetAIGeneratedImagePathProps = {
+  storagePrefix: string
+  fileName: string
+}
+
+export const getAIGeneratedImagePath = ({
+  storagePrefix,
+  fileName,
+}: GetAIGeneratedImagePathProps): string => `${storagePrefix}/${fileName}`
 
 export const aiGenerateImageDefaultFn = (
   props: Partial<AIGenerateImageSchema> = {},
@@ -66,7 +69,7 @@ export const aiGenerateImageDefaultFn = (
     prompt: "",
     size: imageAspectRatio.enum.auto,
     quality: aiGenerateImageQuality.enum.auto,
-    outputCfId: "",
+    outputFieldId: "",
     ...props,
     stepType: stepTypes.enum.aiGenerateImage,
   }

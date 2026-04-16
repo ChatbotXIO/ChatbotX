@@ -7,7 +7,6 @@
     ".": "./src/index.ts",
     "./models": "./src/models/index.ts",
     "./server": "./src/server.ts",
-    "./schemas": "./src/schemas/index.ts",
     "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
@@ -19,6 +18,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
     "ai": "^6.0.168",
     "ky": "^2.0.1",
     "mime-types": "^3.0.2",

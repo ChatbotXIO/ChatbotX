@@ -3,8 +3,9 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
+import { db } from "@chatbotx.io/database/client"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
-import { uploader } from "@chatbotx.io/filesystem"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   type AIGenerateImageSchema,
   getAIGeneratedImagePath,
@@ -17,19 +18,48 @@ import { createId } from "@chatbotx.io/utils"
 import { generateImage, type ImageModel } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
+import { integrationService } from "../../../services/integrations"
 import { saveResultToCustomField } from "../../utils/contact"
 import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 
 export async function handleAIGenerateImage({
   conversation,
+  contactInbox: baseContactInbox,
   step,
 }: ExecuteStepProps<AIGenerateImageSchema>) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const aiConfig = await aiIntegrationService.getCached({
+    const contactInbox =
+      baseContactInbox ||
+      (await db.query.contactInboxModel.findFirst({
+        where: {
+          contactId: conversation.contactId,
+        },
+        orderBy: {
+          lastMessageAt: "desc",
+        },
+      }))
+
+    if (!contactInbox) {
+      return
+    }
+
+    const auth =
+      await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+
+    const ctx = {
+      storagePrefix: getStoragePrefix(
+        conversation.workspaceId,
+        contactInbox.inboxId,
+      ),
+      auth,
+      uploader,
+    }
+
+    const aiConfig = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
     })
@@ -80,13 +110,12 @@ export async function handleAIGenerateImage({
     const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
     const extension = contentType.split("/")[1] || IMAGE_DEFAULT_EXTENSION
     const fileName = `${createId()}.${extension}`
-    const storagePath = getAIGeneratedImagePath(
-      conversation.workspaceId,
-      conversation.id,
+    const storagePath = getAIGeneratedImagePath({
+      storagePrefix: ctx.storagePrefix,
       fileName,
-    )
+    })
 
-    await uploader.putObject(storagePath, buffer, {
+    await ctx.uploader.putObject(storagePath, buffer, {
       ContentType: contentType,
     })
 
@@ -95,10 +124,10 @@ export async function handleAIGenerateImage({
     if (finalImageUrl) {
       await sendMessageWithRender(conversation.id, finalImageUrl)
 
-      if (step.outputCfId) {
+      if (step.outputFieldId) {
         await saveResultToCustomField({
           contactId: conversation.contactId,
-          customFieldId: step.outputCfId,
+          customFieldId: step.outputFieldId,
           fullText: finalImageUrl,
           messageCount: 1,
           workspaceId: conversation.workspaceId,

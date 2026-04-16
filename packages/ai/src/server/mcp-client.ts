@@ -6,8 +6,9 @@ import ky, { type Options } from "ky"
 import { normalizeError } from "universal-error-normalizer"
 import { aiTimeouts, helpTexts, mcpConstants } from "../constants"
 import { logger } from "../logger"
-import type { JsonObject, JsonValue } from "../schemas"
 import {
+  type JsonObject,
+  type JsonValue,
   type MCPTool,
   mcpContentArraySchema,
   mcpJsonRpcErrorResponseSchema,
