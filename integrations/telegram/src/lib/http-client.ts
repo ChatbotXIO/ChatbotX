@@ -1,4 +1,4 @@
-import ky, { type KyInstance } from "ky"
+import ky, { isHTTPError, type KyInstance } from "ky"
 import { TelegramAPIException } from "../exception"
 import { logger } from "./logger"
 
@@ -7,7 +7,7 @@ class TelegramHttpClient {
 
   constructor(botToken: string) {
     this.client = ky.create({
-      prefixUrl: `https://api.telegram.org/bot${botToken}/`,
+      baseUrl: `https://api.telegram.org/bot${botToken}/`,
       timeout: 30_000,
       retry: {
         limit: 3,
@@ -17,24 +17,17 @@ class TelegramHttpClient {
       },
       hooks: {
         beforeError: [
-          (error) => {
-            const { response } = error
-            if (response) {
+          ({error, request}) => {
+            if (isHTTPError(error)) {
               logger.error(
                 {
-                  url: error.request?.url,
-                  method: error.request?.method,
+                  url: request.url,
+                  method: request.method,
                 },
-                `HTTP ${response.status}: ${response.statusText}`,
+                `HTTP ${error.response.status}: ${error.response.statusText}`,
               )
             }
             return error
-          },
-        ],
-        afterResponse: [
-          (_request, _options, response) => {
-            logger.debug(`HTTP ${response.status} ${response.statusText}`)
-            return response
           },
         ],
       },

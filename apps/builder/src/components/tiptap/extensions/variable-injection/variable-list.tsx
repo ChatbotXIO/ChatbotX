@@ -96,5 +96,3 @@ export const VariableList = ({
     </div>
   )
 }
-
-export default VariableList

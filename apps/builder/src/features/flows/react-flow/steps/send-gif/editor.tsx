@@ -85,7 +85,7 @@ const FindGifDialog = ({ parentName }: { parentName: string }) => {
   )
 }
 
-export default function SendGifStepEditor({
+export function SendGifStepEditor({
   parentName,
 }: {
   parentName: string
@@ -96,5 +96,3 @@ export default function SendGifStepEditor({
     </BaseStepEditor>
   )
 }
-
-export { SendGifStepEditor }

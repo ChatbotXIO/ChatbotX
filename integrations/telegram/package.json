@@ -9,14 +9,14 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "ky": "^1.14.3",
-    "remeda": "^2.33.6",
+    "ky": "^2.0.1",
+    "remeda": "^2.33.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   },
   "exports": {
     ".": "./src/index.ts"

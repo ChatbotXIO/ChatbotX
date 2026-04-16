@@ -3,7 +3,7 @@ import type { MentionOptions } from "@tiptap/extension-mention"
 import { ReactRenderer } from "@tiptap/react"
 import tippy from "tippy.js"
 import type { PromptVariableListRef } from "./definition"
-import VariableList from "./variable-list"
+import {VariableList} from "./variable-list"
 
 const getFilteredMentions = (
   query: string,

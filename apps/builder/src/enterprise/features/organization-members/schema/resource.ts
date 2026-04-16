@@ -10,4 +10,4 @@ export const organizationMemberResource = createSelectSchema(
     id: z.string(),
   },
 )
-export const OrganizationMemberResource = organizationMemberResource
+export type OrganizationMemberResource = z.infer<typeof organizationMemberResource>

@@ -1,6 +1,6 @@
 import botFieldWorkspaceTokenAPIs from "@/features/bot-fields/api/workspace-token"
 import { broadcastWorkspaceTokenAPIs } from "@/features/broadcasts/api/workspace-token"
-import contactWorkspaceTokenAPIs from "@/features/contacts/api/workspace-token"
+import {contactWorkspaceTokenAPIs} from "@/features/contacts/api/workspace-token"
 import conversationWorkspaceTokenAPIs from "@/features/conversations/api/workspace-token"
 import customFieldWorkspaceTokenAPIs from "@/features/custom-fields/api/workspace-token"
 import errorLogWorkspaceTokenAPIs from "@/features/error-logs/api/workspace-token"

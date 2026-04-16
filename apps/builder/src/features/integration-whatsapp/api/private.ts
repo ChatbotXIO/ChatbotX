@@ -22,5 +22,3 @@ export const privateAPIs = {
       return data
     }),
 }
-
-export default privateAPIs

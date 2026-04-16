@@ -4,13 +4,13 @@ import { createContext, type ReactNode, useContext, useRef } from "react"
 import { useStore } from "zustand"
 import { createStepStore, type StepStore } from "./step-store"
 
-export type StepStoreApi = ReturnType<typeof createStepStore>
+type StepStoreApi = ReturnType<typeof createStepStore>
 
-export const StepStoreContext = createContext<StepStoreApi | undefined>(
+const StepStoreContext = createContext<StepStoreApi | undefined>(
   undefined,
 )
 
-export type StepStoreProviderProps = {
+type StepStoreProviderProps = {
   children: ReactNode
   initialState?: Partial<StepStore>
 }

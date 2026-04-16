@@ -1,8 +1,8 @@
 import privateAPIs from "./authenticated"
-import workspaceTokenAuthAPIs from "./workspace-token"
+import {contactWorkspaceTokenAPIs} from "./workspace-token"
 
 const contactsAPIs = {
-  ...workspaceTokenAuthAPIs,
+  ...contactWorkspaceTokenAPIs,
   ...privateAPIs,
 }
 

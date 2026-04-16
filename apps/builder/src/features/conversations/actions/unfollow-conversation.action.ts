@@ -28,7 +28,9 @@ export const unfollowConversation = async (ctx: {
     },
     columns: {
       id: true,
-      channel: true,
+    },
+    with: {
+      contactInboxes: true,
     },
   })
 
@@ -54,7 +56,7 @@ export const unfollowConversation = async (ctx: {
       conversationId: conversation.id,
       eventType: "conversation_unfollowed",
       eventId: createId(),
-      channel: "webchat", // TODO: replace correct channel from contact inbox
+      channel: conversation.contactInboxes[0].channel,
       occurredAt: new Date(),
       metadata: {
         triggerContext: {

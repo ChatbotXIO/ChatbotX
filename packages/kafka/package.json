@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
-    "@platformatic/kafka": "^1.31.0",
+    "@platformatic/kafka": "^1.33.0",
     "@t3-oss/env-core": "^0.13.11",
     "async-mutex": "^0.5.0",
     "zod": "^4.3.6"

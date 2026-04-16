@@ -1,4 +1,4 @@
-import ky, { type KyInstance } from "ky"
+import ky, { isHTTPError, type KyInstance } from "ky"
 import { InstagramAPIException } from "../exception"
 import { logger } from "./logger"
 
@@ -14,7 +14,7 @@ class InstagramHttpClient {
 
   constructor(config: HttpClientConfig) {
     this.client = ky.create({
-      prefixUrl: config.baseURL,
+      baseUrl: config.baseURL,
       timeout: config.timeout ?? 30_000,
       retry: {
         limit: config.retries ?? 3,
@@ -24,24 +24,17 @@ class InstagramHttpClient {
       },
       hooks: {
         beforeError: [
-          (error) => {
-            const { response } = error
-            if (response) {
+          ({ error, request }) => {
+            if (isHTTPError(error)) {
               logger.error(
                 {
-                  url: error.request?.url,
-                  method: error.request?.method,
+                  url: request.url,
+                  method: request.method,
                 },
-                `HTTP ${response.status}: ${response.statusText}`,
+                `HTTP ${error.response.status}: ${error.response.statusText}`,
               )
             }
             return error
-          },
-        ],
-        afterResponse: [
-          (_request, _options, response) => {
-            logger.debug(`HTTP ${response.status} ${response.statusText}`)
-            return response
           },
         ],
       },

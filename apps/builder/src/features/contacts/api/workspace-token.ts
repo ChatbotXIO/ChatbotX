@@ -36,7 +36,7 @@ import {
   publicListContactsResponse,
 } from "../schemas/query"
 
-export const workspaceTokenAuthAPIs = {
+export const contactWorkspaceTokenAPIs = {
   findContactWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
@@ -275,5 +275,3 @@ export const workspaceTokenAuthAPIs = {
       })
     }),
 }
-
-export default workspaceTokenAuthAPIs
