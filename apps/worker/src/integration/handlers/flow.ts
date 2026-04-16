@@ -39,6 +39,7 @@ export type ExecuteMultipleStepsProps = {
   useLatestFlowVersion?: boolean
   targetType?: "node" | "button" | "step" | "quickReply"
   targetId?: string
+  targetNodeId?: string
   ctx?: {
     variables: Variables
   }
@@ -63,6 +64,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   startFromStepIndex?: number
   targetType: "node" | "button" | "step" | "quickReply"
   targetId: string
+  targetNodeId?: string
   triggerNextNode?: boolean
   ctx: {
     variables: Variables
@@ -117,6 +119,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
     details: targetNode.data.details,
     targetType: "node",
     targetId: targetNode.id,
+    targetNodeId: targetNode.id,
     ctx: {
       variables: initVariables(),
     },
@@ -135,7 +138,6 @@ export async function runStepsAndQuickReplies(
     flowVersion,
     triggerNextNode = true,
   } = props
-  console.log({ targetId })
 
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
@@ -210,6 +212,7 @@ export async function runStepsAndQuickReplies(
       details: nextNode.data.details,
       targetType: "node",
       targetId: nextNode.id,
+      targetNodeId: nextNode.id,
     })
   }
 }
@@ -232,10 +235,11 @@ async function* executeMultipleStepsGenerator(
   const { steps, ...rest } = props
 
   for (const step of steps) {
-    logger.debug({ step }, "executing step")
+    step.nodeId = props.targetNodeId || ""
+
     const result = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,
-      step: { ...step, nodeId: props.targetId },
+      step,
     })
 
     // Try to send nested step based on state of action
@@ -353,6 +357,7 @@ export async function runFlowPostback(
     details: foundedButton,
     targetType: "button",
     targetId: foundedButton.id,
+    targetNodeId: foundedNodeId ?? "",
     ctx: {
       variables: initVariables(),
     },
@@ -444,6 +449,7 @@ export async function runFlowQuickReply(
     details: found,
     targetType: "quickReply",
     targetId: found.id,
+    targetNodeId: foundedNodeId ?? "",
     ctx: {
       variables: initVariables(),
     },
