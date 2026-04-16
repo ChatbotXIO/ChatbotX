@@ -13,7 +13,7 @@ type ZaloClientConfig = {
   version?: string
   timeout?: number
   retries?: number
-  prefixUrl?: string
+  baseUrl?: string
 }
 
 export class ZaloHttpClient {
@@ -25,13 +25,13 @@ export class ZaloHttpClient {
       accessToken,
       timeout = 30_000,
       retries = 2,
-      prefixUrl = ZALO_API_BASE_URL,
+      baseUrl = ZALO_API_BASE_URL,
     } = config
 
     this.accessToken = accessToken
 
     this.client = ky.create({
-      prefixUrl,
+      baseUrl,
       timeout,
       retry: retries,
       headers: {
@@ -40,7 +40,7 @@ export class ZaloHttpClient {
       },
       hooks: {
         beforeRequest: [
-          (request) => {
+          ({request}) => {
             logger.debug(
               {
                 url: request.url,
@@ -51,7 +51,7 @@ export class ZaloHttpClient {
           },
         ],
         afterResponse: [
-          async (request, _options, response) => {
+          async ({request, response}) => {
             if (!response.ok) {
               const errorText = await response.text()
               logger.error(
@@ -137,7 +137,7 @@ export class ZaloHttpClient {
     return new ZaloHttpClient({
       ...config,
       accessToken: undefined,
-      prefixUrl: ZALO_OAUTH_BASE_URL,
+      baseUrl: ZALO_OAUTH_BASE_URL,
     })
   }
 
@@ -148,7 +148,7 @@ export class ZaloHttpClient {
     return new ZaloHttpClient({
       ...config,
       accessToken,
-      prefixUrl: ZALO_API_BASE_URL,
+      baseUrl: ZALO_API_BASE_URL,
     })
   }
 }

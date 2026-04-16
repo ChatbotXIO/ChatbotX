@@ -1,9 +1,9 @@
-import ky, { type KyInstance } from "ky"
+import ky, { isHTTPError, type KyInstance } from "ky"
 import { MessengerAPIException } from "../exception"
 import { logger } from "./logger"
 
 type HttpClientConfig = {
-  baseURL: string
+  baseUrl: string
   timeout?: number
   retries?: number
   retryDelay?: number
@@ -14,7 +14,7 @@ class MessengerHttpClient {
 
   constructor(config: HttpClientConfig) {
     this.client = ky.create({
-      prefixUrl: config.baseURL,
+      baseUrl: config.baseUrl,
       timeout: config.timeout ?? 30_000,
       retry: {
         limit: config.retries ?? 3,
@@ -24,24 +24,17 @@ class MessengerHttpClient {
       },
       hooks: {
         beforeError: [
-          (error) => {
-            const { response } = error
-            if (response) {
+          ({error, request}) => {
+            if (isHTTPError(error)) {
               logger.error(
                 {
-                  url: error.request?.url,
-                  method: error.request?.method,
+                  url: request.url,
+                  method: request.method,
                 },
-                `HTTP ${response.status}: ${response.statusText}`,
+                `HTTP ${error.response.status}: ${error.response.statusText}`,
               )
             }
             return error
-          },
-        ],
-        afterResponse: [
-          (_request, _options, response) => {
-            logger.debug(`HTTP ${response.status} ${response.statusText}`)
-            return response
           },
         ],
       },
@@ -102,14 +95,14 @@ class MessengerHttpClient {
 
 // Create singleton instances for different API endpoints
 export const facebookGraphClient = new MessengerHttpClient({
-  baseURL: "https://graph.facebook.com",
+  baseUrl: "https://graph.facebook.com",
   timeout: 30_000,
   retries: 3,
   retryDelay: 1000,
 })
 
 export const facebookAttachmentClient = new MessengerHttpClient({
-  baseURL: "https://graph.facebook.com",
+  baseUrl: "https://graph.facebook.com",
   timeout: 60_000, // Longer timeout for file uploads
   retries: 2,
   retryDelay: 2000,

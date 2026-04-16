@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@chatbotx.io/sdk": "workspace:*",
-    "ky": "^1.14.3"
+    "ky": "^2.0.1"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
