@@ -1,6 +1,6 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import { ZaloSdkException } from "@chatbotx.io/sdk"
 
-export class ZaloException extends SdkException {}
+export class ZaloException extends ZaloSdkException {}
 
 /**
  * Wraps an async function with standardized error handling
@@ -17,6 +17,8 @@ export const handleZaloError = async <T>(
     }
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred"
-    throw new ZaloException(`${operation} failed: ${errorMessage}`)
+    throw new ZaloException(
+      `${operation} failed: ${errorMessage}`,
+    ).setOriginError(error)
   }
 }

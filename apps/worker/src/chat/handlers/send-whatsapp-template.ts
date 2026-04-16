@@ -106,6 +106,7 @@ export async function processWhatsappTemplate(
     // ...(flow && { flowVersionId: flow.versionId }),
     ...(trackingContext && { trackingContext }),
     payload: {} as MessageTemplateEntity["payload"],
+    metadata,
   }
 
   if (flow?.buttons && flow.buttons.length > 0) {

@@ -20,30 +20,19 @@ const basePayloadSchema = z.object({
   chatbotId: z.string(),
   contactId: z.string(),
   conversationId: z.string(),
+  channel: z.string(),
   occurredAt: z.date(),
   metadata: messageSourceMetadataSchema.optional(),
-})
-
-export const sentPayloadSchema = basePayloadSchema.extend({
-  messageId: z.string(),
+  messageId: z.string().optional(),
   messageDetail: z.record(z.string(), z.unknown()).optional(),
 })
 
+export const sentPayloadSchema = basePayloadSchema.extend({})
 export const failedPayloadSchema = basePayloadSchema.extend({
-  messageDetail: z.record(z.string(), z.unknown()).optional(),
   errorData: z.unknown(),
-  channel: z.string(),
 })
-
-export const deliveredPayloadSchema = basePayloadSchema.extend({
-  messageId: z.string(),
-  messageDetail: z.record(z.string(), z.unknown()).optional(),
-})
-
-export const seenPayloadSchema = basePayloadSchema.extend({
-  messageId: z.string(),
-  messageDetail: z.record(z.string(), z.unknown()).optional(),
-})
+export const deliveredPayloadSchema = basePayloadSchema.extend({})
+export const seenPayloadSchema = basePayloadSchema.extend({})
 
 export const messageEventSchemas = {
   [MessageEventType.SENT]: sentPayloadSchema,

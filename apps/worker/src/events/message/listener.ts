@@ -8,13 +8,19 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
   [MessageEventType.SENT]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onMessageSent,
+      handler: broadcastStathandler.onMessageSent.bind(broadcastStathandler),
     },
   ],
   [MessageEventType.FAILED]: [
     {
       name: "broadcast-stats",
-      handler: broadcastStathandler.onFailed,
+      handler: broadcastStathandler.onFailed.bind(broadcastStathandler),
+    },
+  ],
+  [MessageEventType.DELIVERED]: [
+    {
+      name: "broadcast-stats",
+      handler: broadcastStathandler.onDelivered.bind(broadcastStathandler),
     },
   ],
 }

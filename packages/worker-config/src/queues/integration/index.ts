@@ -43,6 +43,7 @@ export type IntegrationJobMessageStatus = {
   type: typeof IntegrationJobAction.messageStatus
   data: {
     integrationType: string
+    integrationIdentifier: string
     payload: {
       messageId: string
       status: "delivered" | "failed"

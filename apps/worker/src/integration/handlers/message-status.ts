@@ -1,21 +1,100 @@
-import { db, eq } from "@chatbotx.io/database/client"
-import { messageModel } from "@chatbotx.io/database/schema"
-import type { IntegrationJobMessageStatus } from "@chatbotx.io/worker-config"
+import type { IntegrationType } from "@aha.chat/database/types"
+import { db } from "@chatbotx.io/database/client"
+import { emit, MessageEventType } from "@chatbotx.io/event-bus"
+import { uploader } from "@chatbotx.io/filesystem"
+import { type AuthValue, SdkException } from "@chatbotx.io/sdk"
+import type {
+  IntegrationJobMessageStatus,
+  IntegrationJobMetadata,
+} from "@chatbotx.io/worker-config"
+import { allIntegrations, getDBIntegration } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
 import { runFlowPostback } from "./flow"
 
 export const handleMessageStatus = async (
   job: IntegrationJobMessageStatus["data"],
 ) => {
-  const { payload } = job
+  const { integrationType, integrationIdentifier, payload } = job
+  console.log({ payload })
+
+  const dbIntegration = await getDBIntegration(
+    integrationType as IntegrationType,
+    integrationIdentifier,
+  )
+  const { chatbot, auth, inbox } = dbIntegration
+  const ctx = {
+    chatbot,
+    auth: auth as AuthValue,
+    uploader,
+    inbox,
+  }
+
+  if (!ctx.chatbot?.id) {
+    throw new Error("Unable to handle message status")
+  }
+
+  if (!ctx.inbox?.id) {
+    throw new Error("Unable to handle message status")
+  }
+
+  const parsedMessage = await allIntegrations[
+    integrationType
+  ]?.channels?.channel?.message?.handleMessageStatus?.({
+    ctx,
+    data: job,
+  })
+
+  if (!parsedMessage) {
+    throw new SdkException("Unable to parse received message")
+  }
+
+  const { conversation } = parsedMessage
+
+  const eventStatus = String(payload.status).toLowerCase()
 
   try {
-    const message = await db
-      .select()
-      .from(messageModel)
-      .where(eq(messageModel.sourceId, payload.messageId))
-      .limit(1)
-      .then((rows) => rows[0])
+    const chatConversation = await db.query.conversationModel.findFirst({
+      where: {
+        sourceId: conversation.sourceId,
+        chatbotId: ctx.chatbot.id,
+        inboxId: ctx.inbox.id,
+      },
+      with: {
+        contact: true,
+      },
+    })
+
+    if (!chatConversation) {
+      throw new SdkException("Unable to find conversation")
+    }
+
+    const message = await db.query.messageModel.findFirst({
+      where: {
+        sourceId: payload.messageId,
+        conversationId: chatConversation.id,
+        chatbotId: ctx.chatbot.id,
+      },
+    })
+
+    const eventLog = {
+      chatbotId: inbox.chatbotId,
+      contactId: chatConversation.contact.id,
+      conversationId: chatConversation.id,
+      channel: inbox.channel,
+      messageId: message?.id,
+      occurredAt: new Date(),
+      metadata: {},
+    }
+
+    if (eventStatus === "delivered") {
+      if (message?.contentAttributes?.metadata) {
+        eventLog.metadata = message.contentAttributes
+          .metadata as IntegrationJobMetadata
+      }
+
+      emit(MessageEventType.DELIVERED, eventLog)
+    }
+    console.log({ eventLog, payload })
 
     if (!message) {
       return
@@ -42,11 +121,7 @@ export const handleMessageStatus = async (
       return
     }
 
-    const buttonLabel =
-      String(payload.status).toLowerCase() === "delivered"
-        ? "Delivered"
-        : "Failed"
-
+    const buttonLabel = eventStatus === "delivered" ? "Delivered" : "Failed"
     const button = buttons.find((b) => b.label === buttonLabel)
     if (!button?.postback) {
       return

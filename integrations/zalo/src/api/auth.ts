@@ -89,7 +89,11 @@ export const getZaloOAProfile = (
     )
 
     if (result.error !== 0) {
-      throw new ZaloException(result.message)
+      throw new ZaloException(result.message).setOriginError({
+        response: {
+          error: result,
+        },
+      })
     }
 
     return result.data

@@ -17,6 +17,7 @@ import type {
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../../../client"
 import { API_URL, DEFAULT_API_VERSION } from "../../../constants"
+import { WhatsappException } from "../../../exception"
 import { logger } from "../../../lib/logger"
 import type { TemplateMessage, WhatsappAuthValue } from "../../../schema"
 import { convertFlowStepImage } from "./send-image"
@@ -210,11 +211,13 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
         const serverError = sendResponse as ServerErrorResponse
 
         if (serverError?.error) {
-          logger.error(
-            serverError.error,
-            `Failed to send message of type ${whatsappMessage._type}`,
+          throw new WhatsappException(serverError.error.message).setOriginError(
+            {
+              response: {
+                error: serverError.error,
+              },
+            },
           )
-          continue
         }
 
         const messageId = (sendResponse as ServerSentMessageResponse)

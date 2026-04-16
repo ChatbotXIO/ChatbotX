@@ -49,7 +49,7 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
       throw new MessengerAPIException(
         "Failed to fetch user profile",
         `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`,
-      )
+      ).setOriginError(error)
     }
   }
 

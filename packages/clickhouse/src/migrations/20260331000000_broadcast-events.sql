@@ -1,3 +1,5 @@
+-- DROP TABLE IF EXISTS broadcast_events;
+
 CREATE TABLE IF NOT EXISTS broadcast_events (
   event_id String,
   chatbot_id String,
@@ -7,6 +9,8 @@ CREATE TABLE IF NOT EXISTS broadcast_events (
   conv_id String,
 
   event_type LowCardinality(String),
+
+  batch_id Int32 DEFAULT 1,
 
   content Nullable(String),
   occurred_at DateTime('UTC'),

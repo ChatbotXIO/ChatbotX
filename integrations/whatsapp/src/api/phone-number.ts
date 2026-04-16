@@ -40,7 +40,9 @@ export async function listPhoneNumbers(props: {
   } catch (error) {
     console.error("Unable to list WhatsApp's phone numbers", error)
 
-    throw new WhatsappException("Unable to list WhatsApp's phone numbers")
+    throw new WhatsappException(
+      "Unable to list WhatsApp's phone numbers",
+    ).setOriginError(error)
   }
 }
 
@@ -66,7 +68,9 @@ export async function findPhoneNumber(props: {
   } catch (error) {
     console.error("Unable to find WhatsApp's phone number", error)
 
-    throw new WhatsappException("Unable to find WhatsApp's phone number")
+    throw new WhatsappException(
+      "Unable to find WhatsApp's phone number",
+    ).setOriginError(error)
   }
 }
 
@@ -107,7 +111,9 @@ export const findConversationalAutomation = async (
     return result.conversational_automation
   } catch (e) {
     console.error("Failed to list conversational automation", e)
-    throw new WhatsappException("Failed to list conversational automation")
+    throw new WhatsappException(
+      "Failed to list conversational automation",
+    ).setOriginError(e)
   }
 }
 
@@ -129,6 +135,8 @@ export async function updateConversationalAutomation(
     )
   } catch (e) {
     console.error("Failed to update conversational automation", e)
-    throw new WhatsappException("Failed to update conversational automation")
+    throw new WhatsappException(
+      "Failed to update conversational automation",
+    ).setOriginError(e)
   }
 }

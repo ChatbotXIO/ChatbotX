@@ -198,6 +198,12 @@ export async function sendFlowStep({
           },
         } satisfies MessageTemplateEntity
       }
+
+      messageData.contentAttributes = {
+        ...messageData.contentAttributes,
+        metadata,
+      }
+
       const newMessage = await tx
         .insert(messageModel)
         .values(messageData)
@@ -374,6 +380,9 @@ export const sendChatMessage = async (
           senderType: "bot",
           sourceId: null,
           text,
+          contentAttributes: {
+            metadata,
+          },
         })
         .returning()
         .then((result) => result[0])

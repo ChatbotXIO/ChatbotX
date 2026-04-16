@@ -27,7 +27,49 @@ export const broadcastStathandler = {
           contact_id: payload.contactId,
           conv_id: payload.conversationId,
           event_type: "sent",
-          content: JSON.stringify(payload.messageDetail ?? {}),
+          content: JSON.stringify({}),
+          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
+          inserted_at: toClickHouseDateTime(new Date()),
+        })
+
+        if (payload.channel !== "whatsapp") {
+          insertedData.push({
+            event_id: createId(),
+            chatbot_id: payload.chatbotId,
+            broadcast_id: payload.metadata.broadcastId,
+            contact_id: payload.contactId,
+            conv_id: payload.conversationId,
+            event_type: "delivered",
+            content: JSON.stringify({}),
+            occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
+            inserted_at: toClickHouseDateTime(new Date()),
+          })
+        }
+      }
+    }
+
+    if (insertedData.length === 0) {
+      return
+    }
+
+    await this.saveToClickhouse(insertedData)
+  },
+
+  async onFailed(payloads: MessageFailedPayload[]) {
+    const insertedData: BroadcastStatsType[] = []
+
+    for (const payload of payloads) {
+      if (payload.metadata?.type === "broadcast") {
+        insertedData.push({
+          event_id: createId(),
+          chatbot_id: payload.chatbotId,
+          broadcast_id: payload.metadata.broadcastId,
+          contact_id: payload.contactId,
+          conv_id: payload.conversationId,
+          event_type: "failed",
+          content: JSON.stringify({
+            error: payload.errorData,
+          }),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
         })
@@ -38,26 +80,55 @@ export const broadcastStathandler = {
       return
     }
 
-    await clickhouse.insert({
-      table: "broadcast_events",
-      values: insertedData,
-      format: "JSONEachRow",
-    })
+    await this.saveToClickhouse(insertedData)
   },
 
-  onFailed(payloads: MessageFailedPayload[]) {
-    // TODO: implement
+  async onDelivered(payloads: MessageDeliveredPayload[]) {
+    const insertedData: BroadcastStatsType[] = []
 
-    console.log("onFailed", payloads)
-  },
+    for (const payload of payloads) {
+      if (payload.metadata?.type === "broadcast") {
+        insertedData.push({
+          event_id: createId(),
+          chatbot_id: payload.chatbotId,
+          broadcast_id: payload.metadata.broadcastId,
+          contact_id: payload.contactId,
+          conv_id: payload.conversationId,
+          event_type: "delivered",
+          content: JSON.stringify({}),
+          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
+          inserted_at: toClickHouseDateTime(new Date()),
+        })
+      }
+    }
 
-  onDelivered(payloads: MessageDeliveredPayload[]) {
-    // TODO: implement
-    console.log("onDelivered", payloads)
+    if (insertedData.length === 0) {
+      return
+    }
+
+    await this.saveToClickhouse(insertedData)
   },
 
   onSeen(payloads: MessageSeenPayload[]) {
     // TODO: implement
     console.log("onSeen", payloads)
+  },
+
+  async saveToClickhouse(data: BroadcastStatsType[]) {
+    if (data.length === 0) {
+      return
+    }
+
+    try {
+      const _result = await clickhouse.insert({
+        table: "broadcast_events",
+        values: data,
+        format: "JSONEachRow",
+      })
+
+      // console.log({ _result })
+    } catch (error) {
+      console.error("Failed to save broadcast stats to ClickHouse:", error)
+    }
   },
 }

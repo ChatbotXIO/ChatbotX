@@ -1,6 +1,6 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import { MessengerSdkException } from "@chatbotx.io/sdk"
 
-export class MessengerException extends SdkException {}
+export class MessengerException extends MessengerSdkException {}
 
 export class MessengerAttachmentException extends MessengerException {
   readonly attachmentUrl?: string

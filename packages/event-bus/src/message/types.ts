@@ -1,8 +1,12 @@
 import type { z } from "zod"
 import type { BaseEventListener, BaseEventType, InferEventMap } from "../types"
 import type {
+  deliveredPayloadSchema,
+  failedPayloadSchema,
   messageEventSchemas,
   messageSourceMetadataSchema,
+  seenPayloadSchema,
+  sentPayloadSchema,
 } from "./schemas"
 
 export const MessageEventType: BaseEventType = {
@@ -20,17 +24,10 @@ export type MessageSourceMetadata = z.infer<typeof messageSourceMetadataSchema>
 export type MessageEventMap = InferEventMap<typeof messageEventSchemas>
 export type MessagePayload = MessageEventMap[MessageEventType]
 
-export type MessageSentPayload =
-  MessageEventMap[(typeof MessageEventType)["SENT"]]
-
-export type MessageFailedPayload =
-  MessageEventMap[(typeof MessageEventType)["FAILED"]]
-
-export type MessageDeliveredPayload =
-  MessageEventMap[(typeof MessageEventType)["DELIVERED"]]
-
-export type MessageSeenPayload =
-  MessageEventMap[(typeof MessageEventType)["SEEN"]]
+export type MessageSentPayload = z.infer<typeof sentPayloadSchema>
+export type MessageFailedPayload = z.infer<typeof failedPayloadSchema>
+export type MessageDeliveredPayload = z.infer<typeof deliveredPayloadSchema>
+export type MessageSeenPayload = z.infer<typeof seenPayloadSchema>
 
 export interface MessageEventListener
   extends BaseEventListener<MessagePayload> {}

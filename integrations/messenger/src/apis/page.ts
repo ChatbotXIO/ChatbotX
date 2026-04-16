@@ -85,7 +85,7 @@ export const unsubscribePageFromAppWebhook = async (props: {
     throw new MessengerAPIException(
       "Unsubscribe Page From AppWebhook failed",
       `${version}/${props.pageId}/subscribed_apps`,
-    )
+    ).setOriginError(error)
   }
 }
 

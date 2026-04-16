@@ -1,3 +1,3 @@
-import { SdkException } from "@chatbotx.io/sdk"
+import { MessengerSdkException } from "@chatbotx.io/sdk"
 
-export class WhatsappException extends SdkException {}
+export class WhatsappException extends MessengerSdkException {}
