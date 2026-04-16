@@ -1,7 +1,11 @@
 "use server"
 
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
+import {
+  flowAnalyticsSessionModel,
+  flowModel,
+  flowVersionModel,
+} from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -44,6 +48,12 @@ export const duplicateFlow = async (ctx: {
       ...flow,
       id: newFlowId,
       name: `${flow.name} _copy`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    await tx.insert(flowAnalyticsSessionModel).values({
+      flowId: newFlowId,
+      workspaceId: flow.workspaceId,
       createdAt: new Date(),
       updatedAt: new Date(),
     })

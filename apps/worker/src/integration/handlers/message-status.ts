@@ -89,6 +89,7 @@ export const handleMessageStatus = async (
         messageId: message?.id,
       },
       occurredAt: new Date(),
+      stepId: (message?.contentAttributes?.stepId ?? "") as string,
       metadata: {
         type: UPDATE_STATUS_PAYLOAD_TYPE,
       } as MetadataPayload,

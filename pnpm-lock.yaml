@@ -1181,6 +1181,9 @@ importers:
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@6.0.2)(zod@4.3.6)
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -1249,7 +1252,7 @@ importers:
         version: link:../typescript-config
       '@types/node':
         specifier: 24.x
-        version: 24.12.0
+        version: 24.12.2
 
   packages/events:
     dependencies:

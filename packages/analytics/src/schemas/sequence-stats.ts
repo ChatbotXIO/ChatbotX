@@ -1,5 +1,9 @@
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
-import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
+import {
+  clickedPayloadSchema,
+  flowEventType,
+  messageEventType,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export const sequenceStepEventType = z.union([messageEventType, flowEventType])
@@ -75,3 +79,11 @@ export const listSequenceStepContactsResponse = z.object({
 export type ListSequenceStepContactsResponse = z.infer<
   typeof listSequenceStepContactsResponse
 >
+
+export const sequenceSchemaPayload = clickedPayloadSchema.extend({
+  metadata: z.object({
+    sequenceStepId: z.string(),
+  }),
+})
+
+export type SequenceSchemaPayload = z.infer<typeof sequenceSchemaPayload>

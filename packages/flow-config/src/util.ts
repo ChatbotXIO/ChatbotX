@@ -18,13 +18,15 @@ const buttonPayloadSchema = z
     fv: zodBigintAsString().optional(),
     b: zodBigintAsString().optional(),
     br: zodBigintAsString().optional(),
+    ss: zodBigintAsString().optional(),
   })
   .transform((data) => {
     return {
       flowId: data.f,
-      ...(data.fv ? { flowVersionId: data.fv } : {}), // mark the field to be optional
-      ...(data.b ? { buttonId: data.b } : {}), // mark the field to be optional
-      ...(data.br ? { broadcastId: data.br } : {}), // mark the field to be optional
+      ...(data.fv ? { flowVersionId: data.fv } : {}),
+      ...(data.b ? { buttonId: data.b } : {}),
+      ...(data.br ? { broadcastId: data.br } : {}),
+      ...(data.ss ? { sequenceStepId: data.ss } : {}),
     }
   })
 export type ButtonPayload = z.infer<typeof buttonPayloadSchema>
@@ -36,6 +38,7 @@ export const encodeButtonPayload = (props: ButtonPayload) => {
       fv: props.flowVersionId,
       b: props.buttonId,
       br: props.broadcastId,
+      ss: props.sequenceStepId,
     }),
   )
 }

@@ -12,7 +12,6 @@ import {
   type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
-  type WaTemplateParams,
 } from "@chatbotx.io/flow-config"
 import {
   broadcastToWorkspaceParty,
@@ -43,12 +42,8 @@ export interface ProcessWhatsappTemplateParams {
     buttons: SendWaTemplateMessageStepSchema["buttons"]
   }
   metadata?: MetadataPayload
-  template: {
-    id: string
-    name: string
-    language: string
-    params: WaTemplateParams
-  }
+  step?: SendWaTemplateMessageStepSchema
+  template: SendWaTemplateMessageStepSchema["template"]
   trackingContext?: BotResponseTrackingContext
 }
 
@@ -67,6 +62,7 @@ export async function processWhatsappTemplate(
     template,
     broadcastId,
     flow,
+    step,
     trackingContext,
     metadata,
   } = params
@@ -146,6 +142,11 @@ export async function processWhatsappTemplate(
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
     },
+    action: {
+      flowId: flow?.id || "",
+      flowVersionId: flow?.versionId || "",
+    },
+    stepId: step?.id || "",
     metadata,
   }
 

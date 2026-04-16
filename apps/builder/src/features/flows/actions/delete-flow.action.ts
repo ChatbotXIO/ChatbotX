@@ -1,7 +1,10 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { flowModel } from "@chatbotx.io/database/schema"
+import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import {
+  flowAnalyticsSessionModel,
+  flowModel,
+} from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -22,14 +25,28 @@ export const deleteFlowAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(flowModel)
-        .where(
-          and(
-            eq(flowModel.workspaceId, workspaceId),
-            inArray(flowModel.id, parsedInput.ids),
-          ),
-        )
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(flowModel)
+          .where(
+            and(
+              eq(flowModel.workspaceId, workspaceId),
+              inArray(flowModel.id, parsedInput.ids),
+            ),
+          )
+
+        await tx
+          .update(flowAnalyticsSessionModel)
+          .set({
+            deletedAt: sql`CURRENT_TIMESTAMP`,
+          })
+          .where(
+            and(
+              eq(flowAnalyticsSessionModel.workspaceId, workspaceId),
+              inArray(flowAnalyticsSessionModel.flowId, parsedInput.ids),
+            ),
+          )
+      })
 
       revalidateCacheTags(`workspaces:${workspaceId}#flows`)
     },

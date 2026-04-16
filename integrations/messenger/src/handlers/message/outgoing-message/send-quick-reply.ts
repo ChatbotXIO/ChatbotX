@@ -52,6 +52,7 @@ export function convertFacebookQuickReplies(props: {
       flowVersionId: props.flowVersionId,
       buttonId: button.id,
       broadcastId: extractMetadata("broadcastId", props.metadata),
+      sequenceStepId: extractMetadata("sequenceStepId", props.metadata),
     }),
   }))
 }

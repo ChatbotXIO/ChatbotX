@@ -30,6 +30,7 @@ export function getButtonTemplate(props: {
         flowVersionId,
         buttonId: button.id,
         broadcastId: extractMetadata("broadcastId", metadata),
+        sequenceStepId: extractMetadata("sequenceStepId", metadata),
       })
       return {
         type: "postback",

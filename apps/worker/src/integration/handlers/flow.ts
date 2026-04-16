@@ -297,6 +297,21 @@ export async function runFlowPostback(
     flowVersionId: parsedAction.flowVersionId,
   })
 
+  const nodes = flowVersion.nodes as unknown as FlowNode[]
+
+  const foundedButton = nodes
+    .flatMap((n) =>
+      "steps" in n.data.details && n.data.details.steps
+        ? (n.data.details.steps as BaseStepSchema[])
+        : [],
+    )
+    .flatMap((s) => ("buttons" in s ? (s.buttons as ButtonStepProps[]) : []))
+    .find((b) => b.id === parsedAction.buttonId)
+
+  if (!foundedButton) {
+    return
+  }
+
   if (conversation?.contactId) {
     let contactInbox: { id: string; channel: string } | undefined
     if (data.inboxId) {
@@ -316,12 +331,14 @@ export async function runFlowPostback(
     }
 
     await emit(FlowEventType["flow:clicked"], {
+      stepId: foundedButton.id,
       context: {
         workspaceId: conversation.workspaceId,
         contactId: conversation.contactId,
         conversationId: data.conversationId,
         channel: contactInbox?.channel ?? "",
         contactInboxId: contactInbox?.id ?? "",
+        sequenceStepId: parsedAction.sequenceStepId ?? "",
       },
       action: {
         flowId: parsedAction.flowId,
@@ -331,21 +348,6 @@ export async function runFlowPostback(
       },
       occurredAt: new Date(),
     })
-  }
-
-  const nodes = flowVersion.nodes as unknown as FlowNode[]
-
-  const foundedButton = nodes
-    .flatMap((n) =>
-      "steps" in n.data.details && n.data.details.steps
-        ? (n.data.details.steps as BaseStepSchema[])
-        : [],
-    )
-    .flatMap((s) => ("buttons" in s ? (s.buttons as ButtonStepProps[]) : []))
-    .find((b) => b.id === parsedAction.buttonId)
-
-  if (!foundedButton) {
-    return
   }
 
   await runStepsAndQuickReplies({
@@ -375,6 +377,20 @@ export async function runFlowQuickReply(
     flowVersionId: parsedAction.flowVersionId,
   })
 
+  const nodes = flowVersion.nodes as unknown as FlowNode[]
+
+  const found = nodes
+    .flatMap((n) =>
+      "quickReplies" in n.data.details && n.data.details.quickReplies
+        ? n.data.details.quickReplies
+        : [],
+    )
+    .find((b) => b.id === parsedAction.buttonId)
+
+  if (!found) {
+    return
+  }
+
   if (conversation.contactId) {
     let contactInbox: { id: string; channel: string } | undefined
     if (data.inboxId) {
@@ -391,38 +407,26 @@ export async function runFlowQuickReply(
           ),
         )
         .then((rows) => rows[0])
+
+      await emit(FlowEventType["flow:clicked"], {
+        stepId: found.id,
+        context: {
+          workspaceId: conversation.workspaceId,
+          contactId: conversation.contactId,
+          conversationId: data.conversationId,
+          channel: contactInbox?.channel ?? "",
+          contactInboxId: contactInbox?.id ?? "",
+          sequenceStepId: parsedAction.sequenceStepId ?? "",
+        },
+        action: {
+          flowId: parsedAction.flowId,
+          buttonId: parsedAction.buttonId,
+          broadcastId: parsedAction.broadcastId,
+          clickType: "quick_reply",
+        },
+        occurredAt: new Date(),
+      })
     }
-
-    await emit(FlowEventType["flow:clicked"], {
-      context: {
-        workspaceId: conversation.workspaceId,
-        contactId: conversation.contactId,
-        conversationId: data.conversationId,
-        channel: contactInbox?.channel ?? "",
-        contactInboxId: contactInbox?.id ?? "",
-      },
-      action: {
-        flowId: parsedAction.flowId,
-        buttonId: parsedAction.buttonId,
-        broadcastId: parsedAction.broadcastId,
-        clickType: "quick_reply",
-      },
-      occurredAt: new Date(),
-    })
-  }
-
-  const nodes = flowVersion.nodes as unknown as FlowNode[]
-
-  const found = nodes
-    .flatMap((n) =>
-      "quickReplies" in n.data.details && n.data.details.quickReplies
-        ? n.data.details.quickReplies
-        : [],
-    )
-    .find((b) => b.id === parsedAction.buttonId)
-
-  if (!found) {
-    return
   }
 
   await runStepsAndQuickReplies({

@@ -1,5 +1,6 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
+import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -14,7 +15,7 @@ import {
   type MessageSentPayload,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { format, getTime } from "date-fns"
+import { getTime } from "date-fns"
 import { broadcastStatsRepository } from "../repositories/broadcast-stats.repository"
 import type {
   BroadcastEventType,
@@ -22,11 +23,6 @@ import type {
   BroadcastUpdateItem,
 } from "../schemas/broadcast-stats"
 import type { ContactEventData } from "../schemas/common"
-
-function toClickHouseDateTime(date: Date): string {
-  const utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-  return format(utcDate, "yyyy-MM-dd HH:mm:ss")
-}
 
 function groupBy<T>(
   arr: T[],
@@ -218,7 +214,7 @@ export class BroadcastAnalyticsService {
           conv_id: payload.context.conversationId,
           source_id: payload.action.sourceId ?? "",
           channel: payload.context.channel ?? "",
-          event_type: MessageEventType["message:sent"],
+          event_type: MessageEventType["message:delivered"],
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),

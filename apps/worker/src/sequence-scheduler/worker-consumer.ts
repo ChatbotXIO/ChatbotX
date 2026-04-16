@@ -176,7 +176,7 @@ class DispatchConsumer {
         {
           metadata: {
             type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-            stepId: step?.id ?? "",
+            sequenceStepId: step?.id ?? "",
             sequenceId: step?.sequenceId ?? "",
             dispatchId: dispatch.id,
             contactInboxId: dispatch.contactInboxId,

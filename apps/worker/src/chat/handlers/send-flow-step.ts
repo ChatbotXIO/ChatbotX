@@ -77,6 +77,7 @@ export const convertButtonsToTemplate = (props: {
         flowVersionId,
         buttonId: button.id,
         broadcastId: extractMetadata("broadcastId", metadata),
+        sequenceStepId: extractMetadata("sequenceStepId", metadata),
       }),
     }
   })
@@ -155,6 +156,7 @@ export async function sendFlowStep({
           id: flowId,
           buttons: step?.buttons ?? [],
         },
+        step,
         trackingContext,
         metadata,
       })
@@ -176,7 +178,12 @@ export async function sendFlowStep({
       channel: targetContactInbox.channel,
       contactInboxId: targetContactInbox.id,
     },
+    action: {
+      flowId,
+      flowVersionId,
+    },
     metadata,
+    stepId: step.id,
   }
 
   try {
@@ -225,6 +232,7 @@ export async function sendFlowStep({
       messageData.contentAttributes = {
         ...messageData.contentAttributes,
         metadata,
+        stepId: step.id,
       }
 
       const newMessage = await tx

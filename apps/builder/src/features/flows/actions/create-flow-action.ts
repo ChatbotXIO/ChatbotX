@@ -1,7 +1,11 @@
 "use server"
 
 import { db } from "@chatbotx.io/database/client"
-import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
+import {
+  flowAnalyticsSessionModel,
+  flowModel,
+  flowVersionModel,
+} from "@chatbotx.io/database/schema"
 import { sendMessageNodeDefaultFn } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -46,6 +50,12 @@ export const createFlowAction = workspaceActionClient
           })
           .returning()
           .then((result) => result[0])
+
+        await tx.insert(flowAnalyticsSessionModel).values({
+          id: createId(),
+          workspaceId,
+          flowId,
+        })
 
         await tx.insert(flowVersionModel).values({
           id: createId(),

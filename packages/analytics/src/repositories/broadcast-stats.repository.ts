@@ -4,20 +4,11 @@ import type {
   BroadcastStats,
 } from "../schemas/broadcast-stats"
 import type { ContactEventData } from "../schemas/common"
+import type {
+  ClickHouseContactRow,
+  ClickHouseStatsRow,
+} from "../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
-
-type ClickHouseStatsRow = {
-  event_type: string
-  count: string
-}
-
-type ClickHouseContactRow = {
-  contact_inbox_id: string
-  contact_id: string
-  content: string | null
-  max_occurred_at: string
-  conv_id: string
-}
 
 export class BroadcastStatsRepository extends BaseRepository {
   async getStats(input: {

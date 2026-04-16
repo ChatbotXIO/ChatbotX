@@ -1,23 +1,14 @@
 import { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import type { ContactEventData } from "../schemas/common"
 import type {
+  ClickHouseContactRow,
+  ClickHouseStatsRow,
+} from "../schemas/flow-stats"
+import type {
   SequenceStepEventType,
   SequenceStepStats,
 } from "../schemas/sequence-stats"
 import { BaseRepository } from "./base.repository"
-
-type ClickHouseStatsRow = {
-  event_type: string
-  count: string
-}
-
-type ClickHouseContactRow = {
-  contact_inbox_id: string
-  contact_id: string
-  content: string | null
-  max_occurred_at: string
-  conv_id: string
-}
 
 export class SequenceStatsRepository extends BaseRepository {
   async getStepStats(input: {

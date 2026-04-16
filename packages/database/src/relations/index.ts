@@ -25,6 +25,8 @@ import { conversationParticipantRelations } from "./conversation-participant"
 import { customFieldRelations } from "./custom-field"
 import { errorLogRelations } from "./error-log"
 import { flowRelations } from "./flow"
+import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
+import { flowNodeStatRelations } from "./flow-node-stat"
 import { flowRunRelations } from "./flow-run"
 import { flowVersionRelations } from "./flow-version"
 import { folderRelations } from "./folder"
@@ -140,4 +142,6 @@ export const relations = {
   ...userRelations,
   ...integrationTelegramRelations,
   ...integrationInstagramRelations,
+  ...flowAnalyticsSessionRelations,
+  ...flowNodeStatRelations,
 }

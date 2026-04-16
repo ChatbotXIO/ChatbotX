@@ -24,11 +24,13 @@ export const eventContextSchema = z.object({
   conversationId: z.string(),
   channel: z.string(),
   contactInboxId: z.string().optional(),
+  sequenceStepId: z.string().optional(),
 })
 
 export type EventContext = z.infer<typeof eventContextSchema>
 
 export const messageActionSchema = z.object({
+  flowId: z.string().optional(),
   sourceId: z.string().optional(),
   messageId: z.string().optional(),
   messageDetail: z.record(z.string(), z.unknown()).optional(),
@@ -41,8 +43,6 @@ export const flowActionSchema = z.object({
   buttonId: z.string().optional(),
   nodeId: z.string().optional(),
   broadcastId: z.string().optional(),
-  sequenceId: z.string().optional(),
-  stepId: z.string().optional(),
   clickType: z.enum(["button", "quick_reply"]),
 })
 
@@ -51,6 +51,7 @@ export type FlowAction = z.infer<typeof flowActionSchema>
 const baseMessagePayloadSchema = z.object({
   context: eventContextSchema,
   action: messageActionSchema,
+  stepId: z.string().optional(),
   occurredAt: z.date(),
   metadata: z.custom<MetadataPayload>().optional(),
 })
@@ -72,8 +73,10 @@ export const messageEventSchemas = {
 export const clickedPayloadSchema = z.object({
   context: eventContextSchema,
   action: flowActionSchema,
+  stepId: z.string().optional(),
   occurredAt: z.date(),
 })
+export type ClickedPayload = z.infer<typeof clickedPayloadSchema>
 
 export const flowEventSchemas = {
   [FlowEventType["flow:clicked"]]: clickedPayloadSchema,

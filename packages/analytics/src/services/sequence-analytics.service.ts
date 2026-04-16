@@ -1,9 +1,9 @@
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
+import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  type FlowClickedPayload,
   FlowEventType,
   type MessageDeliveredPayload,
   MessageEventType,
@@ -13,18 +13,13 @@ import {
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { format } from "date-fns"
 import { sequenceStatsRepository } from "../repositories/sequence-stats.repository"
 import type { ContactEventData } from "../schemas/common"
 import type {
+  SequenceSchemaPayload,
   SequenceStepEventType,
   SequenceStepStats,
 } from "../schemas/sequence-stats"
-
-function toClickHouseDateTime(date: Date): string {
-  const utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-  return format(utcDate, "yyyy-MM-dd HH:mm:ss")
-}
 
 function groupBy<T>(
   arr: T[],
@@ -83,9 +78,15 @@ export class SequenceAnalyticsService {
   }
 
   async onMessageSent(payloads: MessageSentPayload[]) {
+    const sequenceSchedulePayloads = payloads.filter(
+      (p) =>
+        p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE &&
+        p.context.channel !== channelTypes.enum.whatsapp,
+    )
+
     const insertedData: SequenceScheduleEventType[] = []
 
-    for (const payload of payloads) {
+    for (const payload of sequenceSchedulePayloads) {
       if (
         payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE &&
         payload.context.channel !== channelTypes.enum.whatsapp
@@ -98,9 +99,9 @@ export class SequenceAnalyticsService {
           conv_id: payload.context.conversationId,
           source_id: payload.action.sourceId ?? "",
           channel: payload.context.channel ?? "",
-          event_type: MessageEventType["message:sent"],
+          event_type: MessageEventType["message:delivered"],
           sequence_id: payload.metadata.sequenceId,
-          step_id: payload.metadata.stepId,
+          step_id: payload.metadata.sequenceStepId,
           content: JSON.stringify({}),
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
@@ -114,22 +115,21 @@ export class SequenceAnalyticsService {
 
     await saveToClickhouse(insertedData)
 
-    const sequenceContacts = payloads
-      .filter((p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE)
-      .map((p) => ({
-        sequenceId: (
-          p.metadata as {
-            type: typeof SEQUENCE_SCHEDULE_PAYLOAD_TYPE
-            sequenceId: string
-          }
-        ).sequenceId,
-        contactId: p.context.contactId,
-      }))
+    const sequenceContacts = sequenceSchedulePayloads.map((p) => ({
+      sequenceId: (
+        p.metadata as {
+          type: typeof SEQUENCE_SCHEDULE_PAYLOAD_TYPE
+          sequenceId: string
+        }
+      ).sequenceId,
+      contactId: p.context.contactId,
+    }))
 
     if (sequenceContacts.length > 0) {
       const tuples = sequenceContacts.map(
         (sc) => sql`(${sc.sequenceId}, ${sc.contactId})`,
       )
+
       await db.execute(sql`
         UPDATE "ContactOnSequence"
         SET "status" = 'sent'
@@ -139,15 +139,19 @@ export class SequenceAnalyticsService {
   }
 
   async onFailed(payloads: MessageFailedPayload[]) {
+    const sequenceSchedulePayloads = payloads.filter(
+      (p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+    )
+
     const insertedData: SequenceScheduleEventType[] = []
 
-    for (const payload of payloads) {
+    for (const payload of sequenceSchedulePayloads) {
       if (payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,
           sequence_id: payload.metadata.sequenceId,
-          step_id: payload.metadata.stepId,
+          step_id: payload.metadata.sequenceStepId,
           contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.context.contactId,
           conv_id: payload.context.conversationId,
@@ -171,15 +175,19 @@ export class SequenceAnalyticsService {
   }
 
   async onDelivered(payloads: MessageDeliveredPayload[]) {
+    const sequenceSchedulePayloads = payloads.filter(
+      (p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+    )
+
     const insertedData: SequenceScheduleEventType[] = []
 
-    for (const payload of payloads) {
+    for (const payload of sequenceSchedulePayloads) {
       if (payload.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE) {
         insertedData.push({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,
           sequence_id: payload.metadata.sequenceId,
-          step_id: payload.metadata.stepId,
+          step_id: payload.metadata.sequenceStepId,
           contact_inbox_id: payload.metadata.contactInboxId,
           contact_id: payload.context.contactId,
           conv_id: payload.context.conversationId,
@@ -281,9 +289,28 @@ export class SequenceAnalyticsService {
     }
   }
 
-  async onClicked(payloads: FlowClickedPayload[]) {
+  async onClicked(payloads: SequenceSchemaPayload[]) {
     try {
-      const sequenceClicks = payloads.filter((p) => p.action.sequenceId)
+      const sequenceClicks = payloads.filter((p) => p.metadata?.sequenceStepId)
+
+      const sequenceStepIds = new Set<string>(
+        sequenceClicks.map((p) => p.metadata.sequenceStepId),
+      )
+
+      const sequenceSteps = await db.query.sequenceStepModel.findMany({
+        where: {
+          id: {
+            in: Array.from(sequenceStepIds),
+          },
+        },
+        columns: {
+          id: true,
+          sequenceId: true,
+        },
+      })
+      const sequenceStepsMap = new Map<string, string>(
+        sequenceSteps.map((s) => [s.id, s.sequenceId]),
+      )
 
       if (sequenceClicks.length === 0) {
         return
@@ -293,8 +320,9 @@ export class SequenceAnalyticsService {
         (payload) => ({
           event_id: createId(),
           workspace_id: payload.context.workspaceId,
-          sequence_id: payload.action.sequenceId as string,
-          step_id: payload.action.stepId || "",
+          sequence_id:
+            sequenceStepsMap.get(payload.metadata.sequenceStepId) || "",
+          step_id: payload.metadata.sequenceStepId || "",
           contact_id: payload.context.contactId,
           contact_inbox_id: payload.context.contactInboxId ?? "",
           conv_id: payload.context.conversationId,

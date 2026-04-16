@@ -34,6 +34,7 @@ export function getButtonTemplate(props: {
           flowVersionId: props.flowVersionId,
           buttonId: button.id,
           broadcastId: extractMetadata("broadcastId", metadata),
+          sequenceStepId: extractMetadata("sequenceStepId", metadata),
         })}`,
       }
   }

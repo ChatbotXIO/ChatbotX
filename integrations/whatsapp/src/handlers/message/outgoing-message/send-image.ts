@@ -36,6 +36,10 @@ export function* convertFlowStepImage(
           flowVersionId: props.data.flowVersionId,
           buttonId: button.id,
           broadcastId: extractMetadata("broadcastId", props.data.metadata),
+          sequenceStepId: extractMetadata(
+            "sequenceStepId",
+            props.data.metadata,
+          ),
         })
         return new Button(buttonId, button.label)
       })
