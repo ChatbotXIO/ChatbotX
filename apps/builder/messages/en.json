@@ -1229,7 +1229,12 @@
       "typing": "Typing",
       "sequenceActions": "Sequence Actions",
       "subscribeSequence": "Subscribe Sequence",
-      "unsubscribeSequence": "Unsubscribe Sequence"
+      "unsubscribeSequence": "Unsubscribe Sequence",
+      "splitTraffic": "Split Traffic"
+    },
+    "splitTraffic": {
+      "balanceHint": "The total sum must equal 100%.",
+      "addVariation": "New Variation"
     },
     "additionalSteps": "Additional steps",
     "delayType": {

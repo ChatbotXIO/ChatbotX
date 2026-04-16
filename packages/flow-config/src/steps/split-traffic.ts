@@ -12,10 +12,16 @@ export const splitTrafficStepSchema = z.object({
         nodeId: zodBigintAsString().nullish(),
       }),
     )
-    .refine((data) => data.reduce((acc, curr) => acc + curr.value, 0) === 100, {
-      message: "Total percentage must be 100",
-      path: ["cases"],
-    }),
+    .refine(
+      (data) => {
+        const total = data.reduce((acc, curr) => acc + curr.value, 0)
+        return total === 100
+      },
+      {
+        message: "The total sum must equal 100%.",
+        path: ["cases"],
+      },
+    ),
 })
 
 export type SplitTrafficStepSchema = z.infer<typeof splitTrafficStepSchema>

@@ -1234,7 +1234,12 @@
       "sequenceActions": "Hành động chăm sóc",
       "subscribeSequence": "Đăng ký chăm sóc",
       "unsubscribeSequence": "Hủy đăng ký chăm sóc",
-      "noTemplatesAvailable": "No templates available"
+      "noTemplatesAvailable": "No templates available",
+      "splitTraffic": "Chia lưu lượng"
+    },
+    "splitTraffic": {
+      "balanceHint": "Tổng phần trăm phải bằng 100%.",
+      "addVariation": "Biến thể mới"
     },
     "additionalSteps": "Các bước bổ sung",
     "delayType": {

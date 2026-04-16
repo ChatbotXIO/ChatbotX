@@ -2,6 +2,7 @@ import type { FlowNode, NodeType, StepType } from "@chatbotx.io/flow-config"
 import {
   buttonStepDefaultFn,
   disabledCopyActionTypes,
+  hiddenActionsStepTypes,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
@@ -351,37 +352,46 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                         type={(field as any).stepType}
                       />
                     </div>
-                    <div className="flex flex-col">
-                      <Button
-                        className="size-8 shrink-0"
-                        onClick={() => onRemoveStep(index)}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <XIcon aria-hidden="true" className="size-4" />
-                      </Button>
-
-                      <SortableItemHandle asChild>
-                        <Button className="size-8" size="icon" variant="ghost">
-                          <MoveVerticalIcon className="h-4 w-4" />
-                        </Button>
-                      </SortableItemHandle>
-                      {!disabledCopyActionTypes.includes(
-                        // biome-ignore lint/suspicious/noExplicitAny: wip
-                        (field as any).stepType,
-                      ) && (
+                    {!hiddenActionsStepTypes.includes(
+                      // biome-ignore lint/suspicious/noExplicitAny: wip
+                      (field as any).stepType,
+                    ) && (
+                      <div className="flex flex-col">
                         <Button
                           className="size-8 shrink-0"
-                          onClick={() => onCopyStep(index)}
+                          onClick={() => onRemoveStep(index)}
                           size="icon"
                           type="button"
                           variant="ghost"
                         >
-                          <CopyIcon aria-hidden="true" className="size-4" />
+                          <XIcon aria-hidden="true" className="size-4" />
                         </Button>
-                      )}
-                    </div>
+
+                        <SortableItemHandle asChild>
+                          <Button
+                            className="size-8"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoveVerticalIcon className="h-4 w-4" />
+                          </Button>
+                        </SortableItemHandle>
+                        {!disabledCopyActionTypes.includes(
+                          // biome-ignore lint/suspicious/noExplicitAny: wip
+                          (field as any).stepType,
+                        ) && (
+                          <Button
+                            className="size-8 shrink-0"
+                            onClick={() => onCopyStep(index)}
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <CopyIcon aria-hidden="true" className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </SortableItem>
               ))}

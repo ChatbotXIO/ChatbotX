@@ -1,6 +1,7 @@
 import { nodeTypeSchema } from "@chatbotx.io/flow-config"
 import performActionNodeConfig from "./perform-action"
 import sendMessageNodeConfig from "./send-message"
+import splitTrafficNodeConfig from "./split-traffic"
 import startFlowNodeConfig from "./start-flow"
 
 export const allNodesConfig = {
@@ -9,7 +10,7 @@ export const allNodesConfig = {
   [nodeTypeSchema.enum.performAction]: performActionNodeConfig,
   [nodeTypeSchema.enum.condition]: undefined,
   [nodeTypeSchema.enum.sendMail]: undefined,
-  [nodeTypeSchema.enum.splitTraffic]: undefined,
+  [nodeTypeSchema.enum.splitTraffic]: splitTrafficNodeConfig,
   [nodeTypeSchema.enum.wait]: undefined,
   [nodeTypeSchema.enum.landingPage]: undefined,
   [nodeTypeSchema.enum.addNotes]: undefined,

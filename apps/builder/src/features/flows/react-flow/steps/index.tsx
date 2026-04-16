@@ -42,6 +42,7 @@ import sendTextStep from "./send-text"
 import { sendVideoStep } from "./send-video"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
 import { setCustomFieldStep } from "./set-custom-field"
+import splitTrafficStep from "./split-traffic"
 import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
 import { spreadsheetGetRandomRowStep } from "./spreadsheet-get-random-row"
 import { spreadsheetGetRowStep } from "./spreadsheet-get-row"
@@ -97,7 +98,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.formatDate]: formatDateStep,
   [stepTypes.enum.generateCode]: generateCodeStep,
   [stepTypes.enum.countCharacters]: countCharactersStep,
-  [stepTypes.enum.splitTraffic]: undefined,
+  [stepTypes.enum.splitTraffic]: splitTrafficStep,
   [stepTypes.enum.startExternalFlow]: sendExternalFlowStep,
   [stepTypes.enum.startExternalNode]: sendExternalNodeStep,
   [stepTypes.enum.startAnotherNode]: startAnotherNodeStep,
@@ -151,14 +152,16 @@ export const DynamicStepViewer = memo(
   ({
     type,
     data,
+    nodeId,
     ...props
   }: {
     type: StepType
     // biome-ignore lint/suspicious/noExplicitAny: safe ignore
     data: any
+    nodeId?: string
   }) => {
     const Element = allSteps[type]?.viewer
 
-    return Element ? <Element data={data} {...props} /> : null
+    return Element ? <Element data={data} nodeId={nodeId} {...props} /> : null
   },
 )

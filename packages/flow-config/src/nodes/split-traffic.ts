@@ -15,7 +15,7 @@ export const splitTrafficNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.splitTraffic),
   data: baseNodeDataSchema.extend({
     details: z.object({
-      beforeStep: splitTrafficStepSchema,
+      steps: z.array(splitTrafficStepSchema).min(1),
     }),
   }),
 })
@@ -31,9 +31,10 @@ export const splitTrafficNodeDefaultFn = (
   data: {
     name: "Split Traffic",
     isStartNode: false,
+    ignoreContinue: true,
     ...props.dataProps,
     details: {
-      beforeStep: splitTrafficStepDefaultFn(),
+      steps: [splitTrafficStepDefaultFn()],
       ...props.detailProps,
     },
   },

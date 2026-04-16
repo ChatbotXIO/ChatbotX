@@ -1,4 +1,6 @@
 import {
+  type EdgeSchema,
+  type SplitTrafficStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
@@ -70,6 +72,45 @@ export async function sendFlowMessage(
       metadata,
     },
   })
+}
+
+async function splitTraffic({
+  conversation,
+  flowVersion,
+  step,
+  targetId,
+}: ExecuteStepProps<SplitTrafficStepSchema>) {
+  if (!(targetId && step.cases.length)) {
+    return
+  }
+
+  const total = step.cases.reduce((sum, c) => sum + c.value, 0)
+  const bucket = Math.random() * total
+  let cumulative = 0
+  let selectedIndex = 0
+  for (let i = 0; i < step.cases.length; i++) {
+    cumulative += step.cases[i].value
+    if (bucket < cumulative) {
+      selectedIndex = i
+      break
+    }
+  }
+
+  const sourceHandle = `${targetId}-case-${selectedIndex}`
+  const edges = (flowVersion.edges as EdgeSchema[]) ?? []
+  const connectedEdge = edges.find((edge) => edge.sourceHandle === sourceHandle)
+
+  if (connectedEdge?.target) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation.id,
+        flowId: flowVersion.flowId,
+        flowVersionId: flowVersion.id,
+        nodeId: connectedEdge.target,
+      },
+    })
+  }
 }
 
 async function startAnotherNode(
@@ -186,7 +227,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.filterContact]: undefined,
   [stepTypes.enum.subscribeBroadcast]: undefined,
   [stepTypes.enum.unsubscribeBroadcast]: undefined,
-  [stepTypes.enum.splitTraffic]: undefined,
+  [stepTypes.enum.splitTraffic]: splitTraffic,
   [stepTypes.enum.startAnotherNode]: startAnotherNode,
   [stepTypes.enum.startExternalNode]: startExternalNode,
   [stepTypes.enum.addNotes]: undefined,

@@ -3,6 +3,7 @@ import {
   edgeSchema,
   flowVersionSchema,
   sendMessageNodeSchema,
+  splitTrafficNodeSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -36,7 +37,11 @@ export type PublishFlowSchema = z.infer<typeof publishFlowSchema>
 
 export const updateFlowVersionSchema = z.object({
   nodes: z.array(
-    z.discriminatedUnion("type", [sendMessageNodeSchema, addNotesNodeSchema]),
+    z.discriminatedUnion("type", [
+      sendMessageNodeSchema,
+      addNotesNodeSchema,
+      splitTrafficNodeSchema,
+    ]),
   ),
   edges: z.array(
     z.object({

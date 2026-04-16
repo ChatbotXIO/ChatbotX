@@ -116,3 +116,5 @@ export const disabledCopyActionTypes = [
   stepTypes.enum.optInEmail,
   stepTypes.enum.optOutEmail,
 ]
+
+export const hiddenActionsStepTypes = [stepTypes.enum.splitTraffic]

@@ -1,16 +1,33 @@
 "use client"
 
 import type { SplitTrafficStepSchema } from "@chatbotx.io/flow-config"
+import { Position } from "@xyflow/react"
+import { BaseHandle } from "@/components/base-handle"
 
-const SplitTrafficStepViewer = ({ data }: { data: SplitTrafficStepSchema }) => (
-  <div className="items-center justify-center overflow-hidden rounded-lg bg-secondary">
-    {data.cases.length > 0 &&
-      data.cases.map((c, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: safe index
-        <div key={i}>
-          <p>{c.value}%</p>
-        </div>
-      ))}
+type SplitTrafficStepViewerProps = {
+  data: SplitTrafficStepSchema
+  nodeId: string
+}
+
+const SplitTrafficStepViewer = ({
+  data,
+  nodeId,
+}: SplitTrafficStepViewerProps) => (
+  <div className="flex flex-col gap-2">
+    {data.cases.map((c, i) => (
+      <div
+        className="relative flex items-center justify-between rounded-lg bg-secondary px-3 py-2"
+        // biome-ignore lint/suspicious/noArrayIndexKey: wip
+        key={`${nodeId}-case-${i}`}
+      >
+        <span className="font-medium">{c.value}%</span>
+        <BaseHandle
+          id={`${nodeId}-case-${i}`}
+          position={Position.Right}
+          type="source"
+        />
+      </div>
+    ))}
   </div>
 )
 

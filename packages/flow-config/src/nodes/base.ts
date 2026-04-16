@@ -37,6 +37,7 @@ export type BaseNodeSchema = z.infer<typeof baseNodeSchema>
 export const baseNodeDataSchema = z.object({
   name: z.string().trim().min(1).max(255),
   isStartNode: z.boolean(),
+  ignoreContinue: z.boolean().default(false).optional(),
   status: z.boolean().nullish(),
   log: z.string().nullish(),
 })
