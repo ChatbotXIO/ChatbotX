@@ -334,6 +334,9 @@
     "messenger": {
       "label": "Messenger"
     },
+    "image": {
+      "label": "Hình ảnh"
+    },
     "instagram": {
       "label": "Instagram"
     },
@@ -628,6 +631,7 @@
     "flows": {
       "aiGenerateText": "{aiName}: Tạo văn bản",
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
+      "aiAnalyzeImage": "{aiName}: AI Phân tích hình ảnh",
       "label": "Luồng",
       "placeholder": "Chọn luồng"
     },
@@ -1257,6 +1261,7 @@
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",
       "aiAnalyzeImage": "AI phân tích hình ảnh",
+      "aiGenerateImage": "AI tạo hình ảnh",
       "aiGenerateTextAgent": "AI tạo văn bản agent",
       "aiSpeechToText": "AI chuyển giọng nói thành văn bản",
       "aiTextToSpeech": "AI chuyển văn bản thành giọng nói",

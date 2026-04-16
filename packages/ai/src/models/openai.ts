@@ -25,8 +25,62 @@ export const openaiModels = z.enum([
   "gpt-5.2-pro",
   "gpt-5.2",
   "gpt-5",
+  "gpt-5.4",
+  "gpt-5.4-mini",
+  "gpt-5.4-nano",
+  "o4-mini",
 ])
 export type OpenAIModel = z.infer<typeof openaiModels>
+
+export const openaiAnalyzeImageModelOptions: {
+  label: string
+  value: OpenAIModel
+}[] = [
+  {
+    label: "GPT-5.4",
+    value: openaiModels.enum["gpt-5.4"],
+  },
+  {
+    label: "GPT-5.4 mini",
+    value: openaiModels.enum["gpt-5.4-mini"],
+  },
+  {
+    label: "GPT-5.4 nano",
+    value: openaiModels.enum["gpt-5.4-nano"],
+  },
+  {
+    label: "GPT-5.2",
+    value: openaiModels.enum["gpt-5.2"],
+  },
+  {
+    label: "GPT-5.1",
+    value: openaiModels.enum["gpt-5.1"],
+  },
+  {
+    label: "GPT-5 mini",
+    value: openaiModels.enum["gpt-5-mini"],
+  },
+  {
+    label: "GPT-4.1 mini",
+    value: openaiModels.enum["gpt-4.1-mini"],
+  },
+  {
+    label: "GPT-4.1",
+    value: openaiModels.enum["gpt-4.1"],
+  },
+  {
+    label: "GPT-4o mini",
+    value: openaiModels.enum["gpt-4o-mini"],
+  },
+  {
+    label: "GPT-4o",
+    value: openaiModels.enum["gpt-4o"],
+  },
+  {
+    label: "o4-mini",
+    value: openaiModels.enum["o4-mini"],
+  },
+]
 
 export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
   {
