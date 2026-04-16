@@ -82,6 +82,9 @@ importers:
       '@chatbotx.io/integration-google-sheets':
         specifier: workspace:*
         version: link:../../integrations/google-sheets
+      '@chatbotx.io/integration-instagram':
+        specifier: workspace:*
+        version: link:../../integrations/instagram
       '@chatbotx.io/integration-messenger':
         specifier: workspace:*
         version: link:../../integrations/messenger
@@ -710,6 +713,46 @@ importers:
       typescript:
         specifier: 6.0.2
         version: 6.0.2
+
+  integrations/instagram:
+    dependencies:
+      '@chatbotx.io/flow-config':
+        specifier: workspace:*
+        version: link:../../packages/flow-config
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      cross-fetch:
+        specifier: ^4.1.0
+        version: 4.1.0
+      image-size:
+        specifier: ^2.0.2
+        version: 2.0.2
+      ky:
+        specifier: ^1.14.3
+        version: 1.14.3
+      remeda:
+        specifier: ^2.33.6
+        version: 2.33.7
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.12.2
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   integrations/messenger:
     dependencies:

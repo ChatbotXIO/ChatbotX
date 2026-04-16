@@ -22,10 +22,6 @@ export type MessengerAuthValue = Oauth2AuthValue & {
 export type MessengerActions<
   IAuth extends MessengerAuthValue = MessengerAuthValue,
 > = {
-  updateMessengerProfile: (props: {
-    ctx: Context<IAuth>
-    params: MessengerProfileRequest
-  }) => Promise<void>
   updatePersona: (props: {
     ctx: Context<IAuth>
     persona: PersonaRequest

@@ -1,12 +1,12 @@
 "use client"
 
-import type { OrganizationSettings } from "@aha.chat/database/types"
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@aha.chat/ui/components/ui/card"
+} from "@chatbotx.io/ui/components/ui/card"
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
@@ -28,12 +28,12 @@ const INSTAGRAM_SCOPE = [
 ]
 
 export type InstagramConnectProps = {
-  chatbotId?: string | null
+  workspaceId?: string | null
   settings: NonNullable<OrganizationSettings["instagram"]>
 }
 
 export function InstagramConnect({
-  chatbotId,
+  workspaceId,
   settings,
 }: InstagramConnectProps) {
   const t = useTranslations()
@@ -60,7 +60,7 @@ export function InstagramConnect({
           />
         )}
         {accounts.length > 0 && (
-          <InstagramAccounts accounts={accounts} chatbotId={chatbotId} />
+          <InstagramAccounts accounts={accounts} workspaceId={workspaceId} />
         )}
       </CardContent>
     </Card>

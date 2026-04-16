@@ -1,4 +1,4 @@
-import type { FileType } from "@aha.chat/sdk"
+import type { FileType } from "@chatbotx.io/sdk"
 import { InstagramAttachmentException } from "../exception"
 import { instagramAttachmentClient } from "../lib/http-client"
 import { logger } from "../lib/logger"

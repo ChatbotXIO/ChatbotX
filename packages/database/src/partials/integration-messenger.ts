@@ -2,29 +2,33 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "./shared"
 
-export const messengerGreetingMessage = z.object({
+export const messengerGreetingMessageSchema = z.object({
   locale: z.string(),
   text: z.string(),
 })
-export type MessengerGreetingMessage = z.infer<typeof messengerGreetingMessage>
+export type MessengerGreetingMessage = z.infer<
+  typeof messengerGreetingMessageSchema
+>
 
-export const persistentMenuType = z.enum(["flow", "url"])
+export const messengerPersistentMenuTypes = z.enum(["flow", "url"])
 
-export const messengerPersistentMenu = z.discriminatedUnion("type", [
+export const messengerPersistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(persistentMenuType.enum.flow),
+    type: z.literal(messengerPersistentMenuTypes.enum.flow),
     flowId: zodBigintAsString(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(persistentMenuType.enum.url),
+    type: z.literal(messengerPersistentMenuTypes.enum.url),
     url: z.url(),
   }),
 ])
-export type MessengerPersistentMenu = z.infer<typeof messengerPersistentMenu>
+export type MessengerPersistentMenu = z.infer<
+  typeof messengerPersistentMenuSchema
+>
 
-export const messengerPersona = z.object({
+export const messengerPersonaSchema = z.object({
   isDefault: z.boolean(),
   name: z.string(),
   profilePicture: z.object({
@@ -34,12 +38,12 @@ export const messengerPersona = z.object({
   }),
   facebookPersonaId: z.string().optional(),
 })
-export type MessengerPersona = z.infer<typeof messengerPersona>
+export type MessengerPersona = z.infer<typeof messengerPersonaSchema>
 
-export const messengerConversationStarter = z.object({
+export const messengerConversationStarterSchema = z.object({
   question: z.string(),
   flowId: zodBigintAsString(),
 })
 export type MessengerConversationStarter = z.infer<
-  typeof messengerConversationStarter
+  typeof messengerConversationStarterSchema
 >

@@ -1,4 +1,4 @@
-import { type ButtonStepProps, ButtonType } from "@chatbotx.io/flow-config"
+import { type ButtonStepProps, buttonTypes } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { Position } from "@xyflow/react"
@@ -22,9 +22,9 @@ export const ButtonStepViewer = (props: ButtonStepViewerProps) => {
       >
         {data.label}
       </Button>
-      {(data.buttonType === ButtonType.SendMessage ||
-        data.buttonType === ButtonType.PerformAction ||
-        data.buttonType === ButtonType.StartAnotherNode ||
+      {(data.buttonType === buttonTypes.enum.sendMessage ||
+        data.buttonType === buttonTypes.enum.performAction ||
+        data.buttonType === buttonTypes.enum.startAnotherNode ||
         data.buttonType === null) && (
         <BaseHandle
           className={cn("right-3!", !!data.buttonType && "bg-red-300")}

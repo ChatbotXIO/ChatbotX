@@ -1,48 +1,55 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
-  flowVersionModel,
   type InstagramConversationStarter,
   type InstagramPersistentMenu,
-  integrationInstagramModel,
-  persistentMenuType,
-} from "@aha.chat/database/schema"
-import type { IntegrationInstagramModel } from "@aha.chat/database/types"
-import { encodeButtonPayload } from "@aha.chat/flow-config"
-import type { InstagramAuthValue } from "@aha.chat/integration-instagram"
-import { integration as integrationInstagram } from "@aha.chat/integration-instagram"
-import type {
-  IceBreaker,
-  InstagramButton,
-  InstagramProfileRequest,
-} from "@aha.chat/integration-instagram/schemas"
-import { findChatbotOrFail } from "@/features/chatbot/queries"
+  instagramPersistentMenuTypes,
+} from "@chatbotx.io/database/partials"
 import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
+  flowVersionModel,
+  integrationInstagramModel,
+} from "@chatbotx.io/database/schema"
+import type {
+  IntegrationInstagramModel,
+  WorkspaceModel,
+} from "@chatbotx.io/database/types"
+import { getStoragePrefix } from "@chatbotx.io/filesystem"
+import { encodeButtonPayload } from "@chatbotx.io/flow-config"
+import {
+  type IceBreaker,
+  type InstagramAuthValue,
+  type InstagramButton,
+  type InstagramProfileRequest,
+  integration as integrationInstagram,
+} from "@chatbotx.io/integration-instagram"
+import {
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
 import { type UpdateInstagramRequest, updateInstagramRequest } from "../schemas"
 
-export const updateInstagramAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const updateInstagramAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .inputSchema(updateInstagramRequest)
   .action(
     async ({
+      ctx,
       parsedInput,
-      bindArgsParsedInputs: [chatbotId, id],
+      bindArgsParsedInputs: [workspaceId, id],
     }: {
+      ctx: { workspace: WorkspaceModel }
       parsedInput: UpdateInstagramRequest
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
       try {
         await db.transaction(async (tx) => {
-          const chatbot = await findChatbotOrFail({ id: chatbotId })
           const integrationInstagramData = await findIntegrationInstagram({
+            workspaceId: ctx.workspace.id,
             id,
           })
 
@@ -57,12 +64,19 @@ export const updateInstagramAction = chatbotActionClient
 
           if (integrationInstagramData) {
             const auth = integrationInstagramData.auth as InstagramAuthValue
-            const ctx = { chatbot, auth }
+            const integrationContext = {
+              workspace: ctx.workspace,
+              auth,
+              storagePrefix: getStoragePrefix(
+                ctx.workspace.id,
+                integrationInstagramData.inboxId,
+              ),
+            }
 
             if (parsedInput.conversationStarters.length) {
-              await integrationInstagram.channels.channel.profile?.update?.({
-                ctx,
-                params: {
+              await integrationInstagram.channels.channel.bot?.updateProfile?.({
+                ctx: integrationContext,
+                data: {
                   ice_breakers: await buildIceBreakersParams(
                     parsedInput.conversationStarters,
                   ),
@@ -74,7 +88,7 @@ export const updateInstagramAction = chatbotActionClient
             }
           }
 
-          revalidateCacheTags([`chatbots:${chatbotId}#instagram`])
+          revalidateCacheTags([`chatbots:${workspaceId}#instagram`])
         })
       } catch (_error) {
         throw new ChatbotXException("Failed to update Instagram integration")
@@ -87,9 +101,12 @@ const buildIceBreakersParams = async (
 ): Promise<IceBreaker[]> => {
   const callToActions = await Promise.all(
     conversationStarters.map(async (item) => {
-      const flowVersion = await findOrFail(flowVersionModel, {
-        flowId: item.flowId,
-        isLatest: true,
+      const flowVersion = await findOrFail({
+        table: flowVersionModel,
+        where: {
+          flowId: item.flowId,
+          isLatest: true,
+        },
       })
       return {
         question: item.question,
@@ -125,10 +142,13 @@ export const parseInstagramButtons = async (
 ): Promise<InstagramButton[]> => {
   const buttons: InstagramButton[] = []
   for (const menu of persistentMenus as InstagramPersistentMenu[]) {
-    if (menu.type === persistentMenuType.enum.flow) {
-      const flowVersion = await findOrFail(flowVersionModel, {
-        flowId: menu.flowId,
-        isLatest: true,
+    if (menu.type === instagramPersistentMenuTypes.enum.flow) {
+      const flowVersion = await findOrFail({
+        table: flowVersionModel,
+        where: {
+          flowId: menu.flowId,
+          isLatest: true,
+        },
       })
       buttons.push({
         type: "postback",
@@ -141,7 +161,7 @@ export const parseInstagramButtons = async (
       })
     } else if (
       menu &&
-      menu.type === persistentMenuType.enum.url &&
+      menu.type === instagramPersistentMenuTypes.enum.url &&
       "url" in menu
     ) {
       buttons.push({

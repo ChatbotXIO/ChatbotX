@@ -6,15 +6,15 @@ import { startAnotherNodeStepSchema } from "./start-another-node"
 import { startExternalFlowStepSchema } from "./start-external-flow"
 import { startExternalNodeStepSchema } from "./start-external-node"
 
-export const ButtonType = {
-  SendMessage: "BT1",
-  OpenWebsite: "BT2",
-  PerformAction: "BT3",
-  StartExternalFlow: "BT4",
-  StartExternalNode: "BT5",
-  StartAnotherNode: "BT6",
-} as const
-export type ButtonType = (typeof ButtonType)[keyof typeof ButtonType]
+export const buttonTypes = z.enum([
+  "sendMessage",
+  "openWebsite",
+  "performAction",
+  "startExternalFlow",
+  "startExternalNode",
+  "startAnotherNode",
+])
+export type ButtonType = z.infer<typeof buttonTypes>
 
 export const buttonStepSchema = z
   .object({
@@ -24,32 +24,32 @@ export const buttonStepSchema = z
   .and(
     z.discriminatedUnion("buttonType", [
       z.object({
-        buttonType: z.literal(ButtonType.SendMessage),
+        buttonType: z.literal(buttonTypes.enum.sendMessage),
         beforeStep: startAnotherNodeStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.OpenWebsite),
+        buttonType: z.literal(buttonTypes.enum.openWebsite),
         beforeStep: openWebsiteStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.PerformAction),
+        buttonType: z.literal(buttonTypes.enum.performAction),
         beforeStep: startAnotherNodeStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.StartExternalFlow),
+        buttonType: z.literal(buttonTypes.enum.startExternalFlow),
         beforeStep: startExternalFlowStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.StartExternalNode),
+        buttonType: z.literal(buttonTypes.enum.startExternalNode),
         beforeStep: startExternalNodeStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({
-        buttonType: z.literal(ButtonType.StartAnotherNode),
+        buttonType: z.literal(buttonTypes.enum.startAnotherNode),
         beforeStep: startAnotherNodeStepSchema,
         steps: z.array(z.union(actionSteps)),
       }),

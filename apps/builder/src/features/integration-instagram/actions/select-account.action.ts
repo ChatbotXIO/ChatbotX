@@ -1,23 +1,23 @@
 "use server"
 
-import { db, isDatabaseError } from "@aha.chat/database/client"
-import { InboxStatus } from "@aha.chat/database/enums"
+import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
   inboxModel,
   integrationInstagramModel,
-} from "@aha.chat/database/schema"
-import type { UserModel } from "@aha.chat/database/types"
-import type { InstagramAuthValue } from "@aha.chat/integration-instagram"
+} from "@chatbotx.io/database/schema"
+import type { UserModel } from "@chatbotx.io/database/types"
+import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   exchangeLongLivedToken,
   subscribePageToInstagramWebhook,
-} from "@aha.chat/integration-instagram/apis/page"
-import { AuthType } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
-import { createSimpleChatbot } from "@/features/chatbot/actions/create-chatbot-action"
-import { identifyChatbotAndOrganizationFromRequest } from "@/features/integrations/uitls"
-import { verifyOrganizationSettings } from "@/features/organization/queries"
+} from "@chatbotx.io/integration-instagram"
+import { AuthType } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils/id"
+import { organizationService } from "@/features/organization/organization-service"
+import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -34,13 +34,13 @@ export const selectAccountAction = authActionClient
       ctx: { user: UserModel }
     }) => {
       try {
-        let chatbotId = parsedInput.chatbotId
-        const { organization } =
-          await identifyChatbotAndOrganizationFromRequest(parsedInput.chatbotId)
-        const settings = await verifyOrganizationSettings(organization)
-        const instagramSettings = settings.instagram
+        let workspaceId = parsedInput.workspaceId
+
+        const domain = await getDomainFromHeader()
+        const organization = await organizationService.findByDomain(domain)
+        const instagramSettings = organization.settings.instagram
         if (!instagramSettings) {
-          throw new ChatbotXException("Instagram settings not found")
+          throw new ChatbotXException("Instagram App settings not found")
         }
 
         const existedAccount =
@@ -54,18 +54,18 @@ export const selectAccountAction = authActionClient
         }
 
         await db.transaction(async (tx) => {
-          if (!chatbotId) {
-            const chatbot = await createSimpleChatbot(
+          if (!workspaceId) {
+            const workspace = await createSimpleWorkspace(
               tx,
               ctx.user.id,
               organization,
               {
                 name: parsedInput.igName,
-                accountTimezone: "UTC",
+                timezone: "UTC",
                 organizationId: organization.id,
               },
             )
-            chatbotId = chatbot.id
+            workspaceId = workspace.id
           }
 
           const longLivedToken = await exchangeLongLivedToken(
@@ -99,14 +99,15 @@ export const selectAccountAction = authActionClient
             .insert(inboxModel)
             .values({
               id: createId(),
-              chatbotId,
+              workspaceId,
+              name: parsedInput.igName,
               channel: "instagram",
               sourceId: parsedInput.igId,
             })
             .onConflictDoUpdate({
               target: [inboxModel.channel, inboxModel.sourceId],
               set: {
-                status: InboxStatus.connected,
+                status: inboxStatuses.enum.connected,
               },
             })
             .returning()
@@ -114,7 +115,7 @@ export const selectAccountAction = authActionClient
 
           await tx.insert(integrationInstagramModel).values({
             id: createId(),
-            chatbotId,
+            workspaceId,
             inboxId: inbox.id,
             igId: parsedInput.igId,
             pageId: parsedInput.pageId,
@@ -127,12 +128,12 @@ export const selectAccountAction = authActionClient
         })
 
         revalidateCacheTags([
-          `chatbots:${chatbotId}#instagram`,
-          `chatbots:${chatbotId}#inboxes`,
+          `chatbots:${workspaceId}#instagram`,
+          `chatbots:${workspaceId}#inboxes`,
         ])
 
         return {
-          chatbotId,
+          workspaceId,
         }
       } catch (error) {
         if (isDatabaseError(error) && error.cause.code === "23505") {

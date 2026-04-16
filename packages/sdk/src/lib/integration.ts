@@ -104,6 +104,11 @@ export type ContactHandlers<IAuth extends AuthValue> = {
     { ctx: Context<IAuth>; data: { sourceId: string } },
     IncomingContact
   >
+  update: Handler<
+    // biome-ignore lint/suspicious/noExplicitAny: safe pass any data
+    { ctx: Context<IAuth>; data: any },
+    void
+  >
   block: Handler<
     { ctx: Context<IAuth>; data: { contact: OutgoingContact } },
     void
@@ -119,6 +124,8 @@ export type BotHandlers<IAuth extends AuthValue> = {
     { ctx: Context<IAuth>; data: { sourceId: string } },
     IncomingContact
   >
+  // biome-ignore lint/suspicious/noExplicitAny: safe pass any data
+  updateProfile: Handler<{ ctx: Context<IAuth>; data: any }, void>
 }
 
 export type IChannel<

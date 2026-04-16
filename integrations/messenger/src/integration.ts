@@ -3,8 +3,9 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { updateMessengerProfile, updatePersona } from "./apis/page"
+import { updatePersona } from "./apis/page"
 import { MessengerAPIException } from "./exception"
+import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -26,10 +27,10 @@ const config: IntegrationDefinition<
       message: messageHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
+      bot: botHandlers,
     },
   },
   actions: {
-    updateMessengerProfile,
     updatePersona,
   },
   handleRequest: async (props) => {

@@ -53,16 +53,6 @@ export const selectPageAction = authActionClient
           throw new ChatbotXException("Page is already connected")
         }
 
-        // make sure the page is unique
-        const existedPage = await db.query.integrationMessengerModel.findFirst({
-          where: {
-            pageId: parsedInput.pageId,
-          },
-        })
-        if (existedPage) {
-          throw new ChatbotXException("Page is already connected")
-        }
-
         await db.transaction(async (tx) => {
           // create new workspace if not exists
           if (!workspaceId) {

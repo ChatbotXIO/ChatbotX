@@ -1,4 +1,4 @@
-import { ButtonType } from "@chatbotx.io/flow-config"
+import { type ButtonType, buttonTypes } from "@chatbotx.io/flow-config"
 import {
   LinkIcon,
   type LucideIcon,
@@ -17,32 +17,32 @@ type IButtonConfig = {
 
 export const allButtonsConfig = (t: TranslationFn): IButtonConfig[] => [
   {
-    buttonType: ButtonType.SendMessage,
+    buttonType: buttonTypes.enum.sendMessage,
     icon: MessageCircleIcon,
     label: t("flows.actions.sendMessage"),
   },
   {
-    buttonType: ButtonType.OpenWebsite,
+    buttonType: buttonTypes.enum.openWebsite,
     icon: LinkIcon,
     label: t("flows.actions.openWebsite"),
   },
   {
-    buttonType: ButtonType.PerformAction,
+    buttonType: buttonTypes.enum.performAction,
     icon: ZapIcon,
     label: t("flows.actions.performAction"),
   },
   {
-    buttonType: ButtonType.StartExternalFlow,
+    buttonType: buttonTypes.enum.startExternalFlow,
     icon: SquareArrowOutUpRightIcon,
     label: t("flows.actions.startExternalFlow"),
   },
   {
-    buttonType: ButtonType.StartExternalNode,
+    buttonType: buttonTypes.enum.startExternalNode,
     icon: SkipForwardIcon,
     label: t("flows.actions.startExternalNode"),
   },
   {
-    buttonType: ButtonType.StartAnotherNode,
+    buttonType: buttonTypes.enum.startAnotherNode,
     icon: SquareArrowOutUpRightIcon,
     label: t("flows.actions.startAnotherNode"),
   },

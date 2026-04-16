@@ -1,6 +1,6 @@
 import {
   type ButtonStepProps,
-  ButtonType,
+  buttonTypes,
   encodeButtonPayload,
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
@@ -15,7 +15,7 @@ export function getButtonTemplate(props: {
   const { flowId, flowVersionId, button } = props
 
   switch (button.buttonType) {
-    case ButtonType.OpenWebsite:
+    case buttonTypes.enum.openWebsite:
       return {
         type: "web_url",
         title: button.label,

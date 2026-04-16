@@ -145,20 +145,21 @@ export const MessageInput = () => {
   const currentInboxType = "webchat"
 
   // Check if conversation is over 7 days since last contact reply
-  const isOver7Days = useMemo(() => {
-    if (!conversation?.messages.length) {
-      return false
-    }
+  // const isOver7Days = useMemo(() => {
+  //   if (!conversation?.messages.length) {
+  //     return false
+  //   }
 
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    return conversation.contactRepliedAt
-      ? new Date(conversation.contactRepliedAt) < sevenDaysAgo
-      : false
-  }, [conversation])
-  const isDisabled = useMemo(() => {
-    return isOver7Days && currentInboxType === "messenger"
-  }, [isOver7Days, currentInboxType])
+  //   const sevenDaysAgo = new Date()
+  //   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  //   return conversation.contactRepliedAt
+  //     ? new Date(conversation.contactRepliedAt) < sevenDaysAgo
+  //     : false
+  // }, [conversation])
+  const isDisabled = false
+  // const isDisabled = useMemo(() => {
+  //   return isOver7Days && currentInboxType === "messenger"
+  // }, [isOver7Days])
   const placeholder = isDisabled ? t("messages.userInactive") : "Message..."
 
   // Check if files are attached

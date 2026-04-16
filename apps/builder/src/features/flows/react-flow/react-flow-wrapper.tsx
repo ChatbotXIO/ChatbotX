@@ -1,5 +1,5 @@
 import {
-  ButtonType,
+  buttonTypes,
   type FlowNode,
   NodeType,
   sendMessageNodeDefaultFn,
@@ -180,7 +180,7 @@ export function ReactFlowWrapper({
               // biome-ignore lint/suspicious/noExplicitAny: safe to use any
               const targetButton = (data.details.steps[stepIndex] as any)
                 .buttons[buttonIndex]
-              targetButton.buttonType = ButtonType.StartAnotherNode
+              targetButton.buttonType = buttonTypes.enum.startAnotherNode
               targetButton.beforeStep = startAnotherNodeStepDefaultFn({
                 nodeId: toNodeId,
                 viewOnly: true,

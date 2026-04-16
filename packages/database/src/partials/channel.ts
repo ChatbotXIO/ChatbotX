@@ -8,5 +8,6 @@ export const channelTypes = z.enum([
   "zalo",
   "smtp",
   "telegram",
+  "instagram",
 ])
 export type ChannelType = z.infer<typeof channelTypes>

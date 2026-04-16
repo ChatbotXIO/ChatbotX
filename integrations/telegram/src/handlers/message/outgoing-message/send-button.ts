@@ -1,6 +1,6 @@
 import {
   type ButtonStepProps,
-  ButtonType,
+  buttonTypes,
   encodeButtonPayload,
 } from "@chatbotx.io/flow-config"
 import { chunk } from "remeda"
@@ -16,7 +16,7 @@ export const buildInlineButton = (props: {
   const { flowId, button } = props
 
   switch (button.buttonType) {
-    case ButtonType.OpenWebsite:
+    case buttonTypes.enum.openWebsite:
       return {
         text: button.label,
         url: button.beforeStep.url,

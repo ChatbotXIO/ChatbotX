@@ -3,8 +3,7 @@ import type {
   IncomingContact,
   Oauth2AuthValue,
   Oauth2Config,
-  SendFlowStepProps,
-} from "@aha.chat/sdk"
+} from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 export const INSTAGRAM_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
@@ -13,7 +12,7 @@ export type InstagramConfig = Oauth2Config & {
   verifyToken?: string
   version: string
   stateParams: {
-    chatbotId: string
+    workspaceId: string
   }
 }
 
@@ -27,7 +26,6 @@ export type InstagramAuthValue = Oauth2AuthValue & {
 }
 
 export type InstagramActions = {
-  sendFlowStep: (props: SendFlowStepProps<InstagramAuthValue>) => Promise<void>
   getUserProfile: (props: {
     ctx: Context<InstagramAuthValue>
     psid: string

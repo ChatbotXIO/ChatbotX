@@ -35,6 +35,7 @@ import { inboxTeamMemberRelations } from "./inbox-team-member"
 import { integrationRelations } from "./integration"
 import { integrationGeminiRelations } from "./integration-gemini"
 import { integrationGoogleSheetsRelations } from "./integration-google-sheets"
+import { integrationInstagramRelations } from "./integration-instagram"
 import { integrationMessengerRelations } from "./integration-messenger"
 import { integrationOpenaiRelations } from "./integration-openai"
 import { integrationSmtpRelations } from "./integration-smtp"
@@ -140,4 +141,5 @@ export const relations = {
   ...savedReplyRelations,
   ...userRelations,
   ...integrationTelegramRelations,
+  ...integrationInstagramRelations,
 }

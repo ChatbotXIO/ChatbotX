@@ -1,119 +1,120 @@
-import { findOrFail } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
 import type {
+  ContactInboxModel,
   ConversationModel,
-  IntegrationType,
 } from "@chatbotx.io/database/types"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
   ChatJobSendExternalMessage,
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
-import { getInboxWithAuthFromInboxId } from "../../lib/inbox"
-import { allIntegrations } from "../../lib/integrations"
 import { logger } from "../../lib/logger"
+import {
+  allIntegrations,
+  integrationService,
+} from "../../services/integrations"
 
 export async function sendMessageToExternal(
   data: ChatJobSendExternalMessage["data"],
 ) {
-  const { conversation, message } = data
+  const { conversation, contactInbox, message } = data
 
   // Find integration auth
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    conversation.inboxId,
-  )
+  const auth =
+    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
 
   // Find integration detail
-  const integrationDetail = allIntegrations[inbox.channel as IntegrationType]
+  const integrationDetail = allIntegrations[contactInbox.channel]
   if (!integrationDetail) {
     logger.debug(
-      `Does not support this integration for channel: ${inbox.channel}`,
+      `Does not support this integration for channel: ${contactInbox.channel}`,
     )
     return
   }
 
-  const contact = await findOrFail({
-    table: contactModel,
-    where: { id: conversation.contactId },
-    message: "Contact not found",
-  })
-
   await integrationDetail.channels?.channel?.message?.sendMessage?.({
     ctx: {
-      workspace: inbox.workspace,
+      storagePrefix: `public/workspaces/${conversation.workspaceId}/inboxes/${contactInbox.inboxId}`,
+      uploader,
       auth,
     },
     data: {
-      contact,
-      conversation,
+      contact: contactInbox,
       message,
     },
   })
 }
 
 export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
-  const { conversation, typing } = data
+  const { conversation, contactInbox, typing, seconds } = data
 
   // Find integration auth
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    conversation.inboxId,
-  )
+  const auth =
+    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
 
   // Find integration detail
-  const integrationDetail = allIntegrations[inbox.channel as IntegrationType]
+  const integrationDetail = allIntegrations[contactInbox.channel]
   if (!integrationDetail) {
     logger.debug(
-      `Does not support this integration for channel: ${inbox.channel}`,
+      `Does not support this integration for channel: ${contactInbox.channel}`,
     )
     return
   }
 
   await integrationDetail.channels?.channel?.conversation?.sendTyping?.({
     ctx: {
-      workspace: inbox.workspace,
+      storagePrefix: getStoragePrefix(
+        conversation.workspaceId,
+        contactInbox.inboxId,
+      ),
       auth,
     },
-    data: { conversation, typing },
+    data: { contact: contactInbox, typing, seconds },
   })
 }
 
 export async function sendFlowStepToExternal({
   conversation,
+  contactInbox,
   flowId,
   flowVersionId,
   step,
 }: {
   conversation: ConversationModel
+  contactInbox: ContactInboxModel
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
 }): Promise<{ messageIds?: string[] }> {
   // Find integration auth
-  const { inbox, auth } = await getInboxWithAuthFromInboxId(
-    conversation.inboxId,
-  )
+  const auth =
+    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
 
   // Find integration detail
-  const intergationDetail = allIntegrations[inbox.channel as IntegrationType]
+  const intergationDetail = allIntegrations[contactInbox.channel]
   if (!intergationDetail) {
     logger.error(
-      `Unable to find integration detail for channel: ${inbox.channel}`,
+      `Unable to find integration detail for channel: ${contactInbox.channel}`,
     )
     return {}
   }
 
-  const result = await intergationDetail.runAction("sendFlowStep", {
-    ctx: {
-      workspace: inbox.workspace,
-      auth,
-    },
-    data: {
-      conversation,
-      flowId,
-      flowVersionId,
-      step,
-    },
-  })
+  const result =
+    await intergationDetail.channels?.channel?.message?.sendFlowStep?.({
+      ctx: {
+        storagePrefix: getStoragePrefix(
+          conversation.workspaceId,
+          contactInbox.inboxId,
+        ),
+        auth,
+      },
+      data: {
+        contact: contactInbox,
+        flowId,
+        flowVersionId,
+        step,
+      },
+    })
 
   return result || {}
 }

@@ -1,24 +1,24 @@
-import { db, findOrFail } from "@aha.chat/database/client"
-import { integrationInstagramModel } from "@aha.chat/database/schema"
-import type { IntegrationInstagramModel } from "@aha.chat/database/types"
+import { db, findOrFail } from "@chatbotx.io/database/client"
+import { integrationInstagramModel } from "@chatbotx.io/database/schema"
+import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 
-export const findIntegrationInstagram = async ({
-  id,
-}: {
+export const findIntegrationInstagram = async (where: {
+  workspaceId: string
   id: string
 }): Promise<IntegrationInstagramModel> =>
-  findOrFail(integrationInstagramModel, {
-    id,
+  findOrFail({
+    table: integrationInstagramModel,
+    where,
   })
 
 export const listIntegrationInstagrams = async ({
-  chatbotId,
+  workspaceId,
 }: {
-  chatbotId: string
+  workspaceId: string
 }): Promise<{ data: IntegrationInstagramModel[] }> => {
   const data = await db.query.integrationInstagramModel.findMany({
     where: {
-      chatbotId,
+      workspaceId,
     },
     orderBy: {
       createdAt: "asc",

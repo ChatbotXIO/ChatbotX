@@ -2,14 +2,13 @@ import {
   HandleRequestType,
   Integration,
   type IntegrationDefinition,
-} from "@aha.chat/sdk"
-import { updateInstagramProfile as update } from "./apis/page"
+} from "@chatbotx.io/sdk"
 import { getUserProfile } from "./apis/user"
-import { agentMarkAsRead, sendTyping } from "./conversation"
 import { InstagramAPIException } from "./exception"
+import { contactHandlers } from "./handlers/contact"
+import { conversationHandlers } from "./handlers/conversation"
+import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
-import { receiveMessage } from "./incomming-message"
-import { sendFlowStep, sendMessage } from "./outgoing-message"
 import type {
   InstagramActions,
   InstagramAuthValue,
@@ -24,21 +23,12 @@ const config: IntegrationDefinition<
   name: "instagram",
   channels: {
     channel: {
-      message: {
-        sendMessage,
-        receiveMessage,
-      },
-      conversation: {
-        sendTyping,
-        agentMarkAsRead,
-      },
-      profile: {
-        update,
-      },
+      message: messageHandlers,
+      conversation: conversationHandlers,
+      contact: contactHandlers,
     },
   },
   actions: {
-    sendFlowStep,
     getUserProfile,
   },
   handleRequest: async (props) => {

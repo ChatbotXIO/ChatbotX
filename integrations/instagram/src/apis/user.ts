@@ -1,5 +1,5 @@
-import type { Context, IncomingContact } from "@aha.chat/sdk"
-import { createId } from "@paralleldrive/cuid2"
+import type { Context, IncomingContact } from "@chatbotx.io/sdk"
+import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
 import { InstagramAPIException } from "../exception"
 import { instagramGraphClient } from "../lib/http-client"
@@ -62,7 +62,7 @@ export const getUserProfilePicture = async ({
     },
   })
   if (response.ok && response.body) {
-    const originPath = `public/chatbots/${ctx.chatbot?.id}/avatars/${createId()}`
+    const originPath = `${ctx.storagePrefix}/avatars/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
 

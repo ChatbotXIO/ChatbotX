@@ -1,36 +1,38 @@
 "use server"
 
-import { db, eq, findOrFail } from "@aha.chat/database/client"
-import { InboxStatus } from "@aha.chat/database/enums"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
   inboxModel,
   integrationInstagramModel,
-} from "@aha.chat/database/schema"
-import type { InstagramAuthValue } from "@aha.chat/integration-instagram"
-import { unsubscribePageFromInstagramWebhook } from "@aha.chat/integration-instagram/apis/page"
+} from "@chatbotx.io/database/schema"
 import {
-  type ChatbotIdAndIdRequestParams,
-  chatbotIdAndIdRequestParams,
+  type InstagramAuthValue,
+  unsubscribePageFromInstagramWebhook,
+} from "@chatbotx.io/integration-instagram"
+import {
+  type WorkspaceIdAndIdRequestParams,
+  workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { chatbotActionClient } from "@/lib/safe-action"
+import { workspaceActionClient } from "@/lib/safe-action"
 
-export const disconnectInstagramAction = chatbotActionClient
-  .bindArgsSchemas(chatbotIdAndIdRequestParams)
+export const disconnectInstagramAction = workspaceActionClient
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
-      bindArgsParsedInputs: [chatbotId, integrationInstagramId],
+      bindArgsParsedInputs: [workspaceId, integrationInstagramId],
     }: {
-      bindArgsParsedInputs: ChatbotIdAndIdRequestParams
+      bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      const integrationInstagram = await findOrFail(
-        integrationInstagramModel,
-        {
+      const integrationInstagram = await findOrFail({
+        table: integrationInstagramModel,
+        where: {
           id: integrationInstagramId,
-          chatbotId,
+          workspaceId,
         },
-        "Integration Instagram not found",
-      )
+        message: "Integration Instagram not found",
+      })
 
       await db.transaction(async (tx) => {
         const authValue = integrationInstagram.auth as InstagramAuthValue
@@ -46,13 +48,13 @@ export const disconnectInstagramAction = chatbotActionClient
 
         await tx
           .update(inboxModel)
-          .set({ status: InboxStatus.disconnected })
+          .set({ status: inboxStatuses.enum.disconnected })
           .where(eq(inboxModel.id, integrationInstagram.inboxId))
       })
 
       revalidateCacheTags([
-        `chatbots:${chatbotId}#instagram`,
-        `chatbots:${chatbotId}#inboxes`,
+        `chatbots:${workspaceId}#instagram`,
+        `chatbots:${workspaceId}#inboxes`,
       ])
     },
   )

@@ -1,9 +1,9 @@
 "use client"
 
-import { InputField } from "@aha.chat/ui/components/form/input-field"
-import { RadioGroupField } from "@aha.chat/ui/components/form/radio-group-field"
-import { Button } from "@aha.chat/ui/components/ui/button"
-import { Form } from "@aha.chat/ui/components/ui/form"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -17,10 +17,10 @@ import type { InstagramAccount } from "../libs/facebook"
 import { selectAccountRequest } from "../schemas"
 
 export function InstagramAccounts({
-  chatbotId,
+  workspaceId,
   accounts,
 }: {
-  chatbotId?: string | null
+  workspaceId?: string | null
   accounts: InstagramAccount[]
 }) {
   const t = useTranslations()
@@ -33,7 +33,7 @@ export function InstagramAccounts({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          chatbotId,
+          workspaceId,
           igId: "",
           igName: "",
           igUsername: "",
@@ -43,9 +43,9 @@ export function InstagramAccounts({
       },
       actionProps: {
         onSuccess: ({ data }) => {
-          if (chatbotId) {
+          if (workspaceId) {
             router.push(
-              `/chatbots/${data?.chatbotId}/settings/channels?channel=instagram`,
+              `/chatbots/${data?.workspaceId}/settings/channels?channel=instagram`,
             )
           } else {
             router.push("/")

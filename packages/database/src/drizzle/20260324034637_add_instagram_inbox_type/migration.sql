@@ -1,1 +1,0 @@
-ALTER TYPE "InboxType" ADD VALUE 'instagram';

@@ -1,6 +1,6 @@
 "use client"
 
-import type { IntegrationInstagramModel } from "@aha.chat/database/types"
+import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@aha.chat/ui/components/ui/alert-dialog"
-import { Button } from "@aha.chat/ui/components/ui/button"
+} from "@chatbotx.io/ui/components/ui/alert-dialog"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -29,11 +29,15 @@ export function InstagramDisconnect({
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState<boolean>(false)
-  const { chatbotId } = useParams<{ chatbotId: string }>()
+  const { workspaceId } = useParams<{ workspaceId: string }>()
 
   const { executeAsync: onDisconnect, isPending: isPendingDisconnect } =
     useAction(
-      disconnectInstagramAction.bind(null, chatbotId, integrationInstagram.id),
+      disconnectInstagramAction.bind(
+        null,
+        workspaceId,
+        integrationInstagram.id,
+      ),
       {
         onSuccess: () => {
           router.refresh()

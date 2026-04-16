@@ -4,7 +4,7 @@ import { db, eq } from "@chatbotx.io/database/client"
 import {
   type MessengerPersistentMenu,
   type MessengerPersona,
-  persistentMenuType,
+  messengerPersistentMenuTypes,
 } from "@chatbotx.io/database/partials"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
@@ -79,7 +79,7 @@ export const updateMessenger = async (
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
-      integrationMessenger.actions.updateMessengerProfile({
+      integrationMessenger.channels.channel.bot?.updateProfile?.({
         ctx: {
           uploader,
           storagePrefix: getStoragePrefix(
@@ -88,7 +88,7 @@ export const updateMessenger = async (
           ),
           auth: integrationMessengerData?.auth as MessengerAuthValue,
         },
-        params: await getMessengerProfileParams(integrationMessengerData),
+        data: await getMessengerProfileParams(integrationMessengerData),
       })
 
       revalidateCacheTags([`workspaces:${ctx.workspace.id}#messenger`])
@@ -104,7 +104,7 @@ const parseFacebookButtons = (
 ): FacebookButton[] => {
   const buttons: FacebookButton[] = []
   for (const menu of persistentMenus) {
-    if (menu.type === persistentMenuType.enum.flow) {
+    if (menu.type === messengerPersistentMenuTypes.enum.flow) {
       buttons.push({
         type: "postback",
         title: menu.label,
@@ -112,7 +112,7 @@ const parseFacebookButtons = (
           flowId: menu.flowId,
         }),
       })
-    } else if (menu.type === persistentMenuType.enum.url) {
+    } else if (menu.type === messengerPersistentMenuTypes.enum.url) {
       buttons.push({
         type: "web_url",
         title: menu.label,

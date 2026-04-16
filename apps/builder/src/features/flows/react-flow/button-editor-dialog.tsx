@@ -2,8 +2,9 @@
 
 import {
   type ButtonStepProps,
-  ButtonType,
+  type ButtonType,
   buttonStepSchema,
+  buttonTypes,
   type FlowNode,
   NodeType,
   type OpenWebsiteStepSchema,
@@ -253,7 +254,7 @@ export function ButtonEditorDialog() {
       | null = null
 
     switch (selectedButtonType) {
-      case ButtonType.SendMessage: {
+      case buttonTypes.enum.sendMessage: {
         const nodeCount = allNodes.filter(
           (node) => node.type === NodeType.sendMessage,
         ).length
@@ -271,7 +272,7 @@ export function ButtonEditorDialog() {
         })
         break
       }
-      case ButtonType.PerformAction: {
+      case buttonTypes.enum.performAction: {
         const nodeCount = allNodes.filter(
           (node) => node.type === NodeType.performAction,
         ).length
@@ -289,7 +290,7 @@ export function ButtonEditorDialog() {
         })
         break
       }
-      case ButtonType.StartExternalFlow: {
+      case buttonTypes.enum.startExternalFlow: {
         const nodeCount = allNodes.filter(
           (node) => node.type === NodeType.startFlow,
         ).length
@@ -307,15 +308,15 @@ export function ButtonEditorDialog() {
         })
         break
       }
-      case ButtonType.OpenWebsite: {
+      case buttonTypes.enum.openWebsite: {
         beforeStep = openWebsiteStepDefaultFn()
         break
       }
-      case ButtonType.StartExternalNode: {
+      case buttonTypes.enum.startExternalNode: {
         beforeStep = startExternalNodeStepDefaultFn()
         break
       }
-      case ButtonType.StartAnotherNode: {
+      case buttonTypes.enum.startAnotherNode: {
         beforeStep = startAnotherNodeStepDefaultFn()
         break
       }

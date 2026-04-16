@@ -19,7 +19,7 @@ import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
 import {
   type ButtonStepProps,
-  ButtonType,
+  buttonTypes,
   encodeButtonPayload,
   type SendCardStepSchema,
   stepTypes,
@@ -53,7 +53,7 @@ const convertButtonsToTemplate = (props: {
 }): MessageButtonTemplate[] => {
   const { flowId, flowVersionId, buttons } = props
   return buttons.map((button) => {
-    if (button.buttonType === ButtonType.OpenWebsite) {
+    if (button.buttonType === buttonTypes.enum.openWebsite) {
       return {
         id: button.id,
         label: button.label,

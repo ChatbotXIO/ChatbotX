@@ -1,8 +1,8 @@
-import { PersistentMenuType } from "@aha.chat/database/types"
+import { instagramPersistentMenuTypes } from "@chatbotx.io/database/partials"
 import z from "zod"
 
 export const selectAccountRequest = z.object({
-  chatbotId: z.string().nullish(),
+  workspaceId: z.string().nullish(),
   igId: z.string(),
   igName: z.string(),
   igUsername: z.string(),
@@ -20,12 +20,12 @@ export type ConversationStarter = z.infer<typeof conversationStarterSchema>
 const persistentMenuSchema = z.discriminatedUnion("type", [
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.flow),
+    type: z.literal(instagramPersistentMenuTypes.enum.flow),
     flowId: z.cuid2(),
   }),
   z.object({
     label: z.string().min(1),
-    type: z.literal(PersistentMenuType.website),
+    type: z.literal(instagramPersistentMenuTypes.enum.url),
     url: z.url(),
   }),
 ])
