@@ -19,6 +19,7 @@ export function* convertFlowStepText(
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
       buttons: step.buttons,
+      metadata: props.data.metadata,
     })
 
     yield {

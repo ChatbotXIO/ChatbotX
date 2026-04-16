@@ -1,5 +1,6 @@
 import {
   encodeButtonPayload,
+  extractMetadata,
   type SendImageStepSchema,
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
@@ -34,6 +35,7 @@ export function* convertFlowStepImage(
           flowId: props.data.flowId,
           flowVersionId: props.data.flowVersionId,
           buttonId: button.id,
+          broadcastId: extractMetadata("broadcastId", props.data.metadata),
         })
         return new Button(buttonId, button.label)
       })

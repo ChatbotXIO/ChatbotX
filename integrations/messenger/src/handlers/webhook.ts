@@ -79,7 +79,25 @@ const handleWebhookEvent = async (
       return
     }
 
-    // Skip if this message is not a message
+    // Calculate integration identifier
+    const integrationIdentifier = webhookData.entry[0].messaging[0].message
+      ?.is_echo
+      ? webhookData.entry[0].messaging[0].sender.id
+      : webhookData.entry[0].messaging[0].recipient.id
+
+    if (webhookData.entry[0].messaging[0].postback) {
+      await queue?.add("incomingMessage", {
+        type: "incomingMessage",
+        data: {
+          integrationType: "messenger",
+          integrationIdentifier,
+          payload: webhookData,
+          action: webhookData.entry[0].messaging[0].postback.payload,
+        },
+      })
+      return
+    }
+
     if (!webhookData.entry[0].messaging[0].message) {
       return
     }
@@ -91,12 +109,6 @@ const handleWebhookEvent = async (
       // Skip if this messsage is from our own bot
       return
     }
-
-    // Calculate integration identifier
-    const integrationIdentifier = webhookData.entry[0].messaging[0].message
-      ?.is_echo
-      ? webhookData.entry[0].messaging[0].sender.id
-      : webhookData.entry[0].messaging[0].recipient.id
 
     await queue?.add("incomingMessage", {
       type: "incomingMessage",

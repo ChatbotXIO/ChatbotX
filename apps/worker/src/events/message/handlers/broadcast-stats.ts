@@ -6,6 +6,7 @@ import {
 import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import type {
+  FlowClickedPayload,
   MessageDeliveredPayload,
   MessageFailedPayload,
   MessageSeenPayload,
@@ -196,6 +197,42 @@ export const broadcastStathandler = {
       }))
 
       await this.saveToClickhouse(insertedData)
+    }
+  },
+
+  async onClicked(payloads: FlowClickedPayload[]) {
+    try {
+      const broadcastClicks = payloads.filter((p) => p.broadcastId)
+
+      console.log({ broadcastClicks })
+      if (broadcastClicks.length === 0) {
+        return
+      }
+
+      const insertedData: BroadcastStatsType[] = broadcastClicks.map(
+        (payload) => ({
+          event_id: createId(),
+          chatbot_id: payload.chatbotId,
+          broadcast_id: payload.broadcastId as string,
+          contact_id: payload.contactId,
+          conv_id: payload.conversationId,
+          event_type: "clicked",
+          content: JSON.stringify({
+            buttonId: payload.buttonId,
+            clickType: payload.clickType,
+          }),
+          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
+          inserted_at: toClickHouseDateTime(new Date()),
+        }),
+      )
+
+      await clickhouse.insert({
+        table: "broadcast_events",
+        values: insertedData,
+        format: "JSONEachRow",
+      })
+    } catch (error) {
+      console.error("Failed to save clicked events", error)
     }
   },
 
