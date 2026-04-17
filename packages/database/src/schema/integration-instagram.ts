@@ -4,7 +4,7 @@ import type {
   InstagramConversationStarter,
   InstagramPersistentMenu,
 } from "../partials"
-import { sharedColumns } from "../partials/shared"
+import { bigintAsString, sharedColumns } from "../partials/shared"
 import { flowModel } from "./flow"
 import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
@@ -28,21 +28,21 @@ export const integrationInstagramModel = pgTable(
       .array()
       .default(sql`[]`)
       .notNull(),
-    workspaceId: text()
+    workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
         name: "IntegrationInstagram_workspaceId_fkey",
       }),
-    inboxId: text()
+    inboxId: bigintAsString()
       .notNull()
       .references(() => inboxModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
         name: "IntegrationInstagram_inboxId_fkey",
       }),
-    welcomeFlowId: text().references(() => flowModel.id, {
+    welcomeFlowId: bigintAsString().references(() => flowModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",
       name: "IntegrationInstagram_welcomeFlowId_fkey",

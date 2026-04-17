@@ -1,9 +1,9 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
-import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
+import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
-export const broadcastEventType = z.union([messageEventType, flowEventType])
+export const broadcastEventType = z.enum([...messageEventTypeSchema.options, ...flowEventTypeSchema.options])
 
 export type BroadcastEventType = MessageEventType | FlowEventType
 

@@ -102,19 +102,19 @@ export const broadcastPrivateAPIs = {
             return null
           }
 
-          const contact = contactMap.get(contactInboxId)
-          if (!contact) {
+          const contactInbox = contactMap.get(contactInboxId)
+          if (!contactInbox) {
             return null
           }
           return {
-            contactId: contact.id,
+            contactId: contactInbox.id,
             contactInboxId,
-            firstName: contact.contact?.firstName ?? null,
-            lastName: contact.contact?.lastName ?? null,
-            sourceId: contact.sourceId ?? null,
-            avatar: contact.contact?.avatar ?? null,
-            channel: contact.channel as ChannelType,
-            conversationId: contact.conversation?.id ?? "",
+            firstName: contactInbox.contact.firstName ?? null,
+            lastName: contactInbox.contact.lastName ?? null,
+            sourceId: contactInbox.sourceId ?? null,
+            avatar: contactInbox.contact.avatar ?? null,
+            channel: contactInbox.channel as ChannelType,
+            conversationId: contactInbox.conversation?.id ?? "",
             errorContent: eventData.errorContent ?? null,
             occurredAt: eventData.occurredAt,
           }

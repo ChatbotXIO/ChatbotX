@@ -199,8 +199,6 @@ export function FlowEditToolbar({
         onOpenChange={() => setAction(null)}
         open={action === "getPublishedLink"}
       />
-
-      {action === "analytics" && <AnalyticsFlow flow={flow} />}
     </div>
   )
 }

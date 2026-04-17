@@ -5,7 +5,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { CustomFieldModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import { FlowEventType } from "@chatbotx.io/flow-config"
+import { flowEventTypeSchema } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import type { IntegrationJobReferral } from "@chatbotx.io/worker-config"
 import {
@@ -47,7 +47,7 @@ export const handleReferral = async (props: IntegrationJobReferral["data"]) => {
     message: "Reflink not found",
   })
 
-  await emit(FlowEventType["flow:ref"], {
+  await emit(flowEventTypeSchema.enum["flow:ref"], {
     context: {
       workspaceId: conversation.workspaceId,
       contactId: conversation.contactId,

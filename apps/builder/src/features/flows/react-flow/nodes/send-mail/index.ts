@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   sendMailNodeDefaultFn,
   sendMailNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -13,7 +13,7 @@ export default function sendMailNodeConfig(t: TranslationFn) {
     icon: MailIcon,
     label: t("actions.sendMail"),
     menus: sendMailEditorMenus,
-    type: NodeType.sendMail,
+    type: nodeTypeSchema.enum.sendMail,
     validator: sendMailNodeSchema,
   }
 }

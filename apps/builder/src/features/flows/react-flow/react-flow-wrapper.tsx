@@ -1,7 +1,7 @@
 import {
   buttonTypes,
   type FlowNode,
-  NodeType,
+  nodeTypeSchema,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
 } from "@chatbotx.io/flow-config"
@@ -39,14 +39,14 @@ import type { ButtonProps } from "react-day-picker"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import ButtonEdge from "./edges/button-edge"
 
-const nodeTypes = {
-  [NodeType.sendMessage]: NodeViewer,
-  [NodeType.sendMail]: NodeViewer,
-  [NodeType.landingPage]: NodeViewer,
-  [NodeType.performAction]: NodeViewer,
-  [NodeType.addNotes]: NodeViewer,
-  [NodeType.wait]: NodeViewer,
-  [NodeType.startFlow]: NodeViewer,
+const viewerNodeTypes = {
+  [nodeTypeSchema.enum.sendMessage]: NodeViewer,
+  [nodeTypeSchema.enum.sendMail]: NodeViewer,
+  [nodeTypeSchema.enum.landingPage]: NodeViewer,
+  [nodeTypeSchema.enum.performAction]: NodeViewer,
+  [nodeTypeSchema.enum.addNotes]: NodeViewer,
+  [nodeTypeSchema.enum.wait]: NodeViewer,
+  [nodeTypeSchema.enum.startFlow]: NodeViewer,
 }
 
 const edgeTypes = {
@@ -221,7 +221,7 @@ export function ReactFlowWrapper({
         if (!(connectionState.toHandle && connectionState.toNode)) {
           const allNodes = getNodes()
           const messageNodesLength = allNodes.filter(
-            (node) => node.type === NodeType.sendMessage,
+            (node) => node.type === nodeTypeSchema.enum.sendMessage,
           ).length
 
           const newNode = sendMessageNodeDefaultFn({
@@ -385,7 +385,7 @@ export function ReactFlowWrapper({
       edges={edges}
       edgeTypes={edgeTypes}
       nodes={nodes}
-      nodeTypes={nodeTypes}
+      nodeTypes={viewerNodeTypes}
       onConnect={onConnect}
       onConnectEnd={onConnectEnd}
       onEdgeMouseEnter={onEdgeMouseEnter}

@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   sendMessageNodeDefaultFn,
   sendMessageNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -12,7 +12,7 @@ const sendMessageNodeConfig = (t: TranslationFn) => ({
   icon: MessageCircleMoreIcon,
   label: t("actions.sendMessage"),
   menus: sendMessageEditorMenus,
-  type: NodeType.sendMessage,
+  type: nodeTypeSchema.enum.sendMessage,
   validator: sendMessageNodeSchema,
 })
 

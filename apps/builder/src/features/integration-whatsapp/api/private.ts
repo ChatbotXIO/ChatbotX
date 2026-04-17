@@ -4,8 +4,8 @@ import { authorizedAPI } from "@/orpc"
 import { listIntegrationWhatsapps } from "../queries"
 import { listIntegrationWhatsappsResponse } from "../schemas/query"
 
-export const privateAPIs = {
-  listIntegrationWhatsapp: authorizedAPI
+export const integrationWhatsappInternalAPIs = {
+  listIntegrationWhatsappInternalAPI: authorizedAPI
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/integrations/whatsapp",
@@ -22,5 +22,3 @@ export const privateAPIs = {
       return data
     }),
 }
-
-export default privateAPIs

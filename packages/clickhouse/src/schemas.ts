@@ -1,16 +1,16 @@
-import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
+import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import z from "zod"
 
-export const BaseEventType = z.enum([
-  ...Object.values(messageEventType.enum),
-  ...Object.values(flowEventType.enum),
+export const baseEventTypes = z.enum([
+  ...messageEventTypeSchema.options,
+  ...flowEventTypeSchema.options,
 ])
 
 export const BroadcastStatsModel = z.object({
   workspace_id: z.string(),
   broadcast_id: z.string(),
   contact_inbox_id: z.string(),
-  event_type: BaseEventType,
+  event_type: baseEventTypes,
   batch_id: z.number().default(1),
   occurred_at: z.string(),
   inserted_at: z.string(),
@@ -21,7 +21,7 @@ export type BroadcastStatsType = z.infer<typeof BroadcastStatsModel>
 export const SequenceScheduleEventModel = z.object({
   workspace_id: z.string(),
   contact_inbox_id: z.string(),
-  event_type: BaseEventType,
+  event_type: baseEventTypes,
   sequence_id: z.string(),
   step_id: z.string(),
   occurred_at: z.string(),
@@ -39,7 +39,7 @@ export const FlowNodeStatsModel = z.object({
   node_id: z.string(),
   button_id: z.string().default(""),
   contact_inbox_id: z.string(),
-  event_type: BaseEventType,
+  event_type: baseEventTypes,
   occurred_at: z.string(),
   inserted_at: z.string(),
 })

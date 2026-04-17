@@ -11,7 +11,7 @@ import {
   type ButtonStepProps,
   decodeButtonPayload,
   type EdgeSchema,
-  FlowEventType,
+  flowEventTypeSchema,
   type FlowNode,
   getNodeFromButton,
   type MetadataPayload,
@@ -313,23 +313,16 @@ export async function runFlowPostback(
     return
   }
 
-  if (conversation?.contactId && data.inboxId) {
-    const contactInbox = await db
+    const [contactInbox] = await db
       .select({
         id: contactInboxModel.id,
         channel: contactInboxModel.channel,
       })
       .from(contactInboxModel)
-      .where(
-        and(
-          eq(contactInboxModel.contactId, conversation.contactId),
-          eq(contactInboxModel.inboxId, data.inboxId),
-        ),
-      )
-      .then((rows) => rows[0])
+      .where(eq(contactInboxModel.id, data.contactInboxId))
 
     if (data.webhookType !== IntegrationJobAction.messageStatus) {
-      await emit(FlowEventType["flow:clicked"], {
+      await emit(flowEventTypeSchema.enum["flow:clicked"], {
         nodeId: foundedNodeId ?? "",
         context: {
           workspaceId: conversation.workspaceId,
@@ -348,7 +341,6 @@ export async function runFlowPostback(
         occurredAt: new Date(),
       })
     }
-  }
 
   await runStepsAndQuickReplies({
     conversation,
@@ -420,7 +412,7 @@ export async function runFlowQuickReply(
         .then((rows) => rows[0])
 
       if (data.webhookType !== IntegrationJobAction.messageStatus) {
-        await emit(FlowEventType["flow:clicked"], {
+        await emit(flowEventTypeSchema.enum["flow:clicked"], {
           nodeId: foundedNodeId ?? "",
           context: {
             workspaceId: conversation.workspaceId,

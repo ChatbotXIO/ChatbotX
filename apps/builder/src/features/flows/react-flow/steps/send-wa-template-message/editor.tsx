@@ -21,10 +21,10 @@ import { useWhatsappInboxOptions } from "@/features/inboxes/provider/inbox-hook"
 import { TemplateParamsForm } from "@/features/integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
 import {
-  type FlowTemplateResource,
   useFlowTemplate,
 } from "../../stores/flow-template-store-provider"
 import { BaseStepEditor } from "../base/editor"
+import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 type SendWaTemplateMessageStepEditorProps = {
   parentName: string
@@ -42,7 +42,7 @@ function SendWaTemplateMessageStepEditor(
   const prevInboxIdRef = useRef<string | undefined>(undefined)
 
   const whatsappInboxOptions = useWhatsappInboxOptions()
-  const templates = useFlowTemplate((s) => s.templates)
+  const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
 
   const integrationInboxId = watch(`${parentName}.template.inboxId`)
   const templateId = watch(`${parentName}.template.id`)
@@ -66,10 +66,9 @@ function SendWaTemplateMessageStepEditor(
   useEffect(() => {
     if (
       templateId &&
-      templates.waTemplates &&
-      templates.waTemplates.length > 0
+      whatsappTemplates.length > 0
     ) {
-      const template = templates.waTemplates.find((t) => t.id === templateId)
+      const template = whatsappTemplates.find((t) => t.id === templateId)
       if (template) {
         setSelectedTemplate(template)
         setValue(`${parentName}.template.name`, template.name)
@@ -80,19 +79,19 @@ function SendWaTemplateMessageStepEditor(
         setParameters(params)
       }
     }
-  }, [templateId, templates, parentName, setValue])
+  }, [templateId, whatsappTemplates, parentName, setValue])
 
   const filteredTemplates = useMemo(
     () =>
-      (templates.waTemplates ?? []).filter(
+      (whatsappTemplates ?? []).filter(
         (template) =>
           template.integrationWhatsapp?.inboxId === integrationInboxId,
       ),
-    [templates.waTemplates, integrationInboxId],
+    [whatsappTemplates, integrationInboxId],
   )
 
   const handleTemplateChange = (value: string) => {
-    const template = templates.waTemplates?.find((t) => t.id === value)
+    const template = whatsappTemplates?.find((t) => t.id === value)
     if (template) {
       setValue(`${parentName}.template.id`, template.id)
       setValue(`${parentName}.template.name`, template.name)

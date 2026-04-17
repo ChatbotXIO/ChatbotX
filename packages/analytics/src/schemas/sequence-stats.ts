@@ -2,14 +2,13 @@ import { channelTypes } from "@chatbotx.io/database/partials"
 import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import {
   clickedPayloadSchema,
-  flowEventType,
-  messageEventType,
+  flowEventTypeSchema,
+  messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
-export const sequenceStepEventType = z.union([messageEventType, flowEventType])
-
-export type SequenceStepEventType = MessageEventType | FlowEventType
+export const sequenceStepEventTypes = z.enum([...messageEventTypeSchema.options, ...flowEventTypeSchema.options])
+export type SequenceStepEventType = z.infer<typeof sequenceStepEventTypes>
 
 export const getSequenceStepStatsRequest = z.object({
   workspaceId: z.string(),
@@ -38,7 +37,7 @@ export const listSequenceStepContactsRequest = z.object({
   workspaceId: z.string(),
   sequenceId: z.string(),
   stepId: z.string(),
-  eventType: sequenceStepEventType,
+  eventType: sequenceStepEventTypes,
   total: z.number().optional(),
   page: z.number().default(1),
   perPage: z.number().default(20),

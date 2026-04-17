@@ -1,7 +1,6 @@
 import botFieldWorkspaceTokenAPIs from "./workspace-token"
 
-const botFieldAPIs = {
+export const botFieldAPIs = {
   ...botFieldWorkspaceTokenAPIs,
 }
 
-export default botFieldAPIs

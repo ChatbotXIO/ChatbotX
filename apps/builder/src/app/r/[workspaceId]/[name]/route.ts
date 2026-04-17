@@ -3,7 +3,7 @@ import { emit } from "@chatbotx.io/event-bus"
 import {
   clickTypeSchema,
   decodeButtonPayload,
-  FlowEventType,
+  flowEventTypeSchema,
   type FlowNode,
   getNodeFromButton,
 } from "@chatbotx.io/flow-config"
@@ -33,22 +33,20 @@ export const GET = async (
     return NextResponse.json({ message: "Code is required" }, { status: 400 })
   }
 
-  const decodeButton = decodeButtonPayload(code)
-
-  if (!decodeButton) {
+  // Decode the button payload
+  const decodedButton = decodeButtonPayload(code)
+  if (!decodedButton) {
     return NextResponse.json({ message: "Invalid code" }, { status: 400 })
+  }
+  if (!decodedButton.contactInboxId) {
+    return NextResponse.json({ message: "Contact inbox ID is missing" }, { status: 400 })
   }
 
   const contactInbox = await db.query.contactInboxModel.findFirst({
     where: {
-      id: decodeButton?.contactInboxId,
+      id: decodedButton.contactInboxId,
     },
     with: {
-      contact: {
-        columns: {
-          id: true,
-        },
-      },
       conversation: true,
     },
   })
@@ -62,7 +60,7 @@ export const GET = async (
 
   const flowVersion = await db.query.flowVersionModel.findFirst({
     where: {
-      id: decodeButton?.flowVersionId,
+      id: decodedButton?.flowVersionId,
       workspaceId,
     },
   })
@@ -71,27 +69,30 @@ export const GET = async (
 
   const { button: foundedButton, nodeId: foundedNodeId } = getNodeFromButton(
     nodes,
-    decodeButton?.buttonId ?? "",
+    decodedButton?.buttonId ?? "",
   )
 
   if (!foundedButton) {
     return NextResponse.json({ message: "Button not found" }, { status: 404 })
   }
+  if (!foundedNodeId) {
+    return NextResponse.json({ message: "Node ID is missing" }, { status: 400 })
+  }
 
-  await emit(FlowEventType["flow:clicked"], {
-    nodeId: foundedNodeId ?? "",
+  await emit(flowEventTypeSchema.enum["flow:clicked"], {
+    nodeId: foundedNodeId,
     context: {
       workspaceId,
-      contactId: contactInbox?.contact.id ?? "",
-      conversationId: contactInbox?.conversation.id ?? "",
-      channel: contactInbox?.channel ?? "",
-      contactInboxId: decodeButton?.contactInboxId ?? "",
+      contactId: contactInbox.contactId,
+      conversationId: contactInbox.conversation.id,
+      channel: contactInbox.channel,
+      contactInboxId: decodedButton.contactInboxId ,
     },
     action: {
-      flowId: decodeButton?.flowId ?? "",
-      buttonId: decodeButton?.buttonId ?? "",
-      broadcastId: decodeButton?.broadcastId ?? "",
-      sequenceStepId: decodeButton?.sequenceStepId ?? "",
+      flowId: decodedButton.flowId,
+      buttonId: decodedButton.buttonId,
+      broadcastId: decodedButton.broadcastId,
+      sequenceStepId: decodedButton.sequenceStepId,
       magicLinkId: row.id,
       clickType: clickTypeSchema.enum.magic_link,
     },

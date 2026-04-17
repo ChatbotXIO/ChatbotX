@@ -48,14 +48,10 @@ export const duplicateFlow = async (ctx: {
       ...flow,
       id: newFlowId,
       name: `${flow.name} _copy`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
     await tx.insert(flowAnalyticsSessionModel).values({
       flowId: newFlowId,
       workspaceId: flow.workspaceId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
 
     await tx.insert(flowVersionModel).values({

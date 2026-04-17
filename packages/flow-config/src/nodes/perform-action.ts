@@ -5,11 +5,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const performActionNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.performAction),
+  type: z.literal(nodeTypeSchema.enum.performAction),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(z.union(actionSteps)),
@@ -22,7 +22,7 @@ export const performActionNodeDefaultFn = (
   props: DefaultNodeProps,
 ): PerformActionNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.performAction,
+  type: nodeTypeSchema.enum.performAction,
   ...props.nodeProps,
   data: {
     name: "Perform Action",

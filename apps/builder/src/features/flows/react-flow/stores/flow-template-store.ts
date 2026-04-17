@@ -1,46 +1,46 @@
-import { HTTPError } from "ky"
+import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import { getTemplatesForFlow } from "@/features/integration-whatsapp/message-templates/actions/get-templates-for-flow"
-import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
-import type { FlowTemplateMenuData } from "../nodes/types"
+import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
+import { whatsappTemplateStatusSchema } from "@chatbotx.io/database/partials"
 
 export type FlowTemplateState = {
-  loading: boolean
   error: string | null
   initialized: boolean
 
   workspaceId: string
-  templates: FlowTemplateMenuData
-  beforeStep?: { channel?: string; [key: string]: unknown }
+
+  loadingWhatsappTemplates: boolean
+  whatsappTemplates: ListWhatsappMessageTemplatesResponse
 }
 
 export type FlowTemplateActions = {
   initialize: () => Promise<void>
-  fetchWaTemplates: () => Promise<void>
-  setWaTemplates: (templates: FlowTemplateResource[]) => void
+  fetchWhatsappTemplates: () => Promise<void>
 }
 
 export type FlowTemplateStore = FlowTemplateState & FlowTemplateActions
 
 export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
   createStore<FlowTemplateStore>((set, get) => ({
-    loading: false,
     error: null,
     initialized: false,
+
     workspaceId: "",
-    templates: {},
-    beforeStep: undefined,
+
+    loadingWhatsappTemplates: false,
+    whatsappTemplates: [],
+
     ...props,
 
     initialize: async () => {
-      const { initialized } = get()
+      const { initialized, workspaceId, fetchWhatsappTemplates } = get()
 
-      if (initialized) {
+      if (initialized || !workspaceId) {
         return
       }
 
       try {
-        await get().fetchWaTemplates()
+        await fetchWhatsappTemplates()
       } catch (error: unknown) {
         set({
           error:
@@ -53,22 +53,23 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
       }
     },
 
-    fetchWaTemplates: async () => {
-      const { workspaceId, loading } = get()
+    fetchWhatsappTemplates: async () => {
+      const { workspaceId, loadingWhatsappTemplates } = get()
 
-      if (loading || !workspaceId) {
+      if (loadingWhatsappTemplates) {
         return
       }
 
-      set({ loading: true, error: null })
+      set({ loadingWhatsappTemplates: true, error: null })
       try {
-        const waTemplates = await getTemplatesForFlow(workspaceId)
+        const templates = await ky.get<ListWhatsappMessageTemplatesResponse>(`/api/workspaces/${workspaceId}/whatsapp-message-templates`, {
+          searchParams: {
+            status: whatsappTemplateStatusSchema.enum.APPROVED,
+          },
+        }).json()
 
         set({
-          templates: {
-            ...get().templates,
-            waTemplates,
-          },
+          whatsappTemplates: templates,
         })
       } catch (error: unknown) {
         set({
@@ -78,12 +79,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
               : "Failed to fetch WA templates",
         })
       } finally {
-        set({ loading: false })
+        set({ loadingWhatsappTemplates: false })
       }
     },
-
-    setWaTemplates: (waTemplates: FlowTemplateResource[]) =>
-      set((state) => ({
-        templates: { ...state.templates, waTemplates },
-      })),
   }))

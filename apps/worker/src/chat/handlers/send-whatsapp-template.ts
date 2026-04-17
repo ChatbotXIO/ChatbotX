@@ -8,7 +8,7 @@ import { emit } from "@chatbotx.io/event-bus"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import {
   extractTemplateParams,
-  MessageEventType,
+  messageEventTypeSchema,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
   type TemplateComponent,
@@ -79,7 +79,7 @@ export async function processWhatsappTemplate(
 
   const variables = await contactVariableService.getAll(conversation.id)
   const replacedParams = await replaceWhatsappTemplateVariables({
-    params: template.params,
+    templateParams: template.params,
     variables,
   })
 
@@ -171,7 +171,7 @@ export async function processWhatsappTemplate(
       messageId: newMessage.id,
     })
 
-    await emit(MessageEventType["message:sent"], {
+    await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,
       action: { messageId: "", flowId: flow?.id || "" },
       occurredAt: new Date(),
@@ -201,7 +201,7 @@ export async function processWhatsappTemplate(
       },
       "Failed to send WhatsApp template to provider",
     )
-    await emit(MessageEventType["message:failed"], {
+    await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
         messageId: "",

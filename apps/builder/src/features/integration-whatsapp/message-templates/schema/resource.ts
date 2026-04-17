@@ -35,23 +35,7 @@ export type MessageTemplateWithComponents = z.infer<
   typeof messageTemplateWithComponents
 >
 
-export const messageTemplateMenuComponents =
-  messageTemplateWithComponents.extend({
-    integrationWhatsapp: z
-      .object({
-        id: z.string(),
-        inboxId: z.string(),
-      })
-      .nullish(),
-  })
-export type MessageTemplateMenuComponents = z.infer<
-  typeof messageTemplateMenuComponents
->
-
 export const flowTemplateResource = whatsappMessageTemplateResource.extend({
-  sourceId: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
   integrationWhatsapp: z
     .object({
       id: z.string(),

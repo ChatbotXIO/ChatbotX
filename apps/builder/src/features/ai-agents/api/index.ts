@@ -18,8 +18,6 @@ const listAIAgentsAPI = authorizedAPI
     return await listAIAgents(input)
   })
 
-const aiAgentsAPI = {
+export const aiAgentsAPI = {
   listAIAgentsAPI,
 }
-
-export default aiAgentsAPI

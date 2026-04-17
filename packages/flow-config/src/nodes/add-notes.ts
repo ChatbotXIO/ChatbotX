@@ -5,11 +5,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const addNotesNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.addNotes),
+  type: z.literal(nodeTypeSchema.enum.addNotes),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: addNotesStepSchema,
@@ -22,7 +22,7 @@ export const addNotesNodeDefaultFn = (
   props: DefaultNodeProps,
 ): AddNotesNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.addNotes,
+  type: nodeTypeSchema.enum.addNotes,
   ...props.nodeProps,
   data: {
     name: "Add Notes",

@@ -73,7 +73,7 @@ export type IntegrationJobSendFlowPostback = {
     conversationId: string
     action: string
     ref?: string | null
-    inboxId?: string
+    contactInboxId: string
     webhookType?: string
   }
 }

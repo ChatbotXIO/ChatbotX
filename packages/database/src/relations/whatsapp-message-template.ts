@@ -9,6 +9,7 @@ export const whatsappMessageTemplateRelations = defineRelationsPart(
       integrationWhatsapp: r.one.integrationWhatsappModel({
         from: r.whatsappMessageTemplateModel.integrationWhatsappId,
         to: r.integrationWhatsappModel.id,
+        optional: false,
       }),
     },
   }),

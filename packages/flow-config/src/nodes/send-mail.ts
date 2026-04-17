@@ -15,11 +15,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const sendMailNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.sendMail),
+  type: z.literal(nodeTypeSchema.enum.sendMail),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: emailHeaderStepSchema,
@@ -44,7 +44,7 @@ export const sendMailNodeDefaultFn = (
   props: DefaultNodeProps,
 ): SendMailNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.sendMail,
+  type: nodeTypeSchema.enum.sendMail,
   ...props.nodeProps,
   data: {
     name: "Send Mail",

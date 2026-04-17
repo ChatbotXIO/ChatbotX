@@ -1,5 +1,6 @@
+import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import { client } from "@/lib/orpc/orpc"
+import type { ListIntegrationWhatsappResponse } from "../schemas/query"
 
 export type IntegrationWhatsapp = {
   id: string
@@ -12,7 +13,7 @@ export type IntegrationState = {
   initialized: boolean
 
   workspaceId: string
-  integrations: IntegrationWhatsapp[]
+  integrations: ListIntegrationWhatsappResponse
 }
 
 export type IntegrationActions = {
@@ -63,10 +64,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
       try {
         set({ loading: true, error: null })
 
-        const integrations =
-          await client.integrationWhatsappAPIs.listIntegrationWhatsapp({
-            workspaceId,
-          })
+        const integrations = await ky.get(`/workspaces/${workspaceId}/integrations/whatsapp`).json<ListIntegrationWhatsappResponse>()
 
         set({ integrations })
       } catch (error: unknown) {

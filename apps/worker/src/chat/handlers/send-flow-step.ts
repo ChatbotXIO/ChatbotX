@@ -25,7 +25,7 @@ import {
   buttonTypes,
   encodeButtonPayload,
   extractMetadata,
-  MessageEventType,
+  messageEventTypeSchema,
   type SendCardStepSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
@@ -313,7 +313,7 @@ export async function sendFlowStep({
     }
 
     await Promise.all(promises)
-    await emit(MessageEventType["message:sent"], {
+    await emit(messageEventTypeSchema.enum["message:sent"], {
       ...eventLogData,
       action: { messageId: "", flowId },
       occurredAt: new Date(),
@@ -367,7 +367,7 @@ export async function sendFlowStep({
       `sendFlowStep error for conversationId: ${conversationId}`,
     )
 
-    await emit(MessageEventType["message:failed"], {
+    await emit(messageEventTypeSchema.enum["message:failed"], {
       ...eventLogData,
       action: {
         messageId: "",
@@ -501,7 +501,6 @@ export const sendChatMessage = async (
     }
 
     await Promise.all(promises)
-    console.log(message, metadata)
 
     contactTrackingService
       .trackEvent({

@@ -1,27 +1,23 @@
-import { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
+import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import {
-  listMessageTemplatesInputSchema,
+  listWhatsappMessageTemplatesRequest,
   listWhatsappMessageTemplatesResponse,
 } from "../schema/query"
 
-export const privateAPIs = {
-  listWhatsappMessageTemplates: authorizedAPI
+export const whatsappMessageTemplateInternalAPIs = {
+  listWhatsappMessageTemplatesInternalAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/workspaces/{workspaceId}/channels/{id}/whatsapp-templates",
-      summary: "List whatsapp templates",
-      tags: ["Broadcasts"],
+      path: "/workspaces/{workspaceId}/whatsapp-message-templates",
+      summary: "List whatsapp message templates",
+      tags: ["Integrations"],
     })
-    .input(listMessageTemplatesInputSchema)
+    .input(listWhatsappMessageTemplatesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWhatsappMessageTemplatesResponse)
     .handler(async ({ input }) => {
-      const data = await getMessageTemplates(input)
-
-      return data
-    }),
+      return await whatsappMessageTemplateService.list({ where: input })
+    })
 }
-
-export default privateAPIs

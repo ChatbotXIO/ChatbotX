@@ -9,9 +9,9 @@ CREATE TABLE "IntegrationInstagram" (
 	"username" text NOT NULL,
 	"conversationStarters" jsonb[] NOT NULL,
 	"persistentMenus" jsonb[] NOT NULL,
-	"workspaceId" text NOT NULL,
-	"inboxId" text NOT NULL,
-	"welcomeFlowId" text
+	"workspaceId" bigint NOT NULL,
+	"inboxId" bigint NOT NULL,
+	"welcomeFlowId" bigint
 );
 --> statement-breakpoint
 CREATE INDEX "IntegrationInstagram_workspaceId_idx" ON "IntegrationInstagram" ("workspaceId");--> statement-breakpoint

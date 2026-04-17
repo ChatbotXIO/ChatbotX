@@ -1,7 +1,7 @@
 import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
-import { MessageEventType } from "@chatbotx.io/flow-config"
+import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobContactMarkAsRead,
@@ -32,7 +32,7 @@ export const contactMarkAsRead = async (
     })
     .where(eq(conversationModel.id, contactInbox.conversation.id))
 
-  await emit(MessageEventType["message:seen"], {
+  await emit(messageEventTypeSchema.enum["message:seen"], {
     context: {
       workspaceId: contactInbox.conversation.workspaceId,
       contactId: contactInbox.contactId,

@@ -1,22 +1,16 @@
 import { z } from "zod"
 import type { MetadataPayload } from "../nodes/send-message"
 
-export const messageEventType = z.enum([
+export const messageEventTypeSchema = z.enum([
   "message:sent",
   "message:delivered",
   "message:seen",
   "message:failed",
 ])
+export type MessageEventType = z.infer<typeof messageEventTypeSchema>
 
-export const flowEventType = z.enum(["flow:clicked", "flow:ref"])
-
-export const MessageEventType = messageEventType.enum
-
-export type MessageEventType = z.infer<typeof messageEventType>
-
-export const FlowEventType = flowEventType.enum
-
-export type FlowEventType = z.infer<typeof flowEventType>
+export const flowEventTypeSchema = z.enum(["flow:clicked", "flow:ref"])
+export type FlowEventType = z.infer<typeof flowEventTypeSchema>
 
 export const eventContextSchema = z.object({
   workspaceId: z.string(),
@@ -77,10 +71,10 @@ export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({})
 export const seenPayloadSchema = baseMessagePayloadSchema.extend({})
 
 export const messageEventSchemas = {
-  [MessageEventType["message:sent"]]: sentPayloadSchema,
-  [MessageEventType["message:failed"]]: failedPayloadSchema,
-  [MessageEventType["message:delivered"]]: deliveredPayloadSchema,
-  [MessageEventType["message:seen"]]: seenPayloadSchema,
+  [messageEventTypeSchema.enum["message:sent"]]: sentPayloadSchema,
+  [messageEventTypeSchema.enum["message:failed"]]: failedPayloadSchema,
+  [messageEventTypeSchema.enum["message:delivered"]]: deliveredPayloadSchema,
+  [messageEventTypeSchema.enum["message:seen"]]: seenPayloadSchema,
 } as const
 
 export const clickedPayloadSchema = z.object({
@@ -99,6 +93,6 @@ export const refLinkPayloadSchema = z.object({
 })
 
 export const flowEventSchemas = {
-  [FlowEventType["flow:clicked"]]: clickedPayloadSchema,
-  [FlowEventType["flow:ref"]]: refLinkPayloadSchema,
+  [flowEventTypeSchema.enum["flow:clicked"]]: clickedPayloadSchema,
+  [flowEventTypeSchema.enum["flow:ref"]]: refLinkPayloadSchema,
 } as const

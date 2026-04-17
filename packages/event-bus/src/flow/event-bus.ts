@@ -1,8 +1,9 @@
 import {
   type FlowEventListener,
   type FlowEventMap,
-  FlowEventType,
   flowEventSchemas,
+  type FlowEventType,
+  flowEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { getRedisConnection } from "@chatbotx.io/worker-config"
 import { BaseEventBus } from "../event-bus"
@@ -20,5 +21,5 @@ export const flowEventBus = new BaseEventBus<FlowEventMap, FlowEventListener>(
 )
 
 export const FlowEventBusByType = Object.fromEntries(
-  Object.values(FlowEventType).map((type) => [type, flowEventBus]),
+  flowEventTypeSchema.options.map((type) => [type, flowEventBus]),
 ) as Record<FlowEventType, typeof flowEventBus>

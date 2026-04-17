@@ -9,10 +9,12 @@ export const integrationWhatsappResource = createSelectSchema(
   integrationWhatsappModel,
   {
     id: zodBigintAsString(),
+    inboxId: zodBigintAsString(),
   },
 ).pick({
   id: true,
   name: true,
+  inboxId: true,
 })
 
 export type IntegrationWhatsappResource = z.infer<

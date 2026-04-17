@@ -11,11 +11,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const landingPageNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.landingPage),
+  type: z.literal(nodeTypeSchema.enum.landingPage),
   data: baseNodeDataSchema.extend({
     details: z.object({
       steps: z.array(
@@ -39,7 +39,7 @@ export const landingPageNodeDefaultFn = (
   props: DefaultNodeProps,
 ): LandingPageNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.landingPage,
+  type: nodeTypeSchema.enum.landingPage,
   ...props.nodeProps,
   data: {
     name: "Landing Page",

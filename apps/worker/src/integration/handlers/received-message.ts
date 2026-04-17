@@ -197,7 +197,7 @@ export const receiveMessage = async (
           conversationId: conversation.id,
           action: postbackAction,
           ref,
-          inboxId: contactInbox.inboxId,
+          contactInboxId: contactInbox.id,
         },
       })
     }

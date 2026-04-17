@@ -6,7 +6,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   type FlowNode,
-  NodeType,
+  nodeTypeSchema,
   type SendMessageNodeSchema,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
@@ -471,7 +471,7 @@ export class FlowStatsRepository extends BaseRepository {
     const nodes = flow.flowVersion.nodes as unknown as FlowNode[]
     const sendMessageNodes = nodes.filter(
       (n): n is FlowNode & { data: SendMessageNodeSchema["data"] } =>
-        n.type === NodeType.sendMessage,
+        n.type === nodeTypeSchema.enum.sendMessage,
     )
 
     if (sendMessageNodes.length === 0) {

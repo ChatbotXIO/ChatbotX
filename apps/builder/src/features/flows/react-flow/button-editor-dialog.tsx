@@ -6,7 +6,6 @@ import {
   buttonStepSchema,
   buttonTypes,
   type FlowNode,
-  NodeType,
   type OpenWebsiteStepSchema,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
@@ -16,6 +15,7 @@ import {
   startAnotherNodeStepDefaultFn,
   startExternalNodeStepDefaultFn,
   startFlowNodeDefaultFn,
+  nodeTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -256,7 +256,7 @@ export function ButtonEditorDialog() {
     switch (selectedButtonType) {
       case buttonTypes.enum.sendMessage: {
         const nodeCount = allNodes.filter(
-          (node) => node.type === NodeType.sendMessage,
+          (node) => node.type === nodeTypeSchema.enum.sendMessage,
         ).length
         newNode = sendMessageNodeDefaultFn({
           nodeProps: {
@@ -274,7 +274,7 @@ export function ButtonEditorDialog() {
       }
       case buttonTypes.enum.performAction: {
         const nodeCount = allNodes.filter(
-          (node) => node.type === NodeType.performAction,
+          (node) => node.type === nodeTypeSchema.enum.performAction,
         ).length
         newNode = performActionNodeDefaultFn({
           nodeProps: {
@@ -292,7 +292,7 @@ export function ButtonEditorDialog() {
       }
       case buttonTypes.enum.startExternalFlow: {
         const nodeCount = allNodes.filter(
-          (node) => node.type === NodeType.startFlow,
+          (node) => node.type === nodeTypeSchema.enum.startFlow,
         ).length
         newNode = startFlowNodeDefaultFn({
           nodeProps: {

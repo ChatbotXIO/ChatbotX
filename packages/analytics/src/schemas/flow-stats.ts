@@ -1,6 +1,5 @@
-import { BaseEventType } from "@chatbotx.io/clickhouse/schemas"
-import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
-import { flowEventType, messageEventType } from "@chatbotx.io/flow-config"
+import {  baseEventTypes } from "@chatbotx.io/clickhouse/schemas"
+import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export const flowStatsRequest = z.object({
@@ -20,13 +19,13 @@ export const getFlowStatsResponse = z.object({
 })
 export type GetFlowStatsResponse = z.infer<typeof getFlowStatsResponse>
 
-export const flowNodeEventType = z.union([messageEventType, flowEventType])
-export type FlowNodeEventType = MessageEventType | FlowEventType
+export const flowNodeEventTypes = z.enum([...messageEventTypeSchema.options, ...flowEventTypeSchema.options])
+export type FlowNodeEventType = z.infer<typeof flowNodeEventTypes>
 
 export const flowContactStatsRequest = z.object({
   workspaceId: z.string(),
   flowId: z.string(),
-  eventType: flowNodeEventType.optional(),
+  eventType: flowNodeEventTypes.optional(),
   nodeId: z.string().optional(),
 })
 export type FlowContactStatsRequest = z.infer<typeof flowContactStatsRequest>
@@ -82,7 +81,7 @@ export const listFlowNodeContactsRequest = z.object({
   flowId: z.string(),
   analyticsId: z.string(),
   stepId: z.string(),
-  eventType: flowNodeEventType,
+  eventType: flowNodeEventTypes,
   buttonId: z.string().optional(),
   total: z.number().optional(),
   page: z.number().default(1),
@@ -167,7 +166,7 @@ export const FlowNodeStatItemSchema = z.object({
   nodeId: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
-  eventType: BaseEventType,
+  eventType: baseEventTypes,
   occurredAt: z.union([z.date()]),
 })
 export type FlowNodeStatItem = z.infer<typeof FlowNodeStatItemSchema>

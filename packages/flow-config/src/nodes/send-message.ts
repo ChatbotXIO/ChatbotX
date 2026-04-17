@@ -20,11 +20,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const sendMessageNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.sendMessage),
+  type: z.literal(nodeTypeSchema.enum.sendMessage),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: chooseChannelStepSchema,
@@ -54,7 +54,7 @@ export const sendMessageNodeDefaultFn = (
   props: DefaultNodeProps,
 ): SendMessageNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.sendMessage,
+  type: nodeTypeSchema.enum.sendMessage,
   ...props.nodeProps,
   data: {
     name: "Send Message",

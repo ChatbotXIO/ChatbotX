@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   waitNodeDefaultFn,
   waitNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -11,7 +11,7 @@ const waitNodeConfig = (t: TranslationFn) => ({
   icon: ClockIcon,
   label: t("actions.wait"),
   menus: () => [],
-  type: NodeType.wait,
+  type: nodeTypeSchema.enum.wait,
   validator: waitNodeSchema,
 })
 

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { WhatsappMessageTemplatesTable } from "@/features/integration-whatsapp/message-templates/message-templates-table"
-import { getMessageTemplates } from "@/features/integration-whatsapp/message-templates/queries"
+import { whatsappMessageTemplateService } from "@/features/integration-whatsapp/message-templates/queries"
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
@@ -18,9 +18,11 @@ export default async function WhatsappMessageTemplatePage(props: {
   const { workspaceId, id } = data
   const integrationWhatsapp = await findIntegrationWhatsapp({ workspaceId, id })
 
-  const promises = getMessageTemplates({
-    workspaceId,
-    id,
+  const promises = whatsappMessageTemplateService.list({
+    where: {
+      workspaceId,
+      integrationWhatsappId: id,
+    },
   })
 
   return (

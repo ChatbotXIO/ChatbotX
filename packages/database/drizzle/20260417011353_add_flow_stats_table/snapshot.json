@@ -1,41 +1,68 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "e6ddd3dc-945b-47bf-9f22-e318cc38c524",
-  "prevIds": ["684a754e-781a-4b72-b720-6871e02ae52d"],
+  "id": "f3902e20-498e-4fbb-a39f-c03f1ac5c5d9",
+  "prevIds": [
+    "b62cfbf4-3ffe-4615-867e-c2aabca95f40"
+  ],
   "ddl": [
     {
-      "values": ["pending", "success", "error", "processing"],
+      "values": [
+        "pending",
+        "success",
+        "error",
+        "processing"
+      ],
       "name": "aiEmbeddingStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["processing", "ingested", "failed"],
+      "values": [
+        "processing",
+        "ingested",
+        "failed"
+      ],
       "name": "analyticsStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["image", "video", "audio", "gif", "file"],
+      "values": [
+        "image",
+        "video",
+        "audio",
+        "gif",
+        "file"
+      ],
       "name": "fileType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["now", "future"],
+      "values": [
+        "now",
+        "future"
+      ],
       "name": "broadcastScheduleType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["scheduled", "sent"],
+      "values": [
+        "scheduled",
+        "sent"
+      ],
       "name": "broadcastStatus",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["male", "female", "unknown"],
+      "values": [
+        "male",
+        "female",
+        "unknown"
+      ],
       "name": "gender",
       "entityType": "enums",
       "schema": "public"
@@ -70,25 +97,42 @@
       "schema": "public"
     },
     {
-      "values": ["text", "location"],
+      "values": [
+        "text",
+        "location",
+        "refLink"
+      ],
       "name": "contentType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["incoming", "outgoing", "activity"],
+      "values": [
+        "incoming",
+        "outgoing",
+        "activity"
+      ],
       "name": "messageType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["bot", "contact", "system", "user", "api"],
+      "values": [
+        "bot",
+        "contact",
+        "system",
+        "user",
+        "api"
+      ],
       "name": "senderType",
       "entityType": "enums",
       "schema": "public"
     },
     {
-      "values": ["owner", "agent"],
+      "values": [
+        "owner",
+        "agent"
+      ],
       "name": "workspaceMemberRole",
       "entityType": "enums",
       "schema": "public"
@@ -299,6 +343,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "FlowAnalyticsSession",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "FlowNodeStat",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "FlowRun",
       "entityType": "tables",
       "schema": "public"
@@ -359,6 +415,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "IntegrationInstagram",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "IntegrationMessenger",
       "entityType": "tables",
       "schema": "public"
@@ -372,6 +434,12 @@
     {
       "isRlsEnabled": false,
       "name": "IntegrationSmtp",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "IntegrationTelegram",
       "entityType": "tables",
       "schema": "public"
     },
@@ -401,6 +469,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "MagicLinkStat",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Message",
       "entityType": "tables",
       "schema": "public"
@@ -414,6 +488,12 @@
     {
       "isRlsEnabled": false,
       "name": "OrganizationMember",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "RefLinkStat",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1397,40 +1477,14 @@
       "table": "AITriggerToIntegrationOpenai"
     },
     {
-      "type": "bigint",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
+      "name": "objectKey",
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsManifestStatus"
@@ -3386,6 +3440,32 @@
       "table": "ContactOnBroadcast"
     },
     {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
       "type": "boolean",
       "typeSchema": null,
       "notNull": true,
@@ -3446,6 +3526,87 @@
       "generated": null,
       "identity": null,
       "name": "failed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorContent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": {
+        "as": "case when \"seenAt\" is null then false when \"deliveredAt\" is null then false else \"seenAt\" >= \"deliveredAt\" end",
+        "type": "stored"
+      },
+      "identity": null,
+      "name": "isRead",
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnBroadcast"
@@ -4865,6 +5026,292 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "analyticsId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nodeId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "buttonId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorContent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "FlowRun"
     },
     {
@@ -5762,6 +6209,175 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "igId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "username",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "conversationStarters",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "persistentMenus",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "welcomeFlowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "IntegrationMessenger"
     },
     {
@@ -6205,6 +6821,110 @@
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationSmtp"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "botId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTelegram"
     },
     {
       "type": "bigint",
@@ -6760,6 +7480,84 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "linkId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -7150,6 +7948,84 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "linkId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -7494,7 +8370,7 @@
       "table": "SequenceDispatch"
     },
     {
-      "type": "integer",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -7611,6 +8487,71 @@
       "table": "SequenceDispatch"
     },
     {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "seenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "clickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorContent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -7657,6 +8598,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "stepId",
       "entityType": "columns",
       "schema": "public",
@@ -7671,6 +8625,22 @@
       "generated": null,
       "identity": null,
       "name": "enrollmentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": {
+        "as": "case when \"seenAt\" is null then false when \"deliveredAt\" is null then false else \"seenAt\" >= \"deliveredAt\" end",
+        "type": "stored"
+      },
+      "identity": null,
+      "name": "isRead",
       "entityType": "columns",
       "schema": "public",
       "table": "SequenceDispatch"
@@ -9325,6 +10295,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "objectKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsManifestStatus_objectKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -9626,6 +10617,48 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_on_broadcast_contact_id",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "isRead",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_on_broadcast_is_read",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "sequenceId",
           "isExpression": false,
           "asc": true,
@@ -9913,6 +10946,139 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"deletedAt\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowAnalyticsSession_workspaceId_flowId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowAnalyticsSession_flowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowAnalyticsSession"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "analyticsId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "nodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "eventType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "buttonId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowNodeStat_filter_1_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "analyticsId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "nodeId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"eventType\" = 'seen' AND \"seenAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "FlowNodeStat_filter_2_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -10128,6 +11294,90 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "IntegrationInstagram_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "welcomeFlowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationInstagram_welcomeFlowId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationInstagram_inboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "igId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationInstagram_igId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "IntegrationMessenger_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -10237,6 +11487,69 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "IntegrationSmtp"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationTelegram_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationTelegram_inboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "botId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationTelegram_botId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTelegram"
     },
     {
       "nameExplicit": true,
@@ -10464,6 +11777,41 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "linkId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MagicLinkStat_workspaceId_linkId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -10615,6 +11963,41 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Organization"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "linkId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "RefLinkStat_workspaceId_linkId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "RefLinkStat"
     },
     {
       "nameExplicit": true,
@@ -11563,10 +12946,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIAgent_workspaceId_Workspace_id_fkey",
@@ -11576,10 +12963,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIAssistant_workspaceId_Workspace_id_fkey",
@@ -11589,10 +12980,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIEmbedding_workspaceId_Workspace_id_fkey",
@@ -11602,10 +12997,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["aiFileId"],
+      "columns": [
+        "aiFileId"
+      ],
       "schemaTo": "public",
       "tableTo": "AIFile",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIEmbedding_aiFileId_AIFile_id_fkey",
@@ -11615,10 +13014,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIFile_workspaceId_Workspace_id_fkey",
@@ -11628,10 +13031,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["triggerFlowId"],
+      "columns": [
+        "triggerFlowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AIFunction_triggerFlowId_Flow_id_fkey",
@@ -11641,10 +13048,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIFunction_workspaceId_Workspace_id_fkey",
@@ -11654,10 +13065,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIMCPServer_workspaceId_Workspace_id_fkey",
@@ -11667,10 +13082,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITrigger_workspaceId_Workspace_id_fkey",
@@ -11680,10 +13099,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AITrigger_flowId_Flow_id_fkey",
@@ -11693,10 +13116,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["aiTriggerId"],
+      "columns": [
+        "aiTriggerId"
+      ],
       "schemaTo": "public",
       "tableTo": "AITrigger",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITriggerToIntegrationOpenai_aiTriggerId_AITrigger_id_fkey",
@@ -11706,10 +13133,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationOpenaiId"],
+      "columns": [
+        "integrationOpenaiId"
+      ],
       "schemaTo": "public",
       "tableTo": "IntegrationOpenai",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AITriggerToIntegrationOpenai_rSgeY7c25Tng_fkey",
@@ -11719,10 +13150,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_workspaceId_Workspace_id_fkey",
@@ -11732,10 +13167,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["conversationId"],
+      "columns": [
+        "conversationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_conversationId_Conversation_id_fkey",
@@ -11745,10 +13184,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["messageId"],
+      "columns": [
+        "messageId"
+      ],
       "schemaTo": "public",
       "tableTo": "Message",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_messageId_Message_id_fkey",
@@ -11758,10 +13201,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Account_userId_User_id_fkey",
@@ -11771,10 +13218,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
+      "columns": [
+        "organizationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Organization",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Invitation_organizationId_Organization_id_fkey",
@@ -11784,10 +13235,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Invitation_workspaceId_Workspace_id_fkey",
@@ -11797,10 +13252,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["invitedBy"],
+      "columns": [
+        "invitedBy"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Invitation_invitedBy_User_id_fkey",
@@ -11810,10 +13269,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Session_userId_User_id_fkey",
@@ -11823,10 +13286,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AutomatedResponse_workspaceId_Workspace_id_fkey",
@@ -11836,10 +13303,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AutomatedResponse_folderId_Folder_id_fkey",
@@ -11849,10 +13320,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AutomatedResponse_flowId_Flow_id_fkey",
@@ -11862,10 +13337,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "BotField_folderId_Folder_id_fkey",
@@ -11875,10 +13354,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "BotField_workspaceId_Workspace_id_fkey",
@@ -11888,10 +13371,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Broadcast_workspaceId_Workspace_id_fkey",
@@ -11901,10 +13388,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Broadcast_flowId_Flow_id_fkey",
@@ -11914,10 +13405,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationWhatsappId"],
+      "columns": [
+        "integrationWhatsappId"
+      ],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Broadcast_integrationWhatsappId_IntegrationWhatsapp_id_fkey",
@@ -11927,10 +13422,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Contact_workspaceId_Workspace_id_fkey",
@@ -11940,10 +13439,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactCustomField_contactId_Contact_id_fkey",
@@ -11953,10 +13456,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["customFieldId"],
+      "columns": [
+        "customFieldId"
+      ],
       "schemaTo": "public",
       "tableTo": "CustomField",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactCustomField_customFieldId_CustomField_id_fkey",
@@ -11966,10 +13473,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactInbox_contactId_Contact_id_fkey",
@@ -11979,10 +13490,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactInbox_inboxId_Inbox_id_fkey",
@@ -11992,10 +13507,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactNote_contactId_Contact_id_fkey",
@@ -12005,10 +13524,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["createdById"],
+      "columns": [
+        "createdById"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactNote_createdById_User_id_fkey",
@@ -12018,10 +13541,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["broadcastId"],
+      "columns": [
+        "broadcastId"
+      ],
       "schemaTo": "public",
       "tableTo": "Broadcast",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_broadcastId_Broadcast_id_fkey",
@@ -12031,10 +13558,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnBroadcast_contactId_Contact_id_fkey",
@@ -12044,10 +13575,48 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnBroadcast_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "conversationId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnBroadcast_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnBroadcast"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_contactId_Contact_id_fkey",
@@ -12057,10 +13626,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["sequenceId"],
+      "columns": [
+        "sequenceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_sequenceId_Sequence_id_fkey",
@@ -12070,10 +13643,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactOnSequence_workspaceId_Workspace_id_fkey",
@@ -12083,10 +13660,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTag_contactId_Contact_id_fkey",
@@ -12096,10 +13677,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["tagId"],
+      "columns": [
+        "tagId"
+      ],
       "schemaTo": "public",
       "tableTo": "Tag",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ContactToTag_tagId_Tag_id_fkey",
@@ -12109,10 +13694,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["assignedUserId"],
+      "columns": [
+        "assignedUserId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Conversation_assignedUserId_User_id_fkey",
@@ -12122,10 +13711,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["assignedInboxTeamId"],
+      "columns": [
+        "assignedInboxTeamId"
+      ],
       "schemaTo": "public",
       "tableTo": "InboxTeam",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Conversation_assignedInboxTeamId_InboxTeam_id_fkey",
@@ -12135,10 +13728,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Conversation_workspaceId_Workspace_id_fkey",
@@ -12148,10 +13745,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Conversation_contactId_Contact_id_fkey",
@@ -12161,10 +13762,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_workspaceId_Workspace_id_fkey",
@@ -12174,10 +13779,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["conversationId"],
+      "columns": [
+        "conversationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_conversationId_Conversation_id_fkey",
@@ -12187,10 +13796,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ConversationParticipant_userId_User_id_fkey",
@@ -12200,10 +13813,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "CustomField_folderId_Folder_id_fkey",
@@ -12213,10 +13830,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "CustomField_workspaceId_Workspace_id_fkey",
@@ -12226,10 +13847,14 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AuditLog_workspaceId_fkey",
@@ -12239,10 +13864,14 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "AuditLog_userId_fkey",
@@ -12252,10 +13881,14 @@
     },
     {
       "nameExplicit": true,
-      "columns": ["organizationId"],
+      "columns": [
+        "organizationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Organization",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Plan_organizationId_fkey",
@@ -12265,10 +13898,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "ErrorLog_workspaceId_Workspace_id_fkey",
@@ -12278,10 +13915,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "ErrorLog_contactId_Contact_id_fkey",
@@ -12291,10 +13932,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Flow_workspaceId_Workspace_id_fkey",
@@ -12304,10 +13949,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Flow_folderId_Folder_id_fkey",
@@ -12317,10 +13966,31 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "FlowNodeStat_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "FlowNodeStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_workspaceId_Workspace_id_fkey",
@@ -12330,10 +14000,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_flowId_Flow_id_fkey",
@@ -12343,10 +14017,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowVersionId"],
+      "columns": [
+        "flowVersionId"
+      ],
       "schemaTo": "public",
       "tableTo": "FlowVersion",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_flowVersionId_FlowVersion_id_fkey",
@@ -12356,10 +14034,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["conversationId"],
+      "columns": [
+        "conversationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowRun_conversationId_Conversation_id_fkey",
@@ -12369,10 +14051,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowVersion_workspaceId_Workspace_id_fkey",
@@ -12382,10 +14068,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "FlowVersion_flowId_Flow_id_fkey",
@@ -12395,10 +14085,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Folder_workspaceId_Workspace_id_fkey",
@@ -12408,10 +14102,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Inbox_workspaceId_Workspace_id_fkey",
@@ -12421,10 +14119,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxContactStat_inboxId_Inbox_id_fkey",
@@ -12434,10 +14136,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeam_workspaceId_Workspace_id_fkey",
@@ -12447,10 +14153,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxTeamId"],
+      "columns": [
+        "inboxTeamId"
+      ],
       "schemaTo": "public",
       "tableTo": "InboxTeam",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeamMember_inboxTeamId_InboxTeam_id_fkey",
@@ -12460,10 +14170,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "InboxTeamMember_userId_User_id_fkey",
@@ -12473,10 +14187,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Integration_workspaceId_Workspace_id_fkey",
@@ -12486,10 +14204,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGemini_workspaceId_Workspace_id_fkey",
@@ -12499,10 +14221,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationId"],
+      "columns": [
+        "integrationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGemini_integrationId_Integration_id_fkey",
@@ -12512,10 +14238,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGoogleSheet_workspaceId_Workspace_id_fkey",
@@ -12525,10 +14255,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationId"],
+      "columns": [
+        "integrationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationGoogleSheet_integrationId_Integration_id_fkey",
@@ -12537,11 +14271,66 @@
       "table": "IntegrationGoogleSheet"
     },
     {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "nameExplicit": true,
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationInstagram_workspaceId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "inboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationInstagram_inboxId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "welcomeFlowId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Flow",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "IntegrationInstagram_welcomeFlowId_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationInstagram"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMessenger_workspaceId_Workspace_id_fkey",
@@ -12551,10 +14340,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationMessenger_inboxId_Inbox_id_fkey",
@@ -12564,10 +14357,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["welcomeFlowId"],
+      "columns": [
+        "welcomeFlowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationMessenger_welcomeFlowId_Flow_id_fkey",
@@ -12577,10 +14374,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenai_workspaceId_Workspace_id_fkey",
@@ -12590,10 +14391,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationId"],
+      "columns": [
+        "integrationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Integration",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationOpenai_integrationId_Integration_id_fkey",
@@ -12603,10 +14408,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["aiAssistantId"],
+      "columns": [
+        "aiAssistantId"
+      ],
       "schemaTo": "public",
       "tableTo": "AIAssistant",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationOpenai_aiAssistantId_AIAssistant_id_fkey",
@@ -12616,10 +14425,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["aiAgentId"],
+      "columns": [
+        "aiAgentId"
+      ],
       "schemaTo": "public",
       "tableTo": "AIAgent",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationOpenai_aiAgentId_AIAgent_id_fkey",
@@ -12629,10 +14442,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSmtp_workspaceId_Workspace_id_fkey",
@@ -12642,10 +14459,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationSmtp_inboxId_Inbox_id_fkey",
@@ -12655,10 +14476,48 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationTelegram_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "inboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationTelegram_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationTelegram"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWebchat_workspaceId_Workspace_id_fkey",
@@ -12668,10 +14527,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWebchat_inboxId_Inbox_id_fkey",
@@ -12681,10 +14544,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["welcomeFlowId"],
+      "columns": [
+        "welcomeFlowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationWebchat_welcomeFlowId_Flow_id_fkey",
@@ -12694,10 +14561,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWhatsapp_workspaceId_Workspace_id_fkey",
@@ -12707,10 +14578,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationWhatsapp_inboxId_Inbox_id_fkey",
@@ -12720,10 +14595,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationZalo_workspaceId_Workspace_id_fkey",
@@ -12733,10 +14612,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "Inbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "IntegrationZalo_inboxId_Inbox_id_fkey",
@@ -12746,10 +14629,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["fallbackFlowId"],
+      "columns": [
+        "fallbackFlowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "IntegrationZalo_fallbackFlowId_Flow_id_fkey",
@@ -12759,10 +14646,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "MagicLink_workspaceId_Workspace_id_fkey",
@@ -12772,10 +14663,48 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["conversationId"],
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkStat_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "linkId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "MagicLink",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "MagicLinkStat_linkId_MagicLink_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "MagicLinkStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "conversationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Conversation",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_conversationId_Conversation_id_fkey",
@@ -12785,10 +14714,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactInboxId"],
+      "columns": [
+        "contactInboxId"
+      ],
       "schemaTo": "public",
       "tableTo": "ContactInbox",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_contactInboxId_ContactInbox_id_fkey",
@@ -12798,10 +14731,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Message_workspaceId_Workspace_id_fkey",
@@ -12811,10 +14748,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
+      "columns": [
+        "organizationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Organization",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "OrganizationMember_organizationId_Organization_id_fkey",
@@ -12824,10 +14765,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "OrganizationMember_userId_User_id_fkey",
@@ -12837,10 +14782,48 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "workspaceId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "RefLinkStat_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "linkId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "Reflink",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "RefLinkStat_linkId_Reflink_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "RefLinkStat"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Reflink_flowId_Flow_id_fkey",
@@ -12850,10 +14833,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Reflink_workspaceId_Workspace_id_fkey",
@@ -12863,10 +14850,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["customFieldId"],
+      "columns": [
+        "customFieldId"
+      ],
       "schemaTo": "public",
       "tableTo": "CustomField",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Reflink_customFieldId_CustomField_id_fkey",
@@ -12876,10 +14867,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SavedReply_workspaceId_Workspace_id_fkey",
@@ -12889,10 +14884,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Sequence_folderId_Folder_id_fkey",
@@ -12902,10 +14901,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Sequence_workspaceId_Workspace_id_fkey",
@@ -12915,10 +14918,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_workspaceId_Workspace_id_fkey",
@@ -12928,10 +14935,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["sequenceId"],
+      "columns": [
+        "sequenceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_sequenceId_Sequence_id_fkey",
@@ -12941,10 +14952,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_contactId_Contact_id_fkey",
@@ -12954,10 +14969,31 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["stepId"],
+      "columns": [
+        "contactInboxId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "SequenceDispatch_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "SequenceDispatch"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "stepId"
+      ],
       "schemaTo": "public",
       "tableTo": "SequenceStep",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_stepId_SequenceStep_id_fkey",
@@ -12967,10 +15003,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["enrollmentId"],
+      "columns": [
+        "enrollmentId"
+      ],
       "schemaTo": "public",
       "tableTo": "ContactOnSequence",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceDispatch_enrollmentId_ContactOnSequence_id_fkey",
@@ -12980,10 +15020,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["flowId"],
+      "columns": [
+        "flowId"
+      ],
       "schemaTo": "public",
       "tableTo": "Flow",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "SequenceStep_flowId_Flow_id_fkey",
@@ -12993,10 +15037,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["sequenceId"],
+      "columns": [
+        "sequenceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Sequence",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "SequenceStep_sequenceId_Sequence_id_fkey",
@@ -13006,10 +15054,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Spreadsheet_workspaceId_Workspace_id_fkey",
@@ -13019,10 +15071,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Tag_folderId_Folder_id_fkey",
@@ -13032,10 +15088,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Tag_workspaceId_Workspace_id_fkey",
@@ -13045,10 +15105,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Trigger_folderId_Folder_id_fkey",
@@ -13058,10 +15122,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Trigger_workspaceId_Workspace_id_fkey",
@@ -13071,10 +15139,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["triggerId"],
+      "columns": [
+        "triggerId"
+      ],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Condition_triggerId_Trigger_id_fkey",
@@ -13084,10 +15156,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["webhookId"],
+      "columns": [
+        "webhookId"
+      ],
       "schemaTo": "public",
       "tableTo": "Webhook",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Condition_webhookId_Webhook_id_fkey",
@@ -13097,10 +15173,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["triggerId"],
+      "columns": [
+        "triggerId"
+      ],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_triggerId_Trigger_id_fkey",
@@ -13110,10 +15190,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_contactId_Contact_id_fkey",
@@ -13123,10 +15207,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerContactHistory_workspaceId_Workspace_id_fkey",
@@ -13136,10 +15224,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["triggerId"],
+      "columns": [
+        "triggerId"
+      ],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_triggerId_Trigger_id_fkey",
@@ -13149,10 +15241,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["contactId"],
+      "columns": [
+        "contactId"
+      ],
       "schemaTo": "public",
       "tableTo": "Contact",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_contactId_Contact_id_fkey",
@@ -13162,10 +15258,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerExecution_workspaceId_Workspace_id_fkey",
@@ -13175,10 +15275,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["triggerId"],
+      "columns": [
+        "triggerId"
+      ],
       "schemaTo": "public",
       "tableTo": "Trigger",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerStat_triggerId_Trigger_id_fkey",
@@ -13188,10 +15292,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "TriggerStat_workspaceId_Workspace_id_fkey",
@@ -13201,10 +15309,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["folderId"],
+      "columns": [
+        "folderId"
+      ],
       "schemaTo": "public",
       "tableTo": "Folder",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "name": "Webhook_folderId_Folder_id_fkey",
@@ -13214,10 +15326,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Webhook_workspaceId_Workspace_id_fkey",
@@ -13227,10 +15343,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationWhatsappId"],
+      "columns": [
+        "integrationWhatsappId"
+      ],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WhatsappFlow_integrationWhatsappId_IntegrationWhatsapp_id_fkey",
@@ -13240,10 +15360,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["integrationWhatsappId"],
+      "columns": [
+        "integrationWhatsappId"
+      ],
       "schemaTo": "public",
       "tableTo": "IntegrationWhatsapp",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WhatsappMessageTemplate_p6pSomUTTJCm_fkey",
@@ -13253,10 +15377,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
+      "columns": [
+        "organizationId"
+      ],
       "schemaTo": "public",
       "tableTo": "Organization",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
       "name": "Workspace_organizationId_Organization_id_fkey",
@@ -13266,10 +15394,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceMember_workspaceId_Workspace_id_fkey",
@@ -13279,10 +15411,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["userId"],
+      "columns": [
+        "userId"
+      ],
       "schemaTo": "public",
       "tableTo": "User",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceMember_userId_User_id_fkey",
@@ -13292,10 +15428,14 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["workspaceId"],
+      "columns": [
+        "workspaceId"
+      ],
       "schemaTo": "public",
       "tableTo": "Workspace",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "WorkspaceUsage_workspaceId_Workspace_id_fkey",
@@ -13304,7 +15444,10 @@
       "table": "WorkspaceUsage"
     },
     {
-      "columns": ["aiTriggerId", "integrationOpenaiId"],
+      "columns": [
+        "aiTriggerId",
+        "integrationOpenaiId"
+      ],
       "nameExplicit": false,
       "name": "AITriggerToIntegrationOpenai_pkey",
       "entityType": "pks",
@@ -13312,7 +15455,10 @@
       "table": "AITriggerToIntegrationOpenai"
     },
     {
-      "columns": ["broadcastId", "contactId"],
+      "columns": [
+        "broadcastId",
+        "contactId"
+      ],
       "nameExplicit": true,
       "name": "ContactsOnBroadcast_pkey",
       "entityType": "pks",
@@ -13320,7 +15466,10 @@
       "table": "ContactOnBroadcast"
     },
     {
-      "columns": ["contactId", "tagId"],
+      "columns": [
+        "contactId",
+        "tagId"
+      ],
       "nameExplicit": false,
       "name": "ContactToTag_pkey",
       "entityType": "pks",
@@ -13328,7 +15477,10 @@
       "table": "ContactToTag"
     },
     {
-      "columns": ["id", "contactId"],
+      "columns": [
+        "id",
+        "contactId"
+      ],
       "nameExplicit": true,
       "name": "TriggerContactHistory_pkey",
       "entityType": "pks",
@@ -13336,7 +15488,9 @@
       "table": "TriggerContactHistory"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIAgent_pkey",
       "schema": "public",
@@ -13344,7 +15498,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIAssistant_pkey",
       "schema": "public",
@@ -13352,7 +15508,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIEmbedding_pkey",
       "schema": "public",
@@ -13360,7 +15518,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIFile_pkey",
       "schema": "public",
@@ -13368,7 +15528,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIFunction_pkey",
       "schema": "public",
@@ -13376,7 +15538,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AIMCPServer_pkey",
       "schema": "public",
@@ -13384,7 +15548,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AITrigger_pkey",
       "schema": "public",
@@ -13392,15 +15558,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "AnalyticsManifestStatus_pkey",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Attachment_pkey",
       "schema": "public",
@@ -13408,7 +15568,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Account_pkey",
       "schema": "public",
@@ -13416,7 +15578,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Invitation_pkey",
       "schema": "public",
@@ -13424,7 +15588,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Jwk_pkey",
       "schema": "public",
@@ -13432,7 +15598,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Session_pkey",
       "schema": "public",
@@ -13440,7 +15608,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "User_pkey",
       "schema": "public",
@@ -13448,7 +15618,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Verification_pkey",
       "schema": "public",
@@ -13456,7 +15628,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AutomatedResponse_pkey",
       "schema": "public",
@@ -13464,7 +15638,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "BotField_pkey",
       "schema": "public",
@@ -13472,7 +15648,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Broadcast_pkey",
       "schema": "public",
@@ -13480,7 +15658,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Contact_pkey",
       "schema": "public",
@@ -13488,7 +15668,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ContactCustomField_pkey",
       "schema": "public",
@@ -13496,7 +15678,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ContactInbox_pkey",
       "schema": "public",
@@ -13504,7 +15688,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ContactNote_pkey",
       "schema": "public",
@@ -13512,7 +15698,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ContactOnSequence_pkey",
       "schema": "public",
@@ -13520,7 +15708,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Conversation_pkey",
       "schema": "public",
@@ -13528,7 +15718,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ConversationParticipant_pkey",
       "schema": "public",
@@ -13536,7 +15728,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "CustomField_pkey",
       "schema": "public",
@@ -13544,7 +15738,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "AuditLog_pkey",
       "schema": "public",
@@ -13552,7 +15748,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Plan_pkey",
       "schema": "public",
@@ -13560,7 +15758,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Subscription_pkey",
       "schema": "public",
@@ -13568,7 +15768,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "ErrorLog_pkey",
       "schema": "public",
@@ -13576,7 +15778,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Flow_pkey",
       "schema": "public",
@@ -13584,7 +15788,29 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FlowAnalyticsSession_pkey",
+      "schema": "public",
+      "table": "FlowAnalyticsSession",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "FlowNodeStat_pkey",
+      "schema": "public",
+      "table": "FlowNodeStat",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "FlowRun_pkey",
       "schema": "public",
@@ -13592,7 +15818,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "FlowVersion_pkey",
       "schema": "public",
@@ -13600,7 +15828,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Folder_pkey",
       "schema": "public",
@@ -13608,7 +15838,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Inbox_pkey",
       "schema": "public",
@@ -13616,7 +15848,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["inboxId"],
+      "columns": [
+        "inboxId"
+      ],
       "nameExplicit": false,
       "name": "InboxContactStat_pkey",
       "schema": "public",
@@ -13624,7 +15858,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "InboxTeam_pkey",
       "schema": "public",
@@ -13632,7 +15868,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "InboxTeamMember_pkey",
       "schema": "public",
@@ -13640,7 +15878,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Integration_pkey",
       "schema": "public",
@@ -13648,7 +15888,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationGemini_pkey",
       "schema": "public",
@@ -13656,7 +15898,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationGoogleSheet_pkey",
       "schema": "public",
@@ -13664,7 +15908,19 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "IntegrationInstagram_pkey",
+      "schema": "public",
+      "table": "IntegrationInstagram",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationMessenger_pkey",
       "schema": "public",
@@ -13672,7 +15928,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationOpenai_pkey",
       "schema": "public",
@@ -13680,7 +15938,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationSmtp_pkey",
       "schema": "public",
@@ -13688,7 +15948,19 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "IntegrationTelegram_pkey",
+      "schema": "public",
+      "table": "IntegrationTelegram",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationWebchat_pkey",
       "schema": "public",
@@ -13696,7 +15968,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationWhatsapp_pkey",
       "schema": "public",
@@ -13704,7 +15978,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "IntegrationZalo_pkey",
       "schema": "public",
@@ -13712,7 +15988,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "MagicLink_pkey",
       "schema": "public",
@@ -13720,7 +15998,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Message_pkey",
       "schema": "public",
@@ -13728,7 +16008,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Organization_pkey",
       "schema": "public",
@@ -13736,7 +16018,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "OrganizationMember_pkey",
       "schema": "public",
@@ -13744,7 +16028,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Reflink_pkey",
       "schema": "public",
@@ -13752,7 +16038,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "SavedReply_pkey",
       "schema": "public",
@@ -13760,7 +16048,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Sequence_pkey",
       "schema": "public",
@@ -13768,7 +16058,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "SequenceDispatch_pkey",
       "schema": "public",
@@ -13776,7 +16068,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "SequenceStep_pkey",
       "schema": "public",
@@ -13784,7 +16078,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Spreadsheet_pkey",
       "schema": "public",
@@ -13792,7 +16088,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Tag_pkey",
       "schema": "public",
@@ -13800,7 +16098,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Trigger_pkey",
       "schema": "public",
@@ -13808,7 +16108,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Condition_pkey",
       "schema": "public",
@@ -13816,7 +16118,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "TriggerExecution_pkey",
       "schema": "public",
@@ -13824,7 +16128,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "TriggerStat_pkey",
       "schema": "public",
@@ -13832,7 +16138,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Webhook_pkey",
       "schema": "public",
@@ -13840,7 +16148,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "WhatsappFlow_pkey",
       "schema": "public",
@@ -13848,7 +16158,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "WhatsappMessageTemplate_pkey",
       "schema": "public",
@@ -13856,7 +16168,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "Workspace_pkey",
       "schema": "public",
@@ -13864,7 +16178,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "WorkspaceMember_pkey",
       "schema": "public",
@@ -13872,7 +16188,9 @@
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "nameExplicit": false,
       "name": "WorkspaceUsage_pkey",
       "schema": "public",

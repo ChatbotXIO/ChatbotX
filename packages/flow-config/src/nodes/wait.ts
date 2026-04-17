@@ -5,11 +5,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const waitNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.wait),
+  type: z.literal(nodeTypeSchema.enum.wait),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: waitStepSchema,
@@ -20,7 +20,7 @@ export type WaitNodeSchema = z.input<typeof waitNodeSchema>
 
 export const waitNodeDefaultFn = (props: DefaultNodeProps): WaitNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.wait,
+  type: nodeTypeSchema.enum.wait,
   ...props.nodeProps,
   data: {
     name: "Wait",

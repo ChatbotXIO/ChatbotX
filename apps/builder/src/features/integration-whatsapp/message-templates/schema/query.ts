@@ -1,22 +1,20 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { createSearchParamsCache } from "nuqs/server"
 import z from "zod"
 import { whatsappMessageTemplateResource } from "./resource"
+import { integrationWhatsappResource } from "../../schemas/resource"
+import { whatsappTemplateStatusSchema } from "@chatbotx.io/database/partials"
 
-export const listMessageTemplatesRequest = createSearchParamsCache({})
-
-export type ListMessageTemplatesRequest = Awaited<
-  ReturnType<typeof listMessageTemplatesRequest.parse>
-> & { workspaceId: string; id?: string }
-
-export const listMessageTemplatesInputSchema = z.object({
+export const listWhatsappMessageTemplatesRequest = z.object({
   workspaceId: zodBigintAsString(),
-  id: zodBigintAsString(),
+  inboxId: zodBigintAsString().optional(),
+  integrationWhatsappId: zodBigintAsString().optional(),
+  status: whatsappTemplateStatusSchema.optional(),
 })
+export type ListWhatsappMessageTemplatesRequest = z.infer<typeof listWhatsappMessageTemplatesRequest>
 
-export const listWhatsappMessageTemplatesResponse = z.array(
-  whatsappMessageTemplateResource,
-)
+export const listWhatsappMessageTemplatesResponse = z.array(whatsappMessageTemplateResource.extend({
+  integrationWhatsapp: integrationWhatsappResource,
+}))
 export type ListWhatsappMessageTemplatesResponse = z.infer<
   typeof listWhatsappMessageTemplatesResponse
 >

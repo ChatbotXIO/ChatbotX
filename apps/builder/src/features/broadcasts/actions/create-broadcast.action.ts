@@ -122,12 +122,11 @@ export const createBroadcastAction = workspaceActionClient
       data.status = "sent"
     }
 
-    await db.transaction(async (tx) => {
-      const newBroadcast = await tx
+    const broadcast = await db.transaction(async (tx) => {
+      const [newBroadcast] = await tx
         .insert(broadcastModel)
         .values(data)
         .returning()
-        .then((result) => result[0])
 
       if (contactInboxes.length > 0) {
         await tx.insert(contactsOnBroadcastsModel).values(
@@ -139,8 +138,9 @@ export const createBroadcastAction = workspaceActionClient
           })),
         )
       }
+
       return newBroadcast
     })
 
-    revalidateCacheTags(`workspaces:${workspaceId}#broadcasts`)
+    return broadcast
   })

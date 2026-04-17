@@ -38,6 +38,4 @@ export const updateBroadcast = async (
     .update(broadcastModel)
     .set(parsedInput)
     .where(eq(broadcastModel.id, broadcast.id))
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#broadcasts`)
 }

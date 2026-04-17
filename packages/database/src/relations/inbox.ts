@@ -37,5 +37,9 @@ export const inboxRelations = defineRelationsPart(schema, (r) => ({
       from: r.inboxModel.id,
       to: r.inboxContactStatsModel.inboxId,
     }),
+    integrationInstagram: r.one.integrationInstagramModel({
+      from: r.inboxModel.id,
+      to: r.integrationInstagramModel.inboxId,
+    }),
   },
 }))

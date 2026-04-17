@@ -1,18 +1,19 @@
 import {
-  BaseEventType,
   type FlowNodeStatsType,
 } from "@chatbotx.io/clickhouse/schemas"
 import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
-import type {
-  ClickedPayload,
-  FlowClickedPayload,
-  MessageDeliveredPayload,
-  MessageFailedPayload,
-  MessagePayload,
-  MessageSeenPayload,
-  MessageSentPayload,
+import {
+  flowEventTypeSchema,
+  messageEventTypeSchema,
+  type ClickedPayload,
+  type FlowClickedPayload,
+  type MessageDeliveredPayload,
+  type MessageFailedPayload,
+  type MessagePayload,
+  type MessageSeenPayload,
+  type MessageSentPayload,
 } from "@chatbotx.io/flow-config"
 import { flowStatsRepository } from "../repositories"
 import type {
@@ -110,7 +111,7 @@ export class FlowAnalyticsService {
           nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
-          eventType: BaseEventType.enum["message:delivered"],
+          eventType: messageEventTypeSchema.enum["message:sent"],
           occurredAt: p.occurredAt,
         }
       })
@@ -133,7 +134,7 @@ export class FlowAnalyticsService {
           node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
-          event_type: BaseEventType.enum["message:delivered"],
+          event_type: messageEventTypeSchema.enum["message:sent"],
           occurred_at: occurredAt,
           inserted_at: toClickHouseDateTime(new Date()),
         }
@@ -163,7 +164,7 @@ export class FlowAnalyticsService {
           nodeId: p.nodeId ?? "",
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
-          eventType: BaseEventType.enum["message:delivered"],
+          eventType: messageEventTypeSchema.enum["message:delivered"],
           occurredAt: new Date(p.occurredAt),
         }
       })
@@ -186,7 +187,7 @@ export class FlowAnalyticsService {
           node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
-          event_type: BaseEventType.enum["message:delivered"],
+          event_type: messageEventTypeSchema.enum["message:delivered"],
           occurred_at: occurredAt,
           inserted_at: toClickHouseDateTime(new Date()),
         }
@@ -217,7 +218,7 @@ export class FlowAnalyticsService {
           contactId: p.context.contactId,
           contactInboxId: p.context.contactInboxId ?? "",
           errorContent: (p.errorData ?? "") as string,
-          eventType: BaseEventType.enum["message:failed"],
+          eventType: messageEventTypeSchema.enum["message:failed"],
           occurredAt: p.occurredAt,
         }
       })
@@ -240,7 +241,7 @@ export class FlowAnalyticsService {
           node_id: payload.nodeId as string,
           button_id: "",
           contact_inbox_id: payload.context.contactInboxId as string,
-          event_type: BaseEventType.enum["message:failed"],
+          event_type: messageEventTypeSchema.enum["message:failed"],
           occurred_at: occurredAt,
           inserted_at: toClickHouseDateTime(new Date()),
         }
@@ -276,7 +277,7 @@ export class FlowAnalyticsService {
       const unseenRecords = await db.query.flowNodeStatModel.findMany({
         where: {
           workspaceId: { eq: workspaceId },
-          eventType: { eq: BaseEventType.enum["message:delivered"] },
+          eventType: { eq: messageEventTypeSchema.enum["message:delivered"] },
           contactInboxId: { in: contactInboxIds },
           seenAt: { isNull: true as const },
         },
@@ -325,7 +326,7 @@ export class FlowAnalyticsService {
             node_id: record.nodeId as string,
             button_id: record.buttonId as string,
             contact_inbox_id: record.contactInboxId as string,
-            event_type: BaseEventType.enum["message:seen"],
+            event_type: messageEventTypeSchema.enum["message:seen"],
             occurred_at: occurredAt,
             inserted_at: toClickHouseDateTime(new Date()),
           }
@@ -363,7 +364,7 @@ export class FlowAnalyticsService {
           contactInboxId: p.context.contactInboxId ?? "",
           buttonId: p.action.buttonId ?? "",
           occurredAt: p.occurredAt,
-          eventType: BaseEventType.enum["flow:clicked"],
+          eventType: flowEventTypeSchema.enum["flow:clicked"],
         }
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -388,7 +389,7 @@ export class FlowAnalyticsService {
           node_id: payload.nodeId as string,
           button_id: payload.action?.buttonId ?? "",
           contact_inbox_id: payload.context.contactInboxId as string,
-          event_type: BaseEventType.enum["flow:clicked"],
+          event_type: flowEventTypeSchema.enum["flow:clicked"],
           occurred_at: occurredAt,
           inserted_at: toClickHouseDateTime(new Date()),
         }

@@ -3,7 +3,8 @@ import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
-  MessageEventType,
+
+  messageEventTypeSchema,
   type MetadataPayload,
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
@@ -112,17 +113,12 @@ export const handleMessageStatus = async (
       eventLog.metadata = message.contentAttributes.metadata as MetadataPayload
     }
 
-    console.log({
-      eventStatus,
-      eventLog: JSON.stringify(eventLog, null, 2),
-      message: JSON.stringify(message, null, 2),
-    })
     if (eventStatus === "delivered") {
-      await emit(MessageEventType["message:delivered"], eventLog)
+      await emit(messageEventTypeSchema.enum["message:delivered"], eventLog)
     }
 
     if (eventStatus === "read") {
-      await emit(MessageEventType["message:seen"], eventLog)
+      await emit(messageEventTypeSchema.enum["message:seen"], eventLog)
     }
 
     if (!message || (eventStatus !== "delivered" && eventStatus !== "failed")) {
@@ -160,7 +156,7 @@ export const handleMessageStatus = async (
       conversationId: message.conversationId,
       action: button.postback,
       ref: null,
-      inboxId: ctx.inbox.id,
+      contactInboxId: contactInbox.id,
       webhookType: IntegrationJobAction.messageStatus,
     })
   } catch (error) {

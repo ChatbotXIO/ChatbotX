@@ -62,7 +62,5 @@ export const privateFlowsAPI = {
         eventType: input.eventType,
         nodeId: input.nodeId,
       })
-    }),
+    })
 }
-
-export default privateFlowsAPI

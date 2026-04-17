@@ -108,7 +108,7 @@ const NodeEditorMenu = memo(
   }) => {
     const t = useTranslations()
     const inboxes = useInboxStore((s) => s.inboxes)
-    const templates = useFlowTemplate((s) => s.templates)
+    const whatsappTemplates = useFlowTemplate((s) => s.whatsappTemplates)
     const beforeStep = useWatch({ name: "beforeStep" })
 
     const [nodeMenus, setNodeMenus] = useState<MenuItem[]>([])
@@ -116,11 +116,11 @@ const NodeEditorMenu = memo(
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
-        setNodeMenus(nodeConfig.menus(t, { inboxes, templates, beforeStep }))
+        setNodeMenus(nodeConfig.menus(t, { inboxes, templates: { waTemplates: whatsappTemplates }, beforeStep }))
       } else {
         setNodeMenus([])
       }
-    }, [nodeType, t, inboxes, templates, beforeStep])
+    }, [nodeType, t, inboxes, whatsappTemplates, beforeStep])
 
     return (
       nodeMenus.length > 0 && (

@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   startFlowNodeDefaultFn,
   startFlowNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -11,7 +11,7 @@ const startFlowNodeConfig = (t: TranslationFn) => ({
   icon: ExternalLinkIcon,
   label: t("flows.actions.startFlow"),
   menus: () => [],
-  type: NodeType.startFlow,
+  type: nodeTypeSchema.enum.startFlow,
   validator: startFlowNodeSchema,
 })
 

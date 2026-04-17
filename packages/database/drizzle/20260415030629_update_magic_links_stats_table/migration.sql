@@ -1,2 +1,0 @@
-ALTER TABLE "MagicLinkStat" DROP CONSTRAINT "MagicLinkStat_workspaceId_linkId_contactInboxId_occurredAt_idx";--> statement-breakpoint
-CREATE INDEX "MagicLinkStat_workspaceId_linkId_occurredAt_idx" ON "MagicLinkStat" ("workspaceId","linkId","occurredAt");

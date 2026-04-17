@@ -8,11 +8,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const startFlowNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.startFlow),
+  type: z.literal(nodeTypeSchema.enum.startFlow),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: startExternalFlowStepSchema,
@@ -25,7 +25,7 @@ export const startFlowNodeDefaultFn = (
   props: DefaultNodeProps,
 ): StartFlowNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.startFlow,
+  type: nodeTypeSchema.enum.startFlow,
   ...props.nodeProps,
   data: {
     name: "Start Flow",

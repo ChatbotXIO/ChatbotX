@@ -25,29 +25,33 @@ export const deleteFlowAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
+      const deletedFlows = await db.query.flowModel.findMany({
+        where: {
+          workspaceId,
+          id: {
+            in: parsedInput.ids,
+          },
+        },
+      })
+      if (deletedFlows.length === 0) {
+        return
+      }
+
+      const deletedFlowIds = deletedFlows.map((flow) => flow.id)
+
       await db.transaction(async (tx) => {
         await tx
           .delete(flowModel)
-          .where(
-            and(
-              eq(flowModel.workspaceId, workspaceId),
-              inArray(flowModel.id, parsedInput.ids),
-            ),
-          )
+          .where(inArray(flowModel.id, deletedFlowIds))
 
         await tx
           .update(flowAnalyticsSessionModel)
           .set({
-            deletedAt: sql`CURRENT_TIMESTAMP`,
+            deletedAt: new Date(),
           })
           .where(
-            and(
-              eq(flowAnalyticsSessionModel.workspaceId, workspaceId),
-              inArray(flowAnalyticsSessionModel.flowId, parsedInput.ids),
-            ),
+                    inArray(flowAnalyticsSessionModel.flowId, deletedFlowIds),
           )
       })
-
-      revalidateCacheTags(`workspaces:${workspaceId}#flows`)
     },
   )

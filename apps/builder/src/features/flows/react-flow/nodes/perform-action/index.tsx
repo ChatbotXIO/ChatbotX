@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   performActionNodeDefaultFn,
   performActionNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -12,7 +12,7 @@ const performActionNodeConfig = (t: TranslationFn) => ({
   icon: ZapIcon,
   label: t("flows.actions.performAction"),
   menus: performActionMenus,
-  type: NodeType.performAction,
+  type: nodeTypeSchema.enum.performAction,
   validator: performActionNodeSchema,
 })
 

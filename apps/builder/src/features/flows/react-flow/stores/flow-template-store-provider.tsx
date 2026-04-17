@@ -8,19 +8,12 @@ import {
   useRef,
 } from "react"
 import { useStore } from "zustand"
-import type { FlowTemplateMenuData } from "../nodes/types"
 import {
   createFlowTemplateStore,
   type FlowTemplateStore,
 } from "./flow-template-store"
 
-export type {
-  FlowTemplateResource,
-  WhatsappMessageTemplateResource,
-} from "@/features/integration-whatsapp/message-templates/schema/resource"
-
-export type FlowTemplateStoreApi = ReturnType<typeof createFlowTemplateStore>
-
+type FlowTemplateStoreApi = ReturnType<typeof createFlowTemplateStore>
 const FlowActionContext = createContext<FlowTemplateStoreApi | undefined>(
   undefined,
 )
@@ -28,24 +21,18 @@ const FlowActionContext = createContext<FlowTemplateStoreApi | undefined>(
 export type FlowTemplateProviderProps = {
   children: ReactNode
   workspaceId: string
-  templates?: FlowTemplateMenuData
-  beforeStep?: { channel?: string; [key: string]: unknown }
   autoInitialize?: boolean
 }
 
 export function FlowTemplateStoreProvider({
   children,
   workspaceId,
-  templates,
-  beforeStep,
   autoInitialize = true,
 }: FlowTemplateProviderProps) {
   const storeRef = useRef<FlowTemplateStoreApi>(null)
   if (!storeRef.current) {
     storeRef.current = createFlowTemplateStore({
       workspaceId,
-      templates,
-      beforeStep,
     })
   }
 

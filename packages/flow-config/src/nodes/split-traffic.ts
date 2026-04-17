@@ -8,11 +8,11 @@ import {
   baseNodeSchema,
   type DefaultNodeProps,
   defaultNodeData,
-  NodeType,
+  nodeTypeSchema,
 } from "./base"
 
 export const splitTrafficNodeSchema = baseNodeSchema.extend({
-  type: z.literal(NodeType.splitTraffic),
+  type: z.literal(nodeTypeSchema.enum.splitTraffic),
   data: baseNodeDataSchema.extend({
     details: z.object({
       beforeStep: splitTrafficStepSchema,
@@ -26,7 +26,7 @@ export const splitTrafficNodeDefaultFn = (
   props: DefaultNodeProps,
 ): SplitTrafficNodeSchema => ({
   ...defaultNodeData(),
-  type: NodeType.splitTraffic,
+  type: nodeTypeSchema.enum.splitTraffic,
   ...props.nodeProps,
   data: {
     name: "Split Traffic",

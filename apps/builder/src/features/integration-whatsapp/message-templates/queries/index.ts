@@ -1,68 +1,34 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type { ListMessageTemplatesRequest } from "@/features/integration-whatsapp/message-templates/schema/query"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { db, type DatabaseClient } from "@chatbotx.io/database/client"
+import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
+import type { WhatsappTemplateStatus } from "@chatbotx.io/database/partials"
 
-export const getMessageTemplates = async (
-  input: ListMessageTemplatesRequest,
-) => {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+export const whatsappMessageTemplateService = {
+  list: (props: {
+    tx?: DatabaseClient
+    where: {
+      workspaceId: string
+      inboxId?: string
+      integrationWhatsappId?: string
+      status?: WhatsappTemplateStatus
+    }
+  }): Promise<ListWhatsappMessageTemplatesResponse> => {
+    const { tx = db, where } = props
 
-  if (input.id) {
-    const integrationWhatsapp = await findOrFail({
-      table: integrationWhatsappModel,
-      where: {
-        workspaceId: input.workspaceId,
-        id: input.id,
+    const queryWhere = {
+      status: where.status,
+      integrationWhatsappId: where.integrationWhatsappId,
+      integrationWhatsapp: {
+        workspaceId: where.workspaceId,
+        inboxId: where.inboxId,
       },
-      message: "Whatsapp integration not found",
-    })
+    }
 
-    return await db.query.whatsappMessageTemplateModel.findMany({
-      where: {
-        integrationWhatsappId: integrationWhatsapp.id,
+    return tx.query.whatsappMessageTemplateModel.findMany({
+      where: queryWhere,
+      with: {
+        integrationWhatsapp: true,
       },
       orderBy: { createdAt: "asc" },
     })
-  }
-
-  return await db.query.whatsappMessageTemplateModel.findMany({
-    where: {
-      integrationWhatsapp: {
-        workspaceId: input.workspaceId,
-      },
-    },
-    orderBy: { createdAt: "asc" },
-  })
-}
-
-export const getTemplatesForChatbot = async (
-  workspaceId: string,
-  status?: string,
-) => {
-  await assertCurrentUserCanAccessChatbot(workspaceId)
-
-  const filter: {
-    integrationWhatsapp: { workspaceId: string }
-    status?: string
-  } = {
-    integrationWhatsapp: { workspaceId },
-  }
-
-  if (status) {
-    filter.status = status
-  }
-
-  return await db.query.whatsappMessageTemplateModel.findMany({
-    where: filter,
-    orderBy: { name: "asc" },
-    with: {
-      integrationWhatsapp: {
-        columns: {
-          id: true,
-          inboxId: true,
-        },
-      },
-    },
-  })
+  },
 }

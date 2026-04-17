@@ -6,7 +6,6 @@ import {
   contactsOnBroadcastsModel,
 } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -76,5 +75,5 @@ export const resendBroadcast = async (ctx: {
     return newBroadcast
   })
 
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#broadcasts`)
+  return broadcast
 }

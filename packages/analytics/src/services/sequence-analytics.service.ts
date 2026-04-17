@@ -4,9 +4,9 @@ import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  FlowEventType,
+  flowEventTypeSchema,
   type MessageDeliveredPayload,
-  MessageEventType,
+  messageEventTypeSchema,
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
@@ -166,7 +166,7 @@ export class SequenceAnalyticsService {
         workspace_id: payload.context.workspaceId,
         contact_inbox_id: (payload.metadata as { contactInboxId: string })
           .contactInboxId,
-        event_type: MessageEventType["message:delivered"],
+        event_type: messageEventTypeSchema.enum["message:delivered"],
         sequence_id: (payload.metadata as { sequenceId: string }).sequenceId,
         step_id: (payload.metadata as { sequenceStepId: string })
           .sequenceStepId,
@@ -228,7 +228,7 @@ export class SequenceAnalyticsService {
           .sequenceStepId,
         contact_inbox_id: (payload.metadata as { contactInboxId: string })
           .contactInboxId,
-        event_type: MessageEventType["message:failed"],
+        event_type: messageEventTypeSchema.enum["message:failed"],
         occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
         inserted_at: toClickHouseDateTime(new Date()),
       }))
@@ -262,7 +262,7 @@ export class SequenceAnalyticsService {
           .sequenceStepId,
         contact_inbox_id: (payload.metadata as { contactInboxId: string })
           .contactInboxId,
-        event_type: MessageEventType["message:delivered"],
+        event_type: messageEventTypeSchema.enum["message:delivered"],
         occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
         inserted_at: toClickHouseDateTime(new Date()),
       }))
@@ -343,7 +343,7 @@ export class SequenceAnalyticsService {
             sequence_id: s.sequenceId,
             step_id: s.stepId,
             contact_inbox_id: s.contactInboxId,
-            event_type: MessageEventType["message:seen"],
+            event_type: messageEventTypeSchema.enum["message:seen"],
             occurred_at: occurredAt,
             inserted_at: toClickHouseDateTime(new Date()),
           }
@@ -392,7 +392,7 @@ export class SequenceAnalyticsService {
             sequenceStepsMap.get(payload.action.sequenceStepId ?? "") ?? "",
           step_id: payload.action.sequenceStepId || "",
           contact_inbox_id: payload.context.contactInboxId ?? "",
-          event_type: FlowEventType["flow:clicked"],
+          event_type: flowEventTypeSchema.enum["flow:clicked"],
           occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
           inserted_at: toClickHouseDateTime(new Date()),
         }),

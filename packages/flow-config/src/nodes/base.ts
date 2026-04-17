@@ -1,18 +1,18 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const NodeType = {
-  sendMessage: "N01",
-  startFlow: "N02",
-  performAction: "N03",
-  condition: "N04",
-  sendMail: "N05",
-  splitTraffic: "N06",
-  wait: "N07",
-  landingPage: "N08",
-  addNotes: "N09",
-} as const
-export type NodeType = (typeof NodeType)[keyof typeof NodeType]
+export const nodeTypeSchema = z.enum([
+  "sendMessage",
+  "startFlow",
+  "performAction",
+  "condition",
+  "sendMail",
+  "splitTraffic",
+  "wait",
+  "landingPage",
+  "addNotes",
+])
+export type NodeType = z.infer<typeof nodeTypeSchema>
 
 export type NewNodeProps = {
   id?: string

@@ -4,10 +4,10 @@ import {
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import type { MessageEvenTypeMap } from "@chatbotx.io/event-bus"
-import { MessageEventType } from "@chatbotx.io/flow-config"
+import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 
 export const messageListeners: Partial<MessageEvenTypeMap> = {
-  [MessageEventType["message:sent"]]: [
+  [messageEventTypeSchema.enum["message:sent"]]: [
     {
       name: "broadcast-stats",
       handler: broadcastAnalyticsService.onMessageSent.bind(
@@ -25,7 +25,7 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       handler: flowAnalyticsService.onMessageSent.bind(flowAnalyticsService),
     },
   ],
-  [MessageEventType["message:failed"]]: [
+  [messageEventTypeSchema.enum["message:failed"]]: [
     {
       name: "broadcast-stats",
       handler: broadcastAnalyticsService.onFailed.bind(
@@ -41,7 +41,7 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       handler: flowAnalyticsService.onMessageFailed.bind(flowAnalyticsService),
     },
   ],
-  [MessageEventType["message:delivered"]]: [
+  [messageEventTypeSchema.enum["message:delivered"]]: [
     {
       name: "broadcast-stats",
       handler: broadcastAnalyticsService.onDelivered.bind(
@@ -60,7 +60,7 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
         flowAnalyticsService.onMessageDelivered.bind(flowAnalyticsService),
     },
   ],
-  [MessageEventType["message:seen"]]: [
+  [messageEventTypeSchema.enum["message:seen"]]: [
     {
       name: "broadcast-stats",
       handler: broadcastAnalyticsService.onSeen.bind(broadcastAnalyticsService),

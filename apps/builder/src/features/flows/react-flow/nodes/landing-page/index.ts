@@ -1,7 +1,7 @@
 import {
   landingPageNodeDefaultFn,
   landingPageNodeSchema,
-  NodeType,
+  nodeTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { AppWindowIcon } from "lucide-react"
 import type { TranslationFn } from "../types"
@@ -13,7 +13,7 @@ export default function landingPageNodeConfig(t: TranslationFn) {
     icon: AppWindowIcon,
     label: t("actions.landingPage"),
     menus: landingPageEditorMenus,
-    type: NodeType.landingPage,
+    type: nodeTypeSchema.enum.landingPage,
     validator: landingPageNodeSchema,
   }
 }

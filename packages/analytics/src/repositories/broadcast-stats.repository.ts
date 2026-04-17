@@ -1,7 +1,6 @@
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { db, isNotNull, or, sql } from "@chatbotx.io/database/client"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
-import { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import type {
   BroadcastBulkUpdateItem,
   BroadcastEventType,
@@ -11,6 +10,7 @@ import type {
 import type { ContactEventData } from "../schemas/common"
 import type { ClickHouseStatsRow } from "../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
+import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
 
 export class BroadcastStatsRepository extends BaseRepository {
   async updateFailedBulk(
@@ -74,8 +74,8 @@ export class BroadcastStatsRepository extends BaseRepository {
     broadcastId: string
   }): Promise<BroadcastStats> {
     const eventTypes = [
-      ...Object.values(MessageEventType),
-      ...Object.values(FlowEventType),
+      ...messageEventTypeSchema.options,
+      ...flowEventTypeSchema.options,
     ]
     const sql = `
       SELECT
@@ -105,19 +105,19 @@ export class BroadcastStatsRepository extends BaseRepository {
     for (const row of rows) {
       const count = Number.parseInt(row.count, 10)
       switch (row.event_type) {
-        case MessageEventType["message:sent"]:
+        case messageEventTypeSchema.enum["message:sent"]:
           stats["message:delivered"] = count
           break
-        case MessageEventType["message:delivered"]:
+        case messageEventTypeSchema.enum["message:delivered"]:
           stats["message:delivered"] = count
           break
-        case MessageEventType["message:seen"]:
+        case messageEventTypeSchema.enum["message:seen"]:
           stats["message:seen"] = count
           break
-        case FlowEventType["flow:clicked"]:
+        case flowEventTypeSchema.enum["flow:clicked"]:
           stats["flow:clicked"] = count
           break
-        case MessageEventType["message:failed"]:
+        case messageEventTypeSchema.enum["message:failed"]:
           stats["message:failed"] = count
           break
         default:

@@ -1,5 +1,5 @@
-import privateAPIs from "./private"
+import {whatsappMessageTemplateInternalAPIs} from "./private"
 
 export const whatsappMessageTemplateAPIs = {
-  ...privateAPIs,
+  ...whatsappMessageTemplateInternalAPIs,
 }
