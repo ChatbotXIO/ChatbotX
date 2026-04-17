@@ -2,10 +2,14 @@ import {
   createSelectSchema,
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import type { z } from "zod"
 
 export const integrationWebchatResource = createSelectSchema(
-  integrationWebchatModel,
+  integrationWebchatModel, {
+    id: zodBigintAsString(),
+    inboxId: zodBigintAsString(),
+  }
 ).pick({
   id: true,
   name: true,

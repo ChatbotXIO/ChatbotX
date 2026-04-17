@@ -31,9 +31,8 @@ export const unarchiveConversationAction = workspaceActionClient
             in: parsedInput.ids,
           },
         },
-        columns: {
-          id: true,
-          channel: true,
+        with: {
+          contactInboxes: true,
         },
       })
 
@@ -50,13 +49,14 @@ export const unarchiveConversationAction = workspaceActionClient
         )
 
       for (const conv of conversations) {
-        await conversationTrackingService.trackEvent(
+        for (const contactInbox of conv.contactInboxes) {
+          await conversationTrackingService.trackEvent(
           {
             workspaceId,
             conversationId: conv.id,
             eventType: "conversation_unarchived",
             eventId: createId(),
-            channel: "webchat", // TODO: replace correct channel from contact inbox
+            channel: contactInbox.channel,
             occurredAt: new Date(),
             metadata: {
               triggerContext: {
@@ -68,6 +68,7 @@ export const unarchiveConversationAction = workspaceActionClient
           },
           { skipSpooler: true },
         )
+        }
       }
 
       revalidateCacheTags(`workspaces:${workspaceId}#conversations`)

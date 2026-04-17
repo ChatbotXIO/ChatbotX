@@ -8,8 +8,12 @@ import type {
   IntegrationWhatsappModel,
   IntegrationZaloModel,
 } from "@chatbotx.io/database/types"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 
-export const inboxResource = createSelectSchema(inboxModel)
+export const inboxResource = createSelectSchema(inboxModel, {
+  id: zodBigintAsString(),
+  workspaceId: zodBigintAsString(),
+})
 
 export type InboxResource = InboxModel & {
   integrationWhatsapp?: IntegrationWhatsappModel

@@ -272,7 +272,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
 
   const onCopyStep = (index: number) => {
     // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic field path
-    const values = getValues(`details.steps.${index}` as any)
+    const values = getValues(`steps.${index}` as any)
     if (values) {
       insertStep(index + 1, replaceIds(values))
     }

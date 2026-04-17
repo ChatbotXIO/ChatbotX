@@ -31,7 +31,7 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
-import { type UpdateInstagramRequest, updateInstagramRequest } from "../schemas"
+import { type UpdateInstagramRequest, updateInstagramRequest } from "../schemas/action"
 
 export const updateInstagramAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)

@@ -1,4 +1,4 @@
-import type { FlowNode, NodeType } from "@chatbotx.io/flow-config"
+import { disabledContinueNodeTypes, type FlowNode, type NodeType } from "@chatbotx.io/flow-config"
 import {
   Card,
   CardContent,
@@ -76,7 +76,7 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
               <ButtonStepViewer data={quickReplyItem} key={quickReplyItem.id} />
             ))}
 
-          {!data.ignoreContinue && (
+          {!disabledContinueNodeTypes.includes(type) && (
             <div className="relative w-full text-right">
               <span className="mr-4">{t("actions.continue")}</span>
               <BaseHandle id={id} position={Position.Right} type="source" />

@@ -8,6 +8,7 @@ export const integrationZaloResource = createSelectSchema(
   integrationZaloModel,
   {
     id: z.string(),
+    inboxId: z.string(),
   },
 ).pick({
   id: true,

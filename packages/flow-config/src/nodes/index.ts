@@ -8,6 +8,7 @@ import { sendMessageNodeSchema } from "./send-message"
 import { splitTrafficNodeSchema } from "./split-traffic"
 import { startFlowNodeSchema } from "./start-flow"
 import { waitNodeSchema } from "./wait"
+import { nodeTypeSchema, type NodeType } from "./base"
 
 export const flowVersionSchema = z.union([
   sendMessageNodeSchema,
@@ -31,3 +32,5 @@ export const edgeSchema = z.object({
 export type EdgeSchema = z.infer<typeof edgeSchema>
 
 export type FlowNode = Node<FlowVersionSchema["data"]>
+
+export const disabledContinueNodeTypes = [nodeTypeSchema.enum.splitTraffic] as NodeType[]

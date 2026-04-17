@@ -21,7 +21,7 @@ import { getDomainFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
-import { type SelectAccountRequest, selectAccountRequest } from "../schemas"
+import { type SelectAccountRequest, selectAccountRequest } from "../schemas/action"
 
 export const selectAccountAction = authActionClient
   .inputSchema(selectAccountRequest)

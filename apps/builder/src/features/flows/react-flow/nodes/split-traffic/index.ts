@@ -1,5 +1,5 @@
 import {
-  NodeType,
+  nodeTypeSchema,
   splitTrafficNodeDefaultFn,
   splitTrafficNodeSchema,
 } from "@chatbotx.io/flow-config"
@@ -12,7 +12,7 @@ const splitTrafficNodeConfig = (t: TranslationFn) => ({
   icon: ShuffleIcon,
   label: t("flows.actions.splitTraffic"),
   menus: splitTrafficEditorMenus,
-  type: NodeType.splitTraffic,
+  type: nodeTypeSchema.enum.splitTraffic,
   validator: splitTrafficNodeSchema,
 })
 

@@ -84,7 +84,9 @@ export const assignConversationAction = workspaceActionClient
             in: parsedInput.contactIds,
           },
         },
-        columns: { id: true, contactId: true, channel: true },
+        with: {
+          contactInboxes: true,
+        }
       })
       const conversationIds = conversations.map((c) => c.id)
       if (conversationIds.length === 0) {
@@ -123,7 +125,8 @@ export const assignConversationAction = workspaceActionClient
         updatedData.assignedUserId || updatedData.assignedInboxTeamId
       if (toAssignee) {
         for (const conv of conversations) {
-          await conversationTrackingService.trackEvent(
+          for (const contactInbox of conv.contactInboxes) {
+            await conversationTrackingService.trackEvent(
             {
               workspaceId,
               conversationId: conv.id,
@@ -131,7 +134,7 @@ export const assignConversationAction = workspaceActionClient
               eventId: createId(),
               toAssignee,
               occurredAt: new Date(),
-              channel: "webchat", // TODO: replace correct channel from contact inbox
+              channel: contactInbox.channel,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",
@@ -142,17 +145,19 @@ export const assignConversationAction = workspaceActionClient
             },
             { skipSpooler: true },
           )
+          }
         }
       } else {
         for (const conv of conversations) {
-          await conversationTrackingService.trackEvent(
+          for (const contactInbox of conv.contactInboxes) {
+            await conversationTrackingService.trackEvent(
             {
               workspaceId,
               conversationId: conv.id,
               eventType: "conversation_unassigned",
               eventId: createId(),
               occurredAt: new Date(),
-              channel: "webchat", // TODO: replace correct channel from contact inbox
+              channel: contactInbox.channel,
               metadata: {
                 triggerContext: {
                   triggerSource: "api",
@@ -163,6 +168,7 @@ export const assignConversationAction = workspaceActionClient
             },
             { skipSpooler: true },
           )
+          }
         }
       }
 

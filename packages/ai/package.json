@@ -10,14 +10,14 @@
     "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/anthropic": "^3.0.71",
     "@ai-sdk/deepseek": "^2.0.29",
-    "@ai-sdk/google": "^3.0.63",
+    "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/openai": "^3.0.53",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "ai": "^6.0.162",
+    "ai": "^6.0.168",
     "ky": "^2.0.1",
     "mime-types": "^3.0.2",
     "universal-error-normalizer": "^1.0.0",
@@ -26,6 +26,6 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/mime-types": "^3.0.1",
-    "typescript": "^6.0.2"
+    "typescript": "^5"
   }
 }

@@ -31,7 +31,6 @@ export const splitTrafficNodeDefaultFn = (
   data: {
     name: "Split Traffic",
     isStartNode: false,
-    ignoreContinue: true,
     ...props.dataProps,
     details: {
       steps: [splitTrafficStepDefaultFn()],

@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "6.0.2"
+    "typescript": "^5"
   },
   "exports": {
     ".": "./src/index.ts",

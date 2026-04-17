@@ -79,6 +79,7 @@ async function splitTraffic({
   flowVersion,
   step,
   targetId,
+  useLatestFlowVersion,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -96,7 +97,7 @@ async function splitTraffic({
     }
   }
 
-  const sourceHandle = `${targetId}-case-${selectedIndex}`
+  const sourceHandle    = `${targetId}-case-${selectedIndex}`
   const edges = (flowVersion.edges as EdgeSchema[]) ?? []
   const connectedEdge = edges.find((edge) => edge.sourceHandle === sourceHandle)
 
@@ -106,7 +107,7 @@ async function splitTraffic({
       data: {
         conversationId: conversation.id,
         flowId: flowVersion.flowId,
-        flowVersionId: flowVersion.id,
+        flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: connectedEdge.target,
       },
     })

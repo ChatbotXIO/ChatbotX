@@ -3,14 +3,17 @@ import { createStore } from "zustand/vanilla"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { maxPerPageString } from "@/lib/shared-request"
 import type { InboxResource } from "../schema/resource"
+import { client } from "@/lib/orpc/orpc"
+import type { ListInboxesResponse } from "../schema/action"
 
 export type InboxState = {
-  loading: boolean
   error: string | null
   initialized: boolean
 
   workspaceId: string
-  inboxes: InboxResource[]
+
+  loadingInboxes: boolean
+  inboxes: ListInboxesResponse["data"]
 }
 
 export type InboxActions = {
@@ -22,12 +25,14 @@ export type InboxStore = InboxState & InboxActions
 
 export const createInboxStore = (props: Partial<InboxState>) =>
   createStore<InboxStore>((set, get) => ({
-    loading: false,
     error: null,
     initialized: false,
 
     workspaceId: "",
+
+    loadingInboxes: false,
     inboxes: [],
+
     ...props,
 
     initialize: async () => {
@@ -52,22 +57,26 @@ export const createInboxStore = (props: Partial<InboxState>) =>
     },
 
     getAllInboxes: async () => {
-      const { workspaceId, loading } = get()
+      const { workspaceId, loadingInboxes } = get()
 
-      if (loading || !workspaceId) {
+      if (loadingInboxes || !workspaceId) {
         return
       }
-      set({ loading: true, error: null })
+      set({ loadingInboxes: true, error: null })
       try {
-        const searchParams = new URLSearchParams({
-          integration: "true",
+        const { data } = await client.inboxesAPI.listInboxesAuthenticatedAPI({
+          workspaceId,
+          includes: ["integration"],
           perPage: maxPerPageString,
+          sort: {
+            createdAt: "desc",
+          },
         })
-        const { data } = await ky
-          .get<PaginatedResponse<InboxResource>>(
-            `/api/workspaces/${workspaceId}/inboxes?${searchParams.toString()}`,
-          )
-          .json()
+        //  ky
+        //   .get<PaginatedResponse<InboxResource>>(
+        //     `/api/workspaces/${workspaceId}/inboxes?${searchParams.toString()}`,
+        //   )
+        //   .json()
 
         set({ inboxes: data })
       } catch (error: unknown) {
@@ -78,7 +87,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
               : "Failed to fetch inboxes",
         })
       } finally {
-        set({ loading: false })
+        set({ loadingInboxes: false })
       }
     },
   }))

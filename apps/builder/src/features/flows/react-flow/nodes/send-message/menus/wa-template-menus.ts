@@ -1,12 +1,12 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { MessageSquareIcon } from "lucide-react"
-import type { InboxResource } from "@/features/inboxes/schema/resource"
 import type { MenuData, MenuItem, TranslationFn } from "../../types"
+import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 
 export const waTemplateMenus = (
   t: TranslationFn,
   menuData?: MenuData,
-  inbox?: InboxResource,
+  inbox?: ListInboxesResponse["data"][number],
 ): MenuItem[] => {
   let templates = menuData?.templates.waTemplates ?? []
 

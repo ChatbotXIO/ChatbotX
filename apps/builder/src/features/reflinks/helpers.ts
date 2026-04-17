@@ -3,6 +3,7 @@
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { env } from "@/env"
 import type { InboxResource } from "../inboxes/schema/resource"
+import type { ListInboxesResponse } from "../inboxes/schema/action"
 
 const buildUrlWithParam = (
   baseUrl: string,
@@ -23,7 +24,7 @@ const buildUrlWithParam = (
 // Viber: viber://pa?chatURI=BOT_USERNAME&context=giveaway
 // WebChat: https://builder.example.com:3123/webchat?workspaceId=...&webchatId=...&ref=...
 export const getInboxLink = (props: {
-  inbox: InboxResource
+  inbox: ListInboxesResponse["data"][number]
   reflinkData?: string
 }): string => {
   const { inbox, reflinkData } = props
@@ -42,11 +43,9 @@ export const getInboxLink = (props: {
         reflinkData,
       )
     case "whatsapp": {
-      const phoneNumber = (
-        inbox.integrationWhatsapp?.auth as WhatsappAuthValue | undefined
-      )?.metadata?.phoneNumber?.display_phone_number
+      const phoneNumber = inbox.integrationWhatsapp?.name ?? ""
       return buildUrlWithParam(
-        `https://wa.me/${phoneNumber ?? ""}`,
+        `https://wa.me/${phoneNumber}`,
         "text",
         reflinkData ? `/${reflinkData}` : undefined,
       )

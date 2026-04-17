@@ -8,8 +8,8 @@
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "19.2.14",
-    "react-email": "5.2.10",
-    "typescript": "6.0.2"
+    "react-email": "6.0.0",
+    "typescript": "^5"
   },
   "dependencies": {
     "@react-email/components": "1.0.12",

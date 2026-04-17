@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { InboxResource } from "@/features/inboxes/schema/resource"
 import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
+import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 
 export type MenuItem = {
   label: string
@@ -23,7 +24,7 @@ export type FlowTemplateMenuData = {
 }
 
 export type MenuData = {
-  inboxes: InboxResource[]
+  inboxes: ListInboxesResponse["data"]
   templates: FlowTemplateMenuData
   beforeStep: ChooseChannelStepSchema
 }

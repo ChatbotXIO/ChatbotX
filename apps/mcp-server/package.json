@@ -24,7 +24,7 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^25.4.0",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "0.21.8",
-    "typescript": "^6.0.2"
+    "tsdown": "0.21.9",
+    "typescript": "^5"
   }
 }

@@ -31,7 +31,7 @@
     "@types/react-dom": "19.2.3",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
-    "typescript": "6.0.2"
+    "typescript": "^5"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",

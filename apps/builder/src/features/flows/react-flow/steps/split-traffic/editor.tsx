@@ -6,7 +6,7 @@ import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { Slider } from "@chatbotx.io/ui/components/ui/slider"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { type FieldError, useFieldArray, useFormContext } from "react-hook-form"
+import { type FieldError, useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { ErrorAlert } from "../error-alert"
 
 type SplitTrafficStepEditorProps = {
@@ -25,7 +25,7 @@ const SplitTrafficStepEditor = ({
     name: `${parentName}.cases`,
   })
 
-  const cases = watch(`${parentName}.cases`)
+  const cases = useWatch({ control, name: `${parentName}.cases` })
   const casesFieldState = getFieldState(`${parentName}.cases`, formState)
 
   const errorMessage = (
@@ -60,7 +60,7 @@ const SplitTrafficStepEditor = ({
       <div className="flex flex-col items-center">
         <div className="flex items-center gap-2 text-base text-muted-foreground">
           {errorMessage && <ErrorAlert message={errorMessage} />}
-          {t("flows.stepTypes.splitTraffic")}
+          {t("flows.actions.splitTraffic")}
         </div>
         <div className="text-base text-muted-foreground">
           {t("flows.splitTraffic.balanceHint")}

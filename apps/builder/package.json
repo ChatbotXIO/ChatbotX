@@ -14,13 +14,14 @@
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.36",
-    "@better-auth/stripe": "^1.6.4",
+    "@better-auth/stripe": "^1.6.5",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/events": "workspace:*",
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
@@ -36,7 +37,6 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
-    "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/scheduler": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
@@ -70,7 +70,7 @@
     "@tiptap/suggestion": "^3.22.3",
     "@types/html-to-text": "^9.0.4",
     "@xyflow/react": "^12.10.2",
-    "better-auth": "^1.6.4",
+    "better-auth": "^1.6.5",
     "class-variance-authority": "^0.7.1",
     "countries-and-timezones": "^3.9.0",
     "countries-list": "^3.3.0",
@@ -102,7 +102,7 @@
     "recharts": "^3.8.1",
     "remeda": "^2.33.7",
     "sonner": "^2.0.7",
-    "stripe": "^22.0.1",
+    "stripe": "^22.0.2",
     "swr": "^2.4.1",
     "tippy.js": "^6.3.7",
     "universal-error-normalizer": "^1.0.0",
@@ -112,7 +112,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1030.0",
+    "@aws-sdk/client-s3": "^3.1031.0",
     "@chatbotx.io/typescript-config": "workspace:*",
     "@lingual/i18n-check": "^0.9.3",
     "@tailwindcss/postcss": "^4.2.2",
@@ -129,6 +129,6 @@
     "postcss": "^8.5.10",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.2",
-    "typescript": "6.0.2"
+    "typescript": "^5"
   }
 }

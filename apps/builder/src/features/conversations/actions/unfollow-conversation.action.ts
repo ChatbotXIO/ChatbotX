@@ -26,9 +26,8 @@ export const unfollowConversation = async (ctx: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
     },
-    columns: {
-      id: true,
-      channel: true,
+    with: {
+      contactInboxes: true,
     },
   })
 
@@ -48,13 +47,14 @@ export const unfollowConversation = async (ctx: {
       ),
     )
 
-  await conversationTrackingService.trackEvent(
+  for (const contactInbox of conversation.contactInboxes) {
+    await conversationTrackingService.trackEvent(
     {
       workspaceId: ctx.workspaceId,
       conversationId: conversation.id,
       eventType: "conversation_unfollowed",
       eventId: createId(),
-      channel: "webchat", // TODO: replace correct channel from contact inbox
+      channel: contactInbox.channel,
       occurredAt: new Date(),
       metadata: {
         triggerContext: {
@@ -66,6 +66,7 @@ export const unfollowConversation = async (ctx: {
     },
     { skipSpooler: true },
   )
+  }
 
   revalidateCacheTags([
     `workspaces:${ctx.workspaceId}#contacts`,

@@ -94,7 +94,7 @@ integrations/<channel>/
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "typescript": "6.0.2"
+    "typescript": "^5"
   }
 }
 ```

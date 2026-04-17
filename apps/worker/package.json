@@ -23,16 +23,17 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.69",
+    "@ai-sdk/anthropic": "^3.0.71",
     "@ai-sdk/deepseek": "^2.0.29",
-    "@ai-sdk/google": "^3.0.63",
+    "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/openai": "^3.0.53",
-    "@aws-sdk/client-s3": "^3.1030.0",
+    "@aws-sdk/client-s3": "^3.1031.0",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/events": "workspace:*",
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
@@ -53,11 +54,10 @@
     "@chatbotx.io/utils": "workspace:*",
     "@chatbotx.io/variables": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
-    "@chatbotx.io/event-bus": "workspace:*",
     "@faker-js/faker": "^10.4.0",
     "@platformatic/kafka": "^1.33.0",
     "@t3-oss/env-core": "^0.13.11",
-    "ai": "^6.0.162",
+    "ai": "^6.0.168",
     "bullmq": "^5.74.1",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
@@ -84,6 +84,6 @@
     "@types/node": "^24.10.1",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "0.21.8"
+    "tsdown": "0.21.9"
   }
 }

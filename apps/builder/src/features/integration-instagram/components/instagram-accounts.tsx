@@ -14,7 +14,7 @@ import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { selectAccountAction } from "../actions/select-account.action"
 import type { InstagramAccount } from "../libs/facebook"
-import { selectAccountRequest } from "../schemas"
+import { selectAccountRequest } from "../schemas/action"
 
 export function InstagramAccounts({
   workspaceId,

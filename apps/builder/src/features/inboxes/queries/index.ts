@@ -3,7 +3,7 @@ import {
   db,
   relationsFilterToSQL,
 } from "@chatbotx.io/database/client"
-import { type ChannelType, inboxStatuses } from "@chatbotx.io/database/partials"
+import { type ChannelType, channelTypes, inboxStatuses } from "@chatbotx.io/database/partials"
 import { inboxModel } from "@chatbotx.io/database/schema"
 import type { InboxModel } from "@chatbotx.io/database/types"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
@@ -64,9 +64,12 @@ export async function listInboxes(
 ): Promise<PaginatedResponse<InboxResource>> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const where = {
+  const where  = {
     workspaceId: input.workspaceId,
     status: inboxStatuses.enum.connected,
+    channel: {
+      ne: channelTypes.enum.smtp,
+    }
   }
 
   const pagination = getPaginationWithDefaults(input)

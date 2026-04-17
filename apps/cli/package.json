@@ -32,8 +32,8 @@
     "@chatbotx.io/typescript-config": "workspace:*",
     "@types/yargs": "^17.0.35",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "0.21.8",
+    "tsdown": "0.21.9",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.2"
+    "typescript": "^5"
   }
 }
