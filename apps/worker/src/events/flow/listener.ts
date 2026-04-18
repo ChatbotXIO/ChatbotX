@@ -6,10 +6,10 @@ import {
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import type { FlowEvenTypeMap } from "@chatbotx.io/event-bus"
-import { FlowEventType } from "@chatbotx.io/flow-config"
+import { flowEventTypeSchema } from "@chatbotx.io/flow-config"
 
 export const flowListeners: Partial<FlowEvenTypeMap> = {
-  [FlowEventType["flow:clicked"]]: [
+  [flowEventTypeSchema.enum["flow:clicked"]]: [
     {
       name: "broadcast-stats",
       handler: broadcastAnalyticsService.onClicked.bind(
@@ -33,7 +33,7 @@ export const flowListeners: Partial<FlowEvenTypeMap> = {
       ),
     },
   ],
-  [FlowEventType["flow:ref"]]: [
+  [flowEventTypeSchema.enum["flow:ref"]]: [
     {
       name: "ref-link-stats",
       handler: refLinkAnalyticsService.handler.bind(refLinkAnalyticsService),
