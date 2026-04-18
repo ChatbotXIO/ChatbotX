@@ -43,7 +43,7 @@ export const useConfiguredInboxTypeOptions = () => {
     for (const inbox of inboxes) {
       setOfInboxTypes.add(inbox.channel)
     }
-      setInboxTypes(Array.from(setOfInboxTypes))
+    setInboxTypes(Array.from(setOfInboxTypes))
   }, [inboxes])
 
   return useMemo(

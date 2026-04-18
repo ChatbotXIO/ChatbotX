@@ -17,7 +17,7 @@ class TelegramHttpClient {
       },
       hooks: {
         beforeError: [
-          ({error, request}) => {
+          ({ error, request }) => {
             if (isHTTPError(error)) {
               logger.error(
                 {

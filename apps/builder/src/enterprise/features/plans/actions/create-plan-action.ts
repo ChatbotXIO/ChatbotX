@@ -19,9 +19,7 @@ export const createPlanAction = organizationActionClient
     }: {
       ctx: { organization: OrganizationModel }
       parsedInput: CreatePlanRequest
-    }) => {
-      return await createPlan(ctx.organization, parsedInput)
-    },
+    }) => await createPlan(ctx.organization, parsedInput),
   )
 
 export const createPlan = async (

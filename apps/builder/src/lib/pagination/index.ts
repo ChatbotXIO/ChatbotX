@@ -7,18 +7,18 @@ export const basePaginationRequest = z.object({
   perPage: z.coerce.number().int().min(1).nullish(),
   sort: z.preprocess((val) => {
     if (val === undefined) {
-      return undefined
+      return
     }
 
     try {
       const value = JSON.parse(decodeURIComponent(`${val}`))
       const { success, data } = sortSchema.safeParse(value)
       if (!success) {
-        return undefined
+        return
       }
       return data
-    } catch (_error) {
-      return undefined
+    } catch {
+      return
     }
   }, sortSchema.nullish()),
 })

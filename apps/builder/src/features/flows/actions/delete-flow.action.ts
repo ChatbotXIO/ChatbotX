@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import { db, inArray } from "@chatbotx.io/database/client"
 import {
   flowAnalyticsSessionModel,
   flowModel,
@@ -11,7 +11,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteFlowAction = workspaceActionClient
@@ -40,18 +39,14 @@ export const deleteFlowAction = workspaceActionClient
       const deletedFlowIds = deletedFlows.map((flow) => flow.id)
 
       await db.transaction(async (tx) => {
-        await tx
-          .delete(flowModel)
-          .where(inArray(flowModel.id, deletedFlowIds))
+        await tx.delete(flowModel).where(inArray(flowModel.id, deletedFlowIds))
 
         await tx
           .update(flowAnalyticsSessionModel)
           .set({
             deletedAt: new Date(),
           })
-          .where(
-                    inArray(flowAnalyticsSessionModel.flowId, deletedFlowIds),
-          )
+          .where(inArray(flowAnalyticsSessionModel.flowId, deletedFlowIds))
       })
     },
   )

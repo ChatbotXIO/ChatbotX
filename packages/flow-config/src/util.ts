@@ -9,7 +9,7 @@ export const extractMetadata = (
   metadata?: { [key: string]: string },
 ): string | undefined => {
   if (!metadata) {
-    return undefined
+    return
   }
 
   return metadata[key] || undefined
@@ -24,20 +24,18 @@ export const buttonPayloadSchema = z
     ss: zodBigintAsString().optional(),
     cid: zodBigintAsString().optional(),
   })
-  .transform((data) => {
-    return {
-      flowId: data.f,
-      ...(data.fv ? { flowVersionId: data.fv } : {}),
-      ...(data.b ? { buttonId: data.b } : {}),
-      ...(data.br ? { broadcastId: data.br } : {}),
-      ...(data.ss ? { sequenceStepId: data.ss } : {}),
-      ...(data.cid ? { contactInboxId: data.cid } : {}),
-    }
-  })
+  .transform((data) => ({
+    flowId: data.f,
+    ...(data.fv ? { flowVersionId: data.fv } : {}),
+    ...(data.b ? { buttonId: data.b } : {}),
+    ...(data.br ? { broadcastId: data.br } : {}),
+    ...(data.ss ? { sequenceStepId: data.ss } : {}),
+    ...(data.cid ? { contactInboxId: data.cid } : {}),
+  }))
 export type ButtonPayload = z.infer<typeof buttonPayloadSchema>
 
-export const encodeButtonPayload = (props: ButtonPayload) => {
-  return btoa(
+export const encodeButtonPayload = (props: ButtonPayload) =>
+  btoa(
     JSON.stringify({
       f: props.flowId,
       fv: props.flowVersionId,
@@ -47,7 +45,6 @@ export const encodeButtonPayload = (props: ButtonPayload) => {
       cid: props.contactInboxId,
     }),
   )
-}
 
 export const decodeButtonPayload = (payload: string): ButtonPayload | null => {
   try {

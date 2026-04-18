@@ -51,16 +51,14 @@ export class MagicLinkAnalyticsService {
       return
     }
 
-    const items: MagicLinkStatModel[] = clickedPayloads.map((p) => {
-      return {
-        workspaceId: p.context.workspaceId,
-        linkId: p.action.magicLinkId ?? "",
-        contactId: p.context.contactId,
-        contactInboxId: p.context.contactInboxId ?? "",
-        occurredAt: startOfSecond(new Date(p.occurredAt)),
-        createdAt: new Date(),
-      }
-    })
+    const items: MagicLinkStatModel[] = clickedPayloads.map((p) => ({
+      workspaceId: p.context.workspaceId,
+      linkId: p.action.magicLinkId ?? "",
+      contactId: p.context.contactId,
+      contactInboxId: p.context.contactInboxId ?? "",
+      occurredAt: startOfSecond(new Date(p.occurredAt)),
+      createdAt: new Date(),
+    }))
 
     await Promise.all([
       db.insert(magicLinkStatModel).values(items).onConflictDoNothing(),

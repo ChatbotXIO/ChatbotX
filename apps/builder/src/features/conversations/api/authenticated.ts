@@ -22,9 +22,7 @@ export const conversationsAuthenticatedAPI = {
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
-    .handler(async ({ input }) => {
-      return await listConversations(input)
-    }),
+    .handler(async ({ input }) => await listConversations(input)),
 
   listConversationsByPOSTAuthenticatedAPI: authorizedAPI
     .route({
@@ -36,9 +34,7 @@ export const conversationsAuthenticatedAPI = {
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listConversationsResponse)
-    .handler(async ({ input }) => {
-      return await listConversations(input)
-    }),
+    .handler(async ({ input }) => await listConversations(input)),
 
   findConversationAuthenticatedAPI: authorizedAPI
     .route({
@@ -50,7 +46,5 @@ export const conversationsAuthenticatedAPI = {
     .input(findConversationRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(findConversationResponse)
-    .handler(async ({ input }) => {
-      return await findConversation(input)
-    }),
+    .handler(async ({ input }) => await findConversation(input)),
 }

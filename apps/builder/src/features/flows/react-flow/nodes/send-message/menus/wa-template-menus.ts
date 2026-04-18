@@ -1,7 +1,7 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
 import { MessageSquareIcon } from "lucide-react"
-import type { MenuData, MenuItem, TranslationFn } from "../../types"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
+import type { MenuData, MenuItem, TranslationFn } from "../../types"
 
 export const waTemplateMenus = (
   t: TranslationFn,

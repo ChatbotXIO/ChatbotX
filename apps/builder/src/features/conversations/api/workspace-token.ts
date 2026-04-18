@@ -17,12 +17,13 @@ export const conversationWorkspaceTokenAPIs = {
       }),
     )
     .output(listConversationsResponse)
-    .handler(async ({ context, input }) => {
-      return await listConversations({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listConversations({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 }
 
 export default conversationWorkspaceTokenAPIs

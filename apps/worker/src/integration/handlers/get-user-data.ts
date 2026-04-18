@@ -213,7 +213,7 @@ async function validateUserData(
         try {
           new URL(lastUserMessage.text)
           result.userInput = lastUserMessage.text
-        } catch (_err) {
+        } catch {
           result.errorMessage = "getUserData: invalid link"
         }
         return result

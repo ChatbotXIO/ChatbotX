@@ -3,8 +3,8 @@ import { emit } from "@chatbotx.io/event-bus"
 import {
   clickTypeSchema,
   decodeButtonPayload,
-  flowEventTypeSchema,
   type FlowNode,
+  flowEventTypeSchema,
   getNodeFromButton,
 } from "@chatbotx.io/flow-config"
 import { interpolate } from "@chatbotx.io/variables"
@@ -39,7 +39,10 @@ export const GET = async (
     return NextResponse.json({ message: "Invalid code" }, { status: 400 })
   }
   if (!decodedButton.contactInboxId) {
-    return NextResponse.json({ message: "Contact inbox ID is missing" }, { status: 400 })
+    return NextResponse.json(
+      { message: "Contact inbox ID is missing" },
+      { status: 400 },
+    )
   }
 
   const contactInbox = await db.query.contactInboxModel.findFirst({
@@ -86,7 +89,7 @@ export const GET = async (
       contactId: contactInbox.contactId,
       conversationId: contactInbox.conversation.id,
       channel: contactInbox.channel,
-      contactInboxId: decodedButton.contactInboxId ,
+      contactInboxId: decodedButton.contactInboxId,
     },
     action: {
       flowId: decodedButton.flowId,

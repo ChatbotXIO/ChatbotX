@@ -20,9 +20,7 @@ export const privateListChatbotTagsAPI = authorizedAPI
   .input(listTagsRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .output(listTagsResponse)
-  .handler(async ({ input }) => {
-    return await listTags(input)
-  })
+  .handler(async ({ input }) => await listTags(input))
 
 export const privateCreateChatbotTagAPI = authorizedAPI
   .route({

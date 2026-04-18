@@ -22,8 +22,8 @@ export const toCliCommands = <
     }
   >,
   execute: (commandName: TName, params: TParams) => Promise<void>,
-): Record<TName, CliCommand> => {
-  return Object.fromEntries(
+): Record<TName, CliCommand> =>
+  Object.fromEntries(
     (Object.keys(commands) as TName[]).map((commandName) => [
       commandName,
       {
@@ -34,7 +34,6 @@ export const toCliCommands = <
       },
     ]),
   ) as Record<TName, CliCommand>
-}
 
 export const validateCommandArgs = <TName extends string, TKey extends string>(
   commandName: TName,
@@ -57,7 +56,7 @@ export const parseBooleanEnv = (
   value: string | undefined,
 ): boolean | undefined => {
   if (!value) {
-    return undefined
+    return
   }
 
   const normalized = value.trim().toLowerCase()
@@ -70,5 +69,5 @@ export const parseBooleanEnv = (
     return false
   }
 
-  return undefined
+  return
 }

@@ -15,12 +15,13 @@ export const sequencesWorkspaceTokenAPIs = {
     })
     .input(basePaginationRequest)
     .output(listSequencesResponse)
-    .handler(async ({ context, input }) => {
-      return await listSequences({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listSequences({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   getSequenceWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
@@ -31,9 +32,10 @@ export const sequencesWorkspaceTokenAPIs = {
     })
     .input(z.object({ id: z.string() }))
     .output(sequenceResource)
-    .handler(async ({ context, input }) => {
-      return await getSequence(context.workspace.id, input.id)
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await getSequence(context.workspace.id, input.id),
+    ),
 }
 
 export default sequencesWorkspaceTokenAPIs

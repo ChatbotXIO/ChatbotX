@@ -14,7 +14,5 @@ export const aiFileAuthenticatedAPI = {
     .input(listAIFilesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listAIFilesResponse)
-    .handler(async ({ input }) => {
-      return await listAIFiles(input)
-    }),
+    .handler(async ({ input }) => await listAIFiles(input)),
 }

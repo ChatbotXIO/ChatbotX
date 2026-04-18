@@ -6,6 +6,7 @@ import {
   buttonStepSchema,
   buttonTypes,
   type FlowNode,
+  nodeTypeSchema,
   type OpenWebsiteStepSchema,
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
@@ -15,7 +16,6 @@ import {
   startAnotherNodeStepDefaultFn,
   startExternalNodeStepDefaultFn,
   startFlowNodeDefaultFn,
-  nodeTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"

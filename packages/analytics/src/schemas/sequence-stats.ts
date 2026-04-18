@@ -1,5 +1,4 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
-import type { FlowEventType, MessageEventType } from "@chatbotx.io/flow-config"
 import {
   clickedPayloadSchema,
   flowEventTypeSchema,
@@ -7,7 +6,10 @@ import {
 } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
-export const sequenceStepEventTypes = z.enum([...messageEventTypeSchema.options, ...flowEventTypeSchema.options])
+export const sequenceStepEventTypes = z.enum([
+  ...messageEventTypeSchema.options,
+  ...flowEventTypeSchema.options,
+])
 export type SequenceStepEventType = z.infer<typeof sequenceStepEventTypes>
 
 export const getSequenceStepStatsRequest = z.object({

@@ -52,44 +52,37 @@ export const deleteTagInputSchema = z.object({
   id: z.string().min(1, "id is required"),
 })
 
-export const listTags = (api: ChatbotXAPI): Promise<ListTagsResponse> => {
-  return api.getClient().get("tags").json<ListTagsResponse>()
-}
+export const listTags = (api: ChatbotXAPI): Promise<ListTagsResponse> =>
+  api.getClient().get("tags").json<ListTagsResponse>()
 
 export const createTag = (
   api: ChatbotXAPI,
   input: CreateTagBody,
-): Promise<CreateTagResponse> => {
-  return api
+): Promise<CreateTagResponse> =>
+  api
     .getClient()
     .post("tags", {
       json: input,
     })
     .json<CreateTagResponse>()
-}
 
 export const showTag = (
   api: ChatbotXAPI,
   input: ShowTagPathParams,
-): Promise<ShowTagResponse> => {
-  return api.getClient().get(`tags/${input.id}`).json<ShowTagResponse>()
-}
+): Promise<ShowTagResponse> =>
+  api.getClient().get(`tags/${input.id}`).json<ShowTagResponse>()
 
 export const showTagByName = (
   api: ChatbotXAPI,
   input: ShowTagByNamePathParams,
-): Promise<ShowTagByNameResponse> => {
-  return api
-    .getClient()
-    .get(`tags/name/${input.name}`)
-    .json<ShowTagByNameResponse>()
-}
+): Promise<ShowTagByNameResponse> =>
+  api.getClient().get(`tags/name/${input.name}`).json<ShowTagByNameResponse>()
 
 export const updateTag = (
   api: ChatbotXAPI,
   input: UpdateTagInput,
-): Promise<UpdateTagResponse> => {
-  return api
+): Promise<UpdateTagResponse> =>
+  api
     .getClient()
     .put(`tags/${input.id}`, {
       json: {
@@ -97,14 +90,12 @@ export const updateTag = (
       },
     })
     .json<UpdateTagResponse>()
-}
 
 export const deleteTag = (
   api: ChatbotXAPI,
   input: DeleteTagPathParams,
-): Promise<DeleteTagResponse> => {
-  return api
+): Promise<DeleteTagResponse> =>
+  api
     .getClient()
     .delete(`tags/${input.id}`, { json: {} })
     .json<DeleteTagResponse>()
-}

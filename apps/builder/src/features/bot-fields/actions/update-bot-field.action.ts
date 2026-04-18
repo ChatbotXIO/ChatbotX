@@ -61,7 +61,5 @@ export const updateBotFieldAction = workspaceActionClient
     }: {
       parsedInput: UpdateBotFieldRequest
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
-    }) => {
-      return await updateBotField({ workspaceId, id, parsedInput })
-    },
+    }) => await updateBotField({ workspaceId, id, parsedInput }),
   )

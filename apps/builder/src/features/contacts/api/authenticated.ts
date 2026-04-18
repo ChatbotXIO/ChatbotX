@@ -51,9 +51,7 @@ export const contactsAuthenticatedAPI = {
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
-    .handler(async ({ input }) => {
-      return await countContacts(input)
-    }),
+    .handler(async ({ input }) => await countContacts(input)),
 
   createContactAuthenticatedAPI: authorizedAPI
     .route({

@@ -14,10 +14,11 @@ export const foldersAuthenticatedAPI = {
     .input(listFoldersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listFoldersResponse)
-    .handler(async ({ input }) => {
-      return await listFolders({
-        ...input,
-        folderId: input.folderId ?? null,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await listFolders({
+          ...input,
+          folderId: input.folderId ?? null,
+        }),
+    ),
 }

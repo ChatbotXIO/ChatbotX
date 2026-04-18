@@ -91,7 +91,7 @@ export const webhookHandler = async (
       }
 
       return "ok"
-    } catch (_error) {
+    } catch {
       throw new SdkException("Failed to handle webhook")
     }
   }

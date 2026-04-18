@@ -6,6 +6,5 @@ type ListBroadcastsResponse =
 
 export const listBroadcasts = (
   api: ChatbotXAPI,
-): Promise<ListBroadcastsResponse> => {
-  return api.getClient().get("broadcasts").json<ListBroadcastsResponse>()
-}
+): Promise<ListBroadcastsResponse> =>
+  api.getClient().get("broadcasts").json<ListBroadcastsResponse>()

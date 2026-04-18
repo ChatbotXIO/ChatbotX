@@ -1,8 +1,8 @@
 import {
   type FlowEventListener,
   type FlowEventMap,
-  flowEventSchemas,
   type FlowEventType,
+  flowEventSchemas,
   flowEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { getRedisConnection } from "@chatbotx.io/worker-config"

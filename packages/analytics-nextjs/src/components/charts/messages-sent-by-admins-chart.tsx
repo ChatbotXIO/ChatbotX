@@ -9,12 +9,14 @@ export function MessagesSentByAdminsChart() {
   const t = useTranslations()
   const messagesByAdmin = useAnalysisStore((state) => state.messagesByAdmin)
 
-  const data = useMemo(() => {
-    return messagesByAdmin.map((stat) => ({
-      name: stat.userName || stat.userEmail || stat.adminId,
-      value: stat.count,
-    }))
-  }, [messagesByAdmin])
+  const data = useMemo(
+    () =>
+      messagesByAdmin.map((stat) => ({
+        name: stat.userName || stat.userEmail || stat.adminId,
+        value: stat.count,
+      })),
+    [messagesByAdmin],
+  )
 
   return (
     <RadarChart

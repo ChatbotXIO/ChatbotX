@@ -14,7 +14,5 @@ export const inboxTeamsAuthenticatedAPI = {
     .input(listInboxTeamsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listInboxTeamsResponse)
-    .handler(async ({ input }) => {
-      return await listInboxTeams(input)
-    }),
+    .handler(async ({ input }) => await listInboxTeams(input)),
 }

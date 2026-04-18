@@ -17,13 +17,14 @@ const flowWorkspaceTokenAPIs = {
         data: z.array(flowResource.pick({ id: true, name: true })),
       }),
     )
-    .handler(async ({ context, input }) => {
-      return await listFlows({
-        ...input,
-        workspaceId: context.workspace.id,
-        active: true,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listFlows({
+          ...input,
+          workspaceId: context.workspace.id,
+          active: true,
+        }),
+    ),
 }
 
 export default flowWorkspaceTokenAPIs

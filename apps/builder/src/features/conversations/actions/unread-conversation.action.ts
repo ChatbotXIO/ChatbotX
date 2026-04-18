@@ -18,8 +18,8 @@ export const unreadConversationAction = workspaceActionClient
 export const unreadConversation = async (ctx: {
   workspaceId: string
   id: string
-}) => {
-  return await db.transaction(async (tx) => {
+}) =>
+  await db.transaction(async (tx) => {
     const conversation = await findOrFail({
       table: conversationModel,
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
@@ -47,4 +47,3 @@ export const unreadConversation = async (ctx: {
 
     return { agentLastReadAt }
   })
-}

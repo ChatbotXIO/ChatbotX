@@ -63,9 +63,8 @@ export const SequenceStepStats = memo(function SequenceStepStats({
     }
   }, [workspaceId, sequenceId, stepId])
 
-  const formatValue = (value: number) => {
-    return value ? value.toLocaleString() : "----"
-  }
+  const formatValue = (value: number) =>
+    value ? value.toLocaleString() : "----"
 
   const handleStatClick = (eventType: SequenceStepEventType, total: number) => {
     if (total > 0 && stepId) {

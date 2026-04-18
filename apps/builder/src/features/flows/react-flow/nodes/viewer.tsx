@@ -1,4 +1,8 @@
-import { disabledContinueNodeTypes, type FlowNode, type NodeType } from "@chatbotx.io/flow-config"
+import {
+  disabledContinueNodeTypes,
+  type FlowNode,
+  type NodeType,
+} from "@chatbotx.io/flow-config"
 import {
   Card,
   CardContent,

@@ -51,23 +51,23 @@ export const unarchiveConversationAction = workspaceActionClient
       for (const conv of conversations) {
         for (const contactInbox of conv.contactInboxes) {
           await conversationTrackingService.trackEvent(
-          {
-            workspaceId,
-            conversationId: conv.id,
-            eventType: "conversation_unarchived",
-            eventId: createId(),
-            channel: contactInbox.channel,
-            occurredAt: new Date(),
-            metadata: {
-              triggerContext: {
-                triggerSource: "api",
-                triggerHandler: "unarchiveConversationAction",
-                triggerType: "conversation_unarchived",
+            {
+              workspaceId,
+              conversationId: conv.id,
+              eventType: "conversation_unarchived",
+              eventId: createId(),
+              channel: contactInbox.channel,
+              occurredAt: new Date(),
+              metadata: {
+                triggerContext: {
+                  triggerSource: "api",
+                  triggerHandler: "unarchiveConversationAction",
+                  triggerType: "conversation_unarchived",
+                },
               },
             },
-          },
-          { skipSpooler: true },
-        )
+            { skipSpooler: true },
+          )
         }
       }
 

@@ -52,7 +52,7 @@ const getApiTokenFromRequest = (req: IncomingMessage): string | undefined => {
     }
   }
 
-  return undefined
+  return
 }
 
 const createSessionApiKeyState = (initialApiKey: string | undefined) => {
@@ -83,12 +83,12 @@ const parseRequestBody = async (req: IncomingMessage): Promise<unknown> => {
   }
 
   if (chunks.length === 0) {
-    return undefined
+    return
   }
 
   const rawBody = Buffer.concat(chunks).toString("utf8").trim()
   if (rawBody.length === 0) {
-    return undefined
+    return
   }
 
   return JSON.parse(rawBody) as unknown

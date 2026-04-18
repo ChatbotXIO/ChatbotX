@@ -6,7 +6,7 @@ export async function verifyGeminiApiKey(apiKey: string) {
       `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
     )
     return true
-  } catch (_error) {
+  } catch {
     return false
   }
 }

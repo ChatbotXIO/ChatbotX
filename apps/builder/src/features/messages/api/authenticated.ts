@@ -19,9 +19,7 @@ export const messagesAuthenticatedAPI = {
     .input(listMessagesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listMessagesResponse)
-    .handler(async ({ input }) => {
-      return await listMessages(input)
-    }),
+    .handler(async ({ input }) => await listMessages(input)),
 
   findMessageAuthenticatedAPI: authorizedAPI
     .route({
@@ -33,7 +31,5 @@ export const messagesAuthenticatedAPI = {
     .input(findMessageRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(messageResource)
-    .handler(async ({ input }) => {
-      return await findMessage(input)
-    }),
+    .handler(async ({ input }) => await findMessage(input)),
 }

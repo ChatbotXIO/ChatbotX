@@ -54,9 +54,9 @@ export async function handleCreateWebchatMessage({
   parsedInput: CreateWebchatMessageRequest
 }) {
   const { conversation, isNewContact, contact, contactInbox } =
-    await db.transaction(async (tx) => {
-      return await getConversationFromInput(tx, parsedInput)
-    })
+    await db.transaction(
+      async (tx) => await getConversationFromInput(tx, parsedInput),
+    )
 
   // Process flow if exists
   if ("flowId" in parsedInput) {

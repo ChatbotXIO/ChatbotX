@@ -85,15 +85,11 @@ export const throwIfExists = async <TTable extends PgTable>(props: {
 
 export const isDatabaseError = (
   error: unknown,
-): error is DrizzleQueryError & { cause: { code: string } } => {
-  return (
-    error instanceof DrizzleQueryError &&
-    typeof error.cause === "object" &&
-    error.cause !== null &&
-    "code" in error.cause
-  )
-}
+): error is DrizzleQueryError & { cause: { code: string } } =>
+  error instanceof DrizzleQueryError &&
+  typeof error.cause === "object" &&
+  error.cause !== null &&
+  "code" in error.cause
 
-export const isUniqueViolationError = (error: unknown): boolean => {
-  return isDatabaseError(error) && error.cause.code === "23505"
-}
+export const isUniqueViolationError = (error: unknown): boolean =>
+  isDatabaseError(error) && error.cause.code === "23505"

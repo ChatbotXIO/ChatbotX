@@ -1,8 +1,6 @@
 "use client"
 
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { env } from "@/env"
-import type { InboxResource } from "../inboxes/schema/resource"
 import type { ListInboxesResponse } from "../inboxes/schema/action"
 
 const buildUrlWithParam = (

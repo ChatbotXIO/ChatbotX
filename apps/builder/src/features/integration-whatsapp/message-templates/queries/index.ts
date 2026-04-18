@@ -1,6 +1,6 @@
-import { db, type DatabaseClient } from "@chatbotx.io/database/client"
-import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type { WhatsappTemplateStatus } from "@chatbotx.io/database/partials"
+import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
 
 export const whatsappMessageTemplateService = {
   list: (props: {

@@ -1,19 +1,17 @@
-import {
-  type FlowNodeStatsType,
-} from "@chatbotx.io/clickhouse/schemas"
+import type { FlowNodeStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  flowEventTypeSchema,
-  messageEventTypeSchema,
   type ClickedPayload,
   type FlowClickedPayload,
+  flowEventTypeSchema,
   type MessageDeliveredPayload,
   type MessageFailedPayload,
   type MessagePayload,
   type MessageSeenPayload,
   type MessageSentPayload,
+  messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { flowStatsRepository } from "../repositories"
 import type {

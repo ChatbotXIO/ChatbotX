@@ -97,7 +97,7 @@ async function splitTraffic({
     }
   }
 
-  const sourceHandle    = `${targetId}-case-${selectedIndex}`
+  const sourceHandle = `${targetId}-case-${selectedIndex}`
   const edges = (flowVersion.edges as EdgeSchema[]) ?? []
   const connectedEdge = edges.find((edge) => edge.sourceHandle === sourceHandle)
 

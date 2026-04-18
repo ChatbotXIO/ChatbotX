@@ -15,11 +15,12 @@ export const analyticsSequenceRoutes = os.router({
     })
     .input(getSequenceStepStatsRequest)
     .output(getSequenceStepStatsResponse)
-    .handler(async ({ input }) => {
-      return await sequenceAnalyticsService.getStepStats({
-        workspaceId: input.workspaceId,
-        sequenceId: input.sequenceId,
-        stepId: input.stepId,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await sequenceAnalyticsService.getStepStats({
+          workspaceId: input.workspaceId,
+          sequenceId: input.sequenceId,
+          stepId: input.stepId,
+        }),
+    ),
 })

@@ -14,7 +14,5 @@ export const sequencesChatbotAuthAPI = {
     .input(listSequencesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSequencesResponse)
-    .handler(async ({ input }) => {
-      return await listSequences(input)
-    }),
+    .handler(async ({ input }) => await listSequences(input)),
 }

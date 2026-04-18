@@ -112,18 +112,17 @@ export const createContactInputSchema = z.object({
 export const getContactById = (
   api: ChatbotXAPI,
   input: GetContactByIdPathParams,
-): Promise<GetContactByIdResponse> => {
-  return api
+): Promise<GetContactByIdResponse> =>
+  api
     .getClient()
     .get(`contacts/${input.contactId}`)
     .json<GetContactByIdResponse>()
-}
 
 export const listContactsByCustomField = (
   api: ChatbotXAPI,
   input: ListContactsByCustomFieldQueryParams,
-): Promise<ListContactsByCustomFieldResponse> => {
-  return api
+): Promise<ListContactsByCustomFieldResponse> =>
+  api
     .getClient()
     .get("contacts/find-by-custom-field", {
       searchParams: {
@@ -132,75 +131,68 @@ export const listContactsByCustomField = (
       },
     })
     .json<ListContactsByCustomFieldResponse>()
-}
 
 export const listTagsByContactId = (
   api: ChatbotXAPI,
   input: ListTagsByContactIdPathParams,
-): Promise<ListTagsByContactIdResponse> => {
-  return api
+): Promise<ListTagsByContactIdResponse> =>
+  api
     .getClient()
     .get(`contacts/${input.contactId}/tags`)
     .json<ListTagsByContactIdResponse>()
-}
 
 export const addTagToContact = (
   api: ChatbotXAPI,
   input: UpdateContactTagInput,
-): Promise<unknown> => {
-  return api
+): Promise<unknown> =>
+  api
     .getClient()
     .post(`contacts/${input.contactId}/tags/${input.tagId}`, { json: {} })
     .json()
-}
 
 export const deleteTagFromContact = (
   api: ChatbotXAPI,
   input: UpdateContactTagInput,
-): Promise<unknown> => {
-  return api
+): Promise<unknown> =>
+  api
     .getClient()
     .delete(`contacts/${input.contactId}/tags/${input.tagId}`, { json: {} })
     .json()
-}
 
 export const listCustomFieldsByContactId = (
   api: ChatbotXAPI,
   input: ListCustomFieldsByContactIdPathParams,
-): Promise<ListCustomFieldsByContactIdResponse> => {
-  return api
+): Promise<ListCustomFieldsByContactIdResponse> =>
+  api
     .getClient()
     .get(`contacts/${input.contactId}/custom-fields`)
     .json<ListCustomFieldsByContactIdResponse>()
-}
 
 export const getContactCustomFieldValue = (
   api: ChatbotXAPI,
   input: ContactCustomFieldPathParams,
-): Promise<ContactCustomFieldResponse> => {
-  return api
+): Promise<ContactCustomFieldResponse> =>
+  api
     .getClient()
     .get(`contacts/${input.contactId}/custom-fields/${input.customFieldId}`)
     .json<ContactCustomFieldResponse>()
-}
 
 export const updateContactCustomFieldValue = (
   api: ChatbotXAPI,
   input: UpdateContactCustomFieldValueInput,
-): Promise<unknown> => {
-  return api
+): Promise<unknown> =>
+  api
     .getClient()
     .post(`contacts/${input.contactId}/custom-fields/${input.customFieldId}`, {
       json: { value: input.value },
     })
     .json()
-}
 
 export const deleteContactCustomField = (
   api: ChatbotXAPI,
   input: DeleteContactCustomFieldPathParams,
-): Promise<unknown> => {
-  return api
+): Promise<unknown> =>
+  api
     .getClient()
     .delete(
       `contacts/${input.contactId}/custom-fields/${input.customFieldId}`,
@@ -209,13 +201,12 @@ export const deleteContactCustomField = (
       },
     )
     .json()
-}
 
 export const sendMessageToContact = (
   api: ChatbotXAPI,
   input: SendMessageToContactInput,
-): Promise<unknown> => {
-  return api
+): Promise<unknown> =>
+  api
     .getClient()
     .post(`contacts/${input.contactId}/messages`, {
       json: {
@@ -227,16 +218,14 @@ export const sendMessageToContact = (
       },
     })
     .json()
-}
 
 export const createContact = (
   api: ChatbotXAPI,
   input: CreateContactBody,
-): Promise<CreateContactResponse> => {
-  return api
+): Promise<CreateContactResponse> =>
+  api
     .getClient()
     .post("contacts", {
       json: input,
     })
     .json<CreateContactResponse>()
-}

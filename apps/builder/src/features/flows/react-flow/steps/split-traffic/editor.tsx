@@ -6,7 +6,12 @@ import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { Slider } from "@chatbotx.io/ui/components/ui/slider"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { type FieldError, useFieldArray, useFormContext, useWatch } from "react-hook-form"
+import {
+  type FieldError,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from "react-hook-form"
 import { ErrorAlert } from "../error-alert"
 
 type SplitTrafficStepEditorProps = {
@@ -17,8 +22,7 @@ const SplitTrafficStepEditor = ({
   parentName,
 }: SplitTrafficStepEditorProps) => {
   const t = useTranslations()
-  const { control, setValue, watch, getFieldState, formState } =
-    useFormContext()
+  const { control, setValue, getFieldState, formState } = useFormContext()
 
   const { fields, append, remove } = useFieldArray({
     control,

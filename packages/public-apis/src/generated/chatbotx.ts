@@ -4,1627 +4,1757 @@
  */
 
 export interface paths {
-    "/v1/contacts/{contactId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get contact by contact id */
-        get: operations["findContactWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a contact */
-        post: operations["createContactWorkspaceTokenAPI"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/find-by-custom-field": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List contacts by custom field
-         * @description Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.
-         */
-        get: operations["listContactsByCustomFieldWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/{contactId}/tags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all tags added to this contact */
-        get: operations["listContactTagsWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/{contactId}/tags/{tagId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add a tag to the contact */
-        post: operations["addContactTagsWorkspaceTokenAPI"];
-        /** Remove a tag from the contact */
-        delete: operations["deleteContactTagWorkspaceTokenAPI"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/{contactId}/custom-fields": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all custom fields from a contact */
-        get: operations["listContactCustomFieldsWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/{contactId}/custom-fields/{customFieldId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get contact custom field value */
-        get: operations["findContactCustomFieldValueWorkspaceTokenAPI"];
-        put?: never;
-        /** Set contact custom field value */
-        post: operations["setContactCustomFieldValueWorkspaceTokenAPI"];
-        /** Delete contact custom field */
-        delete: operations["deleteContactCustomFieldWorkspaceTokenAPI"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/contacts/{contactId}/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send message to contact */
-        post: operations["sendMessageWorkspaceTokenAPI"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/custom-fields": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all custom fields */
-        get: operations["listCustomFieldsWorkspaceTokenAPI"];
-        put?: never;
-        /** Create a custom field */
-        post: operations["createCustomFieldWorkspaceTokenAPI"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/custom-fields/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get custom field by id */
-        get: operations["findCustomFieldWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/custom-fields/name/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get custom field by name */
-        get: operations["findCustomFieldByNameWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/tags": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all tags */
-        get: operations["listTagsWorkspaceTokenAPI"];
-        put?: never;
-        /** Create a new tag */
-        post: operations["createTagWorkspaceTokenAPI"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/tags/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get tag by id */
-        get: operations["findTagWorkspaceTokenAPI"];
-        /** Update tag */
-        put: operations["updateTagWorkspaceTokenAPI"];
-        post?: never;
-        /** Delete tag */
-        delete: operations["deleteTagsWorkspaceTokenAPI"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/tags/name/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get tag by name */
-        get: operations["findTagByNameWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/flows": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all flows */
-        get: operations["listFlowsWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/bot-fields/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get bot field by id */
-        get: operations["findBotFieldWorkspaceTokenAPI"];
-        /** Update bot field */
-        put: operations["updateBotFieldWorkspaceTokenAPI"];
-        post?: never;
-        /** Unset the value of the bot field */
-        delete: operations["deleteBotFieldsWorkspaceTokenAPI"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/broadcasts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all broadcasts */
-        get: operations["listBroadcastsWorkspaceTokenAPI"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+  "/v1/bot-fields/{id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get bot field by id */
+    get: operations["findBotFieldWorkspaceTokenAPI"]
+    /** Update bot field */
+    put: operations["updateBotFieldWorkspaceTokenAPI"]
+    post?: never
+    /** Unset the value of the bot field */
+    delete: operations["deleteBotFieldsWorkspaceTokenAPI"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/broadcasts": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all broadcasts */
+    get: operations["listBroadcastsWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Create a contact */
+    post: operations["createContactWorkspaceTokenAPI"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get contact by contact id */
+    get: operations["findContactWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}/custom-fields": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all custom fields from a contact */
+    get: operations["listContactCustomFieldsWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}/custom-fields/{customFieldId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get contact custom field value */
+    get: operations["findContactCustomFieldValueWorkspaceTokenAPI"]
+    put?: never
+    /** Set contact custom field value */
+    post: operations["setContactCustomFieldValueWorkspaceTokenAPI"]
+    /** Delete contact custom field */
+    delete: operations["deleteContactCustomFieldWorkspaceTokenAPI"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}/messages": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Send message to contact */
+    post: operations["sendMessageWorkspaceTokenAPI"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}/tags": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all tags added to this contact */
+    get: operations["listContactTagsWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/{contactId}/tags/{tagId}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Add a tag to the contact */
+    post: operations["addContactTagsWorkspaceTokenAPI"]
+    /** Remove a tag from the contact */
+    delete: operations["deleteContactTagWorkspaceTokenAPI"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/contacts/find-by-custom-field": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List contacts by custom field
+     * @description Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.
+     */
+    get: operations["listContactsByCustomFieldWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/custom-fields": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all custom fields */
+    get: operations["listCustomFieldsWorkspaceTokenAPI"]
+    put?: never
+    /** Create a custom field */
+    post: operations["createCustomFieldWorkspaceTokenAPI"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/custom-fields/{id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get custom field by id */
+    get: operations["findCustomFieldWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/custom-fields/name/{name}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get custom field by name */
+    get: operations["findCustomFieldByNameWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/flows": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all flows */
+    get: operations["listFlowsWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/tags": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get all tags */
+    get: operations["listTagsWorkspaceTokenAPI"]
+    put?: never
+    /** Create a new tag */
+    post: operations["createTagWorkspaceTokenAPI"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/tags/{id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get tag by id */
+    get: operations["findTagWorkspaceTokenAPI"]
+    /** Update tag */
+    put: operations["updateTagWorkspaceTokenAPI"]
+    post?: never
+    /** Delete tag */
+    delete: operations["deleteTagsWorkspaceTokenAPI"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/v1/tags/name/{name}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get tag by name */
+    get: operations["findTagByNameWorkspaceTokenAPI"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
-export type webhooks = Record<string, never>;
+export type webhooks = Record<string, never>
 export interface components {
-    schemas: {
-        UndefinedError: {
-            /** @constant */
-            defined: false;
-            code: string;
-            status: number;
-            message: string;
-            data?: unknown;
-        };
-    };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+  headers: never
+  parameters: never
+  pathItems: never
+  requestBodies: never
+  responses: never
+  schemas: {
+    UndefinedError: {
+      /** @constant */
+      defined: false
+      code: string
+      status: number
+      message: string
+      data?: unknown
+    }
+  }
 }
-export type $defs = Record<string, never>;
+export type $defs = Record<string, never>
 export interface operations {
-    findContactWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        phoneNumber: string | null;
-                        email: string | null;
-                        firstName: string | null;
-                        lastName: string | null;
-                        /** @enum {unknown} */
-                        gender: "male" | "female" | "unknown";
-                        source: string;
-                        sourceId: string | null;
-                    } & {
-                        tags: {
-                            id: string;
-                            name: string;
-                        }[];
-                        customFields: {
-                            id: string;
-                            name: string;
-                            /** @enum {unknown} */
-                            customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                            description: string | null;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    createContactWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    phoneNumber: string;
-                    email: "" | string;
-                    firstName?: string;
-                    lastName?: string;
-                    /** @enum {unknown} */
-                    gender: "male" | "female" | "unknown";
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        phoneNumber: string | null;
-                        email: string | null;
-                        firstName: string | null;
-                        lastName: string | null;
-                        /** @enum {unknown} */
-                        gender: "male" | "female" | "unknown";
-                        source: string;
-                        sourceId: string | null;
-                    } & {
-                        tags: {
-                            id: string;
-                            name: string;
-                        }[];
-                        customFields: {
-                            id: string;
-                            name: string;
-                            /** @enum {unknown} */
-                            customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                            description: string | null;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listContactsByCustomFieldWorkspaceTokenAPI: {
-        parameters: {
-            query: {
-                customFieldId: string;
-                value: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: ({
-                            id: string;
-                            phoneNumber: string | null;
-                            email: string | null;
-                            firstName: string | null;
-                            lastName: string | null;
-                            /** @enum {unknown} */
-                            gender: "male" | "female" | "unknown";
-                            source: string;
-                            sourceId: string | null;
-                        } & {
-                            tags: {
-                                id: string;
-                                name: string;
-                            }[];
-                            customFields: {
-                                id: string;
-                                name: string;
-                                /** @enum {unknown} */
-                                customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                                description: string | null;
-                            }[];
-                        })[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listContactTagsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: string;
-                            name: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    addContactTagsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-                tagId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    deleteContactTagWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-                tagId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listContactCustomFieldsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: ({
-                            id: string;
-                            name: string;
-                            /** @enum {unknown} */
-                            customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                            description: string | null;
-                        } & {
-                            value: string;
-                        })[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findContactCustomFieldValueWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-                customFieldId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        description: string | null;
-                    } & {
-                        value: string;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    setContactCustomFieldValueWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-                customFieldId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    value: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    deleteContactCustomFieldWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-                customFieldId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    sendMessageWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                contactId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    text?: string;
-                    files?: unknown[];
-                    flowId?: string;
-                    clientId?: string;
-                    /** @enum {unknown} */
-                    channel: "webchat" | "messenger" | "whatsapp" | "zalo";
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listCustomFieldsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: string;
-                            name: string;
-                            /** @enum {unknown} */
-                            customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                            description: string | null;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    createCustomFieldWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name: string;
-                    /** @enum {unknown} */
-                    customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        description: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findCustomFieldWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        description: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findCustomFieldByNameWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        description: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listTagsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: string;
-                            name: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    createTagWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findTagWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    updateTagWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    name: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    deleteTagsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown | unknown;
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findTagByNameWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listFlowsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: string;
-                            name: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    findBotFieldWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        value: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    updateBotFieldWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    value: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        value: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    deleteBotFieldsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": Record<string, never>;
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        name: string;
-                        /** @enum {unknown} */
-                        customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText";
-                        value: string | null;
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
-    listBroadcastsWorkspaceTokenAPI: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            id: string;
-                            name: string;
-                            /** @enum {unknown} */
-                            status: "scheduled" | "sent";
-                            /** @enum {unknown} */
-                            schedulesType: "now" | "future";
-                            /** Format: date-time */
-                            schedulesAt: string;
-                            flowId: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description 500 */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @constant */
-                        defined: true;
-                        /** @constant */
-                        code: "notFound";
-                        /** @constant */
-                        status: 500;
-                        /** @default The resource was not found */
-                        message: string;
-                        data?: unknown;
-                    } | components["schemas"]["UndefinedError"];
-                };
-            };
-        };
-    };
+  addContactTagsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+        tagId: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>
+      }
+    }
+    responses: {
+      /** @description OK */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  createContactWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          phoneNumber: string
+          email: "" | string
+          firstName?: string
+          lastName?: string
+          /** @enum {unknown} */
+          gender: "male" | "female" | "unknown"
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            phoneNumber: string | null
+            email: string | null
+            firstName: string | null
+            lastName: string | null
+            /** @enum {unknown} */
+            gender: "male" | "female" | "unknown"
+            source: string
+            sourceId: string | null
+          } & {
+            tags: {
+              id: string
+              name: string
+            }[]
+            customFields: {
+              id: string
+              name: string
+              /** @enum {unknown} */
+              customFieldType:
+                | "shortText"
+                | "number"
+                | "date"
+                | "datetime"
+                | "boolean"
+                | "longText"
+              description: string | null
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  createCustomFieldWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          name: string
+          /** @enum {unknown} */
+          customFieldType:
+            | "shortText"
+            | "number"
+            | "date"
+            | "datetime"
+            | "boolean"
+            | "longText"
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            description: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  createTagWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          name: string
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  deleteBotFieldsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            value: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  deleteContactCustomFieldWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+        customFieldId: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>
+      }
+    }
+    responses: {
+      /** @description OK */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  deleteContactTagWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+        tagId: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>
+      }
+    }
+    responses: {
+      /** @description OK */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  deleteTagsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": Record<string, never>
+      }
+    }
+    responses: {
+      /** @description OK */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findBotFieldWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            value: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findContactCustomFieldValueWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+        customFieldId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            description: string | null
+          } & {
+            value: string
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findContactWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            phoneNumber: string | null
+            email: string | null
+            firstName: string | null
+            lastName: string | null
+            /** @enum {unknown} */
+            gender: "male" | "female" | "unknown"
+            source: string
+            sourceId: string | null
+          } & {
+            tags: {
+              id: string
+              name: string
+            }[]
+            customFields: {
+              id: string
+              name: string
+              /** @enum {unknown} */
+              customFieldType:
+                | "shortText"
+                | "number"
+                | "date"
+                | "datetime"
+                | "boolean"
+                | "longText"
+              description: string | null
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findCustomFieldByNameWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            description: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findCustomFieldWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            description: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findTagByNameWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        name: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  findTagWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listBroadcastsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: {
+              id: string
+              name: string
+              /** @enum {unknown} */
+              status: "scheduled" | "sent"
+              /** @enum {unknown} */
+              schedulesType: "now" | "future"
+              /** Format: date-time */
+              schedulesAt: string
+              flowId: string
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listContactCustomFieldsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: ({
+              id: string
+              name: string
+              /** @enum {unknown} */
+              customFieldType:
+                | "shortText"
+                | "number"
+                | "date"
+                | "datetime"
+                | "boolean"
+                | "longText"
+              description: string | null
+            } & {
+              value: string
+            })[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listContactsByCustomFieldWorkspaceTokenAPI: {
+    parameters: {
+      query: {
+        customFieldId: string
+        value: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: ({
+              id: string
+              phoneNumber: string | null
+              email: string | null
+              firstName: string | null
+              lastName: string | null
+              /** @enum {unknown} */
+              gender: "male" | "female" | "unknown"
+              source: string
+              sourceId: string | null
+            } & {
+              tags: {
+                id: string
+                name: string
+              }[]
+              customFields: {
+                id: string
+                name: string
+                /** @enum {unknown} */
+                customFieldType:
+                  | "shortText"
+                  | "number"
+                  | "date"
+                  | "datetime"
+                  | "boolean"
+                  | "longText"
+                description: string | null
+              }[]
+            })[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listContactTagsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: {
+              id: string
+              name: string
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listCustomFieldsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: {
+              id: string
+              name: string
+              /** @enum {unknown} */
+              customFieldType:
+                | "shortText"
+                | "number"
+                | "date"
+                | "datetime"
+                | "boolean"
+                | "longText"
+              description: string | null
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listFlowsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: {
+              id: string
+              name: string
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  listTagsWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            data: {
+              id: string
+              name: string
+            }[]
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  sendMessageWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          text?: string
+          files?: unknown[]
+          flowId?: string
+          clientId?: string
+          /** @enum {unknown} */
+          channel: "webchat" | "messenger" | "whatsapp" | "zalo"
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  setContactCustomFieldValueWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        contactId: string
+        customFieldId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          value: string
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": unknown | unknown
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  updateBotFieldWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          value: string
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            customFieldType:
+              | "shortText"
+              | "number"
+              | "date"
+              | "datetime"
+              | "boolean"
+              | "longText"
+            value: string | null
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
+  updateTagWorkspaceTokenAPI: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": {
+          name: string
+        }
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": {
+            id: string
+            name: string
+          }
+        }
+      }
+      /** @description 500 */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json":
+            | {
+                /** @constant */
+                defined: true
+                /** @constant */
+                code: "notFound"
+                /** @constant */
+                status: 500
+                /** @default The resource was not found */
+                message: string
+                data?: unknown
+              }
+            | components["schemas"]["UndefinedError"]
+        }
+      }
+    }
+  }
 }

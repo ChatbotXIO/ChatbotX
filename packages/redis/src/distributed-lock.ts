@@ -8,8 +8,8 @@ export const distributedLockFactory = (
   const lockMutex = new Mutex()
   let redisAdapter: IoredisAdapter | undefined
 
-  const getOrCreateRedisAdapter = async (): Promise<IoredisAdapter> => {
-    return await lockMutex.runExclusive(async () => {
+  const getOrCreateRedisAdapter = async (): Promise<IoredisAdapter> =>
+    await lockMutex.runExclusive(async () => {
       if (redisAdapter !== undefined && redisAdapter !== null) {
         return await Promise.resolve(redisAdapter)
       }
@@ -18,7 +18,6 @@ export const distributedLockFactory = (
       redisAdapter = new IoredisAdapter(redisClient)
       return redisAdapter
     })
-  }
 
   return {
     runExclusive: async <T>({

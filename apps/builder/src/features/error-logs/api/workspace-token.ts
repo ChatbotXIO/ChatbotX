@@ -15,12 +15,13 @@ export const errorLogsWorkspaceTokenAPIs = {
     })
     .input(listErrorLogsRequest)
     .output(publicListErrorLogsResponse)
-    .handler(async ({ context, input }) => {
-      return await listErrorLogs({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listErrorLogs({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 }
 
 export default errorLogsWorkspaceTokenAPIs

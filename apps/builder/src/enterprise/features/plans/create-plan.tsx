@@ -115,12 +115,14 @@ export function CreatePlanForm({ onClose }: { onClose?: () => void }) {
     name: "currency",
   })
 
-  const currentCodeOptions = useMemo(() => {
-    return currentCode.codes().map((code) => ({
-      label: code.toUpperCase(),
-      value: code,
-    }))
-  }, [])
+  const currentCodeOptions = useMemo(
+    () =>
+      currentCode.codes().map((code) => ({
+        label: code.toUpperCase(),
+        value: code,
+      })),
+    [],
+  )
 
   return (
     <Form {...form}>

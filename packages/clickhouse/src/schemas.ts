@@ -1,4 +1,7 @@
-import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import {
+  flowEventTypeSchema,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
 import z from "zod"
 
 export const baseEventTypes = z.enum([

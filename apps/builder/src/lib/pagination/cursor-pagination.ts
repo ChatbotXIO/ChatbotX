@@ -24,6 +24,5 @@ export const decodeCursor = (
   return success ? data : null
 }
 
-export const encodeCursor = (cursor: CursorPagination): string => {
-  return Buffer.from(JSON.stringify(cursor)).toString("base64")
-}
+export const encodeCursor = (cursor: CursorPagination): string =>
+  Buffer.from(JSON.stringify(cursor)).toString("base64")

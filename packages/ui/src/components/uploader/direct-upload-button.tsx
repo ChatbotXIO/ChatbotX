@@ -144,7 +144,7 @@ export function DirectUploadButton({
 
         // Wait for all uploads to complete
         await Promise.all(uploadPromises)
-      } catch (_error) {
+      } catch {
         // This handles any error that might occur outside the individual upload processes
         toast.error("Upload failed", {
           description: "An unexpected error occurred during upload",

@@ -1,4 +1,4 @@
-import {integrationWhatsappInternalAPIs} from "./private"
+import { integrationWhatsappInternalAPIs } from "./private"
 
 export const integrationWhatsappAPIs = {
   ...integrationWhatsappInternalAPIs,

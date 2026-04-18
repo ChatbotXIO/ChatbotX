@@ -9,12 +9,14 @@ export function AllContactsByChannelChart() {
   const t = useTranslations()
   const { contactsByChannel } = useAnalysisStore((state) => state)
 
-  const data = useMemo(() => {
-    return contactsByChannel.map((item) => ({
-      name: item.dimension || "Unknown",
-      value: item.uniqueContacts,
-    }))
-  }, [contactsByChannel])
+  const data = useMemo(
+    () =>
+      contactsByChannel.map((item) => ({
+        name: item.dimension || "Unknown",
+        value: item.uniqueContacts,
+      })),
+    [contactsByChannel],
+  )
 
   return (
     <DonutChart

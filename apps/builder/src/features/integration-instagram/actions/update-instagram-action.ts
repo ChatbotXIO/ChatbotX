@@ -31,7 +31,10 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
-import { type UpdateInstagramRequest, updateInstagramRequest } from "../schemas/action"
+import {
+  type UpdateInstagramRequest,
+  updateInstagramRequest,
+} from "../schemas/action"
 
 export const updateInstagramAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
@@ -90,7 +93,7 @@ export const updateInstagramAction = workspaceActionClient
 
           revalidateCacheTags([`chatbots:${workspaceId}#instagram`])
         })
-      } catch (_error) {
+      } catch {
         throw new ChatbotXException("Failed to update Instagram integration")
       }
     },

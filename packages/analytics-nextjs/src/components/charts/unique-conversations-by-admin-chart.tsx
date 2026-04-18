@@ -11,12 +11,14 @@ export function UniqueConversationsByAdminChart() {
     (state) => state.uniqueConversationsByAdmin,
   )
 
-  const data = useMemo(() => {
-    return uniqueConversationsByAdmin.map((stat) => ({
-      name: stat.userName || stat.userEmail || stat.toAssignee,
-      value: stat.count,
-    }))
-  }, [uniqueConversationsByAdmin])
+  const data = useMemo(
+    () =>
+      uniqueConversationsByAdmin.map((stat) => ({
+        name: stat.userName || stat.userEmail || stat.toAssignee,
+        value: stat.count,
+      })),
+    [uniqueConversationsByAdmin],
+  )
 
   return (
     <DonutChart

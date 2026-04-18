@@ -1,7 +1,7 @@
+import { whatsappTemplateStatusSchema } from "@chatbotx.io/database/partials"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
-import { whatsappTemplateStatusSchema } from "@chatbotx.io/database/partials"
 
 export type FlowTemplateState = {
   error: string | null
@@ -62,11 +62,16 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
 
       set({ loadingWhatsappTemplates: true, error: null })
       try {
-        const templates = await ky.get<ListWhatsappMessageTemplatesResponse>(`/api/workspaces/${workspaceId}/whatsapp-message-templates`, {
-          searchParams: {
-            status: whatsappTemplateStatusSchema.enum.APPROVED,
-          },
-        }).json()
+        const templates = await ky
+          .get<ListWhatsappMessageTemplatesResponse>(
+            `/api/workspaces/${workspaceId}/whatsapp-message-templates`,
+            {
+              searchParams: {
+                status: whatsappTemplateStatusSchema.enum.APPROVED,
+              },
+            },
+          )
+          .json()
 
         set({
           whatsappTemplates: templates,

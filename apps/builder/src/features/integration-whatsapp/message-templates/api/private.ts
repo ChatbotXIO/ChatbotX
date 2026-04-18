@@ -17,7 +17,8 @@ export const whatsappMessageTemplateInternalAPIs = {
     .input(listWhatsappMessageTemplatesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWhatsappMessageTemplatesResponse)
-    .handler(async ({ input }) => {
-      return await whatsappMessageTemplateService.list({ where: input })
-    })
+    .handler(
+      async ({ input }) =>
+        await whatsappMessageTemplateService.list({ where: input }),
+    ),
 }

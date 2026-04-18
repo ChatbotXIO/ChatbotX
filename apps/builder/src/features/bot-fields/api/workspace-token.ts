@@ -54,15 +54,16 @@ const botFieldWorkspaceTokenAPIs = {
     })
     .input(z.object({ id: zodBigintAsString() }))
     .output(publicBotFieldResource)
-    .handler(async ({ context, input }) => {
-      return await updateBotField({
-        workspaceId: context.workspace.id,
-        id: input.id,
-        parsedInput: {
-          value: null,
-        },
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await updateBotField({
+          workspaceId: context.workspace.id,
+          id: input.id,
+          parsedInput: {
+            value: null,
+          },
+        }),
+    ),
 }
 
 export default botFieldWorkspaceTokenAPIs

@@ -6,10 +6,10 @@ import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   flowEventTypeSchema,
   type MessageDeliveredPayload,
-  messageEventTypeSchema,
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
+  messageEventTypeSchema,
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import { sequenceStatsRepository } from "../repositories/sequence-stats.repository"

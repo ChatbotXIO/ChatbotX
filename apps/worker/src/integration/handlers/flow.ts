@@ -11,8 +11,8 @@ import {
   type ButtonStepProps,
   decodeButtonPayload,
   type EdgeSchema,
-  flowEventTypeSchema,
   type FlowNode,
+  flowEventTypeSchema,
   getNodeFromButton,
   type MetadataPayload,
   type SendQuickReplyStepSchema,
@@ -313,34 +313,34 @@ export async function runFlowPostback(
     return
   }
 
-    const [contactInbox] = await db
-      .select({
-        id: contactInboxModel.id,
-        channel: contactInboxModel.channel,
-      })
-      .from(contactInboxModel)
-      .where(eq(contactInboxModel.id, data.contactInboxId))
+  const [contactInbox] = await db
+    .select({
+      id: contactInboxModel.id,
+      channel: contactInboxModel.channel,
+    })
+    .from(contactInboxModel)
+    .where(eq(contactInboxModel.id, data.contactInboxId))
 
-    if (data.webhookType !== IntegrationJobAction.messageStatus) {
-      await emit(flowEventTypeSchema.enum["flow:clicked"], {
-        nodeId: foundedNodeId ?? "",
-        context: {
-          workspaceId: conversation.workspaceId,
-          contactId: conversation.contactId,
-          conversationId: data.conversationId,
-          channel: contactInbox?.channel ?? "",
-          contactInboxId: contactInbox?.id ?? "",
-        },
-        action: {
-          flowId: parsedAction.flowId,
-          buttonId: parsedAction.buttonId,
-          broadcastId: parsedAction.broadcastId,
-          sequenceStepId: parsedAction.sequenceStepId ?? "",
-          clickType: "button",
-        },
-        occurredAt: new Date(),
-      })
-    }
+  if (data.webhookType !== IntegrationJobAction.messageStatus) {
+    await emit(flowEventTypeSchema.enum["flow:clicked"], {
+      nodeId: foundedNodeId ?? "",
+      context: {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: data.conversationId,
+        channel: contactInbox?.channel ?? "",
+        contactInboxId: contactInbox?.id ?? "",
+      },
+      action: {
+        flowId: parsedAction.flowId,
+        buttonId: parsedAction.buttonId,
+        broadcastId: parsedAction.broadcastId,
+        sequenceStepId: parsedAction.sequenceStepId ?? "",
+        clickType: "button",
+      },
+      occurredAt: new Date(),
+    })
+  }
 
   await runStepsAndQuickReplies({
     conversation,

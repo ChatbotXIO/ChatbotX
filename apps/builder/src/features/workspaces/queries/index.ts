@@ -52,17 +52,14 @@ export const workspaceService = {
   findWithCache: async (props: {
     where: WorkspaceWhere
     tx?: DatabaseClient
-  }) => {
-    return await withCache(
+  }) =>
+    await withCache(
       `workspaces:${JSON.stringify(props.where)}`,
-      async () => {
-        return await workspaceService.find(props)
-      },
+      async () => await workspaceService.find(props),
       {
         tags: ["workspaces"],
       },
-    )
-  },
+    ),
   create: async (props: {
     data: typeof workspaceModel.$inferInsert
     organization: OrganizationModel

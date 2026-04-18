@@ -36,10 +36,7 @@ export const findIntegrationTelegramByBotId = async ({
   botId,
 }: {
   botId: string
-}): Promise<IntegrationTelegramModel | null> => {
-  return (
-    (await db.query.integrationTelegramModel.findFirst({
-      where: { botId },
-    })) ?? null
-  )
-}
+}): Promise<IntegrationTelegramModel | null> =>
+  (await db.query.integrationTelegramModel.findFirst({
+    where: { botId },
+  })) ?? null

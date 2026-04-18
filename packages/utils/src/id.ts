@@ -4,20 +4,18 @@ const NumericSnowflakeIDs = new Snowflake({
   epoch: new Date("2026-03-31").toISOString(),
 })
 
-export const createId = (): string => {
-  return NumericSnowflakeIDs.generate()
-}
+export const createId = (): string => NumericSnowflakeIDs.generate()
 
 export const parseBigIntId = (
   id: string | undefined | null,
 ): string | undefined => {
   if (!id) {
-    return undefined
+    return
   }
   try {
     return BigInt(id).toString()
-  } catch (_error) {
-    return undefined
+  } catch {
+    return
   }
 }
 
@@ -26,6 +24,4 @@ export const getIdFromParams = <
 >(
   params: T,
   fieldName: keyof T,
-) => {
-  return params[fieldName]
-}
+) => params[fieldName]

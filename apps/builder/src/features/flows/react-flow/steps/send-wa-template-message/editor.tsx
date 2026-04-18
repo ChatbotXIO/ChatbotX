@@ -20,11 +20,9 @@ import { useFormContext } from "react-hook-form"
 import { useWhatsappInboxOptions } from "@/features/inboxes/provider/inbox-hook"
 import { TemplateParamsForm } from "@/features/integration-whatsapp/message-templates/components/template-params-form"
 import { TemplatePreview } from "@/features/integration-whatsapp/message-templates/components/template-preview"
-import {
-  useFlowTemplate,
-} from "../../stores/flow-template-store-provider"
-import { BaseStepEditor } from "../base/editor"
 import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
+import { useFlowTemplate } from "../../stores/flow-template-store-provider"
+import { BaseStepEditor } from "../base/editor"
 
 type SendWaTemplateMessageStepEditorProps = {
   parentName: string
@@ -64,10 +62,7 @@ function SendWaTemplateMessageStepEditor(
   }, [integrationInboxId, parentName, setValue])
 
   useEffect(() => {
-    if (
-      templateId &&
-      whatsappTemplates.length > 0
-    ) {
+    if (templateId && whatsappTemplates.length > 0) {
       const template = whatsappTemplates.find((t) => t.id === templateId)
       if (template) {
         setSelectedTemplate(template)

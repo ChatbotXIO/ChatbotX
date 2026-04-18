@@ -27,14 +27,14 @@ export const contactVariableService = {
             customField: true,
           },
         })
-        .then((data) => {
-          return data.map((v) => ({
+        .then((data) =>
+          data.map((v) => ({
             key: v.customField.name,
             type: v.customField.type,
             value: v.value,
             description: v.customField.description ?? "",
-          }))
-        })
+          })),
+        )
 
     const customFieldsMap = new Map(fields.map((field) => [field.key, field]))
 

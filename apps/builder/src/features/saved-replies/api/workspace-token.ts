@@ -13,9 +13,10 @@ export const savedReplyWorkspaceTokenAPIs = {
     })
     .input(z.object({}))
     .output(listSavedReplyResponse)
-    .handler(async ({ context }) => {
-      return await listSavedReplies({ workspaceId: context.workspace.id })
-    }),
+    .handler(
+      async ({ context }) =>
+        await listSavedReplies({ workspaceId: context.workspace.id }),
+    ),
 }
 
 export default savedReplyWorkspaceTokenAPIs

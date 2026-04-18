@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { useTranslations } from "next-intl"
 import {
   File,
   FileIcon,
@@ -23,6 +22,7 @@ import {
   X,
 } from "lucide-react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { type SVGProps, useState } from "react"
 import Dropzone from "react-dropzone"
 import { toast } from "sonner"
@@ -36,9 +36,9 @@ type FileDropzoneConfigs = {
 }
 
 type FileDropzoneProps = {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: safe to use any
   register: any
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: safe to use any
   unregister?: any
   parentName: string
   type?: FileType
@@ -81,13 +81,7 @@ export default function FileDropzone({
   parentName,
   type = "image",
   mode = "file",
-  configs: {
-    uploadKeyName = "texts.or",
-    linkKeyName = "actions.insertLink",
-    accept = { "image/*": [] },
-    maxSize = 10,
-    isCard = false,
-  } = {},
+  configs: { accept = { "image/*": [] }, maxSize = 10, isCard = false } = {},
   onMode,
   onRemove,
   onDrop,
@@ -155,14 +149,14 @@ export default function FileDropzone({
     }
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: safe to use any
   const _onRemove = (e: any) => {
     e.stopPropagation()
     setPreview("")
     onRemove?.()
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: safe to use any
   const _onMode = (e: any) => {
     e.stopPropagation()
     setFileMode(fileMode === "file" ? "link" : "file")
@@ -174,29 +168,27 @@ export default function FileDropzone({
     onMode?.(fileMode)
   }
 
-  const _noFile = () => {
-    return (
-      <div className="flex flex-col items-center">
-        <UploadIcon className="text-gray-500" size={30} type={type} />
-        <div>
-          {t("actions.selectFile")}
-          {!isCard && (
-            <>
-              {t("texts.or")}
-              {"\u00A0"}
-              <Button
-                className="p-0 text-destructive"
-                onClick={_onMode}
-                variant="link"
-              >
-                {t("actions.insertLink")}
-              </Button>
-            </>
-          )}
-        </div>
+  const _noFile = () => (
+    <div className="flex flex-col items-center">
+      <UploadIcon className="text-gray-500" size={30} type={type} />
+      <div>
+        {t("actions.selectFile")}
+        {!isCard && (
+          <>
+            {t("texts.or")}
+            {"\u00A0"}
+            <Button
+              className="p-0 text-destructive"
+              onClick={_onMode}
+              variant="link"
+            >
+              {t("actions.insertLink")}
+            </Button>
+          </>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
 
   const _hasFile = () => {
     if (type === "image") {
@@ -221,67 +213,63 @@ export default function FileDropzone({
       )
     }
     return (
-      <div className="flex flex-col gap-2 items-center px-4">
+      <div className="flex flex-col items-center gap-2 px-4">
         <FileIcon />
         <span className="text-sm">{preview}</span>
       </div>
     )
   }
 
-  const dropZone = () => {
-    return (
-      <Dropzone accept={accept} maxFiles={1} onDrop={_onDrop}>
-        {({ getRootProps, getInputProps }) => (
-          <section>
-            <div {...getRootProps()}>
-              <Input {...getInputProps()} />
-              <div
-                className={cn(
-                  "relative flex h-36 flex-col items-center justify-center overflow-hidden hover:cursor-pointer",
-                  preview ? "border-solid" : "border-dashed",
-                  isCard
-                    ? ""
-                    : "rounded-lg border-2 hover:border-blue-500 hover:border-solid",
-                )}
-              >
-                {preview ? _hasFile() : _noFile()}
-              </div>
+  const dropZone = () => (
+    <Dropzone accept={accept} maxFiles={1} onDrop={_onDrop}>
+      {({ getRootProps, getInputProps }) => (
+        <section>
+          <div {...getRootProps()}>
+            <Input {...getInputProps()} />
+            <div
+              className={cn(
+                "relative flex h-36 flex-col items-center justify-center overflow-hidden hover:cursor-pointer",
+                preview ? "border-solid" : "border-dashed",
+                isCard
+                  ? ""
+                  : "rounded-lg border-2 hover:border-blue-500 hover:border-solid",
+              )}
+            >
+              {preview ? _hasFile() : _noFile()}
             </div>
-          </section>
-        )}
-      </Dropzone>
-    )
-  }
-
-  const inputLink = () => {
-    return (
-      <div className="flex flex-col">
-        <div className="relative mb-2 flex items-center justify-center gap-2">
-          <UploadIcon size={25} />
-          <span className="capitalize">{type}</span>
-          <div className="absolute right-0">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={_onMode} variant="link">
-                    <Undo2 size={20} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Upload File</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
+        </section>
+      )}
+    </Dropzone>
+  )
+
+  const inputLink = () => (
+    <div className="flex flex-col">
+      <div className="relative mb-2 flex items-center justify-center gap-2">
+        <UploadIcon size={25} />
+        <span className="capitalize">{type}</span>
+        <div className="absolute right-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={_onMode} variant="link">
+                  <Undo2 size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Upload File</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-        <Input
-          className="rounded-full"
-          placeholder={t("fields.insertLink.label")}
-          {...register(`${parentName}.url`)}
-        />
       </div>
-    )
-  }
+      <Input
+        className="rounded-full"
+        placeholder={t("fields.insertLink.label")}
+        {...register(`${parentName}.url`)}
+      />
+    </div>
+  )
 
   return fileMode === "file" ? dropZone() : inputLink()
 }

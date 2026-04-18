@@ -40,9 +40,8 @@ type CustomFieldCommand = {
 
 export type CustomFieldCommandName = keyof typeof customFieldCommands
 
-const isCustomFieldType = (value: string): value is CustomFieldType => {
-  return CUSTOM_FIELD_TYPES.includes(value as CustomFieldType)
-}
+const isCustomFieldType = (value: string): value is CustomFieldType =>
+  CUSTOM_FIELD_TYPES.includes(value as CustomFieldType)
 
 const ensureCustomFieldType = (value: string): CustomFieldType => {
   if (!isCustomFieldType(value)) {

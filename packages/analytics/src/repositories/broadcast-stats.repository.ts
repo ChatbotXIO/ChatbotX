@@ -1,6 +1,10 @@
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { db, isNotNull, or, sql } from "@chatbotx.io/database/client"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
+import {
+  flowEventTypeSchema,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
 import type {
   BroadcastBulkUpdateItem,
   BroadcastEventType,
@@ -10,7 +14,6 @@ import type {
 import type { ContactEventData } from "../schemas/common"
 import type { ClickHouseStatsRow } from "../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
-import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
 
 export class BroadcastStatsRepository extends BaseRepository {
   async updateFailedBulk(

@@ -26,14 +26,15 @@ const listTagsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .input(z.object({}))
   .output(publicListTagsResponse)
   .errors(posibleErrorsOnFindingResource)
-  .handler(async ({ context, input }) => {
-    return await listTags({
-      ...input,
-      workspaceId: context.workspace.id,
-      sort: [{ id: "createdAt", desc: true }],
-      perPage: maxPerPage,
-    })
-  })
+  .handler(
+    async ({ context, input }) =>
+      await listTags({
+        ...input,
+        workspaceId: context.workspace.id,
+        sort: [{ id: "createdAt", desc: true }],
+        perPage: maxPerPage,
+      }),
+  )
 
 const createTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({

@@ -85,11 +85,7 @@ export function createSpoolerHelpers(eventType: string) {
       }
       return initSpooler({ ...finalConfig, eventType })
     },
-    get: () => {
-      return getSpooler(eventType)
-    },
-    stop: () => {
-      return stopSpooler(eventType)
-    },
+    get: () => getSpooler(eventType),
+    stop: () => stopSpooler(eventType),
   }
 }

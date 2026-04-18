@@ -6,6 +6,7 @@ import { listSavedReplies } from "../queries"
 
 export const listSavedRepliesAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .action(async ({ bindArgsParsedInputs: [workspaceId] }) => {
-    return await listSavedReplies({ workspaceId })
-  })
+  .action(
+    async ({ bindArgsParsedInputs: [workspaceId] }) =>
+      await listSavedReplies({ workspaceId }),
+  )

@@ -92,12 +92,13 @@ export const workspaceTokenAuthAPIs = {
     })
     .input(publicListContactsByCustomFieldRequest)
     .output(publicListContactsResponse)
-    .handler(async ({ context, input }) => {
-      return await publicListContactsByCustomField({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await publicListContactsByCustomField({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   listContactTagsWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({

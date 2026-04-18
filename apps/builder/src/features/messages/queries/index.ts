@@ -44,8 +44,8 @@ export const listMessages = async (
     .select()
     .from(attachmentModel)
     .where(inArray(attachmentModel.messageId, messageIds))
-    .then((attachments) => {
-      return attachments.reduce(
+    .then((attachments) =>
+      attachments.reduce(
         (acc, attachment) => {
           acc[attachment.messageId.toString()] = [
             ...(acc[attachment.messageId.toString()] ?? []),
@@ -54,14 +54,14 @@ export const listMessages = async (
           return acc
         },
         {} as Record<string, AttachmentResource[]>,
-      )
-    })
-    .then((attachments) => {
-      return messages.map((message) => ({
+      ),
+    )
+    .then((attachments) =>
+      messages.map((message) => ({
         ...message,
         attachments: attachments[message.id.toString()] ?? [],
-      }))
-    })
+      })),
+    )
 
   let nextCursor: string | null = null
   const prevCursor: string | null = null

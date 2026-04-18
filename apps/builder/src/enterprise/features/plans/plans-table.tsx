@@ -174,31 +174,29 @@ const getPlansColumns = ({
     {
       id: "actions",
       header: () => null,
-      cell: ({ row }) => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                aria-label={t("actions.openMenu")}
-                size="icon"
-                variant="ghost"
-              >
-                <EllipsisIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault()
-                  setRowAction({ row, variant: "update" })
-                }}
-              >
-                {t("actions.update")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              aria-label={t("actions.openMenu")}
+              size="icon"
+              variant="ghost"
+            >
+              <EllipsisIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault()
+                setRowAction({ row, variant: "update" })
+              }}
+            >
+              {t("actions.update")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
       size: 50,
       enableSorting: false,
       enableHiding: false,

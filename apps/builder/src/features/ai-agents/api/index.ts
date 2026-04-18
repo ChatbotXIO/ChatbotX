@@ -14,9 +14,7 @@ const listAIAgentsAPI = authorizedAPI
   .input(listAIAgentsRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
   .output(listAIAgentsResponse)
-  .handler(async ({ input }) => {
-    return await listAIAgents(input)
-  })
+  .handler(async ({ input }) => await listAIAgents(input))
 
 export const aiAgentsAPI = {
   listAIAgentsAPI,

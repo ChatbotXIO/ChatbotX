@@ -144,7 +144,7 @@ export const createChatStore = () => {
             })
           }
         }
-      } catch (_error) {
+      } catch {
         //
       }
 
@@ -240,7 +240,7 @@ export const createChatStore = () => {
             conversation.assignedInboxTeamId = inboxTeamId
             conversation.assignedUserId = null
           }
-        } catch (_error) {
+        } catch {
           //
         }
 

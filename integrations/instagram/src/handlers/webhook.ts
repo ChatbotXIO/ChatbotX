@@ -27,7 +27,7 @@ const verifyWebhookSignature = (
       .digest("hex")
 
     return signatureHash === expectedHash
-  } catch (_error) {
+  } catch {
     return false
   }
 }

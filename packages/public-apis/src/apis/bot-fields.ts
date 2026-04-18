@@ -36,18 +36,14 @@ export const deleteBotFieldInputSchema = z.object({
 export const getBotField = (
   api: ChatbotXAPI,
   input: GetBotFieldPathParams,
-): Promise<GetBotFieldResponse> => {
-  return api
-    .getClient()
-    .get(`bot-fields/${input.id}`)
-    .json<GetBotFieldResponse>()
-}
+): Promise<GetBotFieldResponse> =>
+  api.getClient().get(`bot-fields/${input.id}`).json<GetBotFieldResponse>()
 
 export const updateBotField = (
   api: ChatbotXAPI,
   input: UpdateBotFieldInput,
-): Promise<UpdateBotFieldResponse> => {
-  return api
+): Promise<UpdateBotFieldResponse> =>
+  api
     .getClient()
     .put(`bot-fields/${input.id}`, {
       json: {
@@ -55,16 +51,14 @@ export const updateBotField = (
       },
     })
     .json<UpdateBotFieldResponse>()
-}
 
 export const deleteBotField = (
   api: ChatbotXAPI,
   input: DeleteBotFieldPathParams,
-): Promise<DeleteBotFieldResponse> => {
-  return api
+): Promise<DeleteBotFieldResponse> =>
+  api
     .getClient()
     .delete(`bot-fields/${input.id}`, {
       json: {},
     })
     .json<DeleteBotFieldResponse>()
-}

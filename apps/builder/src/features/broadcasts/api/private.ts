@@ -21,12 +21,13 @@ export const broadcastPrivateAPIs = {
     .input(getBroadcastStatsRequest)
     .output(getBroadcastStatsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
-      return await broadcastAnalyticsService.getStats({
-        workspaceId: input.workspaceId,
-        broadcastId: input.broadcastId,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await broadcastAnalyticsService.getStats({
+          workspaceId: input.workspaceId,
+          broadcastId: input.broadcastId,
+        }),
+    ),
 
   privateListBroadcastContactsAPI: authorizedAPI
     .route({

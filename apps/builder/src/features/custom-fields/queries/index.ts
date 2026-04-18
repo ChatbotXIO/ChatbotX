@@ -58,8 +58,7 @@ export async function listCustomFields(
 
 export const findCustomField = async (
   input: FindCustomFieldRequest,
-): Promise<CustomFieldResource | undefined> => {
-  return await db.query.customFieldModel.findFirst({
+): Promise<CustomFieldResource | undefined> =>
+  await db.query.customFieldModel.findFirst({
     where: input,
   })
-}

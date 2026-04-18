@@ -10,7 +10,7 @@ export const integrationMessengerResource = createSelectSchema(
   {
     id: zodBigintAsString(),
     inboxId: zodBigintAsString(),
-  }
+  },
 ).pick({
   id: true,
   name: true,

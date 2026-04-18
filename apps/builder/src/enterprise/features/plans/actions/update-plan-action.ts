@@ -18,9 +18,7 @@ export const updatePlanAction = organizationActionClient
     }: {
       ctx: { organization: OrganizationModel }
       parsedInput: UpdatePlanRequest
-    }) => {
-      return await updatePlan(ctx.organization, parsedInput)
-    },
+    }) => await updatePlan(ctx.organization, parsedInput),
   )
 
 export const updatePlan = async (

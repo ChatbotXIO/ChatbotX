@@ -8,6 +8,9 @@
   "files": {
     "ignoreUnknown": false,
     "includes": [
+      "apps/**",
+      "packages/**",
+      "integrations/**",
       "!**/.next",
       "!**/.turbo",
       "!**/packages/ui/src/components/data-table",

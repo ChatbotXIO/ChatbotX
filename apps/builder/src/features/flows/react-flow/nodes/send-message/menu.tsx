@@ -23,7 +23,7 @@ const ALL_MENU_ITEMS = (
   menuData?: MenuData,
 ): Record<string, MenuItem> => ({
   sendText: {
-  label: t("flows.actions.sendText"),
+    label: t("flows.actions.sendText"),
     icon: TextIcon,
     stepType: stepTypes.enum.sendText,
   },

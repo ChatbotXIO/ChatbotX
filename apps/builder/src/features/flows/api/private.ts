@@ -38,12 +38,13 @@ export const privateFlowsAPI = {
     .input(flowStatsRequest)
     .output(flowNodeStatsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
-      return await flowAnalyticsService.getFlowStats({
-        workspaceId: input.workspaceId,
-        flowId: input.flowId,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await flowAnalyticsService.getFlowStats({
+          workspaceId: input.workspaceId,
+          flowId: input.flowId,
+        }),
+    ),
 
   privateGetFlowContactStatsAPI: authorizedAPI
     .route({
@@ -55,12 +56,13 @@ export const privateFlowsAPI = {
     .input(flowContactStatsRequest)
     .output(listFlowNodeContactsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .handler(async ({ input }) => {
-      return await flowAnalyticsService.getContactStats({
-        workspaceId: input.workspaceId,
-        flowId: input.flowId,
-        eventType: input.eventType,
-        nodeId: input.nodeId,
-      })
-    })
+    .handler(
+      async ({ input }) =>
+        await flowAnalyticsService.getContactStats({
+          workspaceId: input.workspaceId,
+          flowId: input.flowId,
+          eventType: input.eventType,
+          nodeId: input.nodeId,
+        }),
+    ),
 }

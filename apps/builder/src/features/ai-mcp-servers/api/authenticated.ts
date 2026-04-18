@@ -42,7 +42,5 @@ export const aiMcpServersAuthenticatedAPI = {
     .input(listAIMcpServersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listAIMcpServersResponse)
-    .handler(async ({ input }) => {
-      return await listAIMcpServers(input)
-    }),
+    .handler(async ({ input }) => await listAIMcpServers(input)),
 }

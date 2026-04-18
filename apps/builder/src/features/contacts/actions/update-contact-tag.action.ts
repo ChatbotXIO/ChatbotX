@@ -36,9 +36,7 @@ export const updateContactTagAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateContactTagRequest
-    }) => {
-      return await updateContactTags({ workspaceId, parsedInput })
-    },
+    }) => await updateContactTags({ workspaceId, parsedInput }),
   )
 
 export const updateContactTags = async ({

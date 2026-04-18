@@ -34,70 +34,48 @@ export type HasOptionPropertyProps = PropertyProps & {
 }
 
 export const properties = {
-  shortText: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.shortText,
-    }
-  },
-  longtText: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.text,
-    }
-  },
-  number: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.number,
-    }
-  },
-  boolean: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.boolean,
-    }
-  },
-  date: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.date,
-    }
-  },
-  datetime: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.datetime,
-    }
-  },
-  staticDropdown: (props: HasOptionPropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.staticDropdown,
-    }
-  },
-  dynamicDropdown: (props: HasOptionPropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.dynamicDropdown,
-    }
-  },
-  array: (props: HasOptionPropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.array,
-    }
-  },
-  object: (props: HasOptionPropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.object,
-    }
-  },
-  file: (props: PropertyProps) => {
-    return {
-      ...props,
-      type: propertyTypes.file,
-    }
-  },
+  shortText: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.shortText,
+  }),
+  longtText: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.text,
+  }),
+  number: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.number,
+  }),
+  boolean: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.boolean,
+  }),
+  date: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.date,
+  }),
+  datetime: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.datetime,
+  }),
+  staticDropdown: (props: HasOptionPropertyProps) => ({
+    ...props,
+    type: propertyTypes.staticDropdown,
+  }),
+  dynamicDropdown: (props: HasOptionPropertyProps) => ({
+    ...props,
+    type: propertyTypes.dynamicDropdown,
+  }),
+  array: (props: HasOptionPropertyProps) => ({
+    ...props,
+    type: propertyTypes.array,
+  }),
+  object: (props: HasOptionPropertyProps) => ({
+    ...props,
+    type: propertyTypes.object,
+  }),
+  file: (props: PropertyProps) => ({
+    ...props,
+    type: propertyTypes.file,
+  }),
 }

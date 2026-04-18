@@ -17,87 +17,82 @@ const getOrganizationMembersColumns = ({
   t,
 }: {
   t: ReturnType<typeof useTranslations>
-}): ColumnDef<ListOrganizationMembersResponse["data"][number]>[] => {
-  return [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          aria-label="Select all"
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          className="translate-y-0.5"
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(Boolean(value))
-          }
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          aria-label="Select row"
-          checked={row.getIsSelected()}
-          className="translate-y-0.5"
-          onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-        />
-      ),
-      size: 50,
-      enableSorting: false,
-      enableHiding: false,
+}): ColumnDef<ListOrganizationMembersResponse["data"][number]>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        aria-label="Select all"
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        className="translate-y-0.5"
+        onCheckedChange={(value) =>
+          table.toggleAllPageRowsSelected(Boolean(value))
+        }
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        aria-label="Select row"
+        checked={row.getIsSelected()}
+        className="translate-y-0.5"
+        onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+      />
+    ),
+    size: 50,
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    id: "name",
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t("fields.name.label")} />
+    ),
+    cell: ({ row }) => <div>{row.original.user.name}</div>,
+    size: 300,
+    meta: {
+      label: t("fields.name.label"),
+      placeholder: t("fields.name.placeholder"),
+      variant: "text",
     },
-    {
-      id: "name",
-      accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("fields.name.label")} />
-      ),
-      cell: ({ row }) => <div>{row.original.user.name}</div>,
-      size: 300,
-      meta: {
-        label: t("fields.name.label"),
-        placeholder: t("fields.name.placeholder"),
-        variant: "text",
-      },
-      enableColumnFilter: true,
-      enableSorting: true,
+    enableColumnFilter: true,
+    enableSorting: true,
+  },
+  {
+    id: "email",
+    accessorKey: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t("fields.email.label")} />
+    ),
+    cell: ({ row }) => <div>{row.original.user.email}</div>,
+    size: 300,
+    meta: {
+      label: t("fields.email.label"),
+      placeholder: t("fields.email.placeholder"),
+      variant: "text",
     },
-    {
-      id: "email",
-      accessorKey: "email",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t("fields.email.label")}
-        />
-      ),
-      cell: ({ row }) => <div>{row.original.user.email}</div>,
-      size: 300,
-      meta: {
-        label: t("fields.email.label"),
-        placeholder: t("fields.email.placeholder"),
-        variant: "text",
-      },
-      enableColumnFilter: true,
-      enableSorting: true,
+    enableColumnFilter: true,
+    enableSorting: true,
+  },
+  {
+    id: "role",
+    accessorKey: "role",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t("fields.role.label")} />
+    ),
+    cell: ({ row }) => <div>{row.original.role}</div>,
+    size: 300,
+    meta: {
+      label: t("fields.role.label"),
+      variant: "text",
     },
-    {
-      id: "role",
-      accessorKey: "role",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t("fields.role.label")} />
-      ),
-      cell: ({ row }) => <div>{row.original.role}</div>,
-      size: 300,
-      meta: {
-        label: t("fields.role.label"),
-        variant: "text",
-      },
-      enableColumnFilter: true,
-      enableSorting: false,
-    },
-  ]
-}
+    enableColumnFilter: true,
+    enableSorting: false,
+  },
+]
 
 const OrganizationMembersTable = (props: OrganizationMembersTableProps) => {
   const [{ data, pageCount }] = use(props.promises)

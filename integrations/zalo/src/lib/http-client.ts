@@ -40,7 +40,7 @@ export class ZaloHttpClient {
       },
       hooks: {
         beforeRequest: [
-          ({request}) => {
+          ({ request }) => {
             logger.debug(
               {
                 url: request.url,
@@ -51,7 +51,7 @@ export class ZaloHttpClient {
           },
         ],
         afterResponse: [
-          async ({request, response}) => {
+          async ({ request, response }) => {
             if (!response.ok) {
               const errorText = await response.text()
               logger.error(

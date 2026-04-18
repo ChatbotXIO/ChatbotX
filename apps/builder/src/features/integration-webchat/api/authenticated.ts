@@ -18,7 +18,5 @@ export const integrationWebchatAuthenticatedAPI = {
     .input(listIntegrationWebchatsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listIntegrationWebchatsResponse)
-    .handler(async ({ input }) => {
-      return await listIntegrationWebchats(input)
-    }),
+    .handler(async ({ input }) => await listIntegrationWebchats(input)),
 }

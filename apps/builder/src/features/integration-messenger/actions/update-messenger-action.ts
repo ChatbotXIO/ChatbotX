@@ -152,14 +152,12 @@ const getMessengerProfileParams = (
   }
 
   if (model.conversationStarters.length) {
-    params.ice_breakers = model.conversationStarters.map((starter) => {
-      return {
-        question: starter.question,
-        payload: encodeButtonPayload({
-          flowId: starter.flowId,
-        }),
-      }
-    })
+    params.ice_breakers = model.conversationStarters.map((starter) => ({
+      question: starter.question,
+      payload: encodeButtonPayload({
+        flowId: starter.flowId,
+      }),
+    }))
   }
 
   return params

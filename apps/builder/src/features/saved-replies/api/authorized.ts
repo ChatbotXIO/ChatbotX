@@ -17,7 +17,8 @@ export const savedRepliesAuthorizedAPI = {
     .input(listSavedRepliesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSavedReplyResponse)
-    .handler(async ({ input }) => {
-      return await listSavedReplies({ workspaceId: input.workspaceId })
-    }),
+    .handler(
+      async ({ input }) =>
+        await listSavedReplies({ workspaceId: input.workspaceId }),
+    ),
 }

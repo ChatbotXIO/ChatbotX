@@ -3,9 +3,8 @@ import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
-
-  messageEventTypeSchema,
   type MetadataPayload,
+  messageEventTypeSchema,
   UPDATE_STATUS_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
 import { SdkException } from "@chatbotx.io/sdk"

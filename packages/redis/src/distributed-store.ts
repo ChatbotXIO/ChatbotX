@@ -22,7 +22,7 @@ export const distributedStoreFactory = (
 
     try {
       return JSON.parse(value) as T
-    } catch (_error) {
+    } catch {
       return null
     }
   },
@@ -93,7 +93,7 @@ export const distributedStoreFactory = (
       }
       try {
         result[field] = JSON.parse(value)
-      } catch (_error) {
+      } catch {
         result[field] = value
       }
     }

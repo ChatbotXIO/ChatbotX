@@ -91,20 +91,16 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
             title={t("fields.name.label")}
           />
         ),
-        cell: ({ row }) => {
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
-                  {row.original.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{row.original.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          )
-        },
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate">{row.original.name}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        ),
         meta: {
           label: t("fields.keyword.label"),
           placeholder: t("fields.keyword.searchPlaceholder"),

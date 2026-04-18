@@ -82,9 +82,7 @@ export const NodeHeaderIcon = ({
   ...props
 }: NodeHeaderIconProps & {
   ref: React.RefObject<HTMLSpanElement>
-}) => {
-  return <span ref={ref} {...props} className={cn(className, "*:size-5")} />
-}
+}) => <span ref={ref} {...props} className={cn(className, "*:size-5")} />
 
 NodeHeaderIcon.displayName = "NodeHeaderIcon"
 
@@ -101,18 +99,16 @@ export const NodeHeaderActions = ({
   ...props
 }: NodeHeaderActionsProps & {
   ref: React.RefObject<HTMLDivElement>
-}) => {
-  return (
-    <div
-      ref={ref}
-      {...props}
-      className={cn(
-        "ml-auto flex items-center gap-1 justify-self-end",
-        className,
-      )}
-    />
-  )
-}
+}) => (
+  <div
+    ref={ref}
+    {...props}
+    className={cn(
+      "ml-auto flex items-center gap-1 justify-self-end",
+      className,
+    )}
+  />
+)
 
 NodeHeaderActions.displayName = "NodeHeaderActions"
 
@@ -138,18 +134,16 @@ export const NodeHeaderAction = ({
   ...props
 }: NodeHeaderActionProps & {
   ref?: React.RefObject<HTMLButtonElement>
-}) => {
-  return (
-    <Button
-      aria-label={label}
-      className={cn(className, "nodrag size-6 p-1")}
-      ref={ref}
-      title={title ?? label}
-      variant="ghost"
-      {...props}
-    />
-  )
-}
+}) => (
+  <Button
+    aria-label={label}
+    className={cn(className, "nodrag size-6 p-1")}
+    ref={ref}
+    title={title ?? label}
+    variant="ghost"
+    {...props}
+  />
+)
 
 NodeHeaderAction.displayName = "NodeHeaderAction"
 
@@ -179,18 +173,16 @@ export const NodeHeaderMenuAction = ({
   ...props
 }: NodeHeaderMenuActionProps & {
   ref: React.RefObject<HTMLButtonElement>
-}) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <NodeHeaderAction ref={ref} {...props}>
-          {trigger ?? <EllipsisVertical />}
-        </NodeHeaderAction>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>{children}</DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <NodeHeaderAction ref={ref} {...props}>
+        {trigger ?? <EllipsisVertical />}
+      </NodeHeaderAction>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>{children}</DropdownMenuContent>
+  </DropdownMenu>
+)
 
 NodeHeaderMenuAction.displayName = "NodeHeaderMenuAction"
 

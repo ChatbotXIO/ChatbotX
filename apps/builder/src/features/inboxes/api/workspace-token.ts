@@ -15,9 +15,10 @@ export const inboxesWorkspaceTokenAPIs = {
     })
     .input(publishInboxesRequest)
     .output(publicListInboxesResponse)
-    .handler(async ({ context, input }) => {
-      return await listInboxes({ ...input, workspaceId: context.workspace.id })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listInboxes({ ...input, workspaceId: context.workspace.id }),
+    ),
 }
 
 export default inboxesWorkspaceTokenAPIs

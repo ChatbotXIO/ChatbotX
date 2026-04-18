@@ -33,15 +33,10 @@ export const createBroadcastRequest = z
       .nullable(),
     contactFilter: contactFilterRequest.shape.contactFilter,
   })
-  .refine(
-    (data) => {
-      return !!(data.flowId || data.templateId)
-    },
-    {
-      message: "Either flow or template must be selected",
-      path: ["flowId"],
-    },
-  )
+  .refine((data) => !!(data.flowId || data.templateId), {
+    message: "Either flow or template must be selected",
+    path: ["flowId"],
+  })
 export type CreateBroadcastRequest = z.infer<typeof createBroadcastRequest>
 
 export const updateBroadcastSchema = z.object({

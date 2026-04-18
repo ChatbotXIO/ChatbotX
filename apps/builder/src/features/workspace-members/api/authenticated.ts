@@ -17,7 +17,5 @@ export const workspaceMembersAuthenticatedAPI = {
     .input(listWorkspaceMembersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWorkspaceMembersResponse)
-    .handler(async ({ input }) => {
-      return await listWorkspaceMembers(input)
-    }),
+    .handler(async ({ input }) => await listWorkspaceMembers(input)),
 }

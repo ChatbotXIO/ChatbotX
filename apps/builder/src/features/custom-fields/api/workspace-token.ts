@@ -19,12 +19,13 @@ const customFieldsWorkspaceTokenAPI = {
     })
     .input(z.object({}))
     .output(z.object({ data: z.array(publicCustomFieldResource) }))
-    .handler(async ({ context, input }) => {
-      return await listCustomFields({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listCustomFields({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   createCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
@@ -35,9 +36,10 @@ const customFieldsWorkspaceTokenAPI = {
     })
     .input(createCustomFieldRequest.pick({ name: true, type: true }))
     .output(publicCustomFieldResource)
-    .handler(async ({ context, input }) => {
-      return await createCustomField(context.workspace.id, input)
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await createCustomField(context.workspace.id, input),
+    ),
 
   findCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({

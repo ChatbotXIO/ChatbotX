@@ -17,7 +17,5 @@ export const aiFunctionsAuthenticatedAPI = {
     .input(listAIFunctionsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listAIFunctionsResponse)
-    .handler(async ({ input }) => {
-      return await listAIFunctions(input)
-    }),
+    .handler(async ({ input }) => await listAIFunctions(input)),
 }

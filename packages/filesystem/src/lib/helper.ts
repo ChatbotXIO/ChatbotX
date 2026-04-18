@@ -52,6 +52,4 @@ export async function getImageDimensions(mimeType: string, buffer: Buffer) {
 export const getStoragePrefix = (
   workspaceId: string,
   inboxId: string,
-): string => {
-  return `public/${workspaceId}/${inboxId}`
-}
+): string => `public/${workspaceId}/${inboxId}`

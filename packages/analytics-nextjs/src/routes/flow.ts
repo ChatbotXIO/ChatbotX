@@ -29,10 +29,11 @@ export const analyticsFlowRoutes = os.router({
     })
     .input(flowStatsRequest)
     .output(flowNodeStatsResponse)
-    .handler(async ({ input }) => {
-      return await flowAnalyticsService.getFlowStats({
-        workspaceId: input.workspaceId,
-        flowId: input.flowId,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await flowAnalyticsService.getFlowStats({
+          workspaceId: input.workspaceId,
+          flowId: input.flowId,
+        }),
+    ),
 })

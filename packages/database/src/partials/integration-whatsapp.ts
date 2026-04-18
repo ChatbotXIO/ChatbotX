@@ -1,6 +1,10 @@
 import { z } from "zod"
 
-export const whatsappTemplateStatusSchema = z.enum(["APPROVED", "PENDING", "REJECTED"])
+export const whatsappTemplateStatusSchema = z.enum([
+  "APPROVED",
+  "PENDING",
+  "REJECTED",
+])
 export type WhatsappTemplateStatus = z.infer<
   typeof whatsappTemplateStatusSchema
 >

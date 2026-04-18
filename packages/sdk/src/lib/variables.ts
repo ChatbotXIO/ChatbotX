@@ -30,10 +30,8 @@ export type Variable = {
     | undefined
 }
 
-export const initVariables = (): Variables => {
-  return {
-    conversation: {},
-    workflow: {},
-    contact: {},
-  }
-}
+export const initVariables = (): Variables => ({
+  conversation: {},
+  workflow: {},
+  contact: {},
+})

@@ -12,11 +12,11 @@ export const extractVariables = (text: string): string[] => {
 export const interpolate = (
   text: string,
   mapping: Record<string, string>,
-): string => {
-  return text.replace(/\{\{(\w+)\}\}/g, (match, variable) => {
-    return mapping[variable] ?? match
-  })
-}
+): string =>
+  text.replace(
+    /\{\{(\w+)\}\}/g,
+    (match, variable) => mapping[variable] ?? match,
+  )
 
 export const getSystemFieldValue = async (
   contact: ContactModel,

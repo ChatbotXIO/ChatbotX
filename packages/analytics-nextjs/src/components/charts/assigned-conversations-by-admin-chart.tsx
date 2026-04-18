@@ -11,12 +11,14 @@ export function AssignedConversationsByAdminChart() {
     (state) => state.conversationAssignedByAdmin,
   )
 
-  const data = useMemo(() => {
-    return conversationAssignedByAdmin.map((stat) => ({
-      name: stat.userName || stat.userEmail || stat.toAssignee,
-      value: stat.count,
-    }))
-  }, [conversationAssignedByAdmin])
+  const data = useMemo(
+    () =>
+      conversationAssignedByAdmin.map((stat) => ({
+        name: stat.userName || stat.userEmail || stat.toAssignee,
+        value: stat.count,
+      })),
+    [conversationAssignedByAdmin],
+  )
 
   return (
     <DonutChart

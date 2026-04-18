@@ -10,9 +10,7 @@ export const workspaceWorkspaceTokenAPIs = {
       tags: ["Workspace"],
     })
     .output(getWorkspacePublicResource)
-    .handler(({ context }) => {
-      return context.workspace
-    }),
+    .handler(({ context }) => context.workspace),
 }
 
 export default workspaceWorkspaceTokenAPIs

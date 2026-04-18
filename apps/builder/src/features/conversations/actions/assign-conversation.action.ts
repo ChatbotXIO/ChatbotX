@@ -86,7 +86,7 @@ export const assignConversationAction = workspaceActionClient
         },
         with: {
           contactInboxes: true,
-        }
+        },
       })
       const conversationIds = conversations.map((c) => c.id)
       if (conversationIds.length === 0) {
@@ -127,47 +127,47 @@ export const assignConversationAction = workspaceActionClient
         for (const conv of conversations) {
           for (const contactInbox of conv.contactInboxes) {
             await conversationTrackingService.trackEvent(
-            {
-              workspaceId,
-              conversationId: conv.id,
-              eventType: "conversation_assigned",
-              eventId: createId(),
-              toAssignee,
-              occurredAt: new Date(),
-              channel: contactInbox.channel,
-              metadata: {
-                triggerContext: {
-                  triggerSource: "api",
-                  triggerHandler: "assignConversation",
-                  triggerType: "conversation_assigned",
+              {
+                workspaceId,
+                conversationId: conv.id,
+                eventType: "conversation_assigned",
+                eventId: createId(),
+                toAssignee,
+                occurredAt: new Date(),
+                channel: contactInbox.channel,
+                metadata: {
+                  triggerContext: {
+                    triggerSource: "api",
+                    triggerHandler: "assignConversation",
+                    triggerType: "conversation_assigned",
+                  },
                 },
               },
-            },
-            { skipSpooler: true },
-          )
+              { skipSpooler: true },
+            )
           }
         }
       } else {
         for (const conv of conversations) {
           for (const contactInbox of conv.contactInboxes) {
             await conversationTrackingService.trackEvent(
-            {
-              workspaceId,
-              conversationId: conv.id,
-              eventType: "conversation_unassigned",
-              eventId: createId(),
-              occurredAt: new Date(),
-              channel: contactInbox.channel,
-              metadata: {
-                triggerContext: {
-                  triggerSource: "api",
-                  triggerHandler: "assignConversation",
-                  triggerType: "conversation_unassigned",
+              {
+                workspaceId,
+                conversationId: conv.id,
+                eventType: "conversation_unassigned",
+                eventId: createId(),
+                occurredAt: new Date(),
+                channel: contactInbox.channel,
+                metadata: {
+                  triggerContext: {
+                    triggerSource: "api",
+                    triggerHandler: "assignConversation",
+                    triggerType: "conversation_unassigned",
+                  },
                 },
               },
-            },
-            { skipSpooler: true },
-          )
+              { skipSpooler: true },
+            )
           }
         }
       }

@@ -24,9 +24,8 @@ import {
 } from "@chatbotx.io/public-apis"
 import { formatResult } from "../utils"
 
-const getErrorMessage = (error: unknown): string => {
-  return error instanceof Error ? error.message : "Unknown error"
-}
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Unknown error"
 
 export default {
   get_contact_by_id: {

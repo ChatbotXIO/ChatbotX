@@ -1,9 +1,7 @@
-import ky, { HTTPError } from "ky"
+import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
-import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import { maxPerPageString } from "@/lib/shared-request"
-import type { InboxResource } from "../schema/resource"
 import { client } from "@/lib/orpc/orpc"
+import { maxPerPageString } from "@/lib/shared-request"
 import type { ListInboxesResponse } from "../schema/action"
 
 export type InboxState = {

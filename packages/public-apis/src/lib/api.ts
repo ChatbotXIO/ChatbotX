@@ -44,6 +44,5 @@ export class ChatbotXAPI {
   }
 }
 
-export const createChatbotXAPI = (config: ChatbotXConfig): ChatbotXAPI => {
-  return new ChatbotXAPI(config)
-}
+export const createChatbotXAPI = (config: ChatbotXConfig): ChatbotXAPI =>
+  new ChatbotXAPI(config)

@@ -206,7 +206,7 @@ export function CreateBroadcastForm({ workspaceId }: CreateBroadcastFormProps) {
       resetFilter()
       getAllActiveFlows()
     }
-    return undefined
+    return
   }, [
     watchedSubAction,
     watchedIntegrationWhatsappId,

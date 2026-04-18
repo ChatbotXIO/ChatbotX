@@ -4,9 +4,8 @@ import type {
 } from "@chatbotx.io/flow-config"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
-import type { InboxResource } from "@/features/inboxes/schema/resource"
-import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
+import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 export type MenuItem = {
   label: string

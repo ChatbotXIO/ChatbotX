@@ -5,14 +5,14 @@ import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   BROADCAST_PAYLOAD_TYPE,
-  flowEventTypeSchema,
-  messageEventTypeSchema,
   type BroadcastMetadataPayload,
   type FlowClickedPayload,
+  flowEventTypeSchema,
   type MessageDeliveredPayload,
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
+  messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
 import { broadcastStatsRepository } from "../repositories/broadcast-stats.repository"
 import type {

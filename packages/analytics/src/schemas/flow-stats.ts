@@ -1,5 +1,8 @@
-import {  baseEventTypes } from "@chatbotx.io/clickhouse/schemas"
-import { flowEventTypeSchema, messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import { baseEventTypes } from "@chatbotx.io/clickhouse/schemas"
+import {
+  flowEventTypeSchema,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export const flowStatsRequest = z.object({
@@ -19,7 +22,10 @@ export const getFlowStatsResponse = z.object({
 })
 export type GetFlowStatsResponse = z.infer<typeof getFlowStatsResponse>
 
-export const flowNodeEventTypes = z.enum([...messageEventTypeSchema.options, ...flowEventTypeSchema.options])
+export const flowNodeEventTypes = z.enum([
+  ...messageEventTypeSchema.options,
+  ...flowEventTypeSchema.options,
+])
 export type FlowNodeEventType = z.infer<typeof flowNodeEventTypes>
 
 export const flowContactStatsRequest = z.object({

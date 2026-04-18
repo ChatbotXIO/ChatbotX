@@ -63,9 +63,7 @@ const getMessagesFromStoreAndProcess = async (props: {
         text: true,
       },
     })
-    .then((data) => {
-      return data.filter((v) => Boolean(v.text))
-    })
+    .then((data) => data.filter((v) => Boolean(v.text)))
   if (messages.length === 0) {
     logger.debug(props, "No message to process")
     return false

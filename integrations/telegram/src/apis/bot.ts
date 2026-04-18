@@ -172,11 +172,11 @@ export const getTelegramFileUrl = async (
     >("getFile", { searchParams: { file_id: fileId } })
     const filePath = response.result.file_path
     if (!filePath) {
-      return undefined
+      return
     }
     return `https://api.telegram.org/file/bot${auth.secretText}/${filePath}`
   } catch (error) {
     logger.error(error, "getTelegramFileUrl error")
-    return undefined
+    return
   }
 }

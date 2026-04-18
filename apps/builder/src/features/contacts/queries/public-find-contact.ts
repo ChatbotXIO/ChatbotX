@@ -8,15 +8,14 @@ import type {
 
 export const publicFindContact = async (
   input: FindContactRequest,
-): Promise<PublicFindContactResponse | undefined> => {
-  return await db.query.contactModel.findFirst({
+): Promise<PublicFindContactResponse | undefined> =>
+  await db.query.contactModel.findFirst({
     where: input,
     with: {
       tags: true,
       customFields: true,
     },
   })
-}
 
 export const publicListContactsByCustomField = async (
   input: PublicListContactsByCustomFieldRequest & { workspaceId: string },

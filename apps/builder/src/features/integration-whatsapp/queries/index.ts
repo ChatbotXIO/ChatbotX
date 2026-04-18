@@ -19,10 +19,9 @@ export const listIntegrationWhatsapps = async (
 
 export const findIntegrationWhatsapp = async (
   props: Pick<IntegrationWhatsappModel, "workspaceId" | "id">,
-): Promise<IntegrationWhatsappResource> => {
-  return await findOrFail({
+): Promise<IntegrationWhatsappResource> =>
+  await findOrFail({
     table: integrationWhatsappModel,
     where: props,
     message: "Whatsapp integration not found",
   })
-}

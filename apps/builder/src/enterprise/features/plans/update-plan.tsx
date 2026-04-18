@@ -118,12 +118,14 @@ export function UpdatePlanDialog({
     name: "currency",
   })
 
-  const currentCodeOptions = useMemo(() => {
-    return currentCode.codes().map((code) => ({
-      label: code.toUpperCase(),
-      value: code,
-    }))
-  }, [])
+  const currentCodeOptions = useMemo(
+    () =>
+      currentCode.codes().map((code) => ({
+        label: code.toUpperCase(),
+        value: code,
+      })),
+    [],
+  )
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>

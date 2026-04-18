@@ -5,9 +5,7 @@ import type { TelegramAuthValue } from "../schema"
 const getProfile: ContactHandlers<TelegramAuthValue>["getProfile"] = async ({
   ctx,
   data: { sourceId },
-}) => {
-  return await getUserProfile({ ctx, psid: sourceId })
-}
+}) => await getUserProfile({ ctx, psid: sourceId })
 
 export const contactHandlers = {
   getProfile,

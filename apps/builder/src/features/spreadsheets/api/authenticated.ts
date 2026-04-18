@@ -25,9 +25,7 @@ export const spreadsheetsAuthenticatedAPI = {
     .input(listSpreadsheetsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listSpreadsheetsResponse)
-    .handler(async ({ input }) => {
-      return await listSpreadsheets(input)
-    }),
+    .handler(async ({ input }) => await listSpreadsheets(input)),
   listWorksheetsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
@@ -38,9 +36,7 @@ export const spreadsheetsAuthenticatedAPI = {
     .input(listWorksheetsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWorksheetsResponse)
-    .handler(async ({ input }) => {
-      return await listWorksheets(input)
-    }),
+    .handler(async ({ input }) => await listWorksheets(input)),
   listWorksheetHeadersAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
@@ -51,7 +47,5 @@ export const spreadsheetsAuthenticatedAPI = {
     .input(listWorksheetHeadersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(listWorksheetHeadersResponse)
-    .handler(async ({ input }) => {
-      return await listWorksheetHeaders(input)
-    }),
+    .handler(async ({ input }) => await listWorksheetHeaders(input)),
 }

@@ -117,7 +117,13 @@ const NodeEditorMenu = memo(
     useEffect(() => {
       const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
       if (nodeConfig) {
-        setNodeMenus(nodeConfig.menus(t, { inboxes, templates: { waTemplates: whatsappTemplates }, beforeStep }))
+        setNodeMenus(
+          nodeConfig.menus(t, {
+            inboxes,
+            templates: { waTemplates: whatsappTemplates },
+            beforeStep,
+          }),
+        )
       } else {
         setNodeMenus([])
       }

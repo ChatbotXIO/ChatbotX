@@ -37,11 +37,9 @@ export const organizationService = {
     return organization
   },
 
-  findByDomain: (domain: string): Promise<OrganizationModel> => {
-    return organizationService.findOrFail({ where: { domain } })
-  },
+  findByDomain: (domain: string): Promise<OrganizationModel> =>
+    organizationService.findOrFail({ where: { domain } }),
 
-  findById: (id: string): Promise<OrganizationModel> => {
-    return organizationService.findOrFail({ where: { id } })
-  },
+  findById: (id: string): Promise<OrganizationModel> =>
+    organizationService.findOrFail({ where: { id } }),
 }

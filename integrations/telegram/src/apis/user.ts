@@ -56,6 +56,6 @@ const getProfilePhotoFileId = async (
     })
     return response.result.photos[0]?.[0]?.file_id
   } catch {
-    return undefined
+    return
   }
 }

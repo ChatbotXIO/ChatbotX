@@ -1,4 +1,4 @@
-import ky, { isHTTPError, type KyInstance, type Options } from "ky"
+import ky, { isHTTPError, type KyInstance } from "ky"
 import { InstagramAPIException } from "../exception"
 import { logger } from "./logger"
 
@@ -24,7 +24,7 @@ class InstagramHttpClient {
       },
       hooks: {
         beforeError: [
-          ({error, request}) => {
+          ({ error, request }) => {
             if (isHTTPError(error)) {
               logger.error(
                 {

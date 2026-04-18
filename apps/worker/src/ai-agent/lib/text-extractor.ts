@@ -32,9 +32,8 @@ const decodeUtf8 = (buffer: Buffer): string => UTF8_DECODER.decode(buffer)
 const decodeUtf8NonFatal = (buffer: Buffer): string =>
   UTF8_NON_FATAL_DECODER.decode(buffer)
 
-const normalizeMimeType = (mimeType: string): string => {
-  return mimeType.toLowerCase().split(";")[0]?.trim() || ""
-}
+const normalizeMimeType = (mimeType: string): string =>
+  mimeType.toLowerCase().split(";")[0]?.trim() || ""
 
 const isMimeType = (
   mimeType: string,
@@ -196,7 +195,7 @@ async function extractTextFromEmail(buffer: Buffer): Promise<string> {
       return normalizeWhitespace(decodeUtf8NonFatal(buffer))
     }
     return result
-  } catch (_error) {
+  } catch {
     const decoded = decodeUtf8NonFatal(buffer)
     const printableRatio =
       decoded
@@ -225,7 +224,7 @@ function extractTextFromXml(buffer: Buffer): string {
       .replace(/&nbsp;/g, " ")
 
     return normalizeWhitespace(text)
-  } catch (_error) {
+  } catch {
     return normalizeWhitespace(decodeUtf8(buffer))
   }
 }

@@ -42,38 +42,34 @@ export const getCustomFieldByNameInputSchema = z.object({
 
 export const listCustomFields = (
   api: ChatbotXAPI,
-): Promise<ListCustomFieldsResponse> => {
-  return api.getClient().get("custom-fields").json<ListCustomFieldsResponse>()
-}
+): Promise<ListCustomFieldsResponse> =>
+  api.getClient().get("custom-fields").json<ListCustomFieldsResponse>()
 
 export const createCustomField = (
   api: ChatbotXAPI,
   input: CreateCustomFieldBody,
-): Promise<CreateCustomFieldResponse> => {
-  return api
+): Promise<CreateCustomFieldResponse> =>
+  api
     .getClient()
     .post("custom-fields", {
       json: input,
     })
     .json<CreateCustomFieldResponse>()
-}
 
 export const getCustomField = (
   api: ChatbotXAPI,
   input: GetCustomFieldPathParams,
-): Promise<GetCustomFieldResponse> => {
-  return api
+): Promise<GetCustomFieldResponse> =>
+  api
     .getClient()
     .get(`custom-fields/${input.id}`)
     .json<GetCustomFieldResponse>()
-}
 
 export const getCustomFieldByName = (
   api: ChatbotXAPI,
   input: GetCustomFieldByNamePathParams,
-): Promise<GetCustomFieldByNameResponse> => {
-  return api
+): Promise<GetCustomFieldByNameResponse> =>
+  api
     .getClient()
     .get(`custom-fields/name/${input.name}`)
     .json<GetCustomFieldByNameResponse>()
-}

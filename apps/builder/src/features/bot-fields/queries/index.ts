@@ -52,8 +52,7 @@ export async function listBotFields(
 
 export const findBotField = async (
   input: FindBotFieldRequest,
-): Promise<BotFieldResource | undefined> => {
-  return await db.query.botFieldModel.findFirst({
+): Promise<BotFieldResource | undefined> =>
+  await db.query.botFieldModel.findFirst({
     where: input,
   })
-}

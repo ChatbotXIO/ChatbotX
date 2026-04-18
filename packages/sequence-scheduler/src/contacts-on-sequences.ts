@@ -7,16 +7,15 @@ export const contactsOnSequencesUtils = {
   getAllSequenceIds: async (
     dbClient: DatabaseClient,
     where: { contactId: string },
-  ): Promise<string[]> => {
-    return await dbClient.query.contactsOnSequenceModel
+  ): Promise<string[]> =>
+    await dbClient.query.contactsOnSequenceModel
       .findMany({
         where,
         columns: {
           sequenceId: true,
         },
       })
-      .then((sequences) => sequences.map((s) => s.sequenceId))
-  },
+      .then((sequences) => sequences.map((s) => s.sequenceId)),
 
   calculateSequenceDiff: (
     currentSequenceIds: string[],

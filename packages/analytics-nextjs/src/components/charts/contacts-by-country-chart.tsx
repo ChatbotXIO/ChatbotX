@@ -9,12 +9,14 @@ export function ContactsByCountryChart() {
   const t = useTranslations()
   const { contactsByCountry } = useAnalysisStore((state) => state)
 
-  const data = useMemo(() => {
-    return contactsByCountry.map((item) => ({
-      name: item.dimension || "Unknown",
-      value: item.uniqueContacts,
-    }))
-  }, [contactsByCountry])
+  const data = useMemo(
+    () =>
+      contactsByCountry.map((item) => ({
+        name: item.dimension || "Unknown",
+        value: item.uniqueContacts,
+      })),
+    [contactsByCountry],
+  )
 
   return (
     <DonutChart

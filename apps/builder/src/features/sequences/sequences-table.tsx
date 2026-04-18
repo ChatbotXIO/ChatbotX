@@ -62,7 +62,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
           t(sequence.active ? "sequences.deactivated" : "sequences.activated"),
         )
         router.refresh()
-      } catch (_error) {
+      } catch {
         toast.error(t("messages.unknownError"))
       }
     },

@@ -15,10 +15,11 @@ export const analyticsBroadcastRoutes = os.router({
     })
     .input(getBroadcastStatsRequest)
     .output(getBroadcastStatsResponse)
-    .handler(async ({ input }) => {
-      return await broadcastAnalyticsService.getStats({
-        workspaceId: input.workspaceId,
-        broadcastId: input.broadcastId,
-      })
-    }),
+    .handler(
+      async ({ input }) =>
+        await broadcastAnalyticsService.getStats({
+          workspaceId: input.workspaceId,
+          broadcastId: input.broadcastId,
+        }),
+    ),
 })

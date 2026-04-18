@@ -15,12 +15,13 @@ export const workspaceMembersAPIs = {
     })
     .input(listWorkspaceMembersRequest.omit({ workspaceId: true }))
     .output(listWorkspaceMembersResponse)
-    .handler(async ({ context, input }) => {
-      return await listWorkspaceMembers({
-        ...input,
-        workspaceId: context.workspace.id,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listWorkspaceMembers({
+          ...input,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 }
 
 export default workspaceMembersAPIs

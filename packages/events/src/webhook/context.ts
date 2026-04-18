@@ -34,7 +34,7 @@ export function setWebhookExecutionContext(context: ExecutionContext) {
 
 export function getWebhookExecutionContext(): ExecutionContext | undefined {
   if (!asyncLocalStorage) {
-    return undefined
+    return
   }
   return asyncLocalStorage.getStore()
 }

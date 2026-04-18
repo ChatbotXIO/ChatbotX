@@ -18,9 +18,7 @@ export type ConfigOptions = {
 const CONFIG_DIR = ".chatbotX"
 const CONFIG_FILE = "config.json"
 
-const getConfigFilePath = (): string => {
-  return join(homedir(), CONFIG_DIR, CONFIG_FILE)
-}
+const getConfigFilePath = (): string => join(homedir(), CONFIG_DIR, CONFIG_FILE)
 
 const readStoredConfig = (): ConfigOptions => {
   try {

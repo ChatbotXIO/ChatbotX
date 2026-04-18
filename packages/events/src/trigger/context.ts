@@ -34,7 +34,7 @@ export function setTriggerExecutionContext(context: ExecutionContext) {
 
 export function getTriggerExecutionContext(): ExecutionContext | undefined {
   if (!asyncLocalStorage) {
-    return undefined
+    return
   }
   return asyncLocalStorage.getStore()
 }

@@ -31,9 +31,8 @@ export const workspaceService = {
     return workspace
   },
 
-  findById: (id: string): Promise<WorkspaceModel> => {
-    return workspaceService.findOrFail({ where: { id } })
-  },
+  findById: (id: string): Promise<WorkspaceModel> =>
+    workspaceService.findOrFail({ where: { id } }),
 
   find: (props: {
     where: WorkspaceWhere
@@ -42,11 +41,10 @@ export const workspaceService = {
     const { where, tx = db } = props
     return withCache(
       `workspaces:${JSON.stringify(props.where)}`,
-      async () => {
-        return await tx.query.workspaceModel.findFirst({
+      async () =>
+        await tx.query.workspaceModel.findFirst({
           where,
-        })
-      },
+        }),
       {
         tags: ["workspaces"],
       },

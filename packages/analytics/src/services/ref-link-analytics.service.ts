@@ -41,16 +41,14 @@ export class RefLinkAnalyticsService {
       return
     }
 
-    const items: RefLinkStatModel[] = refLinkPayloads.map((p) => {
-      return {
-        workspaceId: p.context.workspaceId,
-        linkId: p.action.refId,
-        contactId: p.context.contactId,
-        contactInboxId: p.context.contactInboxId ?? "",
-        occurredAt: startOfSecond(new Date(p.occurredAt)),
-        createdAt: new Date(),
-      }
-    })
+    const items: RefLinkStatModel[] = refLinkPayloads.map((p) => ({
+      workspaceId: p.context.workspaceId,
+      linkId: p.action.refId,
+      contactId: p.context.contactId,
+      contactInboxId: p.context.contactInboxId ?? "",
+      occurredAt: startOfSecond(new Date(p.occurredAt)),
+      createdAt: new Date(),
+    }))
 
     await Promise.all([
       db.insert(refLinkStatModel).values(items).onConflictDoNothing(),

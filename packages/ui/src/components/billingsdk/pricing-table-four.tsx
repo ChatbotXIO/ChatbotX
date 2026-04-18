@@ -253,13 +253,10 @@ export function PricingTableFour({
     onPlanSelect?.(planId)
   }
 
-  const getPlanIcon = (planId: string) => {
-    return (
-      defaultIcons[planId as keyof typeof defaultIcons] || (
-        <Package className="h-5 w-5" />
-      )
+  const getPlanIcon = (planId: string) =>
+    defaultIcons[planId as keyof typeof defaultIcons] || (
+      <Package className="h-5 w-5" />
     )
-  }
 
   return (
     <section className={cn(sectionVariants({ size, theme }), className)}>

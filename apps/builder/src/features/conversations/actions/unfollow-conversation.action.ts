@@ -49,23 +49,23 @@ export const unfollowConversation = async (ctx: {
 
   for (const contactInbox of conversation.contactInboxes) {
     await conversationTrackingService.trackEvent(
-    {
-      workspaceId: ctx.workspaceId,
-      conversationId: conversation.id,
-      eventType: "conversation_unfollowed",
-      eventId: createId(),
-      channel: contactInbox.channel,
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "api",
-          triggerHandler: "unfollowConversationAction",
-          triggerType: "conversation_unfollowed",
+      {
+        workspaceId: ctx.workspaceId,
+        conversationId: conversation.id,
+        eventType: "conversation_unfollowed",
+        eventId: createId(),
+        channel: contactInbox.channel,
+        occurredAt: new Date(),
+        metadata: {
+          triggerContext: {
+            triggerSource: "api",
+            triggerHandler: "unfollowConversationAction",
+            triggerType: "conversation_unfollowed",
+          },
         },
       },
-    },
-    { skipSpooler: true },
-  )
+      { skipSpooler: true },
+    )
   }
 
   revalidateCacheTags([
