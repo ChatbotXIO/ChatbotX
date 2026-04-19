@@ -1,8 +1,12 @@
-import { createProducer, type Producer } from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
+import {
+  createMessagingProducer,
+  type MessagingProducer,
+  providerTypes,
+  SEQUENCE_SCHEDULER_QUEUE_NAME,
+} from "@chatbotx.io/worker-config"
 import { logger } from "../lib/logger"
-import { KAFKA_TOPIC } from "./services/constants"
 
 const TOTAL_BUCKETS = 256
 const CLAIM_LIMIT = 100
@@ -19,7 +23,7 @@ interface SchedulerConfig {
 class SchedulerWorker {
   private readonly config: SchedulerConfig
   private _scheduler: SchedulerClient | null = null
-  private readonly producer: Producer<string, string, string, string>
+  private readonly producer: MessagingProducer
   private running = false
   private timers: NodeJS.Timeout[] = []
 
@@ -38,7 +42,10 @@ class SchedulerWorker {
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
     }
 
-    this.producer = createProducer("sequence-scheduler")
+    this.producer = createMessagingProducer(providerTypes.enum.bullmq, {
+      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
+      clientId: "sequence-scheduler",
+    })
   }
 
   async getHealth(): Promise<{
@@ -167,7 +174,6 @@ class SchedulerWorker {
     dispatches: { dispatchId: string; bucket: number }[],
   ) {
     const messages = dispatches.map((dispatch) => ({
-      topic: KAFKA_TOPIC,
       key: dispatch.dispatchId,
       value: JSON.stringify({
         dispatchId: dispatch.dispatchId,
@@ -176,7 +182,7 @@ class SchedulerWorker {
       }),
     }))
 
-    await this.producer.send({ messages })
+    await this.producer.send(messages)
   }
 
   async stop() {

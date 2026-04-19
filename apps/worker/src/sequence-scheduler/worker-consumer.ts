@@ -1,43 +1,34 @@
-import type { Readable } from "node:stream"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
-import {
-  type Consumer,
-  createConsumer,
-  ensureTopicExists,
-} from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
+import {
+  createMessagingConsumer,
+  type MessagingConsumer,
+  providerTypes,
+  SEQUENCE_SCHEDULER_QUEUE_NAME,
+} from "@chatbotx.io/worker-config"
 import pLimit, { type LimitFunction } from "p-limit"
 import { logger } from "../lib/logger"
-import {
-  CONSUMER_CLIENT_ID,
-  CONSUMER_GROUP_ID,
-  HEARTBEAT_INTERVAL_IN_MS,
-  KAFKA_PARTITIONS,
-  KAFKA_REPLICATION_FACTOR,
-  KAFKA_TOPIC,
-  MAX_PROCESS,
-  MAX_RETRIES,
-  MAX_WAIT_TIME_IN_MS,
-  SESSION_TIMEOUT_IN_MS,
-} from "./services/constants"
+import { MAX_PROCESS, MAX_RETRIES } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
 import { EnrollmentAdvancerService } from "./services/enrollment-advancer.service"
 import { RetrySchedulerService } from "./services/retry-scheduler.service"
 import { StepExecutorService } from "./services/step-executor.service"
 import type {
-  ConsumerConfig,
   DispatchMessage,
   DispatchWithRelations,
   StepWithRelations,
 } from "./services/types"
 
+interface ConsumerOptions {
+  maxProcess: number
+}
+
 class DispatchConsumer {
   private running = false
-  private consumer: Consumer<string, string, string, string> | null = null
-  private stream: Readable | null = null
+  private consumer: MessagingConsumer | null = null
   private _scheduler: SchedulerClient | null = null
-  private readonly config: ConsumerConfig
+  private readonly options: ConsumerOptions
   private readonly limitProcess: LimitFunction
 
   private readonly dispatchProcessor: DispatchProcessorService
@@ -52,16 +43,12 @@ class DispatchConsumer {
     return this._scheduler
   }
 
-  constructor(config: Partial<ConsumerConfig> = {}) {
-    this.config = {
-      groupId: config.groupId || CONSUMER_GROUP_ID,
-      maxWaitTimeInMs: config.maxWaitTimeInMs || MAX_WAIT_TIME_IN_MS,
-      sessionTimeout: config.sessionTimeout || SESSION_TIMEOUT_IN_MS,
-      heartbeatInterval: config.heartbeatInterval || HEARTBEAT_INTERVAL_IN_MS,
-      maxProcess: config.maxProcess || MAX_PROCESS,
+  constructor(options: Partial<ConsumerOptions> = {}) {
+    this.options = {
+      maxProcess: options.maxProcess || MAX_PROCESS,
     }
 
-    this.limitProcess = pLimit(this.config.maxProcess)
+    this.limitProcess = pLimit(this.options.maxProcess)
 
     this.dispatchProcessor = new DispatchProcessorService()
     this.stepExecutor = new StepExecutorService()
@@ -77,40 +64,27 @@ class DispatchConsumer {
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
 
-    this.consumer = createConsumer(CONSUMER_CLIENT_ID, this.config.groupId)
-
-    await ensureTopicExists(
-      CONSUMER_CLIENT_ID,
-      KAFKA_TOPIC,
-      KAFKA_PARTITIONS,
-      KAFKA_REPLICATION_FACTOR,
-    )
-
-    this.stream = await this.consumer.consume({
-      topics: [KAFKA_TOPIC],
-      autocommit: true,
-      sessionTimeout: this.config.sessionTimeout,
-      heartbeatInterval: this.config.heartbeatInterval,
+    this.consumer = createMessagingConsumer(providerTypes.enum.bullmq, {
+      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
+      clientId: "sequence-dispatch-consumer",
+      groupId: "sequence-dispatch-consumer",
     })
-    const stream = this.stream
 
     this.running = true
     console.log("Dispatch consumer fully operational")
 
-    for await (const message of stream) {
+    await this.consumer.consume(async (value: string) => {
       if (!this.running) {
-        break
+        return
       }
 
       try {
-        const payload = JSON.parse(message.value || "{}")
+        const payload = JSON.parse(value || "{}")
         await this.limitProcess(() => this.processDispatch(payload))
       } catch (error) {
-        logger.error({ error, message }, "Error processing dispatch message")
+        logger.error({ error, value }, "Error processing dispatch message")
       }
-    }
-
-    this.stream = null
+    })
   }
 
   private async processDispatch(payload: DispatchMessage) {
@@ -274,13 +248,9 @@ class DispatchConsumer {
 
     this.running = false
 
-    if (this.stream) {
-      this.stream.destroy()
-      this.stream = null
-    }
-
     if (this.consumer) {
       await this.consumer.close()
+      this.consumer = null
     }
   }
 }

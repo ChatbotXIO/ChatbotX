@@ -10,6 +10,8 @@
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
+    "@chatbotx.io/kafka": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@types/node": "^24.10.4",

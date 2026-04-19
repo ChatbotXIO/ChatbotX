@@ -7,4 +7,5 @@ export const queueName = {
   webhook: "webhook",
   default: "default",
   analytics: "analytics",
+  sequenceScheduler: "sequenceScheduler",
 } as const

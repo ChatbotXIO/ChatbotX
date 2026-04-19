@@ -1,7 +1,6 @@
 name: chatbotx
 
 include:
-  - packages/kafka/docker-compose.yml
   - packages/clickhouse/docker-compose.yml
 
 x-network: &network

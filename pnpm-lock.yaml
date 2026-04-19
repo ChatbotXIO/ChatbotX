@@ -1882,6 +1882,12 @@ importers:
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../flow-config
+      '@chatbotx.io/kafka':
+        specifier: workspace:*
+        version: link:../kafka
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../sdk
