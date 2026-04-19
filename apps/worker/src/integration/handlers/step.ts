@@ -48,6 +48,7 @@ import { handleAIGenerateText } from "./generate-text"
 import { handleAIGenerateTextAgent } from "./generate-text-agent"
 import { getUserData } from "./get-user-data"
 import { sendEmail } from "./send-email"
+import { handleAISpeechToText } from "./speech-to-text"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -331,7 +332,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiExtractData]: handleAIExtractData,
-  [stepTypes.enum.aiSpeechToText]: undefined,
+  [stepTypes.enum.aiSpeechToText]: handleAISpeechToText,
   [stepTypes.enum.aiTextToSpeech]: undefined,
   [stepTypes.enum.optInEmail]: optInEmail,
   [stepTypes.enum.optOutEmail]: optOutEmail,

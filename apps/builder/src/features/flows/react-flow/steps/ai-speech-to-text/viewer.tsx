@@ -1,14 +1,25 @@
 "use client"
 
-import { BotIcon } from "lucide-react"
+import type { AISpeechToTextSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
+import { AIIcon } from "../ai-generate-text/components/ai-icon"
 
-const AISpeechToTextViewer = () => {
+type AISpeechToTextViewerProps = {
+  data: AISpeechToTextSchema
+}
+
+const AISpeechToTextViewer = (props: AISpeechToTextViewerProps) => {
+  const { data } = props
   const t = useTranslations()
+
   return (
     <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-bold">
-      <BotIcon className="text-yellow-500" size={18} />
-      {t("flows.actions.aiSpeechToText")}
+      <AIIcon
+        label={t("fields.flows.aiSpeechToText", {
+          aiName: t(`aiProviders.${data.provider}`),
+        })}
+        provider={data.provider}
+      />
     </div>
   )
 }

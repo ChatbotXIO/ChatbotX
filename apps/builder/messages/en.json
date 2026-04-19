@@ -626,6 +626,7 @@
       "aiEditImage": "{aiName}: Edit Image",
       "aiAnalyzeImage": "{aiName}: AI Analyze Image",
       "aiExtractData": "{aiName}: Extract Data",
+      "aiSpeechToText": "{aiName}: AI Speech to Text",
       "label": "Flows",
       "placeholder": "Select flow",
       "aiGenerateTextAgent": "{aiName}: Generate Text Agent"
@@ -1279,9 +1280,9 @@
       "addContactTag": "Add Contact Tag",
       "aiExtractData": "AI Extract Data",
       "aiAnalyzeImage": "AI Analyze Image",
+      "aiSpeechToText": "AI Speech to Text",
       "aiGenerateImage": "AI Generate Image",
       "aiGenerateTextAgent": "AI Generate Text Agent",
-      "aiSpeechToText": "AI Speech to Text",
       "aiTextToSpeech": "AI Text to Speech",
       "archiveConversation": "Archive Conversation",
       "assignConversation": "Assign Conversation",
