@@ -16,6 +16,7 @@ import type { BotResponseTrackingContext } from "../types"
 
 export const IntegrationJobAction = {
   sendFlow: "sendFlow",
+  sendSequenceFlow: "sendSequenceFlow",
   runRef: "runRef",
   incomingMessage: "incomingMessage",
   messageStatus: "messageStatus",
@@ -189,6 +190,21 @@ export type IntegrationJobCreateMessage = {
   }
 }
 
+export type IntegrationJobSendSequenceFlow = {
+  type: typeof IntegrationJobAction.sendSequenceFlow
+  data: {
+    dispatchId: string
+    workspaceId: string
+    stepId: string
+    contactId: string
+    contactInboxId: string
+    enrollmentId: string
+    sequenceId: string
+    bucket: number
+    metadata: MetadataPayload
+  }
+}
+
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
   | IntegrationJobMessageStatus
@@ -206,6 +222,7 @@ export type IntegrationJobData =
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobReferral
+  | IntegrationJobSendSequenceFlow
 
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"

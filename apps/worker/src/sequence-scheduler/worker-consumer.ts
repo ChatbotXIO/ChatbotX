@@ -1,24 +1,23 @@
+import { and, db, eq } from "@chatbotx.io/database/client"
+import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
 import { SEQUENCE_SCHEDULE_PAYLOAD_TYPE } from "@chatbotx.io/flow-config"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
+import { advanceEnrollment } from "@chatbotx.io/sequence-scheduler"
 import {
-  createMessagingConsumer,
+  IntegrationJobAction,
+  integrationQueue,
   type MessagingConsumer,
-  providerTypes,
   SEQUENCE_SCHEDULER_QUEUE_NAME,
 } from "@chatbotx.io/worker-config"
+import { createConsumer } from "@chatbotx.io/worker-config/message-queue/factory"
 import pLimit, { type LimitFunction } from "p-limit"
 import { logger } from "../lib/logger"
-import { MAX_PROCESS, MAX_RETRIES } from "./services/constants"
+import { MAX_PROCESS } from "./services/constants"
 import { DispatchProcessorService } from "./services/dispatch-processor.service"
-import { EnrollmentAdvancerService } from "./services/enrollment-advancer.service"
 import { RetrySchedulerService } from "./services/retry-scheduler.service"
 import { StepExecutorService } from "./services/step-executor.service"
-import type {
-  DispatchMessage,
-  DispatchWithRelations,
-  StepWithRelations,
-} from "./services/types"
+import type { DispatchMessage, DispatchWithRelations } from "./services/types"
 
 interface ConsumerOptions {
   maxProcess: number
@@ -33,7 +32,6 @@ class DispatchConsumer {
 
   private readonly dispatchProcessor: DispatchProcessorService
   private readonly stepExecutor: StepExecutorService
-  private readonly enrollmentAdvancer: EnrollmentAdvancerService
   private readonly retryScheduler: RetrySchedulerService
 
   private get scheduler(): SchedulerClient {
@@ -52,7 +50,6 @@ class DispatchConsumer {
 
     this.dispatchProcessor = new DispatchProcessorService()
     this.stepExecutor = new StepExecutorService()
-    this.enrollmentAdvancer = new EnrollmentAdvancerService()
     this.retryScheduler = new RetrySchedulerService()
   }
 
@@ -64,7 +61,7 @@ class DispatchConsumer {
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
 
-    this.consumer = createMessagingConsumer(providerTypes.enum.bullmq, {
+    this.consumer = await createConsumer({
       topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
       clientId: "sequence-dispatch-consumer",
       groupId: "sequence-dispatch-consumer",
@@ -143,102 +140,80 @@ class DispatchConsumer {
           dispatch.workspaceId,
           validation.reason,
         )
+
+        if (step) {
+          await advanceEnrollment({
+            enrollmentId: dispatch.enrollmentId,
+            workspaceId: dispatch.workspaceId,
+            sequenceId: dispatch.sequenceId,
+            contactId: dispatch.contactId,
+            currentStep: { id: step.id, order: step.order },
+            sentAt: new Date(),
+            scheduler: this.scheduler,
+          })
+        }
+
+        await this.scheduler.removeFromSchedule(dispatch.bucket, dispatch.id)
         return
       }
-      const sentAt = await this.stepExecutor.sendFlowMessage(
-        dispatch,
-        step as StepWithRelations,
+
+      await integrationQueue.add(
+        IntegrationJobAction.sendSequenceFlow,
         {
-          metadata: {
-            type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
-            sequenceStepId: step?.id ?? "",
-            sequenceId: step?.sequenceId ?? "",
+          type: IntegrationJobAction.sendSequenceFlow,
+          data: {
             dispatchId: dispatch.id,
+            workspaceId: dispatch.workspaceId,
+            stepId: dispatch.stepId,
+            contactId: dispatch.contactId,
             contactInboxId: dispatch.contactInboxId,
+            enrollmentId: dispatch.enrollmentId,
+            sequenceId: dispatch.sequenceId,
+            bucket: dispatch.bucket,
+            metadata: {
+              type: SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
+              sequenceStepId: step?.id ?? "",
+              sequenceId: step?.sequenceId ?? "",
+              dispatchId: dispatch.id,
+              contactInboxId: dispatch.contactInboxId,
+            },
           },
         },
+        {
+          jobId: `seq-${dispatch.id}-${dispatch.attempt}`,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: true,
+        },
       )
-
-      await this.stepExecutor.markDispatchCompleted(
-        dispatch.id,
-        dispatch.workspaceId,
-        sentAt,
-      )
-
-      await this.advanceEnrollment(dispatch, step as StepWithRelations, sentAt)
     } catch (error) {
       logger.error(
-        { error, dispatchId: dispatch.id, attempt: dispatch.attempt },
-        "Error executing step",
+        { error, dispatchId: dispatch.id },
+        "Failed to enqueue sendSequenceFlow; reverting dispatch",
       )
 
-      try {
-        if (dispatch.attempt < MAX_RETRIES) {
-          await this.retryScheduler.scheduleRetry(
-            dispatch,
-            error,
-            this.scheduler,
-          )
-        } else {
-          await this.retryScheduler.markDispatchFailed(
-            dispatch.id,
-            dispatch.workspaceId,
-            error instanceof Error ? error.message : "Unknown error",
-          )
-        }
-      } catch (retryError) {
-        logger.error(
-          { retryError, dispatchId: dispatch.id },
-          "Failed to handle dispatch error",
-        )
-      }
+      await this.revertDispatchToPending(dispatch.id, dispatch.workspaceId)
     }
   }
 
-  private async advanceEnrollment(
-    dispatch: DispatchWithRelations,
-    step: StepWithRelations,
-    sentAt: Date,
+  private async revertDispatchToPending(
+    dispatchId: string,
+    workspaceId: string,
   ) {
-    const enrollment = await this.enrollmentAdvancer.fetchEnrollment(
-      dispatch.enrollmentId,
-      dispatch.workspaceId,
-    )
-
-    if (!enrollment) {
-      throw new Error(`Enrollment ${dispatch.enrollmentId} not found`)
-    }
-
-    if (enrollment.status !== "active") {
-      return
-    }
-
-    if (enrollment.lastStepId === step.id) {
-      return
-    }
-
-    const nextStep = await this.enrollmentAdvancer.findNextStep(
-      dispatch.sequenceId,
-      step.order,
-    )
-
-    if (!nextStep) {
-      await this.enrollmentAdvancer.completeEnrollment(
-        dispatch.enrollmentId,
-        dispatch.workspaceId,
-        step,
-        sentAt,
+    await db
+      .update(sequenceDispatchModel)
+      .set({
+        status: "pending",
+        lockedAt: null,
+        lockOwner: null,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(sequenceDispatchModel.id, dispatchId),
+          eq(sequenceDispatchModel.workspaceId, workspaceId),
+        ),
       )
-      return
-    }
-
-    await this.enrollmentAdvancer.advanceToNextStep(
-      dispatch,
-      step,
-      nextStep,
-      sentAt,
-      this.scheduler,
-    )
   }
 
   async stop() {

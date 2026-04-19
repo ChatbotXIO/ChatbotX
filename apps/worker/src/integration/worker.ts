@@ -23,6 +23,7 @@ import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleReferral } from "./handlers/referral"
 import { sendBroadcast } from "./handlers/send-broadcast"
+import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
 async function startIntegrationWorker() {
   try {
@@ -78,6 +79,10 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.sendFlow: {
           await runFlowNode(job.data.data)
+          return
+        }
+        case IntegrationJobAction.sendSequenceFlow: {
+          await handleSendSequenceFlow(job.data.data, job)
           return
         }
         case IntegrationJobAction.runFlowPostback: {

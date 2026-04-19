@@ -1,12 +1,16 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import { sendFlowDirect } from "../../integration/handlers/send-flow-direct"
-import type {
-  DispatchWithRelations,
-  StepWithRelations,
-  ValidationResult,
-} from "./types"
+import { db } from "@chatbotx.io/database/client"
+
+type StepQueryResult = Awaited<
+  ReturnType<
+    typeof db.query.sequenceStepModel.findFirst<{ with: { flow: true } }>
+  >
+>
+
+export type StepWithFlow = NonNullable<StepQueryResult>
+
+export type StepValidationResult =
+  | { valid: true; step: StepWithFlow }
+  | { valid: false; reason: string }
 
 export class StepExecutorService {
   async fetchStep(stepId: string) {
@@ -17,12 +21,10 @@ export class StepExecutorService {
       with: { flow: true },
     })
 
-    return step ?? null
+    return step
   }
 
-  validateStep(
-    step: Awaited<ReturnType<typeof this.fetchStep>>,
-  ): ValidationResult {
+  validateStep(step: StepQueryResult): StepValidationResult {
     if (!step) {
       return { valid: false, reason: "step_not_found" }
     }
@@ -35,47 +37,6 @@ export class StepExecutorService {
       return { valid: false, reason: "flow_not_configured" }
     }
 
-    return { valid: true }
-  }
-
-  async sendFlowMessage(
-    dispatch: DispatchWithRelations,
-    step: StepWithRelations,
-    options?: {
-      metadata?: MetadataPayload
-    },
-  ): Promise<Date> {
-    if (!step.flow) {
-      throw new Error(`Step ${step.id} has no flow configured`)
-    }
-
-    const sentAt = await sendFlowDirect({
-      flowId: step.flow.id,
-      workspaceId: dispatch.workspaceId,
-      contactId: dispatch.contactId,
-      metadata: options?.metadata,
-    })
-
-    return sentAt
-  }
-
-  async markDispatchCompleted(
-    dispatchId: string,
-    workspaceId: string,
-    sentAt: Date,
-  ): Promise<void> {
-    await db
-      .update(sequenceDispatchModel)
-      .set({
-        status: "completed",
-        completedAt: sentAt,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(sequenceDispatchModel.id, dispatchId),
-          eq(sequenceDispatchModel.workspaceId, workspaceId),
-        ),
-      )
+    return { valid: true, step }
   }
 }

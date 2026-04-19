@@ -1,11 +1,10 @@
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import {
-  createMessagingProducer,
   type MessagingProducer,
-  providerTypes,
   SEQUENCE_SCHEDULER_QUEUE_NAME,
 } from "@chatbotx.io/worker-config"
+import { createProducer } from "@chatbotx.io/worker-config/message-queue/factory"
 import { logger } from "../lib/logger"
 
 const TOTAL_BUCKETS = 256
@@ -23,7 +22,7 @@ interface SchedulerConfig {
 class SchedulerWorker {
   private readonly config: SchedulerConfig
   private _scheduler: SchedulerClient | null = null
-  private readonly producer: MessagingProducer
+  private _producer: MessagingProducer | null = null
   private running = false
   private timers: NodeJS.Timeout[] = []
 
@@ -34,6 +33,13 @@ class SchedulerWorker {
     return this._scheduler
   }
 
+  private get producer(): MessagingProducer {
+    if (!this._producer) {
+      throw new Error("Producer not initialized. Call start() first.")
+    }
+    return this._producer
+  }
+
   constructor(config: Partial<SchedulerConfig> = {}) {
     this.config = {
       buckets: config.buckets || this.getAssignedBuckets(),
@@ -41,11 +47,6 @@ class SchedulerWorker {
       claimLimit: config.claimLimit || CLAIM_LIMIT,
       lockTtlMs: config.lockTtlMs || LOCK_TTL_MS,
     }
-
-    this.producer = createMessagingProducer(providerTypes.enum.bullmq, {
-      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
-      clientId: "sequence-scheduler",
-    })
   }
 
   async getHealth(): Promise<{
@@ -75,6 +76,10 @@ class SchedulerWorker {
 
     const redisClient = await sequenceConnections.useExisting()
     this._scheduler = new SchedulerClient(redisClient)
+    this._producer = await createProducer({
+      topic: SEQUENCE_SCHEDULER_QUEUE_NAME,
+      clientId: "sequence-scheduler",
+    })
 
     this.running = true
 

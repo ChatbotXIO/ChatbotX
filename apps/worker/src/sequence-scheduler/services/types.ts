@@ -18,16 +18,6 @@ type DispatchQueryResult = Awaited<
 
 export type DispatchWithRelations = NonNullable<DispatchQueryResult>
 
-type StepQueryResult = Awaited<
-  ReturnType<
-    typeof db.query.sequenceStepModel.findFirst<{
-      with: { flow: true }
-    }>
-  >
->
-
-export type StepWithRelations = NonNullable<StepQueryResult>
-
 export type DispatchMessage = {
   dispatchId: string
   claimedAt: number

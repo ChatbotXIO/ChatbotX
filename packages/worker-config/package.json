@@ -21,7 +21,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./keys": "./src/keys.ts"
+    "./keys": "./src/keys.ts",
+    "./message-queue/factory": "./src/message-queue/factory.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

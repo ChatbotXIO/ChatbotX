@@ -1,3 +1,4 @@
+export * from "./advance-enrollment"
 export * from "./calculate-next-run-at"
 // new imports
 export * from "./contacts-on-sequences"

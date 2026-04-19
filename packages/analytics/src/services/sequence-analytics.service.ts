@@ -176,28 +176,6 @@ export class SequenceAnalyticsService {
 
     await saveToClickhouse(insertedData)
 
-    const sequenceContacts = sequenceSchedulePayloads.map((p) => ({
-      sequenceId: (
-        p.metadata as {
-          type: typeof SEQUENCE_SCHEDULE_PAYLOAD_TYPE
-          sequenceId: string
-        }
-      ).sequenceId,
-      contactId: p.context.contactId,
-    }))
-
-    if (sequenceContacts.length > 0) {
-      const tuples = sequenceContacts.map(
-        (sc) => sql`(${sc.sequenceId}, ${sc.contactId})`,
-      )
-
-      await db.execute(sql`
-        UPDATE "ContactOnSequence"
-        SET "status" = 'sent'
-        WHERE ("sequenceId", "contactId") IN (${sql.join(tuples, sql`, `)})
-      `)
-    }
-
     const updateItems: SequenceUpdateItem[] = sequenceSchedulePayloads.map(
       (p) => ({
         workspaceId: p.context.workspaceId,
