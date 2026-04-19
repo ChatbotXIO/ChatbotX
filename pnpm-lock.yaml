@@ -556,9 +556,6 @@ importers:
       '@chatbotx.io/integration-zalo':
         specifier: workspace:*
         version: link:../../integrations/zalo
-      '@chatbotx.io/kafka':
-        specifier: workspace:*
-        version: link:../../packages/kafka
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../../packages/logger
