@@ -603,6 +603,7 @@
       "aiGenerateText": "{aiName}: Tạo văn bản",
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
       "aiAnalyzeImage": "{aiName}: AI Phân tích hình ảnh",
+      "aiSpeechToText": "{aiName}: AI Chuyển giọng nói thành văn bản",
       "label": "Luồng",
       "placeholder": "Chọn luồng"
     },
@@ -1186,9 +1187,9 @@
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",
       "aiAnalyzeImage": "AI phân tích hình ảnh",
+      "aiSpeechToText": "AI chuyển giọng nói thành văn bản",
       "aiGenerateImage": "AI tạo hình ảnh",
       "aiGenerateTextAgent": "AI tạo văn bản agent",
-      "aiSpeechToText": "AI chuyển giọng nói thành văn bản",
       "aiTextToSpeech": "AI chuyển văn bản thành giọng nói",
       "archiveConversation": "Lưu trữ cuộc trò chuyện",
       "assignConversation": "Gán cuộc trò chuyện",

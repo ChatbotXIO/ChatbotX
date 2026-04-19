@@ -14,6 +14,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { handleAIAnalyzeImage } from "./analyze-image"
 import {
   addContactNotes,
   addContactSequence,
@@ -29,9 +30,9 @@ import {
 } from "./contact"
 import type { ExecuteStepProps } from "./flow"
 import { handleAIGenerateImage } from "./generate-image"
-import { handleAIAnalyzeImage } from "./analyze-image"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
+import { handleAISpeechToText } from "./speech-to-text"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -203,7 +204,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
   [stepTypes.enum.aiGenerateTextAgent]: undefined,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
-  [stepTypes.enum.aiSpeechToText]: undefined,
+  [stepTypes.enum.aiSpeechToText]: handleAISpeechToText,
   [stepTypes.enum.aiTextToSpeech]: undefined,
   [stepTypes.enum.optInEmail]: optInEmail,
   [stepTypes.enum.optOutEmail]: optOutEmail,
