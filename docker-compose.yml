@@ -8,9 +8,9 @@ x-network: &network
   networks:
     - chatbotx-network
 
-x-minio-creds: &minio-creds
-  MINIO_ROOT_USER: ${MINIO_ROOT_USER:-chatbotx}
-  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
+x-rustfs-environment: &rustfs-environment
+  RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-chatbotx}
+  RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-nr541Kv59xB4f48bhZOy5wBz}
 
 services:
   postgres:
@@ -20,14 +20,14 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-    command: ["postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}"]
+    command: [ "postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}" ]
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
       - PGDATA=/var/lib/postgresql/data/pgdata
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,39 +49,44 @@ services:
       - 1025:1025
       - 8025:8025
 
-  minio:
+  filesystem:
     <<: *network
-    image: minio/minio
+    image: rustfs/rustfs:latest
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
-    environment: *minio-creds
+    environment:
+      <<: *rustfs-environment
     volumes:
-      - s3-data:/data
+      - filesystem-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "curl -f http://127.0.0.1:9000/health && curl -f
+            http://127.0.0.1:9001/rustfs/console/health",
+        ]
       interval: 30s
-      timeout: 20s
+      timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 40s
 
-  createbuckets:
+  filesystem-init:
     <<: *network
-    image: minio/mc
+    image: rustfs/rc:latest
     depends_on:
-      minio:
+      filesystem:
         condition: service_healthy
-    restart: "no"
+    environment:
+      <<: *rustfs-environment
     entrypoint: >
-      /bin/sh -c "
-      set -e;
-      /usr/bin/mc alias set minio http://minio:9000 ${MINIO_ROOT_USER:-chatbotx} ${MINIO_ROOT_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz};
-      /usr/bin/mc mb --ignore-existing minio/chatbotx;
-      /usr/bin/mc mb --ignore-existing minio/chatbotx/public;
-      /usr/bin/mc anonymous set public minio/chatbotx/public;
-      exit 0;
-      "
+      /bin/sh -c "rc alias set local http://filesystem:9000
+      $${RUSTFS_ACCESS_KEY} $${RUSTFS_SECRET_KEY}; rc mb local/chatbotx
+      --ignore-existing; touch /tmp/empty && rc cp /tmp/empty
+      local/chatbotx/public/; rc anonymous set public local/chatbotx/public;"
 
   redis:
     <<: *network
@@ -91,7 +96,7 @@ services:
     volumes:
       - cache-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,5 +107,5 @@ networks:
 
 volumes:
   db-data:
-  s3-data:
+  filesystem-data:
   cache-data:

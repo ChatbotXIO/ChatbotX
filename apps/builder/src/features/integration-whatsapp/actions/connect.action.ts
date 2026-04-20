@@ -92,7 +92,6 @@ export const connectWhatsappAction = authActionClient
         // Validate wabaId
         const headersList = await headers()
         const baseUrl = headersList.get("x-url") ?? env.NEXT_PUBLIC_BUILDER_URL
-        const proxyUrl = env.NEXT_PUBLIC_WEBHOOK_PROXY_URL ?? baseUrl
         const auth: WhatsappAuthValue = {
           clientId: whatsappSettings.clientId,
           clientSecret: whatsappSettings.clientSecret,
@@ -109,7 +108,7 @@ export const connectWhatsappAction = authActionClient
             wabaId: parsedInput.wabaId,
             phoneNumber: foundPhoneNumber,
             businessId: parsedInput.businessId,
-            webhookUrl: `${proxyUrl}/integrations/whatsapp/webhook`,
+            webhookUrl: `${baseUrl}/integrations/whatsapp/webhook`,
           },
         }
 
