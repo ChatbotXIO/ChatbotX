@@ -268,8 +268,8 @@ async function* executeMultipleStepsGenerator(
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
             type: IntegrationJobAction.sendFlow,
             data: {
-              conversationId: props.conversation.id,
-              contactInboxId: props.contactInbox.id,
+              conversationId: props.conversation,
+              contactInboxId: props.contactInbox,
               flowId: props.flowVersion.flowId,
               flowVersionId: props.flowVersion.id,
               nodeId: connectedNodeId,

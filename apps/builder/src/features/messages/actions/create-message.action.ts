@@ -90,8 +90,8 @@ export const createMessage = async (props: {
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
-        contactInboxId: contactInbox.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         flowId: parsedInput.flowId,
         nodeId: parsedInput.nodeId,
       },
