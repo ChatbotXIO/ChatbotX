@@ -1,41 +1,72 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import {
+  contactInboxModel,
+  conversationModel,
+} from "@chatbotx.io/database/schema"
 import type {
+  ContactInboxModel,
   ConversationModel,
   FlowVersionModel,
 } from "@chatbotx.io/database/types"
 import { SdkException } from "@chatbotx.io/sdk"
 
-export async function findConversationAndFlowVersion(props: {
-  conversationId: string
-  flowId: string
-  flowVersionId?: string
+export async function detectConversationAndContactInbox(props: {
+  conversationId: string | ConversationModel
+  contactInboxId: string | ContactInboxModel
 }): Promise<{
   conversation: ConversationModel
+  contactInbox: ContactInboxModel
+}> {
+  const conversation =
+    typeof props.conversationId === "string"
+      ? await findOrFail({
+          table: conversationModel,
+          where: {
+            id: props.conversationId,
+          },
+          message: "Conversation not found",
+        })
+      : props.conversationId
+
+  const contactInbox =
+    typeof props.contactInboxId === "string"
+      ? await findOrFail({
+          table: contactInboxModel,
+          where: {
+            id: props.contactInboxId,
+            contactId: conversation.contactId,
+          },
+          message: "Contact inbox not found",
+        })
+      : props.contactInboxId
+
+  return {
+    conversation,
+    contactInbox,
+  }
+}
+
+export async function detectFlowVersion(props: {
+  flowId: string
+  flowVersionId?: string
+  workspaceId: string
+}): Promise<{
   flowVersion: FlowVersionModel
   useLatestFlowVersion: boolean
 }> {
-  const conversation = await findOrFail({
-    table: conversationModel,
-    where: {
-      id: props.conversationId,
-    },
-    message: "Conversation not found",
-  })
-
   let flowVersion: FlowVersionModel | null | undefined = null
   if (props.flowVersionId) {
     flowVersion = await db.query.flowVersionModel.findFirst({
       where: {
         id: props.flowVersionId,
-        workspaceId: conversation.workspaceId,
+        workspaceId: props.workspaceId,
       },
     })
   } else if (props.flowId) {
     const flow = await db.query.flowModel.findFirst({
       where: {
         id: props.flowId,
-        workspaceId: conversation.workspaceId,
+        workspaceId: props.workspaceId,
         active: true,
       },
     })
@@ -43,7 +74,7 @@ export async function findConversationAndFlowVersion(props: {
       flowVersion = await db.query.flowVersionModel.findFirst({
         where: {
           id: flow.currentVersionId,
-          workspaceId: conversation.workspaceId,
+          workspaceId: props.workspaceId,
         },
       })
     }
@@ -54,7 +85,6 @@ export async function findConversationAndFlowVersion(props: {
   }
 
   return {
-    conversation,
     flowVersion,
     useLatestFlowVersion: !props.flowVersionId,
   }

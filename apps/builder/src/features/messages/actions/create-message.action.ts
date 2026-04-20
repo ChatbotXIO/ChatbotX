@@ -91,6 +91,7 @@ export const createMessage = async (props: {
       type: IntegrationJobAction.sendFlow,
       data: {
         conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
         flowId: parsedInput.flowId,
         nodeId: parsedInput.nodeId,
       },

@@ -1,5 +1,3 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -28,13 +26,16 @@ import {
   type IntegrationJobSendFlowQuickReply,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { findConversationAndFlowVersion } from "../../lib/db"
+import {
+  detectConversationAndContactInbox,
+  detectFlowVersion,
+} from "../../lib/db"
 import { logger } from "../../lib/logger"
 import { flowStepHandlers } from "./step"
 
 export type ExecuteMultipleStepsProps = {
   conversation: ConversationModel
-  contactInbox?: ContactInboxModel
+  contactInbox: ContactInboxModel
   flowVersion: FlowVersionModel
   useLatestFlowVersion?: boolean
   targetType?: "node" | "button" | "step" | "quickReply"
@@ -54,6 +55,7 @@ export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
 
 type ExecuteStepsAndQuickRepliesProps = {
   conversation: ConversationModel
+  contactInbox: ContactInboxModel
   flowVersion: FlowVersionModel
   useLatestFlowVersion: boolean
   details: {
@@ -83,25 +85,29 @@ export const seekConnectedNode = (
   return connectedNode?.target
 }
 
-export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
-  if (!props.data.flowId) {
+export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
+  if (!props.flowId) {
     logger.debug({ props }, "runFlowNode is called without flowId")
     return
   }
 
-  const { trackingContext, metadata } = props.data
-  const { conversation, flowVersion, useLatestFlowVersion } =
-    await findConversationAndFlowVersion({
-      conversationId: props.data.conversationId,
-      flowId: props.data.flowId,
-      flowVersionId: props.data.flowVersionId,
+  const { trackingContext, metadata } = props
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId: props.conversationId,
+      contactInboxId: props.contactInboxId,
     })
+  const { flowVersion, useLatestFlowVersion } = await detectFlowVersion({
+    flowId: props.flowId,
+    flowVersionId: props.flowVersionId,
+    workspaceId: conversation.workspaceId,
+  })
 
   // Process to find start node. Try to find by nodeId first, if not found, try to find by isStartNode.
   let targetNode: FlowNode | null | undefined = null
-  if (props.data.nodeId) {
+  if (props.nodeId) {
     targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
-      (n) => n.id === props.data.nodeId,
+      (n) => n.id === props.nodeId,
     )
   } else {
     targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
@@ -114,6 +120,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode) => {
 
   await runStepsAndQuickReplies({
     conversation,
+    contactInbox,
     flowVersion,
     useLatestFlowVersion,
     details: targetNode.data.details,
@@ -262,6 +269,7 @@ async function* executeMultipleStepsGenerator(
             type: IntegrationJobAction.sendFlow,
             data: {
               conversationId: props.conversation.id,
+              contactInboxId: props.contactInbox.id,
               flowId: props.flowVersion.flowId,
               flowVersionId: props.flowVersion.id,
               nodeId: connectedNodeId,
@@ -286,20 +294,23 @@ export async function runFlowPostback(
 
   if (!parsedAction.buttonId) {
     await runFlowNode({
-      type: "sendFlow",
-      data: {
-        conversationId: data.conversationId,
-        flowId: parsedAction.flowId,
-        flowVersionId: parsedAction.flowVersionId,
-      },
+      conversationId: data.conversationId,
+      contactInboxId: data.contactInboxId,
+      flowId: parsedAction.flowId,
+      flowVersionId: parsedAction.flowVersionId,
     })
     return
   }
 
-  const { conversation, flowVersion } = await findConversationAndFlowVersion({
-    conversationId: data.conversationId,
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId: data.conversationId,
+      contactInboxId: data.contactInboxId,
+    })
+  const { flowVersion } = await detectFlowVersion({
     flowId: parsedAction.flowId,
     flowVersionId: parsedAction.flowVersionId,
+    workspaceId: conversation.workspaceId,
   })
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
@@ -313,23 +324,15 @@ export async function runFlowPostback(
     return
   }
 
-  const [contactInbox] = await db
-    .select({
-      id: contactInboxModel.id,
-      channel: contactInboxModel.channel,
-    })
-    .from(contactInboxModel)
-    .where(eq(contactInboxModel.id, data.contactInboxId))
-
   if (data.webhookType !== IntegrationJobAction.messageStatus) {
     await emit(flowEventTypeSchema.enum["flow:clicked"], {
       nodeId: foundedNodeId ?? "",
       context: {
         workspaceId: conversation.workspaceId,
         contactId: conversation.contactId,
-        conversationId: data.conversationId,
-        channel: contactInbox?.channel ?? "",
-        contactInboxId: contactInbox?.id ?? "",
+        conversationId: conversation.id,
+        channel: contactInbox.channel,
+        contactInboxId: contactInbox.id,
       },
       action: {
         flowId: parsedAction.flowId,
@@ -344,6 +347,7 @@ export async function runFlowPostback(
 
   await runStepsAndQuickReplies({
     conversation,
+    contactInbox,
     flowVersion,
     useLatestFlowVersion: true,
     details: foundedButton,
@@ -364,10 +368,15 @@ export async function runFlowQuickReply(
     throw new SdkException("Invalid quick reply action")
   }
 
-  const { conversation, flowVersion } = await findConversationAndFlowVersion({
-    conversationId: data.conversationId,
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId: data.conversationId,
+      contactInboxId: data.contactInboxId,
+    })
+  const { flowVersion } = await detectFlowVersion({
     flowId: parsedAction.flowId,
     flowVersionId: parsedAction.flowVersionId,
+    workspaceId: conversation.workspaceId,
   })
 
   const nodes = flowVersion.nodes as unknown as FlowNode[]
@@ -394,48 +403,30 @@ export async function runFlowQuickReply(
     return
   }
 
-  if (conversation.contactId) {
-    let contactInbox: { id: string; channel: string } | undefined
-    if (data.inboxId) {
-      contactInbox = await db
-        .select({
-          id: contactInboxModel.id,
-          channel: contactInboxModel.channel,
-        })
-        .from(contactInboxModel)
-        .where(
-          and(
-            eq(contactInboxModel.contactId, conversation.contactId),
-            eq(contactInboxModel.inboxId, data.inboxId),
-          ),
-        )
-        .then((rows) => rows[0])
-
-      if (data.webhookType !== IntegrationJobAction.messageStatus) {
-        await emit(flowEventTypeSchema.enum["flow:clicked"], {
-          nodeId: foundedNodeId ?? "",
-          context: {
-            workspaceId: conversation.workspaceId,
-            contactId: conversation.contactId,
-            conversationId: data.conversationId,
-            channel: contactInbox?.channel ?? "",
-            contactInboxId: contactInbox?.id ?? "",
-          },
-          action: {
-            flowId: parsedAction.flowId,
-            buttonId: parsedAction.buttonId,
-            broadcastId: parsedAction.broadcastId,
-            sequenceStepId: parsedAction.sequenceStepId ?? "",
-            clickType: "quick_reply",
-          },
-          occurredAt: new Date(),
-        })
-      }
-    }
+  if (data.webhookType !== IntegrationJobAction.messageStatus) {
+    await emit(flowEventTypeSchema.enum["flow:clicked"], {
+      nodeId: foundedNodeId ?? "",
+      context: {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: conversation.id,
+        channel: contactInbox.channel,
+        contactInboxId: contactInbox.id,
+      },
+      action: {
+        flowId: parsedAction.flowId,
+        buttonId: parsedAction.buttonId,
+        broadcastId: parsedAction.broadcastId,
+        sequenceStepId: parsedAction.sequenceStepId ?? "",
+        clickType: "quick_reply",
+      },
+      occurredAt: new Date(),
+    })
   }
 
   await runStepsAndQuickReplies({
     conversation,
+    contactInbox,
     flowVersion,
     useLatestFlowVersion: true,
     details: found,

@@ -39,7 +39,7 @@ export const handleReferral = async (props: IntegrationJobReferral["data"]) => {
     throw new Error("Contact inbox not found")
   }
 
-  const conversation = contactInbox?.conversation
+  const conversation = contactInbox.conversation
 
   const reflink = await findOrFail({
     table: reflinkModel,
@@ -65,7 +65,8 @@ export const handleReferral = async (props: IntegrationJobReferral["data"]) => {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: conversation.id,
+      conversationId: conversation,
+      contactInboxId: contactInbox,
       flowId: reflink.flowId,
     },
   })

@@ -77,7 +77,7 @@ async function startIntegrationWorker() {
           return
         }
         case IntegrationJobAction.sendFlow: {
-          await runFlowNode(job.data)
+          await runFlowNode(job.data.data)
           return
         }
         case IntegrationJobAction.runFlowPostback: {

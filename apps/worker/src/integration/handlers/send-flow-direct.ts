@@ -1,6 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import { IntegrationJobAction } from "@chatbotx.io/worker-config"
 import { runFlowNode } from "./flow"
 
 export interface SendFlowDirectParams {
@@ -26,14 +25,22 @@ export async function sendFlowDirect(
     throw new Error(`Conversation not found for contact ${contactId}`)
   }
 
-  await runFlowNode({
-    type: IntegrationJobAction.sendFlow,
-    data: {
-      flowId,
-      conversationId: conversation.id,
-      metadata,
+  const allContactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId,
     },
   })
+
+  await Promise.all(
+    allContactInboxes.map(async (contactInbox) => {
+      await runFlowNode({
+        flowId,
+        metadata,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+      })
+    }),
+  )
 
   return new Date()
 }

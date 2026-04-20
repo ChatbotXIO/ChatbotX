@@ -1,4 +1,5 @@
 import type {
+  ContactInboxModel,
   ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
@@ -57,8 +58,8 @@ export type IntegrationJobMessageStatus = {
 export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
-    conversationId: string
-    contactInboxId?: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
     flowId?: string
     flowVersionId?: string
     nodeId?: string
@@ -70,10 +71,10 @@ export type IntegrationJobRunFlowNode = {
 export type IntegrationJobSendFlowPostback = {
   type: typeof IntegrationJobAction.runFlowPostback
   data: {
-    conversationId: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
     action: string
     ref?: string | null
-    contactInboxId: string
     webhookType?: string
   }
 }
@@ -81,7 +82,8 @@ export type IntegrationJobSendFlowPostback = {
 export type IntegrationJobSendFlowQuickReply = {
   type: typeof IntegrationJobAction.runFlowQuickReply
   data: {
-    conversationId: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
     action: string
     ref?: string | null
     inboxId?: string
@@ -92,8 +94,8 @@ export type IntegrationJobSendFlowQuickReply = {
 export type IntegrationJobProcessAutomatedResponse = {
   type: typeof IntegrationJobAction.processAutomatedResonse
   data: {
-    conversationId: string
-    contactInboxId: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
   }
 }
 
@@ -107,7 +109,7 @@ export type IntegrationJobSendBroadcast = {
 export type IntegrationJobAgentMarkAsRead = {
   type: typeof IntegrationJobAction.agentMarkAsRead
   data: {
-    conversation: ConversationModel
+    conversationId: string | ConversationModel
   }
 }
 
@@ -134,7 +136,8 @@ export type IntegrationJobReferral = {
 export type IntegrationJobRunRef = {
   type: typeof IntegrationJobAction.runRef
   data: {
-    conversationId: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
     ref: string
   }
 }
@@ -142,7 +145,8 @@ export type IntegrationJobRunRef = {
 export type IntegrationJobRunChallenge = {
   type: typeof IntegrationJobAction.runChallenge
   data: {
-    conversationId: string
+    conversationId: string | ConversationModel
+    contactInboxId: string | ContactInboxModel
     challenge: {
       type: "step"
       data: {

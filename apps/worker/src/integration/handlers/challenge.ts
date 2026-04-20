@@ -1,19 +1,27 @@
 import type { FlowNode } from "@chatbotx.io/flow-config"
 import { initVariables, SdkException } from "@chatbotx.io/sdk"
 import type { IntegrationJobRunChallenge } from "@chatbotx.io/worker-config"
-import { findConversationAndFlowVersion } from "../../lib/db"
+import {
+  detectConversationAndContactInbox,
+  detectFlowVersion,
+} from "../../lib/db"
 import { runStepsAndQuickReplies } from "./flow"
 
 export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
-  const { conversationId, challenge } = data
+  const { conversationId, contactInboxId, challenge } = data
 
   if (challenge.type === "step") {
-    const { conversation, flowVersion, useLatestFlowVersion } =
-      await findConversationAndFlowVersion({
+    const { conversation, contactInbox } =
+      await detectConversationAndContactInbox({
         conversationId,
-        flowId: challenge.data.flowId,
-        flowVersionId: challenge.data.flowVersionId,
+        contactInboxId,
       })
+
+    const { flowVersion, useLatestFlowVersion } = await detectFlowVersion({
+      flowId: challenge.data.flowId,
+      flowVersionId: challenge.data.flowVersionId,
+      workspaceId: conversation.workspaceId,
+    })
 
     // Find target node
     const targetNode = (flowVersion.nodes as unknown as FlowNode[]).find(
@@ -48,6 +56,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
 
     await runStepsAndQuickReplies({
       conversation,
+      contactInbox,
       flowVersion,
       useLatestFlowVersion,
       details: targetNode.data.details,

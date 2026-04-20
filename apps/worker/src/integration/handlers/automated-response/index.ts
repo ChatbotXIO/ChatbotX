@@ -3,6 +3,7 @@ import { db } from "@chatbotx.io/database/client"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
+import { detectConversationAndContactInbox } from "../../../lib/db"
 import { logger } from "../../../lib/logger"
 import { replyByAI } from "./replies"
 import { trackBotResponse } from "./track-bot-response"
@@ -11,21 +12,11 @@ export async function processAutomatedResponse(
   props: IntegrationJobProcessAutomatedResponse["data"],
 ) {
   const { conversationId, contactInboxId } = props
-  const conversation = await db.query.conversationModel.findFirst({
-    where: { id: conversationId },
-  })
-  if (!conversation?.botEnabled) {
-    logger.debug(props, "Conversation is not enable bot")
-    return
-  }
-
-  const contactInbox = await db.query.contactInboxModel.findFirst({
-    where: { id: contactInboxId, contactId: conversation.contactId },
-  })
-  if (!contactInbox) {
-    logger.debug(props, "Contact inbox not found")
-    return
-  }
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId,
+      contactInboxId,
+    })
 
   const repliedByAutomatedResponse = await automatedResponseService.process({
     conversation,

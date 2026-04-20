@@ -63,7 +63,8 @@ export async function handleCreateWebchatMessage({
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         flowId: parsedInput.flowId,
       },
     })
@@ -75,7 +76,8 @@ export async function handleCreateWebchatMessage({
     await integrationQueue.add(IntegrationJobAction.runRef, {
       type: IntegrationJobAction.runRef,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         ref: parsedInput.initRef,
       },
     })
@@ -86,9 +88,9 @@ export async function handleCreateWebchatMessage({
     await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
       type: IntegrationJobAction.runFlowPostback,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         action: parsedInput.postback,
-        contactInboxId: contactInbox.id,
       },
     })
   }
@@ -190,7 +192,8 @@ export async function handleCreateWebchatMessage({
             {
               type: IntegrationJobAction.runChallenge,
               data: {
-                conversationId: conversation.id,
+                conversationId: conversation,
+                contactInboxId: contactInbox,
                 challenge: additionalAttributes?.challenge,
               },
             },

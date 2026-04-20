@@ -12,7 +12,7 @@ import {
 import { logger } from "../../lib/logger"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
-  const { conversationId, ref } = data
+  const { conversationId, contactInboxId, ref } = data
 
   const conversation = await findOrFail({
     table: conversationModel,
@@ -37,7 +37,8 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId,
         flowId: flowVersion.flowId,
         flowVersionId: flowVersion.id,
       },
@@ -62,7 +63,8 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId,
         flowId: flow.id,
       },
     })

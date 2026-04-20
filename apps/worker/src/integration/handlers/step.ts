@@ -76,6 +76,7 @@ export async function sendFlowMessage(
 
 async function splitTraffic({
   conversation,
+  contactInbox,
   flowVersion,
   step,
   targetId,
@@ -105,7 +106,8 @@ async function splitTraffic({
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         flowId: flowVersion.flowId,
         flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: connectedEdge.target,
@@ -120,7 +122,8 @@ async function startAnotherNode(
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: props.conversation.id,
+      conversationId: props.conversation,
+      contactInboxId: props.contactInbox,
       flowId: props.flowVersion.flowId,
       flowVersionId: props.flowVersion.id,
       nodeId: props.step.nodeId,
@@ -131,13 +134,15 @@ async function startAnotherNode(
 
 async function startExternalFlow({
   conversation,
+  contactInbox,
   step,
   metadata,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: conversation.id,
+      conversationId: conversation,
+      contactInboxId: contactInbox,
       flowId: step.flowId,
       metadata,
     },
@@ -146,13 +151,15 @@ async function startExternalFlow({
 
 async function startExternalNode({
   conversation,
+  contactInbox,
   step,
   metadata,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
     data: {
-      conversationId: conversation.id,
+      conversationId: conversation,
+      contactInboxId: contactInbox,
       flowId: step.flowId,
       nodeId: step.nodeId,
       metadata,

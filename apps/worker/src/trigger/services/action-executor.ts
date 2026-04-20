@@ -39,6 +39,19 @@ export class ActionExecutor {
       return
     }
 
+    const recentContactInbox = await db.query.contactInboxModel.findFirst({
+      where: {
+        contactId,
+      },
+      orderBy: {
+        lastMessageAt: "desc",
+      },
+    })
+    if (!recentContactInbox) {
+      baseLogger.warn(`No recent contact inbox found for contact ${contactId}`)
+      return
+    }
+
     switch (actionType) {
       case triggerActions.enum.addTag: {
         const tagIds = action.tagIds as string[]
@@ -138,7 +151,8 @@ export class ActionExecutor {
         await integrationQueue.add(IntegrationJobAction.sendFlow, {
           type: IntegrationJobAction.sendFlow,
           data: {
-            conversationId: conversation.id,
+            conversationId: conversation,
+            contactInboxId: recentContactInbox,
             flowId,
           },
         })

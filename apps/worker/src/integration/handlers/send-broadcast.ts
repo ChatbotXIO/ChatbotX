@@ -57,6 +57,7 @@ export const sendBroadcast = async (broadcastId: string) => {
             data: {
               flowId: broadcast.flowId,
               conversationId: contactOnBroadcast.conversationId,
+              contactInboxId: contactOnBroadcast.contactInboxId,
               metadata: {
                 type: BROADCAST_PAYLOAD_TYPE,
                 broadcastId: broadcast.id,

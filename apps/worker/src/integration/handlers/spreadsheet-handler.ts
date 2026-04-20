@@ -439,6 +439,7 @@ const getRandomRow = (rows: string[][]): string[] | null => {
 const sendFlow = async (
   {
     conversation,
+    contactInbox,
     flowVersion,
     step,
   }: ExecuteStepProps<
@@ -475,7 +476,8 @@ const sendFlow = async (
     await integrationQueue.add(IntegrationJobAction.sendFlow, {
       type: IntegrationJobAction.sendFlow,
       data: {
-        conversationId: conversation.id,
+        conversationId: conversation,
+        contactInboxId: contactInbox,
         flowId: currentFlowVersion.flowId,
         nodeId: foundEdge.target,
       },

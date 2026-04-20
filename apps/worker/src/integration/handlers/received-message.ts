@@ -194,10 +194,10 @@ export const receiveMessage = async (
       await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
         type: IntegrationJobAction.runFlowPostback,
         data: {
-          conversationId: conversation.id,
+          conversationId: conversation,
+          contactInboxId: contactInbox,
           action: postbackAction,
           ref,
-          contactInboxId: contactInbox.id,
         },
       })
     }
@@ -206,7 +206,8 @@ export const receiveMessage = async (
       await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
         type: IntegrationJobAction.runFlowQuickReply,
         data: {
-          conversationId: conversation.id,
+          conversationId: conversation,
+          contactInboxId: contactInbox,
           action: quickReplyAction,
           ref,
         },
