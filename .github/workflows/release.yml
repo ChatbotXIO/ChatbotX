@@ -2,10 +2,10 @@ name: Build and Push Docker Images
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     tags: ["v*"]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -16,6 +16,9 @@ on:
         options:
           - dev
           - prod
+
+env:
+  BUILD_PLATFORMS: linux/amd64 #,linux/arm64
 
 jobs:
   prepare-metadata:
@@ -39,7 +42,6 @@ jobs:
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker
             ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -47,9 +49,23 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
 
-  build-builder-image:
+  build-image:
+    name: Build ${{ matrix.label }}
     runs-on: ubuntu-latest
     needs: prepare-metadata
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: builder
+            image: chatbotx-builder
+            dockerfile: ./apps/builder/docker/Dockerfile
+          - label: worker
+            image: chatbotx-worker
+            dockerfile: ./apps/worker/docker/Dockerfile
+          - label: realtime
+            image: chatbotx-realtime
+            dockerfile: ./apps/partysocket/docker/Dockerfile
     permissions:
       contents: read
       packages: write
@@ -73,156 +89,75 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push builder image
+      - name: Build and push main image
+        if: github.event_name != 'pull_request' && github.ref_name == 'main'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/builder/docker/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          file: ${{ matrix.dockerfile }}
+          push: true
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:main
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64 #,linux/arm64
+          platforms: ${{ env.BUILD_PLATFORMS }}
 
-  build-worker-image:
-    runs-on: ubuntu-latest
-    needs: prepare-metadata
-    permissions:
-      contents: read
-      packages: write
-    environment: ${{ github.event.inputs.environment || 'dev' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Create .env file from secrets
-        uses: 0ndt/envfile@v2
-        with:
-          secrets: ${{ toJSON(secrets) }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push worker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/worker/docker/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:latest
-          labels: ${{ needs.prepare-metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64 #,linux/arm64
-
-  build-realtime-image:
-    runs-on: ubuntu-latest
-    needs: prepare-metadata
-    permissions:
-      contents: read
-      packages: write
-    environment: ${{ github.event.inputs.environment || 'dev' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Create .env file from secrets
-        uses: 0ndt/envfile@v2
-        with:
-          secrets: ${{ toJSON(secrets) }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push realtime image
+      - name: Build and push version image
+        if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/partysocket/docker/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          file: ${{ matrix.dockerfile }}
+          push: true
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:latest
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:${{ needs.prepare-metadata.outputs.version }}
+            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64 #,linux/arm64
+          platforms: ${{ env.BUILD_PLATFORMS }}
 
-  build-mcp-server-image:
-    runs-on: ubuntu-latest
-    needs: prepare-metadata
-    permissions:
-      contents: read
-      packages: write
-    environment: ${{ github.event.inputs.environment || 'dev' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Create .env file from secrets
-        uses: 0ndt/envfile@v2
-        with:
-          secrets: ${{ toJSON(secrets) }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push mcp-server image
+      - name: Build image for pull request
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/mcp-server/docker/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:latest
+          file: ${{ matrix.dockerfile }}
+          push: false
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64 #,linux/arm64
+          platforms: ${{ env.BUILD_PLATFORMS }}
 
   output-image-urls:
     runs-on: ubuntu-latest
     needs:
       - prepare-metadata
-      - build-builder-image
-      - build-worker-image
-      - build-realtime-image
-      - build-mcp-server-image
+      - build-image
     if: github.event_name != 'pull_request'
     permissions:
       contents: read
+      packages: write
     environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Output image URLs
         run: |
-          echo "Builder image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder:${{ needs.prepare-metadata.outputs.version }}"
-          echo "Worker image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker:${{ needs.prepare-metadata.outputs.version }}"
-          echo "Realtime image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime:${{ needs.prepare-metadata.outputs.version }}"
-          echo "MCP Server image: ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-mcp-server:${{ needs.prepare-metadata.outputs.version }}"
+          VERSION="${{ needs.prepare-metadata.outputs.version }}"
+          REGISTRY="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}"
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            printf '%s\n' \
+              "Builder image (main): ${REGISTRY}/chatbotx-builder:main" \
+              "Worker image (main): ${REGISTRY}/chatbotx-worker:main" \
+              "Realtime image (main): ${REGISTRY}/chatbotx-realtime:main"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            printf '%s\n' \
+              "Builder image (version): ${REGISTRY}/chatbotx-builder:${VERSION}" \
+              "Builder image (latest): ${REGISTRY}/chatbotx-builder:latest" \
+              "Worker image (version): ${REGISTRY}/chatbotx-worker:${VERSION}" \
+              "Worker image (latest): ${REGISTRY}/chatbotx-worker:latest" \
+              "Realtime image (version): ${REGISTRY}/chatbotx-realtime:${VERSION}" \
+              "Realtime image (latest): ${REGISTRY}/chatbotx-realtime:latest"
+          else
+            echo "No publish tags for ref ${GITHUB_REF}."
+          fi
