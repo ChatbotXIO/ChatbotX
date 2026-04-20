@@ -15,12 +15,8 @@ const DelayTypeSelect = (props: DelayTypeSelectProps) => {
       label: t("flows.delayType.duration"),
     },
     {
-      value: DelayType.specify,
-      label: t("flows.delayType.specificDate"),
-    },
-    {
-      value: DelayType.customField,
-      label: t("flows.delayType.datetimeCustomField"),
+      value: DelayType.date,
+      label: t("flows.delayType.date"),
     },
     {
       value: DelayType.random,

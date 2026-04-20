@@ -1312,6 +1312,7 @@
       "datetimeCustomFieldValue": "{customField}",
       "duration": "Thời lượng",
       "durationValue": "{duration}",
+      "date": "Ngày",
       "specificDate": "Ngày cụ thể",
       "specificDateValue": "{date}",
       "random": "Ngẫu nhiên"
@@ -1337,11 +1338,26 @@
       "randomized": "Ngẫu nhiên",
       "delay": "",
       "durationDetailPrefix": "Độ trễ là",
-      "specifyDetailPrefix": "Độ trễ đến",
+      "dateDetailPrefix": "Độ trễ đến",
       "customFieldDetailPrefix": "Độ trễ đến",
       "randomDetailPrefix": "Độ trễ từ",
       "randomDetailAnd": "đến",
-      "intervalDetailPrefix": "Hoạt động từ"
+      "intervalDetailPrefix": "Hoạt động từ",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Thời lượng",
+      "activeHours": "Giờ hoạt động",
+      "dateTypeLabel": "Loại ngày",
+      "datetimeLabel": "Ngày & Giờ",
+      "customFieldLabel": "Trường tùy chỉnh",
+      "offset": "Thêm độ lệch",
+      "offsetLabel": "Độ lệch",
+      "randomRangeLabel": "Khoảng ngẫu nhiên",
+      "minLabel": "Tối thiểu",
+      "maxLabel": "Tối đa",
+      "unitLabel": "Đơn vị",
+      "specific": "Cụ thể",
+      "dynamic": "Tùy chỉnh"
     }
   },
   "folders": {

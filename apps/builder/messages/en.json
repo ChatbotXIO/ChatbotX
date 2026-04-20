@@ -1296,6 +1296,7 @@
       "datetimeCustomFieldValue": "{customField}",
       "duration": "Duration",
       "durationValue": "{duration}",
+      "date": "Date",
       "specificDate": "Specific Date",
       "specificDateValue": "{date}",
       "random": "Random"
@@ -1321,11 +1322,26 @@
       "randomized": "Randomized",
       "delay": "delay",
       "durationDetailPrefix": "Wait",
-      "specifyDetailPrefix": "Wait until",
+      "dateDetailPrefix": "Wait until",
       "customFieldDetailPrefix": "Wait until",
       "randomDetailPrefix": "Wait between",
       "randomDetailAnd": "and",
-      "intervalDetailPrefix": "Active between"
+      "intervalDetailPrefix": "Active between",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Duration",
+      "activeHours": "Active hours",
+      "dateTypeLabel": "Date type",
+      "datetimeLabel": "Date & Time",
+      "customFieldLabel": "Custom field",
+      "offset": "Add offset",
+      "offsetLabel": "Offset",
+      "randomRangeLabel": "Random range",
+      "minLabel": "Min",
+      "maxLabel": "Max",
+      "unitLabel": "Unit",
+      "specific": "Specific",
+      "dynamic": "Dynamic"
     }
   },
   "folders": {

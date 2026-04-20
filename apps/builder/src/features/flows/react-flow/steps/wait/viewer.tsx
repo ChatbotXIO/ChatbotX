@@ -1,6 +1,11 @@
 "use client"
 
-import { DelayType, type WaitStepSchema } from "@chatbotx.io/flow-config"
+import {
+  DateType,
+  DelayType,
+  OffsetOperator,
+  type WaitStepSchema,
+} from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
 import type { ListCustomFieldsResponse } from "@/features/custom-fields/schemas/query"
 import { useWorkspaceId } from "@/hooks/routing"
@@ -18,10 +23,12 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const url = `/api/workspaces/${workspaceId}/custom-fields?perPage=9999`
   const { data: dataCustomFields } = callAPI<ListCustomFieldsResponse>(url)
 
-  const customField = (dataCustomFields?.data ?? []).find(
-    (obj) =>
-      data.delayType === DelayType.customField && obj.id === data.outputFieldId,
-  )
+  const customField =
+    data.delayType === DelayType.date && data.dateType === DateType.enum.dynamic
+      ? (dataCustomFields?.data ?? []).find(
+          (obj) => obj.id === data.outputFieldId,
+        )
+      : undefined
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-2 py-0 text-center text-sm">
@@ -44,24 +51,37 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
             <span className="rounded-full py-1 font-medium text-primary text-sm">
               {data.unit}
             </span>
-          </>
-        )}
-        {data.delayType === DelayType.specify && (
-          <>
-            {t("flows.wait.specifyDetailPrefix")}{" "}
-            <span className="rounded-full py-1 font-medium text-primary text-sm">
-              {data.datetime ? new Date(data.datetime).toLocaleString() : ""}
+            <span className="text-muted-foreground">
+              {data.repeat
+                ? `(${data.startTime?.slice(0, 5)} - ${data.endTime?.slice(0, 5)})`
+                : ""}
             </span>
           </>
         )}
-        {data.delayType === DelayType.customField && (
-          <>
-            {t("flows.wait.customFieldDetailPrefix")}{" "}
-            <span className="rounded-full py-1 font-medium text-primary text-sm">
-              {customField?.name ?? ""}
-            </span>
-          </>
-        )}
+        {data.delayType === DelayType.date &&
+          data.dateType === DateType.enum.specific && (
+            <>
+              {t("flows.wait.dateDetailPrefix")}{" "}
+              <span className="rounded-full py-1 font-medium text-primary text-sm">
+                {data.datetime ? new Date(data.datetime).toLocaleString() : ""}
+              </span>
+            </>
+          )}
+        {data.delayType === DelayType.date &&
+          data.dateType === DateType.enum.dynamic && (
+            <>
+              {t("flows.wait.customFieldDetailPrefix")}{" "}
+              <span className="rounded-full py-1 font-medium text-primary text-sm">
+                {customField?.name ?? ""}
+              </span>
+              {data.offset && (
+                <span className="text-muted-foreground">
+                  ({data.offsetOperator === OffsetOperator.enum.add ? "+" : "-"}
+                  {data.offsetValue} {data.offsetUnit})
+                </span>
+              )}
+            </>
+          )}
         {data.delayType === DelayType.random && (
           <>
             {t("flows.wait.randomDetailPrefix")}{" "}

@@ -4,7 +4,7 @@ import { stepTypes } from "./step-action"
 
 export const DelayType = {
   duration: "D01",
-  specify: "D02",
+  date: "D02",
   customField: "D03",
   random: "D04",
 } as const
@@ -15,6 +15,10 @@ export const DelayUnit = {
   hours: "hours",
   days: "days",
 } as const
+
+export const DateType = z.enum(["specific", "dynamic"])
+
+export const OffsetOperator = z.enum(["add", "subtract"])
 
 const MAX_DELAY = 999_999
 
@@ -29,17 +33,19 @@ export const waitStepSchema = z
         delayType: z.literal(DelayType.duration),
         duration: z.coerce.number().int().min(1).max(MAX_DELAY),
         unit: z.enum(DelayUnit),
-        interval: z.boolean(),
+        repeat: z.boolean(),
         startTime: z.iso.time().nullable(),
         endTime: z.iso.time().nullable(),
       }),
       z.object({
-        delayType: z.literal(DelayType.specify),
-        datetime: z.iso.datetime(),
-      }),
-      z.object({
-        delayType: z.literal(DelayType.customField),
-        outputFieldId: z.string().trim().min(1),
+        delayType: z.literal(DelayType.date),
+        dateType: DateType,
+        datetime: z.iso.datetime().optional(),
+        outputFieldId: z.string().trim().min(1).optional(),
+        offset: z.boolean().default(false),
+        offsetOperator: OffsetOperator.optional(),
+        offsetValue: z.coerce.number().int().min(1).max(MAX_DELAY).optional(),
+        offsetUnit: z.enum(DelayUnit).optional(),
       }),
       z.object({
         delayType: z.literal(DelayType.random),
@@ -71,7 +77,7 @@ export const waitStepDefaultFn = (): WaitStepSchema => ({
 export const delayTypeDurationDefaultFn = () => ({
   duration: 1,
   unit: DelayUnit.hours,
-  interval: false,
+  repeat: false,
   startTime: null,
   endTime: null,
 })
