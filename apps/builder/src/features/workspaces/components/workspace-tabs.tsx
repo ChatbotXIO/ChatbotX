@@ -10,7 +10,7 @@ type Tab = {
   path: string
 }
 
-export default function ChatbotTabs({ tabs }: { tabs: Tab[] }) {
+export default function WorkspaceTabs({ tabs }: { tabs: Tab[] }) {
   const pathname = usePathname()
 
   const activeTab =

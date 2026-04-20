@@ -37,5 +37,3 @@ export const sequencesWorkspaceTokenAPIs = {
         await getSequence(context.workspace.id, input.id),
     ),
 }
-
-export default sequencesWorkspaceTokenAPIs

@@ -3,7 +3,7 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -33,7 +33,7 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
     }
 
     const currentUserAndTargetChatbot =
-      await getCurrentUserAndTargetChatbot(workspaceId)
+      await getCurrentUserAndTargetWorkspace(workspaceId)
     if (!currentUserAndTargetChatbot) {
       throw new ChatbotXException(
         "You are not authorized to delete this workspace member",

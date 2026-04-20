@@ -3,8 +3,8 @@ import { authorizedAPI } from "@/orpc"
 import { listSequences } from "../queries"
 import { listSequencesRequest, listSequencesResponse } from "../schema/action"
 
-export const sequencesChatbotAuthAPI = {
-  listSequencesChatbotAuthAPI: authorizedAPI
+export const sequencesWorkspaceAuthAPI = {
+  listSequencesWorkspaceAuthAPI: authorizedAPI
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/sequences",

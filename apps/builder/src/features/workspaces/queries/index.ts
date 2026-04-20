@@ -1,5 +1,3 @@
-"use server"
-
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import {
@@ -16,7 +14,7 @@ import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { notFoundException } from "@/lib/errors/exception"
 
-export const findChatbotOrFail = async (
+export const findWorkspaceOrFail = async (
   where: Record<string, unknown>,
 ): Promise<WorkspaceModel> => {
   const workspace = await db.query.workspaceModel.findFirst({

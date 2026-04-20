@@ -294,7 +294,7 @@ export class SequenceAnalyticsService {
             .filter(Boolean) as string[],
         ),
       ]
-      const mappedChatbotPayloads = new Map(
+      const mappedWorkspacePayloads = new Map(
         chatbotPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
@@ -313,7 +313,7 @@ export class SequenceAnalyticsService {
 
       const updateItems: SequenceUpdateItem[] = sequenceDispatches
         .map((s) => {
-          const payload = mappedChatbotPayloads.get(s.contactInboxId)
+          const payload = mappedWorkspacePayloads.get(s.contactInboxId)
           if (!payload) {
             return null
           }
@@ -333,7 +333,7 @@ export class SequenceAnalyticsService {
         (s) => {
           const occurredAt = toClickHouseDateTime(
             new Date(
-              mappedChatbotPayloads.get(s.contactInboxId)?.occurredAt ||
+              mappedWorkspacePayloads.get(s.contactInboxId)?.occurredAt ||
                 new Date(),
             ),
           )

@@ -5,16 +5,17 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
+import { BaseService } from "../common/base.service"
 
 type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
   workspace: WorkspaceModel
 }
 
-export const workspaceMemberService = {
-  create: async (props: {
+export class WorkspaceMemberService extends BaseService {
+  async create(props: {
     tx?: DatabaseClient
     data: typeof workspaceMemberModel.$inferInsert
-  }): Promise<WorkspaceMemberModel> => {
+  }): Promise<WorkspaceMemberModel> {
     const { tx = db, data } = props
     const [workspaceMember] = await tx
       .insert(workspaceMemberModel)
@@ -22,14 +23,15 @@ export const workspaceMemberService = {
       .returning()
 
     return workspaceMember
-  },
-  listByUserIdUncached: (props: {
+  }
+
+  async listByUserIdUncached(props: {
     tx?: DatabaseClient
     userId: string
-  }): Promise<WorkspaceMemberWithWorkspace[]> => {
+  }): Promise<WorkspaceMemberWithWorkspace[]> {
     const { tx = db, userId } = props
 
-    return tx.query.workspaceMemberModel.findMany({
+    return await tx.query.workspaceMemberModel.findMany({
       where: {
         userId,
       },
@@ -37,27 +39,21 @@ export const workspaceMemberService = {
         workspace: true,
       },
     })
-  },
-  listByUserId: (props: {
+  }
+
+  async listByUserId(props: {
     tx?: DatabaseClient
     userId: string
-  }): Promise<WorkspaceMemberWithWorkspace[]> => {
+  }): Promise<WorkspaceMemberWithWorkspace[]> {
     const key = `users:${props.userId}:workspace-members`
-    return withCache(
+    return await withCache(
       key,
-      () => workspaceMemberService.listByUserIdUncached(props),
+      async () => await this.listByUserIdUncached(props),
       {
-        dynamicTags: async (distributedStore, result) => {
-          await Promise.all(
-            result.map((workspaceMember) =>
-              distributedStore.sadd(
-                `workspaces:${workspaceMember.workspace.id}:members`,
-                key,
-              ),
-            ),
-          )
-        },
+        tags: [`users:${props.userId}:workspace-members`],
       },
     )
-  },
+  }
 }
+
+export const workspaceMemberService = new WorkspaceMemberService()

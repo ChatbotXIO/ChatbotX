@@ -11,7 +11,7 @@ import {
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { findWorkspaceOrFail } from "@/lib/user-permissions"
 import { type CreateTagRequest, createTagRequest } from "../schema/action"
 
 export const createTagAction = authActionClient
@@ -27,7 +27,7 @@ export const createTagAction = authActionClient
       parsedInput: CreateTagRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, workspaceId)
+      await findWorkspaceOrFail(ctx.user.id, workspaceId)
 
       return await createTag({ workspaceId, ...parsedInput })
     },

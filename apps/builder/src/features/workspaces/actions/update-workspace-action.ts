@@ -8,22 +8,22 @@ import {
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
-  type UpdateChatbotAdvancedRequest,
-  type UpdateChatbotBasicRequest,
-  updateChatbotAdvancedRequest,
-  updateChatbotBasicRequest,
+  type UpdateWorkspaceAdvancedRequest,
+  type UpdateWorkspaceBasicRequest,
+  updateWorkspaceAdvancedRequest,
+  updateWorkspaceBasicRequest,
 } from "../schema/update-workspace-schema"
 
-export const updateChatbotBasicAction = workspaceActionClient
+export const updateWorkspaceBasicAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(updateChatbotBasicRequest)
+  .inputSchema(updateWorkspaceBasicRequest)
   .action(
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: UpdateChatbotBasicRequest
+      parsedInput: UpdateWorkspaceBasicRequest
     }) => {
       await db
         .update(workspaceModel)
@@ -32,16 +32,16 @@ export const updateChatbotBasicAction = workspaceActionClient
     },
   )
 
-export const updateChatbotAdvancedAction = workspaceActionClient
+export const updateWorkspaceAdvancedAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(updateChatbotAdvancedRequest)
+  .inputSchema(updateWorkspaceAdvancedRequest)
   .action(
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: UpdateChatbotAdvancedRequest
+      parsedInput: UpdateWorkspaceAdvancedRequest
     }) => {
       await db
         .update(workspaceModel)

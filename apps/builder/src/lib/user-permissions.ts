@@ -7,7 +7,7 @@ import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { notFoundException } from "./errors/exception"
 
-export const findChatbotOrFail = async (
+export const findWorkspaceOrFail = async (
   userId: string | null | undefined,
   workspaceId: string | null,
 ): Promise<{

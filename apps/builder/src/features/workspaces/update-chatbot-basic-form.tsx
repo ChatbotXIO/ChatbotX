@@ -14,10 +14,10 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { SettingRow } from "@/components/setting-row"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { authClient } from "@/lib/auth/auth-client"
-import { updateChatbotBasicAction } from "./actions/update-workspace-action"
-import { updateChatbotBasicRequest } from "./schema/update-workspace-schema"
+import { updateWorkspaceBasicAction } from "./actions/update-workspace-action"
+import { updateWorkspaceBasicRequest } from "./schema/update-workspace-schema"
 
-export function UpdateChatbotBasicForm({
+export function UpdateWorkspaceBasicForm({
   workspace,
 }: {
   workspace: WorkspaceResource
@@ -34,8 +34,8 @@ export function UpdateChatbotBasicForm({
   }
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateChatbotBasicAction.bind(null, workspace.id),
-    zodResolver(updateChatbotBasicRequest),
+    updateWorkspaceBasicAction.bind(null, workspace.id),
+    zodResolver(updateWorkspaceBasicRequest),
     {
       actionProps: {
         onSuccess: () => {

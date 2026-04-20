@@ -12,34 +12,36 @@ import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { notFoundException } from "@/lib/errors/exception"
+import { BaseService } from "../common/base.service"
 import { workspaceMemberService } from "../workspace-members/workspace-member-service"
 
 type WorkspaceWhere = Partial<{ id: string; organizationId: string }>
 
-export const workspaceService = {
-  findOrFail: async (props: {
+class WorkspaceService extends BaseService {
+  async findOrFail(props: {
     where: WorkspaceWhere
     tx?: DatabaseClient
-  }): Promise<WorkspaceModel> => {
+  }): Promise<WorkspaceModel> {
     const t = await getTranslations()
-    const workspace = await workspaceService.find(props)
+    const workspace = await this.find(props)
     if (!workspace) {
       throw notFoundException(
         t("messages.featureNotFound", { feature: "Workspace" }),
       )
     }
     return workspace
-  },
+  }
 
-  findById: (id: string): Promise<WorkspaceModel> =>
-    workspaceService.findOrFail({ where: { id } }),
+  async findById(id: string): Promise<WorkspaceModel> {
+    return await this.findOrFail({ where: { id } })
+  }
 
-  find: (props: {
+  async find(props: {
     where: WorkspaceWhere
     tx?: DatabaseClient
-  }): Promise<WorkspaceModel | undefined> => {
+  }): Promise<WorkspaceModel | undefined> {
     const { where, tx = db } = props
-    return withCache(
+    return await withCache(
       `workspaces:${JSON.stringify(props.where)}`,
       async () =>
         await tx.query.workspaceModel.findFirst({
@@ -49,14 +51,14 @@ export const workspaceService = {
         tags: ["workspaces"],
       },
     )
-  },
+  }
 
-  create: async (props: {
+  async create(props: {
     data: typeof workspaceModel.$inferInsert
     organization: OrganizationModel
     createdBy: string
     tx?: DatabaseClient
-  }): Promise<WorkspaceModel> => {
+  }): Promise<WorkspaceModel> {
     const { data, tx = db } = props
 
     const [newWorkspace] = await tx
@@ -102,6 +104,10 @@ export const workspaceService = {
       },
     })
 
+    this.invalidateCacheTags([`users:${props.createdBy}:workspace-members`])
+
     return newWorkspace
-  },
+  }
 }
+
+export const workspaceService = new WorkspaceService()

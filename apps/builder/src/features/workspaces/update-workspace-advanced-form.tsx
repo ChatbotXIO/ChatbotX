@@ -15,15 +15,15 @@ import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
-import { updateChatbotAdvancedAction } from "./actions/update-workspace-action"
+import { updateWorkspaceAdvancedAction } from "./actions/update-workspace-action"
 import {
   allCountryOptions,
   allTimezoneOptions,
   UNKNOWN_COUNTRY,
 } from "./schema/types"
-import { updateChatbotAdvancedRequest } from "./schema/update-workspace-schema"
+import { updateWorkspaceAdvancedRequest } from "./schema/update-workspace-schema"
 
-export function UpdateChatbotAdvancedForm({
+export function UpdateWorkspaceAdvancedForm({
   workspace,
 }: {
   workspace: WorkspaceResource
@@ -32,8 +32,8 @@ export function UpdateChatbotAdvancedForm({
   const flowOptions = useFlowSelectOptions()
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateChatbotAdvancedAction.bind(null, workspace.id),
-    zodResolver(updateChatbotAdvancedRequest),
+    updateWorkspaceAdvancedAction.bind(null, workspace.id),
+    zodResolver(updateWorkspaceAdvancedRequest),
     {
       actionProps: {
         onSuccess: () => {

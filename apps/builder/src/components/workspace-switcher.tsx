@@ -1,6 +1,5 @@
 "use client"
 
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -37,14 +36,15 @@ export function WorkspaceSwitcher({
   const { isMobile } = useSidebar()
   const workspaceId = useWorkspaceId()
 
-  const [activeChatbot, setActiveChatbot] = useState<WorkspaceModel | null>(
-    null,
-  )
+  const [activeWorkspace, setActiveWorkspace] =
+    useState<WorkspaceResource | null>(null)
   const t = useTranslations()
 
   useEffect(() => {
-    const founded = workspaces.find((workspace) => workspace.id === workspaceId)
-    setActiveChatbot(founded ?? null)
+    const foundWorkspace = workspaces.find(
+      (workspace) => workspace.id === workspaceId,
+    )
+    setActiveWorkspace(foundWorkspace ?? null)
   }, [workspaces, workspaceId])
 
   return (
@@ -58,18 +58,18 @@ export function WorkspaceSwitcher({
             >
               <Avatar className="rounded-lg border">
                 <AvatarImage
-                  alt={activeChatbot?.name}
-                  src={activeChatbot?.logo ?? ""}
+                  alt={activeWorkspace?.name}
+                  src={activeWorkspace?.logo ?? ""}
                 />
                 <AvatarFallback className="rounded font-medium">
-                  {activeChatbot?.name?.slice(0, 2) || "  "}
+                  {activeWorkspace?.name?.slice(0, 2) || "  "}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {activeChatbot?.name}
+                  {activeWorkspace?.name}
                 </span>
-                {/* <span className="truncate text-xs">{activeChatbot?.plan}</span> */}
+                {/* <span className="truncate text-xs">{activeWorkspace?.plan}</span> */}
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -88,11 +88,11 @@ export function WorkspaceSwitcher({
                 asChild
                 className={cn(
                   "gap-2 p-2",
-                  activeChatbot?.id === workspace.id &&
+                  activeWorkspace?.id === workspace.id &&
                     "bg-sidebar-accent text-sidebar-accent-foreground",
                 )}
                 key={workspace.name}
-                onClick={() => setActiveChatbot(workspace)}
+                onClick={() => setActiveWorkspace(workspace)}
               >
                 <Link href={`/space/${workspace.id}/dashboard`}>
                   <Avatar className="rounded-lg border">

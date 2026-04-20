@@ -1,8 +1,8 @@
 "use client"
 
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
-import { UpdateChatbotAdvancedForm } from "./update-workspace-advanced-form"
-import { UpdateChatbotBasicForm } from "./update-workspace-basic-form"
+import { UpdateWorkspaceAdvancedForm } from "./update-workspace-advanced-form"
+import { UpdateWorkspaceBasicForm } from "./update-workspace-basic-form"
 
 export function UpdateWorkspaceForm({
   workspace,
@@ -11,8 +11,8 @@ export function UpdateWorkspaceForm({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <UpdateChatbotBasicForm workspace={workspace} />
-      <UpdateChatbotAdvancedForm workspace={workspace} />
+      <UpdateWorkspaceBasicForm workspace={workspace} />
+      <UpdateWorkspaceAdvancedForm workspace={workspace} />
     </div>
   )
 }

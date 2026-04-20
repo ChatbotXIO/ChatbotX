@@ -101,6 +101,17 @@ services:
       timeout: 5s
       retries: 5
 
+  redis-ui:
+    <<: *network
+    image: redis/redisinsight:latest
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis-ui-data:/data
+
 networks:
   chatbotx-network:
     driver: bridge
@@ -109,3 +120,4 @@ volumes:
   db-data:
   filesystem-data:
   cache-data:
+  redis-ui-data:

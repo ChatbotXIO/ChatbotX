@@ -10,7 +10,7 @@ import { listTags } from "../queries"
 import { createTagRequest, updateTagSchema } from "../schema/action"
 import { listTagsRequest, listTagsResponse } from "../schema/query"
 
-export const privateListChatbotTagsAPI = authorizedAPI
+const privateListWorkspaceTagsAPI = authorizedAPI
   .route({
     method: "GET",
     path: "/workspaces/{workspaceId}/tags",
@@ -22,7 +22,7 @@ export const privateListChatbotTagsAPI = authorizedAPI
   .output(listTagsResponse)
   .handler(async ({ input }) => await listTags(input))
 
-export const privateCreateChatbotTagAPI = authorizedAPI
+const privateCreateWorkspaceTagAPI = authorizedAPI
   .route({
     method: "POST",
     path: "/workspaces/{workspaceId}/tags",
@@ -37,7 +37,7 @@ export const privateCreateChatbotTagAPI = authorizedAPI
     return { id: data.id }
   })
 
-export const privateUpdateTagAPI = authorizedAPI
+const privateUpdateTagAPI = authorizedAPI
   .route({
     method: "PUT",
     path: "/workspaces/{workspaceId}/tags/{id}",
@@ -61,7 +61,7 @@ export const privateUpdateTagAPI = authorizedAPI
     })
   })
 
-export const privateDeleteTagsAPI = authorizedAPI
+const privateDeleteTagsAPI = authorizedAPI
   .route({
     method: "DELETE",
     path: "/workspaces/{workspaceId}/tags/{id}",
@@ -84,11 +84,9 @@ export const privateDeleteTagsAPI = authorizedAPI
     })
   })
 
-const privateTagsAPI = {
-  privateListChatbotTagsAPI,
-  privateCreateChatbotTagAPI,
+export const privateTagsAPI = {
+  privateListWorkspaceTagsAPI,
+  privateCreateWorkspaceTagAPI,
   privateUpdateTagAPI,
   privateDeleteTagsAPI,
 }
-
-export default privateTagsAPI

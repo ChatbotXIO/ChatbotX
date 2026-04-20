@@ -270,7 +270,7 @@ export class BroadcastAnalyticsService {
             .filter(Boolean) as string[],
         ),
       ]
-      const mappedChatbotPayloads = new Map(
+      const mappedWorkspacePayloads = new Map(
         chatbotPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
@@ -302,7 +302,7 @@ export class BroadcastAnalyticsService {
 
       const updateItems: BroadcastUpdateItem[] = filteredBroadcasts
         .map((b) => {
-          const payload = mappedChatbotPayloads.get(b.contactInboxId)
+          const payload = mappedWorkspacePayloads.get(b.contactInboxId)
           if (!payload) {
             return null
           }
@@ -322,7 +322,7 @@ export class BroadcastAnalyticsService {
         (br) => {
           const occurredAt = toClickHouseDateTime(
             new Date(
-              mappedChatbotPayloads.get(br.contactInboxId)?.occurredAt ||
+              mappedWorkspacePayloads.get(br.contactInboxId)?.occurredAt ||
                 new Date(),
             ),
           )

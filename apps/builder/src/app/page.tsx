@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation"
-import WorkspacesList from "@/features/workspaces/components/chatbot-list"
-import { getCurrentUserAndAllLinkedChatbots } from "@/lib/auth/utils"
+import WorkspacesList from "@/features/workspaces/components/workspaces-list"
+import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
 
 export default async function MainPage() {
-  const userAndChatbots = await getCurrentUserAndAllLinkedChatbots()
-  if (!userAndChatbots) {
+  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  if (!userAndWorkspaces) {
     return notFound()
   }
 
-  return <WorkspacesList workspaces={userAndChatbots.allChatbots} />
+  return <WorkspacesList workspaces={userAndWorkspaces.allWorkspaces} />
 }

@@ -10,7 +10,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { workspaceMemberService } from "@/features/workspace-members/workspace-member-service"
 import { getCurrentUserId } from "@/lib/auth/utils"
 
-export default async function ChatbotLayout({
+export default async function WorkspaceLayout({
   children,
   params,
 }: {

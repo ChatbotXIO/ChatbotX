@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { getOrganizationLogoUrl } from "../organization/utils"
-import { getChatbotLogoUrl } from "../workspaces/helpers"
+import { getWorkspaceLogoUrl } from "../workspaces/helpers"
 import { acceptInvitationAction } from "./actions/accept-invitation"
 
 export function InvitationCard({
@@ -50,7 +50,7 @@ export function InvitationCard({
     <Card className="max-w-lg">
       <CardContent className="flex flex-col gap-4">
         {workspace ? (
-          <ChatbotInvitationCard
+          <WorkspaceInvitationCard
             organization={organization}
             user={user}
             workspace={workspace}
@@ -81,7 +81,7 @@ export function InvitationCard({
   )
 }
 
-export function ChatbotInvitationCard({
+export function WorkspaceInvitationCard({
   workspace,
   organization,
   user,
@@ -96,7 +96,7 @@ export function ChatbotInvitationCard({
     <>
       <div className="flex flex-col items-center justify-center gap-2">
         <Avatar className="size-16">
-          <AvatarImage src={getChatbotLogoUrl(workspace)} />
+          <AvatarImage src={getWorkspaceLogoUrl(workspace)} />
           <AvatarFallback className="rounded font-bold text-2xl">
             {workspace.name.charAt(0)}
           </AvatarFallback>

@@ -9,7 +9,7 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
-import { findChatbotOrFail } from "@/lib/user-permissions"
+import { findWorkspaceOrFail } from "@/lib/user-permissions"
 import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
 
 export const updateTagAction = authActionClient
@@ -25,7 +25,7 @@ export const updateTagAction = authActionClient
       parsedInput: UpdateTagSchema
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await findChatbotOrFail(ctx.user.id, workspaceId)
+      await findWorkspaceOrFail(ctx.user.id, workspaceId)
 
       await updateTag({ workspaceId, id, parsedInput })
     },

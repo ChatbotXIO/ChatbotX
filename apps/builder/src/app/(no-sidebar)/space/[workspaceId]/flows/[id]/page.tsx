@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import type { FlowVersionResource } from "@/features/flow-versions/schema/resource"
 import { FlowDetail } from "@/features/flows/flow-detail"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
-import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 type FlowPageProps = {
   params: Promise<{ workspaceId: string; id: string }>
@@ -15,8 +15,10 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const userAndChatbot = await getCurrentUserAndTargetChatbot(data.workspaceId)
-  if (!userAndChatbot) {
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(
+    data.workspaceId,
+  )
+  if (!userAndWorkspace) {
     return notFound()
   }
 
@@ -40,7 +42,7 @@ export default async function FlowPage({ params }: FlowPageProps) {
 
   const organization = await db.query.organizationModel.findFirst({
     where: {
-      id: userAndChatbot.targetChatbot.organizationId,
+      id: userAndWorkspace.targetWorkspace.organizationId,
     },
   })
   if (!organization) {

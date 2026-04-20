@@ -1,7 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import ManageAccessTokenPage from "@/features/workspaces/manage-access-token"
-import { getCurrentUserAndTargetChatbot } from "@/lib/auth/utils"
+import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 
 export default async function SettingsWorksaceTokenPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -10,10 +10,10 @@ export default async function SettingsWorksaceTokenPage(props: {
   if (!workspaceId) {
     return notFound()
   }
-  const userAndChatbot = await getCurrentUserAndTargetChatbot(workspaceId)
-  if (!userAndChatbot) {
+  const userAndWorkspace = await getCurrentUserAndTargetWorkspace(workspaceId)
+  if (!userAndWorkspace) {
     return notFound()
   }
 
-  return <ManageAccessTokenPage workspace={userAndChatbot.targetChatbot} />
+  return <ManageAccessTokenPage workspace={userAndWorkspace.targetWorkspace} />
 }

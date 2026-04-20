@@ -36,16 +36,16 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
 export const assertCurrentUserCanAccessChatbot = async (
   workspaceId: string,
 ) => {
-  const userAndChatbots = await getCurrentUserAndTargetChatbot(workspaceId)
+  const userAndWorkspaces = await getCurrentUserAndTargetWorkspace(workspaceId)
 
-  if (!userAndChatbots) {
+  if (!userAndWorkspaces) {
     throw new ChatbotXException("User is not associated with this workspace")
   }
 }
 
-export const getCurrentUserAndAllLinkedChatbots = async (): Promise<{
+export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
   user: UserModel
-  allChatbots: WorkspaceModel[]
+  allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
   const user = await getCurrentUser()
@@ -64,28 +64,28 @@ export const getCurrentUserAndAllLinkedChatbots = async (): Promise<{
 
   return {
     user,
-    allChatbots: workspaceMembers.map(
+    allWorkspaces: workspaceMembers.map(
       (workspaceMember) => workspaceMember.workspace,
     ),
     allWorkspaceMembers: workspaceMembers,
   }
 }
 
-export const getCurrentUserAndTargetChatbot = async (
+export const getCurrentUserAndTargetWorkspace = async (
   workspaceId: string,
 ): Promise<{
   user: UserModel
-  targetChatbot: WorkspaceModel
+  targetWorkspace: WorkspaceModel
   targetWorkspaceMember: WorkspaceMemberModel
-  allChatbots: WorkspaceModel[]
+  allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
-  const userAndChatbots = await getCurrentUserAndAllLinkedChatbots()
-  if (!userAndChatbots) {
+  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
+  if (!userAndWorkspaces) {
     return null
   }
 
-  const targetWorkspaceMember = userAndChatbots.allWorkspaceMembers.find(
+  const targetWorkspaceMember = userAndWorkspaces.allWorkspaceMembers.find(
     (workspaceMember) => workspaceMember.workspaceId === workspaceId,
   )
   if (!targetWorkspaceMember) {
@@ -93,8 +93,8 @@ export const getCurrentUserAndTargetChatbot = async (
   }
 
   return {
-    ...userAndChatbots,
-    targetChatbot: targetWorkspaceMember.workspace,
+    ...userAndWorkspaces,
+    targetWorkspace: targetWorkspaceMember.workspace,
     targetWorkspaceMember,
   }
 }
