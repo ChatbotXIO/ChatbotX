@@ -94,3 +94,6 @@ export type InboxWithIntegrations = InboxModel & {
   integrationZalo?: IntegrationZaloModel | null
   integrationSmtp?: IntegrationSmtpModel | null
 }
+
+export type ContactOnSmartDelayModel =
+  typeof schema.contactOnSmartDelayModel.$inferSelect

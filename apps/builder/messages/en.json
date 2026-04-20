@@ -1292,12 +1292,13 @@
     },
     "additionalSteps": "Additional steps",
     "delayType": {
-      "datetimeCustomField": "Datetime Custom Field",
+      "datetimeCustomField": "Date & Time Custom Field",
       "datetimeCustomFieldValue": "{customField}",
       "duration": "Duration",
       "durationValue": "{duration}",
       "specificDate": "Specific Date",
-      "specificDateValue": "{date}"
+      "specificDateValue": "{date}",
+      "random": "Random"
     },
     "formatTimezone": {
       "timezone": "Account Timezone",
@@ -1314,7 +1315,17 @@
     },
     "wait": {
       "datetimeTooltip": "The date and time when the flow will be triggered.",
-      "setInterval": "Set Interval"
+      "setInterval": "Set Interval",
+      "delayTypeLabel": "This is a",
+      "fixed": "Fixed",
+      "randomized": "Randomized",
+      "delay": "delay",
+      "durationDetailPrefix": "Wait",
+      "specifyDetailPrefix": "Wait until",
+      "customFieldDetailPrefix": "Wait until",
+      "randomDetailPrefix": "Wait between",
+      "randomDetailAnd": "and",
+      "intervalDetailPrefix": "Active between"
     }
   },
   "folders": {

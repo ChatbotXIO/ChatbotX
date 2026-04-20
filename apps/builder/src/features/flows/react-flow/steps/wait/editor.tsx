@@ -11,6 +11,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { InfoIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useEffect } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import DelayTypeSelect from "@/features/flows/react-flow/steps/wait/components/delay-type-select"
@@ -29,6 +30,20 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
 
   const delayType = useWatch({ name: `${parentName}.delayType` })
   const repeat = useWatch({ name: `${parentName}.repeat` })
+
+  const min = useWatch({ name: `${parentName}.min` })
+  const max = useWatch({ name: `${parentName}.max` })
+  useEffect(() => {
+    if (delayType !== DelayType.random) {
+      return
+    }
+    if (min == null) {
+      setValue(`${parentName}.min`, 1)
+    }
+    if (max == null) {
+      setValue(`${parentName}.max`, 10)
+    }
+  }, [delayType, max, min, parentName, setValue])
 
   return (
     <div className="flex flex-col gap-3">
@@ -80,18 +95,28 @@ const WaitStepEditor = (props: WaitStepEditorProps) => {
             </Tooltip>
           </div>
           <DateTimePickerField
-            dateTimeFormat="yyyy-MM-dd HH:mm"
+            dateTimeFormat="yyyy-MM-dd HH:mm:ss"
             name={`${parentName}.datetime`}
-            required
+            saveFormat="iso"
           />
         </>
       )}
       {delayType === DelayType.customField && (
         <CustomFieldSelect
           customFieldTypes={["datetime"]}
-          label={t("flows.wait.datetimeTooltip")}
-          name={`${parentName}.customFieldId`}
+          name={`${parentName}.outputFieldId`}
         />
+      )}
+      {delayType === DelayType.random && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-row items-start justify-between gap-2">
+            <InputNumberField className="px-1" name={`${parentName}.min`} />
+            <InputNumberField className="px-1" name={`${parentName}.max`} />
+          </div>
+          <div className="flex-1">
+            <DelayUnitSelect name={`${parentName}.unit`} />
+          </div>
+        </div>
       )}
     </div>
   )

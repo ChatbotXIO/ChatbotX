@@ -19,6 +19,7 @@ import { contactInboxRelations } from "./contact-inbox"
 import { contactNoteRelations } from "./contact-note"
 import { contactsOnBroadcastsRelations } from "./contact-on-broadcast"
 import { contactsOnSequenceRelations } from "./contact-on-sequence"
+import { contactOnSmartDelayRelations } from "./contact-on-smart-delay"
 import { contactsToTagsRelations } from "./contact-to-tag"
 import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
@@ -144,4 +145,5 @@ export const relations = {
   ...integrationInstagramRelations,
   ...flowAnalyticsSessionRelations,
   ...flowNodeStatRelations,
+  ...contactOnSmartDelayRelations,
 }

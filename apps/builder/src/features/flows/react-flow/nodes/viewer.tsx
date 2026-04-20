@@ -79,7 +79,6 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
             data.details.quickReplies.map((quickReplyItem) => (
               <ButtonStepViewer data={quickReplyItem} key={quickReplyItem.id} />
             ))}
-
           {!disabledContinueNodeTypes.includes(type) && (
             <div className="relative w-full text-right">
               <span className="mr-4">{t("actions.continue")}</span>

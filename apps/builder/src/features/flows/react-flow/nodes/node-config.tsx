@@ -4,6 +4,7 @@ import sendMailNodeConfig from "./send-mail"
 import sendMessageNodeConfig from "./send-message"
 import splitTrafficNodeConfig from "./split-traffic"
 import startFlowNodeConfig from "./start-flow"
+import waitNodeConfig from "./wait"
 
 export const allNodesConfig = {
   [nodeTypeSchema.enum.sendMessage]: sendMessageNodeConfig,
@@ -12,7 +13,7 @@ export const allNodesConfig = {
   [nodeTypeSchema.enum.condition]: undefined,
   [nodeTypeSchema.enum.sendMail]: sendMailNodeConfig,
   [nodeTypeSchema.enum.splitTraffic]: splitTrafficNodeConfig,
-  [nodeTypeSchema.enum.wait]: undefined,
+  [nodeTypeSchema.enum.wait]: waitNodeConfig,
   [nodeTypeSchema.enum.landingPage]: undefined,
   [nodeTypeSchema.enum.addNotes]: undefined,
 }

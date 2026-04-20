@@ -113,4 +113,5 @@ export const disabledCopyActionTypes = [
 export const hiddenActionsStepTypes = [
   stepTypes.enum.email,
   stepTypes.enum.splitTraffic,
+  stepTypes.enum.wait,
 ]

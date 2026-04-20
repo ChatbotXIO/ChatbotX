@@ -12,7 +12,7 @@ export const waitNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.wait),
   data: baseNodeDataSchema.extend({
     details: z.object({
-      beforeStep: waitStepSchema,
+      steps: z.array(waitStepSchema).min(1).max(1),
     }),
   }),
 })
@@ -27,7 +27,7 @@ export const waitNodeDefaultFn = (props: DefaultNodeProps): WaitNodeSchema => ({
     isStartNode: false,
     ...props.dataProps,
     details: {
-      beforeStep: waitStepDefaultFn(),
+      steps: [waitStepDefaultFn()],
       ...props.detailProps,
     },
   },

@@ -52,6 +52,7 @@ import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
 import { unsubscribeSequenceStep } from "./unsubscribe-sequence"
+import { waitStep } from "./wait"
 
 // biome-ignore lint/suspicious/noExplicitAny: wip
 export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
@@ -95,7 +96,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.startExternalFlow]: sendExternalFlowStep,
   [stepTypes.enum.startExternalNode]: sendExternalNodeStep,
   [stepTypes.enum.startAnotherNode]: startAnotherNodeStep,
-  [stepTypes.enum.wait]: undefined,
+  [stepTypes.enum.wait]: waitStep,
   [stepTypes.enum.performAction]: undefined,
   [stepTypes.enum.openWebsite]: openWebsiteStep,
   [stepTypes.enum.setCustomField]: setCustomFieldStep,

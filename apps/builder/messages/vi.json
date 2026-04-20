@@ -1313,7 +1313,8 @@
       "duration": "Thời lượng",
       "durationValue": "{duration}",
       "specificDate": "Ngày cụ thể",
-      "specificDateValue": "{date}"
+      "specificDateValue": "{date}",
+      "random": "Ngẫu nhiên"
     },
     "formatTimezone": {
       "timezone": "Múi giờ tài khoản",
@@ -1330,7 +1331,17 @@
     },
     "wait": {
       "datetimeTooltip": "Ngày và giờ khi luồng sẽ được kích hoạt.",
-      "setInterval": "Thiết lập khoảng thời gian"
+      "setInterval": "Thiết lập khoảng thời gian",
+      "delayTypeLabel": "Đây là độ trễ",
+      "fixed": "Cố định",
+      "randomized": "Ngẫu nhiên",
+      "delay": "",
+      "durationDetailPrefix": "Độ trễ là",
+      "specifyDetailPrefix": "Độ trễ đến",
+      "customFieldDetailPrefix": "Độ trễ đến",
+      "randomDetailPrefix": "Độ trễ từ",
+      "randomDetailAnd": "đến",
+      "intervalDetailPrefix": "Hoạt động từ"
     }
   },
   "folders": {

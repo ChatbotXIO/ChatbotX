@@ -28,7 +28,6 @@ const SplitTrafficStepEditor = ({
     control,
     name: `${parentName}.cases`,
   })
-
   const cases = useWatch({ control, name: `${parentName}.cases` })
   const casesFieldState = getFieldState(`${parentName}.cases`, formState)
 

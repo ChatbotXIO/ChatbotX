@@ -1,3 +1,4 @@
+import { db } from "@chatbotx.io/database/client"
 import {
   type EdgeSchema,
   type SplitTrafficStepSchema,
@@ -6,6 +7,7 @@ import {
   type StartExternalNodeStepSchema,
   type StepType,
   stepTypes,
+  type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
   ChatJobAction,
@@ -115,6 +117,35 @@ async function splitTraffic({
       },
     })
   }
+}
+
+async function handleWait({
+  conversation,
+  flowVersion,
+  contactInbox,
+  targetId,
+}: ExecuteStepProps<WaitStepSchema>) {
+  if (!targetId) {
+    return
+  }
+
+  const contactOnSmartDelay = await db.query.contactOnSmartDelayModel.findFirst(
+    {
+      where: {
+        nodeId: conversation.id,
+        flowId: flowVersion.flowId,
+        workspaceId: flowVersion.workspaceId,
+        contactInboxId: contactInbox?.id,
+      },
+    },
+  )
+
+  console.log({ contactOnSmartDelay })
+  if (!contactOnSmartDelay) {
+    return
+  }
+
+  // TODO: Implement wait logic
 }
 
 async function startAnotherNode(
@@ -230,7 +261,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.unassignConversation]: stepUnassignConversation,
   [stepTypes.enum.unfollowConversation]: stepUnfollowConversation,
   [stepTypes.enum.getUserData]: getUserData,
-  [stepTypes.enum.wait]: undefined,
+  [stepTypes.enum.wait]: handleWait,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
   [stepTypes.enum.filterContact]: undefined,
