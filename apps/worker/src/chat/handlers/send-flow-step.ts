@@ -406,6 +406,7 @@ export const sendChatMessage = async (
     contactInbox: targetContactInbox,
     text,
     url,
+    storagePath,
     trackingContext,
     metadata,
   } = props
@@ -448,10 +449,17 @@ export const sendChatMessage = async (
         .then((result) => result[0])
 
       if (url) {
-        const uploadedFile = await uploadFileFromUrl(
-          url,
-          `public/space/${newMessage.workspaceId}/conversations/${conversation.id}/${createId()}`,
-        )
+        const uploadedFile = storagePath
+          ? {
+              originPath: storagePath,
+              mimeType: "audio/mpeg" as const,
+              size: 0,
+              fileType: "audio" as const,
+            }
+          : await uploadFileFromUrl(
+              url,
+              `public/space/${newMessage.workspaceId}/conversations/${conversation.id}/${createId()}`,
+            )
 
         const attachment = await tx
           .insert(attachmentModel)

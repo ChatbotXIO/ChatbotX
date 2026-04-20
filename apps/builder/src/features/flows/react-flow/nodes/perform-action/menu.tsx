@@ -108,6 +108,16 @@ const openaiMenus = (t: TranslationFn): MenuItem[] => [
           provider: "openai",
         },
       },
+      {
+        label: t("fields.flows.aiTextToSpeech", {
+          aiName: "OpenAI",
+        }),
+        icon: OpenAIIcon,
+        stepType: stepTypes.enum.aiTextToSpeech,
+        props: {
+          provider: "openai",
+        },
+      },
     ],
   },
 ]

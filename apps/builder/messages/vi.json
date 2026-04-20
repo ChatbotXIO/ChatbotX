@@ -604,6 +604,7 @@
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
       "aiAnalyzeImage": "{aiName}: AI Phân tích hình ảnh",
       "aiSpeechToText": "{aiName}: AI Chuyển giọng nói thành văn bản",
+      "aiTextToSpeech": "{aiName}: AI Chuyển văn bản thành giọng nói",
       "label": "Luồng",
       "placeholder": "Chọn luồng"
     },
@@ -985,8 +986,19 @@
     "inputFieldId": {
       "label": "Trường tùy chỉnh đầu vào"
     },
+    "inputText": {
+      "label": "Văn bản đầu vào"
+    },
     "outputFieldId": {
       "label": "Lưu kết quả vào trường tùy chỉnh"
+    },
+    "voiceType": {
+      "label": "Kiểu giọng nói",
+      "placeholder": "Chọn kiểu giọng nói"
+    },
+    "voiceTone": {
+      "label": "Tông giọng (Tùy chọn)",
+      "placeholder": "Nói với giọng điệu vui vẻ."
     },
     "jsonPath": {
       "placeholder": "Nhập đường dẫn JSON"
