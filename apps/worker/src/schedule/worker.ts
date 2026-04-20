@@ -12,8 +12,11 @@ import {
   cleanupTriggerExecutions,
   scanDateTimeTriggers,
 } from "../trigger/datetime-trigger-scanner"
+import { enqueueBroadcast } from "./handlers/enqueue-broadcast"
+import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
+import { prepareBroadcast } from "./handlers/prepare-broadcast"
+import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { registerSchedules } from "./handlers/register-schedules"
-import { sendBroadcast } from "./handlers/send-broadcast"
 
 async function startScheduleWorker() {
   try {
@@ -38,8 +41,20 @@ async function startScheduleWorker() {
     queueName.schedule,
     async (job: Job<ScheduleJobData>) => {
       switch (job.data.type) {
+        case ScheduleJobData.enqueueBroadcast:
+          await enqueueBroadcast()
+          return
+
+        case ScheduleJobData.prepareBroadcast:
+          await prepareBroadcast(job.data.data.broadcastId)
+          return
+
         case ScheduleJobData.sendBroadcast:
-          await sendBroadcast()
+          await processBroadcastContacts()
+          return
+
+        case ScheduleJobData.finalizeBroadcasts:
+          await finalizeBroadcasts()
           return
 
         case ScheduleJobData.evaluateTriggers:

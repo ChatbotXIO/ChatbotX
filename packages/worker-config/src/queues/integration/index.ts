@@ -23,7 +23,6 @@ export const IntegrationJobAction = {
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
   processAutomatedResonse: "processAutomatedResponse",
-  sendBroadcast: "sendBroadcast",
   agentMarkAsRead: "agentMarkAsRead",
   contactMarkAsRead: "contactMarkAsRead",
   runChallenge: "runChallenge",
@@ -96,13 +95,6 @@ export type IntegrationJobProcessAutomatedResponse = {
   data: {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
-  }
-}
-
-export type IntegrationJobSendBroadcast = {
-  type: typeof IntegrationJobAction.sendBroadcast
-  data: {
-    broadcastId: string
   }
 }
 
@@ -200,7 +192,6 @@ export type IntegrationJobData =
   | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback
   | IntegrationJobSendFlowQuickReply
-  | IntegrationJobSendBroadcast
   | IntegrationJobAgentMarkAsRead
   | IntegrationJobContactMarkAsRead
   | IntegrationJobRunRef

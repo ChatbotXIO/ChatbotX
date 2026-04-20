@@ -7,7 +7,10 @@ import {
 import { queueName } from "../../lib/types"
 
 export const ScheduleJobData = {
+  enqueueBroadcast: "enqueueBroadcast",
+  prepareBroadcast: "prepareBroadcast",
   sendBroadcast: "sendBroadcast",
+  finalizeBroadcasts: "finalizeBroadcasts",
   evaluateTriggers: "evaluateTriggers",
   cleanupTriggers: "cleanupTriggers",
 } as const
@@ -15,8 +18,27 @@ export const ScheduleJobData = {
 export type ScheduleJobBroadcast = {
   type: typeof ScheduleJobData.sendBroadcast
   data: {
+    broadcastId: string
+  }
+}
+
+export type ScheduleJobEnqueueBroadcast = {
+  type: typeof ScheduleJobData.enqueueBroadcast
+  data: {
     schedulesAt: Date
   }
+}
+
+export type ScheduleJobPrepareBroadcast = {
+  type: typeof ScheduleJobData.prepareBroadcast
+  data: {
+    broadcastId: string
+  }
+}
+
+export type ScheduleJobFinalizeBroadcasts = {
+  type: typeof ScheduleJobData.finalizeBroadcasts
+  data: Record<string, never>
 }
 
 export type ScheduleJobEvaluateTriggers = {
@@ -31,6 +53,9 @@ export type ScheduleJobCleanupTriggers = {
 
 export type ScheduleJobData =
   | ScheduleJobBroadcast
+  | ScheduleJobEnqueueBroadcast
+  | ScheduleJobPrepareBroadcast
+  | ScheduleJobFinalizeBroadcasts
   | ScheduleJobEvaluateTriggers
   | ScheduleJobCleanupTriggers
 

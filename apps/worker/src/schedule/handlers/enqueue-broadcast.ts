@@ -1,13 +1,10 @@
 import { db } from "@chatbotx.io/database/client"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
+import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
 import { startOfMinute } from "date-fns"
 
 const ENQUEUE_BULK_SIZE = 500
 
-export const sendBroadcast = async () => {
+export const enqueueBroadcast = async () => {
   const startTime = startOfMinute(new Date().toString())
   const broadcasts = await db.query.broadcastModel.findMany({
     where: {
@@ -26,18 +23,18 @@ export const sendBroadcast = async () => {
 
   for (let index = 0; index < broadcasts.length; index += ENQUEUE_BULK_SIZE) {
     const batch = broadcasts.slice(index, index + ENQUEUE_BULK_SIZE)
-    await integrationQueue.addBulk(
+    await scheduleQueue.addBulk(
       batch.map((broadcast) => ({
-        name: IntegrationJobAction.sendBroadcast,
+        name: ScheduleJobData.prepareBroadcast,
         data: {
-          type: IntegrationJobAction.sendBroadcast,
+          type: ScheduleJobData.prepareBroadcast,
           data: {
             broadcastId: broadcast.id,
           },
         },
         opts: {
           // Deduplicate fan-out when the scheduler job retries.
-          jobId: `integration-send-broadcast-${broadcast.id}`,
+          jobId: `schedule-prepare-broadcast-${broadcast.id}`,
         },
       })),
     )

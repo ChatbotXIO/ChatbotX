@@ -11,7 +11,6 @@
     "worker:trigger": "dotenv -e ../../.env -- tsx --watch src/trigger/worker.ts",
     "worker:webhook": "dotenv -e ../../.env -- tsx --watch src/webhook/worker.ts",
     "worker:analytics": "dotenv -e ../../.env -- tsx --watch src/analytics/worker.ts",
-    "worker:broadcast": "dotenv -e ../../.env -- tsx --watch src/broadcast/worker.ts",
     "worker:sequence-scheduler": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker.ts",
     "worker:sequence-producer": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker-producer.ts",
     "worker:sequence-consumer": "dotenv -e ../../.env -- tsx --watch src/sequence-scheduler/worker-consumer.ts",

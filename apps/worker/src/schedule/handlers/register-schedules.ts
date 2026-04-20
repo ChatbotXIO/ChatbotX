@@ -7,17 +7,31 @@ export const registerSchedules = async () => {
   }
 
   await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.sendBroadcast,
+    ScheduleJobData.enqueueBroadcast,
     {
       pattern: "* * * * *",
     },
     {
-      name: ScheduleJobData.sendBroadcast,
+      name: ScheduleJobData.enqueueBroadcast,
       data: {
-        type: ScheduleJobData.sendBroadcast,
+        type: ScheduleJobData.enqueueBroadcast,
         data: {
           schedulesAt: new Date(),
         },
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.finalizeBroadcasts,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.finalizeBroadcasts,
+      data: {
+        type: ScheduleJobData.finalizeBroadcasts,
+        data: {},
       },
     },
   )

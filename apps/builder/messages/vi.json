@@ -220,7 +220,8 @@
     "title": "Phát sóng",
     "status": {
       "scheduled": "Đã lên lịch",
-      "sent": "Đã gửi"
+      "sent": "Đã gửi",
+      "sending": "Đang gửi"
     },
     "stats": {
       "sent": "Đã gửi",

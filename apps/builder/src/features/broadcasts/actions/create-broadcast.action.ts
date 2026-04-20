@@ -2,6 +2,7 @@
 
 import { db } from "@chatbotx.io/database/client"
 import { broadcastModel } from "@chatbotx.io/database/schema"
+import { startOfMinute } from "date-fns"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -64,7 +65,9 @@ export const createBroadcastAction = workspaceActionClient
         name: broadcastName,
         workspaceId,
         status: "scheduled",
-        schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
+        schedulesAt: startOfMinute(
+          new Date(parsedInput.schedulesAt ?? new Date()),
+        ),
         templateData: parsedInput.templateData ?? "{}",
       })
       .returning()

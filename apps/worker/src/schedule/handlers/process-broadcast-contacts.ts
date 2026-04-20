@@ -1,4 +1,5 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
+import { broadcastStatuses } from "@chatbotx.io/database/partials"
 import {
   broadcastModel,
   contactsOnBroadcastsModel,
@@ -10,15 +11,16 @@ import {
 import {
   ChatJobAction,
   chatQueue,
-  DEFAULT_BROADCAST_RATE_LIMIT,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 
+const DEFAULT_BROADCAST_RATE_LIMIT = 500
+
 export const processBroadcastContacts = async () => {
   const broadcasts = await db.query.broadcastModel.findMany({
     where: {
-      status: "scheduled",
+      status: broadcastStatuses.enum.sending,
     },
   })
 

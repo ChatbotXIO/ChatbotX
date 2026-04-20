@@ -21,6 +21,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
+  Loader2Icon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -133,7 +134,13 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             title={t("fields.estimatedContacts.label")}
           />
         ),
-        cell: ({ row }) => <div>{row.original.contactsCount ?? 0}</div>,
+        cell: ({ row }) => {
+          if (row.original.contactCount === null) {
+            return <Loader2Icon className="h-4 w-4 animate-spin" />
+          }
+
+          return <div>{row.original.contactCount}</div>
+        },
         meta: {
           label: t("fields.estimatedContacts.label"),
         },

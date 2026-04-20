@@ -220,7 +220,8 @@
     "title": "Broadcasts",
     "status": {
       "scheduled": "Scheduled",
-      "sent": "Sent"
+      "sent": "Sent",
+      "sending": "Sending"
     },
     "stats": {
       "sent": "Sent",
