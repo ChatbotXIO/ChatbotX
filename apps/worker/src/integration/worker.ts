@@ -27,7 +27,6 @@ import {
 import { handleMessageStatus } from "./handlers/message-status"
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
-import { sendBroadcast } from "./handlers/send-broadcast"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
 async function startIntegrationWorker() {
@@ -130,10 +129,6 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.contactMarkAsRead: {
           await contactMarkAsRead(job.data.data)
-          return
-        }
-        case IntegrationJobAction.sendBroadcast: {
-          await sendBroadcast(job.data.data.broadcastId)
           return
         }
         case IntegrationJobAction.runRef: {

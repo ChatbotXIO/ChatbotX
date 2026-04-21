@@ -8,4 +8,5 @@ export const queueName = {
   default: "default",
   analytics: "analytics",
   sequenceScheduler: "sequenceScheduler",
+  broadcast: "broadcast",
 } as const
