@@ -20,13 +20,7 @@ const DateTypeSelect = (props: DateTypeSelectProps) => {
     },
   ]
 
-  return (
-    <SelectField
-      name={props.name}
-      options={dateTypes}
-      placeholder={t("fields.dateType.placeholder")}
-    />
-  )
+  return <SelectField name={props.name} options={dateTypes} />
 }
 
 export default DateTypeSelect

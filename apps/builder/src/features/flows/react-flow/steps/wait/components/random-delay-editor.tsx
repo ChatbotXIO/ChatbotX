@@ -33,18 +33,11 @@ export function RandomDelayEditor({ parentName }: RandomDelayEditorProps) {
         <Label className="text-muted-foreground text-xs">
           {t("flows.wait.randomRangeLabel")}
         </Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <div className="flex-1 space-y-1">
-            <Label className="text-muted-foreground text-xs">
-              {t("flows.wait.minLabel")}
-            </Label>
             <InputNumberField name={`${parentName}.min`} />
           </div>
-          <span className="mt-5 text-muted-foreground">—</span>
           <div className="flex-1 space-y-1">
-            <Label className="text-muted-foreground text-xs">
-              {t("flows.wait.maxLabel")}
-            </Label>
             <InputNumberField name={`${parentName}.max`} />
           </div>
         </div>

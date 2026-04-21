@@ -1,7 +1,22 @@
 import { createId } from "@chatbotx.io/utils"
-import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import { index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core"
+import {
+  smartDelayStatuses,
+  smartDelayTypes,
+} from "../partials/contact-on-smart-delay"
 import { bigintAsString, timestampConfig } from "../partials/shared"
+import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
+
+export const contactOnSmartDelayType = pgEnum(
+  "type",
+  smartDelayTypes.options as [string, ...string[]],
+)
+
+export const contactOnSmartDelayStatus = pgEnum(
+  "status",
+  smartDelayStatuses.options as [string, ...string[]],
+)
 
 export const contactOnSmartDelayModel = pgTable(
   "ContactOnSmartDelay",
@@ -15,22 +30,38 @@ export const contactOnSmartDelayModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    flowId: bigintAsString(),
-    contactInboxId: bigintAsString(),
-    nodeId: text().notNull(),
-    retryCount: integer().default(0).notNull(),
+    flowId: bigintAsString().notNull(),
+    flowVersionId: bigintAsString(),
+    contactInboxId: bigintAsString().notNull(),
+    conversationId: bigintAsString()
+      .notNull()
+      .references(() => conversationModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    nodeId: text(),
+    stepId: text(),
+    type: contactOnSmartDelayType().notNull(),
     createdAt: timestamp(timestampConfig).defaultNow().notNull(),
     triggerAt: timestamp(timestampConfig).notNull(),
+    status: contactOnSmartDelayStatus()
+      .default(smartDelayStatuses.enum.pending)
+      .notNull(),
   },
   (table) => [
     index(
-      "ContactOnSmartDelay_workspaceId_flowId_nodeId_contactInboxId_idx",
+      "ContactOnSmartDelay_workspaceId_flowId_contactInboxId_stepId_idx",
     ).using(
       "btree",
       table.workspaceId,
       table.flowId,
-      table.nodeId,
       table.contactInboxId,
+      table.stepId,
+    ),
+    index("ContactOnSmartDelay_status_triggerAt_idx").using(
+      "btree",
+      table.status,
+      table.triggerAt,
     ),
   ],
 )

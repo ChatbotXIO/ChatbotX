@@ -50,4 +50,18 @@ export const registerSchedules = async () => {
       },
     },
   )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanSmartDelay,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.scanSmartDelay,
+      data: {
+        type: ScheduleJobData.scanSmartDelay,
+        data: {},
+      },
+    },
+  )
 }

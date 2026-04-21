@@ -17,6 +17,7 @@ import { finalizeBroadcasts } from "./handlers/finalize-broadcasts"
 import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { registerSchedules } from "./handlers/register-schedules"
+import { scanSmartDelay } from "./handlers/scan-smart-delay"
 
 async function startScheduleWorker() {
   try {
@@ -63,6 +64,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.cleanupTriggers:
           await cleanupTriggerExecutions()
+          return
+
+        case ScheduleJobData.scanSmartDelay:
+          await scanSmartDelay()
           return
 
         default:

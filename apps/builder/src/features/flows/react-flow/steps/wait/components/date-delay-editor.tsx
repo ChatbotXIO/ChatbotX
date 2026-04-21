@@ -93,6 +93,7 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
             </Label>
             <CustomFieldSelect
               customFieldTypes={["datetime"]}
+              label=""
               name={`${parentName}.outputFieldId`}
             />
           </div>
@@ -121,20 +122,21 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
                   {t("flows.wait.offsetLabel")}
                 </Label>
                 <div className="flex items-center gap-2">
-                  <SelectField
-                    className="w-24"
-                    name={`${parentName}.offsetOperator`}
-                    options={[
-                      {
-                        value: OffsetOperator.enum.add,
-                        label: t("flows.wait.offsetAdd"),
-                      },
-                      {
-                        value: OffsetOperator.enum.subtract,
-                        label: t("flows.wait.offsetSubtract"),
-                      },
-                    ]}
-                  />
+                  <div className="w-16 shrink-0">
+                    <SelectField
+                      name={`${parentName}.offsetOperator`}
+                      options={[
+                        {
+                          value: OffsetOperator.enum.add,
+                          label: t("flows.wait.offsetAdd"),
+                        },
+                        {
+                          value: OffsetOperator.enum.subtract,
+                          label: t("flows.wait.offsetSubtract"),
+                        },
+                      ]}
+                    />
+                  </div>
                   <InputNumberField
                     className="w-20"
                     name={`${parentName}.offsetValue`}

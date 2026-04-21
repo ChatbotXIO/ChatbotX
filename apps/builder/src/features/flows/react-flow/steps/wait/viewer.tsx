@@ -7,9 +7,7 @@ import {
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
-import type { ListCustomFieldsResponse } from "@/features/custom-fields/schemas/query"
-import { useWorkspaceId } from "@/hooks/routing"
-import { callAPI } from "@/lib/swr"
+import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 
 type WaitStepViewerProps = {
   data: WaitStepSchema
@@ -19,15 +17,11 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const { data } = props
 
   const t = useTranslations()
-  const workspaceId = useWorkspaceId()
-  const url = `/api/workspaces/${workspaceId}/custom-fields?perPage=9999`
-  const { data: dataCustomFields } = callAPI<ListCustomFieldsResponse>(url)
+  const { customFields } = useCustomFieldStore((state) => state)
 
   const customField =
     data.delayType === DelayType.date && data.dateType === DateType.enum.dynamic
-      ? (dataCustomFields?.data ?? []).find(
-          (obj) => obj.id === data.outputFieldId,
-        )
+      ? customFields.find((obj) => obj.id === data.outputFieldId)
       : undefined
 
   return (
@@ -52,7 +46,7 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
               {data.unit}
             </span>
             <span className="text-muted-foreground">
-              {data.repeat
+              {data.interval
                 ? `(${data.startTime?.slice(0, 5)} - ${data.endTime?.slice(0, 5)})`
                 : ""}
             </span>

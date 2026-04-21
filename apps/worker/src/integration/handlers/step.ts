@@ -1,6 +1,14 @@
 import { db } from "@chatbotx.io/database/client"
 import {
+  smartDelayStatuses,
+  smartDelayTypes,
+} from "@chatbotx.io/database/partials"
+import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
+import {
+  buildJobId,
+  computeTriggerAt,
   type EdgeSchema,
+  ENQUEUE_DELAY_MS,
   type SplitTrafficStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
@@ -9,6 +17,7 @@ import {
   stepTypes,
   type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   type ChatJobSendFlowStep,
@@ -29,7 +38,7 @@ import {
   removeContactTag,
   setContactCustomField,
 } from "./contact"
-import type { ExecuteStepProps } from "./flow"
+import { type ExecuteStepProps, seekConnectedNode } from "./flow"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
 import { sendEmail } from "./send-email"
@@ -124,28 +133,85 @@ async function handleWait({
   flowVersion,
   contactInbox,
   targetId,
-}: ExecuteStepProps<WaitStepSchema>) {
-  if (!targetId) {
-    return
+  step,
+  useLatestFlowVersion,
+}: ExecuteStepProps<WaitStepSchema>): Promise<ExecuteStepResult> {
+  if (!(targetId && step)) {
+    return { status: "skip", result: null }
   }
 
-  const contactOnSmartDelay = await db.query.contactOnSmartDelayModel.findFirst(
-    {
+  if (!contactInbox) {
+    return { status: "skip", result: null }
+  }
+
+  const contactInboxId = contactInbox.id
+
+  const triggerAt = await computeTriggerAt(step, async (customFieldId) => {
+    const customField = await db.query.contactCustomFieldModel.findFirst({
       where: {
-        nodeId: conversation.id,
-        flowId: flowVersion.flowId,
-        workspaceId: flowVersion.workspaceId,
-        contactInboxId: contactInbox?.id,
+        contactId: contactInbox.contactId,
+        customFieldId,
       },
-    },
-  )
+      columns: {
+        value: true,
+      },
+    })
 
-  console.log({ contactOnSmartDelay })
-  if (!contactOnSmartDelay) {
-    return
+    return customField?.value ?? null
+  })
+
+  if (!triggerAt) {
+    return {
+      status: "error",
+      errorMessage: "Unable to compute wait triggerAt",
+      result: null,
+    }
   }
 
-  // TODO: Implement wait logic
+  const connectedNodeId = seekConnectedNode(flowVersion, targetId)
+  const diffMs = triggerAt.getTime() - Date.now()
+
+  if (!connectedNodeId) {
+    return { status: "skip", result: null }
+  }
+
+  const isEnqueue = diffMs <= ENQUEUE_DELAY_MS
+  const data: typeof contactOnSmartDelayModel.$inferInsert = {
+    id: createId(),
+    workspaceId: conversation.workspaceId,
+    flowId: flowVersion.flowId,
+    flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
+    contactInboxId,
+    conversationId: conversation.id,
+    nodeId: connectedNodeId,
+    stepId: step.id,
+    type: smartDelayTypes.enum.waitNode,
+    triggerAt,
+    status: smartDelayStatuses.enum.pending,
+  }
+
+  if (isEnqueue) {
+    await integrationQueue.add(
+      IntegrationJobAction.sendFlow,
+      {
+        type: IntegrationJobAction.sendFlow,
+        data: {
+          conversationId: conversation.id,
+          flowId: flowVersion.flowId,
+          flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+          nodeId: connectedNodeId,
+          contactInboxId: contactInbox,
+        },
+      },
+      { delay: Math.max(0, diffMs), jobId: buildJobId(data.id as string) },
+    )
+
+    data.status = smartDelayStatuses.enum.completed
+  }
+
+  await db.insert(contactOnSmartDelayModel).values(data)
+
+  return { status: "wait", result: null }
 }
 
 async function startAnotherNode(

@@ -9,8 +9,8 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { logger } from "../../lib/logger"
 import { endOfMinute } from "date-fns"
+import { logger } from "../../lib/logger"
 
 const ENQUEUE_BULK_SIZE = 500
 
@@ -56,6 +56,7 @@ export const scanSmartDelay = async () => {
               flowId: row.flowId,
               flowVersionId: row.flowVersionId ?? undefined,
               nodeId: row.nodeId ?? undefined,
+              contactInboxId: row.contactInboxId as string,
             },
           },
           opts: {

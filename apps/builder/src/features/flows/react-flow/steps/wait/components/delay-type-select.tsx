@@ -29,7 +29,6 @@ const DelayTypeSelect = (props: DelayTypeSelectProps) => {
       label={t("fields.delayType.label")}
       name={props.name}
       options={delayTypes}
-      placeholder={t("fields.delayType.placeholder")}
     />
   )
 }

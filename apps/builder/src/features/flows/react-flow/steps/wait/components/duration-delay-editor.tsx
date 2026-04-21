@@ -16,12 +16,12 @@ type DurationDelayEditorProps = {
 export function DurationDelayEditor({ parentName }: DurationDelayEditorProps) {
   const t = useTranslations()
   const { register, setValue } = useFormContext()
-  const repeat = useWatch({ name: `${parentName}.repeat` })
+  const interval = useWatch({ name: `${parentName}.interval` })
   const startTime = useWatch({ name: `${parentName}.startTime` })
   const endTime = useWatch({ name: `${parentName}.endTime` })
 
   useEffect(() => {
-    if (repeat) {
+    if (interval) {
       if (startTime == null) {
         setValue(`${parentName}.startTime`, "08:00:00")
       }
@@ -29,7 +29,7 @@ export function DurationDelayEditor({ parentName }: DurationDelayEditorProps) {
         setValue(`${parentName}.endTime`, "22:00:00")
       }
     }
-  }, [repeat, startTime, endTime, parentName, setValue])
+  }, [interval, startTime, endTime, parentName, setValue])
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,22 +49,22 @@ export function DurationDelayEditor({ parentName }: DurationDelayEditorProps) {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Checkbox
-            id={`${parentName}.repeat`}
-            {...register(`${parentName}.repeat`)}
-            checked={repeat}
+            id={`${parentName}.interval`}
+            {...register(`${parentName}.interval`)}
+            checked={interval}
             onCheckedChange={(checked) =>
-              setValue(`${parentName}.repeat`, checked as boolean)
+              setValue(`${parentName}.interval`, checked as boolean)
             }
           />
           <Label
             className="cursor-pointer text-sm"
-            htmlFor={`${parentName}.repeat`}
+            htmlFor={`${parentName}.interval`}
           >
             {t("flows.wait.setInterval")}
           </Label>
         </div>
 
-        {repeat && (
+        {interval && (
           <div className="bg-muted/30">
             <div className="flex items-center gap-2">
               <TimeSelect name={`${parentName}.startTime`} />
