@@ -3,6 +3,22 @@ import {
   systemFieldTypes,
 } from "@chatbotx.io/database/partials"
 import type { ContactModel } from "@chatbotx.io/database/types"
+import { formatInTimeZone } from "date-fns-tz"
+import {
+  getAssignedAdminEmail,
+  getAssignedAdminId,
+  getAssignedAdminName,
+} from "./helpers/assigned"
+import {
+  findPrimaryContactChannel,
+  listContactNotesString,
+  listContactTagsString,
+} from "./helpers/contact"
+import {
+  getContactLastInput,
+  getContactLastInputType,
+} from "./helpers/last-input"
+import { listLastMessages } from "./helpers/message"
 
 export const extractVariables = (text: string): string[] => {
   const regex = /\{\{(\w+)\}\}/g
@@ -25,7 +41,7 @@ export const getSystemFieldValue = async (
   switch (key) {
     case systemFieldTypes.enum.email:
       return contact.email
-    case systemFieldTypes.enum.phone_number:
+    case systemFieldTypes.enum.phone:
       return contact.phoneNumber
     case systemFieldTypes.enum.first_name:
       return contact.firstName
@@ -33,6 +49,111 @@ export const getSystemFieldValue = async (
       return contact.lastName
     case systemFieldTypes.enum.full_name:
       return [contact.firstName, contact.lastName].filter(Boolean).join(" ")
+    case systemFieldTypes.enum.profile_pic:
+      return contact.avatar
+    case systemFieldTypes.enum.gender:
+      return contact.gender
+    case systemFieldTypes.enum.user_country:
+      return contact.country
+    case systemFieldTypes.enum.user_state:
+      return contact.state
+    case systemFieldTypes.enum.user_city:
+      return contact.city
+    case systemFieldTypes.enum.locale:
+      return contact.locale
+    case systemFieldTypes.enum.locale2:
+      return contact.locale?.split("_")[0] ?? null
+    case systemFieldTypes.enum.timezone:
+      return contact.timezone
+    case systemFieldTypes.enum.user_id:
+      return contact.id
+    case systemFieldTypes.enum.subscribed_date:
+      return contact.subscribedAt
+        ? formatInTimeZone(
+            contact.subscribedAt,
+            contact.timezone ?? "UTC",
+            "yyyy-MM-dd",
+          )
+        : null
+    case systemFieldTypes.enum.last_seen:
+      return contact.lastActivityAt
+        ? formatInTimeZone(
+            contact.lastActivityAt,
+            contact.timezone ?? "UTC",
+            "yyyy-MM-dd",
+          )
+        : null
+    case systemFieldTypes.enum.last_input:
+      return await getContactLastInput(contact.id)
+    case systemFieldTypes.enum.last_input_type:
+      return await getContactLastInputType(contact.id)
+    case systemFieldTypes.enum.user_channel:
+      return await findPrimaryContactChannel(contact.id)
+    case systemFieldTypes.enum.user_tags:
+      return await listContactTagsString(contact.id)
+    case systemFieldTypes.enum.user_hash:
+      return null
+    case systemFieldTypes.enum.workspace_id:
+      return contact.workspaceId
+    case systemFieldTypes.enum.user_source:
+      return null
+    case systemFieldTypes.enum.assigned_admin_name:
+      return await getAssignedAdminName(contact.workspaceId)
+    case systemFieldTypes.enum.assigned_admin_email:
+      return await getAssignedAdminEmail(contact.workspaceId)
+    case systemFieldTypes.enum.assigned_admin_id:
+      return await getAssignedAdminId(contact.workspaceId)
+    case systemFieldTypes.enum.current_user_time:
+      return formatInTimeZone(
+        new Date(),
+        contact.timezone ?? "UTC",
+        "yyyy-MM-dd HH:mm:ss",
+      )
+    case systemFieldTypes.enum.chat_history:
+      return await listLastMessages(contact.workspaceId, 50)
+    case systemFieldTypes.enum.chat_history_large:
+      return await listLastMessages(contact.workspaceId, 200)
+    case systemFieldTypes.enum.chat_history_details:
+      return await listLastMessages(contact.workspaceId, 50, true)
+    case systemFieldTypes.enum.chat_history_details_large:
+      return await listLastMessages(contact.workspaceId, 200, true)
+    case systemFieldTypes.enum.user_notes:
+      return await listContactNotesString(contact.id)
+    // Non-contact-backed fields are intentionally unresolved here.
+    case systemFieldTypes.enum.inbox_link:
+    case systemFieldTypes.enum.ig_user_name:
+    case systemFieldTypes.enum.ig_followers:
+    case systemFieldTypes.enum.ig_verified:
+    case systemFieldTypes.enum.ig_follow_business:
+    case systemFieldTypes.enum.ig_business_follow_user:
+    case systemFieldTypes.enum.timezone_name:
+    case systemFieldTypes.enum.fb_chat_link:
+    case systemFieldTypes.enum.me:
+    case systemFieldTypes.enum.user_code:
+    case systemFieldTypes.enum.last_btn_title:
+    case systemFieldTypes.enum.last_interaction:
+    case systemFieldTypes.enum.last_order:
+    case systemFieldTypes.enum.consecutive_failed_reply:
+    case systemFieldTypes.enum.last_ref:
+    case systemFieldTypes.enum.user_external_id:
+    case systemFieldTypes.enum.last_user_note:
+    case systemFieldTypes.enum.webchat:
+    case systemFieldTypes.enum.webchat_parent_url:
+    case systemFieldTypes.enum.account_id:
+    case systemFieldTypes.enum.account_name:
+    case systemFieldTypes.enum.account_image:
+    case systemFieldTypes.enum.api_key:
+    case systemFieldTypes.enum.last_ad:
+    case systemFieldTypes.enum.last_ctwa:
+    case systemFieldTypes.enum.last_ad_source_url:
+    case systemFieldTypes.enum.last_ad_source_platform:
+    case systemFieldTypes.enum.last_step:
+    case systemFieldTypes.enum.current_step:
+    case systemFieldTypes.enum.member_name:
+    case systemFieldTypes.enum.team_name:
+    case systemFieldTypes.enum.last_input_failure:
+    case systemFieldTypes.enum.workspace_name:
+      return null
     default: {
       return await null
     }

@@ -179,6 +179,11 @@ export const distributedStoreFactory = (
     return await redisClient.sadd(key, member)
   },
 
+  async addTag(tagName: string, keyName: string): Promise<number> {
+    const redisClient = await getRedisClient()
+    return await redisClient.sadd(`tags:${tagName}`, keyName)
+  },
+
   async smembers(key: string): Promise<string[]> {
     const redisClient = await getRedisClient()
     return await redisClient.smembers(key)

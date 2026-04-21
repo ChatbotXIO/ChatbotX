@@ -11,6 +11,8 @@
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/services": "workspace:*",
+    "date-fns-tz": "^3.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,0 +1,6 @@
+{
+  "extends": "@chatbotx.io/typescript-config/base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}

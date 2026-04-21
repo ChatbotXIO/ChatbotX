@@ -54,6 +54,11 @@ WORKDIR /app
 
 # Build the application
 FROM base AS release
+RUN apt-get update \
+  && apt-get install -y curl vim \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY apps/builder/docker/rootfs/ /
 
 # Automatically leverage output traces to reduce image size
