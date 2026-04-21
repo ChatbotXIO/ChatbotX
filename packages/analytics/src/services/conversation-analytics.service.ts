@@ -1,4 +1,4 @@
-import { conversationStatsRepository } from "../repositories/conversation-stats.repository"
+import { conversationStatsRepository } from "../repositories/clickhouse/conversation-stats.repository"
 import type {
   ConversationArchivedStats,
   ConversationAssignedByAdminStats,

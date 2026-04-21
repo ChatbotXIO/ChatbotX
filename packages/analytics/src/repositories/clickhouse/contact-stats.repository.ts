@@ -5,7 +5,7 @@ import {
   fillDailyTotalContactsSeries,
   fillTotalContactsMonthlySeries,
   shouldUseMonthlyGranularity,
-} from "../lib/time-series"
+} from "../../lib/time-series"
 import type {
   ContactCountsSchema,
   ContactEventType,
@@ -16,7 +16,7 @@ import type {
   MessagesBySenderStats,
   TimeRangeQuery,
   UniqueContactsByAdminStats,
-} from "../schemas"
+} from "../../schemas"
 import { BaseRepository } from "./base.repository"
 import { conversationStatsRepository } from "./conversation-stats.repository"
 
@@ -43,7 +43,7 @@ export class ContactStatsRepository extends BaseRepository {
       FROM contact_stats_minute
       WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
-        ${eventTypeFilter}
+        ${eventTypeFilter.sql}
       GROUP BY workspace_id, minute, event_type
       ORDER BY minute ASC, event_type ASC
     `
@@ -57,6 +57,7 @@ export class ContactStatsRepository extends BaseRepository {
     }>(sql, {
       workspaceId,
       ...timeFilter.params,
+      ...eventTypeFilter.params,
     })
 
     return result.map((row) => ({
@@ -89,7 +90,7 @@ export class ContactStatsRepository extends BaseRepository {
       FROM contact_stats_hourly
       WHERE workspace_id = {workspaceId:String}
         AND ${timeFilter.sql}
-        ${eventTypeFilter}
+        ${eventTypeFilter.sql}
       GROUP BY workspace_id, hour, event_type
       ORDER BY hour ASC, event_type ASC
     `
@@ -103,6 +104,7 @@ export class ContactStatsRepository extends BaseRepository {
     }>(sql, {
       workspaceId,
       ...timeFilter.params,
+      ...eventTypeFilter.params,
     })
 
     return result.map((row) => ({
@@ -142,7 +144,7 @@ export class ContactStatsRepository extends BaseRepository {
         FROM contact_stats_hourly
         WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
-          ${eventTypeFilter}
+          ${eventTypeFilter.sql}
         GROUP BY workspace_id, month_group, event_type
       )
       GROUP BY workspace_id, month_group, event_type
@@ -158,6 +160,7 @@ export class ContactStatsRepository extends BaseRepository {
     }>(sql, {
       workspaceId: props.workspaceId,
       ...timeFilter.params,
+      ...eventTypeFilter.params,
     })
 
     const rows = result.map((row) => ({
@@ -213,7 +216,7 @@ export class ContactStatsRepository extends BaseRepository {
         FROM contact_stats_hourly
         WHERE workspace_id = {workspaceId:String}
           AND ${timeFilter.sql}
-          ${eventTypeFilter}
+          ${eventTypeFilter.sql}
         GROUP BY workspace_id, day_group, event_type
       )
       GROUP BY workspace_id, day_group, event_type
@@ -229,6 +232,7 @@ export class ContactStatsRepository extends BaseRepository {
     }>(sql, {
       workspaceId,
       ...timeFilter.params,
+      ...eventTypeFilter.params,
     })
 
     const rows = result.map((row) => ({

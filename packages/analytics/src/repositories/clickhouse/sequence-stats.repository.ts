@@ -1,44 +1,19 @@
+import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
 import { db, isNotNull, or, sql } from "@chatbotx.io/database/client"
 import { sequenceDispatchModel } from "@chatbotx.io/database/schema"
 import {
   flowEventTypeSchema,
   messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
-import type { ContactEventData } from "../schemas/common"
-import type { ClickHouseStatsRow } from "../schemas/flow-stats"
+import type { ContactEventData } from "../../schemas/common"
+import type { ClickHouseStatsRow } from "../../schemas/flow-stats"
 import type {
-  SequenceFailedBulkUpdateItem,
   SequenceStepEventType,
   SequenceStepStats,
-} from "../schemas/sequence-stats"
+} from "../../schemas/sequence-stats"
 import { BaseRepository } from "./base.repository"
 
 export class SequenceStatsRepository extends BaseRepository {
-  async updateFailedBulk(items: SequenceFailedBulkUpdateItem[]): Promise<void> {
-    if (items.length === 0) {
-      return
-    }
-
-    const tuples = items.map(
-      (i) => sql`(${i.sequenceId}, ${i.stepId}, ${i.contactInboxId})`,
-    )
-    const failedCases = items.map(
-      (i) =>
-        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt}::timestamptz`,
-    )
-    const errorCases = items.map(
-      (i) =>
-        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.errorContent}`,
-    )
-
-    await db.execute(sql`
-      UPDATE "SequenceDispatch"
-      SET "failedAt" = COALESCE("failedAt", CASE ${sql.join(failedCases, sql` `)} END),
-          "errorContent" = COALESCE("errorContent", CASE ${sql.join(errorCases, sql` `)} END)
-      WHERE ("sequenceId", "stepId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
-    `)
-  }
-
   async getStepStats(input: {
     workspaceId: string
     sequenceId: string
@@ -212,6 +187,13 @@ export class SequenceStatsRepository extends BaseRepository {
       default:
         return new Date().toISOString()
     }
+  }
+
+  async insertEvents(data: SequenceScheduleEventType[]): Promise<void> {
+    if (data.length === 0) {
+      return
+    }
+    await this.insert("sequence_schedule_events", data)
   }
 }
 

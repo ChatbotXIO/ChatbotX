@@ -10,7 +10,7 @@ import {
   type SendMessageNodeSchema,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import type { ContactEventData } from "../schemas/common"
+import type { ContactEventData } from "../../schemas/common"
 import type {
   FlowNodeEventType,
   FlowNodeStatClickedItem,
@@ -22,7 +22,7 @@ import type {
   FlowNodeStatTimestampField,
   FlowStatsRequest,
   RemoveFlowStatsRequest,
-} from "../schemas/flow-stats"
+} from "../../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
 
 export class FlowStatsRepository extends BaseRepository {
@@ -281,6 +281,7 @@ export class FlowStatsRepository extends BaseRepository {
 
     return {
       "message:sent": delivered + failed,
+      "message:delivered": delivered,
       "message:seen": seen,
       "flow:clicked": {
         clicked,
@@ -523,6 +524,7 @@ export class FlowStatsRepository extends BaseRepository {
       result[nodeId] = {
         node: {
           "message:sent": stepStat["message:sent"],
+          "message:delivered": stepStat["message:delivered"],
           "message:seen": stepStat["message:seen"],
           "flow:clicked": {
             clicked: stepStat["flow:clicked"].clicked,

@@ -45,6 +45,17 @@ export const whatsappStatusWebhookEventSchema = z.object({
   phone: z.string(),
   messageId: z.string(),
   status: z.string(),
+  error: z
+    .object({
+      code: z.number(),
+      title: z.string(),
+      message: z.string(),
+      href: z.string(),
+      error_data: z.object({
+        details: z.string(),
+      }),
+    })
+    .optional(),
 })
 export type WhatsappStatusWebhookEvent = z.infer<
   typeof whatsappStatusWebhookEventSchema

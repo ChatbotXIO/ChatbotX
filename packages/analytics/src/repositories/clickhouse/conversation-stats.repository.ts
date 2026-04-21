@@ -7,7 +7,7 @@ import type {
   ConversationHandoffStats,
   TimeRangeQuery,
   UniqueConversationsByAdminStats,
-} from "../schemas"
+} from "../../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class ConversationStatsRepository extends BaseRepository {

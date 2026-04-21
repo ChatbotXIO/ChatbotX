@@ -10,9 +10,9 @@ import type {
   BroadcastEventType,
   BroadcastFailedBulkUpdateItem,
   BroadcastStats,
-} from "../schemas/broadcast-stats"
-import type { ContactEventData } from "../schemas/common"
-import type { ClickHouseStatsRow } from "../schemas/flow-stats"
+} from "../../schemas/broadcast-stats"
+import type { ContactEventData } from "../../schemas/common"
+import type { ClickHouseStatsRow } from "../../schemas/flow-stats"
 import { BaseRepository } from "./base.repository"
 
 export class BroadcastStatsRepository extends BaseRepository {
@@ -45,7 +45,7 @@ export class BroadcastStatsRepository extends BaseRepository {
     `)
   }
 
-  async insertClickhouseNodeStats(data: BroadcastStatsType[]): Promise<void> {
+  async insertEvents(data: BroadcastStatsType[]): Promise<void> {
     if (data.length === 0) {
       return
     }

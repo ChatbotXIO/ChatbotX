@@ -8,7 +8,7 @@ import {
   type MessagePayload,
 } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
-import { magicLinkStatsRepository } from "../repositories/magic-link-stats.repository"
+import { magicLinkStatsRepository } from "../repositories/clickhouse/magic-link-stats.repository"
 import type {
   FlowNodeContactData,
   ListFlowNodeContactsResponse,

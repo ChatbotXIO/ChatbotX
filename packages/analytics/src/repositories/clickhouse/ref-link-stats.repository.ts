@@ -1,21 +1,21 @@
 import { and, db, eq, gte, lte, sql } from "@chatbotx.io/database/client"
-import { magicLinkStatModel } from "@chatbotx.io/database/schema"
+import { refLinkStatModel } from "@chatbotx.io/database/schema"
 import { fromZonedTime } from "date-fns-tz"
-import type { MagicLinkStatsInput } from "../schemas"
+import type { MagicLinkStatsInput } from "../../schemas"
 import { BaseRepository } from "./base.repository"
 
-export type MagicLinkTimeseriesRow = {
+export type RefLinkTimeseriesRow = {
   dateReport: string
-  clicks: number
+  total: number
 }
 
-export class MagicLinkStatsRepository extends BaseRepository {
-  async getMagicLinkStatsByDateRange(
+export class RefLinkStatsRepository extends BaseRepository {
+  async getRefLinkStatsByDateRange(
     input: MagicLinkStatsInput,
-  ): Promise<MagicLinkTimeseriesRow[]> {
+  ): Promise<RefLinkTimeseriesRow[]> {
     const { workspaceId, startDate, endDate, linkId, timezone } = input
 
-    const t = magicLinkStatModel
+    const t = refLinkStatModel
 
     const startDateWithTz = fromZonedTime(`${startDate} 00:00:00`, timezone)
     const endDateWithTz = fromZonedTime(`${endDate} 23:59:59`, timezone)
@@ -25,7 +25,7 @@ export class MagicLinkStatsRepository extends BaseRepository {
         dateReport: sql`
           DATE(${t.occurredAt} AT TIME ZONE 'UTC' AT TIME ZONE ${timezone}) as dateReport
         `,
-        clicks: sql`COUNT(*)::bigint`,
+        total: sql`COUNT(*)::bigint`,
       })
       .from(t)
       .where(
@@ -40,11 +40,11 @@ export class MagicLinkStatsRepository extends BaseRepository {
 
     return result.map((r) => ({
       dateReport: r.dateReport as string,
-      clicks: Number(r.clicks),
+      total: Number(r.total),
     }))
   }
 
-  async getMagicLinkContactStats(input: {
+  async getRefLinkContactStats(input: {
     workspaceId: string
     linkId: string
     page: number
@@ -52,13 +52,13 @@ export class MagicLinkStatsRepository extends BaseRepository {
   }): Promise<{
     contactInboxIds: string[]
     rows: Pick<
-      typeof magicLinkStatModel.$inferSelect,
+      typeof refLinkStatModel.$inferSelect,
       "contactInboxId" | "contactId" | "occurredAt"
     >[]
   }> {
     const { workspaceId, linkId, page, perPage } = input
     const offset = (page - 1) * perPage
-    const t = magicLinkStatModel
+    const t = refLinkStatModel
 
     const rows = await db
       .select({
@@ -78,4 +78,4 @@ export class MagicLinkStatsRepository extends BaseRepository {
   }
 }
 
-export const magicLinkStatsRepository = new MagicLinkStatsRepository()
+export const refLinkStatsRepository = new RefLinkStatsRepository()

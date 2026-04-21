@@ -101,11 +101,11 @@ export const handleMessageStatus = async (
           | undefined,
       },
       occurredAt: new Date(),
-      stepId: (message?.contentAttributes?.stepId ?? "") as string,
       nodeId: (message?.contentAttributes?.nodeId ?? "") as string,
       metadata: {
         type: UPDATE_STATUS_PAYLOAD_TYPE,
       } as MetadataPayload,
+      errorData: {},
     }
 
     if (message?.contentAttributes?.metadata) {
@@ -118,6 +118,11 @@ export const handleMessageStatus = async (
 
     if (eventStatus === "read") {
       await emit(messageEventTypeSchema.enum["message:seen"], eventLog)
+    }
+
+    if (eventStatus === "failed") {
+      eventLog.errorData = payload.error ?? {}
+      await emit(messageEventTypeSchema.enum["message:failed"], eventLog)
     }
 
     if (!message || (eventStatus !== "delivered" && eventStatus !== "failed")) {

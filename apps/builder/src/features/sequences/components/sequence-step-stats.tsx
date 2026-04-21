@@ -84,7 +84,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
 
   if (isLoading) {
     return (
-      <div className="flex w-[300px] items-center justify-between gap-4">
+      <div className="flex w-[400px] items-center justify-between gap-4">
         <Skeleton className="h-4 w-12" />
         <Skeleton className="h-4 w-12" />
         <Skeleton className="h-4 w-12" />
@@ -101,7 +101,7 @@ export const SequenceStepStats = memo(function SequenceStepStats({
 
   return (
     <>
-      <div className="flex w-[300px] items-center justify-between gap-4 text-xs">
+      <div className="flex w-[400px] items-center justify-between gap-4 text-xs">
         <button
           className={
             sent === 0
@@ -125,6 +125,11 @@ export const SequenceStepStats = memo(function SequenceStepStats({
           type="button"
         >
           {formatValue(delivered)}
+          {getPercentage(delivered, sent) && (
+            <span className="ml-0.5 text-muted-foreground">
+              ({getPercentage(delivered, sent)}%)
+            </span>
+          )}
         </button>
         <button
           className={
@@ -137,9 +142,9 @@ export const SequenceStepStats = memo(function SequenceStepStats({
           type="button"
         >
           {formatValue(seen)}
-          {getPercentage(seen, sent) && (
+          {getPercentage(seen, delivered) && (
             <span className="ml-0.5 text-muted-foreground">
-              ({getPercentage(seen, sent)}%)
+              ({getPercentage(seen, delivered)}%)
             </span>
           )}
         </button>
@@ -154,9 +159,9 @@ export const SequenceStepStats = memo(function SequenceStepStats({
           type="button"
         >
           {formatValue(clicked)}
-          {getPercentage(clicked, sent) && (
+          {getPercentage(clicked, delivered) && (
             <span className="ml-0.5 text-muted-foreground">
-              ({getPercentage(clicked, sent)}%)
+              ({getPercentage(clicked, delivered)}%)
             </span>
           )}
         </button>
@@ -171,6 +176,11 @@ export const SequenceStepStats = memo(function SequenceStepStats({
           type="button"
         >
           {formatValue(failed)}
+          {getPercentage(failed, sent) && (
+            <span className="ml-0.5 text-muted-foreground">
+              ({getPercentage(failed, sent)}%)
+            </span>
+          )}
         </button>
       </div>
 

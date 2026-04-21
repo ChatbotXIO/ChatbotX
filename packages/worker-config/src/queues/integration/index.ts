@@ -50,6 +50,7 @@ export type IntegrationJobMessageStatus = {
       messageId: string
       status: "delivered" | "failed"
       timestamp: string
+      error?: unknown
     }
   }
 }

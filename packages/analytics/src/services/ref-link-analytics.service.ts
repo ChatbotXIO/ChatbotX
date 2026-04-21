@@ -3,7 +3,7 @@ import { refLinkStatModel } from "@chatbotx.io/database/schema"
 import type { RefLinkStatModel } from "@chatbotx.io/database/types"
 import type { RefLinkPayload } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
-import { refLinkStatsRepository } from "../repositories/ref-link-stats.repository"
+import { refLinkStatsRepository } from "../repositories/clickhouse/ref-link-stats.repository"
 import type {
   FlowNodeContactData,
   ListFlowNodeContactsResponse,

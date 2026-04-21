@@ -3,20 +3,35 @@ import {
   insert as executeInsert,
   query as executeQuery,
 } from "@chatbotx.io/clickhouse/client"
-import type { TimeRangeQuery } from "../schemas"
+import { env } from "../../key"
+import type { TimeRangeQuery } from "../../schemas"
 
 export abstract class BaseRepository {
+  protected get isClickhouseEnabled(): boolean {
+    return env.ANALYTICS_ENABLED
+  }
+
   protected query<T>(
     sql: string,
     params?: Record<string, unknown>,
   ): Promise<T[]> {
+    if (!this.isClickhouseEnabled) {
+      return Promise.resolve([])
+    }
     return executeQuery<T>(sql, params)
   }
 
+  /**
+   * Insert data into ClickHouse table.
+   * Automatically skips insertion when ANALYTICS_ENABLED is false.
+   */
   protected insert(
     table: string,
     data: Record<string, unknown>[],
   ): Promise<void> {
+    if (!this.isClickhouseEnabled) {
+      return Promise.resolve()
+    }
     return executeInsert(table, data)
   }
 
@@ -56,12 +71,17 @@ export abstract class BaseRepository {
     }
   }
 
-  protected buildEventTypeFilter(eventTypes?: string[]): string {
+  protected buildEventTypeFilter(
+    eventTypes?: string[],
+    paramKey = "eventTypes",
+  ): { sql: string; params: Record<string, string[]> } {
     if (!eventTypes || eventTypes.length === 0) {
-      return ""
+      return { sql: "", params: {} }
     }
-    const types = eventTypes.map((t) => `'${t}'`).join(",")
-    return `AND event_type IN (${types})`
+    return {
+      sql: `AND event_type IN ({${paramKey}:Array(String)})`,
+      params: { [paramKey]: eventTypes },
+    }
   }
 
   protected buildHourlyTimestampFilter(props: TimeRangeQuery): {

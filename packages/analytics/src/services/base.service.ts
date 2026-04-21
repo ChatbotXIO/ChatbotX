@@ -203,4 +203,8 @@ export abstract class BaseService {
 
     return result === "OK"
   }
+
+  protected get isAnalyticsEnabled(): boolean {
+    return env.ANALYTICS_ENABLED
+  }
 }

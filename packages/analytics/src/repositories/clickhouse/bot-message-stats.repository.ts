@@ -4,13 +4,13 @@ import {
   generateDaySeries,
   getUtcDayKey,
   shouldUseMonthlyGranularity,
-} from "../lib"
+} from "../../lib"
 import type {
   BotMessageAIProviderStats,
   BotMessageResult,
   BotMessageStats,
   TimeRangeQuery,
-} from "../schemas"
+} from "../../schemas"
 import { BaseRepository } from "./base.repository"
 
 export class BotMessageStatsRepository extends BaseRepository {

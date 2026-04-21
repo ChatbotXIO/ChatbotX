@@ -1,4 +1,3 @@
-import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
 import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
@@ -14,13 +13,15 @@ import {
   type MessageSentPayload,
   messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
-import { broadcastStatsRepository } from "../repositories/broadcast-stats.repository"
+import { broadcastStatsRepository } from "../repositories/clickhouse"
+import { broadcastStatsPgRepository } from "../repositories/postgres"
 import type {
   BroadcastEventType,
   BroadcastStats,
   BroadcastUpdateItem,
 } from "../schemas/broadcast-stats"
 import type { ContactEventData } from "../schemas/common"
+import { BaseService } from "./base.service"
 
 function groupBy<T>(
   arr: T[],
@@ -37,22 +38,6 @@ function groupBy<T>(
     },
     {} as Record<string, T[]>,
   )
-}
-
-async function saveToClickhouse(data: BroadcastStatsType[]) {
-  if (data.length === 0) {
-    return
-  }
-
-  try {
-    await clickhouse.insert({
-      table: "broadcast_events",
-      values: data,
-      format: "JSONEachRow",
-    })
-  } catch (error) {
-    console.error("Failed to save broadcast stats to ClickHouse:", error)
-  }
 }
 
 async function processBroadcastEvents(
@@ -121,11 +106,15 @@ async function processBroadcastEvents(
   }
 }
 
-export class BroadcastAnalyticsService {
+export class BroadcastAnalyticsService extends BaseService {
   getStats(input: {
     workspaceId: string
     broadcastId: string
   }): Promise<BroadcastStats> {
+    if (!this.isAnalyticsEnabled) {
+      return broadcastStatsPgRepository.getStats(input)
+    }
+
     return broadcastStatsRepository.getStats(input)
   }
 
@@ -175,7 +164,7 @@ export class BroadcastAnalyticsService {
       },
     )
 
-    await saveToClickhouse(insertedData)
+    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems: BroadcastUpdateItem[] = broadcastPayloads.map((p) => {
       const metadata = p.metadata as BroadcastMetadataPayload
@@ -214,7 +203,7 @@ export class BroadcastAnalyticsService {
       }),
     )
 
-    await saveToClickhouse(insertedData)
+    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems = broadcastPayloads.map((p) => ({
       broadcastId: (p.metadata as BroadcastMetadataPayload).broadcastId,
@@ -250,7 +239,7 @@ export class BroadcastAnalyticsService {
       },
     )
 
-    await saveToClickhouse(insertedData)
+    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems: BroadcastUpdateItem[] = broadcastPayloads.map((p) => {
       const metadata = p.metadata as BroadcastMetadataPayload
@@ -346,7 +335,7 @@ export class BroadcastAnalyticsService {
         },
       )
 
-      await broadcastStatsRepository.insertClickhouseNodeStats(insertedData)
+      await broadcastStatsRepository.insertEvents(insertedData)
     }
   }
 
@@ -369,7 +358,7 @@ export class BroadcastAnalyticsService {
       }),
     )
 
-    await saveToClickhouse(insertedData)
+    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems = broadcastClicks.map((p) => ({
       broadcastId: p.action.broadcastId as string,
