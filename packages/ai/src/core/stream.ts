@@ -1,4 +1,9 @@
-import { supportedImageExtensions } from "../schemas"
+import {
+  supportedAudioExtensions,
+  supportedFileExtensions,
+  supportedImageExtensions,
+  supportedVideoExtensions,
+} from "../schemas"
 
 const REGEX_ANY_TOKEN =
   /!\[[^\]]*\]\(\s*([^)\s\r\n]+)\s*\)|\[[^\]]+\]\(\s*([^)\s\r\n]+)\s*\)|(https?:\/\/[^\s)\]]+(?:\?[^\s)\]]*)?)/g
@@ -47,7 +52,7 @@ function cleanText(value: string): string {
     .trim()
 }
 
-export function isImageUrl(url: string): boolean {
+function isMediaUrl(url: string, extensions: string[]): boolean {
   const s = url.trim().toLowerCase()
   if (!(s.startsWith("http://") || s.startsWith("https://"))) {
     return false
@@ -55,11 +60,29 @@ export function isImageUrl(url: string): boolean {
   try {
     const u = new URL(s)
     const p = u.pathname.toLowerCase()
-
-    return supportedImageExtensions.options.some((ext) => p.endsWith(`.${ext}`))
+    return extensions.some((ext) => p.endsWith(ext))
   } catch {
     return false
   }
+}
+
+export function isImageUrl(url: string): boolean {
+  return isMediaUrl(
+    url,
+    supportedImageExtensions.options.map((ext) => `.${ext}`),
+  )
+}
+
+export function isAudioUrl(url: string): boolean {
+  return isMediaUrl(url, supportedAudioExtensions.options)
+}
+
+export function isVideoUrl(url: string): boolean {
+  return isMediaUrl(url, supportedVideoExtensions.options)
+}
+
+export function isFileUrl(url: string): boolean {
+  return isMediaUrl(url, supportedFileExtensions.options)
 }
 
 export function processTextForImagesAndLinks(text: string): string[] {

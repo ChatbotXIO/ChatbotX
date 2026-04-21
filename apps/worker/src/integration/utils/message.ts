@@ -1,4 +1,4 @@
-import { isImageUrl } from "@chatbotx.io/ai"
+import { isAudioUrl, isFileUrl, isImageUrl, isVideoUrl } from "@chatbotx.io/ai"
 import { findOrFail } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import {
@@ -10,9 +10,15 @@ import {
 export async function sendMessageWithRender(
   conversationId: string,
   text: string,
-  trackingContext?: BotResponseTrackingContext,
+  props?: {
+    trackingContext?: BotResponseTrackingContext
+  },
 ): Promise<void> {
-  const data = isImageUrl(text)
+  const { trackingContext } = props || {}
+  const isMedia =
+    isImageUrl(text) || isAudioUrl(text) || isVideoUrl(text) || isFileUrl(text)
+
+  const data = isMedia
     ? { conversationId, url: text, trackingContext }
     : { conversationId, text, trackingContext }
 

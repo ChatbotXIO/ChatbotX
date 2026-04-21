@@ -3,9 +3,7 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { db } from "@chatbotx.io/database/client"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   type AIGenerateImageSchema,
   getAIGeneratedImagePath,
@@ -18,8 +16,10 @@ import { createId } from "@chatbotx.io/utils"
 import { generateImage, type ImageModel } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
-import { integrationService } from "../../../services/integrations"
-import { saveResultToCustomField } from "../../utils/contact"
+import {
+  getIntegrationContext,
+  saveResultToCustomField,
+} from "../../utils/contact"
 import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 
@@ -32,31 +32,14 @@ export async function handleAIGenerateImage({
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const contactInbox =
-      baseContactInbox ||
-      (await db.query.contactInboxModel.findFirst({
-        where: {
-          contactId: conversation.contactId,
-        },
-        orderBy: {
-          lastMessageAt: "desc",
-        },
-      }))
+    const ctx = await getIntegrationContext({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      contactInbox: baseContactInbox,
+    })
 
-    if (!contactInbox) {
+    if (!ctx) {
       return
-    }
-
-    const auth =
-      await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
-
-    const ctx = {
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        contactInbox.inboxId,
-      ),
-      auth,
-      uploader,
     }
 
     const aiConfig = await aiIntegrationService.findBy({
@@ -113,6 +96,7 @@ export async function handleAIGenerateImage({
     const storagePath = getAIGeneratedImagePath({
       storagePrefix: ctx.storagePrefix,
       fileName,
+      conversationId: conversation.id,
     })
 
     await ctx.uploader.putObject(storagePath, buffer, {
@@ -129,7 +113,6 @@ export async function handleAIGenerateImage({
           contactId: conversation.contactId,
           customFieldId: step.outputFieldId,
           fullText: finalImageUrl,
-          messageCount: 1,
           workspaceId: conversation.workspaceId,
         })
       }

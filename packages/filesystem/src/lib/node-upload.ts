@@ -1,11 +1,64 @@
 import { PassThrough, Readable } from "node:stream"
 import type { ReadableStream } from "node:stream/web"
 import type { ObjectCannedACL } from "@aws-sdk/client-s3"
+import { env as dbEnv } from "@chatbotx.io/database/keys"
 import { createId } from "@chatbotx.io/utils"
+import ky from "ky"
 import probe from "probe-image-size"
 import { guessFileTypeFromMimeType } from "./helper"
 import { DEFAULT_MIME_TYPE, type UploadedFile } from "./schema"
 import { uploader } from "./uploader"
+
+export async function getUploadedFileFromUrl(
+  url: string,
+): Promise<UploadedFile> {
+  const response = await ky.head(url)
+  if (!response.ok) {
+    throw new Error(`Failed to head file: ${response.status}`)
+  }
+
+  const mimeType = (response.headers.get("content-type") || DEFAULT_MIME_TYPE)
+    .split(";")[0]
+    .trim()
+  const contentLength = Number.parseInt(
+    response.headers.get("content-length") ?? "0",
+    10,
+  )
+
+  const u = new URL(url)
+  const assetUrl = new URL(dbEnv.NEXT_PUBLIC_ASSET_URL)
+  const originPath = decodeURIComponent(
+    u.pathname.replace(assetUrl.pathname, ""),
+  )
+  const name = originPath.split("/").pop() ?? createId()
+
+  const isImage = mimeType.startsWith("image/")
+  let width: number | undefined
+  let height: number | undefined
+
+  if (isImage) {
+    try {
+      const dimensions = await probe(url)
+      width = dimensions.width
+      height = dimensions.height
+    } catch (error) {
+      console.error(
+        "[getUploadedFileFromUrl] Failed to probe image dimensions",
+        error,
+      )
+    }
+  }
+
+  return {
+    name,
+    mimeType,
+    originPath,
+    size: contentLength,
+    fileType: guessFileTypeFromMimeType(mimeType),
+    width,
+    height,
+  }
+}
 
 export async function uploadFileFromUrl(
   url: string,

@@ -48,12 +48,15 @@ export type AIGenerateImageSchema = z.infer<typeof aiGenerateImageSchema>
 export type GetAIGeneratedImagePathProps = {
   storagePrefix: string
   fileName: string
+  conversationId: string
 }
 
 export const getAIGeneratedImagePath = ({
   storagePrefix,
   fileName,
-}: GetAIGeneratedImagePathProps): string => `${storagePrefix}/${fileName}`
+  conversationId,
+}: GetAIGeneratedImagePathProps): string =>
+  `${storagePrefix}/conversations/${conversationId}/${fileName}`
 
 export const aiGenerateImageDefaultFn = (
   props: Partial<AIGenerateImageSchema> = {},

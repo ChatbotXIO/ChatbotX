@@ -18,7 +18,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { detectConversationAndContactInbox } from "../../lib/db"
 import { logger } from "../../lib/logger"
-import { saveResultToCustomField } from "./generate-text"
+import { saveResultToCustomField } from "../utils/contact"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, contactInboxId, ref, messageId } = data
@@ -201,7 +201,8 @@ async function handleReflink(props: {
     await saveResultToCustomField({
       contactId: conversation.contactId,
       customFieldId: reflink.customFieldId,
-      text: refData.name,
+      fullText: refData.name,
+      workspaceId: conversation.workspaceId,
     })
   }
 

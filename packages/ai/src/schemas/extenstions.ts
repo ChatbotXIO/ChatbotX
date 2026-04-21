@@ -38,3 +38,16 @@ export const supportedImageExtensions = z.enum([
   "svg",
 ])
 export type SupportedImageExtension = z.infer<typeof supportedImageExtensions>
+
+export const supportedAudioExtensions = z.enum([".mp3", ".wav", ".ogg", ".m4a"])
+export const supportedVideoExtensions = z.enum([".mp4", ".mov", ".avi", ".wmv"])
+export const supportedFileExtensions = z.enum([
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".xls",
+  ".xlsx",
+  ".ppt",
+  ".pptx",
+  ".txt",
+])

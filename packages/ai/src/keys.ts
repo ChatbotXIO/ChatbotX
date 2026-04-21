@@ -4,7 +4,7 @@ import z from "zod"
 export const keys = () =>
   createEnv({
     server: {
-      AI_INTEGRATION_CACHE_TTL_SECONDS: z.coerce.number().default(60 * 60), // default 1 hour
+      AI_INTEGRATION_CACHE_TTL_SECONDS: z.coerce.number().default(60 * 60),
     },
     runtimeEnv: process.env,
     emptyStringAsUndefined: true,
