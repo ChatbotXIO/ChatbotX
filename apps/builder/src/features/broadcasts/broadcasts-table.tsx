@@ -34,6 +34,7 @@ import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
+import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
@@ -46,6 +47,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
 
   const workspaceId = useWorkspaceId()
+  const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
 
   const t = useTranslations()
   const router = useRouter()
@@ -311,7 +313,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   })
 
   return (
-    <>
+    <BroadcastStatsStoreProvider
+      broadcastIds={broadcastIds}
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex justify-end">
@@ -341,6 +346,6 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "resend"}
       />
-    </>
+    </BroadcastStatsStoreProvider>
   )
 }

@@ -76,61 +76,94 @@ export class BroadcastStatsRepository extends BaseRepository {
     workspaceId: string
     broadcastId: string
   }): Promise<BroadcastStats> {
+    const result = await this.getBatchStats({
+      workspaceId: input.workspaceId,
+      broadcastIds: [input.broadcastId],
+    })
+    return result[input.broadcastId] ?? this.getEmptyStats()
+  }
+
+  async getBatchStats(input: {
+    workspaceId: string
+    broadcastIds: string[]
+  }): Promise<Record<string, BroadcastStats>> {
+    if (input.broadcastIds.length === 0) {
+      return {}
+    }
+
     const eventTypes = [
       ...messageEventTypeSchema.options,
       ...flowEventTypeSchema.options,
     ]
+    const broadcastIdsStr = input.broadcastIds.map((id) => `'${id}'`).join(", ")
     const sql = `
       SELECT
+        broadcast_id,
         event_type,
         uniq(contact_inbox_id) as count
       FROM broadcast_events
       WHERE workspace_id = {workspaceId:String}
-        AND broadcast_id = {broadcastId:String}
+        AND broadcast_id IN (${broadcastIdsStr})
         AND batch_id = 1
         AND event_type IN (${eventTypes.map((t) => `'${t}'`).join(", ")})
-      GROUP BY event_type
+      GROUP BY broadcast_id, event_type
     `
 
-    const rows = await this.query<ClickHouseStatsRow>(sql, {
-      workspaceId: input.workspaceId,
-      broadcastId: input.broadcastId,
-    })
+    const rows = await this.query<
+      ClickHouseStatsRow & { broadcast_id: string }
+    >(sql, { workspaceId: input.workspaceId })
 
-    const stats: BroadcastStats = {
-      "message:sent": 0,
-      "message:delivered": 0,
-      "message:seen": 0,
-      "flow:clicked": 0,
-      "message:failed": 0,
+    const result: Record<string, BroadcastStats> = {}
+
+    for (const broadcastId of input.broadcastIds) {
+      result[broadcastId] = this.getEmptyStats()
     }
 
     for (const row of rows) {
+      const broadcastId = row.broadcast_id
+      if (!result[broadcastId]) {
+        result[broadcastId] = this.getEmptyStats()
+      }
+
       const count = Number.parseInt(row.count, 10)
       switch (row.event_type) {
         case messageEventTypeSchema.enum["message:sent"]:
-          stats["message:delivered"] = count
+          result[broadcastId]["message:delivered"] = count
           break
         case messageEventTypeSchema.enum["message:delivered"]:
-          stats["message:delivered"] = count
+          result[broadcastId]["message:delivered"] = count
           break
         case messageEventTypeSchema.enum["message:seen"]:
-          stats["message:seen"] = count
+          result[broadcastId]["message:seen"] = count
           break
         case flowEventTypeSchema.enum["flow:clicked"]:
-          stats["flow:clicked"] = count
+          result[broadcastId]["flow:clicked"] = count
           break
         case messageEventTypeSchema.enum["message:failed"]:
-          stats["message:failed"] = count
+          result[broadcastId]["message:failed"] = count
           break
         default:
           break
       }
     }
 
-    stats["message:sent"] = stats["message:delivered"] + stats["message:failed"]
+    for (const broadcastId of input.broadcastIds) {
+      result[broadcastId]["message:sent"] =
+        result[broadcastId]["message:delivered"] +
+        result[broadcastId]["message:failed"]
+    }
 
-    return stats
+    return result
+  }
+
+  private getEmptyStats(): BroadcastStats {
+    return {
+      "message:sent": 0,
+      "message:delivered": 0,
+      "message:seen": 0,
+      "flow:clicked": 0,
+      "message:failed": 0,
+    }
   }
 
   async getContacts(input: {

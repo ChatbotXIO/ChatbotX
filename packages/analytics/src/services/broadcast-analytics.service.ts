@@ -129,6 +129,13 @@ export class BroadcastAnalyticsService {
     return broadcastStatsRepository.getStats(input)
   }
 
+  getBatchStats(input: {
+    workspaceId: string
+    broadcastIds: string[]
+  }): Promise<Record<string, BroadcastStats>> {
+    return broadcastStatsRepository.getBatchStats(input)
+  }
+
   getContacts(input: {
     workspaceId: string
     broadcastId: string
