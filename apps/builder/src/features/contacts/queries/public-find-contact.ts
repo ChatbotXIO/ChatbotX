@@ -1,19 +1,30 @@
 import { db } from "@chatbotx.io/database/client"
 import type {
+  ContactResponse,
   FindContactRequest,
-  PublicFindContactResponse,
   PublicListContactsByCustomFieldRequest,
   PublicListContactsResponse,
 } from "../schemas/query"
 
 export const publicFindContact = async (
   input: FindContactRequest,
-): Promise<PublicFindContactResponse | undefined> =>
+): Promise<ContactResponse | undefined> =>
   await db.query.contactModel.findFirst({
     where: input,
     with: {
       tags: true,
-      customFields: true,
+      contactCustomFields: true,
+      contactInboxes: {
+        with: {
+          inbox: true,
+        },
+      },
+      conversation: {
+        with: {
+          assignedUser: true,
+          assignedInboxTeam: true,
+        },
+      },
     },
   })
 
@@ -44,7 +55,18 @@ export const publicListContactsByCustomField = async (
     },
     with: {
       tags: true,
-      customFields: true,
+      contactCustomFields: true,
+      contactInboxes: {
+        with: {
+          inbox: true,
+        },
+      },
+      conversation: {
+        with: {
+          assignedUser: true,
+          assignedInboxTeam: true,
+        },
+      },
     },
   })
 

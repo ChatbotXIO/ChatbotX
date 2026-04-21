@@ -1,6 +1,6 @@
 "use server"
 
-import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
   contactModel,
   contactsToTagsModel,
@@ -193,5 +193,74 @@ export const detachContactTag = async ({
     await emitTagRemoved(workspaceId, contactId, tagId)
   } catch (error) {
     console.error("Failed to emit tagRemoved event:", error)
+  }
+}
+
+export const attachContactTags = async ({
+  workspaceId,
+  contactId,
+  tagIds,
+}: {
+  workspaceId: string
+  contactId: string
+  tagIds: string[]
+}) => {
+  await findOrFail({
+    table: contactModel,
+    where: { id: contactId, workspaceId },
+  })
+
+  const tags = await db.query.tagModel.findMany({
+    where: { workspaceId, id: { in: tagIds } },
+    columns: { id: true },
+  })
+
+  if (tags.length > 0) {
+    await db
+      .insert(contactsToTagsModel)
+      .values(tags.map((tag) => ({ contactId, tagId: tag.id })))
+      .onConflictDoNothing({
+        target: [contactsToTagsModel.contactId, contactsToTagsModel.tagId],
+      })
+
+    for (const tag of tags) {
+      try {
+        await emitTagApplied(workspaceId, contactId, tag.id)
+      } catch (error) {
+        console.error("Failed to emit tagApplied event:", error)
+      }
+    }
+  }
+}
+
+export const detachContactTags = async ({
+  workspaceId,
+  contactId,
+  tagIds,
+}: {
+  workspaceId: string
+  contactId: string
+  tagIds: string[]
+}) => {
+  await findOrFail({
+    table: contactModel,
+    where: { id: contactId, workspaceId },
+  })
+
+  await db
+    .delete(contactsToTagsModel)
+    .where(
+      and(
+        eq(contactsToTagsModel.contactId, contactId),
+        inArray(contactsToTagsModel.tagId, tagIds),
+      ),
+    )
+
+  for (const tagId of tagIds) {
+    try {
+      await emitTagRemoved(workspaceId, contactId, tagId)
+    } catch (error) {
+      console.error("Failed to emit tagRemoved event:", error)
+    }
   }
 }

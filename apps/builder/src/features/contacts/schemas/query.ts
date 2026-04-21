@@ -6,7 +6,6 @@ import { contactInboxResource } from "@/features/contact-inboxes/schema/resource
 import { contactNoteResource } from "@/features/contact-notes/schemas/resource"
 import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
-import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
@@ -40,7 +39,7 @@ export const listContactsRequest = basePaginationRequest.extend({
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
-export const listContactsItem = contactResource.and(
+export const contactResponse = contactResource.and(
   z.object({
     contactCustomFields: z.array(contactCustomFieldResource).optional(),
     tags: z.array(tagResource).optional(),
@@ -58,10 +57,10 @@ export const listContactsItem = contactResource.and(
       .optional(),
   }),
 )
-export type ListContactsItem = z.infer<typeof listContactsItem>
+export type ContactResponse = z.infer<typeof contactResponse>
 
 export const listContactsResponse = z.object({
-  data: z.array(listContactsItem),
+  data: z.array(contactResponse),
   pageCount: z.number(),
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
@@ -74,7 +73,7 @@ export type FindContactRequest = z.infer<typeof findContactRequest>
 export const publicFindContactResponse = publicContactResource.and(
   z.object({
     tags: z.array(publicTagResource),
-    customFields: z.array(publicCustomFieldResource),
+    contactCustomFields: z.array(contactCustomFieldResource).optional(),
   }),
 )
 export type PublicFindContactResponse = z.infer<

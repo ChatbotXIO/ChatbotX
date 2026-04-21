@@ -16,7 +16,7 @@ const rpcHandler = new RPCHandler(router, {
 async function handleRequest(request: Request) {
   const { response } = await rpcHandler.handle(request, {
     prefix: "/rpc",
-    context: { headers: request.headers },
+    context: { headers: request.headers, url: request.url },
   })
 
   return response ?? new Response("Not found", { status: 404 })

@@ -5,28 +5,22 @@ import {
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
+import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
-  FindCustomFieldByKeyRequest,
-  FindCustomFieldRequest,
-  ListCustomFieldsRequest,
-  ListCustomFieldsResponse,
+  FindBotFieldByKeyRequest,
+  FindBotFieldRequest,
+  ListBotFieldsSearchParams,
 } from "../schemas/query"
-import type { CustomFieldResource } from "../schemas/resource"
+import type { BotFieldResource } from "../schemas/resource"
 
-const CUSTOM_FIELD_ID_REGEX = /^\d+$/
+const REGEX_BOT_FIELD_ID = /^\d+$/
 
-export const listCustomFieldsRSC = async (
-  input: ListCustomFieldsRequest & { workspaceId: string },
-) => {
+export async function listBotFields(
+  input: ListBotFieldsSearchParams,
+): Promise<PaginatedResponse<BotFieldResource>> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  return listCustomFields(input)
-}
-
-export async function listCustomFields(
-  input: ListCustomFieldsRequest & { workspaceId: string },
-): Promise<ListCustomFieldsResponse> {
   const where = {
     workspaceId: input.workspaceId,
     folderId: input.folderId
@@ -42,11 +36,11 @@ export async function listCustomFields(
       : undefined,
   }
 
-  const pagination = parsePagination(input)
   const orderBy = parseOrderByAsObject(customFieldModel, input)
 
+  const pagination = parsePagination(input)
   const [data, total] = await Promise.all([
-    db.query.customFieldModel.findMany({
+    db.query.botFieldModel.findMany({
       where,
       orderBy,
       ...pagination,
@@ -56,22 +50,22 @@ export async function listCustomFields(
 
   const pageCount = pagination?.limit ? Math.ceil(total / pagination.limit) : 1
 
-  return { data, pageCount, ...pagination }
+  return { data, pageCount }
 }
 
-export const findCustomField = async (
-  input: FindCustomFieldRequest,
-): Promise<CustomFieldResource | undefined> =>
-  await db.query.customFieldModel.findFirst({
+export const findBotField = async (
+  input: FindBotFieldRequest,
+): Promise<BotFieldResource | undefined> =>
+  await db.query.botFieldModel.findFirst({
     where: input,
   })
 
-export const findCustomFieldByKey = async (
-  input: FindCustomFieldByKeyRequest,
-): Promise<CustomFieldResource | undefined> =>
-  await db.query.customFieldModel.findFirst({
+export const findBotFieldByKey = async (
+  input: FindBotFieldByKeyRequest,
+): Promise<BotFieldResource | undefined> =>
+  await db.query.botFieldModel.findFirst({
     where: {
-      [CUSTOM_FIELD_ID_REGEX.test(input.key) ? "id" : "name"]: input.key,
+      [REGEX_BOT_FIELD_ID.test(input.key) ? "id" : "name"]: input.key,
       workspaceId: input.workspaceId,
     },
   })

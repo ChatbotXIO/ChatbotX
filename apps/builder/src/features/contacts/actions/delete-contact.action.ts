@@ -23,54 +23,67 @@ export const deleteContactAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      const contacts = await db.query.contactModel.findMany({
-        where: {
-          workspaceId,
-          id: {
-            in: parsedInput.ids,
-          },
-        },
-        with: {
-          contactInboxes: true,
-        },
+      await deleteContacts({
+        workspaceId,
+        ids: parsedInput.ids,
       })
-
-      await db.delete(contactModel).where(
-        and(
-          inArray(
-            contactModel.id,
-            contacts.map((c) => c.id),
-          ),
-        ),
-      )
-
-      const occurredAt = new Date()
-
-      for (const contact of contacts) {
-        for (const contactInbox of contact.contactInboxes) {
-          emit("contact:deleted", {
-            workspaceId,
-            contactId: contactInbox.id,
-            occurredAt,
-            source: contactInbox.source,
-            channel: contactInbox.channel,
-            sourceId: contactInbox.sourceId,
-            metadata: {
-              triggerContext: {
-                triggerSource: "api",
-                triggerHandler: "deleteContact",
-                triggerType: "contact_deleted",
-              },
-            },
-          }).catch((error) => {
-            console.error(
-              "[deleteContactAction] Failed to emit contact:deleted event",
-              error,
-            )
-          })
-        }
-      }
-
-      revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
     },
   )
+
+export const deleteContacts = async ({
+  workspaceId,
+  ids,
+}: {
+  workspaceId: string
+  ids: string[]
+}) => {
+  const contacts = await db.query.contactModel.findMany({
+    where: {
+      workspaceId,
+      id: {
+        in: ids,
+      },
+    },
+    with: {
+      contactInboxes: true,
+    },
+  })
+
+  await db.delete(contactModel).where(
+    and(
+      inArray(
+        contactModel.id,
+        contacts.map((c) => c.id),
+      ),
+    ),
+  )
+
+  const occurredAt = new Date()
+
+  for (const contact of contacts) {
+    for (const contactInbox of contact.contactInboxes) {
+      emit("contact:deleted", {
+        workspaceId,
+        contactId: contactInbox.id,
+        occurredAt,
+        source: contactInbox.source,
+        channel: contactInbox.channel,
+        sourceId: contactInbox.sourceId,
+        metadata: {
+          triggerContext: {
+            triggerSource: "api",
+            triggerHandler: "deleteContact",
+            triggerType: "contact_deleted",
+          },
+        },
+      }).catch((error) => {
+        console.error(
+          "[deleteContactAction] Failed to emit contact:deleted event",
+          error,
+        )
+      })
+    }
+  }
+
+  revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
+}

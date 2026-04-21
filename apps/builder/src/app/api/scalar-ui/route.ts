@@ -15,16 +15,6 @@ export async function GET() {
         <script>
           Scalar.createApiReference('#app', {
             url: '/api/public-spec.json',
-            authentication: {
-              securitySchemes: {
-                bearerAuth: {
-                  token: 'default-token',
-                },
-                developerAccessToken: {
-                  token: 'default-workspace-token',
-                },
-              },
-            },
           })
         </script>
       </body>

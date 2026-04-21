@@ -5,7 +5,13 @@ import { base } from "./context"
 export const workspaceTokenAuthMidddleware = base.middleware(
   async ({ context, next }) => {
     const authHeader = context.headers.get("Authorization")
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null
+    const apiKeyToken = context.url
+      ? new URL(context.url).searchParams.get("api_key")
+      : null
+    const token = bearerToken ?? apiKeyToken
     if (!token) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
