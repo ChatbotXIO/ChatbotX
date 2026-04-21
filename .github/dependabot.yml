@@ -1,0 +1,15 @@
+version: 2
+registries:
+  dockerhub:
+    type: docker-registry
+    url: https://docker.io
+    username: ${{secrets.DOCKER_USER}}
+    password: ${{secrets.DOCKER_PASSWORD}}
+
+updates:
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    registries:
+      - dockerhub
