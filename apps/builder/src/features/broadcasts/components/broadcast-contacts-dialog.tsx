@@ -33,6 +33,7 @@ const eventTypeToLabel: Record<BroadcastEventType, string> = {
   "message:delivered": "delivered",
   "message:seen": "seen",
   "message:failed": "failed",
+  "message:received": "received",
   "flow:clicked": "clicked",
   "flow:ref": "ref",
 }

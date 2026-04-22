@@ -74,4 +74,18 @@ export const registerSchedules = async () => {
       data: { type: ScheduleJobData.syncUserQuota, data: {} },
     },
   )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.maintainMacPartitions,
+    {
+      pattern: "0 1 * * *",
+    },
+    {
+      name: ScheduleJobData.maintainMacPartitions,
+      data: {
+        type: ScheduleJobData.maintainMacPartitions,
+        data: {},
+      },
+    },
+  )
 }

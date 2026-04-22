@@ -6,6 +6,7 @@ export const messageEventTypeSchema = z.enum([
   "message:delivered",
   "message:seen",
   "message:failed",
+  "message:received",
 ])
 export type MessageEventType = z.infer<typeof messageEventTypeSchema>
 
@@ -70,11 +71,23 @@ export const failedPayloadSchema = baseMessagePayloadSchema.extend({
 export const deliveredPayloadSchema = baseMessagePayloadSchema.extend({})
 export const seenPayloadSchema = baseMessagePayloadSchema.extend({})
 
+export const receivedPayloadSchema = z.object({
+  workspaceId: z.string(),
+  contactId: z.string(),
+  contactInboxId: z.string(),
+  channel: z.string(),
+  inboxId: z.string(),
+  sourceId: z.string().optional(),
+  occurredAt: z.date(),
+})
+export type MessageReceivedPayload = z.infer<typeof receivedPayloadSchema>
+
 export const messageEventSchemas = {
   [messageEventTypeSchema.enum["message:sent"]]: sentPayloadSchema,
   [messageEventTypeSchema.enum["message:failed"]]: failedPayloadSchema,
   [messageEventTypeSchema.enum["message:delivered"]]: deliveredPayloadSchema,
   [messageEventTypeSchema.enum["message:seen"]]: seenPayloadSchema,
+  [messageEventTypeSchema.enum["message:received"]]: receivedPayloadSchema,
 } as const
 
 export const clickedPayloadSchema = z.object({

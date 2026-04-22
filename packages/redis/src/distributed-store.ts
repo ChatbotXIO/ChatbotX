@@ -47,6 +47,28 @@ export const distributedStoreFactory = (
     await redisClient.del(...keysArray)
   },
 
+  async putMany(
+    entries: Array<{ key: string; value: unknown; ttlInSeconds?: number }>,
+  ): Promise<void> {
+    if (entries.length === 0) {
+      return
+    }
+
+    const redisClient = await getRedisClient()
+    const pipeline = redisClient.pipeline()
+
+    for (const { key, value, ttlInSeconds } of entries) {
+      const serializedValue = JSON.stringify(value)
+      if (ttlInSeconds) {
+        pipeline.setex(key, ttlInSeconds, serializedValue)
+      } else {
+        pipeline.set(key, serializedValue)
+      }
+    }
+
+    await pipeline.exec()
+  },
+
   async putBoolean(key: string, value: boolean): Promise<void> {
     const redisClient = await getRedisClient()
     await redisClient.set(key, value ? "1" : "0")

@@ -2,6 +2,7 @@ import {
   broadcastAnalyticsService,
   contactAnalyticsService,
   flowAnalyticsService,
+  macTrackingService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
 import type { MessageEvenTypeMap } from "@chatbotx.io/event-bus"
@@ -24,6 +25,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "flow-ops",
       handler: flowAnalyticsService.onMessageSent.bind(flowAnalyticsService),
+    },
+    {
+      name: "mac-tracking",
+      handler: macTrackingService.trackMessageOut.bind(macTrackingService),
     },
   ],
   [messageEventTypeSchema.enum["message:failed"]]: [
@@ -75,6 +80,12 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "sequence-ops",
       handler: sequenceAnalyticsService.onSeen.bind(sequenceAnalyticsService),
+    },
+  ],
+  [messageEventTypeSchema.enum["message:received"]]: [
+    {
+      name: "mac-tracking",
+      handler: macTrackingService.trackMessageIn.bind(macTrackingService),
     },
   ],
 }

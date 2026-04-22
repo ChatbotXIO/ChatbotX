@@ -5,7 +5,7 @@ import type {
   FlowEventType,
   failedPayloadSchema,
   flowEventSchemas,
-  MessageEventType,
+  MessageReceivedPayload,
   messageEventSchemas,
   refLinkPayloadSchema,
   seenPayloadSchema,
@@ -28,6 +28,7 @@ export type MessageSentPayload = z.infer<typeof sentPayloadSchema>
 export type MessageFailedPayload = z.infer<typeof failedPayloadSchema>
 export type MessageDeliveredPayload = z.infer<typeof deliveredPayloadSchema>
 export type MessageSeenPayload = z.infer<typeof seenPayloadSchema>
+export type { MessageReceivedPayload } from "./schema"
 
 export type MessagePayload =
   | MessageSentPayload
@@ -38,10 +39,16 @@ export type MessagePayload =
 export interface MessageEventListener
   extends BaseEventListener<MessagePayload> {}
 
-export type MessageEvenTypeMap = Record<
-  MessageEventType,
-  MessageEventListener[]
->
+export interface MessageReceivedEventListener
+  extends BaseEventListener<MessageReceivedPayload> {}
+
+export type MessageEvenTypeMap = {
+  "message:sent": MessageEventListener[]
+  "message:delivered": MessageEventListener[]
+  "message:seen": MessageEventListener[]
+  "message:failed": MessageEventListener[]
+  "message:received": MessageReceivedEventListener[]
+}
 
 export type FlowEventMap = InferEventMap<typeof flowEventSchemas>
 

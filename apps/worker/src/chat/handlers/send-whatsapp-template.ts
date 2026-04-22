@@ -144,6 +144,7 @@ export async function processWhatsappTemplate(
       conversationId: conversation.id,
       channel: contactInbox.channel,
       contactInboxId: contactInbox.id,
+      inboxId: contactInbox.inboxId,
     },
     action: {
       flowId: flow?.id || "",

@@ -26,6 +26,7 @@ import {
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
+import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
   type AuthValue,
@@ -176,6 +177,21 @@ export const receiveMessage = async (
 
     if (isNewMessage) {
       createdMessage = newMessage
+
+      emit(messageEventTypeSchema.enum["message:received"], {
+        workspaceId: inbox.workspaceId,
+        contactId: contactInbox.contactId,
+        contactInboxId: contactInbox.id,
+        channel: inbox.channel,
+        inboxId: inbox.id,
+        occurredAt: newMessage.createdAt,
+        sourceId: newMessage.sourceId ?? undefined,
+      }).catch((error) => {
+        logger.error(
+          error,
+          "[receiveMessage] Failed to emit message:received",
+        )
+      })
 
       if (postbackAction) {
         await integrationQueue.add(IntegrationJobAction.runFlowPostback, {

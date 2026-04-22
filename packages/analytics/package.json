@@ -13,6 +13,7 @@
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

@@ -3,6 +3,7 @@ import { analyticsBroadcastRoutes } from "./broadcast"
 import { analyticsContactRoutes } from "./contact"
 import { analyticsConversationRoutes } from "./conversation"
 import { analyticsFlowRoutes } from "./flow"
+import { analyticsMacRoutes } from "./mac"
 import { analyticsMessageRoutes } from "./message"
 import { analyticsSequenceRoutes } from "./sequence"
 
@@ -13,4 +14,5 @@ export const analyticsRoutes = os.router({
   ...analyticsMessageRoutes,
   ...analyticsSequenceRoutes,
   ...analyticsFlowRoutes,
+  ...analyticsMacRoutes,
 })

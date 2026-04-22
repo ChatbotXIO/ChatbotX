@@ -1,9 +1,13 @@
+import { bloomFilterFactory } from "./bloom-filter"
 import { cacheConnections } from "./connections/cache-connection"
 import { sequenceConnections } from "./connections/sequence-connection"
 import { distributedLockFactory } from "./distributed-lock"
 import { distributedStoreFactory } from "./distributed-store"
 
 export type * from "ioredis"
+export type { BloomFilter, BloomFilterOptions } from "./bloom-filter"
+export { bloomFilterFactory } from "./bloom-filter"
+export const bloomFilter = bloomFilterFactory(cacheConnections.useExisting)
 
 export { cacheConnections } from "./connections/cache-connection"
 export { distributedLockFactory } from "./distributed-lock"
