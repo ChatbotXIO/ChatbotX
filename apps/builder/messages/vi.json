@@ -838,7 +838,8 @@
       "placeholder": "Nhập tiêu đề"
     },
     "tools": {
-      "label": "Công cụ"
+      "label": "Công cụ",
+      "placeholder": "Chọn công cụ"
     },
     "triggerFlowId": {
       "label": "ID Luồng kích hoạt",
@@ -1358,6 +1359,8 @@
     "error": "Error",
     "moveFolderDescription": "Move {feature} to folder",
     "noData": "No data",
+    "featureNotFound": "Không tìm thấy {feature}",
+    "enableSuccess": "Đã bật {feature} thành công",
     "userInactive": "Người dùng không hoạt động hơn 7 ngày"
   },
   "instagram": {
@@ -1744,6 +1747,46 @@
       "description": "Gửi email bằng máy chủ SMTP của bạn.",
       "label": "(Email) SMTP"
     }
+  },
+  "botSimulator": {
+    "title": "Mô phỏng Bot",
+    "description": "Mô phỏng hành vi của bot trong môi trường thời gian thực."
+  },
+  "pollManager": {
+    "title": "Quản lý khảo sát",
+    "description": "Tạo và quản lý khảo sát cho các liên hệ của bạn."
+  },
+  "placesNearMe": {
+    "title": "Địa điểm gần tôi",
+    "description": "Tìm địa điểm gần các liên hệ của bạn."
+  },
+  "questionnaires": {
+    "title": "Bảng câu hỏi",
+    "description": "Tạo và quản lý bảng câu hỏi cho các liên hệ của bạn."
+  },
+  "facebookCommentAutomation": {
+    "title": "Tự động hóa bình luận Facebook",
+    "description": "Tự động hóa bình luận Facebook cho các liên hệ của bạn."
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Tự động hóa Facebook Lead Ads",
+    "description": "Tự động hóa Facebook Lead Ads cho các liên hệ của bạn."
+  },
+  "ecommerce": {
+    "title": "Thương mại điện tử",
+    "description": "Tạo và quản lý cửa hàng thương mại điện tử của bạn."
+  },
+  "appointmentScheduling": {
+    "title": "Lập lịch hẹn",
+    "description": "Tạo và quản lý lịch hẹn của bạn."
+  },
+  "templates": {
+    "title": "Mẫu",
+    "description": "Tạo và quản lý các mẫu của bạn."
+  },
+  "qrCodeGenerator": {
+    "title": "Trình tạo mã QR",
+    "description": "Tạo và quản lý mã QR của bạn."
   },
   "QRCode": {
     "title": "QR Code",

@@ -98,7 +98,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  allowedDevOrigins: [env.NEXT_PUBLIC_BUILDER_URL.replace(/https?:\/\//g, "")],
 }
 
 export default withNextIntl(nextConfig)

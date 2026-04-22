@@ -29,11 +29,11 @@ import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
+import { GetInboxUrlDialog } from "@/features/inboxes/components/get-inbox-url"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { updateFlowVersionSchema } from "../schemas/action"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
-import GetFlowLinkDialog from "./components/get-flow-link"
 import { RenameFlowDialog } from "./components/rename-flow"
 
 export function FlowEditToolbar({
@@ -185,18 +185,16 @@ export function FlowEditToolbar({
         workspaceId={workspaceId}
       />
 
-      <GetFlowLinkDialog
-        flow={flow}
-        isDraft={true}
+      <GetInboxUrlDialog
         onOpenChange={() => setAction(null)}
         open={action === "getDraftLink"}
+        ref={`draft-${flow.id}`}
       />
 
-      <GetFlowLinkDialog
-        flow={flow}
-        isDraft={false}
+      <GetInboxUrlDialog
         onOpenChange={() => setAction(null)}
         open={action === "getPublishedLink"}
+        ref={`flow-${flow.id}`}
       />
     </div>
   )

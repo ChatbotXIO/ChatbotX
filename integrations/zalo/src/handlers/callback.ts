@@ -40,18 +40,14 @@ export const callbackHandler = async (
     throw new SdkException("Invalid OA profile received from Zalo OA")
   }
 
-  const builderUrl = process.env.NEXT_PUBLIC_BUILDER_URL
-  if (!builderUrl) {
-    throw new SdkException(
-      "NEXT_PUBLIC_BUILDER_URL environment variable is not set",
-    )
-  }
-
   return {
     authType: AuthType.oauth2,
     clientId: props.config.clientId,
     clientSecret: props.config.clientSecret,
-    redirectUrl: `${builderUrl}/integrations/zalo/callback`,
+    redirectUrl: new URL(
+      "/integrations/zalo/callback",
+      props.req.url,
+    ).toString(),
     tokens: {
       accessToken: access_token,
       refreshToken: refresh_token,

@@ -38,7 +38,6 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import { DeleteMagicLinksDialog } from "./delete-magic-links"
-import { getMagicLinkPublicUrl } from "./helpers"
 import { MagicLinkQrDialog } from "./magic-link-qr-dialog"
 import { MagicLinksTableToolbarActions } from "./magic-links-table-toolbar-actions"
 import type { ListMagicLinkItem, ListMagicLinksResponse } from "./schemas/query"
@@ -53,6 +52,15 @@ type MagicLinkRowAction =
   | { row: Row<ListMagicLinkItem>; variant: "qr" }
   | { row: Row<ListMagicLinkItem>; variant: "update" }
   | { row: Row<ListMagicLinkItem>; variant: "delete" }
+
+const getMagicLinkUrl = (magicLink: {
+  workspaceId: string
+  name: string
+}): string =>
+  new URL(
+    `/r/${magicLink.workspaceId}/${magicLink.name}`,
+    window.location.origin,
+  ).toString()
 
 export const MagicLinksTable = ({
   workspaceId,
@@ -162,11 +170,7 @@ export const MagicLinksTable = ({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  const url = getMagicLinkPublicUrl(
-                    workspaceId,
-                    row.original.name,
-                  )
-                  copy(url).then(() => {
+                  copy(getMagicLinkUrl(row.original)).then(() => {
                     toast.success(t("messages.copiedToClipboard"))
                   })
                 }}
@@ -203,7 +207,7 @@ export const MagicLinksTable = ({
         enableHiding: false,
       },
     ],
-    [copy, t, workspaceId],
+    [copy, t],
   )
 
   const { table } = useDataTable({
@@ -218,10 +222,6 @@ export const MagicLinksTable = ({
     shallow: false,
     clearOnDefault: true,
   })
-
-  const qrPublicUrl = rowAction?.row.original
-    ? getMagicLinkPublicUrl(workspaceId, rowAction.row.original.name)
-    : null
 
   return (
     <CustomFieldStoreProvider workspaceId={workspaceId}>
@@ -244,7 +244,11 @@ export const MagicLinksTable = ({
           <MagicLinkQrDialog
             onOpenChange={() => setRowAction(null)}
             open={rowAction?.variant === "qr"}
-            publicUrl={rowAction?.variant === "qr" ? qrPublicUrl : null}
+            publicUrl={
+              rowAction?.row.original
+                ? getMagicLinkUrl(rowAction.row.original)
+                : null
+            }
           />
 
           <UpdateMagicLinkDialog

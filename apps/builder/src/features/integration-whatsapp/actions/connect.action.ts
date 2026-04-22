@@ -19,7 +19,6 @@ import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { headers } from "next/headers"
-import { env } from "@/env"
 import { organizationService } from "@/features/organization/organization-service"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -91,7 +90,7 @@ export const connectWhatsappAction = authActionClient
 
         // Validate wabaId
         const headersList = await headers()
-        const baseUrl = headersList.get("x-url") ?? env.NEXT_PUBLIC_BUILDER_URL
+        const baseUrl = headersList.get("x-url") ?? ""
         const auth: WhatsappAuthValue = {
           clientId: whatsappSettings.clientId,
           clientSecret: whatsappSettings.clientSecret,

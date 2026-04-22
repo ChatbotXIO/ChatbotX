@@ -1,80 +1,58 @@
 "use client"
 
-import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
-import { cn } from "@chatbotx.io/ui/lib/utils"
-import { memo, useMemo } from "react"
+import type { ChannelType } from "@chatbotx.io/database/partials"
+import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
+import { useTranslations } from "next-intl"
+import { memo } from "react"
+import { getInboxLink } from "@/features/inboxes/helpers"
+import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import type { ListInboxesResponse } from "../schema/action"
-import { InboxInstagramCard } from "./inbox-instagram-card"
-import { InboxMessengerCard } from "./inbox-messenger-card"
+import { InboxIcon } from "./inbox-icon"
 import InboxNewCard from "./inbox-new-card"
-import { InboxTelegramCard } from "./inbox-telegram-card"
-import { InboxWebchatCard } from "./inbox-webchat-card"
-import { InboxWhatsappCard } from "./inbox-whatsapp-card"
-import { InboxZaloCard } from "./inbox-zalo-card"
 
 type InboxCardListProps = {
   workspaceId: string
   allowAddNew?: boolean
-  actionLabel?: string
-  direction?: "horizontal" | "vertical"
   inboxes: ListInboxesResponse["data"]
 }
 
-export const cardConfigs: Record<
-  ChannelType,
-  | React.ComponentType<{
-      inbox: ListInboxesResponse["data"][number]
-      actionLabel?: string
-      refId?: string
-    }>
-  | undefined
-> = {
-  omnichannel: undefined,
-  whatsapp: InboxWhatsappCard,
-  webchat: InboxWebchatCard,
-  messenger: InboxMessengerCard,
-  instagram: InboxInstagramCard,
-  zalo: InboxZaloCard,
-  smtp: undefined,
-  telegram: InboxTelegramCard,
-}
-
-export const InboxCardList = memo(function InboxCardList({
+export function InboxCardList({
   workspaceId,
-  actionLabel,
   allowAddNew = true,
-  direction = "horizontal",
   inboxes,
 }: InboxCardListProps) {
-  const inboxesFiltered = useMemo(
-    () =>
-      allowAddNew
-        ? inboxes
-        : inboxes.filter((inbox) => inbox.channel !== channelTypes.enum.zalo),
-    [allowAddNew, inboxes],
-  )
-
   return (
-    <div
-      className={cn(
-        "grid gap-4",
-        direction === "horizontal"
-          ? "md:grid-cols-2 lg:grid-cols-4"
-          : "w-full grid-cols-1",
-      )}
-    >
-      {inboxesFiltered.map((inbox) => {
-        const CardComponent = cardConfigs[inbox.channel as ChannelType]
-        return CardComponent ? (
-          <CardComponent
-            actionLabel={actionLabel}
-            inbox={inbox}
-            key={inbox.id}
-          />
-        ) : null
-      })}
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {inboxes.map((inbox) => (
+        <BaseInboxCard inbox={inbox} key={inbox.id} />
+      ))}
 
       {allowAddNew && <InboxNewCard workspaceId={workspaceId} />}
     </div>
+  )
+}
+
+const BaseInboxCard = memo(function BaseInboxCard({
+  inbox,
+}: {
+  inbox: ListInboxesResponse["data"][number]
+}) {
+  const t = useTranslations()
+  const link = getInboxLink({ inbox })
+
+  return (
+    <Card className="py-3">
+      <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+        <InboxIcon channel={inbox.channel as ChannelType} label={inbox.name} />
+
+        <ScanQRCodeDialog
+          link={link}
+          title={t("actions.connectFeature", {
+            feature: inbox.name,
+          })}
+          triggerName={t("actions.testNow")}
+        />
+      </CardContent>
+    </Card>
   )
 })

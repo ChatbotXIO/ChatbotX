@@ -34,8 +34,8 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
+import { GetInboxUrlDialog } from "../inboxes/components/get-inbox-url"
 import { DeleteReflinksDialog } from "./delete-reflinks"
-import { GetReflinksDialog } from "./get-reflinks-dialog"
 import { ReflinksTableToolbarActions } from "./reflinks-table-toolbar-actions"
 import type { ListReflinkItem, ListReflinksResponse } from "./schemas/query"
 import { UpdateReflinkDialog } from "./update-reflink"
@@ -210,10 +210,10 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
           </DataTableToolbar>
         </DataTable>
 
-        <GetReflinksDialog
+        <GetInboxUrlDialog
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "copyUrl"}
-          reflink={rowAction?.row.original ?? null}
+          ref={rowAction?.row.original?.name}
         />
 
         <UpdateReflinkDialog

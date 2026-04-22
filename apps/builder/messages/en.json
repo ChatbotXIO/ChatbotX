@@ -1737,5 +1737,45 @@
       "description": "Send emails using your SMTP server.",
       "label": "(Email) SMTP"
     }
+  },
+  "botSimulator": {
+    "title": "Bot Simulator",
+    "description": "Simulate your bot's behavior in a real-time environment."
+  },
+  "pollManager": {
+    "title": "Poll Manager",
+    "description": "Create and manage polls for your contacts."
+  },
+  "placesNearMe": {
+    "title": "Places Near Me",
+    "description": "Find places near your contacts."
+  },
+  "questionnaires": {
+    "title": "Questionnaires",
+    "description": "Create and manage questionnaires for your contacts."
+  },
+  "facebookCommentAutomation": {
+    "title": "Facebook Comment Automation",
+    "description": "Automate Facebook comments for your contacts."
+  },
+  "facebookLeadAdsAutomation": {
+    "title": "Facebook Lead Ads Automation",
+    "description": "Automate Facebook lead ads for your contacts."
+  },
+  "ecommerce": {
+    "title": "Ecommerce",
+    "description": "Create and manage your ecommerce store."
+  },
+  "appointmentScheduling": {
+    "title": "Appointment Scheduling",
+    "description": "Create and manage your appointment scheduling."
+  },
+  "templates": {
+    "title": "Templates",
+    "description": "Create and manage your templates."
+  },
+  "qrCodeGenerator": {
+    "title": "QR Code Generator",
+    "description": "Create and manage your QR codes."
   }
 }

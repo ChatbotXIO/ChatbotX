@@ -1,5 +1,4 @@
 import { headers } from "next/headers"
-import type { NextRequest } from "next/server"
 import { logger } from "./log"
 
 export async function getDomainFromHeader() {
@@ -12,13 +11,13 @@ export async function getDomainFromHeader() {
   return baseUrl.hostname
 }
 
-export function getPublicOriginFromRequest(request: NextRequest): string {
+export function getPublicOriginFromRequest(request: Request): string {
   const protocol = getPublicProtocolFromRequest(request)
   const host = getPublicHostFromRequest(request)
   return `${protocol}://${host}`
 }
 
-function getPublicProtocolFromRequest(request: NextRequest): "http" | "https" {
+function getPublicProtocolFromRequest(request: Request): "http" | "https" {
   const forwarded = request.headers.get("forwarded")
   const forwardedProtocol = extractForwardedValue(forwarded, "proto")
   if (forwardedProtocol === "http" || forwardedProtocol === "https") {
@@ -30,10 +29,10 @@ function getPublicProtocolFromRequest(request: NextRequest): "http" | "https" {
     return xForwardedProto
   }
 
-  return request.nextUrl.protocol === "http:" ? "http" : "https"
+  return request.url.startsWith("http://") ? "http" : "https"
 }
 
-function getPublicHostFromRequest(request: NextRequest): string {
+function getPublicHostFromRequest(request: Request): string {
   const forwarded = request.headers.get("forwarded")
   const forwardedHost = normalizeHost(extractForwardedValue(forwarded, "host"))
   if (forwardedHost) {

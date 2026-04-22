@@ -1,6 +1,7 @@
 import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import { ORPCError, onError } from "@orpc/server"
 import { ChatbotXException } from "./lib/errors/exception"
+import { logger } from "./lib/log"
 import { authMiddleware } from "./middlewares/auth"
 import { base } from "./middlewares/context"
 import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-auth"
@@ -8,6 +9,8 @@ import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-aut
 export const authorizedAPI = base
   .use(
     onError((error: Error) => {
+      logger.debug({ error }, "Error in authorizedAPI")
+
       if (error.name === ChatbotXException.name) {
         throw new ORPCError((error as ChatbotXException).code, {
           message: error.message,

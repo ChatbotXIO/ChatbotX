@@ -36,21 +36,28 @@ export const getAuthSession = async (
     headers.get("origin") ??
     "https://example.com"
 
-  const verificationUrl = new URL("/api/auth/one-time-token/verify", origin)
+  const verificationUrl = new URL(
+    "/api/auth/one-time-token/verify",
+    origin,
+  ).toString()
 
-  const session: Session | null = await ky
-    .post(verificationUrl, {
-      headers: {
-        Accept: "application/json",
-      },
-      json: {
-        token,
-      },
-    })
-    .json()
+  console.log("verificationUrl", verificationUrl)
 
-  if (session && isSessionValid(session)) {
-    return session
+  try {
+    const session = await ky
+      .post(verificationUrl, {
+        json: {
+          token,
+        },
+      })
+      .json<Session | null>()
+
+    if (session && isSessionValid(session)) {
+      return session
+    }
+  } catch (error) {
+    console.error("Failed to authenticate user", error)
+    throw new Error("Failed to authenticate user")
   }
 
   throw new Error("Failed to authenticate user")

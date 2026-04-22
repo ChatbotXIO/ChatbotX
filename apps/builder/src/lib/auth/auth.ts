@@ -11,11 +11,10 @@ import {
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
 import { createId } from "@chatbotx.io/utils"
-import { betterAuth } from "better-auth"
+import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
-import { env } from "@/env"
-
+import { getPublicOriginFromRequest } from "../domain"
 import { googleSignInConfig } from "./auth-config"
 
 export const auth = betterAuth({
@@ -34,14 +33,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({ user, url }, request) => {
+      if (!request) {
+        throw new APIError(400, {
+          message: "Unknown request",
+        })
+      }
+
+      const realUrl = getPublicOriginFromRequest(request as unknown as Request)
+
       await sendResetPassword(user.email, {
         brandName: "ChatbotX",
-        brandLogoUrl: new URL(
-          "/brand/logo_white.svg",
-          env.NEXT_PUBLIC_ASSET_URL,
-        ).toString(),
-        brandUrl: env.NEXT_PUBLIC_BUILDER_URL,
+        brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
+        brandUrl: new URL("/", realUrl).toString(),
         subject: "Reset your password",
         userName: user.name ?? user.email,
         resetPasswordUrl: url,
@@ -49,14 +53,19 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, url }, request) => {
+      if (!request) {
+        throw new APIError(400, {
+          message: "Unknown request",
+        })
+      }
+
+      const realUrl = getPublicOriginFromRequest(request as unknown as Request)
+
       await sendSignUpVerification(user.email, {
         brandName: "ChatbotX",
-        brandLogoUrl: new URL(
-          "/brand/logo_white.svg",
-          env.NEXT_PUBLIC_ASSET_URL,
-        ).toString(),
-        brandUrl: env.NEXT_PUBLIC_BUILDER_URL,
+        brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
+        brandUrl: new URL("/", realUrl).toString(),
         subject: "ChatbotX Email Verification",
         userName: user.name ?? user.email,
         verificationUrl: url,
@@ -65,22 +74,31 @@ export const auth = betterAuth({
   },
   plugins: [
     magicLink({
-      sendMagicLink: async ({ email, url }) => {
+      sendMagicLink: async ({ email, url }, request) => {
+        if (!request) {
+          throw new APIError(400, {
+            message: "Unknown request",
+          })
+        }
+
+        const realUrl = getPublicOriginFromRequest(
+          request as unknown as Request,
+        )
+
         const user = await db.query.userModel.findFirst({
           where: { email },
         })
         if (!user) {
-          return
+          throw new APIError(400, {
+            message: "Your email is not registered with ChatbotX",
+          })
         }
 
         await sendMagicLink(email, {
           brandName: "ChatbotX",
-          brandLogoUrl: new URL(
-            "/brand/logo_white.svg",
-            env.NEXT_PUBLIC_ASSET_URL,
-          ).toString(),
-          brandUrl: env.NEXT_PUBLIC_BUILDER_URL,
-          subject: "Verify your email",
+          brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
+          brandUrl: new URL("/", realUrl).toString(),
+          subject: "Magic link to ChatbotX",
           userName: user.name ?? email,
           magicUrl: url,
         })

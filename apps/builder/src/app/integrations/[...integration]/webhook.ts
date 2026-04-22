@@ -55,7 +55,9 @@ export const handleWebhook = async (
 
   if (!settings) {
     return new Response(
-      JSON.stringify({ message: "Integration is not configured" }),
+      JSON.stringify({
+        message: `Integration ${integration.name} is not configured`,
+      }),
       {
         status: 400,
         headers: { "Content-Type": "application/json" },

@@ -1,7 +1,7 @@
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import "@/polyfill"
 import { OpenAPIGenerator } from "@orpc/openapi"
-import { env } from "@/env"
+import { getPublicOriginFromRequest } from "@/lib/domain"
 import { publicRouter } from "@/routers/public"
 
 const openAPIGenerator = new OpenAPIGenerator({
@@ -28,7 +28,11 @@ async function handleRequest(request: Request) {
         },
       },
     },
-    servers: [{ url: `${env.NEXT_PUBLIC_BUILDER_URL}/api` }],
+    servers: [
+      {
+        url: new URL("/api", getPublicOriginFromRequest(request)).toString(),
+      },
+    ],
     filter: ({ contract }) => {
       const searchParams = new URLSearchParams(request.url.split("?")[1])
       const filter = searchParams.get("filter")
