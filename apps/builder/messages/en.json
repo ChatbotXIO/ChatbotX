@@ -734,6 +734,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "systemFunction": {
+      "label": "System Function"
+    },
     "min": {
       "label": "Minimum"
     },

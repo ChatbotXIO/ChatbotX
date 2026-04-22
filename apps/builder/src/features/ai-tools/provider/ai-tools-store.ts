@@ -1,3 +1,4 @@
+import { systemFunctionNames } from "@chatbotx.io/ai"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListAIFilesResponse } from "@/features/ai-files/schemas"
@@ -15,6 +16,7 @@ export type AIToolsState = {
   files: ListAIFilesResponse["data"]
   functions: ListAIFunctionsResponse["data"]
   mcpServers: ListAIMcpServersResponse["data"]
+  systemFunctions: { id: string; name: string }[]
 }
 
 export type AIToolsActions = {
@@ -38,6 +40,12 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
     files: [],
     functions: [],
     mcpServers: [],
+    systemFunctions: [
+      {
+        id: systemFunctionNames.connectUserToHuman,
+        name: systemFunctionNames.connectUserToHuman,
+      },
+    ],
     ...props,
 
     initialize: async () => {

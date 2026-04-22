@@ -724,6 +724,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "systemFunction": {
+      "label": "Hàm hệ thống"
+    },
     "min": {
       "label": "Tối thiểu"
     },

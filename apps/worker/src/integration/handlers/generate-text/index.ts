@@ -55,6 +55,7 @@ export async function handleAIGenerateText({
         file: toolPrefixes.enum.file,
         fn: toolPrefixes.enum.fn,
         mcp: toolPrefixes.enum.mcp,
+        sys: toolPrefixes.enum.sys,
       },
       fileSearch: {
         fileSearchDescription: helpTexts.fileSearchDescription,

@@ -5,12 +5,18 @@ import type { JsonValue } from "../schemas"
 import {
   getAIFileTools,
   getAIFunctionTools,
+  getAISystemTools,
   getMCPServerTools,
   type McpClientConstructor,
   type McpClientLike,
+  type SystemFunctionContext,
+  type SystemFunctionHandoffRequest,
 } from "./tools"
 
 export interface ToolsetOptions {
+  executeSystemHandoff?: (
+    request: SystemFunctionHandoffRequest,
+  ) => Promise<void>
   fileSearch?: {
     fileSearchDescription: string
     fileSearchQueryDescription: string
@@ -23,10 +29,12 @@ export interface ToolsetOptions {
     McpClient: McpClientConstructor
     normalizeMcpContent: (content: JsonValue) => JsonValue
   }
+  systemFunctionContextGetter?: () => Promise<SystemFunctionContext | null>
   toolPrefixes: {
     file: string
     fn: string
     mcp: string
+    sys: string
   }
   tools: string[]
   workspaceId: string
@@ -47,16 +55,23 @@ export async function getAIToolset(
     const fileIds = parseToolIds(tools, toolPrefixes.file)
     const functionIds = parseToolIds(tools, toolPrefixes.fn)
     const mcpIds = parseToolIds(tools, toolPrefixes.mcp)
+    const systemIds = parseToolIds(tools, toolPrefixes.sys)
 
-    const [fileTools, functionTools, mcpResult] = await Promise.all([
-      fileSearch && fileIds.length > 0
-        ? getAIFileTools(workspaceId, fileIds, fileSearch)
-        : Promise.resolve({}),
-      getAIFunctionTools(workspaceId, functionIds),
-      mcp && mcpIds.length > 0
-        ? getMCPServerTools(workspaceId, mcpIds, mcp)
-        : Promise.resolve({ tools: {}, clients: [] }),
-    ])
+    const [fileTools, functionTools, systemTools, mcpResult] =
+      await Promise.all([
+        fileSearch && fileIds.length > 0
+          ? getAIFileTools(workspaceId, fileIds, fileSearch)
+          : Promise.resolve({}),
+        getAIFunctionTools(workspaceId, functionIds),
+        getAISystemTools(
+          systemIds,
+          options.systemFunctionContextGetter,
+          options.executeSystemHandoff,
+        ),
+        mcp && mcpIds.length > 0
+          ? getMCPServerTools(workspaceId, mcpIds, mcp)
+          : Promise.resolve({ tools: {}, clients: [] }),
+      ])
 
     const cleanup = async () => {
       if (mcpResult.clients && mcpResult.clients.length > 0) {
@@ -79,7 +94,12 @@ export async function getAIToolset(
     }
 
     return {
-      tools: { ...fileTools, ...functionTools, ...mcpResult.tools },
+      tools: {
+        ...fileTools,
+        ...functionTools,
+        ...systemTools,
+        ...mcpResult.tools,
+      },
       cleanup,
     }
   } catch (error) {

@@ -11,6 +11,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { assignConversation } from "./handlers/assign-conversation"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
 import { runChallenge } from "./handlers/challenge"
@@ -32,7 +33,6 @@ import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 async function startIntegrationWorker() {
   try {
     await ensureBootstrapped()
-    logger.info("Integration worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap integration worker")
     process.exit(1)
@@ -41,7 +41,6 @@ async function startIntegrationWorker() {
   const worker = new Worker(
     queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
-      logger.info(job.data, "Worker received job")
       switch (job.data.type) {
         case IntegrationJobAction.incomingMessage: {
           const { message, postbackAction, quickReplyAction, conversation } =
@@ -148,7 +147,7 @@ async function startIntegrationWorker() {
           return
         }
         case IntegrationJobAction.assignConversation: {
-          // await broadcastAssignConversation(job.data.data)
+          await assignConversation(job.data.data)
           return
         }
         case IntegrationJobAction.messageStatus: {
