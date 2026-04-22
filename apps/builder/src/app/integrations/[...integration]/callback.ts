@@ -15,10 +15,15 @@ import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
-const stateValidationSchema = z.object({
-  workspaceId: zodBigintAsString(),
-  referer: z.url(),
-})
+const stateValidationSchema = z
+  .object({
+    workspaceId: zodBigintAsString(),
+    referer: z.string(),
+  })
+  .transform((data) => ({
+    ...data,
+    referer: decodeURIComponent(data.referer),
+  }))
 
 export const handleCallback = async (
   integrationType: IntegrationType,
