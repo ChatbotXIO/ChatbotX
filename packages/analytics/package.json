@@ -16,7 +16,7 @@
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@clickhouse/client": "^1.18.2",
+    "@clickhouse/client": "^1.18.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv-cli": "^11.0.0",

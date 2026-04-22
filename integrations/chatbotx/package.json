@@ -6,7 +6,7 @@
   "dependencies": {
     "@chatbotx.io/partysocket-config": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
-    "ky": "^2.0.1",
+    "ky": "^2.0.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {

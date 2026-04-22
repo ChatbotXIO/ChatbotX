@@ -18,7 +18,7 @@
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "ai": "^6.0.168",
-    "ky": "^2.0.1",
+    "ky": "^2.0.2",
     "mime-types": "^3.0.2",
     "universal-error-normalizer": "^1.0.0",
     "zod": "^4.3.6"

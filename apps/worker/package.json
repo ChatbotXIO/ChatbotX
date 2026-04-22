@@ -28,7 +28,7 @@
     "@ai-sdk/deepseek": "^2.0.29",
     "@ai-sdk/google": "^3.0.64",
     "@ai-sdk/openai": "^3.0.53",
-    "@aws-sdk/client-s3": "^3.1031.0",
+    "@aws-sdk/client-s3": "^3.1034.0",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
@@ -59,13 +59,13 @@
     "@platformatic/kafka": "^1.33.0",
     "@t3-oss/env-core": "^0.13.11",
     "ai": "^6.0.168",
-    "bullmq": "^5.74.1",
+    "bullmq": "^5.76.0",
     "date-fns": "^4.1.0",
     "dot-prop": "^10.1.0",
     "html-to-text": "^9.0.5",
     "image-size": "^2.0.2",
     "ioredis": "5.10.1",
-    "ky": "^2.0.1",
+    "ky": "^2.0.2",
     "mailparser": "^3.9.8",
     "mammoth": "^1.12.0",
     "mime-types": "^3.0.2",
@@ -85,6 +85,6 @@
     "@types/node": "24.x",
     "concurrently": "^9.2.1",
     "dotenv-cli": "^11.0.0",
-    "tsdown": "0.21.9"
+    "tsdown": "0.21.10"
   }
 }

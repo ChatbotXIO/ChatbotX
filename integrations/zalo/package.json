@@ -10,7 +10,7 @@
     "@chatbotx.io/utils": "workspace:*",
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
-    "ky": "^2.0.1",
+    "ky": "^2.0.2",
     "remeda": "^2.33.7",
     "zod": "^4.3.6"
   },

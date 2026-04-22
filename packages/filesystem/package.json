@@ -9,14 +9,14 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1031.0",
-    "@aws-sdk/s3-presigned-post": "^3.1031.0",
+    "@aws-sdk/client-s3": "^3.1034.0",
+    "@aws-sdk/s3-presigned-post": "^3.1034.0",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
     "aws4fetch": "^1.0.20",
     "image-size": "^2.0.2",
-    "ky": "^2.0.1",
+    "ky": "^2.0.2",
     "probe-image-size": "^7.2.3",
     "zod": "^4.3.6"
   },
