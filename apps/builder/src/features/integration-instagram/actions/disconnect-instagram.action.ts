@@ -53,8 +53,8 @@ export const disconnectInstagramAction = workspaceActionClient
       })
 
       revalidateCacheTags([
-        `chatbots:${workspaceId}#instagram`,
-        `chatbots:${workspaceId}#inboxes`,
+        `workspaces:${workspaceId}#instagram`,
+        `workspaces:${workspaceId}#inboxes`,
       ])
     },
   )

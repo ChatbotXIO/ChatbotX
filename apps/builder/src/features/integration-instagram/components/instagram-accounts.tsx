@@ -45,7 +45,7 @@ export function InstagramAccounts({
         onSuccess: ({ data }) => {
           if (workspaceId) {
             router.push(
-              `/chatbots/${data?.workspaceId}/settings/channels?channel=instagram`,
+              `/space/${data?.workspaceId}/settings/channels?channel=instagram`,
             )
           } else {
             router.push("/")

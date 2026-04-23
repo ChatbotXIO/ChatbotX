@@ -21,6 +21,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { parseBigIntId } from "@chatbotx.io/utils"
+import { groupBy } from "remeda"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { notFoundException } from "@/lib/errors/exception"
@@ -136,6 +137,15 @@ export const listConversations = async (
     contactsOnSequencesMap.set(cos.contactId, [...existing, cos])
   }
 
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId: {
+        in: contactIds,
+      },
+    },
+  })
+  const contactInboxesMap = groupBy(contactInboxes, (ci) => ci.contactId)
+
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
@@ -145,7 +155,7 @@ export const listConversations = async (
             contactsOnSequences: contactsOnSequencesMap.get(c.Contact.id) || [],
           }
         : null,
-      contactInboxes: [],
+      contactInboxes: contactInboxesMap[c.Conversation.contactId] || [],
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
       messages: c.lastMessage ? [c.lastMessage] : [],

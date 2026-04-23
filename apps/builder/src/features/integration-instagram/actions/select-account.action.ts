@@ -131,8 +131,8 @@ export const selectAccountAction = authActionClient
         })
 
         revalidateCacheTags([
-          `chatbots:${workspaceId}#instagram`,
-          `chatbots:${workspaceId}#inboxes`,
+          `workspaces:${workspaceId}#instagram`,
+          `workspaces:${workspaceId}#inboxes`,
         ])
 
         return {

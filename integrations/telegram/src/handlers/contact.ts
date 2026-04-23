@@ -7,6 +7,6 @@ const getProfile: ContactHandlers<TelegramAuthValue>["getProfile"] = async ({
   data: { sourceId },
 }) => await getUserProfile({ ctx, psid: sourceId })
 
-export const contactHandlers = {
+export const contactHandlers: Partial<ContactHandlers<TelegramAuthValue>> = {
   getProfile,
 }

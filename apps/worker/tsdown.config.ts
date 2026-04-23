@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown"
 
 export default defineConfig({
-  format: ["cjs", "esm"],
+  format: ["esm"],
   entry: [
     "src/chat/worker.ts",
     "src/integration/worker.ts",
@@ -15,7 +15,7 @@ export default defineConfig({
     "src/sequence-scheduler/worker-consumer.ts",
     "src/schedule/worker.ts",
   ],
-  dts: true,
+  dts: false,
   shims: true,
   deps: {
     skipNodeModulesBundle: false,
@@ -26,12 +26,9 @@ export default defineConfig({
   clean: true,
   // target: 'node20',
   platform: "node",
-  minify: true,
+  minify: false,
   unbundle: false,
   // splitting: false,
-  // esbuildOptions(options) {
-  //   options.jsx = "automatic"
-  // },
   sourcemap: false,
   treeshake: true,
 })

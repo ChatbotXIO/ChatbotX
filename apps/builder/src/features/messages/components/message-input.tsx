@@ -1,5 +1,6 @@
 "use client"
 
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
@@ -141,9 +142,6 @@ export const MessageInput = () => {
     [handleSubmitWithAction],
   )
 
-  // Memoize inbox type and icon for current conversation
-  const currentInboxType = "webchat"
-
   // Check if conversation is over 7 days since last contact reply
   // const isOver7Days = useMemo(() => {
   //   if (!conversation?.messages.length) {
@@ -210,7 +208,12 @@ export const MessageInput = () => {
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              <InboxIcon channel={currentInboxType} />
+              <InboxIcon
+                channel={
+                  (conversation?.contactInboxes[0]?.channel ??
+                    "webchat") as ChannelType
+                }
+              />
             </div>
 
             {!isDisabled && (

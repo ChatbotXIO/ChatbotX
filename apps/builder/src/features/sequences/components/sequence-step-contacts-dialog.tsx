@@ -212,7 +212,7 @@ const ContactItem = memo(function ContactItem({
         <div className="flex items-center gap-1.5">
           <Link
             className="max-w-[200px] truncate text-blue-500"
-            href={`/chatbots/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
+            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversationId}`}
             target="_blank"
           >
             <span className="truncate font-medium text-sm leading-tight">

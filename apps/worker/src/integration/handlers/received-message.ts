@@ -261,20 +261,19 @@ const detectContactAndConversation = async (props: {
         })
       } else {
         if (canGetUserProfileIfNeeded(inbox.channel)) {
-          const integration = allIntegrations[inbox.channel]
-          if (integration && "getUserProfile" in integration.actions) {
-            const userProfile = await integration.actions.getUserProfile({
-              ctx: {
-                storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
-                auth: integrationAuth,
-                uploader,
-              },
-              psid: incomingContact.sourceId,
-            })
-            contactData = {
-              ...contactData,
-              ...userProfile,
-            }
+          const userProfile = await allIntegrations[
+            inbox.channel
+          ]?.channels.channel?.contact?.getProfile?.({
+            ctx: {
+              storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
+              auth: integrationAuth,
+              uploader,
+            },
+            data: { sourceId: incomingContact.sourceId },
+          })
+          contactData = {
+            ...contactData,
+            ...userProfile,
           }
         }
 

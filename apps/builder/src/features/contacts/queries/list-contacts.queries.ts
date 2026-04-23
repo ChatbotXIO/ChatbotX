@@ -26,6 +26,7 @@ export async function listContacts(
       ...pagination,
       orderBy,
       with: {
+        contactInboxes: true,
         conversation: {
           with: {
             assignedUser: true,

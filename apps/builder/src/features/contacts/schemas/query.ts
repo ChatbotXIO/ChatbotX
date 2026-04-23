@@ -2,6 +2,7 @@ import { operatorTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
+import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
 import { conversationResource } from "@/features/conversations/schema/resource"
 import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
@@ -23,6 +24,7 @@ export const listContactsItem = contactResource.and(
     contactCustomFields: z.array(contactCustomFieldResource).optional(),
     tags: z.array(tagResource).optional(),
     contactNotes: z.array(contactNoteResource).optional(),
+    contactInboxes: z.array(contactInboxResource).optional(),
     conversation: conversationResource
       .and(
         z.object({

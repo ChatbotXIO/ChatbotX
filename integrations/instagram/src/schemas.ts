@@ -1,9 +1,4 @@
-import type {
-  Context,
-  IncomingContact,
-  Oauth2AuthValue,
-  Oauth2Config,
-} from "@chatbotx.io/sdk"
+import type { Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 export const INSTAGRAM_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
@@ -25,12 +20,7 @@ export type InstagramAuthValue = Oauth2AuthValue & {
   }
 }
 
-export type InstagramActions = {
-  getUserProfile: (props: {
-    ctx: Context<InstagramAuthValue>
-    psid: string
-  }) => Promise<IncomingContact>
-}
+export type InstagramActions = Record<string, never>
 
 // Common attachment types
 const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])

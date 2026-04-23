@@ -91,7 +91,7 @@ export const updateInstagramAction = workspaceActionClient
             }
           }
 
-          revalidateCacheTags([`chatbots:${workspaceId}#instagram`])
+          revalidateCacheTags([`workspaces:${workspaceId}#instagram`])
         })
       } catch {
         throw new ChatbotXException("Failed to update Instagram integration")

@@ -3,7 +3,6 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { getUserProfile } from "./apis/user"
 import { InstagramAPIException } from "./exception"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
@@ -28,9 +27,7 @@ const config: IntegrationDefinition<
       contact: contactHandlers,
     },
   },
-  actions: {
-    getUserProfile,
-  },
+  actions: {},
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const action = segments.pop()

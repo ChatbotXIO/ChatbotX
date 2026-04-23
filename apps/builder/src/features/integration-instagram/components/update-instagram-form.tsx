@@ -62,7 +62,7 @@ export function UpdateInstagramForm({
             }),
           )
           router.push(
-            `/chatbots/${workspaceId}/settings/channels?channel=instagram`,
+            `/space/${workspaceId}/settings/channels?channel=instagram`,
           )
         },
         onError: ({ error }) => {
@@ -190,7 +190,7 @@ export function UpdateInstagramForm({
           <Button
             onClick={() =>
               router.push(
-                `/chatbots/${workspaceId}/settings/channels?channel=instagram`,
+                `/space/${workspaceId}/settings/channels?channel=instagram`,
               )
             }
             type="button"

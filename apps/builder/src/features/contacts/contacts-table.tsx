@@ -1,5 +1,6 @@
 "use client"
 
+import type { ChannelType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -15,7 +16,7 @@ import { format, formatDistance } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
-import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
+import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
@@ -32,8 +33,6 @@ type ContactsTableProps = {
 export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
-
-  const channelOptions = useConfiguredInboxTypeOptions()
 
   const columns = useMemo<ColumnDef<ListContactsItem>[]>(
     () => [
@@ -105,12 +104,17 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
             title={t("fields.source.label")}
           />
         ),
-        cell: () => {
-          const channel = channelOptions.find(
-            (option) => option.value === "messenger",
-          )
-          return <div>{channel ? channel.label : ""}</div>
-        },
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            {row.original.contactInboxes?.map((contactInbox) => (
+              <InboxIcon
+                channel={contactInbox.channel as ChannelType}
+                key={contactInbox.id}
+                showLabel={false}
+              />
+            ))}
+          </div>
+        ),
         enableSorting: false,
         enableHiding: false,
         meta: {
@@ -193,7 +197,7 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
         enableHiding: false,
       },
     ],
-    [workspaceId, t, channelOptions],
+    [workspaceId, t],
   )
 
   const { table } = useDataTable({

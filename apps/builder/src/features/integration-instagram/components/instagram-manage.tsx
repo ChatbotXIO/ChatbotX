@@ -69,7 +69,7 @@ export function InstagramManage({
                 <TableCell className="flex w-50 justify-end gap-2">
                   <Button size="sm" variant="secondary">
                     <Link
-                      href={`/chatbots/${workspaceId}/instagrams/${integrationInstagram.id}/edit`}
+                      href={`/space/${workspaceId}/instagrams/${integrationInstagram.id}/edit`}
                     >
                       {t("actions.manage")}
                     </Link>
