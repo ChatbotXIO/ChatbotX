@@ -22,3 +22,9 @@ export class SdkException extends Error {
 export class IntegrationException extends SdkException {}
 
 export class AuthException extends SdkException {}
+
+export class TokenExpiredException extends AuthException {
+  constructor(message = "Token has expired") {
+    super(message, "tokenExpired", 401)
+  }
+}

@@ -19,7 +19,7 @@ const buildUrlWithParam = (
 // Messenger: https://m.me/FB_PAGE_ID?ref=giveaway
 // Instagram: https://ig.me/m/INSTAGRAM_USERNAME?ref=giveaway
 // WhatsApp: https://wa.me/PHONE_NUMBER?text=/giveaway
-// Telegram: https://t.me/BOT_USERNAME?start=giveaway
+// Telegram: https://t.me/BOT_USERNAME?start=giveaway (max 64 chars; use startapp= for Mini Apps up to 512 chars)
 // Viber: viber://pa?chatURI=BOT_USERNAME&context=giveaway
 // WebChat: https://builder.example.com:3123/webchat?workspaceId=...&webchatId=...&ref=...
 export const getInboxLink = (props: {
@@ -43,6 +43,16 @@ export const getInboxLink = (props: {
         `https://wa.me/${phoneNumber ?? ""}`,
         "text",
         reflinkData ? `/${reflinkData}` : undefined,
+      )
+    }
+    case "telegram": {
+      // Telegram deep link: ?start= supports max 64 chars ([A-Za-z0-9_-]).
+      // For payloads longer than 64 chars, fall back to ?startapp= (Mini Apps, 512-char limit).
+      const telegramParam = reflinkData && reflinkData.length > 64 ? "startapp" : "start"
+      return buildUrlWithParam(
+        `https://t.me/${inbox.sourceId}`,
+        telegramParam,
+        reflinkData,
       )
     }
     case "webchat":

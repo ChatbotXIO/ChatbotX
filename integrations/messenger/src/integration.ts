@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { updateMessengerProfile, updatePersona } from "./apis/page"
+import { exchangeLongLivedToken, updateMessengerProfile, updatePersona } from "./apis/page"
 import { MessengerAPIException } from "./exception"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
@@ -48,6 +48,20 @@ const config: IntegrationDefinition<
   },
   disconnect: (_props: MessengerAuthValue): Promise<void> => {
     throw new Error("Method is not implemented.")
+  },
+  refreshToken: async (auth: MessengerAuthValue): Promise<MessengerAuthValue> => {
+    const { version } = auth.metadata
+    const newAccessToken = await exchangeLongLivedToken(
+      { clientId: auth.clientId, clientSecret: auth.clientSecret, version },
+      auth.tokens.accessToken,
+    )
+    return {
+      ...auth,
+      tokens: {
+        ...auth.tokens,
+        accessToken: newAccessToken,
+      },
+    }
   },
 }
 

@@ -12,6 +12,24 @@ import type {
   GoogleSheetsConfig,
 } from "./schemas"
 
+async function doRefreshToken(
+  auth: GoogleSheetsAuthValue,
+): Promise<GoogleSheetsAuthValue> {
+  const client = getClient(auth)
+  const { credentials } = await client.refreshAccessToken()
+  return {
+    ...auth,
+    tokens: {
+      ...auth.tokens,
+      accessToken: credentials.access_token ?? auth.tokens.accessToken,
+      expiresAt: credentials.expiry_date
+        ? new Date(credentials.expiry_date).toISOString()
+        : auth.tokens.expiresAt,
+      refreshToken: credentials.refresh_token ?? auth.tokens.refreshToken,
+    },
+  }
+}
+
 const config: IntegrationDefinition<
   GoogleSheetsConfig,
   GoogleSheetsAuthValue,
@@ -96,6 +114,7 @@ const config: IntegrationDefinition<
     const client = getClient(props)
     await client.revokeToken(props.tokens.accessToken)
   },
+  refreshToken: doRefreshToken,
 }
 
 export const integration = new Integration(config)

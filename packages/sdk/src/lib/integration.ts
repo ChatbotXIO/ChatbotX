@@ -1,4 +1,5 @@
 import type { AuthValue, Oauth2AuthValue } from "./auth"
+import { SdkException } from "./exception"
 import type { SendFlowStepData } from "./flow-step-data"
 import type {
   BaseConfig,
@@ -148,6 +149,7 @@ export type IntegrationDefinition<
     Oauth2AuthValue | string | number
   >
   disconnect: Handler<IAuth, void>
+  refreshToken?: (auth: IAuth) => Promise<IAuth>
 }
 
 export class Integration<
@@ -202,5 +204,16 @@ export class Integration<
     }
 
     throw new Error(`Action "${String(actionName)}" not found.`)
+  }
+
+  async runRefreshToken(auth: AuthValue): Promise<AuthValue> {
+    const fn = this.props.refreshToken
+    if (!fn) {
+      throw new SdkException(
+        `refreshToken is not implemented for integration: ${this.props.name}`,
+      )
+    }
+    // biome-ignore lint/suspicious/noExplicitAny: auth type narrowed at runtime by each integration
+    return await (fn as any)(auth)
   }
 }

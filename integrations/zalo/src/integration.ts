@@ -3,7 +3,9 @@ import {
   Integration,
   type IntegrationDefinition,
   SdkException,
+  TokenExpiredException,
 } from "@chatbotx.io/sdk"
+import { refreshAccessToken } from "./api/auth"
 import { callbackHandler } from "./handlers/callback"
 import { contactHandlers } from "./handlers/handler"
 import { messageHandlers } from "./handlers/message"
@@ -36,6 +38,32 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue> = {
   },
   disconnect: (_props: ZaloAuthValue): Promise<void> => {
     throw new Error("Method is not implemented.")
+  },
+  refreshToken: async (auth: ZaloAuthValue): Promise<ZaloAuthValue> => {
+    if (!auth.tokens.refreshToken) {
+      throw new TokenExpiredException("No refresh token available for Zalo")
+    }
+
+    const result = await refreshAccessToken(
+      {
+        clientId: auth.clientId,
+        clientSecret: auth.clientSecret,
+        redirectUrl: auth.redirectUrl,
+      },
+      auth.tokens.refreshToken,
+    )
+
+    return {
+      ...auth,
+      tokens: {
+        ...auth.tokens,
+        accessToken: result.access_token,
+        refreshToken: result.refresh_token,
+        expiresAt: new Date(
+          Date.now() + result.expires_in * 1000,
+        ).toISOString(),
+      },
+    }
   },
 }
 

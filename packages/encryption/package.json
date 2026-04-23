@@ -1,5 +1,5 @@
 {
-  "name": "@chatbotx.io/utils",
+  "name": "@chatbotx.io/encryption",
   "version": "0.1.0",
   "type": "module",
   "devDependencies": {
@@ -8,10 +8,11 @@
     "typescript": "6.0.2"
   },
   "dependencies": {
-    "uuniq": "^1.3.20",
+    "@t3-oss/env-core": "^0.13.11",
     "zod": "^4.3.6"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./keys": "./src/keys.ts"
   }
 }

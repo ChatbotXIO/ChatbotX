@@ -10,7 +10,7 @@ import { env } from "./keys"
 
 const encryptedDataSchema = z.object({
   iv: z.string().min(1),
-  data: z.string().min(1),
+  text: z.string().min(1),
 })
 export type EncryptedData = z.infer<typeof encryptedDataSchema>
 
@@ -28,7 +28,7 @@ export const encryptUtils = {
 
     return {
       iv: iv.toString("hex"),
-      data: encryptedText.toString("hex"),
+      text: encryptedText.toString("hex"),
     }
   },
 
@@ -36,7 +36,7 @@ export const encryptUtils = {
     const key = await encryptUtils.createKey()
     const decipher = createDecipheriv("aes-256-ctr", key, encryptedData.iv)
     const result = Buffer.concat([
-      decipher.update(encryptedData.data, "hex"),
+      decipher.update(encryptedData.text, "hex"),
       decipher.final(),
     ])
 
