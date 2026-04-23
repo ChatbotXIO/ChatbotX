@@ -1,10 +1,7 @@
 "use server"
 
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  broadcastModel,
-  contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
+import { broadcastModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -40,8 +37,11 @@ export const resendBroadcast = async (ctx: {
       .values({
         workspaceId: ctx.workspaceId,
         flowId: broadcast.flowId,
+        integrationWhatsappId: broadcast.integrationWhatsappId,
         channel: broadcast.channel,
         subaction: broadcast.subaction,
+        templateId: broadcast.templateId,
+        templateData: broadcast.templateData,
         status: "scheduled",
         schedulesType: "now",
         schedulesAt: new Date(),
@@ -51,26 +51,6 @@ export const resendBroadcast = async (ctx: {
       })
       .returning()
       .then((result) => result[0])
-
-    const linkedContacts = await tx.query.contactsOnBroadcastsModel.findMany({
-      columns: {
-        contactId: true,
-        conversationId: true,
-        contactInboxId: true,
-      },
-      where: {
-        broadcastId: broadcast.id,
-      },
-    })
-
-    await tx.insert(contactsOnBroadcastsModel).values(
-      linkedContacts.map((contact) => ({
-        broadcastId: newBroadcast.id,
-        contactId: contact.contactId,
-        conversationId: contact.conversationId,
-        contactInboxId: contact.contactInboxId,
-      })),
-    )
 
     return newBroadcast
   })
