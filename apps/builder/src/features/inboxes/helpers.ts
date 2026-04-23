@@ -1,6 +1,14 @@
 "use client"
 
+import { env } from "@/env"
 import type { ListInboxesResponse } from "./schema/action"
+
+const getPublicOrigin = () => {
+  if (typeof window !== "undefined") {
+    return window.location.origin
+  }
+  return env.NEXT_PUBLIC_BUILDER_URL
+}
 
 // Viber: viber://pa?chatURI=BOT_USERNAME&context=giveaway
 export const getInboxLink = (props: {
@@ -55,7 +63,7 @@ export const getInboxLink = (props: {
   if (inbox.channel === "webchat") {
     const url = new URL(
       `/webchat?workspaceId=${inbox.workspaceId}&webchatId=${inbox.sourceId}`,
-      window.location.origin,
+      getPublicOrigin(),
     )
     if (ref) {
       url.searchParams.set("ref", ref)
@@ -65,10 +73,11 @@ export const getInboxLink = (props: {
 
   const url = new URL(
     `/link?workspaceId=${inbox.workspaceId}`,
-    window.location.origin,
+    getPublicOrigin(),
   )
   if (ref) {
     url.searchParams.set("ref", ref)
   }
+
   return url.toString()
 }

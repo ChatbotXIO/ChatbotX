@@ -5,11 +5,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { getIdFromParams } from "@chatbotx.io/utils"
-import { cookies, headers } from "next/headers"
+import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { workspaceMemberService } from "@/features/workspace-members/workspace-member-service"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { getOriginUrlFromHeader } from "@/lib/domain"
 
 const INBOX_PAGE_REGEX =
   /\/space\/[a-z0-9]+\/inbox(?:\?conversationId=[a-z0-9]+)?$/
@@ -33,9 +34,8 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const headersList = await headers()
-
-  const isInboxPage = INBOX_PAGE_REGEX.test(headersList.get("x-url") ?? "")
+  const originUrl = await getOriginUrlFromHeader()
+  const isInboxPage = INBOX_PAGE_REGEX.test(originUrl)
   const requiredPadding = isInboxPage ? "" : "p-6"
 
   // Check if user is a member of the workspace

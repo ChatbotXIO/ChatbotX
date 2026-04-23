@@ -1,7 +1,7 @@
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import "@/polyfill"
+import { getPublicOriginFromRequest } from "@chatbotx.io/sdk"
 import { OpenAPIGenerator } from "@orpc/openapi"
-import { getPublicOriginFromRequest } from "@/lib/domain"
 import { publicRouter } from "@/routers/public"
 
 const openAPIGenerator = new OpenAPIGenerator({

@@ -13,11 +13,11 @@ import {
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
-import { headers } from "next/headers"
 import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { getOriginUrlFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -104,11 +104,10 @@ export const connectTelegramAction = authActionClient
           })
 
           // Register webhook URL with Telegram
-          const headersList = await headers()
-          const requestUrl = new URL(headersList.get("x-url") ?? "")
+          const originUrl = await getOriginUrlFromHeader()
           const webhookUrl = new URL(
             `/integrations/telegram/webhook?botId=${botData.id}`,
-            requestUrl.origin,
+            originUrl,
           ).toString()
           await integrations.telegram.runAction("registerWebhook", {
             botToken,

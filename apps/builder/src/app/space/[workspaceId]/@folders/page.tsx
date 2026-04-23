@@ -1,6 +1,5 @@
 import type { FolderModel } from "@chatbotx.io/database/types"
 import { getIdFromParams } from "@chatbotx.io/utils"
-import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { createLoader, type SearchParams } from "nuqs/server"
@@ -8,6 +7,7 @@ import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { FolderStoreProvider } from "@/features/folders/provider/folder-store-context"
 import { getCurrentFolder, listFolders } from "@/features/folders/queries"
+import { getOriginUrlFromHeader } from "@/lib/domain"
 import { parseAsBigInt } from "@/lib/nuqs"
 import { getFolderTypeFromFeature } from "./_lib"
 
@@ -25,8 +25,8 @@ export default async function FoldersDetault(props: {
     return notFound()
   }
 
-  const headersList = await headers()
-  const url = new URL(headersList.get("x-url") as string)
+  const originUrl = await getOriginUrlFromHeader()
+  const url = new URL(originUrl)
   const featureName = url.pathname.split("/").pop()
 
   const folderType = getFolderTypeFromFeature(featureName)

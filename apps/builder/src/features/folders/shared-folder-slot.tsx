@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
-import { headers } from "next/headers"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
@@ -14,6 +13,7 @@ import { Suspense } from "react"
 import { ListFolders } from "@/features/folders/list-folders"
 import { getCurrentFolder, listFolders } from "@/features/folders/queries"
 import { listFoldersSearchParams } from "@/features/folders/schema/query"
+import { getOriginUrlFromHeader } from "@/lib/domain"
 
 export default async function SharedFolderSlot(props: {
   workspaceId: string
@@ -21,11 +21,9 @@ export default async function SharedFolderSlot(props: {
 }) {
   const t = await getTranslations()
 
-  const headersList = await headers()
-  const url = new URL(
-    (headersList.get("x-url") ?? "https://google.com") as string,
-  )
-  const featureName = url.pathname.split("/").pop()
+  const originUrl = await getOriginUrlFromHeader()
+  const currentUrl = new URL(originUrl)
+  const featureName = currentUrl.pathname.split("/").pop()
 
   let folderType: FolderType | null = null
   switch (featureName) {

@@ -1,13 +1,43 @@
+import {
+  getPublicHostFromRequest,
+  getPublicOriginFromRequest,
+  getPublicProtocolFromRequest,
+} from "@chatbotx.io/sdk"
 import { getSessionCookie } from "better-auth/cookies"
 import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
-import { getPublicOriginFromRequest } from "@/lib/domain"
+import { httpLogger } from "./lib/log"
 
 const publicRoutes = ["/integrations", "/r"]
 const signinPath = "/auth/sign-in"
 
+async function logRequest(request: NextRequest) {
+  try {
+    // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+    const headers = Object.fromEntries(request.headers as any)
+    const body = await request.clone().json()
+    httpLogger.info(
+      {
+        headers,
+        body,
+      },
+      `LOG ${request.method} ${request.url}`,
+    )
+  } catch {
+    // Body might be empty or not JSON
+    httpLogger.info(
+      {
+        headers,
+      },
+      `LOG ${request.method} ${request.url} (Empty or not JSON)`,
+    )
+  }
+}
+
 export async function proxy(request: NextRequest) {
+  await logRequest(request)
+
   const { pathname, search } = request.nextUrl
   if (isPublicRoute(pathname)) {
     return attachProxyUrl(request)
@@ -30,11 +60,14 @@ export async function proxy(request: NextRequest) {
 }
 
 function attachProxyUrl(request: NextRequest): NextResponse {
-  const { pathname, search } = request.nextUrl
-  const proxyUrl = `${getPublicOriginFromRequest(request)}${pathname}${search}`
+  const originUrl = new URL(request.url)
+  originUrl.host = getPublicHostFromRequest(request)
+  originUrl.protocol = getPublicProtocolFromRequest(request)
+  originUrl.port = ""
 
   const requestHeaders = new Headers(request.headers)
-  requestHeaders.set("x-url", proxyUrl)
+  requestHeaders.set("x-url", originUrl.toString())
+  requestHeaders.set("x-domain", originUrl.hostname)
 
   return NextResponse.next({
     request: {

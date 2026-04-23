@@ -24,7 +24,7 @@ export const messagesAuthenticatedAPI = {
   findMessageAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/workspaces/{workspaceId}/messages/{messageId}",
+      path: "/workspaces/{workspaceId}/messages/{id}",
       summary: "Find message by message id",
       tags: ["Messages"],
     })

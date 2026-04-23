@@ -18,11 +18,10 @@ import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integ
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { headers } from "next/headers"
 import { organizationService } from "@/features/organization/organization-service"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { getDomainFromHeader } from "@/lib/domain"
+import { getDomainFromHeader, getOriginUrlFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
@@ -89,15 +88,19 @@ export const connectWhatsappAction = authActionClient
         }
 
         // Validate wabaId
-        const headersList = await headers()
-        const baseUrl = headersList.get("x-url") ?? ""
+        const originUrl = await getOriginUrlFromHeader()
+        const webhookUrl = new URL(
+          "/integrations/whatsapp/webhook",
+          originUrl,
+        ).toString()
+
         const auth: WhatsappAuthValue = {
           clientId: whatsappSettings.clientId,
           clientSecret: whatsappSettings.clientSecret,
           verifyToken: whatsappSettings.verifyToken,
           redirectUrl: new URL(
             "integrations/whatsapp/callback",
-            baseUrl,
+            originUrl,
           ).toString(),
           authType: AuthType.oauth2,
           tokens: {
@@ -107,7 +110,7 @@ export const connectWhatsappAction = authActionClient
             wabaId: parsedInput.wabaId,
             phoneNumber: foundPhoneNumber,
             businessId: parsedInput.businessId,
-            webhookUrl: `${baseUrl}/integrations/whatsapp/webhook`,
+            webhookUrl: webhookUrl.toString(),
           },
         }
 

@@ -10,11 +10,11 @@ import {
   sendResetPassword,
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
+import { getPublicOriginFromRequest } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
-import { getPublicOriginFromRequest } from "../domain"
 import { googleSignInConfig } from "./auth-config"
 
 export const auth = betterAuth({
@@ -40,12 +40,14 @@ export const auth = betterAuth({
         })
       }
 
-      const realUrl = getPublicOriginFromRequest(request as unknown as Request)
+      const originUrl = await getPublicOriginFromRequest(
+        request as unknown as Request,
+      )
 
       await sendResetPassword(user.email, {
         brandName: "ChatbotX",
-        brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
-        brandUrl: new URL("/", realUrl).toString(),
+        brandLogoUrl: new URL("/brand/logo_white.svg", originUrl).toString(),
+        brandUrl: new URL("/", originUrl).toString(),
         subject: "Reset your password",
         userName: user.name ?? user.email,
         resetPasswordUrl: url,
@@ -60,12 +62,14 @@ export const auth = betterAuth({
         })
       }
 
-      const realUrl = getPublicOriginFromRequest(request as unknown as Request)
+      const originUrl = await getPublicOriginFromRequest(
+        request as unknown as Request,
+      )
 
       await sendSignUpVerification(user.email, {
         brandName: "ChatbotX",
-        brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
-        brandUrl: new URL("/", realUrl).toString(),
+        brandLogoUrl: new URL("/brand/logo_white.svg", originUrl).toString(),
+        brandUrl: new URL("/", originUrl).toString(),
         subject: "ChatbotX Email Verification",
         userName: user.name ?? user.email,
         verificationUrl: url,
@@ -81,7 +85,7 @@ export const auth = betterAuth({
           })
         }
 
-        const realUrl = getPublicOriginFromRequest(
+        const originUrl = await getPublicOriginFromRequest(
           request as unknown as Request,
         )
 
@@ -96,8 +100,8 @@ export const auth = betterAuth({
 
         await sendMagicLink(email, {
           brandName: "ChatbotX",
-          brandLogoUrl: new URL("/brand/logo_white.svg", realUrl).toString(),
-          brandUrl: new URL("/", realUrl).toString(),
+          brandLogoUrl: new URL("/brand/logo_white.svg", originUrl).toString(),
+          brandUrl: new URL("/", originUrl).toString(),
           subject: "Magic link to ChatbotX",
           userName: user.name ?? email,
           magicUrl: url,

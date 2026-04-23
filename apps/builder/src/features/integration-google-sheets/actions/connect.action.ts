@@ -2,11 +2,11 @@
 
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { organizationService } from "@/features/organization/organization-service"
 import { integrations } from "@/integration"
+import { getOriginUrlFromHeader } from "@/lib/domain"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
@@ -27,7 +27,6 @@ export const connectGoogleSheets = workspaceActionClient
       }
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
-      const headersList = await headers()
       const organization = await organizationService.findById(
         ctx.workspace.organizationId,
       )
@@ -36,6 +35,7 @@ export const connectGoogleSheets = workspaceActionClient
         throw new ChatbotXException("Google Sheets App settings is not valid")
       }
 
+      const originUrl = await getOriginUrlFromHeader()
       const redirectUrl = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...googleSheetsSetting,
@@ -48,12 +48,7 @@ export const connectGoogleSheets = workspaceActionClient
             referer: parsedInput.referer,
           },
         },
-        req: new Request(
-          new URL(
-            HandleRequestType.generateAuthUrl,
-            headersList.get("x-url") ?? "",
-          ),
-        ),
+        req: new Request(new URL(HandleRequestType.generateAuthUrl, originUrl)),
       })) as string
 
       return redirect(redirectUrl)
