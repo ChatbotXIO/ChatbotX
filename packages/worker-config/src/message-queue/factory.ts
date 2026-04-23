@@ -16,35 +16,25 @@ const getProviderType = (): ProviderType => {
     : "bullmq"
 }
 
-export async function createProducer(
-  config: ProducerConfig,
-): Promise<MessagingProducer> {
+export function createProducer(config: ProducerConfig): MessagingProducer {
   const type = getProviderType()
 
   switch (type) {
     case "bullmq":
       return new BullMQProducer(config)
-    case "kafka": {
-      const { KafkaProducer } = await import("./kafka-provider")
-      return new KafkaProducer(config)
-    }
     default:
       throw new Error(`Unknown provider type: ${type}`)
   }
 }
 
-export async function createConsumer(
+export function createConsumer(
   config: ConsumerConfig | KafkaConsumerConfig,
-): Promise<MessagingConsumer> {
+): MessagingConsumer {
   const type = getProviderType()
 
   switch (type) {
     case "bullmq":
       return new BullMQConsumer(config as ConsumerConfig)
-    case "kafka": {
-      const { KafkaConsumer } = await import("./kafka-provider")
-      return new KafkaConsumer(config as KafkaConsumerConfig)
-    }
     default:
       throw new Error(`Unknown provider type: ${type}`)
   }
