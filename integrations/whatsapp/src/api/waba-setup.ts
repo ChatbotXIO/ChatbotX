@@ -70,7 +70,7 @@ export async function shareCreditLine({
     )
   } catch (error) {
     if (error instanceof HTTPError) {
-      const response = await error.response.json()
+      const response = error.data
       if (
         response.error?.code === -1 &&
         response.error?.error_subcode === 1_752_244
