@@ -2,6 +2,7 @@ import { createProducer, type Producer } from "@chatbotx.io/kafka"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { logger } from "../lib/logger"
+import { env } from "./keys"
 import { KAFKA_TOPIC } from "./services/constants"
 
 const TOTAL_BUCKETS = 256
@@ -195,7 +196,7 @@ class SchedulerWorker {
   }
 
   private getAssignedBuckets(): number[] {
-    const bucketRange = process.env.SCHEDULER_BUCKET_RANGE
+    const bucketRange = env.SCHEDULER_BUCKET_RANGE
 
     if (bucketRange) {
       if (bucketRange.includes(",")) {

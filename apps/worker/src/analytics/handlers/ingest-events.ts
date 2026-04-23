@@ -8,9 +8,7 @@ import {
 } from "@chatbotx.io/filesystem/server"
 import type { AnalyticsJobData } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import { getClickhouseConfig } from "../config/storage.config"
-
-const clickhouseConfig = getClickhouseConfig()
+import { env } from "../keys"
 
 const ingestedCache = new Map<string, number>()
 const CACHE_TTL = 5 * 60 * 1000
@@ -111,10 +109,10 @@ function getIngester(eventType: string): ClickhouseIngester {
       s3Prefix: eventType,
       manifestStore,
       clickhouseClient: clickhouse,
-      clickhouseDatabase: clickhouseConfig.database,
+      clickhouseDatabase: env.CLICKHOUSE_DB,
       clickhouseTable: eventType,
-      batchSize: clickhouseConfig.batchSize,
-      maxRetries: clickhouseConfig.maxRetries,
+      batchSize: env.CLICKHOUSE_BATCH_SIZE,
+      maxRetries: env.CLICKHOUSE_MAX_RETRIES,
     })
     ingesterCache.set(eventType, ingester)
   }

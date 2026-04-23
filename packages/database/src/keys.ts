@@ -12,10 +12,7 @@ export const keys = () =>
     client: {
       NEXT_PUBLIC_ASSET_URL: z.url(),
     },
-    runtimeEnv: {
-      NEXT_PUBLIC_ASSET_URL: process.env.NEXT_PUBLIC_ASSET_URL,
-      DATABASE_URL: process.env.DATABASE_URL,
-    },
+    runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
 

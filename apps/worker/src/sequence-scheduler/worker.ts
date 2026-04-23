@@ -2,10 +2,9 @@ import { db } from "@chatbotx.io/database/client"
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { SchedulerClient } from "@chatbotx.io/scheduler"
 import { logger } from "../lib/logger"
+import { env } from "./keys"
 
 const BOOTSTRAP_WINDOW_HOURS = 24
-const BOOTSTRAP_INTERVAL_MS_DEFAULT = 3_600_000
-const CLEANUP_INTERVAL_MS_DEFAULT = 21_600_000
 const BATCH_SIZE = 1000
 const TOTAL_BUCKETS = 256
 
@@ -32,9 +31,8 @@ class ReconcileJob {
 
   constructor(options: Partial<ReconcileJobOptions>) {
     this.options = {
-      intervalMs: options.intervalMs || BOOTSTRAP_INTERVAL_MS_DEFAULT,
-      cleanupIntervalMs:
-        options.cleanupIntervalMs || CLEANUP_INTERVAL_MS_DEFAULT,
+      intervalMs: options.intervalMs || env.BOOTSTRAP_INTERVAL_MS,
+      cleanupIntervalMs: options.cleanupIntervalMs || env.CLEANUP_INTERVAL_MS,
     }
   }
 
@@ -188,7 +186,7 @@ class ReconcileJob {
   }
 
   private getMaxBucket(): number {
-    const bucketRange = process.env.SCHEDULER_BUCKET_RANGE
+    const bucketRange = env.SCHEDULER_BUCKET_RANGE
 
     if (bucketRange) {
       if (bucketRange.includes(",")) {
@@ -220,17 +218,7 @@ class ReconcileJob {
   }
 }
 
-const intervalMs = Number.parseInt(
-  process.env.BOOTSTRAP_INTERVAL_MS || BOOTSTRAP_INTERVAL_MS_DEFAULT.toString(),
-  10,
-)
-
-const cleanupIntervalMs = Number.parseInt(
-  process.env.CLEANUP_INTERVAL_MS || CLEANUP_INTERVAL_MS_DEFAULT.toString(),
-  10,
-)
-
-const reconcile = new ReconcileJob({ intervalMs, cleanupIntervalMs })
+const reconcile = new ReconcileJob({})
 
 let isShuttingDown = false
 

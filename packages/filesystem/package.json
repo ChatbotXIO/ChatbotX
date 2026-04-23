@@ -22,6 +22,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./keys": "./src/keys.ts",
     "./node-upload": "./src/lib/node-upload.ts",
     "./server": "./src/lib/ndjson/server.ts",
     "./constants": "./src/lib/ndjson/ndjson-constants.ts"

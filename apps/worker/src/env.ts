@@ -1,3 +1,4 @@
+import { keys as filesystemKeys } from "@chatbotx.io/filesystem/keys"
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
@@ -7,6 +8,7 @@ const editionRule = z
   .default("community")
 
 export const env = createEnv({
+  extends: [filesystemKeys()],
   server: {
     NEXT_PUBLIC_ENVIRONMENT: environmentRule,
     NEXT_PUBLIC_EDITION: editionRule,
