@@ -3,12 +3,11 @@ import { sdkLogger } from "../logger"
 import type { ParsedError } from "../schemas"
 
 export class MessengerSdkException extends SdkException {
-  async getErrorData(): Promise<ParsedError> {
+  getErrorData(): Promise<ParsedError> {
     // biome-ignore lint/suspicious/noExplicitAny: <does not care about type>
     const originError = this.originError as any
     if (originError?.response) {
-      const body =
-        originError.response.error || (await originError.response.json())
+      const body = originError.response.error || originError.data
 
       const error = body?.error ?? {}
 
@@ -16,14 +15,14 @@ export class MessengerSdkException extends SdkException {
         sdkLogger.error("MessengerSdkException: No error in response", body)
       }
 
-      return {
+      return Promise.resolve({
         message: error?.message,
         code: error?.code,
         statusCode: error?.statusCode,
-        subcode: error?.subcode,
-      }
+        subcode: error?.subcode || error.error_subcode,
+      })
     }
 
-    return UNKNOWN_ERROR
+    return Promise.resolve(UNKNOWN_ERROR)
   }
 }

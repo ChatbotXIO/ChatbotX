@@ -1,10 +1,10 @@
 import { HTTPError } from "ky"
 import { toast } from "sonner"
 
-export async function clientErrorHandler(error: unknown) {
+export function clientErrorHandler(error: unknown) {
   if (error instanceof HTTPError) {
     try {
-      const result = await error.response.json()
+      const result = error.data
       toast.error(
         result.message || "An unexpected error occurred. Please contact admin",
       )

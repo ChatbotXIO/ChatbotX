@@ -22,7 +22,7 @@ export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
     }
   } catch (error) {
     if (error instanceof HTTPError) {
-      const result = await error.response.json()
+      const result = error.data
       if (result.error === "invalid_request") {
         console.error("Failed to subscribe webhook", error)
       }
