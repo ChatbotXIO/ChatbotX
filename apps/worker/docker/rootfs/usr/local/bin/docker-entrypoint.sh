@@ -47,6 +47,9 @@ resolve_worker_script() {
     "webhook")
       echo "${WORKER_DIST_DIR}/webhook/worker.mjs"
       ;;
+    "events")
+      echo "${WORKER_DIST_DIR}/events/worker.mjs"
+      ;;
     *)
       return 1
       ;;
