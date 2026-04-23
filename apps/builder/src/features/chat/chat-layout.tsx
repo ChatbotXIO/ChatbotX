@@ -95,29 +95,26 @@ export const ChatLayout = (props: ChatLayoutProps) => {
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
         {activeConversation && (
-          <>
-            <div className="flex h-full w-full flex-col">
-              <MessageHead />
-              {activeConversation?.botEnabled && (
-                <Button
-                  className="rounded-none"
-                  disabled={isDisablingBot}
-                  onClick={() => {
-                    disableBot({ ids: [activeConversation.id] })
-                  }}
-                  variant="secondary"
-                >
-                  <BotIcon />
-                  {t("messages.botIsActive")}
-                </Button>
-              )}
-              <MessageList />
-              <MessageInput />
-            </div>
-
-            <ChatRealtime />
-          </>
+          <div className="flex h-full w-full flex-col">
+            <MessageHead />
+            {activeConversation?.botEnabled && (
+              <Button
+                className="rounded-none"
+                disabled={isDisablingBot}
+                onClick={() => {
+                  disableBot({ ids: [activeConversation.id] })
+                }}
+                variant="secondary"
+              >
+                <BotIcon />
+                {t("messages.botIsActive")}
+              </Button>
+            )}
+            <MessageList />
+            <MessageInput />
+          </div>
         )}
+        <ChatRealtime />
       </ResizablePanel>
 
       <ResizableHandle withHandle />

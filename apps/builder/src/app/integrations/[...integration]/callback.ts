@@ -15,15 +15,10 @@ import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
 
-const stateValidationSchema = z
-  .object({
-    workspaceId: zodBigintAsString(),
-    referer: z.string(),
-  })
-  .transform((data) => ({
-    ...data,
-    referer: decodeURIComponent(data.referer),
-  }))
+const stateValidationSchema = z.object({
+  workspaceId: zodBigintAsString(),
+  referer: z.url(),
+})
 
 export const handleCallback = async (
   integrationType: IntegrationType,
@@ -35,7 +30,9 @@ export const handleCallback = async (
 
   // Parse state params to get workspace info
   const url = new URL(req.url)
-  const rawState = JSON.parse(atob(url.searchParams.get("state") || ""))
+  const rawState = JSON.parse(
+    atob(decodeURIComponent(url.searchParams.get("state") || "")),
+  )
   const { data: stateParams } = stateValidationSchema.safeParse(rawState)
   if (!stateParams) {
     logger.debug(url, "state is not valid")

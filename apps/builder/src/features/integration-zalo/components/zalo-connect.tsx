@@ -32,7 +32,7 @@ export function ZaloConnect({ workspaceId, settings }: ZaloConnectProps) {
       redirectUrl,
       stateParams: {
         workspaceId,
-        referer: encodeURIComponent(currentUrl),
+        referer: currentUrl,
       },
     })
 
