@@ -61,6 +61,7 @@ export const createTriggerAction = workspaceActionClient
         .values({
           id: createId(),
           ...triggerData,
+          actions: [],
           workspaceId,
         })
         .returning()
