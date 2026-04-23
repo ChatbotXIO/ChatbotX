@@ -34,7 +34,7 @@ const config: IntegrationDefinition<
 
       return {
         id: botData.id.toString(),
-        username: botData.first_name ?? botData.username,
+        username: botData.username as string,
       }
     },
     registerWebhook: async ({ botToken, webhookUrl }) =>

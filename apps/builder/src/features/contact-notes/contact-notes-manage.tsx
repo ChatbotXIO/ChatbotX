@@ -19,8 +19,10 @@ type ContactNoteMode = z.infer<typeof contactNoteModes>
 
 export function ContactNotesManage({
   contactNotes,
+  onNotesChange,
 }: {
   contactNotes: ContactNoteResource[]
+  onNotesChange?: (notes: ContactNoteResource[]) => void
 }) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
@@ -34,6 +36,11 @@ export function ContactNotesManage({
   const [contactNote, setContactNote] = useState<ContactNoteResource | null>(
     null,
   )
+
+  useEffect(() => {
+    setAllContactNotes(contactNotes)
+    setMode(contactNoteModes.enum.list)
+  }, [contactNotes])
 
   useEffect(() => {
     if (activeConversationId) {
@@ -50,6 +57,11 @@ export function ContactNotesManage({
       setContact(null)
     }
   }, [activeConversationId, conversations])
+
+  const updateNotes = (notes: ContactNoteResource[]) => {
+    setAllContactNotes(notes)
+    onNotesChange?.(notes)
+  }
 
   const resetAction = () => {
     setMode(contactNoteModes.enum.list)
@@ -75,7 +87,7 @@ export function ContactNotesManage({
           contactId={contact?.id}
           onCancel={() => setMode(contactNoteModes.enum.list)}
           onSuccess={(value: ContactNoteModel) => {
-            setAllContactNotes([value, ...allContactNotes])
+            updateNotes([value, ...allContactNotes])
             resetAction()
           }}
           workspaceId={workspaceId}
@@ -87,7 +99,7 @@ export function ContactNotesManage({
           contactNote={contactNote}
           onCancel={() => setMode(contactNoteModes.enum.list)}
           onSuccess={(value: ContactNoteResource) => {
-            setAllContactNotes(
+            updateNotes(
               allContactNotes.map((note) =>
                 note.id === value.id ? value : (note as ContactNoteResource),
               ),
@@ -108,7 +120,7 @@ export function ContactNotesManage({
             }
           }}
           onSuccess={() => {
-            setAllContactNotes(
+            updateNotes(
               allContactNotes.filter(
                 (note) => note.id !== (contactNote?.id ?? ""),
               ),

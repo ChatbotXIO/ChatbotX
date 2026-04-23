@@ -7,6 +7,7 @@ import { addContactTags } from "../actions/add-contact-tag.action"
 import { createContact } from "../actions/create-contact.action"
 import { deleteContactCustomFields } from "../actions/delete-contact-custom-field.action"
 import { removeContactTags } from "../actions/remove-contact-tag.action"
+import { getContact } from "../queries/get-contact.query"
 import { listContactCustomFields } from "../queries/list-contact-fields.query"
 import { countContactInboxes } from "../queries/list-contact-inboxes.queries"
 import { listContactTags } from "../queries/list-contact-tags.query"
@@ -24,9 +25,29 @@ import {
   listContactTagsResponse,
   removeContactTagRequest,
 } from "../schemas/contact-tag"
-import { listContactsRequest, listContactsResponse } from "../schemas/query"
+import {
+  getContactRequest,
+  getContactResponse,
+  listContactsRequest,
+  listContactsResponse,
+} from "../schemas/query"
 
 export const contactsAuthenticatedAPI = {
+  getContactAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/{contactId}",
+      summary: "Get contact",
+      tags: ["Contacts"],
+    })
+    .input(getContactRequest)
+    .output(getContactResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) => {
+      const { workspaceId, contactId } = input
+      return await getContact({ workspaceId, contactId })
+    }),
+
   listContactsAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",

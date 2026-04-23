@@ -4,7 +4,7 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { TagsInputField } from "@chatbotx.io/ui/components/ui/muhammada86/tags-input-field"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useTagOptions } from "@/features/tags/provider/tag-hook"
 import type { TagResource } from "@/features/tags/schema/resource"
@@ -53,6 +53,12 @@ export default function UpdateContactTagField({
       errorMapProps: {},
     },
   )
+
+  useEffect(() => {
+    const newTagsName = tags.map((tag) => tag.name)
+    setCurrentTagsName(newTagsName)
+    form.reset({ contactId: contact?.id ?? "", tags: newTagsName })
+  }, [tags, contact?.id, form.reset])
 
   return (
     <Form {...form}>

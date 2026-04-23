@@ -13,11 +13,13 @@ import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-
 import { organizationService } from "@/features/organization/organization-service"
 import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
+import { getCurrentUserId } from "@/lib/auth/utils"
+import { getPublicOriginFromRequest } from "@/lib/domain"
 import { logger } from "@/lib/log"
 
 const stateValidationSchema = z
   .object({
-    workspaceId: zodBigintAsString(),
+    workspaceId: zodBigintAsString().optional(),
     referer: z.string(),
   })
   .transform((data) => ({
@@ -51,12 +53,26 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // find workspace and organization config
-  const workspace = await workspaceService.findById(stateParams.workspaceId)
-  const organization = await organizationService.findById(
-    workspace.organizationId,
-  )
+  // find organization from domain and current user
+  const domain = new URL(await getPublicOriginFromRequest(req)).hostname
+  const organization = await organizationService.findByDomain(domain)
   const organizationSettings = organization.settings
+
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return notFound()
+  }
+
+  const workspace = stateParams.workspaceId
+    ? await workspaceService.findById(stateParams.workspaceId)
+    : await workspaceService.create({
+        data: {
+          organizationId: organization.id,
+          name: "New Workspace",
+        },
+        organization,
+        createdBy: userId,
+      })
 
   let authResult: AuthValue
   let googleSheetsAuth: Oauth2AuthValue | null = null
@@ -68,7 +84,7 @@ export const handleCallback = async (
 
       await connectZaloHandler({
         zaloSettings: organizationSettings.zalo,
-        workspaceId: stateParams.workspaceId,
+        workspaceId: workspace.id,
         req,
       })
 
@@ -109,13 +125,13 @@ export const handleCallback = async (
 
     await tx.insert(integrationModel).values({
       id: integrationId,
-      workspaceId: stateParams.workspaceId,
+      workspaceId: workspace.id,
       integrationType,
     })
 
     if (integrationType === "googleSheets" && googleSheetsAuth) {
       await tx.insert(integrationGoogleSheetsModel).values({
-        workspaceId: stateParams.workspaceId,
+        workspaceId: workspace.id,
         integrationId,
         auth: googleSheetsAuth,
       })

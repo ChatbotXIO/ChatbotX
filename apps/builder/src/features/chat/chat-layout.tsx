@@ -129,7 +129,12 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {isFirstLoadConversation && isLoadingConversation && (
           <Loader2Icon className="mx-auto my-4 animate-spin" />
         )}
-        {activeConversation && <ContactInboxPanel workspaceId={workspaceId} />}
+        {activeConversation && (
+          <ContactInboxPanel
+            activeConversationId={activeConversation.id}
+            workspaceId={workspaceId}
+          />
+        )}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

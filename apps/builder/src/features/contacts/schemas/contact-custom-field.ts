@@ -9,6 +9,11 @@ import { publicCustomFieldResource } from "@/features/custom-fields/schemas/reso
 
 export const contactCustomFieldResource = createSelectSchema(
   contactCustomFieldModel,
+  {
+    id: z.string(),
+    contactId: z.string(),
+    customFieldId: z.string(),
+  },
 )
 
 export const addContactCustomFieldRequest = z.object({

@@ -117,26 +117,6 @@ export const listConversations = async (
 
   const contactIds = conversations.map((c) => c.Conversation.contactId)
 
-  const contactsOnSequences =
-    contactIds.length > 0
-      ? await db.query.contactsOnSequenceModel.findMany({
-          where: {
-            contactId: {
-              in: contactIds,
-            },
-          },
-          with: {
-            sequence: true,
-          },
-        })
-      : []
-
-  const contactsOnSequencesMap = new Map<string, typeof contactsOnSequences>()
-  for (const cos of contactsOnSequences) {
-    const existing = contactsOnSequencesMap.get(cos.contactId) || []
-    contactsOnSequencesMap.set(cos.contactId, [...existing, cos])
-  }
-
   const contactInboxes = await db.query.contactInboxModel.findMany({
     where: {
       contactId: {
@@ -149,12 +129,7 @@ export const listConversations = async (
   return {
     data: conversations.map((c) => ({
       ...c.Conversation,
-      contact: c.Contact
-        ? {
-            ...c.Contact,
-            contactsOnSequences: contactsOnSequencesMap.get(c.Contact.id) || [],
-          }
-        : null,
+      contact: c.Contact,
       contactInboxes: contactInboxesMap[c.Conversation.contactId] || [],
       assignedUser: c.User,
       assignedInboxTeam: c.InboxTeam,
@@ -179,6 +154,9 @@ export const findConversation = async (
               sequence: true,
             },
           },
+          contactNotes: true,
+          contactCustomFields: true,
+          tags: true,
         },
       },
       contactInboxes: true,

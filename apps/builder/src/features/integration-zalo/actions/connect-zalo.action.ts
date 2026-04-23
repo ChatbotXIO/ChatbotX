@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { inboxModel, integrationZaloModel } from "@chatbotx.io/database/schema"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
+import { redirect } from "next/navigation"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 
@@ -45,6 +46,21 @@ export async function connectZaloHandler({
       })
       .returning()
       .then((result) => result[0])
+
+    const isExistingIntegration = await tx.query.integrationZaloModel.findFirst(
+      {
+        where: {
+          inboxId: inbox.id,
+          oaId: authValue.oaId,
+        },
+      },
+    )
+
+    if (isExistingIntegration) {
+      redirect(
+        `/space/${workspaceId}/settings/channels?channel=zalo&error=duplicated`,
+      )
+    }
 
     await tx.insert(integrationZaloModel).values({
       inboxId: inbox.id,

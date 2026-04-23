@@ -61,7 +61,7 @@ export function AddContactForm({
         className="flex w-full flex-col gap-3"
         onSubmit={handleSubmitWithAction}
       >
-        <TextareaField name="content" placeholder="..." required />
+        <TextareaField name="text" placeholder="..." required />
 
         <div className="flex justify-end gap-2">
           <Button onClick={onCancel} size="sm" type="button" variant="ghost">

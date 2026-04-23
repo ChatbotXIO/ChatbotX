@@ -1,11 +1,12 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
+import { redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { InstagramConnect } from "@/features/integration-instagram/components/instagram-connect"
 import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
-import { ZaloConnect } from "@/features/integration-zalo/components/zalo-connect"
+import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
 import { organizationService } from "@/features/organization/organization-service"
 import { getDomainFromHeader } from "@/lib/domain"
 
@@ -24,7 +25,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   const selectedChannel = searchParams.channel
 
   if (selectedChannel === "telegram") {
-    return <TelegramConnect workspaceId={workspaceId} />
+    return <TelegramConnect autoOpen={true} workspaceId={workspaceId} />
   }
 
   if (selectedChannel === "webchat") {
@@ -60,7 +61,11 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   if (selectedChannel === "zalo" && settings.zalo) {
-    return <ZaloConnect settings={settings.zalo} workspaceId={workspaceId} />
+    const redirectUri = await generateZaloRedirectUri(
+      settings.zalo,
+      workspaceId,
+    )
+    redirect(redirectUri)
   }
 
   return <InboxSelectCard settings={settings} />

@@ -1,6 +1,7 @@
 "use client"
 
 import type { ContactNoteModel } from "@chatbotx.io/database/types"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
@@ -51,6 +52,7 @@ export function EditContactForm({
           mode: "onChange",
           defaultValues: {
             text: contactNote.text,
+            contactNoteId: contactNote.id.toString(),
           },
         },
         errorMapProps: {},
@@ -63,7 +65,8 @@ export function EditContactForm({
         className="flex w-full flex-col gap-3"
         onSubmit={handleSubmitWithAction}
       >
-        <TextareaField label="" name="content" placeholder="..." />
+        <InputField name="contactNoteId" type="hidden" />
+        <TextareaField label="" name="text" placeholder="..." />
         <div className="flex justify-end gap-2">
           <Button onClick={onCancel} size="sm" type="button" variant="ghost">
             {t("actions.cancel")}

@@ -36,7 +36,7 @@ export function DeleteContactNoteDialog({
   const t = useTranslations()
 
   const { execute, isPending } = useAction(
-    deleteContactNoteAction.bind(null, workspaceId, contactNoteId ?? ""),
+    deleteContactNoteAction.bind(null, workspaceId, contactId ?? ""),
     {
       onSuccess: () => {
         toast.success(

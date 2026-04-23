@@ -21,19 +21,21 @@ import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { useState } from "react"
 import { toast } from "sonner"
-import { connectTelegramAction } from "../actions/connect-telegram.action"
+import { connectTelegramAction } from "../actions/connect.action"
 import { connectTelegramRequest } from "../schemas/request"
 
 export function TelegramConnect({
   workspaceId,
   children,
+  autoOpen = false,
 }: {
   workspaceId?: string | null
   children?: ReactNode
+  autoOpen?: boolean
 }) {
   const t = useTranslations()
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(autoOpen)
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     connectTelegramAction,
@@ -68,13 +70,7 @@ export function TelegramConnect({
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        {children ?? (
-          <Button size="sm" type="button" variant="secondary">
-            {t("actions.connect", { feature: t("fields.telegram.label") })}
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

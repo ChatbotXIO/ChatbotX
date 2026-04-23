@@ -3,14 +3,18 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
+import { contactNoteResource } from "@/features/contact-notes/schemas/resource"
+import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
 import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
 import { basePaginationRequest } from "@/lib/pagination"
-import { contactCustomFieldResource } from "./contact-custom-field"
-import { contactNoteResource } from "./contact-note"
+import {
+  contactCustomFieldResource,
+  publicContactCustomFieldResource,
+} from "./contact-custom-field"
 import { contactResource, publicContactResource } from "./resource"
 
 export const contactFilterSchema = z.object({
@@ -94,3 +98,19 @@ export const publicListContactsByCustomFieldRequest = z.object({
 export type PublicListContactsByCustomFieldRequest = z.infer<
   typeof publicListContactsByCustomFieldRequest
 >
+
+export const getContactRequest = z.object({
+  workspaceId: zodBigintAsString(),
+  contactId: zodBigintAsString(),
+})
+export type GetContactRequest = z.infer<typeof getContactRequest>
+
+export const getContactResponse = contactResource.and(
+  z.object({
+    tags: z.array(tagResource),
+    customFields: z.array(publicContactCustomFieldResource),
+    contactNotes: z.array(contactNoteResource),
+    contactsOnSequences: z.array(contactOnSequenceWithRelations),
+  }),
+)
+export type GetContactResponse = z.infer<typeof getContactResponse>

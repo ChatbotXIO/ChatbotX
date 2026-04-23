@@ -1,7 +1,6 @@
 "use client"
 
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import type { ContactCustomFieldModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -10,23 +9,29 @@ import {
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { AtSignIcon, PhoneIcon, TextIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { ContactCustomFieldManage } from "../custom-fields/contact-custom-field-manage"
 import { customFieldIconsMap } from "../custom-fields/provider/custom-field-hook"
 import { useCustomFieldStore } from "../custom-fields/provider/custom-field-store-context"
 import { EditContactField } from "./edit-contact-field"
-import type { ContactEditableField, ContactResource } from "./schemas/resource"
+import type { GetContactResponse } from "./schemas/query"
+import type { ContactEditableField } from "./schemas/resource"
 import { getAvatarUrl } from "./utils"
 
-export const ContactDetail = () => {
+export const ContactDetail = ({
+  activeConversationId,
+  contact,
+}: {
+  activeConversationId: string | null
+  contact: GetContactResponse | null
+}) => {
   const t = useTranslations()
 
   const workspaceId = useWorkspaceId()
-  const { activeConversationId, conversations } = useChatStore((state) => state)
+  const { conversations } = useChatStore((state) => state)
 
-  const [contact, setContact] = useState<ContactResource | null>(null)
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
 
@@ -35,6 +40,47 @@ export const ContactDetail = () => {
 
   const [contactFields, setContactFields] = useState<ContactEditableField[]>([])
 
+  const handleCustomFieldDeleted = (customFieldId: string) => {
+    setContactFields((previous) =>
+      previous.filter((field) => field.key !== customFieldId),
+    )
+  }
+
+  const handleCustomFieldUpdated = (customFieldId: string, value: string) => {
+    setContactFields((previous) =>
+      previous.map((field) =>
+        field.key === customFieldId ? { ...field, value } : field,
+      ),
+    )
+  }
+
+  const handleChooseCustomField = (customFieldId: string) => {
+    const targetCustomField = customFields.find(
+      (field) => field.id.toString() === customFieldId,
+    )
+    if (!targetCustomField) {
+      return
+    }
+    setContactFields([
+      ...contactFields,
+      {
+        key: customFieldId,
+        icon: customFieldIconsMap[targetCustomField.type as CustomFieldType],
+        label: targetCustomField.name,
+        value: "",
+        type: targetCustomField.type as CustomFieldType,
+      },
+    ])
+  }
+
+  const customFieldMap = useMemo(() => {
+    const map = new Map()
+    for (const field of customFields) {
+      map.set(field.id, field)
+    }
+    return map
+  }, [customFields])
+
   useEffect(() => {
     if (activeConversationId && initializedCustomFields) {
       const conversation = conversations.find(
@@ -42,8 +88,6 @@ export const ContactDetail = () => {
       )
 
       if (conversation?.contact) {
-        setContact(conversation.contact)
-
         const tmpContactFields: ContactEditableField[] = [
           {
             key: "email",
@@ -75,20 +119,16 @@ export const ContactDetail = () => {
           },
         ]
 
-        // TODO: get contact custom fields from conversation
-        for (const cc of [] as ContactCustomFieldModel[]) {
-          // for (const cc of conversation?.contact.contactCustomFields || []) {
-          const targetCustomField = customFields.find(
-            (c) => c.id === cc.customFieldId,
-          )
+        for (const contactCustomField of contact?.customFields ?? []) {
+          const targetCustomField = customFieldMap.get(contactCustomField.id)
           if (targetCustomField) {
             tmpContactFields.push({
-              key: cc.customFieldId,
+              key: contactCustomField.id,
               icon: customFieldIconsMap[
                 targetCustomField.type as CustomFieldType
               ],
               label: targetCustomField.name,
-              value: cc.value,
+              value: contactCustomField.value,
               type: targetCustomField.type as CustomFieldType,
             })
           }
@@ -96,18 +136,17 @@ export const ContactDetail = () => {
 
         setContactFields(tmpContactFields)
       } else {
-        setContact(null)
         setContactFields([])
       }
     } else {
-      setContact(null)
       setContactFields([])
     }
   }, [
     activeConversationId,
-    initializedCustomFields,
     conversations,
-    customFields,
+    initializedCustomFields,
+    contact,
+    customFieldMap,
   ])
 
   return contact ? (
@@ -149,49 +188,17 @@ export const ContactDetail = () => {
           </div>
         ))}
         <ContactCustomFieldManage
-          disabledIds={contactFields.map((c) => c.key)}
-          onChooseCustomField={(customFieldId) => {
-            const targetCustomField = customFields.find(
-              (c) => c.id.toString() === customFieldId,
-            )
-
-            if (targetCustomField) {
-              setContactFields([
-                ...contactFields,
-                {
-                  key: customFieldId,
-                  icon: customFieldIconsMap[
-                    targetCustomField.type as CustomFieldType
-                  ],
-                  label: targetCustomField.name,
-                  value: "",
-                  type: targetCustomField.type as CustomFieldType,
-                },
-              ])
-            }
-          }}
+          disabledIds={contactFields.map((field) => field.key)}
+          onChooseCustomField={handleChooseCustomField}
           workspaceId={workspaceId}
         />
       </div>
 
       <EditContactField
         contactId={contact.id}
-        onDeleted={(key) => {
-          const updatedContactFields = contactFields.filter(
-            (field) => field.key !== key,
-          )
-          setContactFields(updatedContactFields)
-        }}
+        onDeleted={handleCustomFieldDeleted}
         onOpenChange={() => setSelectedField(null)}
-        onUpdated={(key, value) => {
-          const updatedContactFields = contactFields.map((field) => {
-            if (field.key === key) {
-              return { ...field, value }
-            }
-            return field
-          })
-          setContactFields(updatedContactFields)
-        }}
+        onUpdated={handleCustomFieldUpdated}
         open={Boolean(selectedField)}
         targetField={selectedField}
         workspaceId={workspaceId}

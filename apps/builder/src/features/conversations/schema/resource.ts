@@ -1,5 +1,4 @@
 import {
-  contactsOnSequenceModel,
   conversationModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
@@ -9,7 +8,6 @@ import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/reso
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
 import { contactResource } from "@/features/contacts/schemas/resource"
 import { messageResource } from "@/features/messages/schema/resource"
-import { sequenceResource } from "@/features/sequences/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
 
 export const conversationResource = createSelectSchema(conversationModel, {
@@ -19,26 +17,11 @@ export const conversationResource = createSelectSchema(conversationModel, {
 })
 export type ConversationResource = z.infer<typeof conversationResource>
 
-const contactsOnSequenceResource = createSelectSchema(contactsOnSequenceModel, {
-  id: z.string(),
-  contactId: z.string(),
-  sequenceId: z.string(),
-  workspaceId: z.string(),
-})
-
 export const listConversationsItemResource = conversationResource.and(
   z.object({
     contactInboxes: z.array(contactInboxResource),
     messages: z.array(messageResource),
-    contact: contactResource
-      .extend({
-        contactsOnSequences: z.array(
-          contactsOnSequenceResource.extend({
-            sequence: sequenceResource,
-          }),
-        ),
-      })
-      .nullable(),
+    contact: contactResource.nullable(),
     // inbox: inboxResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),

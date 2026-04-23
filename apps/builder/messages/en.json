@@ -1524,7 +1524,8 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Refresh permissions"
+    "refreshPermissions": "Refresh permissions",
+    "duplicated": "This Zalo OA account has already been connected to another workspace."
   },
   "telegram": {
     "description": "This integration lets you create Telegram bots.",
