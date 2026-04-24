@@ -8,11 +8,7 @@ export type BroadcastStatus = z.infer<typeof broadcastStatuses>
 
 export const broadcastSubactions = z.enum([
   "allContacts",
-  "messengerList",
   "messengerActiveContacts",
-  "messengerAccountUpdate",
-  "messengerConfirmedEventUpdate",
-  "messengerPostPurchaseUpdate",
   "whatsappTemplateMessage",
   "whatsappWithin24Hours",
 ])

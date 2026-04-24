@@ -1,4 +1,4 @@
-import { operatorTypes } from "@chatbotx.io/database/partials"
+import { channelTypes, operatorTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
@@ -13,10 +13,6 @@ import { contactCustomFieldResource } from "./contact-custom-field"
 import { contactNoteResource } from "./contact-note"
 import { contactResource, publicContactResource } from "./resource"
 
-export interface ContactFilters {
-  inboxIds?: string[]
-}
-
 export const contactFilterSchema = z.object({
   operator: z.enum(["and", "or"]),
   conditions: z.array(
@@ -28,10 +24,17 @@ export const contactFilterSchema = z.object({
   ),
 })
 
+export const contactFilterRequest = z.object({
+  contactFilter: contactFilterSchema,
+})
+export type ContactFilterRequest = z.infer<typeof contactFilterRequest>
+
 export const listContactsRequest = basePaginationRequest.extend({
   keyword: z.string().optional(),
   workspaceId: zodBigintAsString(),
-  contactFilter: z.array(contactFilterSchema).optional(),
+  contactFilter: contactFilterRequest.shape.contactFilter.optional(),
+  channels: z.array(channelTypes).optional(),
+  inboxIds: z.array(zodBigintAsString()).optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
@@ -60,11 +63,6 @@ export const listContactsResponse = z.object({
   pageCount: z.number(),
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
-
-export const contactFilterRequest = z.object({
-  contactFilter: contactFilterSchema,
-})
-export type ContactFilterRequest = z.infer<typeof contactFilterRequest>
 
 export const findContactRequest = contactResource
   .pick({ id: true, workspaceId: true })

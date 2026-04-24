@@ -78,31 +78,9 @@ const getConfigs = (t: ReturnType<typeof useTranslations>) =>
       description: "",
       subactions: [
         {
-          value: broadcastSubactions.enum.messengerList,
-          name: t("broadcasts.messengerList.title"),
-          description: t("broadcasts.messengerList.description"),
-        },
-        {
           value: broadcastSubactions.enum.messengerActiveContacts,
           name: t("broadcasts.messengerActiveContacts.title"),
           description: t("broadcasts.messengerActiveContacts.description"),
-        },
-        {
-          value: broadcastSubactions.enum.messengerAccountUpdate,
-          name: t("broadcasts.messengerAccountUpdate.title"),
-          description: t("broadcasts.messengerAccountUpdate.description"),
-        },
-        {
-          value: broadcastSubactions.enum.messengerConfirmedEventUpdate,
-          name: t("broadcasts.messengerConfirmedEventUpdate.title"),
-          description: t(
-            "broadcasts.messengerConfirmedEventUpdate.description",
-          ),
-        },
-        {
-          value: broadcastSubactions.enum.messengerPostPurchaseUpdate,
-          name: t("broadcasts.messengerPostPurchaseUpdate.title"),
-          description: t("broadcasts.messengerPostPurchaseUpdate.description"),
         },
       ],
     },
@@ -464,7 +442,8 @@ type CreateBroadcastChooseFlowProps = {
 function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   const t = useTranslations()
   const router = useRouter()
-  const { count, getContactsCount } = useContactStore((state) => state)
+  const { contactInboxesCount: count, getContactInboxesCount } =
+    useContactStore((state) => state)
 
   const workspaceId = useWorkspaceId()
 
@@ -562,11 +541,11 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
   }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId])
 
   useEffect(() => {
-    getContactsCount({
+    getContactInboxesCount({
       contactFilter: watchedContactFilter,
       channel: props.channel,
     })
-  }, [watchedContactFilter, props.channel, getContactsCount])
+  }, [watchedContactFilter, props.channel, getContactInboxesCount])
 
   useEffect(() => {
     if (watchedTemplateId && templates.length > 0) {

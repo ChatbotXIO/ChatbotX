@@ -11,11 +11,13 @@ export type ContactState = {
 
   workspaceId: string
   count: number | null
+  contactInboxesCount: number | null
 }
 
 export type ContactActions = {
   initialize: () => Promise<void>
-  getContactsCount: (params?: {
+  getContactsCount: () => Promise<void>
+  getContactInboxesCount: (params?: {
     contactFilter?: ContactFilterRequest["contactFilter"]
     channel?: ChannelType
   }) => Promise<void>
@@ -31,6 +33,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
 
     workspaceId: "",
     count: null,
+    contactInboxesCount: null,
     ...props,
 
     initialize: async () => {
@@ -44,7 +47,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
       set({ initialized: true })
     },
 
-    getContactsCount: async (params) => {
+    getContactsCount: async () => {
       const { workspaceId, loadingCounts } = get()
 
       if (loadingCounts || !workspaceId) {
@@ -54,33 +57,44 @@ export const createContactStore = (props: Partial<ContactState>) =>
       set({ loadingCounts: true, error: null })
 
       try {
-        let contactFilter: ContactFilterRequest["contactFilter"][] = []
-        if (
-          params?.channel &&
-          params.channel !== channelTypes.enum.omnichannel
-        ) {
-          contactFilter = [
-            {
-              operator: "and",
-              conditions: [
-                {
-                  field: "channel",
-                  operator: "is",
-                  value: [params.channel],
-                },
-              ],
-            },
-          ]
-        }
-
         const { total } =
           await client.contactsAPIs.countContactsAuthenticatedAPI({
             workspaceId,
             sort: [],
-            contactFilter,
           })
 
         set({ count: total, loadingCounts: false })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch contacts count",
+        })
+      } finally {
+        set({ loadingCounts: false })
+      }
+    },
+
+    getContactInboxesCount: async (params) => {
+      const { workspaceId, loadingCounts } = get()
+
+      if (loadingCounts || !workspaceId) {
+        return
+      }
+
+      set({ loadingCounts: true, error: null })
+
+      try {
+        const { total } =
+          await client.contactsAPIs.countContactInboxesAuthenticatedAPI({
+            workspaceId,
+            sort: [],
+            channels: [params?.channel || channelTypes.enum.omnichannel],
+            contactFilter: params?.contactFilter,
+          })
+
+        set({ contactInboxesCount: total, loadingCounts: false })
       } catch (error: unknown) {
         set({
           error:

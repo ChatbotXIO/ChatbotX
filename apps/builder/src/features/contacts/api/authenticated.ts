@@ -8,6 +8,7 @@ import { createContact } from "../actions/create-contact.action"
 import { deleteContactCustomFields } from "../actions/delete-contact-custom-field.action"
 import { removeContactTags } from "../actions/remove-contact-tag.action"
 import { listContactCustomFields } from "../queries/list-contact-fields.query"
+import { countContactInboxes } from "../queries/list-contact-inboxes.queries"
 import { listContactTags } from "../queries/list-contact-tags.query"
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
 import { createContactRequest, createContactResponse } from "../schemas/action"
@@ -52,6 +53,18 @@ export const contactsAuthenticatedAPI = {
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .output(z.object({ total: z.number() }))
     .handler(async ({ input }) => await countContacts(input)),
+
+  countContactInboxesAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/inboxes/count",
+      summary: "Count contact inboxes",
+      tags: ["Contacts"],
+    })
+    .input(listContactsRequest)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .output(z.object({ total: z.number() }))
+    .handler(async ({ input }) => await countContactInboxes(input)),
 
   createContactAuthenticatedAPI: authorizedAPI
     .route({
