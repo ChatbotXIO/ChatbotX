@@ -65,7 +65,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
         set({ loading: true, error: null })
 
         const integrations = await ky
-          .get(`/workspaces/${workspaceId}/integrations/whatsapp`)
+          .get(`/api/workspaces/${workspaceId}/integrations/whatsapp`)
           .json<ListIntegrationWhatsappResponse>()
 
         set({ integrations })

@@ -36,6 +36,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createBroadcastAction } from "@/features/broadcasts/actions/create-broadcast.action"
+import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
 import { ContactFilter } from "../contacts/components/contact-filter"
@@ -221,6 +222,7 @@ export function CreateBroadcastForm({ workspaceId }: CreateBroadcastFormProps) {
       <Form {...form}>
         <form
           className="mx-auto mt-10 mb-10 w-full max-w-2xl flex-1 space-y-4"
+          id="broadcast-form"
           onSubmit={handleSubmitWithAction}
         >
           {!watchedChannel && <CreateBroadcastChooseChannel />}
@@ -513,6 +515,8 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     (state) => state,
   )
 
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   const handleCancel = useCallback(() => {
     router.push(`/space/${workspaceId}/broadcasts`)
   }, [router, workspaceId])
@@ -557,10 +561,12 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
     }
   }, [watchedIntegrationWhatsappId, setIntegrationWhatsappId])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-fetch on filter change
   useEffect(() => {
-    getContactsCount()
-  }, [watchedContactFilter, getContactsCount])
+    getContactsCount({
+      contactFilter: watchedContactFilter,
+      channel: props.channel,
+    })
+  }, [watchedContactFilter, props.channel, getContactsCount])
 
   useEffect(() => {
     if (watchedTemplateId && templates.length > 0) {
@@ -728,11 +734,19 @@ function CreateBroadcastChooseFlow(props: CreateBroadcastChooseFlowProps) {
 
           <Button
             disabled={!formState.isValid || formState.isSubmitting}
-            type="submit"
+            onClick={() => setConfirmOpen(true)}
+            type="button"
           >
             {formState.isSubmitting && <Loader2Icon className="animate-spin" />}
             {t("actions.confirm")}
           </Button>
+
+          <BroadcastConfirmDialog
+            count={count || 0}
+            isSubmitting={formState.isSubmitting}
+            onOpenChange={setConfirmOpen}
+            open={confirmOpen}
+          />
         </div>
       </div>
     </div>

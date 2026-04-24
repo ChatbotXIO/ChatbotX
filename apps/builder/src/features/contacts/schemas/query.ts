@@ -13,9 +13,25 @@ import { contactCustomFieldResource } from "./contact-custom-field"
 import { contactNoteResource } from "./contact-note"
 import { contactResource, publicContactResource } from "./resource"
 
+export interface ContactFilters {
+  inboxIds?: string[]
+}
+
+export const contactFilterSchema = z.object({
+  operator: z.enum(["and", "or"]),
+  conditions: z.array(
+    z.object({
+      field: z.string().trim(),
+      operator: operatorTypes,
+      value: z.union([z.string(), z.array(z.string())]),
+    }),
+  ),
+})
+
 export const listContactsRequest = basePaginationRequest.extend({
   keyword: z.string().optional(),
   workspaceId: zodBigintAsString(),
+  contactFilter: z.array(contactFilterSchema).optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
@@ -46,16 +62,7 @@ export const listContactsResponse = z.object({
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
 
 export const contactFilterRequest = z.object({
-  contactFilter: z.object({
-    operator: z.enum(["and", "or"]),
-    conditions: z.array(
-      z.object({
-        field: z.string().trim(),
-        operator: operatorTypes,
-        value: z.union([z.string(), z.array(z.string())]),
-      }),
-    ),
-  }),
+  contactFilter: contactFilterSchema,
 })
 export type ContactFilterRequest = z.infer<typeof contactFilterRequest>
 
