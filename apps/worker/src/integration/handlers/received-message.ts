@@ -263,6 +263,7 @@ const detectContactAndConversation = async (props: {
 
       contactInbox = await tx.query.contactInboxModel.findFirst({
         where: {
+          inboxId: inbox.id,
           channel: inbox.channel,
           sourceId: incomingContact.sourceId,
         },

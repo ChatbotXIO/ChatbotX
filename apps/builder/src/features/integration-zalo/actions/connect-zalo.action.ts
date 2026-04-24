@@ -39,7 +39,11 @@ export async function connectZaloHandler({
         sourceId: authValue.oaId,
       })
       .onConflictDoUpdate({
-        target: [inboxModel.channel, inboxModel.sourceId],
+        target: [
+          inboxModel.workspaceId,
+          inboxModel.channel,
+          inboxModel.sourceId,
+        ],
         set: {
           status: inboxStatuses.enum.connected,
         },

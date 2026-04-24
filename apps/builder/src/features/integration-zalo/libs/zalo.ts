@@ -18,7 +18,7 @@ export async function generateZaloRedirectUri(
     redirectUrl,
     stateParams: {
       workspaceId,
-      referer: encodeURIComponent(referer),
+      referer,
     },
   })
 }

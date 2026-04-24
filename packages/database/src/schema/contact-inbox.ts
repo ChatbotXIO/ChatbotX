@@ -31,9 +31,9 @@ export const contactInboxModel = pgTable(
     lastIncomingMessageAt: timestamp(timestampConfig),
   },
   (table) => [
-    uniqueIndex("ContactInbox_channel_sourceId_key").using(
+    uniqueIndex("ContactInbox_inboxId_sourceId_key").using(
       "btree",
-      table.channel.asc().nullsLast(),
+      table.inboxId.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),
     ),
   ],

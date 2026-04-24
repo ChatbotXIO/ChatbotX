@@ -1,4 +1,5 @@
 import { db, eq } from "@chatbotx.io/database/client"
+import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
@@ -6,16 +7,25 @@ import type {
   IntegrationJobAgentMarkAsRead,
   IntegrationJobContactMarkAsRead,
 } from "@chatbotx.io/worker-config"
+import { integrationService } from "../../services/integrations"
 
 export const contactMarkAsRead = async (
   props: IntegrationJobContactMarkAsRead["data"],
 ) => {
-  const { sourceConversationId, integrationType } = props
+  const { sourceConversationId, integrationType, integrationIdentifier } = props
+
+  const dbIntegration =
+    await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
+      integrationType as IntegrationType,
+      integrationIdentifier,
+    )
+  const { inbox } = dbIntegration
 
   const contactInbox = await db.query.contactInboxModel.findFirst({
     where: {
       sourceId: sourceConversationId,
       channel: integrationType,
+      inboxId: inbox.id,
     },
     with: {
       conversation: true,

@@ -84,8 +84,14 @@ export const connectTelegramAction = authActionClient
               sourceId: botData.id,
             })
             .onConflictDoUpdate({
-              target: [inboxModel.channel, inboxModel.sourceId],
-              set: { status: inboxStatuses.enum.connected },
+              target: [
+                inboxModel.workspaceId,
+                inboxModel.channel,
+                inboxModel.sourceId,
+              ],
+              set: {
+                status: inboxStatuses.enum.connected,
+              },
             })
             .returning()
             .then((result) => result[0])

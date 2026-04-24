@@ -13,8 +13,9 @@ import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useEffect } from "react"
+import { use } from "react"
 import { toast } from "sonner"
+import { useTimeout } from "usehooks-ts"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
 import type { listIntegrationZalo } from "./queries"
 
@@ -33,12 +34,12 @@ export function ZaloManage({
   const t = useTranslations()
   const searchParams = useSearchParams()
 
-  useEffect(() => {
+  useTimeout(() => {
     if (searchParams.get("error") !== "duplicated") {
       return
     }
     toast.error(t("zalo.duplicated"))
-  }, [searchParams, t])
+  }, 0)
 
   if (!isEnabled) {
     return (

@@ -164,7 +164,11 @@ export const connectWhatsappAction = authActionClient
               name: foundPhoneNumber.verified_name,
             })
             .onConflictDoUpdate({
-              target: [inboxModel.channel, inboxModel.sourceId],
+              target: [
+                inboxModel.workspaceId,
+                inboxModel.channel,
+                inboxModel.sourceId,
+              ],
               set: {
                 status: inboxStatuses.enum.connected,
               },

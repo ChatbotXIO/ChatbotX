@@ -71,6 +71,14 @@ export const getInboxLink = (props: {
     return url.toString()
   }
 
+  if (inbox.channel === "zalo") {
+    const url = new URL("", `https://zalo.me/${inbox.sourceId ?? ""}`)
+    if (ref) {
+      url.searchParams.set("ref", ref)
+    }
+    return url.toString()
+  }
+
   const url = new URL(
     `/link?workspaceId=${inbox.workspaceId}`,
     getPublicOrigin(),

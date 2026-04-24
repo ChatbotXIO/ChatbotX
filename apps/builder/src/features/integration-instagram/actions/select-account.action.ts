@@ -46,16 +46,6 @@ export const selectAccountAction = authActionClient
           throw new ChatbotXException("Instagram App settings not found")
         }
 
-        const existedAccount =
-          await db.query.integrationInstagramModel.findFirst({
-            where: {
-              igId: parsedInput.igId,
-            },
-          })
-        if (existedAccount) {
-          throw new ChatbotXException("Instagram account is already connected")
-        }
-
         await db.transaction(async (tx) => {
           if (!workspaceId) {
             const workspace = await createSimpleWorkspace(
@@ -108,7 +98,11 @@ export const selectAccountAction = authActionClient
               sourceId: parsedInput.igId,
             })
             .onConflictDoUpdate({
-              target: [inboxModel.channel, inboxModel.sourceId],
+              target: [
+                inboxModel.workspaceId,
+                inboxModel.channel,
+                inboxModel.sourceId,
+              ],
               set: {
                 status: inboxStatuses.enum.connected,
               },
