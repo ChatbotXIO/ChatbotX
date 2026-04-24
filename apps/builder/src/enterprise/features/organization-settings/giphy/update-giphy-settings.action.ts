@@ -1,14 +1,13 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
 import {
   type GiphySettingsSchema,
   giphySettingsSchema,
 } from "@chatbotx.io/database/partials"
-import { organizationModel } from "@chatbotx.io/database/schema"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import ky from "ky"
 import { returnValidationErrors } from "next-safe-action"
+import { organizationService } from "@/features/organization/services"
 import { logger } from "@/lib/log"
 import { organizationActionClient } from "@/lib/safe-action"
 
@@ -45,14 +44,11 @@ export const updateGiphySettingsAction = organizationActionClient
         })
       }
 
-      const organizationSettings = ctx.organization.settings
-      organizationSettings.giphy = parsedInput
-
-      await db
-        .update(organizationModel)
-        .set({
-          settings: organizationSettings,
-        })
-        .where(eq(organizationModel.id, ctx.organization.id))
+      await organizationService.updateSettings({
+        organization: ctx.organization,
+        newSettings: {
+          giphy: parsedInput,
+        },
+      })
     },
   )

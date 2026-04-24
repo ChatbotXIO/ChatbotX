@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationZalo } from "@/features/integration-zalo/queries"
 import { ZaloManage } from "@/features/integration-zalo/zalo-manage"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { workspaceService } from "@/features/workspaces/workspace-service"
 
 export default async function SettingChannelZaloPage(props: {

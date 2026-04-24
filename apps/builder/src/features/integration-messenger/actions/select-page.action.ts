@@ -14,7 +14,7 @@ import {
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader } from "@/lib/domain"

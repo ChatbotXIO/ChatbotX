@@ -1,40 +1,42 @@
-"use client"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@chatbotx.io/ui/components/ui/sidebar"
-import { useEffect, useState } from "react"
-import { ManageSidebar } from "@/enterprise/features/manage/components/manage-sidebar"
+import { organizationMemberRoles } from "@chatbotx.io/database/partials"
+import { notFound } from "next/navigation"
+import { ManageLayout } from "@/features/manage/manage-layout"
+import { organizationService } from "@/features/organization/services"
+import { organizationMemberService } from "@/features/organization-members/services"
+import { getCurrentUser } from "@/lib/auth/utils"
+import { getDomainFromHeader } from "@/lib/domain"
 
-export default function ManageLayout({
+export default async function ManageLayoutPage({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(true)
+  const user = await getCurrentUser()
+  if (!user) {
+    return notFound()
+  }
 
-  useEffect(() => {
-    const currentOpenState = localStorage.getItem("manage_sidebar_state")
-    const openState = currentOpenState === "1"
+  // Find organization by domain
+  const currentDomain = await getDomainFromHeader()
+  const organization = await organizationService.findByDomain(currentDomain)
+  if (!organization) {
+    return notFound()
+  }
 
-    setOpen(openState)
-    localStorage.setItem("manage_sidebar_state", openState ? "1" : "0")
-  }, [])
+  // Check if user is a member of the organization
+  const organizationMember = await organizationMemberService.findBy({
+    where: {
+      organizationId: organization.id,
+      userId: user.id,
+    },
+  })
+  console.log("organizationMember", organizationMember)
+  if (
+    !organizationMember ||
+    organizationMember.role !== organizationMemberRoles.enum.admin
+  ) {
+    return notFound()
+  }
 
-  return (
-    <SidebarProvider
-      onOpenChange={(open) => {
-        setOpen(open)
-        localStorage.setItem("manage_sidebar_state", open ? "1" : "0")
-      }}
-      open={open}
-    >
-      <ManageSidebar />
-      <SidebarInset>
-        <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
-        <main className="p-4 pb-24 sm:px-6 sm:pt-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
-  )
+  return <ManageLayout>{children}</ManageLayout>
 }

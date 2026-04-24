@@ -4,7 +4,7 @@ import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { getDomainFromHeader } from "@/lib/domain"
 import type {
   ListOrganizationMembersRequest,

@@ -1,5 +1,4 @@
 import { distributedStore } from "."
-import type { DistributedStore } from "./distributed-store"
 
 export const withCache = async <T>(
   key: string,
@@ -7,10 +6,7 @@ export const withCache = async <T>(
   options?: {
     ttl?: number
     tags?: string[]
-    dynamicTags?: (
-      distributedStore: DistributedStore,
-      result: T,
-    ) => Promise<void>
+    dynamicTags?: (result: T) => string[] | undefined
   },
 ): Promise<T> => {
   const { ttl = 24 * 60 * 60, tags = [], dynamicTags } = options || {}
@@ -25,17 +21,19 @@ export const withCache = async <T>(
   if (result === null || result === undefined) {
     return result
   }
-  console.log("result", result)
   await distributedStore.put(key, result, ttl)
 
   // Add tags to the cache
-  if (tags.length > 0) {
-    for (const tag of tags) {
-      await distributedStore.sadd(`tags:${tag}`, key)
-    }
+  const dynamicTagsResult = dynamicTags?.(result)
+  const allTags = [...tags, ...(dynamicTagsResult || [])]
+  if (allTags.length > 0) {
+    await Promise.all(
+      allTags.map(async (tag) => {
+        await distributedStore.sadd(`tags:${tag}`, key)
+        await distributedStore.expire(`tags:${tag}`, ttl)
+      }),
+    )
   }
-
-  await dynamicTags?.(distributedStore, result)
 
   return result
 }
@@ -46,7 +44,6 @@ export const invalidateCacheByTags = async (tags: string[]) => {
   }
   for (const tag of tags) {
     const keys = await distributedStore.smembers(`tags:${tag}`)
-    await distributedStore.delete(keys)
-    await distributedStore.delete(`tags:${tag}`)
+    await distributedStore.delete([...keys, `tags:${tag}`])
   }
 }

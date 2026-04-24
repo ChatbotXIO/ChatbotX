@@ -6,7 +6,7 @@ import {
   createSafeActionClient,
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "./domain"

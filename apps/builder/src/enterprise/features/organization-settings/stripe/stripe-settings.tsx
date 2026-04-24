@@ -36,6 +36,7 @@ export function StripeSettings({
   config: OrganizationSettings["stripe"]
 }) {
   const t = useTranslations()
+  console.log("configconfigconfig", config)
 
   return (
     <Card className="w-96">

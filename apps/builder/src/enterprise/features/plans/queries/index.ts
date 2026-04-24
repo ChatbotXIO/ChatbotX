@@ -1,5 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { getDomainFromHeader } from "@/lib/domain"
 import type { ListPlansRequest, ListPlansResponse } from "../schemas/query"
 

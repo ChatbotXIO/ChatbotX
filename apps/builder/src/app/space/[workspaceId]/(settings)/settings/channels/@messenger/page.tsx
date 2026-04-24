@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { listIntegrationMessengers } from "@/features/integration-messenger/queries"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { workspaceService } from "@/features/workspaces/workspace-service"
 
 export default async function SettingChannelMessengerPage(props: {

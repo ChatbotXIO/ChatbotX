@@ -3,7 +3,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
-import { organizationService } from "../organization/organization-service"
+import { organizationService } from "../organization/services"
 import { workspaceService } from "../workspaces/workspace-service"
 
 export async function identifyWorkspaceAndOrganizationFromRequest(

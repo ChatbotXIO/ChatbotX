@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { ManageOrganizationSettings } from "@/enterprise/features/organization-settings/manage-organization-settings"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { getDomainFromHeader } from "@/lib/domain"
 
 export default async function ManageIntegrationsPage() {
@@ -13,6 +13,8 @@ export default async function ManageIntegrationsPage() {
   if (!organization) {
     return notFound()
   }
+
+  console.log("organizationorganizationorganization", organization)
 
   return (
     <div className="space-y-4">

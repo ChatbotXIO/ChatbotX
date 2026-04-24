@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+export const organizationMemberRoles = z.enum(["owner", "admin", "member"])
+export type OrganizationMemberRole = z.infer<typeof organizationMemberRoles>
+
 export const whatsappSettingsSchema = z.object({
   clientId: z.string(),
   clientSecret: z.string(),

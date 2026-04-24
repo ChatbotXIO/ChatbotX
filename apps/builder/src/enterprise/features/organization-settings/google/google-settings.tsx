@@ -49,8 +49,8 @@ export function GoogleSettings({
       </CardHeader>
       <CardContent>
         <div className="flex gap-2">
-          <span className="font-bold">Client ID:</span>
-          <span>{config?.clientId ?? "N/A"}</span>
+          <span className="flex-none font-bold">Client ID:</span>
+          <span className="truncate">{config?.clientId ?? "N/A"}</span>
         </div>
       </CardContent>
     </Card>

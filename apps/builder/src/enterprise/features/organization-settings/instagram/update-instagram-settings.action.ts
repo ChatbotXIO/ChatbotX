@@ -1,12 +1,11 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
 import {
   type InstagramSettingsSchema,
   instagramSettingsSchema,
 } from "@chatbotx.io/database/partials"
-import { organizationModel } from "@chatbotx.io/database/schema"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { organizationService } from "@/features/organization/services"
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateInstagramSettingAction = organizationActionClient
@@ -19,14 +18,11 @@ export const updateInstagramSettingAction = organizationActionClient
       ctx: { organization: OrganizationModel }
       parsedInput: InstagramSettingsSchema
     }) => {
-      const organizationSettings = ctx.organization.settings
-      organizationSettings.instagram = parsedInput
-
-      await db
-        .update(organizationModel)
-        .set({
-          settings: organizationSettings,
-        })
-        .where(eq(organizationModel.id, ctx.organization.id))
+      await organizationService.updateSettings({
+        organization: ctx.organization,
+        newSettings: {
+          instagram: parsedInput,
+        },
+      })
     },
   )

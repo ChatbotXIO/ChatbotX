@@ -5,7 +5,7 @@ import {
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
-import { organizationService } from "@/features/organization/organization-service"
+import { organizationService } from "@/features/organization/services"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"

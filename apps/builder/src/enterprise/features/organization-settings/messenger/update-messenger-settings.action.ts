@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import { organizationModel } from "@chatbotx.io/database/schema"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { distributedStore } from "@chatbotx.io/redis"
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateMessengerSettingAction = organizationActionClient
@@ -28,5 +29,10 @@ export const updateMessengerSettingAction = organizationActionClient
           settings: organizationSettings,
         })
         .where(eq(organizationModel.id, ctx.organization.id))
+
+      await distributedStore.delete([
+        `organization:${ctx.organization.id}`,
+        `organization:${ctx.organization.id}:settings`,
+      ])
     },
   )
