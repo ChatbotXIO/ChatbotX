@@ -30,7 +30,7 @@ export default async function ManageLayoutPage({
       userId: user.id,
     },
   })
-  console.log("organizationMember", organizationMember)
+
   if (
     !organizationMember ||
     organizationMember.role !== organizationMemberRoles.enum.admin

@@ -14,8 +14,6 @@ export default async function ManageIntegrationsPage() {
     return notFound()
   }
 
-  console.log("organizationorganizationorganization", organization)
-
   return (
     <div className="space-y-4">
       <h3 className="font-bold text-lg sm:text-xl">
