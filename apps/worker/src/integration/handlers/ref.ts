@@ -1,24 +1,20 @@
 import { findOrFail } from "@chatbotx.io/database/client"
-import {
-  conversationModel,
-  flowModel,
-  flowVersionModel,
-} from "@chatbotx.io/database/schema"
+import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import {
   IntegrationJobAction,
   type IntegrationJobRunRef,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { detectConversationAndContactInbox } from "../../lib/db"
 import { logger } from "../../lib/logger"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
   const { conversationId, contactInboxId, ref } = data
-
-  const conversation = await findOrFail({
-    table: conversationModel,
-    where: { id: conversationId },
-    message: "Conversation not found",
-  })
+  const { conversation, contactInbox } =
+    await detectConversationAndContactInbox({
+      conversationId,
+      contactInboxId,
+    })
 
   if (ref.startsWith("draft-")) {
     logger.debug(`Draft ref: ${ref}`)
@@ -38,7 +34,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       type: IntegrationJobAction.sendFlow,
       data: {
         conversationId: conversation,
-        contactInboxId,
+        contactInboxId: contactInbox,
         flowId: flowVersion.flowId,
         flowVersionId: flowVersion.id,
       },
@@ -64,7 +60,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       type: IntegrationJobAction.sendFlow,
       data: {
         conversationId: conversation,
-        contactInboxId,
+        contactInboxId: contactInbox,
         flowId: flow.id,
       },
     })
