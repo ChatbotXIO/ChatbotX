@@ -3,6 +3,7 @@ import { z } from "zod"
 import type { FlowNode } from "./nodes"
 import type { BaseStepSchema } from "./steps/base"
 import type { ButtonStepProps } from "./steps/button"
+import type { SendCardStepSchema } from "./steps/send-card"
 
 export const extractMetadata = (
   key: string,
@@ -95,12 +96,21 @@ export function getNodeFromButton(nodes: FlowNode[], buttonId: string) {
       continue
     }
     for (const step of node.data.details.steps as BaseStepSchema[]) {
-      if (!("buttons" in step)) {
+      if (!("buttons" in step || "cards" in step)) {
         continue
       }
-      const button = (step.buttons as ButtonStepProps[]).find(
-        (b) => b.id === buttonId,
-      )
+
+      let buttons: ButtonStepProps[] = []
+      if ("buttons" in step) {
+        buttons = step.buttons as ButtonStepProps[]
+      } else if ("cards" in step) {
+        const cards = step.cards as SendCardStepSchema[]
+        buttons = cards.flatMap(
+          (card) => (card.buttons ?? []) as ButtonStepProps[],
+        )
+      }
+
+      const button = buttons.find((b) => b.id === buttonId)
       if (button) {
         foundedButton = button
         foundedNodeId = step.nodeId ?? node.id
