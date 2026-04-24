@@ -23,8 +23,8 @@ export async function sendMessageToExternal(
   const { conversation, contactInbox, message, metadata } = data
 
   // Find integration auth
-  const auth =
-    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+  const { auth, ...integrationData } =
+    await integrationService.getIntegrationFromContactInbox(contactInbox)
 
   // Find integration detail
   const integrationDetail = allIntegrations[contactInbox.channel]
@@ -40,6 +40,7 @@ export async function sendMessageToExternal(
       storagePrefix: `public/workspaces/${conversation.workspaceId}/inboxes/${contactInbox.inboxId}`,
       uploader,
       auth,
+      integrationDetail: integrationData,
     },
     data: {
       contact: contactInbox,
@@ -53,8 +54,8 @@ export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
   const { conversation, contactInbox, typing, seconds } = data
 
   // Find integration auth
-  const auth =
-    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+  const { auth } =
+    await integrationService.getIntegrationFromContactInbox(contactInbox)
 
   // Find integration detail
   const integrationDetail = allIntegrations[contactInbox.channel]
@@ -112,8 +113,8 @@ export async function sendFlowStepToExternal({
   messageId?: string
 }): Promise<{ messageIds?: string[] }> {
   // Find integration auth
-  const auth =
-    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+  const { auth, ...integrationData } =
+    await integrationService.getIntegrationFromContactInbox(contactInbox)
 
   // Find integration detail
   const integrationDetail = allIntegrations[contactInbox.channel]
@@ -132,6 +133,7 @@ export async function sendFlowStepToExternal({
           contactInbox.inboxId,
         ),
         auth,
+        integrationDetail: integrationData,
       },
       data: {
         contact: contactInbox,

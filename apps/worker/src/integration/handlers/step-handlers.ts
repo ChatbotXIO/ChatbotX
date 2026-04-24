@@ -609,8 +609,8 @@ export const stepSendTyping = async (
     return
   }
 
-  const auth =
-    await integrationService.getIntegrationAuthFromContactInbox(contactInbox)
+  const { auth } =
+    await integrationService.getIntegrationFromContactInbox(contactInbox)
 
   await allIntegrations[
     contactInbox.channel

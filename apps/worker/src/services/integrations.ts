@@ -110,9 +110,9 @@ export const integrationService = {
     }
   },
 
-  getIntegrationAuthFromContactInbox: async (
+  getIntegrationFromContactInbox: async (
     contactInbox: ContactInboxModel,
-  ): Promise<AuthValue> => {
+  ): Promise<{ auth: AuthValue; [x: string]: unknown }> => {
     const inboxName = contactInbox.channel
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -120,7 +120,7 @@ export const integrationService = {
 
     const integrationTable = `Integration${inboxName}`
     const result = await db.execute<{ auth: AuthValue }>(
-      sql`SELECT auth FROM ${sql.identifier(integrationTable)} WHERE "inboxId" = ${contactInbox.inboxId} LIMIT 1`,
+      sql`SELECT * FROM ${sql.identifier(integrationTable)} WHERE "inboxId" = ${contactInbox.inboxId} LIMIT 1`,
     )
 
     if (!result.rows[0]) {
@@ -129,6 +129,6 @@ export const integrationService = {
       )
     }
 
-    return result.rows[0].auth
+    return result.rows[0]
   },
 }
