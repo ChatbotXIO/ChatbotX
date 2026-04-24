@@ -17,9 +17,3 @@ export async function getOriginUrlFromHeader() {
 
   return originUrl
 }
-
-export async function getPublicOriginFromRequest(req: Request) {
-  "use server"
-  const originUrl = (await req.headers.get("x-url")) ?? ""
-  return originUrl
-}

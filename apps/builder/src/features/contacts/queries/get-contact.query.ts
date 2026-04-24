@@ -1,14 +1,11 @@
 import { db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { notFoundException } from "@/lib/errors/exception"
 import type { GetContactRequest, GetContactResponse } from "../schemas/query"
 
 export async function getContact(
   input: GetContactRequest,
 ): Promise<GetContactResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
   const contact = await db.query.contactModel.findFirst({
     where: {
       id: input.contactId,

@@ -4,7 +4,11 @@ import {
   integrationGoogleSheetsModel,
   integrationModel,
 } from "@chatbotx.io/database/schema"
-import type { AuthValue, Oauth2AuthValue } from "@chatbotx.io/sdk"
+import {
+  type AuthValue,
+  getPublicHostFromRequest,
+  type Oauth2AuthValue,
+} from "@chatbotx.io/sdk"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
@@ -14,18 +18,12 @@ import { organizationService } from "@/features/organization/organization-servic
 import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
-import { getPublicOriginFromRequest } from "@/lib/domain"
 import { logger } from "@/lib/log"
 
-const stateValidationSchema = z
-  .object({
-    workspaceId: zodBigintAsString().optional(),
-    referer: z.string(),
-  })
-  .transform((data) => ({
-    ...data,
-    referer: decodeURIComponent(data.referer),
-  }))
+const stateValidationSchema = z.object({
+  workspaceId: zodBigintAsString().optional(),
+  referer: z.url(),
+})
 
 export const handleCallback = async (
   integrationType: IntegrationType,
@@ -54,7 +52,7 @@ export const handleCallback = async (
   }
 
   // find organization from domain and current user
-  const domain = new URL(await getPublicOriginFromRequest(req)).hostname
+  const domain = await getPublicHostFromRequest(req)
   const organization = await organizationService.findByDomain(domain)
   const organizationSettings = organization.settings
 

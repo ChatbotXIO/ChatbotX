@@ -37,8 +37,7 @@ export function ZaloManage({
     if (searchParams.get("error") !== "duplicated") {
       return
     }
-    const id = setTimeout(() => toast.error(t("zalo.duplicated")), 0)
-    return () => clearTimeout(id)
+    toast.error(t("zalo.duplicated"))
   }, [searchParams, t])
 
   if (!isEnabled) {
@@ -54,7 +53,7 @@ export function ZaloManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button size="sm" variant="secondary">
+        <Button asChild size="sm" variant="secondary">
           <Link
             className="flex items-center gap-2"
             href={`/channels/create?channel=zalo&workspaceId=${workspaceId}`}
@@ -87,7 +86,7 @@ export function ZaloManage({
             ))}
             {integrationZalos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2}>No data</TableCell>
+                <TableCell colSpan={2}>{t("messages.noData")}</TableCell>
               </TableRow>
             )}
           </TableBody>
