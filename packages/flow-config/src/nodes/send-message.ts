@@ -11,6 +11,7 @@ import { sendCarouselStepSchema } from "../steps/send-carousel"
 import { sendFileStepSchema } from "../steps/send-file"
 import { sendGifStepSchema } from "../steps/send-gif"
 import { sendImageStepSchema } from "../steps/send-image"
+import { MAX_QUICK_REPLIES } from "../steps/send-quick-reply"
 import { sendTextStepSchema } from "../steps/send-text"
 import { sendVideoStepSchema } from "../steps/send-video"
 import { sendWaTemplateMessageStepSchema } from "../steps/send-wa-message-template"
@@ -44,7 +45,7 @@ export const sendMessageNodeSchema = baseNodeSchema.extend({
           ...actionSteps,
         ]),
       ),
-      quickReplies: z.array(buttonStepSchema),
+      quickReplies: z.array(buttonStepSchema).max(MAX_QUICK_REPLIES),
     }),
   }),
 })

@@ -3,6 +3,7 @@ import {
   buttonStepDefaultFn,
   disabledCopyActionTypes,
   hiddenActionsStepTypes,
+  MAX_QUICK_REPLIES,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
@@ -81,20 +82,22 @@ const NodeEditorQuickReplies = () => {
           </div>
         </SortableContent>
       </Sortable>
-      <Button
-        onClick={() =>
-          appendQuickReply(
-            buttonStepDefaultFn({
-              label: `${t("fields.quickReply.label")} #${quickReplies.length + 1}`,
-            }),
-          )
-        }
-        type="button"
-        variant="dashed"
-      >
-        <PlusIcon />
-        {t("fields.quickReply.label")}
-      </Button>
+      {quickReplies.length < MAX_QUICK_REPLIES ? (
+        <Button
+          onClick={() =>
+            appendQuickReply(
+              buttonStepDefaultFn({
+                label: `${t("fields.quickReply.label")} #${quickReplies.length + 1}`,
+              }),
+            )
+          }
+          type="button"
+          variant="dashed"
+        >
+          <PlusIcon />
+          {t("fields.quickReply.label")}
+        </Button>
+      ) : null}
     </div>
   )
 }
