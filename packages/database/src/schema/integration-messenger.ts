@@ -31,6 +31,7 @@ export const integrationMessengerModel = pgTable(
       .default(sql`[]`)
       .notNull(),
     personas: jsonb().$type<MessengerPersona[]>().default(sql`[]`).notNull(),
+    personaId: text(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

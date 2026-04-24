@@ -1,5 +1,4 @@
 import type { Readable } from "node:stream"
-import { z } from "zod"
 import type { AuthValue } from "../auth"
 
 export type ContextUploader = {
@@ -16,17 +15,10 @@ export type ContextQueue = {
   add(name: string, payload: any, opts?: any): Promise<any>
 }
 
-export type Context<AO extends AuthValue> = {
+export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   storagePrefix: string
   uploader?: ContextUploader
   auth: AO
   queue?: ContextQueue
+  integrationDetail?: ID
 }
-
-export const contextSchema = z.custom<Context<AuthValue>>(
-  (data) =>
-    typeof data === "object" &&
-    data !== null &&
-    "auth" in data &&
-    typeof data.auth === "object",
-)

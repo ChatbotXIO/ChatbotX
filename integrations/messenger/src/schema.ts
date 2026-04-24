@@ -19,6 +19,10 @@ export type MessengerAuthValue = Oauth2AuthValue & {
   }
 }
 
+export type MessengerIntegrationDetail = {
+  personaId: string
+}
+
 export type MessengerActions<
   IAuth extends MessengerAuthValue = MessengerAuthValue,
 > = {

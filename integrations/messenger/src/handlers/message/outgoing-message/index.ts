@@ -23,6 +23,7 @@ import {
   type FacebookSendMessageRequest,
   MESSENGER_MESSAGE_METADATA,
   type MessengerAuthValue,
+  type MessengerIntegrationDetail,
 } from "../../../schema"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
@@ -44,6 +45,8 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
         const payload = buildMessagePayload({
           contact,
           message: facebookMessage,
+          personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
+            .personaId,
         })
         await sendPageMessage(ctx.auth, payload)
         logger.info(`Message sent for PSID: ${contact.sourceId}`)
@@ -77,6 +80,8 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
               step.stepType === stepTypes.enum.sendQuickReply
                 ? "RESPONSE"
                 : "MESSAGE_TAG",
+            personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
+              .personaId,
           }),
         )
         logger.info(`Message sent for PSID: ${contact.sourceId}`)
@@ -144,8 +149,9 @@ const buildMessagePayload = (props: {
   contact: OutgoingContact
   message: FacebookMessageAttachmentPayload | FacebookMessage
   messagingType?: "MESSAGE_TAG" | "RESPONSE"
+  personaId?: string
 }): FacebookSendMessageRequest => {
-  const { contact, message, messagingType = "MESSAGE_TAG" } = props
+  const { contact, message, messagingType = "MESSAGE_TAG", personaId } = props
 
   return {
     recipient: { id: contact.sourceId },
@@ -155,6 +161,7 @@ const buildMessagePayload = (props: {
     },
     messaging_type: messagingType,
     tag: messagingType === "MESSAGE_TAG" ? "ACCOUNT_UPDATE" : undefined,
+    persona_id: personaId,
   }
 }
 

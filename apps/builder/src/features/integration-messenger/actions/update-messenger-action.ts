@@ -66,16 +66,17 @@ export const updateMessenger = async (
         workspaceId: ctx.workspace.id,
         id: ctx.id,
       })
-      const updatedPersonas = await updatePersonas(
+      const newPersonaId = await getPersonaId(
         ctx.workspace,
         integrationMessengerData,
+        parsedInput.personas,
       )
 
       await tx
         .update(integrationMessengerModel)
         .set({
           ...rest,
-          personas: updatedPersonas,
+          personaId: newPersonaId ?? null,
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
@@ -163,11 +164,12 @@ const getMessengerProfileParams = (
   return params
 }
 
-const updatePersonas = async (
+const getPersonaId = async (
   workspace: WorkspaceModel,
   model: IntegrationMessengerModel,
-): Promise<MessengerPersona[]> => {
-  const defaultPersona = model.personas.find((persona) => persona.isDefault)
+  personas: MessengerPersona[],
+): Promise<string | undefined> => {
+  const defaultPersona = personas.find((persona) => persona.isDefault)
 
   const newPersona = await integrationMessenger.actions.updatePersona({
     ctx: {
@@ -183,13 +185,5 @@ const updatePersonas = async (
       : undefined,
   })
 
-  return model.personas.map((persona) => {
-    if (persona.isDefault && newPersona.personaId) {
-      return {
-        ...persona,
-        facebookPersonaId: newPersona.personaId,
-      }
-    }
-    return persona
-  })
+  return newPersona.personaId
 }

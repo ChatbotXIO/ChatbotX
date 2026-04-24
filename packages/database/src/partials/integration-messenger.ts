@@ -36,7 +36,6 @@ export const messengerPersonaSchema = z.object({
     url: z.url(),
     mode: uploadModes,
   }),
-  facebookPersonaId: z.string().optional(),
 })
 export type MessengerPersona = z.infer<typeof messengerPersonaSchema>
 

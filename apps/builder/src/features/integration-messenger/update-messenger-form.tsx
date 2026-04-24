@@ -393,7 +393,7 @@ export function UpdateMessengerForm({
                       mode: fileTypes.enum.file,
                       url: "",
                     },
-                    isDefault: false,
+                    isDefault: !personas.length,
                   })
                 }
                 size="sm"
