@@ -47,7 +47,7 @@ import {
 export const receiveMessage = async (
   props: IntegrationJobReceiveMessage["data"],
 ): Promise<{
-  message: MessageModel
+  message: MessageModel | null
   conversation: ConversationModel
   postbackAction: string | null
   quickReplyAction: string | null
@@ -97,126 +97,143 @@ export const receiveMessage = async (
     integrationAuth,
   })
 
-  const { newMessage, isNewMessage } = await db.transaction(async (tx) => {
-    // Create message and attachments
-    const now = new Date()
-    const newMessage = await tx
-      .insert(messageModel)
-      .values({
-        id: createId(),
-        conversationId: conversation.id,
-        contactInboxId: contactInbox.id,
-        senderType:
-          incomingMessage.messageType === "outgoing" ? "user" : "contact",
-        workspaceId: inbox.workspaceId,
-        sourceId: incomingMessage.sourceId,
-        senderId:
-          incomingMessage.messageType === "outgoing"
-            ? null
-            : contactInbox.contactId,
-        messageType: incomingMessage.messageType,
-        text: incomingMessage.text,
-        contentType: incomingMessage.contentType,
-        contentAttributes: incomingMessage.contentAttributes,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [messageModel.contactInboxId, messageModel.sourceId],
-        set: {
-          updatedAt: new Date(),
-        },
-      })
-      .returning()
-      .then((result) => result[0])
-
-    const isNewMessage = newMessage.createdAt.getTime() === now.getTime()
-
-    if (
-      isNewMessage &&
-      incomingMessage.attachments &&
-      incomingMessage.attachments.length > 0
-    ) {
-      await tx.insert(attachmentModel).values(
-        incomingMessage.attachments.map((attachment: IncomingAttachment) => ({
+  let createdMessage: MessageModel | null = null
+  if (incomingMessage) {
+    const { newMessage, isNewMessage } = await db.transaction(async (tx) => {
+      // Create message and attachments
+      const now = new Date()
+      const newMessage = await tx
+        .insert(messageModel)
+        .values({
           id: createId(),
-          ...attachment,
-          messageId: newMessage.id,
-          workspaceId: inbox.workspaceId,
           conversationId: conversation.id,
-          url: getPublicUrl(attachment.originPath),
-        })),
-      )
-    }
-
-    try {
-      broadcastToWorkspaceParty(inbox.workspaceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: newMessage,
-      })
-    } catch (error) {
-      logger.warn(error, "Unable to emit realtime message")
-    }
-
-    return {
-      newMessage,
-      isNewMessage,
-    }
-  })
-
-  if (isNewMessage) {
-    contactTrackingService
-      .trackEvent({
-        workspaceId: inbox.workspaceId,
-        contactId: contactInbox.contactId,
-        eventType: "contact_message_in",
-        senderType: "human",
-        occurredAt: newMessage.createdAt,
-        source: integrationType,
-        sourceId: newMessage.sourceId,
-        channel: inbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "receiveMessage",
-            triggerType: "contact_message_in",
+          contactInboxId: contactInbox.id,
+          senderType:
+            incomingMessage.messageType === "outgoing" ? "user" : "contact",
+          workspaceId: inbox.workspaceId,
+          sourceId: incomingMessage.sourceId,
+          senderId:
+            incomingMessage.messageType === "outgoing"
+              ? null
+              : contactInbox.contactId,
+          messageType: incomingMessage.messageType,
+          text: incomingMessage.text,
+          contentType: incomingMessage.contentType,
+          contentAttributes: incomingMessage.contentAttributes,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: [messageModel.contactInboxId, messageModel.sourceId],
+          set: {
+            updatedAt: new Date(),
           },
-        },
-      })
-      .catch((error) => {
-        logger.error(
-          error,
-          "[receiveMessage] Failed to track contact_message_in",
+        })
+        .returning()
+        .then((result) => result[0])
+
+      const isNewMessage = newMessage.createdAt.getTime() === now.getTime()
+
+      if (
+        isNewMessage &&
+        incomingMessage.attachments &&
+        incomingMessage.attachments.length > 0
+      ) {
+        await tx.insert(attachmentModel).values(
+          incomingMessage.attachments.map((attachment: IncomingAttachment) => ({
+            id: createId(),
+            ...attachment,
+            messageId: newMessage.id,
+            workspaceId: inbox.workspaceId,
+            conversationId: conversation.id,
+            url: getPublicUrl(attachment.originPath),
+          })),
         )
-      })
+      }
 
-    if (postbackAction) {
-      await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
-        type: IntegrationJobAction.runFlowPostback,
-        data: {
-          conversationId: conversation,
-          contactInboxId: contactInbox,
-          action: postbackAction,
-          ref,
-        },
-      })
-    }
+      try {
+        broadcastToWorkspaceParty(inbox.workspaceId, {
+          eventType: RealtimeEventType.messageCreated,
+          data: newMessage,
+        })
+      } catch (error) {
+        logger.warn(error, "Unable to emit realtime message")
+      }
 
-    if (quickReplyAction) {
-      await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
-        type: IntegrationJobAction.runFlowQuickReply,
-        data: {
-          conversationId: conversation,
-          contactInboxId: contactInbox,
-          action: quickReplyAction,
-          ref,
-        },
-      })
+      return {
+        newMessage,
+        isNewMessage,
+      }
+    })
+
+    if (isNewMessage) {
+      // re-assign if is new message
+      createdMessage = newMessage
+
+      contactTrackingService
+        .trackEvent({
+          workspaceId: inbox.workspaceId,
+          contactId: contactInbox.contactId,
+          eventType: "contact_message_in",
+          senderType: "human",
+          occurredAt: newMessage.createdAt,
+          source: integrationType,
+          sourceId: newMessage.sourceId,
+          channel: inbox.channel,
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "receiveMessage",
+              triggerType: "contact_message_in",
+            },
+          },
+        })
+        .catch((error) => {
+          logger.error(
+            error,
+            "[receiveMessage] Failed to track contact_message_in",
+          )
+        })
+
+      if (postbackAction) {
+        await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
+          type: IntegrationJobAction.runFlowPostback,
+          data: {
+            conversationId: conversation,
+            contactInboxId: contactInbox,
+            action: postbackAction,
+            ref,
+          },
+        })
+      }
+
+      if (quickReplyAction) {
+        await integrationQueue.add(IntegrationJobAction.runFlowQuickReply, {
+          type: IntegrationJobAction.runFlowQuickReply,
+          data: {
+            conversationId: conversation,
+            contactInboxId: contactInbox,
+            action: quickReplyAction,
+            ref,
+          },
+        })
+      }
     }
   }
 
+  if (ref) {
+    await integrationQueue.add(IntegrationJobAction.runRef, {
+      type: IntegrationJobAction.runRef,
+      data: {
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+        ref,
+      },
+    })
+  }
+
   return {
-    message: newMessage,
+    message: createdMessage,
     conversation,
     postbackAction,
     quickReplyAction,

@@ -31,7 +31,6 @@ export const IntegrationJobAction = {
   unblockContact: "unblockContact",
   assignConversation: "assignConversation",
   createMessage: "createMessage",
-  referral: "referral",
 } as const
 
 export type IntegrationJobReceiveMessage = {
@@ -116,16 +115,6 @@ export type IntegrationJobAgentMarkAsRead = {
 
 export type IntegrationJobContactMarkAsRead = {
   type: typeof IntegrationJobAction.contactMarkAsRead
-  data: {
-    integrationType: string
-    integrationIdentifier: string
-    sourceConversationId: string
-    payload: unknown
-  }
-}
-
-export type IntegrationJobReferral = {
-  type: typeof IntegrationJobAction.referral
   data: {
     integrationType: string
     integrationIdentifier: string
@@ -221,7 +210,6 @@ export type IntegrationJobData =
   | IntegrationJobAssignConversation
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
-  | IntegrationJobReferral
   | IntegrationJobSendSequenceFlow
 
 export const integrationQueue =

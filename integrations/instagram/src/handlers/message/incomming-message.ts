@@ -73,36 +73,25 @@ export const receiveMessage = async ({
     throw new InstagramException("No message found")
   }
 
-  const { message, postbackAction, quickReplyAction } = await getMessageEntity(
-    ctx,
-    messaging,
-  )
-
-  const sourceId =
-    message.messageType === messageTypes.enum.outgoing
-      ? messaging.recipient.id
-      : messaging.sender.id
-  const contact: IncomingContact = {
-    sourceId,
-  }
-
-  return {
-    message,
-    contact,
-    postbackAction,
-    quickReplyAction,
-    ref: null,
-  }
+  return await getMessageEntity(ctx, messaging)
 }
 
 const getMessageEntity = async (
   ctx: Context<InstagramAuthValue>,
   messaging: InstagramMessagingEvent,
-): Promise<Omit<ReceivedMessageResult, "contact">> => {
+): Promise<ReceivedMessageResult> => {
   let message: IncomingMessage | null = null
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null
+
+  const contactSourceId =
+    messaging.sender.id === ctx.auth.metadata.igId
+      ? messaging.recipient.id
+      : messaging.sender.id
+  const contact: IncomingContact = {
+    sourceId: contactSourceId,
+  }
 
   if (messaging.message) {
     message = {
@@ -132,9 +121,5 @@ const getMessageEntity = async (
     ref = messaging.referral.ref
   }
 
-  if (message) {
-    return { message, postbackAction, quickReplyAction, ref }
-  }
-
-  throw new InstagramException("No message found")
+  return { message, postbackAction, quickReplyAction, ref, contact }
 }

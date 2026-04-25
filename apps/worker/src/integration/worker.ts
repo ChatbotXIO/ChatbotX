@@ -21,7 +21,6 @@ import {
 import { handleMessageStatus } from "./handlers/message-status"
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
-import { handleReferral } from "./handlers/referral"
 import { sendBroadcast } from "./handlers/send-broadcast"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
@@ -42,6 +41,10 @@ async function startIntegrationWorker() {
         case IntegrationJobAction.incomingMessage: {
           const { message, postbackAction, quickReplyAction, conversation } =
             await receiveMessage(job.data.data)
+
+          if (!message) {
+            return
+          }
 
           // Trigger automated response if the message is from a user
           if (
@@ -103,10 +106,6 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.contactMarkAsRead: {
           await contactMarkAsRead(job.data.data)
-          return
-        }
-        case IntegrationJobAction.referral: {
-          await handleReferral(job.data.data)
           return
         }
         case IntegrationJobAction.sendBroadcast: {

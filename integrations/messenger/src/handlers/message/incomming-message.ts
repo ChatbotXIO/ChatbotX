@@ -65,34 +65,25 @@ export const receiveMessage: MessageHandlers<MessengerAuthValue>["receiveMessage
       throw new MessengerException("No message found")
     }
 
-    const { message, postbackAction, quickReplyAction, ref } =
-      await getMessageEntity(ctx, messaging)
-
-    const sourceId =
-      message.messageType === messageTypes.enum.outgoing
-        ? messaging.recipient.id
-        : messaging.sender.id
-    const contact: IncomingContact = {
-      sourceId,
-    }
-
-    return {
-      message,
-      contact,
-      postbackAction,
-      quickReplyAction,
-      ref,
-    }
+    return await getMessageEntity(ctx, messaging)
   }
 
 const getMessageEntity = async (
   ctx: Context<MessengerAuthValue>,
   messaging: MessengerMessagingEvent,
-): Promise<Omit<ReceivedMessageResult, "contact">> => {
+): Promise<ReceivedMessageResult> => {
   let message: IncomingMessage | null = null
   let postbackAction: string | null = null
   let quickReplyAction: string | null = null
   let ref: string | null = null
+
+  const sourceId =
+    messaging.sender.id === ctx.auth.metadata.pageId
+      ? messaging.recipient.id
+      : messaging.sender.id
+  const contact: IncomingContact = {
+    sourceId,
+  }
 
   if (messaging.message) {
     message = {
@@ -120,17 +111,13 @@ const getMessageEntity = async (
 
   if (messaging.referral) {
     ref = messaging.referral.ref
-    message = {
-      sourceId: messaging.referral.ref,
-      messageType: messageTypes.enum.incoming,
-      text: messaging.referral.ref,
-      contentType: contentTypes.enum.refLink,
-    }
+    // message = {
+    //   sourceId: messaging.referral.ref,
+    //   messageType: messageTypes.enum.incoming,
+    //   text: messaging.referral.ref,
+    //   contentType: contentTypes.enum.refLink,
+    // }
   }
 
-  if (message) {
-    return { message, postbackAction, quickReplyAction, ref }
-  }
-
-  throw new MessengerException("No message found")
+  return { message, postbackAction, quickReplyAction, ref, contact }
 }

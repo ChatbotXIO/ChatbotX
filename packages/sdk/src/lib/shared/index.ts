@@ -28,7 +28,7 @@ export const HandleRequestType = {
 } as const
 
 export type ReceivedMessageResult = {
-  message: IncomingMessage
+  message: IncomingMessage | null
   contact: IncomingContact
   postbackAction: string | null
   quickReplyAction: string | null

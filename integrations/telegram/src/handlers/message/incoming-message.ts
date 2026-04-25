@@ -66,12 +66,18 @@ const getMessageResult = async (
     lastName: message.from?.last_name,
   }
 
+  // Calculate ref from /start command
+  let ref: string | null = null
+  if (message.text?.startsWith("/start")) {
+    ref = message.text.split(" ")[1]
+  }
+
   return {
     message: incomingMessage,
     contact,
     postbackAction: null,
     quickReplyAction: null,
-    ref: null,
+    ref,
   }
 }
 

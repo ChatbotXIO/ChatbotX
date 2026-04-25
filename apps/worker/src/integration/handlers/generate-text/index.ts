@@ -96,7 +96,6 @@ export async function handleAIGenerateText({
       contactId: conversation.contactId,
       customFieldId: step.outputFieldId,
       text: fullText,
-      abortSignal: controller.signal,
     })
   } finally {
     clearTimeout(timeoutId)
@@ -106,11 +105,10 @@ export async function handleAIGenerateText({
   }
 }
 
-async function saveResultToCustomField(props: {
+export async function saveResultToCustomField(props: {
   contactId: string
   customFieldId: string
   text: string
-  abortSignal: AbortSignal
 }): Promise<void> {
   const { contactId, customFieldId, text } = props
 
