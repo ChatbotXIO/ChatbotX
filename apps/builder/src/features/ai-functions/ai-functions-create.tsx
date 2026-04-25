@@ -1,5 +1,6 @@
 "use client"
 
+import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
@@ -19,87 +20,132 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import CustomFieldField from "../custom-fields/components/custom-field-field"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
+import { updateAIFunctionAction } from "./actions/update-ai-function.action"
 import { createAIFunctionRequest } from "./schema/action"
 
 type AIFunctionsCreateProps = {
   workspaceId: string
   onSuccess?: () => void
+  mode?: "create" | "edit" | "duplicate"
+  initialData?: AIFunctionModel
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function AIFunctionsCreate({
   workspaceId,
   onSuccess,
+  mode = "create",
+  initialData,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
 }: AIFunctionsCreateProps) {
   const t = useTranslations()
 
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = controlledOpen ?? internalOpen
+  const setIsOpen = setControlledOpen ?? setInternalOpen
 
   const flowOptions = useFlowSelectOptions()
 
+  const action =
+    mode === "edit" && initialData
+      ? updateAIFunctionAction.bind(null, workspaceId, initialData.id)
+      : createAIFunctionAction.bind(null, workspaceId)
+
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createAIFunctionAction.bind(null, workspaceId),
-      zodResolver(createAIFunctionRequest),
-      {
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            name: "",
-            purpose: "",
-            dataCollect: [],
-            outputMessage: "",
-            triggerFlowId: null,
-          },
+    useHookFormAction(action, zodResolver(createAIFunctionRequest), {
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          name: "",
+          purpose: "",
+          dataCollect: [],
+          outputMessage: "",
+          triggerFlowId: null,
         },
-        actionProps: {
-          onSuccess: () => {
-            toast.success(
-              t("messages.createdSuccess", {
-                feature: t("fields.aiFunction.label"),
-              }),
-            )
-            resetFormAndAction()
-            setIsOpen(false)
-            onSuccess?.()
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError)
-            }
-          },
-        },
-        errorMapProps: {},
       },
-    )
+      actionProps: {
+        onSuccess: () => {
+          toast.success(
+            t(
+              `messages.${mode === "edit" ? "updatedSuccess" : "createdSuccess"}`,
+              {
+                feature: t("fields.aiFunction.label"),
+              },
+            ),
+          )
+          resetFormAndAction()
+          setIsOpen(false)
+          onSuccess?.()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+        },
+      },
+      errorMapProps: {},
+    })
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    if (initialData) {
+      form.reset({
+        name: initialData.name,
+        purpose: initialData.purpose ?? "",
+        dataCollect:
+          (initialData.dataCollect as { from: string; to: string }[]) ?? [],
+        outputMessage: initialData.outputMessage ?? "",
+        triggerFlowId: initialData.triggerFlowId,
+      })
+    } else {
+      form.reset({
+        name: "",
+        purpose: "",
+        dataCollect: [],
+        outputMessage: "",
+        triggerFlowId: null,
+      })
+    }
+  }, [isOpen, initialData, form])
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "dataCollect",
   })
 
+  const title =
+    mode === "edit"
+      ? t("messages.editFeature", { feature: t("fields.aiFunction.label") })
+      : t("messages.createFeature", { feature: t("fields.aiFunction.label") })
+
+  const trigger = controlledOpen === undefined && (
+    <DialogTrigger asChild>
+      <Button>
+        <PlusIcon className="h-4 w-4" />
+        {t("actions.createFeature", {
+          feature: t("fields.aiFunction.label"),
+        })}
+      </Button>
+    </DialogTrigger>
+  )
+
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon className="h-4 w-4" />
-          {t("actions.createFeature", {
-            feature: t("fields.aiFunction.label"),
-          })}
-        </Button>
-      </DialogTrigger>
+      {trigger}
       <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
         <DialogHeader>
-          <DialogTitle>
-            {t("messages.createFeature", {
-              feature: t("fields.aiFunction.label"),
-            })}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

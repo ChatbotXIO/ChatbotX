@@ -26,5 +26,5 @@ export const createAIFunctionRequest = z.object({
 })
 export type CreateAIFunctionRequest = z.infer<typeof createAIFunctionRequest>
 
-export const updateAIFunctionRequest = createAIFunctionRequest.partial()
+export const updateAIFunctionRequest = createAIFunctionRequest
 export type UpdateAIFunctionRequest = z.infer<typeof updateAIFunctionRequest>
