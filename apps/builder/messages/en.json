@@ -1284,11 +1284,11 @@
   },
   "googleSheets": {
     "setting": {
-      "description": "Google services configuration (Sheets, SSO, and more)",
-      "label": "Google"
+      "label": "Google Sheets",
+      "description": "Google Sheets integration configuration"
     },
     "header": "Column Header",
-    "title": "Google"
+    "title": "Google Sheets"
   },
   "integrations": {
     "title": "Integrations"

@@ -1,10 +1,12 @@
 "use client"
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
+import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useTranslations } from "next-intl"
 import React, { useMemo, useState } from "react"
+import { CreateSpreadsheetDialog } from "./create-spreadsheet-dialog"
 import { DeleteSpreadsheetsDialog } from "./delete-spreadsheet-dialog"
 import { UpdateSpreadsheetDialog } from "./edit-spreadsheet-dialog"
 import type { listSpreadsheets } from "./queries/list-spreadsheet.queries"
@@ -42,7 +44,11 @@ export function SpreadsheetsTable({
 
   return (
     <>
-      <DataTable table={table} />
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <CreateSpreadsheetDialog workspaceId={workspaceId} />
+        </DataTableToolbar>
+      </DataTable>
 
       <DeleteSpreadsheetsDialog
         onOpenChange={() => setRowAction(null)}

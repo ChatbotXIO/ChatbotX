@@ -11,7 +11,6 @@ export const withCache = async <T>(
 ): Promise<T> => {
   const { ttl = 24 * 60 * 60, tags = [], dynamicTags } = options || {}
   const cached = await distributedStore.get<T>(key)
-  // console.log("cachedddd", cached)
   if (cached) {
     return cached
   }

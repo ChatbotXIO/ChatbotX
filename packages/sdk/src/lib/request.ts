@@ -4,6 +4,13 @@ export function getPublicOriginFromRequest(request: Request): string {
   return `${protocol}://${host}`
 }
 
+export function getPublicUrlFromRequest(request: Request): URL {
+  const url = new URL(request.url)
+  url.host = getPublicHostFromRequest(request)
+  url.port = ""
+  return url
+}
+
 export function getPublicProtocolFromRequest(
   request: Request,
 ): "http" | "https" {

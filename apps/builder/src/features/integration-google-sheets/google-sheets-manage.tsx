@@ -67,7 +67,9 @@ export function GoogleSheetsManage({
       {integrationGoogleSheets ? (
         <div className="flex flex-col gap-2">
           <Button size="sm" variant="secondary">
-            <Link href="../google-sheets">{t("actions.manage")}</Link>
+            <Link className="w-full" href="../google-sheets">
+              {t("actions.manage")}
+            </Link>
           </Button>
 
           <AlertDialog>

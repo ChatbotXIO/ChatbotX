@@ -6,7 +6,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   type AuthValue,
-  getPublicHostFromRequest,
+  getPublicUrlFromRequest,
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
@@ -34,7 +34,7 @@ export const handleCallback = async (
   }
 
   // Parse state params to get workspace info
-  const url = new URL(req.url)
+  const url = new URL(getPublicUrlFromRequest(req))
   const rawState = JSON.parse(
     atob(decodeURIComponent(url.searchParams.get("state") || "")),
   )
@@ -52,8 +52,7 @@ export const handleCallback = async (
   }
 
   // find organization from domain and current user
-  const domain = await getPublicHostFromRequest(req)
-  const organization = await organizationService.findByDomain(domain)
+  const organization = await organizationService.findByDomain(url.hostname)
   const organizationSettings = organization.settings
 
   const userId = await getCurrentUserId()
@@ -94,15 +93,16 @@ export const handleCallback = async (
         return notFound()
       }
 
-      logger.debug(req, "debug google sheets callback request")
+      const callbackUrl = new URL(
+        "/integrations/google-sheets/callback",
+        url,
+      ).toString()
+      logger.debug({ callbackUrl }, "debug google sheets callback request")
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
           ...organizationSettings.google,
-          redirectUrl: new URL(
-            "/integrations/google-sheets/callback",
-            req.url,
-          ).toString(),
+          redirectUrl: callbackUrl,
         },
         req,
       })) as unknown as Oauth2AuthValue
