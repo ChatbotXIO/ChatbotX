@@ -38,6 +38,10 @@ import {
   allIntegrations,
   integrationService,
 } from "../../services/integrations"
+import {
+  disableConversationState,
+  enableConversationState,
+} from "./conversation"
 import type { ExecuteStepProps } from "./flow"
 
 export async function stepBlockContact({
@@ -508,12 +512,10 @@ export async function stepUnfollowConversation({
 export async function stepDisableBot({
   conversation,
 }: ExecuteStepProps<DisableBotStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      botEnabled: false,
-    })
-    .where(eq(conversationModel.id, conversation.id))
+  await disableConversationState({
+    workspaceId: conversation.workspaceId,
+    conversationIds: [conversation.id],
+  })
 
   // Emit conversation transferred to human event
   try {
@@ -550,12 +552,10 @@ export async function stepDisableBot({
 export async function stepEnableBot({
   conversation,
 }: ExecuteStepProps<EnableBotStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      botEnabled: true,
-    })
-    .where(eq(conversationModel.id, conversation.id))
+  await enableConversationState({
+    workspaceId: conversation.workspaceId,
+    conversationIds: [conversation.id],
+  })
 
   // Emit conversation transferred to bot event
   try {

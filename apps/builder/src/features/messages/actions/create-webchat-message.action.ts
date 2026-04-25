@@ -36,6 +36,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
+import { ensureConversationActive } from "@/features/conversations/queries/bot-state"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { actionClient } from "@/lib/safe-action"
 import {
@@ -205,9 +206,9 @@ export async function handleCreateWebchatMessage({
           ),
         )
       } else if (
-        conversation.botEnabled &&
         newMessage.text &&
-        !("postback" in parsedInput && parsedInput.postback)
+        !("postback" in parsedInput && parsedInput.postback) &&
+        (await ensureConversationActive(conversation))
       ) {
         promises.push(
           automatedResponseService.enqueue({

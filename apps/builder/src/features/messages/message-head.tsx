@@ -16,6 +16,7 @@ import { getFullName } from "../contacts/utils"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
+import { isConversationActive } from "../conversations/utils/bot-state"
 
 export default function MessageHead() {
   const t = useTranslations()
@@ -39,6 +40,7 @@ export default function MessageHead() {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
             botEnabled: true,
+            botResumeAt: null,
           })
         }
       },
@@ -62,7 +64,7 @@ export default function MessageHead() {
             onChange={setAssignee}
           />
         </div>
-        {!activeConversation.botEnabled && (
+        {!isConversationActive(activeConversation) && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

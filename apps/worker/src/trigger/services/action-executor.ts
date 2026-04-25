@@ -24,6 +24,10 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import {
+  disableConversationState,
+  enableConversationState,
+} from "../../integration/handlers/conversation"
 import type { ExecuteStepProps } from "../../integration/handlers/flow"
 import {
   clearSpreadsheetRow,
@@ -232,10 +236,10 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.disableBot:
-        await db
-          .update(conversationModel)
-          .set({ botEnabled: false })
-          .where(eq(conversationModel.id, conversation.id))
+        await disableConversationState({
+          workspaceId,
+          conversationIds: [conversation.id],
+        })
         conversationTrackingService
           .trackEvent({
             eventId: createId(),
@@ -261,10 +265,10 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.enableBot:
-        await db
-          .update(conversationModel)
-          .set({ botEnabled: true })
-          .where(eq(conversationModel.id, conversation.id))
+        await enableConversationState({
+          workspaceId,
+          conversationIds: [conversation.id],
+        })
         conversationTrackingService
           .trackEvent({
             eventId: createId(),
@@ -290,10 +294,10 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.transferConversationToHuman:
-        await db
-          .update(conversationModel)
-          .set({ botEnabled: false })
-          .where(eq(conversationModel.id, conversation.id))
+        await disableConversationState({
+          workspaceId,
+          conversationIds: [conversation.id],
+        })
         if (action.notifyAdmins) {
           baseLogger.info(
             `Notifying admins for conversation ${conversation.id}`,

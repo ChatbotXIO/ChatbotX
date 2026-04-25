@@ -16,6 +16,10 @@ import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schema/resource"
+import {
+  BOT_DISABLE_DURATION_MS,
+  isConversationActive,
+} from "../conversations/utils/bot-state"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -49,6 +53,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
             botEnabled: false,
+            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
           })
         }
       },
@@ -97,7 +102,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {activeConversation && (
           <div className="flex h-full w-full flex-col">
             <MessageHead />
-            {activeConversation?.botEnabled && (
+            {isConversationActive(activeConversation) && (
               <Button
                 className="rounded-none"
                 disabled={isDisablingBot}

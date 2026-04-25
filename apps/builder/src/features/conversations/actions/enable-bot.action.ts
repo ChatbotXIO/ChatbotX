@@ -1,8 +1,7 @@
 "use server"
 
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { emitConversationTransferredToBot } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
@@ -14,6 +13,7 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { enableConversationState } from "../queries/bot-state"
 
 export const enableBotAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -38,17 +38,10 @@ export const enableBotAction = workspaceActionClient
         },
       })
 
-      await db
-        .update(conversationModel)
-        .set({
-          botEnabled: true,
-        })
-        .where(
-          and(
-            eq(conversationModel.workspaceId, workspaceId),
-            inArray(conversationModel.id, parsedInput.ids),
-          ),
-        )
+      await enableConversationState({
+        workspaceId,
+        conversationIds: parsedInput.ids,
+      })
 
       // Emit conversation transferred to bot events
       for (const conv of conversations) {
