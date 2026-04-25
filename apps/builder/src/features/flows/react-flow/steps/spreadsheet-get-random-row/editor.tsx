@@ -54,7 +54,7 @@ export const SpreadsheetGetRandomRowEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="flows.actions.spreadsheetGetRandomRow"
+        name={`flows.actions.${getValues(parentName).stepType}`}
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

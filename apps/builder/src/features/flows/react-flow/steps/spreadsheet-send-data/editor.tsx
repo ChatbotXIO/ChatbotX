@@ -53,7 +53,7 @@ export const SpreadsheetSendDataEditor = ({
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="flows.actions.spreadsheetSendData"
+        name={`flows.actions.${getValues(parentName).stepType}`}
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}

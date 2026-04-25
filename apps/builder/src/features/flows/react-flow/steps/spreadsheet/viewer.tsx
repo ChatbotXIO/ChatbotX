@@ -19,6 +19,9 @@ export const SpreadsheetViewer = ({ data }: SpreadsheetViewerProps) => {
           <FileSpreadsheetIcon className="text-gray-500" size={20} />
           <p className="font-bold">{t("fields.googleSheets.label")}</p>
         </div>
+        <div className="mt-2 ml-4 text-center text-gray-500 text-xs">
+          {t(`flows.actions.${data.stepType}`)}
+        </div>
       </div>
 
       <div className="flex flex-col items-end gap-2">

@@ -27,7 +27,7 @@ type SpreadsheetDialogProps = {
 export const SpreadsheetDialog = ({
   open = false,
   onOpenChange,
-  // name,
+  name,
   onSubmit,
   children,
   trigger,
@@ -44,13 +44,15 @@ export const SpreadsheetDialog = ({
               <FileSpreadsheetIcon className="text-gray-500" size={20} />
               <p className="font-medium text-sm">Google Sheets</p>
             </div>
-            {/* <div className="mt-2 text-gray-500 text-xs">{t(name)}</div> */}
+            <div className="mt-2 text-gray-500 text-xs">{t(`${name}`)}</div>
           </div>
         )}
       </DialogTrigger>
       <DialogContent aria-describedby={undefined} className="flex-1">
         <DialogHeader>
-          <DialogTitle className="capitalize">Google Sheets</DialogTitle>
+          <DialogTitle className="capitalize">
+            Google Sheets - {t(`${name}`)}
+          </DialogTitle>
           <DialogDescription />
         </DialogHeader>
         <div className={"max-h-[calc(100vh-150px)] overflow-y-auto"}>

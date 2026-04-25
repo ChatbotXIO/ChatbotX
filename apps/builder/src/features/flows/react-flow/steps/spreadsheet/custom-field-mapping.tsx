@@ -46,7 +46,7 @@ export const SpreadsheetCustomFieldMapping = ({
   })
   const map = getValues(getFieldName("map"))
 
-  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
+  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheets/${spreadsheetId}/headers?sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
   const headers = headersData?.data ?? []
 

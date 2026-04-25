@@ -29,24 +29,34 @@ export const SpreadsheetClearRowEditor = ({
     mode: "onChange",
   })
 
-  const spreadsheetId = useWatch({ name: "spreadsheetId" })
-  const sheetName = useWatch({ name: "sheetName" })
+  const { control, resetField } = form
+
+  const spreadsheetId = useWatch({ control, name: "spreadsheetId" })
+  const sheetName = useWatch({ control, name: "sheetName" })
 
   const onSubmit = useCallback(() => {
     setValueParent(parentName, form.getValues())
     setOpen(false)
   }, [setValueParent, parentName, form.getValues, form])
 
+  const onChangeSpreadsheet = useCallback(() => {
+    resetField("sheetName")
+  }, [resetField])
+
   return (
     <Form {...form}>
       <SpreadsheetDialog
-        name="flows.actions.spreadsheetClearRow"
+        name={`flows.actions.${getValues(parentName).stepType}`}
         onOpenChange={(val: boolean) => setOpen(val)}
         onSubmit={onSubmit}
         open={open}
       >
         <div className="flex flex-col gap-4">
-          <SpreadsheetSelect label="Spreadsheet" name="spreadsheetId" />
+          <SpreadsheetSelect
+            name="spreadsheetId"
+            required
+            triggerValueChange={onChangeSpreadsheet}
+          />
 
           {spreadsheetId && (
             <WorksheetSelect name="sheetName" spreadsheetId={spreadsheetId} />

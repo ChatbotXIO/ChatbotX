@@ -40,7 +40,7 @@ export const spreadsheetsAuthenticatedAPI = {
   listWorksheetHeadersAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/workspaces/{workspaceId}/worksheets/{id}/headers",
+      path: "/workspaces/{workspaceId}/worksheets/{spreadsheetId}/headers",
       summary: "List worksheet headers",
       tags: ["Worksheet Headers"],
     })

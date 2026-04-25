@@ -34,7 +34,7 @@ export const WorksheetColumnSelect = ({
     name: getFieldName("sheetName"),
   })
 
-  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheet-headers?spreadsheetId=${spreadsheetId}&sheetName=${sheetName}`
+  const worksheetHeadersUrl = `/api/workspaces/${workspaceId}/worksheets/${spreadsheetId}/headers?sheetName=${sheetName}`
   const { data: headersData } = callAPI<{ data: string[] }>(worksheetHeadersUrl)
   const headers = (headersData?.data ?? []).map((h) => ({
     label: h,
