@@ -1260,6 +1260,7 @@
       "sendText": "Send Text",
       "sendVideo": "Send Video",
       "sendWaTemplateMessage": "Template Message",
+      "whatsappOptionList": "Option List",
       "noTemplatesAvailable": "No templates available",
       "setCustomField": "Set Custom Field",
       "startAnotherNode": "Start Another Node",

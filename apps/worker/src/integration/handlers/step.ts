@@ -367,4 +367,5 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.email]: sendEmail,
   [stepTypes.enum.typing]: stepSendTyping,
   [stepTypes.enum.sendWaTemplateMessage]: sendFlowMessage,
+  [stepTypes.enum.whatsappOptionList]: undefined,
 }

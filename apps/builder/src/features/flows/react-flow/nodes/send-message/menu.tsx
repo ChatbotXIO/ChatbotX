@@ -5,6 +5,7 @@ import {
   ImageIcon,
   ImagePlayIcon,
   KeyboardIcon,
+  ListIcon,
   MessageSquareIcon,
   PaperclipIcon,
   PictureInPicture2Icon,
@@ -63,6 +64,11 @@ const ALL_MENU_ITEMS = (
     stepType: stepTypes.enum.sendWaTemplateMessage,
     children: integrationMenus(t, menuData, channelTypes.enum.whatsapp),
   },
+  whatsappOptionList: {
+    label: t("flows.actions.whatsappOptionList"),
+    icon: ListIcon,
+    stepType: stepTypes.enum.whatsappOptionList,
+  },
   typing: {
     label: t("flows.actions.typing"),
     icon: TimerIcon,
@@ -115,6 +121,7 @@ const WHATSAPP_MENU_ORDER = [
   "getUserData",
   "sendGif",
   "sendWaTemplateMessage",
+  "whatsappOptionList",
   "typing",
   "sendFile",
   "actions",

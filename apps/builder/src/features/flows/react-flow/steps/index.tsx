@@ -125,6 +125,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.sendQuickReply]: undefined,
   [stepTypes.enum.email]: emailStep,
   [stepTypes.enum.typing]: typingStep,
+  [stepTypes.enum.whatsappOptionList]: undefined,
 }
 
 export const DynamicStepEditor = memo(
