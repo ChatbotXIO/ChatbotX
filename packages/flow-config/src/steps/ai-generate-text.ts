@@ -21,6 +21,8 @@ export const aiGenerateTextSchema = z.object({
   remember: z.boolean(),
   temperature: z.number().min(0).max(2),
   maxOutputTokens: z.number().int().min(250).max(4096),
+  successNodeId: zodBigintAsString().optional(),
+  errorNodeId: zodBigintAsString().optional(),
 })
 
 export type AIGenerateTextSchema = z.infer<typeof aiGenerateTextSchema>
@@ -46,5 +48,7 @@ export const aiGenerateTextDefaultFn = (
     maxOutputTokens: 250,
     ...props,
     stepType: stepTypes.enum.aiGenerateText,
+    successNodeId: createId(),
+    errorNodeId: createId(),
   }
 }

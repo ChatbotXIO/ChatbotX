@@ -85,6 +85,44 @@ export const seekConnectedNode = (
   return connectedNode?.target
 }
 
+export type SuccessErrorStepSchema = BaseStepSchema & {
+  successNodeId?: string
+  errorNodeId?: string
+}
+
+export async function sendFlow(
+  props: ExecuteStepProps<SuccessErrorStepSchema>,
+  isSuccess: boolean,
+) {
+  const { conversation, contactInbox, flowVersion, step } = props
+  if (!flowVersion) {
+    return
+  }
+
+  const nodeId: string | undefined = isSuccess
+    ? step.successNodeId
+    : step.errorNodeId
+
+  if (!nodeId) {
+    return
+  }
+
+  const connectedNodeId = seekConnectedNode(flowVersion, nodeId)
+
+  if (connectedNodeId) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+        flowId: flowVersion.flowId,
+        nodeId: connectedNodeId,
+        metadata: props.metadata,
+      },
+    })
+  }
+}
+
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
   if (!props.flowId) {
     logger.debug({ props }, "runFlowNode is called without flowId")

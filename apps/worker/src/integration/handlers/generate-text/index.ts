@@ -15,14 +15,16 @@ import {
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { streamText } from "ai"
+import { normalizeError } from "universal-error-normalizer"
+import { logger } from "../../../lib/logger"
 import { sendMessageWithRender } from "../../utils/message"
-import type { ExecuteStepProps } from "../flow"
+import { type ExecuteStepProps, sendFlow } from "../flow"
 import { buildAIMessages } from "./messages"
 
-export async function handleAIGenerateText({
-  conversation,
-  step,
-}: ExecuteStepProps<AIGenerateTextSchema>) {
+export async function handleAIGenerateText(
+  props: ExecuteStepProps<AIGenerateTextSchema>,
+) {
+  const { conversation, step } = props
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
 
@@ -98,6 +100,12 @@ export async function handleAIGenerateText({
       customFieldId: step.outputFieldId,
       text: fullText,
     })
+
+    await sendFlow(props, true)
+  } catch (err) {
+    await sendFlow(props, false)
+    const error = normalizeError(err)
+    logger.error(error, "An error occurred while generating text")
   } finally {
     clearTimeout(timeoutId)
     if (cleanupToolset) {
