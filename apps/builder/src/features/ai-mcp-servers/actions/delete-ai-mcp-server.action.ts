@@ -1,10 +1,12 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import { aiMCPServerModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
+import { getTranslations } from "next-intl/server"
+import { notFoundException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { aiMcpServerService } from "../ai-mcp-server.service"
 
 export const deleteAIMcpServerAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -20,18 +22,21 @@ export const deleteAIMcpServer = async (ctx: {
   workspaceId: string
   aiMcpServerId: string
 }) => {
-  await findOrFail({
-    table: aiMCPServerModel,
+  const t = await getTranslations()
+
+  const mcpServer = await aiMcpServerService.findBy({
     where: {
       id: ctx.aiMcpServerId,
       workspaceId: ctx.workspaceId,
     },
-    message: `AIMcpServer with id ${ctx.aiMcpServerId} not found`,
   })
+  if (!mcpServer) {
+    throw notFoundException(
+      t("messages.featureNotFound", { feature: "AIMcpServer" }),
+    )
+  }
 
   await db
     .delete(aiMCPServerModel)
     .where(eq(aiMCPServerModel.id, ctx.aiMcpServerId))
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiMcpServers`)
 }
