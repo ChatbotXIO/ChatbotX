@@ -1322,6 +1322,7 @@
     "noDataAvailable": "No data available",
     "savedSuccessfully": "Saved successfully",
     "syncedSuccessfully": "Synced successfully",
+    "nameAlreadyExists": "{feature} name already exists",
     "unknownError": "Unknown error",
     "updatedSuccess": "{feature} updated successfully",
     "updateFileComingSoon": "Update file functionality coming soon",

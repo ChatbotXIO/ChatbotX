@@ -3,6 +3,16 @@
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
@@ -24,11 +34,17 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import {
+  Loader2Icon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { use, useMemo, useState, useTransition } from "react"
 import { toast } from "sonner"
+import { deleteAIMcpServerAction } from "./actions/delete-ai-mcp-server.action"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
 import type { listAIMcpServers } from "./queries"
 import type { AIMcpServerResource } from "./schema/resource"
@@ -46,8 +62,33 @@ export default function AIMcpServersTable({
 
   const t = useTranslations()
   const router = useRouter()
-  // const [rowAction, setRowAction] =
-  //   useState<DataTableRowAction<AIMCPServerModel> | null>(null)
+  const [rowAction, setRowAction] = useState<AIMcpServerResource | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [selectedRow, setSelectedRow] = useState<AIMcpServerResource | null>(
+    null,
+  )
+  const [isPending, startTransition] = useTransition()
+
+  const handleDelete = () => {
+    if (!selectedRow) {
+      return
+    }
+
+    startTransition(async () => {
+      const result = await deleteAIMcpServerAction(workspaceId, selectedRow.id)
+      if (result?.serverError) {
+        toast.error(result.serverError)
+      } else {
+        toast.success(
+          t("messages.deletedSuccess", {
+            feature: t("fields.mcpServer.label"),
+          }),
+        )
+        setIsDeleteOpen(false)
+        router.refresh()
+      }
+    })
+  }
 
   const columns = useMemo<ColumnDef<AIMcpServerResource>[]>(
     () => [
@@ -98,7 +139,7 @@ export default function AIMcpServersTable({
       {
         id: "actions",
         header: t("actions.actions"),
-        cell: () => (
+        cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
@@ -109,7 +150,7 @@ export default function AIMcpServersTable({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  toast.info(t("messages.updateFileComingSoon"))
+                  setRowAction(row.original)
                 }}
               >
                 <PencilIcon className="mr-2 h-4 w-4" />
@@ -118,7 +159,8 @@ export default function AIMcpServersTable({
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => {
-                  toast.info(t("messages.deleteFileComingSoon"))
+                  setSelectedRow(row.original)
+                  setIsDeleteOpen(true)
                 }}
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />
@@ -167,6 +209,44 @@ export default function AIMcpServersTable({
             />
           </DataTableToolbar>
         </DataTable>
+
+        <AIMcpServersCreate
+          initialData={rowAction ?? undefined}
+          mode="edit"
+          onOpenChange={(open) => !open && setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={!!rowAction}
+          workspaceId={workspaceId}
+        />
+
+        <AlertDialog onOpenChange={setIsDeleteOpen} open={isDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("messages.deleteFeature", {
+                  feature: t("fields.mcpServer.label"),
+                })}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("messages.deleteConfirmation", {
+                  feature: t("fields.mcpServer.label"),
+                  name: selectedRow?.name ?? "",
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+              <AlertDialogAction disabled={isPending} onClick={handleDelete}>
+                {isPending && (
+                  <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t("actions.confirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   )

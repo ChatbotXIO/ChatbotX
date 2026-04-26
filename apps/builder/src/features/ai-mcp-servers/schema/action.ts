@@ -26,6 +26,9 @@ export const createAIMcpServerRequest = baseAIMcpServerRequest.extend({
 })
 export type CreateAIMcpServerRequest = z.infer<typeof createAIMcpServerRequest>
 
+export const updateAIMcpServerRequest = createAIMcpServerRequest
+export type UpdateAIMcpServerRequest = z.infer<typeof updateAIMcpServerRequest>
+
 export const validateAIMcpServerRequest = baseAIMcpServerRequest
 export type ValidateAIMcpServerRequest = z.infer<
   typeof validateAIMcpServerRequest

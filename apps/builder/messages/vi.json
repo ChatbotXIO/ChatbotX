@@ -1327,6 +1327,7 @@
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
     "noDataAvailable": "Không có dữ liệu",
     "savedSuccessfully": "Đã lưu thành công",
+    "nameAlreadyExists": "Tên {feature} đã tồn tại",
     "unknownError": "Lỗi không xác định",
     "updatedSuccess": "{feature} đã được cập nhật thành công",
     "updateFileComingSoon": "Chức năng cập nhật tệp sẽ sớm có",
