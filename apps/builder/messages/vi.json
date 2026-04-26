@@ -1521,6 +1521,14 @@
     "showFooter": {
       "label": "Hiển thị chân trang"
     },
+    "tabs": {
+      "automation": "Tự động hóa",
+      "ecommerce": "Thương mại điện tử",
+      "flows": "Luồng",
+      "messageTemplates": "Mẫu tin nhắn",
+      "profile": "Hồ sơ",
+      "usefulLinks": "Liên kết hữu ích"
+    },
     "templateFooter": {
       "label": "Chân trang mẫu"
     },

@@ -1515,6 +1515,14 @@
     "showFooter": {
       "label": "Show footer"
     },
+    "tabs": {
+      "automation": "Automation",
+      "ecommerce": "Ecommerce",
+      "flows": "Flows",
+      "messageTemplates": "Message Templates",
+      "profile": "Profile",
+      "usefulLinks": "Useful Links"
+    },
     "templateFooter": {
       "label": "Template Footer"
     },
