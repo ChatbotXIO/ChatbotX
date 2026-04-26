@@ -1,9 +1,11 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   defaultWorkerOptions,
   getRedisConnection,
   IntegrationJobAction,
   type IntegrationJobData,
+  integrationQueue,
   queueName,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
@@ -46,19 +48,37 @@ async function startIntegrationWorker() {
             return
           }
 
-          // Trigger automated response if the message is from a user
+          const isNotPostbackOrQuickReply = !(
+            postbackAction || quickReplyAction
+          )
+
+          // Check for active challenge (getUserData waiting for input)
           if (
-            !(postbackAction || quickReplyAction) &&
+            isNotPostbackOrQuickReply &&
             message.text &&
             message.senderType === "contact" &&
             conversation.botEnabled
           ) {
-            await automatedResponseService.enqueue({
-              conversationId: conversation.id,
-              contactInboxId: message.contactInboxId,
-              messageId: message.id,
-            })
-          } else if (!(postbackAction || quickReplyAction)) {
+            const additionalAttributes =
+              conversation.additionalAttributes as ConversationAttributes
+
+            if (additionalAttributes?.challenge) {
+              await integrationQueue.add(IntegrationJobAction.runChallenge, {
+                type: IntegrationJobAction.runChallenge,
+                data: {
+                  conversationId: conversation,
+                  contactInboxId: message.contactInboxId,
+                  challenge: additionalAttributes.challenge,
+                },
+              })
+            } else {
+              await automatedResponseService.enqueue({
+                conversationId: conversation.id,
+                contactInboxId: message.contactInboxId,
+                messageId: message.id,
+              })
+            }
+          } else if (isNotPostbackOrQuickReply) {
             // Track no response for messages without content or not from contact
             // (postback/quickReply are tracked in their own handlers)
             await trackBotResponse({

@@ -2,7 +2,6 @@
 
 import {
   type GetUserDataStepSchema,
-  getUserDataStepDefaultFn,
   getUserDataStepSchema,
   ReplyFormat,
 } from "@chatbotx.io/flow-config"
@@ -49,7 +48,9 @@ const GetUserDataStepForm = ({
 
   const form = useForm({
     resolver: zodResolver(getUserDataStepSchema),
-    defaultValues: getUserDataStepDefaultFn(),
+    defaultValues: {
+      ...getParentValues(parentName),
+    },
     mode: "onChange",
   })
 
@@ -74,7 +75,14 @@ const GetUserDataStepForm = ({
   }
 
   const onSubmit = (data: GetUserDataStepSchema) => {
-    setParentValue(parentName, data)
+    setParentValue(`${parentName}.message`, data.message)
+    setParentValue(`${parentName}.replyFormat`, data.replyFormat)
+    setParentValue(`${parentName}.outputFieldId`, data.outputFieldId)
+    setParentValue(`${parentName}.retryMessage`, data.retryMessage)
+    setParentValue(`${parentName}.skipButtonLabel`, data.skipButtonLabel)
+    setParentValue(`${parentName}.autoSkip`, data.autoSkip)
+    setParentValue(`${parentName}.autoSkipTimeValue`, data.autoSkipTimeValue)
+    setParentValue(`${parentName}.autoSkipTimeUnit`, data.autoSkipTimeUnit)
     onSuccess?.()
   }
 
