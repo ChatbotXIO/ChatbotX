@@ -70,7 +70,7 @@ const NEXT_PHASE = process.env.NEXT_PHASE
 export const myQueue =
   NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue(queueName.myQueue, {
+    : new Queue(queueNames.enum.myQueue, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
@@ -90,7 +90,7 @@ Create `apps/worker/src/<domain>/worker.ts`:
 
 ```typescript
 import { Worker, type Job } from "bullmq"
-import { queueName } from "@chatbotx.io/worker-config"
+import { queueNames } from "@chatbotx.io/worker-config"
 import {
   getRedisConnection,
   defaultWorkerOptions,
@@ -110,7 +110,7 @@ const startMyWorker = async () => {
   }
 
   const worker = new Worker(
-    queueName.myQueue,
+    queueNames.enum.myQueue,
     async (job: Job<MyQueueJobData>) => {
       logger.info(job.data, "Worker received job")
 

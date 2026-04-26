@@ -4,7 +4,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export const TriggerJobAction = {
   executeTrigger: "executeTrigger",
@@ -40,7 +40,7 @@ export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 export const triggerQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<TriggerJobData>(queueName.trigger, {
+    : new Queue<TriggerJobData>(queueNames.enum.trigger, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

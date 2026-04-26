@@ -3,7 +3,7 @@ import {
   type AIJobData,
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -21,7 +21,7 @@ async function startAIAgentWorker() {
   }
 
   const worker = new Worker(
-    queueName.aiAgent,
+    queueNames.enum.aiAgent,
     async (job: Job<AIJobData>) => {
       logger.info(job.data, `Worker received job: ${job.id}`)
 

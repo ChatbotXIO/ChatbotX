@@ -4,7 +4,7 @@ import {
   analyticsQueue,
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Queue, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -33,7 +33,7 @@ async function startScheduleWorker() {
   }
 
   const worker = new Worker(
-    queueName.analytics,
+    queueNames.enum.analytics,
     async (job: Job<AnalyticsJobData>) => {
       switch (job.data.type) {
         case AnalyticsJobData.syncContact:

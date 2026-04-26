@@ -11,7 +11,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
 export const IntegrationJobAction = {
@@ -206,7 +206,7 @@ export type IntegrationJobData =
 export const integrationQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<IntegrationJobData>(queueName.integration, {
+    : new Queue<IntegrationJobData>(queueNames.enum.integration, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

@@ -1,7 +1,7 @@
 import { sequenceConnections } from "@chatbotx.io/redis"
 import { Queue } from "bullmq"
 import { defaultJobOptions } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export type SequenceSchedulerJobData = {
   dispatchId: string
@@ -24,7 +24,7 @@ export const getSequenceSchedulerQueue =
 
     const connection = await sequenceConnections.useExisting()
     sequenceSchedulerQueueInstance = new Queue<SequenceSchedulerJobData>(
-      queueName.sequenceScheduler,
+      queueNames.enum.sequenceScheduler,
       {
         connection,
         defaultJobOptions,
@@ -34,4 +34,4 @@ export const getSequenceSchedulerQueue =
     return sequenceSchedulerQueueInstance
   }
 
-export const SEQUENCE_SCHEDULER_QUEUE_NAME = queueName.sequenceScheduler
+export const SEQUENCE_SCHEDULER_QUEUE_NAME = queueNames.enum.sequenceScheduler

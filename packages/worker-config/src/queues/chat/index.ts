@@ -23,7 +23,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
@@ -112,7 +112,7 @@ export type ChatJobData =
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<ChatJobData>(queueName.chat, {
+    : new Queue<ChatJobData>(queueNames.enum.chat, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

@@ -1,7 +1,7 @@
 import {
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
   ScheduleJobData,
   scheduleQueue,
 } from "@chatbotx.io/worker-config"
@@ -38,7 +38,7 @@ async function startScheduleWorker() {
   }
 
   const worker = new Worker(
-    queueName.schedule,
+    queueNames.enum.schedule,
     async (job: Job<ScheduleJobData>) => {
       switch (job.data.type) {
         case ScheduleJobData.enqueueBroadcast:

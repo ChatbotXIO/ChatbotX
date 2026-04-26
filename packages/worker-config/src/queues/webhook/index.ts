@@ -5,7 +5,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export const WebhookJobAction = {
   evaluateWebhooks: "evaluateWebhooks",
@@ -27,7 +27,7 @@ export type WebhookJobData = WebhookJobEvaluate
 export const webhookQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<WebhookJobData>(queueName.webhook, {
+    : new Queue<WebhookJobData>(queueNames.enum.webhook, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

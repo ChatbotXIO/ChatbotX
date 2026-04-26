@@ -4,7 +4,7 @@ import {
   type ChatJobData,
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -23,7 +23,7 @@ async function startChatWorker() {
   }
 
   const worker = new Worker(
-    queueName.chat,
+    queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
       switch (job.data.type) {
         case ChatJobAction.sendExternalMessage:

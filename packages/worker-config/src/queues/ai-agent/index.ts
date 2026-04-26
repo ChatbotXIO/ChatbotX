@@ -4,12 +4,12 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export const aiAgentQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue(queueName.aiAgent, {
+    : new Queue(queueNames.enum.aiAgent, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

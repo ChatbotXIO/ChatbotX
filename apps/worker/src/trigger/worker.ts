@@ -2,7 +2,7 @@ import { SdkException } from "@chatbotx.io/sdk"
 import {
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
   TriggerJobAction,
   type TriggerJobData,
 } from "@chatbotx.io/worker-config"
@@ -16,7 +16,7 @@ const triggerMatcher = new TriggerMatcherService()
 const triggerExecutor = new TriggerExecutorService()
 
 const worker = new Worker(
-  queueName.trigger,
+  queueNames.enum.trigger,
   async (job: Job<TriggerJobData>) => {
     switch (job.data.type) {
       case TriggerJobAction.evaluateTriggers: {

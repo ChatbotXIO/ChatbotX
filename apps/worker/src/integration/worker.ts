@@ -6,7 +6,7 @@ import {
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
-  queueName,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
@@ -39,7 +39,7 @@ async function startIntegrationWorker() {
   }
 
   const worker = new Worker(
-    queueName.integration,
+    queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
       logger.info(job.data, "Worker received job")
       switch (job.data.type) {

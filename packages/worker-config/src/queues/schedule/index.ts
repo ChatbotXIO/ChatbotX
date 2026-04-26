@@ -4,7 +4,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export const ScheduleJobData = {
   enqueueBroadcast: "enqueueBroadcast",
@@ -62,7 +62,7 @@ export type ScheduleJobData =
 export const scheduleQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<ScheduleJobData>(queueName.schedule, {
+    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })
