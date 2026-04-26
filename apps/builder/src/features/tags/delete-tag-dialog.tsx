@@ -14,6 +14,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import type { Row } from "@tanstack/react-table"
 import { Loader, Trash } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import type { ComponentPropsWithoutRef } from "react"
@@ -37,6 +38,7 @@ export function DeleteTagsDialog({
   ...props
 }: DeleteTagsDialogProps) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteTagAction.bind(null, workspaceId),
@@ -47,7 +49,9 @@ export function DeleteTagsDialog({
             feature: t("fields.tag.label"),
           }),
         )
+        onSuccess?.()
         onOpenChange?.(false)
+        router.refresh()
       },
       onError: ({ error }) => {
         if (error.serverError) {
