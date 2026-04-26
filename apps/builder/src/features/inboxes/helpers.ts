@@ -42,7 +42,7 @@ export const getInboxLink = (props: {
   if (inbox.channel === "whatsapp") {
     const url = new URL(
       "",
-      `https://wa.me/${inbox.integrationWhatsapp?.name ?? ""}`,
+      `https://wa.me/${inbox.integrationWhatsapp?.auth?.metadata?.phoneNumber?.display_phone_number ?? ""}`,
     )
     if (ref) {
       url.searchParams.set("text", `/${ref}`)
