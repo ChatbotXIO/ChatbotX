@@ -1,8 +1,5 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { aiMCPServerModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
@@ -32,11 +29,7 @@ export const createAIMcpServerAction = workspaceActionClient
       })
     }
 
-    await db.insert(aiMCPServerModel).values({
-      ...parsedInput,
-      id: createId(),
-      workspaceId,
-    })
+    await aiMcpServerService.create(workspaceId, parsedInput)
 
     revalidateCacheTags(`workspaces:${workspaceId}#aiMcpServers`)
   })

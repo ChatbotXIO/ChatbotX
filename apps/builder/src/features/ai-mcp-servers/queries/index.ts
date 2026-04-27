@@ -5,18 +5,9 @@ import type {
   ListAIMcpServersResponse,
 } from "../schema/action"
 
-export async function findAIMcpServerByName(workspaceId: string, name: string) {
-  return await db.query.aiMCPServerModel.findFirst({
-    where: {
-      workspaceId,
-      name,
-    },
-  })
-}
-
 export async function listAIMcpServers(
   input: ListAIMcpServersRequest,
-): Promise<ListAIMcpServersResponse> {
+): Promise<ListAIMcpServersResponse & { pageCount: number }> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.aiMCPServerModel.findMany({
@@ -25,5 +16,5 @@ export async function listAIMcpServers(
     },
   })
 
-  return { data }
+  return { data, pageCount: 1 }
 }

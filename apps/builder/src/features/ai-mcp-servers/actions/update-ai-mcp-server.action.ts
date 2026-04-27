@@ -1,7 +1,4 @@
 "use server"
-
-import { db, eq } from "@chatbotx.io/database/client"
-import { aiMCPServerModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
@@ -62,10 +59,7 @@ export const updateAIMcpServer = async (
     })
   }
 
-  await db
-    .update(aiMCPServerModel)
-    .set(parsedInput)
-    .where(eq(aiMCPServerModel.id, mcpServer.id))
+  await aiMcpServerService.update(mcpServer.id, parsedInput)
 
   revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiMcpServers`)
 }

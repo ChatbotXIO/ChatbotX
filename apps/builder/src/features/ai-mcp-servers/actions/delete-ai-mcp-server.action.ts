@@ -1,7 +1,4 @@
 "use server"
-
-import { db, eq } from "@chatbotx.io/database/client"
-import { aiMCPServerModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { notFoundException } from "@/lib/errors/exception"
@@ -36,7 +33,5 @@ export const deleteAIMcpServer = async (ctx: {
     )
   }
 
-  await db
-    .delete(aiMCPServerModel)
-    .where(eq(aiMCPServerModel.id, ctx.aiMcpServerId))
+  await aiMcpServerService.delete(ctx.aiMcpServerId)
 }
