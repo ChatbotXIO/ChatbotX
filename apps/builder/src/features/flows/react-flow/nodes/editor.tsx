@@ -44,6 +44,29 @@ import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
 import type { MenuItem } from "./types"
 
+const collectErrorMessages = (node: unknown): string[] => {
+  if (!node || typeof node !== "object") {
+    return []
+  }
+  if (Array.isArray(node)) {
+    return node.flatMap(collectErrorMessages)
+  }
+
+  const messages: string[] = []
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    if (key === "ref" || key === "type") {
+      continue
+    }
+    if (key === "message" && typeof value === "string" && value.length > 0) {
+      messages.push(value)
+      continue
+    }
+    messages.push(...collectErrorMessages(value))
+  }
+
+  return messages
+}
+
 type NodeEditorProps = {
   nodeId: string
   nodeType: NodeType
@@ -327,24 +350,17 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                         : "",
                     )}
                   >
-                    {/* biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors */}
-                    {(form.formState.errors as any).steps ? (
-                      <ErrorAlert
-                        message={
-                          JSON.stringify(form.formState.errors)
-                          // typeof form.formState.errors.steps?.[index]?.message ===
-                          //   "object"
-                          //   ? ((
-                          //     form.formState.errors.steps?.[index]?.message as {
-                          //       message: string
-                          //     }
-                          //   ).message as string)
-                          //   : ""
-                        }
-                      />
-                    ) : (
-                      <div className="w-4">{"\u00A0"}</div>
-                    )}
+                    {(() => {
+                      const messages = collectErrorMessages(
+                        // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+                        (form.formState.errors as any).steps?.[index],
+                      )
+                      return messages.length > 0 ? (
+                        <ErrorAlert message={messages.join(", ")} />
+                      ) : (
+                        <div className="w-4">{"\u00A0"}</div>
+                      )
+                    })()}
                     <div
                       className={cn(
                         "break-word flex-1",
