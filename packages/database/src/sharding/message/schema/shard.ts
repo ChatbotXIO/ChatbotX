@@ -1,5 +1,13 @@
 import { boolean, index, integer, pgTable, text } from "drizzle-orm/pg-core"
-import { sharedColumns } from "../partials/shared"
+import { sharedColumns } from "../../../partials/shared"
+
+export const sslModes = [
+  "disable",
+  "require",
+  "verify-ca",
+  "verify-full",
+] as const
+export type SslMode = (typeof sslModes)[number]
 
 export const messageShardModel = pgTable(
   "MessageShard",
@@ -10,6 +18,8 @@ export const messageShardModel = pgTable(
     port: integer().default(5432),
     database: text().notNull(),
     user: text().notNull(),
+    credentialRef: text(),
+    sslMode: text().$type<SslMode>().default("disable"),
     isActive: boolean().default(false),
   },
   (table) => [

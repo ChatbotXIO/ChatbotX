@@ -1,50 +1,66 @@
-import { count } from "drizzle-orm"
 import { type DatabaseClient, db } from "../../client"
 import { keys } from "../../keys"
-import { messageShardModel } from "../../schema"
-import { ShardConnectionManager } from "../../shard"
-import { MessageRepository as SingleDatabaseMessageRepository } from "./message-repository"
-import type {
-  DistributedLock,
+import {
+  type DistributedLock,
+  type IMessageRepository,
   MessageRepository,
-} from "./message-repository.interface"
-import { ShardedMessageRepository } from "./sharded-message-repository"
+} from "./message-repository"
 
 interface RepositoryCacheEntry {
   distributedLock?: DistributedLock
-  promise: Promise<MessageRepository>
+  promise: Promise<IMessageRepository>
+}
+
+export interface ShardManagerLike {
+  invalidateShardingCache(): void
+  shutdown(): Promise<void>
 }
 
 const repositoryCache = new WeakMap<DatabaseClient, RepositoryCacheEntry>()
-const shardManagerCache = new WeakMap<DatabaseClient, ShardConnectionManager>()
+const shardManagerCache = new WeakMap<DatabaseClient, ShardManagerLike>()
+
+let shardModuleCache: {
+  createShardRepository: typeof import("../../sharding/message").createShardRepository
+} | null = null
+let shardModuleExists: boolean | null = null
 
 async function buildRepository(
   client: DatabaseClient,
-  distributedLock?: DistributedLock,
-): Promise<MessageRepository> {
+  _distributedLock?: DistributedLock,
+): Promise<IMessageRepository> {
   const env = keys()
 
-  if (!env.ENABLE_MESSAGE_SHARDING) {
-    return new SingleDatabaseMessageRepository(client)
+  if (env.ENABLE_MESSAGE_SHARDING !== "true") {
+    return new MessageRepository(client)
   }
 
-  const result = await client.select({ count: count() }).from(messageShardModel)
+  try {
+    if (shardModuleExists === false) {
+      return new MessageRepository(client)
+    }
 
-  const shardCount = Number(result[0]?.count ?? 0)
+    if (!shardModuleCache) {
+      const module = await import("../../sharding/message")
+      shardModuleCache = module
+      shardModuleExists = true
+    }
 
-  if (shardCount === 0) {
-    return new SingleDatabaseMessageRepository(client)
+    const result = shardModuleCache.createShardRepository()
+    if (result === null) {
+      return new MessageRepository(client)
+    }
+
+    return result
+  } catch {
+    shardModuleExists = false
+    return new MessageRepository(client)
   }
-
-  const manager = new ShardConnectionManager(client)
-  shardManagerCache.set(client, manager)
-  return new ShardedMessageRepository(manager, distributedLock)
 }
 
 export function createMessageRepository(
   client: DatabaseClient = db,
   distributedLock?: DistributedLock,
-): Promise<MessageRepository> {
+): Promise<IMessageRepository> {
   const cached = repositoryCache.get(client)
   if (cached && cached.distributedLock === distributedLock) {
     return cached.promise
@@ -57,7 +73,7 @@ export function createMessageRepository(
 
 export function getShardManager(
   client: DatabaseClient = db,
-): ShardConnectionManager | null {
+): ShardManagerLike | null {
   return shardManagerCache.get(client) ?? null
 }
 

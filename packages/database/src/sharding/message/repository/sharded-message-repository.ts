@@ -4,22 +4,7 @@ import {
   withCache,
 } from "@chatbotx.io/redis"
 import { and, desc, eq, gte, inArray, isNotNull, lt, or } from "drizzle-orm"
-import { logger } from "../../logger"
-import {
-  attachmentModel,
-  messageModel,
-  type ShardConnectionManager,
-  type ShardDatabaseClient,
-  type ShardTimeRangeInfo,
-  withShardRetry,
-} from "../../shard"
-import type { AttachmentModel, MessageModel } from "../../types"
-import {
-  type AnyDatabaseClient,
-  type AttachmentTable,
-  BaseMessageRepository,
-  type MessageTable,
-} from "./base-message-repository"
+import { logger } from "../../../logger"
 import type {
   CreateAttachmentInput,
   CreateMessageInput,
@@ -27,63 +12,42 @@ import type {
   DistributedLock,
   FindLastByConversationOptions,
   FindManyByConversationOptions,
+  IMessageRepository,
   ListMessagesQuery,
   MessageWithAttachments,
   PaginatedMessages,
   PaginationCursor,
-} from "./message-repository.interface"
+} from "../../../repositories/message"
+import type { AttachmentModel, MessageModel } from "../../../types"
+import {
+  endOfHour,
+  rehydrateTimeRangeDates,
+  startOfHour,
+  withShardRetry,
+} from "../../shared"
+import {
+  attachmentModel,
+  type MessageShardConnectionManager,
+  type MessageShardDatabaseClient,
+  type MessageShardTimeRangeInfo,
+  messageModel,
+} from ".."
 
-const SINCE_TIME_BUFFER_MS = 10_000
+export { getSafeSinceTime } from "../../../repositories"
+
 const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 5 * 60
 
-export function getSafeSinceTime(
-  time: Date | number | undefined | null,
-  bufferMs: number = SINCE_TIME_BUFFER_MS,
-): Date | undefined {
-  if (!time) {
-    return
-  }
-
-  const timestamp = time instanceof Date ? time.getTime() : time
-  const date = new Date(timestamp - bufferMs)
-  date.setMinutes(0, 0, 0)
-  return date
-}
-
-function startOfHour(date: Date): Date {
-  const result = new Date(date)
-  result.setMinutes(0, 0, 0)
-  return result
-}
-
-function endOfHour(date: Date): Date {
-  const result = new Date(date)
-  result.setMinutes(59, 59, 999)
-  return result
-}
-
-function rehydrateShardTimeRange(
-  shards: ShardTimeRangeInfo[],
-): ShardTimeRangeInfo[] {
-  return shards.map((s) => ({
-    ...s,
-    startTime: new Date(s.startTime),
-    endTime: s.endTime ? new Date(s.endTime) : null,
-  }))
-}
-
-export class ShardedMessageRepository extends BaseMessageRepository {
-  private readonly shardManager: ShardConnectionManager
+export class ShardedMessageRepository implements IMessageRepository {
+  private readonly shardManager: MessageShardConnectionManager
   private readonly distributedLock: DistributedLock
 
   private static readonly LOCK_TIMEOUT_SECONDS = 5
 
   constructor(
-    shardManager: ShardConnectionManager,
+    shardManager: MessageShardConnectionManager,
     distributedLock?: DistributedLock,
   ) {
-    super()
     this.shardManager = shardManager
     this.distributedLock = distributedLock ?? redisDistributedLock
   }
@@ -99,7 +63,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
   private async getShardsForRange(
     start: Date,
     end: Date,
-  ): Promise<ShardTimeRangeInfo[]> {
+  ): Promise<MessageShardTimeRangeInfo[]> {
     const bucketStart = startOfHour(start)
     const bucketEnd = endOfHour(end)
     const key = `${SHARD_RANGE_CACHE_TAG}:${bucketStart.getTime()}:${bucketEnd.getTime()}`
@@ -113,7 +77,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
       },
     )
 
-    return rehydrateShardTimeRange(cached)
+    return rehydrateTimeRangeDates(cached)
   }
 
   private executeWithLock<T>(
@@ -127,8 +91,24 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     })
   }
 
+  private groupAttachmentsByMessageId(
+    attachments: AttachmentModel[],
+  ): Record<string, AttachmentModel[]> {
+    return attachments.reduce(
+      (acc, attachment) => {
+        const key = attachment.messageId
+        if (!acc[key]) {
+          acc[key] = []
+        }
+        acc[key].push(attachment)
+        return acc
+      },
+      {} as Record<string, AttachmentModel[]>,
+    )
+  }
+
   private async fetchAndGroupAttachments(
-    shardClient: ShardDatabaseClient,
+    shardClient: MessageShardDatabaseClient,
     messages: { id: string; createdAt: Date }[],
   ): Promise<Record<string, AttachmentModel[]>> {
     const messageIds = messages.map((m) => m.id)
@@ -154,61 +134,8 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     )
   }
 
-  protected getMessageModel(): MessageTable {
-    return messageModel
-  }
-
-  protected getAttachmentModel(): AttachmentTable {
-    return attachmentModel
-  }
-
-  protected getDbForWrite(): Promise<ShardDatabaseClient> {
-    return this.shardManager.getActiveShardForWrite()
-  }
-
-  protected async getDbForRead(
-    startTime?: Date,
-    endTime?: Date,
-  ): Promise<ShardDatabaseClient> {
-    if (!startTime) {
-      throw new Error(
-        "startTime is required for getDbForRead in sharded repository",
-      )
-    }
-
-    const shards = await this.getShardsForRange(
-      startTime,
-      endTime ?? new Date(),
-    )
-
-    if (shards.length === 0) {
-      return this.shardManager.getActiveShardForWrite()
-    }
-    if (shards.length > 1) {
-      throw new Error(
-        `getDbForRead spans ${shards.length} shards. Use explicit multi-shard query methods instead.`,
-      )
-    }
-    return this.shardManager.getShardClient(shards[0].shard)
-  }
-
-  protected createAttachmentValues(
-    attachments: Omit<
-      CreateAttachmentInput,
-      "messageId" | "messageCreatedAt"
-    >[],
-    messageId: string,
-    messageCreatedAt: Date,
-  ): (typeof attachmentModel.$inferInsert)[] {
-    return attachments.map((attachment) => ({
-      ...attachment,
-      messageId,
-      messageCreatedAt,
-    }))
-  }
-
-  protected async queryAttachmentsForMessages(
-    db: AnyDatabaseClient,
+  private async queryAttachmentsForMessages(
+    db: MessageShardDatabaseClient,
     messageIds: string[],
     messageCreatedAts?: Date[],
   ): Promise<AttachmentModel[]> {
@@ -232,11 +159,18 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return attachments as AttachmentModel[]
   }
 
-  override create(message: CreateMessageInput): Promise<MessageModel> {
-    return withShardRetry(() => super.create(message))
+  create(message: CreateMessageInput): Promise<MessageModel> {
+    return withShardRetry(async () => {
+      const db = await this.shardManager.getActiveShardForWrite()
+      const [result] = await db
+        .insert(messageModel)
+        .values(message as typeof messageModel.$inferInsert)
+        .returning()
+      return result as MessageModel
+    })
   }
 
-  override async createOrUpdate(
+  async createOrUpdate(
     message: CreateMessageInput,
   ): Promise<CreateMessageResult> {
     if (message.sourceId && message.conversationId && message.workspaceId) {
@@ -255,17 +189,17 @@ export class ShardedMessageRepository extends BaseMessageRepository {
         if (existing) {
           return { message: existing, isNew: false }
         }
-        const created = await withShardRetry(() => super.create(message))
+        const created = await this.create(message)
         return { message: created, isNew: true }
       }
 
       return this.executeWithLock(lockKey, doCreateOrUpdate)
     }
-    const created = await withShardRetry(() => super.create(message))
+    const created = await this.create(message)
     return { message: created, isNew: true }
   }
 
-  override createWithAttachments(
+  createWithAttachments(
     message: CreateMessageInput,
     attachments: Omit<
       CreateAttachmentInput,
@@ -273,11 +207,47 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     >[],
   ): Promise<MessageWithAttachments> {
     return withShardRetry(() =>
-      super.createWithAttachments(message, attachments),
+      this.createWithAttachmentsInternal(message, attachments),
     )
   }
 
-  override async createOrUpdateWithAttachments(
+  private async createWithAttachmentsInternal(
+    message: CreateMessageInput,
+    attachments: Omit<
+      CreateAttachmentInput,
+      "messageId" | "messageCreatedAt"
+    >[],
+  ): Promise<MessageWithAttachments> {
+    const db = await this.shardManager.getActiveShardForWrite()
+
+    return await db.transaction(async (tx) => {
+      const [newMessage] = await tx
+        .insert(messageModel)
+        .values(message as typeof messageModel.$inferInsert)
+        .returning()
+
+      let messageAttachments: AttachmentModel[] = []
+
+      if (attachments.length > 0) {
+        const attachmentValues = attachments.map((attachment) => ({
+          ...attachment,
+          messageId: newMessage.id,
+          messageCreatedAt: newMessage.createdAt,
+        }))
+        messageAttachments = (await tx
+          .insert(attachmentModel)
+          .values(attachmentValues as (typeof attachmentModel.$inferInsert)[])
+          .returning()) as AttachmentModel[]
+      }
+
+      return {
+        ...newMessage,
+        attachments: messageAttachments,
+      } as MessageWithAttachments
+    })
+  }
+
+  async createOrUpdateWithAttachments(
     message: CreateMessageInput,
     attachments: Omit<
       CreateAttachmentInput,
@@ -311,7 +281,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
           }
         }
         const created = await withShardRetry(() =>
-          super.createWithAttachments(message, attachments),
+          this.createWithAttachmentsInternal(message, attachments),
         )
         return { result: created, isNew: true }
       }
@@ -319,12 +289,12 @@ export class ShardedMessageRepository extends BaseMessageRepository {
       return this.executeWithLock(lockKey, doCreateOrUpdate)
     }
     const created = await withShardRetry(() =>
-      super.createWithAttachments(message, attachments),
+      this.createWithAttachmentsInternal(message, attachments),
     )
     return { result: created, isNew: true }
   }
 
-  override async findById(
+  async findById(
     id: string,
     createdAt?: Date,
   ): Promise<MessageWithAttachments | null> {
@@ -376,7 +346,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return null
   }
 
-  override async findBySourceId(
+  async findBySourceId(
     sourceId: string,
     conversationId: string,
     workspaceId: string,
@@ -427,7 +397,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return null
   }
 
-  override async findLastByConversation(
+  async findLastByConversation(
     conversationId: string,
     options?: FindLastByConversationOptions,
   ): Promise<MessageWithAttachments[]> {
@@ -503,7 +473,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return allMessages.slice(0, limit)
   }
 
-  override async findManyByConversation(
+  async findManyByConversation(
     conversationId: string,
     options: FindManyByConversationOptions,
   ): Promise<MessageModel[]> {
@@ -565,7 +535,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return allMessages.slice(0, options.limit)
   }
 
-  override async findManyByIds(
+  async findManyByIds(
     ids: string[],
     contactInboxId: string,
     sinceTime?: Date,
@@ -631,7 +601,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     return allMessages
   }
 
-  override async listByConversation(
+  async listByConversation(
     query: ListMessagesQuery,
   ): Promise<PaginatedMessages> {
     const { pagination } = query
@@ -701,7 +671,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
     }
   }
 
-  protected override buildNextCursor(
+  private buildNextCursor(
     lastMessage: typeof messageModel.$inferSelect,
     shardId?: string,
   ): PaginationCursor {
@@ -713,7 +683,7 @@ export class ShardedMessageRepository extends BaseMessageRepository {
   }
 
   private async queryShardForMessages(
-    shardInfo: ShardTimeRangeInfo,
+    shardInfo: MessageShardTimeRangeInfo,
     query: ListMessagesQuery,
     limit: number,
     cursor?: PaginationCursor,
