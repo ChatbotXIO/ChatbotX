@@ -136,7 +136,14 @@ export const TiptapEditor = ({
                     className="w-full cursor-pointer justify-start rounded-none p-2"
                     key={field.value}
                     onClick={() => {
-                      setEditorValue(`{{${field.value}}}`)
+                      tiptapEditor
+                        ?.chain()
+                        .insertContent({
+                          type: "mention",
+                          attrs: { id: `${field.label}}}` },
+                        })
+                        .focus()
+                        .run()
                       setIsOpenCustomField(false)
                     }}
                     variant="ghost"

@@ -23,12 +23,14 @@ export const VariableList = ({
 
   const [selectedIndex, setSelectedIndex] = useState(0)
 
-  const selectItem = (index: number) => {
+  const selectItem = (index: number): boolean => {
     const item = props.items[index]
 
     if (item) {
       props.command({ id: `${item.label}}}` })
     }
+
+    return Boolean(item)
   }
 
   const upHandler = () => {
@@ -41,9 +43,7 @@ export const VariableList = ({
     setSelectedIndex((selectedIndex + 1) % props.items.length)
   }
 
-  const enterHandler = () => {
-    selectItem(selectedIndex)
-  }
+  const enterHandler = () => selectItem(selectedIndex)
 
   useEffect(() => setSelectedIndex(0), [])
 
@@ -60,8 +60,7 @@ export const VariableList = ({
       }
 
       if (event.key === "Enter") {
-        enterHandler()
-        return true
+        return enterHandler()
       }
 
       return false
