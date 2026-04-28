@@ -55,6 +55,7 @@ export const stepTypes = z.enum([
   "aiGenerateImage",
   "aiSpeechToText",
   "aiTextToSpeech",
+  "aiExtractData",
   "aiDeleteMessageHistory",
 
   // Email Operations (E_)

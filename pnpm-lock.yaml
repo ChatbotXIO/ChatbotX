@@ -1298,6 +1298,9 @@ importers:
       '@aws-sdk/s3-presigned-post':
         specifier: ^3.1034.0
         version: 3.1034.0
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../database
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger

@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1034.0",
     "@aws-sdk/s3-presigned-post": "^3.1034.0",
+    "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
