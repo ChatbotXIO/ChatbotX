@@ -4,6 +4,7 @@ import { addContactNotesStep } from "./add-contact-notes"
 import { addContactTagStep } from "./add-contact-tag"
 import { addNotesStep } from "./add-notes"
 import { aiAnalyzeImageStep } from "./ai-analyze-image"
+import { aiExtractDataStep } from "./ai-extract-data/index"
 import { aiGenerateImageStep } from "./ai-generate-image/index"
 import { aiGenerateTextStep } from "./ai-generate-text"
 import { aiGenerateTextAgentStep } from "./ai-generate-text-agent"
@@ -115,6 +116,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.addNotes]: addNotesStep,
   [stepTypes.enum.waitUserReply]: undefined,
   [stepTypes.enum.aiGenerateText]: aiGenerateTextStep,
+  [stepTypes.enum.aiExtractData]: aiExtractDataStep,
   [stepTypes.enum.aiGenerateTextAgent]: aiGenerateTextAgentStep,
   [stepTypes.enum.aiGenerateImage]: aiGenerateImageStep,
   [stepTypes.enum.aiAnalyzeImage]: aiAnalyzeImageStep,

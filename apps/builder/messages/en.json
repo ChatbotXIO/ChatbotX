@@ -624,6 +624,7 @@
       "aiGenerateText": "{aiName}: Generate Text",
       "aiGenerateImage": "{aiName}: Generate Image",
       "aiAnalyzeImage": "{aiName}: AI Analyze Image",
+      "aiExtractData": "{aiName}: Extract Data",
       "label": "Flows",
       "placeholder": "Select flow",
       "aiGenerateTextAgent": "{aiName}: Generate Text Agent"
@@ -728,6 +729,28 @@
     },
     "errorLog": {
       "label": "Error Log"
+    },
+    "inputType": {
+      "label": "Input Type",
+      "options": {
+        "text": "Text",
+        "image": "Image",
+        "file": "File"
+      }
+    },
+    "extractFields": {
+      "label": "Fields to Extract",
+      "key": {
+        "label": "JSON Key",
+        "placeholder": "e.g. email, phone, address"
+      },
+      "customFieldId": {
+        "label": "Save to Custom Field"
+      },
+      "description": {
+        "label": "Description (Optional)",
+        "placeholder": "Describe what to extract"
+      }
     },
     "max": {
       "label": "Maximum"
@@ -1239,9 +1262,13 @@
     "aiGenerateImage": {
       "label": "{name}: AI Generate Image"
     },
+    "aiExtractData": {
+      "label": "{name}: AI Extract Data"
+    },
     "actions": {
       "addContactNotes": "Add Contact Notes",
       "addContactTag": "Add Contact Tag",
+      "aiExtractData": "AI Extract Data",
       "aiAnalyzeImage": "AI Analyze Image",
       "aiGenerateImage": "AI Generate Image",
       "aiGenerateTextAgent": "AI Generate Text Agent",
