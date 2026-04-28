@@ -1,6 +1,10 @@
 import { buildContext } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
+import {
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   type MetadataPayload,
@@ -76,13 +80,13 @@ export const handleMessageStatus = async (
       throw new SdkException("Unable to find conversation")
     }
 
-    const message = await db.query.messageModel.findFirst({
-      where: {
-        sourceId: payload.messageId,
-        conversationId: contactInbox?.conversation.id,
-        workspaceId: workspace.id,
-      },
-    })
+    const messageRepository = await createMessageRepository()
+    const message = await messageRepository.findBySourceId(
+      payload.messageId,
+      contactInbox.conversation.id,
+      ctx.workspace.id,
+      getSafeSinceTime(contactInbox.lastMessageAt, 365 * 24 * 60 * 60 * 1000),
+    )
 
     const eventLog = {
       context: {

@@ -1,6 +1,7 @@
 import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
-import { messageModel } from "@chatbotx.io/database/schema"
+import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import { contactInboxModel, messageModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -111,8 +112,9 @@ export async function processWhatsappTemplate(
     }
   }
 
-  const messageData: typeof messageModel.$inferInsert = {
-    id: createId(),
+  const repository = await createMessageRepository()
+
+  const newMessage = await repository.create({
     contactInboxId: contactInbox.id,
     workspaceId: conversation.workspaceId,
     conversationId: conversation.id,
@@ -122,13 +124,13 @@ export async function processWhatsappTemplate(
     sourceId: null,
     text: `Template: ${template.name}`,
     contentAttributes,
-  }
+    createdAt: new Date(),
+  })
 
-  const newMessage = await db
-    .insert(messageModel)
-    .values(messageData)
-    .returning()
-    .then((result) => result[0])
+  await db
+    .update(contactInboxModel)
+    .set({ lastMessageAt: newMessage.createdAt })
+    .where(eq(contactInboxModel.id, contactInbox.id))
 
   broadcastToWorkspaceParty(conversation.workspaceId, {
     eventType: RealtimeEventType.messageCreated,

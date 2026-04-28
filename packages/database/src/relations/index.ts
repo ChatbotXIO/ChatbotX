@@ -63,6 +63,7 @@ import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
+import { messageShardRelations } from "./message-shard"
 import { productRelations } from "./product"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
@@ -100,6 +101,7 @@ export const relations = {
   ...attachmentRelations,
   ...conversationRelations,
   ...messageRelations,
+  ...messageShardRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
   ...platformSettingRelations,

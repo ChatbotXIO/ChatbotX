@@ -1,12 +1,39 @@
 "use server"
 
+import {
+  broadcastToGuestParty,
+  broadcastToWorkspaceParty,
+  resolvePlatformSettings,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { channelTypes } from "@chatbotx.io/database/partials"
+import { createMessageRepository } from "@chatbotx.io/database/repositories"
+import {
+  contactInboxModel,
+  conversationModel,
+} from "@chatbotx.io/database/schema"
+import type {
+  ContactInboxModel,
+  ConversationModel,
+  UserModel,
+} from "@chatbotx.io/database/types"
+import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import {
+  ChatJobAction,
+  chatQueue,
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
+import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createMessageRequest } from "../schema/mutation"
-import { createMessage } from "./create-message.service"
+import {
+  type CreateMessageRequest,
+  createMessageRequest,
+} from "../schema/mutation"
 
 export const createMessageAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -27,7 +54,6 @@ export const createMessageAction = workspaceActionClient
       message: "Conversation not found",
     })
 
-    // Find target contact inbox, or fallback to latest interactive contactInbox
     const contactInbox = await db.query.contactInboxModel.findFirst({
       where: {
         contactId: conversation.contactId,
@@ -48,3 +74,136 @@ export const createMessageAction = workspaceActionClient
       user: ctx.user,
     })
   })
+
+export const createMessage = async (props: {
+  conversation: ConversationModel
+  contactInbox: ContactInboxModel
+  parsedInput: CreateMessageRequest
+  user?: UserModel
+}) => {
+  const { conversation, parsedInput, user, contactInbox } = props
+
+  if ("flowId" in parsedInput) {
+    await integrationQueue.add(IntegrationJobAction.sendFlow, {
+      type: IntegrationJobAction.sendFlow,
+      data: {
+        conversationId: conversation,
+        contactInboxId: contactInbox,
+        flowId: parsedInput.flowId,
+        nodeId: parsedInput.nodeId,
+      },
+    })
+    return null
+  }
+
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: conversation.workspaceId,
+  })
+
+  let uploadedFiles: UploadedFile[] = []
+  if ("files" in parsedInput && parsedInput.files.length > 0) {
+    uploadedFiles = await uploadMultipleFiles(
+      parsedInput.files,
+      `public/space/${conversation.workspaceId}/conversations/${conversation.id}`,
+    )
+  }
+
+  const repository = await createMessageRepository()
+
+  const messageInput = {
+    text: "text" in parsedInput ? parsedInput.text : null,
+    messageType: "outgoing" as const,
+    workspaceId: conversation.workspaceId,
+    conversationId: conversation.id,
+    senderType: user ? ("user" as const) : ("api" as const),
+    senderId: user?.id ?? null,
+    contactInboxId: contactInbox.id,
+    contentType: "text" as const,
+    createdAt: new Date(),
+  }
+
+  const attachmentInputs = uploadedFiles.map((file) => ({
+    workspaceId: conversation.workspaceId,
+    conversationId: conversation.id,
+    ...file,
+  }))
+
+  const message =
+    attachmentInputs.length > 0
+      ? await repository.createWithAttachments(messageInput, attachmentInputs)
+      : await repository.create(messageInput)
+
+  await db
+    .update(conversationModel)
+    .set({
+      agentLastReadAt: new Date(),
+      lastActivityAt: new Date(),
+      adminRepliedAt: new Date(),
+    })
+    .where(eq(conversationModel.id, conversation.id))
+
+  await db
+    .update(contactInboxModel)
+    .set({ lastMessageAt: message.createdAt })
+    .where(eq(contactInboxModel.id, contactInbox.id))
+
+  const attachments =
+    "attachments" in message && Array.isArray(message.attachments)
+      ? message.attachments
+      : []
+  const messageWithAttachments = {
+    ...message,
+    attachments: attachments.map((attachment) => ({
+      ...attachment,
+      url: getPublicFileUrl(attachment.originPath, storageUrl),
+    })),
+  }
+
+  const promises: Promise<unknown>[] = [
+    broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
+      eventType: RealtimeEventType.messageCreated,
+      data: {
+        ...messageWithAttachments,
+        clientId: parsedInput.clientId,
+      },
+    }),
+  ]
+
+  if (contactInbox.channel === channelTypes.enum.webchat) {
+    promises.push(
+      broadcastToGuestParty(
+        {
+          workspaceId: conversation.workspaceId,
+          guestConversationId: contactInbox.sourceId ?? "",
+        },
+        {
+          eventType: RealtimeEventType.messageCreated,
+          data: {
+            ...messageWithAttachments,
+            clientId: parsedInput.clientId,
+          },
+        },
+      ),
+    )
+  } else {
+    promises.push(
+      chatQueue.add(ChatJobAction.sendExternalMessage, {
+        type: ChatJobAction.sendExternalMessage,
+        data: {
+          conversation,
+          contactInbox,
+          message: {
+            ...messageWithAttachments,
+            clientId: parsedInput.clientId,
+          },
+        },
+      }),
+    )
+  }
+
+  await Promise.all(promises)
+
+  revalidateCacheTags(`workspaces:${conversation.workspaceId}:conversations`)
+
+  return messageWithAttachments
+}

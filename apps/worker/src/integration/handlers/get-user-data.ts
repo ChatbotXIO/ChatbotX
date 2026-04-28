@@ -1,6 +1,10 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
+import {
   contactCustomFieldModel,
   conversationModel,
   customFieldModel,
@@ -135,18 +139,21 @@ async function handleSkipOrError(
 async function validateUserData(
   props: ExecuteStepProps<GetUserDataStepSchema>,
 ): Promise<GetUserDataResult> {
-  const lastUserMessage = await db.query.messageModel.findFirst({
-    where: {
-      conversationId: props.conversation.id,
-      messageType: "incoming",
+  const { contactInbox } = props
+  const messageRepository = await createMessageRepository()
+  const lastMessages = await messageRepository.findLastByConversation(
+    props.conversation.id,
+    {
+      messageTypes: ["incoming"],
+      limit: 1,
+      withAttachments: true,
+      sinceTime: getSafeSinceTime(
+        contactInbox.lastMessageAt ?? contactInbox.createdAt,
+        365 * 24 * 60 * 60 * 1000, // 1 year
+      ),
     },
-    with: {
-      attachments: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+  )
+  const lastUserMessage = lastMessages[0]
 
   if (!lastUserMessage) {
     return {

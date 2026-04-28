@@ -4,6 +4,8 @@
   "type": "module",
   "dependencies": {
     "@chatbotx.io/encryption": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "drizzle-orm": "1.0.0-beta.22",
@@ -43,6 +45,7 @@
     "./errors": "./src/errors.ts",
     "./utils": "./src/utils.ts",
     "./partials": "./src/partials/index.ts",
-    "./queries": "./src/queries/index.ts"
+    "./queries": "./src/queries/index.ts",
+    "./repositories": "./src/repositories/index.ts"
   }
 }

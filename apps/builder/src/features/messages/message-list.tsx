@@ -1,13 +1,14 @@
 "use client"
 
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { MessageItem } from "./components/message-item"
 
-const MESSAGE_LIST_PER_PAGE = 50
+const MESSAGE_LIST_PER_PAGE = 20
+const START_INDEX = 100_000
 
 export function MessageList() {
   const workspaceId = useWorkspaceId()
@@ -15,28 +16,41 @@ export function MessageList() {
   const {
     messages,
     loadMoreMessages,
-    nextCursorMessage,
     isLoadMoreMessage,
+    hasNextMessagePage,
     activeConversationId,
   } = useChatStore((state) => state)
 
-  // Check if there are more pages to load
-  const hasNextPage = messages.length === 0 || nextCursorMessage !== null
+  const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX)
+  const prevLengthRef = useRef(0)
+  const prependPendingRef = useRef(false)
 
-  const [page, setPage] = useState(1)
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
-    setPage(1)
+    setFirstItemIndex(START_INDEX)
+    prevLengthRef.current = 0
+    prependPendingRef.current = false
     if (activeConversationId) {
       loadMoreMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
     }
   }, [activeConversationId])
 
-  // Load more items when reaching the end of the list
-  const loadMoreItems = () => {
-    if (!isLoadMoreMessage && hasNextPage) {
-      setPage((prev) => prev + 1)
+  useEffect(() => {
+    const prevLength = prevLengthRef.current
+    const delta = messages.length - prevLength
+    if (delta > 0 && prependPendingRef.current) {
+      setFirstItemIndex((idx) => idx - delta)
+      prependPendingRef.current = false
     }
+    prevLengthRef.current = messages.length
+  }, [messages.length])
+
+  const loadMoreItems = () => {
+    if (isLoadMoreMessage || !hasNextMessagePage || messages.length === 0) {
+      return
+    }
+    prependPendingRef.current = true
+    loadMoreMessages(workspaceId, MESSAGE_LIST_PER_PAGE)
   }
 
   return (
@@ -48,16 +62,13 @@ export function MessageList() {
           Header: MessageComponentHeader,
         }}
         data={messages}
+        firstItemIndex={firstItemIndex}
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
           <MessageItem key={message.id} message={message} />
         )}
-        rangeChanged={({ startIndex }) => {
-          if (startIndex <= 5 && page !== 1) {
-            loadMoreItems()
-          }
-        }}
+        startReached={loadMoreItems}
       />
     </div>
   )

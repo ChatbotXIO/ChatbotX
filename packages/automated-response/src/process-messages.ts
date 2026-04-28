@@ -1,5 +1,9 @@
 import { trackingResponseTypes } from "@chatbotx.io/analytics"
 import { db } from "@chatbotx.io/database/client"
+import {
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -50,19 +54,16 @@ const getMessagesFromStoreAndProcess = async (props: {
   }
 
   // Only process text messages
-  const messages = await db.query.messageModel
-    .findMany({
-      where: {
-        contactInboxId: props.contactInbox.id,
-        id: {
-          in: messageIds,
-        },
-      },
-      columns: {
-        id: true,
-        text: true,
-      },
-    })
+  const messageRepository = await createMessageRepository()
+  const messages = await messageRepository
+    .findManyByIds(
+      messageIds,
+      props.contactInbox.id,
+      getSafeSinceTime(
+        props.contactInbox.lastMessageAt,
+        365 * 24 * 60 * 60 * 1000, // 1 year
+      ),
+    )
     .then((data) => data.filter((v) => Boolean(v.text)))
   if (messages.length === 0) {
     logger.debug(props, "No message to process")

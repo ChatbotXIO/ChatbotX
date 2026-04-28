@@ -16,17 +16,18 @@ import type { ExecuteStepProps } from "../flow-utils"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
 
-export async function handleAIGenerateText(
-  props: ExecuteStepProps<AIGenerateTextSchema>,
-): Promise<ExecuteStepResult> {
-  const { conversation, step } = props
+export async function handleAIGenerateText({
+  conversation,
+  contactInbox,
+  step,
+}: ExecuteStepProps<AIGenerateTextSchema>): Promise<ExecuteStepResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
 
   let cleanupToolset: (() => Promise<void>) | undefined
 
   try {
-    const messages = await buildAIMessages(conversation, step)
+    const messages = await buildAIMessages(conversation, contactInbox, step)
 
     const aiConfig = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,

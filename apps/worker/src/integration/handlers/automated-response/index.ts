@@ -2,6 +2,10 @@ import { systemFunctionNames } from "@chatbotx.io/ai"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { db } from "@chatbotx.io/database/client"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import {
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   DOCX_MIME_TYPES,
@@ -121,11 +125,17 @@ export async function processAutomatedResponse(
       return
     }
 
-    const last100Messages = await db.query.messageModel.findMany({
-      where: { conversationId: conversation.id },
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
-      limit: 100,
-    })
+    const messageRepository = await createMessageRepository()
+    const last100Messages = await messageRepository.findManyByConversation(
+      conversation.id,
+      {
+        limit: 100,
+        sinceTime: getSafeSinceTime(
+          contactInbox.lastMessageAt,
+          365 * 24 * 60 * 60 * 1000,
+        ),
+      },
+    )
     const messages: ModelMessage[] = []
     for (const message of last100Messages) {
       if (!message.text) {

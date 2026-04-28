@@ -32,6 +32,7 @@ export type ListMessagesResponse = z.infer<typeof listMessagesResponse>
 export const findMessageRequest = z.object({
   id: zodBigintAsString(),
   workspaceId: zodBigintAsString(),
+  createdAt: z.coerce.date(),
 })
 export type FindMessageRequest = z.infer<typeof findMessageRequest>
 
