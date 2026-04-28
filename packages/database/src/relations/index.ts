@@ -101,7 +101,6 @@ export const relations = {
   ...attachmentRelations,
   ...conversationRelations,
   ...messageRelations,
-  ...messageShardRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
   ...platformSettingRelations,

@@ -3,11 +3,11 @@ import {
   bigintAsString,
   sharedColumns,
   timestampConfig,
-} from "../partials/shared"
-import { messageShardModel } from "./message-shard"
+} from "../../../partials/shared"
+import { messageShardModel } from "./shard"
 
-export const shardTimeRangeModel = pgTable(
-  "ShardTimeRange",
+export const messageShardTimeRangeModel = pgTable(
+  "MessageShardTimeRange",
   {
     ...sharedColumns,
     shardId: bigintAsString()
@@ -20,12 +20,12 @@ export const shardTimeRangeModel = pgTable(
     endTime: timestamp(timestampConfig),
   },
   (table) => [
-    index("ShardTimeRange_time_lookup_idx").using(
+    index("MessageShardTimeRange_time_lookup_idx").using(
       "btree",
       table.startTime.asc().nullsLast(),
       table.endTime.asc().nullsLast(),
     ),
-    index("ShardTimeRange_shardId_idx").using(
+    index("MessageShardTimeRange_shardId_idx").using(
       "btree",
       table.shardId.asc().nullsLast(),
     ),

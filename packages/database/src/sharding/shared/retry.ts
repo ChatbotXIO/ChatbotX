@@ -13,16 +13,16 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
 }
 
 const RETRYABLE_PG_CODES = new Set([
-  "08000", // connection_exception
-  "08003", // connection_does_not_exist
-  "08006", // connection_failure
-  "08001", // sqlclient_unable_to_establish_sqlconnection
-  "08004", // sqlserver_rejected_establishment_of_sqlconnection
-  "57P01", // admin_shutdown
-  "57P02", // crash_shutdown
-  "57P03", // cannot_connect_now
-  "40001", // serialization_failure
-  "40P01", // deadlock_detected
+  "08000",
+  "08003",
+  "08006",
+  "08001",
+  "08004",
+  "57P01",
+  "57P02",
+  "57P03",
+  "40001",
+  "40P01",
 ])
 
 const RETRYABLE_ERROR_CODES = new Set([

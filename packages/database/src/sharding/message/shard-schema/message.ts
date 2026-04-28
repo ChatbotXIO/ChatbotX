@@ -7,9 +7,9 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
-import type { ContentType, MessageType, SenderType } from "../../partials"
-import { bigintAsString, timestampConfig } from "../../partials/shared"
-import { contentType, messageType, senderType } from "../../schema"
+import type { ContentType, MessageType, SenderType } from "../../../partials"
+import { bigintAsString, timestampConfig } from "../../../partials/shared"
+import { contentType, messageType, senderType } from "./enums"
 
 export const messageModel = pgTable(
   "Message",

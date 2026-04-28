@@ -7,9 +7,9 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
-import type { FileType } from "../../partials"
-import { bigintAsString, timestampConfig } from "../../partials/shared"
-import { fileType } from "../../schema"
+import type { FileType } from "../../../partials"
+import { bigintAsString, timestampConfig } from "../../../partials/shared"
+import { fileType } from "./enums"
 
 export const attachmentModel = pgTable(
   "Attachment",

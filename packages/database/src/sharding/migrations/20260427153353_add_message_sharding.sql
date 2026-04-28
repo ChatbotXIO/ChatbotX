@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS "ShardTimeRange";
+DROP TABLE IF EXISTS "MessageShard";
+
 CREATE TABLE "MessageShard" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -7,6 +10,7 @@ CREATE TABLE "MessageShard" (
 	"port" integer DEFAULT 5432,
 	"database" text NOT NULL,
 	"user" text NOT NULL,
+	"credentialRef" text,
 	"isActive" boolean DEFAULT false
 );
 --> statement-breakpoint

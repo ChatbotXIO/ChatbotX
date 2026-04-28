@@ -1,30 +1,23 @@
-import { and, count, desc, eq, gt, isNull, lte, or } from "drizzle-orm"
 import type { Pool } from "pg"
-import type { DatabaseClient } from "../client"
-import { logger } from "../logger"
-import { messageShardModel, shardTimeRangeModel } from "../schema"
-import { ShardNotActiveError, ShardUnreachableError } from "./errors"
+import type { DatabaseClient } from "../../client"
+import { logger } from "../../logger"
 import {
-  createShardClient,
   createShardPool,
   type ShardConfig,
-  type ShardDatabaseClient,
-} from "./shard-client"
-
-export interface ShardInfo extends ShardConfig {
-  isActive: boolean | null
-}
-
-export interface ShardTimeRangeInfo {
-  endTime: Date | null
-  id: string
-  shard: ShardInfo
-  shardId: string
-  startTime: Date
-}
+  ShardNotActiveError,
+  ShardUnreachableError,
+} from "../shared"
+import {
+  createMessageShardClient,
+  type MessageShardDatabaseClient,
+} from "./client"
+import {
+  MessageShardRegistry,
+  type MessageShardTimeRangeInfo,
+} from "./registry"
 
 interface PoolEntry {
-  client: ShardDatabaseClient
+  client: MessageShardDatabaseClient
   lastUsed: Date
   pool: Pool
 }
@@ -34,27 +27,23 @@ interface ActiveShardCache {
   shard: ShardConfig
 }
 
-export class ShardConnectionManager {
+export class MessageShardConnectionManager {
   private readonly pools: Map<string, PoolEntry> = new Map()
   private shardingEnabled: boolean | null = null
   private activeShardCache: ActiveShardCache | null = null
   private lastEvictedAt: Date | null = null
-  private readonly mainDb: DatabaseClient
+  private readonly registry: MessageShardRegistry
 
   private static readonly MAX_POOLS = 10
-  private static readonly POOL_SIZE_PER_SHARD = 5
   private static readonly ACTIVE_SHARD_TTL_MS = 30_000
 
-  constructor(mainDb: DatabaseClient) {
-    this.mainDb = mainDb
+  constructor(mainDb: DatabaseClient, registry?: MessageShardRegistry) {
+    this.registry = registry ?? new MessageShardRegistry(mainDb)
   }
 
   async isShardingEnabled(): Promise<boolean> {
     if (this.shardingEnabled === null) {
-      const result = await this.mainDb
-        .select({ count: count() })
-        .from(messageShardModel)
-      this.shardingEnabled = Number(result[0]?.count ?? 0) > 0
+      this.shardingEnabled = (await this.registry.countShards()) > 0
     }
     return this.shardingEnabled
   }
@@ -63,7 +52,7 @@ export class ShardConnectionManager {
     this.shardingEnabled = null
   }
 
-  async getActiveShardForWrite(): Promise<ShardDatabaseClient> {
+  async getActiveShardForWrite(): Promise<MessageShardDatabaseClient> {
     if (!(await this.isShardingEnabled())) {
       throw new ShardNotActiveError(
         "Message sharding is not enabled. No shards configured.",
@@ -72,17 +61,13 @@ export class ShardConnectionManager {
 
     if (this.activeShardCache) {
       const age = Date.now() - this.activeShardCache.cachedAt.getTime()
-      if (age < ShardConnectionManager.ACTIVE_SHARD_TTL_MS) {
+      if (age < MessageShardConnectionManager.ACTIVE_SHARD_TTL_MS) {
         return this.getShardClient(this.activeShardCache.shard)
       }
       this.activeShardCache = null
     }
 
-    const activeShard = await this.mainDb.query.messageShardModel.findFirst({
-      where: {
-        isActive: true,
-      },
-    })
+    const activeShard = await this.registry.findActiveForWrite()
 
     if (!activeShard) {
       throw new ShardNotActiveError()
@@ -103,59 +88,20 @@ export class ShardConnectionManager {
   async getShardsForTimeRange(
     startTime: Date,
     endTime: Date,
-  ): Promise<ShardTimeRangeInfo[]> {
-    const timeRanges = await this.mainDb
-      .select()
-      .from(shardTimeRangeModel)
-      .innerJoin(
-        messageShardModel,
-        eq(messageShardModel.id, shardTimeRangeModel.shardId),
-      )
-      .where(
-        and(
-          lte(shardTimeRangeModel.startTime, endTime),
-          or(
-            isNull(shardTimeRangeModel.endTime),
-            gt(shardTimeRangeModel.endTime, startTime),
-          ),
-        ),
-      )
-      .orderBy(desc(shardTimeRangeModel.startTime))
-
-    return this.mapTimeRangeRows(timeRanges)
+  ): Promise<MessageShardTimeRangeInfo[]> {
+    return await this.registry.findShardsForTimeRange(startTime, endTime)
   }
 
-  private mapTimeRangeRows(
-    timeRanges: {
-      ShardTimeRange: typeof shardTimeRangeModel.$inferSelect
-      MessageShard: typeof messageShardModel.$inferSelect
-    }[],
-  ): ShardTimeRangeInfo[] {
-    return timeRanges.map((row) => ({
-      id: row.ShardTimeRange.id,
-      shardId: row.ShardTimeRange.shardId,
-      startTime: row.ShardTimeRange.startTime,
-      endTime: row.ShardTimeRange.endTime,
-      shard: {
-        id: row.MessageShard.id,
-        name: row.MessageShard.name,
-        host: row.MessageShard.host,
-        port: row.MessageShard.port,
-        database: row.MessageShard.database,
-        user: row.MessageShard.user,
-        isActive: row.MessageShard.isActive,
-      },
-    }))
-  }
-
-  async getShardClient(shard: ShardConfig): Promise<ShardDatabaseClient> {
+  async getShardClient(
+    shard: ShardConfig,
+  ): Promise<MessageShardDatabaseClient> {
     const existing = this.pools.get(shard.id)
     if (existing) {
       existing.lastUsed = new Date()
       return existing.client
     }
 
-    if (this.pools.size >= ShardConnectionManager.MAX_POOLS) {
+    if (this.pools.size >= MessageShardConnectionManager.MAX_POOLS) {
       this.evictLeastRecentlyUsed()
     }
 
@@ -163,7 +109,7 @@ export class ShardConnectionManager {
 
     await this.healthCheck(pool, shard.id)
 
-    const client = createShardClient(pool)
+    const client = createMessageShardClient(pool)
 
     this.pools.set(shard.id, {
       pool,
@@ -179,7 +125,7 @@ export class ShardConnectionManager {
       await pool.query("SELECT 1")
     } catch (error) {
       await pool.end().catch(() => {
-        // Ignore close errors during health check failure
+        // ignore close errors during health check failure
       })
       throw new ShardUnreachableError(`Shard ${shardId} health check failed`, {
         cause: error,
@@ -206,7 +152,6 @@ export class ShardConnectionManager {
   getPoolStats(): {
     totalPools: number
     maxPools: number
-    poolsPerShard: number
     lastEvictedAt: Date | null
     pools: Array<{
       shardId: string
@@ -228,8 +173,7 @@ export class ShardConnectionManager {
 
     return {
       totalPools: this.pools.size,
-      maxPools: ShardConnectionManager.MAX_POOLS,
-      poolsPerShard: ShardConnectionManager.POOL_SIZE_PER_SHARD,
+      maxPools: MessageShardConnectionManager.MAX_POOLS,
       lastEvictedAt: this.lastEvictedAt,
       pools: poolDetails,
     }
