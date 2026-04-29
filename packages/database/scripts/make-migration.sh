@@ -7,4 +7,4 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-drizzle-kit generate --name=$1
+drizzle-kit generate --name="$1"

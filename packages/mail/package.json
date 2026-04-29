@@ -8,13 +8,13 @@
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "19.2.14",
-    "react-email": "6.0.0",
+    "react-email": "6.0.5",
     "typescript": "^5"
   },
   "dependencies": {
     "@react-email/components": "1.0.12",
     "@t3-oss/env-nextjs": "^0.13.11",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^8.0.7",
     "react": "19.2.5",
     "zod": "^4.3.6"
   },

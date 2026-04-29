@@ -20,10 +20,10 @@
     "@types/node": "^24.10.4",
     "date-fns": "^4.1.0",
     "ky": "^2.0.2",
-    "lucide-react": "^1.8.0",
-    "next-intl": "^4.9.1",
+    "lucide-react": "^1.14.0",
+    "next-intl": "^4.11.0",
     "react": "19.2.5",
-    "react-hook-form": "^7.73.1",
+    "react-hook-form": "^7.74.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

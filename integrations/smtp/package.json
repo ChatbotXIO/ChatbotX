@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@chatbotx.io/sdk": "workspace:*",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^8.0.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -11,17 +11,17 @@
     "check:unused": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
+    "@biomejs/biome": "^2.4.13",
     "@types/node": "^24.10.4",
     "dependency-cruiser": "^17.3.10",
-    "knip": "^6.6.1",
+    "knip": "^6.9.0",
     "lefthook": "^2.1.6",
     "tsx": "^4.21.0",
     "turbo": "^2.9.6",
     "typescript": "^5",
-    "ultracite": "7.6.0"
+    "ultracite": "7.6.2"
   },
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8",
   "engines": {
     "node": ">=24"
   },

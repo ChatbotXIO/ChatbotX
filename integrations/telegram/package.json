@@ -10,7 +10,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "ky": "^2.0.2",
-    "remeda": "^2.33.7",
+    "remeda": "^2.34.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
