@@ -64,10 +64,14 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
       try {
         set({ loading: true, error: null })
 
-        const url = `/api/workspaces/${workspaceId}/channels/${integrationWhatsappId}/whatsapp-templates`
+        const url = `/api/workspaces/${workspaceId}/whatsapp-message-templates`
 
         const templates = await ky
-          .get(url)
+          .get(url, {
+            searchParams: {
+              integrationWhatsappId,
+            },
+          })
           .json<WhatsappMessageTemplateResource[]>()
 
         set({ templates })

@@ -2,6 +2,7 @@
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
@@ -15,12 +16,14 @@ export function WhatsappMessageTemplatesTableToolbarActions({
   integrationWhatsappId: string
 }) {
   const t = useTranslations()
+  const router = useRouter()
 
   const { execute, isPending } = useAction(
     syncMessageTemplateAction.bind(null, workspaceId, integrationWhatsappId),
     {
       onSuccess() {
         toast.success(t("messages.syncedSuccessfully"))
+        router.refresh()
       },
       onError({ error }) {
         if (error.serverError) {

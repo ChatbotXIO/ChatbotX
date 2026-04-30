@@ -12,6 +12,14 @@ export const listIntegrationWhatsapps = async (
     orderBy: {
       createdAt: "asc",
     },
+    with: {
+      inbox: {
+        columns: {
+          id: true,
+          name: true,
+        },
+      },
+    },
   })
 
   return { data, pageCount: 1 }

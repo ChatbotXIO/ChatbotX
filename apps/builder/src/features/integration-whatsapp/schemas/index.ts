@@ -1,7 +1,12 @@
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type {
+  InboxModel,
+  IntegrationWhatsappModel,
+} from "@chatbotx.io/database/types"
 import { z } from "zod"
 
-export type IntegrationWhatsappResource = IntegrationWhatsappModel
+export type IntegrationWhatsappResource = IntegrationWhatsappModel & {
+  inbox?: Pick<InboxModel, "id" | "name">
+}
 
 export const connectWhatsappSchema = z
   .object({

@@ -65,7 +65,7 @@ export function WhatsappManage({
           <TableBody>
             {integrationWhatsapps.map((integrationWhatsapp) => (
               <TableRow key={integrationWhatsapp.id}>
-                <TableCell>{integrationWhatsapp.name}</TableCell>
+                <TableCell>{integrationWhatsapp.inbox?.name}</TableCell>
                 <TableCell className="flex w-[200px] justify-end gap-2">
                   <Button size="sm" variant="secondary">
                     <Link
