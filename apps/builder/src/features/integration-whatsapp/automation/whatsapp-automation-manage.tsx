@@ -25,7 +25,8 @@ export function WhatsappAutomationManage({
   promises,
 }: WhatsappAutomationManageProps) {
   const t = useTranslations()
-  const [{ prompts, commands }] = use(promises)
+  const [{ prompts = [], commands = [] } = { prompts: [], commands: [] }] =
+    use(promises)
 
   const auth = integrationWhatsapp.auth as unknown as WhatsappAuthValue
   const managerUrl = `https://business.facebook.com/latest/whatsapp_manager/phone_numbers?business_id=${auth.metadata.businessId}&asset_id=${auth.metadata.wabaId}`
