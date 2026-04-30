@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
-import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
   TooltipContent,
@@ -41,31 +40,6 @@ export default function AIFunctionsTable({
 
   const columns = useMemo<ColumnDef<AIFunctionModel>[]>(
     () => [
-      {
-        id: "select",
-        header: ({ table: innerTable }) => (
-          <Checkbox
-            aria-label="Select all"
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              innerTable.toggleAllPageRowsSelected(Boolean(value))
-            }
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label="Select row"
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-          />
-        ),
-        size: 32,
-        enableSorting: false,
-        enableHiding: false,
-      },
       {
         id: "name",
         accessorKey: "name",

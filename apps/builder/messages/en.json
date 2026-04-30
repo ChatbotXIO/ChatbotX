@@ -1362,6 +1362,7 @@
     "selectInstagramAccount": "Select Instagram Account",
     "iceBreakers": "Ice Breakers",
     "iceBreakersDescription": "Ice breakers provide a way for users to start a conversation with your bot by showing a list of frequently asked questions.",
+    "refreshPermissions": "Refresh Permissions",
     "title": "Instagram"
   },
   "messenger": {

@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
-import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,31 +51,6 @@ export default function AIMcpServersTable({
 
   const columns = useMemo<ColumnDef<AIMcpServerResource>[]>(
     () => [
-      {
-        id: "select",
-        header: ({ table: innerTable }) => (
-          <Checkbox
-            aria-label={t("actions.selectAll")}
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              innerTable.toggleAllPageRowsSelected(Boolean(value))
-            }
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label={t("actions.selectRow")}
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-          />
-        ),
-        size: 32,
-        enableSorting: false,
-        enableHiding: false,
-      },
       {
         id: "name",
         accessorKey: "name",

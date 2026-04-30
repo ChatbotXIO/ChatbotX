@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl"
 import { use } from "react"
 import type { listIntegrationInstagrams } from "../queries"
 import { InstagramDisconnect } from "./instagram-disconnect"
+import { InstagramRefreshPermissions } from "./instagram-refresh-permissions"
 
 type InstagramManageProps = {
   isEnabled: boolean
@@ -67,6 +68,9 @@ export function InstagramManage({
               <TableRow key={integrationInstagram.id}>
                 <TableCell>{integrationInstagram.name}</TableCell>
                 <TableCell className="flex w-50 justify-end gap-2">
+                  <InstagramRefreshPermissions
+                    integrationInstagram={integrationInstagram}
+                  />
                   <Button size="sm" variant="secondary">
                     <Link
                       href={`/space/${workspaceId}/instagrams/${integrationInstagram.id}/edit`}

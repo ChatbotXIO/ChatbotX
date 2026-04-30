@@ -61,7 +61,7 @@ export function DeleteAutomatedResponsesDialog({
   )
 
   return (
-    <Dialog {...props}>
+    <Dialog {...props} onOpenChange={onOpenChange}>
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">

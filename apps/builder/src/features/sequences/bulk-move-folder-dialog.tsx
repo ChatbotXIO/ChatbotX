@@ -14,7 +14,7 @@ import {
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { FolderInput, Loader2Icon } from "lucide-react"
+import { FolderUpIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { ComponentPropsWithoutRef } from "react"
@@ -89,8 +89,8 @@ export function BulkMoveFolderDialog({
       {showTrigger ? (
         <DialogTrigger asChild>
           <Button size="sm" variant="outline">
-            <FolderInput aria-hidden="true" className="mr-2 size-4" />
-            {t("actions.move")} ({sequences.length})
+            <FolderUpIcon aria-hidden="true" className="size-4" />
+            {t("actions.move")}
           </Button>
         </DialogTrigger>
       ) : null}

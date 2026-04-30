@@ -49,7 +49,7 @@ export function ChangeFolderDialog(props: ChangeFolderDialogProps) {
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      {trigger && <DialogTrigger>{trigger}</DialogTrigger>}
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

@@ -14,6 +14,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { MessengerDisconnect } from "./components/messenger-disconnect"
+import { MessengerRefreshPermissions } from "./components/messenger-refresh-permissions"
 import type { listIntegrationMessengers } from "./queries"
 
 type WhatsappManageProps = {
@@ -66,10 +67,10 @@ export function MessengerManage({
             {integrationMessengers.map((integrationMessenger) => (
               <TableRow key={integrationMessenger.id}>
                 <TableCell>{integrationMessenger.name}</TableCell>
-                <TableCell className="flex w-[200px] justify-end gap-2">
-                  <Button size="sm" variant="secondary">
-                    {t("messenger.refreshPermissions")}
-                  </Button>
+                <TableCell className="flex w-50 justify-end gap-2">
+                  <MessengerRefreshPermissions
+                    integrationMessenger={integrationMessenger}
+                  />
                   <Button size="sm" variant="secondary">
                     <Link
                       href={`/space/${workspaceId}/messengers/${integrationMessenger.id}/edit`}

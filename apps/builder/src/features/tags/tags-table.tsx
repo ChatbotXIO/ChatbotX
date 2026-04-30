@@ -73,8 +73,8 @@ export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
-            <CreateTagDialog folderId={folderId} workspaceId={workspaceId} />
             <TagsTableToolbarActions table={table} workspaceId={workspaceId} />
+            <CreateTagDialog folderId={folderId} workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>
 
