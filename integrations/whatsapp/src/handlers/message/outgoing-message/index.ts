@@ -3,6 +3,7 @@ import {
   type SendTextStepSchema,
   type SendWaTemplateMessageStepSchema,
   stepTypes,
+  type WhatsappOptionListStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
   contentTypes,
@@ -23,6 +24,7 @@ import type { TemplateMessage, WhatsappAuthValue } from "../../../schema"
 import { convertFlowStepImage } from "./send-image"
 import { convertFlowStepText } from "./send-text"
 import { convertFlowStepWaTemplate } from "./send-wa-template"
+import { convertFlowStepWhatsappOptionList } from "./whatsapp-option-list"
 
 function* convertMessageToWhatsappMessage(
   message: OutgoingMessage,
@@ -83,6 +85,16 @@ function* convertFlowStepToWhatsappMessage(
           MessageHandlers<
             WhatsappAuthValue,
             SendWaTemplateMessageStepSchema
+          >["sendFlowStep"]
+        >[0],
+      )
+      break
+    case stepTypes.enum.whatsappOptionList:
+      yield* convertFlowStepWhatsappOptionList(
+        props as Parameters<
+          MessageHandlers<
+            WhatsappAuthValue,
+            WhatsappOptionListStepSchema
           >["sendFlowStep"]
         >[0],
       )

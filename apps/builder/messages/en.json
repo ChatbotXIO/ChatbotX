@@ -1294,6 +1294,14 @@
       "balanceHint": "The total sum must equal 100%.",
       "addVariation": "New Variation"
     },
+    "whatsappOptionList": {
+      "buttonLabel": "Button Label",
+      "optionTitle": "Title",
+      "optionDescription": "Description",
+      "addOption": "Add New",
+      "editButtonTitle": "Edit Button",
+      "editOptionTitle": "Edit Option"
+    },
     "additionalSteps": "Additional steps",
     "delayType": {
       "datetimeCustomField": "Date & Time Custom Field",

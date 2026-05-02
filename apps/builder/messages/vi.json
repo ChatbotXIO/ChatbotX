@@ -1310,6 +1310,14 @@
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
       "addVariation": "Biến thể mới"
     },
+    "whatsappOptionList": {
+      "buttonLabel": "Nhãn nút",
+      "optionTitle": "Tiêu đề",
+      "optionDescription": "Mô tả",
+      "addOption": "Thêm mới",
+      "editButtonTitle": "Chỉnh sửa nút",
+      "editOptionTitle": "Chỉnh sửa tùy chọn"
+    },
     "additionalSteps": "Các bước bổ sung",
     "delayType": {
       "datetimeCustomField": "Trường tùy chỉnh ngày giờ",

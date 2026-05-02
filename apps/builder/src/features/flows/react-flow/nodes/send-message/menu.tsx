@@ -128,7 +128,7 @@ const WHATSAPP_MENU_ORDER = [
 ] as const
 
 const MENU_ORDER_BY_CHANNEL: Record<string, readonly string[]> = {
-  whatsapp: WHATSAPP_MENU_ORDER,
+  [channelTypes.enum.whatsapp]: WHATSAPP_MENU_ORDER,
 }
 
 export const sendMessageEditorMenus = (
@@ -137,6 +137,10 @@ export const sendMessageEditorMenus = (
 ): MenuItem[] => {
   const channel = menuData?.beforeStep?.channel
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)
+
+  if (channel === channelTypes.enum.omnichannel) {
+    return Object.keys(allMenuItems).map((key) => allMenuItems[key])
+  }
 
   const menuOrder =
     channel && MENU_ORDER_BY_CHANNEL[channel]

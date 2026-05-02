@@ -152,7 +152,9 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
             break
           }
           case "list_reply": {
+            message.text = data.message.interactive.list_reply.title
             message.contentAttributes = data.message.interactive.list_reply
+            postbackAction = data.message.interactive.list_reply.id
             break
           }
           case "nfm_reply": {
