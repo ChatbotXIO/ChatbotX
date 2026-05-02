@@ -1,13 +1,13 @@
 "use client"
 
-import type { WhatsappOptionListButton } from "@chatbotx.io/flow-config"
+import type { WhatsappOptionListItem } from "@chatbotx.io/flow-config"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { XIcon } from "lucide-react"
 import { memo, useCallback } from "react"
 
 type OptionRowProps = {
   index: number
-  item: WhatsappOptionListButton
+  item: WhatsappOptionListItem
   onEdit: (index: number) => void
   onRemove: (index: number) => void
 }
@@ -23,7 +23,7 @@ function OptionRowInner({ index, item, onEdit, onRemove }: OptionRowProps) {
         onClick={handleEdit}
         type="button"
       >
-        <span className="font-medium text-sm">{item.label}</span>
+        <span className="font-medium text-sm">{item.title}</span>
         {item.description ? (
           <span className="text-muted-foreground text-xs">
             {item.description}
