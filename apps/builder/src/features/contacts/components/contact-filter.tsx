@@ -57,7 +57,7 @@ import {
 import {
   type ContactFilterRequest,
   contactFilterRequest,
-} from "../schemas/query"
+} from "../schemas/contact-filter"
 
 type ContactFilterProps = {
   parentName: string

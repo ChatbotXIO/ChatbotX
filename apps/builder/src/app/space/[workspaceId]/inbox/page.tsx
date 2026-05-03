@@ -7,6 +7,7 @@ import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/cust
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved-reply-store-context"
+import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
 
 type InboxPageProps = {
@@ -32,9 +33,14 @@ export default async function InboxPage({ params }: InboxPageProps) {
                 autoInitialize={false}
                 workspaceId={workspaceId}
               >
-                <FlowStoreProvider workspaceId={workspaceId}>
-                  <ChatLayout layout={savedLayout} workspaceId={workspaceId} />
-                </FlowStoreProvider>
+                <TagStoreProvider workspaceId={workspaceId}>
+                  <FlowStoreProvider workspaceId={workspaceId}>
+                    <ChatLayout
+                      layout={savedLayout}
+                      workspaceId={workspaceId}
+                    />
+                  </FlowStoreProvider>
+                </TagStoreProvider>
               </SavedReplyStoreProvider>
             </CustomFieldStoreProvider>
           </UserStoreProvider>

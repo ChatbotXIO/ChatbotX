@@ -1,15 +1,17 @@
 import {
   channelTypes,
+  conversationBotCategories,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterRequest } from "@/features/contacts/schemas/query"
+import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 
 export const listConversationsRequest = z.object({
   workspaceId: zodBigintAsString(),
   perPage: z.coerce.number().optional(),
   cursor: z.string().optional(),
+  botCategory: conversationBotCategories.optional(),
   assignedId: z.string().nullable().optional(),
   channel: z.union([channelTypes]).optional(),
   status: z.array(conversationStatuses).optional(),
@@ -17,7 +19,7 @@ export const listConversationsRequest = z.object({
   botEnabled: z.boolean().nullish(),
   tags: z
     .array(
-      z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),
+      z.enum(["noAdminReply", "unread", "followed", "archived", "blocked"]),
     )
     .optional(),
   contactFilter: contactFilterRequest.shape.contactFilter.optional(),

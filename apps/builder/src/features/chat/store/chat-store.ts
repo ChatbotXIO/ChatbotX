@@ -1,10 +1,11 @@
 import type {
   ChannelType,
+  ConversationBotCategory,
   ConversationStatus,
 } from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
+import type { ContactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
   ConversationResource,
@@ -19,11 +20,13 @@ import type {
 } from "@/features/messages/schema/resource"
 
 export type ConversationFilters = {
+  botCategory?: ConversationBotCategory
   assignedId?: string
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
   botEnabled?: boolean
+  tags?: ("noAdminReply" | "unread" | "followed" | "archived" | "blocked")[]
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -127,7 +130,9 @@ export const createChatStore = () => {
         )
         .json()
 
-      const urlParams = new URLSearchParams(window.location.search)
+      const urlParams = new URLSearchParams(
+        typeof window === "undefined" ? "" : window.location.search,
+      )
       try {
         const queryConversationId = urlParams.get("conversationId") ?? ""
         if (!activeConversationId && newConversations.length > 0) {

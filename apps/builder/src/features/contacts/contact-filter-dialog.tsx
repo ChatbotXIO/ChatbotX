@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl"
 import { type FormEvent, useState } from "react"
 import { useForm } from "react-hook-form"
 import { ContactFilter } from "./components/contact-filter"
-import { contactFilterRequest } from "./schemas/query"
+import { contactFilterRequest } from "./schemas/contact-filter"
 
 export function ContactFilterDialog() {
   const t = useTranslations()

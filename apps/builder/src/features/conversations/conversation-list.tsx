@@ -3,7 +3,7 @@
 import {
   assignerFilterTypes,
   channelTypes,
-  conversationTypes,
+  conversationBotCategories,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -70,10 +70,11 @@ export default function ConversationList({
   const form = useForm<ConversationFilters>({
     defaultValues: {
       keyword: "",
+      botCategory: conversationBotCategories.enum.all,
       botEnabled: undefined,
       channel: channelTypes.enum.omnichannel,
       assignedId: assignerFilterTypes.enum.all,
-      status: [],
+      tags: [],
       contactFilter: {
         operator: "and",
         conditions: [],
@@ -94,11 +95,11 @@ export default function ConversationList({
       <form className="flex h-full flex-col">
         <div className="mb-2 flex items-center gap-1">
           <SelectField
-            name="conversationType"
+            name="botCategory"
             options={[
-              { label: "Human", value: conversationTypes.enum.human },
-              { label: "Bot", value: conversationTypes.enum.bot },
-              { label: "All", value: conversationTypes.enum.all },
+              { label: "All", value: conversationBotCategories.enum.all },
+              { label: "Human", value: conversationBotCategories.enum.human },
+              { label: "Bot", value: conversationBotCategories.enum.bot },
             ]}
           />
 

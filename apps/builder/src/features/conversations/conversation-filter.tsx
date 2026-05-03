@@ -59,7 +59,7 @@ export function ConversationFilter() {
     },
     {
       label: t("condition.fields.followUp"),
-      value: conversationStatuses.enum.followUp,
+      value: conversationStatuses.enum.followed,
       icon: StarIcon,
     },
     {
@@ -92,14 +92,14 @@ export function ConversationFilter() {
 
           <ComboboxField
             label={t("fields.assignedId.label")}
-            name="assignedUserId"
+            name="assignedId"
             options={contactAssigneeOptions}
             required
           />
 
           <MultiSelectField
-            label={t("fields.status.label")}
-            name="status"
+            label={t("fields.tags.label")}
+            name="tags"
             options={conversationStatusOptions}
             placeholder={`${t("condition.fields.unread")}, ${t("condition.fields.followUp")}, ... `}
             required

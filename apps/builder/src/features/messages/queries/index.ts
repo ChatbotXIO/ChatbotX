@@ -1,6 +1,13 @@
 "use server"
 
-import { and, db, desc, eq, inArray } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  dbRead,
+  desc,
+  eq,
+  inArray,
+} from "@chatbotx.io/database/client"
 import { attachmentModel, messageModel } from "@chatbotx.io/database/schema"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import {
@@ -28,7 +35,7 @@ export const listMessages = async (
 
   const pagination = getPaginationWithDefaults(input)
 
-  const messages = await db
+  const messages = await dbRead
     .select()
     .from(messageModel)
     .where(and(...where))
@@ -40,7 +47,7 @@ export const listMessages = async (
   }
 
   const messageIds = messages.map((message) => message.id)
-  const messagesWithAttachments = await db
+  const messagesWithAttachments = await dbRead
     .select()
     .from(attachmentModel)
     .where(inArray(attachmentModel.messageId, messageIds))

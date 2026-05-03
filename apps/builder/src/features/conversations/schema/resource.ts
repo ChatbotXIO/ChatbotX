@@ -22,7 +22,6 @@ export const listConversationsItemResource = conversationResource.and(
     contactInboxes: z.array(contactInboxResource),
     messages: z.array(messageResource),
     contact: contactResource.nullable(),
-    // inbox: inboxResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),
   }),

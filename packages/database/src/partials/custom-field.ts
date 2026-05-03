@@ -13,6 +13,13 @@ export const customFieldTypes = z.enum([
 export type CustomFieldType = z.infer<typeof customFieldTypes>
 
 export const operatorTypes = z.enum([
+  "contains",
+  "notContains",
+  "isEmpty",
+  "isNotEmpty",
+  "hasAnyOf",
+  "hasNoneOf",
+
   "is",
   "isNot",
   "hasAnyValue",
