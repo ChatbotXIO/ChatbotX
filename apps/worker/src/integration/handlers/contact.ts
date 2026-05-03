@@ -1,3 +1,4 @@
+import { contactTrackingService } from "@chatbotx.io/analytics"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -273,6 +274,13 @@ export async function removeContactTag({
 export async function deleteContact({
   conversation,
 }: ExecuteStepProps<DeleteContactStepSchema>) {
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId: conversation.contactId,
+    },
+  })
+  const occurredAt = new Date()
+
   await db.transaction(async (tx) => {
     await tx
       .delete(conversationModel)
@@ -282,6 +290,29 @@ export async function deleteContact({
       .delete(contactModel)
       .where(eq(contactModel.id, conversation.contactId))
   })
+
+  contactTrackingService
+    .trackEvents(
+      contactInboxes.map((contactInbox) => ({
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        eventType: "contact_deleted",
+        occurredAt,
+        source: contactInbox.source,
+        sourceId: contactInbox.sourceId,
+        channel: contactInbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "deleteContact",
+            triggerType: "contact_deleted",
+          },
+        },
+      })),
+    )
+    .catch((error) => {
+      console.error("[deleteContact] Failed to track contact_deleted", error)
+    })
 }
 
 export async function addContactSequence({

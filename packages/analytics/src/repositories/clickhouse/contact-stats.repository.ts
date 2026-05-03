@@ -2,7 +2,9 @@ import { db } from "@chatbotx.io/database/client"
 import {
   fillContactStatsMonthlySeries,
   fillDailyContactStats,
+  fillDailyNewContactsSeries,
   fillDailyTotalContactsSeries,
+  fillMonthlyNewContactsSeries,
   fillTotalContactsMonthlySeries,
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
@@ -257,145 +259,76 @@ export class ContactStatsRepository extends BaseRepository {
   async getTotalContactsByMonth(
     props: TimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
+    const { workspaceId } = props
+
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const monthGroup = this.buildMonthGroupFromHourly(props)
 
-    const baselineSql = `
-      WITH hourly_created AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS created_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
-          AND event_type = 'contact_created'
-        GROUP BY hour
-      ),
-      hourly_deleted AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS deleted_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour < toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
-          AND event_type = 'contact_deleted'
-        GROUP BY hour
-      )
-      SELECT
-        sum(created_contacts) - sum(deleted_contacts) AS baseline_total
-      FROM hourly_created
-      FULL OUTER JOIN hourly_deleted USING (hour)
-    `
-
-    const createdSql = `
+    const sql = `
       WITH hourly AS (
         SELECT
           hour,
-          countMerge(event_count_state) AS created_contacts
+          countMergeIf(event_count_state, event_type = 'contact_created')
+            - countMergeIf(event_count_state, event_type = 'contact_deleted') AS net
         FROM contact_stats_hourly
         WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
-          AND event_type = 'contact_created'
+          AND event_type IN ('contact_created', 'contact_deleted')
         GROUP BY hour
-      ),
-      monthly AS (
-        SELECT
-          ${monthGroup} as month,
-          sum(created_contacts) AS created_contacts
-        FROM hourly
-        GROUP BY month
-      ),
-      cumulative AS (
-        SELECT
-          month,
-          sum(created_contacts) OVER (ORDER BY month ASC) AS total_contacts
-        FROM monthly
       )
       SELECT
-        month,
-        total_contacts
-      FROM cumulative
-      WHERE month >= toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
-      ORDER BY month ASC
-    `
-
-    const deletedSql = `
-      WITH hourly AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS deleted_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour <= toDateTime({to:UInt32}, {timezone:String})
-          AND event_type = 'contact_deleted'
-        GROUP BY hour
-      ),
-      monthly AS (
-        SELECT
-          ${monthGroup} as month,
-          sum(deleted_contacts) AS deleted_contacts
-        FROM hourly
-        GROUP BY month
-      ),
-      cumulative AS (
-        SELECT
-          month,
-          sum(deleted_contacts) OVER (ORDER BY month ASC) AS total_deleted
-        FROM monthly
-      )
+        'baseline' AS kind,
+        toStartOfMonth(toDate(toDateTime({from:UInt32}, {timezone:String}))) AS month,
+        coalesce(sum(net), 0) AS value
+      FROM hourly
+      WHERE hour < toDateTime(toStartOfMonth(toDateTime({from:UInt32}, {timezone:String})), {timezone:String})
+      UNION ALL
       SELECT
+        'series' AS kind,
         month,
-        total_deleted
-      FROM cumulative
-      WHERE month >= toStartOfMonth(toDateTime({from:UInt32}, {timezone:String}))
-      ORDER BY month ASC
+        sum(month_net) OVER (ORDER BY month ASC) AS value
+      FROM (
+        SELECT
+          ${monthGroup} AS month,
+          sum(net) AS month_net
+        FROM hourly
+        WHERE hour >= toDateTime(toStartOfMonth(toDateTime({from:UInt32}, {timezone:String})), {timezone:String})
+        GROUP BY month
+      )
     `
 
-    const [baselineResult, createdResult, deletedResult] = await Promise.all([
-      this.query<{
-        baseline_total: string
-      }>(baselineSql, {
-        workspaceId: props.workspaceId,
-        ...timeFilter.params,
-      }),
-      this.query<{
-        month: string
-        total_contacts: string
-      }>(createdSql, {
-        workspaceId: props.workspaceId,
-        ...timeFilter.params,
-      }),
-      this.query<{
-        month: string
-        total_deleted: string
-      }>(deletedSql, {
-        workspaceId: props.workspaceId,
-        ...timeFilter.params,
-      }),
-    ])
+    const rows = await this.query<{
+      kind: "baseline" | "series"
+      month: string
+      value: string
+    }>(sql, {
+      workspaceId,
+      ...timeFilter.params,
+    })
 
-    const baselineTotal = baselineResult[0]?.baseline_total
-      ? Number(baselineResult[0].baseline_total)
-      : 0
-
-    const deletedByMonth = new Map<string, number>()
-    for (const row of deletedResult) {
-      deletedByMonth.set(row.month, Number(row.total_deleted))
+    let baselineTotal = 0
+    const raw: ContactCountsSchema[] = []
+    for (const row of rows) {
+      if (row.kind === "baseline") {
+        baselineTotal = Number(row.value)
+      } else {
+        raw.push({
+          date: new Date(row.month),
+          count: Number(row.value),
+        })
+      }
     }
 
-    const raw = createdResult.map((row) => {
-      const monthKey = row.month
-      const created = Number(row.total_contacts)
-      const deleted = deletedByMonth.get(monthKey) ?? 0
-      return {
-        date: new Date(row.month),
-        count: created - deleted,
-      }
-    })
+    raw.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    const rawWithBaseline = raw.map((r) => ({
+      date: r.date,
+      count: baselineTotal + r.count,
+    }))
 
     return fillTotalContactsMonthlySeries({
       ...props,
-      raw,
+      raw: rawWithBaseline,
       initialTotal: baselineTotal,
     })
   }
@@ -404,6 +337,7 @@ export class ContactStatsRepository extends BaseRepository {
     props: TimeRangeQuery,
   ): Promise<ContactCountsSchema[]> {
     const { workspaceId } = props
+
     if (shouldUseMonthlyGranularity(props)) {
       return this.getTotalContactsByMonth(props)
     }
@@ -411,144 +345,147 @@ export class ContactStatsRepository extends BaseRepository {
     const timeFilter = this.buildHourlyTimestampFilter(props)
     const dayGroup = this.buildDayGroupFromHourly(props)
 
-    const baselineSql = `
-      WITH hourly_created AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS created_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
-          AND event_type = 'contact_created'
-        GROUP BY hour
-      ),
-      hourly_deleted AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS deleted_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
-          AND event_type = 'contact_deleted'
-        GROUP BY hour
-      )
-      SELECT
-        sum(created_contacts) - sum(deleted_contacts) AS baseline_total
-      FROM hourly_created
-      FULL OUTER JOIN hourly_deleted USING (hour)
-    `
-
-    const createdSql = `
+    const sql = `
       WITH hourly AS (
         SELECT
           hour,
-          countMerge(event_count_state) AS created_contacts
+          countMergeIf(event_count_state, event_type = 'contact_created')
+            - countMergeIf(event_count_state, event_type = 'contact_deleted') AS net
         FROM contact_stats_hourly
         WHERE workspace_id = {workspaceId:String}
           AND hour <= toDateTime({to:UInt32}, {timezone:String})
-          AND event_type = 'contact_created'
+          AND event_type IN ('contact_created', 'contact_deleted')
         GROUP BY hour
-      ),
-      daily AS (
-        SELECT
-          ${dayGroup} as day,
-          sum(created_contacts) AS created_contacts
-        FROM hourly
-        GROUP BY day
-      ),
-      cumulative AS (
-        SELECT
-          day,
-          sum(created_contacts) OVER (ORDER BY day ASC) AS total_contacts
-        FROM daily
       )
       SELECT
-        day,
-        total_contacts
-      FROM cumulative
-      WHERE day >= toDate(toDateTime({from:UInt32}, {timezone:String}))
-      ORDER BY day ASC
-    `
-
-    const deletedSql = `
-      WITH hourly AS (
-        SELECT
-          hour,
-          countMerge(event_count_state) AS deleted_contacts
-        FROM contact_stats_hourly
-        WHERE workspace_id = {workspaceId:String}
-          AND hour <= toDateTime({to:UInt32}, {timezone:String})
-          AND event_type = 'contact_deleted'
-        GROUP BY hour
-      ),
-      daily AS (
-        SELECT
-          ${dayGroup} as day,
-          sum(deleted_contacts) AS deleted_contacts
-        FROM hourly
-        GROUP BY day
-      ),
-      cumulative AS (
-        SELECT
-          day,
-          sum(deleted_contacts) OVER (ORDER BY day ASC) AS total_deleted
-        FROM daily
-      )
+        'baseline' AS kind,
+        toDate(toDateTime({from:UInt32}, {timezone:String})) AS day,
+        coalesce(sum(net), 0) AS value
+      FROM hourly
+      WHERE hour < toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
+      UNION ALL
       SELECT
+        'series' AS kind,
         day,
-        total_deleted
-      FROM cumulative
-      WHERE day >= toDate(toDateTime({from:UInt32}, {timezone:String}))
-      ORDER BY day ASC
+        sum(day_net) OVER (ORDER BY day ASC) AS value
+      FROM (
+        SELECT
+          ${dayGroup} AS day,
+          sum(net) AS day_net
+        FROM hourly
+        WHERE hour >= toStartOfDay(toDateTime({from:UInt32}, {timezone:String}))
+        GROUP BY day
+      )
     `
 
-    const [baselineResult, createdResult, deletedResult] = await Promise.all([
-      this.query<{
-        baseline_total: string
-      }>(baselineSql, {
-        workspaceId,
-        ...timeFilter.params,
-      }),
-      this.query<{
-        day: string
-        total_contacts: string
-      }>(createdSql, {
-        workspaceId,
-        ...timeFilter.params,
-      }),
-      this.query<{
-        day: string
-        total_deleted: string
-      }>(deletedSql, {
-        workspaceId,
-        ...timeFilter.params,
-      }),
-    ])
+    const rows = await this.query<{
+      kind: "baseline" | "series"
+      day: string
+      value: string
+    }>(sql, {
+      workspaceId,
+      ...timeFilter.params,
+    })
 
-    const baselineTotal = baselineResult[0]?.baseline_total
-      ? Number(baselineResult[0].baseline_total)
-      : 0
-
-    const deletedByDay = new Map<string, number>()
-    for (const row of deletedResult) {
-      deletedByDay.set(row.day, Number(row.total_deleted))
+    let baselineTotal = 0
+    const raw: ContactCountsSchema[] = []
+    for (const row of rows) {
+      if (row.kind === "baseline") {
+        baselineTotal = Number(row.value)
+      } else {
+        raw.push({
+          date: new Date(row.day),
+          count: Number(row.value),
+        })
+      }
     }
 
-    const raw = createdResult.map((row) => {
-      const dayKey = row.day
-      const created = Number(row.total_contacts)
-      const deleted = deletedByDay.get(dayKey) ?? 0
-      return {
-        date: new Date(row.day),
-        count: created - deleted,
-      }
-    })
+    raw.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    const rawWithBaseline = raw.map((r) => ({
+      date: r.date,
+      count: baselineTotal + r.count,
+    }))
 
     return fillDailyTotalContactsSeries({
       ...props,
-      raw,
+      raw: rawWithBaseline,
       initialTotal: baselineTotal,
     })
+  }
+
+  async getNewContactsPerDay(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    if (shouldUseMonthlyGranularity(props)) {
+      return this.getNewContactsPerMonth(props)
+    }
+
+    const { workspaceId } = props
+
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const dayGroup = this.buildDayGroupFromHourly(props)
+
+    const sql = `
+      SELECT
+        ${dayGroup} AS day,
+        uniqMerge(unique_contacts_state) AS new_contacts
+      FROM contact_stats_hourly
+      WHERE workspace_id = {workspaceId:String}
+        AND ${timeFilter.sql}
+        AND event_type = 'contact_created'
+      GROUP BY day
+      ORDER BY day ASC
+    `
+
+    const result = await this.query<{
+      day: string
+      new_contacts: string
+    }>(sql, {
+      workspaceId,
+      ...timeFilter.params,
+    })
+
+    const raw = result.map((row) => ({
+      date: new Date(row.day),
+      count: Number(row.new_contacts),
+    }))
+
+    return fillDailyNewContactsSeries({ ...props, raw })
+  }
+
+  async getNewContactsPerMonth(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    const timeFilter = this.buildHourlyTimestampFilter(props)
+    const monthGroup = this.buildMonthGroupFromHourly(props)
+
+    const sql = `
+      SELECT
+        ${monthGroup} AS month,
+        uniqMerge(unique_contacts_state) AS new_contacts
+      FROM contact_stats_hourly
+      WHERE workspace_id = {workspaceId:String}
+        AND ${timeFilter.sql}
+        AND event_type = 'contact_created'
+      GROUP BY month
+      ORDER BY month ASC
+    `
+
+    const result = await this.query<{
+      month: string
+      new_contacts: string
+    }>(sql, {
+      workspaceId: props.workspaceId,
+      ...timeFilter.params,
+    })
+
+    const raw = result.map((row) => ({
+      date: new Date(row.month),
+      count: Number(row.new_contacts),
+    }))
+
+    return fillMonthlyNewContactsSeries({ ...props, raw })
   }
 
   async getNewContactsCount(props: TimeRangeQuery): Promise<number> {

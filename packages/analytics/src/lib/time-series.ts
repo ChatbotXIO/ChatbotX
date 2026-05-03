@@ -3,8 +3,10 @@ import {
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfMonth,
+  parseISO,
   startOfMonth,
 } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 import {
   type BotMessageResult,
   type BotMessageStats,
@@ -49,16 +51,48 @@ export function getUtcDayStart(date: Date): Date {
   return new Date(`${getUtcDayKey(date)}T00:00:00.000Z`)
 }
 
-export function* iterateUtcDays(from: Date, to: Date): Generator<Date> {
-  const fromDay = getUtcDayStart(from)
-  const toDay = getUtcDayStart(to)
+export function getTzDayKey(date: Date, timezone: string): string {
+  return formatInTimeZone(date, timezone, "yyyy-MM-dd")
+}
 
-  for (
-    let d = new Date(fromDay);
-    d <= toDay;
-    d = new Date(d.getTime() + 24 * 60 * 60 * 1000)
-  ) {
-    yield d
+export function getTzMonthKey(date: Date, timezone: string): string {
+  return formatInTimeZone(date, timezone, "yyyy-MM")
+}
+
+export function* iterateTzDays(
+  from: Date,
+  to: Date,
+  timezone: string,
+): Generator<{ key: string; date: Date }> {
+  const startKey = getTzDayKey(from, timezone)
+  const endKey = getTzDayKey(to, timezone)
+  if (startKey > endKey) {
+    return
+  }
+
+  for (const date of eachDayOfInterval({
+    start: parseISO(startKey),
+    end: parseISO(endKey),
+  })) {
+    yield { key: getUtcDayKey(date), date }
+  }
+}
+
+export function* iterateTzMonths(
+  from: Date,
+  to: Date,
+  timezone: string,
+): Generator<{ key: string; date: Date }> {
+  const startKey = getTzMonthKey(from, timezone)
+  const endKey = getTzMonthKey(to, timezone)
+  if (startKey > endKey) {
+    return
+  }
+  for (const date of eachMonthOfInterval({
+    start: parseISO(`${startKey}-01`),
+    end: parseISO(`${endKey}-01`),
+  })) {
+    yield { key: getUtcMonthKey(date), date }
   }
 }
 
@@ -68,7 +102,7 @@ export function fillDailyContactStats(
     eventTypes: ContactEventType[]
   },
 ): ContactStats[] {
-  const { workspaceId, from, to, rows, eventTypes } = props
+  const { workspaceId, from, to, timezone, rows, eventTypes } = props
   const keyOf = (day: string, eventType: string) => `${day}::${eventType}`
 
   const byKey = new Map<string, ContactStats>()
@@ -77,15 +111,13 @@ export function fillDailyContactStats(
   }
 
   const filled: ContactStats[] = []
-  const daySeries = generateDaySeries(from, to)
-  for (const d of daySeries) {
-    const dayKey = getUtcDayKey(d)
+  for (const { key, date } of iterateTzDays(from, to, timezone)) {
     for (const et of eventTypes) {
-      const existing = byKey.get(keyOf(dayKey, et))
+      const existing = byKey.get(keyOf(key, et))
       filled.push(
         existing ?? {
           workspaceId,
-          timestamp: getUtcDayStart(d),
+          timestamp: date,
           eventType: et,
           count: 0,
           uniqueContacts: 0,
@@ -103,7 +135,7 @@ export function fillDailyTotalContactsSeries(
     initialTotal: number
   },
 ): ContactCountsSchema[] {
-  const { from, to, raw, initialTotal = 0 } = props
+  const { from, to, timezone, raw, initialTotal = 0 } = props
 
   const byDay = new Map<string, number>()
   for (const r of raw) {
@@ -111,16 +143,14 @@ export function fillDailyTotalContactsSeries(
   }
 
   const filled: ContactCountsSchema[] = []
-  const dateSeries = eachDayOfInterval({ start: from, end: to })
   let lastTotal = initialTotal
-  for (const d of dateSeries) {
-    const dayKey = getUtcDayKey(d)
-    const v = byDay.get(dayKey)
+  for (const { key, date } of iterateTzDays(from, to, timezone)) {
+    const v = byDay.get(key)
     if (typeof v === "number") {
       lastTotal = v
     }
     filled.push({
-      date: getUtcDayStart(d),
+      date,
       count: lastTotal,
     })
   }
@@ -134,7 +164,7 @@ export function fillContactStatsMonthlySeries(
     eventTypes: ContactEventType[]
   },
 ): ContactStats[] {
-  const { rows, eventTypes } = props
+  const { from, to, timezone, rows, eventTypes } = props
   const keyOf = (month: string, eventType: string) => `${month}::${eventType}`
 
   const byKey = new Map<string, ContactStats>()
@@ -143,15 +173,13 @@ export function fillContactStatsMonthlySeries(
   }
 
   const filled: ContactStats[] = []
-  const monthSeries = generateMonthSeries(props.from, props.to)
-  for (const m of monthSeries) {
-    const monthKey = getUtcMonthKey(m)
+  for (const { key, date } of iterateTzMonths(from, to, timezone)) {
     for (const et of eventTypes) {
-      const existing = byKey.get(keyOf(monthKey, et))
+      const existing = byKey.get(keyOf(key, et))
       filled.push(
         existing ?? {
           workspaceId: props.workspaceId,
-          timestamp: getUtcMonthStart(m),
+          timestamp: date,
           eventType: et,
           count: 0,
           uniqueContacts: 0,
@@ -163,13 +191,59 @@ export function fillContactStatsMonthlySeries(
   return filled
 }
 
+export function fillDailyNewContactsSeries(
+  props: TimeRangeQuery & {
+    raw: ContactCountsSchema[]
+  },
+): ContactCountsSchema[] {
+  const { from, to, timezone, raw } = props
+
+  const byDay = new Map<string, number>()
+  for (const r of raw) {
+    byDay.set(getUtcDayKey(r.date), r.count)
+  }
+
+  const filled: ContactCountsSchema[] = []
+  for (const { key, date } of iterateTzDays(from, to, timezone)) {
+    filled.push({
+      date,
+      count: byDay.get(key) ?? 0,
+    })
+  }
+
+  return filled
+}
+
+export function fillMonthlyNewContactsSeries(
+  props: TimeRangeQuery & {
+    raw: ContactCountsSchema[]
+  },
+): ContactCountsSchema[] {
+  const { from, to, timezone, raw } = props
+
+  const byMonth = new Map<string, number>()
+  for (const r of raw) {
+    byMonth.set(getUtcMonthKey(r.date), r.count)
+  }
+
+  const filled: ContactCountsSchema[] = []
+  for (const { key, date } of iterateTzMonths(from, to, timezone)) {
+    filled.push({
+      date,
+      count: byMonth.get(key) ?? 0,
+    })
+  }
+
+  return filled
+}
+
 export function fillTotalContactsMonthlySeries(
   props: TimeRangeQuery & {
     raw: ContactCountsSchema[]
     initialTotal: number
   },
 ): ContactCountsSchema[] {
-  const { from, to, raw, initialTotal = 0 } = props
+  const { from, to, timezone, raw, initialTotal = 0 } = props
   const byMonth = new Map<string, number>()
   for (const r of raw) {
     byMonth.set(getUtcMonthKey(r.date), r.count)
@@ -178,15 +252,13 @@ export function fillTotalContactsMonthlySeries(
   const filled: ContactCountsSchema[] = []
   let lastTotal = initialTotal
 
-  const monthSeries = generateMonthSeries(from, to)
-  for (const m of monthSeries) {
-    const monthKey = getUtcMonthKey(m)
-    const v = byMonth.get(monthKey)
+  for (const { key, date } of iterateTzMonths(from, to, timezone)) {
+    const v = byMonth.get(key)
     if (typeof v === "number") {
       lastTotal = v
     }
     filled.push({
-      date: getUtcMonthStart(m),
+      date,
       count: lastTotal,
     })
   }

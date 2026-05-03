@@ -47,6 +47,8 @@ export const deleteContactAction = workspaceActionClient
         ),
       )
 
+      const occurredAt = new Date()
+
       // Trigger delete events
       const events: CreateContactEvent[] = []
       for (const contact of contacts) {
@@ -55,7 +57,7 @@ export const deleteContactAction = workspaceActionClient
             workspaceId,
             contactId: contact.id,
             eventType: "contact_deleted" as const,
-            occurredAt: contact.updatedAt,
+            occurredAt,
             source: contactInbox.source,
             channel: contactInbox.channel,
             sourceId: contactInbox.sourceId,
