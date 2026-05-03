@@ -4,13 +4,8 @@ import { z } from "zod"
 export const keys = () =>
   createEnv({
     server: {
-      ANALYTICS_ENABLED: z
-        .enum(["true", "false"])
-        .default("false")
-        .transform((v) => v === "true"),
+      ANALYTICS_ENABLED: z.coerce.boolean().default(false),
     },
-    clientPrefix: "CHATBOTX_PUBLIC_",
-    client: {},
     runtimeEnv: process.env,
   })
 
