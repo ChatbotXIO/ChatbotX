@@ -19,6 +19,7 @@ on:
 
 env:
   BUILD_PLATFORMS: linux/amd64 #,linux/arm64
+  DOCKER_REGISTRY: ghcr.io
 
 jobs:
   prepare-metadata:
@@ -30,18 +31,23 @@ jobs:
     outputs:
       version: ${{ steps.meta.outputs.version }}
       labels: ${{ steps.meta.outputs.labels }}
+      image_namespace: ${{ steps.image_namespace.outputs.owner_lc }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Set image namespace (GHCR requires lowercase)
+        id: image_namespace
+        run: echo "owner_lc=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-builder
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-worker
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/chatbotx-realtime
+            ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-builder
+            ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-worker
+            ${{ env.DOCKER_REGISTRY }}/${{ steps.image_namespace.outputs.owner_lc }}/chatbotx-realtime
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -82,12 +88,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push main image
         if: github.event_name != 'pull_request' && github.ref_name == 'main'
@@ -97,7 +103,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:main
+            ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:main
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -111,8 +117,8 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:${{ needs.prepare-metadata.outputs.version }}
-            ${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}/${{ matrix.image }}:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:${{ needs.prepare-metadata.outputs.version }}
+            ${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}/${{ matrix.image }}:latest
           labels: ${{ needs.prepare-metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -144,8 +150,8 @@ jobs:
       - name: Output image URLs
         run: |
           VERSION="${{ needs.prepare-metadata.outputs.version }}"
-          REGISTRY="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_IMAGE_PREFIX }}"
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          REGISTRY="${{ env.DOCKER_REGISTRY }}/${{ needs.prepare-metadata.outputs.image_namespace }}"
+          if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "ghcr" ]]; then
             printf '%s\n' \
               "Builder image (main): ${REGISTRY}/chatbotx-builder:main" \
               "Worker image (main): ${REGISTRY}/chatbotx-worker:main" \
