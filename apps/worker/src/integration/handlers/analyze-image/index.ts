@@ -62,7 +62,7 @@ export async function handleAIAnalyzeImage({
       abortSignal: controller.signal,
     })
 
-    const { messageCount, fullText } = await processStreamingText(
+    const { fullText } = await processStreamingText(
       result.textStream,
       async (_segment, parts) => {
         for (const part of parts) {
@@ -77,7 +77,6 @@ export async function handleAIAnalyzeImage({
         contactId: conversation.contactId,
         customFieldId: step.outputFieldId,
         fullText,
-        messageCount,
         workspaceId: conversation.workspaceId,
       })
     }
