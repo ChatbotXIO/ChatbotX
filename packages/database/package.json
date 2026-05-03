@@ -19,8 +19,7 @@
   "scripts": {
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
-    "db:migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
-    "db:migrate:prod": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
+    "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
     "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
