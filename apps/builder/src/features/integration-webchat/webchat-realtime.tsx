@@ -19,7 +19,7 @@ export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
   )
 
   usePartySocket({
-    host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
+    host: env.NEXT_PUBLIC_REALTIME_URL,
     room: guestConversationId,
     party: "guests",
 

@@ -19,7 +19,7 @@ export function ChatRealtime() {
   )
 
   usePartySocket({
-    host: env.NEXT_PUBLIC_PARTYSOCKET_URL,
+    host: env.NEXT_PUBLIC_REALTIME_URL,
     room: workspaceId,
     party: "workspaces",
     // protocol: "ws",

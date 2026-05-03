@@ -45,7 +45,6 @@ CREATE TABLE "RefLinkStat" (
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-DROP TABLE "SequenceEvent";--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" DROP CONSTRAINT "AnalyticsManifestStatus_pkey";--> statement-breakpoint
 ALTER TABLE "AnalyticsManifestStatus" ADD COLUMN "objectKey" text NOT NULL;--> statement-breakpoint
 ALTER TABLE "ContactOnBroadcast" ADD COLUMN "contactInboxId" bigint NOT NULL;--> statement-breakpoint

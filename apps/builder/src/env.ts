@@ -34,8 +34,8 @@ const baseEnv = {
 
 const googleAuthEnv = {
   server: {
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
   },
 }
 

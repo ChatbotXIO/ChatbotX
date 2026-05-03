@@ -10,6 +10,18 @@ import {
   workspaceUsageModel,
 } from "../schema"
 
+const resolveBuilderHostname = () => {
+  const raw = process.env.NEXT_PUBLIC_BUILDER_URL?.trim()
+  if (!raw) {
+    return "localhost"
+  }
+  try {
+    return new URL(raw).hostname
+  } catch {
+    return "localhost"
+  }
+}
+
 async function main() {
   let organization = await db.query.organizationModel.findFirst()
   if (organization) {
@@ -21,7 +33,7 @@ async function main() {
       id: createId(),
       name: "ChatbotX",
       createdAt: new Date(),
-      domain: new URL(process.env.NEXT_PUBLIC_BUILDER_URL ?? "").hostname,
+      domain: resolveBuilderHostname(),
     })
     .returning()
     .then((result) => result[0])
@@ -100,7 +112,10 @@ async function main() {
 }
 
 main()
-  .then(() => true)
+  .then(() => {
+    process.exit(0)
+  })
   .catch((error) => {
     console.log(error)
+    process.exit(1)
   })

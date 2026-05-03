@@ -9,7 +9,7 @@ x-network: &network
 
 x-rustfs-environment: &rustfs-environment
   RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-chatbotx}
-  RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-nr541Kv59xB4f48bhZOy5wBz}
+  RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-secretkey}
 
 services:
   postgres:
@@ -23,7 +23,7 @@ services:
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nr541Kv59xB4f48bhZOy5wBz}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secretkey}
       - PGDATA=/var/lib/postgresql/data/pgdata
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]

@@ -27,7 +27,7 @@ export default class WorkspaceParty implements Party.Server {
     lobby: Party.Lobby,
     // ctx: Party.ExecutionContext
   ) {
-    if (req.headers.get("X-API-KEY") !== lobby.env.PARTYSOCKET_API_KEY) {
+    if (req.headers.get("X-API-KEY") !== lobby.env.REALTIME_API_KEY) {
       return new Response("Method not allowed", { status: 405 })
     }
     return req

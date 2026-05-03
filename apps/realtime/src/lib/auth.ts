@@ -32,9 +32,7 @@ export const getAuthSession = async (
 
   const headers = proxiedRequest.headers
   const origin =
-    env.NEXT_PUBLIC_PARTYSOCKET_AUTH_URL ??
-    headers.get("origin") ??
-    "https://example.com"
+    env.REALTIME_AUTH_URL ?? headers.get("origin") ?? "https://example.com"
 
   const verificationUrl = new URL(
     "/api/auth/one-time-token/verify",

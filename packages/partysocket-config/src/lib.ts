@@ -14,10 +14,10 @@ export async function broadcastToWorkspaceParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/workspaces/${workspaceId}`,
+      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/workspaces/${workspaceId}`,
       {
         headers: {
-          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+          "X-API-KEY": env.REALTIME_API_KEY,
         },
         json,
       },
@@ -34,10 +34,10 @@ export async function broadcastToGuestParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/guests/${guestConversationId}`,
+      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/guests/${guestConversationId}`,
       {
         headers: {
-          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+          "X-API-KEY": env.REALTIME_API_KEY,
         },
         json,
       },
@@ -54,10 +54,10 @@ export async function broadcastToUserParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_PARTYSOCKET_URL}/parties/users/${userId}`,
+      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/users/${userId}`,
       {
         headers: {
-          "X-API-KEY": env.PARTYSOCKET_API_KEY,
+          "X-API-KEY": env.REALTIME_API_KEY,
         },
         json,
       },

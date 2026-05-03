@@ -12,7 +12,7 @@ RUN npm install -g turbo@^2
 
 # Generate a partial monorepo for a target package
 COPY . .
-RUN turbo prune partysocket --docker
+RUN turbo prune realtime --docker
 
 FROM base AS deps
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -20,7 +20,7 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apt-get update && apt-get install -y ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY apps/partysocket/docker/rootfs/ /
+COPY apps/realtime/docker/rootfs/ /
 
 COPY --from=pre /app/out/json/ .
 RUN pnpm install --frozen-lockfile

@@ -463,7 +463,7 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  apps/partysocket:
+  apps/realtime:
     dependencies:
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
@@ -1227,9 +1227,6 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@chatbotx.io/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
       '@types/node':
         specifier: 24.x
         version: 24.12.2
@@ -1242,6 +1239,9 @@ importers:
       drizzle-kit:
         specifier: 1.0.0-beta.22
         version: 1.0.0-beta.22
+      esbuild:
+        specifier: ^0.28.0
+        version: 0.28.0
 
   packages/event-bus:
     dependencies:
