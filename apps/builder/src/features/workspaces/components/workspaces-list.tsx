@@ -76,7 +76,7 @@ const WorkspacesList = async ({ workspaces }: WorkspacesListProps) => {
   const createLabel = t("actions.createFeature", {
     feature: t("fields.workspace.label"),
   })
-  const showCreateCard = !isCommunity || workspaces.length === 0
+  const showCreateCard = !isCommunity
 
   return (
     <div className="flex min-h-dvh w-full max-w-full justify-start px-20">

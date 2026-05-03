@@ -1,15 +1,21 @@
+import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import PlansTable from "@/enterprise/features/plans/plans-table"
 import { listPlansRSC } from "@/enterprise/features/plans/queries"
 import { listPlansSearchParamsCache } from "@/enterprise/features/plans/schemas/query"
+import { isCommunity } from "@/env"
 
 type ManagePlansPageProps = {
   searchParams: Promise<SearchParams>
 }
 
 export default async function ManagePlansPage(props: ManagePlansPageProps) {
+  if (isCommunity) {
+    return notFound()
+  }
+
   const t = await getTranslations()
 
   const searchParams = await props.searchParams
