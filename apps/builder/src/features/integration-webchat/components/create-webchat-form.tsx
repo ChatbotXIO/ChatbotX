@@ -1,10 +1,9 @@
 "use client"
 
 import {
+  channelTypes,
   type WebchatConversationStarterType,
-  type WebchatPersistentMenuType,
   webchatConversationStarterType,
-  webchatPersistentMenuType,
 } from "@chatbotx.io/database/partials"
 import { ColorPickerField } from "@chatbotx.io/ui/components/form/color-picker-field"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
@@ -35,8 +34,10 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { createWebchatAction } from "../actions/create-webchat.action"
+import { BRANDING_TITLE, getBrandingUrl } from "../lib"
 import { createWebchatRequest } from "../schema/mutation"
 import AuthorizedDomainField from "./authorized-domain-field"
+import PersistentMenuField from "./persistent-menu-field"
 
 export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
@@ -60,23 +61,6 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
       {
         value: webchatConversationStarterType.enum.message,
         label: t("fields.conversationStarter.type.sendText"),
-      },
-    ],
-    [t],
-  )
-
-  const persistentMenuTypeOptions: {
-    value: WebchatPersistentMenuType
-    label: string
-  }[] = useMemo(
-    () => [
-      {
-        value: webchatPersistentMenuType.enum.flow,
-        label: t("fields.persistentMenu.type.sendFlow"),
-      },
-      {
-        value: webchatPersistentMenuType.enum.url,
-        label: t("fields.persistentMenu.type.openWebsite"),
       },
     ],
     [t],
@@ -106,7 +90,13 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
           welcomeFlowId: null,
           authorizedDomains: [],
           conversationStarters: [],
-          persistentMenus: [],
+          persistentMenus: [
+            {
+              label: BRANDING_TITLE,
+              type: "url" as const,
+              url: getBrandingUrl("webchat"),
+            },
+          ],
           brandColor: "#007bff",
           hideHeader: true,
           showLogo: false,
@@ -124,15 +114,6 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   } = useFieldArray({
     control: form.control,
     name: "conversationStarters",
-  })
-
-  const {
-    fields: persistentMenus,
-    append: appendPersistentMenus,
-    remove: removePersistentMenus,
-  } = useFieldArray({
-    control: form.control,
-    name: "persistentMenus",
   })
 
   return (
@@ -233,83 +214,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
 
         <Separator />
 
-        <div className="space-y-2">
-          <Label htmlFor="persistentMenus">
-            {t("fields.persistentMenu.label", { plural: 1 })}
-          </Label>
-          <p className="text-muted-foreground text-sm">
-            {t("fields.persistentMenu.description")}
-          </p>
-          <Accordion className="w-full" collapsible type="single">
-            {persistentMenus.map((_, index) => (
-              <AccordionItem
-                className="flex flex-col gap-2"
-                // biome-ignore lint/suspicious/noArrayIndexKey: wip
-                key={index}
-                value={`persistentMenu-${index}`}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <AccordionTrigger>
-                    {t("fields.persistentMenu.label", { plural: 0 })} #
-                    {index + 1}
-                  </AccordionTrigger>
-                  <Button
-                    onClick={() => removePersistentMenus(index)}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    <TrashIcon className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <AccordionContent className="flex flex-col gap-4">
-                  <InputField
-                    label={t("fields.buttonLabel.label")}
-                    name={`persistentMenus.${index}.label`}
-                  />
-
-                  <RadioGroupField
-                    name={`persistentMenus.${index}.type`}
-                    options={persistentMenuTypeOptions}
-                  />
-
-                  {form.watch(`persistentMenus.${index}.type`) ===
-                    webchatPersistentMenuType.enum.flow && (
-                    <SelectField
-                      label={t("fields.flowId.label")}
-                      name={`persistentMenus.${index}.flowId`}
-                      options={flowOptions}
-                    />
-                  )}
-
-                  {form.watch(`persistentMenus.${index}.type`) ===
-                    webchatPersistentMenuType.enum.url && (
-                    <InputField
-                      label={t("fields.url.label")}
-                      name={`persistentMenus.${index}.url`}
-                    />
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-
-          <Button
-            onClick={() =>
-              appendPersistentMenus({
-                label: "",
-                type: webchatPersistentMenuType.enum.flow,
-                flowId: "",
-              })
-            }
-            size="sm"
-            variant="outline"
-          >
-            <PlusIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.persistentMenu.label", { plural: 0 }),
-            })}
-          </Button>
-        </div>
+        <PersistentMenuField channel={channelTypes.enum.webchat} />
 
         <Separator />
 

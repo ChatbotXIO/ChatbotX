@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  channelTypes,
   type WebchatConversationStarterType,
   webchatConversationStarterType,
 } from "@chatbotx.io/database/partials"
@@ -232,7 +233,7 @@ export function UpdateWebchatForm({
           </Button>
         </div>
 
-        <PersistentMenuField />
+        <PersistentMenuField channel={channelTypes.enum.webchat} />
 
         <Separator />
 

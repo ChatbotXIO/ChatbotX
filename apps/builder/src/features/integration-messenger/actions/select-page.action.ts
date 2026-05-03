@@ -7,13 +7,19 @@ import {
   integrationMessengerModel,
 } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import { organizationService } from "@/features/organization/services"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -124,10 +130,25 @@ export const selectPageAction = authActionClient
             pageId: parsedInput.pageId,
             auth,
             name: parsedInput.pageName,
-            greetingMessages: [],
-            persistentMenus: [],
+            persistentMenus: [
+              {
+                label: BRANDING_TITLE,
+                type: "url" as const,
+                url: getBrandingUrl("messenger"),
+              },
+            ],
             conversationStarters: [],
             personas: [],
+          })
+
+          await integrationMessenger.channels.channel.bot?.addBranding?.({
+            ctx: {
+              uploader,
+              storagePrefix: getStoragePrefix(workspaceId, inbox.id),
+              auth,
+            },
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("messenger"),
           })
         })
 

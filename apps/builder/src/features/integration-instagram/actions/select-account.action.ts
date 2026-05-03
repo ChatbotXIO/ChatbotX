@@ -7,13 +7,19 @@ import {
   integrationInstagramModel,
 } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   exchangeLongLivedToken,
+  integration as integrationInstagram,
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils/id"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import { organizationService } from "@/features/organization/services"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
@@ -119,8 +125,24 @@ export const selectAccountAction = authActionClient
             auth,
             name: parsedInput.igName,
             username: parsedInput.igUsername,
-            persistentMenus: [],
+            persistentMenus: [
+              {
+                label: BRANDING_TITLE,
+                type: "url" as const,
+                url: getBrandingUrl("instagram"),
+              },
+            ],
             conversationStarters: [],
+          })
+
+          await integrationInstagram.channels.channel.bot?.addBranding?.({
+            ctx: {
+              uploader,
+              storagePrefix: getStoragePrefix(workspaceId, inbox.id),
+              auth,
+            },
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("instagram"),
           })
         })
 

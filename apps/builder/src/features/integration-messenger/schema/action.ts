@@ -1,6 +1,5 @@
 import {
   messengerConversationStarterSchema,
-  messengerGreetingMessageSchema,
   messengerPersistentMenuSchema,
   messengerPersonaSchema,
 } from "@chatbotx.io/database/partials"
@@ -16,9 +15,7 @@ export const selectPageRequest = z.object({
 export type SelectPageRequest = z.infer<typeof selectPageRequest>
 
 export const updateMessengerRequest = z.object({
-  addLanguage: z.string().optional(),
   welcomeFlowId: zodBigintAsString().nullable(),
-  greetingMessages: z.array(messengerGreetingMessageSchema),
   persistentMenus: z.array(messengerPersistentMenuSchema),
   personas: z.array(messengerPersonaSchema),
   conversationStarters: z.array(messengerConversationStarterSchema),

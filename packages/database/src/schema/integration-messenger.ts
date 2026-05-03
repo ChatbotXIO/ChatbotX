@@ -2,7 +2,6 @@ import { sql } from "drizzle-orm"
 import { index, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import type {
   MessengerConversationStarter,
-  MessengerGreetingMessage,
   MessengerPersistentMenu,
   MessengerPersona,
 } from "../partials/integration-messenger"
@@ -24,10 +23,6 @@ export const integrationMessengerModel = pgTable(
       .notNull(),
     persistentMenus: jsonb()
       .$type<MessengerPersistentMenu[]>()
-      .default(sql`[]`)
-      .notNull(),
-    greetingMessages: jsonb()
-      .$type<MessengerGreetingMessage[]>()
       .default(sql`[]`)
       .notNull(),
     personas: jsonb().$type<MessengerPersona[]>().default(sql`[]`).notNull(),

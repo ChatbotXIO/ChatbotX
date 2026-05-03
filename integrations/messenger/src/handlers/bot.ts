@@ -1,10 +1,15 @@
 import type { BotHandlers } from "@chatbotx.io/sdk"
-import { updateMessengerProfile } from "../apis/page"
-import { getUserProfile } from "../apis/user"
+import {
+  addBranding,
+  deleteMessengerProfileFields,
+  updateMessengerProfile,
+} from "../apis/page"
 import type { MessengerAuthValue } from "../schema"
 
 export const botHandlers: BotHandlers<MessengerAuthValue> = {
-  getProfile: async ({ ctx, data }) => await getUserProfile({ ctx, data }),
   updateProfile: async ({ ctx, data }) =>
     await updateMessengerProfile({ ctx, params: data }),
+  addBranding: async ({ ctx, title, url }) => addBranding({ ctx, title, url }),
+  deleteProfileFields: async ({ ctx, fields }) =>
+    deleteMessengerProfileFields({ ctx, fields }),
 }

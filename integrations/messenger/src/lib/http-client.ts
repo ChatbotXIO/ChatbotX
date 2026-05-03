@@ -80,6 +80,7 @@ class MessengerHttpClient {
     options?: {
       headers?: Record<string, string>
       searchParams?: Record<string, string>
+      json?: Record<string, unknown>
     },
   ): Promise<T> {
     try {

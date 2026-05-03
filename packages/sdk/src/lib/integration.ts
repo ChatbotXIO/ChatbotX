@@ -135,12 +135,13 @@ export type ContactHandlers<IAuth extends AuthValue> = {
 }
 
 export type BotHandlers<IAuth extends AuthValue> = {
-  getProfile: Handler<
-    { ctx: Context<IAuth>; data: { sourceId: string } },
-    IncomingContact
-  >
   // biome-ignore lint/suspicious/noExplicitAny: safe pass any data
   updateProfile: Handler<{ ctx: Context<IAuth>; data: any }, void>
+  addBranding: Handler<
+    { ctx: Context<IAuth>; title: string; url: string },
+    void
+  >
+  deleteProfileFields: Handler<{ ctx: Context<IAuth>; fields: string[] }, void>
 }
 
 export type IChannel<

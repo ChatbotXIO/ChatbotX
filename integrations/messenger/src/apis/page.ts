@@ -164,3 +164,126 @@ export const updatePersona = async (props: {
     return {}
   }
 }
+
+export const getPersistentMenu = async (props: {
+  ctx: Context<MessengerAuthValue>
+}): Promise<{
+  persistentMenu?: MessengerProfileRequest["persistent_menu"]
+}> => {
+  const { ctx } = props
+
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  try {
+    const response: {
+      persistent_menu?: MessengerProfileRequest["persistent_menu"]
+    } = await facebookGraphClient.get(`${version}/me/messenger_profile`, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        fields: "persistent_menu",
+      },
+    })
+
+    return {
+      persistentMenu: response.persistent_menu,
+    }
+  } catch (error) {
+    logger.error(error, "Get Persistent Menu failed")
+    throw new MessengerAPIException(
+      "Get Persistent Menu failed",
+      `${version}/me/messenger_profile?fields=persistent_menu`,
+    ).setOriginError(error)
+  }
+}
+
+export const deleteMessengerProfileFields = async (props: {
+  ctx: Context<MessengerAuthValue>
+  fields: string[]
+}): Promise<void> => {
+  const { ctx, fields } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  await facebookGraphClient.delete(`${version}/me/messenger_profile`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+    },
+    json: { fields },
+  })
+}
+
+export const addBranding = async (props: {
+  ctx: Context<MessengerAuthValue>
+  title: string
+  url: string
+}): Promise<void> => {
+  const { ctx } = props
+
+  const { persistentMenu } = await getPersistentMenu({ ctx })
+
+  if (!persistentMenu || persistentMenu.length === 0) {
+    await updateMessengerProfile({
+      ctx,
+      params: {
+        get_started: {
+          payload: "GET_STARTED",
+        },
+        persistent_menu: [
+          {
+            locale: "default",
+            composer_input_disabled: false,
+            call_to_actions: [
+              {
+                type: "web_url",
+                title: props.title,
+                url: props.url,
+                webview_height_ratio: "full",
+              },
+            ],
+          },
+        ],
+      },
+    })
+    return
+  }
+
+  const hasBranding = persistentMenu.some((menu) =>
+    menu.call_to_actions?.some(
+      (action) =>
+        action.type === "web_url" &&
+        action.url === props.url &&
+        action.title === props.title,
+    ),
+  )
+
+  if (hasBranding) {
+    return
+  }
+
+  const updatedMenu = persistentMenu.map((menu, index) => {
+    if (index === 0) {
+      return {
+        ...menu,
+        call_to_actions: [
+          ...(menu.call_to_actions || []),
+          {
+            type: "web_url" as const,
+            title: props.title,
+            url: props.url,
+            webview_height_ratio: "full" as const,
+          },
+        ],
+      }
+    }
+    return menu
+  })
+
+  await updateMessengerProfile({
+    ctx,
+    params: {
+      persistent_menu: updatedMenu,
+    },
+  })
+}

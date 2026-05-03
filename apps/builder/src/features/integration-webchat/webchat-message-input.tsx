@@ -13,6 +13,7 @@ import { createWebchatMessageAction } from "../messages/actions/create-webchat-m
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
+import WebchatMessageMenu from "./components/webchat-message-menu"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
@@ -161,7 +162,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              {/* <WebchatMessageMenu workspaceId={workspaceId} webchatId={webchatId} /> */}
+              <WebchatMessageMenu
+                webchatId={webchatId}
+                workspaceId={workspaceId}
+              />
             </div>
             <div className="message-toolbar flex items-center">
               {!content && (

@@ -2,14 +2,6 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { uploadModes } from "./shared"
 
-export const messengerGreetingMessageSchema = z.object({
-  locale: z.string(),
-  text: z.string(),
-})
-export type MessengerGreetingMessage = z.infer<
-  typeof messengerGreetingMessageSchema
->
-
 export const messengerPersistentMenuTypes = z.enum(["flow", "url"])
 
 export const messengerPersistentMenuSchema = z.discriminatedUnion("type", [

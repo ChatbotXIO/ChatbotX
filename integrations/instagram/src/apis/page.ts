@@ -164,6 +164,25 @@ export const getMessageAttachmentEntity = async ({
   }
 }
 
+export const deleteInstagramProfileFields = async (props: {
+  ctx: Context<InstagramAuthValue>
+  fields: string[]
+}): Promise<void> => {
+  const { ctx, fields } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  await instagramGraphClient.delete(`${version}/me/messenger_profile`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+    },
+    json: {
+      platform: "instagram",
+      fields,
+    },
+  })
+}
+
 export const updateInstagramProfile = async (props: {
   ctx: Context<InstagramAuthValue>
   params: InstagramProfileRequest
@@ -185,6 +204,117 @@ export const updateInstagramProfile = async (props: {
       json: {
         platform: "instagram",
         ...params,
+      },
+    },
+  )
+}
+
+export const getInstagramPersistentMenu = async (props: {
+  ctx: Context<InstagramAuthValue>
+}): Promise<{
+  persistentMenu?: InstagramProfileRequest["persistent_menu"]
+}> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  try {
+    const queries = new URLSearchParams({
+      platform: "instagram",
+      access_token: ctx.auth.tokens.accessToken,
+      fields: "persistent_menu",
+    }).toString()
+
+    const response: {
+      persistent_menu?: InstagramProfileRequest["persistent_menu"]
+    } = await instagramGraphClient.get(
+      `${version}/me/messenger_profile?${queries}`,
+      {
+        headers: {
+          Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+        },
+      },
+    )
+
+    return { persistentMenu: response.persistent_menu }
+  } catch (error) {
+    logger.error(error, "Get Instagram Persistent Menu failed")
+    throw new InstagramAPIException(
+      "Get Instagram Persistent Menu failed",
+      `${version}/me/messenger_profile?platform=instagram&fields=persistent_menu`,
+    )
+  }
+}
+
+export const addBranding = async (props: {
+  ctx: Context<InstagramAuthValue>
+  title: string
+  url: string
+}): Promise<void> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+
+  const { persistentMenu } = await getInstagramPersistentMenu({ ctx })
+
+  const queries = new URLSearchParams({
+    platform: "instagram",
+    access_token: ctx.auth.tokens.accessToken,
+  }).toString()
+
+  const brandingAction = {
+    type: "web_url" as const,
+    title: props.title,
+    url: props.url,
+  }
+
+  if (!persistentMenu || persistentMenu.length === 0) {
+    await instagramGraphClient.post(
+      `${version}/me/messenger_profile?${queries}`,
+      {
+        headers: { "Content-Type": "application/json" },
+        json: {
+          platform: "instagram",
+          persistent_menu: [
+            {
+              locale: "default",
+              call_to_actions: [brandingAction],
+            },
+          ],
+        },
+      },
+    )
+    return
+  }
+
+  const hasBranding = persistentMenu.some((menu) =>
+    menu.call_to_actions?.some(
+      (action) =>
+        action.type === "web_url" &&
+        action.url === props.url &&
+        action.title === props.title,
+    ),
+  )
+
+  if (hasBranding) {
+    return
+  }
+
+  const updatedMenu = persistentMenu.map((menu, index) => {
+    if (index === 0) {
+      return {
+        ...menu,
+        call_to_actions: [...(menu.call_to_actions || []), brandingAction],
+      }
+    }
+    return menu
+  })
+
+  await instagramGraphClient.post(
+    `${version}/me/messenger_profile?${queries}`,
+    {
+      headers: { "Content-Type": "application/json" },
+      json: {
+        platform: "instagram",
+        persistent_menu: updatedMenu,
       },
     },
   )

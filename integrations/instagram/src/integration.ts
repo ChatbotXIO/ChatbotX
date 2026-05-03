@@ -4,6 +4,7 @@ import {
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import { InstagramAPIException } from "./exception"
+import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -25,6 +26,7 @@ const config: IntegrationDefinition<
       message: messageHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
+      bot: botHandlers,
     },
   },
   actions: {},

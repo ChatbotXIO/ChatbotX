@@ -27,6 +27,7 @@ import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -76,17 +77,34 @@ export const updateInstagramAction = workspaceActionClient
               ),
             }
 
+            const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
+            if (fieldsToDelete.length > 0) {
+              await integrationInstagram.channels.channel.bot?.deleteProfileFields?.(
+                {
+                  ctx: integrationContext,
+                  fields: fieldsToDelete,
+                },
+              )
+            }
+
+            const profileData: Partial<InstagramProfileRequest> = {}
+
             if (parsedInput.conversationStarters.length) {
+              profileData.ice_breakers = await buildIceBreakersParams(
+                parsedInput.conversationStarters,
+              )
+            }
+
+            if (parsedInput.persistentMenus.length) {
+              profileData.persistent_menu = await buildPersistentMenuParams(
+                parsedInput.persistentMenus,
+              )
+            }
+
+            if (Object.keys(profileData).length > 0) {
               await integrationInstagram.channels.channel.bot?.updateProfile?.({
                 ctx: integrationContext,
-                data: {
-                  ice_breakers: await buildIceBreakersParams(
-                    parsedInput.conversationStarters,
-                  ),
-                  persistent_menu: await buildPersistentMenuParams(
-                    parsedInput.persistentMenus,
-                  ),
-                },
+                data: profileData as InstagramProfileRequest,
               })
             }
           }
@@ -98,6 +116,22 @@ export const updateInstagramAction = workspaceActionClient
       }
     },
   )
+
+const getInstagramFieldsToDelete = (
+  input: Pick<
+    UpdateInstagramRequest,
+    "conversationStarters" | "persistentMenus"
+  >,
+): string[] => {
+  const fields: string[] = []
+  if (!input.conversationStarters.length) {
+    fields.push("ICE_BREAKERS")
+  }
+  if (!input.persistentMenus.length) {
+    fields.push("PERSISTENT_MENU")
+  }
+  return fields
+}
 
 const buildIceBreakersParams = async (
   conversationStarters: InstagramConversationStarter[],
@@ -132,7 +166,15 @@ const buildIceBreakersParams = async (
 const buildPersistentMenuParams = async (
   persistentMenus: InstagramPersistentMenu[],
 ): Promise<InstagramProfileRequest["persistent_menu"]> => {
-  const callToActions = await parseInstagramButtons(persistentMenus)
+  const brandingUrl = getBrandingUrl("instagram")
+  const menus = [...persistentMenus]
+  const brandingIndex = menus.findIndex(
+    (menu) => menu.type === "url" && "url" in menu && menu.url === brandingUrl,
+  )
+  if (brandingIndex !== -1) {
+    menus.push(...menus.splice(brandingIndex, 1))
+  }
+  const callToActions = await parseInstagramButtons(menus)
   return [
     {
       locale: "default",

@@ -1369,8 +1369,6 @@
     "description": "This integration lets you create Messenger bots.",
     "welcomeMessage": "Welcome Message",
     "welcomeMessageDescription": "This is the first message the user will receive from your Bot. This message is sent when the user interacts for the first time with the Bot by clicking on the 'Get Started' button.",
-    "greeting": "Greeting",
-    "greetingDescription": "The greeting message that people see on the welcome screen of your Bot. The welcome screen is displayed for people who interact with your Bot for the first time. This is the message the user will see before clicking the 'Get Started' button.",
     "conversationStarters": "Conversation Starters",
     "conversationStartersDescription": "Conversation Starters provide a way for users to start a conversation with your business with a list of frequently asked questions.",
     "persistentMenu": "Persistent Menu",
@@ -1387,11 +1385,6 @@
     "reconnectDescription": "Always reconnect your bot if your Messenger bot is not responding, or if you are seem any permission error on the error log.",
     "selectFacebookPage": "Select Facebook Page",
     "title": "Facebook Messenger"
-  },
-  "greeting": {
-    "addLanguage": "+ Add Language",
-    "title": "Greeting",
-    "description": "The greeting message that people see on the welcome screen of your Bot. The welcome screen is displayed for people who interact with your Bot for the first time. This is the message the user will see before clicking the 'Get Started' button."
   },
   "omnichannel": {
     "title": "Omnichannel"

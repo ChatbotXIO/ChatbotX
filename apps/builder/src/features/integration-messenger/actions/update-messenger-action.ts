@@ -22,6 +22,7 @@ import type {
   MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
@@ -58,8 +59,6 @@ export const updateMessenger = async (
   },
   parsedInput: UpdateMessengerRequest,
 ) => {
-  const { addLanguage, ...rest } = parsedInput
-
   try {
     await db.transaction(async (tx) => {
       const integrationMessengerData = await findIntegrationMessenger({
@@ -75,22 +74,38 @@ export const updateMessenger = async (
       await tx
         .update(integrationMessengerModel)
         .set({
-          ...rest,
+          ...parsedInput,
           personaId: newPersonaId ?? null,
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
-      integrationMessenger.channels.channel.bot?.updateProfile?.({
-        ctx: {
-          uploader,
-          storagePrefix: getStoragePrefix(
-            ctx.workspace.id,
-            integrationMessengerData.inboxId,
-          ),
-          auth: integrationMessengerData?.auth as MessengerAuthValue,
-        },
-        data: await getMessengerProfileParams(integrationMessengerData),
+      const botCtx = {
+        uploader,
+        storagePrefix: getStoragePrefix(
+          ctx.workspace.id,
+          integrationMessengerData.inboxId,
+        ),
+        auth: integrationMessengerData?.auth as MessengerAuthValue,
+      }
+
+      const fieldsToDelete = getFieldsToDelete(parsedInput)
+      if (fieldsToDelete.length > 0) {
+        await integrationMessenger.channels.channel.bot?.deleteProfileFields?.({
+          ctx: botCtx,
+          fields: fieldsToDelete,
+        })
+      }
+
+      const profileParams = getMessengerProfileParams({
+        ...integrationMessengerData,
+        ...parsedInput,
       })
+      if (Object.keys(profileParams).length > 0) {
+        await integrationMessenger.channels.channel.bot?.updateProfile?.({
+          ctx: botCtx,
+          data: profileParams,
+        })
+      }
 
       revalidateCacheTags([`workspaces:${ctx.workspace.id}#messenger`])
     })
@@ -98,6 +113,22 @@ export const updateMessenger = async (
     logger.debug(error, "Failed to update Facebook page")
     throw new ChatbotXException("Failed to update Facebook page")
   }
+}
+
+const getFieldsToDelete = (
+  input: Pick<
+    UpdateMessengerRequest,
+    "persistentMenus" | "conversationStarters"
+  >,
+): string[] => {
+  const fields: string[] = []
+  if (!input.persistentMenus.length) {
+    fields.push("PERSISTENT_MENU")
+  }
+  if (!input.conversationStarters.length) {
+    fields.push("ICE_BREAKERS")
+  }
+  return fields
 }
 
 const parseFacebookButtons = (
@@ -129,20 +160,23 @@ const getMessengerProfileParams = (
 ): MessengerProfileRequest => {
   const params: MessengerProfileRequest = {}
 
-  if (model.welcomeFlowId) {
-    params.get_started = {
-      payload: encodeButtonPayload({
-        flowId: model.welcomeFlowId,
-      }),
-    }
-  }
-
-  if (model.greetingMessages.length) {
-    params.greeting = model.greetingMessages
+  params.get_started = {
+    payload: model.welcomeFlowId
+      ? encodeButtonPayload({ flowId: model.welcomeFlowId })
+      : "GET_STARTED",
   }
 
   if (model.persistentMenus.length) {
-    const callToActions = parseFacebookButtons(model.persistentMenus)
+    const brandingUrl = getBrandingUrl("messenger")
+    const menus = [...model.persistentMenus]
+    const brandingIndex = menus.findIndex(
+      (menu) =>
+        menu.type === "url" && "url" in menu && menu.url === brandingUrl,
+    )
+    if (brandingIndex !== -1) {
+      menus.push(...menus.splice(brandingIndex, 1))
+    }
+    const callToActions = parseFacebookButtons(menus)
     params.persistent_menu = [
       {
         locale: "default",

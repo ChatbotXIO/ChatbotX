@@ -1375,8 +1375,6 @@
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
     "welcomeMessage": "Tin nhắn chào mừng",
     "welcomeMessageDescription": "Đây là tin nhắn đầu tiên mà người dùng sẽ nhận được từ Bot của bạn. Tin nhắn này được gửi khi người dùng tương tác lần đầu tiên với Bot bằng cách nhấn nút 'Bắt đầu'.",
-    "greeting": "Lời chào",
-    "greetingDescription": "Lời chào mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'.",
     "conversationStarters": "Gợi ý bắt đầu hội thoại",
     "conversationStartersDescription": "Gợi ý bắt đầu hội thoại giúp người dùng bắt đầu trò chuyện với doanh nghiệp của bạn bằng danh sách các câu hỏi thường gặp.",
     "persistentMenu": "Menu cố định",
@@ -1393,11 +1391,6 @@
     "reconnectDescription": "Luôn kết nối lại bot của bạn nếu bot Messenger không phản hồi, hoặc nếu bạn thấy bất kỳ lỗi quyền nào trong nhật ký lỗi.",
     "selectFacebookPage": "Chọn trang Facebook",
     "title": "Facebook Messenger"
-  },
-  "greeting": {
-    "title": "Lời chào",
-    "addLanguage": "+ Thêm ngôn ngữ",
-    "description": "Tin nhắn chào mừng mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'."
   },
   "omnichannel": {
     "title": "Đa kênh"
