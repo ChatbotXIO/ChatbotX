@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,27 +8,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
-import { PlusCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import type { ReactNode } from "react"
 import { useState } from "react"
 import { CreateSmtpForm } from "./create-smtp-form"
 
 type CreateSmtpDialogProps = {
   readonly workspaceId: string
+  readonly children: ReactNode
 }
 
-export const CreateSmtpDialog = ({ workspaceId }: CreateSmtpDialogProps) => {
+export const CreateSmtpDialog = ({
+  workspaceId,
+  children,
+}: CreateSmtpDialogProps) => {
   const t = useTranslations()
   const [open, onOpenChange] = useState(false)
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          <PlusCircleIcon className="h-4 w-4" />
-          {t("actions.connectFeature", { feature: "SMTP" })}
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent className="max-h-screen max-w-lg overflow-y-scroll">
         <DialogHeader>

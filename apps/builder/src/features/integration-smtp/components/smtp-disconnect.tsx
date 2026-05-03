@@ -13,9 +13,11 @@ import {
   AlertDialogTrigger,
 } from "@chatbotx.io/ui/components/ui/alert-dialog"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { useParams } from "next/navigation"
+import { Loader2Icon } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
 import { deleteSmtpAction } from "../actions/delete-smtp.action"
 
@@ -25,41 +27,35 @@ type SmtpDisconnectProps = {
 
 export const SmtpDisconnect = ({ integrationSmtp }: SmtpDisconnectProps) => {
   const t = useTranslations()
-  const params = useParams<{ workspaceId: string }>()
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const { workspaceId } = useParams<{ workspaceId: string }>()
 
-  const { execute, isPending } = useAction(
-    deleteSmtpAction.bind(null, params.workspaceId, integrationSmtp.id),
+  const { executeAsync: onDisconnect, isPending } = useAction(
+    deleteSmtpAction.bind(null, workspaceId, integrationSmtp.id),
     {
       onSuccess: () => {
-        toast.success(
-          t("messages.disconnectSuccess", {
-            feature: "SMTP",
-          }),
-        )
+        router.refresh()
+        toast.success(t("messages.disconnectSuccess", { feature: "SMTP" }))
       },
       onError: ({ error }) => {
-        toast.error(
-          error.serverError || "Failed to disconnect SMTP integration",
-        )
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
       },
     },
   )
 
   return (
-    <AlertDialog>
+    <AlertDialog onOpenChange={setOpen} open={open}>
       <AlertDialogTrigger asChild>
-        <div className="flex w-full flex-col gap-2">
-          <span>{integrationSmtp.name}</span>
-          <Button
-            aria-label={t("actions.disconnect")}
-            className="w-24"
-            disabled={isPending}
-            size="sm"
-            variant="destructive"
-          >
-            {t("actions.disconnect")}
-          </Button>
-        </div>
+        <Button
+          className="w-fit cursor-pointer"
+          size="sm"
+          variant="destructive"
+        >
+          {t("actions.disconnect")}
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -71,28 +67,16 @@ export const SmtpDisconnect = ({ integrationSmtp }: SmtpDisconnectProps) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel asChild>
-            <Button
-              aria-label={t("actions.cancel")}
-              className="w-24"
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-          </AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button
-              aria-label={t("actions.disconnect")}
-              className="w-24"
-              disabled={isPending}
-              onClick={() => execute()}
-              size="sm"
-              variant="destructive"
-            >
-              {t("actions.disconnect")}
-            </Button>
+          <AlertDialogCancel>{t("actions.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isPending}
+            onClick={async (e) => {
+              e.preventDefault()
+              await onDisconnect()
+            }}
+          >
+            {isPending && <Loader2Icon className="animate-spin" />}
+            {t("actions.disconnect")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

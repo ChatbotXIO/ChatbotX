@@ -22,7 +22,6 @@ export const listIntegrationSmtps = async (input: {
     orderBy: {
       createdAt: "desc",
     },
-    limit: 1,
   })
 
   return { data }
