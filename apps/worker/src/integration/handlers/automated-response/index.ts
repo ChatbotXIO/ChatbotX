@@ -1,6 +1,6 @@
+import { aiContextService } from "@chatbotx.io/ai/server"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { db } from "@chatbotx.io/database/client"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { detectConversationAndContactInbox } from "../../../lib/db"
@@ -57,35 +57,66 @@ export async function processAutomatedResponse(
       return
     }
 
-    const last100Messages = await db.query.messageModel.findMany({
-      where: { conversationId: conversation.id },
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
-      limit: 100,
+    const aiContext = await aiContextService.getOrInitContext({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
     })
-    const messages: ModelMessage[] = []
-    for (const message of last100Messages) {
-      if (!message.text) {
-        continue
-      }
-      if (message.senderType === "contact") {
-        messages.push({
-          role: aiMessageRoles.enum.user,
-          content: message.text,
+
+    let messages: ModelMessage[] = []
+    let summary = ""
+
+    if (aiContext) {
+      const latestContactMessage = await db.query.messageModel.findFirst({
+        where: {
+          conversationId: conversation.id,
+          senderType: "contact",
+        },
+        orderBy: (table, { desc }) => [desc(table.createdAt)],
+      })
+
+      if (latestContactMessage?.text) {
+        await aiContextService.appendHistory({
+          conversationId: conversation.id,
+          newMessages: [
+            {
+              message: {
+                role: "user",
+                content: latestContactMessage.text,
+              },
+              messageId: latestContactMessage.id,
+              createdAt: latestContactMessage.createdAt.getTime(),
+            },
+          ],
         })
-      } else if (
-        message.senderType === "user" ||
-        message.senderType === "bot"
-      ) {
-        messages.push({ role: "assistant", content: message.text })
       }
+
+      const refreshedContext = await aiContextService.getOrInitContext({
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+      })
+
+      if (refreshedContext) {
+        messages = aiContextService.mapContextToModelMessages(
+          refreshedContext.history,
+        )
+        summary = refreshedContext.summary
+      }
+    } else {
+      const last100Messages = await db.query.messageModel.findMany({
+        where: { conversationId: conversation.id },
+        orderBy: (table, { desc }) => [desc(table.createdAt)],
+        limit: 100,
+      })
+      const dbMessages = [...last100Messages].reverse()
+      messages = aiContextService.mapMessages(dbMessages)
     }
-    messages.reverse()
 
     const startTime = Date.now()
     const aiResult = await replyByAI({
       conversation,
       messages,
       aiAgent,
+      summary,
     })
 
     if (aiResult) {
