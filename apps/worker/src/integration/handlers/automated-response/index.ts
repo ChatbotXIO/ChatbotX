@@ -108,7 +108,8 @@ export async function processAutomatedResponse(
         limit: 100,
       })
       const dbMessages = [...last100Messages].reverse()
-      messages = aiContextService.mapMessages(dbMessages)
+      const aiHistory = aiContextService.mapDbMessagesToContext(dbMessages)
+      messages = aiContextService.mapContextToModelMessages(aiHistory)
     }
 
     const startTime = Date.now()

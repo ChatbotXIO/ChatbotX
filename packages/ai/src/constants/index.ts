@@ -17,6 +17,18 @@ export const helpTexts = {
     "- If you use a tool, summarize the result concisely in natural language.",
     "- Only provide the most relevant information the customer is asking for.",
   ].join("\n"),
+  summarizer: {
+    previousSummary: (summary: string) =>
+      `This is the previous summary of the conversation: "${summary}"`,
+    latestMessages: "Here are the latest messages:",
+    updateSummaryPrompt:
+      "Please update the previous summary by incorporating the new information. Keep the summary concise and succinct (under 1000 characters), focusing on key information such as: customer name, issues encountered, needs, order status, and agreed decisions. Return the new summary.",
+    conversationHistory: "Below is the conversation history:",
+    newSummaryPrompt:
+      "Please summarize the above conversation concisely and succinctly (under 1000 characters). Focus on key information such as: customer name, issues encountered, needs, order status, and agreed decisions. Return the summary.",
+    shortenPrompt: (summary: string) =>
+      `The following summary is too long: "${summary}". Please shorten it to under 1000 characters while still retaining the most important key points.`,
+  },
 } as const
 
 export const mcpConstants = {
@@ -56,3 +68,4 @@ export const aiPolicies = {
 export const toolPrefixes = z.enum(["file", "fn", "mcp", "sys"])
 
 export const MAX_CONVERSATION_HISTORY = 100
+export const MAX_SUMMARY_LENGTH = 1000
