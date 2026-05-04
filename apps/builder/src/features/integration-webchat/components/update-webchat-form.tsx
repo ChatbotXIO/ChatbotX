@@ -84,7 +84,7 @@ export function UpdateWebchatForm({
               feature: t("fields.webchat.label"),
             }),
           )
-          router.push(`/space/${workspaceId}/webchats`)
+          router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to update webchat")
@@ -264,7 +264,9 @@ export function UpdateWebchatForm({
         />
         <DialogFooter>
           <Button
-            onClick={() => router.push(`/space/${workspaceId}/webchats`)}
+            onClick={() =>
+              router.push(`/space/${workspaceId}/settings/channels`)
+            }
             type="button"
             variant="link"
           >

@@ -1,5 +1,6 @@
 "use client"
 
+import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Table,
@@ -14,24 +15,25 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import type { listIntegrationInstagrams } from "../queries"
+import { InstagramConnect } from "./instagram-connect"
 import { InstagramDisconnect } from "./instagram-disconnect"
 import { InstagramRefreshPermissions } from "./instagram-refresh-permissions"
 
 type InstagramManageProps = {
-  isEnabled: boolean
+  settings: OrganizationSettings["instagram"]
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listIntegrationInstagrams>>]>
 }
 
 export function InstagramManage({
-  isEnabled,
+  settings,
   workspaceId,
   promises,
 }: InstagramManageProps) {
   const [{ data: integrationInstagrams }] = use(promises)
   const t = useTranslations()
 
-  if (!isEnabled) {
+  if (!settings?.clientId) {
     return (
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">
@@ -44,15 +46,18 @@ export function InstagramManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button size="sm" variant="secondary">
-          <Link
-            className="flex items-center gap-2"
-            href={`/channels/create?channel=instagram&workspaceId=${workspaceId}`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", { feature: "Instagram" })}
-          </Link>
-        </Button>
+        <InstagramConnect
+          settings={settings}
+          trigger={
+            <div className="flex items-center gap-2">
+              <PlusCircleIcon className="h-4 w-4" />
+              {t("actions.addFeature", {
+                feature: t("fields.instagram.label"),
+              })}
+            </div>
+          }
+          workspaceId={workspaceId}
+        />
       </div>
 
       <div className="overflow-hidden rounded-md border">

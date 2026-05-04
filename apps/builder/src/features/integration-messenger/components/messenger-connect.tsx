@@ -3,16 +3,17 @@
 import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import type { FacebookPage } from "@chatbotx.io/integration-messenger/schema"
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@chatbotx.io/ui/components/ui/dialog"
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { getFacebookPages } from "../libs/facebook"
@@ -35,48 +36,65 @@ const MESSENGER_SCOPE = [
 export type MessengerConnectProps = {
   workspaceId?: string | null
   settings: NonNullable<OrganizationSettings["messenger"]>
+  trigger?: ReactNode
 }
 
 export function MessengerConnect({
   workspaceId,
   settings,
+  trigger,
 }: MessengerConnectProps) {
   const t = useTranslations()
-
+  const [open, setOpen] = useState(false)
   const [pages, setPages] = useState<FacebookPage[]>([])
 
   const onLoginSuccess = async () => {
     const allPages = await getFacebookPages()
     setPages(allPages)
+    setOpen(true)
+  }
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value)
+    if (!value) {
+      setPages([])
+    }
   }
 
   return (
-    <Card className="mx-auto mt-40 w-lg">
-      <CardHeader>
-        <CardTitle>
-          {t("actions.connectFeature", { feature: "Messenger" })}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {pages.length === 0 && (
-          <MessengerConnectButton
-            onLoginSuccess={onLoginSuccess}
-            settings={settings}
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogTrigger asChild>
+        <MessengerConnectButton
+          onLoginSuccess={onLoginSuccess}
+          settings={settings}
+          trigger={trigger}
+        />
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("actions.connectFeature", { feature: "Messenger" })}
+          </DialogTitle>
+        </DialogHeader>
+        {pages.length && (
+          <FacebookPages
+            onSuccess={() => setOpen(false)}
+            pages={pages}
+            workspaceId={workspaceId}
           />
         )}
-        {pages.length > 0 && (
-          <FacebookPages pages={pages} workspaceId={workspaceId} />
-        )}
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   )
 }
 
 export function MessengerConnectButton({
   settings,
   onLoginSuccess,
+  trigger,
 }: {
   settings: NonNullable<OrganizationSettings["messenger"]>
+  trigger?: ReactNode
   onLoginSuccess: () => Promise<void>
 }) {
   const t = useTranslations()
@@ -98,7 +116,9 @@ export function MessengerConnectButton({
       }}
       scope={MESSENGER_SCOPE.join(",")}
     >
-      <InboxIcon channel="messenger" label={t("actions.connect")} />
+      {trigger ?? (
+        <InboxIcon channel="messenger" label={t("actions.connect")} />
+      )}
     </FacebookLogin>
   )
 }

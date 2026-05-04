@@ -333,7 +333,12 @@
     },
     "telegram": {
       "label": "Telegram",
-      "botToken": "Bot Token"
+      "botToken": "Bot Token",
+      "connectInstructions": {
+        "step1": "Open <link>@BotFather</link> in Telegram.",
+        "step2": "Send <strong>/newbot</strong> and follow the instructions.",
+        "step3": "After you created the bot, you will receive the bot API token. Copy the API token and paste it below."
+      }
     },
     "matchAll": {
       "label": "Match all the conditions below"

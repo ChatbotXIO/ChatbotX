@@ -339,7 +339,12 @@
     },
     "telegram": {
       "label": "Telegram",
-      "botToken": "Bot Token"
+      "botToken": "Bot Token",
+      "connectInstructions": {
+        "step1": "Mở <link>@BotFather</link> trong Telegram.",
+        "step2": "Gửi <strong>/newbot</strong> và làm theo hướng dẫn.",
+        "step3": "Sau khi tạo bot, bạn sẽ nhận được API token. Sao chép token và dán vào bên dưới."
+      }
     },
     "matchAll": {
       "label": "Khớp tất cả các điều kiện bên dưới"

@@ -19,9 +19,6 @@ export default async function SettingChannelMessengerPage(props: {
   const organization = await organizationService.findOrFail({
     where: { id: workspace.organizationId },
   })
-  const hasMessengerSettings = Boolean(
-    organization.settings?.messenger?.clientId,
-  )
 
   const promises = Promise.all([
     listIntegrationMessengers({
@@ -31,8 +28,8 @@ export default async function SettingChannelMessengerPage(props: {
 
   return (
     <MessengerManage
-      isEnabled={hasMessengerSettings}
       promises={promises}
+      settings={organization.settings.messenger}
       workspaceId={workspaceId}
     />
   )

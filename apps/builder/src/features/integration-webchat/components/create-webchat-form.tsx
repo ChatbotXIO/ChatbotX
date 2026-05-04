@@ -77,7 +77,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
               feature: t("fields.webchat.label"),
             }),
           )
-          router.push(`/space/${workspaceId}/webchats`)
+          router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {
           toast.error(error.serverError || "Failed to create webchat")
@@ -250,7 +250,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
 
         <DialogFooter>
           <Button asChild size="sm" variant="ghost">
-            <Link href={`/space/${workspaceId}/webchats`}>
+            <Link href={`/space/${workspaceId}/settings/channels`}>
               {t("actions.cancel")}
             </Link>
           </Button>

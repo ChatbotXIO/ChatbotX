@@ -1,26 +1,33 @@
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import Link from "next/link"
-import { getTranslations } from "next-intl/server"
-import { SettingRow } from "@/components/setting-row"
+import { notFound } from "next/navigation"
+import type { SearchParams } from "nuqs/server"
+import { Suspense } from "react"
+import { listIntegrationWebchats } from "@/features/integration-webchat/queries"
+import { listIntegrationWebchatsRequest } from "@/features/integration-webchat/schema/query"
+import { WebchatTable } from "@/features/integration-webchat/webchat-table"
+import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function SettingChannelWebchatPage(props: {
   params: Promise<{ workspaceId: string }>
+  searchParams: Promise<SearchParams>
 }) {
-  const params = await props.params
-  const t = await getTranslations()
+  const { data } = withWorkspaceIdSchema.safeParse(await props.params)
+  if (!data) {
+    return notFound()
+  }
+
+  const searchParams = await props.searchParams
+  const search = listIntegrationWebchatsRequest.parse(searchParams)
+
+  const promises = Promise.all([
+    listIntegrationWebchats({
+      ...search,
+      workspaceId: data.workspaceId,
+    }),
+  ])
 
   return (
-    <div className="flex flex-col gap-4">
-      <SettingRow
-        description={t("webchat.description")}
-        label={t("webchat.title")}
-      >
-        <Button className="w-full" size="sm" variant="secondary">
-          <Link href={`/space/${params.workspaceId}/webchats`}>
-            {t("actions.manage")}
-          </Link>
-        </Button>
-      </SettingRow>
-    </div>
+    <Suspense>
+      <WebchatTable promises={promises} />
+    </Suspense>
   )
 }

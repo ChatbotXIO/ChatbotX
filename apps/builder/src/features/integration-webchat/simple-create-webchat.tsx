@@ -38,7 +38,7 @@ export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
             }),
           )
           if (data.workspaceId) {
-            return router.push(`/space/${data.workspaceId}/webchats`)
+            return router.push(`/space/${data.workspaceId}/settings/channels`)
           }
           return router.push("/")
         },

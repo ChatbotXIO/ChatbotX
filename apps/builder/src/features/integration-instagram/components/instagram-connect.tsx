@@ -2,16 +2,17 @@
 
 import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@chatbotx.io/ui/components/ui/dialog"
 import FacebookLogin, {
   type InitParams,
 } from "@greatsumini/react-facebook-login"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { getInstagramAccounts, type InstagramAccount } from "../libs/facebook"
@@ -30,48 +31,65 @@ const INSTAGRAM_SCOPE = [
 export type InstagramConnectProps = {
   workspaceId?: string | null
   settings: NonNullable<OrganizationSettings["instagram"]>
+  trigger?: ReactNode
 }
 
 export function InstagramConnect({
   workspaceId,
   settings,
+  trigger,
 }: InstagramConnectProps) {
   const t = useTranslations()
-
+  const [open, setOpen] = useState(false)
   const [accounts, setAccounts] = useState<InstagramAccount[]>([])
 
   const onLoginSuccess = async () => {
     const allAccounts = await getInstagramAccounts()
     setAccounts(allAccounts)
+    setOpen(true)
+  }
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(value)
+    if (!value) {
+      setAccounts([])
+    }
   }
 
   return (
-    <Card className="mx-auto mt-40 w-lg">
-      <CardHeader>
-        <CardTitle>
-          {t("actions.connectFeature", { feature: "Instagram" })}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {accounts.length === 0 && (
-          <InstagramConnectButton
-            onLoginSuccess={onLoginSuccess}
-            settings={settings}
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogTrigger asChild>
+        <InstagramConnectButton
+          onLoginSuccess={onLoginSuccess}
+          settings={settings}
+          trigger={trigger}
+        />
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("actions.connectFeature", { feature: "Instagram" })}
+          </DialogTitle>
+        </DialogHeader>
+        {accounts.length ? (
+          <InstagramAccounts
+            accounts={accounts}
+            onSuccess={() => setOpen(false)}
+            workspaceId={workspaceId}
           />
-        )}
-        {accounts.length > 0 && (
-          <InstagramAccounts accounts={accounts} workspaceId={workspaceId} />
-        )}
-      </CardContent>
-    </Card>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   )
 }
 
 export function InstagramConnectButton({
   settings,
   onLoginSuccess,
+  trigger,
 }: {
   settings: NonNullable<OrganizationSettings["instagram"]>
+  trigger?: ReactNode
   onLoginSuccess: () => Promise<void>
 }) {
   const t = useTranslations()
@@ -93,7 +111,9 @@ export function InstagramConnectButton({
       }}
       scope={INSTAGRAM_SCOPE.join(",")}
     >
-      <InboxIcon channel="instagram" label={t("actions.connect")} />
+      {trigger ?? (
+        <InboxIcon channel="instagram" label={t("actions.connect")} />
+      )}
     </FacebookLogin>
   )
 }

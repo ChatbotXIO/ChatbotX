@@ -14,7 +14,9 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { memo, useCallback, useMemo } from "react"
+import { memo, type ReactNode, useCallback, useMemo } from "react"
+import { InstagramConnect } from "@/features/integration-instagram/components/instagram-connect"
+import { MessengerConnect } from "@/features/integration-messenger/components/messenger-connect"
 import { InboxIcon } from "./inbox-icon"
 
 function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
@@ -22,17 +24,53 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const connectMessengerTrigger = useMemo(() => {
+    if (settings.messenger) {
+      return (
+        <MessengerConnect
+          settings={settings.messenger}
+          trigger={t("actions.continue")}
+        />
+      )
+    }
+
+    return (
+      <Button disabled type="button" variant="secondary">
+        {t("actions.continue")}
+      </Button>
+    )
+  }, [settings.messenger, t])
+
+  const connectInstagramTrigger = useMemo(() => {
+    if (settings.instagram) {
+      return (
+        <InstagramConnect
+          settings={settings.instagram}
+          trigger={t("actions.continue")}
+        />
+      )
+    }
+
+    return (
+      <Button disabled type="button" variant="secondary">
+        {t("actions.continue")}
+      </Button>
+    )
+  }, [settings.instagram, t])
+
   // Memoize inbox options to prevent recreation on every render
-  const inboxOptions: { value: ChannelType }[] = useMemo(
+  const inboxOptions: { value: ChannelType; trigger?: ReactNode }[] = useMemo(
     () => [
       {
         value: "whatsapp",
       },
       {
         value: "messenger",
+        trigger: connectMessengerTrigger,
       },
       {
         value: "instagram",
+        trigger: connectInstagramTrigger,
       },
       {
         value: "zalo",
@@ -44,7 +82,7 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
         value: "webchat",
       },
     ],
-    [],
+    [connectMessengerTrigger, connectInstagramTrigger],
   )
 
   // Memoize navigation handler to prevent recreation on every render
@@ -72,18 +110,20 @@ function InboxSelectCard({ settings }: { settings: OrganizationSettings }) {
               <div className="flex-1">
                 <InboxIcon channel={inbox.value} size="large" />
               </div>
-              <Button
-                disabled={
-                  inbox.value !== "webchat" &&
-                  inbox.value !== "telegram" &&
-                  !(inbox.value in settings)
-                }
-                onClick={() => handleInboxSelect(inbox.value)}
-                type="button"
-                variant="secondary"
-              >
-                {t("actions.continue")}
-              </Button>
+              {inbox.trigger ?? (
+                <Button
+                  disabled={
+                    inbox.value !== "webchat" &&
+                    inbox.value !== "telegram" &&
+                    !(inbox.value in settings)
+                  }
+                  onClick={() => handleInboxSelect(inbox.value)}
+                  type="button"
+                  variant="secondary"
+                >
+                  {t("actions.continue")}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
