@@ -1,4 +1,3 @@
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -9,6 +8,7 @@ import {
   conversationModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   emitCustomFieldChanged,
   emitTagApplied,
@@ -291,12 +291,11 @@ export async function deleteContact({
       .where(eq(contactModel.id, conversation.contactId))
   })
 
-  contactTrackingService
-    .trackEvents(
-      contactInboxes.map((contactInbox) => ({
+  for (const contactInbox of contactInboxes) {
+    if (contactInbox.sourceId) {
+      emit("contact:deleted", {
         workspaceId: conversation.workspaceId,
-        contactId: conversation.contactId,
-        eventType: "contact_deleted",
+        contactId: contactInbox.id,
         occurredAt,
         source: contactInbox.source,
         sourceId: contactInbox.sourceId,
@@ -308,11 +307,11 @@ export async function deleteContact({
             triggerType: "contact_deleted",
           },
         },
-      })),
-    )
-    .catch((error) => {
-      console.error("[deleteContact] Failed to track contact_deleted", error)
-    })
+      }).catch((error) => {
+        console.error("[deleteContact] Failed to emit contact:deleted", error)
+      })
+    }
+  }
 }
 
 export async function addContactSequence({

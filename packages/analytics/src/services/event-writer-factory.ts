@@ -46,7 +46,7 @@ export interface ConversationEventRow {
 }
 
 export interface EventWriter {
-  insert(table: string, rows: EventRow[]): Promise<void>
+  insert(table: string, rows: unknown[]): Promise<void>
   insertOne(
     table: string,
     row: EventRow | BotMessageEventRow | ConversationEventRow,

@@ -1,6 +1,10 @@
 import type { z } from "zod"
 import type {
+  ContactEventType,
   clickedPayloadSchema,
+  contactCreatedPayloadSchema,
+  contactDeletedPayloadSchema,
+  contactEventSchemas,
   deliveredPayloadSchema,
   FlowEventType,
   failedPayloadSchema,
@@ -53,3 +57,18 @@ export type FlowPayload = FlowClickedPayload | RefLinkPayload
 export interface FlowEventListener extends BaseEventListener<FlowPayload> {}
 
 export type FlowEvenTypeMap = Record<FlowEventType, FlowEventListener[]>
+
+export type ContactEventMap = InferEventMap<typeof contactEventSchemas>
+
+export type ContactCreatedPayload = z.infer<typeof contactCreatedPayloadSchema>
+export type ContactDeletedPayload = z.infer<typeof contactDeletedPayloadSchema>
+
+export type ContactPayload = ContactCreatedPayload | ContactDeletedPayload
+
+export interface ContactEventListener
+  extends BaseEventListener<ContactPayload> {}
+
+export type ContactEvenTypeMap = Record<
+  ContactEventType,
+  ContactEventListener[]
+>

@@ -1,6 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
 import { env } from "../key"
 import type { CreateContactEvent } from "../schemas"
+import { clickhouseEventWriter } from "./clickhouse-event-writer"
 
 type Redis = {
   set: (
@@ -107,6 +108,20 @@ export abstract class BaseService {
       `[${serviceName}] Spool write failed, fallback to direct insert`,
       `[${serviceName}] Direct insert failed`,
     )
+  }
+
+  protected async insertBatch(
+    table: string,
+    rows: unknown[],
+    serviceName: string,
+  ): Promise<void> {
+    if (rows.length === 0) {
+      return
+    }
+
+    await this.runSafely(async () => {
+      await clickhouseEventWriter.insert(table, rows)
+    }, `[${serviceName}] Batch insert failed for ${rows.length} rows`)
   }
 
   setRedis(redis: Redis, ttl = 3600) {

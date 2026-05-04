@@ -1,8 +1,9 @@
-import { startWorker, stopWorker } from "@chatbotx.io/event-bus"
+import { startWorker, stopWorker } from "@chatbotx.io/event-bus/worker"
+import contactEventListener from "./contact"
 import flowEventListener from "./flow"
 import messageEventListener from "./message"
 
-startWorker([messageEventListener, flowEventListener])
+startWorker([messageEventListener, flowEventListener, contactEventListener])
 
 let isShuttingDown = false
 async function shutdown(signal: "SIGINT" | "SIGTERM") {

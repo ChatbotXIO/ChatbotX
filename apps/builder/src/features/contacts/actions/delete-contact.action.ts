@@ -1,11 +1,8 @@
 "use server"
 
-import {
-  type CreateContactEvent,
-  contactTrackingService,
-} from "@chatbotx.io/analytics"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -49,28 +46,30 @@ export const deleteContactAction = workspaceActionClient
 
       const occurredAt = new Date()
 
-      // Trigger delete events
-      const events: CreateContactEvent[] = []
       for (const contact of contacts) {
         for (const contactInbox of contact.contactInboxes) {
-          events.push({
+          emit("contact:deleted", {
             workspaceId,
-            contactId: contact.id,
-            eventType: "contact_deleted" as const,
+            contactId: contactInbox.id,
             occurredAt,
             source: contactInbox.source,
             channel: contactInbox.channel,
             sourceId: contactInbox.sourceId,
+            metadata: {
+              triggerContext: {
+                triggerSource: "api",
+                triggerHandler: "deleteContact",
+                triggerType: "contact_deleted",
+              },
+            },
+          }).catch((error) => {
+            console.error(
+              "[deleteContactAction] Failed to emit contact:deleted event",
+              error,
+            )
           })
         }
       }
-
-      contactTrackingService.trackEvents(events).catch((error) => {
-        console.error(
-          "[deleteContactAction] Failed to track contact_deleted events",
-          error,
-        )
-      })
 
       revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
     },

@@ -12,6 +12,12 @@ export type MessageEventType = z.infer<typeof messageEventTypeSchema>
 export const flowEventTypeSchema = z.enum(["flow:clicked", "flow:ref"])
 export type FlowEventType = z.infer<typeof flowEventTypeSchema>
 
+export const contactEventTypeSchema = z.enum([
+  "contact:created",
+  "contact:deleted",
+])
+export type ContactEventType = z.infer<typeof contactEventTypeSchema>
+
 export const eventContextSchema = z.object({
   workspaceId: z.string(),
   contactId: z.string(),
@@ -95,4 +101,28 @@ export const refLinkPayloadSchema = z.object({
 export const flowEventSchemas = {
   [flowEventTypeSchema.enum["flow:clicked"]]: clickedPayloadSchema,
   [flowEventTypeSchema.enum["flow:ref"]]: refLinkPayloadSchema,
+} as const
+
+export const contactSenderTypeSchema = z.enum(["bot", "human"])
+export type ContactSenderTypeSchema = z.infer<typeof contactSenderTypeSchema>
+
+const baseContactPayloadSchema = z.object({
+  workspaceId: z.string(),
+  contactId: z.string(),
+  occurredAt: z.union([z.date(), z.string(), z.number()]),
+  adminId: z.string().optional(),
+  channel: z.string().nullish(),
+  country: z.string().nullish(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  senderType: contactSenderTypeSchema.optional(),
+  source: z.string().nullish(),
+  sourceId: z.string().nullish(),
+})
+
+export const contactCreatedPayloadSchema = baseContactPayloadSchema.extend({})
+export const contactDeletedPayloadSchema = baseContactPayloadSchema.extend({})
+
+export const contactEventSchemas = {
+  [contactEventTypeSchema.enum["contact:created"]]: contactCreatedPayloadSchema,
+  [contactEventTypeSchema.enum["contact:deleted"]]: contactDeletedPayloadSchema,
 } as const

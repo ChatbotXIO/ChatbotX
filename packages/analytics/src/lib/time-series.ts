@@ -3,6 +3,7 @@ import {
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfMonth,
+  format,
   parseISO,
   startOfMonth,
 } from "date-fns"
@@ -74,7 +75,7 @@ export function* iterateTzDays(
     start: parseISO(startKey),
     end: parseISO(endKey),
   })) {
-    yield { key: getUtcDayKey(date), date }
+    yield { key: format(date, "yyyy-MM-dd"), date }
   }
 }
 
@@ -92,7 +93,7 @@ export function* iterateTzMonths(
     start: parseISO(`${startKey}-01`),
     end: parseISO(`${endKey}-01`),
   })) {
-    yield { key: getUtcMonthKey(date), date }
+    yield { key: format(date, "yyyy-MM"), date }
   }
 }
 

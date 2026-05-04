@@ -17,6 +17,7 @@ import type {
   MessageModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   emitContactCreated,
   setWebhookExecutionContext,
@@ -364,13 +365,13 @@ const detectContactAndConversation = async (props: {
     } catch (error) {
       console.error("Failed to emit contactCreated event:", error)
     }
-    contactTrackingService
-      .trackEvent({
-        workspaceId: inbox.workspaceId,
-        contactId: newContact.id,
-        eventType: "contact_created",
+
+    if (contactInbox.sourceId) {
+      emit("contact:created", {
+        workspaceId: newContact.workspaceId,
+        contactId: contactInbox.id,
         occurredAt: newContact.createdAt,
-        source: contactInbox.channel,
+        source: contactInbox.source,
         sourceId: contactInbox.sourceId,
         channel: contactInbox.channel,
         metadata: {
@@ -380,10 +381,10 @@ const detectContactAndConversation = async (props: {
             triggerType: "contact_created",
           },
         },
+      }).catch((error) => {
+        logger.error(error, "[receiveMessage] Failed to emit contact:created")
       })
-      .catch((error) => {
-        logger.error(error, "[receiveMessage] Failed to track contact_created")
-      })
+    }
   }
 
   return { contactInbox, conversation }

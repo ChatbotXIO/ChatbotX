@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
@@ -24,6 +23,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import {
   broadcastToGuestParty,
@@ -219,16 +219,26 @@ export async function handleCreateWebchatMessage({
         )
       }
 
-      if (isNewContact && parsedInput.guestConversationId) {
-        await contactTrackingService.trackEvent({
+      if (isNewContact && contactInbox.sourceId) {
+        emit("contact:created", {
           workspaceId: parsedInput.workspaceId,
-          contactId: contact.id,
-          eventType: "contact_created",
+          contactId: contactInbox.id,
           occurredAt: contact.createdAt,
-          source: "webchat",
-          sourceId: parsedInput.guestConversationId,
-          channel: "webchat",
-          country: undefined,
+          source: contactInbox.source,
+          sourceId: contactInbox.sourceId,
+          channel: contactInbox.channel,
+          metadata: {
+            triggerContext: {
+              triggerSource: "api",
+              triggerHandler: "createWebchatMessage",
+              triggerType: "contact_created",
+            },
+          },
+        }).catch((error) => {
+          console.error(
+            "[createWebchatMessage] Failed to emit contact:created",
+            error,
+          )
         })
       }
 
