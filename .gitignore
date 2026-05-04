@@ -52,7 +52,4 @@ test-webchat
 # ClickHouse migrations local state
 packages/database/src/clickhouse/.migrations.local.json
 
-# Cursor
-.cursor/skills/
-CLAUDE.md
 .pnpm-store/

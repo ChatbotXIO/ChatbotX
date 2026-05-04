@@ -4,36 +4,59 @@ Key components of the project's tech stack.
 
 ### Core Technologies
 
-- [Next.js](https://nextjs.org/docs) (App Router v15)
-- [React](https://react.dev/) (v19)
-- [TypeScript](https://www.typescriptlang.org/)
+- [Next.js](https://nextjs.org/docs) 16 (App Router)
+- [React](https://react.dev/) 19
+- [TypeScript](https://www.typescriptlang.org/) 5
 
 ### UI Libraries
 
-- [Shadcn UI](https://ui.shadcn.com/)
-- [Radix UI](https://www.radix-ui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Sonner](https://sonner.emilkowal.ski/)
-- [React Table](https://www.npmjs.com/package/@tanstack/react-table)
+- [Shadcn UI](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/)
+- [Tailwind CSS](https://tailwindcss.com/) v4
+- [Sonner](https://sonner.emilkowal.ski/) (toasts)
+- [TanStack Table](https://tanstack.com/table)
 - [DnD Kit](https://dndkit.com/)
-- [emoji-mart](https://www.npmjs.com/package/emoji-mart)
 
 ### Forms and Validation
 
-- [React Hook Form](https://www.npmjs.com/package/react-hook-form)
-- [Hookform Resolvers](https://www.npmjs.com/package/@hookform/resolvers)
-- [Zod](https://www.npmjs.com/package/zod)
+- [React Hook Form](https://react-hook-form.com/)
+- [Zod](https://zod.dev/) (schema validation)
+- [next-safe-action](https://next-safe-action.dev/) (server actions with type safety)
+
+### API Layer
+
+- [oRPC](https://orpc.unnoq.com/) — RPC + OpenAPI, serves `/rpc` and `/api` endpoints
 
 ### Database
 
-- [Prisma](https://www.npmjs.com/package/prisma)
-- [Prisma Client](https://www.npmjs.com/package/@prisma/client)
+- [Drizzle ORM](https://orm.drizzle.team/) + **PostgreSQL** (with **pgvector** for vector search)
+- Package: `packages/database` (`@chatbotx.io/database`)
 
 ### Authentication
 
-- [Better Auth](https://github.com/better-auth/better-auth)
+- [Better Auth](https://better-auth.com/)
+
+### Background Jobs & Queues
+
+- [BullMQ](https://bullmq.io/) backed by **Redis / Dragonfly**
+- **Kafka** for high-throughput sequence dispatch
+- Package: `packages/worker-config` (`@chatbotx.io/worker-config`)
+
+### Realtime
+
+- Custom realtime server at `apps/realtime` (port 1999)
+
+### Analytics
+
+- [ClickHouse](https://clickhouse.com/) for event analytics
+- Package: `packages/clickhouse`
+
+### Storage
+
+- S3-compatible object storage (RustFS locally via Docker)
 
 ### Utilities
 
-- [Next Safe Action](https://www.npmjs.com/package/next-safe-action)
-- [Nuqs](https://www.npmjs.com/package/nuqs)
+- [nuqs](https://nuqs.47ng.com/) — URL search param state management
+- [@t3-oss/env-core](https://env.t3.gg/) — typed env validation
+- Lint/format: **Ultracite** (Biome)
+- Git hooks: **lefthook**

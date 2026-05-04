@@ -10,7 +10,7 @@ description: >-
 
 ## Project Overview
 
-Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 24, TypeScript 6.x.
+Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 24, TypeScript 5.
 
 ### Workspace Layout
 
@@ -18,9 +18,9 @@ Monorepo managed by **pnpm workspaces + Turborepo**. Node >= 24, TypeScript 6.x.
 apps/
   builder/     → Next.js 16 web UI (port 3123)
   worker/      → Background workers (BullMQ, Kafka)
+  realtime/    → Realtime server (port 1999)
   cli/         → CLI tool (yargs)
   mcp-server/  → MCP server
-  partysocket/ → PartyKit realtime
 
 packages/
   database/    → Drizzle ORM + PostgreSQL
