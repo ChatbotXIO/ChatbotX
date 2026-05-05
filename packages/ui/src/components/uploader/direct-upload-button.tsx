@@ -172,7 +172,7 @@ export function DirectUploadButton({
     >
       <FileUploadDropzone className="border-none p-0">
         <FileUploadTrigger asChild>
-          <Button disabled={isUploading} ref={triggerRef}>
+          <Button disabled={isUploading} ref={triggerRef} type="button">
             {isUploading ? (
               <Loader2Icon className="size-4 animate-spin" />
             ) : (

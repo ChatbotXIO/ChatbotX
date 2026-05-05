@@ -65,6 +65,7 @@
     "sendMessage": "Send Message",
     "setCustomField": "Set Custom Field",
     "synchronize": "Synchronize",
+    "syncMetaCatalog": "Sync Meta Catalog",
     "testNow": "Test Now",
     "toggle": "Toggle",
     "toggleTheme": "Toggle theme",
@@ -2255,5 +2256,109 @@
     "description": "You will no longer receive emails from this sender.",
     "invalidTitle": "Invalid unsubscribe link.",
     "invalidDescription": "This link is invalid or has expired."
+  },
+  "orders": {
+    "title": "Orders"
+  },
+  "products": {
+    "title": "Products",
+    "create": {
+      "title": "Create Product"
+    },
+    "edit": {
+      "title": "Edit Product"
+    },
+    "sections": {
+      "pricing": "Pricing",
+      "images": "Images",
+      "inventory": "Inventory",
+      "variants": "Variants",
+      "addons": "Add-ons",
+      "tags": "Tags",
+      "moreOptions": "More Options"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "Short Description"
+      },
+      "longDescription": {
+        "label": "Long Description"
+      },
+      "price": {
+        "label": "Price $"
+      },
+      "taxes": {
+        "label": "Taxes (0-100%)"
+      },
+      "discount": {
+        "label": "Discount (0-100%)"
+      },
+      "sku": {
+        "label": "Content ID/Retailer ID/SKU",
+        "placeholder": "Optional"
+      },
+      "inventoryPolicy": {
+        "label": "Inventory policy"
+      },
+      "inventoryQuantity": {
+        "label": "Quantity"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "Allow customers to purchase this product when it's out of stock"
+      },
+      "vendor": {
+        "label": "Vendor"
+      },
+      "rank": {
+        "label": "Rank"
+      },
+      "category": {
+        "label": "Category"
+      },
+      "subcategory": {
+        "label": "Subcategory"
+      },
+      "isSearchable": {
+        "label": "This product is searchable inside the bot"
+      },
+      "allowSpecialRequest": {
+        "label": "Allow the user to request a special request (attach notes)"
+      },
+      "isActive": {
+        "label": "Active"
+      },
+      "isAddonOnly": {
+        "label": "Use this product only as an addon for others products"
+      },
+      "optionName": {
+        "label": "Option Name"
+      },
+      "optionValue": {
+        "label": "Option Value"
+      },
+      "variant": {
+        "label": "Variant"
+      },
+      "addImageFromLink": "Add Image",
+      "uploadImage": "Upload Image",
+      "tagsDescription": "Tags are searchable.",
+      "addonsDescription": "Add products that clients can buy as an add-on. You can also give free products here. For example, a restaurant may give free drinks options here. You must create a product before you use it as add-on.",
+      "addonName": {
+        "label": "Name",
+        "placeholder": "name"
+      },
+      "addonMaxSelections": {
+        "label": "Max selections"
+      },
+      "addonProducts": {
+        "label": "Products",
+        "placeholder": "Select products..."
+      },
+      "variantsDescription": "Add variants if this product comes in multiple versions, like different sizes or colors"
+    },
+    "inventoryPolicy": {
+      "dont_track": "Don't track inventory",
+      "track": "Track inventory"
+    }
   }
 }

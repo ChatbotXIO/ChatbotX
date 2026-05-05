@@ -10,6 +10,7 @@ import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { getPlatformSettings } from "@/features/platform/utils"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { WorkspaceMain } from "./workspace-main"
 
 export default async function WorkspaceLayout({
   children,
@@ -55,9 +56,8 @@ export default async function WorkspaceLayout({
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar allWorkspaces={allWorkspaces} workspaceId={workspaceId} />
       <SidebarInset>
+        <WorkspaceMain>{children}</WorkspaceMain>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
-
-        <main className="flex flex-1 flex-col gap-4 p-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )

@@ -181,6 +181,61 @@ export const CreateItemForm = ({ workspaceId }: { workspaceId: string }) => {
   )
 }
 ```
+### Form Section Layout — Use `<Card>`
+
+Multi-section forms (create/edit pages) use `<Card>` to group related fields. **Never use a plain `<div className="rounded-lg border p-6">` wrapper** — always use the Card component.
+
+```typescript
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@chatbotx.io/ui/components/ui/card"
+
+// Section with a title
+<Card>
+  <CardHeader>
+    <CardTitle className="text-base">{t("feature.sections.pricing")}</CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    <InputField ... />
+    <InputField ... />
+  </CardContent>
+</Card>
+
+// Section without a title (e.g. basic info / first card)
+<Card>
+  <CardContent className="space-y-4 pt-6">
+    <InputField ... />
+  </CardContent>
+</Card>
+```
+
+Full-page create/edit forms follow this layout:
+
+```typescript
+<div className="flex min-h-screen flex-col bg-muted/20">
+  {/* Sticky top bar with title + Save/Cancel */}
+  <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-6 py-3">
+    <h1 className="font-semibold text-lg">{t("feature.create.title")}</h1>
+    <div className="flex items-center gap-2">
+      <Button onClick={() => router.back()} type="button" variant="ghost">
+        {t("actions.cancel")}
+      </Button>
+      <Button type="submit">{t("actions.save")}</Button>
+    </div>
+  </div>
+
+  {/* Scrollable form content */}
+  <Form {...form}>
+    <form className="mx-auto w-full max-w-3xl space-y-6 px-6 py-8" onSubmit={handleSubmitWithAction}>
+      <Card>...</Card>
+      <Card>...</Card>
+    </form>
+  </Form>
+</div>
+```
 
 ### CRITICAL — `.bind()` for actions with `bindArgsSchemas`
 

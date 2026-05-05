@@ -65,6 +65,7 @@
     "sendMessage": "Gửi tin nhắn",
     "setCustomField": "Thiết lập trường tùy chỉnh",
     "synchronize": "Đồng bộ",
+    "syncMetaCatalog": "Đồng bộ Meta Catalog",
     "testNow": "Kiểm tra ngay",
     "toggle": "Chuyển đổi",
     "toggleTheme": "Chuyển đổi giao diện",
@@ -2277,5 +2278,109 @@
     "description": "Bạn sẽ không còn nhận email từ người gửi này nữa.",
     "invalidTitle": "Liên kết hủy đăng ký không hợp lệ.",
     "invalidDescription": "Liên kết này không hợp lệ hoặc đã hết hạn."
+  },
+  "orders": {
+    "title": "Đơn hàng"
+  },
+  "products": {
+    "title": "Sản phẩm",
+    "create": {
+      "title": "Tạo sản phẩm"
+    },
+    "edit": {
+      "title": "Chỉnh sửa sản phẩm"
+    },
+    "sections": {
+      "pricing": "Giá",
+      "images": "Hình ảnh",
+      "inventory": "Kho hàng",
+      "variants": "Biến thể",
+      "addons": "Tiện ích thêm",
+      "tags": "Thẻ",
+      "moreOptions": "Tùy chọn thêm"
+    },
+    "fields": {
+      "shortDescription": {
+        "label": "Mô tả ngắn"
+      },
+      "longDescription": {
+        "label": "Mô tả dài"
+      },
+      "price": {
+        "label": "Giá $"
+      },
+      "taxes": {
+        "label": "Thuế (0-100%)"
+      },
+      "discount": {
+        "label": "Giảm giá (0-100%)"
+      },
+      "sku": {
+        "label": "ID nội dung/ID nhà bán lẻ/SKU",
+        "placeholder": "Tùy chọn"
+      },
+      "inventoryPolicy": {
+        "label": "Chính sách kho hàng"
+      },
+      "inventoryQuantity": {
+        "label": "Số lượng"
+      },
+      "allowOutOfStockPurchase": {
+        "label": "Cho phép khách hàng mua sản phẩm này khi hết hàng"
+      },
+      "vendor": {
+        "label": "Nhà cung cấp"
+      },
+      "rank": {
+        "label": "Xếp hạng"
+      },
+      "category": {
+        "label": "Danh mục"
+      },
+      "subcategory": {
+        "label": "Danh mục con"
+      },
+      "isSearchable": {
+        "label": "Sản phẩm này có thể tìm kiếm trong bot"
+      },
+      "allowSpecialRequest": {
+        "label": "Cho phép người dùng yêu cầu đặc biệt (đính kèm ghi chú)"
+      },
+      "isActive": {
+        "label": "Hoạt động"
+      },
+      "isAddonOnly": {
+        "label": "Chỉ sử dụng sản phẩm này làm tiện ích cho sản phẩm khác"
+      },
+      "optionName": {
+        "label": "Tên tùy chọn"
+      },
+      "optionValue": {
+        "label": "Giá trị tùy chọn"
+      },
+      "variant": {
+        "label": "Biến thể"
+      },
+      "addImageFromLink": "Thêm hình ảnh",
+      "uploadImage": "Tải hình ảnh lên",
+      "tagsDescription": "Thẻ có thể tìm kiếm.",
+      "addonsDescription": "Thêm sản phẩm mà khách hàng có thể mua như tiện ích. Bạn cũng có thể cho miễn phí ở đây. Ví dụ, nhà hàng có thể cho đồ uống miễn phí. Bạn phải tạo sản phẩm trước khi sử dụng làm tiện ích.",
+      "addonName": {
+        "label": "Tên",
+        "placeholder": "tên"
+      },
+      "addonMaxSelections": {
+        "label": "Số lượng tối đa"
+      },
+      "addonProducts": {
+        "label": "Sản phẩm",
+        "placeholder": "Chọn sản phẩm..."
+      },
+      "variantsDescription": "Thêm biến thể nếu sản phẩm có nhiều phiên bản, như kích thước hoặc màu sắc"
+    },
+    "inventoryPolicy": {
+      "dont_track": "Không theo dõi kho hàng",
+      "track": "Theo dõi kho hàng"
+    }
   }
 }

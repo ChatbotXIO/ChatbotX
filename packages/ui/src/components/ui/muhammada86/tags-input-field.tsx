@@ -27,7 +27,7 @@ interface TagsInputFieldProps<TFieldValues extends FieldValues> {
   name: Path<TFieldValues>;
   beautifyName?: string;
   description?: string;
-  label: string;
+  label?: string;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -124,6 +124,8 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       addTag(inputValue, currentTags, onChange);
+      setInputValue("");
+      inputRef.current?.focus();
     } else if (e.key === "Backspace" && !inputValue && currentTags.length > 0) {
       removeTag(currentTags.length - 1, currentTags, onChange);
     } else if (e.key === "Escape") {
@@ -138,7 +140,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
           container:
             "dark:border-gray-600 border-2 border-muted hover:border-primary/30 transition-all duration-300 backdrop-blur-sm",
           input:
-            "bg-transparent border-0 focus:ring-0 placeholder:text-muted-foreground/60",
+            "h-8 bg-transparent border-0 focus:ring-0 placeholder:text-muted-foreground/60",
           suggestions:
             "bg-background/95 backdrop-blur-md border border-border/50 shadow-xl",
         };
@@ -146,14 +148,14 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
         return {
           container:
             "bg-background border border-border hover:border-primary/50 transition-colors",
-          input: "bg-transparent border-0 focus:ring-0",
+          input: "h-8 bg-transparent border-0 focus:ring-0",
           suggestions: "bg-background border border-border shadow-lg",
         };
       default:
         return {
           container:
-            "bg-background border border-input hover:border-primary/50 transition-colors",
-          input: "bg-transparent border-0 focus:ring-0",
+            "bg-background border border-input hover:border-input transition-[color,box-shadow] outline-none focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+          input: "h-8 bg-transparent border-0 focus:ring-0",
           suggestions: "bg-background border border-border shadow-lg",
         };
     }
@@ -170,7 +172,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
 
         return (
           <FormItem className={cn("space-y-2", className)}>
-            <FormLabel className="flex items-center gap-2">
+            {label && <FormLabel className="flex items-center gap-2">
               {label}
               {maxTags && (
                 <Badge
@@ -180,13 +182,14 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                   {tags.length}/{maxTags}
                 </Badge>
               )}
-            </FormLabel>
+            </FormLabel>}
 
             <FormControl>
-              <div ref={containerRef} className="relative">
+              <div ref={containerRef} className="relative mb-0">
                 <div
                   className={cn(
-                    "min-h-[2.5rem] p-2 rounded-md flex flex-wrap gap-2 items-center ",
+                    "min-h-9 rounded-md flex flex-wrap gap-1 items-center",
+                    tags.length > 0 && "px-2 py-1.5",
                     styles.container,
                     disabled && "opacity-50 cursor-not-allowed"
                   )}
@@ -248,7 +251,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                       placeholder={
                         tags.length === 0
                           ? placeholder ??
-                            `Enter ${label.toLowerCase()} and press Enter`
+                            `Enter ${label?.toLowerCase()} and press Enter`
                           : maxTags && tags.length >= maxTags
                           ? `Maximum ${maxTags} tags reached`
                           : "Add another..."
@@ -295,7 +298,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                       className={cn(
-                        "absolute z-50 w-full mt-1 rounded-md py-1 overflow-auto",
+                        "absolute z-50 w-full mt-1 rounded-md overflow-auto",
                         styles.suggestions
                       )}
                     >

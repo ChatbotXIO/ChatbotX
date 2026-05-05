@@ -76,6 +76,7 @@ const TOOLS_CONFIG = [
     labelKey: "ecommerce.title",
     descriptionKey: "ecommerce.description",
     icon: CardSimIcon,
+    getLink: (id: string) => `/space/${id}/products`,
   },
   {
     id: "places-near-me",
