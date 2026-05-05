@@ -1,16 +1,16 @@
 ## What's Changed
 
 ### ✨ New Features
-- 
+-
 
 ### 🐛 Bug Fixes
-- 
+-
 
 ### ⚡ Improvements
-- 
+-
 
 ### 🔧 Internal / Chore
-- 
+-
 
 ---
 
@@ -31,7 +31,5 @@ ghcr.io/ahachatai/chatbotx-realtime:VERSION
 ## 🙏 Thanks
 
 A big thank you to all contributors who made this release possible!
-
-@<!-- mention contributors here -->
 
 **Full Changelog:** https://github.com/AhaChatAI/quametmoi/compare/PREVIOUS_TAG...VERSION
