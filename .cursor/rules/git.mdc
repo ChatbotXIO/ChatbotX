@@ -1,0 +1,6 @@
+---
+description: Git commit, branch, and PR conventions for this repository
+alwaysApply: true
+---
+
+@.agents/rules/git.md
