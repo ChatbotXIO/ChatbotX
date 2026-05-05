@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/sdk"
 import { convertCodeToTokens, getZaloOAProfile } from "../api/auth"
 import type { ZaloAuthValue } from "../schema/definition"
+import { calculateExpiresAt } from "../utils"
 
 export const callbackHandler = async (
   props: HandleRequestProps<Oauth2Config>,
@@ -59,11 +60,4 @@ export const callbackHandler = async (
       oaName: oaProfile.name,
     },
   }
-}
-
-export const calculateExpiresAt = (expiresIn: number): string => {
-  const now = new Date()
-  const expiresAt = new Date(now.getTime() + expiresIn * 1000)
-
-  return expiresAt.toISOString()
 }
