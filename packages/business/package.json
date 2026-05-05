@@ -9,7 +9,9 @@
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
-    "next-intl": "^4.11.0"
+    "@t3-oss/env-core": "^0.13.11",
+    "next-intl": "^4.11.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

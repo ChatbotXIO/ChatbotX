@@ -6,6 +6,7 @@ import { withCache } from "@chatbotx.io/redis"
 import { getTranslations } from "next-intl/server"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { isCommunity } from "../keys"
 
 class OrganizationService extends BaseService {
   find(props: {
@@ -48,9 +49,10 @@ class OrganizationService extends BaseService {
   }
 
   findByDomain(domain: string): Promise<OrganizationModel> {
-    // if (isCommunity) {
-    //   return this.findOrFail({ where: {} })
-    // }
+    if (isCommunity()) {
+      return this.findOrFail({ where: {} })
+    }
+
     return this.findOrFail({ where: { domain } })
   }
 
