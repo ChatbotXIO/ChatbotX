@@ -631,6 +631,7 @@
     "flows": {
       "aiGenerateText": "{aiName}: Tạo văn bản",
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
+      "aiEditImage": "{aiName}: Chỉnh sửa hình ảnh",
       "aiAnalyzeImage": "{aiName}: AI Phân tích hình ảnh",
       "label": "Luồng",
       "placeholder": "Chọn luồng",
@@ -1025,6 +1026,11 @@
     "inputFieldId": {
       "label": "Trường tùy chỉnh đầu vào"
     },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Hình ảnh"
+      }
+    },
     "outputFieldId": {
       "label": "Lưu kết quả vào trường tùy chỉnh"
     },
@@ -1255,6 +1261,9 @@
     "aiGenerateImage": {
       "label": "{name}: AI Tạo hình ảnh"
     },
+    "aiEditImage": {
+      "label": "{name}: AI Chỉnh sửa hình ảnh"
+    },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",
       "addContactTag": "Thêm thẻ liên hệ",
@@ -1326,7 +1335,8 @@
       "subscribeSequence": "Đăng ký chăm sóc",
       "unsubscribeSequence": "Hủy đăng ký chăm sóc",
       "noTemplatesAvailable": "No templates available",
-      "splitTraffic": "Chia lưu lượng"
+      "splitTraffic": "Chia lưu lượng",
+      "aiEditImage": "AI Chỉnh sửa hình ảnh"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",

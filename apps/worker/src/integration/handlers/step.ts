@@ -40,6 +40,7 @@ import {
   removeContactTag,
   setContactCustomField,
 } from "./contact"
+import { handleAIEditImage } from "./edit-image"
 import { handleAIExtractData } from "./extract-data/index"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow"
 import { handleAIGenerateImage } from "./generate-image"
@@ -325,6 +326,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.openWebsite]: undefined,
   [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: undefined,
+  [stepTypes.enum.aiEditImage]: handleAIEditImage,
   [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
   [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
