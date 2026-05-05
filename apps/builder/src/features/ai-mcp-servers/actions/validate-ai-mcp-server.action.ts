@@ -6,6 +6,8 @@ import {
 } from "@ai-sdk/mcp"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
+import { returnValidationErrors } from "next-safe-action"
+import { normalizeError } from "universal-error-normalizer"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
@@ -46,6 +48,13 @@ export const validateAIMcpServer = async ({
         Object.fromEntries(toolKeys.map((key) => [key, tools[key]])),
       ),
     )
+  } catch (error) {
+    const normalized = normalizeError(error)
+    return returnValidationErrors(validateAIMcpServerRequest, {
+      url: {
+        _errors: [normalized.message],
+      },
+    })
   } finally {
     if (httpClient) {
       await httpClient.close()

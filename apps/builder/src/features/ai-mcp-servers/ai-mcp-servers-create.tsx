@@ -21,7 +21,7 @@ import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
-import { useFieldArray } from "react-hook-form"
+import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
 import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
@@ -206,6 +206,11 @@ export function AIMcpServersCreate({
     </DialogTrigger>
   )
 
+  const watchAuthType = useWatch({
+    name: "auth.type",
+    control: form.control,
+  })
+
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       {trigger}
@@ -227,45 +232,44 @@ export function AIMcpServersCreate({
               options={authOptions}
               required
             />
-            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.token && (
+            {watchAuthType === aiMcpServerAuthTypes.enum.token && (
               <InputField
                 label={t("fields.authToken.label")}
                 name="auth.token"
                 required
               />
             )}
-            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.header &&
-              fields && (
-                <div className="flex flex-col gap-2">
-                  {fields.map((field, index) => (
-                    <div className="flex items-start gap-2" key={field.id}>
-                      <InputField
-                        name={`auth.headers.${index}.header`}
-                        placeholder="Header"
-                      />
-                      <MoveRightIcon className="size-10" />
-                      <InputField
-                        name={`auth.headers.${index}.value`}
-                        placeholder="Value"
-                      />
-                      <Button
-                        onClick={() => remove(index)}
-                        size="icon"
-                        variant="outline"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    onClick={() => append({ header: "", value: "" })}
-                    variant="secondary"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    {t("actions.addMore")}
-                  </Button>
-                </div>
-              )}
+            {watchAuthType === aiMcpServerAuthTypes.enum.header && fields && (
+              <div className="flex flex-col gap-2">
+                {fields.map((field, index) => (
+                  <div className="flex items-start gap-2" key={field.id}>
+                    <InputField
+                      name={`auth.headers.${index}.header`}
+                      placeholder="Header"
+                    />
+                    <MoveRightIcon className="size-10" />
+                    <InputField
+                      name={`auth.headers.${index}.value`}
+                      placeholder="Value"
+                    />
+                    <Button
+                      onClick={() => remove(index)}
+                      size="icon"
+                      variant="outline"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  onClick={() => append({ header: "", value: "" })}
+                  variant="secondary"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  {t("actions.addMore")}
+                </Button>
+              </div>
+            )}
             {allTools.length > 0 && (
               <div className="flex flex-col gap-4">
                 <div className="font-medium text-sm leading-none">
