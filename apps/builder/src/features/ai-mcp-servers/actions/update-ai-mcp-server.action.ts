@@ -1,9 +1,10 @@
 "use server"
+
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { notFoundException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { aiMcpServerService } from "../ai-mcp-server.service"
 import {
