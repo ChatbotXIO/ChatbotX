@@ -65,7 +65,7 @@ export const useWhatsappInboxOptions = (): SelectOption[] => {
         .filter((inbox) => inbox.channel === channelTypes.enum.whatsapp)
         .map((inbox) => ({
           label: inbox.name,
-          value: inbox.integrationWhatsapp?.id ?? "",
+          value: inbox.id,
         })),
     [inboxes],
   )

@@ -5,7 +5,11 @@ import { logger } from "../lib/logger"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
-export type WhatsappWabaDetailResponse = {
+export type WhatsappWabaMMLite = {
+  marketing_messages_onboarding_status?: WhatsappMarketingMessagesLiteApiStatus
+}
+
+export type WhatsappWabaDetailResponse = WhatsappWabaMMLite & {
   id: string
   name: string
   owner_business_info: {
@@ -15,17 +19,30 @@ export type WhatsappWabaDetailResponse = {
   phone_numbers: WhatsappPhoneNumberResponse
 }
 
+export type WhatsappMarketingMessagesLiteApiStatus =
+  | "INELIGIBLE_ON_BEHALF_OF_WABA"
+  | "INELIGIBLE_INACTIVE_OR_RESTRICTED"
+  | "INELIGIBLE_COUNTRY_NOT_SUPPORTED"
+  | "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP"
+  | "ELIGIBLE"
+  | "PENDING_VALID_PAYMENT_METHOD"
+  | "PENDING_INTERNAL_SETUP"
+  | "ONBOARDED"
+
 export async function findWaba(props: {
   wabaId: string
   acessToken: string
+  fields?: string
   version?: string
 }) {
   const { version = DEFAULT_API_VERSION } = props
 
   try {
+    const fields = props.fields || "name,owner_business_info,phone_numbers"
+
     return await ky
       .get<WhatsappWabaDetailResponse>(
-        `${API_URL}/${version}/${props.wabaId}?fields=name,owner_business_info,phone_numbers`,
+        `${API_URL}/${version}/${props.wabaId}?fields=${fields}`,
         {
           headers: {
             Authorization: `Bearer ${props.acessToken}`,

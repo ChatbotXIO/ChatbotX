@@ -7,13 +7,7 @@ import {
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@chatbotx.io/ui/components/ui/select"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useFormContext } from "react-hook-form"
@@ -85,7 +79,20 @@ function SendWaTemplateMessageStepEditor(
     [whatsappTemplates, integrationInboxId],
   )
 
-  const handleTemplateChange = (value: string) => {
+  const templateOptions = useMemo(
+    () =>
+      filteredTemplates.map((template) => ({
+        label: `${template.name} (${template.language})`,
+        value: template.id,
+      })),
+    [filteredTemplates],
+  )
+
+  const handleTemplateChange = (value?: string) => {
+    if (!value) {
+      return
+    }
+
     const template = whatsappTemplates?.find((t) => t.id === value)
     if (template) {
       setValue(`${parentName}.template.id`, template.id)
@@ -112,20 +119,12 @@ function SendWaTemplateMessageStepEditor(
           required={true}
         />
 
-        <Select onValueChange={handleTemplateChange} value={templateId || ""}>
-          <SelectTrigger className="w-full">
-            <SelectValue
-              placeholder={t("flows.fields.selectTemplatePlaceholder")}
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {filteredTemplates.map((template) => (
-              <SelectItem key={template.id} value={template.id}>
-                {template.name} ({template.language})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SelectField
+          name={`${parentName}.template.id`}
+          options={templateOptions}
+          placeholder={t("flows.fields.selectTemplatePlaceholder")}
+          triggerValueChange={handleTemplateChange}
+        />
 
         {parameters.length > 0 && (
           <TemplateParamsForm

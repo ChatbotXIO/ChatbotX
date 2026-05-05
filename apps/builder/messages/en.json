@@ -1531,6 +1531,25 @@
       },
       "viewProduct": {
         "label": "View Product"
+      },
+      "params": {
+        "couponCode": "Coupon Code",
+        "couponCodePlaceholder": "Enter coupon code",
+        "quickReplyPayload": "Quick Reply Payload",
+        "quickReplyPayloadPlaceholder": "Enter payload (optional)",
+        "flowToken": "Flow Token",
+        "flowTokenPlaceholder": "Enter flow token",
+        "catalogProductId": "Product ID",
+        "catalogProductIdPlaceholder": "Enter product retailer ID",
+        "carouselCard": "Card {index}",
+        "limitedTimeOffer": "Offer Expiration Time",
+        "limitedTimeOfferPlaceholder": "Enter expiration time in milliseconds",
+        "limitedTimeOfferHelp": "Unix timestamp in milliseconds when the offer expires",
+        "location": "Location",
+        "latitude": "Latitude",
+        "longitude": "Longitude",
+        "locationName": "Location name (optional)",
+        "locationAddress": "Address (optional)"
       }
     },
     "sampleBodyCardContent": {
@@ -1546,12 +1565,130 @@
       "label": "Show footer"
     },
     "tabs": {
+      "accountHealths": "Account Health",
       "automation": "Automation",
       "ecommerce": "Ecommerce",
       "flows": "Flows",
       "messageTemplates": "Message Templates",
       "profile": "Profile",
       "usefulLinks": "Useful Links"
+    },
+    "accountHealths": {
+      "title": "Manage your WhatsApp account",
+      "description": "Review your WhatsApp account status, messaging limits, and quality. Update settings or resolve issues if needed",
+      "goToBusinessManager": "Go to Meta Business Manager",
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Display phone number",
+          "tooltip": "The phone number shown to customers when they message your business."
+        },
+        "businessName": {
+          "label": "Business name",
+          "tooltip": "The verified WhatsApp business display name."
+        },
+        "displayNameStatus": {
+          "label": "Display name status",
+          "tooltip": "Approval status of your WhatsApp business display name."
+        },
+        "qualityRating": {
+          "label": "Quality rating",
+          "tooltip": "Quality rating based on customer feedback over the last 7 days."
+        },
+        "messagingLimitTier": {
+          "label": "Messaging limit tier",
+          "tooltip": "Maximum number of unique customers your business can message in a 24-hour rolling window."
+        },
+        "accountMode": {
+          "label": "Account mode",
+          "tooltip": "Whether the WhatsApp Business Account is live or in sandbox mode."
+        },
+        "marketingMessages": {
+          "label": "Marketing Messages (MM Lite)",
+          "tooltip": "Onboarding status of the WhatsApp Business Account into Marketing Messages Lite API.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Ineligible: OBO model",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Ineligible: inactive or restricted",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Ineligible: country not supported",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Ineligible: using WhatsApp Business app",
+            "ELIGIBLE": "Eligible",
+            "PENDING_VALID_PAYMENT_METHOD": "Pending valid payment method",
+            "PENDING_INTERNAL_SETUP": "Pending internal setup",
+            "ONBOARDED": "Onboarded"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "The WhatsApp Business Account uses the OBO model, which is not supported. You must first transfer ownership of the WABA to the customer or onboard using the Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "The WhatsApp Business Account is inactive or restricted from messaging due to a policy enforcement issue.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "The WhatsApp Business Account is in a region that does not support the MM Lite API.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "The WhatsApp Business phone number is being used within the WhatsApp Business app.",
+            "ELIGIBLE": "The WhatsApp Business Account is eligible to onboard and use the MM Lite API.",
+            "PENDING_VALID_PAYMENT_METHOD": "The WhatsApp Business Account requires setting up a valid payment method.",
+            "PENDING_INTERNAL_SETUP": "The WhatsApp Business Account is being configured to use the MM Lite API and requires no further action from the business customer or partner. The automated setup process is estimated to take less than ten minutes. Subscribe to the account_update webhook and listen for the AD_ACCOUNT_LINKED event. Submit a support ticket if the setup process takes more than ten minutes and you have not received a webhook.",
+            "ONBOARDED": "The WhatsApp Business Account has successfully onboarded and is ready to use the MM Lite API."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Webhook Configuration",
+          "tooltip": "Status of the webhook configured to receive WhatsApp events.",
+          "configured": "Webhook configured successfully",
+          "notConfigured": "Webhook not configured"
+        },
+        "phoneNumberHealth": {
+          "label": "Phone Number Health",
+          "tooltip": "Whether this phone number can send messages and any issues affecting it.",
+          "headline": "Phone Number - {status}"
+        },
+        "wabaHealth": {
+          "label": "WhatsApp Business Account Health",
+          "tooltip": "Whether the WhatsApp Business Account can send messages and any issues affecting it.",
+          "headline": "WhatsApp Business Account (WABA ID: {id}) - {status}",
+          "headlineNoId": "WhatsApp Business Account - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 customers per 24h",
+        "TIER_250": "250 customers per 24h",
+        "TIER_1K": "1,000 customers per 24h",
+        "TIER_10K": "10,000 customers per 24h",
+        "TIER_100K": "100,000 customers per 24h",
+        "TIER_UNLIMITED": "Unlimited customers per 24h",
+        "UNKNOWN": "Unknown"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Approved",
+        "AVAILABLE_WITHOUT_REVIEW": "Available Without Review",
+        "DECLINED": "Declined",
+        "EXPIRED": "Expired",
+        "NONE": "None",
+        "PENDING_REVIEW": "Pending Review"
+      },
+      "accountMode": {
+        "LIVE": "Live",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "AVAILABLE",
+        "LIMITED": "LIMITED",
+        "BLOCKED": "BLOCKED",
+        "UNKNOWN": "UNKNOWN"
+      },
+      "health": {
+        "label": "Business Status",
+        "tooltip": "Overview of your WhatsApp account health and messaging capability.",
+        "blockedMessage": "Your phone number has been blocked from sending messages.",
+        "problem": "Problem:",
+        "possibleSolution": "Possible solution:",
+        "noIssues": "No issues detected",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "Whether this {type} can send messages and any issues affecting it.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Phone Number",
+          "WABA": "WhatsApp Business Account",
+          "BUSINESS": "Business",
+          "MESSAGE_TEMPLATE": "Message Template",
+          "APP": "App"
+        }
+      }
     },
     "templateFooter": {
       "label": "Template Footer"

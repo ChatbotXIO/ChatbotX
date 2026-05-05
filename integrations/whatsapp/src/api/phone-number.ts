@@ -74,6 +74,109 @@ export async function findPhoneNumber(props: {
   }
 }
 
+export type WhatsappPhoneNumberWebhookConfiguration = {
+  application?: string
+  waba_application?: string
+  smb_app_data?: Record<string, unknown>
+}
+
+export type WhatsappPhoneNumberThroughput = {
+  level?: string
+}
+
+export type WhatsappEntityCanSendMessage = "AVAILABLE" | "LIMITED" | "BLOCKED"
+
+export type WhatsappEntityType =
+  | "PHONE_NUMBER"
+  | "WABA"
+  | "BUSINESS"
+  | "MESSAGE_TEMPLATE"
+  | "APP"
+
+export type WhatsappHealthError = {
+  error_code?: number
+  error_description?: string
+  possible_solution?: string
+}
+
+export type WhatsappHealthEntity = {
+  entity_type: WhatsappEntityType
+  id?: string
+  can_send_message?: WhatsappEntityCanSendMessage
+  additional_info?: string[]
+  errors?: WhatsappHealthError[]
+}
+
+export type WhatsappHealthStatus = {
+  can_send_message?: WhatsappEntityCanSendMessage
+  entities?: WhatsappHealthEntity[]
+}
+
+export type WhatsappPhoneNumberDetail = {
+  id: string
+  quality_rating?: string
+  messaging_limit_tier?: string
+  code_verification_status?: string
+  account_mode?: string
+  display_phone_number?: string
+  name_status?: string
+  verified_name?: string
+  webhook_configuration?: WhatsappPhoneNumberWebhookConfiguration
+  throughput?: WhatsappPhoneNumberThroughput
+  last_onboarded_time?: string
+  platform_type?: string
+  certificate?: string
+  health_status?: WhatsappHealthStatus
+}
+
+const PHONE_NUMBER_DETAIL_FIELDS = [
+  "id",
+  "quality_rating",
+  "messaging_limit_tier",
+  "code_verification_status",
+  "account_mode",
+  "display_phone_number",
+  "name_status",
+  "verified_name",
+  "webhook_configuration",
+  "throughput",
+  "last_onboarded_time",
+  "platform_type",
+  "certificate",
+  "health_status",
+].join(",")
+
+/**
+ * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers
+ */
+export async function findPhoneNumberDetail(
+  auth: WhatsappAuthValue,
+): Promise<WhatsappPhoneNumberDetail> {
+  const { version = DEFAULT_API_VERSION } = auth
+
+  try {
+    return await ky
+      .get<WhatsappPhoneNumberDetail>(
+        `${API_URL}/${version}/${auth.metadata.phoneNumber.id}`,
+        {
+          searchParams: {
+            fields: PHONE_NUMBER_DETAIL_FIELDS,
+          },
+          headers: {
+            Authorization: `Bearer ${auth.tokens.accessToken}`,
+          },
+        },
+      )
+      .json()
+  } catch (error) {
+    console.error("Unable to find WhatsApp's phone number detail", error)
+
+    throw new WhatsappException(
+      "Unable to find WhatsApp's phone number detail",
+    ).setOriginError(error)
+  }
+}
+
 export type ConversationalAutomation = {
   enable_welcome_message: boolean
   prompts: string[]
@@ -108,7 +211,17 @@ export const findConversationalAutomation = async (
       )
       .json()
 
-    return result.conversational_automation
+    const conversationalAutomation = result.conversational_automation
+
+    if (!conversationalAutomation.prompts) {
+      conversationalAutomation.prompts = []
+    }
+
+    if (!conversationalAutomation.commands) {
+      conversationalAutomation.commands = []
+    }
+
+    return conversationalAutomation
   } catch (e) {
     console.error("Failed to list conversational automation", e)
     throw new WhatsappException(

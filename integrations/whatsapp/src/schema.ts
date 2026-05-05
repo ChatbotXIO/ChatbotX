@@ -71,6 +71,25 @@ export type WhatsAppTemplateComponentParameter = {
   image?: { link: string }
   video?: { link: string }
   document?: { link: string }
+  location?: {
+    latitude: string
+    longitude: string
+    name?: string
+    address?: string
+  }
+  coupon_code?: string
+  payload?: string
+  action?: {
+    flow_token?: string
+    flow_action_data?: Record<string, unknown>
+    thumbnail_product_retailer_id?: string
+    sections?: Array<{
+      title?: string
+      product_items?: Array<{
+        product_retailer_id: string
+      }>
+    }>
+  }
 }
 
 export type WhatsAppTemplateComponent = {
@@ -78,6 +97,10 @@ export type WhatsAppTemplateComponent = {
   parameters?: WhatsAppTemplateComponentParameter[]
   sub_type?: string
   index?: number
+  cards?: Array<{
+    card_index: number
+    components: WhatsAppTemplateComponent[]
+  }>
 }
 
 export type TemplateMessage = {

@@ -1538,6 +1538,25 @@
       },
       "viewProduct": {
         "label": "Xem sản phẩm"
+      },
+      "params": {
+        "couponCode": "Mã giảm giá",
+        "couponCodePlaceholder": "Nhập mã giảm giá",
+        "quickReplyPayload": "Payload trả lời nhanh",
+        "quickReplyPayloadPlaceholder": "Nhập payload (tùy chọn)",
+        "flowToken": "Flow Token",
+        "flowTokenPlaceholder": "Nhập flow token",
+        "catalogProductId": "ID sản phẩm",
+        "catalogProductIdPlaceholder": "Nhập ID sản phẩm",
+        "carouselCard": "Thẻ {index}",
+        "limitedTimeOffer": "Thời gian hết hạn ưu đãi",
+        "limitedTimeOfferPlaceholder": "Nhập thời gian hết hạn (mili giây)",
+        "limitedTimeOfferHelp": "Unix timestamp tính bằng mili giây khi ưu đãi hết hạn",
+        "location": "Vị trí",
+        "latitude": "Vĩ độ",
+        "longitude": "Kinh độ",
+        "locationName": "Tên vị trí (tùy chọn)",
+        "locationAddress": "Địa chỉ (tùy chọn)"
       }
     },
     "sampleBodyCardContent": {
@@ -1553,12 +1572,130 @@
       "label": "Hiển thị chân trang"
     },
     "tabs": {
+      "accountHealths": "Tình trạng tài khoản",
       "automation": "Tự động hóa",
       "ecommerce": "Thương mại điện tử",
       "flows": "Luồng",
       "messageTemplates": "Mẫu tin nhắn",
       "profile": "Hồ sơ",
       "usefulLinks": "Liên kết hữu ích"
+    },
+    "accountHealths": {
+      "title": "Quản lý tài khoản WhatsApp của bạn",
+      "description": "Xem trạng thái tài khoản WhatsApp, giới hạn nhắn tin và chất lượng. Cập nhật cài đặt hoặc khắc phục sự cố nếu cần",
+      "goToBusinessManager": "Mở Meta Business Manager",
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Số điện thoại hiển thị",
+          "tooltip": "Số điện thoại hiển thị với khách hàng khi họ nhắn tin cho doanh nghiệp của bạn."
+        },
+        "businessName": {
+          "label": "Tên doanh nghiệp",
+          "tooltip": "Tên doanh nghiệp WhatsApp đã được xác minh."
+        },
+        "displayNameStatus": {
+          "label": "Trạng thái tên hiển thị",
+          "tooltip": "Trạng thái phê duyệt tên doanh nghiệp WhatsApp."
+        },
+        "qualityRating": {
+          "label": "Đánh giá chất lượng",
+          "tooltip": "Đánh giá chất lượng dựa trên phản hồi của khách hàng trong 7 ngày qua."
+        },
+        "messagingLimitTier": {
+          "label": "Cấp độ giới hạn nhắn tin",
+          "tooltip": "Số khách hàng tối đa doanh nghiệp có thể nhắn tin trong 24 giờ."
+        },
+        "accountMode": {
+          "label": "Chế độ tài khoản",
+          "tooltip": "Tài khoản WhatsApp Business đang ở chế độ hoạt động hay sandbox."
+        },
+        "marketingMessages": {
+          "label": "Marketing Messages (MM Lite)",
+          "tooltip": "Trạng thái onboarding của tài khoản WhatsApp Business vào Marketing Messages Lite API.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Không đủ điều kiện: mô hình OBO",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Không đủ điều kiện: không hoạt động hoặc bị hạn chế",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Không đủ điều kiện: quốc gia chưa hỗ trợ",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Không đủ điều kiện: đang dùng WhatsApp Business app",
+            "ELIGIBLE": "Đủ điều kiện",
+            "PENDING_VALID_PAYMENT_METHOD": "Đang chờ phương thức thanh toán hợp lệ",
+            "PENDING_INTERNAL_SETUP": "Đang chờ thiết lập nội bộ",
+            "ONBOARDED": "Đã onboarding"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Tài khoản WhatsApp Business sử dụng mô hình OBO, mô hình này chưa được hỗ trợ. Bạn cần chuyển quyền sở hữu WABA cho khách hàng trước hoặc onboarding bằng Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Tài khoản WhatsApp Business không hoạt động hoặc bị hạn chế gửi tin nhắn do vấn đề thực thi chính sách.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Tài khoản WhatsApp Business nằm ở khu vực chưa hỗ trợ MM Lite API.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Số điện thoại WhatsApp Business đang được sử dụng trong ứng dụng WhatsApp Business.",
+            "ELIGIBLE": "Tài khoản WhatsApp Business đủ điều kiện onboarding và sử dụng MM Lite API.",
+            "PENDING_VALID_PAYMENT_METHOD": "Tài khoản WhatsApp Business cần thiết lập phương thức thanh toán hợp lệ.",
+            "PENDING_INTERNAL_SETUP": "Tài khoản WhatsApp Business đang trong quá trình cấu hình để sử dụng MM Lite API và khách hàng doanh nghiệp hoặc đối tác không cần thực hiện thêm hành động. Quá trình thiết lập tự động dự kiến mất dưới mười phút. Hãy đăng ký webhook account_update và lắng nghe sự kiện AD_ACCOUNT_LINKED. Gửi ticket hỗ trợ nếu quá trình thiết lập mất hơn mười phút và bạn chưa nhận được webhook.",
+            "ONBOARDED": "Tài khoản WhatsApp Business đã onboarding thành công và sẵn sàng sử dụng MM Lite API."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Cấu hình Webhook",
+          "tooltip": "Trạng thái webhook nhận sự kiện WhatsApp.",
+          "configured": "Đã cấu hình webhook thành công",
+          "notConfigured": "Webhook chưa được cấu hình"
+        },
+        "phoneNumberHealth": {
+          "label": "Tình trạng số điện thoại",
+          "tooltip": "Số điện thoại có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+          "headline": "Phone Number - {status}"
+        },
+        "wabaHealth": {
+          "label": "Tình trạng tài khoản WhatsApp Business",
+          "tooltip": "Tài khoản WhatsApp Business có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+          "headline": "WhatsApp Business Account (WABA ID: {id}) - {status}",
+          "headlineNoId": "WhatsApp Business Account - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 khách hàng / 24 giờ",
+        "TIER_250": "250 khách hàng / 24 giờ",
+        "TIER_1K": "1.000 khách hàng / 24 giờ",
+        "TIER_10K": "10.000 khách hàng / 24 giờ",
+        "TIER_100K": "100.000 khách hàng / 24 giờ",
+        "TIER_UNLIMITED": "Không giới hạn khách hàng / 24 giờ",
+        "UNKNOWN": "Không xác định"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Đã phê duyệt",
+        "AVAILABLE_WITHOUT_REVIEW": "Khả dụng không cần duyệt",
+        "DECLINED": "Bị từ chối",
+        "EXPIRED": "Đã hết hạn",
+        "NONE": "Không có",
+        "PENDING_REVIEW": "Đang chờ duyệt"
+      },
+      "accountMode": {
+        "LIVE": "Live",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "AVAILABLE",
+        "LIMITED": "LIMITED",
+        "BLOCKED": "BLOCKED",
+        "UNKNOWN": "UNKNOWN"
+      },
+      "health": {
+        "label": "Trạng thái doanh nghiệp",
+        "tooltip": "Tổng quan về tình trạng tài khoản WhatsApp và khả năng nhắn tin.",
+        "blockedMessage": "Số điện thoại của bạn đã bị chặn gửi tin nhắn.",
+        "problem": "Vấn đề:",
+        "possibleSolution": "Giải pháp khả thi:",
+        "noIssues": "Không phát hiện vấn đề",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "{type} có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Số điện thoại",
+          "WABA": "Tài khoản WhatsApp Business",
+          "BUSINESS": "Doanh nghiệp",
+          "MESSAGE_TEMPLATE": "Mẫu tin nhắn",
+          "APP": "Ứng dụng"
+        }
+      }
     },
     "templateFooter": {
       "label": "Chân trang mẫu"
