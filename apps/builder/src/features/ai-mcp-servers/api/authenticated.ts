@@ -1,7 +1,7 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { normalizeError } from "universal-error-normalizer"
 import z from "zod"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { validateAIMcpServer } from "../actions/validate-ai-mcp-server.action"

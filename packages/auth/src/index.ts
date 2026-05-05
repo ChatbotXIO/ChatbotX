@@ -1,2 +1,2 @@
-export { createAuth } from "./server.js"
-export type { AuthConfig, Auth } from "./server.js"
+export type { Auth, AuthConfig } from "./server"
+export { createAuth } from "./server"

@@ -1,11 +1,11 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 

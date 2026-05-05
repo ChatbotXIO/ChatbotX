@@ -15,11 +15,12 @@
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.37",
     "@better-auth/stripe": "^1.6.9",
-    "@chatbotx.io/auth": "workspace:*",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",
+    "@chatbotx.io/auth": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
+    "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/event-bus": "workspace:*",

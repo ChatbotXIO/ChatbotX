@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import { folderTypes } from "@chatbotx.io/database/partials"
 import { webhookModel } from "@chatbotx.io/database/schema"
@@ -11,7 +12,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { MAX_WEBHOOKS_PER_CHATBOT } from "../constants"
 import {

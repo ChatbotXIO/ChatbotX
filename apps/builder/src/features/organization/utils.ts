@@ -1,6 +1,6 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { env } from "@/env"
-import { ChatbotXException } from "../../lib/errors/exception"
 
 export const getOrganizationLogoUrl = (organization: OrganizationModel) =>
   organization.logo

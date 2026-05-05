@@ -1,12 +1,12 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationZaloModel } from "@chatbotx.io/database/schema"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { refreshAccessToken } from "@chatbotx.io/integration-zalo"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { calculateExpiresAt } from "../../../../../../integrations/zalo/src/handlers/callback"

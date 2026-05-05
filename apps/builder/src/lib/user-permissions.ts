@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   workspaceMemberModel,
@@ -5,7 +6,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { WorkspaceMemberModel } from "@chatbotx.io/database/types"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
-import { notFoundException } from "./errors/exception"
 
 export const findWorkspaceOrFail = async (
   userId: string | null | undefined,

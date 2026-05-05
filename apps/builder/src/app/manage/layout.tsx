@@ -1,7 +1,7 @@
+import { organizationService } from "@chatbotx.io/business"
 import { organizationMemberRoles } from "@chatbotx.io/database/partials"
 import { notFound } from "next/navigation"
 import { ManageLayout } from "@/features/manage/manage-layout"
-import { organizationService } from "@/features/organization/services"
 import { organizationMemberService } from "@/features/organization-members/services"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "@/lib/domain"

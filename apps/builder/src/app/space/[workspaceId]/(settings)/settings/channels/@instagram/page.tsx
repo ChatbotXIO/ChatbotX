@@ -1,8 +1,9 @@
+import { organizationService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InstagramManage } from "@/features/integration-instagram/components/instagram-manage"
 import { listIntegrationInstagrams } from "@/features/integration-instagram/queries"
-import { organizationService } from "@/features/organization/services"
+
 import { workspaceService } from "@/features/workspaces/workspace-service"
 
 export default async function SettingChannelInstagramPage(props: {

@@ -1,6 +1,6 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { ModelNotfoundException } from "@chatbotx.io/database/errors"
 import { ORPCError, onError } from "@orpc/server"
-import { ChatbotXException } from "./lib/errors/exception"
 import { logger } from "./lib/log"
 import { authMiddleware } from "./middlewares/auth"
 import { base } from "./middlewares/context"

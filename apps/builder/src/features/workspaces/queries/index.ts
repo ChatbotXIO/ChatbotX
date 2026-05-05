@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import {
@@ -12,7 +13,6 @@ import type {
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
-import { notFoundException } from "@/lib/errors/exception"
 
 export const findWorkspaceOrFail = async (
   where: Record<string, unknown>,

@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
   isDatabaseError,
@@ -18,7 +19,6 @@ import { createSimpleWorkspace } from "@/features/workspaces/actions/create-work
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {

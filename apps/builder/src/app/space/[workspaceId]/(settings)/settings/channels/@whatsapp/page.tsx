@@ -1,8 +1,9 @@
+import { organizationService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
-import { organizationService } from "@/features/organization/services"
+
 import { workspaceService } from "@/features/workspaces/workspace-service"
 
 export default async function SettingChannelWhatsappPage(props: {

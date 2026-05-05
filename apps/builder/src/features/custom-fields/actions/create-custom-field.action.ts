@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
@@ -9,7 +10,6 @@ import {
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,

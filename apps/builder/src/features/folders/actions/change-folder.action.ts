@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { folderTypes, rootFolderId } from "@chatbotx.io/database/partials"
 import {
@@ -13,7 +14,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { changeFolderRequest } from "../schema/action"
 

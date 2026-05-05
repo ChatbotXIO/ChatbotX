@@ -1,5 +1,6 @@
 "use server"
 
+import { organizationService } from "@chatbotx.io/business"
 import {
   type GiphySettingsSchema,
   giphySettingsSchema,
@@ -7,7 +8,7 @@ import {
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import ky from "ky"
 import { returnValidationErrors } from "next-safe-action"
-import { organizationService } from "@/features/organization/services"
+
 import { logger } from "@/lib/log"
 import { organizationActionClient } from "@/lib/safe-action"
 

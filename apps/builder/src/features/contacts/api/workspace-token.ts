@@ -1,10 +1,10 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { createMessage } from "@/features/messages/actions/create-message.action"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { publicListTagsResponse } from "@/features/tags/schema/query"
-import { notFoundException } from "@/lib/errors/exception"
 import { workspaceTokenAuthAPI } from "@/orpc"
 import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import {

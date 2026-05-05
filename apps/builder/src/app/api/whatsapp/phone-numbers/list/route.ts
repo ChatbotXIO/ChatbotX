@@ -1,10 +1,10 @@
+import { organizationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { type NextRequest, NextResponse } from "next/server"
 import { listPhoneNumbersRequest } from "@/features/integration-whatsapp/schemas"
-import { organizationService } from "@/features/organization/services"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 
 export async function POST(request: NextRequest) {

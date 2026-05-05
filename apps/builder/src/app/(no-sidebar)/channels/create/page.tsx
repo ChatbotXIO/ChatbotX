@@ -1,3 +1,4 @@
+import { organizationService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
@@ -7,7 +8,6 @@ import { TelegramConnect } from "@/features/integration-telegram/components/tele
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
-import { organizationService } from "@/features/organization/services"
 import { getDomainFromHeader } from "@/lib/domain"
 
 export const dynamic = "force-dynamic"

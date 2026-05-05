@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type InstagramConversationStarter,
@@ -29,7 +30,6 @@ import {
 } from "@/features/common/schemas"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
 import {

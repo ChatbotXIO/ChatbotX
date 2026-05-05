@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type {
   UserModel,
@@ -7,7 +8,6 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
-import { ChatbotXException } from "../errors/exception"
 import { auth } from "./auth"
 
 export const getCurrentUserId = async (): Promise<string | null> => {

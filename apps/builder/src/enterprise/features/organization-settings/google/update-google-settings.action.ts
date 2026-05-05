@@ -1,11 +1,12 @@
 "use server"
 
+import { organizationService } from "@chatbotx.io/business"
 import {
   type GoogleSettingsSchema,
   googleSettingsSchema,
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
-import { organizationService } from "@/features/organization/services"
+
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateGoogleSettingsAction = organizationActionClient

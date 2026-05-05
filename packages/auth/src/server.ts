@@ -1,3 +1,4 @@
+import { organizationService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
@@ -19,10 +20,6 @@ import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 export type AuthConfig = {
   brandName?: string
   brandUrl: string
-  google?: {
-    clientId: string
-    clientSecret: string
-  }
 }
 
 export function createAuth(config: AuthConfig) {
@@ -39,7 +36,33 @@ export function createAuth(config: AuthConfig) {
       },
     }),
     socialProviders: {
-      google: config.google,
+      google: async () => {
+        // TODO: support white-labeling
+        // TODO: ignore if the organization is a community
+        const organization = await organizationService.find({ where: {} })
+        if (!organization) {
+          return await {
+            enabled: false,
+            clientId: "",
+            clientSecret: "",
+          }
+        }
+
+        const googleSettings = organization.settings.google
+        if (!googleSettings) {
+          return await {
+            enabled: false,
+            clientId: "",
+            clientSecret: "",
+          }
+        }
+
+        return await {
+          enabled: true,
+          clientId: googleSettings.clientId,
+          clientSecret: googleSettings.clientSecret,
+        }
+      },
     },
     emailAndPassword: {
       enabled: true,

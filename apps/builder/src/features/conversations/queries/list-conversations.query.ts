@@ -1,5 +1,6 @@
 "use server"
 
+import { notFoundException } from "@chatbotx.io/business/errors"
 import {
   and,
   db,
@@ -24,7 +25,6 @@ import { parseBigIntId } from "@chatbotx.io/utils"
 import { groupBy } from "remeda"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { notFoundException } from "@/lib/errors/exception"
 import type {
   FindConversationRequest,
   FindConversationResponse,

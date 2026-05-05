@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -29,7 +30,6 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,

@@ -178,7 +178,6 @@ export class SequenceAnalyticsService extends BaseService {
   }
 
   async onFailed(payloads: MessageFailedPayload[]) {
-    console.log({ payloads: JSON.stringify(payloads, null, 2) })
     const sequenceSchedulePayloads = payloads.filter(
       (p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
     )

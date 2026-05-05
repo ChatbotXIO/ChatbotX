@@ -1,0 +1,22 @@
+{
+  "name": "@chatbotx.io/business",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./errors": "./src/errors.ts"
+  },
+  "dependencies": {
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
+    "next-intl": "^4.11.0"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "^5"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  }
+}

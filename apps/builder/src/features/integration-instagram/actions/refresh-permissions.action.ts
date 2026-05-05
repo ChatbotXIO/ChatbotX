@@ -1,12 +1,12 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import { exchangeLongLivedToken } from "@chatbotx.io/integration-instagram"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 

@@ -1,12 +1,12 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 

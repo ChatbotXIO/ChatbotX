@@ -1,5 +1,7 @@
 "use server"
 
+import { organizationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
@@ -20,11 +22,9 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
-import { organizationService } from "@/features/organization/services"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schema/action"

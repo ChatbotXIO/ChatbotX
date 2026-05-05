@@ -1,6 +1,6 @@
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { ChatbotXException } from "./exception"
 
 export function serverErrorHandler(error: unknown) {
   if (error instanceof z.ZodError) {

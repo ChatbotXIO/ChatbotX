@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type MessengerPersistentMenu,
@@ -24,7 +25,6 @@ import type {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"

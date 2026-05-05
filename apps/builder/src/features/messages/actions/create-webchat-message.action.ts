@@ -2,6 +2,7 @@
 
 import { contactTrackingService } from "@chatbotx.io/analytics"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
   eq,
@@ -37,7 +38,6 @@ import {
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { ensureConversationActive } from "@/features/conversations/queries/bot-state"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,

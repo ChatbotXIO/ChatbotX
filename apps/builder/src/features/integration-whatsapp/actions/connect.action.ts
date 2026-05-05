@@ -1,5 +1,7 @@
 "use server"
 
+import { organizationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
@@ -18,11 +20,9 @@ import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integ
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { organizationService } from "@/features/organization/services"
 import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader, getOriginUrlFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 import { type ConnectWhatsappSchema, connectWhatsappSchema } from "../schemas"
 

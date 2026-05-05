@@ -1,6 +1,6 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { notFoundException } from "@/lib/errors/exception"
 import {
   posibleErrorsOnCreatingResource,
   posibleErrorsOnDeletingResource,

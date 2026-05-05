@@ -9,6 +9,7 @@
     "./client": "./src/client.ts"
   },
   "dependencies": {
+    "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",

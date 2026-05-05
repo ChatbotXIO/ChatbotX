@@ -1,8 +1,9 @@
+import { organizationService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { ManageOrganizationSettings } from "@/enterprise/features/organization-settings/manage-organization-settings"
-import { organizationService } from "@/features/organization/services"
+
 import { getDomainFromHeader } from "@/lib/domain"
 
 export default async function ManageIntegrationsPage() {

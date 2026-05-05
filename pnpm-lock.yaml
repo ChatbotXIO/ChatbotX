@@ -63,6 +63,9 @@ importers:
       '@chatbotx.io/automated-response':
         specifier: workspace:*
         version: link:../../packages/automated-response
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../../packages/business
       '@chatbotx.io/clickhouse':
         specifier: workspace:*
         version: link:../../packages/clickhouse
@@ -1149,6 +1152,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
@@ -1201,6 +1207,28 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
+    devDependencies:
+      '@chatbotx.io/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.12.2
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/business:
+    dependencies:
+      '@chatbotx.io/database':
+        specifier: workspace:*
+        version: link:../database
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
+      next-intl:
+        specifier: ^4.11.0
+        version: 4.11.0(next@16.2.4(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
     devDependencies:
       '@chatbotx.io/typescript-config':
         specifier: workspace:*

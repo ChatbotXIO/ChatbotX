@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { flowModel } from "@chatbotx.io/database/schema"
@@ -6,7 +7,6 @@ import {
   parsePagination,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { notFoundException } from "@/lib/errors/exception"
 import { filterFlowsByTemplateIds } from "../actions/filter-flow-action"
 import type {
   FindFlowParams,

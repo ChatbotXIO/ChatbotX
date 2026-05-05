@@ -1,5 +1,6 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   invitationModel,
@@ -8,7 +9,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { authActionClient } from "@/lib/safe-action"
 
 export const acceptInvitationAction = authActionClient

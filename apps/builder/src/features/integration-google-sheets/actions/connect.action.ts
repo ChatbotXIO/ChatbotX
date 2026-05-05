@@ -1,13 +1,13 @@
 "use server"
 
+import { organizationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { organizationService } from "@/features/organization/services"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,

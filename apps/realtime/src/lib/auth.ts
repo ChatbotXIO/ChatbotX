@@ -39,8 +39,6 @@ export const getAuthSession = async (
     origin,
   ).toString()
 
-  console.log("verificationUrl", verificationUrl)
-
   try {
     const session = await ky
       .post(verificationUrl, {
