@@ -1,9 +1,9 @@
 "use client"
 
 import {
-  type MessengerSettingsSchema,
-  messengerSettingsSchema,
   type OrganizationSettings,
+  type StripeSettingsSchema,
+  stripeSettingsSchema,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -22,45 +22,98 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SiMessenger, SiMessengerHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
+import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { updateMessengerSettingAction } from "./update-messenger-settings.action"
+import { useCopyToClipboard } from "usehooks-ts"
+import { updateStripeSettingsAction } from "./update-stripe-settings.action"
 
-export function MessengerSettings({
+export function StripeSettings({
   config,
 }: {
-  config: OrganizationSettings["messenger"]
+  config: OrganizationSettings["stripe"]
 }) {
+  const t = useTranslations()
+  const [_, copy] = useCopyToClipboard()
+  const [webhookUrl, setWebhookUrl] = useState<string>("")
+  useEffect(() => {
+    setWebhookUrl(
+      new URL(
+        "/integrations/stripe/webhook",
+        window.location.origin,
+      ).toString(),
+    )
+  }, [])
+
+  const handleCopy = (text: string) => () => {
+    copy(text)
+      .then(() => {
+        toast.success("Copied to clipboard")
+      })
+      .catch((error) => {
+        console.error("Failed to copy!", error)
+      })
+  }
+
   return (
-    <Card className="w-96">
+    <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
-          <SiMessenger className="size-6" fill={SiMessengerHex} />
-          <span>Messenger</span>
+          <span className="font-semibold text-lg">Stripe</span>
         </CardTitle>
         <CardAction>
-          <EditMessengerSettingsDialog config={config ?? null} />
+          <EditStripeSettingsDialog config={config ?? null} />
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2">
-          <span className="font-bold">Client ID:</span>
-          <span>{config?.clientId ?? "N/A"}</span>
-        </div>
+        {config?.publishableKey ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <div className="font-bold">
+                {t("fields.publishableKey.label")}:
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">••••••••</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">{t("fields.secretKey.label")}:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">••••••••</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">Webhook URL:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{webhookUrl}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(webhookUrl)}
+                  />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("messages.needToAddSettings")}
+          </p>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-export function EditMessengerSettingsDialog({
+export function EditStripeSettingsDialog({
   config,
 }: {
-  config: MessengerSettingsSchema | null
+  config: StripeSettingsSchema | null
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -75,10 +128,10 @@ export function EditMessengerSettingsDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>
-          {t("messages.editFeature", { feature: "Messenger" })}
+          {t("messages.editFeature", { feature: "Stripe" })}
         </DialogTitle>
 
-        <EditMessengerSettingsForm
+        <EditStripeSettingsForm
           config={config}
           onClose={() => {
             setOpen(false)
@@ -90,19 +143,19 @@ export function EditMessengerSettingsDialog({
   )
 }
 
-export function EditMessengerSettingsForm({
+export function EditStripeSettingsForm({
   config,
   onClose,
 }: {
-  config: MessengerSettingsSchema | null
+  config: StripeSettingsSchema | null
   onClose?: () => void
 }) {
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateMessengerSettingAction,
-      zodResolver(messengerSettingsSchema),
+      updateStripeSettingsAction,
+      zodResolver(stripeSettingsSchema),
       {
         actionProps: {
           onSuccess: () => {
@@ -117,9 +170,8 @@ export function EditMessengerSettingsForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            clientId: config?.clientId ?? "",
-            clientSecret: config?.clientSecret ?? "",
-            version: config?.version ?? "v25.0",
+            publishableKey: config?.publishableKey ?? "",
+            secretKey: config?.secretKey ?? "",
             verifyToken: config?.verifyToken ?? "",
           },
         },
@@ -130,22 +182,16 @@ export function EditMessengerSettingsForm({
     <Form {...form}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmitWithAction}>
         <InputField
-          label={t("fields.clientId.label")}
-          name="clientId"
+          label={t("fields.publishableKey.label")}
+          name="publishableKey"
           required
         />
 
         <InputField
-          label={t("fields.clientSecret.label")}
-          name="clientSecret"
+          label={t("fields.secretKey.label")}
+          name="secretKey"
           required
           type="password"
-        />
-
-        <InputField
-          label={t("fields.apiVersion.label")}
-          name="version"
-          required
         />
 
         <InputField

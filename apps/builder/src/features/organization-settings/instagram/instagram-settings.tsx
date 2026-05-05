@@ -24,11 +24,12 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SiInstagram, SiInstagramHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
+import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useCopyToClipboard } from "usehooks-ts"
 import { updateInstagramSettingAction } from "./update-instagram-settings.action"
 
 export function InstagramSettings({
@@ -36,8 +37,37 @@ export function InstagramSettings({
 }: {
   config: OrganizationSettings["instagram"]
 }) {
+  const t = useTranslations()
+  const [_, copy] = useCopyToClipboard()
+  const [webhookUrl, setWebhookUrl] = useState<string>("")
+  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
+  useEffect(() => {
+    setWebhookUrl(
+      new URL(
+        "/integrations/instagram/webhook",
+        window.location.origin,
+      ).toString(),
+    )
+    setAuthCallbackUrl(
+      new URL(
+        "/integrations/instagram/callback",
+        window.location.origin,
+      ).toString(),
+    )
+  }, [])
+
+  const handleCopy = (text: string) => () => {
+    copy(text)
+      .then(() => {
+        toast.success("Copied to clipboard")
+      })
+      .catch((error) => {
+        console.error("Failed to copy!", error)
+      })
+  }
+
   return (
-    <Card className="w-96">
+    <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
           <SiInstagram className="size-6" fill={SiInstagramHex} />
@@ -48,10 +78,65 @@ export function InstagramSettings({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2">
-          <span className="font-bold">Client ID:</span>
-          <span>{config?.clientId ?? "N/A"}</span>
-        </div>
+        {config?.clientId ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <div className="font-bold">App ID:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{config.clientId}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(config.clientId)}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">Auth Callback URL:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{authCallbackUrl}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(authCallbackUrl)}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">Webhook URL:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{webhookUrl}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(webhookUrl)}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">Webhook Verify Token:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{config.verifyToken}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(config.verifyToken)}
+                  />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("messages.needToAddSettings")}
+          </p>
+        )}
       </CardContent>
     </Card>
   )
@@ -129,28 +214,24 @@ export function EditInstagramSettingsForm({
   return (
     <Form {...form}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmitWithAction}>
-        <InputField
-          label={t("fields.clientId.label")}
-          name="clientId"
-          required
-        />
+        <InputField label={t("fields.appId.label")} name="clientId" required />
 
         <InputField
-          label={t("fields.clientSecret.label")}
+          label={t("fields.appSecret.label")}
           name="clientSecret"
           required
           type="password"
         />
 
         <InputField
-          label={t("fields.apiVersion.label")}
-          name="version"
+          label={t("fields.webhookVerifyToken.label")}
+          name="verifyToken"
           required
         />
 
         <InputField
-          label={t("fields.verifyToken.label")}
-          name="verifyToken"
+          label={t("fields.apiVersion.label")}
+          name="version"
           required
         />
 

@@ -1,9 +1,9 @@
 "use client"
 
 import {
+  type GoogleSettingsSchema,
+  googleSettingsSchema,
   type OrganizationSettings,
-  type StripeSettingsSchema,
-  stripeSettingsSchema,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -22,53 +22,97 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { SiGoogle, SiGoogleHex } from "@icons-pack/react-simple-icons"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
+import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { updateStripeSettingsAction } from "./update-stripe-settings.action"
+import { useCopyToClipboard } from "usehooks-ts"
+import { updateGoogleSettingsAction } from "./update-google-settings.action"
 
-export function StripeSettings({
+export function GoogleSettings({
   config,
 }: {
-  config: OrganizationSettings["stripe"]
+  config: OrganizationSettings["google"]
 }) {
   const t = useTranslations()
+  const [_, copy] = useCopyToClipboard()
+  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
+  useEffect(() => {
+    setAuthCallbackUrl(
+      new URL(
+        "/integrations/google/callback",
+        window.location.origin,
+      ).toString(),
+    )
+  }, [])
+
+  const handleCopy = (text: string) => () => {
+    copy(text)
+      .then(() => {
+        toast.success("Copied to clipboard")
+      })
+      .catch((error) => {
+        console.error("Failed to copy!", error)
+      })
+  }
 
   return (
-    <Card className="w-96">
+    <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
-          <span className="font-semibold text-lg">Stripe</span>
+          <SiGoogle className="size-6" fill={SiGoogleHex} />
+          <span>Google</span>
         </CardTitle>
         <CardAction>
-          <EditStripeSettingsDialog config={config ?? null} />
+          <EditGoogleSettingsDialog config={config ?? null} />
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <span className="font-bold">
-              {t("fields.publishableKey.label")}:
-            </span>
-            <span>{config?.publishableKey ? "********" : "N/A"}</span>
+        {config?.clientId ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <div className="font-bold">Client ID:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{config.clientId}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(config.clientId)}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">Auth Callback URL:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{authCallbackUrl}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={handleCopy(authCallbackUrl)}
+                  />
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <span className="font-bold">{t("fields.secretKey.label")}:</span>
-            <span>{config?.secretKey ? "********" : "N/A"}</span>
-          </div>
-        </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("messages.needToAddSettings")}
+          </p>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-export function EditStripeSettingsDialog({
+export function EditGoogleSettingsDialog({
   config,
 }: {
-  config: StripeSettingsSchema | null
+  config: GoogleSettingsSchema | null
 }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -83,10 +127,10 @@ export function EditStripeSettingsDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogTitle>
-          {t("messages.editFeature", { feature: "Stripe" })}
+          {t("messages.editFeature", { feature: "Google" })}
         </DialogTitle>
 
-        <EditStripeSettingsForm
+        <GoogleEditSettingsForm
           config={config}
           onClose={() => {
             setOpen(false)
@@ -98,19 +142,19 @@ export function EditStripeSettingsDialog({
   )
 }
 
-export function EditStripeSettingsForm({
+export function GoogleEditSettingsForm({
   config,
   onClose,
 }: {
-  config: StripeSettingsSchema | null
+  config: GoogleSettingsSchema | null
   onClose?: () => void
 }) {
   const t = useTranslations()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateStripeSettingsAction,
-      zodResolver(stripeSettingsSchema),
+      updateGoogleSettingsAction,
+      zodResolver(googleSettingsSchema),
       {
         actionProps: {
           onSuccess: () => {
@@ -125,8 +169,8 @@ export function EditStripeSettingsForm({
         formProps: {
           mode: "onChange",
           defaultValues: {
-            publishableKey: config?.publishableKey ?? "",
-            secretKey: config?.secretKey ?? "",
+            clientId: config?.clientId ?? "",
+            clientSecret: config?.clientSecret ?? "",
             verifyToken: config?.verifyToken ?? "",
           },
         },
@@ -137,14 +181,14 @@ export function EditStripeSettingsForm({
     <Form {...form}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmitWithAction}>
         <InputField
-          label={t("fields.publishableKey.label")}
-          name="publishableKey"
+          label={t("fields.clientId.label")}
+          name="clientId"
           required
         />
 
         <InputField
-          label={t("fields.secretKey.label")}
-          name="secretKey"
+          label={t("fields.clientSecret.label")}
+          name="clientSecret"
           required
           type="password"
         />

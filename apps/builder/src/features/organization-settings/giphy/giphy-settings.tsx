@@ -38,7 +38,7 @@ export function GiphySettings({
   const t = useTranslations()
 
   return (
-    <Card className="w-96">
+    <Card>
       <CardHeader className="items-center justify-center">
         <CardTitle className="flex items-center gap-2">
           <span className="font-semibold text-lg">GIPHY</span>
@@ -48,10 +48,20 @@ export function GiphySettings({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2">
-          <span className="font-bold">{t("fields.apiKey.label")}:</span>
-          <span>{config?.apiKey ? "********" : "N/A"}</span>
-        </div>
+        {config?.apiKey ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <div className="font-bold">{t("fields.apiKey.label")}:</div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">••••••••</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {t("messages.needToAddSettings")}
+          </p>
+        )}
       </CardContent>
     </Card>
   )

@@ -20,7 +20,7 @@ export function ManageOrganizationSettings({
   )
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <MessengerSettings config={organizationSetting.messenger} />
       <InstagramSettings config={organizationSetting.instagram} />
       <GoogleSettings config={organizationSetting.google} />

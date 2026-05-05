@@ -1158,6 +1158,15 @@
       "label": "Magic Link",
       "nameHint": "Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only.",
       "urlHint": "Use double braces in the URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come from the tracking link query string."
+    },
+    "appId": {
+      "label": "App ID"
+    },
+    "appSecret": {
+      "label": "App Secret"
+    },
+    "webhookVerifyToken": {
+      "label": "Webhook Verify Token"
     }
   },
   "flows": {
@@ -1540,7 +1549,8 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền"
+    "refreshPermissions": "Làm mới quyền",
+    "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác."
   },
   "telegram": {
     "description": "Tích hợp này cho phép bạn tạo bot Telegram.",
