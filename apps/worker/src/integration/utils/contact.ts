@@ -40,6 +40,22 @@ export async function getIntegrationContext(props: {
   }
 }
 
+export async function readCustomFieldValue(props: {
+  contactId: string
+  customFieldId: string
+}): Promise<string | null> {
+  const { contactId, customFieldId } = props
+
+  const existing = await db.query.contactCustomFieldModel.findFirst({
+    where: {
+      contactId,
+      customFieldId,
+    },
+  })
+
+  return existing?.value ?? null
+}
+
 export async function saveResultToCustomField(props: {
   contactId: string
   customFieldId: string

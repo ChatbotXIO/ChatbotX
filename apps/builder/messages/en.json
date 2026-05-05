@@ -601,6 +601,7 @@
     "flows": {
       "aiGenerateText": "{aiName}: Generate Text",
       "aiGenerateImage": "{aiName}: Generate Image",
+      "aiEditImage": "{aiName}: Edit Image",
       "label": "Flows",
       "placeholder": "Select flow"
     },
@@ -1004,6 +1005,11 @@
     "inputFieldId": {
       "label": "Input Custom Field"
     },
+    "aiEditImage": {
+      "inputFieldId": {
+        "label": "Image"
+      }
+    },
     "outputFieldId": {
       "label": "Save result to a custom field"
     },
@@ -1173,6 +1179,9 @@
     "aiGenerateImage": {
       "label": "{name}: AI Generate Image"
     },
+    "aiEditImage": {
+      "label": "{name}: AI Edit Image"
+    },
     "actions": {
       "addContactNotes": "Add Contact Notes",
       "addContactTag": "Add Contact Tag",
@@ -1249,7 +1258,8 @@
       "sequenceActions": "Sequence Actions",
       "subscribeSequence": "Subscribe Sequence",
       "unsubscribeSequence": "Unsubscribe Sequence",
-      "splitTraffic": "Split Traffic"
+      "splitTraffic": "Split Traffic",
+      "aiEditImage": "AI Edit Image"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",

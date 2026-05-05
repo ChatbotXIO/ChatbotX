@@ -1,5 +1,6 @@
 import { addContactNotesStepSchema } from "./steps/add-contact-notes"
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
+import { aiEditImageSchema } from "./steps/ai-edit-image"
 import { aiGenerateImageSchema } from "./steps/ai-generate-image"
 import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
@@ -87,7 +88,7 @@ const flowSteps = [
   startExternalNodeStepSchema,
 ]
 
-const aiSteps = [aiGenerateTextSchema, aiGenerateImageSchema]
+const aiSteps = [aiGenerateTextSchema, aiGenerateImageSchema, aiEditImageSchema]
 
 const googleSheetStep = [
   spreadsheetGetRowSchema,
