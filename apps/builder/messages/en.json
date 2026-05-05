@@ -1494,6 +1494,15 @@
       "label": "Icebreakers"
     },
     "manualConnect": "Manual connect using System User Access token.",
+    "manualOnboarding": {
+      "title": "Your Whatsapp inbox is ready!",
+      "description": "Configure the webhook URL and verification token in your Meta App. Use the values below.",
+      "webhookUrl": "Webhook URL",
+      "verifyToken": "Webhook verification token",
+      "qrCodeHint": "Scan the QR code to open the webhook URL",
+      "moreSettings": "More settings",
+      "goToInbox": "Take me there"
+    },
     "marketingMessageLite": "Marketing Message Lite",
     "messageTemplate": {
       "carouselImage": {

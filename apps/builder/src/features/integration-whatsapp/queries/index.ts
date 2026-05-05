@@ -1,6 +1,7 @@
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import type { IntegrationWhatsappResource } from "../schemas"
 
@@ -33,3 +34,31 @@ export const findIntegrationWhatsapp = async (
     where: props,
     message: "Whatsapp integration not found",
   })
+
+export const findIntegrationWhatsappById = async (
+  id: IntegrationWhatsappModel["id"],
+): Promise<IntegrationWhatsappModel | null> => {
+  const integration = await db.query.integrationWhatsappModel.findFirst({
+    where: { id },
+  })
+
+  return integration ?? null
+}
+
+export const markWhatsappWebhookVerified = async (
+  id: IntegrationWhatsappModel["id"],
+  current: WhatsappAuthValue,
+): Promise<void> => {
+  const updatedAuth: WhatsappAuthValue = {
+    ...current,
+    metadata: {
+      ...current.metadata,
+      webhookVerifiedAt: new Date().toISOString(),
+    },
+  }
+
+  await db
+    .update(integrationWhatsappModel)
+    .set({ auth: updatedAuth })
+    .where(eq(integrationWhatsappModel.id, id))
+}

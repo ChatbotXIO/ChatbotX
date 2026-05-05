@@ -14,6 +14,7 @@ import type { ListFlowsResponse, ListMessageTemplatesReponse } from "./api/waba"
 
 export type WhatsappConfig = BaseConfig & {
   verifyToken?: string
+  clientSecret?: string
 }
 
 export type WhatsappAuthValue = Oauth2AuthValue & {
@@ -22,6 +23,9 @@ export type WhatsappAuthValue = Oauth2AuthValue & {
     businessId: string
     phoneNumber: WhatsappPhoneNumber
     webhookUrl: string
+    isManual?: boolean
+    webhookVerifiedAt?: string
+    subscribeOverrideOk?: boolean
   }
 }
 

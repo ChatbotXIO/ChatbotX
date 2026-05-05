@@ -32,7 +32,8 @@ import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 import { connectWhatsappAction } from "../actions/connect.action"
-import { connectWhatsappSchema } from "../schemas"
+import { connectWhatsappSchema, type ManualOnboardingResult } from "../schemas"
+import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
 const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
@@ -104,6 +105,8 @@ export default function WhatsappCreate({
   const t = useTranslations()
   const { visibility, updateVisibility } = useFormVisibility()
   const router = useRouter()
+  const [manualResult, setManualResult] =
+    useState<ManualOnboardingResult | null>(null)
 
   // Form setup
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -118,6 +121,10 @@ export default function WhatsappCreate({
         },
         onSuccess: ({ data }) => {
           toast.success(t("messages.connectSuccess", { feature: "Whatsapp" }))
+          if (data.type === "manualResult") {
+            setManualResult(data.data)
+            return
+          }
           router.push(data.redirectUrl)
         },
       },
@@ -128,7 +135,7 @@ export default function WhatsappCreate({
           connectExisting: false,
           transferPhoneNumber: false,
           manualConnect: false,
-          marketingMessageLite: false,
+          marketingMessageLite: true,
           workspaceId: workspaceId ?? "",
 
           // Main fields
@@ -210,7 +217,7 @@ export default function WhatsappCreate({
       updateVisibility({
         connectExisting: false,
         manualConnect: false,
-        marketingMessageLite: false,
+        marketingMessageLite: true,
       })
       setValue(FORM_FIELDS.MANUAL_CONNECT, false)
       setValue(FORM_FIELDS.MARKETING_MESSAGE_LITE, false)
@@ -233,19 +240,23 @@ export default function WhatsappCreate({
         <CardDescription />
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-            {watchManualConnect ? (
-              <ManualConnectSection watchManualConnect={watchManualConnect} />
-            ) : (
-              <SdkConnectSection
-                settings={settings}
-                visibility={visibility}
-                watchManualConnect={watchManualConnect}
-              />
-            )}
-          </form>
-        </Form>
+        {manualResult ? (
+          <WhatsappOnboardingResult result={manualResult} />
+        ) : (
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+              {watchManualConnect ? (
+                <ManualConnectSection watchManualConnect={watchManualConnect} />
+              ) : (
+                <SdkConnectSection
+                  settings={settings}
+                  visibility={visibility}
+                  watchManualConnect={watchManualConnect}
+                />
+              )}
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   )
@@ -293,15 +304,6 @@ function SdkConnectSection({
 
       {visibility.manualConnect && (
         <ManualConnectSection watchManualConnect={watchManualConnect} />
-      )}
-
-      {visibility.marketingMessageLite && (
-        <SwitchField
-          formItemClassName={switchFieldClassName}
-          label={t("whatsapp.marketingMessageLite")}
-          name={FORM_FIELDS.MARKETING_MESSAGE_LITE}
-          required
-        />
       )}
 
       <div className="flex items-center justify-end gap-2">

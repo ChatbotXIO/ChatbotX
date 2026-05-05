@@ -3,18 +3,34 @@ import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
 
-export async function subscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
+export async function subscribeWebhook({
+  auth,
+  overrideCallbackUrl = false,
+}: {
+  auth: WhatsappAuthValue
+  overrideCallbackUrl?: boolean
+}) {
   const { version = DEFAULT_API_VERSION } = auth
+  const url = `${API_URL}/${version}/${auth.metadata.wabaId}/subscribed_apps`
 
   try {
+    const requestOptions: Parameters<typeof ky.post>[1] = {
+      headers: {
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+    }
+
+    if (overrideCallbackUrl && auth.metadata.webhookUrl && auth.verifyToken) {
+      requestOptions.json = {
+        override_callback_uri: auth.metadata.webhookUrl,
+        verify_token: auth.verifyToken,
+      }
+    }
+
     const result = await ky
       .post<{
         success: boolean
-      }>(`${API_URL}/${version}/${auth.metadata.wabaId}/subscribed_apps`, {
-        headers: {
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-      })
+      }>(url, requestOptions)
       .json()
 
     if (!result.success) {

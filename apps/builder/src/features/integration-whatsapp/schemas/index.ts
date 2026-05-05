@@ -8,9 +8,20 @@ export type IntegrationWhatsappResource = IntegrationWhatsappModel & {
   inbox?: Pick<InboxModel, "id" | "name">
 }
 
+export type ManualOnboardingResult = {
+  integrationId: string
+  workspaceId: string
+  webhookUrl: string
+  verifyToken: string
+}
+
+export type ConnectWhatsappResult =
+  | { type: "redirect"; redirectUrl: string }
+  | { type: "manualResult"; data: ManualOnboardingResult }
+
 export const connectWhatsappSchema = z
   .object({
-    businessId: z.string().min(1),
+    businessId: z.string().nullish(),
     wabaId: z.string().min(1),
     connectExisting: z.boolean(),
     transferPhoneNumber: z.boolean(),
@@ -22,6 +33,14 @@ export const connectWhatsappSchema = z
     code: z.string().nullish(),
   })
   .superRefine((data, ctx) => {
+    if (!(data.manualConnect || data.businessId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Required business id",
+        path: ["businessId"],
+      })
+    }
+
     if (!(data.accessToken || data.code)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
