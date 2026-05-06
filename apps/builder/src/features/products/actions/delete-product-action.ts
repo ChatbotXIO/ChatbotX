@@ -1,7 +1,5 @@
 "use server"
 
-import { db, inArray } from "@chatbotx.io/database/client"
-import { productModel } from "@chatbotx.io/database/schema"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -9,20 +7,19 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { productService } from "../services"
 
 export const deleteProductAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
   .inputSchema(bulkUpdateIdsRequest)
   .action(
     async ({
-      bindArgsParsedInputs: [_workspaceId],
+      bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
     }) => {
-      await db
-        .delete(productModel)
-        .where(inArray(productModel.id, parsedInput.ids))
+      await productService.delete({ ids: parsedInput.ids, workspaceId })
     },
   )

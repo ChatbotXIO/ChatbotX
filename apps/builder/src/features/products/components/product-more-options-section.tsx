@@ -23,15 +23,11 @@ import { MultiSelect } from "@chatbotx.io/ui/components/ui/sersavan/multi-select
 import { PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
+import { useProductSelectOptions } from "../provider/product-hook"
 import type { CreateProductRequest } from "../schema/action"
 
-type ProductOption = { value: string; label: string }
-
-type Props = {
-  productOptions: ProductOption[]
-}
-
-export function ProductMoreOptionsSection({ productOptions }: Props) {
+export function ProductMoreOptionsSection() {
+  const productOptions = useProductSelectOptions()
   const t = useTranslations("products")
   const tActions = useTranslations("actions")
   const { control, register, watch, setValue } =

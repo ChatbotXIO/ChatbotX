@@ -237,6 +237,21 @@ Full-page create/edit forms follow this layout:
 </div>
 ```
 
+### Watching Form Values — Use `useWatch`
+
+To reactively read form field values in render, use `useWatch` from `react-hook-form` instead of `form.watch()`. `useWatch` is a proper React hook and avoids unnecessary re-renders of parent components.
+
+```typescript
+import { useWatch } from "react-hook-form"
+
+// WRONG — causes parent re-renders
+const inventoryPolicy = form.watch("inventoryPolicy")
+
+// CORRECT — scoped subscription
+const inventoryPolicy = useWatch({ control: form.control, name: "inventoryPolicy" })
+const longDescription = useWatch({ control: form.control, name: "longDescription" }) ?? ""
+```
+
 ### CRITICAL — `.bind()` for actions with `bindArgsSchemas`
 
 When an action uses `bindArgsSchemas` (e.g. for workspaceId), you **MUST** call `.bind(null, workspaceId)` before passing to `useHookFormAction`. Without `.bind()`, TypeScript will error: "Target signature provides too few arguments."

@@ -19,108 +19,29 @@ import {
   FormItem,
   FormLabel,
 } from "@chatbotx.io/ui/components/ui/form"
-import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createProductAction } from "../actions/create-product-action"
 import { updateProductAction } from "../actions/update-product-action"
-import type { ProductWithRelations } from "../queries"
 import { createProductRequest } from "../schema/action"
+import type { ProductResource } from "../schema/resource"
 import { ProductImagesSection } from "./product-images-section"
 import { ProductMoreOptionsSection } from "./product-more-options-section"
 import { ProductVariantsSection } from "./product-variants-section"
 
-type ProductOption = { value: string; label: string }
-
 type ProductFormProps = {
   workspaceId: string
-  productOptions: ProductOption[]
-  product?: ProductWithRelations
+  product?: ProductResource
 }
 
-function buildDefaultValues(product?: ProductWithRelations) {
-  if (!product) {
-    return {
-      name: "",
-      shortDescription: "",
-      longDescription: "",
-      price: 0,
-      taxes: 0,
-      discount: 0,
-      sku: "",
-      inventoryPolicy: "dont_track" as const,
-      inventoryQuantity: 0,
-      allowOutOfStockPurchase: false,
-      images: [{ id: createId(), mode: "file" as const, url: "" }],
-      variantOptions: [],
-      variants: [],
-      addons: [],
-      tags: [],
-      vendor: null,
-      rank: 10,
-      category: null,
-      subcategory: null,
-      isSearchable: true,
-      allowSpecialRequest: false,
-      isAddonOnly: false,
-    }
-  }
-
-  return {
-    name: product.name,
-    shortDescription: product.shortDescription ?? "",
-    longDescription: product.longDescription ?? "",
-    price: product.price,
-    taxes: product.taxes,
-    discount: product.discount,
-    sku: product.sku ?? "",
-    inventoryPolicy: product.inventoryPolicy as "dont_track" | "track",
-    inventoryQuantity: product.inventoryQuantity,
-    allowOutOfStockPurchase: product.allowOutOfStockPurchase,
-    images: [
-      ...product.images.map((img) => ({
-        id: createId(),
-        mode: img.type,
-        url: img.url,
-      })),
-      { id: createId(), mode: "file" as const, url: "" },
-    ],
-    variantOptions: product.variantOptions.map((opt) => ({
-      name: opt.name,
-      values: opt.values,
-      position: opt.position,
-    })),
-    variants: product.variants.map((v) => ({
-      combination: v.combination,
-      price: v.price,
-      isEnabled: v.isEnabled,
-    })),
-    addons: product.addons.map((a) => ({
-      name: a.name,
-      maxSelections: a.maxSelections,
-      addonProductIds: a.addonProductIds,
-    })),
-    tags: product.tags,
-    vendor: product.vendor ?? null,
-    rank: product.rank ?? 10,
-    category: product.category ?? null,
-    subcategory: product.subcategory ?? null,
-    isSearchable: product.isSearchable,
-    allowSpecialRequest: product.allowSpecialRequest,
-    isAddonOnly: product.isAddonOnly,
-  }
-}
-
-export function ProductForm({
-  workspaceId,
-  productOptions,
-  product,
-}: ProductFormProps) {
+export function ProductForm({ workspaceId, product }: ProductFormProps) {
   const t = useTranslations()
   const router = useRouter()
   const isEdit = !!product
@@ -140,6 +61,19 @@ export function ProductForm({
   const action = isEdit
     ? updateProductAction.bind(null, workspaceId, product.id)
     : createProductAction.bind(null, workspaceId)
+
+  const buildDefaultValues = (product?: ProductResource) => {
+    const defaultProductFormValues = createProductRequest.parse({})
+
+    if (!product) {
+      return defaultProductFormValues
+    }
+    const { id, workspaceId, ...rest } = product
+    return {
+      ...defaultProductFormValues,
+      ...rest,
+    }
+  }
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     // biome-ignore lint/suspicious/noExplicitAny: both actions share the same input schema
@@ -168,33 +102,15 @@ export function ProductForm({
     },
   )
 
-  const longDescription = form.watch("longDescription") ?? ""
-  const inventoryPolicy = form.watch("inventoryPolicy")
+  const longDescription =
+    useWatch({ control: form.control, name: "longDescription" }) ?? ""
+  const inventoryPolicy = useWatch({
+    control: form.control,
+    name: "inventoryPolicy",
+  })
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/20">
-      {/* Fixed top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-6 py-3">
-        <h1 className="font-semibold text-lg">
-          {t(isEdit ? "products.edit.title" : "products.create.title")}
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => router.back()} type="button" variant="ghost">
-            {t("actions.cancel")}
-          </Button>
-          <Button
-            disabled={form.formState.isSubmitting}
-            form="product-form"
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("actions.save")}
-          </Button>
-        </div>
-      </div>
-
       {/* Scrollable form */}
       <Form {...form}>
         <form
@@ -226,7 +142,6 @@ export function ProductForm({
               </div>
             </CardContent>
           </Card>
-
           {/* Pricing */}
           <Card>
             <CardHeader>
@@ -259,10 +174,8 @@ export function ProductForm({
               </div>
             </CardContent>
           </Card>
-
           {/* Images */}
           <ProductImagesSection workspaceId={workspaceId} />
-
           {/* Inventory */}
           <Card>
             <CardHeader>
@@ -311,10 +224,8 @@ export function ProductForm({
               )}
             </CardContent>
           </Card>
-
           {/* Variants */}
           <ProductVariantsSection />
-
           {/* More Options toggle */}
           <button
             className="mb-2 flex w-full items-center gap-2 font-medium text-primary text-sm hover:underline"
@@ -328,10 +239,24 @@ export function ProductForm({
             )}
             {t("products.sections.moreOptions")}
           </button>
-
-          {showMoreOptions && (
-            <ProductMoreOptionsSection productOptions={productOptions} />
-          )}
+          {showMoreOptions && <ProductMoreOptionsSection />}
+          <div className="flex items-center justify-end gap-2">
+            <Button onClick={() => router.back()} type="button" variant="ghost">
+              <Link href={`/space/${workspaceId}/products`}>
+                {t("actions.cancel")}
+              </Link>
+            </Button>
+            <Button
+              disabled={form.formState.isSubmitting}
+              form="product-form"
+              type="submit"
+            >
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="animate-spin" />
+              )}
+              {t("actions.save")}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

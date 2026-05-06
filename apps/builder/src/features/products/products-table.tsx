@@ -19,11 +19,11 @@ import { use, useMemo, useState } from "react"
 import { DeleteProductsDialog } from "./delete-product-dialog"
 import { getProductColumns } from "./products-table-columns"
 import { ProductsTableToolbarActions } from "./products-table-toolbar-actions"
-import type { listProductsRSC } from "./queries"
+import type { ListProductsResponse } from "./schema/query"
 import type { ProductResource } from "./schema/resource"
 
 type ProductsTableProps = {
-  promises: Promise<[Awaited<ReturnType<typeof listProductsRSC>>]>
+  promises: Promise<[ListProductsResponse]>
   workspaceId: string
 }
 

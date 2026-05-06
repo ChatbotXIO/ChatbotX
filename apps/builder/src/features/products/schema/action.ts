@@ -1,16 +1,22 @@
 import { z } from "zod"
 
 export const createProductRequest = z.object({
-  name: z.string().trim().min(1).max(255),
-  shortDescription: z.string().nullish(),
-  longDescription: z.string().max(840).nullish(),
+  name: z.string().trim().min(1).max(255).default(""),
+  shortDescription: z.string().nullish().default(""),
+  longDescription: z.string().max(840).nullish().default(""),
   price: z.coerce.number().min(0).default(0),
   taxes: z.coerce.number().min(0).max(100).default(0),
   discount: z.coerce.number().min(0).max(100).default(0),
-  sku: z.string().nullish(),
+  sku: z.string().nullish().default(""),
   inventoryPolicy: z.enum(["dont_track", "track"]).default("dont_track"),
   inventoryQuantity: z.coerce.number().int().min(0).default(0),
   allowOutOfStockPurchase: z.boolean().default(false),
+  image: z
+    .object({
+      url: z.string().default(""),
+      mode: z.enum(["link", "file"]).default("file"),
+    })
+    .default({ url: "", mode: "file" }),
   images: z
     .array(
       z.object({
@@ -58,3 +64,13 @@ export const createProductRequest = z.object({
 })
 
 export type CreateProductRequest = z.infer<typeof createProductRequest>
+
+export type ProductInsertData = Omit<
+  CreateProductRequest,
+  "variantOptions" | "variants" | "addons"
+> & { workspaceId: string }
+
+export type VariantOptionInsertData =
+  CreateProductRequest["variantOptions"][number]
+export type VariantInsertData = CreateProductRequest["variants"][number]
+export type AddonInsertData = CreateProductRequest["addons"][number]

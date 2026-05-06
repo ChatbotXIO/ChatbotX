@@ -13,7 +13,6 @@ import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { EllipsisVerticalIcon, Trash } from "lucide-react"
-import { useRouter } from "next/navigation"
 import type { useTranslations } from "next-intl"
 import {
   type Dispatch,
@@ -25,7 +24,6 @@ import { toggleProductActiveAction } from "./actions/toggle-product-active-actio
 import type { ProductResource } from "./schema/resource"
 
 function ActiveToggleCell({ product }: { product: ProductResource }) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isActive, setIsActive] = useState(product.isActive)
 
@@ -37,7 +35,6 @@ function ActiveToggleCell({ product }: { product: ProductResource }) {
         product.workspaceId,
         product.id,
       )({ isActive: checked })
-      router.refresh()
     })
   }
 

@@ -1,30 +1,19 @@
-import { notFound } from "next/navigation"
 import { ProductForm } from "@/features/products/components/product-form"
-import { findProduct, getProductsForSelect } from "@/features/products/queries"
-import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
+import { ProductStoreProvider } from "@/features/products/provider/product-store-context"
+import { productService } from "@/features/products/services"
 
 export default async function EditProductPage({
   params,
 }: {
   params: Promise<{ workspaceId: string; id: string }>
 }) {
-  const { data } = withWorkspaceIdAndIdSchema.safeParse(await params)
-  if (!data) {
-    return notFound()
-  }
+  const { workspaceId, id } = await params
 
-  const { workspaceId, id } = data
-
-  const [product, productOptions] = await Promise.all([
-    findProduct(id, workspaceId),
-    getProductsForSelect(workspaceId),
-  ])
+  const product = await productService.findById(id, workspaceId)
 
   return (
-    <ProductForm
-      product={product}
-      productOptions={productOptions}
-      workspaceId={workspaceId}
-    />
+    <ProductStoreProvider workspaceId={workspaceId}>
+      <ProductForm product={product} workspaceId={workspaceId} />
+    </ProductStoreProvider>
   )
 }

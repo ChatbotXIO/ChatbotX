@@ -208,6 +208,27 @@ import { myModel } from "@chatbotx.io/database/schema"
 const item = await findOrFail({ table: myModel, where: { id } })
 ```
 
+## Transactions
+
+**Rule:** Use `db.transaction()` whenever an action performs 2 or more write operations (INSERT, UPDATE, DELETE) so all succeed or fail together.
+
+```typescript
+import { db } from "@chatbotx.io/database/client"
+
+await db.transaction(async (tx) => {
+  const product = await productService.create({ data, tx })
+
+  await Promise.all([
+    productVariantService.createBulk({ productId: product.id, variants, tx }),
+    productAddonService.createBulk({ productId: product.id, addons, tx }),
+  ])
+})
+```
+
+- Pass `tx` down to every service method inside the callback — never mix `tx` and bare `db` within the same transaction.
+- Services accept `tx?: DatabaseClient` as an optional parameter (defaults to `db`), so they work both inside and outside a transaction.
+- Return values from the transaction callback are returned by `db.transaction()`.
+
 ## Imports Cheatsheet
 
 | What | Import from |

@@ -24,10 +24,12 @@ export function DirectUploadOrInsertLink({
   parentName,
   fileType,
   uploadPath,
+  onSuccess,
 }: {
   parentName: string
   fileType: FileType
   uploadPath: string
+  onSuccess?: (url: string) => void
 }) {
   const t = useTranslations()
 
@@ -123,7 +125,11 @@ export function DirectUploadOrInsertLink({
               })
             }}
             onUploadSuccess={(_filePath, _file, finalUrl) => {
-              setValue(`${parentName}.url`, finalUrl)
+              if (onSuccess) {
+                onSuccess(finalUrl)
+              } else {
+                setValue(`${parentName}.url`, finalUrl)
+              }
             }}
             triggerRef={triggerRef}
             uploadPath={uploadPath}
@@ -178,29 +184,27 @@ export function DirectUploadOrInsertLink({
         </>
       ) : (
         <div className="flex w-full items-center gap-2 py-2">
-          {publicUrl.length ? (
+          <fileConfigs.icon size={24} />
+          <InputField
+            className="flex-1"
+            name={`${parentName}.url`}
+            placeholder={t("fields.url.placeholder")}
+          />
+          {onSuccess && (
             <Button
-              className="h-full p-0!"
-              onClick={chooseUploadFile}
+              disabled={!publicUrl}
+              onClick={() => {
+                if (publicUrl) {
+                  onSuccess(publicUrl)
+                  setValue(`${parentName}.url`, "")
+                  setValue(`${parentName}.mode`, "file")
+                }
+              }}
+              size="sm"
               type="button"
-              variant="ghost"
             >
-              <Image
-                alt={stepId}
-                fill={true}
-                objectFit="contain"
-                src={publicUrl}
-              />
+              {t("actions.add")}
             </Button>
-          ) : (
-            <>
-              <fileConfigs.icon size={24} />
-              <InputField
-                className="flex-1"
-                name={`${parentName}.url`}
-                placeholder={t("fields.url.placeholder")}
-              />
-            </>
           )}
         </div>
       )}
