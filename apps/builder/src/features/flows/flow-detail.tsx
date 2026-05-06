@@ -2,6 +2,7 @@
 
 import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import { ReactFlowProvider } from "@xyflow/react"
+import { AIAgentStoreProvider } from "../ai-agents/provider/ai-agent-store-context"
 import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
@@ -42,7 +43,9 @@ export function FlowDetail({
                 <UserStoreProvider workspaceId={flow.workspaceId}>
                   <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
                     <AIToolsStoreProvider workspaceId={flow.workspaceId}>
-                      <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
+                      <AIAgentStoreProvider workspaceId={flow.workspaceId}>
+                        <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
+                      </AIAgentStoreProvider>
                     </AIToolsStoreProvider>
                   </CustomFieldStoreProvider>
                 </UserStoreProvider>

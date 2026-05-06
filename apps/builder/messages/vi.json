@@ -600,7 +600,8 @@
       "aiGenerateText": "{aiName}: Tạo văn bản",
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
       "label": "Luồng",
-      "placeholder": "Chọn luồng"
+      "placeholder": "Chọn luồng",
+      "aiGenerateTextAgent": "{aiName}: AI tạo văn bản agent"
     },
     "steps": {
       "label": "Bước",

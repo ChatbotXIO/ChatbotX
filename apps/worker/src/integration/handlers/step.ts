@@ -30,6 +30,7 @@ import {
 import type { ExecuteStepProps } from "./flow"
 import { handleAIGenerateImage } from "./generate-image"
 import { handleAIGenerateText } from "./generate-text"
+import { handleAIGenerateTextAgent } from "./generate-text-agent"
 import { getUserData } from "./get-user-data"
 import {
   clearSpreadsheetRow,
@@ -207,7 +208,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.aiAnalyzeImage]: undefined,
   [stepTypes.enum.aiDeleteMessageHistory]: undefined,
   [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
-  [stepTypes.enum.aiGenerateTextAgent]: undefined,
+  [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiSpeechToText]: undefined,
   [stepTypes.enum.aiTextToSpeech]: undefined,
