@@ -633,7 +633,8 @@
       "aiGenerateImage": "{aiName}: Tạo hình ảnh",
       "aiAnalyzeImage": "{aiName}: AI Phân tích hình ảnh",
       "label": "Luồng",
-      "placeholder": "Chọn luồng"
+      "placeholder": "Chọn luồng",
+      "aiGenerateTextAgent": "{aiName}: AI tạo văn bản agent"
     },
     "steps": {
       "label": "Bước",

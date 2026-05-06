@@ -18,3 +18,5 @@ export const listAIAgentsResponse = z.object({
   data: z.array(aiAgentResourceSchema),
   pageCount: z.number().int(),
 })
+
+export type ListAIAgentsResponse = z.infer<typeof listAIAgentsResponse>

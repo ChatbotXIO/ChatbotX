@@ -625,7 +625,8 @@
       "aiGenerateImage": "{aiName}: Generate Image",
       "aiAnalyzeImage": "{aiName}: AI Analyze Image",
       "label": "Flows",
-      "placeholder": "Select flow"
+      "placeholder": "Select flow",
+      "aiGenerateTextAgent": "{aiName}: Generate Text Agent"
     },
     "steps": {
       "label": "Steps",

@@ -1,16 +1,20 @@
 "use client"
 
-import { BotIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import type { AIGenerateTextAgentSchema } from "@chatbotx.io/flow-config"
+import { AIIcon } from "../ai-generate-text/components/ai-icon"
 
-const AIGenerateTextAgentViewer = () => {
-  const t = useTranslations()
+type AIGenerateTextAgentViewerProps = {
+  data: AIGenerateTextAgentSchema
+}
+
+export const AIGenerateTextAgentViewer = (
+  props: AIGenerateTextAgentViewerProps,
+) => {
+  const { data } = props
+
   return (
     <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-bold">
-      <BotIcon className="text-yellow-500" size={18} />
-      {t("flows.actions.aiGenerateTextAgent")}
+      <AIIcon label={data.provider} provider={data.provider} />
     </div>
   )
 }
-
-export default AIGenerateTextAgentViewer

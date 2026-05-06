@@ -26,6 +26,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
+import { handleAIAnalyzeImage } from "./analyze-image"
 import {
   addContactNotes,
   addContactSequence,
@@ -41,8 +42,8 @@ import {
 } from "./contact"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow"
 import { handleAIGenerateImage } from "./generate-image"
-import { handleAIAnalyzeImage } from "./analyze-image"
 import { handleAIGenerateText } from "./generate-text"
+import { handleAIGenerateTextAgent } from "./generate-text-agent"
 import { getUserData } from "./get-user-data"
 import { sendEmail } from "./send-email"
 import {
@@ -324,7 +325,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: undefined,
   [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
-  [stepTypes.enum.aiGenerateTextAgent]: undefined,
+  [stepTypes.enum.aiGenerateTextAgent]: handleAIGenerateTextAgent,
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiSpeechToText]: undefined,
   [stepTypes.enum.aiTextToSpeech]: undefined,

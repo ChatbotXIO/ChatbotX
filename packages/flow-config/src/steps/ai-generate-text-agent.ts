@@ -1,34 +1,45 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+
 import { stepTypes } from "./step-action"
 
-export const AIGenerateTextAgentSchema = z.object({
+export const aiGenerateTextAgentProvider = z.enum([
+  "openai",
+  "gemini",
+  "claude",
+  "deepseek",
+])
+export type AIGenerateTextAgentProvider = z.infer<
+  typeof aiGenerateTextAgentProvider
+>
+
+export const aiGenerateTextAgentSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiGenerateTextAgent),
+  provider: aiGenerateTextAgentProvider.catch("openai"),
   aiAgentId: zodBigintAsString(),
   message: z.string().trim().min(1),
   outputFieldId: z.string().trim().min(1),
-  aiToolIds: z.array(zodBigintAsString()),
   rememberConversation: z.boolean(),
-  temperature: z.number().min(0).max(1).optional(),
-  maxOutputTokens: z.number().optional(),
 })
 
 export type AIGenerateTextAgentSchema = z.infer<
-  typeof AIGenerateTextAgentSchema
+  typeof aiGenerateTextAgentSchema
 >
 
-export const AIGenerateTextAgentDefaultFn = (
-  props?: Partial<AIGenerateTextAgentSchema>,
-): AIGenerateTextAgentSchema => ({
-  id: createId(),
-  stepType: stepTypes.enum.aiGenerateTextAgent,
-  aiAgentId: "",
-  message: "",
-  outputFieldId: "",
-  aiToolIds: [],
-  rememberConversation: true,
-  temperature: 0.4,
-  maxOutputTokens: 250,
-  ...props,
-})
+export const aiGenerateTextAgentDefaultFn = (
+  props: Partial<AIGenerateTextAgentSchema> = {},
+): AIGenerateTextAgentSchema => {
+  const provider = props.provider ?? "openai"
+
+  return {
+    id: createId(),
+    provider,
+    aiAgentId: "",
+    message: "",
+    outputFieldId: "",
+    rememberConversation: true,
+    ...props,
+    stepType: stepTypes.enum.aiGenerateTextAgent,
+  }
+}
