@@ -16,10 +16,12 @@ export default async function Dashboard({
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-  const { data: inboxes } = await listInboxes({
-    workspaceId,
-    includes: ["integration"],
-  })
+  const inboxes = (
+    await listInboxes({
+      workspaceId,
+      includes: ["integration"],
+    })
+  ).data.filter((inbox) => inbox.channel !== "smtp")
 
   return (
     <div className="flex flex-col gap-4">
