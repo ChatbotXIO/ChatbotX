@@ -3,7 +3,7 @@ import {
   integrationSmtpModel,
 } from "@chatbotx.io/database/schema"
 import type { smtpProviders } from "@chatbotx.io/integration-smtp"
-import type { z } from "zod"
+import { z } from "zod"
 
 export const smtpProviderLabels: Record<
   z.infer<typeof smtpProviders>,
@@ -23,8 +23,18 @@ export const smtpProviderLabels: Record<
 
 export const integrationSmtpResource = createSelectSchema(
   integrationSmtpModel,
+  {
+    id: z.string(),
+  },
 ).pick({
   id: true,
   name: true,
 })
 export type IntegrationSmtpResource = z.infer<typeof integrationSmtpResource>
+
+export const listIntegrationSmtpsResponse = z.object({
+  data: z.array(integrationSmtpResource),
+})
+export type ListIntegrationSmtpsResponse = z.infer<
+  typeof listIntegrationSmtpsResponse
+>

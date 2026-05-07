@@ -3,6 +3,7 @@ import { createSearchParamsCache, parseAsInteger } from "nuqs/server"
 import { z } from "zod"
 import { integrationInstagramResource } from "@/features/integration-instagram/schemas/resource"
 import { integrationMessengerResource } from "@/features/integration-messenger/schema/resource"
+import { integrationSmtpResource } from "@/features/integration-smtp/schemas/resource"
 import { integrationTelegramResource } from "@/features/integration-telegram/schemas/resource"
 import { integrationWebchatResource } from "@/features/integration-webchat/schema/resource"
 import { integrationWhatsappResource } from "@/features/integration-whatsapp/schemas/resource"
@@ -51,6 +52,7 @@ export const listInboxesResponse = z.object({
       integrationZalo: integrationZaloResource.nullish(),
       integrationTelegram: integrationTelegramResource.nullish(),
       integrationInstagram: integrationInstagramResource.nullish(),
+      integrationSmtp: integrationSmtpResource.nullish(),
     }),
   ),
   pageCount: z.number(),

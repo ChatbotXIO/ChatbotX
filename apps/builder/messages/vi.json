@@ -1151,6 +1151,9 @@
     "topicId": {
       "label": "Topic ID"
     },
+    "smtpChannel": {
+      "label": "Kênh SMTP"
+    },
     "verifyToken": {
       "label": "Webhook Verify Token"
     },

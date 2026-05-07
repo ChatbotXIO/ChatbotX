@@ -1148,6 +1148,9 @@
     "topicId": {
       "label": "Topic ID"
     },
+    "smtpChannel": {
+      "label": "SMTP Channel"
+    },
     "magicLink": {
       "label": "Magic Link",
       "nameHint": "Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only.",
