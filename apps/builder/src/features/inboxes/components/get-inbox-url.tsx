@@ -36,10 +36,12 @@ export function GetInboxUrlDialog({
           <DialogDescription />
         </DialogHeader>
 
-        <div className="flex flex-col">
-          {inboxes.map((inbox) => (
-            <GetInboxUrlItem inbox={inbox} key={inbox.id} ref={ref} />
-          ))}
+        <div className="flex max-h-[60vh] flex-col overflow-y-auto">
+          {inboxes
+            .filter((inbox) => inbox.channel !== "smtp")
+            .map((inbox) => (
+              <GetInboxUrlItem inbox={inbox} key={inbox.id} ref={ref} />
+            ))}
         </div>
       </DialogContent>
     </Dialog>
