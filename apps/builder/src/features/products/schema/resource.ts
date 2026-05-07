@@ -1,3 +1,4 @@
+import { inventoryPolicyTypes } from "@chatbotx.io/database/partials"
 import { createSelectSchema, productModel } from "@chatbotx.io/database/schema"
 import z from "zod"
 
@@ -8,5 +9,6 @@ export const productResource = createSelectSchema(productModel, {
     z.object({ url: z.string(), type: z.enum(["link", "file"]) }),
   ),
   tags: z.array(z.string()),
+  inventoryPolicy: inventoryPolicyTypes,
 })
 export type ProductResource = z.infer<typeof productResource>

@@ -19,32 +19,33 @@ import {
   FormItem,
   FormLabel,
 } from "@chatbotx.io/ui/components/ui/form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import type { BaseSyntheticEvent } from "react"
 import { useState } from "react"
-import { useWatch } from "react-hook-form"
-import { toast } from "sonner"
-import { createProductAction } from "../actions/create-product-action"
-import { updateProductAction } from "../actions/update-product-action"
-import { createProductRequest } from "../schema/action"
-import type { ProductResource } from "../schema/resource"
+import { type UseFormReturn, useWatch } from "react-hook-form"
+import type { CreateProductRequest } from "../schema/action"
 import { ProductImagesSection } from "./product-images-section"
 import { ProductMoreOptionsSection } from "./product-more-options-section"
 import { ProductVariantsSection } from "./product-variants-section"
 
 type ProductFormProps = {
   workspaceId: string
-  product?: ProductResource
+  form: UseFormReturn<CreateProductRequest>
+  handleSubmitWithAction: (event?: BaseSyntheticEvent) => void | Promise<void>
+  isEdit?: boolean
 }
 
-export function ProductForm({ workspaceId, product }: ProductFormProps) {
+export function ProductForm({
+  workspaceId,
+  form,
+  handleSubmitWithAction,
+  isEdit = false,
+}: ProductFormProps) {
   const t = useTranslations()
   const router = useRouter()
-  const isEdit = !!product
   const [showMoreOptions, setShowMoreOptions] = useState(isEdit)
 
   const inventoryPolicyOptions = [
@@ -58,50 +59,6 @@ export function ProductForm({ workspaceId, product }: ProductFormProps) {
     },
   ]
 
-  const action = isEdit
-    ? updateProductAction.bind(null, workspaceId, product.id)
-    : createProductAction.bind(null, workspaceId)
-
-  const buildDefaultValues = (product?: ProductResource) => {
-    const defaultProductFormValues = createProductRequest.parse({})
-
-    if (!product) {
-      return defaultProductFormValues
-    }
-    const { id, workspaceId, ...rest } = product
-    return {
-      ...defaultProductFormValues,
-      ...rest,
-    }
-  }
-
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    // biome-ignore lint/suspicious/noExplicitAny: both actions share the same input schema
-    action as any,
-    zodResolver(createProductRequest),
-    {
-      formProps: {
-        defaultValues: buildDefaultValues(product),
-      },
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t(isEdit ? "messages.updatedSuccess" : "messages.createdSuccess", {
-              feature: t("products.title"),
-            }),
-          )
-          router.push(`/space/${workspaceId}/products`)
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(String(error.serverError))
-          }
-        },
-      },
-      errorMapProps: {},
-    },
-  )
-
   const longDescription =
     useWatch({ control: form.control, name: "longDescription" }) ?? ""
   const inventoryPolicy = useWatch({
@@ -111,7 +68,6 @@ export function ProductForm({ workspaceId, product }: ProductFormProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/20">
-      {/* Scrollable form */}
       <Form {...form}>
         <form
           className="mx-auto w-full max-w-3xl space-y-6 px-6 py-8"

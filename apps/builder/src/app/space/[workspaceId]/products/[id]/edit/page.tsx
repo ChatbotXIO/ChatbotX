@@ -1,5 +1,4 @@
-import { ProductForm } from "@/features/products/components/product-form"
-import { ProductStoreProvider } from "@/features/products/provider/product-store-context"
+import { EditProduct } from "@/features/products/components/edit-product"
 import { productService } from "@/features/products/services"
 
 export default async function EditProductPage({
@@ -11,9 +10,5 @@ export default async function EditProductPage({
 
   const product = await productService.findById(id, workspaceId)
 
-  return (
-    <ProductStoreProvider workspaceId={workspaceId}>
-      <ProductForm product={product} workspaceId={workspaceId} />
-    </ProductStoreProvider>
-  )
+  return <EditProduct product={product} workspaceId={workspaceId} />
 }

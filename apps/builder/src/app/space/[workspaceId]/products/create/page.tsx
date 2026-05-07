@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
-import { ProductForm } from "@/features/products/components/product-form"
-import { ProductStoreProvider } from "@/features/products/provider/product-store-context"
+import { CreateProduct } from "@/features/products/components/create-product"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 
 export default async function CreateProductPage({
@@ -13,9 +12,5 @@ export default async function CreateProductPage({
     return notFound()
   }
 
-  return (
-    <ProductStoreProvider workspaceId={data.workspaceId}>
-      <ProductForm workspaceId={data.workspaceId} />
-    </ProductStoreProvider>
-  )
+  return <CreateProduct workspaceId={data.workspaceId} />
 }

@@ -159,12 +159,16 @@ class ProductService extends BaseService {
   async findById(id: string, workspaceId: string): Promise<ProductResource> {
     const product = await db.query.productModel.findFirst({
       where: { id, workspaceId },
-      with: { variantOptions: true, variants: true, addons: true },
+      with: {
+        variantOptions: true,
+        variants: true,
+        addons: true,
+      },
     })
     if (!product) {
       throw notFoundException("Product does not exist.")
     }
-    return product
+    return product as unknown as ProductResource
   }
 }
 
