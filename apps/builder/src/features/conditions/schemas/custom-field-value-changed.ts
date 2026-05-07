@@ -16,6 +16,6 @@ export type CustomFieldValueChanged = z.infer<typeof customFieldValueChanged>
 export const defaultFn = (): CustomFieldValueChanged => ({
   type: triggerEventTypes.enum.customFieldValueChanged,
   sourceId: "",
-  operator: operatorTypes.enum.is,
+  operator: operatorTypes.enum.eq,
   value: "",
 })

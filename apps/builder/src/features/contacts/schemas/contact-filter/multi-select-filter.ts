@@ -5,23 +5,23 @@ import {
 import { z } from "zod"
 import { sampleStringSchema } from "./shared"
 
-export const selectOperators: OperatorType[] = [
-  operatorTypes.enum.eq,
-  operatorTypes.enum.ne,
+export const multiSelectOperators: OperatorType[] = [
+  operatorTypes.enum.in,
+  operatorTypes.enum.notIn,
   operatorTypes.enum.isEmpty,
 ]
 
-export const selectFilter = <T extends string>(field: T) =>
+export const multiSelectFilter = <T extends string>(field: T) =>
   z.discriminatedUnion("operator", [
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.eq),
-      value: sampleStringSchema,
+      operator: z.literal(operatorTypes.enum.in),
+      value: z.array(sampleStringSchema),
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.ne),
-      value: sampleStringSchema,
+      operator: z.literal(operatorTypes.enum.notIn),
+      value: z.array(sampleStringSchema),
     }),
     z.object({
       field: z.literal(field),

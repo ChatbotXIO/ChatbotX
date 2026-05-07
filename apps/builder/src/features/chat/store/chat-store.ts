@@ -9,7 +9,6 @@ import type { ContactFilterRequest } from "@/features/contacts/schemas/contact-f
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
   ConversationResource,
-  FindConversationResponse,
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
@@ -18,6 +17,7 @@ import type {
   MessageResource,
   MessageResourceWithRelations,
 } from "@/features/messages/schema/resource"
+import { client } from "@/lib/orpc/orpc"
 
 export type ConversationFilters = {
   botCategory?: ConversationBotCategory
@@ -25,8 +25,7 @@ export type ConversationFilters = {
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
-  botEnabled?: boolean
-  tags?: ("noAdminReply" | "unread" | "followed" | "archived" | "blocked")[]
+  tags?: ("noAdminReply" | "unread" | "followUp" | "archived" | "blocked")[]
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -309,11 +308,11 @@ export const createChatStore = () => {
         set({ conversations: [conversation, ...updatedConversations] })
       } else {
         // New conversation, we'll need basic details
-        const newConversation = await ky
-          .get<FindConversationResponse>(
-            `/api/workspaces/${message.workspaceId}/conversations/${message.conversationId}`,
-          )
-          .json()
+        const newConversation =
+          await client.conversationsAPI.findConversationAuthenticatedAPI({
+            workspaceId: message.workspaceId,
+            id: message.conversationId,
+          })
         newConversation.data.messages = [message]
         prependConversation(newConversation.data)
       }

@@ -116,7 +116,7 @@ class ReconcileJob {
 
       this.lastReconcileRun = new Date()
     } catch (error) {
-      logger.error({ error }, "Error in reconciliation")
+      logger.error(error, "Error in reconciliation")
       throw error
     }
   }
@@ -173,7 +173,7 @@ class ReconcileJob {
 
       this.lastCleanupRun = new Date()
     } catch (error) {
-      logger.error({ error }, "Error during orphan cleanup")
+      logger.error(error, "Error during orphan cleanup")
       throw error
     }
   }
@@ -182,7 +182,11 @@ class ReconcileJob {
     try {
       return await this.scheduler.getZSetMembers(bucket, type)
     } catch (error) {
-      logger.error({ error, bucket, type }, "Error getting ZSET members")
+      logger.error(error, "Error getting ZSET members")
+      logger.error(
+        { bucket, type },
+        "Error getting ZSET members bucket and type",
+      )
       return []
     }
   }

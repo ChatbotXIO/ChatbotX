@@ -280,7 +280,7 @@
     "yes": "Yes",
     "no": "No",
     "fields": {
-      "language": "Language",
+      "locale": "Language",
       "fullName": "Full name",
       "country": "Country",
       "continent": "Continent",
@@ -304,7 +304,9 @@
       "unread": "Unread",
       "archived": "Archived",
       "blocked": "Blocked",
-      "noAdminReply": "No admin reply"
+      "noAdminReply": "No admin reply",
+      "contactCreatedAt": "Contact created at",
+      "interactedInLast24h": "Interacted in last 24 hours"
     }
   },
   "channels": {
@@ -377,18 +379,20 @@
       "label": "Operator",
       "is": "Is",
       "isNot": "Is not",
-      "hasAnyValue": "Has any value",
-      "hasNoValue": "Has no value",
-      "greaterThan": "Greater than",
-      "lessThan": "Less than",
-      "greaterThanOrEqualTo": "Greater than or equal to",
-      "lessThanOrEqualTo": "Less than or equal to",
+      "in": "In",
+      "notIn": "Not in",
+      "isEmpty": "Is empty",
+      "isNotEmpty": "Is not empty",
+      "gt": "Greater than",
+      "lt": "Less than",
+      "gte": "Greater than or equal to",
+      "lte": "Less than or equal to",
       "contains": "Contains",
-      "doesNotContain": "Does not contain",
+      "notContains": "Does not contain",
       "startsWith": "Starts with",
       "endsWith": "Ends with",
-      "interval": "Interval",
-      "notInterval": "Not interval"
+      "isBetween": "Is between",
+      "notBetween": "Not between"
     },
     "contactFilter": {
       "label": "Contact filter"
@@ -1356,6 +1360,10 @@
     "changeDefaultDescription": "Are you sure you want to change the default AI agent?",
     "unsetDefaultDescription": "Are you sure you want to unset the default AI agent?",
     "botIsActive": "Bot is active",
+    "selectConversationTitle": "Select a conversation",
+    "selectConversationDescription": "Choose a conversation from the list on the left to view messages and start chatting.",
+    "selectConversationContactTitle": "No contact selected",
+    "selectConversationContactDescription": "Select a conversation to view the contact's details and inbox information here.",
     "archiveFeature": "Archive {feature}",
     "archiveFeatureDescription": "Are you sure you want to archive the {feature}?",
     "disableFeature": "Disable {feature}",

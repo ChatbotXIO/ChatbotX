@@ -24,7 +24,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { ContactFilterDialog } from "../contacts/components/contact-filter"
+import { ContactFilterDialog } from "../contacts/components/contact-filter-dialog"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
@@ -59,7 +59,7 @@ export function ConversationFilter() {
     },
     {
       label: t("condition.fields.followUp"),
-      value: conversationStatuses.enum.followed,
+      value: conversationStatuses.enum.followUp,
       icon: StarIcon,
     },
     {

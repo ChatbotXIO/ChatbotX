@@ -7,7 +7,7 @@
     "build": "dotenv  -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
     "i18n:check": "i18n-check --source en --locales messages",
-    "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123",
+    "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
     "lint": "pnpm i18n:check && biome check .",
     "start": "next start"
@@ -128,6 +128,7 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv-cli": "^11.0.0",
     "pg": "^8.20.0",
+    "pino-pretty": "^13.1.3",
     "postcss": "^8.5.12",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.4",

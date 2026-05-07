@@ -23,7 +23,6 @@ import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ListContactsItem } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
-import { getFullName } from "./utils"
 
 type ContactsTableProps = {
   workspaceId: string
@@ -79,11 +78,11 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
                   href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
                   target="_blank"
                 >
-                  {getFullName(row.original)}
+                  {row.original.fullName}
                 </Link>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{getFullName(row.original)}</p>
+                <p>{row.original.fullName}</p>
               </TooltipContent>
             </Tooltip>
           </div>

@@ -6,11 +6,10 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
+import { cursorPaginationRequest } from "@/lib/pagination"
 
 export const listConversationsRequest = z.object({
   workspaceId: zodBigintAsString(),
-  perPage: z.coerce.number().optional(),
-  cursor: z.string().optional(),
   botCategory: conversationBotCategories.optional(),
   assignedId: z.string().nullable().optional(),
   channel: z.union([channelTypes]).optional(),
@@ -19,9 +18,10 @@ export const listConversationsRequest = z.object({
   botEnabled: z.boolean().nullish(),
   tags: z
     .array(
-      z.enum(["noAdminReply", "unread", "followed", "archived", "blocked"]),
+      z.enum(["noAdminReply", "unread", "followUp", "archived", "blocked"]),
     )
     .optional(),
   contactFilter: contactFilterRequest.shape.contactFilter.optional(),
+  ...cursorPaginationRequest.shape,
 })
 export type ListConversationsRequest = z.infer<typeof listConversationsRequest>

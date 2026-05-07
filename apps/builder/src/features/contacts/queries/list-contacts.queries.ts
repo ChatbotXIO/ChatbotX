@@ -5,6 +5,7 @@ import {
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { applyContactFilter } from "../apply-contact-filter"
 import type {
   ListContactsRequest,
   ListContactsResponse,
@@ -36,7 +37,8 @@ export async function listContacts(
         },
       },
     }),
-    db.$count(contactModel, relationsFilterToSQL(contactModel, where)),
+    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
+    db.$count(contactModel, relationsFilterToSQL(contactModel, where as any)),
   ])
 
   const pageCount = Math.ceil(totalRows / pagination.limit)
@@ -57,7 +59,8 @@ export async function countContacts(
 
   const total = await db.$count(
     contactModel,
-    relationsFilterToSQL(contactModel, where),
+    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
+    relationsFilterToSQL(contactModel, where as any),
   )
   return { total }
 }
@@ -86,26 +89,22 @@ async function getTotalContactsFromStats(
 }
 
 const generateWhere = (input: ListContactsRequest) => {
-  const where = {
+  const where: Record<string, unknown> = {
     workspaceId: input.workspaceId,
     ...(input.keyword
       ? {
           OR: [
-            {
-              firstName: { ilike: `%${input.keyword.toLowerCase()}%` },
-            },
-            {
-              lastName: { ilike: `%${input.keyword.toLowerCase()}%` },
-            },
-            {
-              email: { ilike: `%${input.keyword.toLowerCase()}%` },
-            },
-            {
-              phoneNumber: { ilike: `%${input.keyword.toLowerCase()}%` },
-            },
+            { firstName: { ilike: `%${input.keyword.toLowerCase()}%` } },
+            { lastName: { ilike: `%${input.keyword.toLowerCase()}%` } },
+            { email: { ilike: `%${input.keyword.toLowerCase()}%` } },
+            { phoneNumber: { ilike: `%${input.keyword.toLowerCase()}%` } },
           ],
         }
       : {}),
+  }
+
+  if (input.contactFilter) {
+    Object.assign(where, applyContactFilter(input.contactFilter))
   }
 
   return where

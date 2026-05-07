@@ -12,7 +12,7 @@ import { httpLogger } from "./lib/log"
 const publicRoutes = ["/integrations", "/r"]
 const signinPath = "/auth/sign-in"
 
-async function logRequest(request: NextRequest) {
+async function _logRequest(request: NextRequest) {
   try {
     // biome-ignore lint/suspicious/noExplicitAny: safe to use any
     const headers = Object.fromEntries(request.headers as any)
@@ -36,7 +36,7 @@ async function logRequest(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
-  await logRequest(request)
+  // await logRequest(request)
 
   const { pathname, search } = request.nextUrl
   if (isPublicRoute(pathname)) {

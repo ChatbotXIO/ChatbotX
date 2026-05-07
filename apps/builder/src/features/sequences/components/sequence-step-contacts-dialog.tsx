@@ -24,7 +24,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { memo, useCallback, useEffect, useState } from "react"
-import { getAvatarUrl, getFullName } from "@/features/contacts/utils"
+import { getAvatarUrl } from "@/features/contacts/utils"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 
 const eventTypeToLabel: Record<SequenceStepEventType, string> = {
@@ -193,12 +193,6 @@ const ContactItem = memo(function ContactItem({
     lastName: contact.lastName,
   } as Parameters<typeof getAvatarUrl>[0])
 
-  const fullName = getFullName({
-    firstName: contact.firstName,
-    lastName: contact.lastName,
-    phoneNumber: contact.sourceId,
-  } as Parameters<typeof getFullName>[0])
-
   return (
     <div className="flex items-center gap-3 rounded-lg p-0 transition-colors hover:bg-muted/50">
       <Avatar className="size-8 shrink-0">
@@ -216,7 +210,7 @@ const ContactItem = memo(function ContactItem({
             target="_blank"
           >
             <span className="truncate font-medium text-sm leading-tight">
-              {fullName}
+              {contact.fullName}
             </span>
           </Link>
           <InboxIcon

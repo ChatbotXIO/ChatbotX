@@ -5,18 +5,19 @@ import {
 import { z } from "zod"
 import { sampleStringSchema } from "./shared"
 
-export const textOperators: OperatorType[] = [
+export const numberOperators: OperatorType[] = [
   operatorTypes.enum.eq,
   operatorTypes.enum.ne,
-  operatorTypes.enum.isNotEmpty,
   operatorTypes.enum.isEmpty,
-  operatorTypes.enum.contains,
-  operatorTypes.enum.notContains,
-  operatorTypes.enum.startsWith,
-  operatorTypes.enum.endsWith,
+  operatorTypes.enum.lt,
+  operatorTypes.enum.lte,
+  operatorTypes.enum.gt,
+  operatorTypes.enum.gte,
+  operatorTypes.enum.isBetween,
+  operatorTypes.enum.notBetween,
 ]
 
-export const textFilter = <T extends string>(field: T) =>
+export const numberFilter = <T extends string>(field: T) =>
   z.discriminatedUnion("operator", [
     z.object({
       field: z.literal(field),
@@ -30,31 +31,36 @@ export const textFilter = <T extends string>(field: T) =>
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.isNotEmpty),
-      value: sampleStringSchema,
-    }),
-    z.object({
-      field: z.literal(field),
       operator: z.literal(operatorTypes.enum.isEmpty),
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.contains),
+      operator: z.literal(operatorTypes.enum.lt),
       value: sampleStringSchema,
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.notContains),
+      operator: z.literal(operatorTypes.enum.lte),
       value: sampleStringSchema,
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.startsWith),
+      operator: z.literal(operatorTypes.enum.gt),
       value: sampleStringSchema,
     }),
     z.object({
       field: z.literal(field),
-      operator: z.literal(operatorTypes.enum.endsWith),
+      operator: z.literal(operatorTypes.enum.gte),
+      value: sampleStringSchema,
+    }),
+    z.object({
+      field: z.literal(field),
+      operator: z.literal(operatorTypes.enum.isBetween),
+      value: sampleStringSchema,
+    }),
+    z.object({
+      field: z.literal(field),
+      operator: z.literal(operatorTypes.enum.notBetween),
       value: sampleStringSchema,
     }),
   ])

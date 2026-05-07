@@ -104,7 +104,7 @@ export class ZaloHttpClient {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred"
 
-      logger.error({ error: errorMessage }, "Zalo OA HTTP client error")
+      logger.error({ errorMessage }, "Zalo OA HTTP client error")
       throw new ZaloException(
         `HTTP request failed: ${errorMessage}`,
       ).setOriginError(error)

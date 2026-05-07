@@ -56,7 +56,7 @@ export type DateTimeBasedTrigger = z.infer<typeof dateTimeBasedTrigger>
 export const defaultFn = (): DateTimeBasedTrigger => ({
   type: triggerEventTypes.enum.dateTimeBasedTrigger,
   sourceId: "",
-  operator: operatorTypes.enum.is,
+  operator: operatorTypes.enum.eq,
   value: {
     triggerType: dateTimeTriggerTypes.enum.before,
     timeValue: 1,

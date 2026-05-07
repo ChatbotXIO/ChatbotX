@@ -69,6 +69,7 @@ export const broadcastContactResource = z.object({
   contactInboxId: z.string(),
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
+  fullName: z.string().nullable(),
   sourceId: z.string().nullable(),
   avatar: z.string().nullable(),
   channel: z.enum(channelTypes.enum),

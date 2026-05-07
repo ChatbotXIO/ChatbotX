@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { getAvatarUrl, getFullName } from "../contacts/utils"
+import { getAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
 import type { ListConversationItemResource } from "./schema/resource"
@@ -70,21 +70,16 @@ export default function ConversationItem({
   )
   const isActive = conversation.id === activeConversationId
 
-  const contactFullName = useMemo(
-    () => getFullName(conversation.contact),
-    [conversation.contact],
-  )
-
   const contactAvatar = useMemo(
     () => (
       <Avatar className="h-12 w-12">
         <AvatarImage
-          alt={getFullName(conversation.contact)}
+          alt={conversation.contact?.fullName ?? ""}
           className="object-cover"
           src={getAvatarUrl(conversation.contact)}
         />
         <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
-          {getFullName(conversation.contact).slice(0, 2)}
+          {conversation.contact?.fullName?.slice(0, 2)}
         </AvatarFallback>
       </Avatar>
     ),
@@ -151,7 +146,7 @@ export default function ConversationItem({
 
         <div className="flex-1 overflow-hidden">
           <div className="truncate text-left font-medium dark:text-gray-200">
-            {contactFullName}
+            {conversation.contact?.fullName}
           </div>
           <div
             className={cn(

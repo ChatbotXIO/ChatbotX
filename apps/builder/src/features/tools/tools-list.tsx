@@ -52,7 +52,6 @@ const TOOLS_CONFIG = [
     labelKey: "qrCodeGenerator.title",
     descriptionKey: "qrCodeGenerator.description",
     icon: QrCodeIcon,
-    getLink: (id: string) => `/space/${id}/qr-codes`,
   },
   {
     id: "templates",

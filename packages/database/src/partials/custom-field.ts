@@ -13,27 +13,22 @@ export const customFieldTypes = z.enum([
 export type CustomFieldType = z.infer<typeof customFieldTypes>
 
 export const operatorTypes = z.enum([
-  "contains",
-  "notContains",
+  "in",
+  "notIn",
   "isEmpty",
   "isNotEmpty",
-  "hasAnyOf",
-  "hasNoneOf",
-
-  "is",
-  "isNot",
-  "hasAnyValue",
-  "hasNoValue",
-  "greaterThan",
-  "lessThan",
-  "greaterThanOrEqualTo",
-  "lessThanOrEqualTo",
-  "contains",
-  "doesNotContain",
+  "eq",
+  "ne",
   "startsWith",
   "endsWith",
-  "interval",
-  "notInterval",
+  "contains",
+  "notContains",
+  "lt",
+  "lte",
+  "gt",
+  "gte",
+  "isBetween",
+  "notBetween",
 ])
 export type OperatorType = z.infer<typeof operatorTypes>
 

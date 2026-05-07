@@ -71,7 +71,6 @@ export default function ConversationList({
     defaultValues: {
       keyword: "",
       botCategory: conversationBotCategories.enum.all,
-      botEnabled: undefined,
       channel: channelTypes.enum.omnichannel,
       assignedId: assignerFilterTypes.enum.all,
       tags: [],

@@ -6,7 +6,7 @@ export type ConversationBotCategory = z.infer<typeof conversationBotCategories>
 export const conversationStatuses = z.enum([
   "noAdminReply",
   "unread",
-  "followed",
+  "followUp",
   "archived",
   "blocked",
 ])

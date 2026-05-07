@@ -169,12 +169,6 @@ export class FlowStatsPgRepository extends BaseRepository {
       return {}
     }
 
-    console.log({
-      nodeIds,
-      analyticsId,
-      flowId: input.flowId,
-      workspaceId: input.workspaceId,
-    })
     const stepStatsPromises = nodeIds.map((nodeId) =>
       this.getNodeStats({
         workspaceId: input.workspaceId,

@@ -61,14 +61,14 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     isTyping: false,
 
     initGuestSession: () => {
-      const { guestConversationId } = get()
+      const { guestConversationId, config } = get()
       if (guestConversationId) {
         return
       }
 
       let guestId = localStorage.getItem(GUEST_CONVERSATION_ID_KEY)
       if (!guestId) {
-        guestId = createId()
+        guestId = `${config.workspaceId}:${createId()}`
         localStorage.setItem(GUEST_CONVERSATION_ID_KEY, guestId)
       }
       set({ guestConversationId: guestId })

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm"
 import {
   boolean,
   jsonb,
@@ -28,6 +29,7 @@ export const contactModel = pgTable("Contact", {
   emailOptIn: boolean().default(false).notNull(),
   firstName: text(),
   lastName: text(),
+  fullName: text().generatedAlwaysAs(sql`"firstName" || ' ' || "lastName"`),
   gender: gender(),
   lastReadAt: timestamp(timestampConfig),
   ref: text(),

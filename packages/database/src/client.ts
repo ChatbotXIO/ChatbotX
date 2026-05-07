@@ -22,22 +22,8 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 })
 
-const readPool = new Pool({
-  connectionString: env.DATABASE_READ_URL ?? env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5000,
-})
-
 export const db = drizzle({
   client: pool,
-  schema,
-  relations,
-  logger: env.NODE_ENV !== "production",
-})
-
-export const dbRead = drizzle({
-  client: readPool,
   schema,
   relations,
   logger: env.NODE_ENV !== "production",

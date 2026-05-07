@@ -1,4 +1,4 @@
-import { channelTypes, operatorTypes } from "@chatbotx.io/database/partials"
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
@@ -15,28 +15,26 @@ import {
   contactCustomFieldResource,
   publicContactCustomFieldResource,
 } from "./contact-custom-field"
+import { contactFilterCriteriaSchema } from "./contact-filter"
 import { contactResource, publicContactResource } from "./resource"
 
-export const contactFilterSchema = z.object({
-  operator: z.enum(["and", "or"]),
-  conditions: z.array(
-    z.object({
-      field: z.string().trim(),
-      operator: operatorTypes,
-      value: z.union([z.string(), z.array(z.string())]),
-    }),
-  ),
-})
+/** Same as contact filter payload (strict discriminated `conditions`). */
+export const contactFilterSchema = contactFilterCriteriaSchema
 
-export const contactFilterRequest = z.object({
-  contactFilter: contactFilterSchema,
-})
-export type ContactFilterRequest = z.infer<typeof contactFilterRequest>
+export type {
+  ContactFilterCondition,
+  ContactFilterCriteria,
+  ContactFilterRequest,
+} from "./contact-filter"
+export {
+  contactFilterRequest,
+  singleContactFilterConditionSchema,
+} from "./contact-filter"
 
 export const listContactsRequest = basePaginationRequest.extend({
   keyword: z.string().optional(),
   workspaceId: zodBigintAsString(),
-  contactFilter: contactFilterRequest.shape.contactFilter.optional(),
+  contactFilter: contactFilterCriteriaSchema.optional(),
   channels: z.array(channelTypes).optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
 })
