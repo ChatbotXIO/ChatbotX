@@ -4,6 +4,7 @@ import {
   type IntegrationDefinition,
   SdkException,
 } from "@chatbotx.io/sdk"
+import { getFlowAssets } from "./api/flow"
 import {
   findConversationalAutomation,
   updateConversationalAutomation,
@@ -40,6 +41,11 @@ const config: IntegrationDefinition<
     listMessageTemplates: async ({ ctx }) =>
       await listMessageTemplates(ctx.auth),
     listFlows: async ({ ctx }) => await listFlows(ctx),
+    getFlowAssets: async ({ ctx, params }) =>
+      await getFlowAssets({
+        auth: ctx.auth,
+        flowSourceId: params.flowSourceId,
+      }),
     findConversationalAutomation: async ({ ctx }) =>
       await findConversationalAutomation(ctx.auth),
     updateConversationalAutomation: async ({ ctx, data }) =>

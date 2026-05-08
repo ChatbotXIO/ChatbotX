@@ -1,5 +1,5 @@
 import { db, eq } from "@chatbotx.io/database/client"
-import { messageModel } from "@chatbotx.io/database/schema"
+import { messageModel, whatsappFlowModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -8,6 +8,7 @@ import { emit } from "@chatbotx.io/event-bus"
 import {
   type MetadataPayload,
   messageEventTypeSchema,
+  stepTypes,
 } from "@chatbotx.io/flow-config"
 import { parseSdkError, type SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
@@ -121,6 +122,27 @@ export async function sendFlowStepToChannel({
     contactInbox,
   })
 
+  let resolvedStep: SendFlowStepData = step
+
+  if (
+    step.stepType === stepTypes.enum.whatsappFlow &&
+    step.flow.id &&
+    !step.flow.sourceId
+  ) {
+    const [row] = await db
+      .select({ sourceId: whatsappFlowModel.sourceId })
+      .from(whatsappFlowModel)
+      .where(eq(whatsappFlowModel.id, step.flow.id))
+      .limit(1)
+
+    if (row?.sourceId) {
+      resolvedStep = {
+        ...step,
+        flow: { ...step.flow, sourceId: row.sourceId },
+      }
+    }
+  }
+
   const result = await integration.runChannelHandler(
     "message",
     "sendFlowStep",
@@ -130,7 +152,7 @@ export async function sendFlowStepToChannel({
         contact: contactInbox,
         flowId,
         flowVersionId,
-        step,
+        step: resolvedStep,
         metadata,
       },
     },

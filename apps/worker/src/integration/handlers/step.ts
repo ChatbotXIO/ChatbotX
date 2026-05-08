@@ -388,4 +388,5 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.typing]: stepSendTyping,
   [stepTypes.enum.sendWaTemplateMessage]: sendFlowMessage,
   [stepTypes.enum.whatsappOptionList]: sendFlowMessage,
+  [stepTypes.enum.whatsappFlow]: sendFlowMessage,
 }

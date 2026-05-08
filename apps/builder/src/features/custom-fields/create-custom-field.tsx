@@ -28,6 +28,7 @@ type CreateCustomFieldDialogProps = {
   folderId: string | null
   triggerButton?: ReactNode
   onSuccess?: () => void
+  modal?: boolean
 }
 
 export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
@@ -38,6 +39,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
     workspaceId,
     folderId,
     triggerButton,
+    modal = true,
     onSuccess = () => {
       router.refresh()
     },
@@ -46,7 +48,7 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
+    <Dialog modal={modal} onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
         {triggerButton ? (
           triggerButton
@@ -59,7 +61,11 @@ export function CreateCustomFieldDialog(props: CreateCustomFieldDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent
+        className={"max-h-screen max-w-lg overflow-y-scroll"}
+        onInteractOutside={(e) => e.stopPropagation()}
+        onPointerDownOutside={(e) => e.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("messages.createFeature", {
@@ -171,7 +177,13 @@ function CreateCustomFieldForm({
 
   return (
     <Form {...form}>
-      <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
+      <form
+        className="flex-1 space-y-4"
+        onSubmit={(e) => {
+          e.stopPropagation()
+          handleSubmitWithAction(e)
+        }}
+      >
         <InputField
           label={t("fields.name.label")}
           name="name"

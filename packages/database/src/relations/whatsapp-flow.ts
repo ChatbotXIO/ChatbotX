@@ -7,6 +7,7 @@ export const whatsappFlowRelations = defineRelationsPart(schema, (r) => ({
     integrationWhatsapp: r.one.integrationWhatsappModel({
       from: r.whatsappFlowModel.integrationWhatsappId,
       to: r.integrationWhatsappModel.id,
+      optional: false,
     }),
   },
 }))

@@ -1,28 +1,31 @@
-import { findOrFail } from "@chatbotx.io/database/client"
-import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import {
-  type ListFlowsResponse,
-  listFlows,
-} from "@chatbotx.io/integration-whatsapp/api/waba"
-import type { ListWhatsappFlowsRequest } from "@/features/integration-whatsapp/flows/schemas/get-flows-schema"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import type { ListWhatsappFlowsResponse } from "@/features/integration-whatsapp/flows/schema/query"
 
-export async function listWhatsappFlows(
-  input: ListWhatsappFlowsRequest,
-): Promise<ListFlowsResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
-
-  const integrationWhatsapp = await findOrFail({
-    table: integrationWhatsappModel,
+export const whatsappFlowService = {
+  list: (props: {
+    tx?: DatabaseClient
     where: {
-      workspaceId: input.workspaceId,
-      id: input.id,
-    },
-    message: "Whatsapp integration not found",
-  })
+      workspaceId: string
+      inboxId?: string
+      integrationWhatsappId?: string
+    }
+  }): Promise<ListWhatsappFlowsResponse> => {
+    const { tx = db, where } = props
 
-  return await listFlows({
-    auth: integrationWhatsapp.auth as WhatsappAuthValue,
-  })
+    const queryWhere = {
+      integrationWhatsappId: where.integrationWhatsappId,
+      integrationWhatsapp: {
+        workspaceId: where.workspaceId,
+        inboxId: where.inboxId,
+      },
+    }
+
+    return tx.query.whatsappFlowModel.findMany({
+      where: queryWhere,
+      with: {
+        integrationWhatsapp: true,
+      },
+      orderBy: { createdAt: "asc" },
+    })
+  },
 }

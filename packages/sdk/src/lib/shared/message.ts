@@ -1,3 +1,4 @@
+import type { ButtonPayload } from "@chatbotx.io/flow-config"
 import { z } from "zod"
 
 export type IncomingContact = {
@@ -39,9 +40,18 @@ export type IncomingMessage = {
   contentAttributes?:
     | MessageLocationEntity
     | MessageTemplateEntity
+    | MessageWhatsappFlowResponseEntity
     | { [x: string]: unknown }
   attachments?: IncomingAttachment[]
   clientId?: string | null
+}
+
+export type MessageWhatsappFlowResponseEntity = {
+  type: "whatsapp_flow_response"
+  name?: string
+  flowResponse: Record<string, unknown>
+  flowToken: string | null
+  decoded: ButtonPayload | null
 }
 
 export const MessageEntitySchema = z.custom<IncomingMessage>(

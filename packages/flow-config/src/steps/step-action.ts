@@ -103,6 +103,7 @@ export const stepTypes = z.enum([
   // WhatsApp Template Message
   "sendWaTemplateMessage",
   "whatsappOptionList",
+  "whatsappFlow",
 ])
 
 export type StepType = z.infer<typeof stepTypes>

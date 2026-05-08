@@ -1,3 +1,4 @@
+import { decodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   type Context,
   contentTypes,
@@ -5,6 +6,7 @@ import {
   type IncomingContact,
   type IncomingMessage,
   type MessageHandlers,
+  type MessageWhatsappFlowResponseEntity,
   messageTypes,
   SdkException,
 } from "@chatbotx.io/sdk"
@@ -18,6 +20,7 @@ import type {
   ServerContactsMessage,
   ServerDocumentMessage,
   ServerImageMessage,
+  ServerInteractiveNFMMessage,
   ServerLocationMessage,
   ServerOrderMessage,
   ServerStickerMessage,
@@ -27,6 +30,10 @@ import type {
 import { getWhatsappClient } from "../../client"
 import { logger } from "../../lib/logger"
 import type { WhatsappAuthValue, WhatsappWebhookEvent } from "../../schema"
+
+type WhatsappNfmFlowResponse = Record<string, unknown> & {
+  flow_token?: string
+}
 
 export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"] =
   async (props) => {
@@ -165,7 +172,28 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
             break
           }
           case "nfm_reply": {
-            message.text = data.message.interactive.nfm_reply.body ?? ""
+            const reply = (
+              data.message.interactive as ServerInteractiveNFMMessage
+            ).nfm_reply
+            const flowResponse = parseNfmReplyResponse(reply.response_json)
+            const flowToken = getNfmFlowToken(flowResponse)
+            const decodedPayload = flowToken
+              ? decodeButtonPayload(flowToken)
+              : null
+
+            if (flowToken && decodedPayload?.buttonId) {
+              postbackAction = flowToken
+            }
+
+            message.text = reply.body ?? ""
+            const flowResponseEntity: MessageWhatsappFlowResponseEntity = {
+              type: "whatsapp_flow_response",
+              name: reply.name,
+              flowResponse,
+              flowToken,
+              decoded: decodedPayload,
+            }
+            message.contentAttributes = flowResponseEntity
             break
           }
           default: {
@@ -256,3 +284,20 @@ const fetchMedia = async (
     throw new SdkException("Unable to fetch media info")
   }
 }
+
+const parseNfmReplyResponse = (
+  responseJson: string,
+): WhatsappNfmFlowResponse => {
+  try {
+    return JSON.parse(responseJson) as WhatsappNfmFlowResponse
+  } catch (error) {
+    logger.warn(
+      { error, responseJson },
+      "Failed to parse nfm_reply.response_json",
+    )
+    return {}
+  }
+}
+
+const getNfmFlowToken = (flowResponse: WhatsappNfmFlowResponse) =>
+  typeof flowResponse.flow_token === "string" ? flowResponse.flow_token : null

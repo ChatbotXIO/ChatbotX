@@ -32,6 +32,7 @@ import {
   type AuthValue,
   type IncomingAttachment,
   type IncomingContact,
+  type MessageWhatsappFlowResponseEntity,
   SdkException,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
@@ -189,6 +190,12 @@ export const receiveMessage = async (
             action: postbackAction,
             ref,
             messageId: createdMessage?.id,
+            payload: {
+              waFlowResponse:
+                (
+                  incomingMessage.contentAttributes as MessageWhatsappFlowResponseEntity
+                )?.flowResponse || "",
+            },
           },
         })
       }

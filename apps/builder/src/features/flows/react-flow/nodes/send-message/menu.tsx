@@ -13,6 +13,7 @@ import {
   TimerIcon,
   VideoIcon,
   Volume2Icon,
+  WorkflowIcon,
   ZapIcon,
 } from "lucide-react"
 import { performActionMenus } from "../perform-action/menu"
@@ -62,7 +63,23 @@ const ALL_MENU_ITEMS = (
     label: t("flows.actions.sendWaTemplateMessage"),
     icon: MessageSquareIcon,
     stepType: stepTypes.enum.sendWaTemplateMessage,
-    children: integrationMenus(t, menuData, channelTypes.enum.whatsapp),
+    children: integrationMenus(
+      t,
+      stepTypes.enum.sendWaTemplateMessage,
+      menuData,
+      channelTypes.enum.whatsapp,
+    ),
+  },
+  whatsappFlow: {
+    label: t("flows.actions.whatsappFlow"),
+    icon: WorkflowIcon,
+    stepType: stepTypes.enum.whatsappFlow,
+    children: integrationMenus(
+      t,
+      stepTypes.enum.whatsappFlow,
+      menuData,
+      channelTypes.enum.whatsapp,
+    ),
   },
   whatsappOptionList: {
     label: t("flows.actions.whatsappOptionList"),
@@ -121,6 +138,7 @@ const WHATSAPP_MENU_ORDER = [
   "getUserData",
   "sendGif",
   "sendWaTemplateMessage",
+  "whatsappFlow",
   "whatsappOptionList",
   "typing",
   "sendFile",

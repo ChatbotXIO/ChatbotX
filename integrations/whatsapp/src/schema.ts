@@ -10,7 +10,6 @@ import type {
   ConversationalAutomation,
   WhatsappPhoneNumber,
 } from "./api/phone-number"
-import type { ListFlowsResponse, ListMessageTemplatesReponse } from "./api/waba"
 
 export type WhatsappConfig = BaseConfig & {
   verifyToken?: string
@@ -33,6 +32,57 @@ export type WhatsappPagination = {
   cursors: {
     before: string
     after: string
+  }
+}
+
+export type WhatsappFlow = {
+  id: string
+  name: string
+  status: string
+  categories: string[]
+  validation_errors: unknown[]
+}
+
+export type ListFlowsResponse = {
+  data: WhatsappFlow[]
+  paging: WhatsappPagination
+}
+
+export type WhatsappFlowScreenOutput = {
+  value: string
+  label: string
+}
+
+export type WhatsappFlowScreen = {
+  id: string
+  title: string
+  terminal: boolean
+  output: WhatsappFlowScreenOutput[]
+}
+
+export type FlowAssetEntity = {
+  name: string
+  asset_type: string
+  download_url: string
+}
+
+export type FlowAssetsResponse = {
+  data: FlowAssetEntity[]
+}
+
+export type MessageTemplateEntity = {
+  id: string
+  name: string
+  status: "APPROVED" | "PENDING" | "REJECTED"
+  language: string
+  category: "AUTHENTICATION" | "MARKETING" | "UTILITY"
+  components: JSON[]
+}
+
+export type ListMessageTemplatesReponse = {
+  data: MessageTemplateEntity[]
+  paging: {
+    next: string
   }
 }
 
@@ -133,6 +183,13 @@ export type WhatsappActions = {
       params: { limit: number }
     },
     ListFlowsResponse
+  >
+  getFlowAssets: Handler<
+    {
+      ctx: Context<WhatsappAuthValue>
+      params: { flowSourceId: string }
+    },
+    WhatsappFlowScreen[]
   >
   findConversationalAutomation: Handler<
     {

@@ -5,6 +5,7 @@ import type {
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
+import type { WhatsappFlowResource } from "@/features/integration-whatsapp/flows/schema/resource"
 import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 
 export type MenuItem = {
@@ -22,8 +23,13 @@ export type FlowTemplateMenuData = {
   waTemplates?: FlowTemplateResource[]
 }
 
+export type FlowMenuData = {
+  waFlows?: WhatsappFlowResource[]
+}
+
 export type MenuData = {
   inboxes: ListInboxesResponse["data"]
   templates: FlowTemplateMenuData
+  flows: FlowMenuData
   beforeStep: ChooseChannelStepSchema
 }
