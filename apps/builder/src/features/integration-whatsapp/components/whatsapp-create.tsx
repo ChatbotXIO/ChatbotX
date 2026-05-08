@@ -53,6 +53,15 @@ const FORM_FIELDS = {
   CODE: "code",
 } as const
 
+const EMBEDDED_SIGNUP_FEATURE_TYPES = {
+  WHATSAPP_BUSINESS_APP_ONBOARDING: "whatsapp_business_app_onboarding",
+  ONLY_WABA_SHARING: "only_waba_sharing",
+} as const
+
+const EMBEDDED_SIGNUP_FEATURES = {
+  MARKETING_MESSAGES_LITE: "marketing_messages_lite",
+} as const
+
 type FormVisibility = {
   connectExisting: boolean
   transferPhoneNumber: boolean
@@ -175,10 +184,17 @@ export default function WhatsappCreate({
            *     "version": "3"
            * }
            */
-          if (data.event === "FINISH") {
-            setValue(FORM_FIELDS.BUSINESS_ID, data.data.business_id)
-            setValue(FORM_FIELDS.WABA_ID, data.data.waba_id)
-            setValue(FORM_FIELDS.PHONE_NUMBER_ID, data.data.phone_number_id)
+          if (
+            data.event === "FINISH" ||
+            data.event === "FINISH_ONLY_WABA" ||
+            data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING"
+          ) {
+            setValue(FORM_FIELDS.BUSINESS_ID, data.data.business_id ?? "")
+            setValue(FORM_FIELDS.WABA_ID, data.data.waba_id ?? "")
+            setValue(
+              FORM_FIELDS.PHONE_NUMBER_ID,
+              data.data.phone_number_id ?? "",
+            )
           } else if (data.event === "CANCEL") {
             setValue(FORM_FIELDS.BUSINESS_ID, "")
             setValue(FORM_FIELDS.WABA_ID, "")
@@ -220,7 +236,6 @@ export default function WhatsappCreate({
         marketingMessageLite: true,
       })
       setValue(FORM_FIELDS.MANUAL_CONNECT, false)
-      setValue(FORM_FIELDS.MARKETING_MESSAGE_LITE, false)
     } else {
       updateVisibility({
         connectExisting: true,
@@ -281,6 +296,18 @@ function SdkConnectSection({
 
   const finalSubmitRef = useRef<HTMLButtonElement>(null)
   const watchCode = useWatch({ name: FORM_FIELDS.CODE })
+  const watchConnectExisting = useWatch({ name: FORM_FIELDS.CONNECT_EXISTING })
+  const watchTransferPhoneNumber = useWatch({
+    name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
+  })
+
+  let embeddedSignupFeatureType: string | undefined
+  if (watchTransferPhoneNumber) {
+    embeddedSignupFeatureType =
+      EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
+  } else if (watchConnectExisting) {
+    embeddedSignupFeatureType = EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING
+  }
 
   return (
     <>
@@ -312,7 +339,7 @@ function SdkConnectSection({
             appId={settings.clientId}
             className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
             initParams={{
-              version: (settings.version as InitParams["version"]) ?? "v18.0",
+              version: (settings.version as InitParams["version"]) ?? "v21.0",
             }}
             loginOptions={
               {
@@ -323,8 +350,10 @@ function SdkConnectSection({
                 extras: {
                   sessionInfoVersion: 3,
                   setup: {},
-                  features: [],
-                  featureType: "whatsapp_business_app_onboarding",
+                  features: [EMBEDDED_SIGNUP_FEATURES.MARKETING_MESSAGES_LITE],
+                  ...(embeddedSignupFeatureType
+                    ? { featureType: embeddedSignupFeatureType }
+                    : {}),
                 },
                 // biome-ignore lint/suspicious/noExplicitAny: some types are not supported
               } as any
