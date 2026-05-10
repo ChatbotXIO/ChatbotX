@@ -1,4 +1,4 @@
-import ky from "ky"
+import ky, { HTTPError } from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
 import { logger } from "../lib/logger"
@@ -145,11 +145,14 @@ export const listMessageTemplates = async (
       data: allTemplates,
       paging: { next: "" },
     }
-  } catch (e) {
-    logger.error(e, "Failed to list message templates")
+  } catch (error: unknown) {
+    logger.error(error, "Failed to list message templates")
+
     throw new WhatsappException(
-      "Failed to list message templates",
-    ).setOriginError(e)
+      error instanceof HTTPError
+        ? error.message
+        : "Failed to list message templates",
+    ).setOriginError(error)
   }
 }
 

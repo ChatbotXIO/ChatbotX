@@ -40,10 +40,13 @@ export const getInboxLink = (props: {
 
   // WhatsApp: https://wa.me/PHONE_NUMBER?text=/giveaway
   if (inbox.channel === "whatsapp") {
-    const url = new URL(
-      "",
-      `https://wa.me/${inbox.integrationWhatsapp?.auth?.metadata?.phoneNumber?.display_phone_number ?? ""}`,
-    )
+    const displayPhoneNumber =
+      inbox.integrationWhatsapp?.auth?.metadata?.phoneNumber?.display_phone_number?.replace(
+        /\s/g,
+        "",
+      ) ?? ""
+
+    const url = new URL("", `https://wa.me/${displayPhoneNumber}`)
     if (ref) {
       url.searchParams.set("text", `/${ref}`)
     }
