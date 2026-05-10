@@ -27,26 +27,10 @@ export const publishInboxesRequest = listInboxesRequest.omit({
 })
 export type PublishInboxesRequest = z.infer<typeof publishInboxesRequest>
 
-const integrationWhatsappListResource = integrationWhatsappResource.extend({
-  auth: z
-    .object({
-      metadata: z
-        .object({
-          phoneNumber: z
-            .object({
-              display_phone_number: z.string(),
-            })
-            .nullish(),
-        })
-        .nullish(),
-    })
-    .nullish(),
-})
-
 export const listInboxesResponse = z.object({
   data: z.array(
     inboxResource.extend({
-      integrationWhatsapp: integrationWhatsappListResource.nullish(),
+      integrationWhatsapp: integrationWhatsappResource.nullish(),
       integrationWebchat: integrationWebchatResource.nullish(),
       integrationMessenger: integrationMessengerResource.nullish(),
       integrationZalo: integrationZaloResource.nullish(),

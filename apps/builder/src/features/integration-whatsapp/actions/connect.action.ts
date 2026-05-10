@@ -24,6 +24,7 @@ import {
   exchangeAccessToken,
 } from "@chatbotx.io/integration-whatsapp/api/auth"
 import {
+  normalizeWhatsappDisplayPhoneNumber,
   type WhatsappPhoneNumber,
   listPhoneNumbers as whatsappListPhoneNumbers,
 } from "@chatbotx.io/integration-whatsapp/api/phone-number"
@@ -246,6 +247,10 @@ async function persistIntegration(params: {
     .returning()
     .then((result) => result[0])
 
+  const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
+    phoneNumber.display_phone_number,
+  )
+
   await tx
     .insert(integrationWhatsappModel)
     .values({
@@ -257,10 +262,14 @@ async function persistIntegration(params: {
       wabaId,
       businessId,
       name: phoneNumber.verified_name,
+      displayPhoneNumber,
     })
     .onConflictDoUpdate({
       target: [integrationWhatsappModel.inboxId],
-      set: { updatedAt: new Date() },
+      set: {
+        displayPhoneNumber,
+        updatedAt: new Date(),
+      },
     })
 
   return resolvedWorkspaceId

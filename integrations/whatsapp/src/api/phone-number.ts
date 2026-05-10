@@ -3,6 +3,20 @@ import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { WhatsappException } from "../exception"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 
+export const normalizeWhatsappDisplayPhoneNumber = (
+  phone: string,
+  defaultCountryCode = "84",
+): string => {
+  let digits = phone.replace(/\D/g, "")
+
+  if (digits.startsWith("0")) {
+    // convert local VN number starting with 0
+    digits = defaultCountryCode + digits.slice(1)
+  }
+
+  return digits
+}
+
 export type WhatsappPhoneNumber = {
   verified_name: string
   code_verification_status: string
