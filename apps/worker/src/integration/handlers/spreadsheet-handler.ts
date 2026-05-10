@@ -1,8 +1,11 @@
+import {
+  buildContext,
+  integrationGoogleSheetService,
+} from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   flowVersionModel,
-  integrationGoogleSheetsModel,
   spreadsheetModel,
 } from "@chatbotx.io/database/schema"
 import type {
@@ -10,7 +13,6 @@ import type {
   SpreadsheetModel,
 } from "@chatbotx.io/database/types"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import type {
   EdgeSchema,
   FilterMode,
@@ -25,7 +27,6 @@ import {
   type GoogleSheetsAuthValue,
   integration as integrationGooglesheets,
 } from "@chatbotx.io/integration-google-sheets"
-import { SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -58,46 +59,37 @@ const getWorksheet = async ({
     message: "Spreadsheet not found",
   })
 
-const getGoogleSheetsIntegration = async (workspaceId: string) =>
-  await findOrFail({
-    table: integrationGoogleSheetsModel,
-    where: {
-      workspaceId,
-    },
-    message: "Google Sheets integration not found",
-  })
-
 const getSheetData = async ({
   conversation,
   step,
 }: ExecuteStepProps<SpreadsheetGetRowSchema>) => {
-  const auth = await getGoogleSheetAuth(conversation.workspaceId)
+  const integrationRow =
+    await integrationGoogleSheetService.findByWorkspaceIdOrFail(
+      conversation.workspaceId,
+    )
   const worksheet = await getWorksheet({
     id: step.spreadsheetId,
     workspaceId: conversation.workspaceId,
   })
 
-  const headers = await integrationGooglesheets.actions.listSheetHeaders({
-    ctx: {
-      auth,
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        conversation.contactId,
-      ),
+  const ctx = await buildContext({
+    workspaceId: conversation.workspaceId,
+    integrationType: "googleSheets",
+    integration: {
+      ...integrationRow,
+      auth: integrationRow.auth as GoogleSheetsAuthValue,
     },
+  })
+
+  const headers = await integrationGooglesheets.runAction("listSheetHeaders", {
+    ctx,
     props: {
       spreadsheetId: worksheet.spreadsheetId,
       sheetName: step.sheetName,
     },
   })
-  const values = await integrationGooglesheets.actions.getSheetValues({
-    ctx: {
-      auth,
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        conversation.contactId,
-      ),
-    },
+  const values = await integrationGooglesheets.runAction("getSheetValues", {
+    ctx,
     props: {
       spreadsheetId: worksheet.spreadsheetId,
       sheetName: step.sheetName,
@@ -168,19 +160,14 @@ export const getSpreadsheetRow = async (
   }
 }
 
-const getGoogleSheetAuth = async (workspaceId: string) => {
-  const googleSheetsIntegration = await getGoogleSheetsIntegration(workspaceId)
-  if (!googleSheetsIntegration.auth) {
-    throw new SdkException("Google Sheets integration auth is missing")
-  }
-  return googleSheetsIntegration.auth as GoogleSheetsAuthValue
-}
-
 export const sendSpreadsheetData = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
 ) => {
   try {
-    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
+    const integrationRow =
+      await integrationGoogleSheetService.findByWorkspaceIdOrFail(
+        props.conversation.workspaceId,
+      )
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
       workspaceId: props.conversation.workspaceId,
@@ -202,14 +189,16 @@ export const sendSpreadsheetData = async (
       data.push(value)
     }
 
-    await integrationGooglesheets.actions.insertRow({
-      ctx: {
-        auth,
-        storagePrefix: getStoragePrefix(
-          props.conversation.workspaceId,
-          props.conversation.contactId,
-        ),
+    const ctx = await buildContext({
+      workspaceId: props.conversation.workspaceId,
+      integrationType: "googleSheets",
+      integration: {
+        ...integrationRow,
+        auth: integrationRow.auth as GoogleSheetsAuthValue,
       },
+    })
+    await integrationGooglesheets.runAction("insertRow", {
+      ctx,
       props: {
         spreadsheetId: worksheet.spreadsheetId,
         sheetName: props.step.sheetName,
@@ -238,7 +227,10 @@ export const updateSpreadsheetRow = async (
       return
     }
 
-    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
+    const integrationRow =
+      await integrationGoogleSheetService.findByWorkspaceIdOrFail(
+        props.conversation.workspaceId,
+      )
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
       workspaceId: props.conversation.workspaceId,
@@ -260,15 +252,17 @@ export const updateSpreadsheetRow = async (
       data.push(value)
     }
 
+    const ctx = await buildContext({
+      workspaceId: props.conversation.workspaceId,
+      integrationType: "googleSheets",
+      integration: {
+        ...integrationRow,
+        auth: integrationRow.auth as GoogleSheetsAuthValue,
+      },
+    })
     for (const foundRow of foundRows) {
-      await integrationGooglesheets.actions.updateRow({
-        ctx: {
-          auth,
-          storagePrefix: getStoragePrefix(
-            props.conversation.workspaceId,
-            props.conversation.contactId,
-          ),
-        },
+      await integrationGooglesheets.runAction("updateRow", {
+        ctx,
         props: {
           spreadsheetId: worksheet.spreadsheetId,
           sheetName: props.step.sheetName,
@@ -299,21 +293,26 @@ export const clearSpreadsheetRow = async (
       return
     }
 
-    const auth = await getGoogleSheetAuth(props.conversation.workspaceId)
+    const integrationRow =
+      await integrationGoogleSheetService.findByWorkspaceIdOrFail(
+        props.conversation.workspaceId,
+      )
     const worksheet = await getWorksheet({
       id: props.step.spreadsheetId,
       workspaceId: props.conversation.workspaceId,
     })
 
+    const ctx = await buildContext({
+      workspaceId: props.conversation.workspaceId,
+      integrationType: "googleSheets",
+      integration: {
+        ...integrationRow,
+        auth: integrationRow.auth as GoogleSheetsAuthValue,
+      },
+    })
     for (const foundRow of foundRows) {
-      await integrationGooglesheets.actions.clearRow({
-        ctx: {
-          auth,
-          storagePrefix: getStoragePrefix(
-            props.conversation.workspaceId,
-            props.conversation.contactId,
-          ),
-        },
+      await integrationGooglesheets.runAction("clearRow", {
+        ctx,
         props: {
           spreadsheetId: worksheet.spreadsheetId,
           sheetName: props.step.sheetName,

@@ -30,7 +30,7 @@ import {
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
 import { convertButtonsToTemplate } from "./send-flow-step"
-import { sendFlowStepToExternal } from "./send-message"
+import { sendFlowStepToChannel } from "./send-message"
 
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
@@ -155,7 +155,7 @@ export async function processWhatsappTemplate(
   }
 
   try {
-    const result = await sendFlowStepToExternal({
+    const result = await sendFlowStepToChannel({
       conversation,
       contactInbox,
       flowId: flow?.id || "",

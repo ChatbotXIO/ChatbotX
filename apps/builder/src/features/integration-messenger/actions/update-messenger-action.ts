@@ -1,5 +1,6 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -12,7 +13,6 @@ import type {
   IntegrationMessengerModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
@@ -79,21 +79,25 @@ export const updateMessenger = async (
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
-      const botCtx = {
-        uploader,
-        storagePrefix: getStoragePrefix(
-          ctx.workspace.id,
-          integrationMessengerData.inboxId,
-        ),
-        auth: integrationMessengerData?.auth as MessengerAuthValue,
-      }
+      const botContext = await buildContext({
+        workspaceId: ctx.workspace.id,
+        integrationType: "messenger",
+        integration: {
+          ...integrationMessengerData,
+          auth: integrationMessengerData.auth as MessengerAuthValue,
+        },
+      })
 
       const fieldsToDelete = getFieldsToDelete(parsedInput)
       if (fieldsToDelete.length > 0) {
-        await integrationMessenger.channels.channel.bot?.deleteProfileFields?.({
-          ctx: botCtx,
-          fields: fieldsToDelete,
-        })
+        await integrationMessenger.runChannelHandler(
+          "bot",
+          "deleteProfileFields",
+          {
+            ctx: botContext,
+            fields: fieldsToDelete,
+          },
+        )
       }
 
       const profileParams = getMessengerProfileParams({
@@ -101,8 +105,8 @@ export const updateMessenger = async (
         ...parsedInput,
       })
       if (Object.keys(profileParams).length > 0) {
-        await integrationMessenger.channels.channel.bot?.updateProfile?.({
-          ctx: botCtx,
+        await integrationMessenger.runChannelHandler("bot", "updateProfile", {
+          ctx: botContext,
           data: profileParams,
         })
       }
@@ -205,12 +209,16 @@ const getPersonaId = async (
 ): Promise<string | undefined> => {
   const defaultPersona = personas.find((persona) => persona.isDefault)
 
-  const newPersona = await integrationMessenger.actions.updatePersona({
-    ctx: {
-      storagePrefix: getStoragePrefix(workspace.id, model.inboxId),
-      uploader,
-      auth: model?.auth as MessengerAuthValue,
+  const ctx = await buildContext({
+    workspaceId: workspace.id,
+    integrationType: "messenger",
+    integration: {
+      ...model,
+      auth: model.auth as MessengerAuthValue,
     },
+  })
+  const newPersona = await integrationMessenger.runAction("updatePersona", {
+    ctx,
     persona: defaultPersona
       ? {
           name: defaultPersona.name,

@@ -3,7 +3,6 @@ import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import { organizationModel } from "@chatbotx.io/database/schema"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
-import { getTranslations } from "next-intl/server"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { isCommunity } from "../keys"
@@ -37,13 +36,10 @@ class OrganizationService extends BaseService {
     where: Partial<{ domain: string; id: string }>
     tx?: DatabaseClient
   }): Promise<OrganizationModel> {
-    const t = await getTranslations()
     const { where, tx = db } = props
     const organization = await this.find({ where, tx })
     if (!organization) {
-      throw notFoundException(
-        t("messages.featureNotFound", { feature: "Organization" }),
-      )
+      throw notFoundException("Organization not found")
     }
     return organization
   }

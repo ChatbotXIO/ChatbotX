@@ -17,23 +17,21 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { use } from "react"
 import { toast } from "sonner"
 import { SettingRow } from "@/components/setting-row"
 import { connectGoogleSheets } from "./actions/connect.action"
 import { disconnectGoogleSheets } from "./actions/disconnect.action"
-import type { getGoogleSheetsIntegration } from "./queries"
+import type { IntegrationGoogleSheetsResource } from "./schemas"
 
 type GoogleSheetsConnectProps = {
   workspaceId: string
-  promises: Promise<[Awaited<ReturnType<typeof getGoogleSheetsIntegration>>]>
+  integrationGoogleSheets: IntegrationGoogleSheetsResource | undefined
 }
 
 export function GoogleSheetsManage({
   workspaceId,
-  promises,
+  integrationGoogleSheets,
 }: GoogleSheetsConnectProps) {
-  const [{ data: integrationGoogleSheets }] = use(promises)
   const router = useRouter()
   const t = useTranslations()
 

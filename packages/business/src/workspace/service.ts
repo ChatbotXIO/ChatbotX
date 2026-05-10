@@ -1,4 +1,3 @@
-import { notFoundException } from "@chatbotx.io/business/errors"
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import {
@@ -11,9 +10,9 @@ import type {
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
-import { getTranslations } from "next-intl/server"
-import { BaseService } from "../common/base.service"
-import { workspaceMemberService } from "../workspace-members/workspace-member-service"
+import { BaseService } from "../base.service"
+import { notFoundException } from "../errors"
+import { workspaceMemberService } from "../workspace-member/service"
 
 type WorkspaceWhere = Partial<{ id: string; organizationId: string }>
 
@@ -22,12 +21,9 @@ class WorkspaceService extends BaseService {
     where: WorkspaceWhere
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
-    const t = await getTranslations()
     const workspace = await this.find(props)
     if (!workspace) {
-      throw notFoundException(
-        t("messages.featureNotFound", { feature: "Workspace" }),
-      )
+      throw notFoundException("Workspace not found")
     }
     return workspace
   }

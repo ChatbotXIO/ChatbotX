@@ -1,5 +1,6 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -15,7 +16,6 @@ import type {
   IntegrationInstagramModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   type IceBreaker,
@@ -68,20 +68,19 @@ export const updateInstagramAction = workspaceActionClient
 
           if (integrationInstagramData) {
             const auth = integrationInstagramData.auth as InstagramAuthValue
-            const integrationContext = {
-              workspace: ctx.workspace,
-              auth,
-              storagePrefix: getStoragePrefix(
-                ctx.workspace.id,
-                integrationInstagramData.inboxId,
-              ),
-            }
+            const botContext = await buildContext({
+              workspaceId: ctx.workspace.id,
+              integrationType: "instagram",
+              integration: { ...integrationInstagramData, auth },
+            })
 
             const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
             if (fieldsToDelete.length > 0) {
-              await integrationInstagram.channels.channel.bot?.deleteProfileFields?.(
+              await integrationInstagram.runChannelHandler(
+                "bot",
+                "deleteProfileFields",
                 {
-                  ctx: integrationContext,
+                  ctx: botContext,
                   fields: fieldsToDelete,
                 },
               )
@@ -102,10 +101,14 @@ export const updateInstagramAction = workspaceActionClient
             }
 
             if (Object.keys(profileData).length > 0) {
-              await integrationInstagram.channels.channel.bot?.updateProfile?.({
-                ctx: integrationContext,
-                data: profileData as InstagramProfileRequest,
-              })
+              await integrationInstagram.runChannelHandler(
+                "bot",
+                "updateProfile",
+                {
+                  ctx: botContext,
+                  data: profileData as InstagramProfileRequest,
+                },
+              )
             }
           }
 

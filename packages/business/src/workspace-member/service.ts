@@ -5,7 +5,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
-import { BaseService } from "../common/base.service"
+import { BaseService } from "../base.service"
 
 type WorkspaceMemberWithWorkspace = WorkspaceMemberModel & {
   workspace: WorkspaceModel

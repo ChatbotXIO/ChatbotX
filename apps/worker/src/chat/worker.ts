@@ -10,7 +10,7 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
-import { sendMessageToExternal } from "./handlers/send-message"
+import { sendMessageToChannel } from "./handlers/send-message"
 import { sendWhatsappTemplateMessage } from "./handlers/send-whatsapp-template"
 
 async function startChatWorker() {
@@ -26,8 +26,8 @@ async function startChatWorker() {
     queueNames.enum.chat,
     async (job: Job<ChatJobData>) => {
       switch (job.data.type) {
-        case ChatJobAction.sendExternalMessage:
-          await sendMessageToExternal(job.data.data)
+        case ChatJobAction.sendChannelMessage:
+          await sendMessageToChannel(job.data.data)
           return
         case ChatJobAction.sendFlowMessage:
           await sendFlowStep(job.data.data)

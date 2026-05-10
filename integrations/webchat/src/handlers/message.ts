@@ -10,16 +10,16 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
     } = props
 
     await ky
-      .post(`${ctx.auth.websocketUrl}/parties/guests/${contact.sourceId}`, {
+      .post(`${ctx.platform.realtimeUrl}/parties/guests/${contact.sourceId}`, {
         headers: {
-          "X-API-Key": ctx.auth.apiKey,
+          "X-API-Key": ctx.platform.realtimeApiKey,
         },
         json: {
           eventType: "messageCreated",
           data: message,
         },
       })
-      .json()
+      .text()
 
     return {
       messageIds: [],

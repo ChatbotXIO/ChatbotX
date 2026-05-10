@@ -1,14 +1,13 @@
-import type { AuthValue, Context } from "@chatbotx.io/sdk"
+import type { Context } from "@chatbotx.io/sdk"
 import ky, { type KyInstance } from "ky"
-import { chatbotxAuthSchema } from "../auth"
+import type { ChatbotxAuthValue } from "../auth"
 
-export const getRealtimeClient = (ctx: Context<AuthValue>): KyInstance => {
-  const authSchema = chatbotxAuthSchema.parse(ctx.auth)
-
-  return ky.create({
+export const getRealtimeClient = (
+  ctx: Context<ChatbotxAuthValue>,
+): KyInstance =>
+  ky.create({
     headers: {
-      "X-API-KEY": authSchema.apiKey,
+      "X-API-KEY": ctx.auth.apiKey,
     },
-    baseUrl: authSchema.websocketUrl,
+    baseUrl: ctx.auth.realtimeUrl,
   })
-}

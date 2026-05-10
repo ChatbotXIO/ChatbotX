@@ -1,6 +1,10 @@
 "use server"
 
-import { organizationService } from "@chatbotx.io/business"
+import {
+  buildContext,
+  organizationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -9,7 +13,6 @@ import {
   integrationMessengerModel,
 } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import {
@@ -22,7 +25,6 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
@@ -62,16 +64,16 @@ export const selectPageAction = authActionClient
         await db.transaction(async (tx) => {
           // create new workspace if not exists
           if (!workspaceId) {
-            const workspace = await createSimpleWorkspace(
+            const workspace = await workspaceService.create({
               tx,
-              ctx.user.id,
+              createdBy: ctx.user.id,
               organization,
-              {
+              data: {
                 name: parsedInput.pageName,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
-            )
+            })
             workspaceId = workspace.id
           }
 
@@ -123,30 +125,35 @@ export const selectPageAction = authActionClient
             .returning()
             .then((result) => result[0])
 
-          await tx.insert(integrationMessengerModel).values({
-            id: createId(),
-            workspaceId,
-            inboxId: inbox.id,
-            pageId: parsedInput.pageId,
-            auth,
-            name: parsedInput.pageName,
-            persistentMenus: [
-              {
-                label: BRANDING_TITLE,
-                type: "url" as const,
-                url: getBrandingUrl("messenger"),
-              },
-            ],
-            conversationStarters: [],
-            personas: [],
-          })
-
-          await integrationMessenger.channels.channel.bot?.addBranding?.({
-            ctx: {
-              uploader,
-              storagePrefix: getStoragePrefix(workspaceId, inbox.id),
+          const integrationRow = await tx
+            .insert(integrationMessengerModel)
+            .values({
+              id: createId(),
+              workspaceId,
+              inboxId: inbox.id,
+              pageId: parsedInput.pageId,
               auth,
-            },
+              name: parsedInput.pageName,
+              persistentMenus: [
+                {
+                  label: BRANDING_TITLE,
+                  type: "url" as const,
+                  url: getBrandingUrl("messenger"),
+                },
+              ],
+              conversationStarters: [],
+              personas: [],
+            })
+            .returning()
+            .then((result) => result[0])
+
+          const brandingCtx = await buildContext({
+            workspaceId,
+            integrationType: "messenger",
+            integration: { ...integrationRow, auth },
+          })
+          await integrationMessenger.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
             title: BRANDING_TITLE,
             url: getBrandingUrl("messenger"),
           })

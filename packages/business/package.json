@@ -8,9 +8,11 @@
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "next-intl": "^4.11.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

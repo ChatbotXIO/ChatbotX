@@ -1,10 +1,9 @@
-import { organizationService } from "@chatbotx.io/business"
+import { organizationService, workspaceService } from "@chatbotx.io/business"
 import type {
   OrganizationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { getDomainFromHeader } from "@/lib/domain"
-import { workspaceService } from "../workspaces/workspace-service"
 
 export async function identifyWorkspaceAndOrganizationFromRequest(
   workspaceId?: string | null,

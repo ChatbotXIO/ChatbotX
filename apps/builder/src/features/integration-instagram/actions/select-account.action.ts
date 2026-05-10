@@ -1,6 +1,10 @@
 "use server"
 
-import { organizationService } from "@chatbotx.io/business"
+import {
+  buildContext,
+  organizationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -9,7 +13,6 @@ import {
   integrationInstagramModel,
 } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   exchangeLongLivedToken,
@@ -22,8 +25,6 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -54,16 +55,16 @@ export const selectAccountAction = authActionClient
 
         await db.transaction(async (tx) => {
           if (!workspaceId) {
-            const workspace = await createSimpleWorkspace(
+            const workspace = await workspaceService.create({
               tx,
-              ctx.user.id,
+              createdBy: ctx.user.id,
               organization,
-              {
+              data: {
                 name: parsedInput.igName,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
-            )
+            })
             workspaceId = workspace.id
           }
 
@@ -116,40 +117,43 @@ export const selectAccountAction = authActionClient
             .returning()
             .then((result) => result[0])
 
-          await tx.insert(integrationInstagramModel).values({
-            id: createId(),
-            workspaceId,
-            inboxId: inbox.id,
-            igId: parsedInput.igId,
-            pageId: parsedInput.pageId,
-            auth,
-            name: parsedInput.igName,
-            username: parsedInput.igUsername,
-            persistentMenus: [
-              {
-                label: BRANDING_TITLE,
-                type: "url" as const,
-                url: getBrandingUrl("instagram"),
-              },
-            ],
-            conversationStarters: [],
-          })
-
-          await integrationInstagram.channels.channel.bot?.addBranding?.({
-            ctx: {
-              uploader,
-              storagePrefix: getStoragePrefix(workspaceId, inbox.id),
+          const integrationRow = await tx
+            .insert(integrationInstagramModel)
+            .values({
+              id: createId(),
+              workspaceId,
+              inboxId: inbox.id,
+              igId: parsedInput.igId,
+              pageId: parsedInput.pageId,
               auth,
+              name: parsedInput.igName,
+              username: parsedInput.igUsername,
+              persistentMenus: [
+                {
+                  label: BRANDING_TITLE,
+                  type: "url" as const,
+                  url: getBrandingUrl("instagram"),
+                },
+              ],
+              conversationStarters: [],
+            })
+            .returning()
+            .then((result) => result[0])
+
+          const brandingCtx = await buildContext({
+            workspaceId,
+            integrationType: "instagram",
+            integration: {
+              ...integrationRow,
+              auth: integrationRow.auth as InstagramAuthValue,
             },
+          })
+          await integrationInstagram.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
             title: BRANDING_TITLE,
             url: getBrandingUrl("instagram"),
           })
         })
-
-        revalidateCacheTags([
-          `workspaces:${workspaceId}#instagram`,
-          `workspaces:${workspaceId}#inboxes`,
-        ])
 
         return {
           workspaceId,

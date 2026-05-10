@@ -1,5 +1,6 @@
 "use server"
 
+import { workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   inboxModel,
@@ -7,7 +8,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { createWebchatRequest } from "../schema/mutation"
@@ -24,16 +24,16 @@ export const createWebchatAction = authActionClient
 
     await db.transaction(async (tx) => {
       if (!workspaceId) {
-        const newChatbot = await createSimpleWorkspace(
+        const newChatbot = await workspaceService.create({
           tx,
-          ctx.user.id,
+          createdBy: ctx.user.id,
           organization,
-          {
+          data: {
             name: parsedInput.name,
             timezone: "UTC",
             organizationId: organization.id,
           },
-        )
+        })
         workspaceId = newChatbot.id
       }
 

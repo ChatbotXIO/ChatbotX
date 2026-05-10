@@ -17,7 +17,6 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -36,7 +35,7 @@ import { createId } from "@chatbotx.io/utils"
 import { subHours } from "date-fns"
 import {
   allIntegrations,
-  integrationService,
+  resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 import {
   disableConversationState,
@@ -609,19 +608,17 @@ export const stepSendTyping = async (
     return
   }
 
-  const { auth } =
-    await integrationService.getIntegrationFromContactInbox(contactInbox)
+  if (!allIntegrations[contactInbox.channel]) {
+    return
+  }
 
-  await allIntegrations[
-    contactInbox.channel
-  ]?.channels.channel?.conversation?.sendTyping?.({
-    ctx: {
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        contactInbox.inboxId,
-      ),
-      auth,
-    },
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  await integration.runChannelHandler("conversation", "sendTyping", {
+    ctx,
     data: {
       contact: contactInbox,
       typing: true,

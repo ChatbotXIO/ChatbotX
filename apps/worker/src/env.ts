@@ -10,6 +10,8 @@ export const env = createEnv({
   server: {
     NEXT_PUBLIC_ENVIRONMENT: environmentRule,
     NEXT_PUBLIC_EDITION: editionRule,
+    NEXT_PUBLIC_BUILDER_URL: z.url(),
+    NEXT_PUBLIC_REALTIME_URL: z.url(),
   },
   runtimeEnv: process.env,
 })

@@ -2,7 +2,6 @@
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   attachmentModel,
   conversationModel,
@@ -18,7 +17,6 @@ import type {
 import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import {
-  broadcastToGuestParty,
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
@@ -29,7 +27,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,
@@ -176,33 +173,18 @@ export const createMessage = async (props: {
         clientId: parsedInput.clientId,
       },
     }),
-  ]
-
-  if (contactInbox.channel === channelTypes.enum.webchat) {
-    promises.push(
-      broadcastToGuestParty(contactInbox.sourceId, {
-        eventType: RealtimeEventType.messageCreated,
-        data: {
+    chatQueue.add(ChatJobAction.sendChannelMessage, {
+      type: ChatJobAction.sendChannelMessage,
+      data: {
+        conversation,
+        contactInbox,
+        message: {
           ...message,
           clientId: parsedInput.clientId,
         },
-      }),
-    )
-  } else {
-    promises.push(
-      chatQueue.add(ChatJobAction.sendExternalMessage, {
-        type: ChatJobAction.sendExternalMessage,
-        data: {
-          conversation,
-          contactInbox,
-          message: {
-            ...message,
-            clientId: parsedInput.clientId,
-          },
-        },
-      }),
-    )
-  }
+      },
+    }),
+  ]
 
   // promises.push(
   //   contactTrackingService.trackEvent({
@@ -225,8 +207,6 @@ export const createMessage = async (props: {
 
   // Broadcast and send
   await Promise.all(promises)
-
-  revalidateCacheTags(`workspaces:${conversation.workspaceId}:conversations`)
 
   return message
 }

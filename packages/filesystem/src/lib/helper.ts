@@ -49,7 +49,10 @@ export async function getImageDimensions(mimeType: string, buffer: Buffer) {
   return imageDimensions
 }
 
-export const getStoragePrefix = (
-  workspaceId: string,
-  inboxId: string,
-): string => `public/${workspaceId}/${inboxId}`
+const getDatePrefix = (): string => {
+  const date = new Date()
+  return date.toISOString().split("T")[0].replace(/-/g, "/")
+}
+
+export const getStoragePrefix = (workspaceId: string): string =>
+  `public/ws/${workspaceId}/${getDatePrefix()}`

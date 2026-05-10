@@ -1,6 +1,6 @@
 "use server"
 
-import { organizationService } from "@chatbotx.io/business"
+import { organizationService, workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, type Transaction } from "@chatbotx.io/database/client"
 import {
@@ -30,7 +30,6 @@ import {
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader, getOriginUrlFromHeader } from "@/lib/domain"
 import { authActionClient } from "@/lib/safe-action"
@@ -222,10 +221,15 @@ async function persistIntegration(params: {
   let resolvedWorkspaceId = workspaceId
 
   if (!resolvedWorkspaceId) {
-    const workspace = await createSimpleWorkspace(tx, userId, organization, {
-      name: phoneNumber.verified_name,
-      timezone: "UTC",
-      organizationId: organization.id,
+    const workspace = await workspaceService.create({
+      tx,
+      createdBy: userId,
+      organization,
+      data: {
+        name: phoneNumber.verified_name,
+        timezone: "UTC",
+        organizationId: organization.id,
+      },
     })
     resolvedWorkspaceId = workspace.id
   }

@@ -1,4 +1,5 @@
 import { contactTrackingService } from "@chatbotx.io/analytics"
+import { buildContext } from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -21,7 +22,6 @@ import {
   emitContactCreated,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   broadcastToWorkspaceParty,
   RealtimeEventType,
@@ -66,19 +66,24 @@ export const receiveMessage = async (
       integrationType as IntegrationType,
       integrationIdentifier,
     )
-  const { inbox, integrationAuth } = dbIntegration
-  const ctx = {
-    auth: integrationAuth,
-    uploader,
-    storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
+  const { inbox, integrationRow } = dbIntegration
+  const integration = allIntegrations[integrationType]
+  if (!integration) {
+    throw new SdkException(
+      `No integration registered for channel: ${integrationType}`,
+    )
   }
-
-  const parsedMessage = await allIntegrations[
-    integrationType
-  ]?.channels?.channel?.message?.receiveMessage?.({
-    ctx,
-    data: props,
+  const ctx = await buildContext({
+    workspaceId: inbox.workspaceId,
+    integrationType,
+    integration: integrationRow,
   })
+
+  const parsedMessage = await integration.runChannelHandler(
+    "message",
+    "receiveMessage",
+    { ctx, data: props },
+  )
   if (!parsedMessage) {
     throw new SdkException("Unable to parse received message")
   }
@@ -94,7 +99,7 @@ export const receiveMessage = async (
   const { contactInbox, conversation } = await detectContactAndConversation({
     incomingContact,
     inbox,
-    integrationAuth,
+    integrationRow,
   })
 
   let createdMessage: MessageModel | null = null
@@ -244,12 +249,17 @@ export const receiveMessage = async (
 const detectContactAndConversation = async (props: {
   inbox: InboxModel
   incomingContact: IncomingContact
-  integrationAuth: AuthValue
+  integrationRow: {
+    id: string
+    auth: AuthValue
+    inboxId: string
+    [x: string]: unknown
+  }
 }): Promise<{
   contactInbox: ContactInboxModel
   conversation: ConversationModel
 }> => {
-  const { incomingContact, inbox, integrationAuth } = props
+  const { incomingContact, inbox, integrationRow } = props
   let contactData: typeof contactModel.$inferInsert = {
     ...incomingContact,
     workspaceId: inbox.workspaceId,
@@ -279,19 +289,25 @@ const detectContactAndConversation = async (props: {
         })
       } else {
         if (canGetUserProfileIfNeeded(inbox.channel)) {
-          const userProfile = await allIntegrations[
-            inbox.channel
-          ]?.channels.channel?.contact?.getProfile?.({
-            ctx: {
-              storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
-              auth: integrationAuth,
-              uploader,
-            },
-            data: { sourceId: incomingContact.sourceId },
-          })
-          contactData = {
-            ...contactData,
-            ...userProfile,
+          const profileIntegration = allIntegrations[inbox.channel]
+          if (profileIntegration) {
+            const profileCtx = await buildContext({
+              workspaceId: inbox.workspaceId,
+              integrationType: inbox.channel,
+              integration: integrationRow,
+            })
+            const userProfile = await profileIntegration.runChannelHandler(
+              "contact",
+              "getProfile",
+              {
+                ctx: profileCtx,
+                data: { sourceId: incomingContact.sourceId },
+              },
+            )
+            contactData = {
+              ...contactData,
+              ...userProfile,
+            }
           }
         }
 

@@ -1,5 +1,6 @@
 "use server"
 
+import { workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
@@ -15,7 +16,6 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
 import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
@@ -61,16 +61,16 @@ export const connectTelegramAction = authActionClient
           }
 
           if (!workspaceId) {
-            const workspace = await createSimpleWorkspace(
+            const workspace = await workspaceService.create({
               tx,
-              ctx.user.id,
+              createdBy: ctx.user.id,
               organization,
-              {
+              data: {
                 name: botData.username,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
-            )
+            })
             workspaceId = workspace.id
           }
 

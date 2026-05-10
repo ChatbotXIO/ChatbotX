@@ -1,8 +1,8 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
 import { findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import {
   type WorkspaceIdRequestParams,
@@ -34,15 +34,14 @@ export const updateWhatsappIceBreakerAction = workspaceActionClient
         message: "Integration Whatsapp not found",
       })
 
-      const ctx = {
-        auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        uploader,
-        storagePrefix: getStoragePrefix(
-          workspaceId,
-          integrationWhatsapp.inboxId,
-        ),
-      }
-
+      const ctx = await buildContext({
+        workspaceId,
+        integrationType: "whatsapp",
+        integration: {
+          ...integrationWhatsapp,
+          auth: integrationWhatsapp.auth as WhatsappAuthValue,
+        },
+      })
       await integrations.whatsapp.runAction("updateConversationalAutomation", {
         ctx,
         data: {

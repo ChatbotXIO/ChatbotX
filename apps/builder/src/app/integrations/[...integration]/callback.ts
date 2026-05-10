@@ -1,4 +1,4 @@
-import { organizationService } from "@chatbotx.io/business"
+import { organizationService, workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -15,8 +15,6 @@ import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
-
-import { workspaceService } from "@/features/workspaces/workspace-service"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"

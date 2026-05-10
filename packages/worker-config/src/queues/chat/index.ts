@@ -27,7 +27,7 @@ import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
-  sendExternalMessage: "sendExternalMessage",
+  sendChannelMessage: "sendChannelMessage",
   sendFlowMessage: "sendFlowMessage",
   sendChatMessage: "sendChatMessage",
   sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
@@ -35,8 +35,8 @@ export const ChatJobAction = {
   notifyExportResult: "notifyExportResult",
 } as const
 
-export type ChatJobSendExternalMessage = {
-  type: typeof ChatJobAction.sendExternalMessage
+export type ChatJobSendChannelMessage = {
+  type: typeof ChatJobAction.sendChannelMessage
   data: {
     conversation: ConversationModel
     contactInbox: ContactInboxModel
@@ -103,7 +103,7 @@ export type ChatJobSendTyping = {
 }
 
 export type ChatJobData =
-  | ChatJobSendExternalMessage
+  | ChatJobSendChannelMessage
   | ChatJobSendFlowStep
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage

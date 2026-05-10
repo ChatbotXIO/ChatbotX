@@ -30,7 +30,6 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
-  broadcastToGuestParty,
   broadcastToWorkspaceParty,
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
@@ -49,7 +48,7 @@ import type {
 } from "@chatbotx.io/worker-config"
 import { trackBotResponse } from "../../integration/handlers/automated-response/track-bot-response"
 import { logger } from "../../lib/logger"
-import { sendFlowStepToExternal, sendMessageToExternal } from "./send-message"
+import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
 export const convertButtonsToTemplate = (props: {
@@ -290,27 +289,16 @@ export async function sendFlowStep({
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
+      sendFlowStepToChannel({
+        conversation,
+        contactInbox: targetContactInbox,
+        flowId,
+        flowVersionId,
+        step: step as SendFlowStepData,
+        metadata,
+        messageId: message?.id,
+      }),
     ]
-    if (targetContactInbox.channel === channelTypes.enum.webchat) {
-      promises.push(
-        broadcastToGuestParty(targetContactInbox.sourceId, {
-          eventType: RealtimeEventType.messageCreated,
-          data: message,
-        }),
-      )
-    } else {
-      promises.push(
-        sendFlowStepToExternal({
-          conversation,
-          contactInbox: targetContactInbox,
-          flowId,
-          flowVersionId,
-          step: step as SendFlowStepData,
-          metadata,
-          messageId: message?.id,
-        }),
-      )
-    }
 
     await Promise.all(promises)
     await emit(messageEventTypeSchema.enum["message:sent"], {
@@ -481,24 +469,13 @@ export const sendChatMessage = async (
         eventType: RealtimeEventType.messageCreated,
         data: message,
       }),
+      sendMessageToChannel({
+        conversation,
+        contactInbox,
+        message,
+        metadata,
+      }),
     ]
-    if (contactInbox.channel === channelTypes.enum.webchat) {
-      promises.push(
-        broadcastToGuestParty(contactInbox.sourceId, {
-          eventType: RealtimeEventType.messageCreated,
-          data: message,
-        }),
-      )
-    } else {
-      promises.push(
-        sendMessageToExternal({
-          conversation,
-          contactInbox,
-          message,
-          metadata,
-        }),
-      )
-    }
 
     await Promise.all(promises)
 

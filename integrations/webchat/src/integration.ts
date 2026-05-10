@@ -6,6 +6,7 @@ import {
   type Oauth2AuthValue,
 } from "@chatbotx.io/sdk"
 import { conversationHandlers } from "./handlers/conversation"
+import { messageHandlers } from "./handlers/message"
 import type { WebchatActions, WebchatAuthValue } from "./schema"
 
 const config: IntegrationDefinition<
@@ -16,6 +17,7 @@ const config: IntegrationDefinition<
   name: "webchat",
   channels: {
     channel: {
+      message: messageHandlers,
       conversation: conversationHandlers,
     },
   },

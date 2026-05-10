@@ -1,3 +1,4 @@
+import { workspaceMemberService } from "@chatbotx.io/business"
 import {
   SidebarInset,
   SidebarProvider,
@@ -7,7 +8,6 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { workspaceMemberService } from "@/features/workspace-members/workspace-member-service"
 import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function WorkspaceLayout({

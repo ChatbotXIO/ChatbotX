@@ -54,3 +54,19 @@ export class SdkException extends Error {
 export class IntegrationException extends SdkException {}
 
 export class AuthException extends SdkException {}
+
+/**
+ * Thrown when an OAuth2 token refresh has failed terminally — the refresh
+ * token is revoked, the integration is misconfigured, or all retry attempts
+ * have been exhausted. Callers should surface this as a "reconnect required"
+ * state to the user; the SDK will also call `ctx.authStore.markOffline` when
+ * available.
+ */
+export class AuthRefreshException extends SdkException {
+  constructor(message: string, originError?: Error | unknown) {
+    super(message, "authRefreshFailed", 401)
+    if (originError) {
+      this.setOriginError(originError)
+    }
+  }
+}
