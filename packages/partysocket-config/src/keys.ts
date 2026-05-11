@@ -1,16 +1,20 @@
-import { createEnv } from "@t3-oss/env-nextjs"
+import { createEnv } from "@t3-oss/env-core"
 import z from "zod"
 
 export const keys = () =>
   createEnv({
     server: {
-      REALTIME_API_KEY: z.string().min(1),
-      REALTIME_AUTH_URL: z.url().optional(),
+      REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
+      REALTIME_BROADCAST_URL: z.url().default("http://localhost:1999"),
+      REALTIME_SESSION_VERIFY_URL: z.url().optional(),
     },
     client: {
       NEXT_PUBLIC_REALTIME_URL: z.url(),
     },
-    experimental__runtimeEnv: {
+    clientPrefix: "NEXT_PUBLIC_",
+    runtimeEnv: {
       NEXT_PUBLIC_REALTIME_URL: process.env.NEXT_PUBLIC_REALTIME_URL,
     },
   })
+
+export const env = keys()

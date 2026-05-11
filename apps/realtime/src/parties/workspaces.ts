@@ -1,5 +1,7 @@
 import type * as Party from "partykit/server"
+import { env } from "../env"
 import { getAuthSession } from "../lib/auth"
+import { verifyBroadcastRequest } from "../lib/realtime-auth"
 
 export default class WorkspaceParty implements Party.Server {
   // biome-ignore lint/style/noParameterProperties: wip
@@ -22,15 +24,17 @@ export default class WorkspaceParty implements Party.Server {
     return new Response("ok", { status: 200 })
   }
 
-  static onBeforeRequest(
+  static async onBeforeRequest(
     req: Party.Request,
-    lobby: Party.Lobby,
+    // lobby: Party.Lobby,
     // ctx: Party.ExecutionContext
   ) {
-    if (req.headers.get("X-API-KEY") !== lobby.env.REALTIME_API_KEY) {
-      return new Response("Method not allowed", { status: 405 })
-    }
-    return req
+    const error = await verifyBroadcastRequest(
+      req,
+      "workspace",
+      env.REALTIME_BROADCAST_SECRET,
+    )
+    return error ?? req
   }
 
   static async onBeforeConnect(

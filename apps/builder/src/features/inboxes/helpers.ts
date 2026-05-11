@@ -1,21 +1,22 @@
 "use client"
 
-import { env } from "@/env"
+import { usePlatformUrls } from "@/features/platform"
 import type { ListInboxesResponse } from "./schema/action"
 
-const getPublicOrigin = () => {
+const getPublicOrigin = (appUrl: string) => {
   if (typeof window !== "undefined") {
     return window.location.origin
   }
-  return env.NEXT_PUBLIC_BUILDER_URL
+  return appUrl
 }
 
 // Viber: viber://pa?chatURI=BOT_USERNAME&context=giveaway
-export const getInboxLink = (props: {
+export const useInboxLink = (props: {
   inbox: ListInboxesResponse["data"][number]
   ref?: string
 }): string => {
   const { inbox, ref } = props
+  const { appUrl } = usePlatformUrls()
 
   // Messenger: https://m.me/FB_PAGE_ID?ref=giveaway
   if (inbox.channel === "messenger") {
@@ -63,7 +64,7 @@ export const getInboxLink = (props: {
   if (inbox.channel === "webchat") {
     const url = new URL(
       `/webchat?workspaceId=${inbox.workspaceId}&webchatId=${inbox.sourceId}`,
-      getPublicOrigin(),
+      getPublicOrigin(appUrl),
     )
     if (ref) {
       url.searchParams.set("ref", ref)
@@ -81,7 +82,7 @@ export const getInboxLink = (props: {
 
   const url = new URL(
     `/link?workspaceId=${inbox.workspaceId}`,
-    getPublicOrigin(),
+    getPublicOrigin(appUrl),
   )
   if (ref) {
     url.searchParams.set("ref", ref)

@@ -9,7 +9,6 @@ import { workspaceTokenAuthMidddleware } from "./middlewares/workspace-token-aut
 export const authorizedAPI = base
   .use(
     onError((error: Error) => {
-      // console.log("sdfsdfsdfdfd", error)
       logger.error(error, "Error in authorizedAPI")
 
       if (error.name === ChatbotXException.name) {

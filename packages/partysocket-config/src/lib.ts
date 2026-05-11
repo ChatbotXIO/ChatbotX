@@ -1,12 +1,16 @@
 import ky from "ky"
-import { keys } from "./keys"
+import { type RealtimeAudience, signRealtimeToken } from "./auth"
+import { env } from "./keys"
 import { logger } from "./logger"
 import type {
   RealtimeEventData,
   RealtimeEventNotifyExportResult,
 } from "./schemas"
 
-const env = keys()
+const buildAuthHeader = async (audience: RealtimeAudience): Promise<string> => {
+  const token = await signRealtimeToken(audience, env.REALTIME_BROADCAST_SECRET)
+  return `Bearer ${token}`
+}
 
 export async function broadcastToWorkspaceParty(
   workspaceId: string,
@@ -14,10 +18,13 @@ export async function broadcastToWorkspaceParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/workspaces/${workspaceId}`,
+      `${env.REALTIME_BROADCAST_URL}/parties/workspaces/${workspaceId}`,
       {
         headers: {
-          "X-API-KEY": env.REALTIME_API_KEY,
+          Authorization: await buildAuthHeader({
+            kind: "workspace",
+            id: workspaceId,
+          }),
         },
         json,
       },
@@ -34,10 +41,13 @@ export async function broadcastToGuestParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/guests/${guestConversationId}`,
+      `${env.REALTIME_BROADCAST_URL}/parties/guests/${guestConversationId}`,
       {
         headers: {
-          "X-API-KEY": env.REALTIME_API_KEY,
+          Authorization: await buildAuthHeader({
+            kind: "guest",
+            id: guestConversationId,
+          }),
         },
         json,
       },
@@ -54,10 +64,13 @@ export async function broadcastToUserParty(
 ) {
   try {
     return await ky.post(
-      `${env.NEXT_PUBLIC_REALTIME_URL}/parties/users/${userId}`,
+      `${env.REALTIME_BROADCAST_URL}/parties/users/${userId}`,
       {
         headers: {
-          "X-API-KEY": env.REALTIME_API_KEY,
+          Authorization: await buildAuthHeader({
+            kind: "user",
+            id: userId,
+          }),
         },
         json,
       },

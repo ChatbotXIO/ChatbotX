@@ -104,8 +104,6 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
         //   archivedAt: new Date(),
         // })
 
-        console.log("asdfasdff, on success")
-
         // Reload conversation list
         resetConversationState()
         loadMoreConversations(workspaceId)

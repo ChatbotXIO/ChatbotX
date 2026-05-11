@@ -4,7 +4,7 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
-import { getInboxLink } from "@/features/inboxes/helpers"
+import { useInboxLink } from "@/features/inboxes/helpers"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import type { ListInboxesResponse } from "../schema/action"
 import { InboxIcon } from "./inbox-icon"
@@ -38,7 +38,7 @@ const BaseInboxCard = memo(function BaseInboxCard({
   inbox: ListInboxesResponse["data"][number]
 }) {
   const t = useTranslations()
-  const link = getInboxLink({ inbox })
+  const link = useInboxLink({ inbox })
 
   return (
     <Card className="py-3">

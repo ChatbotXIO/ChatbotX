@@ -1,4 +1,6 @@
 import type * as Party from "partykit/server"
+import { env } from "../env"
+import { verifyBroadcastRequest } from "../lib/realtime-auth"
 
 export default class GuestConversationParty implements Party.Server {
   // biome-ignore lint/style/noParameterProperties: wip
@@ -21,25 +23,16 @@ export default class GuestConversationParty implements Party.Server {
     return new Response("ok", { status: 200 })
   }
 
-  static onBeforeRequest(
+  static async onBeforeRequest(
     req: Party.Request,
-    lobby: Party.Lobby,
+    // lobby: Party.Lobby,
     // ctx: Party.ExecutionContext
   ) {
-    if (req.headers.get("X-API-KEY") !== lobby.env.REALTIME_API_KEY) {
-      return new Response("Method not allowed", { status: 405 })
-    }
-    return req
+    const error = await verifyBroadcastRequest(
+      req,
+      "guest",
+      env.REALTIME_BROADCAST_SECRET as string,
+    )
+    return error ?? req
   }
-
-  // static async onBeforeConnect(
-  //   req: Party.Request,
-  // lobby: Party.Lobby,
-  // ctx: Party.ExecutionContext
-  // ) {
-  // const session = await getAuthSession(req)
-  // req.headers.set("X-GUEST-CONVERSATION-ID", session.user.id)
-
-  // return req
-  // }
 }

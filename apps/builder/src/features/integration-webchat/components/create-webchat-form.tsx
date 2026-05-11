@@ -33,6 +33,7 @@ import { useMemo } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { usePlatformUrls } from "@/features/platform"
 import { createWebchatAction } from "../actions/create-webchat.action"
 import { BRANDING_TITLE, getBrandingUrl } from "../lib"
 import { createWebchatRequest } from "../schema/mutation"
@@ -42,6 +43,7 @@ import PersistentMenuField from "./persistent-menu-field"
 export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   const t = useTranslations()
   const router = useRouter()
+  const { appUrl } = usePlatformUrls()
 
   const flowOptions = useFlowSelectOptions()
 
@@ -94,7 +96,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
             {
               label: BRANDING_TITLE,
               type: "url" as const,
-              url: getBrandingUrl("webchat"),
+              url: getBrandingUrl("webchat", appUrl),
             },
           ],
           brandColor: "#007bff",

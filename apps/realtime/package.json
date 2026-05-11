@@ -10,7 +10,9 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@t3-oss/env-nextjs": "^0.13.11",
+    "@chatbotx.io/partysocket-config": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
+    "jose": "^6.2.3",
     "ky": "^2.0.2",
     "partykit": "0.0.115",
     "zod": "^4.3.6"

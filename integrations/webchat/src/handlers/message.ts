@@ -9,11 +9,14 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
 
+    const headers = await ctx.platform.getRealtimeAuthHeaders({
+      kind: "guest",
+      id: contact.sourceId,
+    })
+
     await ky
       .post(`${ctx.platform.realtimeUrl}/parties/guests/${contact.sourceId}`, {
-        headers: {
-          "X-API-Key": ctx.platform.realtimeApiKey,
-        },
+        headers,
         json: {
           eventType: "messageCreated",
           data: message,

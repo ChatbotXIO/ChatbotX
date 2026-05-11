@@ -474,9 +474,15 @@ importers:
 
   apps/realtime:
     dependencies:
-      '@t3-oss/env-nextjs':
+      '@chatbotx.io/partysocket-config':
+        specifier: workspace:*
+        version: link:../../packages/partysocket-config
+      '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2
@@ -1235,6 +1241,9 @@ importers:
       '@chatbotx.io/filesystem':
         specifier: workspace:*
         version: link:../filesystem
+      '@chatbotx.io/partysocket-config':
+        specifier: workspace:*
+        version: link:../partysocket-config
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
@@ -1527,9 +1536,12 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
-      '@t3-oss/env-nextjs':
+      '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       ky:
         specifier: ^2.0.2
         version: 2.0.2

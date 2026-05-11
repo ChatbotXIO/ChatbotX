@@ -18,7 +18,7 @@ import { useCustomFieldStore } from "../custom-fields/provider/custom-field-stor
 import { EditContactField } from "./edit-contact-field"
 import type { GetContactResponse } from "./schemas/query"
 import type { ContactEditableField } from "./schemas/resource"
-import { getAvatarUrl } from "./utils"
+import { useAvatarUrl } from "./utils"
 
 export const ContactDetail = ({
   activeConversationId,
@@ -31,6 +31,7 @@ export const ContactDetail = ({
 
   const workspaceId = useWorkspaceId()
   const { conversations } = useChatStore((state) => state)
+  const avatarUrl = useAvatarUrl(contact)
 
   const [selectedField, setSelectedField] =
     useState<ContactEditableField | null>(null)
@@ -156,7 +157,7 @@ export const ContactDetail = ({
           <AvatarImage
             alt={contact.firstName ?? ""}
             className="object-cover"
-            src={getAvatarUrl(contact)}
+            src={avatarUrl}
           />
           <AvatarFallback>NA</AvatarFallback>
         </Avatar>

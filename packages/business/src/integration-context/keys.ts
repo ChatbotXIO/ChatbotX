@@ -10,7 +10,7 @@ export const integrationContextEnv = () =>
       NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
       NEXT_PUBLIC_REALTIME_URL: z.url().default("http://localhost:1999"),
       NEXT_PUBLIC_ASSET_URL: z.url().default("http://localhost:3000"),
-      REALTIME_API_KEY: z.string().default(""),
+      REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
     },
     runtimeEnv: process.env,
   })

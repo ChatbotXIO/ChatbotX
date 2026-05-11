@@ -1,14 +1,15 @@
-import { env } from "@/env"
+import { usePlatformUrls } from "@/features/platform"
 import type { ContactResource } from "./schemas/resource"
 
-export function getAvatarUrl(
+export function useAvatarUrl(
   contact?: ContactResource | null,
 ): string | undefined {
+  const { assetUrl } = usePlatformUrls()
   if (!contact) {
     return
   }
 
   return contact.avatar
-    ? new URL(contact.avatar, env.NEXT_PUBLIC_ASSET_URL).toString()
+    ? new URL(contact.avatar, assetUrl).toString()
     : undefined
 }

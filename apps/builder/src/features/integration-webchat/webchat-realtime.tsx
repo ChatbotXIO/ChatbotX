@@ -5,8 +5,8 @@ import {
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
-import { env } from "@/env"
 import type { MessageResource } from "../messages/schema/resource"
+import { usePlatformUrls } from "../platform"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatRealtimeProps = {
@@ -14,12 +14,13 @@ type WebchatRealtimeProps = {
 }
 
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
+  const { realtimeUrl } = usePlatformUrls()
   const { handleNewMessage, setIsTyping } = useGuestSessionStore(
     (state) => state,
   )
 
   usePartySocket({
-    host: env.NEXT_PUBLIC_REALTIME_URL,
+    host: realtimeUrl,
     room: guestConversationId,
     party: "guests",
 

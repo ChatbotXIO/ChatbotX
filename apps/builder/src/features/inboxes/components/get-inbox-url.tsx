@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { getInboxLink } from "@/features/inboxes/helpers"
+import { useInboxLink } from "@/features/inboxes/helpers"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
@@ -58,7 +58,7 @@ function GetInboxUrlItem({
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
 
-  const url = getInboxLink({ inbox, ref })
+  const url = useInboxLink({ inbox, ref })
   const handleCopy = async () => {
     console.log("copied url", url)
     await copy(url)

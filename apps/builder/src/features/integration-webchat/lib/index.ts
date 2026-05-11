@@ -1,12 +1,9 @@
 import type { ChannelType } from "@chatbotx.io/database/partials"
-import { env, isCommunity } from "@/env"
+import { isCommunity } from "@/env"
 
 export const BRANDING_TITLE = "⚡ Built with chatbotx.io"
 
-export function getBrandingUrl(channel: ChannelType) {
+export function getBrandingUrl(channel: ChannelType, appUrl: string) {
   const ref = isCommunity ? "selfhosted" : "cloud"
-  return new URL(
-    `?ref=${ref}&channel=${channel}`,
-    env.NEXT_PUBLIC_BUILDER_URL,
-  ).toString()
+  return new URL(`?ref=${ref}&channel=${channel}`, appUrl).toString()
 }

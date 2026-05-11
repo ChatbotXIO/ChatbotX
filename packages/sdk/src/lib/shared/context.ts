@@ -44,6 +44,9 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   platform: {
     appUrl: string
     realtimeUrl: string
-    realtimeApiKey: string
+    getRealtimeAuthHeaders: (target: {
+      kind: "guest" | "workspace" | "user"
+      id: string
+    }) => Promise<Record<string, string>>
   }
 }

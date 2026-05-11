@@ -3,6 +3,7 @@
 import {
   buildContext,
   organizationService,
+  resolvePlatformUrls,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -50,6 +51,10 @@ export const selectPageAction = authActionClient
         if (!messengerSettings) {
           throw new ChatbotXException("Messenger App settings not found")
         }
+
+        const { appUrl } = await resolvePlatformUrls({
+          organizationId: organization.id,
+        })
 
         // make sure the page is unique
         const existedPage = await db.query.integrationMessengerModel.findFirst({
@@ -138,7 +143,7 @@ export const selectPageAction = authActionClient
                 {
                   label: BRANDING_TITLE,
                   type: "url" as const,
-                  url: getBrandingUrl("messenger"),
+                  url: getBrandingUrl("messenger", appUrl),
                 },
               ],
               conversationStarters: [],
@@ -155,7 +160,7 @@ export const selectPageAction = authActionClient
           await integrationMessenger.runChannelHandler("bot", "addBranding", {
             ctx: brandingCtx,
             title: BRANDING_TITLE,
-            url: getBrandingUrl("messenger"),
+            url: getBrandingUrl("messenger", appUrl),
           })
         })
 

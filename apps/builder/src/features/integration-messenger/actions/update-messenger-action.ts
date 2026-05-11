@@ -100,10 +100,13 @@ export const updateMessenger = async (
         )
       }
 
-      const profileParams = getMessengerProfileParams({
-        ...integrationMessengerData,
-        ...parsedInput,
-      })
+      const profileParams = getMessengerProfileParams(
+        {
+          ...integrationMessengerData,
+          ...parsedInput,
+        },
+        botContext.platform.appUrl,
+      )
       if (Object.keys(profileParams).length > 0) {
         await integrationMessenger.runChannelHandler("bot", "updateProfile", {
           ctx: botContext,
@@ -161,6 +164,7 @@ const parseFacebookButtons = (
 
 const getMessengerProfileParams = (
   model: IntegrationMessengerModel,
+  appUrl: string,
 ): MessengerProfileRequest => {
   const params: MessengerProfileRequest = {}
 
@@ -171,7 +175,7 @@ const getMessengerProfileParams = (
   }
 
   if (model.persistentMenus.length) {
-    const brandingUrl = getBrandingUrl("messenger")
+    const brandingUrl = getBrandingUrl("messenger", appUrl)
     const menus = [...model.persistentMenus]
     const brandingIndex = menus.findIndex(
       (menu) =>

@@ -3,6 +3,7 @@
 import {
   buildContext,
   organizationService,
+  resolvePlatformUrls,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -52,6 +53,10 @@ export const selectAccountAction = authActionClient
         if (!instagramSettings) {
           throw new ChatbotXException("Instagram App settings not found")
         }
+
+        const { appUrl } = await resolvePlatformUrls({
+          organizationId: organization.id,
+        })
 
         await db.transaction(async (tx) => {
           if (!workspaceId) {
@@ -132,7 +137,7 @@ export const selectAccountAction = authActionClient
                 {
                   label: BRANDING_TITLE,
                   type: "url" as const,
-                  url: getBrandingUrl("instagram"),
+                  url: getBrandingUrl("instagram", appUrl),
                 },
               ],
               conversationStarters: [],
@@ -151,7 +156,7 @@ export const selectAccountAction = authActionClient
           await integrationInstagram.runChannelHandler("bot", "addBranding", {
             ctx: brandingCtx,
             title: BRANDING_TITLE,
-            url: getBrandingUrl("instagram"),
+            url: getBrandingUrl("instagram", appUrl),
           })
         })
 

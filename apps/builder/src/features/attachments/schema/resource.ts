@@ -2,9 +2,7 @@ import {
   attachmentModel,
   createSelectSchema,
 } from "@chatbotx.io/database/schema"
-import type { AttachmentModel } from "@chatbotx.io/database/types"
 import { z } from "zod"
-import { logger } from "@/lib/log"
 
 export const attachmentResource = createSelectSchema(attachmentModel, {
   id: z.string(),
@@ -14,15 +12,3 @@ export const attachmentResource = createSelectSchema(attachmentModel, {
   }),
 )
 export type AttachmentResource = z.infer<typeof attachmentResource>
-
-export function getAttachmentUrl(attachment: AttachmentModel) {
-  try {
-    return new URL(
-      attachment.originPath,
-      process.env.NEXT_PUBLIC_ASSET_URL,
-    ).toString()
-  } catch (error) {
-    logger.error(error, "Error getting attachment URL")
-    return ""
-  }
-}

@@ -97,6 +97,7 @@ export const updateInstagramAction = workspaceActionClient
             if (parsedInput.persistentMenus.length) {
               profileData.persistent_menu = await buildPersistentMenuParams(
                 parsedInput.persistentMenus,
+                botContext.platform.appUrl,
               )
             }
 
@@ -168,8 +169,9 @@ const buildIceBreakersParams = async (
 
 const buildPersistentMenuParams = async (
   persistentMenus: InstagramPersistentMenu[],
+  appUrl: string,
 ): Promise<InstagramProfileRequest["persistent_menu"]> => {
-  const brandingUrl = getBrandingUrl("instagram")
+  const brandingUrl = getBrandingUrl("instagram", appUrl)
   const menus = [...persistentMenus]
   const brandingIndex = menus.findIndex(
     (menu) => menu.type === "url" && "url" in menu && menu.url === brandingUrl,

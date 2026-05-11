@@ -2,57 +2,37 @@ import {
   uploader as defaultUploader,
   getStoragePrefix,
 } from "@chatbotx.io/filesystem"
-import type { AuthStore, AuthValue } from "@chatbotx.io/sdk"
-import { isCommunity } from "../keys"
-import { organizationService } from "../organization/service"
-import { getOrganizationUrls } from "../organization/urls"
-import { workspaceService } from "../workspace/service"
+import { signRealtimeToken } from "@chatbotx.io/partysocket-config/auth"
+import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
+import { resolveBroadcastSecret, resolvePlatformUrls } from "../platform/urls"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
-import { integrationContextEnv } from "./keys"
+
+type GetRealtimeAuthHeaders =
+  Context<AuthValue>["platform"]["getRealtimeAuthHeaders"]
+
+const buildGetRealtimeAuthHeaders =
+  (secret: string): GetRealtimeAuthHeaders =>
+  async (target) => {
+    const token = await signRealtimeToken(target, secret)
+    return { Authorization: `Bearer ${token}` }
+  }
 
 export type PlatformData = {
   appUrl: string
   realtimeUrl: string
-  realtimeApiKey: string
+  getRealtimeAuthHeaders: GetRealtimeAuthHeaders
   assetUrl: string
-}
-
-/**
- * Resolve the public-facing URLs to embed in the integration context for the
- * **community** edition. Reads NEXT_PUBLIC_* env vars; both builder (Next.js)
- * and worker (Node.js) runtimes populate these.
- *
- * Non-community editions resolve URLs per-organization via {@link buildContext}.
- */
-export const getContextUrls = (): PlatformData => {
-  const env = integrationContextEnv()
-  return {
-    appUrl: env.NEXT_PUBLIC_BUILDER_URL,
-    realtimeUrl: env.NEXT_PUBLIC_REALTIME_URL,
-    realtimeApiKey: env.REALTIME_API_KEY,
-    assetUrl: env.NEXT_PUBLIC_ASSET_URL,
-  }
 }
 
 const resolvePlatformData = async (
   workspaceId: string,
 ): Promise<PlatformData> => {
-  if (isCommunity()) {
-    return getContextUrls()
-  }
-
-  const workspace = await workspaceService.findById(workspaceId)
-  const organization = await organizationService.findById(
-    workspace.organizationId,
-  )
-  const orgUrls = getOrganizationUrls(organization)
-  const env = integrationContextEnv()
+  const urls = await resolvePlatformUrls({ workspaceId })
+  const realtimeSecret = await resolveBroadcastSecret({ workspaceId })
 
   return {
-    appUrl: orgUrls.appUrl,
-    realtimeUrl: orgUrls.wsUrl,
-    realtimeApiKey: env.REALTIME_API_KEY,
-    assetUrl: orgUrls.assetUrl,
+    ...urls,
+    getRealtimeAuthHeaders: buildGetRealtimeAuthHeaders(realtimeSecret),
   }
 }
 

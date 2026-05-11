@@ -5,21 +5,22 @@ import {
   RealtimeEventType,
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
-import { env } from "@/env"
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
+import { usePlatformUrls } from "../platform"
 import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
+  const { realtimeUrl } = usePlatformUrls()
 
   const { handleNewMessage, updateContact, updateConversations } = useChatStore(
     (state) => state,
   )
 
   usePartySocket({
-    host: env.NEXT_PUBLIC_REALTIME_URL,
+    host: realtimeUrl,
     room: workspaceId,
     party: "workspaces",
     // protocol: "ws",

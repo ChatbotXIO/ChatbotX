@@ -1,6 +1,8 @@
+import { resolvePlatformUrls } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import { PlatformUrlsProvider } from "@/features/platform"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
 
@@ -27,5 +29,9 @@ export default async function WorkspaceNoSidebarLayout({
     return redirect("/")
   }
 
-  return children
+  const platformUrls = await resolvePlatformUrls({ workspaceId })
+
+  return (
+    <PlatformUrlsProvider urls={platformUrls}>{children}</PlatformUrlsProvider>
+  )
 }

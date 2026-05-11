@@ -19,7 +19,7 @@ import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { getAvatarUrl } from "../contacts/utils"
+import { useAvatarUrl } from "../contacts/utils"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { readConversationAction } from "./actions/read-conversation.action"
 import type { ListConversationItemResource } from "./schema/resource"
@@ -69,6 +69,7 @@ export default function ConversationItem({
     (state) => state,
   )
   const isActive = conversation.id === activeConversationId
+  const avatarUrl = useAvatarUrl(conversation.contact)
 
   const contactAvatar = useMemo(
     () => (
@@ -76,14 +77,14 @@ export default function ConversationItem({
         <AvatarImage
           alt={conversation.contact?.fullName ?? ""}
           className="object-cover"
-          src={getAvatarUrl(conversation.contact)}
+          src={avatarUrl}
         />
         <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
           {conversation.contact?.fullName?.slice(0, 2)}
         </AvatarFallback>
       </Avatar>
     ),
-    [conversation.contact],
+    [conversation.contact, avatarUrl],
   )
 
   const { execute } = useAction(

@@ -16,6 +16,7 @@ import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
+import { usePlatformUrls } from "@/features/platform"
 
 type EmbedCodeDialogProps = {
   webchat: IntegrationWebchatModel
@@ -26,11 +27,11 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
   const [_, copyToClipboard] = useCopyToClipboard()
   const t = useTranslations()
 
+  const { appUrl } = usePlatformUrls()
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof window === "undefined" ? "" : window.location.origin)
+    appUrl || (typeof window === "undefined" ? "" : window.location.origin)
 
-  const embedCode = `<!-- Aha Chat Widget -->
+  const embedCode = `<!-- ChatbotX Widget -->
 <script src="${baseUrl}/chat-widget/plugin.js" crossorigin="anonymous" async
   type="module" onload="window.csmChatWidget?.init({
     webchatId: '${webchat.id}',
