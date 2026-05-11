@@ -5,7 +5,6 @@ export const keys = () =>
   createEnv({
     server: {
       REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
-      REALTIME_BROADCAST_URL: z.url().default("http://localhost:1999"),
       REALTIME_SESSION_VERIFY_URL: z.url().optional(),
     },
     client: {

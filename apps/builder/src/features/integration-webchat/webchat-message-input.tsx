@@ -24,9 +24,8 @@ type WebchatMessageInputProps = {
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   const { workspaceId, webchatId, referral = "" } = props
-  const { sendMessage, guestConversationId } = useGuestSessionStore(
-    (state) => state,
-  )
+  const { sendMessage, guestConversationId, appendMessage } =
+    useGuestSessionStore((state) => state)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
@@ -60,7 +59,11 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           setValue("text", "")
           textareaRef.current?.focus()
         },
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
+          if (data?.attachments) {
+            appendMessage(data)
+          }
+
           textareaRef.current?.focus()
           resetFormAndAction()
 

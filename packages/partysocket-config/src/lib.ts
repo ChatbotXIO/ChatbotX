@@ -1,34 +1,39 @@
 import ky from "ky"
 import { type RealtimeAudience, signRealtimeToken } from "./auth"
-import { env } from "./keys"
 import { logger } from "./logger"
 import type {
   RealtimeEventData,
   RealtimeEventNotifyExportResult,
 } from "./schemas"
 
-const buildAuthHeader = async (audience: RealtimeAudience): Promise<string> => {
-  const token = await signRealtimeToken(audience, env.REALTIME_BROADCAST_SECRET)
+export interface BroadcastTarget {
+  secret: string
+  url: string
+}
+
+const buildAuthHeader = async (
+  audience: RealtimeAudience,
+  secret: string,
+): Promise<string> => {
+  const token = await signRealtimeToken(audience, secret)
   return `Bearer ${token}`
 }
 
 export async function broadcastToWorkspaceParty(
+  target: BroadcastTarget,
   workspaceId: string,
   json: RealtimeEventData,
 ) {
   try {
-    return await ky.post(
-      `${env.REALTIME_BROADCAST_URL}/parties/workspaces/${workspaceId}`,
-      {
-        headers: {
-          Authorization: await buildAuthHeader({
-            kind: "workspace",
-            id: workspaceId,
-          }),
-        },
-        json,
+    return await ky.post(`${target.url}/parties/workspaces/${workspaceId}`, {
+      headers: {
+        Authorization: await buildAuthHeader(
+          { kind: "workspace", id: workspaceId },
+          target.secret,
+        ),
       },
-    )
+      json,
+    })
   } catch (error) {
     logger.error(error, `Failed to broadcast to workspace ${workspaceId} party`)
     return null
@@ -36,18 +41,19 @@ export async function broadcastToWorkspaceParty(
 }
 
 export async function broadcastToGuestParty(
+  target: BroadcastTarget,
   guestConversationId: string,
   json: RealtimeEventData,
 ) {
   try {
     return await ky.post(
-      `${env.REALTIME_BROADCAST_URL}/parties/guests/${guestConversationId}`,
+      `${target.url}/parties/guests/${guestConversationId}`,
       {
         headers: {
-          Authorization: await buildAuthHeader({
-            kind: "guest",
-            id: guestConversationId,
-          }),
+          Authorization: await buildAuthHeader(
+            { kind: "guest", id: guestConversationId },
+            target.secret,
+          ),
         },
         json,
       },
@@ -59,22 +65,20 @@ export async function broadcastToGuestParty(
 }
 
 export async function broadcastToUserParty(
+  target: BroadcastTarget,
   userId: string,
   json: RealtimeEventNotifyExportResult,
 ) {
   try {
-    return await ky.post(
-      `${env.REALTIME_BROADCAST_URL}/parties/users/${userId}`,
-      {
-        headers: {
-          Authorization: await buildAuthHeader({
-            kind: "user",
-            id: userId,
-          }),
-        },
-        json,
+    return await ky.post(`${target.url}/parties/users/${userId}`, {
+      headers: {
+        Authorization: await buildAuthHeader(
+          { kind: "user", id: userId },
+          target.secret,
+        ),
       },
-    )
+      json,
+    })
   } catch (error) {
     logger.error(error, `Failed to broadcast to user ${userId} party`)
     return null

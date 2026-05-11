@@ -13,7 +13,7 @@
     "@aws-sdk/s3-presigned-post": "^3.1039.0",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@t3-oss/env-nextjs": "^0.13.11",
+    "@t3-oss/env-core": "^0.13.11",
     "aws4fetch": "^1.0.20",
     "image-size": "^2.0.2",
     "ky": "^2.0.2",

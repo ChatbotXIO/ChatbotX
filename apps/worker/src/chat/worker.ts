@@ -1,3 +1,5 @@
+import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
+import type { RealtimeEventData } from "@chatbotx.io/partysocket-config"
 import { SdkException } from "@chatbotx.io/sdk"
 import {
   ChatJobAction,
@@ -37,6 +39,12 @@ async function startChatWorker() {
           return
         case ChatJobAction.sendWhatsappTemplateMessage:
           await sendWhatsappTemplateMessage(job.data.data)
+          return
+        case ChatJobAction.broadcastEvent:
+          await broadcastToWorkspaceParty(
+            job.data.data.workspaceId,
+            job.data.data.event as RealtimeEventData,
+          )
           return
         default:
           throw new SdkException("ChatJobAction action is not defined")

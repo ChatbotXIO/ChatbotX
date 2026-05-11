@@ -1,4 +1,4 @@
-import { createEnv } from "@t3-oss/env-nextjs"
+import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
 export const keys = () =>
@@ -10,5 +10,5 @@ export const keys = () =>
       S3_REGION: z.string().min(1),
       S3_BUCKET: z.string().min(1),
     },
-    experimental__runtimeEnv: {},
+    runtimeEnv: process.env,
   })

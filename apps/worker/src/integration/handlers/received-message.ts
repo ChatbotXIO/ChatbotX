@@ -1,5 +1,5 @@
 import { contactTrackingService } from "@chatbotx.io/analytics"
-import { buildContext } from "@chatbotx.io/business"
+import { broadcastToWorkspaceParty, buildContext } from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -23,10 +23,7 @@ import {
   emitContactCreated,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
-import {
-  broadcastToWorkspaceParty,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   type AuthValue,
   type IncomingAttachment,

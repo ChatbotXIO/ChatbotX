@@ -1,3 +1,5 @@
+"use client"
+
 import type {
   MessageButtonTemplate,
   MessageTemplateEntity,
@@ -16,6 +18,8 @@ import { format } from "date-fns"
 import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import type { AttachmentResource } from "@/features/attachments/schema/resource"
+import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
 import { MessageBubble } from "./message-bubble"
 
@@ -60,9 +64,9 @@ export const MessageItem = (props: MessageItemProps) => {
             </pre>
           </div>
         )}
-        {message.attachments &&
-          message.attachments.length > 0 &&
-          RenderAttachments({ message })}
+        {message.attachments && message.attachments.length > 0 && (
+          <RenderAttachments message={message} />
+        )}
         {RenderContentAttributes(props)}
       </div>
     </MessageBubble>
@@ -76,55 +80,63 @@ const RenderAttachments = (props: {
 
   return (
     <div className="grid grid-cols-auto gap-2">
-      {(message.attachments ?? []).map((attachment) => {
-        switch (attachment.fileType) {
-          case "image":
-            return (
-              <Image
-                alt={attachment.name || "Attachment"}
-                className="max-w-80 rounded-xl"
-                height={attachment.height || 0}
-                key={attachment.id}
-                src={attachment.url}
-                width={attachment.width || 0}
-              />
-            )
-          case "video":
-            return (
-              <video
-                controls
-                height="240"
-                key={attachment.id}
-                preload="none"
-                width="320"
-              >
-                <track default kind="captions" />
-                <source src={attachment.url} type={attachment.mimeType} />
-              </video>
-            )
-          case "audio":
-            return (
-              <audio controls key={attachment.id} preload="none">
-                <track default kind="captions" />
-                <source src={attachment.url} type={attachment.mimeType} />
-              </audio>
-            )
-          default:
-            return (
-              <div
-                className="flex items-center gap-2 overflow-hidden rounded-xl bg-secondary p-3 text-sm"
-                key={attachment.id}
-              >
-                <PaperclipIcon className="size-5 flex-none" />
-                <Link className="truncate" href={attachment.url}>
-                  {attachment.url}
-                </Link>
-              </div>
-            )
-        }
-      })}
+      {(message.attachments ?? []).map((attachment) => (
+        <RenderAttachmentItem attachment={attachment} key={attachment.id} />
+      ))}
     </div>
   )
+}
+
+const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
+  const { attachment } = props
+  const attachmentUrl = useAttachmentUrl(attachment)
+  const attachmentLabel =
+    attachment.name || attachment.originPath || "Attachment"
+
+  if (!attachmentUrl) {
+    return (
+      <div className="flex items-center gap-2 overflow-hidden rounded-xl bg-secondary p-3 text-sm">
+        <PaperclipIcon className="size-5 flex-none" />
+        <span className="truncate">{attachmentLabel}</span>
+      </div>
+    )
+  }
+
+  switch (attachment.fileType) {
+    case "image":
+      return (
+        <Image
+          alt={attachmentLabel}
+          className="max-w-80 rounded-xl"
+          height={attachment.height || 0}
+          src={attachmentUrl}
+          width={attachment.width || 0}
+        />
+      )
+    case "video":
+      return (
+        <video controls height="240" preload="none" width="320">
+          <track default kind="captions" />
+          <source src={attachmentUrl} type={attachment.mimeType} />
+        </video>
+      )
+    case "audio":
+      return (
+        <audio controls preload="none">
+          <track default kind="captions" />
+          <source src={attachmentUrl} type={attachment.mimeType} />
+        </audio>
+      )
+    default:
+      return (
+        <div className="flex items-center gap-2 overflow-hidden rounded-xl bg-secondary p-3 text-sm">
+          <PaperclipIcon className="size-5 flex-none" />
+          <Link className="truncate" href={attachmentUrl}>
+            {attachmentUrl}
+          </Link>
+        </div>
+      )
+  }
 }
 
 const RenderContentAttributes = (props: MessageItemProps) => {

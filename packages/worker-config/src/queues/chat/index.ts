@@ -33,6 +33,7 @@ export const ChatJobAction = {
   sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
+  broadcastEvent: "broadcastEvent",
 } as const
 
 export type ChatJobSendChannelMessage = {
@@ -102,12 +103,21 @@ export type ChatJobSendTyping = {
   }
 }
 
+export type ChatJobBroadcastEvent = {
+  type: typeof ChatJobAction.broadcastEvent
+  data: {
+    workspaceId: string
+    event: unknown
+  }
+}
+
 export type ChatJobData =
   | ChatJobSendChannelMessage
   | ChatJobSendFlowStep
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage
   | ChatJobSendTyping
+  | ChatJobBroadcastEvent
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"

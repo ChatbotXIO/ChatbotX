@@ -42,13 +42,14 @@ export function MessageList() {
   return (
     <div className="flex flex-1 flex-col">
       <Virtuoso
+        alignToBottom={true}
         components={{
           List: MessageComponentList,
           Header: MessageComponentHeader,
         }}
         data={messages}
         followOutput
-        initialTopMostItemIndex={messages.length - 1}
+        initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, message) => (
           <MessageItem key={message.id} message={message} />
         )}

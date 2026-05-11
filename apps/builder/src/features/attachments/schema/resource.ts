@@ -8,7 +8,7 @@ export const attachmentResource = createSelectSchema(attachmentModel, {
   id: z.string(),
 }).and(
   z.object({
-    url: z.url(),
+    url: z.url().optional(),
   }),
 )
 export type AttachmentResource = z.infer<typeof attachmentResource>

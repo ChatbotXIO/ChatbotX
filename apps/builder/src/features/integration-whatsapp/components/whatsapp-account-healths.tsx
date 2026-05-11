@@ -234,10 +234,6 @@ export const WhatsappAccountHealths = memo(
       (entity) => entity.entity_type !== "APP",
     )
     const canSendMessage = true
-    // console.log({
-    //   health_status: phoneNumber.health_status,
-    //   healthEntities: JSON.stringify(healthEntities),
-    // })
 
     const canSendMessageLabels: Record<string, string> = {
       AVAILABLE: t("canSendMessage.AVAILABLE"),
