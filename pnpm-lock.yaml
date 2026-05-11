@@ -695,9 +695,6 @@ importers:
 
   integrations/chatbotx:
     dependencies:
-      '@chatbotx.io/partysocket-config':
-        specifier: workspace:*
-        version: link:../../packages/partysocket-config
       '@chatbotx.io/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
