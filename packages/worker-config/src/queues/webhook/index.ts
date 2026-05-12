@@ -1,11 +1,5 @@
 import type { TriggerEventType } from "@chatbotx.io/database/partials"
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
+import { defineQueue } from "../../lib/define-queue"
 
 export const WebhookJobAction = {
   evaluateWebhooks: "evaluateWebhooks",
@@ -24,10 +18,4 @@ export type WebhookJobEvaluate = {
 
 export type WebhookJobData = WebhookJobEvaluate
 
-export const webhookQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<WebhookJobData>(queueNames.enum.webhook, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const webhookQueue = defineQueue<WebhookJobData>("webhook")

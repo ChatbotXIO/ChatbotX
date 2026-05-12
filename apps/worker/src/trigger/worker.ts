@@ -1,12 +1,8 @@
-import { SdkException } from "@chatbotx.io/sdk"
 import {
-  defaultWorkerOptions,
-  getRedisConnection,
-  queueNames,
   TriggerJobAction,
   type TriggerJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
+import { createBullMQWorker } from "../lib/create-worker"
 import { logger } from "../lib/logger"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
 import { TriggerMatcherService } from "./services/trigger-matcher.service"
@@ -15,53 +11,41 @@ import type { TriggerEventData } from "./types"
 const triggerMatcher = new TriggerMatcherService()
 const triggerExecutor = new TriggerExecutorService()
 
-const worker = new Worker(
-  queueNames.enum.trigger,
-  async (job: Job<TriggerJobData>) => {
-    switch (job.data.type) {
-      case TriggerJobAction.evaluateTriggers: {
-        const { data: eventData } = job.data
-
-        if (eventData.source === "worker") {
-          logger.info("Skipping worker-emitted event to prevent loop")
-          return
-        }
-
-        const matchedTriggers = await triggerMatcher.findMatchingTriggers(
-          eventData as TriggerEventData,
-        )
-
-        if (matchedTriggers.length === 0) {
-          return
-        }
-
-        logger.info(
-          `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
-        )
-
-        await Promise.allSettled(
-          matchedTriggers.map((trigger) =>
-            triggerExecutor.execute(trigger, eventData.contactId),
-          ),
-        )
+const worker = await createBullMQWorker<TriggerJobData>({
+  name: "trigger",
+  label: "trigger",
+  bootstrap: false,
+  concurrency: 100,
+  handlers: {
+    [TriggerJobAction.executeTrigger]: async () => {
+      // No direct execution path today; matched triggers fan out via
+      // evaluateTriggers below.
+    },
+    [TriggerJobAction.evaluateTriggers]: async (eventData) => {
+      if (eventData.source === "worker") {
+        logger.info("Skipping worker-emitted event to prevent loop")
         return
       }
 
-      default:
-        throw new SdkException("TriggerJobAction action is not defined")
-    }
-  },
-  {
-    connection: getRedisConnection(),
-    ...defaultWorkerOptions,
-    concurrency: 100,
-  },
-)
+      const matchedTriggers = await triggerMatcher.findMatchingTriggers(
+        eventData as TriggerEventData,
+      )
 
-worker.on("failed", (job, err) => {
-  if (job) {
-    logger.error(err, `Trigger job ${job.id} has failed`)
-  }
+      if (matchedTriggers.length === 0) {
+        return
+      }
+
+      logger.info(
+        `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
+      )
+
+      await Promise.allSettled(
+        matchedTriggers.map((trigger) =>
+          triggerExecutor.execute(trigger, eventData.contactId),
+        ),
+      )
+    },
+  },
 })
 
 worker.on("completed", (job) => {

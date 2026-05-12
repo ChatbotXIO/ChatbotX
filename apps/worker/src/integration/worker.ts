@@ -1,15 +1,11 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
-  defaultWorkerOptions,
-  getRedisConnection,
   IntegrationJobAction,
   type IntegrationJobData,
   integrationQueue,
-  queueNames,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { createBullMQWorker } from "../lib/create-worker"
 import { logger } from "../lib/logger"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
@@ -29,150 +25,86 @@ import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
-async function startIntegrationWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Integration worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap integration worker")
-    process.exit(1)
-  }
+await createBullMQWorker<IntegrationJobData>({
+  name: "integration",
+  label: "integration",
+  logJobReceipt: true,
+  handlers: {
+    [IntegrationJobAction.incomingMessage]: async (data) => {
+      const { message, postbackAction, quickReplyAction, conversation } =
+        await receiveMessage(data)
 
-  const worker = new Worker(
-    queueNames.enum.integration,
-    async (job: Job<IntegrationJobData>) => {
-      logger.info(job.data, "Worker received job")
-      switch (job.data.type) {
-        case IntegrationJobAction.incomingMessage: {
-          const { message, postbackAction, quickReplyAction, conversation } =
-            await receiveMessage(job.data.data)
+      if (!message) {
+        return
+      }
 
-          if (!message) {
-            return
-          }
+      const isNotPostbackOrQuickReply = !(postbackAction || quickReplyAction)
 
-          const isNotPostbackOrQuickReply = !(
-            postbackAction || quickReplyAction
-          )
+      if (
+        isNotPostbackOrQuickReply &&
+        message.text &&
+        message.senderType === "contact" &&
+        (await ensureConversationActive(conversation))
+      ) {
+        const additionalAttributes =
+          conversation.additionalAttributes as ConversationAttributes
 
-          // Check for active challenge (getUserData waiting for input)
-          if (
-            isNotPostbackOrQuickReply &&
-            message.text &&
-            message.senderType === "contact" &&
-            (await ensureConversationActive(conversation))
-          ) {
-            const additionalAttributes =
-              conversation.additionalAttributes as ConversationAttributes
-
-            if (additionalAttributes?.challenge) {
-              await integrationQueue.add(IntegrationJobAction.runChallenge, {
-                type: IntegrationJobAction.runChallenge,
-                data: {
-                  conversationId: conversation,
-                  contactInboxId: message.contactInboxId,
-                  challenge: additionalAttributes.challenge,
-                },
-              })
-            } else {
-              await automatedResponseService.enqueue({
-                conversationId: conversation.id,
-                contactInboxId: message.contactInboxId,
-                messageId: message.id,
-              })
-            }
-          } else if (isNotPostbackOrQuickReply) {
-            // Track no response for messages without content or not from contact
-            // (postback/quickReply are tracked in their own handlers)
-            await trackBotResponse({
-              workspaceId: message.workspaceId,
-              conversationId: message.conversationId,
-              messageId: message.id,
-              hasResponse: false,
-              responseType: "none",
-              routeType: "fallback",
-              result: "fallback",
-              aiProvider: "none",
-              metadata: {
-                fallbackReason: message.text
-                  ? "not_from_contact"
-                  : "no_content",
-              },
-              startTime: Date.now(),
-            })
-          }
-          return
+        if (additionalAttributes?.challenge) {
+          await integrationQueue.add(IntegrationJobAction.runChallenge, {
+            type: IntegrationJobAction.runChallenge,
+            data: {
+              conversationId: conversation,
+              contactInboxId: message.contactInboxId,
+              challenge: additionalAttributes.challenge,
+            },
+          })
+        } else {
+          await automatedResponseService.enqueue({
+            conversationId: conversation.id,
+            contactInboxId: message.contactInboxId,
+            messageId: message.id,
+          })
         }
-        case IntegrationJobAction.sendFlow: {
-          await runFlowNode(job.data.data)
-          return
-        }
-        case IntegrationJobAction.sendSequenceFlow: {
-          await handleSendSequenceFlow(job.data.data, job)
-          return
-        }
-        case IntegrationJobAction.runFlowPostback: {
-          await runFlowPostback(job.data.data)
-          return
-        }
-        case IntegrationJobAction.runFlowQuickReply: {
-          await runFlowQuickReply(job.data.data)
-          return
-        }
-        case IntegrationJobAction.processAutomatedResonse: {
-          await processAutomatedResponse(job.data.data)
-          return
-        }
-        case IntegrationJobAction.agentMarkAsRead: {
-          await agentMarkAsRead(job.data.data)
-          return
-        }
-        case IntegrationJobAction.contactMarkAsRead: {
-          await contactMarkAsRead(job.data.data)
-          return
-        }
-        case IntegrationJobAction.runRef: {
-          await runRef(job.data.data)
-          return
-        }
-        case IntegrationJobAction.runChallenge: {
-          await runChallenge(job.data.data)
-          return
-        }
-        case IntegrationJobAction.blockContact: {
-          // await broadcastBlockContactEvent(job.data.data)
-          return
-        }
-        case IntegrationJobAction.unblockContact: {
-          // await broadcastUnblockContactEvent(job.data.data)
-          return
-        }
-        case IntegrationJobAction.assignConversation: {
-          // await broadcastAssignConversation(job.data.data)
-          return
-        }
-        case IntegrationJobAction.messageStatus: {
-          await handleMessageStatus(job.data.data)
-          return
-        }
-        default:
-          return
+      } else if (isNotPostbackOrQuickReply) {
+        await trackBotResponse({
+          workspaceId: message.workspaceId,
+          conversationId: message.conversationId,
+          messageId: message.id,
+          hasResponse: false,
+          responseType: "none",
+          routeType: "fallback",
+          result: "fallback",
+          aiProvider: "none",
+          metadata: {
+            fallbackReason: message.text ? "not_from_contact" : "no_content",
+          },
+          startTime: Date.now(),
+        })
       }
     },
-    {
-      connection: getRedisConnection(),
-      ...defaultWorkerOptions,
+    [IntegrationJobAction.sendFlow]: (data) => runFlowNode(data),
+    [IntegrationJobAction.sendSequenceFlow]: (data, job) =>
+      handleSendSequenceFlow(data, job),
+    [IntegrationJobAction.runFlowPostback]: (data) => runFlowPostback(data),
+    [IntegrationJobAction.runFlowQuickReply]: (data) => runFlowQuickReply(data),
+    [IntegrationJobAction.processAutomatedResonse]: (data) =>
+      processAutomatedResponse(data),
+    [IntegrationJobAction.agentMarkAsRead]: (data) => agentMarkAsRead(data),
+    [IntegrationJobAction.contactMarkAsRead]: (data) => contactMarkAsRead(data),
+    [IntegrationJobAction.runRef]: (data) => runRef(data),
+    [IntegrationJobAction.runChallenge]: (data) => runChallenge(data),
+    [IntegrationJobAction.blockContact]: () => {
+      // intentionally a no-op today; broadcastBlockContactEvent is commented out
     },
-  )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-}
-
-startIntegrationWorker().catch((err) => {
-  logger.error(err, "Failed to start integration worker")
-  process.exit(1)
+    [IntegrationJobAction.unblockContact]: () => {
+      // intentionally a no-op today; broadcastUnblockContactEvent is commented out
+    },
+    [IntegrationJobAction.assignConversation]: () => {
+      // intentionally a no-op today; broadcastAssignConversation is commented out
+    },
+    [IntegrationJobAction.messageStatus]: (data) => handleMessageStatus(data),
+    [IntegrationJobAction.createMessage]: () => {
+      logger.warn("IntegrationJobAction.createMessage is not implemented")
+    },
+  },
 })

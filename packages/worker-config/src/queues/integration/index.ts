@@ -5,13 +5,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { OutgoingMessage } from "@chatbotx.io/sdk"
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
+import { defineQueue } from "../../lib/define-queue"
 import type { BotResponseTrackingContext } from "../types"
 
 export const IntegrationJobAction = {
@@ -204,10 +198,4 @@ export type IntegrationJobData =
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow
 
-export const integrationQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<IntegrationJobData>(queueNames.enum.integration, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const integrationQueue = defineQueue<IntegrationJobData>("integration")

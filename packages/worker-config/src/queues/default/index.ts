@@ -1,18 +1,4 @@
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
-
-export const defaultQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<DefaultJobData>(queueNames.enum.default, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+import { defineQueue } from "../../lib/define-queue"
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
@@ -62,3 +48,5 @@ export type DefaultJobData =
   | JobExportContacts
   | JobSendErrorLog
   | JobSendAuditLog
+
+export const defaultQueue = defineQueue<DefaultJobData>("default")

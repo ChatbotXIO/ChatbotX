@@ -1,10 +1,4 @@
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
+import { defineQueue } from "../../lib/define-queue"
 
 export const ScheduleJobData = {
   enqueueBroadcast: "enqueueBroadcast",
@@ -59,10 +53,4 @@ export type ScheduleJobData =
   | ScheduleJobEvaluateTriggers
   | ScheduleJobCleanupTriggers
 
-export const scheduleQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ScheduleJobData>(queueNames.enum.schedule, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const scheduleQueue = defineQueue<ScheduleJobData>("schedule")

@@ -1,10 +1,4 @@
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
+import { defineQueue } from "../../lib/define-queue"
 
 export const TriggerJobAction = {
   executeTrigger: "executeTrigger",
@@ -37,10 +31,4 @@ export type TriggerJobEvaluate = {
 
 export type TriggerJobData = TriggerJobExecute | TriggerJobEvaluate
 
-export const triggerQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<TriggerJobData>(queueNames.enum.trigger, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const triggerQueue = defineQueue<TriggerJobData>("trigger")

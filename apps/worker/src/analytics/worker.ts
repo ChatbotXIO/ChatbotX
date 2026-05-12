@@ -1,75 +1,34 @@
 import { env } from "@chatbotx.io/analytics/key"
-import { SdkException } from "@chatbotx.io/sdk"
-import {
-  AnalyticsJobData,
-  analyticsQueue,
-  defaultWorkerOptions,
-  getRedisConnection,
-  queueNames,
-} from "@chatbotx.io/worker-config"
-import { type Job, Queue, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { AnalyticsJobData, analyticsQueue } from "@chatbotx.io/worker-config"
+import { Queue } from "bullmq"
+import { createBullMQWorker } from "../lib/create-worker"
 import { logger } from "../lib/logger"
 import { ingestEvents } from "./handlers/ingest-events"
 import { registerSchedules } from "./handlers/register-schedules"
 import { syncEvents } from "./handlers/sync-events"
 
-async function startScheduleWorker() {
-  if (!env.ANALYTICS_ENABLED) {
-    logger.info("Analytics is disabled via ANALYTICS_ENABLED=false")
-    return
-  }
-
-  try {
-    await ensureBootstrapped()
-    // logger.info("Analytics bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap analytics")
-    process.exit(1)
-  }
-
+if (env.ANALYTICS_ENABLED) {
   if (analyticsQueue instanceof Queue) {
-    registerSchedules()
-      .then(() => {
-        // logger.info("Schedules registered")
-      })
-      .catch((err) => {
-        logger.error(err, "Error registering schedules")
-      })
+    registerSchedules().catch((err) => {
+      logger.error(err, "Error registering schedules")
+    })
   }
 
-  const worker = new Worker(
-    queueNames.enum.analytics,
-    async (job: Job<AnalyticsJobData>) => {
-      switch (job.data.type) {
-        case AnalyticsJobData.syncContact:
-        case AnalyticsJobData.syncConversation:
-        case AnalyticsJobData.syncBotMessage:
-          await syncEvents(job.data)
-          return
-        case AnalyticsJobData.ingestContactEvents:
-        case AnalyticsJobData.ingestBotMessageEvents:
-        case AnalyticsJobData.ingestConversationEvents:
-          await ingestEvents(job.data)
-          return
-        default:
-          throw new SdkException("AnalyticsJobData type is not defined")
-      }
+  await createBullMQWorker<AnalyticsJobData>({
+    name: "analytics",
+    label: "analytics",
+    handlers: {
+      [AnalyticsJobData.syncContact]: (_data, job) => syncEvents(job.data),
+      [AnalyticsJobData.syncConversation]: (_data, job) => syncEvents(job.data),
+      [AnalyticsJobData.syncBotMessage]: (_data, job) => syncEvents(job.data),
+      [AnalyticsJobData.ingestContactEvents]: (_data, job) =>
+        ingestEvents(job.data),
+      [AnalyticsJobData.ingestBotMessageEvents]: (_data, job) =>
+        ingestEvents(job.data),
+      [AnalyticsJobData.ingestConversationEvents]: (_data, job) =>
+        ingestEvents(job.data),
     },
-    {
-      connection: getRedisConnection(),
-      ...defaultWorkerOptions,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `${job.id} has failed`)
-    }
   })
+} else {
+  logger.info("Analytics is disabled via ANALYTICS_ENABLED=false")
 }
-
-startScheduleWorker().catch((err) => {
-  logger.error(err, "Failed to start schedule worker")
-  process.exit(1)
-})

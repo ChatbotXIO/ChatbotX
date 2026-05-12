@@ -1,53 +1,15 @@
-import {
-  AIJobAction,
-  type AIJobData,
-  defaultWorkerOptions,
-  getRedisConnection,
-  queueNames,
-} from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
-import { logger } from "../lib/logger"
+import { AIJobAction, type AIJobData } from "@chatbotx.io/worker-config"
+import { createBullMQWorker } from "../lib/create-worker"
 import { processAIFile } from "./handlers/process-ai-file"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 
-async function startAIAgentWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("AI Agent worker bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap AI Agent worker")
-    process.exit(1)
-  }
-
-  const worker = new Worker(
-    queueNames.enum.aiAgent,
-    async (job: Job<AIJobData>) => {
-      logger.info(job.data, `Worker received job: ${job.id}`)
-
-      switch (job.data.type) {
-        case AIJobAction.processAIFile:
-          await processAIFile(job.data.data)
-          return
-        case AIJobAction.processPendingEmbedding:
-          await processPendingEmbedding(job.data.data)
-          return
-        default:
-          logger.warn(`Unknown job name: ${job.name}`)
-          return
-      }
-    },
-    {
-      connection: getRedisConnection(),
-      ...defaultWorkerOptions,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
-}
-
-startAIAgentWorker()
+await createBullMQWorker<AIJobData>({
+  name: "aiAgent",
+  label: "AI Agent",
+  logJobReceipt: true,
+  handlers: {
+    [AIJobAction.processAIFile]: (data) => processAIFile(data),
+    [AIJobAction.processPendingEmbedding]: (data) =>
+      processPendingEmbedding(data),
+  },
+})

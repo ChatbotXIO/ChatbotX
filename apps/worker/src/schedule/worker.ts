@@ -1,12 +1,6 @@
-import {
-  defaultWorkerOptions,
-  getRedisConnection,
-  queueNames,
-  ScheduleJobData,
-  scheduleQueue,
-} from "@chatbotx.io/worker-config"
-import { type Job, Queue, Worker } from "bullmq"
-import { ensureBootstrapped } from "../lib/bootstrap"
+import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
+import { Queue } from "bullmq"
+import { createBullMQWorker } from "../lib/create-worker"
 import { logger } from "../lib/logger"
 import {
   cleanupTriggerExecutions,
@@ -18,71 +12,26 @@ import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { registerSchedules } from "./handlers/register-schedules"
 
-async function startScheduleWorker() {
-  try {
-    await ensureBootstrapped()
-    logger.info("Analytics bootstrapped successfully")
-  } catch (err) {
-    logger.error(err, "Failed to bootstrap analytics")
-    process.exit(1)
-  }
-
-  if (scheduleQueue instanceof Queue) {
-    registerSchedules()
-      .then(() => {
-        logger.info("Schedules registered")
-      })
-      .catch((err) => {
-        logger.error(err, "Error registering schedules")
-      })
-  }
-
-  const worker = new Worker(
-    queueNames.enum.schedule,
-    async (job: Job<ScheduleJobData>) => {
-      switch (job.data.type) {
-        case ScheduleJobData.enqueueBroadcast:
-          await enqueueBroadcast()
-          return
-
-        case ScheduleJobData.prepareBroadcast:
-          await prepareBroadcast(job.data.data.broadcastId)
-          return
-
-        case ScheduleJobData.sendBroadcast:
-          await processBroadcastContacts()
-          return
-
-        case ScheduleJobData.finalizeBroadcasts:
-          await finalizeBroadcasts()
-          return
-
-        case ScheduleJobData.evaluateTriggers:
-          await scanDateTimeTriggers()
-          return
-
-        case ScheduleJobData.cleanupTriggers:
-          await cleanupTriggerExecutions()
-          return
-
-        default:
-          logger.warn("Unknown schedule job type")
-      }
-    },
-    {
-      connection: getRedisConnection(),
-      ...defaultWorkerOptions,
-    },
-  )
-
-  worker.on("failed", (job, err) => {
-    if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
-    }
-  })
+if (scheduleQueue instanceof Queue) {
+  registerSchedules()
+    .then(() => {
+      logger.info("Schedules registered")
+    })
+    .catch((err) => {
+      logger.error(err, "Error registering schedules")
+    })
 }
 
-startScheduleWorker().catch((err) => {
-  logger.error("Failed to start schedule worker", err)
-  process.exit(1)
+await createBullMQWorker<ScheduleJobData>({
+  name: "schedule",
+  label: "schedule",
+  handlers: {
+    [ScheduleJobData.enqueueBroadcast]: () => enqueueBroadcast(),
+    [ScheduleJobData.prepareBroadcast]: (data) =>
+      prepareBroadcast(data.broadcastId),
+    [ScheduleJobData.sendBroadcast]: () => processBroadcastContacts(),
+    [ScheduleJobData.finalizeBroadcasts]: () => finalizeBroadcasts(),
+    [ScheduleJobData.evaluateTriggers]: () => scanDateTimeTriggers(),
+    [ScheduleJobData.cleanupTriggers]: () => cleanupTriggerExecutions(),
+  },
 })

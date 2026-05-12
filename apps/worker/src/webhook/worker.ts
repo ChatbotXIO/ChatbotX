@@ -1,36 +1,18 @@
 import {
-  defaultWorkerOptions,
-  getRedisConnection,
-  queueNames,
   WebhookJobAction,
   type WebhookJobData,
 } from "@chatbotx.io/worker-config"
-import { type Job, Worker } from "bullmq"
-import { logger } from "../lib/logger"
+import { createBullMQWorker } from "../lib/create-worker"
 import { WebhookMatcherService } from "./services/webhook-matcher.service"
 
 const webhookMatcher = new WebhookMatcherService()
 
-const worker = new Worker(
-  queueNames.enum.webhook,
-  async (job: Job<WebhookJobData>) => {
-    switch (job.data.type) {
-      case WebhookJobAction.evaluateWebhooks: {
-        await webhookMatcher.findAndExecuteWebhooks(job.data.data)
-        return
-      }
-      default:
-        return
-    }
+await createBullMQWorker<WebhookJobData>({
+  name: "webhook",
+  bootstrap: false,
+  label: "webhook",
+  handlers: {
+    [WebhookJobAction.evaluateWebhooks]: (data) =>
+      webhookMatcher.findAndExecuteWebhooks(data),
   },
-  {
-    connection: getRedisConnection(),
-    ...defaultWorkerOptions,
-  },
-)
-
-worker.on("failed", (job, err) => {
-  if (job) {
-    logger.error(err, `Webhook job ${job.id} has failed`)
-  }
 })

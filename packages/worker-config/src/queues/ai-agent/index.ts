@@ -1,18 +1,4 @@
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
-
-export const aiAgentQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue(queueNames.enum.aiAgent, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+import { defineQueue } from "../../lib/define-queue"
 
 export const AI_FILES_DEFAULT_CHUNK_SIZE = 1000
 export const AI_FILES_DEFAULT_OVERLAP_SIZE = 200
@@ -37,3 +23,5 @@ export type AIJobProcessPendingEmbedding = {
 }
 
 export type AIJobData = AIJobProcessFile | AIJobProcessPendingEmbedding
+
+export const aiAgentQueue = defineQueue<AIJobData>("aiAgent")

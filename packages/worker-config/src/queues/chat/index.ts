@@ -17,13 +17,7 @@ import type {
   SendWaTemplateMessageStepSchema,
   WaTemplateParams,
 } from "@chatbotx.io/flow-config"
-import { Queue } from "bullmq"
-import {
-  defaultJobOptions,
-  fakeQueue,
-  getRedisConnection,
-} from "../../lib/connection"
-import { queueNames } from "../../lib/types"
+import { defineQueue } from "../../lib/define-queue"
 import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
@@ -119,10 +113,4 @@ export type ChatJobData =
   | ChatJobSendTyping
   | ChatJobBroadcastEvent
 
-export const chatQueue =
-  process.env.NEXT_PHASE === "phase-production-build"
-    ? fakeQueue
-    : new Queue<ChatJobData>(queueNames.enum.chat, {
-        connection: getRedisConnection(),
-        defaultJobOptions,
-      })
+export const chatQueue = defineQueue<ChatJobData>("chat")
