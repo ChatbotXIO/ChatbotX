@@ -4,9 +4,11 @@
   "type": "module",
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "24.x",
     "@types/react": "19.2.14",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@chatbotx.io/utils": "workspace:*",
@@ -17,6 +19,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

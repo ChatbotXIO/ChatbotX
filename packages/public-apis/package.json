@@ -4,9 +4,11 @@
   "type": "module",
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "~24.12.2",
     "openapi-typescript": "^7.13.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "ky": "^2.0.2",
@@ -16,7 +18,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
     "generate:chatbotx": "openapi-typescript ${DOMAIN:-https://cloud.chatbotx.io}/api/public-spec.json --output src/generated/chatbotx.ts",
-    "check-types": "tsc --noEmit"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

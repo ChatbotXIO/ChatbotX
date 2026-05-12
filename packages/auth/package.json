@@ -18,9 +18,15 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "^5"
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "next": ">=15"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

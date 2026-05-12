@@ -10,21 +10,25 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.20.0",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "1.0.0-beta.22",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
-    "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
-    "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
+    "check-types": "tsc --noEmit",
+    "db:check": "dotenv -e ../../.env -- drizzle-kit up",
     "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
-    "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
-    "db:check": "dotenv -e ../../.env -- drizzle-kit up",
-    "check-types": "tsc --noEmit"
+    "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
+    "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
+    "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "exports": {
     ".": "./src/index.ts",

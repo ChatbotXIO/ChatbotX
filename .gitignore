@@ -20,6 +20,7 @@ node_modules
 
 # Testing
 coverage
+.vitest-cache
 
 # Turbo
 .turbo

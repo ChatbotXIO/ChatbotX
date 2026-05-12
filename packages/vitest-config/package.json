@@ -1,0 +1,33 @@
+{
+  "name": "@chatbotx.io/vitest-config",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "exports": {
+    "./node": "./src/node.ts",
+    "./react": "./src/react.ts",
+    "./nextjs": "./src/nextjs.ts",
+    "./msw": "./src/msw.ts",
+    "./setup-env": "./src/setup-env.ts",
+    "./setup-msw": "./src/setup-msw.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "jsdom": "^25.0.1",
+    "msw": "^2.7.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "^5"
+  }
+}

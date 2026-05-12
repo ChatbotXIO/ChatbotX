@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "build": "tsdown",
-    "start": "node dist/index.mjs",
+    "check-types": "tsc --noEmit",
     "dev:mcp": "dotenv -e .env -- tsx --watch src/index.ts",
-    "test": "dotenv -e .env -- tsx src/test-tools.ts",
-    "check-types": "tsc --noEmit"
+    "start": "node dist/index.mjs",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "license": "ISC",
@@ -23,9 +24,11 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "24.x",
     "dotenv-cli": "^11.0.0",
     "tsdown": "0.21.10",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

@@ -12,13 +12,17 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "24.x",
-    "dotenv-cli": "^11.0.0"
+    "dotenv-cli": "^11.0.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
     "db:migrate": "dotenv -e ../../.env -- tsx src/migrate.ts",
     "db:reset": "dotenv -e ../../.env -v CLICKHOUSE_MIGRATIONS_FORCE=1 -- tsx src/migrate.ts",
-    "check-types": "tsc --noEmit"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "exports": {
     ".": "./src/index.ts",

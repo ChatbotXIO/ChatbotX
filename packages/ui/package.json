@@ -17,12 +17,15 @@
     ]
   },
   "scripts": {
-    "generate:component": "turbo gen react-component",
+    "check-types": "tsc --noEmit --emitDeclarationOnly false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "check-types": "tsc --noEmit --emitDeclarationOnly false"
+    "generate:component": "turbo gen react-component",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/color": "^4.2.1",
     "@types/mime-types": "^3.0.1",
@@ -31,7 +34,8 @@
     "@types/react-dom": "19.2.3",
     "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",

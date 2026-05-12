@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "check-types": "tsc --noEmit",
     "dev": "dotenv -e ../../.env -- partykit dev",
     "https": "dotenv -e ../../.env -- partykit dev --https --https-key-path certificates/partysocket.pem --https-cert-path certificates/partysocket.pem",
-    "check-types": "tsc --noEmit"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "license": "ISC",
@@ -19,7 +21,9 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "24.x",
-    "dotenv-cli": "^11.0.0"
+    "dotenv-cli": "^11.0.0",
+    "vitest": "^3.2.4"
   }
 }

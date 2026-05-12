@@ -6,11 +6,13 @@
   "scripts": {
     "build": "dotenv  -e ../../.env -- next build",
     "check-types": "tsc --noEmit",
-    "i18n:check": "i18n-check --source en --locales messages",
     "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
+    "i18n:check": "i18n-check --source en --locales messages",
     "lint": "pnpm i18n:check && biome check .",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.37",
@@ -116,6 +118,7 @@
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1039.0",
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@lingual/i18n-check": "^0.9.4",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/facebook-js-sdk": "^3.3.12",
@@ -132,6 +135,7 @@
     "postcss": "^8.5.12",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

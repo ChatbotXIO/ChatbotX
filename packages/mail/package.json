@@ -4,12 +4,14 @@
   "type": "module",
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@react-email/preview-server": "5.2.10",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "19.2.14",
     "react-email": "6.0.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@react-email/components": "1.0.12",
@@ -24,7 +26,9 @@
     "./keys": "./src/keys.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
     "packages:dev": "email dev -d src/emails -p 3201",
-    "check-types": "tsc --noEmit"
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

@@ -11,14 +11,20 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
-    "typescript": "^5"
+    "msw": "^2.7.3",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./**/*": "./src/**/*.ts"
+    "./**/*": "./src/**/*.ts",
+    "./test-handlers": "./src/test-handlers.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }
