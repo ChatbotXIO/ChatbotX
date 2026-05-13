@@ -34,18 +34,18 @@ export function* convertFlowStepWhatsappOptionList(
     .trim()
     .slice(0, WHATSAPP_OPTION_LIST_BUTTON_MAX)
 
-  const rows = step.options.map((option) => {
+  const rows = step.buttons.map((btn) => {
     const encoded = encodeButtonPayload({
       flowId: props.data.flowId,
       flowVersionId: props.data.flowVersionId,
-      buttonId: option.id,
+      buttonId: btn.id,
       broadcastId: extractMetadata("broadcastId", props.data.metadata),
       sequenceStepId: extractMetadata("sequenceStepId", props.data.metadata),
     })
     return new Row(
       encoded.slice(0, ROW_ID_MAX_LENGTH),
-      option.title.slice(0, WHATSAPP_OPTION_LIST_TITLE_MAX),
-      option.description?.slice(0, WHATSAPP_OPTION_LIST_DESCRIPTION_MAX),
+      btn.label.slice(0, WHATSAPP_OPTION_LIST_TITLE_MAX),
+      btn.description?.slice(0, WHATSAPP_OPTION_LIST_DESCRIPTION_MAX),
     )
   })
 

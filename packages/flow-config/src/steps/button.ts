@@ -13,6 +13,7 @@ export const buttonTypes = z.enum([
   "startExternalFlow",
   "startExternalNode",
   "startAnotherNode",
+  "whatsappOptionList",
 ])
 export type ButtonType = z.infer<typeof buttonTypes>
 
@@ -46,6 +47,11 @@ export const buttonStepSchema = z
       z.object({
         buttonType: z.literal(buttonTypes.enum.startExternalNode),
         beforeStep: startExternalNodeStepSchema,
+        steps: z.array(z.union(actionSteps)),
+      }),
+      z.object({
+        buttonType: z.literal(buttonTypes.enum.whatsappOptionList),
+        beforeStep: z.null(),
         steps: z.array(z.union(actionSteps)),
       }),
       z.object({

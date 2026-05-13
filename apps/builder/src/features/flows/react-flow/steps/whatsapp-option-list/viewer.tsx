@@ -22,24 +22,20 @@ const WhatsappOptionListStepViewer = (
           {data.buttonLabel}
         </div>
         <div className="flex flex-1 flex-col gap-2 bg-gray-100 px-3 pb-2 dark:bg-neutral-700">
-          {data.options.map((option) => (
+          {data.buttons.map((btn) => (
             <div
               className="relative flex items-center justify-between rounded-lg bg-secondary px-3 py-2"
-              key={option.id}
+              key={btn.id}
             >
               <div className="flex flex-col">
-                <span className="font-medium text-sm">{option.title}</span>
-                {option.description ? (
+                <span className="font-medium text-sm">{btn.label}</span>
+                {btn.description ? (
                   <span className="text-muted-foreground text-xs">
-                    {option.description}
+                    {btn.description}
                   </span>
                 ) : null}
               </div>
-              <BaseHandle
-                id={option.id}
-                position={Position.Right}
-                type="source"
-              />
+              <BaseHandle id={btn.id} position={Position.Right} type="source" />
             </div>
           ))}
         </div>

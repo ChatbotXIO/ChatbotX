@@ -3,7 +3,7 @@
 import {
   WHATSAPP_OPTION_LIST_DESCRIPTION_MAX,
   WHATSAPP_OPTION_LIST_TITLE_MAX,
-  type WhatsappOptionListItem,
+  type WhatsappOptionListButton,
   type WhatsappOptionListOptionFormValues,
   whatsappOptionListOptionFormSchema,
 } from "@chatbotx.io/flow-config"
@@ -29,7 +29,7 @@ type OptionDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (index: number, values: WhatsappOptionListOptionFormValues) => void
-  currentItem: WhatsappOptionListItem | undefined
+  currentItem: WhatsappOptionListButton | undefined
 }
 
 function OptionDialogInner({
@@ -44,11 +44,11 @@ function OptionDialogInner({
   const form = useForm<WhatsappOptionListOptionFormValues>({
     resolver: zodResolver(whatsappOptionListOptionFormSchema),
     defaultValues: {
-      title: currentItem?.title ?? "",
+      title: currentItem?.label ?? "",
       description: currentItem?.description ?? "",
     },
     values: {
-      title: currentItem?.title ?? "",
+      title: currentItem?.label ?? "",
       description: currentItem?.description ?? "",
     },
     mode: "onChange",
