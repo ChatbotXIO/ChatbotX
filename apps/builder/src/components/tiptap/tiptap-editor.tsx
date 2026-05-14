@@ -71,7 +71,7 @@ export const TiptapEditor = ({
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      const text = editor.getText()
+      const text = editor.getText({ blockSeparator: "\n" })
       onChange?.(text)
     },
     onFocus: () => {
@@ -95,7 +95,11 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (tiptapEditor && initValue) {
-      tiptapEditor.commands.setContent(initValue)
+      const html = initValue
+        .split("\n")
+        .map((line) => `<p>${line || "<br>"}</p>`)
+        .join("")
+      tiptapEditor.commands.setContent(html)
     }
   }, [tiptapEditor, initValue])
 
@@ -140,7 +144,7 @@ export const TiptapEditor = ({
                         ?.chain()
                         .insertContent({
                           type: "mention",
-                          attrs: { id: `${field.label}}}` },
+                          attrs: { id: `${field.value}}}` },
                         })
                         .focus()
                         .run()

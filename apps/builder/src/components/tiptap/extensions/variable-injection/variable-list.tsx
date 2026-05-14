@@ -27,7 +27,7 @@ export const VariableList = ({
     const item = props.items[index]
 
     if (item) {
-      props.command({ id: `${item.label}}}` })
+      props.command({ id: `${item.value}}}` })
     }
 
     return Boolean(item)

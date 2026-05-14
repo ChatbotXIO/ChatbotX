@@ -11,11 +11,12 @@ import {
   openWebsiteStepDefaultFn,
   performActionNodeDefaultFn,
   type StartAnotherNodeStepSchema,
+  type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
+  startExternalFlowStepDefaultFn,
   startExternalNodeStepDefaultFn,
-  startFlowNodeDefaultFn,
 } from "@chatbotx.io/flow-config"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -39,7 +40,7 @@ import { useReactFlow } from "@xyflow/react"
 import { getProperty } from "dot-prop"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   useFieldArray,
   useForm,
@@ -187,15 +188,34 @@ export function ButtonEditorDialog() {
 
   const t = useTranslations()
 
-  const {
-    getNodes,
-    addNodes,
-    addEdges,
-    updateNodeData,
-    deleteElements,
-    getEdges,
-    screenToFlowPosition,
-  } = useReactFlow()
+  const { getNodes, addNodes, setEdges, updateNodeData, screenToFlowPosition } =
+    useReactFlow()
+
+  const refreshEdge = useCallback(
+    (buttonId: string, sourceNodeId: string, targetNodeId: string) => {
+      setEdges((currentEdges) => [
+        ...currentEdges.filter((edge) => edge.sourceHandle !== buttonId),
+        {
+          id: buttonId,
+          source: sourceNodeId,
+          target: targetNodeId,
+          sourceHandle: buttonId,
+          targetHandle: targetNodeId,
+          type: "buttonedge",
+        },
+      ])
+    },
+    [setEdges],
+  )
+
+  const removeEdge = useCallback(
+    (buttonId: string) => {
+      setEdges((currentEdges) =>
+        currentEdges.filter((edge) => edge.sourceHandle !== buttonId),
+      )
+    },
+    [setEdges],
+  )
   const {
     buttonPath,
     setButtonPath,
@@ -250,6 +270,7 @@ export function ButtonEditorDialog() {
     let beforeStep:
       | StartAnotherNodeStepSchema
       | OpenWebsiteStepSchema
+      | StartExternalFlowStepSchema
       | StartExternalNodeStepSchema
       | null = null
 
@@ -291,21 +312,7 @@ export function ButtonEditorDialog() {
         break
       }
       case buttonTypes.enum.startExternalFlow: {
-        const nodeCount = allNodes.filter(
-          (node) => node.type === nodeTypeSchema.enum.startFlow,
-        ).length
-        newNode = startFlowNodeDefaultFn({
-          nodeProps: {
-            position,
-          },
-          dataProps: {
-            name: `${t("flows.actions.startExternalFlow")} #${nodeCount + 1}`,
-          },
-        })
-        beforeStep = startAnotherNodeStepDefaultFn({
-          nodeId: newNode.id,
-          viewOnly: true,
-        })
+        beforeStep = startExternalFlowStepDefaultFn()
         break
       }
       case buttonTypes.enum.openWebsite: {
@@ -335,25 +342,7 @@ export function ButtonEditorDialog() {
 
       const currentButtonId = getValues("id") as string
       if (currentButtonId && activeNode) {
-        // Delete related edges
-        const allEdges = getEdges()
-        const relatedEdges = allEdges.filter(
-          (edge) => edge.sourceHandle === currentButtonId,
-        )
-        if (relatedEdges.length > 0) {
-          deleteElements({
-            edges: relatedEdges.map((edge) => ({ id: edge.id })),
-          })
-        }
-
-        addEdges({
-          id: currentButtonId,
-          source: activeNode.id,
-          target: newNode.id,
-          sourceHandle: currentButtonId,
-          targetHandle: newNode.id,
-          type: "buttonedge",
-        })
+        refreshEdge(currentButtonId, activeNode.id, newNode.id)
       }
 
       onSave()
@@ -370,15 +359,7 @@ export function ButtonEditorDialog() {
       buttonPath,
     )
     if (foundedButton) {
-      const allEdges = getEdges()
-      const relatedEdges = allEdges.filter(
-        (edge) => edge.sourceHandle === foundedButton.id,
-      )
-      if (relatedEdges.length > 0) {
-        deleteElements({
-          edges: relatedEdges.map((edge) => ({ id: edge.id })),
-        })
-      }
+      removeEdge(foundedButton.id)
       onChangeButtonData({
         path: buttonPath,
         data: null,
@@ -391,13 +372,23 @@ export function ButtonEditorDialog() {
 
   const onSave = () => {
     if (activeNode && buttonPath) {
-      setProperty(activeNode, buttonPath, form.getValues())
+      const values = form.getValues()
+      setProperty(activeNode, buttonPath, values)
       updateNodeData(activeNode.id, activeNode.data)
+
+      if (values.buttonType === buttonTypes.enum.startAnotherNode) {
+        const targetNodeId = values.beforeStep.nodeId
+        const currentButtonId = values.id as string
+
+        if (currentButtonId && targetNodeId) {
+          refreshEdge(currentButtonId, activeNode.id, targetNodeId)
+        }
+      }
 
       setOpenButtonEditorDialog(false)
       onChangeButtonData({
         path: buttonPath,
-        data: form.getValues(),
+        data: values,
       })
     }
   }

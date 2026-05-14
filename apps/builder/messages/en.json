@@ -464,6 +464,9 @@
     "automatedResponse": {
       "label": "Automated Response"
     },
+    "avatar": {
+      "label": "Avatar"
+    },
     "reflink": {
       "label": "Entry Point Link"
     },
@@ -506,6 +509,9 @@
       "description": "Unique identifier for your workspace.",
       "label": "Workspace ID"
     },
+    "workspaceName": {
+      "label": "Account Name"
+    },
     "contact": {
       "label": "Contact"
     },
@@ -526,6 +532,9 @@
     },
     "createdAt": {
       "label": "Created At"
+    },
+    "currentTime": {
+      "label": "Current Time"
     },
     "customRange": {
       "label": "Custom range"
@@ -701,11 +710,17 @@
     "last7days": {
       "label": "Last 7 days"
     },
+    "lastInput": {
+      "label": "Last Input"
+    },
     "lastMonth": {
       "label": "Last month"
     },
     "lifeTime": {
       "label": "Lifetime"
+    },
+    "locale": {
+      "label": "Locale"
     },
     "errorLog": {
       "label": "Error Log"
@@ -792,6 +807,9 @@
     },
     "userMessage": {
       "label": "User message"
+    },
+    "pageUserName": {
+      "label": "Page User Name"
     },
     "purpose": {
       "label": "Purpose",
@@ -907,6 +925,9 @@
     },
     "userId": {
       "label": "User ID"
+    },
+    "userTags": {
+      "label": "User Tags"
     },
     "username": {
       "label": "Username",

@@ -14,6 +14,7 @@ import {
   PhoneIcon,
   TextIcon,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useCustomFieldStore } from "./custom-field-store-context"
 
@@ -28,90 +29,90 @@ export const customFieldIconsMap: Record<CustomFieldType, LucideIcon> = {
   phoneNumber: PhoneIcon,
 }
 
-export const reservedCustomFieldOptions: {
-  name: string
+const reservedCustomFieldIds: {
   type: CustomFieldType
   id: SystemFieldType
+  labelKey: string
 }[] = [
   {
-    name: "First Name",
     id: systemFieldTypes.enum.first_name,
     type: "shortText",
+    labelKey: "fields.firstName.label",
   },
   {
-    name: "Last Name",
     id: systemFieldTypes.enum.last_name,
     type: "shortText",
+    labelKey: "fields.lastName.label",
   },
   {
-    name: "Full Name",
     id: systemFieldTypes.enum.full_name,
     type: "shortText",
+    labelKey: "fields.fullName.label",
   },
   {
-    name: "Email",
     id: systemFieldTypes.enum.email,
     type: "shortText",
+    labelKey: "fields.email.label",
   },
   {
-    name: "Phone Number",
     id: systemFieldTypes.enum.phone_number,
     type: "shortText",
+    labelKey: "fields.phoneNumber.label",
   },
   {
-    name: "Avatar",
     id: systemFieldTypes.enum.avatar,
     type: "shortText",
+    labelKey: "fields.avatar.label",
   },
   {
-    name: "Locale",
     id: systemFieldTypes.enum.locale,
     type: "shortText",
+    labelKey: "fields.locale.label",
   },
   {
-    name: "Gender",
     id: systemFieldTypes.enum.gender,
     type: "shortText",
+    labelKey: "fields.gender.label",
   },
   {
-    name: "Timezone",
     id: systemFieldTypes.enum.timezone,
     type: "shortText",
+    labelKey: "fields.timezone.label",
   },
   {
-    name: "User ID",
     id: systemFieldTypes.enum.user_id,
     type: "shortText",
+    labelKey: "fields.userId.label",
   },
   {
-    name: "User Tags",
     id: systemFieldTypes.enum.user_tags,
     type: "shortText",
+    labelKey: "fields.userTags.label",
   },
   {
-    name: "Account Name",
     id: systemFieldTypes.enum.workspace_name,
     type: "shortText",
+    labelKey: "fields.workspaceName.label",
   },
   {
-    name: "Account ID",
     id: systemFieldTypes.enum.workspace_id,
     type: "shortText",
+    labelKey: "fields.workspaceId.label",
   },
   {
-    name: "Page User Name",
     id: systemFieldTypes.enum.page_user_name,
     type: "shortText",
+    labelKey: "fields.pageUserName.label",
   },
   {
-    name: "Last Input",
     id: systemFieldTypes.enum.last_input,
     type: "shortText",
+    labelKey: "fields.lastInput.label",
   },
   {
-    name: "Current Time",
     id: systemFieldTypes.enum.current_time,
     type: "shortText",
+    labelKey: "fields.currentTime.label",
   },
 ]
 
@@ -123,8 +124,18 @@ export const useCustomFieldSelectOptions = (
   } = {},
 ): SelectOption[] => {
   const { customFieldTypes, includeReserved, prefix } = props
+  const t = useTranslations()
 
   const { customFields } = useCustomFieldStore((state) => state)
+
+  const reservedCustomFieldOptions = useMemo(
+    () =>
+      reservedCustomFieldIds.map((field) => ({
+        ...field,
+        name: t(field.labelKey),
+      })),
+    [t],
+  )
 
   return useMemo(() => {
     const allFields = includeReserved
@@ -150,5 +161,11 @@ export const useCustomFieldSelectOptions = (
       value: customField.id,
       Icon: customFieldIconsMap[customField.type as CustomFieldType],
     }))
-  }, [customFieldTypes, includeReserved, customFields, prefix])
+  }, [
+    customFieldTypes,
+    includeReserved,
+    customFields,
+    prefix,
+    reservedCustomFieldOptions,
+  ])
 }

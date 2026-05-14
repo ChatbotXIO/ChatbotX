@@ -186,11 +186,6 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     (state) => state,
   )
 
-  const targetNode = useMemo(() => {
-    const allNodes = getNodes()
-    return allNodes.find((node) => node.id === nodeId)
-  }, [nodeId, getNodes])
-
   // biome-ignore lint/suspicious/noExplicitAny: wip - complex node data types
   const form = useForm<any>({
     // biome-ignore lint/suspicious/noExplicitAny: wip - validator can be undefined
@@ -218,16 +213,19 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
     () =>
       funnel(
         () => {
-          if (nodeId && targetNode) {
-            updateNodeData(nodeId, {
-              ...targetNode.data,
-              details: allValues,
-            })
+          if (nodeId) {
+            const currentNode = getNodes().find((node) => node.id === nodeId)
+            if (currentNode) {
+              updateNodeData(nodeId, {
+                ...currentNode.data,
+                details: allValues,
+              })
+            }
           }
         },
         { minQuietPeriodMs: 500 },
       ),
-    [updateNodeData, nodeId, targetNode, allValues],
+    [updateNodeData, nodeId, getNodes, allValues],
   )
 
   useEffect(() => {

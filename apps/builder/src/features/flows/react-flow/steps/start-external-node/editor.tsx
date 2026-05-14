@@ -4,7 +4,8 @@ import type { FlowNode } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useMemo } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { useFlowStore } from "@/features/flows/provider/flow-store-context"
 import { useStepStore } from "../../stores/step-store-provider"
@@ -16,34 +17,27 @@ const StartExternalNodeStepEditor = ({
   parentName: string
 }) => {
   const t = useTranslations()
-  const [nodeOptions, setNodeOptions] = useState<
-    { value: string; label: string }[]
-  >([])
-
   const flowOptions = useFlowSelectOptions()
   const { flows } = useFlowStore((state) => state)
   const { activeFlowId } = useStepStore((state) => state)
+  const { control } = useFormContext()
+  const currentFlowId = useWatch({ control, name: `${parentName}.flowId` })
 
-  const onFlowChange = (value?: string) => {
-    if (!value) {
-      setNodeOptions([])
-      return
+  const nodeOptions = useMemo(() => {
+    if (!currentFlowId) {
+      return []
     }
-
-    const targetFlow = flows.find((f) => f.id === value)
-    if (targetFlow) {
-      setNodeOptions(
-        (
-          (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
-        ).map((node) => ({
-          value: node.id,
-          label: node.data.name,
-        })),
-      )
-    } else {
-      setNodeOptions([])
+    const targetFlow = flows.find((f) => f.id === currentFlowId)
+    if (!targetFlow) {
+      return []
     }
-  }
+    return (
+      (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
+    ).map((node) => ({
+      value: node.id,
+      label: node.data.name,
+    }))
+  }, [currentFlowId, flows])
 
   return (
     <BaseStepEditor
@@ -57,7 +51,6 @@ const StartExternalNodeStepEditor = ({
           name={`${parentName}.flowId`}
           options={flowOptions}
           required={true}
-          triggerValueChange={onFlowChange}
         />
 
         <ComboboxField

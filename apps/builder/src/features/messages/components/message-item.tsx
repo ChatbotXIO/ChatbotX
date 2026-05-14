@@ -59,7 +59,7 @@ export const MessageItem = (props: MessageItemProps) => {
       <div className="mx-3 flex min-h-11 max-w-[70%] flex-col gap-1">
         {message.text && message.text.length > 0 && (
           <div className={cn("text-sm", variants[variant])}>
-            <pre className="break-word whitespace-pre-line font-sans">
+            <pre className="whitespace-pre-line break-words font-sans">
               {message.text}
             </pre>
           </div>
@@ -191,7 +191,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
                   <CarouselItem className="w-32 pl-0" key={card.id}>
                     <div className="p-1">
                       <Card className="py-0">
-                        <CardContent className="flex aspect-square flex-col items-center justify-center overflow-hidden p-0">
+                        <CardContent className="flex flex-col items-center justify-center overflow-hidden p-0">
                           <div className="flex w-full flex-1 flex-col gap-1">
                             {"imageUrl" in card && card.imageUrl && (
                               <Image
@@ -206,7 +206,7 @@ const RenderContentAttributes = (props: MessageItemProps) => {
                               {card.title}
                             </span>
                             {"subtitle" in card && card.subtitle && (
-                              <span className="truncate text-muted-foreground text-sm">
+                              <span className="truncate px-2 text-muted-foreground text-sm">
                                 {card.subtitle}
                               </span>
                             )}

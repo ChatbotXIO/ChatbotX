@@ -475,6 +475,9 @@
     "automatedResponse": {
       "label": "Phản hồi tự động"
     },
+    "avatar": {
+      "label": "Ảnh đại diện"
+    },
     "reflink": {
       "label": "Liên kết giới thiệu"
     },
@@ -517,6 +520,9 @@
       "description": "Định danh duy nhất cho workspace của bạn.",
       "label": "ID Workspace"
     },
+    "workspaceName": {
+      "label": "Tên tài khoản"
+    },
     "contact": {
       "label": "Liên hệ"
     },
@@ -537,6 +543,9 @@
     },
     "createdAt": {
       "label": "Tạo lúc"
+    },
+    "currentTime": {
+      "label": "Thời gian hiện tại"
     },
     "customCss": {
       "label": "CSS tùy chỉnh"
@@ -789,6 +798,9 @@
     "userMessage": {
       "label": "Tin nhắn người dùng"
     },
+    "pageUserName": {
+      "label": "Tên người dùng trang"
+    },
     "purpose": {
       "label": "Mục đích",
       "placeholder": "Chức năng này làm gì?"
@@ -897,6 +909,9 @@
     },
     "userId": {
       "label": "ID Người dùng"
+    },
+    "userTags": {
+      "label": "Nhãn người dùng"
     },
     "username": {
       "label": "Tên đăng nhập",
@@ -1062,11 +1077,17 @@
     "thisMonth": {
       "label": "Tháng này"
     },
+    "lastInput": {
+      "label": "Dữ liệu nhập cuối"
+    },
     "lastMonth": {
       "label": "Tháng trước"
     },
     "lifeTime": {
       "label": "Toàn thời gian"
+    },
+    "locale": {
+      "label": "Ngôn ngữ"
     },
     "customRange": {
       "label": "Khoảng tùy chỉnh"

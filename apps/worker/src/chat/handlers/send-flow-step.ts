@@ -43,6 +43,7 @@ import {
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { contactVariableService } from "@chatbotx.io/variables"
 import type {
   ChatJobSendChatMessage,
   ChatJobSendFlowStep,
@@ -197,7 +198,7 @@ export async function sendFlowStep({
 
   try {
     const message = await db.transaction(async (tx) => {
-      const messageData: typeof messageModel.$inferInsert = {
+      let messageData: typeof messageModel.$inferInsert = {
         id: createId(),
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
@@ -248,6 +249,16 @@ export async function sendFlowStep({
         flowId,
         flowVersionId,
       }
+
+      const variables = await contactVariableService.getAll(
+        conversation.contactId,
+      )
+      messageData = JSON.parse(
+        await contactVariableService.replaceAll({
+          variables,
+          text: JSON.stringify(messageData),
+        }),
+      )
 
       const newMessage = await tx
         .insert(messageModel)
