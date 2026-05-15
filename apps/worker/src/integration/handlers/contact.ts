@@ -293,7 +293,8 @@ export async function deleteContact({
 
   for (const contactInbox of contactInboxes) {
     if (contactInbox.sourceId) {
-      emit("contact:deleted", {
+      emit("analytics:dashboard", {
+        eventType: "contact:deleted",
         workspaceId: conversation.workspaceId,
         contactId: contactInbox.id,
         occurredAt,

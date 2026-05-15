@@ -86,16 +86,15 @@ export type FlowAnalyticsSessionModel =
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect
 export type MagicLinkStatModel = typeof schema.magicLinkStatModel.$inferSelect
 export type RefLinkStatModel = typeof schema.refLinkStatModel.$inferSelect
-
-export type InboxWithIntegrations = InboxModel & {
-  integrationInstagram?: IntegrationInstagramModel | null
-  integrationMessenger?: IntegrationMessengerModel | null
-  integrationTelegram?: IntegrationTelegramModel | null
-  integrationWebchat?: IntegrationWebchatModel | null
-  integrationWhatsapp?: IntegrationWhatsappModel | null
-  integrationZalo?: IntegrationZaloModel | null
-  integrationSmtp?: IntegrationSmtpModel | null
-}
-
-export type ContactOnSmartDelayModel =
-  typeof schema.contactOnSmartDelayModel.$inferSelect
+export type AnalyticsContactEventModel =
+  typeof schema.analyticsContactEventModel.$inferSelect
+export type AnalyticsBotMessageEventModel =
+  typeof schema.analyticsBotMessageEventModel.$inferSelect
+export type AnalyticsConversationEventModel =
+  typeof schema.analyticsConversationEventModel.$inferSelect
+export type AnalyticsBroadcastEventModel =
+  typeof schema.analyticsBroadcastEventModel.$inferSelect
+export type AnalyticsSequenceEventModel =
+  typeof schema.analyticsSequenceEventModel.$inferSelect
+export type AnalyticsFlowNodeEventModel =
+  typeof schema.analyticsFlowNodeEventModel.$inferSelect

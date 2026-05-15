@@ -47,6 +47,7 @@ export type AnalysisFilterFormProps = {
   initialFrom?: number
   initialTo?: number
   defaultPreset?: PresetOption
+  workspaceCreatedAt?: Date
   onChange?: (range: DateRangeResult) => void
   onSubmit?: (range: DateRangeResult) => void
 }
@@ -94,17 +95,21 @@ function getLastMonthRange(): DateRangeResult {
   return { from: start, to: end }
 }
 
-function getLifeTimeRange(): DateRangeResult {
-  const start = startOfDay(new Date(2000, 0, 1))
-  const end = endOfDay(new Date())
+const LIFETIME_FLOOR = new Date("2020-01-01T00:00:00.000Z")
 
-  return { from: start, to: end }
+function getLifeTimeRange(workspaceCreatedAt?: Date): DateRangeResult {
+  const floor =
+    workspaceCreatedAt && workspaceCreatedAt > LIFETIME_FLOOR
+      ? workspaceCreatedAt
+      : LIFETIME_FLOOR
+  return { from: startOfDay(floor), to: endOfDay(new Date()) }
 }
 
 export default function AnalysisFilterForm({
   initialFrom,
   initialTo,
   defaultPreset = "today",
+  workspaceCreatedAt,
   onChange,
 }: AnalysisFilterFormProps) {
   const t = useTranslations()
@@ -143,11 +148,11 @@ export default function AnalysisFilterForm({
       case "lastMonth":
         return getLastMonthRange()
       case "lifeTime":
-        return getLifeTimeRange()
+        return getLifeTimeRange(workspaceCreatedAt)
       default:
         return null
     }
-  }, [initialFrom, initialTo, defaultPreset])
+  }, [initialFrom, initialTo, defaultPreset, workspaceCreatedAt])
 
   const [range, setRange] = useState<DateRangeResult | null>(initialRange)
 
@@ -207,7 +212,7 @@ export default function AnalysisFilterForm({
       applyRange(getLastMonthRange())
     }
     if (value === "lifeTime") {
-      applyRange(getLifeTimeRange())
+      applyRange(getLifeTimeRange(workspaceCreatedAt))
     }
   }
 

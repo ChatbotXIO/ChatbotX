@@ -4,24 +4,17 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./server": "./src/server.ts",
     "./events": "./src/events.ts",
     "./queries": "./src/queries.ts",
-    "./schemas": "./src/schemas/index.ts",
-    "./key": "./src/key.ts"
+    "./schemas": "./src/schemas/index.ts"
   },
   "dependencies": {
-    "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
-    "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "@clickhouse/client": "^1.18.3",
-    "@t3-oss/env-core": "^0.13.11",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "dotenv-cli": "^11.0.0",
     "ioredis": "5.10.1",
     "zod": "^4.3.6"
   },

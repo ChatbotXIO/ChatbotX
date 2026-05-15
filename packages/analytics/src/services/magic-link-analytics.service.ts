@@ -8,7 +8,7 @@ import {
   type MessagePayload,
 } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
-import { magicLinkStatsRepository } from "../repositories/clickhouse/magic-link-stats.repository"
+import { magicLinkStatsRepository } from "../repositories/postgres/magic-link-stats.repository"
 import type {
   FlowNodeContactData,
   ListFlowNodeContactsResponse,
@@ -66,7 +66,7 @@ export class MagicLinkAnalyticsService {
   }
 
   async getMagicLinkStatsByDateRange(input: MagicLinkStatsInput) {
-    const rows = await magicLinkStatsRepository.getMagicLinkStatsByDateRange({
+    const rows = await magicLinkStatsRepository.getStatsByDateRange({
       workspaceId: input.workspaceId,
       startDate: input.startDate,
       endDate: input.endDate,
@@ -98,7 +98,7 @@ export class MagicLinkAnalyticsService {
     }
 
     const { contactInboxIds, rows } =
-      await magicLinkStatsRepository.getMagicLinkContactStats({
+      await magicLinkStatsRepository.getContactStats({
         workspaceId,
         linkId,
         page,

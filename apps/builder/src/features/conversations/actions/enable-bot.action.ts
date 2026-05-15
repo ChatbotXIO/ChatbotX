@@ -1,10 +1,9 @@
 "use server"
 
-import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { db } from "@chatbotx.io/database/client"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { emit } from "@chatbotx.io/event-bus"
 import { emitConversationTransferredToBot } from "@chatbotx.io/events"
-import { createId } from "@chatbotx.io/utils"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -61,24 +60,22 @@ export const enableBotAction = workspaceActionClient
       }
 
       for (const conv of conversations) {
-        await conversationTrackingService.trackEvent(
-          {
-            workspaceId,
-            conversationId: conv.id,
-            eventType: "conversation_transferred_to_bot",
-            eventId: createId(),
-            channel: "webchat", // TODO: replace correct channel from contact inbox
-            occurredAt: new Date(),
-            metadata: {
-              triggerContext: {
-                triggerSource: "api",
-                triggerHandler: "enableBotAction",
-                triggerType: "conversation_transferred_to_bot",
-              },
+        emit("analytics:dashboard", {
+          eventType: "conversation:transferred_to_bot",
+          workspaceId,
+          conversationId: conv.id,
+          channel: "webchat", // TODO: replace correct channel from contact inbox
+          occurredAt: new Date(),
+          metadata: {
+            triggerContext: {
+              triggerSource: "api",
+              triggerHandler: "enableBotAction",
+              triggerType: "conversation_transferred_to_bot",
             },
           },
-          { skipSpooler: true },
-        )
+        }).catch((error) => {
+          console.error("[enableBotAction] Failed to emit", error)
+        })
       }
 
       revalidateCacheTags(`workspaces:${workspaceId}#conversations`)

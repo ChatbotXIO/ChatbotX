@@ -1,4 +1,3 @@
-import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerActions } from "@chatbotx.io/database/partials"
 import {
@@ -6,6 +5,7 @@ import {
   contactsToTagsModel,
   conversationModel,
 } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   FieldOperationType,
   type SpreadsheetClearRowSchema,
@@ -240,28 +240,22 @@ export class ActionExecutor {
           workspaceId,
           conversationIds: [conversation.id],
         })
-        conversationTrackingService
-          .trackEvent({
-            eventId: createId(),
-            workspaceId,
-            conversationId: conversation.id,
-            eventType: "conversation_transferred_to_human",
-            channel: "webchat", // TODO: temporary comment, use from contactInbox later
-            occurredAt: new Date(),
-            metadata: {
-              triggerContext: {
-                triggerSource: "worker",
-                triggerHandler: "actionExecutor.disableBot",
-                triggerType: "trigger_action",
-              },
+        emit("analytics:dashboard", {
+          eventType: "conversation:transferred_to_human",
+          workspaceId,
+          conversationId: conversation.id,
+          channel: "webchat", // TODO: temporary comment, use from contactInbox later
+          occurredAt: new Date(),
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "actionExecutor.disableBot",
+              triggerType: "trigger_action",
             },
-          })
-          .catch((error) => {
-            baseLogger.error(
-              error,
-              "[actionExecutor.disableBot] Failed to track",
-            )
-          })
+          },
+        }).catch((error) => {
+          baseLogger.error(error, "[actionExecutor.disableBot] Failed to track")
+        })
         break
 
       case triggerActions.enum.enableBot:
@@ -269,28 +263,22 @@ export class ActionExecutor {
           workspaceId,
           conversationIds: [conversation.id],
         })
-        conversationTrackingService
-          .trackEvent({
-            eventId: createId(),
-            workspaceId,
-            conversationId: conversation.id,
-            eventType: "conversation_transferred_to_bot",
-            channel: "webchat", // TODO: temporary comment, use from contactInbox later
-            occurredAt: new Date(),
-            metadata: {
-              triggerContext: {
-                triggerSource: "worker",
-                triggerHandler: "actionExecutor.enableBot",
-                triggerType: "trigger_action",
-              },
+        emit("analytics:dashboard", {
+          eventType: "conversation:transferred_to_bot",
+          workspaceId,
+          conversationId: conversation.id,
+          channel: "webchat", // TODO: temporary comment, use from contactInbox later
+          occurredAt: new Date(),
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "actionExecutor.enableBot",
+              triggerType: "trigger_action",
             },
-          })
-          .catch((error) => {
-            baseLogger.error(
-              error,
-              "[actionExecutor.enableBot] Failed to track",
-            )
-          })
+          },
+        }).catch((error) => {
+          baseLogger.error(error, "[actionExecutor.enableBot] Failed to track")
+        })
         break
 
       case triggerActions.enum.transferConversationToHuman:
@@ -303,28 +291,25 @@ export class ActionExecutor {
             `Notifying admins for conversation ${conversation.id}`,
           )
         }
-        conversationTrackingService
-          .trackEvent({
-            eventId: createId(),
-            workspaceId,
-            conversationId: conversation.id,
-            eventType: "conversation_transferred_to_human",
-            channel: "webchat", // TODO: temporary comment, use from contactInbox later
-            occurredAt: new Date(),
-            metadata: {
-              triggerContext: {
-                triggerSource: "worker",
-                triggerHandler: "actionExecutor.transferConversationToHuman",
-                triggerType: "trigger_action",
-              },
+        emit("analytics:dashboard", {
+          eventType: "conversation:transferred_to_human",
+          workspaceId,
+          conversationId: conversation.id,
+          channel: "webchat", // TODO: temporary comment, use from contactInbox later
+          occurredAt: new Date(),
+          metadata: {
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "actionExecutor.transferConversationToHuman",
+              triggerType: "trigger_action",
             },
-          })
-          .catch((error) => {
-            baseLogger.error(
-              error,
-              "[actionExecutor.transferConversationToHuman] Failed to track",
-            )
-          })
+          },
+        }).catch((error) => {
+          baseLogger.error(
+            error,
+            "[actionExecutor.transferConversationToHuman] Failed to track",
+          )
+        })
         break
 
       case triggerActions.enum.runGoogleSheet: {

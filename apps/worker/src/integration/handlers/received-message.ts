@@ -1,4 +1,3 @@
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { broadcastToWorkspaceParty, buildContext } from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
@@ -173,30 +172,28 @@ export const receiveMessage = async (
       // re-assign if is new message
       createdMessage = newMessage
 
-      contactTrackingService
-        .trackEvent({
-          workspaceId: inbox.workspaceId,
-          contactId: contactInbox.contactId,
-          eventType: "contact_message_in",
-          senderType: "human",
-          occurredAt: newMessage.createdAt,
-          source: integrationType,
-          sourceId: newMessage.sourceId,
-          channel: inbox.channel,
-          metadata: {
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "receiveMessage",
-              triggerType: "contact_message_in",
-            },
+      emit("analytics:dashboard", {
+        eventType: "message:human_sent",
+        workspaceId: inbox.workspaceId,
+        contactId: contactInbox.contactId,
+        senderType: "human",
+        occurredAt: newMessage.createdAt,
+        source: integrationType,
+        sourceId: newMessage.sourceId,
+        channel: inbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "receiveMessage",
+            triggerType: "message_human_sent",
           },
-        })
-        .catch((error) => {
-          logger.error(
-            error,
-            "[receiveMessage] Failed to track contact_message_in",
-          )
-        })
+        },
+      }).catch((error) => {
+        logger.error(
+          error,
+          "[receiveMessage] Failed to track message:human_sent",
+        )
+      })
 
       if (postbackAction) {
         await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
@@ -380,7 +377,8 @@ const detectContactAndConversation = async (props: {
     }
 
     if (contactInbox.sourceId) {
-      emit("contact:created", {
+      emit("analytics:dashboard", {
+        eventType: "contact:created",
         workspaceId: newContact.workspaceId,
         contactId: contactInbox.id,
         occurredAt: newContact.createdAt,

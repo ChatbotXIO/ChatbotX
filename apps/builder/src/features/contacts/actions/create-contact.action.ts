@@ -136,7 +136,8 @@ export const createContact = async ({
   }
 
   if (contactInbox.sourceId) {
-    emit("contact:created", {
+    emit("analytics:dashboard", {
+      eventType: "contact:created",
       workspaceId,
       contactId: contactInbox.id,
       occurredAt: contact.createdAt,

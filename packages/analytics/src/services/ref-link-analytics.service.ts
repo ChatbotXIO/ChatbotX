@@ -3,7 +3,7 @@ import { refLinkStatModel } from "@chatbotx.io/database/schema"
 import type { RefLinkStatModel } from "@chatbotx.io/database/types"
 import type { RefLinkPayload } from "@chatbotx.io/flow-config"
 import { startOfSecond } from "date-fns"
-import { refLinkStatsRepository } from "../repositories/clickhouse/ref-link-stats.repository"
+import { refLinkStatsRepository } from "../repositories/postgres/ref-link-stats.repository"
 import type {
   FlowNodeContactData,
   ListFlowNodeContactsResponse,
@@ -56,7 +56,7 @@ export class RefLinkAnalyticsService {
   }
 
   async getRefLinkStatsByDateRange(input: MagicLinkStatsInput) {
-    const rows = await refLinkStatsRepository.getRefLinkStatsByDateRange({
+    const rows = await refLinkStatsRepository.getStatsByDateRange({
       workspaceId: input.workspaceId,
       startDate: input.startDate,
       endDate: input.endDate,
@@ -88,7 +88,7 @@ export class RefLinkAnalyticsService {
     }
 
     const { contactInboxIds, rows } =
-      await refLinkStatsRepository.getRefLinkContactStats({
+      await refLinkStatsRepository.getContactStats({
         workspaceId,
         linkId,
         page,

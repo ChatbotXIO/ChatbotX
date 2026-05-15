@@ -1,17 +1,11 @@
-import {
-  bootstrapAnalytics,
-  setupAnalyticsServer,
-} from "@chatbotx.io/analytics/server"
+// biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op after analytics server removal
+export function bootstrapApp(): void {}
 
-export async function bootstrapApp() {
-  setupAnalyticsServer()
-  await bootstrapAnalytics()
-}
 let bootstrapPromise: Promise<void> | null = null
 
 export async function ensureBootstrapped(): Promise<void> {
   if (!bootstrapPromise) {
-    bootstrapPromise = bootstrapApp()
+    bootstrapPromise = Promise.resolve().then(() => bootstrapApp())
   }
 
   await bootstrapPromise

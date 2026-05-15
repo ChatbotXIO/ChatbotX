@@ -1,4 +1,7 @@
-import { botMessageStatsRepository } from "../repositories/clickhouse/bot-message-stats.repository"
+import {
+  botMessageStatsRepository,
+  type InsertBotMessageEventRow,
+} from "../repositories/postgres"
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,
@@ -6,6 +9,10 @@ import type {
 } from "../schemas"
 
 export class BotMessageAnalyticsService {
+  recordEvents(payloads: InsertBotMessageEventRow[]): Promise<void> {
+    return botMessageStatsRepository.insertEvents(payloads)
+  }
+
   getMessagesByResult(
     props: TimeRangeQuery & {
       granularity: "minute" | "hour" | "day"

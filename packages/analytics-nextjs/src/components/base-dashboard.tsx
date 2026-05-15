@@ -21,12 +21,17 @@ import InboxStatsList from "./inbox-stats-list"
 
 export function BaseDashboard({
   defaultSearchParams,
+  workspaceCreatedAt,
 }: {
   defaultSearchParams: { [x: string]: string }
+  workspaceCreatedAt?: Date
 }) {
   return (
     <AnalysisStoreProvider defaultSearchParams={defaultSearchParams}>
-      <AnalysisFilterForm defaultPreset="last7" />
+      <AnalysisFilterForm
+        defaultPreset="last7"
+        workspaceCreatedAt={workspaceCreatedAt}
+      />
       <InboxStatsList />
 
       <div className="grid grid-cols-2 gap-4">

@@ -1,4 +1,7 @@
-import { conversationStatsRepository } from "../repositories/clickhouse/conversation-stats.repository"
+import {
+  conversationStatsRepository,
+  type InsertConversationEventRow,
+} from "../repositories/postgres"
 import type {
   ConversationArchivedStats,
   ConversationAssignedByAdminStats,
@@ -8,8 +11,16 @@ import type {
   TimeRangeQuery,
   UniqueConversationsByAdminStats,
 } from "../schemas"
+import type { ConversationEventType } from "../schemas/conversation-event"
 
 export class ConversationAnalyticsService {
+  recordEvents(
+    payloads: InsertConversationEventRow[],
+    eventType: ConversationEventType,
+  ): Promise<void> {
+    return conversationStatsRepository.insertEvents(payloads, eventType)
+  }
+
   getHandoffsByDay(props: TimeRangeQuery): Promise<ConversationHandoffStats[]> {
     return conversationStatsRepository.getHandoffsByDay(props)
   }

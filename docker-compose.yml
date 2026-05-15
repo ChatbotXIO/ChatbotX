@@ -15,6 +15,7 @@ services:
   postgres:
     <<: *network
     image: pgvector/pgvector:pg18-trixie
+    # image: timescale/timescaledb-ha:pg18-all
     ports:
       - "5432:5432"
     volumes:

@@ -23,7 +23,6 @@
     "@chatbotx.io/auth": "workspace:*",
     "@chatbotx.io/automated-response": "workspace:*",
     "@chatbotx.io/business": "workspace:*",
-    "@chatbotx.io/clickhouse": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/events": "workspace:*",

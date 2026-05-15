@@ -1,4 +1,3 @@
-import { baseEventTypes } from "@chatbotx.io/clickhouse/schemas"
 import {
   flowEventTypeSchema,
   messageEventTypeSchema,
@@ -122,35 +121,6 @@ export type ListFlowNodeContactsResponse = z.infer<
 >
 
 // ══════════════════════════════════════════════════
-// CLICKHOUSE ROW SCHEMAS (Shared across analytics)
-// ══════════════════════════════════════════════════
-
-export const clickHouseStatsRowSchema = z.object({
-  event_type: z.string(),
-  count: z.string(),
-})
-export type ClickHouseStatsRow = z.infer<typeof clickHouseStatsRowSchema>
-
-export const clickHouseButtonStatsRowSchema = z.object({
-  button_id: z.string(),
-  clicks: z.string(),
-})
-export type ClickHouseButtonStatsRow = z.infer<
-  typeof clickHouseButtonStatsRowSchema
->
-
-export const clickHouseContactRowSchema = z.object({
-  contact_inbox_id: z.string(),
-  contact_id: z.string(),
-  content: z.string().nullable(),
-  max_occurred_at: z.string(),
-  conv_id: z.string().optional(),
-  source_id: z.string().optional(),
-  channel: z.string().optional(),
-})
-export type ClickHouseContactRow = z.infer<typeof clickHouseContactRowSchema>
-
-// ══════════════════════════════════════════════════
 // REPOSITORY UPDATE SCHEMAS
 // ══════════════════════════════════════════════════
 
@@ -173,7 +143,7 @@ export const FlowNodeStatItemSchema = z.object({
   nodeId: z.string(),
   contactId: z.string(),
   contactInboxId: z.string(),
-  eventType: baseEventTypes,
+  eventType: flowNodeEventTypes,
   occurredAt: z.union([z.date()]),
 })
 export type FlowNodeStatItem = z.infer<typeof FlowNodeStatItemSchema>

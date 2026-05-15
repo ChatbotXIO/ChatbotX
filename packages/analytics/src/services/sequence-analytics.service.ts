@@ -1,42 +1,20 @@
-import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
-import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
-  flowEventTypeSchema,
   type MessageDeliveredPayload,
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
-  messageEventTypeSchema,
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
-import { sequenceStatsRepository } from "../repositories/clickhouse"
-import { sequenceStatsPgRepository } from "../repositories/postgres"
+import { logger } from "../lib/logger"
+import { sequenceStatsRepository } from "../repositories/postgres"
 import type { ContactEventData } from "../schemas/common"
 import type {
   SequenceSchemaPayload,
   SequenceStepEventType,
   SequenceStepStats,
 } from "../schemas/sequence-stats"
-import { BaseService } from "./base.service"
-
-function groupBy<T>(
-  arr: T[],
-  keySelector: (item: T) => string,
-): Record<string, T[]> {
-  return arr.reduce(
-    (acc, item) => {
-      const k = keySelector(item)
-      if (!acc[k]) {
-        acc[k] = []
-      }
-      acc[k].push(item)
-      return acc
-    },
-    {} as Record<string, T[]>,
-  )
-}
 
 type SequenceUpdateItem = {
   workspaceId: string
@@ -64,12 +42,7 @@ async function processSequenceEvents(
       stepId: { in: stepIds },
       contactInboxId: { in: contactInboxIds },
     },
-    columns: {
-      id: true,
-      sequenceId: true,
-      stepId: true,
-      contactInboxId: true,
-    },
+    columns: { id: true, sequenceId: true, stepId: true, contactInboxId: true },
   })
 
   if (dispatches.length === 0) {
@@ -87,40 +60,36 @@ async function processSequenceEvents(
       if (!item) {
         return null
       }
-      return {
-        id: d.id,
-        timestamp: item.occurredAt,
-      }
+      return { id: d.id, timestamp: item.occurredAt }
     })
     .filter((item): item is NonNullable<typeof item> => item !== null)
 
-  if (updateItems.length > 0) {
-    const cases = updateItems
-      .map(
-        (item) =>
-          `WHEN "id" = '${item.id}' THEN '${item.timestamp.toISOString()}'`,
-      )
-      .join(" ")
-
-    const ids = updateItems.map((i) => sql`${i.id}`)
-
-    await db.execute(sql`
-      UPDATE "SequenceDispatch"
-      SET "${sql.raw(updateField)}" = CASE ${sql.raw(cases)} ELSE "${sql.raw(updateField)}" END
-      WHERE "id" IN (${sql.join(ids, sql`, `)})
-    `)
+  if (updateItems.length === 0) {
+    return
   }
+
+  const cases = updateItems
+    .map(
+      (item) =>
+        `WHEN "id" = '${item.id}' THEN '${item.timestamp.toISOString()}'`,
+    )
+    .join(" ")
+
+  const ids = updateItems.map((i) => sql`${i.id}`)
+
+  await db.execute(sql`
+    UPDATE "SequenceDispatch"
+    SET "${sql.raw(updateField)}" = CASE ${sql.raw(cases)} ELSE "${sql.raw(updateField)}" END
+    WHERE "id" IN (${sql.join(ids, sql`, `)})
+  `)
 }
 
-export class SequenceAnalyticsService extends BaseService {
+export class SequenceAnalyticsService {
   getStepStats(input: {
     workspaceId: string
     sequenceId: string
     stepId: string
   }): Promise<SequenceStepStats> {
-    if (!this.isAnalyticsEnabled) {
-      return sequenceStatsPgRepository.getStepStats(input)
-    }
     return sequenceStatsRepository.getStepStats(input)
   }
 
@@ -139,132 +108,87 @@ export class SequenceAnalyticsService extends BaseService {
   }
 
   async onMessageSent(payloads: MessageSentPayload[]) {
-    const sequenceSchedulePayloads = payloads.filter(
+    const sequencePayloads = payloads.filter(
       (p) =>
         p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE &&
         p.context.channel !== channelTypes.enum.whatsapp,
     )
-
-    if (sequenceSchedulePayloads.length === 0) {
+    if (sequencePayloads.length === 0) {
       return
     }
 
-    const insertedData: SequenceScheduleEventType[] =
-      sequenceSchedulePayloads.map((payload) => ({
-        workspace_id: payload.context.workspaceId,
-        contact_inbox_id: (payload.metadata as { contactInboxId: string })
-          .contactInboxId,
-        event_type: messageEventTypeSchema.enum["message:delivered"],
-        sequence_id: (payload.metadata as { sequenceId: string }).sequenceId,
-        step_id: (payload.metadata as { sequenceStepId: string })
-          .sequenceStepId,
-        occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-        inserted_at: toClickHouseDateTime(new Date()),
-      }))
+    const updateItems: SequenceUpdateItem[] = sequencePayloads.map((p) => ({
+      workspaceId: p.context.workspaceId,
+      sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
+      stepId: (p.metadata as { sequenceStepId: string }).sequenceStepId,
+      contactInboxId: (p.metadata as { contactInboxId: string }).contactInboxId,
+      occurredAt: new Date(p.occurredAt),
+    }))
 
-    await sequenceStatsRepository.insertEvents(insertedData)
-
-    const updateItems: SequenceUpdateItem[] = sequenceSchedulePayloads.map(
-      (p) => ({
-        workspaceId: p.context.workspaceId,
-        sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
-        stepId: (p.metadata as { sequenceStepId: string }).sequenceStepId,
-        contactInboxId: (p.metadata as { contactInboxId: string })
-          .contactInboxId,
-        occurredAt: new Date(p.occurredAt),
-      }),
-    )
     await processSequenceEvents(updateItems, "deliveredAt")
   }
 
   async onFailed(payloads: MessageFailedPayload[]) {
-    const sequenceSchedulePayloads = payloads.filter(
+    const sequencePayloads = payloads.filter(
       (p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
     )
-
-    if (sequenceSchedulePayloads.length === 0) {
+    if (sequencePayloads.length === 0) {
       return
     }
 
-    const insertedData: SequenceScheduleEventType[] =
-      sequenceSchedulePayloads.map((payload) => ({
-        workspace_id: payload.context.workspaceId,
-        sequence_id: (payload.metadata as { sequenceId: string }).sequenceId,
-        step_id: (payload.metadata as { sequenceStepId: string })
-          .sequenceStepId,
-        contact_inbox_id: (payload.metadata as { contactInboxId: string })
-          .contactInboxId,
-        event_type: messageEventTypeSchema.enum["message:failed"],
-        occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-        inserted_at: toClickHouseDateTime(new Date()),
-      }))
-
-    await sequenceStatsRepository.insertEvents(insertedData)
-
-    const updateItems = sequenceSchedulePayloads.map((p) => ({
+    const updateItems = sequencePayloads.map((p) => ({
       sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
       stepId: (p.metadata as { sequenceStepId: string }).sequenceStepId,
       contactInboxId: (p.metadata as { contactInboxId: string }).contactInboxId,
       occurredAt: new Date(p.occurredAt),
       errorContent: JSON.stringify(p.errorData),
     }))
-    await sequenceStatsPgRepository.updateFailedBulk(updateItems)
+
+    await sequenceStatsRepository.updateFailedBulk(updateItems)
   }
 
   async onDelivered(payloads: MessageDeliveredPayload[]) {
-    const sequenceSchedulePayloads = payloads.filter(
+    const sequencePayloads = payloads.filter(
       (p) => p.metadata?.type === SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
     )
-
-    if (sequenceSchedulePayloads.length === 0) {
+    if (sequencePayloads.length === 0) {
       return
     }
 
-    const insertedData: SequenceScheduleEventType[] =
-      sequenceSchedulePayloads.map((payload) => ({
-        workspace_id: payload.context.workspaceId,
-        sequence_id: (payload.metadata as { sequenceId: string }).sequenceId,
-        step_id: (payload.metadata as { sequenceStepId: string })
-          .sequenceStepId,
-        contact_inbox_id: (payload.metadata as { contactInboxId: string })
-          .contactInboxId,
-        event_type: messageEventTypeSchema.enum["message:delivered"],
-        occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-        inserted_at: toClickHouseDateTime(new Date()),
-      }))
-
-    await sequenceStatsRepository.insertEvents(insertedData)
-
-    const updateItems: SequenceUpdateItem[] = sequenceSchedulePayloads.map(
-      (p) => ({
-        workspaceId: p.context.workspaceId,
-        sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
-        stepId: (p.metadata as { sequenceStepId: string }).sequenceStepId,
-        contactInboxId: (p.metadata as { contactInboxId: string })
-          .contactInboxId,
-        occurredAt: new Date(p.occurredAt),
-      }),
-    )
+    const updateItems: SequenceUpdateItem[] = sequencePayloads.map((p) => ({
+      workspaceId: p.context.workspaceId,
+      sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
+      stepId: (p.metadata as { sequenceStepId: string }).sequenceStepId,
+      contactInboxId: (p.metadata as { contactInboxId: string }).contactInboxId,
+      occurredAt: new Date(p.occurredAt),
+    }))
 
     await processSequenceEvents(updateItems, "deliveredAt")
   }
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = groupBy(payloads, (p) => p.context.workspaceId)
+    const grouped = new Map<string, MessageSeenPayload[]>()
+    for (const p of payloads) {
+      const ws = p.context.workspaceId
+      if (!grouped.has(ws)) {
+        grouped.set(ws, [])
+      }
+      grouped.get(ws)?.push(p)
+    }
 
-    for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
+    for (const [workspaceId, wsPayloads] of grouped) {
       const contactInboxIds = [
         ...new Set(
-          chatbotPayloads
+          wsPayloads
             .map((p) => p.context.contactInboxId)
             .filter(Boolean) as string[],
         ),
       ]
-      const mappedWorkspacePayloads = new Map(
-        chatbotPayloads.map((p) => [p.context.contactInboxId, p]),
+      const payloadMap = new Map(
+        wsPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
-      const sequenceDispatches = await db.query.sequenceDispatchModel.findMany({
+      const dispatches = await db.query.sequenceDispatchModel.findMany({
         where: {
           workspaceId,
           contactInboxId: { in: contactInboxIds },
@@ -273,13 +197,13 @@ export class SequenceAnalyticsService extends BaseService {
         },
       })
 
-      if (sequenceDispatches.length === 0) {
+      if (dispatches.length === 0) {
         continue
       }
 
-      const updateItems: SequenceUpdateItem[] = sequenceDispatches
+      const updateItems: SequenceUpdateItem[] = dispatches
         .map((s) => {
-          const payload = mappedWorkspacePayloads.get(s.contactInboxId)
+          const payload = payloadMap.get(s.contactInboxId)
           if (!payload) {
             return null
           }
@@ -294,36 +218,12 @@ export class SequenceAnalyticsService extends BaseService {
         .filter((item): item is NonNullable<typeof item> => item !== null)
 
       await processSequenceEvents(updateItems, "seenAt")
-
-      const insertedData: SequenceScheduleEventType[] = sequenceDispatches.map(
-        (s) => {
-          const occurredAt = toClickHouseDateTime(
-            new Date(
-              mappedWorkspacePayloads.get(s.contactInboxId)?.occurredAt ||
-                new Date(),
-            ),
-          )
-
-          return {
-            workspace_id: workspaceId,
-            sequence_id: s.sequenceId,
-            step_id: s.stepId,
-            contact_inbox_id: s.contactInboxId,
-            event_type: messageEventTypeSchema.enum["message:seen"],
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        },
-      )
-
-      await sequenceStatsRepository.insertEvents(insertedData)
     }
   }
 
   async onClicked(payloads: SequenceSchemaPayload[]) {
     try {
       const sequenceClicks = payloads.filter((p) => p.action?.sequenceStepId)
-
       if (sequenceClicks.length === 0) {
         return
       }
@@ -337,34 +237,12 @@ export class SequenceAnalyticsService extends BaseService {
       ]
 
       const sequenceSteps = await db.query.sequenceStepModel.findMany({
-        where: {
-          id: {
-            in: Array.from(sequenceStepIds),
-          },
-        },
-        columns: {
-          id: true,
-          sequenceId: true,
-        },
+        where: { id: { in: Array.from(sequenceStepIds) } },
+        columns: { id: true, sequenceId: true },
       })
       const sequenceStepsMap = new Map<string, string>(
         sequenceSteps.map((s) => [s.id, s.sequenceId]),
       )
-
-      const insertedData: SequenceScheduleEventType[] = sequenceClicks.map(
-        (payload) => ({
-          workspace_id: payload.context.workspaceId,
-          sequence_id:
-            sequenceStepsMap.get(payload.action.sequenceStepId ?? "") ?? "",
-          step_id: payload.action.sequenceStepId || "",
-          contact_inbox_id: payload.context.contactInboxId ?? "",
-          event_type: flowEventTypeSchema.enum["flow:clicked"],
-          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-          inserted_at: toClickHouseDateTime(new Date()),
-        }),
-      )
-
-      await sequenceStatsRepository.insertEvents(insertedData)
 
       const updateItems: SequenceUpdateItem[] = sequenceClicks.map((p) => ({
         workspaceId: p.context.workspaceId,
@@ -373,9 +251,10 @@ export class SequenceAnalyticsService extends BaseService {
         contactInboxId: p.context.contactInboxId ?? "",
         occurredAt: new Date(p.occurredAt),
       }))
+
       await processSequenceEvents(updateItems, "clickedAt")
     } catch (error) {
-      console.error("Failed to save clicked events", error)
+      logger.error(error, "Failed to save clicked events")
     }
   }
 }

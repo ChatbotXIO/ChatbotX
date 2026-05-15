@@ -164,7 +164,7 @@ export class BaseEventBus<
             ...this.parseStreamMessage(fields),
           }))
 
-          const processResults = await this.processEvents(
+          const _processResults = await this.processEvents(
             parsedMessages,
             listeners,
           )
@@ -176,19 +176,21 @@ export class BaseEventBus<
             ...messageIds,
           )
 
-          const successIds = processResults
-            .filter((r) => r.success)
-            .map((r) => r.messageId)
-
-          if (successIds.length > 0) {
-            await this.redis.xdel(this.config.streamKey, ...successIds)
-          }
+          // XDEL intentionally omitted: stream entries are retained until
+          // evicted by MAXLEN so multiple consumer groups can read each message.
         }
       } catch (error) {
         console.error("[EventBus] Consumer error:", error)
         await new Promise((r) => setTimeout(r, 1000))
       }
     }
+  }
+
+  cloneForGroup(groupName: string): BaseEventBus<TEventMap, TListener> {
+    return new BaseEventBus<TEventMap, TListener>(this.redis, {
+      ...this.config,
+      consumerGroup: groupName,
+    })
   }
 
   stop(): void {

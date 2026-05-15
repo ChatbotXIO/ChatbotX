@@ -5,6 +5,14 @@ import { aiFileRelations } from "./ai-file"
 import { aiFunctionRelations } from "./ai-function"
 import { aiMCPServerRelations } from "./ai-mcp-server"
 import { aiTriggerRelations } from "./ai-trigger"
+import {
+  analyticsBotMessageEventRelations,
+  analyticsBroadcastEventRelations,
+  analyticsContactEventRelations,
+  analyticsConversationEventRelations,
+  analyticsFlowNodeEventRelations,
+  analyticsSequenceEventRelations,
+} from "./analytics"
 import { attachmentRelations } from "./attachment"
 import { auditLogRelations } from "./audit-log"
 import { accountRelations } from "./auth-account"
@@ -148,4 +156,10 @@ export const relations = {
   ...flowAnalyticsSessionRelations,
   ...flowNodeStatRelations,
   ...contactOnSmartDelayRelations,
+  ...analyticsContactEventRelations,
+  ...analyticsBotMessageEventRelations,
+  ...analyticsConversationEventRelations,
+  ...analyticsBroadcastEventRelations,
+  ...analyticsSequenceEventRelations,
+  ...analyticsFlowNodeEventRelations,
 }

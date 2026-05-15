@@ -1,10 +1,10 @@
 "use server"
 
-import { conversationTrackingService } from "@chatbotx.io/analytics"
 import { db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import { emitConversationFollowUp } from "@chatbotx.io/events"
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -54,24 +54,22 @@ export const followConversation = async (ctx: {
     console.error("Failed to emit conversationFollowUp event:", error)
   }
 
-  await conversationTrackingService.trackEvent(
-    {
-      workspaceId: ctx.workspaceId,
-      conversationId: conversation.id,
-      eventType: "conversation_followed",
-      eventId: createId(),
-      channel: "webchat", // TODO: replace correct channel from contact inbox
-      occurredAt: new Date(),
-      metadata: {
-        triggerContext: {
-          triggerSource: "api",
-          triggerHandler: "followConversationAction",
-          triggerType: "conversation_followed",
-        },
+  emit("analytics:dashboard", {
+    eventType: "conversation:followed",
+    workspaceId: ctx.workspaceId,
+    conversationId: conversation.id,
+    channel: "webchat", // TODO: replace correct channel from contact inbox
+    occurredAt: new Date(),
+    metadata: {
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "followConversationAction",
+        triggerType: "conversation_followed",
       },
     },
-    { skipSpooler: true },
-  )
+  }).catch((error) => {
+    console.error("[followConversation] Failed to emit", error)
+  })
 
   revalidateCacheTags([
     `workspaces:${ctx.workspaceId}#contacts`,

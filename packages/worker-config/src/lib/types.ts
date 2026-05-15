@@ -8,7 +8,6 @@ export const queueNames = z.enum([
   "trigger",
   "webhook",
   "default",
-  "analytics",
   "sequenceScheduler",
   "broadcast",
 ])

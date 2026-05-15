@@ -1,18 +1,28 @@
-import { contactStatsRepository } from "../repositories"
+import {
+  contactStatsRepository,
+  type InsertContactEventRow,
+} from "../repositories/postgres"
 import type {
   ContactCountsSchema,
-  ContactEventType,
   ContactStats,
   ContactsByDimension,
   MessagesBySenderStats,
   TimeRangeQuery,
 } from "../schemas"
+import type { ContactEventType } from "../schemas/contact-event"
 import type {
   HumanAgentStats,
   MessagesByAdminStats,
 } from "../schemas/contact-stats"
 
 export class ContactAnalyticsService {
+  recordEvents(
+    payloads: InsertContactEventRow[],
+    eventType: ContactEventType,
+  ): Promise<void> {
+    return contactStatsRepository.insertEvents(payloads, eventType)
+  }
+
   getStatsByMinute(
     props: TimeRangeQuery & {
       eventTypes?: ContactEventType[]

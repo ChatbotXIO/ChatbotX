@@ -48,7 +48,8 @@ export const deleteContactAction = workspaceActionClient
 
       for (const contact of contacts) {
         for (const contactInbox of contact.contactInboxes) {
-          emit("contact:deleted", {
+          emit("analytics:dashboard", {
+            eventType: "contact:deleted",
             workspaceId,
             contactId: contactInbox.id,
             occurredAt,

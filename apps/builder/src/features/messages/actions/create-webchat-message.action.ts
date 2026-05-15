@@ -222,7 +222,8 @@ export async function handleCreateWebchatMessage({
   }
 
   if (isNewContact && contactInbox.sourceId) {
-    emit("contact:created", {
+    emit("analytics:dashboard", {
+      eventType: "contact:created",
       workspaceId: parsedInput.workspaceId,
       contactId: contactInbox.id,
       occurredAt: contact.createdAt,

@@ -12,12 +12,6 @@ export type MessageEventType = z.infer<typeof messageEventTypeSchema>
 export const flowEventTypeSchema = z.enum(["flow:clicked", "flow:ref"])
 export type FlowEventType = z.infer<typeof flowEventTypeSchema>
 
-export const contactEventTypeSchema = z.enum([
-  "contact:created",
-  "contact:deleted",
-])
-export type ContactEventType = z.infer<typeof contactEventTypeSchema>
-
 export const eventContextSchema = z.object({
   workspaceId: z.string(),
   contactId: z.string(),
@@ -106,23 +100,23 @@ export const flowEventSchemas = {
 export const contactSenderTypeSchema = z.enum(["bot", "human"])
 export type ContactSenderTypeSchema = z.infer<typeof contactSenderTypeSchema>
 
-const baseContactPayloadSchema = z.object({
+export const botMessageResponseTypeSchema = z.enum([
+  "automated_response",
+  "ai_agent",
+  "flow",
+  "none",
+])
+export const botMessageRouteTypeSchema = z.enum(["flow", "agent", "fallback"])
+export const botMessageResultSchema = z.enum(["success", "fallback"])
+
+export const botMessagePayloadSchema = z.object({
   workspaceId: z.string(),
-  contactId: z.string(),
+  messageId: z.string(),
+  conversationId: z.string(),
   occurredAt: z.union([z.date(), z.string(), z.number()]),
-  adminId: z.string().optional(),
-  channel: z.string().nullish(),
-  country: z.string().nullish(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  senderType: contactSenderTypeSchema.optional(),
-  source: z.string().nullish(),
-  sourceId: z.string().nullish(),
+  hasResponse: z.boolean(),
+  responseType: botMessageResponseTypeSchema.optional(),
+  routeType: botMessageRouteTypeSchema.optional(),
+  result: botMessageResultSchema.optional(),
+  aiProvider: z.string().optional(),
 })
-
-export const contactCreatedPayloadSchema = baseContactPayloadSchema.extend({})
-export const contactDeletedPayloadSchema = baseContactPayloadSchema.extend({})
-
-export const contactEventSchemas = {
-  [contactEventTypeSchema.enum["contact:created"]]: contactCreatedPayloadSchema,
-  [contactEventTypeSchema.enum["contact:deleted"]]: contactDeletedPayloadSchema,
-} as const

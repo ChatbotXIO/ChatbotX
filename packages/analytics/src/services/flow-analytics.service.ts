@@ -1,5 +1,3 @@
-import type { FlowNodeStatsType } from "@chatbotx.io/clickhouse/schemas"
-import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
@@ -13,8 +11,7 @@ import {
   type MessageSentPayload,
   messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
-import { flowStatsPgRepository } from "../repositories"
-import { flowStatsRepository } from "../repositories/clickhouse"
+import { flowStatsRepository } from "../repositories"
 import type {
   FlowContactStatsRequest,
   FlowNodeContactData,
@@ -25,14 +22,13 @@ import type {
   FlowStatsRequest,
   ListFlowNodeContactsResponse,
 } from "../schemas/flow-stats"
-import { BaseService } from "./base.service"
 
 type ExtractedPayload<T extends MessagePayload> = {
   analyticsMap: Map<string, string>
   flowPayloads: T[]
 }
 
-export class FlowAnalyticsService extends BaseService {
+export class FlowAnalyticsService {
   private async extractPayload<T extends MessagePayload | ClickedPayload>(
     payloads: T[],
     options?: {
@@ -55,7 +51,6 @@ export class FlowAnalyticsService extends BaseService {
         ) {
           continue
         }
-
         if (
           options?.include?.buttonId &&
           !(payload as ClickedPayload).action?.buttonId
@@ -65,7 +60,6 @@ export class FlowAnalyticsService extends BaseService {
       }
 
       flowPayloads.push(payload)
-
       if (payload.action.flowId) {
         flowIds.add(payload.action.flowId)
       }
@@ -96,7 +90,6 @@ export class FlowAnalyticsService extends BaseService {
     const { analyticsMap, flowPayloads } = await this.extractPayload(payloads, {
       excludeChannel: channelTypes.enum.whatsapp,
     })
-
     if (analyticsMap.size === 0) {
       return
     }
@@ -120,38 +113,11 @@ export class FlowAnalyticsService extends BaseService {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
-    await flowStatsRepository.insertPgNodeStats(items)
-
-    if (this.isAnalyticsEnabled) {
-      const nodeStatsData: FlowNodeStatsType[] = flowPayloads
-        .map((payload) => {
-          const occurredAt = toClickHouseDateTime(
-            payload ? new Date(payload.occurredAt) : new Date(),
-          )
-
-          return {
-            workspace_id: payload.context.workspaceId,
-            flow_id: payload.action?.flowId as string,
-            analytics_id: analyticsMap.get(
-              payload.action?.flowId ?? "",
-            ) as string,
-            node_id: payload.nodeId as string,
-            button_id: "",
-            contact_inbox_id: payload.context.contactInboxId as string,
-            event_type: messageEventTypeSchema.enum["message:delivered"],
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-
-      await flowStatsRepository.insertClickhouseNodeStats(nodeStatsData)
-    }
+    await flowStatsRepository.insertNodeStats(items)
   }
 
   async onMessageDelivered(payloads: MessageDeliveredPayload[]) {
     const { analyticsMap, flowPayloads } = await this.extractPayload(payloads)
-
     if (analyticsMap.size === 0) {
       return
     }
@@ -175,38 +141,11 @@ export class FlowAnalyticsService extends BaseService {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
-    await flowStatsRepository.insertPgNodeStats(items)
-
-    if (this.isAnalyticsEnabled) {
-      const nodeStatsData: FlowNodeStatsType[] = flowPayloads
-        .map((payload) => {
-          const occurredAt = toClickHouseDateTime(
-            payload ? new Date(payload.occurredAt) : new Date(),
-          )
-
-          return {
-            workspace_id: payload.context.workspaceId,
-            flow_id: payload.action?.flowId as string,
-            analytics_id: analyticsMap.get(
-              payload.action?.flowId ?? "",
-            ) as string,
-            node_id: payload.nodeId as string,
-            button_id: "",
-            contact_inbox_id: payload.context.contactInboxId as string,
-            event_type: messageEventTypeSchema.enum["message:delivered"],
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-
-      await flowStatsRepository.insertClickhouseNodeStats(nodeStatsData)
-    }
+    await flowStatsRepository.insertNodeStats(items)
   }
 
   async onMessageFailed(payloads: MessageFailedPayload[]) {
     const { analyticsMap, flowPayloads } = await this.extractPayload(payloads)
-
     if (analyticsMap.size === 0) {
       return
     }
@@ -231,33 +170,7 @@ export class FlowAnalyticsService extends BaseService {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
-    await flowStatsRepository.insertPgNodeStats(items)
-
-    if (this.isAnalyticsEnabled) {
-      const nodeStatsData: FlowNodeStatsType[] = flowPayloads
-        .map((payload) => {
-          const occurredAt = toClickHouseDateTime(
-            payload ? new Date(payload.occurredAt) : new Date(),
-          )
-
-          return {
-            workspace_id: payload.context.workspaceId,
-            flow_id: payload.action?.flowId as string,
-            analytics_id: analyticsMap.get(
-              payload.action?.flowId ?? "",
-            ) as string,
-            node_id: payload.nodeId as string,
-            button_id: "",
-            contact_inbox_id: payload.context.contactInboxId as string,
-            event_type: messageEventTypeSchema.enum["message:failed"],
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-
-      await flowStatsRepository.insertClickhouseNodeStats(nodeStatsData)
-    }
+    await flowStatsRepository.insertNodeStats(items)
   }
 
   async onMessageSeen(payloads: MessageSeenPayload[]) {
@@ -309,52 +222,18 @@ export class FlowAnalyticsService extends BaseService {
           if (!p) {
             return null
           }
-          return {
-            id: r.id as string,
-            seenAt: p.occurredAt,
-          }
+          return { id: r.id as string, seenAt: p.occurredAt }
         })
         .filter((item): item is NonNullable<typeof item> => item !== null)
 
       await flowStatsRepository.updateSeenAt(updateItems)
-
-      if (this.isAnalyticsEnabled) {
-        const nodeStatsData: FlowNodeStatsType[] = unseenRecords
-          .map((record) => {
-            const payload = payloadMap.get(record.contactInboxId as string)
-            if (!payload) {
-              return null
-            }
-            const occurredAt = toClickHouseDateTime(
-              payload.occurredAt ? new Date(payload.occurredAt) : new Date(),
-            )
-
-            return {
-              workspace_id: workspaceId,
-              flow_id: record.flowId as string,
-              analytics_id: record.analyticsId as string,
-              node_id: record.nodeId as string,
-              button_id: record.buttonId as string,
-              contact_inbox_id: record.contactInboxId as string,
-              event_type: messageEventTypeSchema.enum["message:seen"],
-              occurred_at: occurredAt,
-              inserted_at: toClickHouseDateTime(new Date()),
-            }
-          })
-          .filter((item): item is NonNullable<typeof item> => item !== null)
-
-        await flowStatsRepository.insertClickhouseNodeStats(nodeStatsData)
-      }
     }
   }
 
   async onClicked(payloads: FlowClickedPayload[]) {
     const { analyticsMap, flowPayloads } = await this.extractPayload(payloads, {
-      include: {
-        buttonId: true,
-      },
+      include: { buttonId: true },
     })
-
     if (analyticsMap.size === 0) {
       return
     }
@@ -365,7 +244,6 @@ export class FlowAnalyticsService extends BaseService {
         if (!analyticsId) {
           return null
         }
-
         return {
           workspaceId: p.context.workspaceId,
           flowId: p.action.flowId,
@@ -380,45 +258,15 @@ export class FlowAnalyticsService extends BaseService {
       })
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
-    await flowStatsRepository.insertPgNodeStats(items)
-
-    if (this.isAnalyticsEnabled) {
-      const nodeStatsData: FlowNodeStatsType[] = flowPayloads
-        .map((payload) => {
-          const occurredAt = toClickHouseDateTime(
-            payload ? new Date(payload.occurredAt) : new Date(),
-          )
-
-          return {
-            workspace_id: payload.context.workspaceId,
-            flow_id: payload.action?.flowId as string,
-            analytics_id: analyticsMap.get(
-              payload.action?.flowId ?? "",
-            ) as string,
-            node_id: payload.nodeId as string,
-            button_id: payload.action?.buttonId ?? "",
-            contact_inbox_id: payload.context.contactInboxId as string,
-            event_type: flowEventTypeSchema.enum["flow:clicked"],
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-
-      await flowStatsRepository.insertClickhouseNodeStats(nodeStatsData)
-    }
+    await flowStatsRepository.insertNodeStats(items)
   }
 
   resetStatsSession(input: FlowStatsRequest): Promise<void> {
     return flowStatsRepository.resetStatsSession(input)
   }
 
-  async getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
-    if (!this.isAnalyticsEnabled) {
-      return await flowStatsPgRepository.getFlowStats(input)
-    }
-
-    return await flowStatsRepository.getFlowStats(input)
+  getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
+    return flowStatsRepository.getFlowStats(input)
   }
 
   async getContactStats(
@@ -447,7 +295,6 @@ export class FlowAnalyticsService extends BaseService {
 
     const analyticsId = analyticsSession.id
 
-    // Get contacts for the specific node and event type
     const { contactInboxIds, contactEventMap } =
       await flowStatsRepository.getContacts({
         workspaceId,
@@ -463,27 +310,15 @@ export class FlowAnalyticsService extends BaseService {
       return { data: [], total: 0, page: 1, pageCount: 0 }
     }
 
-    // Fetch contact details
     const contactInboxes = await db.query.contactInboxModel.findMany({
       where: { id: { in: contactInboxIds } },
       with: {
         contact: {
-          columns: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-          },
+          columns: { id: true, firstName: true, lastName: true, avatar: true },
         },
-        conversation: {
-          columns: { id: true },
-        },
+        conversation: { columns: { id: true } },
       },
-      columns: {
-        id: true,
-        sourceId: true,
-        channel: true,
-      },
+      columns: { id: true, sourceId: true, channel: true },
     })
 
     const data: FlowNodeContactData[] = contactInboxes.map((ci) => {
@@ -501,12 +336,7 @@ export class FlowAnalyticsService extends BaseService {
       }
     })
 
-    return {
-      data,
-      total: data.length,
-      page: 1,
-      pageCount: 1,
-    }
+    return { data, total: data.length, page: 1, pageCount: 1 }
   }
 }
 

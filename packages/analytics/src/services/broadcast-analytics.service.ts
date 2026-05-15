@@ -1,44 +1,23 @@
-import type { BroadcastStatsType } from "@chatbotx.io/clickhouse/schemas"
-import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   BROADCAST_PAYLOAD_TYPE,
   type BroadcastMetadataPayload,
   type FlowClickedPayload,
-  flowEventTypeSchema,
   type MessageDeliveredPayload,
   type MessageFailedPayload,
   type MessageSeenPayload,
   type MessageSentPayload,
-  messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
-import { broadcastStatsRepository } from "../repositories/clickhouse"
-import { broadcastStatsPgRepository } from "../repositories/postgres"
+import { broadcastStatsRepository } from "../repositories/postgres"
 import type {
+  BroadcastBulkUpdateItem,
   BroadcastEventType,
+  BroadcastFailedBulkUpdateItem,
   BroadcastStats,
   BroadcastUpdateItem,
 } from "../schemas/broadcast-stats"
 import type { ContactEventData } from "../schemas/common"
-import { BaseService } from "./base.service"
-
-function groupBy<T>(
-  arr: T[],
-  keySelector: (item: T) => string,
-): Record<string, T[]> {
-  return arr.reduce(
-    (acc, item) => {
-      const k = keySelector(item)
-      if (!acc[k]) {
-        acc[k] = []
-      }
-      acc[k].push(item)
-      return acc
-    },
-    {} as Record<string, T[]>,
-  )
-}
 
 async function processBroadcastEvents(
   items: BroadcastUpdateItem[],
@@ -81,40 +60,35 @@ async function processBroadcastEvents(
         broadcastId: b.broadcastId,
         contactInboxId: b.contactInboxId,
         timestamp: item.occurredAt,
-        workspaceId: item.workspaceId,
       }
     })
     .filter((item): item is NonNullable<typeof item> => item !== null)
 
-  if (updateItems.length > 0) {
-    const cases = updateItems
-      .map(
-        (item) =>
-          `WHEN "broadcastId" = '${item.broadcastId}' AND "contactInboxId" = '${item.contactInboxId}' THEN '${item.timestamp}'`,
-      )
-      .join(" ")
-
-    const tuples = updateItems.map(
-      (i) => sql`(${i.broadcastId}, ${i.contactInboxId})`,
-    )
-
-    await db.execute(sql`
-      UPDATE "ContactOnBroadcast"
-      SET "${sql.raw(updateField)}" = CASE ${sql.raw(cases)} ELSE "${sql.raw(updateField)}" END
-      WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
-    `)
+  if (updateItems.length === 0) {
+    return
   }
+
+  const cases = updateItems.map(
+    (item) =>
+      sql`WHEN "broadcastId" = ${item.broadcastId} AND "contactInboxId" = ${item.contactInboxId} THEN ${item.timestamp}`,
+  )
+
+  const tuples = updateItems.map(
+    (i) => sql`(${i.broadcastId}, ${i.contactInboxId})`,
+  )
+
+  await db.execute(sql`
+    UPDATE "ContactOnBroadcast"
+    SET ${sql.identifier(updateField)} = CASE ${sql.join(cases, sql` `)} ELSE ${sql.identifier(updateField)} END
+    WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
+  `)
 }
 
-export class BroadcastAnalyticsService extends BaseService {
+export class BroadcastAnalyticsService {
   getStats(input: {
     workspaceId: string
     broadcastId: string
   }): Promise<BroadcastStats> {
-    if (!this.isAnalyticsEnabled) {
-      return broadcastStatsPgRepository.getStats(input)
-    }
-
     return broadcastStatsRepository.getStats(input)
   }
 
@@ -144,27 +118,9 @@ export class BroadcastAnalyticsService extends BaseService {
         p.metadata?.type === BROADCAST_PAYLOAD_TYPE &&
         p.context.channel !== channelTypes.enum.whatsapp,
     )
-
     if (broadcastPayloads.length === 0) {
       return
     }
-
-    const insertedData: BroadcastStatsType[] = broadcastPayloads.map(
-      (payload) => {
-        const metadata = payload.metadata as BroadcastMetadataPayload
-        return {
-          workspace_id: payload.context.workspaceId,
-          broadcast_id: metadata.broadcastId,
-          contact_inbox_id: metadata.contactInboxId,
-          event_type: messageEventTypeSchema.enum["message:delivered"],
-          batch_id: 1,
-          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-          inserted_at: toClickHouseDateTime(new Date()),
-        }
-      },
-    )
-
-    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems: BroadcastUpdateItem[] = broadcastPayloads.map((p) => {
       const metadata = p.metadata as BroadcastMetadataPayload
@@ -173,7 +129,7 @@ export class BroadcastAnalyticsService extends BaseService {
         broadcastId: metadata.broadcastId,
         contactId: p.context.contactId,
         contactInboxId: metadata.contactInboxId,
-        occurredAt: p.occurredAt,
+        occurredAt: new Date(p.occurredAt),
       }
     })
 
@@ -184,34 +140,20 @@ export class BroadcastAnalyticsService extends BaseService {
     const broadcastPayloads = payloads.filter(
       (p) => p.metadata?.type === BROADCAST_PAYLOAD_TYPE,
     )
-
     if (broadcastPayloads.length === 0) {
       return
     }
 
-    const insertedData: BroadcastStatsType[] = broadcastPayloads.map(
-      (payload) => ({
-        workspace_id: payload.context.workspaceId,
-        broadcast_id: (payload.metadata as BroadcastMetadataPayload)
-          .broadcastId,
-        contact_inbox_id: (payload.metadata as BroadcastMetadataPayload)
-          .contactInboxId,
-        event_type: messageEventTypeSchema.enum["message:failed"],
-        batch_id: 1,
-        occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-        inserted_at: toClickHouseDateTime(new Date()),
+    const updateItems: BroadcastFailedBulkUpdateItem[] = broadcastPayloads.map(
+      (p) => ({
+        broadcastId: (p.metadata as BroadcastMetadataPayload).broadcastId,
+        contactId: p.context.contactId,
+        contactInboxId: (p.metadata as BroadcastMetadataPayload).contactInboxId,
+        occurredAt: new Date(p.occurredAt),
+        errorContent: JSON.stringify(p.errorData),
       }),
     )
 
-    await broadcastStatsRepository.insertEvents(insertedData)
-
-    const updateItems = broadcastPayloads.map((p) => ({
-      broadcastId: (p.metadata as BroadcastMetadataPayload).broadcastId,
-      contactId: p.context.contactId,
-      contactInboxId: (p.metadata as BroadcastMetadataPayload).contactInboxId,
-      occurredAt: p.occurredAt,
-      errorContent: JSON.stringify(p.errorData),
-    }))
     await broadcastStatsRepository.updateFailedBulk(updateItems)
   }
 
@@ -219,27 +161,9 @@ export class BroadcastAnalyticsService extends BaseService {
     const broadcastPayloads = payloads.filter(
       (p) => p.metadata?.type === BROADCAST_PAYLOAD_TYPE,
     )
-
     if (broadcastPayloads.length === 0) {
       return
     }
-
-    const insertedData: BroadcastStatsType[] = broadcastPayloads.map(
-      (payload) => {
-        const metadata = payload.metadata as BroadcastMetadataPayload
-        return {
-          workspace_id: payload.context.workspaceId,
-          broadcast_id: metadata.broadcastId,
-          contact_inbox_id: metadata.contactInboxId,
-          event_type: messageEventTypeSchema.enum["message:delivered"],
-          batch_id: 1,
-          occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-          inserted_at: toClickHouseDateTime(new Date()),
-        }
-      },
-    )
-
-    await broadcastStatsRepository.insertEvents(insertedData)
 
     const updateItems: BroadcastUpdateItem[] = broadcastPayloads.map((p) => {
       const metadata = p.metadata as BroadcastMetadataPayload
@@ -256,18 +180,25 @@ export class BroadcastAnalyticsService extends BaseService {
   }
 
   async onSeen(payloads: MessageSeenPayload[]) {
-    const grouped = groupBy(payloads, (p) => p.context.workspaceId)
+    const grouped = new Map<string, MessageSeenPayload[]>()
+    for (const p of payloads) {
+      const ws = p.context.workspaceId
+      if (!grouped.has(ws)) {
+        grouped.set(ws, [])
+      }
+      grouped.get(ws)?.push(p)
+    }
 
-    for (const [workspaceId, chatbotPayloads] of Object.entries(grouped)) {
+    for (const [workspaceId, wsPayloads] of grouped) {
       const contactInboxIds = [
         ...new Set(
-          chatbotPayloads
+          wsPayloads
             .map((p) => p.context.contactInboxId)
             .filter(Boolean) as string[],
         ),
       ]
-      const mappedWorkspacePayloads = new Map(
-        chatbotPayloads.map((p) => [p.context.contactInboxId, p]),
+      const payloadMap = new Map(
+        wsPayloads.map((p) => [p.context.contactInboxId, p]),
       )
 
       const unreadBroadcasts =
@@ -277,28 +208,22 @@ export class BroadcastAnalyticsService extends BaseService {
             isRead: false,
           },
           with: {
-            broadcast: {
-              columns: { id: true, workspaceId: true },
-            },
+            broadcast: { columns: { id: true, workspaceId: true } },
           },
-          columns: {
-            broadcastId: true,
-            contactId: true,
-            contactInboxId: true,
-          },
+          columns: { broadcastId: true, contactId: true, contactInboxId: true },
         })
 
-      const filteredBroadcasts = unreadBroadcasts.filter(
+      const filtered = unreadBroadcasts.filter(
         (b) => b.broadcast.workspaceId === workspaceId,
       )
 
-      if (filteredBroadcasts.length === 0) {
+      if (filtered.length === 0) {
         continue
       }
 
-      const updateItems: BroadcastUpdateItem[] = filteredBroadcasts
+      const updateItems: BroadcastUpdateItem[] = filtered
         .map((b) => {
-          const payload = mappedWorkspacePayloads.get(b.contactInboxId)
+          const payload = payloadMap.get(b.contactInboxId)
           if (!payload) {
             return null
           }
@@ -313,58 +238,21 @@ export class BroadcastAnalyticsService extends BaseService {
         .filter((item): item is NonNullable<typeof item> => item !== null)
 
       await processBroadcastEvents(updateItems, "seenAt")
-
-      const insertedData: BroadcastStatsType[] = filteredBroadcasts.map(
-        (br) => {
-          const occurredAt = toClickHouseDateTime(
-            new Date(
-              mappedWorkspacePayloads.get(br.contactInboxId)?.occurredAt ||
-                new Date(),
-            ),
-          )
-
-          return {
-            workspace_id: br.broadcast.workspaceId,
-            broadcast_id: br.broadcastId,
-            contact_inbox_id: br.contactInboxId,
-            event_type: messageEventTypeSchema.enum["message:seen"],
-            batch_id: 1,
-            occurred_at: occurredAt,
-            inserted_at: toClickHouseDateTime(new Date()),
-          }
-        },
-      )
-
-      await broadcastStatsRepository.insertEvents(insertedData)
     }
   }
 
   async onClicked(payloads: FlowClickedPayload[]) {
     const broadcastClicks = payloads.filter((p) => p.action.broadcastId)
-
     if (broadcastClicks.length === 0) {
       return
     }
 
-    const insertedData: BroadcastStatsType[] = broadcastClicks.map(
-      (payload) => ({
-        workspace_id: payload.context.workspaceId,
-        broadcast_id: payload.action.broadcastId as string,
-        contact_inbox_id: payload.context.contactInboxId ?? "",
-        event_type: flowEventTypeSchema.enum["flow:clicked"],
-        batch_id: 1,
-        occurred_at: toClickHouseDateTime(new Date(payload.occurredAt)),
-        inserted_at: toClickHouseDateTime(new Date()),
-      }),
-    )
-
-    await broadcastStatsRepository.insertEvents(insertedData)
-
-    const updateItems = broadcastClicks.map((p) => ({
+    const updateItems: BroadcastBulkUpdateItem[] = broadcastClicks.map((p) => ({
       broadcastId: p.action.broadcastId as string,
       contactInboxId: p.context.contactInboxId ?? "",
       occurredAt: p.occurredAt,
     }))
+
     await broadcastStatsRepository.updateClickedBulk(updateItems)
   }
 }

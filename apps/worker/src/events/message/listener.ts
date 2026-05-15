@@ -9,68 +9,68 @@ import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
 export const messageListeners: Partial<MessageEvenTypeMap> = {
   [messageEventTypeSchema.enum["message:sent"]]: [
     {
-      name: "broadcast-stats",
+      name: "broadcast-ops",
       handler: broadcastAnalyticsService.onMessageSent.bind(
         broadcastAnalyticsService,
       ),
     },
     {
-      name: "sequence-stats",
+      name: "sequence-ops",
       handler: sequenceAnalyticsService.onMessageSent.bind(
         sequenceAnalyticsService,
       ),
     },
     {
-      name: "flow-stats",
+      name: "flow-ops",
       handler: flowAnalyticsService.onMessageSent.bind(flowAnalyticsService),
     },
   ],
   [messageEventTypeSchema.enum["message:failed"]]: [
     {
-      name: "broadcast-stats",
+      name: "broadcast-ops",
       handler: broadcastAnalyticsService.onFailed.bind(
         broadcastAnalyticsService,
       ),
     },
     {
-      name: "sequence-stats",
+      name: "sequence-ops",
       handler: sequenceAnalyticsService.onFailed.bind(sequenceAnalyticsService),
     },
     {
-      name: "flow-stats",
+      name: "flow-ops",
       handler: flowAnalyticsService.onMessageFailed.bind(flowAnalyticsService),
     },
   ],
   [messageEventTypeSchema.enum["message:delivered"]]: [
     {
-      name: "broadcast-stats",
+      name: "broadcast-ops",
       handler: broadcastAnalyticsService.onDelivered.bind(
         broadcastAnalyticsService,
       ),
     },
     {
-      name: "sequence-stats",
+      name: "sequence-ops",
       handler: sequenceAnalyticsService.onDelivered.bind(
         sequenceAnalyticsService,
       ),
     },
     {
-      name: "flow-stats",
+      name: "flow-ops",
       handler:
         flowAnalyticsService.onMessageDelivered.bind(flowAnalyticsService),
     },
   ],
   [messageEventTypeSchema.enum["message:seen"]]: [
     {
-      name: "broadcast-stats",
+      name: "broadcast-ops",
       handler: broadcastAnalyticsService.onSeen.bind(broadcastAnalyticsService),
     },
     {
-      name: "sequence-stats",
+      name: "sequence-ops",
       handler: sequenceAnalyticsService.onSeen.bind(sequenceAnalyticsService),
     },
     {
-      name: "flow-stats",
+      name: "flow-ops",
       handler: flowAnalyticsService.onMessageSeen.bind(flowAnalyticsService),
     },
   ],

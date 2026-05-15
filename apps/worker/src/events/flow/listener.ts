@@ -11,19 +11,19 @@ import { flowEventTypeSchema } from "@chatbotx.io/flow-config"
 export const flowListeners: Partial<FlowEvenTypeMap> = {
   [flowEventTypeSchema.enum["flow:clicked"]]: [
     {
-      name: "broadcast-stats",
+      name: "broadcast-ops",
       handler: broadcastAnalyticsService.onClicked.bind(
         broadcastAnalyticsService,
       ),
     },
     {
-      name: "sequence-stats",
+      name: "sequence-ops",
       handler: sequenceAnalyticsService.onClicked.bind(
         sequenceAnalyticsService,
       ),
     },
     {
-      name: "flow-stats",
+      name: "flow-ops",
       handler: flowAnalyticsService.onClicked.bind(flowAnalyticsService),
     },
     {

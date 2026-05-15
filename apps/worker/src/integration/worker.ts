@@ -1,5 +1,6 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   defaultWorkerOptions,
   getRedisConnection,
@@ -13,7 +14,6 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { assignConversation } from "./handlers/assign-conversation"
 import { processAutomatedResponse } from "./handlers/automated-response"
-import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
 import { runChallenge } from "./handlers/challenge"
 import {
   agentMarkAsRead,
@@ -83,21 +83,23 @@ async function startIntegrationWorker() {
           } else if (isNotPostbackOrQuickReply) {
             // Track no response for messages without content or not from contact
             // (postback/quickReply are tracked in their own handlers)
-            await trackBotResponse({
+            await emit("analytics:dashboard", {
+              eventType: "message:bot_received",
               workspaceId: message.workspaceId,
               conversationId: message.conversationId,
               messageId: message.id,
+              occurredAt: new Date(),
               hasResponse: false,
               responseType: "none",
               routeType: "fallback",
               result: "fallback",
               aiProvider: "none",
               metadata: {
+                latency: 0,
                 fallbackReason: message.text
                   ? "not_from_contact"
                   : "no_content",
               },
-              startTime: Date.now(),
             })
           }
           return

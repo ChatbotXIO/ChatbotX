@@ -1,4 +1,3 @@
-import { keys as clickhouse } from "@chatbotx.io/clickhouse/keys"
 import { keys as database } from "@chatbotx.io/database/keys"
 import { keys as mail } from "@chatbotx.io/mail/keys"
 import { keys as partysocket } from "@chatbotx.io/partysocket-config/keys"
@@ -45,7 +44,7 @@ const authEnv = {
 }
 
 export const env = createEnv({
-  extends: [partysocket(), database(), mail(), clickhouse()],
+  extends: [partysocket(), database(), mail()],
   server: {
     ...baseEnv.server,
     ...googleAuthEnv.server,

@@ -1,4 +1,5 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
+import { db } from "@chatbotx.io/database/client"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
@@ -16,12 +17,15 @@ export default async function Dashboard({
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-  const inboxes = (
-    await listInboxes({
-      workspaceId,
-      includes: ["integration"],
-    })
-  ).data.filter((inbox) => inbox.channel !== "smtp")
+  const [inboxesResult, workspace] = await Promise.all([
+    listInboxes({ workspaceId, includes: ["integration"] }),
+    db.query.workspaceModel.findFirst({
+      where: { id: workspaceId },
+      columns: { createdAt: true },
+    }),
+  ])
+
+  const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,6 +36,7 @@ export default async function Dashboard({
           workspaceId,
           timezone,
         }}
+        workspaceCreatedAt={workspace?.createdAt}
       />
     </div>
   )

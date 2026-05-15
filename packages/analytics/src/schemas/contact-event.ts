@@ -4,8 +4,8 @@ import { z } from "zod"
 export const contactEventTypes = z.enum([
   "contact_created",
   "contact_deleted",
-  "contact_message_in",
-  "contact_message_out",
+  "message_human_sent",
+  "message_bot_sent",
 ])
 export type ContactEventType = z.infer<typeof contactEventTypes>
 
