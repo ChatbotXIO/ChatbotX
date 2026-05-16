@@ -7,13 +7,13 @@ import {
   integrationTelegramModel,
 } from "@chatbotx.io/database/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
-import { isRevokedTokenError } from "@chatbotx.io/integration-telegram"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectTelegramAction = workspaceActionClient
@@ -30,6 +30,17 @@ export const disconnectTelegramAction = workspaceActionClient
         message: "Integration Telegram not found",
       })
 
+      try {
+        await integrations.telegram.disconnect(
+          integrationTelegram.auth as TelegramAuthValue,
+        )
+      } catch (error) {
+        logger.warn(
+          error,
+          "Telegram disconnect API call failed — proceeding with local cleanup",
+        )
+      }
+
       await db.transaction(async (tx) => {
         await tx
           .delete(integrationTelegramModel)
@@ -39,16 +50,6 @@ export const disconnectTelegramAction = workspaceActionClient
           .set({ status: inboxStatuses.enum.disconnected })
           .where(eq(inboxModel.id, integrationTelegram.inboxId))
       })
-
-      try {
-        await integrations.telegram.disconnect(
-          integrationTelegram.auth as TelegramAuthValue,
-        )
-      } catch (error) {
-        if (!isRevokedTokenError(error)) {
-          throw error
-        }
-      }
 
       revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
     },

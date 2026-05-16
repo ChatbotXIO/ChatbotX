@@ -38,18 +38,17 @@ const disconnectMessenger = async (ctx: {
     message: "Integration Messenger not found",
   })
 
-  await db.transaction(async (tx) => {
-    // Unsubscribe from app
-    const authValue = integrationMessenger.auth as MessengerAuthValue
+  const authValue = integrationMessenger.auth as MessengerAuthValue
 
-    try {
-      await integrations.messenger.disconnect(authValue)
-    } catch (error) {
-      if (!isRevokedTokenError(error)) {
-        throw error
-      }
+  try {
+    await integrations.messenger.disconnect(authValue)
+  } catch (error) {
+    if (!isRevokedTokenError(error)) {
+      throw error
     }
+  }
 
+  await db.transaction(async (tx) => {
     await tx
       .delete(integrationMessengerModel)
       .where(eq(integrationMessengerModel.id, integrationMessenger.id))

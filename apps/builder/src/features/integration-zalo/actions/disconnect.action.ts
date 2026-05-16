@@ -10,6 +10,7 @@ import {
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectZaloAction = workspaceActionClient
@@ -30,6 +31,11 @@ export const disconnectZaloAction = workspaceActionClient
     try {
       await integrations.zalo.disconnect(integrationZalo.auth as ZaloAuthValue)
     } catch (error) {
+      logger.warn(
+        error,
+        "Zalo disconnect API call failed — proceeding with local cleanup",
+      )
+
       if (!isRevokedTokenError(error)) {
         throw error
       }

@@ -16,6 +16,7 @@ import {
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectInstagramAction = workspaceActionClient
@@ -40,6 +41,11 @@ export const disconnectInstagramAction = workspaceActionClient
       try {
         await integrations.instagram.disconnect(authValue)
       } catch (error) {
+        logger.warn(
+          error,
+          "Instagram disconnect API call failed — proceeding with local cleanup",
+        )
+
         if (!isRevokedTokenError(error)) {
           throw error
         }
