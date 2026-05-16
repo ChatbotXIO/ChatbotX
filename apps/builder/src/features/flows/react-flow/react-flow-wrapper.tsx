@@ -253,10 +253,12 @@ export function ReactFlowWrapper({
             (node) => node.type === nodeTypeSchema.enum.sendMessage,
           ).length
 
-          const rawPosition = connectionState.to ?? { x: 300, y: 300 }
+          const position = connectionState.to
+            ? screenToFlowPosition(connectionState.to)
+            : { x: 300, y: 300 }
           const newNode = sendMessageNodeDefaultFn({
             nodeProps: {
-              position: screenToFlowPosition(rawPosition),
+              position,
             },
             dataProps: {
               name: `Send Message #${messageNodesLength + 1}`,

@@ -10,7 +10,7 @@ import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
 } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { db, type Transaction } from "@chatbotx.io/database/client"
 import {
   channelTypes,
   contentTypes,
@@ -43,7 +43,7 @@ import {
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { contactVariableService } from "@chatbotx.io/variables"
+import { resolveContactVariablesDeep } from "@chatbotx.io/variables"
 import type {
   ChatJobSendChatMessage,
   ChatJobSendFlowStep,
@@ -53,6 +53,37 @@ import { logger } from "../../lib/logger"
 import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
+const insertAttachmentForMessage = async (
+  tx: Transaction,
+  props: {
+    workspaceId: string
+    conversationId: string
+    messageId: string
+    url: string
+  },
+): Promise<AttachmentModel & { url: string }> => {
+  const uploadedFile = await uploadFileFromUrl(
+    props.url,
+    `public/space/${props.workspaceId}/conversations/${props.conversationId}/${createId()}`,
+  )
+  const row = await tx
+    .insert(attachmentModel)
+    .values({
+      id: createId(),
+      workspaceId: props.workspaceId,
+      conversationId: props.conversationId,
+      messageId: props.messageId,
+      ...uploadedFile,
+    })
+    .returning()
+    .then((result) => result[0])
+
+  return {
+    ...row,
+    url: getPublicUrl(row.originPath),
+  }
+}
+
 export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -61,13 +92,16 @@ export const convertButtonsToTemplate = (props: {
   contactInboxId?: string
 }): MessageButtonTemplate[] => {
   const { flowId, flowVersionId, buttons, metadata, contactInboxId } = props
+  const broadcastId = extractMetadata("broadcastId", metadata)
+  const sequenceStepId = extractMetadata("sequenceStepId", metadata)
+
   return buttons.map((button) => {
     const buttonPayload = encodeButtonPayload({
       flowId,
       flowVersionId,
       buttonId: button.id,
-      broadcastId: extractMetadata("broadcastId", metadata),
-      sequenceStepId: extractMetadata("sequenceStepId", metadata),
+      broadcastId,
+      sequenceStepId,
       contactInboxId,
     })
 
@@ -196,9 +230,16 @@ export async function sendFlowStep({
     nodeId: step.nodeId,
   }
 
+  const resolvedStep = await resolveContactVariablesDeep(
+    conversation.contactId,
+    step,
+  )
+  const messageText =
+    resolvedStep.stepType === stepTypes.enum.sendText ? resolvedStep.text : null
+
   try {
     const message = await db.transaction(async (tx) => {
-      let messageData: typeof messageModel.$inferInsert = {
+      const messageData: typeof messageModel.$inferInsert = {
         id: createId(),
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
@@ -207,33 +248,34 @@ export async function sendFlowStep({
         contentType: contentTypes.enum.text,
         senderType: senderTypes.enum.bot,
         sourceId: null,
-        text: step.stepType === stepTypes.enum.sendText ? step.text : null,
+        text: messageText,
       }
 
-      if ("buttons" in step && step.buttons.length > 0) {
-        messageData.contentAttributes = {
+      let templateLayer: MessageTemplateEntity | undefined
+      if ("buttons" in resolvedStep && resolvedStep.buttons.length > 0) {
+        templateLayer = {
           type: "template",
           payload: {
             templateType: "button",
             buttons: convertButtonsToTemplate({
               flowId,
               flowVersionId,
-              buttons: step.buttons,
+              buttons: resolvedStep.buttons,
               metadata,
               contactInboxId: targetContactInbox.id,
             }),
           },
         } satisfies MessageTemplateEntity
       }
-      if ("cards" in step && step.cards.length > 0) {
-        messageData.contentAttributes = {
+      if ("cards" in resolvedStep && resolvedStep.cards.length > 0) {
+        templateLayer = {
           type: "template",
           payload: {
             templateType: "carousel",
             cards: convertCardsToTemplate({
               flowId,
               flowVersionId,
-              cards: step.cards,
+              cards: resolvedStep.cards,
               metadata,
               contactInboxId: targetContactInbox.id,
             }),
@@ -242,23 +284,13 @@ export async function sendFlowStep({
       }
 
       messageData.contentAttributes = {
-        ...messageData.contentAttributes,
+        ...templateLayer,
         metadata,
-        stepId: step.id,
-        nodeId: step.nodeId,
+        stepId: resolvedStep.id,
+        nodeId: resolvedStep.nodeId,
         flowId,
         flowVersionId,
       }
-
-      const variables = await contactVariableService.getAll(
-        conversation.contactId,
-      )
-      messageData = JSON.parse(
-        await contactVariableService.replaceAll({
-          variables,
-          text: JSON.stringify(messageData),
-        }),
-      )
 
       const newMessage = await tx
         .insert(messageModel)
@@ -267,30 +299,16 @@ export async function sendFlowStep({
         .then((result) => result[0])
 
       // Upload file if exists
-      let attachment: AttachmentModel | undefined
-      if ("url" in step) {
-        const uploadedFile = await uploadFileFromUrl(
-          step.url,
-          `public/space/${newMessage.workspaceId}/conversations/${conversation.id}/${createId()}`,
-        )
-
-        attachment = await tx
-          .insert(attachmentModel)
-          .values({
-            id: createId(),
-            workspaceId: conversation.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-            ...uploadedFile,
-          })
-          .returning()
-          .then((result) => ({
-            ...result[0],
-            url: getPublicUrl(result[0].originPath),
-          }))
-
-        ;(newMessage as { attachments?: AttachmentModel[] }).attachments =
-          attachment ? [attachment] : undefined
+      if ("url" in resolvedStep) {
+        const attachment = await insertAttachmentForMessage(tx, {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          messageId: newMessage.id,
+          url: resolvedStep.url,
+        })
+        ;(newMessage as { attachments?: AttachmentModel[] }).attachments = [
+          attachment,
+        ]
       }
 
       return newMessage
@@ -306,7 +324,7 @@ export async function sendFlowStep({
         contactInbox: targetContactInbox,
         flowId,
         flowVersionId,
-        step: step as SendFlowStepData,
+        step: resolvedStep as SendFlowStepData,
         metadata,
         messageId: message?.id,
       }),
@@ -463,26 +481,12 @@ export const sendChatMessage = async (
         .then((result) => result[0])
 
       if (url) {
-        const uploadedFile = await uploadFileFromUrl(
+        const attachment = await insertAttachmentForMessage(tx, {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          messageId: newMessage.id,
           url,
-          `public/space/${newMessage.workspaceId}/conversations/${conversation.id}/${createId()}`,
-        )
-
-        const attachment = await tx
-          .insert(attachmentModel)
-          .values({
-            id: createId(),
-            workspaceId: conversation.workspaceId,
-            conversationId: conversation.id,
-            messageId: newMessage.id,
-            ...uploadedFile,
-          })
-          .returning()
-          .then((result) => ({
-            ...result[0],
-            url: getPublicUrl(result[0].originPath),
-          }))
-
+        })
         ;(newMessage as { attachments?: AttachmentModel[] }).attachments = [
           attachment,
         ]

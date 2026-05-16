@@ -161,9 +161,9 @@ export function DirectUploadOrInsertLink({
         </>
       ) : (
         <div className="flex h-40 w-full items-center gap-2 py-2">
-          {publicUrl.length ? (
+          {publicUrl?.length ? (
             <Button
-              className="p-0!"
+              className="relative h-40 w-full p-0!"
               onClick={chooseUploadFile}
               type="button"
               variant="ghost"

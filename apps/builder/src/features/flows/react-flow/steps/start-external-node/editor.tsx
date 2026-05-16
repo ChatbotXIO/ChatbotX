@@ -1,27 +1,37 @@
 "use client"
 
-import type { FlowNode } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
-import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import {
+  getFlowNodesOptions,
+  useFlowSelectOptions,
+} from "@/features/flows/provider/flow-hook"
 import { useFlowStore } from "@/features/flows/provider/flow-store-context"
 import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
-const StartExternalNodeStepEditor = ({
-  parentName,
-}: {
+type StartExternalNodeStepEditorProps = {
   parentName: string
-}) => {
+}
+
+const StartExternalNodeStepEditor = (
+  props: StartExternalNodeStepEditorProps,
+) => {
+  const { parentName } = props
+
   const t = useTranslations()
   const flowOptions = useFlowSelectOptions()
-  const { flows } = useFlowStore((state) => state)
-  const { activeFlowId } = useStepStore((state) => state)
+  const flows = useFlowStore((state) => state.flows)
+  const activeFlowId = useStepStore((state) => state.activeFlowId)
   const { control } = useFormContext()
-  const currentFlowId = useWatch({ control, name: `${parentName}.flowId` })
+
+  const flowIdField = `${parentName}.flowId`
+  const nodeIdField = `${parentName}.nodeId`
+
+  const currentFlowId = useWatch({ control, name: flowIdField })
 
   const nodeOptions = useMemo(() => {
     if (!currentFlowId) {
@@ -31,12 +41,7 @@ const StartExternalNodeStepEditor = ({
     if (!targetFlow) {
       return []
     }
-    return (
-      (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
-    ).map((node) => ({
-      value: node.id,
-      label: node.data.name,
-    }))
+    return getFlowNodesOptions(targetFlow.flowVersions)
   }, [currentFlowId, flows])
 
   return (
@@ -48,14 +53,14 @@ const StartExternalNodeStepEditor = ({
         <ComboboxField
           disableValues={activeFlowId ? [activeFlowId] : undefined}
           label={t("fields.flow.label")}
-          name={`${parentName}.flowId`}
+          name={flowIdField}
           options={flowOptions}
           required={true}
         />
 
         <ComboboxField
           label={t("fields.node.label")}
-          name={`${parentName}.nodeId`}
+          name={nodeIdField}
           options={nodeOptions}
           required={true}
         />

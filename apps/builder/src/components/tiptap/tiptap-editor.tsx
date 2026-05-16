@@ -95,9 +95,11 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (tiptapEditor && initValue) {
+      const escHtml = (s: string) =>
+        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       const html = initValue
         .split("\n")
-        .map((line) => `<p>${line || "<br>"}</p>`)
+        .map((line) => `<p>${line ? escHtml(line) : "<br>"}</p>`)
         .join("")
       tiptapEditor.commands.setContent(html)
     }

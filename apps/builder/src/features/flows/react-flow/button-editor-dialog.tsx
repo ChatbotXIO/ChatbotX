@@ -40,7 +40,7 @@ import { useReactFlow } from "@xyflow/react"
 import { getProperty } from "dot-prop"
 import { PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   useFieldArray,
   useForm,
@@ -61,7 +61,7 @@ function AllButtonOptions({
   onChooseButton: (buttonType: ButtonType | null) => void
 }) {
   const t = useTranslations()
-  const allButtons = allButtonsConfig(t)
+  const allButtons = useMemo(() => allButtonsConfig(t), [t])
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -89,7 +89,7 @@ function ActiveButton({
   onChooseButton: (buttonType: ButtonType | null) => void
 }) {
   const t = useTranslations()
-  const allButtons = allButtonsConfig(t)
+  const allButtons = useMemo(() => allButtonsConfig(t), [t])
   const activeButton = allButtons.find((bt) => bt.buttonType === buttonType)
   const { getValues } = useFormContext()
   const beforeStep = getValues("beforeStep")
@@ -131,14 +131,17 @@ function ButtonSteps() {
     name: "steps",
   })
 
-  const onAddAction = (menuItem: MenuItem) => {
-    if (menuItem.stepType) {
-      const newStep = allSteps[menuItem.stepType]?.defaultFn(menuItem.props)
-      if (newStep) {
-        append(newStep)
+  const onAddAction = useCallback(
+    (menuItem: MenuItem) => {
+      if (menuItem.stepType) {
+        const newStep = allSteps[menuItem.stepType]?.defaultFn(menuItem.props)
+        if (newStep) {
+          append(newStep)
+        }
       }
-    }
-  }
+    },
+    [append],
+  )
 
   return (
     <div className="mt-2 flex flex-col gap-2">
@@ -169,7 +172,7 @@ function ButtonSteps() {
         <DropdownMenuTrigger asChild>
           <Button className="w-32" size="sm" variant="outline">
             <PlusIcon />
-            Actions
+            {t("actions.actions")}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -216,13 +219,15 @@ export function ButtonEditorDialog() {
     },
     [setEdges],
   )
-  const {
-    buttonPath,
-    setButtonPath,
-    openButtonEditorDialog,
-    setOpenButtonEditorDialog,
-    onChangeButtonData,
-  } = useStepStore((state) => state)
+  const buttonPath = useStepStore((state) => state.buttonPath)
+  const setButtonPath = useStepStore((state) => state.setButtonPath)
+  const openButtonEditorDialog = useStepStore(
+    (state) => state.openButtonEditorDialog,
+  )
+  const setOpenButtonEditorDialog = useStepStore(
+    (state) => state.setOpenButtonEditorDialog,
+  )
+  const onChangeButtonData = useStepStore((state) => state.onChangeButtonData)
 
   const form = useForm<ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),
@@ -231,6 +236,7 @@ export function ButtonEditorDialog() {
   })
   const { setValue, getValues, control } = form
   const buttonType = useWatch({ control, name: "buttonType" })
+  const buttonId = useWatch({ control, name: "id" })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wip
   useEffect(() => {
@@ -254,102 +260,40 @@ export function ButtonEditorDialog() {
     setOpenButtonEditorDialog(false)
   }, [buttonPath, openButtonEditorDialog])
 
-  const onChooseButton = (selectedButtonType: ButtonType | null) => {
-    const allNodes = getNodes() as FlowNode[]
+  const onSave = useCallback(() => {
+    if (!(activeNode && buttonPath)) {
+      return
+    }
 
-    setValue("buttonType", selectedButtonType)
-    setValue("steps", [])
-    setValue("beforeStep", null)
+    const values = form.getValues()
+    setProperty(activeNode, buttonPath, values)
+    updateNodeData(activeNode.id, activeNode.data)
 
-    const position = screenToFlowPosition({
-      x: window.innerWidth - 400,
-      y: 100,
+    if (values.buttonType === buttonTypes.enum.startAnotherNode) {
+      const targetNodeId = values.beforeStep.nodeId
+      const currentButtonId = values.id as string
+
+      if (currentButtonId && targetNodeId) {
+        refreshEdge(currentButtonId, activeNode.id, targetNodeId)
+      }
+    }
+
+    setOpenButtonEditorDialog(false)
+    onChangeButtonData({
+      path: buttonPath,
+      data: values,
     })
+  }, [
+    activeNode,
+    buttonPath,
+    form,
+    onChangeButtonData,
+    refreshEdge,
+    setOpenButtonEditorDialog,
+    updateNodeData,
+  ])
 
-    let newNode: FlowNode | null = null
-    let beforeStep:
-      | StartAnotherNodeStepSchema
-      | OpenWebsiteStepSchema
-      | StartExternalFlowStepSchema
-      | StartExternalNodeStepSchema
-      | null = null
-
-    switch (selectedButtonType) {
-      case buttonTypes.enum.sendMessage: {
-        const nodeCount = allNodes.filter(
-          (node) => node.type === nodeTypeSchema.enum.sendMessage,
-        ).length
-        newNode = sendMessageNodeDefaultFn({
-          nodeProps: {
-            position,
-          },
-          dataProps: {
-            name: `${t("actions.sendMessage")} #${nodeCount + 1}`,
-          },
-        })
-        beforeStep = startAnotherNodeStepDefaultFn({
-          nodeId: newNode.id,
-          viewOnly: true,
-        })
-        break
-      }
-      case buttonTypes.enum.performAction: {
-        const nodeCount = allNodes.filter(
-          (node) => node.type === nodeTypeSchema.enum.performAction,
-        ).length
-        newNode = performActionNodeDefaultFn({
-          nodeProps: {
-            position,
-          },
-          dataProps: {
-            name: `${t("flows.actions.performAction")} #${nodeCount + 1}`,
-          },
-        })
-        beforeStep = startAnotherNodeStepDefaultFn({
-          nodeId: newNode.id,
-          viewOnly: true,
-        })
-        break
-      }
-      case buttonTypes.enum.startExternalFlow: {
-        beforeStep = startExternalFlowStepDefaultFn()
-        break
-      }
-      case buttonTypes.enum.openWebsite: {
-        beforeStep = openWebsiteStepDefaultFn()
-        break
-      }
-      case buttonTypes.enum.startExternalNode: {
-        beforeStep = startExternalNodeStepDefaultFn()
-        break
-      }
-      case buttonTypes.enum.startAnotherNode: {
-        beforeStep = startAnotherNodeStepDefaultFn()
-        break
-      }
-      default: {
-        return
-      }
-    }
-
-    if (beforeStep) {
-      setValue("beforeStep", beforeStep)
-    }
-
-    // Add new node if exists
-    if (newNode) {
-      addNodes([newNode])
-
-      const currentButtonId = getValues("id") as string
-      if (currentButtonId && activeNode) {
-        refreshEdge(currentButtonId, activeNode.id, newNode.id)
-      }
-
-      onSave()
-    }
-  }
-
-  const onDelete = () => {
+  const onDelete = useCallback(() => {
     if (!(activeNode && buttonPath)) {
       return
     }
@@ -368,32 +312,123 @@ export function ButtonEditorDialog() {
 
     setOpenButtonEditorDialog(false)
     setButtonPath(null)
-  }
+  }, [
+    activeNode,
+    buttonPath,
+    onChangeButtonData,
+    removeEdge,
+    setButtonPath,
+    setOpenButtonEditorDialog,
+  ])
 
-  const onSave = () => {
-    if (activeNode && buttonPath) {
-      const values = form.getValues()
-      setProperty(activeNode, buttonPath, values)
-      updateNodeData(activeNode.id, activeNode.data)
+  const onChooseButton = useCallback(
+    (selectedButtonType: ButtonType | null) => {
+      const allNodes = getNodes() as FlowNode[]
 
-      if (values.buttonType === buttonTypes.enum.startAnotherNode) {
-        const targetNodeId = values.beforeStep.nodeId
-        const currentButtonId = values.id as string
+      setValue("buttonType", selectedButtonType)
+      setValue("steps", [])
+      setValue("beforeStep", null)
 
-        if (currentButtonId && targetNodeId) {
-          refreshEdge(currentButtonId, activeNode.id, targetNodeId)
+      const position = screenToFlowPosition({
+        x: window.innerWidth - 400,
+        y: 100,
+      })
+
+      let newNode: FlowNode | null = null
+      let beforeStep:
+        | StartAnotherNodeStepSchema
+        | OpenWebsiteStepSchema
+        | StartExternalFlowStepSchema
+        | StartExternalNodeStepSchema
+        | null = null
+
+      switch (selectedButtonType) {
+        case buttonTypes.enum.sendMessage: {
+          const nodeCount = allNodes.filter(
+            (node) => node.type === nodeTypeSchema.enum.sendMessage,
+          ).length
+          newNode = sendMessageNodeDefaultFn({
+            nodeProps: {
+              position,
+            },
+            dataProps: {
+              name: `${t("actions.sendMessage")} #${nodeCount + 1}`,
+            },
+          })
+          beforeStep = startAnotherNodeStepDefaultFn({
+            nodeId: newNode.id,
+            viewOnly: true,
+          })
+          break
+        }
+        case buttonTypes.enum.performAction: {
+          const nodeCount = allNodes.filter(
+            (node) => node.type === nodeTypeSchema.enum.performAction,
+          ).length
+          newNode = performActionNodeDefaultFn({
+            nodeProps: {
+              position,
+            },
+            dataProps: {
+              name: `${t("flows.actions.performAction")} #${nodeCount + 1}`,
+            },
+          })
+          beforeStep = startAnotherNodeStepDefaultFn({
+            nodeId: newNode.id,
+            viewOnly: true,
+          })
+          break
+        }
+        case buttonTypes.enum.startExternalFlow: {
+          beforeStep = startExternalFlowStepDefaultFn()
+          break
+        }
+        case buttonTypes.enum.openWebsite: {
+          beforeStep = openWebsiteStepDefaultFn()
+          break
+        }
+        case buttonTypes.enum.startExternalNode: {
+          beforeStep = startExternalNodeStepDefaultFn()
+          break
+        }
+        case buttonTypes.enum.startAnotherNode: {
+          beforeStep = startAnotherNodeStepDefaultFn()
+          break
+        }
+        default: {
+          return
         }
       }
 
-      setOpenButtonEditorDialog(false)
-      onChangeButtonData({
-        path: buttonPath,
-        data: values,
-      })
-    }
-  }
+      if (beforeStep) {
+        setValue("beforeStep", beforeStep)
+      }
 
-  return getValues("id") ? (
+      if (newNode) {
+        addNodes([newNode])
+
+        const currentButtonId = getValues("id") as string
+        if (currentButtonId && activeNode) {
+          refreshEdge(currentButtonId, activeNode.id, newNode.id)
+        }
+
+        onSave()
+      }
+    },
+    [
+      activeNode,
+      addNodes,
+      getNodes,
+      getValues,
+      onSave,
+      refreshEdge,
+      screenToFlowPosition,
+      setValue,
+      t,
+    ],
+  )
+
+  return buttonId ? (
     <Dialog
       onOpenChange={(isOpen) => setOpenButtonEditorDialog(isOpen)}
       open={openButtonEditorDialog}
@@ -406,40 +441,34 @@ export function ButtonEditorDialog() {
           <DialogDescription />
         </DialogHeader>
 
-        <div className="flex items-center space-x-4">
-          <Form {...form}>
-            <form
-              className="flex w-full flex-col gap-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                onSave()
-              }}
-            >
-              <InputField
-                label={t("fields.name.label")}
-                name="label"
-                required
-              />
+        <Form {...form}>
+          <form
+            className="flex w-full flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onSave()
+            }}
+          >
+            <InputField label={t("fields.name.label")} name="label" required />
 
-              <div className="mt-2 font-medium">
-                {t("fields.button.whenPressed")}
+            <div className="mt-2 font-medium">
+              {t("fields.button.whenPressed")}
+            </div>
+
+            {buttonType ? (
+              <div className="flex flex-col gap-2">
+                <ActiveButton
+                  buttonType={buttonType}
+                  onChooseButton={onChooseButton}
+                />
+                <ButtonSteps />
               </div>
-
-              {buttonType ? (
-                <div className="flex flex-col gap-2">
-                  <ActiveButton
-                    buttonType={buttonType}
-                    onChooseButton={onChooseButton}
-                  />
-                  <ButtonSteps />
-                </div>
-              ) : (
-                <AllButtonOptions onChooseButton={onChooseButton} />
-              )}
-            </form>
-          </Form>
-        </div>
+            ) : (
+              <AllButtonOptions onChooseButton={onChooseButton} />
+            )}
+          </form>
+        </Form>
 
         <DialogFooter>
           <div className="flex-1">
