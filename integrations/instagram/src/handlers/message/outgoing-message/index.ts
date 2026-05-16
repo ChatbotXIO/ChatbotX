@@ -16,6 +16,7 @@ import {
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendInstagramMessage } from "../../../apis/page"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import {
   INSTAGRAM_MESSAGE_METADATA,
@@ -49,6 +50,7 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw mapToChannelError(error)
     }
 
     return {
@@ -195,6 +197,7 @@ export const sendFlowStep = async (
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
+    throw mapToChannelError(error)
   }
 
   return {

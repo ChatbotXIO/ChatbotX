@@ -16,6 +16,7 @@ import {
   type SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendPageMessage } from "../../../apis/message"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import {
   type FacebookMessage,
@@ -53,7 +54,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return {
@@ -88,7 +89,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return {

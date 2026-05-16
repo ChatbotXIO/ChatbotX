@@ -366,6 +366,8 @@ export async function sendFlowStep({
       })
     }
   } catch (error) {
+    const parsedError = await parseSdkError(error)
+
     logger.error(
       error,
       `sendFlowStep error for conversationId: ${conversationId}`,
@@ -377,7 +379,7 @@ export async function sendFlowStep({
         messageId: "",
         flowId,
       },
-      errorData: await parseSdkError(error),
+      errorData: parsedError,
       occurredAt: new Date(),
     })
 

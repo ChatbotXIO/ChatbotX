@@ -114,12 +114,6 @@ export type TemplateMessage = {
 }
 
 export type WhatsappActions = {
-  unsubscribeWebhook: Handler<
-    {
-      ctx: Context<WhatsappAuthValue>
-    },
-    void
-  >
   verifyAccessToken: Handler<
     {
       ctx: Context<WhatsappAuthValue>

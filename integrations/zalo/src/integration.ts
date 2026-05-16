@@ -37,9 +37,7 @@ const config: IntegrationDefinition<ZaloConfig, ZaloAuthValue> = {
         )
     }
   },
-  disconnect: (_props: ZaloAuthValue): Promise<void> => {
-    throw new Error("Method is not implemented.")
-  },
+  disconnect: (_auth: ZaloAuthValue): Promise<void> => Promise.resolve(),
   refreshAuth: async ({ auth }) => {
     if (!auth.tokens.refreshToken) {
       throw new AuthException("Zalo refresh token not available")

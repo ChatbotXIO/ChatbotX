@@ -1,6 +1,6 @@
 import type { Context } from "@chatbotx.io/sdk"
 import { DEFAULT_API_VERSION } from "../constants"
-import { MessengerAPIException } from "../exception"
+import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type {
@@ -25,7 +25,7 @@ export const PAGE_SUBSCRIBE_SCOPES = [
   "standby",
 ]
 
-export const exchangeLongLivedToken = async (
+export const exchangeLongLivedToken = (
   settings: {
     clientId: string
     clientSecret: string
@@ -34,120 +34,122 @@ export const exchangeLongLivedToken = async (
   accessToken: string,
 ): Promise<string> => {
   const { version = DEFAULT_API_VERSION } = settings
+  const endpoint = `${version}/oauth/access_token`
 
-  const res: { access_token: string } = await facebookGraphClient.get(
-    `${version}/oauth/access_token`,
-    {
-      searchParams: {
-        grant_type: "fb_exchange_token",
-        client_id: settings.clientId as string,
-        client_secret: settings.clientSecret as string,
-        fb_exchange_token: accessToken,
+  return rescue(endpoint, async () => {
+    const res: { access_token: string } = await facebookGraphClient.get(
+      endpoint,
+      {
+        searchParams: {
+          grant_type: "fb_exchange_token",
+          client_id: settings.clientId as string,
+          client_secret: settings.clientSecret as string,
+          fb_exchange_token: accessToken,
+        },
       },
-    },
-  )
-
-  return res.access_token
+    )
+    return res.access_token
+  })
 }
 
-export const subscribePageToAppWebhook = async (props: {
+export const subscribePageToAppWebhook = (props: {
   pageId: string
   accessToken: string
   version?: string
 }): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = props
+  const endpoint = `${version}/me/subscribed_apps`
 
-  await facebookGraphClient.post(`${version}/me/subscribed_apps`, {
-    headers: {
-      Authorization: `Bearer ${props.accessToken}`,
-    },
-    json: {
-      subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
-    },
-  })
+  return rescue(endpoint, () =>
+    facebookGraphClient.post(endpoint, {
+      headers: {
+        Authorization: `Bearer ${props.accessToken}`,
+      },
+      json: {
+        subscribed_fields: PAGE_SUBSCRIBE_SCOPES.join(","),
+      },
+    }),
+  )
 }
 
-export const unsubscribePageFromAppWebhook = async (
+export const unsubscribePageFromAppWebhook = (
   auth: MessengerAuthValue,
 ): Promise<void> => {
   const { version = DEFAULT_API_VERSION } = auth.metadata
+  const endpoint = `${version}/me/subscribed_apps`
 
-  try {
-    await facebookGraphClient.delete(`${version}/me/subscribed_apps`, {
+  return rescue(endpoint, () =>
+    facebookGraphClient.delete(endpoint, {
       headers: {
         Authorization: `Bearer ${auth.tokens.accessToken}`,
       },
-    })
-  } catch (error) {
-    logger.error(error, "Unsubscribe Page From AppWebhook failed")
-
-    let originError = error
-    if (error instanceof MessengerAPIException) {
-      originError = error.getOriginError()
-    }
-
-    throw new MessengerAPIException(
-      "Unsubscribe Page From AppWebhook failed",
-      `${version}/${auth.metadata.pageId}/subscribed_apps`,
-    ).setOriginError(originError)
-  }
+    }),
+  )
 }
 
-export const updateMessengerProfile = async (props: {
+export const updateMessengerProfile = (props: {
   ctx: Context<MessengerAuthValue>
   params: MessengerProfileRequest
 }): Promise<void> => {
   const { ctx, params } = props
   const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/messenger_profile`
 
-  await facebookGraphClient.post(`${version}/me/messenger_profile`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-    },
-    json: params,
-  })
+  return rescue(endpoint, () =>
+    facebookGraphClient.post(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+      json: params,
+    }),
+  )
 }
 
-export const createPersona = async (props: {
+export const createPersona = (props: {
   ctx: Context<MessengerAuthValue>
   persona: PersonaRequest
 }): Promise<{ personaId?: string }> => {
   const { ctx, persona } = props
+  const endpoint = "me/personas"
 
-  const response: { id: string } = await facebookGraphClient.post(
-    `me/personas?access_token=${ctx.auth.tokens.accessToken}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
+  return rescue(endpoint, async () => {
+    const response: { id: string } = await facebookGraphClient.post(
+      `${endpoint}?access_token=${ctx.auth.tokens.accessToken}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        json: persona,
       },
-      json: persona,
-    },
-  )
-  return { personaId: response.id }
+    )
+    return { personaId: response.id }
+  })
 }
 
-export const deleteAllPersonas = async (props: {
+export const deleteAllPersonas = (props: {
   ctx: Context<MessengerAuthValue>
 }): Promise<void> => {
   const { ctx } = props
 
-  const response: { data: Array<{ id: string }> } =
-    await facebookGraphClient.get("me/personas", {
-      headers: {
-        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-      },
-    })
-
-  await Promise.all(
-    response.data.map((persona) =>
-      facebookGraphClient.delete(persona.id, {
+  return rescue("me/personas", async () => {
+    const response: { data: Array<{ id: string }> } =
+      await facebookGraphClient.get("me/personas", {
         headers: {
           Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
         },
-      }),
-    ),
-  )
+      })
+
+    await Promise.all(
+      response.data.map((persona) =>
+        facebookGraphClient.delete(persona.id, {
+          headers: {
+            Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+          },
+        }),
+      ),
+    )
+  })
 }
 
 export const updatePersona = async (props: {
@@ -169,19 +171,19 @@ export const updatePersona = async (props: {
   }
 }
 
-export const getPersistentMenu = async (props: {
+export const getPersistentMenu = (props: {
   ctx: Context<MessengerAuthValue>
 }): Promise<{
   persistentMenu?: MessengerProfileRequest["persistent_menu"]
 }> => {
   const { ctx } = props
-
   const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/messenger_profile`
 
-  try {
+  return rescue(endpoint, async () => {
     const response: {
       persistent_menu?: MessengerProfileRequest["persistent_menu"]
-    } = await facebookGraphClient.get(`${version}/me/messenger_profile`, {
+    } = await facebookGraphClient.get(endpoint, {
       headers: {
         Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
       },
@@ -190,32 +192,27 @@ export const getPersistentMenu = async (props: {
       },
     })
 
-    return {
-      persistentMenu: response.persistent_menu,
-    }
-  } catch (error) {
-    logger.error(error, "Get Persistent Menu failed")
-    throw new MessengerAPIException(
-      "Get Persistent Menu failed",
-      `${version}/me/messenger_profile?fields=persistent_menu`,
-    ).setOriginError(error)
-  }
+    return { persistentMenu: response.persistent_menu }
+  })
 }
 
-export const deleteMessengerProfileFields = async (props: {
+export const deleteMessengerProfileFields = (props: {
   ctx: Context<MessengerAuthValue>
   fields: string[]
 }): Promise<void> => {
   const { ctx, fields } = props
   const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/messenger_profile`
 
-  await facebookGraphClient.delete(`${version}/me/messenger_profile`, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-    },
-    json: { fields },
-  })
+  return rescue(endpoint, () =>
+    facebookGraphClient.delete(endpoint, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+      json: { fields },
+    }),
+  )
 }
 
 export const addBranding = async (props: {

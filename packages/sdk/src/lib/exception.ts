@@ -1,10 +1,11 @@
 import type { ParsedError } from "./schemas"
 
 export const UNKNOWN_ERROR: ParsedError = {
-  message: "Unknown error. Please contact support team for assistance.",
+  message: "Unknown error.",
   code: -1,
   statusCode: -1,
   subcode: -1,
+  type: "unknown",
 }
 
 export class SdkException extends Error {
@@ -16,9 +17,9 @@ export class SdkException extends Error {
 
   constructor(
     message: string,
-    code = "sysmtemError",
+    code: string | number = UNKNOWN_ERROR.code,
     httpStatusCode = 400,
-    subCode = null,
+    subCode: string | number | null = null,
     type?: string,
   ) {
     super(message)
@@ -46,12 +47,12 @@ export class SdkException extends Error {
 
   async getErrorData(): Promise<ParsedError> {
     return await Promise.resolve({
-      message: this.message,
+      message: this.message || UNKNOWN_ERROR.message,
       type: this.type,
-      code: this.code,
-      statusCode: this.httpStatusCode,
-      subcode: this.subCode,
-    } as ParsedError)
+      code: this.code ?? UNKNOWN_ERROR.code,
+      statusCode: this.httpStatusCode ?? UNKNOWN_ERROR.statusCode,
+      subcode: this.subCode ?? UNKNOWN_ERROR.subcode,
+    })
   }
 
   getOriginError() {
@@ -72,7 +73,7 @@ export class AuthException extends SdkException {}
  */
 export class AuthRefreshException extends SdkException {
   constructor(message: string, originError?: Error | unknown) {
-    super(message, "authRefreshFailed", 401)
+    super(message, UNKNOWN_ERROR.code, 401)
     if (originError) {
       this.setOriginError(originError)
     }

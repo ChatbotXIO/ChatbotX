@@ -10,6 +10,9 @@ export const parsedErrorSchema = z.object({
   message: z.string(),
   statusCode: z.number(),
   subcode: z.union([z.string(), z.number()]),
+  category: z.string().optional(),
+  isRetryable: z.boolean().optional(),
+  isPermanent: z.boolean().optional(),
 })
 
 export type ParsedError = z.infer<typeof parsedErrorSchema>

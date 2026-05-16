@@ -26,9 +26,6 @@ export type MessengerIntegrationDetail = {
 export type MessengerActions<
   IAuth extends MessengerAuthValue = MessengerAuthValue,
 > = {
-  unsubscribePageFromAppWebhook: (props: {
-    ctx: Context<IAuth>
-  }) => Promise<void>
   updatePersona: (props: {
     ctx: Context<IAuth>
     persona: PersonaRequest

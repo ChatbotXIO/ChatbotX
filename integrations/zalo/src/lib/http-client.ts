@@ -1,6 +1,6 @@
 import ky, { type KyInstance, type Options } from "ky"
 import { ZALO_API_BASE_URL, ZALO_OAUTH_BASE_URL } from "../constants"
-import { ZaloException } from "./exception"
+import { parseOriginError, ZaloException } from "./exception"
 import { logger } from "./logger"
 
 type ZaloApiErrorResponse = {
@@ -65,6 +65,7 @@ export class ZaloHttpClient {
 
               throw new ZaloException(
                 `API request failed: ${response.status} ${errorText}`,
+                response.status,
               )
             }
 
@@ -85,29 +86,38 @@ export class ZaloHttpClient {
       if (typeof data === "object" && data !== null && "error" in data) {
         const apiError = data as ZaloApiErrorResponse
         if (apiError.error !== 0) {
+          const wrapped = { response: { error: apiError } }
+          const sdkException = parseOriginError(wrapped)
+
           throw new ZaloException(
-            `Zalo OA API error: ${apiError.message}`,
-          ).setOriginError({
-            response: {
-              error: apiError,
-            },
-          })
+            sdkException.message ?? `Zalo OA API error: ${apiError.message}`,
+            sdkException.httpStatusCode,
+            sdkException.code,
+            sdkException.subCode,
+            sdkException.type,
+            wrapped,
+          )
         }
       }
 
       return data
     } catch (error) {
+      logger.error(error, "Zalo OA HTTP client error")
+
       if (error instanceof ZaloException) {
         throw error
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred"
+      const sdkException = parseOriginError(error)
 
-      logger.error({ errorMessage }, "Zalo OA HTTP client error")
       throw new ZaloException(
-        `HTTP request failed: ${errorMessage}`,
-      ).setOriginError(error)
+        sdkException.message ?? "HTTP request failed",
+        sdkException.httpStatusCode,
+        sdkException.code,
+        sdkException.subCode,
+        sdkException.type,
+        error,
+      )
     }
   }
 

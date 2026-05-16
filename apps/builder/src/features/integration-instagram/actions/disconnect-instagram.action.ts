@@ -8,12 +8,13 @@ import {
 } from "@chatbotx.io/database/schema"
 import {
   type InstagramAuthValue,
-  unsubscribePageFromInstagramWebhook,
+  isRevokedTokenError,
 } from "@chatbotx.io/integration-instagram"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -34,14 +35,17 @@ export const disconnectInstagramAction = workspaceActionClient
         message: "Integration Instagram not found",
       })
 
-      await db.transaction(async (tx) => {
-        const authValue = integrationInstagram.auth as InstagramAuthValue
-        await unsubscribePageFromInstagramWebhook({
-          pageId: integrationInstagram.pageId,
-          accessToken: authValue.tokens.accessToken as string,
-          version: authValue.metadata.version,
-        })
+      const authValue = integrationInstagram.auth as InstagramAuthValue
 
+      try {
+        await integrations.instagram.disconnect(authValue)
+      } catch (error) {
+        if (!isRevokedTokenError(error)) {
+          throw error
+        }
+      }
+
+      await db.transaction(async (tx) => {
         await tx
           .delete(integrationInstagramModel)
           .where(eq(integrationInstagramModel.id, integrationInstagram.id))

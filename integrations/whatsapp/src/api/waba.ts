@@ -1,7 +1,6 @@
-import ky, { HTTPError } from "ky"
+import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
-import { logger } from "../lib/logger"
+import { rescue } from "../exception"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
@@ -29,18 +28,17 @@ export type WhatsappMarketingMessagesLiteApiStatus =
   | "PENDING_INTERNAL_SETUP"
   | "ONBOARDED"
 
-export async function findWaba(props: {
+export function findWaba(props: {
   wabaId: string
   acessToken: string
   fields?: string
   version?: string
 }) {
   const { version = DEFAULT_API_VERSION } = props
+  const fields = props.fields || "name,owner_business_info,phone_numbers"
 
-  try {
-    const fields = props.fields || "name,owner_business_info,phone_numbers"
-
-    return await ky
+  return rescue(() =>
+    ky
       .get<WhatsappWabaDetailResponse>(
         `${API_URL}/${version}/${props.wabaId}?fields=${fields}`,
         {
@@ -49,14 +47,8 @@ export async function findWaba(props: {
           },
         },
       )
-      .json()
-  } catch (error) {
-    logger.error(error, "Unable to find WhatsApp's business account")
-
-    throw new WhatsappException(
-      "Unable to find WhatsApp's business account",
-    ).setOriginError(error)
-  }
+      .json(),
+  )
 }
 
 export type WhatsappFlow = {
@@ -71,15 +63,15 @@ export type ListFlowsResponse = {
   data: WhatsappFlow[]
   paging: WhatsappPagination
 }
-export async function listFlows({
+export function listFlows({
   auth,
 }: {
   auth: WhatsappAuthValue
 }): Promise<ListFlowsResponse> {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<ListFlowsResponse>(
         `${API_URL}/${version}/${auth.metadata.wabaId}/flows`,
         {
@@ -88,11 +80,8 @@ export async function listFlows({
           },
         },
       )
-      .json()
-  } catch (e) {
-    logger.error(e, "Failed to list flows")
-    throw new WhatsappException("Failed to list flows").setOriginError(e)
-  }
+      .json(),
+  )
 }
 
 export type ListMessageTemplatesReponse = {
@@ -119,15 +108,16 @@ export type CreateMessageTemplateProps = {
   components: any[]
 }
 
-export const listMessageTemplates = async (
+export const listMessageTemplates = (
   auth: WhatsappAuthValue,
 ): Promise<ListMessageTemplatesReponse> => {
   const { version = DEFAULT_API_VERSION } = auth
-  const allTemplates: MessageTemplateEntity[] = []
-  let nextUrl: string | undefined =
-    `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
 
-  try {
+  return rescue(async () => {
+    const allTemplates: MessageTemplateEntity[] = []
+    let nextUrl: string | undefined =
+      `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
+
     while (nextUrl) {
       const response: ListMessageTemplatesReponse = await ky
         .get<ListMessageTemplatesReponse>(nextUrl, {
@@ -145,36 +135,23 @@ export const listMessageTemplates = async (
       data: allTemplates,
       paging: { next: "" },
     }
-  } catch (error: unknown) {
-    logger.error(error, "Failed to list message templates")
-
-    throw new WhatsappException(
-      error instanceof HTTPError
-        ? error.message
-        : "Failed to list message templates",
-    ).setOriginError(error)
-  }
+  })
 }
 
-export const createMessageTemplate = async (
+export const createMessageTemplate = (
   auth: WhatsappAuthValue,
   data: CreateMessageTemplateProps,
 ): Promise<MessageTemplateEntity> => {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .post(`${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`, {
         headers: {
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
         body: JSON.stringify(data),
       })
-      .json()
-  } catch (e) {
-    logger.error(e, "Failed to create message template")
-    throw new WhatsappException(
-      "Failed to create message template",
-    ).setOriginError(e)
-  }
+      .json(),
+  )
 }

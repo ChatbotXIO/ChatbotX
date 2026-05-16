@@ -7,13 +7,13 @@ import {
   integrationTelegramModel,
 } from "@chatbotx.io/database/schema"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
+import { isRevokedTokenError } from "@chatbotx.io/integration-telegram"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectTelegramAction = workspaceActionClient
@@ -24,30 +24,32 @@ export const disconnectTelegramAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
+      const integrationTelegram = await findOrFail({
+        table: integrationTelegramModel,
+        where: { workspaceId, id },
+        message: "Integration Telegram not found",
+      })
+
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationTelegramModel)
+          .where(eq(integrationTelegramModel.id, integrationTelegram.id))
+        await tx
+          .update(inboxModel)
+          .set({ status: inboxStatuses.enum.disconnected })
+          .where(eq(inboxModel.id, integrationTelegram.inboxId))
+      })
+
       try {
-        const integrationTelegram = await findOrFail({
-          table: integrationTelegramModel,
-          where: { workspaceId, id },
-          message: "Integration Telegram not found",
-        })
-
-        await db.transaction(async (tx) => {
-          await tx
-            .delete(integrationTelegramModel)
-            .where(eq(integrationTelegramModel.id, integrationTelegram.id))
-          await tx
-            .update(inboxModel)
-            .set({ status: inboxStatuses.enum.disconnected })
-            .where(eq(inboxModel.id, integrationTelegram.inboxId))
-        })
-
         await integrations.telegram.disconnect(
           integrationTelegram.auth as TelegramAuthValue,
         )
-
-        revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
       } catch (error) {
-        logger.error(error, "Failed to disconnect Telegram")
+        if (!isRevokedTokenError(error)) {
+          throw error
+        }
       }
+
+      revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
     },
   )

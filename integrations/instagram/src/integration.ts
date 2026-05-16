@@ -3,6 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
+import { unsubscribePageFromInstagramWebhook } from "./apis/page"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
@@ -40,12 +41,13 @@ const config: IntegrationDefinition<
       default:
         throw new InstagramAPIException(
           `${props.req.method} ${props.req.url} is not implemented`,
-          props.req.url,
         )
     }
   },
-  disconnect: (_props: InstagramAuthValue): Promise<void> => {
-    throw new Error("Method is not implemented.")
+  disconnect: async (auth: InstagramAuthValue): Promise<void> => {
+    await unsubscribePageFromInstagramWebhook({
+      auth,
+    })
   },
 }
 

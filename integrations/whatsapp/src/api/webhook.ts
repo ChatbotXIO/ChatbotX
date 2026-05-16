@@ -1,9 +1,10 @@
 import ky, { HTTPError } from "ky"
 import type { WhatsappAuthValue } from ".."
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
+import { rescue, WhatsappException } from "../exception"
+import { logger } from "../lib/logger"
 
-export async function subscribeWebhook({
+export function subscribeWebhook({
   auth,
   overrideCallbackUrl = false,
 }: {
@@ -13,7 +14,7 @@ export async function subscribeWebhook({
   const { version = DEFAULT_API_VERSION } = auth
   const url = `${API_URL}/${version}/${auth.metadata.wabaId}/subscribed_apps`
 
-  try {
+  return rescue(async () => {
     const requestOptions: Parameters<typeof ky.post>[1] = {
       headers: {
         Authorization: `Bearer ${auth.tokens.accessToken}`,
@@ -27,39 +28,32 @@ export async function subscribeWebhook({
       }
     }
 
-    const result = await ky
-      .post<{
-        success: boolean
-      }>(url, requestOptions)
-      .json()
+    try {
+      const result = await ky
+        .post<{
+          success: boolean
+        }>(url, requestOptions)
+        .json()
 
-    if (!result.success) {
-      throw new WhatsappException("Failed to subscribe webhook")
-    }
-  } catch (error) {
-    if (error instanceof HTTPError) {
-      const result = error.data
-      if (result.error === "invalid_request") {
-        console.error("Failed to subscribe webhook", error)
+      if (!result.success) {
+        throw new WhatsappException("Failed to subscribe webhook")
       }
-    } else {
-      console.error("Failed to subscribe webhook", error)
+    } catch (error) {
+      if (error instanceof HTTPError) {
+        const result = error.data
+        if (result.error === "invalid_request") {
+          logger.error(error, "Subscribe webhook: invalid_request")
+        }
+      }
+      throw error
     }
-
-    throw new WhatsappException("Failed to subscribe webhook").setOriginError(
-      error,
-    )
-  }
+  })
 }
 
-export async function unsubscribeWebhook({
-  auth,
-}: {
-  auth: WhatsappAuthValue
-}) {
+export function unsubscribeWebhook({ auth }: { auth: WhatsappAuthValue }) {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
+  return rescue(async () => {
     const result = await ky
       .delete<{
         success: boolean
@@ -73,17 +67,5 @@ export async function unsubscribeWebhook({
     if (!result.success) {
       throw new WhatsappException("Failed to unsubscribe webhook")
     }
-  } catch (error) {
-    let message = "Failed to unsubscribe webhook"
-
-    if (error instanceof Error) {
-      message = error.message
-    }
-
-    if (error instanceof HTTPError) {
-      message = error.data?.error?.message || message
-    }
-
-    throw new WhatsappException(message).setOriginError(error)
-  }
+  })
 }

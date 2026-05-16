@@ -33,8 +33,6 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
-    unsubscribeWebhook: async ({ ctx }) =>
-      await unsubscribeWebhook({ auth: ctx.auth }),
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     listMessageTemplates: async ({ ctx }) =>
@@ -56,8 +54,8 @@ const config: IntegrationDefinition<
       `Handler: ${props.req.method} ${props.req.url} is not implemented`,
     )
   },
-  disconnect: (_props: WhatsappAuthValue): Promise<void> => {
-    throw new Error("Method is not implemented.")
+  disconnect: async (auth: WhatsappAuthValue): Promise<void> => {
+    await unsubscribeWebhook({ auth })
   },
 }
 

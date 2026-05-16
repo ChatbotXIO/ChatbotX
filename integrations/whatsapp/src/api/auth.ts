@@ -1,7 +1,8 @@
 import type { Oauth2Config } from "@chatbotx.io/sdk"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
+import { rescue } from "../exception"
+import { logger } from "../lib/logger"
 
 type ExchangeAccessTokenResponse = {
   access_token: string
@@ -18,14 +19,14 @@ type DebugTokenResponse = {
   data: DebugTokenData
 }
 
-export const exchangeAccessToken = async (
+export const exchangeAccessToken = (
   settings: Pick<Oauth2Config, "clientId" | "clientSecret" | "version">,
   code: string,
 ): Promise<ExchangeAccessTokenResponse> => {
   const { version = DEFAULT_API_VERSION } = settings
 
-  try {
-    const result = await ky
+  return rescue(() =>
+    ky
       .get<ExchangeAccessTokenResponse>(
         `${API_URL}/${version}/oauth/access_token`,
         {
@@ -36,15 +37,8 @@ export const exchangeAccessToken = async (
           },
         },
       )
-      .json()
-
-    return result
-  } catch (e) {
-    console.error("Failed to exchange access token", e)
-    throw new WhatsappException(
-      "Failed to exchange access token",
-    ).setOriginError(e)
-  }
+      .json(),
+  )
 }
 
 export async function debugToken(
@@ -66,7 +60,7 @@ export async function debugToken(
 
     return result.data
   } catch (e) {
-    console.error("Failed to debug token", e)
+    logger.error(e, "Failed to debug token")
     return null
   }
 }

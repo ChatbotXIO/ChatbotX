@@ -1,6 +1,6 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
+import { rescue } from "../exception"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 
 export const normalizeWhatsappDisplayPhoneNumber = (
@@ -33,15 +33,15 @@ export type WhatsappPhoneNumberResponse = {
   paging: WhatsappPagination
 }
 
-export async function listPhoneNumbers(props: {
+export function listPhoneNumbers(props: {
   wabaId: string
   accessToken: string
   version?: string
 }): Promise<WhatsappPhoneNumberResponse> {
   const { version = DEFAULT_API_VERSION } = props
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<WhatsappPhoneNumberResponse>(
         `${API_URL}/${version}/${props.wabaId}/phone_numbers`,
         {
@@ -50,17 +50,11 @@ export async function listPhoneNumbers(props: {
           },
         },
       )
-      .json()
-  } catch (error) {
-    console.error("Unable to list WhatsApp's phone numbers", error)
-
-    throw new WhatsappException(
-      "Unable to list WhatsApp's phone numbers",
-    ).setOriginError(error)
-  }
+      .json(),
+  )
 }
 
-export async function findPhoneNumber(props: {
+export function findPhoneNumber(props: {
   wabaId: string
   accessToken: string
   version?: string
@@ -68,8 +62,8 @@ export async function findPhoneNumber(props: {
 }): Promise<WhatsappPhoneNumber> {
   const { version = DEFAULT_API_VERSION } = props
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<WhatsappPhoneNumber>(
         `${API_URL}/${version}/${props.wabaId}/phone_numbers/${props.phoneNumberId}`,
         {
@@ -78,14 +72,8 @@ export async function findPhoneNumber(props: {
           },
         },
       )
-      .json()
-  } catch (error) {
-    console.error("Unable to find WhatsApp's phone number", error)
-
-    throw new WhatsappException(
-      "Unable to find WhatsApp's phone number",
-    ).setOriginError(error)
-  }
+      .json(),
+  )
 }
 
 export type WhatsappPhoneNumberWebhookConfiguration = {
@@ -163,13 +151,13 @@ const PHONE_NUMBER_DETAIL_FIELDS = [
 /**
  * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/reference/phone-numbers
  */
-export async function findPhoneNumberDetail(
+export function findPhoneNumberDetail(
   auth: WhatsappAuthValue,
 ): Promise<WhatsappPhoneNumberDetail> {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<WhatsappPhoneNumberDetail>(
         `${API_URL}/${version}/${auth.metadata.phoneNumber.id}`,
         {
@@ -181,14 +169,8 @@ export async function findPhoneNumberDetail(
           },
         },
       )
-      .json()
-  } catch (error) {
-    console.error("Unable to find WhatsApp's phone number detail", error)
-
-    throw new WhatsappException(
-      "Unable to find WhatsApp's phone number detail",
-    ).setOriginError(error)
-  }
+      .json(),
+  )
 }
 
 export type ConversationalAutomation = {
@@ -208,12 +190,12 @@ export type ConversationalAutomationResponse = {
 /**
  * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers/conversational-components/#configuring-via-the-api
  */
-export const findConversationalAutomation = async (
+export const findConversationalAutomation = (
   auth: WhatsappAuthValue,
 ): Promise<ConversationalAutomation> => {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
+  return rescue(async () => {
     const result = await ky
       .get<ConversationalAutomationResponse>(
         `${API_URL}/${version}/${auth.metadata.phoneNumber.id}?fields=conversational_automation`,
@@ -225,29 +207,22 @@ export const findConversationalAutomation = async (
       )
       .json()
 
-    const conversationalAutomation: ConversationalAutomation = {
+    return {
       enable_welcome_message:
         result.conversational_automation?.enable_welcome_message ?? false,
       prompts: result.conversational_automation?.prompts ?? [],
       commands: result.conversational_automation?.commands ?? [],
     }
-
-    return conversationalAutomation
-  } catch (e) {
-    console.error("Failed to list conversational automation", e)
-    throw new WhatsappException(
-      "Failed to list conversational automation",
-    ).setOriginError(e)
-  }
+  })
 }
 
-export async function updateConversationalAutomation(
+export function updateConversationalAutomation(
   auth: WhatsappAuthValue,
   data: ConversationalAutomation,
 ): Promise<void> {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
+  return rescue(async () => {
     await ky.post(
       `${API_URL}/${version}/${auth.metadata.phoneNumber?.id}/conversational_automation`,
       {
@@ -257,10 +232,5 @@ export async function updateConversationalAutomation(
         },
       },
     )
-  } catch (e) {
-    console.error("Failed to update conversational automation", e)
-    throw new WhatsappException(
-      "Failed to update conversational automation",
-    ).setOriginError(e)
-  }
+  })
 }

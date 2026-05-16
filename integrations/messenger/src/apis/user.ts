@@ -5,18 +5,20 @@ import type {
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL } from "../constants"
-import { MessengerAPIException } from "../exception"
+import { rescue } from "../exception"
 import { facebookGraphClient } from "../lib/http-client"
 import { logger } from "../lib/logger"
 import type { FacebookUserProfile, MessengerAuthValue } from "../schema"
 
 export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
-  async (props) => {
+  (props) => {
     const {
       data: { sourceId },
       ctx,
     } = props
-    try {
+    const endpoint = `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`
+
+    return rescue(endpoint, async () => {
       const response = await facebookGraphClient.get<FacebookUserProfile>(
         `${ctx.auth.metadata.version}/${sourceId}`,
         {
@@ -44,13 +46,7 @@ export const getUserProfile: ContactHandlers<MessengerAuthValue>["getProfile"] =
       }
 
       return result
-    } catch (error) {
-      logger.error(error, "getUserProfile error")
-      throw new MessengerAPIException(
-        "Failed to fetch user profile",
-        `${API_URL}/${ctx.auth.metadata.version}/${sourceId}`,
-      ).setOriginError(error)
-    }
+    })
   }
 
 const getContactProfilePicture = async ({

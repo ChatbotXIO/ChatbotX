@@ -12,6 +12,7 @@ import type {
   SendFlowStepProps,
 } from "@chatbotx.io/sdk"
 import { sendMessageToZaloOA, uploadAttachment } from "../../../api/message"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { ZaloAuthValue } from "../../../schema/definition"
 import type {
@@ -39,7 +40,7 @@ export const sendMessage: MessageHandlers<ZaloAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return {
@@ -159,7 +160,7 @@ export const sendFlowStep: MessageHandlers<ZaloAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return {

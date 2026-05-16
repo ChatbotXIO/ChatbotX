@@ -7,47 +7,39 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import fetch from "cross-fetch"
 import imageSize from "image-size"
-import { MessengerAttachmentException } from "../exception"
+import { rescue } from "../exception"
 import { facebookAttachmentClient } from "../lib/http-client"
-import { logger } from "../lib/logger"
 import type {
   FacebookMessageAttachment,
   FacebookSendMessageResponse,
   MessengerAuthValue,
 } from "../schema"
 
-export const uploadAttachment = async (
+export const uploadAttachment = (
   auth: MessengerAuthValue,
   url: string,
   type: FileType,
 ): Promise<FacebookSendMessageResponse> => {
-  try {
-    return await facebookAttachmentClient.post<FacebookSendMessageResponse>(
-      `${auth.metadata.version}/me/message_attachments`,
-      {
-        headers: {
-          Authorization: `Bearer ${auth.tokens.accessToken}`,
-        },
-        json: {
-          message: {
-            attachment: {
-              type,
-              payload: {
-                is_reusable: true,
-                url,
-              } as FacebookMessageAttachment["payload"],
-            },
+  const endpoint = `${auth.metadata.version}/me/message_attachments`
+
+  return rescue(endpoint, () =>
+    facebookAttachmentClient.post<FacebookSendMessageResponse>(endpoint, {
+      headers: {
+        Authorization: `Bearer ${auth.tokens.accessToken}`,
+      },
+      json: {
+        message: {
+          attachment: {
+            type,
+            payload: {
+              is_reusable: true,
+              url,
+            } as FacebookMessageAttachment["payload"],
           },
         },
       },
-    )
-  } catch (error) {
-    logger.error(error, "Upload attachment failed")
-    throw new MessengerAttachmentException(
-      "Upload attachment failed",
-      url,
-    ).setOriginError(error)
-  }
+    }),
+  )
 }
 
 export const getMessageAttachmentEntity = async ({
