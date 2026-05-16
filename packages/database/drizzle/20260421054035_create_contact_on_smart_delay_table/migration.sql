@@ -1,9 +1,5 @@
--- DROP TABLE IF EXISTS "ContactOnSmartDelay";
--- DROP TYPE IF EXISTS "status";
--- DROP TYPE IF EXISTS "type";
-
-CREATE TYPE "status" AS ENUM('pending', 'completed', 'failed');--> statement-breakpoint
-CREATE TYPE "type" AS ENUM('waitNode');--> statement-breakpoint
+CREATE TYPE "ContactOnSmartDelayStatus" AS ENUM('pending', 'completed', 'failed');--> statement-breakpoint
+CREATE TYPE "ContactOnSmartDelayType" AS ENUM('waitNode');--> statement-breakpoint
 CREATE TABLE "ContactOnSmartDelay" (
 	"id" bigint PRIMARY KEY,
 	"workspaceId" bigint NOT NULL,
@@ -13,10 +9,10 @@ CREATE TABLE "ContactOnSmartDelay" (
 	"conversationId" bigint NOT NULL,
 	"nodeId" text,
 	"stepId" text,
-	"type" "type" NOT NULL,
+	"type" "ContactOnSmartDelayType" NOT NULL,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"triggerAt" timestamp(6) with time zone NOT NULL,
-	"status" "status" DEFAULT 'pending'::"status" NOT NULL
+	"status" "ContactOnSmartDelayStatus" DEFAULT 'pending'::"ContactOnSmartDelayStatus" NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX "ContactOnSmartDelay_workspaceId_flowId_contactInboxId_stepId_idx" ON "ContactOnSmartDelay" ("workspaceId","flowId","contactInboxId","stepId");--> statement-breakpoint

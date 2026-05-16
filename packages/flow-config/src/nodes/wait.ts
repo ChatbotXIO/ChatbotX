@@ -16,7 +16,7 @@ export const waitNodeSchema = baseNodeSchema.extend({
     }),
   }),
 })
-export type WaitNodeSchema = z.input<typeof waitNodeSchema>
+export type WaitNodeSchema = z.infer<typeof waitNodeSchema>
 
 export const waitNodeDefaultFn = (props: DefaultNodeProps): WaitNodeSchema => ({
   ...defaultNodeData(),

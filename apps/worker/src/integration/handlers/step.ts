@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { db, eq } from "@chatbotx.io/database/client"
 import {
   smartDelayStatuses,
   smartDelayTypes,
@@ -25,6 +25,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { logger } from "../../lib/logger"
 import {
   addContactNotes,
   addContactSequence,
@@ -147,17 +148,24 @@ async function handleWait({
   const contactInboxId = contactInbox.id
 
   const triggerAt = await computeTriggerAt(step, async (customFieldId) => {
-    const customField = await db.query.contactCustomFieldModel.findFirst({
-      where: {
-        contactId: contactInbox.contactId,
-        customFieldId,
-      },
-      columns: {
-        value: true,
-      },
-    })
-
-    return customField?.value ?? null
+    try {
+      const customField = await db.query.contactCustomFieldModel.findFirst({
+        where: {
+          contactId: contactInbox.contactId,
+          customFieldId,
+        },
+        columns: {
+          value: true,
+        },
+      })
+      return customField?.value ?? null
+    } catch (err) {
+      logger.error(
+        { err, customFieldId },
+        "Failed to query custom field for wait step",
+      )
+      return null
+    }
   })
 
   if (!triggerAt) {
@@ -175,9 +183,9 @@ async function handleWait({
     return { status: "skip", result: null }
   }
 
-  const isEnqueue = diffMs <= ENQUEUE_DELAY_MS
+  const rowId = createId()
   const data: typeof contactOnSmartDelayModel.$inferInsert = {
-    id: createId(),
+    id: rowId,
     workspaceId: conversation.workspaceId,
     flowId: flowVersion.flowId,
     flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
@@ -190,26 +198,36 @@ async function handleWait({
     status: smartDelayStatuses.enum.pending,
   }
 
-  if (isEnqueue) {
-    await integrationQueue.add(
-      IntegrationJobAction.sendFlow,
-      {
-        type: IntegrationJobAction.sendFlow,
-        data: {
-          conversationId: conversation.id,
-          flowId: flowVersion.flowId,
-          flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
-          nodeId: connectedNodeId,
-          contactInboxId: contactInbox,
-        },
-      },
-      { delay: Math.max(0, diffMs), jobId: buildJobId(data.id as string) },
-    )
-
-    data.status = smartDelayStatuses.enum.completed
-  }
-
+  // Insert tracking record first so a crash during enqueue still has a recovery path via scanner
   await db.insert(contactOnSmartDelayModel).values(data)
+
+  if (diffMs <= ENQUEUE_DELAY_MS) {
+    try {
+      await integrationQueue.add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: conversation.id,
+            flowId: flowVersion.flowId,
+            flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+            nodeId: connectedNodeId,
+            contactInboxId,
+          },
+        },
+        { delay: Math.max(0, diffMs), jobId: buildJobId(rowId) },
+      )
+      await db
+        .update(contactOnSmartDelayModel)
+        .set({ status: smartDelayStatuses.enum.completed })
+        .where(eq(contactOnSmartDelayModel.id, rowId))
+    } catch (err) {
+      logger.warn(
+        { err, rowId },
+        "Failed to immediately enqueue smart delay; scanner will pick it up",
+      )
+    }
+  }
 
   return { status: "wait", result: null }
 }

@@ -1,4 +1,4 @@
-import { DelayType } from "@chatbotx.io/flow-config"
+import { waitStepDelayTypes } from "@chatbotx.io/flow-config"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
@@ -11,15 +11,15 @@ const DelayTypeSelect = (props: DelayTypeSelectProps) => {
 
   const delayTypes = [
     {
-      value: DelayType.duration,
+      value: waitStepDelayTypes.enum.duration,
       label: t("flows.delayType.duration"),
     },
     {
-      value: DelayType.date,
+      value: waitStepDelayTypes.enum.date,
       label: t("flows.delayType.date"),
     },
     {
-      value: DelayType.random,
+      value: waitStepDelayTypes.enum.random,
       label: t("flows.delayType.random"),
     },
   ]

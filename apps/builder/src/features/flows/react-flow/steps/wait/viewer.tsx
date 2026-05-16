@@ -1,10 +1,10 @@
 "use client"
 
 import {
-  DateType,
-  DelayType,
-  OffsetOperator,
   type WaitStepSchema,
+  waitStepDateTypes,
+  waitStepDelayTypes,
+  waitStepOffsetOperators,
 } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
@@ -20,7 +20,8 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
   const { customFields } = useCustomFieldStore((state) => state)
 
   const customField =
-    data.delayType === DelayType.date && data.dateType === DateType.enum.dynamic
+    data.delayType === waitStepDelayTypes.enum.date &&
+    data.dateType === waitStepDateTypes.enum.dynamic
       ? customFields.find((obj) => obj.id === data.outputFieldId)
       : undefined
 
@@ -29,14 +30,14 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
       <div>
         {t("flows.wait.delayTypeLabel")}{" "}
         <span className="rounded-full py-1 font-medium text-primary text-sm">
-          {data.delayType === DelayType.random
+          {data.delayType === waitStepDelayTypes.enum.random
             ? t("flows.wait.randomized")
             : t("flows.wait.fixed")}
         </span>{" "}
         {t("flows.wait.delay")}
       </div>
       <div className="flex flex-wrap items-center justify-center gap-1">
-        {data.delayType === DelayType.duration && (
+        {data.delayType === waitStepDelayTypes.enum.duration && (
           <>
             {t("flows.wait.durationDetailPrefix")}{" "}
             <span className="rounded-full py-1 font-medium text-primary text-sm">
@@ -52,8 +53,8 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
             </span>
           </>
         )}
-        {data.delayType === DelayType.date &&
-          data.dateType === DateType.enum.specific && (
+        {data.delayType === waitStepDelayTypes.enum.date &&
+          data.dateType === waitStepDateTypes.enum.specific && (
             <>
               {t("flows.wait.dateDetailPrefix")}{" "}
               <span className="rounded-full py-1 font-medium text-primary text-sm">
@@ -61,8 +62,8 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
               </span>
             </>
           )}
-        {data.delayType === DelayType.date &&
-          data.dateType === DateType.enum.dynamic && (
+        {data.delayType === waitStepDelayTypes.enum.date &&
+          data.dateType === waitStepDateTypes.enum.dynamic && (
             <>
               {t("flows.wait.customFieldDetailPrefix")}{" "}
               <span className="rounded-full py-1 font-medium text-primary text-sm">
@@ -70,13 +71,16 @@ const WaitStepViewer = (props: WaitStepViewerProps) => {
               </span>
               {data.offset && (
                 <span className="text-muted-foreground">
-                  ({data.offsetOperator === OffsetOperator.enum.add ? "+" : "-"}
+                  (
+                  {data.offsetOperator === waitStepOffsetOperators.enum.add
+                    ? "+"
+                    : "-"}
                   {data.offsetValue} {data.offsetUnit})
                 </span>
               )}
             </>
           )}
-        {data.delayType === DelayType.random && (
+        {data.delayType === waitStepDelayTypes.enum.random && (
           <>
             {t("flows.wait.randomDetailPrefix")}{" "}
             <span className="rounded-full py-1 font-medium text-primary text-sm">

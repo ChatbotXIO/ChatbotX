@@ -1,4 +1,4 @@
-import { DateType } from "@chatbotx.io/flow-config"
+import { waitStepDateTypes } from "@chatbotx.io/flow-config"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { useTranslations } from "next-intl"
 
@@ -11,11 +11,11 @@ const DateTypeSelect = (props: DateTypeSelectProps) => {
 
   const dateTypes = [
     {
-      value: DateType.enum.specific,
+      value: waitStepDateTypes.enum.specific,
       label: t("flows.wait.specific"),
     },
     {
-      value: DateType.enum.dynamic,
+      value: waitStepDateTypes.enum.dynamic,
       label: t("flows.wait.dynamic"),
     },
   ]

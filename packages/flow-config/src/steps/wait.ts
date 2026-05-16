@@ -11,22 +11,18 @@ import {
 import { z } from "zod"
 import { stepTypes } from "./step-action"
 
-export const DelayType = {
-  duration: "D01",
-  date: "D02",
-  random: "D03",
-} as const
+export const waitStepDelayTypes = z.enum(["duration", "date", "random"])
 
-export const DelayUnit = {
-  seconds: "seconds",
-  minutes: "minutes",
-  hours: "hours",
-  days: "days",
-} as const
+export const waitStepDelayUnits = z.enum([
+  "seconds",
+  "minutes",
+  "hours",
+  "days",
+])
 
-export const DateType = z.enum(["specific", "dynamic"])
+export const waitStepDateTypes = z.enum(["specific", "dynamic"])
 
-export const OffsetOperator = z.enum(["add", "subtract"])
+export const waitStepOffsetOperators = z.enum(["add", "subtract"])
 
 const MAX_DELAY = 999_999
 
@@ -40,38 +36,78 @@ export const waitStepSchema = z
   .and(
     z.discriminatedUnion("delayType", [
       z.object({
-        delayType: z.literal(DelayType.duration),
+        delayType: z.literal(waitStepDelayTypes.enum.duration),
         duration: z.coerce.number().int().min(1).max(MAX_DELAY),
-        unit: z.enum(DelayUnit),
+        unit: waitStepDelayUnits,
         interval: z.boolean(),
         startTime: z.iso.time().nullable(),
         endTime: z.iso.time().nullable(),
       }),
       z.object({
-        delayType: z.literal(DelayType.date),
-        dateType: DateType,
+        delayType: z.literal(waitStepDelayTypes.enum.date),
+        dateType: waitStepDateTypes,
         datetime: z.iso.datetime().optional(),
         outputFieldId: z.string().trim().min(1).optional(),
         offset: z.boolean().default(false),
-        offsetOperator: OffsetOperator.optional(),
+        offsetOperator: waitStepOffsetOperators.optional(),
         offsetValue: z.coerce.number().int().min(1).max(MAX_DELAY).optional(),
-        offsetUnit: z.enum(DelayUnit).optional(),
+        offsetUnit: waitStepDelayUnits.optional(),
       }),
       z.object({
-        delayType: z.literal(DelayType.random),
+        delayType: z.literal(waitStepDelayTypes.enum.random),
         min: z.coerce.number().int().min(1).max(MAX_DELAY),
         max: z.coerce.number().int().min(1).max(MAX_DELAY),
-        unit: z.enum(DelayUnit),
+        unit: waitStepDelayUnits,
       }),
     ]),
   )
   .superRefine((data, ctx) => {
-    if (data.delayType === DelayType.random && data.min > data.max) {
+    if (
+      data.delayType === waitStepDelayTypes.enum.random &&
+      data.min > data.max
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["max"],
         message: "Max must be ≥ Min",
       })
+    }
+
+    if (data.delayType === waitStepDelayTypes.enum.date) {
+      if (data.dateType === waitStepDateTypes.enum.specific && !data.datetime) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["datetime"],
+          message: "Required",
+        })
+      }
+      if (
+        data.dateType === waitStepDateTypes.enum.dynamic &&
+        !data.outputFieldId
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["outputFieldId"],
+          message: "Required",
+        })
+      }
+    }
+
+    if (data.delayType === waitStepDelayTypes.enum.duration && data.interval) {
+      if (!data.startTime) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startTime"],
+          message: "Required when interval is enabled",
+        })
+      }
+      if (!data.endTime) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endTime"],
+          message: "Required when interval is enabled",
+        })
+      }
     }
   })
 
@@ -80,13 +116,13 @@ export type WaitStepSchema = z.infer<typeof waitStepSchema>
 export const waitStepDefaultFn = (): WaitStepSchema => ({
   id: createId(),
   stepType: stepTypes.enum.wait,
-  delayType: DelayType.duration,
+  delayType: waitStepDelayTypes.enum.duration,
   ...delayTypeDurationDefaultFn(),
 })
 
 export const delayTypeDurationDefaultFn = () => ({
   duration: 1,
-  unit: DelayUnit.hours,
+  unit: waitStepDelayUnits.enum.hours,
   interval: false,
   startTime: null,
   endTime: null,
@@ -101,12 +137,12 @@ export async function computeTriggerAt(
   ) => Promise<string | null | undefined>,
 ): Promise<Date | null> {
   const UNIT_MS: Record<string, number> = {
-    [DelayUnit.seconds]: 1000,
-    [DelayUnit.minutes]: 60_000,
-    [DelayUnit.hours]: 3_600_000,
-    [DelayUnit.days]: 86_400_000,
+    [waitStepDelayUnits.enum.seconds]: 1000,
+    [waitStepDelayUnits.enum.minutes]: 60_000,
+    [waitStepDelayUnits.enum.hours]: 3_600_000,
+    [waitStepDelayUnits.enum.days]: 86_400_000,
   }
-  const toMs = (unit: string) => UNIT_MS[unit] ?? 0
+  const toMs = (unit: string): number | null => UNIT_MS[unit] ?? null
 
   const timeToSeconds = (time: string) => {
     const [h = 0, m = 0, s = 0] = time.split(":").map(Number)
@@ -128,8 +164,12 @@ export async function computeTriggerAt(
   const getTimeOfDay = (d: Date) =>
     d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()
 
-  if (step.delayType === DelayType.duration) {
-    const base = addMilliseconds(Date.now(), step.duration * toMs(step.unit))
+  if (step.delayType === waitStepDelayTypes.enum.duration) {
+    const unitMs = toMs(step.unit)
+    if (unitMs === null) {
+      return null
+    }
+    const base = addMilliseconds(Date.now(), step.duration * unitMs)
 
     if (!(step.interval && step.startTime && step.endTime)) {
       return base
@@ -155,16 +195,20 @@ export async function computeTriggerAt(
     return base
   }
 
-  if (step.delayType === DelayType.random) {
+  if (step.delayType === waitStepDelayTypes.enum.random) {
+    const unitMs = toMs(step.unit)
+    if (unitMs === null) {
+      return null
+    }
     const rand = Math.floor(
       Math.random() * (step.max - step.min + 1) + step.min,
     )
-    return addMilliseconds(Date.now(), rand * toMs(step.unit))
+    return addMilliseconds(Date.now(), rand * unitMs)
   }
 
   let triggerAt: Date | null = null
-  if (step.delayType === DelayType.date) {
-    if (step.dateType === DateType.enum.specific) {
+  if (step.delayType === waitStepDelayTypes.enum.date) {
+    if (step.dateType === waitStepDateTypes.enum.specific) {
       if (!step.datetime) {
         return null
       }
@@ -172,7 +216,7 @@ export async function computeTriggerAt(
       triggerAt = new Date(step.datetime)
     }
 
-    if (step.dateType === DateType.enum.dynamic) {
+    if (step.dateType === waitStepDateTypes.enum.dynamic) {
       if (!(step.outputFieldId && getCustomFieldValue)) {
         return null
       }
@@ -196,10 +240,15 @@ export async function computeTriggerAt(
         step.offsetUnit &&
         step.offsetOperator
       ) {
-        const sign = step.offsetOperator === OffsetOperator.enum.add ? 1 : -1
+        const offsetMs = toMs(step.offsetUnit)
+        if (offsetMs === null) {
+          return null
+        }
+        const sign =
+          step.offsetOperator === waitStepOffsetOperators.enum.add ? 1 : -1
         triggerAt = addMilliseconds(
           triggerAt,
-          sign * step.offsetValue * toMs(step.offsetUnit),
+          sign * step.offsetValue * offsetMs,
         )
       }
     }

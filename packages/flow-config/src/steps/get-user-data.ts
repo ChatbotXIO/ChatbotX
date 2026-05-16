@@ -7,7 +7,7 @@ import {
   successStateSchema,
 } from "../states"
 import { stepTypes } from "./step-action"
-import { DelayUnit } from "./wait"
+import { waitStepDelayUnits } from "./wait"
 
 export const ReplyFormat = {
   number: "RF01",
@@ -32,7 +32,7 @@ export const getUserDataStepSchema = z.object({
   retryMessage: z.string().trim().max(255),
   skipButtonLabel: z.string().trim().max(255),
   autoSkip: z.boolean(),
-  autoSkipTimeUnit: z.string().pipe(z.enum(DelayUnit)),
+  autoSkipTimeUnit: z.string().pipe(waitStepDelayUnits),
   autoSkipTimeValue: z.coerce.number().int().min(1).max(100),
   autoSkipFailAttempts: z.coerce.number().int().min(1).max(100),
   states: z.tuple([successStateSchema, skipStateSchema]),
@@ -48,7 +48,7 @@ export const getUserDataStepDefaultFn = (): GetUserDataStepSchema => ({
   retryMessage: "",
   skipButtonLabel: "",
   autoSkip: false,
-  autoSkipTimeUnit: DelayUnit.minutes,
+  autoSkipTimeUnit: waitStepDelayUnits.enum.minutes,
   autoSkipTimeValue: 3,
   autoSkipFailAttempts: 3,
   states: [successStateDefaultFn(), skipStateDefaultFn()],

@@ -1,4 +1,4 @@
-import { DelayUnit } from "@chatbotx.io/flow-config"
+import { waitStepDelayUnits } from "@chatbotx.io/flow-config"
 import {
   SelectField,
   type SelectFieldProps,
@@ -12,10 +12,19 @@ const DelayUnitSelect = (props: DelayUnitSelectProps) => {
   const t = useTranslations()
 
   const delayUnits = [
-    { value: DelayUnit.seconds, label: t("fields.delayUnit.seconds") },
-    { value: DelayUnit.minutes, label: t("fields.delayUnit.minutes") },
-    { value: DelayUnit.hours, label: t("fields.delayUnit.hours") },
-    { value: DelayUnit.days, label: t("fields.delayUnit.days") },
+    {
+      value: waitStepDelayUnits.enum.seconds,
+      label: t("fields.delayUnit.seconds"),
+    },
+    {
+      value: waitStepDelayUnits.enum.minutes,
+      label: t("fields.delayUnit.minutes"),
+    },
+    {
+      value: waitStepDelayUnits.enum.hours,
+      label: t("fields.delayUnit.hours"),
+    },
+    { value: waitStepDelayUnits.enum.days, label: t("fields.delayUnit.days") },
   ]
 
   return <SelectField {...props} options={delayUnits} />

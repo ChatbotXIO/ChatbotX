@@ -33,14 +33,15 @@ export const scanSmartDelay = async () => {
     return { scanned: 0, enqueued: 0 }
   }
 
-  const enqueueable = claimed.filter((row) => row.nodeId)
-  if (enqueueable.length > 0) {
+  const terminalRows = claimed.filter((row) => !row.nodeId)
+  if (terminalRows.length > 0) {
     logger.info(
-      { ids: enqueueable.map((row) => row.id) },
+      { ids: terminalRows.map((row) => row.id) },
       "Smart delay rows without nodeId marked completed (terminal wait)",
     )
   }
 
+  const enqueueable = claimed.filter((row) => row.nodeId)
   let enqueued = 0
 
   for (let index = 0; index < enqueueable.length; index += ENQUEUE_BULK_SIZE) {
@@ -56,7 +57,7 @@ export const scanSmartDelay = async () => {
               flowId: row.flowId,
               flowVersionId: row.flowVersionId ?? undefined,
               nodeId: row.nodeId ?? undefined,
-              contactInboxId: row.contactInboxId as string,
+              contactInboxId: row.contactInboxId,
             },
           },
           opts: {
@@ -70,18 +71,25 @@ export const scanSmartDelay = async () => {
     } catch (err) {
       logger.error(
         { err, ids: batch.map((row) => row.id) },
-        "Failed to enqueue smart delay batch, marking failed",
+        "Failed to enqueue smart delay batch, resetting to pending for retry",
       )
 
-      await db
-        .update(contactOnSmartDelayModel)
-        .set({ status: smartDelayStatuses.enum.failed })
-        .where(
-          inArray(
-            contactOnSmartDelayModel.id,
-            batch.map((row) => row.id),
-          ),
+      try {
+        await db
+          .update(contactOnSmartDelayModel)
+          .set({ status: smartDelayStatuses.enum.pending })
+          .where(
+            inArray(
+              contactOnSmartDelayModel.id,
+              batch.map((row) => row.id),
+            ),
+          )
+      } catch (updateErr) {
+        logger.error(
+          { err: updateErr, ids: batch.map((row) => row.id) },
+          "Failed to reset smart delay batch status to pending",
         )
+      }
     }
   }
 

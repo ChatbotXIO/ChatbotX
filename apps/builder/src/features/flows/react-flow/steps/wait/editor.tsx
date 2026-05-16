@@ -1,6 +1,6 @@
 "use client"
 
-import { DelayType } from "@chatbotx.io/flow-config"
+import { waitStepDelayTypes } from "@chatbotx.io/flow-config"
 import { useWatch } from "react-hook-form"
 import { DateDelayEditor } from "./components/date-delay-editor"
 import DelayTypeSelect from "./components/delay-type-select"
@@ -18,15 +18,15 @@ const WaitStepEditor = ({ parentName }: WaitStepEditorProps) => {
     <div className="flex flex-col gap-4">
       <DelayTypeSelect name={`${parentName}.delayType`} />
 
-      {delayType === DelayType.duration && (
+      {delayType === waitStepDelayTypes.enum.duration && (
         <DurationDelayEditor parentName={parentName} />
       )}
 
-      {delayType === DelayType.date && (
+      {delayType === waitStepDelayTypes.enum.date && (
         <DateDelayEditor parentName={parentName} />
       )}
 
-      {delayType === DelayType.random && (
+      {delayType === waitStepDelayTypes.enum.random && (
         <RandomDelayEditor parentName={parentName} />
       )}
     </div>

@@ -1,6 +1,9 @@
 "use client"
 
-import { DateType, OffsetOperator } from "@chatbotx.io/flow-config"
+import {
+  waitStepDateTypes,
+  waitStepOffsetOperators,
+} from "@chatbotx.io/flow-config"
 import { DateTimePickerField } from "@chatbotx.io/ui/components/form/date-picker-field"
 import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -35,14 +38,17 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
 
   useEffect(() => {
     if (dateType == null) {
-      setValue(`${parentName}.dateType`, DateType.enum.specific)
+      setValue(`${parentName}.dateType`, waitStepDateTypes.enum.specific)
     }
   }, [dateType, parentName, setValue])
 
   useEffect(() => {
     if (offset) {
       if (offsetOperator == null) {
-        setValue(`${parentName}.offsetOperator`, OffsetOperator.enum.add)
+        setValue(
+          `${parentName}.offsetOperator`,
+          waitStepOffsetOperators.enum.add,
+        )
       }
       if (offsetValue == null) {
         setValue(`${parentName}.offsetValue`, 1)
@@ -62,7 +68,7 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
         <DateTypeSelect name={`${parentName}.dateType`} />
       </div>
 
-      {dateType === DateType.enum.specific && (
+      {dateType === waitStepDateTypes.enum.specific && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label className="text-muted-foreground text-xs">
@@ -85,7 +91,7 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
         </div>
       )}
 
-      {dateType === DateType.enum.dynamic && (
+      {dateType === waitStepDateTypes.enum.dynamic && (
         <div className="flex flex-col gap-4">
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">
@@ -127,11 +133,11 @@ export function DateDelayEditor({ parentName }: DateDelayEditorProps) {
                       name={`${parentName}.offsetOperator`}
                       options={[
                         {
-                          value: OffsetOperator.enum.add,
+                          value: waitStepOffsetOperators.enum.add,
                           label: t("flows.wait.offsetAdd"),
                         },
                         {
-                          value: OffsetOperator.enum.subtract,
+                          value: waitStepOffsetOperators.enum.subtract,
                           label: t("flows.wait.offsetSubtract"),
                         },
                       ]}

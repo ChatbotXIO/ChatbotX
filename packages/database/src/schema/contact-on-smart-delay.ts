@@ -9,12 +9,12 @@ import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
 
 export const contactOnSmartDelayType = pgEnum(
-  "type",
+  "ContactOnSmartDelayType",
   smartDelayTypes.options as [string, ...string[]],
 )
 
 export const contactOnSmartDelayStatus = pgEnum(
-  "status",
+  "ContactOnSmartDelayStatus",
   smartDelayStatuses.options as [string, ...string[]],
 )
 
