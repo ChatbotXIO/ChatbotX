@@ -15,14 +15,9 @@ import type {
   ContactEventType,
   ContactStats,
   ContactsByDimension,
-  HumanAgentStats,
-  MessagesByAdminStats,
-  MessagesBySenderStats,
   TimeRangeQuery,
-  UniqueContactsByAdminStats,
 } from "../../schemas"
 import { BaseRepository } from "./base.repository"
-import { conversationStatsRepository } from "./conversation-stats.repository"
 
 export type InsertContactEventRow = {
   workspaceId: string
@@ -32,8 +27,6 @@ export type InsertContactEventRow = {
   sourceId?: string | null
   channel?: string | null
   country?: string | null
-  senderType?: "bot" | "human" | null
-  adminId?: string | null
   metadata?: Record<string, unknown> | null
 }
 
@@ -58,8 +51,6 @@ export class ContactStatsRepository extends BaseRepository {
       sourceId: p.sourceId ?? null,
       channel: p.channel ?? null,
       country: p.country ?? null,
-      senderType: p.senderType ?? null,
-      adminId: p.adminId ?? null,
       metadata: p.metadata ?? null,
     }))
     await db
@@ -545,173 +536,6 @@ export class ContactStatsRepository extends BaseRepository {
       dimension: row.dimension,
       count: Number(row.count),
       uniqueContacts: Number(row.uniqueContacts),
-    }))
-  }
-
-  async getMessagesBySender(
-    props: TimeRangeQuery & { granularity?: "day" | "month" },
-  ): Promise<MessagesBySenderStats[]> {
-    const { workspaceId, from, to, timezone } = props
-    const useMonth =
-      props.granularity === "month" || shouldUseMonthlyGranularity(props)
-    const interval = useMonth ? "1 month" : "1 day"
-
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket(${interval}, bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        "channel",
-        "senderType",
-        SUM(count)::int AS count
-      FROM analytics_contact_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "eventType" = 'contact_message_out'
-        AND "senderType" IS NOT NULL
-        AND "senderType" != ''
-      GROUP BY 1, 2, 3
-      ORDER BY 1 ASC, 2 ASC, 3 ASC
-    `)
-
-    return (
-      result.rows as {
-        bucket: Date
-        channel: string
-        senderType: "bot" | "human"
-        count: number
-      }[]
-    ).map((row) => ({
-      workspaceId,
-      timestamp: row.bucket,
-      channel: row.channel,
-      senderType: row.senderType,
-      count: Number(row.count),
-    }))
-  }
-
-  async getMessagesByAdmin(
-    props: TimeRangeQuery,
-  ): Promise<MessagesByAdminStats[]> {
-    const { workspaceId, from, to } = props
-
-    const [statsResult, members] = await Promise.all([
-      db.execute(sql`
-        SELECT
-          "adminId",
-          COUNT(*)::int AS count
-        FROM "AnalyticsContactEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" >= ${from}
-          AND "occurredAt" <= ${to}
-          AND "eventType" = 'contact_message_out'
-          AND "senderType" = 'human'
-          AND "adminId" IS NOT NULL
-        GROUP BY "adminId"
-        ORDER BY count DESC
-      `),
-      db.query.workspaceMemberModel.findMany({
-        where: { workspaceId },
-        with: {
-          user: { columns: { id: true, name: true, email: true } },
-        },
-      }),
-    ])
-
-    const countByAdmin = new Map<string, number>()
-    for (const row of statsResult.rows as {
-      adminId: string
-      count: number
-    }[]) {
-      countByAdmin.set(String(row.adminId), Number(row.count))
-    }
-
-    return members.map((member) => ({
-      workspaceId,
-      adminId: String(member.userId),
-      count: countByAdmin.get(String(member.userId)) ?? 0,
-      userName: member.user?.name ?? undefined,
-      userEmail: member.user?.email ?? undefined,
-    }))
-  }
-
-  async getUniqueContactsByAdmin(
-    props: TimeRangeQuery,
-  ): Promise<UniqueContactsByAdminStats[]> {
-    const { workspaceId, from, to } = props
-
-    const [statsResult, members] = await Promise.all([
-      db.execute(sql`
-        SELECT
-          "adminId",
-          COUNT(DISTINCT "contactId")::int AS count
-        FROM "AnalyticsContactEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" >= ${from}
-          AND "occurredAt" <= ${to}
-          AND "senderType" = 'human'
-          AND "adminId" IS NOT NULL
-        GROUP BY "adminId"
-        ORDER BY count DESC
-      `),
-      db.query.workspaceMemberModel.findMany({
-        where: { workspaceId },
-        with: {
-          user: { columns: { id: true, name: true, email: true } },
-        },
-      }),
-    ])
-
-    const countByAdmin = new Map<string, number>()
-    for (const row of statsResult.rows as {
-      adminId: string
-      count: number
-    }[]) {
-      countByAdmin.set(String(row.adminId), Number(row.count))
-    }
-
-    return members.map((member) => ({
-      workspaceId,
-      toAssignee: String(member.userId),
-      count: countByAdmin.get(String(member.userId)) ?? 0,
-      userName: member.user?.name ?? undefined,
-      userEmail: member.user?.email ?? undefined,
-    }))
-  }
-
-  async getHumanAgentStats(props: TimeRangeQuery): Promise<HumanAgentStats[]> {
-    const { workspaceId } = props
-
-    const [messagesByAdmin, contactsByAdmin, assignedByAdmin, members] =
-      await Promise.all([
-        this.getMessagesByAdmin(props),
-        this.getUniqueContactsByAdmin(props),
-        conversationStatsRepository.getAssignedByAdmin(props),
-        db.query.workspaceMemberModel.findMany({
-          where: { workspaceId },
-          with: {
-            user: { columns: { id: true, name: true, email: true } },
-          },
-        }),
-      ])
-
-    const messageCount = new Map(
-      messagesByAdmin.map((s) => [String(s.adminId), s.count]),
-    )
-    const contactCount = new Map(
-      contactsByAdmin.map((s) => [String(s.toAssignee), s.count]),
-    )
-    const assignedCount = new Map(
-      assignedByAdmin.map((s) => [s.toAssignee, s.count]),
-    )
-
-    return members.map((member) => ({
-      workspaceId,
-      adminId: String(member.userId),
-      messagesSent: messageCount.get(String(member.userId)) ?? 0,
-      uniqueContacts: contactCount.get(String(member.userId)) ?? 0,
-      assignedConversations: assignedCount.get(String(member.userId)) ?? 0,
-      userName: member.user?.name ?? undefined,
-      userEmail: member.user?.email ?? undefined,
     }))
   }
 }

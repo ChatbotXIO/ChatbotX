@@ -7,7 +7,6 @@ import {
   type MessageDeliveredPayload,
   type MessageFailedPayload,
   type MessagePayload,
-  type MessageSeenPayload,
   type MessageSentPayload,
   messageEventTypeSchema,
 } from "@chatbotx.io/flow-config"
@@ -17,7 +16,6 @@ import type {
   FlowNodeContactData,
   FlowNodeStatFailedItem,
   FlowNodeStatItem,
-  FlowNodeStatSeenItem,
   FlowNodeStatsResponse,
   FlowStatsRequest,
   ListFlowNodeContactsResponse,
@@ -171,63 +169,6 @@ export class FlowAnalyticsService {
       .filter((item): item is NonNullable<typeof item> => item !== null)
 
     await flowStatsRepository.insertNodeStats(items)
-  }
-
-  async onMessageSeen(payloads: MessageSeenPayload[]) {
-    const grouped = new Map<string, MessageSeenPayload[]>()
-    for (const payload of payloads) {
-      const wsId = payload.context.workspaceId
-      if (!grouped.has(wsId)) {
-        grouped.set(wsId, [])
-      }
-      grouped.get(wsId)?.push(payload)
-    }
-
-    for (const [workspaceId, wsPayloads] of grouped) {
-      const contactInboxIds = [
-        ...new Set(
-          wsPayloads
-            .map((p) => p.context.contactInboxId)
-            .filter(Boolean) as string[],
-        ),
-      ]
-
-      if (contactInboxIds.length === 0) {
-        continue
-      }
-
-      const unseenRecords = await db.query.flowNodeStatModel.findMany({
-        where: {
-          workspaceId: { eq: workspaceId },
-          eventType: { eq: messageEventTypeSchema.enum["message:delivered"] },
-          contactInboxId: { in: contactInboxIds },
-          seenAt: { isNull: true as const },
-        },
-      })
-
-      if (unseenRecords.length === 0) {
-        continue
-      }
-
-      const payloadMap = new Map<string, MessageSeenPayload>(
-        wsPayloads.map((p) => [
-          p.context.contactInboxId as string,
-          p as MessageSeenPayload,
-        ]),
-      )
-
-      const updateItems: FlowNodeStatSeenItem[] = unseenRecords
-        .map((r) => {
-          const p = payloadMap.get(r.contactInboxId as string)
-          if (!p) {
-            return null
-          }
-          return { id: r.id as string, seenAt: p.occurredAt }
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null)
-
-      await flowStatsRepository.updateSeenAt(updateItems)
-    }
   }
 
   async onClicked(payloads: FlowClickedPayload[]) {

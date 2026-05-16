@@ -3,6 +3,7 @@ import {
   getBroadcastStatsRequest,
   getBroadcastStatsResponse,
 } from "@chatbotx.io/analytics/schemas"
+import { withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
 
 export const analyticsBroadcastRoutes = os.router({
@@ -15,11 +16,15 @@ export const analyticsBroadcastRoutes = os.router({
     })
     .input(getBroadcastStatsRequest)
     .output(getBroadcastStatsResponse)
-    .handler(
-      async ({ input }) =>
-        await broadcastAnalyticsService.getStats({
-          workspaceId: input.workspaceId,
-          broadcastId: input.broadcastId,
-        }),
+    .handler(async ({ input }) =>
+      withCache(
+        `analytics:broadcast-stats:${input.workspaceId}:${input.broadcastId}`,
+        () =>
+          broadcastAnalyticsService.getStats({
+            workspaceId: input.workspaceId,
+            broadcastId: input.broadcastId,
+          }),
+        { ttl: 120 },
+      ),
     ),
 })

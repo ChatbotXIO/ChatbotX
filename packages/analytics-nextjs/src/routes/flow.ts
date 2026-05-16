@@ -3,7 +3,12 @@ import {
   flowNodeStatsResponse,
   flowStatsRequest,
 } from "@chatbotx.io/analytics/schemas"
+import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
+
+const flowStatsCacheTag = (flowId: string) => `flow-stats:${flowId}`
+const flowStatsCacheKey = (workspaceId: string, flowId: string) =>
+  `flow:stats:${workspaceId}:${flowId}`
 
 export const analyticsFlowRoutes = os.router({
   resetFlowAnalytics: os
@@ -19,6 +24,7 @@ export const analyticsFlowRoutes = os.router({
         workspaceId: input.workspaceId,
         flowId: input.flowId,
       })
+      await invalidateCacheByTags([flowStatsCacheTag(input.flowId)])
     }),
   getFlowAnalytics: os
     .route({
@@ -29,11 +35,15 @@ export const analyticsFlowRoutes = os.router({
     })
     .input(flowStatsRequest)
     .output(flowNodeStatsResponse)
-    .handler(
-      async ({ input }) =>
-        await flowAnalyticsService.getFlowStats({
-          workspaceId: input.workspaceId,
-          flowId: input.flowId,
-        }),
+    .handler(async ({ input }) =>
+      withCache(
+        flowStatsCacheKey(input.workspaceId, input.flowId),
+        () =>
+          flowAnalyticsService.getFlowStats({
+            workspaceId: input.workspaceId,
+            flowId: input.flowId,
+          }),
+        { ttl: 120, tags: [flowStatsCacheTag(input.flowId)] },
+      ),
     ),
 })

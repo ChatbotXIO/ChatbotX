@@ -1223,6 +1223,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
+      '@chatbotx.io/redis':
+        specifier: workspace:*
+        version: link:../redis
       '@chatbotx.io/ui':
         specifier: workspace:*
         version: link:../ui

@@ -3,11 +3,17 @@ import { z } from "zod"
 export const analyticsContactEventTypes = z.enum([
   "contact_created",
   "contact_deleted",
-  "message_human_sent",
-  "message_bot_sent",
 ])
 export type AnalyticsContactEventType = z.infer<
   typeof analyticsContactEventTypes
+>
+
+export const analyticsMessageEventTypes = z.enum([
+  "message_human_sent",
+  "message_bot_sent",
+])
+export type AnalyticsMessageEventType = z.infer<
+  typeof analyticsMessageEventTypes
 >
 
 export const analyticsContactSenderTypes = z.enum(["bot", "human"])

@@ -73,3 +73,15 @@ export const analyticsFlowNodeEventRelations = defineRelationsPart(
     },
   }),
 )
+
+export const analyticsMessageEventRelations = defineRelationsPart(
+  schema,
+  (r) => ({
+    analyticsMessageEventModel: {
+      workspace: r.one.workspaceModel({
+        from: r.analyticsMessageEventModel.workspaceId,
+        to: r.workspaceModel.id,
+      }),
+    },
+  }),
+)

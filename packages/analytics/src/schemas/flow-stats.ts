@@ -155,12 +155,6 @@ export type FlowNodeStatClickedItem = z.infer<
   typeof flowNodeStatClickedItemSchema
 >
 
-export const flowNodeStatSeenItemSchema = z.object({
-  id: z.string(),
-  seenAt: z.date(),
-})
-export type FlowNodeStatSeenItem = z.infer<typeof flowNodeStatSeenItemSchema>
-
 export const FlowNodeStatFailedItemSchema = FlowNodeStatItemSchema.extend({
   errorContent: z.string(),
 })

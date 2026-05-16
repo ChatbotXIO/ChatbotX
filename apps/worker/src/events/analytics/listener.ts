@@ -4,12 +4,7 @@ import type {
   BaseEventListener,
 } from "@chatbotx.io/event-bus"
 import { handleMessageBotReceived } from "./bot-message"
-import {
-  handleBotMessageSent,
-  handleContactCreated,
-  handleContactDeleted,
-  handleHumanMessageSent,
-} from "./contact"
+import { handleContactCreated, handleContactDeleted } from "./contact"
 import {
   handleConversationArchived,
   handleConversationAssigned,
@@ -21,6 +16,7 @@ import {
   handleConversationUnassigned,
   handleConversationUnfollowed,
 } from "./conversation"
+import { handleBotMessageSent, handleHumanMessageSent } from "./message"
 
 type DashboardListener = BaseEventListener<AnalyticsDashboardEvent>
 

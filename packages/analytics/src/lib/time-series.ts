@@ -17,6 +17,7 @@ import {
   type TimeRangeQuery,
   trackingResponseTypes,
 } from "../schemas"
+import type { MessageEventType, MessageStats } from "../schemas/message-event"
 
 export function getUtcMonthKey(date: Date): string {
   return date.toISOString().slice(0, 7)
@@ -349,6 +350,72 @@ export function fillBotMessageStatsMonthSeries(
           result,
           aiProvider: "none",
           count: 0,
+        },
+      )
+    }
+  }
+
+  return filled
+}
+
+export function fillDailyMessageStats(
+  props: TimeRangeQuery & {
+    rows: MessageStats[]
+    eventTypes: MessageEventType[]
+  },
+): MessageStats[] {
+  const { workspaceId, from, to, timezone, rows, eventTypes } = props
+  const keyOf = (day: string, eventType: string) => `${day}::${eventType}`
+
+  const byKey = new Map<string, MessageStats>()
+  for (const r of rows) {
+    byKey.set(keyOf(getUtcDayKey(r.timestamp), r.eventType), r)
+  }
+
+  const filled: MessageStats[] = []
+  for (const { key, date } of iterateTzDays(from, to, timezone)) {
+    for (const et of eventTypes) {
+      const existing = byKey.get(keyOf(key, et))
+      filled.push(
+        existing ?? {
+          workspaceId,
+          timestamp: date,
+          eventType: et,
+          count: 0,
+          uniqueContacts: 0,
+        },
+      )
+    }
+  }
+
+  return filled
+}
+
+export function fillMessageStatsMonthlySeries(
+  props: TimeRangeQuery & {
+    rows: MessageStats[]
+    eventTypes: MessageEventType[]
+  },
+): MessageStats[] {
+  const { from, to, timezone, rows, eventTypes } = props
+  const keyOf = (month: string, eventType: string) => `${month}::${eventType}`
+
+  const byKey = new Map<string, MessageStats>()
+  for (const r of rows) {
+    byKey.set(keyOf(getUtcMonthKey(r.timestamp), r.eventType), r)
+  }
+
+  const filled: MessageStats[] = []
+  for (const { key, date } of iterateTzMonths(from, to, timezone)) {
+    for (const et of eventTypes) {
+      const existing = byKey.get(keyOf(key, et))
+      filled.push(
+        existing ?? {
+          workspaceId: props.workspaceId,
+          timestamp: date,
+          eventType: et,
+          count: 0,
+          uniqueContacts: 0,
         },
       )
     }

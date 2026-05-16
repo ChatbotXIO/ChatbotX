@@ -69,9 +69,5 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       name: "sequence-ops",
       handler: sequenceAnalyticsService.onSeen.bind(sequenceAnalyticsService),
     },
-    {
-      name: "flow-ops",
-      handler: flowAnalyticsService.onMessageSeen.bind(flowAnalyticsService),
-    },
   ],
 }

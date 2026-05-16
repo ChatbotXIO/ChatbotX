@@ -1,5 +1,6 @@
 import { and, count, db, eq, sql } from "@chatbotx.io/database/client"
 import {
+  conversationModel,
   flowAnalyticsSessionModel,
   flowNodeStatModel,
 } from "@chatbotx.io/database/schema"
@@ -14,7 +15,6 @@ import type { ContactEventData } from "../../schemas/common"
 import type {
   FlowNodeEventType,
   FlowNodeStatItem,
-  FlowNodeStatSeenItem,
   FlowNodeStats,
   FlowNodeStatsResponse,
   FlowStatsRequest,
@@ -32,13 +32,12 @@ export class FlowStatsRepository extends BaseRepository {
     const { workspaceId, analyticsId, nodeId } = input
     const t = flowNodeStatModel
 
-    const [statsResult, uniqueDeliveredResult, clickedResult] =
+    const [statsResult, uniqueDeliveredResult, clickedResult, seenResult] =
       await Promise.all([
         db
           .select({
             eventType: t.eventType,
             total: count(),
-            totalSeen: sql<number>`COUNT("seenAt")`,
           })
           .from(t)
           .where(
@@ -52,7 +51,7 @@ export class FlowStatsRepository extends BaseRepository {
           .groupBy(t.eventType),
         db
           .select({
-            count: sql<number>`COUNT(DISTINCT ${t.contactInboxId})`,
+            count: count(),
           })
           .from(t)
           .where(
@@ -65,7 +64,7 @@ export class FlowStatsRepository extends BaseRepository {
           ),
         db
           .select({
-            count: sql<number>`COUNT(DISTINCT ${t.contactInboxId})`,
+            count: count(),
           })
           .from(t)
           .where(
@@ -76,17 +75,33 @@ export class FlowStatsRepository extends BaseRepository {
               eq(t.eventType, "flow:clicked"),
             ),
           ),
+        db
+          .select({
+            count: count(),
+          })
+          .from(t)
+          .innerJoin(
+            conversationModel,
+            eq(conversationModel.contactId, t.contactId),
+          )
+          .where(
+            and(
+              eq(t.workspaceId, workspaceId),
+              eq(t.analyticsId, analyticsId),
+              eq(t.nodeId, nodeId),
+              eq(t.eventType, messageEventTypeSchema.enum["message:delivered"]),
+              sql`${conversationModel.contactLastReadAt} >= ${t.occurredAt}`,
+            ),
+          ),
       ])
 
     let delivered = 0
     let failed = 0
-    let seen = 0
 
     for (const row of statsResult) {
       switch (row.eventType) {
         case "message:delivered":
           delivered = Number(row.total)
-          seen = Number(row.totalSeen)
           break
         case "message:failed":
           failed = Number(row.total)
@@ -95,6 +110,8 @@ export class FlowStatsRepository extends BaseRepository {
           break
       }
     }
+
+    const seen = Number(seenResult[0]?.count ?? 0)
 
     const clicked = Number(clickedResult[0]?.count ?? 0)
     const uniqueDelivered = Number(uniqueDeliveredResult[0]?.count ?? 0)
@@ -116,24 +133,6 @@ export class FlowStatsRepository extends BaseRepository {
       return
     }
     await db.insert(flowNodeStatModel).values(data).onConflictDoNothing()
-  }
-
-  async updateSeenAt(items: FlowNodeStatSeenItem[]): Promise<void> {
-    if (items.length === 0) {
-      return
-    }
-
-    const seenCases = items.map(
-      (item) =>
-        sql`WHEN "id" = ${item.id} THEN greatest("seenAt", ${item.seenAt})`,
-    )
-    const idTuples = items.map((i) => sql`${i.id}`)
-
-    await db.execute(sql`
-      UPDATE "FlowNodeStat"
-      SET "seenAt" = CASE ${sql.join(seenCases, sql` `)} ELSE "seenAt" END
-      WHERE "id" IN (${sql.join(idTuples, sql`, `)})
-    `)
   }
 
   async getFlowStats(input: FlowStatsRequest): Promise<FlowNodeStatsResponse> {
@@ -305,6 +304,47 @@ export class FlowStatsRepository extends BaseRepository {
     const offset = (page - 1) * perPage
     const t = flowNodeStatModel
 
+    if (eventType === "message:seen") {
+      const rows = await db
+        .select({
+          contactInboxId: t.contactInboxId,
+          contactId: t.contactId,
+          occurredAt: t.occurredAt,
+          errorContent: t.errorContent,
+        })
+        .from(t)
+        .innerJoin(
+          conversationModel,
+          eq(conversationModel.contactId, t.contactId),
+        )
+        .where(
+          and(
+            eq(t.workspaceId, workspaceId),
+            eq(t.analyticsId, analyticsId),
+            eq(t.nodeId, nodeId),
+            eq(t.eventType, messageEventTypeSchema.enum["message:delivered"]),
+            sql`${conversationModel.contactLastReadAt} >= ${t.occurredAt}`,
+          ),
+        )
+        .orderBy(sql`${t.occurredAt} DESC NULLS LAST`)
+        .limit(perPage)
+        .offset(offset)
+
+      const contactInboxIds = rows.map((r) => r.contactInboxId as string)
+      const contactEventMap = new Map<string, ContactEventData>()
+
+      for (const row of rows) {
+        contactEventMap.set(row.contactInboxId, {
+          contactId: row.contactId,
+          contactInboxId: row.contactInboxId,
+          occurredAt: (row.occurredAt ?? new Date()).toISOString(),
+          errorContent: row.errorContent ?? undefined,
+        })
+      }
+
+      return { contactInboxIds, contactEventMap }
+    }
+
     const { eventCondition, orderColumn } = this.buildEventFilter(eventType)
 
     const baseCondition = sql`${t.workspaceId} = ${workspaceId} AND ${t.analyticsId} = ${analyticsId} AND ${t.nodeId} = ${nodeId} AND ${eventCondition}`
@@ -316,9 +356,7 @@ export class FlowStatsRepository extends BaseRepository {
       .select({
         contactInboxId: t.contactInboxId,
         contactId: t.contactId,
-        eventType: t.eventType,
         occurredAt: t.occurredAt,
-        seenAt: t.seenAt,
         errorContent: t.errorContent,
       })
       .from(t)
@@ -334,7 +372,7 @@ export class FlowStatsRepository extends BaseRepository {
       contactEventMap.set(row.contactInboxId, {
         contactId: row.contactId,
         contactInboxId: row.contactInboxId,
-        occurredAt: this.getFlowNodeOccurredAt(row, eventType),
+        occurredAt: (row.occurredAt ?? new Date()).toISOString(),
         errorContent: row.errorContent ?? undefined,
       })
     }
@@ -377,8 +415,8 @@ export class FlowStatsRepository extends BaseRepository {
         }
       case "message:seen":
         return {
-          eventCondition: sql`${t.eventType} = 'message:delivered' AND ${t.seenAt} IS NOT NULL`,
-          orderColumn: t.seenAt,
+          eventCondition: sql`${t.eventType} = 'message:delivered'`,
+          orderColumn: t.occurredAt,
         }
       case "message:failed":
         return {
@@ -395,22 +433,6 @@ export class FlowStatsRepository extends BaseRepository {
           eventCondition: sql`${t.eventType} = 'message:delivered'`,
           orderColumn: t.occurredAt,
         }
-    }
-  }
-
-  private getFlowNodeOccurredAt(
-    row: {
-      eventType: string
-      occurredAt: Date | null
-      seenAt: Date | null
-    },
-    eventType: FlowNodeEventType,
-  ): string {
-    switch (eventType) {
-      case "message:seen":
-        return (row.seenAt ?? new Date()).toISOString()
-      default:
-        return (row.occurredAt ?? new Date()).toISOString()
     }
   }
 }

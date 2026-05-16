@@ -8,8 +8,18 @@ import {
   getMessagesByAdminStatsResponseSchema,
   timeRangeQuerySchema,
 } from "@chatbotx.io/analytics"
+import { withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
 import z from "zod"
+
+const timeRangeKey = (
+  route: string,
+  workspaceId: string,
+  from: Date,
+  to: Date,
+  timezone: string,
+) =>
+  `analytics:${route}:${workspaceId}:${from.toISOString()}:${to.toISOString()}:${timezone}`
 
 export const analyticsContactRoutes = os.router({
   contactCountsPerDayAnalyticsAPI: os
@@ -47,10 +57,22 @@ export const analyticsContactRoutes = os.router({
     })
     .input(timeRangeQuerySchema)
     .output(getContactsCountResponseSchema)
-    .handler(async ({ input }) => {
-      const count = await contactAnalyticsService.getNewContactsCount(input)
-      return { data: { count } }
-    }),
+    .handler(async ({ input }) =>
+      withCache(
+        timeRangeKey(
+          "new-contacts-count",
+          input.workspaceId,
+          input.from,
+          input.to,
+          input.timezone,
+        ),
+        async () => {
+          const count = await contactAnalyticsService.getNewContactsCount(input)
+          return { data: { count } }
+        },
+        { ttl: 120 },
+      ),
+    ),
   contactsCountAnalyticsAPI: os
     .route({
       method: "GET",
@@ -60,10 +82,22 @@ export const analyticsContactRoutes = os.router({
     })
     .input(timeRangeQuerySchema)
     .output(getContactsCountResponseSchema)
-    .handler(async ({ input }) => {
-      const count = await contactAnalyticsService.getContactsCount(input)
-      return { data: { count } }
-    }),
+    .handler(async ({ input }) =>
+      withCache(
+        timeRangeKey(
+          "contacts-count",
+          input.workspaceId,
+          input.from,
+          input.to,
+          input.timezone,
+        ),
+        async () => {
+          const count = await contactAnalyticsService.getContactsCount(input)
+          return { data: { count } }
+        },
+        { ttl: 120 },
+      ),
+    ),
   activeContactsCountAnalyticsAPI: os
     .route({
       method: "GET",
@@ -73,10 +107,23 @@ export const analyticsContactRoutes = os.router({
     })
     .input(timeRangeQuerySchema)
     .output(getContactsCountResponseSchema)
-    .handler(async ({ input }) => {
-      const count = await contactAnalyticsService.getActiveContactsCount(input)
-      return { data: { count } }
-    }),
+    .handler(async ({ input }) =>
+      withCache(
+        timeRangeKey(
+          "active-contacts-count",
+          input.workspaceId,
+          input.from,
+          input.to,
+          input.timezone,
+        ),
+        async () => {
+          const count =
+            await contactAnalyticsService.getActiveContactsCount(input)
+          return { data: { count } }
+        },
+        { ttl: 120 },
+      ),
+    ),
   contactsByDimensionAnalyticsAPI: os
     .route({
       method: "GET",
