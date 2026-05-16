@@ -21,7 +21,7 @@ import { logger } from "../../lib/logger"
 import { saveResultToCustomField } from "./generate-text"
 
 export async function runRef(data: IntegrationJobRunRef["data"]) {
-  const { conversationId, contactInboxId, ref } = data
+  const { conversationId, contactInboxId, ref, messageId } = data
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId,
@@ -31,6 +31,61 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
   const refData = decodeRef(ref)
   if (!refData) {
     return
+  }
+
+  const startTime = Date.now()
+  try {
+    if (messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId,
+        occurredAt: new Date(),
+        hasResponse: true,
+        responseType: "flow",
+        routeType: "flow",
+        result: "success",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runRef",
+            triggerType: "contact_ref",
+          },
+        },
+      }).catch((err) =>
+        logger.error(err, "[runRef] Failed to emit bot_received"),
+      )
+    }
+  } catch (error) {
+    if (messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId,
+        occurredAt: new Date(),
+        hasResponse: false,
+        responseType: "flow",
+        routeType: "flow",
+        result: "fallback",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          fallbackReason: "handler_error_to_fallback",
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runRef",
+            triggerType: "contact_ref_failed",
+          },
+        },
+      }).catch((err) =>
+        logger.error(err, "[runRef] Failed to emit bot_received fallback"),
+      )
+    }
+    throw error
   }
 
   if (refData.type === "draft") {

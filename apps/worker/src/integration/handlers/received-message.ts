@@ -172,29 +172,6 @@ export const receiveMessage = async (
       // re-assign if is new message
       createdMessage = newMessage
 
-      emit("analytics:dashboard", {
-        eventType: "message:human_sent",
-        workspaceId: inbox.workspaceId,
-        contactId: contactInbox.contactId,
-        senderType: "human",
-        occurredAt: newMessage.createdAt,
-        source: integrationType,
-        sourceId: newMessage.sourceId,
-        channel: inbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "receiveMessage",
-            triggerType: "message_human_sent",
-          },
-        },
-      }).catch((error) => {
-        logger.error(
-          error,
-          "[receiveMessage] Failed to track message:human_sent",
-        )
-      })
-
       if (postbackAction) {
         await integrationQueue.add(IntegrationJobAction.runFlowPostback, {
           type: IntegrationJobAction.runFlowPostback,
@@ -203,6 +180,7 @@ export const receiveMessage = async (
             contactInboxId: contactInbox,
             action: postbackAction,
             ref,
+            messageId: createdMessage?.id,
           },
         })
       }
@@ -215,6 +193,7 @@ export const receiveMessage = async (
             contactInboxId: contactInbox,
             action: quickReplyAction,
             ref,
+            messageId: createdMessage?.id,
           },
         })
       }
@@ -228,6 +207,7 @@ export const receiveMessage = async (
         conversationId: conversation,
         contactInboxId: contactInbox,
         ref,
+        messageId: createdMessage?.id,
       },
     })
   }

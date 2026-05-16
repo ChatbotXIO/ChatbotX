@@ -28,7 +28,6 @@ packages/
   utils/       → Shared utilities
   redis/       → Redis/Dragonfly client
   kafka/       → Kafka client
-  clickhouse/  → ClickHouse analytics
   analytics/   → Analytics services
   worker-config/ → BullMQ queues, job types
   sdk/         → Types, integration contracts

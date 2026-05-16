@@ -71,7 +71,10 @@ export class MessageStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -114,7 +117,10 @@ export class MessageStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -159,7 +165,10 @@ export class MessageStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -205,7 +214,10 @@ export class MessageStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -261,7 +273,7 @@ export class MessageStatsRepository extends BaseRepository {
         AND bucket >= ${from}
         AND bucket <= ${to}
         AND "senderType" IS NOT NULL
-        AND "senderType" != ''
+        AND "channel" IS NOT NULL
       GROUP BY 1, 2, 3
       ORDER BY 1 ASC, 2 ASC, 3 ASC
     `)
@@ -282,32 +294,32 @@ export class MessageStatsRepository extends BaseRepository {
     }))
   }
 
-  async getMessagesByAdmin(
-    props: TimeRangeQuery,
-  ): Promise<MessagesByAdminStats[]> {
-    const { workspaceId, from, to } = props
+  private fetchWorkspaceMembers(workspaceId: string) {
+    return db.query.workspaceMemberModel.findMany({
+      where: { workspaceId },
+      with: {
+        user: { columns: { id: true, name: true, email: true } },
+      },
+    })
+  }
 
-    const [statsResult, members] = await Promise.all([
-      db.execute(sql`
-        SELECT
-          "adminId",
-          COUNT(*)::int AS count
-        FROM "AnalyticsMessageEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" >= ${from}
-          AND "occurredAt" <= ${to}
-          AND "eventType" = 'message_human_sent'
-          AND "adminId" IS NOT NULL
-        GROUP BY "adminId"
-        ORDER BY count DESC
-      `),
-      db.query.workspaceMemberModel.findMany({
-        where: { workspaceId },
-        with: {
-          user: { columns: { id: true, name: true, email: true } },
-        },
-      }),
-    ])
+  private async getMessagesByAdminCounts(
+    props: TimeRangeQuery,
+  ): Promise<Map<string, number>> {
+    const { workspaceId, from, to } = props
+    const statsResult = await db.execute(sql`
+      SELECT
+        "adminId",
+        COUNT(*)::int AS count
+      FROM "AnalyticsMessageEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
+        AND "eventType" = 'message_human_sent'
+        AND "adminId" IS NOT NULL
+      GROUP BY "adminId"
+      ORDER BY count DESC
+    `)
 
     const countByAdmin = new Map<string, number>()
     for (const row of statsResult.rows as {
@@ -316,6 +328,45 @@ export class MessageStatsRepository extends BaseRepository {
     }[]) {
       countByAdmin.set(String(row.adminId), Number(row.count))
     }
+    return countByAdmin
+  }
+
+  private async getUniqueContactsByAdminCounts(
+    props: TimeRangeQuery,
+  ): Promise<Map<string, number>> {
+    const { workspaceId, from, to } = props
+    const statsResult = await db.execute(sql`
+      SELECT
+        "adminId",
+        COUNT(DISTINCT "contactId")::int AS count
+      FROM "AnalyticsMessageEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
+        AND "senderType" = 'human'
+        AND "adminId" IS NOT NULL
+      GROUP BY "adminId"
+      ORDER BY count DESC
+    `)
+
+    const countByAdmin = new Map<string, number>()
+    for (const row of statsResult.rows as {
+      adminId: string
+      count: number
+    }[]) {
+      countByAdmin.set(String(row.adminId), Number(row.count))
+    }
+    return countByAdmin
+  }
+
+  async getMessagesByAdmin(
+    props: TimeRangeQuery,
+  ): Promise<MessagesByAdminStats[]> {
+    const { workspaceId } = props
+    const [countByAdmin, members] = await Promise.all([
+      this.getMessagesByAdminCounts(props),
+      this.fetchWorkspaceMembers(workspaceId),
+    ])
 
     return members.map((member) => ({
       workspaceId,
@@ -329,37 +380,11 @@ export class MessageStatsRepository extends BaseRepository {
   async getUniqueContactsByAdmin(
     props: TimeRangeQuery,
   ): Promise<UniqueContactsByAdminStats[]> {
-    const { workspaceId, from, to } = props
-
-    const [statsResult, members] = await Promise.all([
-      db.execute(sql`
-        SELECT
-          "adminId",
-          COUNT(DISTINCT "contactId")::int AS count
-        FROM "AnalyticsMessageEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" >= ${from}
-          AND "occurredAt" <= ${to}
-          AND "senderType" = 'human'
-          AND "adminId" IS NOT NULL
-        GROUP BY "adminId"
-        ORDER BY count DESC
-      `),
-      db.query.workspaceMemberModel.findMany({
-        where: { workspaceId },
-        with: {
-          user: { columns: { id: true, name: true, email: true } },
-        },
-      }),
+    const { workspaceId } = props
+    const [countByAdmin, members] = await Promise.all([
+      this.getUniqueContactsByAdminCounts(props),
+      this.fetchWorkspaceMembers(workspaceId),
     ])
-
-    const countByAdmin = new Map<string, number>()
-    for (const row of statsResult.rows as {
-      adminId: string
-      count: number
-    }[]) {
-      countByAdmin.set(String(row.adminId), Number(row.count))
-    }
 
     return members.map((member) => ({
       workspaceId,
@@ -373,25 +398,14 @@ export class MessageStatsRepository extends BaseRepository {
   async getHumanAgentStats(props: TimeRangeQuery): Promise<HumanAgentStats[]> {
     const { workspaceId } = props
 
-    const [messagesByAdmin, contactsByAdmin, assignedByAdmin, members] =
+    const [messageCount, contactCount, assignedByAdmin, members] =
       await Promise.all([
-        this.getMessagesByAdmin(props),
-        this.getUniqueContactsByAdmin(props),
+        this.getMessagesByAdminCounts(props),
+        this.getUniqueContactsByAdminCounts(props),
         conversationStatsRepository.getAssignedByAdmin(props),
-        db.query.workspaceMemberModel.findMany({
-          where: { workspaceId },
-          with: {
-            user: { columns: { id: true, name: true, email: true } },
-          },
-        }),
+        this.fetchWorkspaceMembers(workspaceId),
       ])
 
-    const messageCount = new Map(
-      messagesByAdmin.map((s) => [String(s.adminId), s.count]),
-    )
-    const contactCount = new Map(
-      contactsByAdmin.map((s) => [String(s.toAssignee), s.count]),
-    )
     const assignedCount = new Map(
       assignedByAdmin.map((s) => [s.toAssignee, s.count]),
     )

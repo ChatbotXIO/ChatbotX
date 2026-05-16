@@ -383,19 +383,78 @@ export async function runFlowPostback(
     })
   }
 
-  await runStepsAndQuickReplies({
-    conversation,
-    contactInbox,
-    flowVersion,
-    useLatestFlowVersion: true,
-    details: foundedButton,
-    targetType: "button",
-    targetId: foundedButton.id,
-    targetNodeId: foundedNodeId ?? "",
-    ctx: {
-      variables: initVariables(),
-    },
-  })
+  const startTime = Date.now()
+  try {
+    await runStepsAndQuickReplies({
+      conversation,
+      contactInbox,
+      flowVersion,
+      useLatestFlowVersion: true,
+      details: foundedButton,
+      targetType: "button",
+      targetId: foundedButton.id,
+      targetNodeId: foundedNodeId ?? "",
+      ctx: {
+        variables: initVariables(),
+      },
+    })
+    if (data.messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: data.messageId,
+        occurredAt: new Date(),
+        hasResponse: true,
+        responseType: "flow",
+        routeType: "flow",
+        result: "success",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          flowId: parsedAction.flowId,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runFlowPostback",
+            triggerType: "contact_postback",
+          },
+        },
+      }).catch((err) =>
+        logger.error(err, "[runFlowPostback] Failed to emit bot_received"),
+      )
+    }
+  } catch (error) {
+    if (data.messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: data.messageId,
+        occurredAt: new Date(),
+        hasResponse: false,
+        responseType: "flow",
+        routeType: "flow",
+        result: "fallback",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          flowId: parsedAction.flowId,
+          fallbackReason: "handler_error_to_fallback",
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runFlowPostback",
+            triggerType: "contact_postback_failed",
+          },
+        },
+      }).catch((err) =>
+        logger.error(
+          err,
+          "[runFlowPostback] Failed to emit bot_received fallback",
+        ),
+      )
+    }
+    throw error
+  }
 }
 
 export async function runFlowQuickReply(
@@ -462,17 +521,76 @@ export async function runFlowQuickReply(
     })
   }
 
-  await runStepsAndQuickReplies({
-    conversation,
-    contactInbox,
-    flowVersion,
-    useLatestFlowVersion: true,
-    details: found,
-    targetType: "quickReply",
-    targetId: found.id,
-    targetNodeId: foundedNodeId ?? "",
-    ctx: {
-      variables: initVariables(),
-    },
-  })
+  const startTime = Date.now()
+  try {
+    await runStepsAndQuickReplies({
+      conversation,
+      contactInbox,
+      flowVersion,
+      useLatestFlowVersion: true,
+      details: found,
+      targetType: "quickReply",
+      targetId: found.id,
+      targetNodeId: foundedNodeId ?? "",
+      ctx: {
+        variables: initVariables(),
+      },
+    })
+    if (data.messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: data.messageId,
+        occurredAt: new Date(),
+        hasResponse: true,
+        responseType: "flow",
+        routeType: "flow",
+        result: "success",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          flowId: parsedAction.flowId,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runFlowQuickReply",
+            triggerType: "contact_quick_reply",
+          },
+        },
+      }).catch((err) =>
+        logger.error(err, "[runFlowQuickReply] Failed to emit bot_received"),
+      )
+    }
+  } catch (error) {
+    if (data.messageId) {
+      emit("analytics:dashboard", {
+        eventType: "message:bot_received",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        messageId: data.messageId,
+        occurredAt: new Date(),
+        hasResponse: false,
+        responseType: "flow",
+        routeType: "flow",
+        result: "fallback",
+        aiProvider: "none",
+        metadata: {
+          latency: Date.now() - startTime,
+          flowId: parsedAction.flowId,
+          fallbackReason: "handler_error_to_fallback",
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "runFlowQuickReply",
+            triggerType: "contact_quick_reply_failed",
+          },
+        },
+      }).catch((err) =>
+        logger.error(
+          err,
+          "[runFlowQuickReply] Failed to emit bot_received fallback",
+        ),
+      )
+    }
+    throw error
+  }
 }

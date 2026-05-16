@@ -26,11 +26,11 @@ export type GetContactsByDimensionStatsResponseSchema = z.infer<
 >
 
 export const messagesBySenderStatsSchema = z.object({
-  channel: z.string(),
+  channel: z.string().nullable(),
   workspaceId: z.string(),
-  count: z.number(),
+  count: z.coerce.number(),
   senderType: contactSenderTypes,
-  timestamp: z.date(),
+  timestamp: z.coerce.date(),
 })
 export type MessagesBySenderStats = z.infer<typeof messagesBySenderStatsSchema>
 

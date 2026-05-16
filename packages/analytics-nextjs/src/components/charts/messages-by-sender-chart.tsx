@@ -23,7 +23,7 @@ export function MessagesBySenderChart() {
     const totals = new Map<string, number>()
 
     for (const item of messagesBySender) {
-      const channelLabel = getChannelLabel(item.channel)
+      const channelLabel = getChannelLabel(item.channel ?? "unknown")
       const senderLabel =
         item.senderType === "bot" ? t("analytics.bot") : t("analytics.human")
 

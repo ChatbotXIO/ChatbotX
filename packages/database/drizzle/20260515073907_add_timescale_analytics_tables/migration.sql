@@ -1,3 +1,19 @@
+DROP TABLE IF EXISTS "AnalyticsManifestStatus" CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS analytics_contact_events_hourly CASCADE;--> statement-breakpoint
+DROP MATERIALIZED VIEW IF EXISTS analytics_bot_message_events_hourly CASCADE;--> statement-breakpoint
+DROP MATERIALIZED VIEW IF EXISTS analytics_conversation_events_hourly CASCADE;--> statement-breakpoint
+DROP MATERIALIZED VIEW IF EXISTS analytics_message_events_hourly CASCADE;--> statement-breakpoint
+DROP TABLE IF EXISTS "AnalyticsBotMessageEvent" CASCADE;--> statement-breakpoint
+DROP TABLE IF EXISTS "AnalyticsContactEvent" CASCADE;--> statement-breakpoint
+DROP TABLE IF EXISTS "AnalyticsConversationEvent" CASCADE;--> statement-breakpoint
+DROP TABLE IF EXISTS "AnalyticsMessageEvent" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsBotResponseType" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsBotResult" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsBotRouteType" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsContactEventType" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsMessageEventType" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsContactSenderType" CASCADE;--> statement-breakpoint
+DROP TYPE IF EXISTS "analyticsConversationEventType" CASCADE;--> statement-breakpoint
 CREATE TYPE "analyticsBotResponseType" AS ENUM('automated_response', 'ai_agent', 'flow', 'none');--> statement-breakpoint
 CREATE TYPE "analyticsBotResult" AS ENUM('success', 'fallback');--> statement-breakpoint
 CREATE TYPE "analyticsBotRouteType" AS ENUM('flow', 'agent', 'fallback');--> statement-breakpoint
@@ -97,8 +113,7 @@ CREATE INDEX "AnalyticsContactEvent_workspaceId_eventType_occurredAt_covering_id
 -- AnalyticsContactEvent hypertable
 SELECT create_hypertable(
   '"AnalyticsContactEvent"',
-  by_range('"occurredAt"'),
-  chunk_time_interval => INTERVAL '30 days',
+  by_range('occurredAt', INTERVAL '30 days'),
   if_not_exists => TRUE
 );
 --> statement-breakpoint
@@ -115,8 +130,7 @@ SELECT add_retention_policy('"AnalyticsContactEvent"', INTERVAL '10 years', if_n
 -- AnalyticsBotMessageEvent hypertable
 SELECT create_hypertable(
   '"AnalyticsBotMessageEvent"',
-  by_range('"occurredAt"'),
-  chunk_time_interval => INTERVAL '30 days',
+  by_range('occurredAt', INTERVAL '30 days'),
   if_not_exists => TRUE
 );
 --> statement-breakpoint
@@ -133,8 +147,7 @@ SELECT add_retention_policy('"AnalyticsBotMessageEvent"', INTERVAL '10 years', i
 -- AnalyticsConversationEvent hypertable
 SELECT create_hypertable(
   '"AnalyticsConversationEvent"',
-  by_range('"occurredAt"'),
-  chunk_time_interval => INTERVAL '30 days',
+  by_range('occurredAt', INTERVAL '30 days'),
   if_not_exists => TRUE
 );
 --> statement-breakpoint
@@ -144,15 +157,14 @@ ALTER TABLE "AnalyticsConversationEvent" SET (
   timescaledb.compress_orderby = '"occurredAt" DESC'
 );
 --> statement-breakpoint
-SELECT add_compression_policy('"AnalyticsConversationEvent"', INTERVAL '10 days', if_not_exists => TRUE);
+SELECT add_compression_policy('"AnalyticsConversationEvent"', INTERVAL '30 days', if_not_exists => TRUE);
 --> statement-breakpoint
 SELECT add_retention_policy('"AnalyticsConversationEvent"', INTERVAL '10 years', if_not_exists => TRUE);
 --> statement-breakpoint
 -- AnalyticsMessageEvent hypertable
 SELECT create_hypertable(
   '"AnalyticsMessageEvent"',
-  by_range('"occurredAt"'),
-  chunk_time_interval => INTERVAL '30 days',
+  by_range('occurredAt', INTERVAL '30 days'),
   if_not_exists => TRUE
 );
 --> statement-breakpoint
@@ -165,3 +177,168 @@ ALTER TABLE "AnalyticsMessageEvent" SET (
 SELECT add_compression_policy('"AnalyticsMessageEvent"', INTERVAL '30 days', if_not_exists => TRUE);
 --> statement-breakpoint
 SELECT add_retention_policy('"AnalyticsMessageEvent"', INTERVAL '10 years', if_not_exists => TRUE);
+--> statement-breakpoint
+-- Continuous aggregate: contact events per hour
+CREATE MATERIALIZED VIEW analytics_contact_events_hourly
+  WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket('1 hour', "occurredAt") AS bucket,
+  "workspaceId",
+  "eventType",
+  "channel",
+  "senderType",
+  "country",
+  "source",
+  "adminId",
+  COUNT(*)                            AS count
+FROM "AnalyticsContactEvent"
+GROUP BY 1, 2, 3, 4, 5, 6, 7, 8
+WITH NO DATA;
+--> statement-breakpoint
+SELECT add_continuous_aggregate_policy(
+  'analytics_contact_events_hourly',
+  start_offset      => INTERVAL '7 days',
+  end_offset        => INTERVAL '1 minute',
+  schedule_interval => INTERVAL '5 minutes',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_contact_events_hourly
+  SET (timescaledb.materialized_only = FALSE);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_contact_events_hourly
+  SET (timescaledb.compress = TRUE);
+--> statement-breakpoint
+SELECT add_compression_policy(
+  'analytics_contact_events_hourly',
+  compress_after    => INTERVAL '30 days',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+SELECT add_retention_policy(
+  'analytics_contact_events_hourly',
+  drop_after        => INTERVAL '3 years',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+-- Continuous aggregate: bot message events per hour
+CREATE MATERIALIZED VIEW analytics_bot_message_events_hourly
+  WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket('1 hour', "occurredAt") AS bucket,
+  "workspaceId",
+  "hasResponse",
+  "responseType",
+  "routeType",
+  "result",
+  "aiProvider",
+  COUNT(*)                            AS count
+FROM "AnalyticsBotMessageEvent"
+GROUP BY 1, 2, 3, 4, 5, 6, 7
+WITH NO DATA;
+--> statement-breakpoint
+SELECT add_continuous_aggregate_policy(
+  'analytics_bot_message_events_hourly',
+  start_offset      => INTERVAL '7 days',
+  end_offset        => INTERVAL '1 minute',
+  schedule_interval => INTERVAL '5 minutes',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_bot_message_events_hourly
+  SET (timescaledb.materialized_only = FALSE);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_bot_message_events_hourly
+  SET (timescaledb.compress = TRUE);
+--> statement-breakpoint
+SELECT add_compression_policy(
+  'analytics_bot_message_events_hourly',
+  compress_after    => INTERVAL '30 days',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+SELECT add_retention_policy(
+  'analytics_bot_message_events_hourly',
+  drop_after        => INTERVAL '3 years',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+-- Continuous aggregate: conversation events per hour
+CREATE MATERIALIZED VIEW analytics_conversation_events_hourly
+  WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket('1 hour', "occurredAt") AS bucket,
+  "workspaceId",
+  "eventType",
+  "toAssignee",
+  COUNT(*)                            AS count
+FROM "AnalyticsConversationEvent"
+GROUP BY 1, 2, 3, 4
+WITH NO DATA;
+--> statement-breakpoint
+SELECT add_continuous_aggregate_policy(
+  'analytics_conversation_events_hourly',
+  start_offset      => INTERVAL '7 days',
+  end_offset        => INTERVAL '1 minute',
+  schedule_interval => INTERVAL '5 minutes',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_conversation_events_hourly
+  SET (timescaledb.materialized_only = FALSE);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_conversation_events_hourly
+  SET (timescaledb.compress = TRUE);
+--> statement-breakpoint
+SELECT add_compression_policy(
+  'analytics_conversation_events_hourly',
+  compress_after    => INTERVAL '30 days',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+SELECT add_retention_policy(
+  'analytics_conversation_events_hourly',
+  drop_after        => INTERVAL '3 years',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+-- Continuous aggregate: message events per hour
+CREATE MATERIALIZED VIEW analytics_message_events_hourly
+  WITH (timescaledb.continuous) AS
+SELECT
+  time_bucket('1 hour', "occurredAt") AS bucket,
+  "workspaceId",
+  "eventType",
+  "channel",
+  "senderType",
+  "adminId",
+  COUNT(*)                            AS count
+FROM "AnalyticsMessageEvent"
+GROUP BY 1, 2, 3, 4, 5, 6
+WITH NO DATA;
+--> statement-breakpoint
+SELECT add_continuous_aggregate_policy(
+  'analytics_message_events_hourly',
+  start_offset      => INTERVAL '7 days',
+  end_offset        => INTERVAL '1 minute',
+  schedule_interval => INTERVAL '5 minutes',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_message_events_hourly
+  SET (timescaledb.materialized_only = FALSE);
+--> statement-breakpoint
+ALTER MATERIALIZED VIEW analytics_message_events_hourly
+  SET (timescaledb.compress = TRUE);
+--> statement-breakpoint
+SELECT add_compression_policy(
+  'analytics_message_events_hourly',
+  compress_after    => INTERVAL '30 days',
+  if_not_exists     => TRUE
+);
+--> statement-breakpoint
+SELECT add_retention_policy(
+  'analytics_message_events_hourly',
+  drop_after        => INTERVAL '10 years',
+  if_not_exists     => TRUE
+);

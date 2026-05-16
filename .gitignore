@@ -50,8 +50,5 @@ yarn-error.log*
 test.rest
 test-webchat
 
-# ClickHouse migrations local state
-packages/database/src/clickhouse/.migrations.local.json
-
 .pnpm-store/
 .plans/

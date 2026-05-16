@@ -1,6 +1,6 @@
 import {
   botMessageAnalyticsService,
-  contactAnalyticsService,
+  messageAnalyticsService,
   timeRangeQueryWithGranularityMHDSchema,
 } from "@chatbotx.io/analytics"
 import {
@@ -23,8 +23,13 @@ export const analyticsMessageRoutes = os.router({
     .input(timeRangeQueryWithGranularityMHDSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await botMessageAnalyticsService.getMessagesByResult(input)
-      return { data }
+      try {
+        const data = await botMessageAnalyticsService.getMessagesByResult(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:botMessagesByResult] failed", error)
+        throw error
+      }
     }),
 
   botMessagesWithResponseAnalyticsAPI: os
@@ -37,9 +42,14 @@ export const analyticsMessageRoutes = os.router({
     .input(timeRangeQueryWithGranularityMHDSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data =
-        await botMessageAnalyticsService.getMessagesWithResponse(input)
-      return { data }
+      try {
+        const data =
+          await botMessageAnalyticsService.getMessagesWithResponse(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:botMessagesWithResponse] failed", error)
+        throw error
+      }
     }),
 
   botMessagesNoResponseAnalyticsAPI: os
@@ -52,9 +62,14 @@ export const analyticsMessageRoutes = os.router({
     .input(timeRangeQueryWithGranularityMHDSchema)
     .output(getMessagesStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data =
-        await botMessageAnalyticsService.getMessagesWithNoResponse(input)
-      return { data }
+      try {
+        const data =
+          await botMessageAnalyticsService.getMessagesWithNoResponse(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:botMessagesNoResponse] failed", error)
+        throw error
+      }
     }),
 
   botMessagesAIProvidersAnalyticsAPI: os
@@ -67,8 +82,13 @@ export const analyticsMessageRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getBotMessagesAIProvidersResponseSchema)
     .handler(async ({ input }) => {
-      const data = await botMessageAnalyticsService.getAIProviderStats(input)
-      return { data }
+      try {
+        const data = await botMessageAnalyticsService.getAIProviderStats(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:botMessagesAIProviders] failed", error)
+        throw error
+      }
     }),
 
   messagesBySenderAnalyticsAPI: os
@@ -81,7 +101,12 @@ export const analyticsMessageRoutes = os.router({
     .input(timeRangeQueryWithGranularityDMSchema)
     .output(getMessagesBySenderStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getMessagesBySender(input)
-      return { data }
+      try {
+        const data = await messageAnalyticsService.getMessagesBySender(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:messagesBySender] failed", error)
+        throw error
+      }
     }),
 })

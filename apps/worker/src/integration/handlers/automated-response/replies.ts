@@ -23,6 +23,7 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
+import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
@@ -33,6 +34,7 @@ type ReplyByAIProps = {
   conversation: ConversationModel
   messages: ModelMessage[]
   aiAgent: AIAgentModel
+  trackingContext?: BotResponseTrackingContext
 }
 
 export type ReplyByAIExecutionResult = {
@@ -57,7 +59,7 @@ export type ReplyByAIExecutionResult = {
 export async function replyByAI(
   props: ReplyByAIProps,
 ): Promise<null | ReplyByAIExecutionResult> {
-  const { aiAgent, conversation } = props
+  const { aiAgent, conversation, trackingContext } = props
   const providers = aiAgent.models as AIAgentProviderModels
 
   const { tools, cleanup } = await getAIToolset({
@@ -92,6 +94,10 @@ export async function replyByAI(
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
+  const trackingContextHolder = trackingContext
+    ? { current: trackingContext as BotResponseTrackingContext | undefined }
+    : undefined
+
   try {
     for (const providerInfo of providers) {
       const result = await runAIReply(
@@ -99,6 +105,7 @@ export async function replyByAI(
         providerInfo,
         tools,
         controller.signal,
+        trackingContextHolder,
       )
       if (result?.responded) {
         return result
@@ -117,6 +124,7 @@ async function runAIReply(
   providerInfo: AIAgentProviderModel,
   tools: ToolSet,
   abortSignal: AbortSignal,
+  trackingContextHolder?: { current: BotResponseTrackingContext | undefined },
 ): Promise<null | ReplyByAIExecutionResult> {
   const { conversation, messages, aiAgent } = props
   const provider = providerInfo.provider
@@ -243,7 +251,17 @@ async function runAIReply(
       result.textStream,
       async (_segment, parts) => {
         for (const part of parts) {
-          await sendMessageWithRender(conversation.id, part)
+          const trackingForThisPart = trackingContextHolder?.current
+          if (trackingContextHolder) {
+            trackingContextHolder.current = undefined
+          }
+          await sendMessageWithRender(
+            conversation.id,
+            part,
+            trackingForThisPart
+              ? { ...trackingForThisPart, aiProvider: provider }
+              : undefined,
+          )
         }
       },
       { sendParts: true },

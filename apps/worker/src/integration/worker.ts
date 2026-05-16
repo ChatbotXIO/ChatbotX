@@ -70,6 +70,7 @@ async function startIntegrationWorker() {
                 data: {
                   conversationId: conversation,
                   contactInboxId: message.contactInboxId,
+                  messageId: message.id,
                   challenge: additionalAttributes.challenge,
                 },
               })

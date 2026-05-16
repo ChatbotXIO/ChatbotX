@@ -413,11 +413,6 @@ export class FlowStatsRepository extends BaseRepository {
           eventCondition: sql`${t.eventType} = 'message:delivered'`,
           orderColumn: t.occurredAt,
         }
-      case "message:seen":
-        return {
-          eventCondition: sql`${t.eventType} = 'message:delivered'`,
-          orderColumn: t.occurredAt,
-        }
       case "message:failed":
         return {
           eventCondition: sql`${t.eventType} = 'message:failed'`,

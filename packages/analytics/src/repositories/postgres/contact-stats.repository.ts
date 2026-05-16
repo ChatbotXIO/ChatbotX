@@ -68,7 +68,10 @@ export class ContactStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -111,7 +114,10 @@ export class ContactStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -156,7 +162,10 @@ export class ContactStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -202,7 +211,10 @@ export class ContactStatsRepository extends BaseRepository {
 
     const eventTypeFilter =
       eventTypes && eventTypes.length > 0
-        ? sql` AND "eventType" = ANY(ARRAY[${sql.raw(eventTypes.map((t) => `'${t}'`).join(","))}]::text[])`
+        ? sql` AND "eventType" IN (${sql.join(
+            eventTypes.map((t) => sql`${t}`),
+            sql`, `,
+          )})`
         : sql``
 
     const result = await db.execute(sql`
@@ -431,17 +443,13 @@ export class ContactStatsRepository extends BaseRepository {
   }
 
   async getContactsCount(props: TimeRangeQuery): Promise<number> {
-    const { workspaceId, to } = props
+    const { workspaceId } = props
 
     const result = await db.execute(sql`
-      SELECT COALESCE(
-        SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END) -
-        SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END),
-        0
-      )::int AS total
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" <= ${to}
+      SELECT COALESCE(SUM(ics."totalContacts"), 0)::int AS total
+      FROM "InboxContactStat" ics
+      INNER JOIN "Inbox" i ON i.id = ics."inboxId"
+      WHERE i."workspaceId" = ${workspaceId}
     `)
 
     return Number((result.rows[0] as { total: number } | undefined)?.total ?? 0)

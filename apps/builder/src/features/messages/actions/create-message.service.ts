@@ -12,6 +12,7 @@ import type {
   UserModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
@@ -141,24 +142,30 @@ export const createMessage = async (props: {
     }),
   ]
 
-  // promises.push(
-  //   contactTrackingService.trackEvent({
-  //     workspaceId: message.workspaceId,
-  //     contactId: contactInbox.contactId,
-  //     eventType: "contact_message_out",
-  //     senderType: "human",
-  //     adminId: user?.id,
-  //     occurredAt: new Date(),
-  //     source: contactInbox.source,
-  //     sourceId: contactInbox.sourceId,
-  //     channel: contactInbox.channel,
-  //     country: undefined,
-  //     metadata: {
-  //       messageId: message.id,
-  //       conversationId: message.conversationId,
-  //     },
-  //   }),
-  // )
+  if (user) {
+    emit("analytics:dashboard", {
+      eventType: "message:human_sent",
+      workspaceId: message.workspaceId,
+      contactId: contactInbox.contactId,
+      senderType: "human",
+      adminId: user.id,
+      occurredAt: message.createdAt,
+      source: contactInbox.source,
+      sourceId: contactInbox.sourceId,
+      channel: contactInbox.channel,
+      metadata: {
+        messageId: message.id,
+        conversationId: message.conversationId,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "createMessage",
+          triggerType: "message_human_sent",
+        },
+      },
+    }).catch((error) => {
+      console.error("[createMessage] Failed to emit message:human_sent", error)
+    })
+  }
 
   // Broadcast and send
   await Promise.all(promises)

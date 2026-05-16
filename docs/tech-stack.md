@@ -45,11 +45,6 @@ Key components of the project's tech stack.
 
 - Custom realtime server at `apps/realtime` (port 1999)
 
-### Analytics
-
-- [ClickHouse](https://clickhouse.com/) for event analytics
-- Package: `packages/clickhouse`
-
 ### Storage
 
 - S3-compatible object storage (RustFS locally via Docker)

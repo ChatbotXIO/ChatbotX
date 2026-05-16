@@ -21,8 +21,13 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getConversationHandoffsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await conversationAnalyticsService.getHandoffsByDay(input)
-      return { data }
+      try {
+        const data = await conversationAnalyticsService.getHandoffsByDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:conversationHandoffs] failed", error)
+        throw error
+      }
     }),
   conversationFollowUpsAnalyticsAPI: os
     .route({
@@ -34,8 +39,13 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getConversationFollowUpsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await conversationAnalyticsService.getFollowUpsByDay(input)
-      return { data }
+      try {
+        const data = await conversationAnalyticsService.getFollowUpsByDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:conversationFollowUps] failed", error)
+        throw error
+      }
     }),
   conversationArchivedAnalyticsAPI: os
     .route({
@@ -47,8 +57,13 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getConversationArchivedResponseSchema)
     .handler(async ({ input }) => {
-      const data = await conversationAnalyticsService.getArchivedByDay(input)
-      return { data }
+      try {
+        const data = await conversationAnalyticsService.getArchivedByDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:conversationArchived] failed", error)
+        throw error
+      }
     }),
   conversationAssignedAnalyticsAPI: os
     .route({
@@ -60,8 +75,13 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getConversationAssignedResponseSchema)
     .handler(async ({ input }) => {
-      const data = await conversationAnalyticsService.getAssignedByDay(input)
-      return { data }
+      try {
+        const data = await conversationAnalyticsService.getAssignedByDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:conversationAssigned] failed", error)
+        throw error
+      }
     }),
   conversationAssignedByAdminAnalyticsAPI: os
     .route({
@@ -73,8 +93,14 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getConversationAssignedByAdminResponseSchema)
     .handler(async ({ input }) => {
-      const data = await conversationAnalyticsService.getAssignedByAdmin(input)
-      return { data }
+      try {
+        const data =
+          await conversationAnalyticsService.getAssignedByAdmin(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:conversationAssignedByAdmin] failed", error)
+        throw error
+      }
     }),
   uniqueConversationsByAdminAnalyticsAPI: os
     .route({
@@ -86,8 +112,15 @@ export const analyticsConversationRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getUniqueConversationsByAdminResponseSchema)
     .handler(async ({ input }) => {
-      const data =
-        await conversationAnalyticsService.getUniqueConversationsByAdmin(input)
-      return { data }
+      try {
+        const data =
+          await conversationAnalyticsService.getUniqueConversationsByAdmin(
+            input,
+          )
+        return { data }
+      } catch (error) {
+        console.log("[analytics:uniqueConversationsByAdmin] failed", error)
+        throw error
+      }
     }),
 })

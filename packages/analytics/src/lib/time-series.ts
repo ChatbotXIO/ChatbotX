@@ -19,11 +19,15 @@ import {
 } from "../schemas"
 import type { MessageEventType, MessageStats } from "../schemas/message-event"
 
-export function getUtcMonthKey(date: Date): string {
-  return date.toISOString().slice(0, 7)
+function toDate(value: Date | string | number): Date {
+  return value instanceof Date ? value : new Date(value)
 }
 
-export function getUtcMonthStart(date: Date): Date {
+export function getUtcMonthKey(date: Date | string | number): string {
+  return toDate(date).toISOString().slice(0, 7)
+}
+
+export function getUtcMonthStart(date: Date | string | number): Date {
   return new Date(`${getUtcMonthKey(date)}-01T00:00:00.000Z`)
 }
 
@@ -45,20 +49,26 @@ export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
   return differenceInDays(props.to, props.from) > 60
 }
 
-export function getUtcDayKey(date: Date): string {
-  return date.toISOString().slice(0, 10)
+export function getUtcDayKey(date: Date | string | number): string {
+  return toDate(date).toISOString().slice(0, 10)
 }
 
-export function getUtcDayStart(date: Date): Date {
+export function getUtcDayStart(date: Date | string | number): Date {
   return new Date(`${getUtcDayKey(date)}T00:00:00.000Z`)
 }
 
-export function getTzDayKey(date: Date, timezone: string): string {
-  return formatInTimeZone(date, timezone, "yyyy-MM-dd")
+export function getTzDayKey(
+  date: Date | string | number,
+  timezone: string,
+): string {
+  return formatInTimeZone(toDate(date), timezone, "yyyy-MM-dd")
 }
 
-export function getTzMonthKey(date: Date, timezone: string): string {
-  return formatInTimeZone(date, timezone, "yyyy-MM")
+export function getTzMonthKey(
+  date: Date | string | number,
+  timezone: string,
+): string {
+  return formatInTimeZone(toDate(date), timezone, "yyyy-MM")
 }
 
 export function* iterateTzDays(
@@ -274,7 +284,7 @@ export function fillBotMessageStatsDaySeries(
     results: BotMessageResult[]
   },
 ): BotMessageStats[] {
-  const { workspaceId, from, to, rows, results } = props
+  const { workspaceId, from, to, timezone, rows, results } = props
   const keyOf = (day: string, result: string) => `${day}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -291,15 +301,13 @@ export function fillBotMessageStatsDaySeries(
   }
 
   const filled: BotMessageStats[] = []
-  const daySeries = generateDaySeries(from, to)
-  for (const d of daySeries) {
-    const dayKey = getUtcDayKey(d)
+  for (const { key, date } of iterateTzDays(from, to, timezone)) {
     for (const result of results) {
-      const existing = byKey.get(keyOf(dayKey, result))
+      const existing = byKey.get(keyOf(key, result))
       filled.push(
         existing ?? {
           workspaceId,
-          timestamp: getUtcDayStart(d),
+          timestamp: date,
           hasResponse: true,
           responseType: trackingResponseTypes.enum.none,
           result,
@@ -319,7 +327,7 @@ export function fillBotMessageStatsMonthSeries(
     results: BotMessageResult[]
   },
 ): BotMessageStats[] {
-  const { workspaceId, from, to, rows, results } = props
+  const { workspaceId, from, to, timezone, rows, results } = props
   const keyOf = (month: string, result: string) => `${month}::${result}`
 
   const byKey = new Map<string, BotMessageStats>()
@@ -336,15 +344,13 @@ export function fillBotMessageStatsMonthSeries(
   }
 
   const filled: BotMessageStats[] = []
-  const monthSeries = generateMonthSeries(from, to)
-  for (const m of monthSeries) {
-    const monthKey = getUtcMonthKey(m)
+  for (const { key, date } of iterateTzMonths(from, to, timezone)) {
     for (const result of results) {
-      const existing = byKey.get(keyOf(monthKey, result))
+      const existing = byKey.get(keyOf(key, result))
       filled.push(
         existing ?? {
           workspaceId,
-          timestamp: getUtcMonthStart(m),
+          timestamp: date,
           hasResponse: true,
           responseType: "none",
           result,

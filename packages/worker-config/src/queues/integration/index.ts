@@ -77,6 +77,7 @@ export type IntegrationJobSendFlowPostback = {
     action: string
     ref?: string | null
     webhookType?: string
+    messageId?: string
   }
 }
 
@@ -89,6 +90,7 @@ export type IntegrationJobSendFlowQuickReply = {
     ref?: string | null
     inboxId?: string
     webhookType?: string
+    messageId?: string
   }
 }
 
@@ -97,6 +99,7 @@ export type IntegrationJobProcessAutomatedResponse = {
   data: {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
+    messageId?: string
   }
 }
 
@@ -123,6 +126,7 @@ export type IntegrationJobRunRef = {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
     ref: string
+    messageId?: string
   }
 }
 
@@ -131,6 +135,7 @@ export type IntegrationJobRunChallenge = {
   data: {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
+    messageId?: string
     challenge: {
       type: "step"
       data: {

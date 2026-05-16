@@ -96,7 +96,6 @@
 - Drizzle ORM with PostgreSQL and pgvector
 - Redis and BullMQ for queues and worker coordination
 - RustFS / S3-compatible storage for uploaded assets
-- ClickHouse for analytics
 - Docker Compose for local infrastructure
 
 ## Quick Start
@@ -170,7 +169,6 @@ The default Docker Compose stack includes:
 - RustFS object storage on `9000` and console on `9001`
 - MailHog SMTP on `1025` and UI on `8025`
 - Adminer on `8080`
-- ClickHouse through the included ClickHouse compose file
 
 ## License
 

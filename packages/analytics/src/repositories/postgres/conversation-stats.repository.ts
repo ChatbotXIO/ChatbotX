@@ -75,13 +75,13 @@ export class ConversationStatsRepository extends BaseRepository {
 
     return (
       result.rows as {
-        bucket: Date
+        bucket: Date | string
         direction: "to_human" | "to_bot"
         count: number
       }[]
     ).map((row) => ({
       workspaceId,
-      timestamp: row.bucket,
+      timestamp: row.bucket instanceof Date ? row.bucket : new Date(row.bucket),
       direction: row.direction,
       count: Number(row.count),
     }))
@@ -107,12 +107,12 @@ export class ConversationStatsRepository extends BaseRepository {
 
     return (
       result.rows as {
-        bucket: Date
+        bucket: Date | string
         count: number
       }[]
     ).map((row) => ({
       workspaceId,
-      timestamp: row.bucket,
+      timestamp: row.bucket instanceof Date ? row.bucket : new Date(row.bucket),
       count: Number(row.count),
     }))
   }
@@ -137,12 +137,12 @@ export class ConversationStatsRepository extends BaseRepository {
 
     return (
       result.rows as {
-        bucket: Date
+        bucket: Date | string
         count: number
       }[]
     ).map((row) => ({
       workspaceId,
-      timestamp: row.bucket,
+      timestamp: row.bucket instanceof Date ? row.bucket : new Date(row.bucket),
       count: Number(row.count),
     }))
   }
@@ -167,12 +167,12 @@ export class ConversationStatsRepository extends BaseRepository {
 
     return (
       result.rows as {
-        bucket: Date
+        bucket: Date | string
         count: number
       }[]
     ).map((row) => ({
       workspaceId,
-      timestamp: row.bucket,
+      timestamp: row.bucket instanceof Date ? row.bucket : new Date(row.bucket),
       count: Number(row.count),
     }))
   }

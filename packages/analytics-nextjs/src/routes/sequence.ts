@@ -19,12 +19,18 @@ export const analyticsSequenceRoutes = os.router({
     .handler(async ({ input }) =>
       withCache(
         `analytics:sequence-step-stats:${input.workspaceId}:${input.sequenceId}:${input.stepId}`,
-        () =>
-          sequenceAnalyticsService.getStepStats({
-            workspaceId: input.workspaceId,
-            sequenceId: input.sequenceId,
-            stepId: input.stepId,
-          }),
+        async () => {
+          try {
+            return await sequenceAnalyticsService.getStepStats({
+              workspaceId: input.workspaceId,
+              sequenceId: input.sequenceId,
+              stepId: input.stepId,
+            })
+          } catch (error) {
+            console.log("[analytics:getSequenceStepStats] failed", error)
+            throw error
+          }
+        },
         { ttl: 120 },
       ),
     ),

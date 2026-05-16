@@ -23,6 +23,7 @@ export const enqueueMessage = async (props: {
           data: {
             conversationId: props.conversationId,
             contactInboxId: props.contactInboxId,
+            messageId: props.messageId,
           },
         },
         {

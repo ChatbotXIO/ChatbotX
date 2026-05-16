@@ -1,8 +1,5 @@
 name: chatbotx
 
-include:
-  - packages/clickhouse/docker-compose.yml
-
 x-network: &network
   networks:
     - chatbotx-network
@@ -14,18 +11,16 @@ x-rustfs-environment: &rustfs-environment
 services:
   postgres:
     <<: *network
-    image: pgvector/pgvector:pg18-trixie
-    # image: timescale/timescaledb-ha:pg18-all
+    image: timescale/timescaledb-ha:pg18-all
     ports:
       - "5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/home/postgres/pgdata
     command: [ "postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}" ]
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secretkey}
-      - PGDATA=/var/lib/postgresql/data/pgdata
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
       interval: 10s

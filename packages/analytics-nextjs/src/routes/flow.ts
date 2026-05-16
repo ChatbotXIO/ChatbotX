@@ -20,11 +20,16 @@ export const analyticsFlowRoutes = os.router({
     })
     .input(flowStatsRequest)
     .handler(async ({ input }) => {
-      await flowAnalyticsService.resetStatsSession({
-        workspaceId: input.workspaceId,
-        flowId: input.flowId,
-      })
-      await invalidateCacheByTags([flowStatsCacheTag(input.flowId)])
+      try {
+        await flowAnalyticsService.resetStatsSession({
+          workspaceId: input.workspaceId,
+          flowId: input.flowId,
+        })
+        await invalidateCacheByTags([flowStatsCacheTag(input.flowId)])
+      } catch (error) {
+        console.log("[analytics:resetFlowAnalytics] failed", error)
+        throw error
+      }
     }),
   getFlowAnalytics: os
     .route({
@@ -38,11 +43,17 @@ export const analyticsFlowRoutes = os.router({
     .handler(async ({ input }) =>
       withCache(
         flowStatsCacheKey(input.workspaceId, input.flowId),
-        () =>
-          flowAnalyticsService.getFlowStats({
-            workspaceId: input.workspaceId,
-            flowId: input.flowId,
-          }),
+        async () => {
+          try {
+            return await flowAnalyticsService.getFlowStats({
+              workspaceId: input.workspaceId,
+              flowId: input.flowId,
+            })
+          } catch (error) {
+            console.log("[analytics:getFlowAnalytics] failed", error)
+            throw error
+          }
+        },
         { ttl: 120, tags: [flowStatsCacheTag(input.flowId)] },
       ),
     ),

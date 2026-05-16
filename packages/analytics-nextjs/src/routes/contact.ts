@@ -6,6 +6,7 @@ import {
   getContactsCountResponseSchema,
   getHumanAgentStatsResponseSchema,
   getMessagesByAdminStatsResponseSchema,
+  messageAnalyticsService,
   timeRangeQuerySchema,
 } from "@chatbotx.io/analytics"
 import { withCache } from "@chatbotx.io/redis"
@@ -32,8 +33,13 @@ export const analyticsContactRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getContactCountsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getContactCountsPerDay(input)
-      return { data }
+      try {
+        const data = await contactAnalyticsService.getContactCountsPerDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:contactCountsPerDay] failed", error)
+        throw error
+      }
     }),
   newContactCountsPerDayAnalyticsAPI: os
     .route({
@@ -45,8 +51,13 @@ export const analyticsContactRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getContactCountsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getNewContactsPerDay(input)
-      return { data }
+      try {
+        const data = await contactAnalyticsService.getNewContactsPerDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:newContactCountsPerDay] failed", error)
+        throw error
+      }
     }),
   newContactsCountAnalyticsAPI: os
     .route({
@@ -67,8 +78,14 @@ export const analyticsContactRoutes = os.router({
           input.timezone,
         ),
         async () => {
-          const count = await contactAnalyticsService.getNewContactsCount(input)
-          return { data: { count } }
+          try {
+            const count =
+              await contactAnalyticsService.getNewContactsCount(input)
+            return { data: { count } }
+          } catch (error) {
+            console.log("[analytics:newContactsCount] failed", error)
+            throw error
+          }
         },
         { ttl: 120 },
       ),
@@ -92,8 +109,13 @@ export const analyticsContactRoutes = os.router({
           input.timezone,
         ),
         async () => {
-          const count = await contactAnalyticsService.getContactsCount(input)
-          return { data: { count } }
+          try {
+            const count = await contactAnalyticsService.getContactsCount(input)
+            return { data: { count } }
+          } catch (error) {
+            console.log("[analytics:contactsCount] failed", error)
+            throw error
+          }
         },
         { ttl: 120 },
       ),
@@ -117,9 +139,14 @@ export const analyticsContactRoutes = os.router({
           input.timezone,
         ),
         async () => {
-          const count =
-            await contactAnalyticsService.getActiveContactsCount(input)
-          return { data: { count } }
+          try {
+            const count =
+              await contactAnalyticsService.getActiveContactsCount(input)
+            return { data: { count } }
+          } catch (error) {
+            console.log("[analytics:activeContactsCount] failed", error)
+            throw error
+          }
         },
         { ttl: 120 },
       ),
@@ -138,23 +165,28 @@ export const analyticsContactRoutes = os.router({
     )
     .output(getContactsByDimensionStatsResponseSchema)
     .handler(async ({ input }) => {
-      let data: ContactsByDimension[] = []
+      try {
+        let data: ContactsByDimension[] = []
 
-      switch (input.dimension) {
-        case "country":
-          data = await contactAnalyticsService.getContactsByCountry(input)
-          break
-        case "channel":
-          data = await contactAnalyticsService.getContactsByChannel(input)
-          break
-        case "source":
-          data = await contactAnalyticsService.getContactsBySource(input)
-          break
-        default:
-          data = []
+        switch (input.dimension) {
+          case "country":
+            data = await contactAnalyticsService.getContactsByCountry(input)
+            break
+          case "channel":
+            data = await contactAnalyticsService.getContactsByChannel(input)
+            break
+          case "source":
+            data = await contactAnalyticsService.getContactsBySource(input)
+            break
+          default:
+            data = []
+        }
+
+        return { data }
+      } catch (error) {
+        console.log("[analytics:contactsByDimension] failed", error)
+        throw error
       }
-
-      return { data }
     }),
   messagesByAdminAnalyticsAPI: os
     .route({
@@ -166,8 +198,13 @@ export const analyticsContactRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getMessagesByAdminStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getMessagesByAdmin(input)
-      return { data }
+      try {
+        const data = await messageAnalyticsService.getMessagesByAdmin(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:messagesByAdmin] failed", error)
+        throw error
+      }
     }),
   humanAgentStatsAnalyticsAPI: os
     .route({
@@ -179,7 +216,12 @@ export const analyticsContactRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getHumanAgentStatsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getHumanAgentStats(input)
-      return { data }
+      try {
+        const data = await messageAnalyticsService.getHumanAgentStats(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:humanAgentStats] failed", error)
+        throw error
+      }
     }),
 })

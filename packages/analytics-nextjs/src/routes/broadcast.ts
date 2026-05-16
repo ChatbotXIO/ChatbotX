@@ -19,11 +19,17 @@ export const analyticsBroadcastRoutes = os.router({
     .handler(async ({ input }) =>
       withCache(
         `analytics:broadcast-stats:${input.workspaceId}:${input.broadcastId}`,
-        () =>
-          broadcastAnalyticsService.getStats({
-            workspaceId: input.workspaceId,
-            broadcastId: input.broadcastId,
-          }),
+        async () => {
+          try {
+            return await broadcastAnalyticsService.getStats({
+              workspaceId: input.workspaceId,
+              broadcastId: input.broadcastId,
+            })
+          } catch (error) {
+            console.log("[analytics:getBroadcastStats] failed", error)
+            throw error
+          }
+        },
         { ttl: 120 },
       ),
     ),

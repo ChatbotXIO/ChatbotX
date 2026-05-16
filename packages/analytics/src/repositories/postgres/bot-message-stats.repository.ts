@@ -1,11 +1,12 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { analyticsBotMessageEventModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
+import { logger } from "../../lib/logger"
 import {
   fillBotMessageStatsDaySeries,
   fillBotMessageStatsMonthSeries,
-  generateDaySeries,
   getUtcDayKey,
+  iterateTzDays,
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
 import type {
@@ -36,7 +37,26 @@ export class BotMessageStatsRepository extends BaseRepository {
     if (payloads.length === 0) {
       return
     }
-    const rows = payloads.map((p) => ({
+    const validPayloads = payloads.filter((p) => {
+      if (!(p.messageId && p.workspaceId && p.conversationId)) {
+        logger.warn(
+          {
+            messageId: p.messageId,
+            workspaceId: p.workspaceId,
+            conversationId: p.conversationId,
+            hasResponse: p.hasResponse,
+            responseType: p.responseType,
+          },
+          "[bot-message-stats] dropping invalid event row",
+        )
+        return false
+      }
+      return true
+    })
+    if (validPayloads.length === 0) {
+      return
+    }
+    const rows = validPayloads.map((p) => ({
       eventId: createId(),
       workspaceId: p.workspaceId,
       messageId: p.messageId,
@@ -54,10 +74,20 @@ export class BotMessageStatsRepository extends BaseRepository {
       source: p.source ?? null,
       metadata: p.metadata ?? null,
     }))
-    await db
-      .insert(analyticsBotMessageEventModel)
-      .values(rows)
-      .onConflictDoNothing()
+    try {
+      await db
+        .insert(analyticsBotMessageEventModel)
+        .values(rows)
+        .onConflictDoNothing()
+    } catch (error) {
+      logger.error(
+        {
+          error,
+          rowCount: rows.length,
+        },
+        "[bot-message-stats] insertEvents failed",
+      )
+    }
   }
 
   async getMessagesByResult(
@@ -80,7 +110,6 @@ export class BotMessageStatsRepository extends BaseRepository {
           AND bucket >= ${from}
           AND bucket <= ${to}
           AND "result" IS NOT NULL
-          AND "result" != ''
         GROUP BY 1, 2, 3, 4
         ORDER BY 1 ASC
       `)
@@ -106,7 +135,6 @@ export class BotMessageStatsRepository extends BaseRepository {
           AND bucket >= ${from}
           AND bucket <= ${to}
           AND "result" IS NOT NULL
-          AND "result" != ''
         GROUP BY 1, 2, 3, 4
         ORDER BY 1 ASC
       `)
@@ -132,7 +160,6 @@ export class BotMessageStatsRepository extends BaseRepository {
           AND bucket >= ${from}
           AND bucket <= ${to}
           AND "result" IS NOT NULL
-          AND "result" != ''
         GROUP BY 1, 2, 3, 4
         ORDER BY 1 ASC
       `)
@@ -152,7 +179,6 @@ export class BotMessageStatsRepository extends BaseRepository {
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "result" IS NOT NULL
-        AND "result" != ''
       GROUP BY 1, 2, 3, 4
       ORDER BY 1 ASC
     `)
@@ -307,8 +333,8 @@ export class BotMessageStatsRepository extends BaseRepository {
       }
 
       const filled: BotMessageStats[] = []
-      for (const d of generateDaySeries(from, to)) {
-        const dayRows = byDay.get(getUtcDayKey(d))
+      for (const { key } of iterateTzDays(from, to, timezone)) {
+        const dayRows = byDay.get(key)
         if (dayRows) {
           filled.push(...dayRows)
         }
