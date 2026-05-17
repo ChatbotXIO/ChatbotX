@@ -193,6 +193,8 @@
     "archivedConversations": "Archived conversations",
     "blockedConversations": "Blocked conversations",
     "blockedConversationsHelp": "Conversations that your account blocked.",
+    "blockedContacts": "Blocked contacts",
+    "blockedContactsHelp": "Contacts don't want to receive messages from your account",
     "newContactsByCountry": "New contacts by country"
   },
   "autoAssignConversation": {

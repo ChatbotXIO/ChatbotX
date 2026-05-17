@@ -193,6 +193,8 @@
     "archivedConversations": "Cuộc trò chuyện đã lưu trữ",
     "blockedConversations": "Cuộc trò chuyện đã chặn",
     "blockedConversationsHelp": "Cuộc trò chuyện mà tài khoản của bạn đã chặn.",
+    "blockedContacts": "Liên hệ bị chặn",
+    "blockedContactsHelp": "Khách hàng không muốn nhận tin nhắn từ tài khoản của bạn",
     "newContactsByCountry": "Liên hệ mới theo quốc gia"
   },
   "autoAssignConversation": {
