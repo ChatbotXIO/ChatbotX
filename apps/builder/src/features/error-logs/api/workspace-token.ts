@@ -13,7 +13,7 @@ export const errorLogsWorkspaceTokenAPIs = {
       summary: "List error logs",
       tags: ["Error Logs"],
     })
-    .input(listErrorLogsRequest)
+    .input(listErrorLogsRequest.omit({ workspaceId: true }))
     .output(publicListErrorLogsResponse)
     .handler(
       async ({ context, input }) =>

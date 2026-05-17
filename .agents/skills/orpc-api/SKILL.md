@@ -20,7 +20,7 @@ description: >-
 Defined in `apps/builder/src/orpc.ts`:
 
 - **`authorizedAPI`**: `base` → error mapping → `authMiddleware` (session/cookie auth)
-- **`workspaceTokenAuthAPI`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (X-CHATBOT-TOKEN header)
+- **`workspaceTokenAuthAPI`**: `base` → error mapping → `workspaceTokenAuthMidddleware` (Authorization: Bearer header)
 
 Workspace-scoped procedures add `workspaceAuthorizedMidddleware` per-procedure.
 
