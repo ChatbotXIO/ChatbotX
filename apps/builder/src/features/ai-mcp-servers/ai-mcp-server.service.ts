@@ -11,7 +11,7 @@ import { BaseService } from "../common/base.service"
 import type {
   CreateAIMcpServerRequest,
   UpdateAIMcpServerRequest,
-} from "./schema/action"
+} from "./schemas/action"
 
 type FindByProps = {
   tx?: DatabaseClient

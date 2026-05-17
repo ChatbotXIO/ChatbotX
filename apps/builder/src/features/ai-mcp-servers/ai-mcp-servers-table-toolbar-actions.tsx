@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
-import type { AIMcpServerResource } from "./schema/resource"
+import type { AIMcpServerResource } from "./schemas/resource"
 
 type AIMcpServersTableToolbarActionsProps = {
   workspaceId: string

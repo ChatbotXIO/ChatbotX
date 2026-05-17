@@ -18,7 +18,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import type { useTranslations } from "next-intl"
-import type { AIMcpServerResource } from "./schema/resource"
+import type { AIMcpServerResource } from "./schemas/resource"
 
 type GetAIMcpServerColumnsProps = {
   t: ReturnType<typeof useTranslations>

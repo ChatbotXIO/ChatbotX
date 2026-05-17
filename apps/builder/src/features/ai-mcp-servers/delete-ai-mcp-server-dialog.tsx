@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl"
 import { useTransition } from "react"
 import { toast } from "sonner"
 import { deleteAIMcpServerAction } from "./actions/delete-ai-mcp-server.action"
-import type { AIMcpServerResource } from "./schema/resource"
+import type { AIMcpServerResource } from "./schemas/resource"
 
 type DeleteAIMcpServerDialogProps = {
   workspaceId: string

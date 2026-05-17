@@ -10,7 +10,7 @@ import { aiMcpServerService } from "../ai-mcp-server.service"
 import {
   type UpdateAIMcpServerRequest,
   updateAIMcpServerRequest,
-} from "../schema/action"
+} from "../schemas/action"
 
 export const updateAIMcpServerAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
