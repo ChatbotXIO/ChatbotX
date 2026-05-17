@@ -41,14 +41,13 @@ import { useCopyToClipboard } from "usehooks-ts"
 import CustomFieldTypeLabel from "../custom-fields/components/custom-field-label"
 import { BotFieldToolbarActions } from "./bot-field-table-toolbar"
 import { DeleteBotFieldsDialog } from "./delete-bot-fields-dialog"
-import type { listBotFields } from "./queries"
 import type { BotFieldResource } from "./schemas/resource"
 import { UpdateBotFieldDialog } from "./update-bot-field-dialog"
 
 type FieldsTableProps = {
   workspaceId: string
   folderId: string | null
-  promises: Promise<[Awaited<ReturnType<typeof listBotFields>>]>
+  promises: Promise<[{ data: BotFieldResource[]; pageCount: number }]>
 }
 
 export function BotFieldsTable({

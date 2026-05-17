@@ -1,10 +1,10 @@
+import { botFieldService } from "@chatbotx.io/business"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { BotFieldsTable } from "@/features/bot-fields/bot-field-table"
-import { listBotFields } from "@/features/bot-fields/queries"
 import { listBotFieldsSearchParams } from "@/features/bot-fields/schemas/query"
 
 export default async function BotFieldsPage(props: {
@@ -22,7 +22,7 @@ export default async function BotFieldsPage(props: {
   const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
-    listBotFields({
+    botFieldService.list({
       ...search,
       workspaceId,
       folderId,
