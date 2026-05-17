@@ -3,12 +3,10 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
 import { contactInboxResource } from "@/features/contact-inboxes/schema/resource"
-import { contactNoteResource } from "@/features/contact-notes/schemas/resource"
 import { contactOnSequenceWithRelations } from "@/features/contact-sequences/schema"
 import { conversationResource } from "@/features/conversations/schema/resource"
-import { publicCustomFieldResource } from "@/features/custom-fields/schemas/resource"
 import { inboxResource } from "@/features/inboxes/schema/resource"
-import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
+import { tagResource } from "@/features/tags/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
 import { basePaginationRequest } from "@/lib/pagination"
 import {
@@ -16,7 +14,8 @@ import {
   publicContactCustomFieldResource,
 } from "./contact-custom-field"
 import { contactFilterCriteriaSchema } from "./contact-filter"
-import { contactResource, publicContactResource } from "./resource"
+import { contactNoteResource } from "./contact-note"
+import { contactResource } from "./resource"
 
 /** Same as contact filter payload (strict discriminated `conditions`). */
 export const contactFilterSchema = contactFilterCriteriaSchema
@@ -40,12 +39,14 @@ export const listContactsRequest = basePaginationRequest.extend({
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 
-export const listContactsItem = contactResource.and(
+export const contactResponse = contactResource.and(
   z.object({
     contactCustomFields: z.array(contactCustomFieldResource).optional(),
     tags: z.array(tagResource).optional(),
     contactNotes: z.array(contactNoteResource).optional(),
-    contactInboxes: z.array(contactInboxResource).optional(),
+    contactInboxes: z
+      .array(contactInboxResource.extend({ inbox: inboxResource }))
+      .optional(),
     conversation: conversationResource
       .and(
         z.object({
@@ -58,35 +59,22 @@ export const listContactsItem = contactResource.and(
       .optional(),
   }),
 )
-export type ListContactsItem = z.infer<typeof listContactsItem>
+export type ContactResponse = z.infer<typeof contactResponse>
 
 export const listContactsResponse = z.object({
-  data: z.array(listContactsItem),
+  data: z.array(contactResponse),
   pageCount: z.number(),
 })
 export type ListContactsResponse = z.infer<typeof listContactsResponse>
+
+export const publicListContactsResponse = z.object({
+  data: z.array(contactResponse),
+})
 
 export const findContactRequest = contactResource
   .pick({ id: true, workspaceId: true })
   .partial()
 export type FindContactRequest = z.infer<typeof findContactRequest>
-
-export const publicFindContactResponse = publicContactResource.and(
-  z.object({
-    tags: z.array(publicTagResource),
-    customFields: z.array(publicCustomFieldResource),
-  }),
-)
-export type PublicFindContactResponse = z.infer<
-  typeof publicFindContactResponse
->
-
-export const publicListContactsResponse = z.object({
-  data: z.array(publicFindContactResponse),
-})
-export type PublicListContactsResponse = z.infer<
-  typeof publicListContactsResponse
->
 
 export const publicListContactsByCustomFieldRequest = z.object({
   customFieldId: z.string(),

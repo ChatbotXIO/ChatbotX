@@ -1,9 +1,9 @@
 import { botFieldService } from "@chatbotx.io/business"
 import z from "zod"
 import {
-  posibleErrorsOnCreatingResource,
-  posibleErrorsOnDeletingResource,
-  posibleErrorsOnFindingResource,
+  possibleErrorsOnCreatingResource,
+  possibleErrorsOnDeletingResource,
+  possibleErrorsOnFindingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPI } from "@/orpc"
@@ -21,7 +21,7 @@ const botFieldWorkspaceTokenAPIs = {
     })
     .input(z.object({}))
     .output(publicListBotFieldsResponse)
-    .errors(posibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context }) => {
       const result = await botFieldService.list({
         workspaceId: context.workspace.id,
@@ -44,7 +44,7 @@ const botFieldWorkspaceTokenAPIs = {
     })
     .input(createBotFieldRequest)
     .output(publicBotFieldResource)
-    .errors(posibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
         await botFieldService.create({
@@ -62,7 +62,7 @@ const botFieldWorkspaceTokenAPIs = {
     })
     .input(z.object({ key: z.string().max(255) }))
     .output(publicBotFieldResource)
-    .errors(posibleErrorsOnFindingResource)
+    .errors(possibleErrorsOnFindingResource)
     .handler(
       async ({ context, input }) =>
         await botFieldService.findByKeyOrFail({
@@ -80,7 +80,7 @@ const botFieldWorkspaceTokenAPIs = {
     })
     .input(z.object({ key: z.string().max(255), value: z.string().max(255) }))
     .output(publicBotFieldResource)
-    .errors(posibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnCreatingResource)
     .handler(async ({ context, input }) => {
       const { key, ...rest } = input
       return await botFieldService.updateByKey({
@@ -99,7 +99,7 @@ const botFieldWorkspaceTokenAPIs = {
       tags: ["Bot Fields"],
     })
     .input(z.object({ key: z.string().max(255) }))
-    .errors(posibleErrorsOnDeletingResource)
+    .errors(possibleErrorsOnDeletingResource)
     .handler(
       async ({ context, input }) =>
         await botFieldService.deleteByKey({

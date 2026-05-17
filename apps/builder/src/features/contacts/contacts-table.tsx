@@ -21,7 +21,7 @@ import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
-import type { ListContactsItem } from "./schemas/query"
+import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 
 type ContactsTableProps = {
@@ -33,7 +33,7 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
 
-  const columns = useMemo<ColumnDef<ListContactsItem>[]>(
+  const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
     () => [
       {
         id: "select",

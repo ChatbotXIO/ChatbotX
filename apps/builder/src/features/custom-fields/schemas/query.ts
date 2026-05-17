@@ -47,6 +47,14 @@ export const findCustomFieldRequest = customFieldResource
   .partial()
 export type FindCustomFieldRequest = z.infer<typeof findCustomFieldRequest>
 
+export const findCustomFieldByKeyRequest = z.object({
+  key: z.string(),
+  workspaceId: z.string(),
+})
+export type FindCustomFieldByKeyRequest = z.infer<
+  typeof findCustomFieldByKeyRequest
+>
+
 export const listPublicCustomFieldsResponse = z.object({
   data: z.array(publicCustomFieldResource),
 })

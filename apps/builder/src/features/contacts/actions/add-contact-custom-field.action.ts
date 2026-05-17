@@ -192,3 +192,85 @@ export const setContactCustomFieldValue = async ({
 
   revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }
+
+export const setContactCustomFieldValues = async ({
+  workspaceId,
+  contactId,
+  fields,
+}: {
+  workspaceId: string
+  contactId: string
+  fields: Array<{ customFieldId: string; value: string }>
+}) => {
+  try {
+    const customFieldIds = fields.map((f) => f.customFieldId)
+
+    const customFields = await db.query.customFieldModel.findMany({
+      where: { workspaceId, id: { in: customFieldIds } },
+      columns: { id: true, name: true },
+    })
+
+    if (customFields.length === 0) {
+      return
+    }
+
+    const existingValues = await db.query.contactCustomFieldModel.findMany({
+      where: {
+        contactId,
+        customFieldId: { in: customFieldIds },
+      },
+    })
+
+    await db.transaction(async (tx) => {
+      const matchedFields = customFields.flatMap((customField) => {
+        const field = fields.find((f) => f.customFieldId === customField.id)
+        return field ? [{ customField, field }] : []
+      })
+
+      await Promise.all(
+        matchedFields.map(({ customField, field }) => {
+          const existing = existingValues.find(
+            (v) => v.customFieldId === customField.id,
+          )
+
+          if (existing) {
+            return tx
+              .update(contactCustomFieldModel)
+              .set({ value: field.value })
+              .where(eq(contactCustomFieldModel.id, existing.id))
+          }
+
+          return tx.insert(contactCustomFieldModel).values({
+            id: createId(),
+            contactId,
+            customFieldId: customField.id,
+            value: field.value,
+          })
+        }),
+      )
+    })
+
+    for (const customField of customFields) {
+      const field = fields.find((f) => f.customFieldId === customField.id)
+      if (!field) {
+        continue
+      }
+      try {
+        await emitCustomFieldChanged(
+          workspaceId,
+          contactId,
+          customField.id,
+          customField.name,
+          null,
+          field.value,
+        )
+      } catch (error) {
+        console.error("Failed to emit customFieldChanged event:", error)
+      }
+    }
+
+    revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
+  } catch (error) {
+    console.error("[setContactCustomFieldValues] Error:", error)
+  }
+}

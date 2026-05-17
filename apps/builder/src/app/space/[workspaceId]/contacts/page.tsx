@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ContactsTable } from "@/features/contacts/contacts-table"
-import { listContacts } from "@/features/contacts/queries/list-contacts.queries"
+import { listContactsRSC } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
@@ -25,7 +25,7 @@ export default async function ContactsPage(props: {
   const { data: search } = listContactsRequest.safeParse(searchParams)
 
   const promises = Promise.all([
-    listContacts({
+    listContactsRSC({
       ...search,
       workspaceId,
     }),

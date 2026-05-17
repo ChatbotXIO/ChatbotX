@@ -1,6 +1,12 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
+const NUMERIC_RE = /^\d+$/
+
+import { and, db, eq, inArray, or } from "@chatbotx.io/database/client"
+import {
+  contactCustomFieldModel,
+  customFieldModel,
+} from "@chatbotx.io/database/schema"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -99,4 +105,56 @@ export const deleteContactCustomFields = async ({
     `workspaces:${workspaceId}#conversations`,
     `workspaces:${workspaceId}#fields`,
   ])
+}
+
+export const deleteContactCustomFieldsByFields = async ({
+  workspaceId,
+  contactId,
+  keys,
+}: {
+  workspaceId: string
+  contactId: string
+  keys: string[]
+}) => {
+  try {
+    const numericKeys = keys.filter((k) => NUMERIC_RE.test(k))
+
+    const idOrNameCondition =
+      numericKeys.length > 0
+        ? or(
+            inArray(customFieldModel.id, numericKeys),
+            inArray(customFieldModel.name, keys),
+          )
+        : inArray(customFieldModel.name, keys)
+
+    const matched = await db
+      .select({ id: customFieldModel.id })
+      .from(customFieldModel)
+      .where(
+        and(eq(customFieldModel.workspaceId, workspaceId), idOrNameCondition),
+      )
+
+    const resolvedIds = matched.map((f) => f.id)
+
+    if (resolvedIds.length === 0) {
+      return
+    }
+
+    await db
+      .delete(contactCustomFieldModel)
+      .where(
+        and(
+          eq(contactCustomFieldModel.contactId, contactId),
+          inArray(contactCustomFieldModel.customFieldId, resolvedIds),
+        ),
+      )
+
+    revalidateCacheTags([
+      `workspaces:${workspaceId}#contacts`,
+      `workspaces:${workspaceId}#conversations`,
+      `workspaces:${workspaceId}#fields`,
+    ])
+  } catch (error) {
+    console.error("[deleteContactCustomFieldsByFields] Error:", error)
+  }
 }

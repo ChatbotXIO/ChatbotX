@@ -12,6 +12,8 @@ import type {
   ListTagsResponse,
 } from "../schema/query"
 
+const TAG_ID_REGEX = /^\d+$/
+
 export const listTagsRSC = async (
   input: ListTagsRequest & { workspaceId: string },
 ) => {
@@ -63,11 +65,16 @@ export async function listTags(
 }
 
 export const findTag = async (input: FindTagRequest) => {
-  const { folderId, ...where } = input
+  const { folderId, workspaceId } = input
+  const isNumber = TAG_ID_REGEX.test(input.key)
+  const key = isNumber ? "id" : "name"
   return await db.query.tagModel.findFirst({
     where: {
-      ...where,
+      ...{
+        [key]: input.key,
+      },
       folderId: folderId === null ? { isNull: true as const } : folderId,
+      workspaceId,
     },
   })
 }

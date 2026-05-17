@@ -43,7 +43,9 @@ export const publicListTagsResponse = z.object({
 })
 export type ListPublicTagResponse = z.infer<typeof publicListTagsResponse>
 
-export const findTagRequest = tagResource
-  .pick({ id: true, workspaceId: true, folderId: true, name: true })
-  .partial()
+export const findTagRequest = z.object({
+  key: z.string(),
+  folderId: zodBigintAsString().nullish(),
+  workspaceId: zodBigintAsString(),
+})
 export type FindTagRequest = z.infer<typeof findTagRequest>

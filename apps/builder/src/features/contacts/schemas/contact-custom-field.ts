@@ -58,12 +58,36 @@ export type SetContactCustomFieldValueRequest = z.infer<
   typeof setContactCustomFieldValueRequest
 >
 
+export const setBulkContactCustomFieldsRequest = z.object({
+  contactId: zodBigintAsString(),
+  fields: z
+    .array(
+      z.object({
+        customFieldId: zodBigintAsString(),
+        value: z.string().trim(),
+      }),
+    )
+    .min(1)
+    .max(20),
+})
+export type SetBulkContactCustomFieldsRequest = z.infer<
+  typeof setBulkContactCustomFieldsRequest
+>
+
 export const deleteContactCustomFieldRequest = z.object({
   contactId: zodBigintAsString(),
   customFieldId: zodBigintAsString(),
 })
 export type DeleteContactCustomFieldRequest = z.infer<
   typeof deleteContactCustomFieldRequest
+>
+
+export const deleteBulkContactCustomFieldsRequest = z.object({
+  contactId: zodBigintAsString(),
+  keys: z.array(z.string().trim().min(1)).min(1),
+})
+export type DeleteBulkContactCustomFieldsRequest = z.infer<
+  typeof deleteBulkContactCustomFieldsRequest
 >
 
 export const publicContactCustomFieldResource = publicCustomFieldResource.and(

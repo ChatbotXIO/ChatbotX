@@ -7,11 +7,14 @@ import {
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
+  FindCustomFieldByKeyRequest,
   FindCustomFieldRequest,
   ListCustomFieldsRequest,
   ListCustomFieldsResponse,
 } from "../schemas/query"
 import type { CustomFieldResource } from "../schemas/resource"
+
+const CUSTOM_FIELD_ID_REGEX = /^\d+$/
 
 export const listCustomFieldsRSC = async (
   input: ListCustomFieldsRequest & { workspaceId: string },
@@ -61,4 +64,14 @@ export const findCustomField = async (
 ): Promise<CustomFieldResource | undefined> =>
   await db.query.customFieldModel.findFirst({
     where: input,
+  })
+
+export const findCustomFieldByKey = async (
+  input: FindCustomFieldByKeyRequest,
+): Promise<CustomFieldResource | undefined> =>
+  await db.query.customFieldModel.findFirst({
+    where: {
+      [CUSTOM_FIELD_ID_REGEX.test(input.key) ? "id" : "name"]: input.key,
+      workspaceId: input.workspaceId,
+    },
   })

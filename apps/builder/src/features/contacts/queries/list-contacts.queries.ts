@@ -12,6 +12,46 @@ import type {
 } from "../schemas/query"
 
 export async function listContacts(
+  input: ListContactsRequest,
+): Promise<ListContactsResponse> {
+  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
+  const where = generateWhere(input)
+
+  const pagination = getPaginationWithDefaults(input)
+  const orderBy = parseOrderByAsObject(contactModel, input)
+
+  const [data, totalRows] = await Promise.all([
+    db.query.contactModel.findMany({
+      where,
+      ...pagination,
+      orderBy,
+      with: {
+        tags: true,
+        contactCustomFields: true,
+        contactInboxes: {
+          with: {
+            inbox: true,
+          },
+        },
+        conversation: {
+          with: {
+            assignedUser: true,
+            assignedInboxTeam: true,
+          },
+        },
+      },
+    }),
+    // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
+    db.$count(contactModel, relationsFilterToSQL(contactModel, where as any)),
+  ])
+
+  const pageCount = Math.ceil(totalRows / pagination.limit)
+
+  return { data, pageCount }
+}
+
+export async function listContactsRSC(
   input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
@@ -27,7 +67,11 @@ export async function listContacts(
       ...pagination,
       orderBy,
       with: {
-        contactInboxes: true,
+        contactInboxes: {
+          with: {
+            inbox: true,
+          },
+        },
         conversation: {
           with: {
             assignedUser: true,
