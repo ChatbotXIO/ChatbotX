@@ -14,10 +14,17 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
+import {
+  fileToolId,
+  fncToolId,
+  mcpToolId,
+  sysToolId,
+  type ToolId,
+} from "../lib/tool-id"
 
 export type AIToolMultiSelectGroupOption = {
   label: string
-  value: string
+  value: ToolId
   icon: LucideIcon
 }
 
@@ -33,7 +40,7 @@ export type AIToolMultiSelectSource = {
   systemFunctions?: { id: string; name: string }[]
 }
 
-export const buildAIToolMultiSelectGroups = (
+const buildAIToolMultiSelectGroups = (
   source: AIToolMultiSelectSource,
   labels: {
     file: string
@@ -49,7 +56,7 @@ export const buildAIToolMultiSelectGroups = (
       heading: labels.file,
       options: files.map((file) => ({
         label: file.name,
-        value: `file:${file.id}`,
+        value: fileToolId(file.id),
         icon: FileIcon,
       })),
     },
@@ -57,7 +64,7 @@ export const buildAIToolMultiSelectGroups = (
       heading: labels.fn,
       options: functions.map((fn) => ({
         label: fn.name,
-        value: `fn:${fn.id}`,
+        value: fncToolId(fn.id),
         icon: FunctionSquareIcon,
       })),
     },
@@ -65,19 +72,18 @@ export const buildAIToolMultiSelectGroups = (
       heading: labels.mcp,
       options: mcpServers.map((mcpServer) => ({
         label: mcpServer.name,
-        value: `mcp:${mcpServer.id}`,
+        value: mcpToolId(mcpServer.id),
         icon: ServerIcon,
       })),
     },
   ]
 
-  // System functions always at the end
   if (systemFunctions.length > 0) {
     groups.push({
       heading: labels.sys,
       options: systemFunctions.map((sysFn) => ({
         label: sysFn.name,
-        value: `sys:${sysFn.id}`,
+        value: sysToolId(sysFn.id),
         icon: SettingsIcon,
       })),
     })

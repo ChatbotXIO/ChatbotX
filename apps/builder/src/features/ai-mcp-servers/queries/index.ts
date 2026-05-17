@@ -3,7 +3,7 @@ import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListAIMcpServersRequest,
   ListAIMcpServersResponse,
-} from "../schema/action"
+} from "../schemas/action"
 
 export async function listAIMcpServers(
   input: ListAIMcpServersRequest,

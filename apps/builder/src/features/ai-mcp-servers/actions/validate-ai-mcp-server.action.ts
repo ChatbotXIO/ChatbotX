@@ -13,7 +13,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ValidateAIMcpServerRequest,
   validateAIMcpServerRequest,
-} from "../schema/action"
+} from "../schemas/action"
 
 export const validateAIMcpServer = async ({
   parsedInput,

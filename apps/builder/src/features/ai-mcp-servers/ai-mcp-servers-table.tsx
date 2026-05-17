@@ -19,7 +19,7 @@ import { AIMcpServersCreate } from "./ai-mcp-servers-create"
 import { AIMcpServersTableToolbarActions } from "./ai-mcp-servers-table-toolbar-actions"
 import { DeleteAIMcpServerDialog } from "./delete-ai-mcp-server-dialog"
 import type { listAIMcpServers } from "./queries"
-import type { AIMcpServerResource } from "./schema/resource"
+import type { AIMcpServerResource } from "./schemas/resource"
 
 type AIMcpServersTableProps = {
   workspaceId: string

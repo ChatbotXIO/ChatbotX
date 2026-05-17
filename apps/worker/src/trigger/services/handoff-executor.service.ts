@@ -1,5 +1,5 @@
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emitConversationTransferredToHuman } from "@chatbotx.io/events"
 import baseLogger from "@chatbotx.io/logger"
@@ -16,6 +16,8 @@ export interface HandoffRequest {
   workspaceId: string
 }
 
+const DEFAULT_CHANNEL = "webchat"
+
 export class HandoffExecutorService {
   async execute(request: HandoffRequest): Promise<void> {
     const {
@@ -29,51 +31,31 @@ export class HandoffExecutorService {
     } = request
 
     try {
-      // 0. Check if already transferred to human (Idempotency)
-      const currentConversation = await db.query.conversationModel.findFirst({
-        where: {
-          id: conversationId,
-        },
-        columns: {
-          botEnabled: true,
-        },
-      })
+      // Atomic update acts as idempotency guard: only proceeds when bot is still enabled.
+      // Using WHERE botEnabled = true eliminates the TOCTOU race between a separate check and update.
+      const updated = await db
+        .update(conversationModel)
+        .set({ botEnabled: false })
+        .where(
+          and(
+            eq(conversationModel.id, conversationId),
+            eq(conversationModel.botEnabled, true),
+          ),
+        )
+        .returning({ id: conversationModel.id })
 
-      const contactInbox = await db.query.contactInboxModel.findFirst({
-        where: {
-          contactId,
-        },
-        columns: {
-          channel: true,
-        },
-      })
-
-      if (currentConversation && currentConversation.botEnabled === false) {
+      if (updated.length === 0) {
         return
       }
 
-      const resolvedChannel = channel || contactInbox?.channel || "webchat"
+      const resolvedChannel = channel ?? DEFAULT_CHANNEL
 
-      // 1. Disable bot for the conversation
-      await db
-        .update(conversationModel)
-        .set({ botEnabled: false })
-        .where(eq(conversationModel.id, conversationId))
-
-      // 2. Emit event for real-time and webhooks
       await emitConversationTransferredToHuman(
         workspaceId,
         contactId,
         conversationId,
-      ).catch((err) => {
-        const normalizedError = normalizeError(err)
-        baseLogger.error(
-          { error: normalizedError, conversationId },
-          "[handoff-executor] Failed to emit event",
-        )
-      })
+      )
 
-      // 3. Track analytics
       await conversationTrackingService
         .trackEvent({
           eventId: createId(),

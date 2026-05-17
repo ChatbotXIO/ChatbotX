@@ -5,8 +5,7 @@ import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { aiMcpServerService } from "../ai-mcp-server.service"
-import { createAIMcpServerRequest } from "../schema/action"
+import { createAIMcpServerRequest } from "../schemas/action"
 
 export const createAIMcpServerAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

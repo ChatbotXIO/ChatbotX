@@ -6,7 +6,7 @@ import { createId } from "@chatbotx.io/utils"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { createAIFunctionRequest } from "../schema/action"
+import { createAIFunctionRequest } from "../schemas/action"
 
 export const createAIFunctionAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)

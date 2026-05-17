@@ -12,7 +12,7 @@ import { type AIToolsStore, createAIToolsStore } from "./ai-tools-store"
 
 export type AIToolsStoreApi = ReturnType<typeof createAIToolsStore>
 
-export const AIToolsStoreContext = createContext<AIToolsStoreApi | undefined>(
+const AIToolsStoreContext = createContext<AIToolsStoreApi | undefined>(
   undefined,
 )
 

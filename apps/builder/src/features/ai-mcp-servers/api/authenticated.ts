@@ -10,7 +10,7 @@ import {
   listAIMcpServersRequest,
   listAIMcpServersResponse,
   validateAIMcpServerRequest,
-} from "../schema/action"
+} from "../schemas/action"
 
 export const aiMcpServersAuthenticatedAPI = {
   validateAIMcpServerAuthenticatedAPI: authorizedAPI

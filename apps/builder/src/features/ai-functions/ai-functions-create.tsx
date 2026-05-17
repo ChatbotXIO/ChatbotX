@@ -25,7 +25,7 @@ import { toast } from "sonner"
 import CustomFieldField from "../custom-fields/components/custom-field-field"
 import { useFlowSelectOptions } from "../flows/provider/flow-hook"
 import { createAIFunctionAction } from "./actions/create-ai-function.action"
-import { createAIFunctionRequest } from "./schema/action"
+import { createAIFunctionRequest } from "./schemas/action"
 
 type AIFunctionsCreateProps = {
   workspaceId: string

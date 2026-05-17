@@ -8,7 +8,7 @@ import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateAIFunctionRequest,
   updateAIFunctionRequest,
-} from "../schema/action"
+} from "../schemas/action"
 
 export const updateAIFunctionAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])

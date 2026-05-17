@@ -4,7 +4,7 @@ import { listAIFunctions } from "../queries"
 import {
   listAIFunctionsRequest,
   listAIFunctionsResponse,
-} from "../schema/action"
+} from "../schemas/action"
 
 export const aiFunctionsAuthenticatedAPI = {
   listAIFunctionsAuthenticatedAPI: authorizedAPI

@@ -24,18 +24,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
-import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
-import { createAIMcpServerRequest } from "./schema/action"
-import type { AIMcpServerResource } from "./schema/resource"
-
-type AIMcpServersCreateProps = {
-  workspaceId: string
-  onSuccess?: () => void
-  mode?: "create" | "edit"
-  initialData?: AIMcpServerResource
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-}
+import { createAIMcpServerRequest } from "./schemas/action"
 
 export function AIMcpServersCreate({
   workspaceId,
