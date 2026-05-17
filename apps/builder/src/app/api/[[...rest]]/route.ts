@@ -28,9 +28,8 @@ const openAPIHandler = new OpenAPIHandler(router, {
               scheme: "bearer",
             },
             developerAccessToken: {
-              type: "apiKey",
-              in: "header",
-              name: "X-CHATBOT-TOKEN",
+              type: "http",
+              scheme: "bearer",
             },
           },
         },

@@ -22,9 +22,8 @@ async function handleRequest(request: Request) {
     components: {
       securitySchemes: {
         developerAccessToken: {
-          type: "apiKey",
-          in: "header",
-          name: "X-CHATBOT-TOKEN",
+          type: "http",
+          scheme: "bearer",
         },
       },
     },
