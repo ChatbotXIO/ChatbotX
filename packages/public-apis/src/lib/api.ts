@@ -34,7 +34,7 @@ export class ChatbotXAPI {
       // throwHttpErrors: false,
       headers: {
         "Content-Type": "application/json",
-        "X-CHATBOT-TOKEN": this.apiKey,
+        Authorization: `Bearer ${this.apiKey}`,
       },
     })
   }
