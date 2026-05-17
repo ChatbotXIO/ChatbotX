@@ -139,7 +139,7 @@ export const sendMessageEditorMenus = (
   const allMenuItems = ALL_MENU_ITEMS(t, menuData)
 
   if (channel === channelTypes.enum.omnichannel) {
-    return Object.keys(allMenuItems).map((key) => allMenuItems[key])
+    return Object.values(allMenuItems)
   }
 
   const menuOrder =

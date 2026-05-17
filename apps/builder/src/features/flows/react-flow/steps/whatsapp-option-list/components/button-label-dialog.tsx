@@ -38,7 +38,6 @@ function ButtonLabelDialogInner({
 
   const form = useForm<WhatsappOptionListButtonLabelFormValues>({
     resolver: zodResolver(whatsappOptionListButtonLabelFormSchema),
-    defaultValues: { buttonLabel: currentLabel },
     values: { buttonLabel: currentLabel },
     mode: "onChange",
   })

@@ -43,10 +43,6 @@ function OptionDialogInner({
 
   const form = useForm<WhatsappOptionListOptionFormValues>({
     resolver: zodResolver(whatsappOptionListOptionFormSchema),
-    defaultValues: {
-      title: currentItem?.label ?? "",
-      description: currentItem?.description ?? "",
-    },
     values: {
       title: currentItem?.label ?? "",
       description: currentItem?.description ?? "",

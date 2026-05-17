@@ -1,4 +1,4 @@
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
+import { createId } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { baseStepSchema } from "./base"
 import { buttonStepSchema, buttonTypes } from "./button"
@@ -29,7 +29,6 @@ export type WhatsappOptionListButton = z.infer<
 export const whatsappOptionListStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.whatsappOptionList),
   text: z.string().trim().min(1).max(WHATSAPP_OPTION_LIST_BODY_MAX),
-  buttonId: zodBigintAsString(),
   buttonLabel: z.string().trim().min(1).max(WHATSAPP_OPTION_LIST_BUTTON_MAX),
   buttons: z
     .array(whatsappOptionListButtonSchema)
@@ -84,6 +83,5 @@ export const whatsappOptionListStepDefaultFn = (
   ],
   ...props,
   id: createId(),
-  buttonId: createId(),
   stepType: stepTypes.enum.whatsappOptionList,
 })

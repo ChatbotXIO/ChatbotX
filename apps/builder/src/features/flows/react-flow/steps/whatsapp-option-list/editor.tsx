@@ -32,11 +32,19 @@ const WhatsappOptionListStepEditor = ({
     name: `${parentName}.buttonLabel`,
   }) as string
 
-  const { fields, append, remove, update } = useFieldArray({
+  const {
+    fields: rawFields,
+    append,
+    remove,
+    update,
+  } = useFieldArray({
     control,
     name: `${parentName}.buttons`,
     keyName: "_key",
   })
+  const fields = rawFields as unknown as (WhatsappOptionListButton & {
+    _key: string
+  })[]
 
   const [buttonDialogOpen, setButtonDialogOpen] = useState(false)
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(
@@ -135,7 +143,7 @@ const WhatsappOptionListStepEditor = ({
           {fields.map((field, index) => (
             <OptionRow
               index={index}
-              item={field as unknown as WhatsappOptionListButton}
+              item={field}
               key={field._key}
               onEdit={handleEditOption}
               onRemove={handleRemoveOption}
@@ -164,9 +172,7 @@ const WhatsappOptionListStepEditor = ({
       />
       {activeOptionIndex === null ? null : (
         <OptionDialog
-          currentItem={
-            fields[activeOptionIndex] as unknown as WhatsappOptionListButton
-          }
+          currentItem={fields[activeOptionIndex]}
           index={activeOptionIndex}
           key={activeOptionIndex}
           onOpenChange={handleOptionDialogOpenChange}
