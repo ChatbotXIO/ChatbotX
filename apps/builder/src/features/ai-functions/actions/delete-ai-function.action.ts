@@ -32,7 +32,7 @@ export const deleteAIFunction = async (ctx: {
 
   if (!aiFunction) {
     throw notFoundException(
-      t("messages.featureNotFound", { feature: "AIFunction" }),
+      t("messages.featureNotFound", { feature: t("fields.aiFunction.label") }),
     )
   }
 

@@ -60,7 +60,9 @@ export const updateAIFunction = async (
 
   if (!aiFunction) {
     throw notFoundException(
-      translations("messages.featureNotFound", { feature: "AIFunction" }),
+      translations("messages.featureNotFound", {
+        feature: translations("fields.aiFunction.label"),
+      }),
     )
   }
 

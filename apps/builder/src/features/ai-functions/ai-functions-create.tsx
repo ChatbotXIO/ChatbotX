@@ -185,13 +185,18 @@ export function AIFunctionsCreate({
                   />
                   <MoveRightIcon className="size-10" />
                   <CustomFieldField name={`dataCollect.${index}.to`} />
-                  <Button onClick={() => remove(index)} variant="outline">
+                  <Button
+                    onClick={() => remove(index)}
+                    type="button"
+                    variant="outline"
+                  >
                     <TrashIcon className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
               <Button
                 onClick={() => append({ from: "", to: "" })}
+                type="button"
                 variant="outline"
               >
                 <PlusIcon className="h-4 w-4" />
