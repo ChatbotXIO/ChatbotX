@@ -50,7 +50,6 @@ const config: IntegrationDefinition<
       default:
         throw new TelegramAPIException(
           `${props.req.method} ${props.req.url} is not implemented`,
-          props.req.url,
         )
     }
   },

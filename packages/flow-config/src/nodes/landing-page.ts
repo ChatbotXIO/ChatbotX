@@ -1,11 +1,4 @@
 import { z } from "zod"
-import { emailButtonStepSchema } from "../steps/email-button"
-import { emailCodeStepSchema } from "../steps/email-code"
-import { emailH3StepSchema } from "../steps/email-h3"
-import { emailImageStepSchema } from "../steps/email-image"
-import { emailLineStepSchema } from "../steps/email-line"
-import { emailSpacingStepSchema } from "../steps/email-spacing"
-import { emailTextStepSchema } from "../steps/email-text"
 import {
   baseNodeDataSchema,
   baseNodeSchema,
@@ -17,19 +10,7 @@ import {
 export const landingPageNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.landingPage),
   data: baseNodeDataSchema.extend({
-    details: z.object({
-      steps: z.array(
-        z.union([
-          emailH3StepSchema,
-          emailTextStepSchema,
-          emailImageStepSchema,
-          emailButtonStepSchema,
-          emailCodeStepSchema,
-          emailSpacingStepSchema,
-          emailLineStepSchema,
-        ]),
-      ),
-    }),
+    details: z.object({}),
   }),
 })
 
@@ -45,9 +26,6 @@ export const landingPageNodeDefaultFn = (
     name: "Landing Page",
     isStartNode: false,
     ...props.dataProps,
-    details: {
-      steps: [],
-      ...props.detailProps,
-    },
+    details: {},
   },
 })

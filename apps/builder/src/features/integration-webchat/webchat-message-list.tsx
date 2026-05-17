@@ -63,8 +63,8 @@ export function WebchatMessageList() {
           Header: MessageComponentHeader,
         }}
         data={data}
-        followOutput={true}
-        initialTopMostItemIndex={Math.max(0, data.length - 1)}
+        followOutput
+        initialTopMostItemIndex={{ index: "LAST" }}
         itemContent={(_, item) =>
           item.id === TYPING_INDICATOR_ID ? (
             <TypingIndicator />

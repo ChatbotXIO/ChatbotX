@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { automatedResponseModel } from "@chatbotx.io/database/schema"
@@ -8,7 +9,6 @@ import {
 } from "@chatbotx.io/database/utils"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { notFoundException } from "@/lib/errors/exception"
 import type {
   FindAutomatedResponseRequest,
   ListAutomatedResponsesRequest,

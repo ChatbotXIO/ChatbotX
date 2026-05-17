@@ -1,0 +1,34 @@
+{
+  "name": "@chatbotx.io/business",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./errors": "./src/errors.ts",
+    "./utils": "./src/utils.ts"
+  },
+  "dependencies": {
+    "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/encryption": "workspace:*",
+    "@chatbotx.io/filesystem": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
+    "@chatbotx.io/partysocket-config": "workspace:*",
+    "@chatbotx.io/redis": "workspace:*",
+    "@chatbotx.io/sdk": "workspace:*",
+    "@chatbotx.io/utils": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "^24.10.4",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  }
+}

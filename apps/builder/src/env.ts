@@ -15,27 +15,25 @@ const _isCommunity = process.env.NEXT_PUBLIC_EDITION === "community"
 const baseEnv = {
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
-    NEXT_PUBLIC_BILLING_URL: z.url().optional(),
-    NEXT_PUBLIC_MANAGE_URL: z.url().optional(),
-    NEXT_PUBLIC_ASSET_URL: z.url().optional(),
+    NEXT_PUBLIC_ASSET_URL: z.url(),
     NEXT_PUBLIC_ENVIRONMENT: environmentRule,
     NEXT_PUBLIC_EDITION: editionRule,
   },
   runtimeEnv: {
-    NEXT_PUBLIC_BUILDER_URL: process.env.NEXT_PUBLIC_BUILDER_URL,
-    NEXT_PUBLIC_BILLING_URL: process.env.NEXT_PUBLIC_BILLING_URL,
-    NEXT_PUBLIC_ASSET_URL: process.env.NEXT_PUBLIC_ASSET_URL,
-    NEXT_PUBLIC_MANAGE_URL: process.env.NEXT_PUBLIC_MANAGE_URL,
-    NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
-    NEXT_PUBLIC_EDITION: process.env.NEXT_PUBLIC_EDITION,
+    NEXT_PUBLIC_BUILDER_URL:
+      process.env.NEXT_PUBLIC_BUILDER_URL || "http://localhost:3123",
+    NEXT_PUBLIC_ASSET_URL:
+      process.env.NEXT_PUBLIC_ASSET_URL || "http://localhost:9000/chatbotx/",
+    NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT || "dev",
+    NEXT_PUBLIC_EDITION: process.env.NEXT_PUBLIC_EDITION || "community",
   },
   server: {},
 }
 
 const googleAuthEnv = {
   server: {
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
   },
 }
 
@@ -59,6 +57,7 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     ...baseEnv.runtimeEnv,
   },
+  emptyStringAsUndefined: true,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",
 })
 

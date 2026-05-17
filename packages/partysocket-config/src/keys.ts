@@ -1,15 +1,20 @@
-import { createEnv } from "@t3-oss/env-nextjs"
+import { createEnv } from "@t3-oss/env-core"
 import z from "zod"
 
 export const keys = () =>
   createEnv({
     server: {
-      PARTYSOCKET_API_KEY: z.string().min(1),
+      REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
+      REALTIME_SESSION_VERIFY_URL: z.url().optional(),
     },
     client: {
-      NEXT_PUBLIC_PARTYSOCKET_URL: z.url(),
+      NEXT_PUBLIC_REALTIME_URL: z.url(),
     },
-    experimental__runtimeEnv: {
-      NEXT_PUBLIC_PARTYSOCKET_URL: process.env.NEXT_PUBLIC_PARTYSOCKET_URL,
+    clientPrefix: "NEXT_PUBLIC_",
+    runtimeEnv: {
+      NEXT_PUBLIC_REALTIME_URL: process.env.NEXT_PUBLIC_REALTIME_URL,
     },
+    skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
+
+export const env = keys()

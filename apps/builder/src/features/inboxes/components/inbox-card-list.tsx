@@ -1,10 +1,12 @@
 "use client"
 
+import { buildInboxLink } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
-import { getInboxLink } from "@/features/inboxes/helpers"
+import { usePlatformUrls } from "@/features/platform"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 import type { ListInboxesResponse } from "../schema/action"
 import { InboxIcon } from "./inbox-icon"
@@ -38,7 +40,12 @@ const BaseInboxCard = memo(function BaseInboxCard({
   inbox: ListInboxesResponse["data"][number]
 }) {
   const t = useTranslations()
-  const link = getInboxLink({ inbox })
+  const { appUrl } = usePlatformUrls()
+  const link = buildInboxLink(appUrl, inbox as InboxWithIntegrations)
+
+  if (!link) {
+    return
+  }
 
   return (
     <Card className="py-3">

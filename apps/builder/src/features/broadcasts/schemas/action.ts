@@ -6,7 +6,7 @@ import {
 import { waTemplateParamsSchema } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterRequest } from "@/features/contacts/schemas/query"
+import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 
 export const createBroadcastRequest = z
   .object({

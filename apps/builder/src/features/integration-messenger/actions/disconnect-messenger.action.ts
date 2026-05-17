@@ -6,9 +6,12 @@ import {
   inboxModel,
   integrationMessengerModel,
 } from "@chatbotx.io/database/schema"
-import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
-import { unsubscribePageFromAppWebhook } from "@chatbotx.io/integration-messenger/apis/page"
+import {
+  isRevokedTokenError,
+  type MessengerAuthValue,
+} from "@chatbotx.io/integration-messenger"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -35,15 +38,17 @@ const disconnectMessenger = async (ctx: {
     message: "Integration Messenger not found",
   })
 
-  await db.transaction(async (tx) => {
-    // Unsubscribe from app
-    const authValue = integrationMessenger.auth as MessengerAuthValue
-    await unsubscribePageFromAppWebhook({
-      pageId: integrationMessenger.pageId,
-      accessToken: authValue.tokens.accessToken as string,
-      version: authValue.metadata.version,
-    })
+  const authValue = integrationMessenger.auth as MessengerAuthValue
 
+  try {
+    await integrations.messenger.disconnect(authValue)
+  } catch (error) {
+    if (!isRevokedTokenError(error)) {
+      throw error
+    }
+  }
+
+  await db.transaction(async (tx) => {
     await tx
       .delete(integrationMessengerModel)
       .where(eq(integrationMessengerModel.id, integrationMessenger.id))

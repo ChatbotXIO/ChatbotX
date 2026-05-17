@@ -7,7 +7,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@chatbotx.io/ui/components/ui/resizable"
-import { BotIcon, Loader2Icon } from "lucide-react"
+import {
+  BotIcon,
+  Loader2Icon,
+  MessagesSquareIcon,
+  UserRoundIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
@@ -16,6 +21,10 @@ import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schema/resource"
+import {
+  BOT_DISABLE_DURATION_MS,
+  isConversationActive,
+} from "../conversations/utils/bot-state"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
@@ -49,6 +58,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
             botEnabled: false,
+            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
           })
         }
       },
@@ -97,7 +107,7 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {activeConversation && (
           <div className="flex h-full w-full flex-col">
             <MessageHead />
-            {activeConversation?.botEnabled && (
+            {isConversationActive(activeConversation) && (
               <Button
                 className="rounded-none"
                 disabled={isDisablingBot}
@@ -112,6 +122,25 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             )}
             <MessageList />
             <MessageInput />
+          </div>
+        )}
+        {!(activeConversation || isFirstLoadConversation) && (
+          <div
+            aria-live="polite"
+            className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
+          >
+            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
+              <MessagesSquareIcon
+                aria-hidden="true"
+                className="size-7 text-muted-foreground"
+              />
+            </div>
+            <h3 className="font-semibold text-base">
+              {t("messages.selectConversationTitle")}
+            </h3>
+            <p className="mt-1 max-w-sm text-muted-foreground text-sm">
+              {t("messages.selectConversationDescription")}
+            </p>
           </div>
         )}
         <ChatRealtime />
@@ -134,6 +163,25 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             activeConversationId={activeConversation.id}
             workspaceId={workspaceId}
           />
+        )}
+        {!(activeConversation || isFirstLoadConversation) && (
+          <div
+            aria-live="polite"
+            className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
+          >
+            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
+              <UserRoundIcon
+                aria-hidden="true"
+                className="size-7 text-muted-foreground"
+              />
+            </div>
+            <h3 className="font-semibold text-base">
+              {t("messages.selectConversationContactTitle")}
+            </h3>
+            <p className="mt-1 max-w-sm text-muted-foreground text-sm">
+              {t("messages.selectConversationContactDescription")}
+            </p>
+          </div>
         )}
       </ResizablePanel>
     </ResizablePanelGroup>

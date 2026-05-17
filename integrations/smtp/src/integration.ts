@@ -4,6 +4,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
+import { sendMail } from "./actions"
 import type { SmtpActions, SmtpAuthValue } from "./schema"
 
 const config: IntegrationDefinition<BaseConfig, SmtpAuthValue, SmtpActions> = {
@@ -13,7 +14,9 @@ const config: IntegrationDefinition<BaseConfig, SmtpAuthValue, SmtpActions> = {
       message: {},
     },
   },
-  actions: {},
+  actions: {
+    sendMail,
+  },
   handleRequest(_props: HandleRequestProps<BaseConfig>) {
     throw new Error("Method is not implemented.")
   },

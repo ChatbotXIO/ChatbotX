@@ -23,11 +23,10 @@ export const AuthHeader = ({ brandName, title }: AuthHeaderProps) => {
       <div className="flex items-center justify-center gap-4">
         <Image
           alt={brandName}
-          className="h-20 w-auto"
           height={80}
           priority={true}
           src={logoSrc}
-          width={140}
+          width={271}
         />
       </div>
 

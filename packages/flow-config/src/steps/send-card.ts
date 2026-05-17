@@ -7,8 +7,8 @@ import { stepTypes } from "./step-action"
 
 export const sendCardStepSchema = baseStepSchema.extend({
   stepType: z.literal(stepTypes.enum.sendCard),
-  title: z.string().trim().min(1).max(255),
-  subtitle: z.string().trim().max(255).optional(),
+  title: z.string().trim().min(1).max(80),
+  subtitle: z.string().trim().max(80).optional(),
   image: sendImageStepSchema
     .extend({
       url: z.url().or(z.literal("")),

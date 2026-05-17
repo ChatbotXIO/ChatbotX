@@ -4,6 +4,12 @@ const NumericSnowflakeIDs = new Snowflake({
   epoch: new Date("2026-03-31").toISOString(),
 })
 
+export const SymbolicSnowflakeIDs = new Snowflake({
+  epoch: new Date("2026-03-31").toISOString(),
+  format: "symbolic",
+  place_id: 1,
+})
+
 export const createId = (): string => NumericSnowflakeIDs.generate()
 
 export const parseBigIntId = (

@@ -1,7 +1,7 @@
+import { buildContext } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   type MetadataPayload,
   messageEventTypeSchema,
@@ -29,29 +29,28 @@ export const handleMessageStatus = async (
       integrationType as IntegrationType,
       integrationIdentifier,
     )
-  const { workspace, inbox, integrationAuth } = dbIntegration
-  const ctx = {
-    workspace,
-    auth: integrationAuth,
-    uploader,
-    storagePrefix: getStoragePrefix(inbox.workspaceId, inbox.id),
-    inbox,
+  const { workspace, inbox, integrationRow } = dbIntegration
+  const integration = allIntegrations[integrationType]
+  if (!integration) {
+    throw new SdkException(
+      `No integration registered for channel: ${integrationType}`,
+    )
   }
 
-  if (!ctx.workspace?.id) {
-    throw new Error("Unable to handle message status")
-  }
-
-  if (!ctx.inbox?.id) {
-    throw new Error("Unable to handle message status")
-  }
-
-  const parsedMessage = await allIntegrations[
-    integrationType
-  ]?.channels?.channel?.message?.handleMessageStatus?.({
-    ctx,
-    data: job,
+  const ctx = await buildContext({
+    workspaceId: inbox.workspaceId,
+    integrationType,
+    integration: integrationRow,
   })
+
+  const parsedMessage = await integration.runChannelHandler(
+    "message",
+    "handleMessageStatus",
+    {
+      ctx,
+      data: job,
+    },
+  )
 
   if (!parsedMessage) {
     throw new SdkException("Unable to parse received message")
@@ -65,7 +64,7 @@ export const handleMessageStatus = async (
     const contactInbox = await db.query.contactInboxModel.findFirst({
       where: {
         sourceId: contact.sourceId,
-        inboxId: ctx.inbox.id,
+        inboxId: inbox.id,
       },
       with: {
         conversation: true,
@@ -81,7 +80,7 @@ export const handleMessageStatus = async (
       where: {
         sourceId: payload.messageId,
         conversationId: contactInbox?.conversation.id,
-        workspaceId: ctx.workspace.id,
+        workspaceId: workspace.id,
       },
     })
 
@@ -101,11 +100,11 @@ export const handleMessageStatus = async (
           | undefined,
       },
       occurredAt: new Date(),
-      stepId: (message?.contentAttributes?.stepId ?? "") as string,
       nodeId: (message?.contentAttributes?.nodeId ?? "") as string,
       metadata: {
         type: UPDATE_STATUS_PAYLOAD_TYPE,
       } as MetadataPayload,
+      errorData: {},
     }
 
     if (message?.contentAttributes?.metadata) {
@@ -118,6 +117,11 @@ export const handleMessageStatus = async (
 
     if (eventStatus === "read") {
       await emit(messageEventTypeSchema.enum["message:seen"], eventLog)
+    }
+
+    if (eventStatus === "failed") {
+      eventLog.errorData = payload.error ?? {}
+      await emit(messageEventTypeSchema.enum["message:failed"], eventLog)
     }
 
     if (!message || (eventStatus !== "delivered" && eventStatus !== "failed")) {

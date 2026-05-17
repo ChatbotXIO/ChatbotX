@@ -1,6 +1,6 @@
 "use client"
 
-import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import type { WhatsappCredentialPublic } from "@chatbotx.io/database/partials"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
@@ -32,7 +32,8 @@ import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
 import { connectWhatsappAction } from "../actions/connect.action"
-import { connectWhatsappSchema } from "../schemas"
+import { connectWhatsappSchema, type ManualOnboardingResult } from "../schemas"
+import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
 // Constants
 const API_ENDPOINT = "/api/whatsapp/phone-numbers/list"
@@ -50,6 +51,15 @@ const FORM_FIELDS = {
   PHONE_NUMBER_ID: "phoneNumberId",
   BUSINESS_ID: "businessId",
   CODE: "code",
+} as const
+
+const EMBEDDED_SIGNUP_FEATURE_TYPES = {
+  WHATSAPP_BUSINESS_APP_ONBOARDING: "whatsapp_business_app_onboarding",
+  ONLY_WABA_SHARING: "only_waba_sharing",
+} as const
+
+const EMBEDDED_SIGNUP_FEATURES = {
+  MARKETING_MESSAGES_LITE: "marketing_messages_lite",
 } as const
 
 type FormVisibility = {
@@ -94,7 +104,7 @@ function usePhoneNumbers() {
 
 type WhatsappCreateProps = {
   workspaceId?: string | null
-  settings: NonNullable<OrganizationSettings["whatsapp"]>
+  settings: WhatsappCredentialPublic
 }
 
 export default function WhatsappCreate({
@@ -104,6 +114,8 @@ export default function WhatsappCreate({
   const t = useTranslations()
   const { visibility, updateVisibility } = useFormVisibility()
   const router = useRouter()
+  const [manualResult, setManualResult] =
+    useState<ManualOnboardingResult | null>(null)
 
   // Form setup
   const { form, handleSubmitWithAction } = useHookFormAction(
@@ -118,6 +130,10 @@ export default function WhatsappCreate({
         },
         onSuccess: ({ data }) => {
           toast.success(t("messages.connectSuccess", { feature: "Whatsapp" }))
+          if (data.type === "manualResult") {
+            setManualResult(data.data)
+            return
+          }
           router.push(data.redirectUrl)
         },
       },
@@ -128,7 +144,7 @@ export default function WhatsappCreate({
           connectExisting: false,
           transferPhoneNumber: false,
           manualConnect: false,
-          marketingMessageLite: false,
+          marketingMessageLite: true,
           workspaceId: workspaceId ?? "",
 
           // Main fields
@@ -168,10 +184,17 @@ export default function WhatsappCreate({
            *     "version": "3"
            * }
            */
-          if (data.event === "FINISH") {
-            setValue(FORM_FIELDS.BUSINESS_ID, data.data.business_id)
-            setValue(FORM_FIELDS.WABA_ID, data.data.waba_id)
-            setValue(FORM_FIELDS.PHONE_NUMBER_ID, data.data.phone_number_id)
+          if (
+            data.event === "FINISH" ||
+            data.event === "FINISH_ONLY_WABA" ||
+            data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING"
+          ) {
+            setValue(FORM_FIELDS.BUSINESS_ID, data.data.business_id ?? "")
+            setValue(FORM_FIELDS.WABA_ID, data.data.waba_id ?? "")
+            setValue(
+              FORM_FIELDS.PHONE_NUMBER_ID,
+              data.data.phone_number_id ?? "",
+            )
           } else if (data.event === "CANCEL") {
             setValue(FORM_FIELDS.BUSINESS_ID, "")
             setValue(FORM_FIELDS.WABA_ID, "")
@@ -210,10 +233,9 @@ export default function WhatsappCreate({
       updateVisibility({
         connectExisting: false,
         manualConnect: false,
-        marketingMessageLite: false,
+        marketingMessageLite: true,
       })
       setValue(FORM_FIELDS.MANUAL_CONNECT, false)
-      setValue(FORM_FIELDS.MARKETING_MESSAGE_LITE, false)
     } else {
       updateVisibility({
         connectExisting: true,
@@ -233,19 +255,23 @@ export default function WhatsappCreate({
         <CardDescription />
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form className="space-y-4" onSubmit={handleSubmitWithAction}>
-            {watchManualConnect ? (
-              <ManualConnectSection watchManualConnect={watchManualConnect} />
-            ) : (
-              <SdkConnectSection
-                settings={settings}
-                visibility={visibility}
-                watchManualConnect={watchManualConnect}
-              />
-            )}
-          </form>
-        </Form>
+        {manualResult ? (
+          <WhatsappOnboardingResult result={manualResult} />
+        ) : (
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+              {watchManualConnect ? (
+                <ManualConnectSection watchManualConnect={watchManualConnect} />
+              ) : (
+                <SdkConnectSection
+                  settings={settings}
+                  visibility={visibility}
+                  watchManualConnect={watchManualConnect}
+                />
+              )}
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   )
@@ -254,7 +280,7 @@ export default function WhatsappCreate({
 type SdkConnectSectionProps = {
   visibility: FormVisibility
   watchManualConnect: boolean
-  settings: NonNullable<OrganizationSettings["whatsapp"]>
+  settings: WhatsappCredentialPublic
 }
 
 function SdkConnectSection({
@@ -270,6 +296,18 @@ function SdkConnectSection({
 
   const finalSubmitRef = useRef<HTMLButtonElement>(null)
   const watchCode = useWatch({ name: FORM_FIELDS.CODE })
+  const watchConnectExisting = useWatch({ name: FORM_FIELDS.CONNECT_EXISTING })
+  const watchTransferPhoneNumber = useWatch({
+    name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
+  })
+
+  let embeddedSignupFeatureType: string | undefined
+  if (watchTransferPhoneNumber) {
+    embeddedSignupFeatureType =
+      EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
+  } else if (watchConnectExisting) {
+    embeddedSignupFeatureType = EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING
+  }
 
   return (
     <>
@@ -295,22 +333,13 @@ function SdkConnectSection({
         <ManualConnectSection watchManualConnect={watchManualConnect} />
       )}
 
-      {visibility.marketingMessageLite && (
-        <SwitchField
-          formItemClassName={switchFieldClassName}
-          label={t("whatsapp.marketingMessageLite")}
-          name={FORM_FIELDS.MARKETING_MESSAGE_LITE}
-          required
-        />
-      )}
-
       <div className="flex items-center justify-end gap-2">
         {!(watchManualConnect || watch(FORM_FIELDS.CODE)) && (
           <FacebookLogin
             appId={settings.clientId}
             className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
             initParams={{
-              version: (settings.version as InitParams["version"]) ?? "v18.0",
+              version: (settings.version as InitParams["version"]) ?? "v21.0",
             }}
             loginOptions={
               {
@@ -321,8 +350,10 @@ function SdkConnectSection({
                 extras: {
                   sessionInfoVersion: 3,
                   setup: {},
-                  features: [],
-                  featureType: "whatsapp_business_app_onboarding",
+                  features: [EMBEDDED_SIGNUP_FEATURES.MARKETING_MESSAGES_LITE],
+                  ...(embeddedSignupFeatureType
+                    ? { featureType: embeddedSignupFeatureType }
+                    : {}),
                 },
                 // biome-ignore lint/suspicious/noExplicitAny: some types are not supported
               } as any

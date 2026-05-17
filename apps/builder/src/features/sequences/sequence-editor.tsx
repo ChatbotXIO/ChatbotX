@@ -96,7 +96,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
           </BreadcrumbList>
         </Breadcrumb>
 
-        <Card className="mx-auto max-w-5xl border-none py-1 shadow-none">
+        <Card className="mx-auto max-w-6xl border-none py-1 shadow-none">
           <CardHeader />
 
           <CardContent>
@@ -108,7 +108,7 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
                       <div className="flex items-center gap-4 px-6 pl-4 text-muted-foreground text-xs">
                         <div className="min-w-[320px] flex-1" />
                         <div className="w-[280px]" />
-                        <div className="ml-2 flex w-[300px] items-center justify-between gap-4 text-xs">
+                        <div className="ml-2 flex w-[400px] items-center justify-between gap-4 text-xs">
                           <span className="w-12 text-center">Sent</span>
                           <span className="w-12 text-center">Delivered</span>
                           <span className="w-12 text-center">Seen</span>

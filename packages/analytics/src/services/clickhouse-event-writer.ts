@@ -5,7 +5,7 @@ const MAX_RETRIES = 3
 const BASE_DELAY_MS = 500
 
 export class ClickhouseEventWriter implements EventWriter {
-  async insert(table: string, rows: EventRow[]): Promise<void> {
+  async insert(table: string, rows: unknown[]): Promise<void> {
     if (rows.length === 0) {
       return
     }

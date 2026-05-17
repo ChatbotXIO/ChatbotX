@@ -4,7 +4,7 @@ import type { FlowVersionResource } from "@/features/flow-versions/schema/resour
 import { useFlowStore } from "./flow-store-context"
 
 export const useFlowSelectOptions = () => {
-  const { flows } = useFlowStore((state) => state)
+  const flows = useFlowStore((state) => state.flows)
 
   return useMemo(
     () =>
@@ -17,7 +17,7 @@ export const useFlowSelectOptions = () => {
 }
 
 export const useFlowNodesSelectOptions = () => {
-  const { flows } = useFlowStore((state) => state)
+  const flows = useFlowStore((state) => state.flows)
 
   return useMemo(
     () =>
@@ -30,7 +30,7 @@ export const useFlowNodesSelectOptions = () => {
   )
 }
 
-const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
+export const getFlowNodesOptions = (flowVersions: FlowVersionResource[]) => {
   const lastedFlowVersion = flowVersions.find(({ isLatest }) => isLatest)
   if (!lastedFlowVersion) {
     return []

@@ -20,6 +20,7 @@ import {
   sendTelegramPhoto,
   sendTelegramVideo,
 } from "../../../apis/bot"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { TelegramAuthValue } from "../../../schema"
 import {
@@ -96,6 +97,7 @@ export const sendMessage: MessageHandlers<TelegramAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
+      throw mapToChannelError(error)
     }
 
     return {
@@ -230,6 +232,7 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending flow step")
+      throw mapToChannelError(error)
     }
 
     return {

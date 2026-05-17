@@ -1,5 +1,13 @@
 "use server"
 
+import {
+  buildContext,
+  organizationCredentialService,
+  organizationService,
+  resolvePlatformUrls,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
@@ -8,17 +16,19 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
+import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
 import {
   exchangeLongLivedToken,
   subscribePageToAppWebhook,
 } from "@chatbotx.io/integration-messenger/apis/page"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
-import { organizationService } from "@/features/organization/services"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getDomainFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schema/action"
@@ -38,10 +48,19 @@ export const selectPageAction = authActionClient
 
         const domain = await getDomainFromHeader()
         const organization = await organizationService.findByDomain(domain)
-        const messengerSettings = organization.settings.messenger
-        if (!messengerSettings) {
+        const messengerCredential =
+          await organizationCredentialService.findDecrypted({
+            organizationId: organization.id,
+            type: "messenger",
+          })
+        if (!messengerCredential) {
           throw new ChatbotXException("Messenger App settings not found")
         }
+        const messengerSettings = messengerCredential.config
+
+        const { appUrl } = await resolvePlatformUrls({
+          organizationId: organization.id,
+        })
 
         // make sure the page is unique
         const existedPage = await db.query.integrationMessengerModel.findFirst({
@@ -56,16 +75,16 @@ export const selectPageAction = authActionClient
         await db.transaction(async (tx) => {
           // create new workspace if not exists
           if (!workspaceId) {
-            const workspace = await createSimpleWorkspace(
+            const workspace = await workspaceService.create({
               tx,
-              ctx.user.id,
+              createdBy: ctx.user.id,
               organization,
-              {
+              data: {
                 name: parsedInput.pageName,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
-            )
+            })
             workspaceId = workspace.id
           }
 
@@ -117,17 +136,37 @@ export const selectPageAction = authActionClient
             .returning()
             .then((result) => result[0])
 
-          await tx.insert(integrationMessengerModel).values({
-            id: createId(),
+          const integrationRow = await tx
+            .insert(integrationMessengerModel)
+            .values({
+              id: createId(),
+              workspaceId,
+              inboxId: inbox.id,
+              pageId: parsedInput.pageId,
+              auth,
+              name: parsedInput.pageName,
+              persistentMenus: [
+                {
+                  label: BRANDING_TITLE,
+                  type: "url" as const,
+                  url: getBrandingUrl("messenger", appUrl),
+                },
+              ],
+              conversationStarters: [],
+              personas: [],
+            })
+            .returning()
+            .then((result) => result[0])
+
+          const brandingCtx = await buildContext({
             workspaceId,
-            inboxId: inbox.id,
-            pageId: parsedInput.pageId,
-            auth,
-            name: parsedInput.pageName,
-            greetingMessages: [],
-            persistentMenus: [],
-            conversationStarters: [],
-            personas: [],
+            integrationType: "messenger",
+            integration: { ...integrationRow, auth },
+          })
+          await integrationMessenger.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("messenger", appUrl),
           })
         })
 

@@ -59,13 +59,6 @@ const buildCsvChunk = (
 
     for (const field of selectedFields) {
       if (field.type === "contact") {
-        if (field.value === "fullName") {
-          const firstName = (contact.firstName ?? "") as string
-          const lastName = (contact.lastName ?? "") as string
-          rowValues.push(escapeCsvValue(`${firstName} ${lastName}`.trim()))
-          continue
-        }
-
         const rawValue = contact[field.value as keyof typeof contact]
         if (rawValue instanceof Date) {
           rowValues.push(escapeCsvValue(rawValue.toISOString()))

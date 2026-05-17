@@ -7,7 +7,7 @@ x-service-common: &service-common
   platform: linux/amd64
   restart: unless-stopped
   env_file:
-    - ./.env.dev
+    - ./.env
   extra_hosts:
     - "host.docker.internal:host-gateway"
   networks:
@@ -25,8 +25,6 @@ services:
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
-    environment:
-      - HOSTNAME=0.0.0.0
     ports:
       - "3123:3000"
     depends_on:
@@ -34,26 +32,32 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
+      filesystem:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      virtual.host: "virtual-builder.example.com"
-      virtual.port: "3000"
-      virtual.tls-email: "admin@example.com"
+    environment:
+      - RUN_DB_MIGRATE=true
+      - RUN_DB_SEED=true
 
   # BullMQ Worker
   worker:
     <<: *worker-common
-    # image: realcodesiman/chatbotx-worker:latest
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio:
+      filesystem:
         condition: service_healthy
+
+  realtime:
+    <<: *service-common
+    build:
+      context: .
+      dockerfile: apps/realtime/docker/Dockerfile
+    ports:
+      - "1999:1999"

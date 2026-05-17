@@ -17,12 +17,15 @@ export const AIToolMultiSelect = ({
   ...props
 }: AIToolMultiSelectProps) => {
   const t = useTranslations()
-  const { files, functions, mcpServers } = useAIToolsStore((store) => store)
+  const { files, functions, mcpServers, systemFunctions } = useAIToolsStore(
+    (store) => store,
+  )
 
   const toolOptions = useAIToolMultiSelectGroups({
     files,
     functions,
     mcpServers,
+    systemFunctions,
   })
 
   return (

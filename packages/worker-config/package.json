@@ -4,7 +4,9 @@
   "type": "module",
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "^5"
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
@@ -15,7 +17,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@types/node": "^24.10.4",
-    "bullmq": "^5.76.0",
+    "bullmq": "^5.76.4",
     "ioredis": "5.10.1",
     "zod": "^4.3.6"
   },
@@ -25,6 +27,8 @@
     "./message-queue/factory": "./src/message-queue/factory.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

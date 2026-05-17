@@ -19,9 +19,11 @@ import { selectAccountRequest } from "../schemas/action"
 export function InstagramAccounts({
   workspaceId,
   accounts,
+  onSuccess,
 }: {
   workspaceId?: string | null
   accounts: InstagramAccount[]
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -43,6 +45,7 @@ export function InstagramAccounts({
       },
       actionProps: {
         onSuccess: ({ data }) => {
+          onSuccess?.()
           if (workspaceId) {
             router.push(
               `/space/${data?.workspaceId}/settings/channels?channel=instagram`,

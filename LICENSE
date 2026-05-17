@@ -2,7 +2,7 @@ Copyright (c) 2024-present AhaChat LLC.
 
 Portions of this software are licensed as follows:
 
-* All content that resides under <https://github.com/chatbotxio/ChatbotX> of
+* All content that resides under the "apps/builder/src/enterprise" directory of
   this repository (Commercial License) is licensed under the license defined in
   "apps/builder/src/enterprise/LICENSE".
 * All third party components incorporated into the ChatbotX Software are

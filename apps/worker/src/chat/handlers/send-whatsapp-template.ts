@@ -1,3 +1,4 @@
+import { broadcastToWorkspaceParty } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { messageModel } from "@chatbotx.io/database/schema"
 import type {
@@ -13,10 +14,7 @@ import {
   stepTypes,
   type TemplateComponent,
 } from "@chatbotx.io/flow-config"
-import {
-  broadcastToWorkspaceParty,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { type MessageTemplateEntity, parseSdkError } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { contactVariableService } from "@chatbotx.io/variables"
@@ -30,7 +28,7 @@ import {
 } from "../../integration/handlers/wa-template-handler"
 import { logger } from "../../lib/logger"
 import { convertButtonsToTemplate } from "./send-flow-step"
-import { sendFlowStepToExternal } from "./send-message"
+import { sendFlowStepToChannel } from "./send-message"
 
 export interface ProcessWhatsappTemplateParams {
   broadcastId?: string
@@ -77,7 +75,7 @@ export async function processWhatsappTemplate(
     throw new Error(`Template validation failed: ${template.id}`)
   }
 
-  const variables = await contactVariableService.getAll(conversation.id)
+  const variables = await contactVariableService.getAll(conversation.contactId)
   const replacedParams = await replaceWhatsappTemplateVariables({
     templateParams: template.params,
     variables,
@@ -155,7 +153,7 @@ export async function processWhatsappTemplate(
   }
 
   try {
-    const result = await sendFlowStepToExternal({
+    const result = await sendFlowStepToChannel({
       conversation,
       contactInbox,
       flowId: flow?.id || "",

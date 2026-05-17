@@ -41,14 +41,14 @@ export function TelegramManage({ workspaceId, promises }: TelegramManageProps) {
           <TableHeader>
             <TableRow>
               <TableHead>{t("fields.name.label")}</TableHead>
-              <TableHead className="w-[200px]" />
+              <TableHead className="w-50" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {integrationTelegrams.map((integrationTelegram) => (
               <TableRow key={integrationTelegram.id}>
                 <TableCell>@{integrationTelegram.name}</TableCell>
-                <TableCell className="flex w-[200px] justify-end gap-2">
+                <TableCell className="flex w-50 justify-end gap-2">
                   <TelegramDisconnect
                     integrationTelegram={integrationTelegram}
                   />

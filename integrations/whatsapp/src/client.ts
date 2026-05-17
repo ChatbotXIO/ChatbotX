@@ -1,10 +1,11 @@
-import { type Context, SdkException } from "@chatbotx.io/sdk"
+import type { Context } from "@chatbotx.io/sdk"
 import { WhatsAppAPI } from "whatsapp-api-js"
 import type {
   WhatsappPhoneNumber,
   WhatsappPhoneNumberResponse,
 } from "./api/phone-number"
 import { API_URL, DEFAULT_API_VERSION } from "./constants"
+import { rescue, WhatsappException } from "./exception"
 import type { WhatsappAuthValue } from "./schema"
 
 export const getWhatsappClient = (auth: WhatsappAuthValue) =>
@@ -20,7 +21,7 @@ export const getWhatsappClient = (auth: WhatsappAuthValue) =>
  * @param auth WhatsappAuthValue
  * @returns string phoneNumberId
  */
-export const verifyAccessToken = async (
+export const verifyAccessToken = (
   ctx: Context<WhatsappAuthValue>,
 ): Promise<WhatsappPhoneNumber> => {
   const client = getWhatsappClient(ctx.auth)
@@ -42,23 +43,21 @@ export const verifyAccessToken = async (
    *    ]
    *  }
    */
-  const res = await client.$$apiFetch$$(
-    `${API_URL}/${DEFAULT_API_VERSION}/${ctx.auth.metadata.wabaId}/phone_numbers`,
-  )
-  if (!res.ok) {
-    throw new SdkException("Access token is not valid")
-  }
+  return rescue(async () => {
+    const res = await client.$$apiFetch$$(
+      `${API_URL}/${DEFAULT_API_VERSION}/${ctx.auth.metadata.wabaId}/phone_numbers`,
+    )
+    if (!res.ok) {
+      throw new WhatsappException("Access token is not valid")
+    }
 
-  try {
     const body = (await res.json()) as WhatsappPhoneNumberResponse
-    if (body.data[0].id) {
+    if (body.data[0]?.id) {
       return body.data[0]
     }
 
-    throw new SdkException("Unable to get phone number")
-  } catch (err: unknown) {
-    throw new SdkException(`Unable to get phone number: ${err}`)
-  }
+    throw new WhatsappException("Unable to get phone number")
+  })
 }
 
 /**
@@ -70,50 +69,53 @@ export const verifyAccessToken = async (
  * @param file File
  * @returns string uploadedFileId
  */
-export const uploadMedia = async (
+export const uploadMedia = (
   auth: WhatsappAuthValue,
   file: File,
 ): Promise<string> => {
   const client = getWhatsappClient(auth)
-  const resSession = await client.$$apiFetch$$(
-    `${API_URL}/${DEFAULT_API_VERSION}/${auth.clientId}/uploads`,
-    {
-      method: "POST",
-      body: new URLSearchParams({
-        file_name: file.name,
-        file_type: file.type,
-        access_token: auth.tokens.accessToken,
-      }),
-    },
-  )
-  if (!resSession.ok) {
-    throw new SdkException("File is not valid")
-  }
 
-  const { id: sessionId } = await resSession.json()
-  if (!sessionId) {
-    throw new SdkException("Upload session is not created")
-  }
-
-  const res = await client.$$apiFetch$$(
-    `${API_URL}/${DEFAULT_API_VERSION}/${sessionId}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `OAuth ${auth.tokens.accessToken}`,
-        file_offset: "0",
+  return rescue(async () => {
+    const resSession = await client.$$apiFetch$$(
+      `${API_URL}/${DEFAULT_API_VERSION}/${auth.clientId}/uploads`,
+      {
+        method: "POST",
+        body: new URLSearchParams({
+          file_name: file.name,
+          file_type: file.type,
+          access_token: auth.tokens.accessToken,
+        }),
       },
-      body: file,
-    },
-  )
-  if (!res.ok) {
-    throw new SdkException("Access token is not valid")
-  }
+    )
+    if (!resSession.ok) {
+      throw new WhatsappException("File is not valid")
+    }
 
-  const { h: uploadedFileId } = await res.json()
-  if (!uploadedFileId) {
-    throw new SdkException("Upload file can't upload")
-  }
+    const { id: sessionId } = await resSession.json()
+    if (!sessionId) {
+      throw new WhatsappException("Upload session is not created")
+    }
 
-  return uploadedFileId
+    const res = await client.$$apiFetch$$(
+      `${API_URL}/${DEFAULT_API_VERSION}/${sessionId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `OAuth ${auth.tokens.accessToken}`,
+          file_offset: "0",
+        },
+        body: file,
+      },
+    )
+    if (!res.ok) {
+      throw new WhatsappException("Access token is not valid")
+    }
+
+    const { h: uploadedFileId } = await res.json()
+    if (!uploadedFileId) {
+      throw new WhatsappException("Upload file can't upload")
+    }
+
+    return uploadedFileId
+  })
 }

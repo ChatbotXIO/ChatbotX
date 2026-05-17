@@ -20,20 +20,24 @@
     "@types/node": "^24.10.4",
     "date-fns": "^4.1.0",
     "ky": "^2.0.2",
-    "lucide-react": "^1.8.0",
-    "next-intl": "^4.9.1",
+    "lucide-react": "^1.14.0",
+    "next-intl": "^4.11.0",
     "react": "19.2.5",
-    "react-hook-form": "^7.73.1",
+    "react-hook-form": "^7.74.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.1",
     "@types/react": "19.2.14",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

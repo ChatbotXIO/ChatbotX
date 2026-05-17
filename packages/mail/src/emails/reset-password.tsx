@@ -1,7 +1,7 @@
 import { Button, Link, Section, Text } from "@react-email/components"
-import BaseTempate, { type BaseTempateProps } from "./base-template"
+import BaseTemplate, { type BaseTemplateProps } from "./base-template"
 
-export type ResetPasswordProps = BaseTempateProps & {
+export type ResetPasswordProps = BaseTemplateProps & {
   userName: string
   resetPasswordUrl: string
 }
@@ -10,7 +10,7 @@ function ResetPassword(props: ResetPasswordProps) {
   const { userName, resetPasswordUrl } = props
 
   return (
-    <BaseTempate {...props}>
+    <BaseTemplate {...props}>
       <Text>Hi {userName},</Text>
       <Text>
         We received a request to reset the password for your account. Click the
@@ -27,7 +27,7 @@ function ResetPassword(props: ResetPasswordProps) {
         This link will expire in 1 hour. If you didn't request a password reset,
         you can safely ignore this email — your password won't be changed.
       </Text>
-    </BaseTempate>
+    </BaseTemplate>
   )
 }
 

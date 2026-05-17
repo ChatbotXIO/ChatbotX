@@ -13,14 +13,14 @@ import {
 import type { ReactNode } from "react"
 import tailwindConfig from "../tailwind.config"
 
-export type BaseTempateProps = {
+export type BaseTemplateProps = {
   brandName: string
   brandLogoUrl: string
   brandUrl: string
   subject: string
 }
 
-function BaseTempate(props: BaseTempateProps & { children: ReactNode }) {
+function BaseTemplate(props: BaseTemplateProps & { children: ReactNode }) {
   const { brandName, brandLogoUrl, subject, children } = props
 
   return (
@@ -48,4 +48,4 @@ function BaseTempate(props: BaseTempateProps & { children: ReactNode }) {
   )
 }
 
-export default BaseTempate
+export default BaseTemplate

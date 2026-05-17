@@ -17,7 +17,7 @@ import type {
 } from "whatsapp-api-js/types"
 import { getWhatsappClient } from "../../../client"
 import { API_URL, DEFAULT_API_VERSION } from "../../../constants"
-import { WhatsappException } from "../../../exception"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { TemplateMessage, WhatsappAuthValue } from "../../../schema"
 import { convertFlowStepImage } from "./send-image"
@@ -120,7 +120,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
             serverError.error,
             `Failed to send message of type ${whatsappMessage._type}`,
           )
-          continue
+          throw mapToChannelError(serverError.error)
         }
 
         const messageId = (sendResponse as ServerSentMessageResponse)
@@ -143,7 +143,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return {
@@ -196,7 +196,9 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
           if (!response.ok) {
             const errorBody = await response.json()
             logger.error(errorBody, "Failed to send template message")
-            continue
+            throw mapToChannelError(
+              (errorBody as { error?: unknown })?.error ?? errorBody,
+            )
           }
 
           sendResponse = await response.json()
@@ -211,13 +213,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
         const serverError = sendResponse as ServerErrorResponse
 
         if (serverError?.error) {
-          throw new WhatsappException(serverError.error.message).setOriginError(
-            {
-              response: {
-                error: serverError.error,
-              },
-            },
-          )
+          throw mapToChannelError(serverError.error)
         }
 
         const messageId = (sendResponse as ServerSentMessageResponse)
@@ -240,7 +236,7 @@ export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =
       }
     } catch (error) {
       logger.error(error, "An error occurred while sending the message")
-      throw error
+      throw mapToChannelError(error)
     }
 
     return { messageIds }

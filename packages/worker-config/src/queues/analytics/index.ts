@@ -4,7 +4,7 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 
 export const AnalyticsJobData = {
   syncContact: "sync-contact",
@@ -33,7 +33,7 @@ export type AnalyticsJobData = AnalyticsJob
 export const analyticsQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<AnalyticsJobData>(queueName.analytics, {
+    : new Queue<AnalyticsJobData>(queueNames.enum.analytics, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

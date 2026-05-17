@@ -18,7 +18,11 @@ export const organizationModel = pgTable(
     logo: text(),
     metadata: text(),
     domain: text(),
+    appUrl: text(),
+    wsUrl: text(),
+    assetUrl: text(),
     supportEmail: text(),
+    // @deprecated
     settings: jsonb().$type<OrganizationSettings>().default({}).notNull(),
     defaultMaxContacts: integer().default(999_999_999).notNull(),
   },

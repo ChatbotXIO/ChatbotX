@@ -79,7 +79,8 @@ class DispatchConsumer {
         const payload = JSON.parse(value || "{}")
         await this.limitProcess(() => this.processDispatch(payload))
       } catch (error) {
-        logger.error({ error, value }, "Error processing dispatch message")
+        logger.error(error, "Error processing dispatch message")
+        logger.error({ value }, "Error processing dispatch message value")
       }
     })
   }
@@ -125,7 +126,8 @@ class DispatchConsumer {
         },
       )
     } catch (error) {
-      logger.error({ error, payload }, "Error processing dispatch")
+      logger.error(error, "Error processing dispatch")
+      logger.error({ payload }, "Error processing dispatch payload")
     }
   }
 

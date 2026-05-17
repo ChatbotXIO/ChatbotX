@@ -1,12 +1,13 @@
+import { systemFunctionNames } from "@chatbotx.io/ai"
 import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListAIFilesResponse } from "@/features/ai-files/schemas"
-import type { ListAIFunctionsResponse } from "@/features/ai-functions/schema/action"
-import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schema/action"
+import type { ListAIFunctionsResponse } from "@/features/ai-functions/schemas"
+import type { ListAIMcpServersResponse } from "@/features/ai-mcp-servers/schemas"
 
-export type AIToolsState = {
+type AIToolsState = {
   loadingAIFiles: boolean
-  loadingAIFunction: boolean
+  loadingAIFunctions: boolean
   loadingAIMCPServer: boolean
   error: string | null
   initialized: boolean
@@ -15,55 +16,49 @@ export type AIToolsState = {
   files: ListAIFilesResponse["data"]
   functions: ListAIFunctionsResponse["data"]
   mcpServers: ListAIMcpServersResponse["data"]
+  systemFunctions: { id: string; name: string }[]
 }
 
-export type AIToolsActions = {
+type AIToolsActions = {
   initialize: () => Promise<void>
   listAIFiles: () => Promise<void>
   listAIFunctions: () => Promise<void>
-  getAIMCPServers: () => Promise<void>
+  listAIMcpServers: () => Promise<void>
 }
 
 export type AIToolsStore = AIToolsState & AIToolsActions
 
-export const createAIToolsStore = (props: Partial<AIToolsState>) =>
+export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
   createStore<AIToolsStore>((set, get) => ({
     loadingAIFiles: false,
-    loadingAIFunction: false,
+    loadingAIFunctions: false,
     loadingAIMCPServer: false,
     error: null,
     initialized: false,
 
-    workspaceId: "",
+    workspaceId: props.workspaceId,
     files: [],
     functions: [],
     mcpServers: [],
-    ...props,
+    systemFunctions: [
+      {
+        id: systemFunctionNames.connectUserToHuman,
+        name: "Connect to Human Agent",
+      },
+    ],
 
     initialize: async () => {
-      const { initialized } = get()
-
-      // Skip if already initialized for the same workspaceId or currently loading
-      if (initialized) {
+      if (get().initialized) {
         return
       }
 
-      try {
-        await Promise.all([
-          get().listAIFiles(),
-          get().listAIFunctions(),
-          get().getAIMCPServers(),
-        ])
-      } catch (error: unknown) {
-        set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI tools",
-        })
-      } finally {
-        set({ initialized: true })
-      }
+      await Promise.all([
+        get().listAIFiles(),
+        get().listAIFunctions(),
+        get().listAIMcpServers(),
+      ])
+
+      set({ initialized: true })
     },
 
     listAIFiles: async () => {
@@ -94,13 +89,13 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
     },
 
     listAIFunctions: async () => {
-      const { workspaceId, loadingAIFunction } = get()
+      const { workspaceId, loadingAIFunctions } = get()
 
-      if (loadingAIFunction || !workspaceId) {
+      if (loadingAIFunctions || !workspaceId) {
         return
       }
 
-      set({ loadingAIFunction: true, error: null })
+      set({ loadingAIFunctions: true, error: null })
 
       try {
         const { data } = await ky
@@ -118,11 +113,11 @@ export const createAIToolsStore = (props: Partial<AIToolsState>) =>
               : "Failed to fetch AI functions",
         })
       } finally {
-        set({ loadingAIFunction: false })
+        set({ loadingAIFunctions: false })
       }
     },
 
-    getAIMCPServers: async () => {
+    listAIMcpServers: async () => {
       const { workspaceId, loadingAIMCPServer } = get()
 
       if (loadingAIMCPServer || !workspaceId) {

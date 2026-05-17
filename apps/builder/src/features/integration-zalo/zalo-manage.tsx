@@ -17,6 +17,7 @@ import { use } from "react"
 import { toast } from "sonner"
 import { useTimeout } from "usehooks-ts"
 import { ZaloDisconnect } from "./components/zalo-disconnect"
+import { ZaloRefreshPermissions } from "./components/zalo-refresh-permissions"
 import type { listIntegrationZalo } from "./queries"
 
 type ZaloManageProps = {
@@ -77,10 +78,8 @@ export function ZaloManage({
             {integrationZalos.map((integrationZalo) => (
               <TableRow key={integrationZalo.id}>
                 <TableCell>{integrationZalo.name}</TableCell>
-                <TableCell className="flex w-[200px] justify-end gap-2">
-                  <Button size="sm" variant="secondary">
-                    {t("zalo.refreshPermissions")}
-                  </Button>
+                <TableCell className="flex w-50 justify-end gap-2">
+                  <ZaloRefreshPermissions integrationZalo={integrationZalo} />
                   <ZaloDisconnect integrationZalo={integrationZalo} />
                 </TableCell>
               </TableRow>

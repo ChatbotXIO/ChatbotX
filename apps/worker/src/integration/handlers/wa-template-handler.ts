@@ -46,7 +46,7 @@ export async function replaceWhatsappTemplateVariables(props: {
       templateParams.button.map(async (param) => ({
         ...param,
         text: await contactVariableService.replaceAll({
-          text: param.text,
+          text: param.text || "",
           variables,
         }),
       })),

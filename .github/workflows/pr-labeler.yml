@@ -1,0 +1,83 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply label from PR title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const LABEL_DEFS = {
+              'feature':         { color: '0075ca', description: 'New feature or request' },
+              'bug':             { color: 'd73a4a', description: "Something isn't working" },
+              'improvement':     { color: 'a2eeef', description: 'Refactor or performance improvement' },
+              'chore':           { color: 'e4e669', description: 'Maintenance / housekeeping' },
+              'ci':              { color: 'e4e669', description: 'CI/CD pipeline changes' },
+              'docs':            { color: '0075ca', description: 'Documentation changes' },
+              'security':        { color: 'ee0701', description: 'Security fix or hardening' },
+              'breaking-change': { color: 'b60205', description: 'Contains a breaking change' },
+              'dependencies':    { color: '0366d6', description: 'Dependency updates' },
+            };
+
+            // Maps conventional commit prefix → labels to apply.
+            // The '!' variant (breaking change) adds 'breaking-change' on top.
+            const TYPE_MAP = [
+              { re: /^feat(\([^)]+\))?!/,              labels: ['feature', 'breaking-change'] },
+              { re: /^feat(\([^)]+\))?:/,              labels: ['feature'] },
+              { re: /^(fix|bugfix)(\([^)]+\))?!/,      labels: ['bug', 'breaking-change'] },
+              { re: /^(fix|bugfix)(\([^)]+\))?:/,      labels: ['bug'] },
+              { re: /^(refactor|perf)(\([^)]+\))?!/,   labels: ['improvement', 'breaking-change'] },
+              { re: /^(refactor|perf)/,                labels: ['improvement'] },
+              { re: /^docs/,                           labels: ['docs'] },
+              { re: /^chore/,                          labels: ['chore'] },
+              { re: /^ci/,                             labels: ['ci'] },
+              { re: /^security/,                       labels: ['security'] },
+              { re: /^build\(deps\)|^chore\(deps\)/,   labels: ['dependencies'] },
+            ];
+
+            const title = context.payload.pull_request.title;
+            const match = TYPE_MAP.find(({ re }) => re.test(title));
+            if (!match) {
+              console.log(`No conventional commit prefix found in: "${title}"`);
+              return;
+            }
+
+            // Ensure all required labels exist in the repo before applying them.
+            const { data: existing } = await github.rest.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existingNames = new Set(existing.map(l => l.name));
+
+            for (const name of match.labels) {
+              if (!existingNames.has(name)) {
+                const meta = LABEL_DEFS[name];
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color: meta.color,
+                  description: meta.description,
+                });
+                console.log(`Created label: ${name}`);
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: match.labels,
+            });
+
+            console.log(`Applied labels [${match.labels.join(', ')}] to PR #${context.payload.pull_request.number}`);

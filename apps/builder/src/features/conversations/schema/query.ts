@@ -1,15 +1,16 @@
 import {
   channelTypes,
+  conversationBotCategories,
   conversationStatuses,
 } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { contactFilterRequest } from "@/features/contacts/schemas/query"
+import { contactFilterRequest } from "@/features/contacts/schemas/contact-filter"
+import { cursorPaginationRequest } from "@/lib/pagination"
 
 export const listConversationsRequest = z.object({
   workspaceId: zodBigintAsString(),
-  perPage: z.coerce.number().optional(),
-  cursor: z.string().optional(),
+  botCategory: conversationBotCategories.optional(),
   assignedId: z.string().nullable().optional(),
   channel: z.union([channelTypes]).optional(),
   status: z.array(conversationStatuses).optional(),
@@ -21,5 +22,6 @@ export const listConversationsRequest = z.object({
     )
     .optional(),
   contactFilter: contactFilterRequest.shape.contactFilter.optional(),
+  ...cursorPaginationRequest.shape,
 })
 export type ListConversationsRequest = z.infer<typeof listConversationsRequest>

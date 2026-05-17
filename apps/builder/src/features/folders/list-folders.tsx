@@ -3,11 +3,10 @@
 import type { FolderType } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
-import { useQueryState } from "@chatbotx.io/ui/lib/nuqs"
 import { FolderIcon, PencilIcon, TrashIcon } from "lucide-react"
-import { use, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { use, useCallback, useState } from "react"
 import { AppBreadcrumb } from "@/components/app-breadcrumb"
-import { parseAsBigInt } from "@/lib/nuqs"
 import { CreateFolderDialog } from "./create-folder-dialog"
 import { DeleteFolderDialog } from "./delete-folder-dialog"
 import { EditFolderDialog } from "./edit-folder-dialog"
@@ -29,7 +28,22 @@ const ListFolders = (props: ListFoldersProps) => {
   const { workspaceId, folderType, promises } = props
 
   const [{ folder, parents }, { data: folders }] = use(promises)
-  const [_, setFolderId] = useQueryState("folderId", parseAsBigInt)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const setFolderId = useCallback(
+    (id: string | null) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (id === null) {
+        params.delete("folderId")
+      } else {
+        params.set("folderId", id)
+      }
+      params.delete("page")
+      router.push(`?${params.toString()}`)
+    },
+    [router, searchParams],
+  )
 
   const [targetFolder, setTargetFolder] = useState<FolderResource | null>(null)
 

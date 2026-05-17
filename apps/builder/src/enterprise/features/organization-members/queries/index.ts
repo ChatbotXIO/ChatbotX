@@ -1,10 +1,11 @@
+import { organizationService } from "@chatbotx.io/business"
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
 import { organizationMemberModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
 } from "@chatbotx.io/database/utils"
-import { organizationService } from "@/features/organization/services"
+
 import { getDomainFromHeader } from "@/lib/domain"
 import type {
   ListOrganizationMembersRequest,

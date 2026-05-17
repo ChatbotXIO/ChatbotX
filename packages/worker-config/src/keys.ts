@@ -8,4 +8,5 @@ export const keys = () =>
       NEXT_PHASE: z.string().default(""),
     },
     experimental__runtimeEnv: {},
+    skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })

@@ -1,5 +1,5 @@
+import { buildContext } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { returnValidationErrors } from "next-safe-action"
 import { integrations } from "@/integration"
@@ -41,12 +41,17 @@ export async function verifyGoogleSheetsUrl(
 
   // make sure integration can access to url
   try {
-    await integrations.googleSheets.actions.listSheetNames({
-      ctx: {
-        storagePrefix: getStoragePrefix(workspaceId, dbIntegration.id),
+    const ctx = await buildContext({
+      workspaceId,
+      integrationType: "googleSheets",
+      integration: {
+        ...dbIntegration.integrationGoogleSheet,
         auth: dbIntegration.integrationGoogleSheet
-          .auth as unknown as GoogleSheetsAuthValue,
+          .auth as GoogleSheetsAuthValue,
       },
+    })
+    await integrations.googleSheets.runAction("listSheetNames", {
+      ctx,
       props: {
         spreadsheetId: matches[1],
       },

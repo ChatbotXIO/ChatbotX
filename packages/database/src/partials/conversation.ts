@@ -1,7 +1,7 @@
 import z from "zod"
 
-export const conversationTypes = z.enum(["bot", "human", "all"])
-export type ConversationType = z.infer<typeof conversationTypes>
+export const conversationBotCategories = z.enum(["bot", "human", "all"])
+export type ConversationBotCategory = z.infer<typeof conversationBotCategories>
 
 export const conversationStatuses = z.enum([
   "noAdminReply",

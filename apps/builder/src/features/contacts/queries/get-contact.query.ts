@@ -1,6 +1,6 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import type { CustomFieldType } from "@chatbotx.io/database/partials"
-import { notFoundException } from "@/lib/errors/exception"
 import type { GetContactRequest, GetContactResponse } from "../schemas/query"
 
 export async function getContact(

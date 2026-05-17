@@ -24,6 +24,23 @@ import { toast } from "sonner"
 import { connectTelegramAction } from "../actions/connect.action"
 import { connectTelegramRequest } from "../schemas/request"
 
+function ConnectStep({
+  index,
+  children,
+}: {
+  index: number
+  children: ReactNode
+}) {
+  return (
+    <li className="flex items-start gap-3">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground text-sm">
+        {index}
+      </span>
+      <span className="text-muted-foreground text-sm">{children}</span>
+    </li>
+  )
+}
+
 export function TelegramConnect({
   workspaceId,
   children,
@@ -76,7 +93,34 @@ export function TelegramConnect({
           <DialogTitle>
             {t("actions.addFeature", { feature: t("fields.telegram.label") })}
           </DialogTitle>
-          <DialogDescription />
+          <DialogDescription asChild>
+            <ol className="mt-2 flex list-none flex-col gap-3">
+              <ConnectStep index={1}>
+                {t.rich("fields.telegram.connectInstructions.step1", {
+                  link: (chunks) => (
+                    <a
+                      className="text-primary underline underline-offset-2"
+                      href="https://t.me/BotFather"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </ConnectStep>
+              <ConnectStep index={2}>
+                {t.rich("fields.telegram.connectInstructions.step2", {
+                  strong: (chunks) => (
+                    <strong className="font-semibold">{chunks}</strong>
+                  ),
+                })}
+              </ConnectStep>
+              <ConnectStep index={3}>
+                {t("fields.telegram.connectInstructions.step3")}
+              </ConnectStep>
+            </ol>
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form

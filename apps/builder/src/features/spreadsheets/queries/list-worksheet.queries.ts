@@ -1,9 +1,9 @@
+import { buildContext } from "@chatbotx.io/business"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationGoogleSheetsModel,
   spreadsheetModel,
 } from "@chatbotx.io/database/schema"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { GoogleSheetsAuthValue } from "@chatbotx.io/integration-google-sheets"
 import { integration } from "@chatbotx.io/integration-google-sheets"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -36,16 +36,15 @@ export const listWorksheets = async (
     message: "Google Sheets integration not found",
   })
 
-  const ctx = {
-    auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
-    storagePrefix: getStoragePrefix(
-      input.workspaceId,
-      integrationGoogleSheets.id,
-    ),
-    uploader,
-  }
-
-  const sheets = await integration.actions.listSheetNames({
+  const ctx = await buildContext({
+    workspaceId: input.workspaceId,
+    integrationType: "googleSheets",
+    integration: {
+      ...integrationGoogleSheets,
+      auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
+    },
+  })
+  const sheets = await integration.runAction("listSheetNames", {
     ctx,
     props: {
       spreadsheetId: spreadsheet.spreadsheetId,
@@ -79,16 +78,15 @@ export const listWorksheetHeaders = async (
     message: "Google Sheets integration not found",
   })
 
-  const ctx = {
-    storagePrefix: getStoragePrefix(
-      input.workspaceId,
-      integrationGoogleSheets.id,
-    ),
-    uploader,
-    auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
-  }
-
-  const headers = await integration.actions.listSheetHeaders({
+  const ctx = await buildContext({
+    workspaceId: input.workspaceId,
+    integrationType: "googleSheets",
+    integration: {
+      ...integrationGoogleSheets,
+      auth: integrationGoogleSheets.auth as GoogleSheetsAuthValue,
+    },
+  })
+  const headers = await integration.runAction("listSheetHeaders", {
     ctx,
     props: {
       spreadsheetId: spreadsheet.spreadsheetId,

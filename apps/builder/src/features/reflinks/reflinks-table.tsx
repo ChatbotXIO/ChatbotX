@@ -213,7 +213,10 @@ export function ReflinksTable({ workspaceId, promises }: ReflinksTableProps) {
         <GetInboxUrlDialog
           onOpenChange={() => setRowAction(null)}
           open={rowAction?.variant === "copyUrl"}
-          ref={rowAction?.row.original?.name}
+          refConfig={{
+            type: "reflink",
+            name: rowAction?.row.original?.name ?? "",
+          }}
         />
 
         <UpdateReflinkDialog

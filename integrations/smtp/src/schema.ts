@@ -1,4 +1,4 @@
-import type { BaseConfig } from "@chatbotx.io/sdk"
+import type { BaseConfig, Context } from "@chatbotx.io/sdk"
 import { customAuthSchema } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
@@ -45,4 +45,12 @@ export const smtpAuthSchema = customAuthSchema.extend({
 })
 export type SmtpAuthValue = z.infer<typeof smtpAuthSchema>
 
-export type SmtpActions = Record<string, never>
+export type SmtpActions<IAuth extends SmtpAuthValue = SmtpAuthValue> = {
+  sendMail: (props: {
+    ctx: Context<IAuth>
+    from: string
+    to: string
+    subject: string
+    html: string
+  }) => Promise<void>
+}

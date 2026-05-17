@@ -1,5 +1,6 @@
 import type { ThemeProviderProps } from "next-themes"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
+import { throttle } from "nuqs/server"
 import { Toaster } from "./components/ui/sonner"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { ThemeProvider } from "./providers/theme"
@@ -18,7 +19,13 @@ export const UiProvider = ({
   ...properties
 }: UiProviderProperties) => {
   return (
-    <NuqsAdapter>
+    <NuqsAdapter
+      defaultOptions={{
+        shallow: false,
+        scroll: true,
+        limitUrlUpdates: throttle(250),
+      }}
+    >
       <ThemeProvider {...properties}>
         {/* <AuthProvider privacyUrl={privacyUrl} termsUrl={termsUrl} helpUrl={helpUrl}>
       <AnalyticsProvider> */}

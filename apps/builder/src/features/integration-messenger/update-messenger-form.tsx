@@ -1,5 +1,6 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import type { IntegrationMessengerModel } from "@chatbotx.io/database/types"
 import { fileTypes } from "@chatbotx.io/sdk"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
@@ -29,7 +30,6 @@ import {
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
@@ -47,10 +47,8 @@ import { useEffect } from "react"
 import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
-import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import PersistentMenuField from "../integration-webchat/components/persistent-menu-field"
-import { allSupportedLanguages } from "../workspaces/schema/types"
 import { updateMessengerAction } from "./actions/update-messenger-action"
 import { updateMessengerRequest } from "./schema/action"
 
@@ -68,11 +66,7 @@ export function UpdateMessengerForm({
 
   const flowOptions = useFlowSelectOptions()
 
-  const {
-    form,
-    handleSubmitWithAction,
-    form: { setValue },
-  } = useHookFormAction(
+  const { form, handleSubmitWithAction } = useHookFormAction(
     updateMessengerAction.bind(
       null,
       integrationMessenger.workspaceId,
@@ -115,15 +109,6 @@ export function UpdateMessengerForm({
   })
 
   const {
-    fields: greetingMessages,
-    append: appendGreetingMessage,
-    remove: removeGreetingMessage,
-  } = useFieldArray({
-    control: form.control,
-    name: "greetingMessages",
-  })
-
-  const {
     fields: personas,
     append: appendPersona,
     remove: removePersona,
@@ -141,28 +126,17 @@ export function UpdateMessengerForm({
     })
   }
 
-  const languageOptions = allSupportedLanguages.filter(
-    (lang) => !greetingMessages.find((field) => field.locale === lang.value),
-  )
-
-  const onChangeLanguage = (locale: string) => {
-    appendGreetingMessage({ locale, text: "" })
-    setValue("addLanguage", "")
-  }
-
   useEffect(() => {
     if (integrationMessenger) {
       const {
         persistentMenus: persistentMenusArray,
         conversationStarters: conversationStartersArray,
-        greetingMessages: greetingMessagesArray,
         personas: personasArray,
         welcomeFlowId,
       } = integrationMessenger
 
       form.reset({
-        welcomeFlowId: welcomeFlowId?.toString() ?? "",
-        greetingMessages: greetingMessagesArray,
+        welcomeFlowId: welcomeFlowId?.toString() ?? null,
         persistentMenus: persistentMenusArray,
         conversationStarters: conversationStartersArray,
         personas: personasArray,
@@ -179,52 +153,6 @@ export function UpdateMessengerForm({
           name="welcomeFlowId"
           options={flowOptions}
         />
-
-        <Separator />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <Label>{t("messenger.greeting")}</Label>
-            </CardTitle>
-            <CardDescription>
-              {t("messenger.greetingDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <ComboboxField
-                className="float-right w-fit"
-                name="addLanguage"
-                options={languageOptions}
-                placeholder={t("greeting.addLanguage")}
-                triggerValueChange={onChangeLanguage}
-              />
-
-              {greetingMessages.map((message, index) => (
-                <div className="flex items-center gap-4" key={message.id}>
-                  <Button
-                    disabled={greetingMessages.length <= 1}
-                    onClick={() => removeGreetingMessage(index)}
-                    type="button"
-                    variant="secondary"
-                  >
-                    <TrashIcon />
-                  </Button>
-                  <TiptapEditorField
-                    name={`greetingMessages.${index}.text`}
-                    placeholder={
-                      allSupportedLanguages.find(
-                        (lang) => lang.value === message.locale,
-                      )?.label
-                    }
-                    required
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
@@ -409,7 +337,7 @@ export function UpdateMessengerForm({
           </CardContent>
         </Card>
 
-        <PersistentMenuField />
+        <PersistentMenuField channel={channelTypes.enum.messenger} />
 
         <DialogFooter>
           <Button

@@ -220,7 +220,8 @@
     "title": "Phát sóng",
     "status": {
       "scheduled": "Đã lên lịch",
-      "sent": "Đã gửi"
+      "sent": "Đã gửi",
+      "sending": "Đang gửi"
     },
     "stats": {
       "sent": "Đã gửi",
@@ -279,6 +280,7 @@
     "yes": "Có",
     "no": "Không",
     "fields": {
+      "locale": "Ngôn ngữ",
       "language": "Ngôn ngữ",
       "fullName": "Họ và tên",
       "country": "Quốc gia",
@@ -303,7 +305,9 @@
       "unread": "Chưa đọc",
       "archived": "Đã lưu trữ",
       "blocked": "Đã chặn",
-      "noAdminReply": "Không có phản hồi quản trị viên"
+      "noAdminReply": "Không có phản hồi quản trị viên",
+      "contactCreatedAt": "Ngày tạo liên hệ",
+      "interactedInLast24h": "Đã tương tác trong 24 giờ qua"
     }
   },
   "channels": {
@@ -338,7 +342,12 @@
     },
     "telegram": {
       "label": "Telegram",
-      "botToken": "Bot Token"
+      "botToken": "Bot Token",
+      "connectInstructions": {
+        "step1": "Mở <link>@BotFather</link> trong Telegram.",
+        "step2": "Gửi <strong>/newbot</strong> và làm theo hướng dẫn.",
+        "step3": "Sau khi tạo bot, bạn sẽ nhận được API token. Sao chép token và dán vào bên dưới."
+      }
     },
     "matchAll": {
       "label": "Khớp tất cả các điều kiện bên dưới"
@@ -368,16 +377,27 @@
       "label": "Toán tử",
       "is": "Là",
       "isNot": "Không phải",
+      "in": "Thuộc",
+      "notIn": "Không thuộc",
+      "isEmpty": "Trống",
+      "isNotEmpty": "Không trống",
+      "gt": "Lớn hơn",
+      "lt": "Nhỏ hơn",
+      "gte": "Lớn hơn hoặc bằng",
+      "lte": "Nhỏ hơn hoặc bằng",
+      "contains": "Chứa",
+      "notContains": "Không chứa",
+      "startsWith": "Bắt đầu bằng",
+      "endsWith": "Kết thúc bằng",
+      "isBetween": "Trong khoảng",
+      "notBetween": "Ngoài khoảng",
       "hasAnyValue": "Có bất kỳ giá trị nào",
       "hasNoValue": "Không có giá trị",
       "greaterThan": "Lớn hơn",
       "lessThan": "Nhỏ hơn",
       "greaterThanOrEqualTo": "Lớn hơn hoặc bằng",
       "lessThanOrEqualTo": "Nhỏ hơn hoặc bằng",
-      "contains": "Chứa",
       "doesNotContain": "Không chứa",
-      "startsWith": "Bắt đầu bằng",
-      "endsWith": "Kết thúc bằng",
       "interval": "Khoảng",
       "notInterval": "Không phải khoảng"
     },
@@ -455,6 +475,9 @@
     "automatedResponse": {
       "label": "Phản hồi tự động"
     },
+    "avatar": {
+      "label": "Ảnh đại diện"
+    },
     "reflink": {
       "label": "Liên kết giới thiệu"
     },
@@ -497,6 +520,9 @@
       "description": "Định danh duy nhất cho workspace của bạn.",
       "label": "ID Workspace"
     },
+    "workspaceName": {
+      "label": "Tên tài khoản"
+    },
     "contact": {
       "label": "Liên hệ"
     },
@@ -517,6 +543,9 @@
     },
     "createdAt": {
       "label": "Tạo lúc"
+    },
+    "currentTime": {
+      "label": "Thời gian hiện tại"
     },
     "customCss": {
       "label": "CSS tùy chỉnh"
@@ -695,6 +724,9 @@
     "mcpServer": {
       "label": "MCP Server"
     },
+    "systemFunction": {
+      "label": "Hàm hệ thống"
+    },
     "min": {
       "label": "Tối thiểu"
     },
@@ -769,6 +801,9 @@
     "userMessage": {
       "label": "Tin nhắn người dùng"
     },
+    "pageUserName": {
+      "label": "Tên người dùng trang"
+    },
     "purpose": {
       "label": "Mục đích",
       "placeholder": "Chức năng này làm gì?"
@@ -828,7 +863,8 @@
       "label": "Tin nhắn mẫu"
     },
     "text": {
-      "label": "Văn bản"
+      "label": "Văn bản",
+      "placeholder": "Nhập văn bản"
     },
     "timezone": {
       "description": "Liên hệ được gán múi giờ này khi múi giờ liên hệ không xác định.",
@@ -876,6 +912,9 @@
     },
     "userId": {
       "label": "ID Người dùng"
+    },
+    "userTags": {
+      "label": "Nhãn người dùng"
     },
     "username": {
       "label": "Tên đăng nhập",
@@ -1041,11 +1080,17 @@
     "thisMonth": {
       "label": "Tháng này"
     },
+    "lastInput": {
+      "label": "Dữ liệu nhập cuối"
+    },
     "lastMonth": {
       "label": "Tháng trước"
     },
     "lifeTime": {
       "label": "Toàn thời gian"
+    },
+    "locale": {
+      "label": "Ngôn ngữ"
     },
     "customRange": {
       "label": "Khoảng tùy chỉnh"
@@ -1145,6 +1190,9 @@
     "topicId": {
       "label": "Topic ID"
     },
+    "smtpChannel": {
+      "label": "Kênh SMTP"
+    },
     "verifyToken": {
       "label": "Webhook Verify Token"
     },
@@ -1152,6 +1200,32 @@
       "label": "Magic Link",
       "nameHint": "Appended after /r/{workspaceId}/ in the public tracking URL. Use letters, numbers, underscore, and hyphen only.",
       "urlHint": "Use double braces in the URL, e.g. https://example.com/page?utm_campaign='{{campaign}}'. Values come from the tracking link query string."
+    },
+    "appId": {
+      "label": "App ID"
+    },
+    "appSecret": {
+      "label": "App Secret"
+    },
+    "webhookVerifyToken": {
+      "label": "Webhook Verify Token"
+    },
+    "heading": {
+      "label": "Tiêu đề",
+      "placeholder": "Nhập tiêu đề"
+    },
+    "image": {
+      "label": "Hình ảnh"
+    },
+    "line": {
+      "label": "Đường kẻ"
+    },
+    "spacing": {
+      "label": "Khoảng cách"
+    },
+    "code": {
+      "label": "Mã",
+      "placeholder": "Nhập mã"
     }
   },
   "flows": {
@@ -1224,13 +1298,6 @@
       "spreadsheetSendData": "Gửi dữ liệu",
       "spreadsheetGetRandomRow": "Lấy hàng ngẫu nhiên",
       "spreadsheetClearRow": "Xóa hàng",
-      "emailText": "Văn bản",
-      "emailH3": "Tiêu đề",
-      "emailImage": "Hình ảnh",
-      "emailButton": "Nút",
-      "emailLine": "Đường kẻ",
-      "emailSpacing": "Khoảng cách",
-      "emailCode": "Mã",
       "typing": "Đang gõ",
       "sequenceActions": "Hành động chăm sóc",
       "subscribeSequence": "Đăng ký chăm sóc",
@@ -1248,8 +1315,10 @@
       "datetimeCustomFieldValue": "{customField}",
       "duration": "Thời lượng",
       "durationValue": "{duration}",
+      "date": "Ngày",
       "specificDate": "Ngày cụ thể",
-      "specificDateValue": "{date}"
+      "specificDateValue": "{date}",
+      "random": "Ngẫu nhiên"
     },
     "formatTimezone": {
       "timezone": "Múi giờ tài khoản",
@@ -1266,7 +1335,32 @@
     },
     "wait": {
       "datetimeTooltip": "Ngày và giờ khi luồng sẽ được kích hoạt.",
-      "setInterval": "Thiết lập khoảng thời gian"
+      "setInterval": "Thiết lập khoảng thời gian",
+      "delayTypeLabel": "Đây là độ trễ",
+      "fixed": "Cố định",
+      "randomized": "Ngẫu nhiên",
+      "delay": "",
+      "durationDetailPrefix": "Độ trễ là",
+      "dateDetailPrefix": "Độ trễ đến",
+      "customFieldDetailPrefix": "Độ trễ đến",
+      "randomDetailPrefix": "Độ trễ từ",
+      "randomDetailAnd": "đến",
+      "intervalDetailPrefix": "Hoạt động từ",
+      "offsetAdd": "+",
+      "offsetSubtract": "-",
+      "durationLabel": "Thời lượng",
+      "activeHours": "Giờ hoạt động",
+      "dateTypeLabel": "Loại ngày",
+      "datetimeLabel": "Ngày & Giờ",
+      "customFieldLabel": "Trường tùy chỉnh",
+      "offset": "Thêm độ lệch",
+      "offsetLabel": "Độ lệch",
+      "randomRangeLabel": "Khoảng ngẫu nhiên",
+      "minLabel": "Tối thiểu",
+      "maxLabel": "Tối đa",
+      "unitLabel": "Đơn vị",
+      "specific": "Cụ thể",
+      "dynamic": "Tùy chỉnh"
     }
   },
   "folders": {
@@ -1309,6 +1403,7 @@
     "success": "Thành công",
     "failed": "Thất bại",
     "copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
+    "copyFailed": "Sao chép thất bại",
     "createdFailed": "Tạo {feature} thất bại",
     "deletedSuccess": "{feature} đã được xóa thành công",
     "deleteFileComingSoon": "Chức năng xóa tệp sẽ sớm có",
@@ -1346,6 +1441,10 @@
     "changeDefaultDescription": "Bạn có chắc chắn muốn thay đổi AI agent mặc định?",
     "unsetDefaultDescription": "Bạn có chắc chắn muốn bỏ đặt AI agent mặc định?",
     "botIsActive": "Bot đang hoạt động",
+    "selectConversationTitle": "Chọn một cuộc trò chuyện",
+    "selectConversationDescription": "Chọn một cuộc trò chuyện từ danh sách bên trái để xem tin nhắn và bắt đầu trò chuyện.",
+    "selectConversationContactTitle": "Chưa chọn liên hệ",
+    "selectConversationContactDescription": "Chọn một cuộc trò chuyện để xem chi tiết liên hệ và thông tin hộp thư tại đây.",
     "archiveFeature": "Lưu trữ {feature}",
     "archiveFeatureDescription": "Bạn có chắc chắn muốn lưu trữ {feature}?",
     "disableFeature": "Tắt {feature}",
@@ -1369,14 +1468,13 @@
     "selectInstagramAccount": "Chọn tài khoản Instagram",
     "iceBreakers": "Câu hỏi gợi mở",
     "iceBreakersDescription": "Câu hỏi gợi mở cung cấp cách để người dùng bắt đầu trò chuyện với bot bằng danh sách câu hỏi thường gặp.",
+    "refreshPermissions": "Làm mới quyền",
     "title": "Instagram"
   },
   "messenger": {
     "description": "Tích hợp này cho phép bạn tạo bot Messenger.",
     "welcomeMessage": "Tin nhắn chào mừng",
     "welcomeMessageDescription": "Đây là tin nhắn đầu tiên mà người dùng sẽ nhận được từ Bot của bạn. Tin nhắn này được gửi khi người dùng tương tác lần đầu tiên với Bot bằng cách nhấn nút 'Bắt đầu'.",
-    "greeting": "Lời chào",
-    "greetingDescription": "Lời chào mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'.",
     "conversationStarters": "Gợi ý bắt đầu hội thoại",
     "conversationStartersDescription": "Gợi ý bắt đầu hội thoại giúp người dùng bắt đầu trò chuyện với doanh nghiệp của bạn bằng danh sách các câu hỏi thường gặp.",
     "persistentMenu": "Menu cố định",
@@ -1393,11 +1491,6 @@
     "reconnectDescription": "Luôn kết nối lại bot của bạn nếu bot Messenger không phản hồi, hoặc nếu bạn thấy bất kỳ lỗi quyền nào trong nhật ký lỗi.",
     "selectFacebookPage": "Chọn trang Facebook",
     "title": "Facebook Messenger"
-  },
-  "greeting": {
-    "title": "Lời chào",
-    "addLanguage": "+ Thêm ngôn ngữ",
-    "description": "Tin nhắn chào mừng mà người dùng nhìn thấy trên màn hình chào mừng của Bot. Màn hình chào mừng hiển thị cho những người lần đầu tiên tương tác với Bot của bạn. Đây là tin nhắn mà người dùng sẽ thấy trước khi nhấn nút 'Bắt đầu'."
   },
   "omnichannel": {
     "title": "Đa kênh"
@@ -1508,6 +1601,25 @@
       },
       "viewProduct": {
         "label": "Xem sản phẩm"
+      },
+      "params": {
+        "couponCode": "Mã giảm giá",
+        "couponCodePlaceholder": "Nhập mã giảm giá",
+        "quickReplyPayload": "Payload trả lời nhanh",
+        "quickReplyPayloadPlaceholder": "Nhập payload (tùy chọn)",
+        "flowToken": "Flow Token",
+        "flowTokenPlaceholder": "Nhập flow token",
+        "catalogProductId": "ID sản phẩm",
+        "catalogProductIdPlaceholder": "Nhập ID sản phẩm",
+        "carouselCard": "Thẻ {index}",
+        "limitedTimeOffer": "Thời gian hết hạn ưu đãi",
+        "limitedTimeOfferPlaceholder": "Nhập thời gian hết hạn (mili giây)",
+        "limitedTimeOfferHelp": "Unix timestamp tính bằng mili giây khi ưu đãi hết hạn",
+        "location": "Vị trí",
+        "latitude": "Vĩ độ",
+        "longitude": "Kinh độ",
+        "locationName": "Tên vị trí (tùy chọn)",
+        "locationAddress": "Địa chỉ (tùy chọn)"
       }
     },
     "sampleBodyCardContent": {
@@ -1522,6 +1634,132 @@
     "showFooter": {
       "label": "Hiển thị chân trang"
     },
+    "tabs": {
+      "accountHealths": "Tình trạng tài khoản",
+      "automation": "Tự động hóa",
+      "ecommerce": "Thương mại điện tử",
+      "flows": "Luồng",
+      "messageTemplates": "Mẫu tin nhắn",
+      "profile": "Hồ sơ",
+      "usefulLinks": "Liên kết hữu ích"
+    },
+    "accountHealths": {
+      "title": "Quản lý tài khoản WhatsApp của bạn",
+      "description": "Xem trạng thái tài khoản WhatsApp, giới hạn nhắn tin và chất lượng. Cập nhật cài đặt hoặc khắc phục sự cố nếu cần",
+      "goToBusinessManager": "Mở Meta Business Manager",
+      "fields": {
+        "displayPhoneNumber": {
+          "label": "Số điện thoại hiển thị",
+          "tooltip": "Số điện thoại hiển thị với khách hàng khi họ nhắn tin cho doanh nghiệp của bạn."
+        },
+        "businessName": {
+          "label": "Tên doanh nghiệp",
+          "tooltip": "Tên doanh nghiệp WhatsApp đã được xác minh."
+        },
+        "displayNameStatus": {
+          "label": "Trạng thái tên hiển thị",
+          "tooltip": "Trạng thái phê duyệt tên doanh nghiệp WhatsApp."
+        },
+        "qualityRating": {
+          "label": "Đánh giá chất lượng",
+          "tooltip": "Đánh giá chất lượng dựa trên phản hồi của khách hàng trong 7 ngày qua."
+        },
+        "messagingLimitTier": {
+          "label": "Cấp độ giới hạn nhắn tin",
+          "tooltip": "Số khách hàng tối đa doanh nghiệp có thể nhắn tin trong 24 giờ."
+        },
+        "accountMode": {
+          "label": "Chế độ tài khoản",
+          "tooltip": "Tài khoản WhatsApp Business đang ở chế độ hoạt động hay sandbox."
+        },
+        "marketingMessages": {
+          "label": "Marketing Messages (MM Lite)",
+          "tooltip": "Trạng thái onboarding của tài khoản WhatsApp Business vào Marketing Messages Lite API.",
+          "status": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Không đủ điều kiện: mô hình OBO",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Không đủ điều kiện: không hoạt động hoặc bị hạn chế",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Không đủ điều kiện: quốc gia chưa hỗ trợ",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Không đủ điều kiện: đang dùng WhatsApp Business app",
+            "ELIGIBLE": "Đủ điều kiện",
+            "PENDING_VALID_PAYMENT_METHOD": "Đang chờ phương thức thanh toán hợp lệ",
+            "PENDING_INTERNAL_SETUP": "Đang chờ thiết lập nội bộ",
+            "ONBOARDED": "Đã onboarding"
+          },
+          "description": {
+            "INELIGIBLE_ON_BEHALF_OF_WABA": "Tài khoản WhatsApp Business sử dụng mô hình OBO, mô hình này chưa được hỗ trợ. Bạn cần chuyển quyền sở hữu WABA cho khách hàng trước hoặc onboarding bằng Intent API.",
+            "INELIGIBLE_INACTIVE_OR_RESTRICTED": "Tài khoản WhatsApp Business không hoạt động hoặc bị hạn chế gửi tin nhắn do vấn đề thực thi chính sách.",
+            "INELIGIBLE_COUNTRY_NOT_SUPPORTED": "Tài khoản WhatsApp Business nằm ở khu vực chưa hỗ trợ MM Lite API.",
+            "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP": "Số điện thoại WhatsApp Business đang được sử dụng trong ứng dụng WhatsApp Business.",
+            "ELIGIBLE": "Tài khoản WhatsApp Business đủ điều kiện onboarding và sử dụng MM Lite API.",
+            "PENDING_VALID_PAYMENT_METHOD": "Tài khoản WhatsApp Business cần thiết lập phương thức thanh toán hợp lệ.",
+            "PENDING_INTERNAL_SETUP": "Tài khoản WhatsApp Business đang trong quá trình cấu hình để sử dụng MM Lite API và khách hàng doanh nghiệp hoặc đối tác không cần thực hiện thêm hành động. Quá trình thiết lập tự động dự kiến mất dưới mười phút. Hãy đăng ký webhook account_update và lắng nghe sự kiện AD_ACCOUNT_LINKED. Gửi ticket hỗ trợ nếu quá trình thiết lập mất hơn mười phút và bạn chưa nhận được webhook.",
+            "ONBOARDED": "Tài khoản WhatsApp Business đã onboarding thành công và sẵn sàng sử dụng MM Lite API."
+          }
+        },
+        "webhookConfiguration": {
+          "label": "Cấu hình Webhook",
+          "tooltip": "Trạng thái webhook nhận sự kiện WhatsApp.",
+          "configured": "Đã cấu hình webhook thành công",
+          "notConfigured": "Webhook chưa được cấu hình"
+        },
+        "phoneNumberHealth": {
+          "label": "Tình trạng số điện thoại",
+          "tooltip": "Số điện thoại có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+          "headline": "Phone Number - {status}"
+        },
+        "wabaHealth": {
+          "label": "Tình trạng tài khoản WhatsApp Business",
+          "tooltip": "Tài khoản WhatsApp Business có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+          "headline": "WhatsApp Business Account (WABA ID: {id}) - {status}",
+          "headlineNoId": "WhatsApp Business Account - {status}"
+        }
+      },
+      "messagingLimitTier": {
+        "TIER_50": "50 khách hàng / 24 giờ",
+        "TIER_250": "250 khách hàng / 24 giờ",
+        "TIER_1K": "1.000 khách hàng / 24 giờ",
+        "TIER_10K": "10.000 khách hàng / 24 giờ",
+        "TIER_100K": "100.000 khách hàng / 24 giờ",
+        "TIER_UNLIMITED": "Không giới hạn khách hàng / 24 giờ",
+        "UNKNOWN": "Không xác định"
+      },
+      "displayNameStatus": {
+        "APPROVED": "Đã phê duyệt",
+        "AVAILABLE_WITHOUT_REVIEW": "Khả dụng không cần duyệt",
+        "DECLINED": "Bị từ chối",
+        "EXPIRED": "Đã hết hạn",
+        "NONE": "Không có",
+        "PENDING_REVIEW": "Đang chờ duyệt"
+      },
+      "accountMode": {
+        "LIVE": "Live",
+        "SANDBOX": "Sandbox"
+      },
+      "canSendMessage": {
+        "AVAILABLE": "AVAILABLE",
+        "LIMITED": "LIMITED",
+        "BLOCKED": "BLOCKED",
+        "UNKNOWN": "UNKNOWN"
+      },
+      "health": {
+        "label": "Trạng thái doanh nghiệp",
+        "tooltip": "Tổng quan về tình trạng tài khoản WhatsApp và khả năng nhắn tin.",
+        "blockedMessage": "Số điện thoại của bạn đã bị chặn gửi tin nhắn.",
+        "problem": "Vấn đề:",
+        "possibleSolution": "Giải pháp khả thi:",
+        "noIssues": "Không phát hiện vấn đề",
+        "entityHeadline": "{type} (ID: {id})",
+        "entityHeadlineNoId": "{type}",
+        "entityTooltip": "{type} có thể gửi tin nhắn hay không và các vấn đề liên quan.",
+        "entityTypes": {
+          "PHONE_NUMBER": "Số điện thoại",
+          "WABA": "Tài khoản WhatsApp Business",
+          "BUSINESS": "Doanh nghiệp",
+          "MESSAGE_TEMPLATE": "Mẫu tin nhắn",
+          "APP": "Ứng dụng"
+        }
+      }
+    },
     "templateFooter": {
       "label": "Chân trang mẫu"
     },
@@ -1532,7 +1770,8 @@
   },
   "zalo": {
     "title": "Zalo OA",
-    "refreshPermissions": "Làm mới quyền"
+    "refreshPermissions": "Làm mới quyền",
+    "duplicated": "Tài khoản Zalo OA này đã được kết nối với một workspace khác."
   },
   "telegram": {
     "description": "Tích hợp này cho phép bạn tạo bot Telegram.",
@@ -1748,6 +1987,9 @@
     "setting": {
       "description": "Gửi email bằng máy chủ SMTP của bạn.",
       "label": "(Email) SMTP"
+    },
+    "errors": {
+      "connectionFailed": "Không thể kết nối đến máy chủ SMTP. Vui lòng kiểm tra thông tin xác thực và thử lại."
     }
   },
   "botSimulator": {

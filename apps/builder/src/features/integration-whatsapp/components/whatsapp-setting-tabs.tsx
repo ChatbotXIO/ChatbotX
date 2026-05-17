@@ -35,6 +35,10 @@ const TAB_CONFIGS: readonly TabConfig[] = [
     value: "ecommerce",
     translationKey: "whatsapp.tabs.ecommerce",
   },
+  {
+    value: "account-healths",
+    translationKey: "whatsapp.tabs.accountHealths",
+  },
 ] as const
 
 export const WhatsappSettingTabs = memo(

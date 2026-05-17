@@ -8,6 +8,7 @@ import {
   conversationModel,
   tagModel,
 } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import {
   emitCustomFieldChanged,
   emitTagApplied,
@@ -273,6 +274,13 @@ export async function removeContactTag({
 export async function deleteContact({
   conversation,
 }: ExecuteStepProps<DeleteContactStepSchema>) {
+  const contactInboxes = await db.query.contactInboxModel.findMany({
+    where: {
+      contactId: conversation.contactId,
+    },
+  })
+  const occurredAt = new Date()
+
   await db.transaction(async (tx) => {
     await tx
       .delete(conversationModel)
@@ -282,6 +290,28 @@ export async function deleteContact({
       .delete(contactModel)
       .where(eq(contactModel.id, conversation.contactId))
   })
+
+  for (const contactInbox of contactInboxes) {
+    if (contactInbox.sourceId) {
+      emit("contact:deleted", {
+        workspaceId: conversation.workspaceId,
+        contactId: contactInbox.id,
+        occurredAt,
+        source: contactInbox.source,
+        sourceId: contactInbox.sourceId,
+        channel: contactInbox.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "deleteContact",
+            triggerType: "contact_deleted",
+          },
+        },
+      }).catch((error) => {
+        console.error("[deleteContact] Failed to emit contact:deleted", error)
+      })
+    }
+  }
 }
 
 export async function addContactSequence({

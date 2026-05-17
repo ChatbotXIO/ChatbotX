@@ -17,8 +17,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { getOrganizationLogoUrl } from "../organization/utils"
-import { getWorkspaceLogoUrl } from "../workspaces/helpers"
+import { useOrganizationLogoUrl } from "../organization/utils"
+import { useWorkspaceLogoUrl } from "../workspaces/helpers"
 import { acceptInvitationAction } from "./actions/accept-invitation"
 
 export function InvitationCard({
@@ -91,12 +91,13 @@ export function WorkspaceInvitationCard({
   user: UserModel
 }) {
   const t = useTranslations()
+  const logoUrl = useWorkspaceLogoUrl(workspace)
 
   return (
     <>
       <div className="flex flex-col items-center justify-center gap-2">
         <Avatar className="size-16">
-          <AvatarImage src={getWorkspaceLogoUrl(workspace)} />
+          <AvatarImage src={logoUrl} />
           <AvatarFallback className="rounded font-bold text-2xl">
             {workspace.name.charAt(0)}
           </AvatarFallback>
@@ -132,11 +133,12 @@ export function OrganizationInvitationCard({
   user: UserModel
 }) {
   const t = useTranslations()
+  const logoUrl = useOrganizationLogoUrl(organization)
 
   return (
     <>
       <Avatar>
-        <AvatarImage src={getOrganizationLogoUrl(organization)} />
+        <AvatarImage src={logoUrl} />
         <AvatarFallback>{organization.name.charAt(0)}</AvatarFallback>
       </Avatar>
 

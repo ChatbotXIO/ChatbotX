@@ -1,7 +1,9 @@
 import {
+  aiPolicies,
   aiTimeouts,
   helpTexts,
   processStreamingText,
+  systemFunctionNames,
   toolPrefixes,
 } from "@chatbotx.io/ai"
 import {
@@ -22,7 +24,9 @@ import type {
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
+import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
+import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageWithRender } from "../../utils/message"
 
 type ReplyByAIProps = {
@@ -53,7 +57,7 @@ export type ReplyByAIExecutionResult = {
 export async function replyByAI(
   props: ReplyByAIProps,
 ): Promise<null | ReplyByAIExecutionResult> {
-  const { aiAgent } = props
+  const { aiAgent, conversation } = props
   const providers = aiAgent.models as AIAgentProviderModels
 
   const { tools, cleanup } = await getAIToolset({
@@ -63,6 +67,15 @@ export async function replyByAI(
       file: toolPrefixes.enum.file,
       fn: toolPrefixes.enum.fn,
       mcp: toolPrefixes.enum.mcp,
+      sys: toolPrefixes.enum.sys,
+    },
+    systemFunctionContextGetter: async () => ({
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      contactId: conversation.contactId,
+    }),
+    executeSystemHandoff: async (request) => {
+      await handoffExecutorService.execute(request)
     },
     fileSearch: {
       fileSearchDescription: helpTexts.fileSearchDescription,
@@ -137,7 +150,10 @@ async function runAIReply(
           variables,
         })
       : ""
-    const systemPrompt = appendToolOutputGuard(completePrompt)
+    const systemPrompt = appendHandoffPolicy(
+      appendToolOutputGuard(completePrompt),
+      tools,
+    )
 
     const toolNamesSet = new Set<string>()
     const finishReasons: Array<{
@@ -232,16 +248,13 @@ async function runAIReply(
       },
       { sendParts: true },
     ).catch((streamError) => {
+      const normalizedError = normalizeError(streamError)
       logger.error(
         {
           provider,
           modelId: selectedModelId,
           conversationId: conversation.id,
-          error: streamError,
-          errorMessage:
-            streamError instanceof Error
-              ? streamError.message
-              : String(streamError),
+          error: normalizedError,
         },
         "[automated-response] processStreamingText threw error",
       )
@@ -287,9 +300,10 @@ async function runAIReply(
 
     return null
   } catch (error) {
+    const normalizedError = normalizeError(error)
     logger.error(
       {
-        error,
+        error: normalizedError,
         provider,
         conversationId: conversation.id,
         workspaceId: conversation.workspaceId,
@@ -304,4 +318,12 @@ async function runAIReply(
 
 function appendToolOutputGuard(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
+}
+
+function appendHandoffPolicy(systemPrompt: string, tools: ToolSet): string {
+  if (!tools[systemFunctionNames.connectUserToHuman]) {
+    return systemPrompt
+  }
+
+  return `${systemPrompt}\n\n${aiPolicies.handoff}`.trim()
 }

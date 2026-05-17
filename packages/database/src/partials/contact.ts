@@ -74,6 +74,6 @@ export const contactFilterFields = z.enum([
   "tags",
   "customFields",
   "executedFlow",
-  "language",
+  "locale",
 ])
 export type ContactFilterField = z.infer<typeof contactFilterFields>

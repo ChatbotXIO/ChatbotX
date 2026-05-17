@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { isCommunity } from "@/env"
 import { authClient } from "@/lib/auth/auth-client"
 
 export function ManageSidebar() {
@@ -36,16 +37,20 @@ export function ManageSidebar() {
         icon: Grid2x2PlusIcon,
         isActive: true,
       },
-      {
-        title: t("plans.title"),
-        url: "/manage/plans",
-        icon: CoinsIcon,
-      },
-      {
-        title: t("subscriptions.title"),
-        url: "/manage/subscriptions",
-        icon: CreditCardIcon,
-      },
+      ...(isCommunity
+        ? []
+        : [
+            {
+              title: t("plans.title"),
+              url: "/manage/plans",
+              icon: CoinsIcon,
+            },
+            {
+              title: t("subscriptions.title"),
+              url: "/manage/subscriptions",
+              icon: CreditCardIcon,
+            },
+          ]),
       {
         title: t("users.title"),
         url: "/manage/users",

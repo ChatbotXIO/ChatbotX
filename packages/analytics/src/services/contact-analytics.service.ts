@@ -43,6 +43,10 @@ export class ContactAnalyticsService {
     return contactStatsRepository.getContactCountsPerDay(props)
   }
 
+  getNewContactsPerDay(props: TimeRangeQuery): Promise<ContactCountsSchema[]> {
+    return contactStatsRepository.getNewContactsPerDay(props)
+  }
+
   getNewContactsCount(props: TimeRangeQuery): Promise<number> {
     return contactStatsRepository.getNewContactsCount(props)
   }

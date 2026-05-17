@@ -13,7 +13,7 @@ const SendFileStepEditor = (props: SendFileStepEditorProps) => {
       <div className="bg-secondary px-4 py-2 pt-3">
         <DirectUploadOrInsertLink fileType="file" parentName={parentName} />
       </div>
-      <div className="bg-slate-200 px-3 py-2">
+      <div className="bg-slate-200 px-3 py-2 dark:bg-neutral-900">
         <ButtonGroupEditor parentName={`${parentName}.buttons`} />
       </div>
     </div>

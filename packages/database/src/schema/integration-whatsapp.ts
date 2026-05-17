@@ -12,6 +12,7 @@ export const integrationWhatsappModel = pgTable(
     wabaId: text().notNull(),
     businessId: text().notNull(),
     name: text().notNull(),
+    displayPhoneNumber: text().notNull().default(""),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./worker": "./src/worker.ts"
   },
   "dependencies": {
     "@chatbotx.io/worker-config": "workspace:*",
@@ -13,9 +14,13 @@
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "@types/node": "^24.10.1"
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "^24.10.1",
+    "vitest": "^3.2.4"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

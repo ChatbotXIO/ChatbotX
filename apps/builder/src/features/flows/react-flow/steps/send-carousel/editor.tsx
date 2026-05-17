@@ -69,7 +69,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
 
   return (
     <div className="relative pr-3">
-      <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1">
+      <div className="absolute top-2 left-3 z-1 flex items-center gap-1 rounded-full bg-white px-2 py-1 dark:bg-neutral-500!">
         <Button
           className={cn(
             "size-6 p-0!",

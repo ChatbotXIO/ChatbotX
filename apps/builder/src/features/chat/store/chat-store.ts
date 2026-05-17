@@ -1,14 +1,14 @@
 import type {
   ChannelType,
+  ConversationBotCategory,
   ConversationStatus,
 } from "@chatbotx.io/database/partials"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ContactFilterRequest } from "@/features/contacts/schemas/query"
+import type { ContactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
   ConversationResource,
-  FindConversationResponse,
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
@@ -17,13 +17,15 @@ import type {
   MessageResource,
   MessageResourceWithRelations,
 } from "@/features/messages/schema/resource"
+import { client } from "@/lib/orpc/orpc"
 
 export type ConversationFilters = {
+  botCategory?: ConversationBotCategory
   assignedId?: string
   channel?: ChannelType
   status?: ConversationStatus[]
   keyword?: string
-  botEnabled?: boolean
+  tags?: ("noAdminReply" | "unread" | "followUp" | "archived" | "blocked")[]
   contactFilter?: ContactFilterRequest["contactFilter"]
 }
 
@@ -127,7 +129,9 @@ export const createChatStore = () => {
         )
         .json()
 
-      const urlParams = new URLSearchParams(window.location.search)
+      const urlParams = new URLSearchParams(
+        typeof window === "undefined" ? "" : window.location.search,
+      )
       try {
         const queryConversationId = urlParams.get("conversationId") ?? ""
         if (!activeConversationId && newConversations.length > 0) {
@@ -304,11 +308,11 @@ export const createChatStore = () => {
         set({ conversations: [conversation, ...updatedConversations] })
       } else {
         // New conversation, we'll need basic details
-        const newConversation = await ky
-          .get<FindConversationResponse>(
-            `/api/workspaces/${message.workspaceId}/conversations/${message.conversationId}`,
-          )
-          .json()
+        const newConversation =
+          await client.conversationsAPI.findConversationAuthenticatedAPI({
+            workspaceId: message.workspaceId,
+            id: message.conversationId,
+          })
         newConversation.data.messages = [message]
         prependConversation(newConversation.data)
       }

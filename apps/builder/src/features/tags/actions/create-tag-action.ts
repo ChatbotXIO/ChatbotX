@@ -2,35 +2,27 @@
 
 import { db } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
 import { createId } from "@chatbotx.io/utils"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
-import { authActionClient } from "@/lib/safe-action"
-import { findWorkspaceOrFail } from "@/lib/user-permissions"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { type CreateTagRequest, createTagRequest } from "../schema/action"
 
-export const createTagAction = authActionClient
+export const createTagAction = workspaceActionClient
   .inputSchema(createTagRequest)
   .bindArgsSchemas(workspaceIdrequestParams)
   .action(
     async ({
-      ctx,
       parsedInput,
       bindArgsParsedInputs: [workspaceId],
     }: {
-      ctx: { user: UserModel }
       parsedInput: CreateTagRequest
       bindArgsParsedInputs: WorkspaceIdRequestParams
-    }) => {
-      await findWorkspaceOrFail(ctx.user.id, workspaceId)
-
-      return await createTag({ workspaceId, ...parsedInput })
-    },
+    }) => await createTag({ workspaceId, ...parsedInput }),
   )
 
 export const createTag = async (
@@ -46,7 +38,11 @@ export const createTag = async (
     },
   })
   if (existingTag) {
-    throw new Error(`Tag with the name "${parsedInput.name}" already exists.`)
+    return returnValidationErrors(createTagRequest, {
+      name: {
+        _errors: ["Name is already taken."],
+      },
+    })
   }
 
   if (parsedInput.folderId) {
@@ -67,8 +63,6 @@ export const createTag = async (
     })
     .returning()
     .then((result) => result[0])
-
-  revalidateCacheTags(`workspaces:${parsedInput.workspaceId}#tags`)
 
   return {
     data: newTag,

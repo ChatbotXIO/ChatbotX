@@ -19,6 +19,7 @@ import { contactInboxRelations } from "./contact-inbox"
 import { contactNoteRelations } from "./contact-note"
 import { contactsOnBroadcastsRelations } from "./contact-on-broadcast"
 import { contactsOnSequenceRelations } from "./contact-on-sequence"
+import { contactOnSmartDelayRelations } from "./contact-on-smart-delay"
 import { contactsToTagsRelations } from "./contact-to-tag"
 import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
@@ -48,6 +49,7 @@ import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { organizationRelations } from "./organization"
+import { organizationCredentialRelations } from "./organization-credential"
 import { organizationMemberRelations } from "./organization-member"
 import { planRelations } from "./plan"
 import { reflinkRelations } from "./reflink"
@@ -88,6 +90,7 @@ export const relations = {
   ...messageRelations,
   ...automatedResponseRelations,
   ...organizationRelations,
+  ...organizationCredentialRelations,
   ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
@@ -144,4 +147,5 @@ export const relations = {
   ...integrationInstagramRelations,
   ...flowAnalyticsSessionRelations,
   ...flowNodeStatRelations,
+  ...contactOnSmartDelayRelations,
 }

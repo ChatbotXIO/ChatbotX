@@ -13,20 +13,27 @@
     "cross-fetch": "^4.1.0",
     "image-size": "^2.0.2",
     "ky": "^2.0.2",
-    "remeda": "^2.33.7",
+    "remeda": "^2.34.0",
     "whatsapp-api-js": "^6.2.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
-    "typescript": "^5"
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "msw": "^2.7.3",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "exports": {
     ".": "./src/index.ts",
     "./api/*": "./src/api/*.ts",
-    "./constants": "./src/constants.ts"
+    "./constants": "./src/constants.ts",
+    "./test-handlers": "./src/test-handlers.ts",
+    "./exception": "./src/exception.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   }
 }

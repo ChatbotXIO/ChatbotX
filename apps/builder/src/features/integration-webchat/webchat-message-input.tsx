@@ -13,6 +13,7 @@ import { createWebchatMessageAction } from "../messages/actions/create-webchat-m
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
+import WebchatMessageMenu from "./components/webchat-message-menu"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatMessageInputProps = {
@@ -23,9 +24,8 @@ type WebchatMessageInputProps = {
 
 export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
   const { workspaceId, webchatId, referral = "" } = props
-  const { sendMessage, guestConversationId } = useGuestSessionStore(
-    (state) => state,
-  )
+  const { sendMessage, guestConversationId, appendMessage } =
+    useGuestSessionStore((state) => state)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const defaultValues = useMemo(
@@ -59,7 +59,11 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           setValue("text", "")
           textareaRef.current?.focus()
         },
-        onSuccess: () => {
+        onSuccess: ({ data }) => {
+          if (data?.attachments) {
+            appendMessage(data)
+          }
+
           textareaRef.current?.focus()
           resetFormAndAction()
 
@@ -161,7 +165,10 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           </div>
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
-              {/* <WebchatMessageMenu workspaceId={workspaceId} webchatId={webchatId} /> */}
+              <WebchatMessageMenu
+                webchatId={webchatId}
+                workspaceId={workspaceId}
+              />
             </div>
             <div className="message-toolbar flex items-center">
               {!content && (

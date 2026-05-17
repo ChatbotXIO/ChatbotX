@@ -3,28 +3,35 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "drizzle-orm": "1.0.0-beta.20",
+    "drizzle-orm": "1.0.0-beta.22",
     "pg": "^8.20.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.20.0",
     "dotenv-cli": "^11.0.0",
-    "drizzle-kit": "1.0.0-beta.20"
+    "drizzle-kit": "1.0.0-beta.22",
+    "esbuild": "^0.28.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
-    "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
-    "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
-    "db:migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
-    "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
+    "check-types": "tsc --noEmit",
+    "db:check": "dotenv -e ../../.env -- drizzle-kit up",
+    "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
-    "db:check": "dotenv -e ../../.env -- drizzle-kit up",
-    "check-types": "tsc --noEmit"
+    "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
+    "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
+    "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
+    "backfill:organization-credentials": "dotenv -e ../../.env -- tsx scripts/backfill-organization-credentials.ts",
+    "rotate:encryption-key": "dotenv -e ../../.env -- tsx scripts/rotate-encryption-key.ts",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "exports": {
     ".": "./src/index.ts",

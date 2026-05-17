@@ -2,31 +2,26 @@
 
 import { db, eq } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
+import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { authActionClient } from "@/lib/safe-action"
-import { findWorkspaceOrFail } from "@/lib/user-permissions"
+import { workspaceActionClient } from "@/lib/safe-action"
 import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
 
-export const updateTagAction = authActionClient
+export const updateTagAction = workspaceActionClient
   .inputSchema(updateTagSchema)
   .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(
     async ({
-      ctx,
       parsedInput,
       bindArgsParsedInputs: [workspaceId, id],
     }: {
-      ctx: { user: UserModel }
       parsedInput: UpdateTagSchema
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await findWorkspaceOrFail(ctx.user.id, workspaceId)
-
       await updateTag({ workspaceId, id, parsedInput })
     },
   )
@@ -53,7 +48,11 @@ export const updateTag = async ({
     },
   })
   if (existingTag) {
-    throw new Error(`Tag with the name "${parsedInput.name}" already exists.`)
+    return returnValidationErrors(updateTagSchema, {
+      name: {
+        _errors: ["Name is already taken."],
+      },
+    })
   }
 
   const updatedTag = await db

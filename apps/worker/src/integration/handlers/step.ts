@@ -1,12 +1,23 @@
+import { db, eq } from "@chatbotx.io/database/client"
 import {
+  smartDelayStatuses,
+  smartDelayTypes,
+} from "@chatbotx.io/database/partials"
+import { contactOnSmartDelayModel } from "@chatbotx.io/database/schema"
+import {
+  buildJobId,
+  computeTriggerAt,
   type EdgeSchema,
+  ENQUEUE_DELAY_MS,
   type SplitTrafficStepSchema,
   type StartAnotherNodeStepSchema,
   type StartExternalFlowStepSchema,
   type StartExternalNodeStepSchema,
   type StepType,
   stepTypes,
+  type WaitStepSchema,
 } from "@chatbotx.io/flow-config"
+import { createId } from "@chatbotx.io/utils"
 import {
   ChatJobAction,
   type ChatJobSendFlowStep,
@@ -14,6 +25,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { logger } from "../../lib/logger"
 import {
   addContactNotes,
   addContactSequence,
@@ -27,9 +39,10 @@ import {
   removeContactTag,
   setContactCustomField,
 } from "./contact"
-import type { ExecuteStepProps } from "./flow"
+import { type ExecuteStepProps, seekConnectedNode } from "./flow"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
+import { sendEmail } from "./send-email"
 import {
   clearSpreadsheetRow,
   getSpreadsheetRandomRow,
@@ -114,6 +127,109 @@ async function splitTraffic({
       },
     })
   }
+}
+
+async function handleWait({
+  conversation,
+  flowVersion,
+  contactInbox,
+  targetId,
+  step,
+  useLatestFlowVersion,
+}: ExecuteStepProps<WaitStepSchema>): Promise<ExecuteStepResult> {
+  if (!(targetId && step)) {
+    return { status: "skip", result: null }
+  }
+
+  if (!contactInbox) {
+    return { status: "skip", result: null }
+  }
+
+  const contactInboxId = contactInbox.id
+
+  const triggerAt = await computeTriggerAt(step, async (customFieldId) => {
+    try {
+      const customField = await db.query.contactCustomFieldModel.findFirst({
+        where: {
+          contactId: contactInbox.contactId,
+          customFieldId,
+        },
+        columns: {
+          value: true,
+        },
+      })
+      return customField?.value ?? null
+    } catch (err) {
+      logger.error(
+        { err, customFieldId },
+        "Failed to query custom field for wait step",
+      )
+      return null
+    }
+  })
+
+  if (!triggerAt) {
+    return {
+      status: "error",
+      errorMessage: "Unable to compute wait triggerAt",
+      result: null,
+    }
+  }
+
+  const connectedNodeId = seekConnectedNode(flowVersion, targetId)
+  const diffMs = triggerAt.getTime() - Date.now()
+
+  if (!connectedNodeId) {
+    return { status: "skip", result: null }
+  }
+
+  const rowId = createId()
+  const data: typeof contactOnSmartDelayModel.$inferInsert = {
+    id: rowId,
+    workspaceId: conversation.workspaceId,
+    flowId: flowVersion.flowId,
+    flowVersionId: useLatestFlowVersion ? null : flowVersion.id,
+    contactInboxId,
+    conversationId: conversation.id,
+    nodeId: connectedNodeId,
+    stepId: step.id,
+    type: smartDelayTypes.enum.waitNode,
+    triggerAt,
+    status: smartDelayStatuses.enum.pending,
+  }
+
+  // Insert tracking record first so a crash during enqueue still has a recovery path via scanner
+  await db.insert(contactOnSmartDelayModel).values(data)
+
+  if (diffMs <= ENQUEUE_DELAY_MS) {
+    try {
+      await integrationQueue.add(
+        IntegrationJobAction.sendFlow,
+        {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: conversation.id,
+            flowId: flowVersion.flowId,
+            flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
+            nodeId: connectedNodeId,
+            contactInboxId,
+          },
+        },
+        { delay: Math.max(0, diffMs), jobId: buildJobId(rowId) },
+      )
+      await db
+        .update(contactOnSmartDelayModel)
+        .set({ status: smartDelayStatuses.enum.completed })
+        .where(eq(contactOnSmartDelayModel.id, rowId))
+    } catch (err) {
+      logger.warn(
+        { err, rowId },
+        "Failed to immediately enqueue smart delay; scanner will pick it up",
+      )
+    }
+  }
+
+  return { status: "wait", result: null }
 }
 
 async function startAnotherNode(
@@ -229,7 +345,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.unassignConversation]: stepUnassignConversation,
   [stepTypes.enum.unfollowConversation]: stepUnfollowConversation,
   [stepTypes.enum.getUserData]: getUserData,
-  [stepTypes.enum.wait]: undefined,
+  [stepTypes.enum.wait]: handleWait,
   [stepTypes.enum.startExternalFlow]: startExternalFlow,
   [stepTypes.enum.chooseChannel]: undefined,
   [stepTypes.enum.filterContact]: undefined,
@@ -248,14 +364,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.subscribeSequence]: addContactSequence,
   [stepTypes.enum.unsubscribeSequence]: removeContactSequence,
   [stepTypes.enum.sendQuickReply]: sendFlowMessage,
-  [stepTypes.enum.emailH3]: undefined,
-  [stepTypes.enum.emailText]: undefined,
-  [stepTypes.enum.emailImage]: undefined,
-  [stepTypes.enum.emailButton]: undefined,
-  [stepTypes.enum.emailLine]: undefined,
-  [stepTypes.enum.emailSpacing]: undefined,
-  [stepTypes.enum.emailCode]: undefined,
-  [stepTypes.enum.emailHeader]: undefined,
+  [stepTypes.enum.email]: sendEmail,
   [stepTypes.enum.typing]: stepSendTyping,
   [stepTypes.enum.sendWaTemplateMessage]: sendFlowMessage,
 }

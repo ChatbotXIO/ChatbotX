@@ -1,7 +1,7 @@
 import {
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
   WebhookJobAction,
   type WebhookJobData,
 } from "@chatbotx.io/worker-config"
@@ -12,7 +12,7 @@ import { WebhookMatcherService } from "./services/webhook-matcher.service"
 const webhookMatcher = new WebhookMatcherService()
 
 const worker = new Worker(
-  queueName.webhook,
+  queueNames.enum.webhook,
   async (job: Job<WebhookJobData>) => {
     switch (job.data.type) {
       case WebhookJobAction.evaluateWebhooks: {

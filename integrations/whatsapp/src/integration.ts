@@ -9,6 +9,7 @@ import {
   updateConversationalAutomation,
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
+import { unsubscribeWebhook } from "./api/webhook"
 import { uploadMedia, verifyAccessToken } from "./client"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -53,8 +54,8 @@ const config: IntegrationDefinition<
       `Handler: ${props.req.method} ${props.req.url} is not implemented`,
     )
   },
-  disconnect: (_props: WhatsappAuthValue): Promise<void> => {
-    throw new Error("Method is not implemented.")
+  disconnect: async (auth: WhatsappAuthValue): Promise<void> => {
+    await unsubscribeWebhook({ auth })
   },
 }
 

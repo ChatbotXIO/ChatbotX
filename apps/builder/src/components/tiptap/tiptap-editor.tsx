@@ -71,7 +71,7 @@ export const TiptapEditor = ({
     // Don't render immediately on the server to avoid SSR issues
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      const text = editor.getText()
+      const text = editor.getText({ blockSeparator: "\n" })
       onChange?.(text)
     },
     onFocus: () => {
@@ -95,7 +95,13 @@ export const TiptapEditor = ({
 
   useEffect(() => {
     if (tiptapEditor && initValue) {
-      tiptapEditor.commands.setContent(initValue)
+      const escHtml = (s: string) =>
+        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      const html = initValue
+        .split("\n")
+        .map((line) => `<p>${line ? escHtml(line) : "<br>"}</p>`)
+        .join("")
+      tiptapEditor.commands.setContent(html)
     }
   }, [tiptapEditor, initValue])
 
@@ -136,7 +142,14 @@ export const TiptapEditor = ({
                     className="w-full cursor-pointer justify-start rounded-none p-2"
                     key={field.value}
                     onClick={() => {
-                      setEditorValue(`{{${field.value}}}`)
+                      tiptapEditor
+                        ?.chain()
+                        .insertContent({
+                          type: "mention",
+                          attrs: { id: `${field.value}}}` },
+                        })
+                        .focus()
+                        .run()
                       setIsOpenCustomField(false)
                     }}
                     variant="ghost"

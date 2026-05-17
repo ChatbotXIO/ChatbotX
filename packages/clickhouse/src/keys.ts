@@ -13,4 +13,5 @@ export const keys = () =>
     clientPrefix: "CHATBOTX_PUBLIC_",
     client: {},
     runtimeEnv: process.env,
+    skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })

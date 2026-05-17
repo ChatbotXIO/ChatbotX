@@ -1,11 +1,11 @@
-import { smtpProviders } from "@chatbotx.io/integration-smtp"
+import { smtpProviders } from "@chatbotx.io/integration-smtp/schema"
 import { z } from "zod"
 
 export const createSmtpRequest = z
   .object({
     provider: smtpProviders,
-    host: z.string().optional(),
-    port: z.coerce.number().int().positive().max(65_535).optional(),
+    host: z.string(),
+    port: z.coerce.number().int().positive().max(65_535),
     username: z.string().min(1).max(255),
     password: z.string().min(1).max(255),
     fromAddress: z.email(),
@@ -34,13 +34,13 @@ export type CreateSmtpRequest = z.infer<typeof createSmtpRequest>
 
 export const updateSmtpRequest = z
   .object({
-    name: z.string().min(1).max(40).optional(),
-    provider: smtpProviders.optional(),
-    host: z.string().optional(),
-    port: z.coerce.number().int().positive().optional(),
-    username: z.string().min(1).optional(),
-    password: z.string().min(1).optional(),
-    fromAddress: z.string().email().optional(),
+    name: z.string().min(1).max(40),
+    provider: smtpProviders,
+    host: z.string(),
+    port: z.coerce.number().int().positive(),
+    username: z.string().min(1),
+    password: z.string().min(1),
+    fromAddress: z.email(),
   })
   .superRefine((data, ctx) => {
     if (data.provider === "other") {

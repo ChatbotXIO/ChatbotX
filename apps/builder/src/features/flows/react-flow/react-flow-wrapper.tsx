@@ -1,7 +1,10 @@
 import {
   buttonTypes,
+  type EmailStepSchema,
   type FlowNode,
   nodeTypeSchema,
+  type PageElementSchema,
+  pageElementTypes,
   sendMessageNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
 } from "@chatbotx.io/flow-config"
@@ -72,6 +75,7 @@ export function ReactFlowWrapper({
     updateEdge,
     getEdges,
     deleteElements,
+    screenToFlowPosition,
   } = reactFlow
 
   const [nodes, _setNodes, onNodesChange] = useNodesState(
@@ -160,40 +164,64 @@ export function ReactFlowWrapper({
         return
       }
 
+      const fromNodeId = connectionState.fromNode.id
+      const handleId = connectionState.fromHandle?.id
       const data = connectionState.fromNode.data as FlowNode["data"]
 
-      if (data.details && "steps" in data.details) {
-        // biome-ignore lint/style/useForOf: safe to use for of
+      // biome-ignore lint/suspicious/noExplicitAny: safe to use any
+      function connectButtonsInStep(step: any): boolean {
+        const buttonIndex = (step.buttons as ButtonProps[]).findIndex(
+          (button: ButtonProps) => button.id === handleId,
+        )
+        if (buttonIndex === -1) {
+          return false
+        }
+
+        const targetButton = step.buttons[buttonIndex]
+        targetButton.buttonType = buttonTypes.enum.startAnotherNode
+        targetButton.beforeStep = startAnotherNodeStepDefaultFn({
+          nodeId: toNodeId,
+          viewOnly: true,
+        })
+        step.buttons[buttonIndex] = targetButton
+        updateNodeData(fromNodeId, data)
+        return true
+      }
+
+      function connectElementsInStep(step: EmailStepSchema): boolean {
+        const elements = step.elements as PageElementSchema[]
         for (
-          let stepIndex = 0;
-          stepIndex < data.details.steps.length;
-          stepIndex++
+          let elementIndex = 0;
+          elementIndex < elements.length;
+          elementIndex++
         ) {
-          if ("buttons" in data.details.steps[stepIndex]) {
-            const buttonIndex =
-              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-              (data.details.steps[stepIndex] as any).buttons.findIndex(
-                (button: ButtonProps) =>
-                  button.id === connectionState.fromHandle?.id,
-              )
+          const element = elements[elementIndex]
+          if (
+            element.type === pageElementTypes.enum.button &&
+            element.beforeStep &&
+            element.beforeStep.id === handleId
+          ) {
+            element.beforeStep.stepType = buttonTypes.enum.startAnotherNode
+            element.beforeStep = startAnotherNodeStepDefaultFn({
+              nodeId: toNodeId,
+              viewOnly: true,
+            })
+            elements[elementIndex] = element
+            updateNodeData(fromNodeId, data)
+            return true
+          }
+        }
+        return false
+      }
 
-            if (buttonIndex !== -1) {
-              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-              const targetButton = (data.details.steps[stepIndex] as any)
-                .buttons[buttonIndex]
-              targetButton.buttonType = buttonTypes.enum.startAnotherNode
-              targetButton.beforeStep = startAnotherNodeStepDefaultFn({
-                nodeId: toNodeId,
-                viewOnly: true,
-              })
-              // biome-ignore lint/suspicious/noExplicitAny: safe to use any
-              ;(data.details.steps[stepIndex] as any).buttons[buttonIndex] =
-                targetButton
+      if ("steps" in data.details) {
+        for (const step of data.details.steps as EmailStepSchema[]) {
+          if ("buttons" in step && connectButtonsInStep(step)) {
+            break
+          }
 
-              updateNodeData(connectionState.fromNode.id, data)
-
-              break
-            }
+          if ("elements" in step && connectElementsInStep(step)) {
+            return
           }
         }
       }
@@ -225,12 +253,12 @@ export function ReactFlowWrapper({
             (node) => node.type === nodeTypeSchema.enum.sendMessage,
           ).length
 
+          const position = connectionState.to
+            ? screenToFlowPosition(connectionState.to)
+            : { x: 300, y: 300 }
           const newNode = sendMessageNodeDefaultFn({
             nodeProps: {
-              position: connectionState.to ?? {
-                x: 300,
-                y: 300,
-              },
+              position,
             },
             dataProps: {
               name: `Send Message #${messageNodesLength + 1}`,
@@ -307,6 +335,7 @@ export function ReactFlowWrapper({
       deleteElements,
       getEdges,
       connectButtonToNode,
+      screenToFlowPosition,
     ],
   )
 
@@ -347,7 +376,7 @@ export function ReactFlowWrapper({
         }
 
         const data = foundedNode.data as FlowNode["data"]
-        if (data.details && "steps" in data.details) {
+        if ("details" in data && data.details && "steps" in data.details) {
           const stepIndex = data.details.steps.findIndex(
             (step) =>
               "buttons" in step &&
@@ -365,6 +394,30 @@ export function ReactFlowWrapper({
 
               // update the node data
               updateNodeData(foundedNode.id, data)
+            }
+            continue
+          }
+
+          // Handle button page elements in steps (e.g. SendMail node)
+          let elementFound = false
+          for (const step of data.details.steps) {
+            if (!("elements" in step)) {
+              continue
+            }
+            for (const element of (step as EmailStepSchema).elements) {
+              if (
+                element.type === pageElementTypes.enum.button &&
+                element.beforeStep &&
+                element.beforeStep.id === edge.sourceHandle
+              ) {
+                Object.assign(element, { buttonType: null, beforeStep: null })
+                updateNodeData(foundedNode.id, data)
+                elementFound = true
+                break
+              }
+            }
+            if (elementFound) {
+              break
             }
           }
         }
@@ -385,6 +438,8 @@ export function ReactFlowWrapper({
       }}
       edges={edges}
       edgeTypes={edgeTypes}
+      maxZoom={10}
+      minZoom={0.1}
       nodes={nodes}
       nodeTypes={viewerNodeTypes}
       onConnect={onConnect}

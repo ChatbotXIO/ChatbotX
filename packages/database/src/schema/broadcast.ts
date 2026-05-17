@@ -1,5 +1,6 @@
 import {
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -55,6 +56,7 @@ export const broadcastModel = pgTable(
     contactFilter: jsonb(),
     subaction: text().notNull(),
     channel: text().notNull(),
+    contactCount: integer(),
   },
   (table) => [
     index("Broadcast_workspaceId_idx").using(
@@ -72,6 +74,10 @@ export const broadcastModel = pgTable(
     index("Broadcast_schedulesAt_idx").using(
       "btree",
       table.schedulesAt.asc().nullsLast(),
+    ),
+    index("Broadcast_status_idx").using(
+      "btree",
+      table.status.asc().nullsLast(),
     ),
   ],
 )

@@ -1,5 +1,7 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type InstagramConversationStarter,
@@ -14,7 +16,6 @@ import type {
   IntegrationInstagramModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   type IceBreaker,
@@ -27,8 +28,8 @@ import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
 import {
@@ -67,27 +68,48 @@ export const updateInstagramAction = workspaceActionClient
 
           if (integrationInstagramData) {
             const auth = integrationInstagramData.auth as InstagramAuthValue
-            const integrationContext = {
-              workspace: ctx.workspace,
-              auth,
-              storagePrefix: getStoragePrefix(
-                ctx.workspace.id,
-                integrationInstagramData.inboxId,
-              ),
+            const botContext = await buildContext({
+              workspaceId: ctx.workspace.id,
+              integrationType: "instagram",
+              integration: { ...integrationInstagramData, auth },
+            })
+
+            const fieldsToDelete = getInstagramFieldsToDelete(parsedInput)
+            if (fieldsToDelete.length > 0) {
+              await integrationInstagram.runChannelHandler(
+                "bot",
+                "deleteProfileFields",
+                {
+                  ctx: botContext,
+                  fields: fieldsToDelete,
+                },
+              )
             }
 
+            const profileData: Partial<InstagramProfileRequest> = {}
+
             if (parsedInput.conversationStarters.length) {
-              await integrationInstagram.channels.channel.bot?.updateProfile?.({
-                ctx: integrationContext,
-                data: {
-                  ice_breakers: await buildIceBreakersParams(
-                    parsedInput.conversationStarters,
-                  ),
-                  persistent_menu: await buildPersistentMenuParams(
-                    parsedInput.persistentMenus,
-                  ),
+              profileData.ice_breakers = await buildIceBreakersParams(
+                parsedInput.conversationStarters,
+              )
+            }
+
+            if (parsedInput.persistentMenus.length) {
+              profileData.persistent_menu = await buildPersistentMenuParams(
+                parsedInput.persistentMenus,
+                botContext.platform.appUrl,
+              )
+            }
+
+            if (Object.keys(profileData).length > 0) {
+              await integrationInstagram.runChannelHandler(
+                "bot",
+                "updateProfile",
+                {
+                  ctx: botContext,
+                  data: profileData as InstagramProfileRequest,
                 },
-              })
+              )
             }
           }
 
@@ -98,6 +120,22 @@ export const updateInstagramAction = workspaceActionClient
       }
     },
   )
+
+const getInstagramFieldsToDelete = (
+  input: Pick<
+    UpdateInstagramRequest,
+    "conversationStarters" | "persistentMenus"
+  >,
+): string[] => {
+  const fields: string[] = []
+  if (!input.conversationStarters.length) {
+    fields.push("ICE_BREAKERS")
+  }
+  if (!input.persistentMenus.length) {
+    fields.push("PERSISTENT_MENU")
+  }
+  return fields
+}
 
 const buildIceBreakersParams = async (
   conversationStarters: InstagramConversationStarter[],
@@ -131,8 +169,17 @@ const buildIceBreakersParams = async (
 
 const buildPersistentMenuParams = async (
   persistentMenus: InstagramPersistentMenu[],
+  appUrl: string,
 ): Promise<InstagramProfileRequest["persistent_menu"]> => {
-  const callToActions = await parseInstagramButtons(persistentMenus)
+  const brandingUrl = getBrandingUrl("instagram", appUrl)
+  const menus = [...persistentMenus]
+  const brandingIndex = menus.findIndex(
+    (menu) => menu.type === "url" && "url" in menu && menu.url === brandingUrl,
+  )
+  if (brandingIndex !== -1) {
+    menus.push(...menus.splice(brandingIndex, 1))
+  }
+  const callToActions = await parseInstagramButtons(menus)
   return [
     {
       locale: "default",

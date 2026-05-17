@@ -23,20 +23,21 @@ import {
   fakeQueue,
   getRedisConnection,
 } from "../../lib/connection"
-import { queueName } from "../../lib/types"
+import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
 
 export const ChatJobAction = {
-  sendExternalMessage: "sendExternalMessage",
+  sendChannelMessage: "sendChannelMessage",
   sendFlowMessage: "sendFlowMessage",
   sendChatMessage: "sendChatMessage",
   sendWhatsappTemplateMessage: "sendWhatsappTemplateMessage",
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
+  broadcastEvent: "broadcastEvent",
 } as const
 
-export type ChatJobSendExternalMessage = {
-  type: typeof ChatJobAction.sendExternalMessage
+export type ChatJobSendChannelMessage = {
+  type: typeof ChatJobAction.sendChannelMessage
   data: {
     conversation: ConversationModel
     contactInbox: ContactInboxModel
@@ -102,17 +103,26 @@ export type ChatJobSendTyping = {
   }
 }
 
+export type ChatJobBroadcastEvent = {
+  type: typeof ChatJobAction.broadcastEvent
+  data: {
+    workspaceId: string
+    event: unknown
+  }
+}
+
 export type ChatJobData =
-  | ChatJobSendExternalMessage
+  | ChatJobSendChannelMessage
   | ChatJobSendFlowStep
   | ChatJobSendChatMessage
   | ChatJobSendWhatsappTemplateMessage
   | ChatJobSendTyping
+  | ChatJobBroadcastEvent
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"
     ? fakeQueue
-    : new Queue<ChatJobData>(queueName.chat, {
+    : new Queue<ChatJobData>(queueNames.enum.chat, {
         connection: getRedisConnection(),
         defaultJobOptions,
       })

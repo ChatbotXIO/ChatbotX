@@ -19,7 +19,8 @@ export const conversationModel = pgTable(
   "Conversation",
   {
     ...sharedColumns,
-    botEnabled: boolean().default(false).notNull(),
+    botEnabled: boolean().default(true).notNull(),
+    botResumeAt: timestamp(timestampConfig),
     archivedAt: timestamp(timestampConfig),
     additionalAttributes: jsonb().$type<{
       [x: string]: unknown

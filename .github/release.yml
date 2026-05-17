@@ -1,0 +1,29 @@
+changelog:
+  exclude:
+    authors:
+      - dependabot
+      - dependabot[bot]
+      - github-actions
+      - github-actions[bot]
+  categories:
+    - title: "⚠️ Breaking Changes"
+      labels:
+        - breaking-change
+    - title: "✨ New Features"
+      labels:
+        - feature
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+    - title: "⚡ Improvements"
+      labels:
+        - improvement
+    - title: "🔒 Security"
+      labels:
+        - security
+    - title: "🔧 Internal / Chore"
+      labels:
+        - chore
+        - ci
+        - docs
+        - dependencies

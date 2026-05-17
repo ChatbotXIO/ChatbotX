@@ -1,7 +1,7 @@
 import { Button, Link, Section, Text } from "@react-email/components"
-import BaseTempate, { type BaseTempateProps } from "./base-template"
+import BaseTemplate, { type BaseTemplateProps } from "./base-template"
 
-export type SignUpVerificationProps = BaseTempateProps & {
+export type SignUpVerificationProps = BaseTemplateProps & {
   userName: string
   verificationUrl: string
 }
@@ -10,7 +10,7 @@ function SignUpVerification(props: SignUpVerificationProps) {
   const { userName, verificationUrl } = props
 
   return (
-    <BaseTempate {...props}>
+    <BaseTemplate {...props}>
       <Text>Hi {userName},</Text>
       <Text>
         Thanks for signing up! Please verify your email address by clicking the
@@ -27,7 +27,7 @@ function SignUpVerification(props: SignUpVerificationProps) {
         This link will expire in 24 hours. If you didn't create an account, you
         can ignore this email.
       </Text>
-    </BaseTempate>
+    </BaseTemplate>
   )
 }
 

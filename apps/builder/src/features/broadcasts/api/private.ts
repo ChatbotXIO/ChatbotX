@@ -1,31 +1,41 @@
 import { broadcastAnalyticsService } from "@chatbotx.io/analytics"
 import {
-  getBroadcastStatsRequest,
   getBroadcastStatsResponse,
   listBroadcastContactsRequest,
   listBroadcastContactsResponse,
 } from "@chatbotx.io/analytics/schemas"
 import { db } from "@chatbotx.io/database/client"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import { z } from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 
+const getBatchBroadcastStatsRequest = z.object({
+  workspaceId: z.string(),
+  broadcastIds: z.array(z.string()),
+})
+
+const getBatchBroadcastStatsResponse = z.record(
+  z.string(),
+  getBroadcastStatsResponse,
+)
+
 export const broadcastPrivateAPIs = {
-  privateGetBroadcastStatsAPI: authorizedAPI
+  privateGetBatchBroadcastStatsAPI: authorizedAPI
     .route({
-      method: "GET",
-      path: "/workspaces/{workspaceId}/broadcasts/{broadcastId}/stats",
-      summary: "Get broadcast stats",
+      method: "POST",
+      path: "/workspaces/{workspaceId}/broadcasts/stats",
+      summary: "Get batch broadcast stats",
       tags: ["Broadcasts"],
     })
-    .input(getBroadcastStatsRequest)
-    .output(getBroadcastStatsResponse)
+    .input(getBatchBroadcastStatsRequest)
+    .output(getBatchBroadcastStatsResponse)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .handler(
       async ({ input }) =>
-        await broadcastAnalyticsService.getStats({
+        await broadcastAnalyticsService.getBatchStats({
           workspaceId: input.workspaceId,
-          broadcastId: input.broadcastId,
+          broadcastIds: input.broadcastIds,
         }),
     ),
 
@@ -82,6 +92,7 @@ export const broadcastPrivateAPIs = {
               id: true,
               firstName: true,
               lastName: true,
+              fullName: true,
               avatar: true,
             },
           },
@@ -112,7 +123,8 @@ export const broadcastPrivateAPIs = {
             contactInboxId,
             firstName: contactInbox.contact.firstName ?? null,
             lastName: contactInbox.contact.lastName ?? null,
-            sourceId: contactInbox.sourceId ?? null,
+            fullName: contactInbox.contact.fullName ?? null,
+            sourceId: contactInbox.sourceId,
             avatar: contactInbox.contact.avatar ?? null,
             channel: contactInbox.channel as ChannelType,
             conversationId: contactInbox.conversation?.id ?? "",

@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import "./globals.css"
+import { resolvePlatformUrlsByDomain } from "@chatbotx.io/business"
 import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
+import { PlatformUrlsProvider } from "@/features/platform"
+import { getDomainFromHeader } from "@/lib/domain"
 
 export const metadata: Metadata = {
   title: "ChatbotX",
@@ -16,6 +19,9 @@ type Props = {
 
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
+
+  const domain = await getDomainFromHeader()
+  const platformUrls = await resolvePlatformUrlsByDomain(domain)
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -44,9 +50,11 @@ export default async function RootLayout({ children }: Props) {
         <link href="/brand/favicon/site.webmanifest" rel="manifest" />
       </head>
       <body suppressHydrationWarning>
-        <UiProvider>
-          <NextIntlClientProvider>{children}</NextIntlClientProvider>
-        </UiProvider>
+        <PlatformUrlsProvider urls={platformUrls}>
+          <UiProvider>
+            <NextIntlClientProvider>{children}</NextIntlClientProvider>
+          </UiProvider>
+        </PlatformUrlsProvider>
       </body>
     </html>
   )

@@ -2,7 +2,6 @@
 
 import {
   type GetUserDataStepSchema,
-  getUserDataStepDefaultFn,
   getUserDataStepSchema,
   ReplyFormat,
 } from "@chatbotx.io/flow-config"
@@ -49,7 +48,9 @@ const GetUserDataStepForm = ({
 
   const form = useForm({
     resolver: zodResolver(getUserDataStepSchema),
-    defaultValues: getUserDataStepDefaultFn(),
+    defaultValues: {
+      ...getParentValues(parentName),
+    },
     mode: "onChange",
   })
 
@@ -74,7 +75,14 @@ const GetUserDataStepForm = ({
   }
 
   const onSubmit = (data: GetUserDataStepSchema) => {
-    setParentValue(parentName, data)
+    setParentValue(`${parentName}.message`, data.message)
+    setParentValue(`${parentName}.replyFormat`, data.replyFormat)
+    setParentValue(`${parentName}.outputFieldId`, data.outputFieldId)
+    setParentValue(`${parentName}.retryMessage`, data.retryMessage)
+    setParentValue(`${parentName}.skipButtonLabel`, data.skipButtonLabel)
+    setParentValue(`${parentName}.autoSkip`, data.autoSkip)
+    setParentValue(`${parentName}.autoSkipTimeValue`, data.autoSkipTimeValue)
+    setParentValue(`${parentName}.autoSkipTimeUnit`, data.autoSkipTimeUnit)
     onSuccess?.()
   }
 
@@ -84,8 +92,6 @@ const GetUserDataStepForm = ({
         className="flex max-h-[calc(100vh-120px)] flex-col gap-6 overflow-y-scroll px-1"
         onSubmit={form.handleSubmit(onSubmit)}
       >
-        <TiptapEditorField label="Message" name="message" required />
-
         <SelectField
           label={t("fields.replyFormat.label")}
           name="replyFormat"
@@ -166,7 +172,11 @@ const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
   return (
     <BaseStepEditor icon={KeyboardIcon} title={t("flows.actions.getUserData")}>
       <div className="flex flex-col gap-3">
-        <InputField label="Message" name={`${parentName}.message`} required />
+        <TiptapEditorField
+          label="Message"
+          name={`${parentName}.message`}
+          required
+        />
 
         <Dialog onOpenChange={setOpen} open={open}>
           <DialogTrigger asChild>

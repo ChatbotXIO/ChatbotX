@@ -1,22 +1,28 @@
 "use client"
 
-import AreaChart from "@chatbotx.io/ui/components/charts/area-chart"
+import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { getTimeRangeDateFormat } from "../../utils/date-format"
 
 export function NewContactCountsChart() {
   const t = useTranslations()
-  const { newContactCounts } = useAnalysisStore((state) => state)
+  const { newContactCounts, from, to } = useAnalysisStore((state) => state)
+  const dateFormat = getTimeRangeDateFormat(from, to)
 
   return (
-    <AreaChart
+    <BarChart
       data={newContactCounts.map((count) => ({
-        label: format(count.date, "MMM d"),
-        value: count.count,
+        name: format(count.date, dateFormat),
+        value: [
+          {
+            label: t("analytics.newContacts"),
+            value: count.count,
+          },
+        ],
       }))}
       title={t("analytics.newContacts")}
-      valueLabel={t("analytics.newContacts")}
     />
   )
 }

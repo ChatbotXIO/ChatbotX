@@ -1,7 +1,30 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Email">
-  <rect width="512" height="512" rx="76.8" fill="#F59E0B"/>
-  <rect x="104" y="148" width="304" height="216" rx="28" fill="#FFFFFF"/>
-  <path d="M124 176 256 276 388 176" fill="none" stroke="#111827" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M126 338 220 250" fill="none" stroke="#111827" stroke-width="24" stroke-linecap="round"/>
-  <path d="M386 338 292 250" fill="none" stroke="#111827" stroke-width="24" stroke-linecap="round"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+
+      .cls-2, .cls-3 {
+        fill: none;
+        stroke: #f59e0b;
+        stroke-linecap: round;
+        stroke-width: 8px;
+      }
+
+      .cls-4 {
+        fill: #f59e0b;
+      }
+
+      .cls-3 {
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+  <rect class="cls-4" width="512" height="512" rx="76.8" ry="76.8"/>
+  <rect class="cls-1" x="104" y="148" width="304" height="216" rx="28" ry="28"/>
+  <path class="cls-3" d="m94,176l162,100,162-100"/>
+  <path class="cls-2" d="m98,370l119.06-117.11"/>
+  <path class="cls-2" d="m414,370l-119.63-117.67"/>
 </svg>

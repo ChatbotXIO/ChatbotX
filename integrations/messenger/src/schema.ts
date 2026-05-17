@@ -127,6 +127,7 @@ export const facebookButtonSchema = z.object({
   title: z.string(),
   url: z.url().optional(),
   payload: z.string().optional(),
+  webview_height_ratio: z.enum(["compact", "tall", "full"]).optional(),
 })
 export type FacebookButton = z.infer<typeof facebookButtonSchema>
 

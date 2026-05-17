@@ -85,6 +85,7 @@ export const webhookHandler = async (
                 messageId: statusData.id,
                 status: statusData.status,
                 timestamp: statusData.timestamp,
+                error: result.data.error,
               },
             },
           })

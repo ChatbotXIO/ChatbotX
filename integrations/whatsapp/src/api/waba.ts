@@ -1,11 +1,14 @@
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
-import { WhatsappException } from "../exception"
-import { logger } from "../lib/logger"
+import { rescue } from "../exception"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 import type { WhatsappPhoneNumberResponse } from "./phone-number"
 
-export type WhatsappWabaDetailResponse = {
+export type WhatsappWabaMMLite = {
+  marketing_messages_onboarding_status?: WhatsappMarketingMessagesLiteApiStatus
+}
+
+export type WhatsappWabaDetailResponse = WhatsappWabaMMLite & {
   id: string
   name: string
   owner_business_info: {
@@ -15,31 +18,37 @@ export type WhatsappWabaDetailResponse = {
   phone_numbers: WhatsappPhoneNumberResponse
 }
 
-export async function findWaba(props: {
+export type WhatsappMarketingMessagesLiteApiStatus =
+  | "INELIGIBLE_ON_BEHALF_OF_WABA"
+  | "INELIGIBLE_INACTIVE_OR_RESTRICTED"
+  | "INELIGIBLE_COUNTRY_NOT_SUPPORTED"
+  | "INELIGIBLE_USING_WHATSAPP_BUSINESS_APP"
+  | "ELIGIBLE"
+  | "PENDING_VALID_PAYMENT_METHOD"
+  | "PENDING_INTERNAL_SETUP"
+  | "ONBOARDED"
+
+export function findWaba(props: {
   wabaId: string
   acessToken: string
+  fields?: string
   version?: string
 }) {
   const { version = DEFAULT_API_VERSION } = props
+  const fields = props.fields || "name,owner_business_info,phone_numbers"
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<WhatsappWabaDetailResponse>(
-        `${API_URL}/${version}/${props.wabaId}?fields=name,owner_business_info,phone_numbers`,
+        `${API_URL}/${version}/${props.wabaId}?fields=${fields}`,
         {
           headers: {
             Authorization: `Bearer ${props.acessToken}`,
           },
         },
       )
-      .json()
-  } catch (error) {
-    logger.error(error, "Unable to find WhatsApp's business account")
-
-    throw new WhatsappException(
-      "Unable to find WhatsApp's business account",
-    ).setOriginError(error)
-  }
+      .json(),
+  )
 }
 
 export type WhatsappFlow = {
@@ -54,15 +63,15 @@ export type ListFlowsResponse = {
   data: WhatsappFlow[]
   paging: WhatsappPagination
 }
-export async function listFlows({
+export function listFlows({
   auth,
 }: {
   auth: WhatsappAuthValue
 }): Promise<ListFlowsResponse> {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .get<ListFlowsResponse>(
         `${API_URL}/${version}/${auth.metadata.wabaId}/flows`,
         {
@@ -71,11 +80,8 @@ export async function listFlows({
           },
         },
       )
-      .json()
-  } catch (e) {
-    logger.error(e, "Failed to list flows")
-    throw new WhatsappException("Failed to list flows").setOriginError(e)
-  }
+      .json(),
+  )
 }
 
 export type ListMessageTemplatesReponse = {
@@ -102,15 +108,16 @@ export type CreateMessageTemplateProps = {
   components: any[]
 }
 
-export const listMessageTemplates = async (
+export const listMessageTemplates = (
   auth: WhatsappAuthValue,
 ): Promise<ListMessageTemplatesReponse> => {
   const { version = DEFAULT_API_VERSION } = auth
-  const allTemplates: MessageTemplateEntity[] = []
-  let nextUrl: string | undefined =
-    `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
 
-  try {
+  return rescue(async () => {
+    const allTemplates: MessageTemplateEntity[] = []
+    let nextUrl: string | undefined =
+      `${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`
+
     while (nextUrl) {
       const response: ListMessageTemplatesReponse = await ky
         .get<ListMessageTemplatesReponse>(nextUrl, {
@@ -128,33 +135,23 @@ export const listMessageTemplates = async (
       data: allTemplates,
       paging: { next: "" },
     }
-  } catch (e) {
-    logger.error(e, "Failed to list message templates")
-    throw new WhatsappException(
-      "Failed to list message templates",
-    ).setOriginError(e)
-  }
+  })
 }
 
-export const createMessageTemplate = async (
+export const createMessageTemplate = (
   auth: WhatsappAuthValue,
   data: CreateMessageTemplateProps,
 ): Promise<MessageTemplateEntity> => {
   const { version = DEFAULT_API_VERSION } = auth
 
-  try {
-    return await ky
+  return rescue(() =>
+    ky
       .post(`${API_URL}/${version}/${auth.metadata.wabaId}/message_templates`, {
         headers: {
           Authorization: `Bearer ${auth.tokens.accessToken}`,
         },
         body: JSON.stringify(data),
       })
-      .json()
-  } catch (e) {
-    logger.error(e, "Failed to create message template")
-    throw new WhatsappException(
-      "Failed to create message template",
-    ).setOriginError(e)
-  }
+      .json(),
+  )
 }

@@ -37,6 +37,7 @@ import { toast } from "sonner"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { ChangeFolderDialog } from "../folders/change-folder"
 import { enableAutomatedResponseAction } from "./actions/enable-automated-response-action"
+import { AutomatedResponseTableToolbarActions } from "./automated-response-table-toolbar-actions"
 import { AddAutomatedResponseButton } from "./components/add-automated-response-button"
 import { DeleteAutomatedResponsesDialog } from "./delete-automated-response-dialog"
 import type { listAutomatedResponses } from "./queries"
@@ -254,6 +255,10 @@ export function AutomatedResponsesTable({
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
+            <AutomatedResponseTableToolbarActions
+              table={table}
+              workspaceId={workspaceId}
+            />
             <AddAutomatedResponseButton />
           </DataTableToolbar>
         </DataTable>

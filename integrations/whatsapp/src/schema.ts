@@ -14,6 +14,7 @@ import type { ListFlowsResponse, ListMessageTemplatesReponse } from "./api/waba"
 
 export type WhatsappConfig = BaseConfig & {
   verifyToken?: string
+  clientSecret?: string
 }
 
 export type WhatsappAuthValue = Oauth2AuthValue & {
@@ -22,6 +23,9 @@ export type WhatsappAuthValue = Oauth2AuthValue & {
     businessId: string
     phoneNumber: WhatsappPhoneNumber
     webhookUrl: string
+    isManual?: boolean
+    webhookVerifiedAt?: string
+    subscribeOverrideOk?: boolean
   }
 }
 
@@ -45,6 +49,17 @@ export const whatsappStatusWebhookEventSchema = z.object({
   phone: z.string(),
   messageId: z.string(),
   status: z.string(),
+  error: z
+    .object({
+      code: z.number(),
+      title: z.string(),
+      message: z.string(),
+      href: z.string(),
+      error_data: z.object({
+        details: z.string(),
+      }),
+    })
+    .optional(),
 })
 export type WhatsappStatusWebhookEvent = z.infer<
   typeof whatsappStatusWebhookEventSchema
@@ -56,6 +71,25 @@ export type WhatsAppTemplateComponentParameter = {
   image?: { link: string }
   video?: { link: string }
   document?: { link: string }
+  location?: {
+    latitude: string
+    longitude: string
+    name?: string
+    address?: string
+  }
+  coupon_code?: string
+  payload?: string
+  action?: {
+    flow_token?: string
+    flow_action_data?: Record<string, unknown>
+    thumbnail_product_retailer_id?: string
+    sections?: Array<{
+      title?: string
+      product_items?: Array<{
+        product_retailer_id: string
+      }>
+    }>
+  }
 }
 
 export type WhatsAppTemplateComponent = {
@@ -63,6 +97,10 @@ export type WhatsAppTemplateComponent = {
   parameters?: WhatsAppTemplateComponentParameter[]
   sub_type?: string
   index?: number
+  cards?: Array<{
+    card_index: number
+    components: WhatsAppTemplateComponent[]
+  }>
 }
 
 export type TemplateMessage = {

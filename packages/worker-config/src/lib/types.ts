@@ -1,11 +1,14 @@
-export const queueName = {
-  integration: "integration",
-  chat: "chat",
-  aiAgent: "aiAgent",
-  schedule: "schedule",
-  trigger: "trigger",
-  webhook: "webhook",
-  default: "default",
-  analytics: "analytics",
-  sequenceScheduler: "sequenceScheduler",
-} as const
+import { z } from "zod"
+
+export const queueNames = z.enum([
+  "integration",
+  "chat",
+  "aiAgent",
+  "schedule",
+  "trigger",
+  "webhook",
+  "default",
+  "analytics",
+  "sequenceScheduler",
+  "broadcast",
+])

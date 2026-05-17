@@ -40,8 +40,12 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
 
-  const { deleteConversation, updateConversation, updateContact } =
-    useChatStore((state) => state)
+  const {
+    deleteConversation,
+    updateConversation,
+    resetState: resetConversationState,
+    loadMoreConversations,
+  } = useChatStore((state) => state)
 
   const { execute: followUpFn, isExecuting: isFollowingUp } = useAction(
     followConversationAction.bind(null, workspaceId, conversation.id),
@@ -96,9 +100,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     archiveConversationAction.bind(null, workspaceId),
     {
       onSuccess: () => {
-        updateConversation(conversation.id, {
-          archivedAt: new Date(),
-        })
+        // updateConversation(conversation.id, {
+        //   archivedAt: new Date(),
+        // })
+
+        // Reload conversation list
+        resetConversationState()
+        loadMoreConversations(workspaceId)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -112,9 +120,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unarchiveConversationAction.bind(null, workspaceId),
     {
       onSuccess: () => {
-        updateConversation(conversation.id, {
-          archivedAt: null,
-        })
+        // updateConversation(conversation.id, {
+        //   archivedAt: null,
+        // })
+
+        // Reload conversation list
+        resetConversationState()
+        loadMoreConversations(workspaceId)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -128,9 +140,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     blockContactAction.bind(null, workspaceId, conversation.contactId),
     {
       onSuccess: () => {
-        updateContact(conversation.contactId, {
-          blockedAt: new Date(),
-        })
+        // updateContact(conversation.contactId, {
+        //   blockedAt: new Date(),
+        // })
+
+        // Reload conversation list
+        resetConversationState()
+        loadMoreConversations(workspaceId)
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -144,9 +160,13 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unblockContactAction.bind(null, workspaceId, conversation.contactId),
     {
       onSuccess: () => {
-        updateContact(conversation.contactId, {
-          blockedAt: null,
-        })
+        // updateContact(conversation.contactId, {
+        //   blockedAt: null,
+        // })
+
+        // Reload conversation list
+        resetConversationState()
+        loadMoreConversations(workspaceId)
       },
       onError: ({ error }) => {
         if (error.serverError) {

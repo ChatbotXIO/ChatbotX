@@ -20,19 +20,31 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import ky from "ky"
 import { Loader2Icon, MoveRightIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useMemo, useState } from "react"
-import { useFieldArray } from "react-hook-form"
+import { useEffect, useMemo, useState } from "react"
+import { useFieldArray, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createAIMcpServerAction } from "./actions/create-ai-mcp-server.action"
-import { createAIMcpServerRequest } from "./schema/action"
+import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
+import { createAIMcpServerRequest } from "./schemas/action"
+import type { AIMcpServerResource } from "./schemas/resource"
+
+type AIMcpServersCreateProps = {
+  workspaceId: string
+  onSuccess?: () => void
+  mode?: "create" | "edit"
+  initialData?: AIMcpServerResource
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
 
 export function AIMcpServersCreate({
   workspaceId,
   onSuccess,
-}: {
-  workspaceId: string
-  onSuccess?: () => void
-}) {
+  mode = "create",
+  initialData,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+}: AIMcpServersCreateProps) {
   const t = useTranslations()
 
   const [isMcpServerValidating, setIsMcpServerValidating] =
@@ -40,7 +52,9 @@ export function AIMcpServersCreate({
   const [isMcpServerValidated, setIsMcpServerValidated] =
     useState<boolean>(false)
   const [allTools, setAllTools] = useState<string[]>([])
-  const [isOpen, setIsOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const isOpen = controlledOpen ?? internalOpen
+  const setIsOpen = setControlledOpen ?? setInternalOpen
 
   const authOptions = useMemo(
     () => [
@@ -60,45 +74,87 @@ export function AIMcpServersCreate({
     [t],
   )
 
+  const action =
+    mode === "edit" && initialData
+      ? updateAIMcpServerAction.bind(null, workspaceId, initialData.id)
+      : createAIMcpServerAction.bind(null, workspaceId)
+
   const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      createAIMcpServerAction.bind(null, workspaceId),
-      zodResolver(createAIMcpServerRequest),
-      {
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            url: "",
-            name: "",
-            auth: {
-              type: aiMcpServerAuthTypes.enum.none,
-            },
-            availableTools: {},
-            selectedTools: [],
+    useHookFormAction(action, zodResolver(createAIMcpServerRequest), {
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          url: "",
+          name: "",
+          auth: {
+            type: aiMcpServerAuthTypes.enum.none,
           },
+          availableTools: {},
+          selectedTools: [],
         },
-        actionProps: {
-          onSuccess: () => {
-            toast.success(
-              t("messages.createdSuccess", {
-                feature: t("fields.mcpServer.label"),
-              }),
-            )
-            resetFormAndAction()
-            setAllTools([])
-            setIsMcpServerValidated(false)
-            setIsOpen(false)
-            onSuccess?.()
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError)
-            }
-          },
-        },
-        errorMapProps: {},
       },
-    )
+      actionProps: {
+        onSuccess: () => {
+          toast.success(
+            t(
+              `messages.${mode === "edit" ? "updatedSuccess" : "createdSuccess"}`,
+              {
+                feature: t("fields.mcpServer.label"),
+              },
+            ),
+          )
+          resetFormAndAction()
+          setAllTools([])
+          setIsMcpServerValidated(false)
+          setIsOpen(false)
+          onSuccess?.()
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+        },
+      },
+      errorMapProps: {},
+    })
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    if (initialData) {
+      const availableTools =
+        (initialData.availableTools as Record<string, unknown>) ?? {}
+      const selectedTools = initialData.selectedTools?.length
+        ? initialData.selectedTools
+        : Object.keys(availableTools)
+
+      form.reset({
+        url: initialData.url,
+        name: initialData.name,
+        auth: initialData.auth ?? { type: aiMcpServerAuthTypes.enum.none },
+        availableTools,
+        selectedTools,
+      })
+
+      setAllTools(Object.keys(availableTools))
+      setIsMcpServerValidated(true)
+      return
+    }
+
+    form.reset({
+      url: "",
+      name: "",
+      auth: {
+        type: aiMcpServerAuthTypes.enum.none,
+      },
+      availableTools: {},
+      selectedTools: [],
+    })
+    setAllTools([])
+    setIsMcpServerValidated(false)
+  }, [isOpen, initialData, form])
 
   const validateMcpServer = async () => {
     try {
@@ -134,23 +190,33 @@ export function AIMcpServersCreate({
     name: "auth.headers",
   })
 
+  const title =
+    mode === "edit"
+      ? t("messages.editFeature", { feature: t("fields.mcpServer.label") })
+      : t("messages.createFeature", { feature: t("fields.mcpServer.label") })
+
+  const trigger = controlledOpen === undefined && (
+    <DialogTrigger asChild>
+      <Button>
+        <PlusIcon className="h-4 w-4" />
+        {t("actions.createFeature", {
+          feature: t("fields.mcpServer.label"),
+        })}
+      </Button>
+    </DialogTrigger>
+  )
+
+  const watchAuthType = useWatch({
+    name: "auth.type",
+    control: form.control,
+  })
+
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon className="h-4 w-4" />
-          {t("actions.createFeature", {
-            feature: t("fields.mcpServer.label"),
-          })}
-        </Button>
-      </DialogTrigger>
+      {trigger}
       <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
         <DialogHeader>
-          <DialogTitle>
-            {t("messages.createFeature", {
-              feature: t("fields.mcpServer.label"),
-            })}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -166,45 +232,44 @@ export function AIMcpServersCreate({
               options={authOptions}
               required
             />
-            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.token && (
+            {watchAuthType === aiMcpServerAuthTypes.enum.token && (
               <InputField
                 label={t("fields.authToken.label")}
                 name="auth.token"
                 required
               />
             )}
-            {form.watch("auth.type") === aiMcpServerAuthTypes.enum.header &&
-              fields && (
-                <div className="flex flex-col gap-2">
-                  {fields.map((field, index) => (
-                    <div className="flex items-start gap-2" key={field.id}>
-                      <InputField
-                        name={`auth.headers.${index}.header`}
-                        placeholder="Header"
-                      />
-                      <MoveRightIcon className="size-10" />
-                      <InputField
-                        name={`auth.headers.${index}.value`}
-                        placeholder="Value"
-                      />
-                      <Button
-                        onClick={() => remove(index)}
-                        size="icon"
-                        variant="outline"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    onClick={() => append({ header: "", value: "" })}
-                    variant="secondary"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    {t("actions.addMore")}
-                  </Button>
-                </div>
-              )}
+            {watchAuthType === aiMcpServerAuthTypes.enum.header && fields && (
+              <div className="flex flex-col gap-2">
+                {fields.map((field, index) => (
+                  <div className="flex items-start gap-2" key={field.id}>
+                    <InputField
+                      name={`auth.headers.${index}.header`}
+                      placeholder="Header"
+                    />
+                    <MoveRightIcon className="size-10" />
+                    <InputField
+                      name={`auth.headers.${index}.value`}
+                      placeholder="Value"
+                    />
+                    <Button
+                      onClick={() => remove(index)}
+                      size="icon"
+                      variant="outline"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  onClick={() => append({ header: "", value: "" })}
+                  variant="secondary"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  {t("actions.addMore")}
+                </Button>
+              </div>
+            )}
             {allTools.length > 0 && (
               <div className="flex flex-col gap-4">
                 <div className="font-medium text-sm leading-none">

@@ -1,7 +1,7 @@
 "use server"
 
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
   eq,
@@ -23,20 +23,19 @@ import type {
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
-import {
-  broadcastToGuestParty,
-  broadcastToWorkspaceParty,
-  RealtimeEventType,
-} from "@chatbotx.io/partysocket-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import { createId } from "@chatbotx.io/utils"
 import {
+  ChatJobAction,
+  chatQueue,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { randomString } from "remeda"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
-import { ChatbotXException } from "@/lib/errors/exception"
+import { ensureConversationActive } from "@/features/conversations/queries/bot-state"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,
@@ -96,7 +95,7 @@ export async function handleCreateWebchatMessage({
   }
 
   // Create conversation if it does not exist
-  return await db.transaction(async (tx) => {
+  const newMessage = await db.transaction(async (tx) => {
     // upload file if exists
     let uploadedFiles: UploadedFile[] = []
     if ("files" in parsedInput && parsedInput.files.length > 0) {
@@ -107,15 +106,15 @@ export async function handleCreateWebchatMessage({
     }
 
     if (
-      "text" in parsedInput &&
-      (parsedInput.text || uploadedFiles.length > 0)
+      ("text" in parsedInput && parsedInput.text) ||
+      uploadedFiles.length > 0
     ) {
       const newMessage: MessageResource & {
         attachments?: AttachmentResource[]
       } = await tx
         .insert(messageModel)
         .values({
-          text: parsedInput.text,
+          text: "text" in parsedInput ? parsedInput.text : null,
           messageType: "incoming",
           workspaceId: conversation.workspaceId,
           conversationId: conversation.id,
@@ -158,88 +157,98 @@ export async function handleCreateWebchatMessage({
         })
         .where(eq(conversationModel.id, conversation.id))
 
-      // Broadcast realtime message
-      const promises: Promise<unknown>[] = []
-      promises.push(
-        broadcastToWorkspaceParty(newMessage.workspaceId, {
-          eventType: RealtimeEventType.messageCreated,
-          data: {
-            ...newMessage,
-            clientId: parsedInput.clientId,
-          },
-        }),
-      )
-
-      if (uploadedFiles.length > 0 && contactInbox.sourceId) {
-        promises.push(
-          broadcastToGuestParty(contactInbox.sourceId, {
-            eventType: RealtimeEventType.messageCreated,
-            data: {
-              ...newMessage,
-              clientId: parsedInput.clientId,
-            },
-          }),
-        )
-      }
-
-      const additionalAttributes =
-        conversation.additionalAttributes as unknown as ConversationAttributes
-
-      if (additionalAttributes?.challenge) {
-        promises.push(
-          integrationQueue.add(
-            IntegrationJobAction.runChallenge,
-            {
-              type: IntegrationJobAction.runChallenge,
-              data: {
-                conversationId: conversation,
-                contactInboxId: contactInbox,
-                challenge: additionalAttributes?.challenge,
-              },
-            },
-            {
-              deduplication: {
-                id: `conversation-${conversation.id}-challenge`,
-              },
-            },
-          ),
-        )
-      } else if (
-        conversation.botEnabled &&
-        newMessage.text &&
-        !("postback" in parsedInput && parsedInput.postback)
-      ) {
-        promises.push(
-          automatedResponseService.enqueue({
-            conversationId: conversation.id,
-            contactInboxId: contactInbox.id,
-            messageId: newMessage.id,
-          }),
-        )
-      }
-
-      if (isNewContact && parsedInput.guestConversationId) {
-        await contactTrackingService.trackEvent({
-          workspaceId: parsedInput.workspaceId,
-          contactId: contact.id,
-          eventType: "contact_created",
-          occurredAt: contact.createdAt,
-          source: "webchat",
-          sourceId: parsedInput.guestConversationId,
-          channel: "webchat",
-          country: undefined,
-        })
-      }
-
-      if (promises.length > 0) {
-        await Promise.all(promises)
-      }
-
       return newMessage
     }
 
     return null
   })
+
+  if (!newMessage) {
+    return null
+  }
+
+  // Broadcast realtime message via worker (non-blocking enqueue)
+  const promises: Promise<unknown>[] = []
+  promises.push(
+    chatQueue.add(ChatJobAction.broadcastEvent, {
+      type: ChatJobAction.broadcastEvent,
+      data: {
+        workspaceId: newMessage.workspaceId,
+        event: {
+          eventType: RealtimeEventType.messageCreated,
+          data: {
+            ...newMessage,
+            clientId: parsedInput.clientId,
+          },
+        },
+      },
+    }),
+  )
+
+  const additionalAttributes =
+    conversation.additionalAttributes as unknown as ConversationAttributes
+
+  if (additionalAttributes?.challenge) {
+    promises.push(
+      integrationQueue.add(
+        IntegrationJobAction.runChallenge,
+        {
+          type: IntegrationJobAction.runChallenge,
+          data: {
+            conversationId: conversation,
+            contactInboxId: contactInbox,
+            challenge: additionalAttributes?.challenge,
+          },
+        },
+        {
+          deduplication: {
+            id: `conversation-${conversation.id}-challenge`,
+          },
+        },
+      ),
+    )
+  } else if (
+    newMessage.text &&
+    !("postback" in parsedInput && parsedInput.postback) &&
+    (await ensureConversationActive(conversation))
+  ) {
+    promises.push(
+      automatedResponseService.enqueue({
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        messageId: newMessage.id,
+      }),
+    )
+  }
+
+  if (isNewContact && contactInbox.sourceId) {
+    emit("contact:created", {
+      workspaceId: parsedInput.workspaceId,
+      contactId: contactInbox.id,
+      occurredAt: contact.createdAt,
+      source: contactInbox.source,
+      sourceId: contactInbox.sourceId,
+      channel: contactInbox.channel,
+      metadata: {
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "createWebchatMessage",
+          triggerType: "contact_created",
+        },
+      },
+    }).catch((error) => {
+      console.error(
+        "[createWebchatMessage] Failed to emit contact:created",
+        error,
+      )
+    })
+  }
+
+  if (promises.length > 0) {
+    await Promise.all(promises)
+  }
+
+  return newMessage
 }
 
 async function getConversationFromInput(

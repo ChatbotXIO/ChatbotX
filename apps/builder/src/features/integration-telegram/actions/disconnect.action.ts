@@ -24,30 +24,33 @@ export const disconnectTelegramAction = workspaceActionClient
     }: {
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
+      const integrationTelegram = await findOrFail({
+        table: integrationTelegramModel,
+        where: { workspaceId, id },
+        message: "Integration Telegram not found",
+      })
+
       try {
-        const integrationTelegram = await findOrFail({
-          table: integrationTelegramModel,
-          where: { workspaceId, id },
-          message: "Integration Telegram not found",
-        })
-
-        await db.transaction(async (tx) => {
-          await tx
-            .delete(integrationTelegramModel)
-            .where(eq(integrationTelegramModel.id, integrationTelegram.id))
-          await tx
-            .update(inboxModel)
-            .set({ status: inboxStatuses.enum.disconnected })
-            .where(eq(inboxModel.id, integrationTelegram.inboxId))
-        })
-
         await integrations.telegram.disconnect(
           integrationTelegram.auth as TelegramAuthValue,
         )
-
-        revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
       } catch (error) {
-        logger.error(error, "Failed to disconnect Telegram")
+        logger.warn(
+          error,
+          "Telegram disconnect API call failed — proceeding with local cleanup",
+        )
       }
+
+      await db.transaction(async (tx) => {
+        await tx
+          .delete(integrationTelegramModel)
+          .where(eq(integrationTelegramModel.id, integrationTelegram.id))
+        await tx
+          .update(inboxModel)
+          .set({ status: inboxStatuses.enum.disconnected })
+          .where(eq(inboxModel.id, integrationTelegram.inboxId))
+      })
+
+      revalidateCacheTags(`workspaces:${workspaceId}#telegrams`)
     },
   )

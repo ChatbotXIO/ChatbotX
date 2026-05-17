@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/card"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { isCommunity } from "@/env"
 import SSOSignIn from "@/features/auth/sso-sign-in"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
@@ -46,8 +47,12 @@ export const SignInForm = ({
 
             <MagicLinkSignIn />
 
-            <OrSeparator />
-            <SSOSignIn />
+            {!isCommunity && (
+              <>
+                <OrSeparator />
+                <SSOSignIn />
+              </>
+            )}
 
             <div className="text-center font-medium text-foreground/60 text-sm">
               {t("auth.dontHaveAnAccount")}{" "}

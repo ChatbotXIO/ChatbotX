@@ -4,7 +4,7 @@ import {
   defaultQueue,
   defaultWorkerOptions,
   getRedisConnection,
-  queueName,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
@@ -13,7 +13,7 @@ import { sendAuditLog } from "./handlers/send-audit-log"
 import { sendErrorLog } from "./handlers/send-error-log"
 
 const worker = new Worker(
-  queueName.default,
+  queueNames.enum.default,
   async (job: Job<DefaultJobData>) => {
     logger.info(job.data, `Worker received job: ${job.id}`)
 

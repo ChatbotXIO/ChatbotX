@@ -1,9 +1,7 @@
 "use client"
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Card,
   CardContent,
@@ -11,160 +9,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
-import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
-import { toast } from "sonner"
+import { use, useMemo, useState } from "react"
+import { getAIMcpServerColumns } from "./ai-mcp-servers-columns"
 import { AIMcpServersCreate } from "./ai-mcp-servers-create"
+import { AIMcpServersTableToolbarActions } from "./ai-mcp-servers-table-toolbar-actions"
+import { DeleteAIMcpServerDialog } from "./delete-ai-mcp-server-dialog"
 import type { listAIMcpServers } from "./queries"
-import type { AIMcpServerResource } from "./schema/resource"
+import type { AIMcpServerResource } from "./schemas/resource"
 
 type AIMcpServersTableProps = {
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listAIMcpServers>>]>
 }
 
-export default function AIMcpServersTable({
+export function AIMcpServersTable({
   workspaceId,
   promises,
 }: AIMcpServersTableProps) {
-  const [{ data }] = use(promises)
+  const [{ data, pageCount }] = use(promises)
 
   const t = useTranslations()
   const router = useRouter()
-  // const [rowAction, setRowAction] =
-  //   useState<DataTableRowAction<AIMCPServerModel> | null>(null)
+  const [rowAction, setRowAction] =
+    useState<DataTableRowAction<AIMcpServerResource> | null>(null)
 
-  const columns = useMemo<ColumnDef<AIMcpServerResource>[]>(
-    () => [
-      {
-        id: "select",
-        header: ({ table: innerTable }) => (
-          <Checkbox
-            aria-label={t("actions.selectAll")}
-            checked={
-              innerTable.getIsAllPageRowsSelected() ||
-              (innerTable.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              innerTable.toggleAllPageRowsSelected(Boolean(value))
-            }
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label={t("actions.selectRow")}
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
-          />
-        ),
-        size: 32,
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        id: "name",
-        accessorKey: "name",
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t("fields.name.label")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[300px] truncate">{row.original.name}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{row.original.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        ),
-        enableSorting: true,
-        enableHiding: false,
-      },
-      {
-        id: "url",
-        accessorKey: "url",
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t("fields.url.label")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[400px] truncate">{row.original.url}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{row.original.url}</p>
-            </TooltipContent>
-          </Tooltip>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        id: "actions",
-        header: t("actions.actions"),
-        cell: () => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">{t("actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  toast.info(t("messages.updateFileComingSoon"))
-                }}
-              >
-                <PencilIcon className="mr-2 h-4 w-4" />
-                {t("actions.edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  toast.info(t("messages.deleteFileComingSoon"))
-                }}
-              >
-                <Trash2Icon className="mr-2 h-4 w-4" />
-                {t("actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-        size: 50,
-        enableSorting: false,
-        enableHiding: false,
-      },
-    ],
-    [t],
-  )
+  const columns = useMemo(() => getAIMcpServerColumns({ t, setRowAction }), [t])
 
   const { table } = useDataTable({
     data,
     columns,
-    pageCount: 1,
+    pageCount: pageCount ?? 1,
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
@@ -185,14 +63,37 @@ export default function AIMcpServersTable({
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
-            <AIMcpServersCreate
-              onSuccess={() => {
-                router.refresh()
-              }}
+            <AIMcpServersTableToolbarActions
+              table={table}
               workspaceId={workspaceId}
             />
           </DataTableToolbar>
         </DataTable>
+
+        <AIMcpServersCreate
+          initialData={
+            rowAction?.variant === "update" ? rowAction.row.original : undefined
+          }
+          mode="edit"
+          onOpenChange={(open) => !open && setRowAction(null)}
+          onSuccess={() => {
+            router.refresh()
+          }}
+          open={rowAction?.variant === "update"}
+          workspaceId={workspaceId}
+        />
+
+        <DeleteAIMcpServerDialog
+          mcpServer={
+            rowAction?.variant === "delete" ? rowAction.row.original : null
+          }
+          onOpenChange={(open) => !open && setRowAction(null)}
+          onSuccess={() => {
+            rowAction?.row.toggleSelected(false)
+          }}
+          open={rowAction?.variant === "delete"}
+          workspaceId={workspaceId}
+        />
       </CardContent>
     </Card>
   )

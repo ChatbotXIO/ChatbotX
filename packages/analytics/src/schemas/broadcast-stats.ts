@@ -33,6 +33,24 @@ export type GetBroadcastStatsResponse = z.infer<
 >
 export type BroadcastStats = GetBroadcastStatsResponse
 
+export const getBatchBroadcastStatsRequest = z.object({
+  workspaceId: z.string(),
+  broadcastIds: z.array(z.string()),
+})
+
+export type GetBatchBroadcastStatsRequest = z.infer<
+  typeof getBatchBroadcastStatsRequest
+>
+
+export const getBatchBroadcastStatsResponse = z.record(
+  z.string(),
+  getBroadcastStatsResponse,
+)
+
+export type GetBatchBroadcastStatsResponse = z.infer<
+  typeof getBatchBroadcastStatsResponse
+>
+
 export const listBroadcastContactsRequest = z.object({
   workspaceId: z.string(),
   broadcastId: z.string(),
@@ -51,6 +69,7 @@ export const broadcastContactResource = z.object({
   contactInboxId: z.string(),
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
+  fullName: z.string().nullable(),
   sourceId: z.string().nullable(),
   avatar: z.string().nullable(),
   channel: z.enum(channelTypes.enum),

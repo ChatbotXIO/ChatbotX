@@ -4,44 +4,30 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
 import type { SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
-  ChatJobSendExternalMessage,
+  ChatJobSendChannelMessage,
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
-  integrationService,
+  resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
 
-export async function sendMessageToExternal(
-  data: ChatJobSendExternalMessage["data"],
+export async function sendMessageToChannel(
+  data: ChatJobSendChannelMessage["data"],
 ) {
   const { conversation, contactInbox, message, metadata } = data
 
-  // Find integration auth
-  const { auth, ...integrationData } =
-    await integrationService.getIntegrationFromContactInbox(contactInbox)
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
 
-  // Find integration detail
-  const integrationDetail = allIntegrations[contactInbox.channel]
-  if (!integrationDetail) {
-    logger.debug(
-      `Does not support this integration for channel: ${contactInbox.channel}`,
-    )
-    return
-  }
-
-  await integrationDetail.channels?.channel?.message?.sendMessage?.({
-    ctx: {
-      storagePrefix: `public/workspaces/${conversation.workspaceId}/inboxes/${contactInbox.inboxId}`,
-      uploader,
-      auth,
-      integrationDetail: integrationData,
-    },
+  await integration.runChannelHandler("message", "sendMessage", {
+    ctx,
     data: {
       contact: contactInbox,
       message,
@@ -50,37 +36,31 @@ export async function sendMessageToExternal(
   })
 }
 
-export async function sendTypingToExternal(data: ChatJobSendTyping["data"]) {
+export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
   const { conversation, contactInbox, typing, seconds } = data
 
-  // Find integration auth
-  const { auth } =
-    await integrationService.getIntegrationFromContactInbox(contactInbox)
-
-  // Find integration detail
-  const integrationDetail = allIntegrations[contactInbox.channel]
-  if (!integrationDetail) {
+  if (!allIntegrations[contactInbox.channel]) {
+    // Typing is best-effort; missing integration is logged but not fatal.
     logger.debug(
-      `Does not support this integration for channel: ${contactInbox.channel}`,
+      `No integration registered for typing on channel: ${contactInbox.channel}`,
     )
     return
   }
 
-  await integrationDetail.channels?.channel?.conversation?.sendTyping?.({
-    ctx: {
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        contactInbox.inboxId,
-      ),
-      auth,
-    },
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  await integration.runChannelHandler("conversation", "sendTyping", {
+    ctx,
     data: { contact: contactInbox, typing, seconds },
   })
 }
 
 async function updateMessageSourceId(
   messageId: string | undefined,
-  result: { messageIds?: string[] },
+  result: { messageIds: string[] },
 ) {
   try {
     const firstMessageId = result?.messageIds?.[0]
@@ -95,7 +75,7 @@ async function updateMessageSourceId(
   }
 }
 
-export async function sendFlowStepToExternal({
+export async function sendFlowStepToChannel({
   conversation,
   contactInbox,
   flowId,
@@ -111,30 +91,17 @@ export async function sendFlowStepToExternal({
   step: SendFlowStepData
   metadata?: MetadataPayload
   messageId?: string
-}): Promise<{ messageIds?: string[] }> {
-  // Find integration auth
-  const { auth, ...integrationData } =
-    await integrationService.getIntegrationFromContactInbox(contactInbox)
+}): Promise<{ messageIds: string[] }> {
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
 
-  // Find integration detail
-  const integrationDetail = allIntegrations[contactInbox.channel]
-  if (!integrationDetail) {
-    logger.error(
-      `Unable to find integration detail for channel: ${contactInbox.channel}`,
-    )
-    return {}
-  }
-
-  const result =
-    await integrationDetail.channels?.channel?.message?.sendFlowStep?.({
-      ctx: {
-        storagePrefix: getStoragePrefix(
-          conversation.workspaceId,
-          contactInbox.inboxId,
-        ),
-        auth,
-        integrationDetail: integrationData,
-      },
+  const result = await integration.runChannelHandler(
+    "message",
+    "sendFlowStep",
+    {
+      ctx,
       data: {
         contact: contactInbox,
         flowId,
@@ -142,9 +109,10 @@ export async function sendFlowStepToExternal({
         step,
         metadata,
       },
-    })
+    },
+  )
 
-  await updateMessageSourceId(messageId, result ?? {})
+  await updateMessageSourceId(messageId, result)
 
-  return result || {}
+  return result
 }

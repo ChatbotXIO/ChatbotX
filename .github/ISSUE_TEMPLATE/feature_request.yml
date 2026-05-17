@@ -1,0 +1,74 @@
+name: "🚀 Feature Request"
+description: "Submit a proposal for a new feature for ChatbotX."
+title: "<Short description>"
+labels: ["enhancement", "feature-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Welcome to the ChatbotX Feature Requests! Your ideas help us build a better omnichannel agentic chatbot platform. 💡
+
+  - type: checkboxes
+    id: search
+    attributes:
+      label: "Have you checked for existing requests?"
+      description: "Please search the existing issues to ensure your request hasn't already been reported."
+      options:
+        - label: "I have searched the existing issues and found no similar request."
+          required: true
+
+  - type: dropdown
+    id: feature_area
+    attributes:
+      label: "Feature Area"
+      description: "Which area of ChatbotX does this feature request relate to?"
+      options:
+        - "📊 Analytics"
+        - "💬 Inbox & Live Chat"
+        - "🔀 Flow Builder (Flows, Tags, Custom Fields)"
+        - "👥 Contacts & CRM"
+        - "🤖 AI Agents, Knowledge & MCP"
+        - "⚙️ Keywords Automation"
+        - "📢 Broadcasts & Sequences"
+        - "⚡ Triggers & Webhooks"
+        - "🛠️ Tools & Extensions (Ecommerce, QR, etc.)"
+        - "🔧 Settings, Channels & Integrations"
+        - "🌐 General / Multiple Areas"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Is your feature request related to a problem? Please describe."
+      description: "A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]"
+      placeholder: "Describe the problem here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Describe the solution you'd like"
+      description: "A clear and concise description of what you want to happen."
+      placeholder: "Describe the solution here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Describe alternatives you've considered"
+      description: "A clear and concise description of any alternative solutions or features you've considered."
+      placeholder: "Describe alternatives here..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional context"
+      description: "Add any other context or screenshots about the feature request here."
+      placeholder: "Add context or drag and drop screenshots here..."
+    validations:
+      required: false

@@ -65,7 +65,7 @@ export function InstagramDisconnect({
             })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {t("dialog.disconnect.description", {
+            {t("messages.disconnectFeatureDescription", {
               feature: integrationInstagram.name,
             })}
           </AlertDialogDescription>

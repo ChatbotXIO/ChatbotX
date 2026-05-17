@@ -39,7 +39,7 @@ export const conversationsAuthenticatedAPI = {
   findConversationAuthenticatedAPI: authorizedAPI
     .route({
       method: "GET",
-      path: "/workspaces/{workspaceId}/conversations/{conversationId}",
+      path: "/workspaces/{workspaceId}/conversations/{id}",
       summary: "Find conversation by conversation id",
       tags: ["Conversations"],
     })

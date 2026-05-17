@@ -1,5 +1,13 @@
 "use server"
 
+import {
+  buildContext,
+  organizationCredentialService,
+  organizationService,
+  resolvePlatformUrls,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
 import {
@@ -10,15 +18,16 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
   exchangeLongLivedToken,
+  integration as integrationInstagram,
   subscribePageToInstagramWebhook,
 } from "@chatbotx.io/integration-instagram"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils/id"
-import { organizationService } from "@/features/organization/services"
-import { createSimpleWorkspace } from "@/features/workspaces/actions/create-workspace-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
+import {
+  BRANDING_TITLE,
+  getBrandingUrl,
+} from "@/features/integration-webchat/lib"
 import { getDomainFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {
@@ -41,23 +50,32 @@ export const selectAccountAction = authActionClient
 
         const domain = await getDomainFromHeader()
         const organization = await organizationService.findByDomain(domain)
-        const instagramSettings = organization.settings.instagram
-        if (!instagramSettings) {
+        const instagramCredential =
+          await organizationCredentialService.findDecrypted({
+            organizationId: organization.id,
+            type: "instagram",
+          })
+        if (!instagramCredential) {
           throw new ChatbotXException("Instagram App settings not found")
         }
+        const instagramSettings = instagramCredential.config
+
+        const { appUrl } = await resolvePlatformUrls({
+          organizationId: organization.id,
+        })
 
         await db.transaction(async (tx) => {
           if (!workspaceId) {
-            const workspace = await createSimpleWorkspace(
+            const workspace = await workspaceService.create({
               tx,
-              ctx.user.id,
+              createdBy: ctx.user.id,
               organization,
-              {
+              data: {
                 name: parsedInput.igName,
                 timezone: "UTC",
                 organizationId: organization.id,
               },
-            )
+            })
             workspaceId = workspace.id
           }
 
@@ -110,24 +128,43 @@ export const selectAccountAction = authActionClient
             .returning()
             .then((result) => result[0])
 
-          await tx.insert(integrationInstagramModel).values({
-            id: createId(),
+          const integrationRow = await tx
+            .insert(integrationInstagramModel)
+            .values({
+              id: createId(),
+              workspaceId,
+              inboxId: inbox.id,
+              igId: parsedInput.igId,
+              pageId: parsedInput.pageId,
+              auth,
+              name: parsedInput.igName,
+              username: parsedInput.igUsername,
+              persistentMenus: [
+                {
+                  label: BRANDING_TITLE,
+                  type: "url" as const,
+                  url: getBrandingUrl("instagram", appUrl),
+                },
+              ],
+              conversationStarters: [],
+            })
+            .returning()
+            .then((result) => result[0])
+
+          const brandingCtx = await buildContext({
             workspaceId,
-            inboxId: inbox.id,
-            igId: parsedInput.igId,
-            pageId: parsedInput.pageId,
-            auth,
-            name: parsedInput.igName,
-            username: parsedInput.igUsername,
-            persistentMenus: [],
-            conversationStarters: [],
+            integrationType: "instagram",
+            integration: {
+              ...integrationRow,
+              auth: integrationRow.auth as InstagramAuthValue,
+            },
+          })
+          await integrationInstagram.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("instagram", appUrl),
           })
         })
-
-        revalidateCacheTags([
-          `workspaces:${workspaceId}#instagram`,
-          `workspaces:${workspaceId}#inboxes`,
-        ])
 
         return {
           workspaceId,

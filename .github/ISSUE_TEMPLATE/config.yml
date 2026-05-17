@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 ChatbotX Documentation
+    about: Read our official documentation for setup, guides, and API reference.
+    url: https://chatbotx.io/docs
+  - name: 💬 Discord Community
+    about: Join our Discord server to ask questions, share ideas, and get help.
+    url: https://discord.com/invite/nZHk7kxuhM
+  - name: 🔒 Report a Security Vulnerability
+    about: Please review our security policy for more details.
+    url: https://github.com/ChatbotXIO/ChatbotX/security/policy

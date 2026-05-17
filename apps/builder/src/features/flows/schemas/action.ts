@@ -2,8 +2,11 @@ import {
   addNotesNodeSchema,
   edgeSchema,
   flowVersionSchema,
+  performActionNodeSchema,
+  sendMailNodeSchema,
   sendMessageNodeSchema,
   splitTrafficNodeSchema,
+  waitNodeSchema,
 } from "@chatbotx.io/flow-config"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
@@ -41,6 +44,9 @@ export const updateFlowVersionSchema = z.object({
       sendMessageNodeSchema,
       addNotesNodeSchema,
       splitTrafficNodeSchema,
+      performActionNodeSchema,
+      sendMailNodeSchema,
+      waitNodeSchema,
     ]),
   ),
   edges: z.array(

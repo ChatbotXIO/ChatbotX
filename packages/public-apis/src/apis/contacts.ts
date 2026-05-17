@@ -95,7 +95,7 @@ export const deleteContactCustomFieldInputSchema = z.object({
 export const sendMessageToContactInputSchema = z.object({
   contactId: z.string().min(1, "contactId is required"),
   channel: z.enum(["webchat", "messenger", "whatsapp", "zalo"]),
-  content: z.string().optional(),
+  text: z.string().optional(),
   files: z.array(z.unknown()).optional(),
   flowId: z.string().optional(),
   clientId: z.string().optional(),
@@ -205,7 +205,7 @@ export const deleteContactCustomField = (
 export const sendMessageToContact = (
   api: ChatbotXAPI,
   input: SendMessageToContactInput,
-): Promise<unknown> =>
+): Promise<string> =>
   api
     .getClient()
     .post(`contacts/${input.contactId}/messages`, {
@@ -217,7 +217,7 @@ export const sendMessageToContact = (
         clientId: input.clientId,
       },
     })
-    .json()
+    .text()
 
 export const createContact = (
   api: ChatbotXAPI,

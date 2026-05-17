@@ -112,3 +112,38 @@ export const getPublicUrl = (path: string) => {
     return ""
   }
 }
+
+type ChunkByIdOptions<T> = {
+  chunkSize?: number
+  callback: (records: T[]) => Promise<boolean | undefined>
+}
+
+export async function chunkById<T extends { id: string }>(
+  queryBuilder: (lastId: string | null) => Promise<T[]>,
+  options: ChunkByIdOptions<T>,
+): Promise<void> {
+  const { chunkSize = 1000, callback } = options
+
+  let lastId: string | null = null
+  let hasMore = true
+
+  while (hasMore) {
+    const records = await queryBuilder(lastId)
+
+    if (records.length === 0) {
+      break
+    }
+
+    const shouldContinue = await callback(records)
+
+    if (shouldContinue === false) {
+      break
+    }
+
+    if (records.length < chunkSize) {
+      hasMore = false
+    } else {
+      lastId = records.at(-1)?.id ?? null
+    }
+  }
+}

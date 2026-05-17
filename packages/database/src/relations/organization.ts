@@ -22,5 +22,9 @@ export const organizationRelations = defineRelationsPart(schema, (r) => ({
       from: r.organizationModel.id,
       to: r.organizationMemberModel.organizationId,
     }),
+    credentials: r.many.organizationCredentialModel({
+      from: r.organizationModel.id,
+      to: r.organizationCredentialModel.organizationId,
+    }),
   },
 }))

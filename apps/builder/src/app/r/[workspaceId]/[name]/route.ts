@@ -16,7 +16,6 @@ export const GET = async (
 ) => {
   const { workspaceId, name: nameParam } = await context.params
   const name = decodeURIComponent(nameParam)
-  const code = request.nextUrl.searchParams.get("code")
 
   const row = await db.query.magicLinkModel.findFirst({
     where: {
@@ -29,8 +28,22 @@ export const GET = async (
     return NextResponse.json({ message: "Not found" }, { status: 404 })
   }
 
+  let destination: string
+  try {
+    destination = interpolate(row.url, {
+      ...Object.fromEntries(request.nextUrl.searchParams.entries()),
+    })
+  } catch {
+    return NextResponse.json(
+      { message: "Invalid link configuration" },
+      { status: 400 },
+    )
+  }
+
+  const code = request.nextUrl.searchParams.get("code")
+
   if (!code) {
-    return NextResponse.json({ message: "Code is required" }, { status: 400 })
+    return NextResponse.redirect(destination, 302)
   }
 
   // Decode the button payload
@@ -101,18 +114,6 @@ export const GET = async (
     },
     occurredAt: new Date(),
   })
-
-  let destination: string
-  try {
-    destination = interpolate(row.url, {
-      ...Object.fromEntries(request.nextUrl.searchParams.entries()),
-    })
-  } catch {
-    return NextResponse.json(
-      { message: "Invalid link configuration" },
-      { status: 400 },
-    )
-  }
 
   return NextResponse.redirect(destination, 302)
 }

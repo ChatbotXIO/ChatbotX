@@ -1,5 +1,7 @@
 import { createId } from "@chatbotx.io/utils"
+import { env } from "../key"
 import type { CreateContactEvent } from "../schemas"
+import { clickhouseEventWriter } from "./clickhouse-event-writer"
 
 type Redis = {
   set: (
@@ -108,6 +110,20 @@ export abstract class BaseService {
     )
   }
 
+  protected async insertBatch(
+    table: string,
+    rows: unknown[],
+    serviceName: string,
+  ): Promise<void> {
+    if (rows.length === 0) {
+      return
+    }
+
+    await this.runSafely(async () => {
+      await clickhouseEventWriter.insert(table, rows)
+    }, `[${serviceName}] Batch insert failed for ${rows.length} rows`)
+  }
+
   setRedis(redis: Redis, ttl = 3600) {
     this.redis = redis
     this.dedupTTL = ttl
@@ -180,6 +196,10 @@ export abstract class BaseService {
     message_id?: string
     event_type: string
   }): Promise<boolean> {
+    if (!env.ANALYTICS_ENABLED) {
+      return false
+    }
+
     if (!this.redis) {
       return true
     }
@@ -197,5 +217,9 @@ export abstract class BaseService {
     const result = await this.redis.set(key, "1", "EX", this.dedupTTL, "NX")
 
     return result === "OK"
+  }
+
+  protected get isAnalyticsEnabled(): boolean {
+    return env.ANALYTICS_ENABLED
   }
 }

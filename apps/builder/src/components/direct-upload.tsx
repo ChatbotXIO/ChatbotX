@@ -12,12 +12,13 @@ import {
   ImagePlayIcon,
   VideoIcon,
   Volume2Icon,
+  XIcon,
 } from "lucide-react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useMemo, useRef, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import { useMemo, useRef } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 export function DirectUploadOrInsertLink({
@@ -31,14 +32,13 @@ export function DirectUploadOrInsertLink({
   const t = useTranslations()
 
   const { setValue, getValues } = useFormContext()
-  const [uploadMode, setUploadMode] = useState(getValues(`${parentName}.mode`))
-  const publicUrl = getValues(`${parentName}.url`)
+  const uploadMode = useWatch({ name: `${parentName}.mode` }) || "file"
+  const publicUrl = useWatch({ name: `${parentName}.url` })
   const stepId = getValues(`${parentName}.id`)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   const chooseInsertLink = () => {
-    setValue(`${parentName}.mode`, "link")
-    setUploadMode("link")
+    setValue(`${parentName}.mode`, "url")
   }
 
   const chooseUploadFile = () => {
@@ -75,11 +75,35 @@ export function DirectUploadOrInsertLink({
     }
   }, [fileType])
 
+  const clearInputFile = () => {
+    setValue(`${parentName}.url`, "")
+    setValue(`${parentName}.mode`, "file")
+  }
+
   return (
-    <>
+    <div className="relative flex min-h-40 flex-col items-center justify-center">
       <FormFieldWrapper name={`${parentName}.mode`}>
         {(field) => <Input type="hidden" {...field} />}
       </FormFieldWrapper>
+
+      <DirectUploadButton
+        accept={fileConfigs.mimeType}
+        className="hidden"
+        label={t("actions.uploadFile")}
+        maxSize={10_485_760} // 10MB
+        multiple={false}
+        onUploadError={(error, file) => {
+          toast.error(`Failed to upload ${file.name}`, {
+            description: error.message,
+          })
+        }}
+        onUploadSuccess={(_filePath, _file, finalUrl) => {
+          setValue(`${parentName}.url`, finalUrl)
+          setValue(`${parentName}.mode`, "file")
+        }}
+        triggerRef={triggerRef}
+        uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/steps/${stepId}`}
+      />
 
       {uploadMode === "file" ? (
         <>
@@ -87,32 +111,20 @@ export function DirectUploadOrInsertLink({
             {(field) => <Input type="hidden" {...field} />}
           </FormFieldWrapper>
 
-          <DirectUploadButton
-            accept={fileConfigs.mimeType}
-            className="hidden"
-            label={t("actions.uploadFile")}
-            maxSize={10_485_760} // 10MB
-            multiple={false}
-            onUploadError={(error, file) => {
-              toast.error(`Failed to upload ${file.name}`, {
-                description: error.message,
-              })
-            }}
-            onUploadSuccess={(_filePath, _file, finalUrl) => {
-              setValue(`${parentName}.url`, finalUrl)
-            }}
-            triggerRef={triggerRef}
-            uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/steps/${stepId}`}
-          />
           {publicUrl && publicUrl.length > 0 ? (
             <Button
-              className="relative h-[150px] w-[240px] p-0!"
+              className="relative flex h-40 w-full p-0!"
               onClick={chooseUploadFile}
               type="button"
               variant="ghost"
             >
               {fileType === "image" ? (
-                <Image alt={stepId} fill={true} src={publicUrl} />
+                <Image
+                  alt={stepId}
+                  fill={true}
+                  objectFit="contain"
+                  src={publicUrl}
+                />
               ) : (
                 <>
                   <fileConfigs.icon className="size-5" />
@@ -148,15 +160,46 @@ export function DirectUploadOrInsertLink({
           )}
         </>
       ) : (
-        <div className="flex w-full items-center gap-2 py-2">
-          <fileConfigs.icon size={24} />
-          <InputField
-            className="flex-1"
-            name={`${parentName}.url`}
-            placeholder={t("fields.url.placeholder")}
-          />
+        <div className="flex h-40 w-full items-center gap-2 py-2">
+          {publicUrl?.length ? (
+            <Button
+              className="relative h-40 w-full p-0!"
+              onClick={chooseUploadFile}
+              type="button"
+              variant="ghost"
+            >
+              <Image
+                alt={stepId}
+                fill={true}
+                objectFit="contain"
+                src={publicUrl}
+              />
+            </Button>
+          ) : (
+            <>
+              <fileConfigs.icon size={24} />
+              <InputField
+                className="flex-1"
+                name={`${parentName}.url`}
+                placeholder={t("fields.url.placeholder")}
+              />
+            </>
+          )}
         </div>
       )}
-    </>
+
+      {publicUrl && (
+        <div className="absolute top-0 right-0 z-1 size-6 rounded-full bg-white p-0 dark:bg-neutral-500!">
+          <Button
+            className="size-6 p-0!"
+            onClick={clearInputFile}
+            size="icon"
+            variant="ghost"
+          >
+            <XIcon />
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }

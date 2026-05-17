@@ -1,5 +1,7 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   type MessengerPersistentMenu,
@@ -11,7 +13,6 @@ import type {
   IntegrationMessengerModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
@@ -22,8 +23,8 @@ import type {
   MessengerAuthValue,
 } from "@chatbotx.io/integration-messenger/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
@@ -58,8 +59,6 @@ export const updateMessenger = async (
   },
   parsedInput: UpdateMessengerRequest,
 ) => {
-  const { addLanguage, ...rest } = parsedInput
-
   try {
     await db.transaction(async (tx) => {
       const integrationMessengerData = await findIntegrationMessenger({
@@ -75,22 +74,45 @@ export const updateMessenger = async (
       await tx
         .update(integrationMessengerModel)
         .set({
-          ...rest,
+          ...parsedInput,
           personaId: newPersonaId ?? null,
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
-      integrationMessenger.channels.channel.bot?.updateProfile?.({
-        ctx: {
-          uploader,
-          storagePrefix: getStoragePrefix(
-            ctx.workspace.id,
-            integrationMessengerData.inboxId,
-          ),
-          auth: integrationMessengerData?.auth as MessengerAuthValue,
+      const botContext = await buildContext({
+        workspaceId: ctx.workspace.id,
+        integrationType: "messenger",
+        integration: {
+          ...integrationMessengerData,
+          auth: integrationMessengerData.auth as MessengerAuthValue,
         },
-        data: await getMessengerProfileParams(integrationMessengerData),
       })
+
+      const fieldsToDelete = getFieldsToDelete(parsedInput)
+      if (fieldsToDelete.length > 0) {
+        await integrationMessenger.runChannelHandler(
+          "bot",
+          "deleteProfileFields",
+          {
+            ctx: botContext,
+            fields: fieldsToDelete,
+          },
+        )
+      }
+
+      const profileParams = getMessengerProfileParams(
+        {
+          ...integrationMessengerData,
+          ...parsedInput,
+        },
+        botContext.platform.appUrl,
+      )
+      if (Object.keys(profileParams).length > 0) {
+        await integrationMessenger.runChannelHandler("bot", "updateProfile", {
+          ctx: botContext,
+          data: profileParams,
+        })
+      }
 
       revalidateCacheTags([`workspaces:${ctx.workspace.id}#messenger`])
     })
@@ -98,6 +120,22 @@ export const updateMessenger = async (
     logger.debug(error, "Failed to update Facebook page")
     throw new ChatbotXException("Failed to update Facebook page")
   }
+}
+
+const getFieldsToDelete = (
+  input: Pick<
+    UpdateMessengerRequest,
+    "persistentMenus" | "conversationStarters"
+  >,
+): string[] => {
+  const fields: string[] = []
+  if (!input.persistentMenus.length) {
+    fields.push("PERSISTENT_MENU")
+  }
+  if (!input.conversationStarters.length) {
+    fields.push("ICE_BREAKERS")
+  }
+  return fields
 }
 
 const parseFacebookButtons = (
@@ -126,23 +164,27 @@ const parseFacebookButtons = (
 
 const getMessengerProfileParams = (
   model: IntegrationMessengerModel,
+  appUrl: string,
 ): MessengerProfileRequest => {
   const params: MessengerProfileRequest = {}
 
-  if (model.welcomeFlowId) {
-    params.get_started = {
-      payload: encodeButtonPayload({
-        flowId: model.welcomeFlowId,
-      }),
-    }
-  }
-
-  if (model.greetingMessages.length) {
-    params.greeting = model.greetingMessages
+  params.get_started = {
+    payload: model.welcomeFlowId
+      ? encodeButtonPayload({ flowId: model.welcomeFlowId })
+      : "GET_STARTED",
   }
 
   if (model.persistentMenus.length) {
-    const callToActions = parseFacebookButtons(model.persistentMenus)
+    const brandingUrl = getBrandingUrl("messenger", appUrl)
+    const menus = [...model.persistentMenus]
+    const brandingIndex = menus.findIndex(
+      (menu) =>
+        menu.type === "url" && "url" in menu && menu.url === brandingUrl,
+    )
+    if (brandingIndex !== -1) {
+      menus.push(...menus.splice(brandingIndex, 1))
+    }
+    const callToActions = parseFacebookButtons(menus)
     params.persistent_menu = [
       {
         locale: "default",
@@ -171,12 +213,16 @@ const getPersonaId = async (
 ): Promise<string | undefined> => {
   const defaultPersona = personas.find((persona) => persona.isDefault)
 
-  const newPersona = await integrationMessenger.actions.updatePersona({
-    ctx: {
-      storagePrefix: getStoragePrefix(workspace.id, model.inboxId),
-      uploader,
-      auth: model?.auth as MessengerAuthValue,
+  const ctx = await buildContext({
+    workspaceId: workspace.id,
+    integrationType: "messenger",
+    integration: {
+      ...model,
+      auth: model.auth as MessengerAuthValue,
     },
+  })
+  const newPersona = await integrationMessenger.runAction("updatePersona", {
+    ctx,
     persona: defaultPersona
       ? {
           name: defaultPersona.name,

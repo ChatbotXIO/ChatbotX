@@ -7,11 +7,12 @@ import {
   integrationWhatsappModel,
 } from "@chatbotx.io/database/schema"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
-import { unsubscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
+import { isRevokedTokenError } from "@chatbotx.io/integration-whatsapp"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
+import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
@@ -32,9 +33,15 @@ export const disconnectWhatsappAction = authActionClient
         message: "Integration Whatsapp not found",
       })
 
-      await unsubscribeWebhook({
-        auth: integrationWhatsapp.auth as WhatsappAuthValue,
-      })
+      try {
+        await integrations.whatsapp.disconnect(
+          integrationWhatsapp.auth as WhatsappAuthValue,
+        )
+      } catch (error) {
+        if (!isRevokedTokenError(error)) {
+          throw error
+        }
+      }
 
       await db.transaction(async (tx) => {
         await tx

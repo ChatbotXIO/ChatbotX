@@ -1,6 +1,5 @@
 "use server"
 
-import { contactTrackingService } from "@chatbotx.io/analytics"
 import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
@@ -10,6 +9,7 @@ import {
   inboxModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
@@ -136,26 +136,23 @@ export const createContact = async ({
   }
 
   if (contactInbox.sourceId) {
-    await contactTrackingService.trackEvent(
-      {
-        workspaceId,
-        contactId: contact.id,
-        eventType: "contact_created",
-        occurredAt: contact.createdAt,
-        source: contactInbox.source,
-        sourceId: contactInbox.sourceId,
-        channel: inbox.channel,
-        country: undefined,
-        metadata: {
-          triggerContext: {
-            triggerSource: "api",
-            triggerHandler: "createContact",
-            triggerType: "contact_created",
-          },
+    emit("contact:created", {
+      workspaceId,
+      contactId: contactInbox.id,
+      occurredAt: contact.createdAt,
+      source: contactInbox.source,
+      sourceId: contactInbox.sourceId,
+      channel: inbox.channel,
+      metadata: {
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "createContact",
+          triggerType: "contact_created",
         },
       },
-      { skipSpooler: true },
-    )
+    }).catch((error) => {
+      console.error("[createContact] Failed to emit contact:created", error)
+    })
   }
 
   revalidateCacheTags([

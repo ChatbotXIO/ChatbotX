@@ -1,9 +1,9 @@
-import type { OrganizationSettings } from "@chatbotx.io/database/partials"
+import type { ZaloCredentialPublic } from "@chatbotx.io/database/partials"
 import { generateAuthUrl } from "@chatbotx.io/integration-zalo"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 
 export async function generateZaloRedirectUri(
-  settings: NonNullable<OrganizationSettings["zalo"]>,
+  publicConfig: ZaloCredentialPublic,
   workspaceId?: string | null,
 ) {
   const baseUrl = await getOriginUrlFromHeader()
@@ -14,7 +14,8 @@ export async function generateZaloRedirectUri(
     : baseUrl
 
   return generateAuthUrl({
-    ...settings,
+    clientId: publicConfig.clientId,
+    clientSecret: "",
     redirectUrl,
     stateParams: {
       workspaceId,

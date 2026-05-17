@@ -1,8 +1,12 @@
-import { env } from "@/env"
+import { usePlatformUrls } from "@/features/platform"
 import type { WorkspaceResource } from "./schema/resource"
 
-export function getWorkspaceLogoUrl(workspace: WorkspaceResource) {
+export function useWorkspaceLogoUrl(
+  workspace: WorkspaceResource,
+): string | undefined {
+  const { assetUrl } = usePlatformUrls()
+
   return workspace.logo
-    ? new URL(workspace.logo, env.NEXT_PUBLIC_ASSET_URL).toString()
+    ? new URL(workspace.logo, assetUrl).toString()
     : undefined
 }

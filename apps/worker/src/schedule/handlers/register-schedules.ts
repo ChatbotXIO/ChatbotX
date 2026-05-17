@@ -7,17 +7,31 @@ export const registerSchedules = async () => {
   }
 
   await scheduleQueue.upsertJobScheduler(
-    ScheduleJobData.sendBroadcast,
+    ScheduleJobData.enqueueBroadcast,
     {
       pattern: "* * * * *",
     },
     {
-      name: ScheduleJobData.sendBroadcast,
+      name: ScheduleJobData.enqueueBroadcast,
       data: {
-        type: ScheduleJobData.sendBroadcast,
+        type: ScheduleJobData.enqueueBroadcast,
         data: {
           schedulesAt: new Date(),
         },
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.finalizeBroadcasts,
+    {
+      pattern: "* * * * *",
+    },
+    {
+      name: ScheduleJobData.finalizeBroadcasts,
+      data: {
+        type: ScheduleJobData.finalizeBroadcasts,
+        data: {},
       },
     },
   )
@@ -32,6 +46,20 @@ export const registerSchedules = async () => {
       name: ScheduleJobData.evaluateTriggers,
       data: {
         type: ScheduleJobData.evaluateTriggers,
+        data: {},
+      },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.scanSmartDelay,
+    {
+      pattern: "*/5 * * * *",
+    },
+    {
+      name: ScheduleJobData.scanSmartDelay,
+      data: {
+        type: ScheduleJobData.scanSmartDelay,
         data: {},
       },
     },

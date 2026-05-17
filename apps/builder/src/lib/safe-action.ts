@@ -1,3 +1,5 @@
+import { organizationService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
 import { userModel } from "@chatbotx.io/database/schema"
 import { SdkException } from "@chatbotx.io/sdk"
@@ -6,16 +8,15 @@ import {
   createSafeActionClient,
   DEFAULT_SERVER_ERROR_MESSAGE,
 } from "next-safe-action"
-import { organizationService } from "@/features/organization/services"
 import { getAllWorkspaceMembers } from "@/features/workspace-members/queries"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { getDomainFromHeader } from "./domain"
-import { ChatbotXException } from "./errors/exception"
 import { logger } from "./log"
 
 export const actionClient = createSafeActionClient({
   handleServerError(error) {
-    logger.error({ error }, "Error in actionClient")
+    logger.error(error, "Error in actionClient")
+
     if (isDatabaseError(error)) {
       logger.error(error)
       return DEFAULT_SERVER_ERROR_MESSAGE

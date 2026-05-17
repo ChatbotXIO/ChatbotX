@@ -5,7 +5,7 @@ import { WhatsappAutomationManage } from "@/features/integration-whatsapp/automa
 import { findIntegrationWhatsapp } from "@/features/integration-whatsapp/queries"
 import { withWorkspaceIdAndIdSchema } from "@/features/workspaces/schema/resource"
 
-export default async function WhatsappIceBreakersPage(props: {
+export default async function WhatsappAutomationPage(props: {
   params: Promise<{ workspaceId: string; id: string }>
 }) {
   const { data } = withWorkspaceIdAndIdSchema.safeParse(await props.params)
@@ -19,7 +19,17 @@ export default async function WhatsappIceBreakersPage(props: {
   })
 
   const promises = Promise.all([
-    findConversationalAutomation(integrationWhatsapp.auth as WhatsappAuthValue),
+    findConversationalAutomation(
+      integrationWhatsapp.auth as WhatsappAuthValue,
+    ).catch((err) => ({
+      enable_welcome_message: false,
+      prompts: [],
+      commands: [],
+      error:
+        err instanceof Error
+          ? err.message
+          : "Failed to load automation settings",
+    })),
   ])
 
   return (

@@ -3,7 +3,7 @@
 import {
   assignerFilterTypes,
   channelTypes,
-  conversationTypes,
+  conversationBotCategories,
 } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -17,6 +17,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
+import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
@@ -69,10 +70,10 @@ export default function ConversationList({
   const form = useForm<ConversationFilters>({
     defaultValues: {
       keyword: "",
-      botEnabled: undefined,
+      botCategory: conversationBotCategories.enum.all,
       channel: channelTypes.enum.omnichannel,
       assignedId: assignerFilterTypes.enum.all,
-      status: [],
+      tags: [],
       contactFilter: {
         operator: "and",
         conditions: [],
@@ -93,11 +94,11 @@ export default function ConversationList({
       <form className="flex h-full flex-col">
         <div className="mb-2 flex items-center gap-1">
           <SelectField
-            name="conversationType"
+            name="botCategory"
             options={[
-              { label: "Human", value: conversationTypes.enum.human },
-              { label: "Bot", value: conversationTypes.enum.bot },
-              { label: "All", value: conversationTypes.enum.all },
+              { label: "All", value: conversationBotCategories.enum.all },
+              { label: "Human", value: conversationBotCategories.enum.human },
+              { label: "Bot", value: conversationBotCategories.enum.bot },
             ]}
           />
 
@@ -122,7 +123,9 @@ export default function ConversationList({
             workspaceId={workspaceId}
           />
 
-          <ConversationFilter />
+          <TagStoreProvider workspaceId={workspaceId}>
+            <ConversationFilter />
+          </TagStoreProvider>
         </div>
 
         <div className="flex-1">

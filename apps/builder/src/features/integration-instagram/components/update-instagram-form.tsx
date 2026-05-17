@@ -1,5 +1,6 @@
 "use client"
 
+import { channelTypes } from "@chatbotx.io/database/partials"
 import type { IntegrationInstagramModel } from "@chatbotx.io/database/types"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
@@ -184,7 +185,7 @@ export function UpdateInstagramForm({
           </CardContent>
         </Card>
 
-        <PersistentMenuField />
+        <PersistentMenuField channel={channelTypes.enum.instagram} />
 
         <DialogFooter>
           <Button

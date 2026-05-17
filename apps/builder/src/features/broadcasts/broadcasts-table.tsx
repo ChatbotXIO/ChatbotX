@@ -21,6 +21,7 @@ import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
+  Loader2Icon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -33,6 +34,7 @@ import React, { useMemo, useState } from "react"
 import type { listBroadcasts } from "@/features/broadcasts/queries"
 import { useWorkspaceId } from "@/hooks/routing"
 import { BroadcastStatsCell } from "./components/broadcast-stats-cell"
+import { BroadcastStatsStoreProvider } from "./provider/broadcast-stats-store-context"
 import { RenameBroadcastDialog } from "./rename-broadcast-dialog"
 import { ResendBroadcastDialog } from "./resend-broadcast-dialog"
 import type { BroadcastResourceWithRelations } from "./schemas/resource"
@@ -45,6 +47,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
 
   const workspaceId = useWorkspaceId()
+  const broadcastIds = useMemo(() => data.map((b) => b.id), [data])
 
   const t = useTranslations()
   const router = useRouter()
@@ -133,7 +136,13 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
             title={t("fields.estimatedContacts.label")}
           />
         ),
-        cell: ({ row }) => <div>{row.original.contactsCount ?? 0}</div>,
+        cell: ({ row }) => {
+          if (row.original.contactCount === null) {
+            return <Loader2Icon className="h-4 w-4 animate-spin" />
+          }
+
+          return <div>{row.original.contactCount}</div>
+        },
         meta: {
           label: t("fields.estimatedContacts.label"),
         },
@@ -304,7 +313,10 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
   })
 
   return (
-    <>
+    <BroadcastStatsStoreProvider
+      broadcastIds={broadcastIds}
+      workspaceId={workspaceId}
+    >
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <div className="flex justify-end">
@@ -334,6 +346,6 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         onOpenChange={() => setRowAction(null)}
         open={rowAction?.variant === "resend"}
       />
-    </>
+    </BroadcastStatsStoreProvider>
   )
 }

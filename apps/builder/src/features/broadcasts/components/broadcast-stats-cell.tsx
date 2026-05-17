@@ -1,13 +1,10 @@
 "use client"
 
-import type {
-  GetBroadcastStatsRequest,
-  GetBroadcastStatsResponse,
-} from "@chatbotx.io/analytics/schemas"
+import type { GetBroadcastStatsResponse } from "@chatbotx.io/analytics/schemas"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
-import ky from "ky"
 import { useParams } from "next/navigation"
-import { memo, useCallback, useEffect, useState } from "react"
+import { memo, useCallback, useState } from "react"
+import { useBroadcastStatsStore } from "../provider/broadcast-stats-store-context"
 import { BroadcastContactsDialog } from "./broadcast-contacts-dialog"
 
 type Props = {
@@ -20,39 +17,10 @@ export const BroadcastStatsCell = memo(function BroadcastStatsCell({
   field,
 }: Props) {
   const { workspaceId } = useParams<{ workspaceId: string }>()
-  const [stats, setStats] = useState<GetBroadcastStatsResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  useEffect(() => {
-    let isMounted = true
-
-    async function fetchStats() {
-      try {
-        const result = await ky
-          .get<GetBroadcastStatsRequest>(
-            `/api/workspaces/${workspaceId}/broadcasts/${broadcastId}/stats`,
-          )
-          .json<GetBroadcastStatsResponse>()
-
-        if (isMounted) {
-          setStats(result)
-        }
-      } catch (error) {
-        console.error("Failed to fetch broadcast stats:", error)
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    fetchStats()
-
-    return () => {
-      isMounted = false
-    }
-  }, [workspaceId, broadcastId])
+  const stats = useBroadcastStatsStore((state) => state.stats[broadcastId])
+  const isLoading = useBroadcastStatsStore((state) => state.isLoading)
 
   const handleClick = useCallback(() => {
     setDialogOpen(true)

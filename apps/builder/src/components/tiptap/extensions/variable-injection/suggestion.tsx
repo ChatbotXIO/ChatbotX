@@ -70,8 +70,8 @@ const suggestion = ({
       },
 
       onExit() {
-        popup.destroy()
-        component.destroy()
+        popup?.destroy()
+        component?.destroy()
       },
     }
   },

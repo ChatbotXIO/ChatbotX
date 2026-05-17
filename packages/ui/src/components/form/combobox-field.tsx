@@ -35,7 +35,11 @@ export const OptionItem = ({
 }: OptionItemProps) => {
   const isSelected = option.value === selectedValue
   return (
-    <CommandItem disabled={disabled} onSelect={onSelect} value={option.value}>
+    <CommandItem
+      disabled={disabled}
+      onSelect={() => onSelect(option.value)}
+      value={option.label}
+    >
       {option.icon && <option.icon className="h-4 w-4" />}
       {option.label}
       <Check

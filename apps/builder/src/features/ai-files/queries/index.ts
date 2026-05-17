@@ -1,8 +1,8 @@
 "use server"
 
+import { resolvePlatformUrls } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { AIEmbeddingStatus } from "@chatbotx.io/database/partials"
-import { env } from "@/env"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListAIFilesRequest, ListAIFilesResponse } from "../schemas"
 
@@ -11,19 +11,22 @@ export async function listAIFiles(
 ): Promise<ListAIFilesResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.aiFileModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-    },
-    with: {
-      aiEmbeddings: {
-        columns: {
-          id: true,
-          status: true,
+  const [data, { assetUrl }] = await Promise.all([
+    db.query.aiFileModel.findMany({
+      where: {
+        workspaceId: input.workspaceId,
+      },
+      with: {
+        aiEmbeddings: {
+          columns: {
+            id: true,
+            status: true,
+          },
         },
       },
-    },
-  })
+    }),
+    resolvePlatformUrls({ workspaceId: input.workspaceId }),
+  ])
 
   const transformedData = data.map((file) => {
     const hasEmbeddings = file.aiEmbeddings.length > 0
@@ -48,7 +51,7 @@ export async function listAIFiles(
       size: file.size,
       name: file.name,
       path: file.path,
-      url: new URL(file.path, env.NEXT_PUBLIC_ASSET_URL).toString(),
+      url: new URL(file.path, assetUrl).toString(),
       chunksCount: file.aiEmbeddings.length,
       processingStatus,
     }

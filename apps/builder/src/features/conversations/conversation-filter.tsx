@@ -24,7 +24,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { ContactFilterDialog } from "../contacts/components/contact-filter"
+import { ContactFilterDialog } from "../contacts/components/contact-filter-dialog"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
@@ -92,14 +92,14 @@ export function ConversationFilter() {
 
           <ComboboxField
             label={t("fields.assignedId.label")}
-            name="assignedUserId"
+            name="assignedId"
             options={contactAssigneeOptions}
             required
           />
 
           <MultiSelectField
-            label={t("fields.status.label")}
-            name="status"
+            label={t("fields.tags.label")}
+            name="tags"
             options={conversationStatusOptions}
             placeholder={`${t("condition.fields.unread")}, ${t("condition.fields.followUp")}, ... `}
             required

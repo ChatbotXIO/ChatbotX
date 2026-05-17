@@ -19,9 +19,11 @@ import { selectPageRequest } from "../schema/action"
 export function FacebookPages({
   workspaceId,
   pages,
+  onSuccess,
 }: {
   workspaceId?: string | null
   pages: FacebookPage[]
+  onSuccess?: () => void
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -41,6 +43,7 @@ export function FacebookPages({
       },
       actionProps: {
         onSuccess: ({ data }) => {
+          onSuccess?.()
           if (workspaceId) {
             router.push(
               `/space/${data.workspaceId}/settings/channels?channel=messenger`,
@@ -76,7 +79,7 @@ export function FacebookPages({
           <InputField name="pageName" type="hidden" />
         </div>
 
-        <div className="">
+        <div className="max-h-75 overflow-y-auto pr-1">
           <RadioGroupField
             label={t("messenger.selectFacebookPage")}
             name="pageId"

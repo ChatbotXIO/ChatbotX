@@ -1,5 +1,6 @@
+import { UNKNOWN_ERROR } from "@chatbotx.io/sdk"
 import ky, { isHTTPError, type KyInstance } from "ky"
-import { InstagramAPIException } from "../exception"
+import { InstagramAPIException, parseOriginError } from "../exception"
 import { logger } from "./logger"
 
 type HttpClientConfig = {
@@ -7,6 +8,24 @@ type HttpClientConfig = {
   timeout?: number
   retries?: number
   retryDelay?: number
+}
+
+type GetOptions = {
+  headers?: Record<string, string>
+  searchParams?: Record<string, string>
+}
+
+type PostOptions = {
+  headers?: Record<string, string>
+  json?: unknown
+  body?: URLSearchParams | string
+  searchParams?: Record<string, string>
+}
+
+type DeleteOptions = {
+  headers?: Record<string, string>
+  searchParams?: Record<string, string>
+  json?: unknown
 }
 
 class InstagramHttpClient {
@@ -41,62 +60,40 @@ class InstagramHttpClient {
     })
   }
 
-  async get<T>(
-    url: string,
-    options?: {
-      headers?: Record<string, string>
-      searchParams?: Record<string, string>
-    },
-  ): Promise<T> {
+  private toException(error: unknown): InstagramAPIException {
+    const sdkException = parseOriginError(error)
+
+    return new InstagramAPIException(
+      sdkException.message ?? UNKNOWN_ERROR.message,
+      sdkException.httpStatusCode,
+      sdkException.code,
+      sdkException.subCode,
+      sdkException.type,
+      error,
+    )
+  }
+
+  private async request<T>(call: () => Promise<T>): Promise<T> {
     try {
-      return await this.client.get(url, options).json<T>()
+      return await call()
     } catch (error) {
-      throw new InstagramAPIException(
-        `GET request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        url,
-      )
+      throw this.toException(error)
     }
   }
 
-  async post<T>(
-    url: string,
-    options?: {
-      headers?: Record<string, string>
-      json?: unknown
-      body?: URLSearchParams | string
-      searchParams?: Record<string, string>
-    },
-  ): Promise<T> {
-    try {
-      return await this.client.post(url, options).json<T>()
-    } catch (error) {
-      throw new InstagramAPIException(
-        `POST request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        url,
-      )
-    }
+  get<T>(url: string, options?: GetOptions): Promise<T> {
+    return this.request(() => this.client.get(url, options).json<T>())
   }
 
-  async delete<T>(
-    url: string,
-    options?: {
-      headers?: Record<string, string>
-      searchParams?: Record<string, string>
-      json?: unknown
-    },
-  ): Promise<T> {
-    try {
-      return await this.client.delete(url, options).json<T>()
-    } catch (error) {
-      throw new InstagramAPIException(
-        `DELETE request failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        url,
-      )
-    }
+  post<T>(url: string, options?: PostOptions): Promise<T> {
+    return this.request(() => this.client.post(url, options).json<T>())
+  }
+
+  delete<T>(url: string, options?: DeleteOptions): Promise<T> {
+    return this.request(() => this.client.delete(url, options).json<T>())
   }
 }
 
-// Create singleton instances for different API endpoints
 export const instagramGraphClient = new InstagramHttpClient({
   baseUrl: "https://graph.facebook.com",
   timeout: 30_000,

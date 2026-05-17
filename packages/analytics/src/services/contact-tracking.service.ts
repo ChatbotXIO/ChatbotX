@@ -65,6 +65,45 @@ export class ContactTrackingService extends BaseService {
       await this.trackEvent(event)
     }
   }
+
+  async trackEventsBatch(events: CreateContactEvent[]): Promise<void> {
+    if (events.length === 0) {
+      return
+    }
+
+    const rows = events
+      .filter((event) => {
+        if (
+          !(event.occurredAt instanceof Date) ||
+          Number.isNaN(event.occurredAt.getTime())
+        ) {
+          logger.error("Invalid occurredAt, skipping event")
+          return false
+        }
+        return true
+      })
+      .map((event) => ({
+        event_id: this.getEventId(event),
+        workspace_id: event.workspaceId,
+        contact_id: event.contactId,
+        event_type: event.eventType,
+        sender_type: event.senderType || "",
+        admin_id: event.adminId || "",
+        occurred_at: Math.floor(event.occurredAt.getTime() / 1000),
+        source: event.source || null,
+        source_id: event.sourceId || null,
+        channel: event.channel || null,
+        country: event.country || null,
+        metadata: event.metadata ? JSON.stringify(event.metadata) : null,
+        inserted_at: Math.floor(Date.now() / 1000),
+      }))
+
+    await this.insertBatch(
+      CONTACT_EVENTS_EVENT_TYPE,
+      rows,
+      "ContactTrackingService",
+    )
+  }
 }
 
 export const contactTrackingService = new ContactTrackingService()

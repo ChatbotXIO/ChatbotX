@@ -1,18 +1,25 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import {
   defaultWorkerOptions,
   getRedisConnection,
   IntegrationJobAction,
   type IntegrationJobData,
-  queueName,
+  integrationQueue,
+  queueNames,
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { assignConversation } from "./handlers/assign-conversation"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { trackBotResponse } from "./handlers/automated-response/track-bot-response"
 import { runChallenge } from "./handlers/challenge"
-import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
+import {
+  agentMarkAsRead,
+  contactMarkAsRead,
+  ensureConversationActive,
+} from "./handlers/conversation"
 import {
   runFlowNode,
   runFlowPostback,
@@ -21,22 +28,19 @@ import {
 import { handleMessageStatus } from "./handlers/message-status"
 import { receiveMessage } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
-import { sendBroadcast } from "./handlers/send-broadcast"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
 async function startIntegrationWorker() {
   try {
     await ensureBootstrapped()
-    logger.info("Integration worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap integration worker")
     process.exit(1)
   }
 
   const worker = new Worker(
-    queueName.integration,
+    queueNames.enum.integration,
     async (job: Job<IntegrationJobData>) => {
-      logger.info(job.data, "Worker received job")
       switch (job.data.type) {
         case IntegrationJobAction.incomingMessage: {
           const { message, postbackAction, quickReplyAction, conversation } =
@@ -46,19 +50,37 @@ async function startIntegrationWorker() {
             return
           }
 
-          // Trigger automated response if the message is from a user
+          const isNotPostbackOrQuickReply = !(
+            postbackAction || quickReplyAction
+          )
+
+          // Check for active challenge (getUserData waiting for input)
           if (
-            !(postbackAction || quickReplyAction) &&
+            isNotPostbackOrQuickReply &&
             message.text &&
             message.senderType === "contact" &&
-            conversation.botEnabled
+            (await ensureConversationActive(conversation))
           ) {
-            await automatedResponseService.enqueue({
-              conversationId: conversation.id,
-              contactInboxId: message.contactInboxId,
-              messageId: message.id,
-            })
-          } else if (!(postbackAction || quickReplyAction)) {
+            const additionalAttributes =
+              conversation.additionalAttributes as ConversationAttributes
+
+            if (additionalAttributes?.challenge) {
+              await integrationQueue.add(IntegrationJobAction.runChallenge, {
+                type: IntegrationJobAction.runChallenge,
+                data: {
+                  conversationId: conversation,
+                  contactInboxId: message.contactInboxId,
+                  challenge: additionalAttributes.challenge,
+                },
+              })
+            } else {
+              await automatedResponseService.enqueue({
+                conversationId: conversation.id,
+                contactInboxId: message.contactInboxId,
+                messageId: message.id,
+              })
+            }
+          } else if (isNotPostbackOrQuickReply) {
             // Track no response for messages without content or not from contact
             // (postback/quickReply are tracked in their own handlers)
             await trackBotResponse({
@@ -108,10 +130,6 @@ async function startIntegrationWorker() {
           await contactMarkAsRead(job.data.data)
           return
         }
-        case IntegrationJobAction.sendBroadcast: {
-          await sendBroadcast(job.data.data.broadcastId)
-          return
-        }
         case IntegrationJobAction.runRef: {
           await runRef(job.data.data)
           return
@@ -129,7 +147,7 @@ async function startIntegrationWorker() {
           return
         }
         case IntegrationJobAction.assignConversation: {
-          // await broadcastAssignConversation(job.data.data)
+          await assignConversation(job.data.data)
           return
         }
         case IntegrationJobAction.messageStatus: {

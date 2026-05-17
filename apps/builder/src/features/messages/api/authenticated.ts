@@ -6,7 +6,7 @@ import {
   listMessagesRequest,
   listMessagesResponse,
 } from "../schema/query"
-import { messageResource } from "../schema/resource"
+import { messageResourceWithRelations } from "../schema/resource"
 
 export const messagesAuthenticatedAPI = {
   listMessagesAuthenticatedAPI: authorizedAPI
@@ -30,6 +30,6 @@ export const messagesAuthenticatedAPI = {
     })
     .input(findMessageRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(messageResource)
+    .output(messageResourceWithRelations)
     .handler(async ({ input }) => await findMessage(input)),
 }

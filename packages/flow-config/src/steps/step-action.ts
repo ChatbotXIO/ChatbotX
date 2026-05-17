@@ -95,15 +95,8 @@ export const stepTypes = z.enum([
   "subscribeSequence",
   "unsubscribeSequence",
 
-  // Eamil
-  "emailText",
-  "emailH3",
-  "emailImage",
-  "emailButton",
-  "emailSpacing",
-  "emailCode",
-  "emailLine",
-  "emailHeader",
+  // Email
+  "email",
 
   // WhatsApp Template Message
   "sendWaTemplateMessage",
@@ -117,4 +110,8 @@ export const disabledCopyActionTypes = [
   stepTypes.enum.optOutEmail,
 ]
 
-export const hiddenActionsStepTypes = [stepTypes.enum.splitTraffic]
+export const hiddenActionsStepTypes = [
+  stepTypes.enum.email,
+  stepTypes.enum.splitTraffic,
+  stepTypes.enum.wait,
+]

@@ -2,7 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { AITab } from "@/features/ai-hub/ai-hub-breadcrumb"
-import AIMcpServersTable from "@/features/ai-mcp-servers/ai-mcp-servers-table"
+import { AIMcpServersTable } from "@/features/ai-mcp-servers/ai-mcp-servers-table"
 import { listAIMcpServers } from "@/features/ai-mcp-servers/queries"
 
 type AIMcpServersPageProps = {

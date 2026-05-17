@@ -48,6 +48,8 @@ export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type OrganizationModel = typeof schema.organizationModel.$inferSelect
+export type OrganizationCredentialModel =
+  typeof schema.organizationCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
 export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
 export type InboxTeamMemberModel =
@@ -84,3 +86,16 @@ export type FlowAnalyticsSessionModel =
 export type FlowNodeStatModel = typeof schema.flowNodeStatModel.$inferSelect
 export type MagicLinkStatModel = typeof schema.magicLinkStatModel.$inferSelect
 export type RefLinkStatModel = typeof schema.refLinkStatModel.$inferSelect
+
+export type InboxWithIntegrations = InboxModel & {
+  integrationInstagram?: IntegrationInstagramModel | null
+  integrationMessenger?: IntegrationMessengerModel | null
+  integrationTelegram?: IntegrationTelegramModel | null
+  integrationWebchat?: IntegrationWebchatModel | null
+  integrationWhatsapp?: IntegrationWhatsappModel | null
+  integrationZalo?: IntegrationZaloModel | null
+  integrationSmtp?: IntegrationSmtpModel | null
+}
+
+export type ContactOnSmartDelayModel =
+  typeof schema.contactOnSmartDelayModel.$inferSelect

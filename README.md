@@ -1,28 +1,40 @@
 <p align="center">
   <a href="https://github.com/ChatbotXIO/ChatbotX" target="_blank" rel="noopener">
-    <img alt="ChatbotX Logo" src=".github/assets/readme/chatbotx-logo.svg" width="280">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme/chatbotx-logo-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme/chatbotx-logo-light.svg">
+      <img alt="ChatbotX Logo" src=".github/assets/readme/chatbotx-logo-light.svg" width="280">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://opensource.org/license/agpl-v3">
+    <img alt="License" src="https://img.shields.io/badge/License-AGPL%203.0-2496ED?labelColor=111827">
   </a>
 </p>
 
 <p align="center">
   <strong>Open-source omnichannel chatbot for agentic workflows via APIs, CLI, and MCP.</strong>
   <br>
-  An alternative to Wati, ManyChat, and Respond.io.
+  An alternative to Wati, ManyChat, Chatfuel and Respond.io.
 </p>
 
 <p align="center">
-  <a href="https://chatbotx.io">Website</a>
+  <a href="https://chatbotx.io/">Website</a>
   |
-  <a href="https://cloud.chatbotx.io">Cloud</a>
+  <a href="https://chatbotx.canny.io/">Roadmap</a>
   |
-  <a href="https://chatconnectx.com/">ChatConnectX</a>
+  <a href="https://chatbotx.io/coming-soon/">Cloud</a>
   |
-  <a href="https://github.com/ChatbotXIO/ChatbotX">Repository</a>
+  <a href="https://chatbotx.io/docs">Docs</a>
+  |
+  <a href="https://discord.chatbotx.io/">Discord</a>
 </p>
 
 <p align="center">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-111827?logo=nextdotjs&logoColor=white">
   <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-EF4444?logo=turborepo&logoColor=white">
   <img alt="pnpm" src="https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white">
@@ -37,63 +49,41 @@
   <img alt="Instagram" src=".github/assets/readme/instagram.svg" width="32">
   <img alt="Telegram" src=".github/assets/readme/telegram.svg" width="32">
   <img alt="Zalo" src=".github/assets/readme/zalo.svg" width="32">
-  <img alt="TikTok" src=".github/assets/readme/tiktok.svg" width="32">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/readme/tiktok-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/readme/tiktok-light.svg">
+    <img alt="TikTok" src=".github/assets/readme/tiktok-light.svg" width="32">
+  </picture>
   <img alt="Email" src=".github/assets/readme/email.svg" width="32">
   <img alt="Website" src=".github/assets/readme/website.svg" width="32">
 </p>
 
 <p align="center">
-  <img alt="ChatbotX omnichannel AI chatbot hero" src=".github/assets/readme/chatbotx-hero-16x9.png">
+  <img alt="ChatbotX omnichannel AI chatbot hero" src=".github/assets/readme/chatbotx-hero.png">
 </p>
-
-## About
-
-ChatbotX is a Node.js and TypeScript monorepo for building, running, and extending an omnichannel chatbot platform. It brings together a web builder, background workers, realtime messaging, channel integrations, public APIs, a CLI, and an MCP server.
-
-Use ChatbotX to automate conversations across WhatsApp, Messenger, Instagram, Telegram, Zalo, Webchat, Email, and other channels. Teams can design Flows, run AI Agents, manage a shared Inbox, send Broadcasts, schedule Sequences, trigger Webhooks, and sync customer data through integrations.
 
 ## ✨ Features
 
-- **Omnichannel Inbox:** Manage customer conversations from supported messaging channels in one workspace.
-- **Flow builder:** Build automated chatbot flows for qualification, support, routing, follow-up, and data capture.
-- **AI Agents:** Connect AI providers and knowledge workflows to answer questions, analyze inputs, generate content, and hand off to humans.
-- **Broadcasts and Sequences:** Send campaigns, schedule follow-ups, and track channel-level delivery workflows.
-- **Triggers and Webhooks:** React to events and connect ChatbotX with external systems.
-- **Public APIs, CLI, and MCP:** Automate ChatbotX from scripts, agent workflows, and MCP-compatible clients.
-- **Integrations:** Includes channel and app integrations such as WhatsApp, Messenger, Instagram, Telegram, Zalo, Webchat, SMTP, OpenAI, and Google Sheets.
+- **Visual Flow Builder:** Drag-and-drop chatbot builder with 15+ node types
+- **AI Agent:** AI-powered responses and actions using OpenAI, DeepSeek, or Gemini
+- **Live Chat Inbox:** Real-time inbox with human takeover and conversation assignment
+- **Contact CRM:** Manage contacts with tags, custom fields, and segmentation
+- **Broadcasting:** Send targeted messages to specific contact segments
+- **Sequences:** Automate drip campaigns with scheduled messages and auto-enrollment
+- **Team Management:** Invite team members, assign roles, and manage permissions
+- **Multi-Platform:** Connect across WhatsApp, Facebook, Instagram, Telegram, Zalo, Email, and Webchat
+- **Rich Messaging:** Support for buttons, quick replies, catalogs, and carousel cards
+- **Comment-to-DM:** Automatically message users who comment with specific keywords
+- **A/B Testing:** Test and optimize different message flows
+- **Triggers:** Execute actions based on events within your bot
+- **Webhooks & HTTP:** Integrate external APIs directly into your flows
+- **Growth Tools:** Generate conversation starter links for each platform
+- **Analytics:** Track performance metrics, user engagement, and campaign results
+- **APIs, CLI, and MCP:** Build advanced agent workflows with MCP-compatible clients
 
-<table>
-  <tr>
-    <td width="50%" align="center" valign="top">
-      <strong>WhatsApp Flows</strong><br>
-      <img alt="WhatsApp Flows" src=".github/assets/readme/feature-whatsapp-flows.png" width="420">
-    </td>
-    <td width="50%" align="center" valign="top">
-      <strong>Unified CRM Inbox</strong><br>
-      <img alt="WhatsApp CRM Inbox" src=".github/assets/readme/feature-whatsapp-crm-inbox.png" width="420">
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center" valign="top">
-      <strong>Facebook AI Comments</strong><br>
-      <img alt="Facebook AI Comments" src=".github/assets/readme/feature-facebook-ai-comments.png" width="420">
-    </td>
-    <td width="50%" align="center" valign="top">
-      <strong>Zalo AI Chatbot</strong><br>
-      <img alt="Zalo AI Chatbot" src=".github/assets/readme/feature-zalo-ai-chatbot.png" width="420">
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center" valign="top">
-      <strong>Bulk Scheduler</strong><br>
-      <img alt="Facebook Bulk Scheduler" src=".github/assets/readme/feature-facebook-bulk-scheduler.png" width="420">
-    </td>
-    <td width="50%" align="center" valign="top">
-      <strong>Zalo ZNS Marketing</strong><br>
-      <img alt="Zalo ZNS Marketing" src=".github/assets/readme/feature-zalo-zns-marketing.png" width="420">
-    </td>
-  </tr>
-</table>
+| ![Omnichannel Team Inbox](https://github.com/user-attachments/assets/daa23e91-7ba5-4093-8605-e77cddebe35c) | ![Smart Contact Import](https://github.com/user-attachments/assets/6a4a6c7d-5a77-4f3c-900b-d87cb849e589) |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| ![Visual Flow Builder](https://github.com/user-attachments/assets/6f0448ad-0f32-4065-9e2a-f41b5354a68f) | ![Built-in AI Agents](https://github.com/user-attachments/assets/365167c6-b4d9-498a-8b8c-a5079b82edbf) |
 
 ## Tech Stack
 
@@ -111,7 +101,7 @@ Use ChatbotX to automate conversations across WhatsApp, Messenger, Instagram, Te
 
 ## Quick Start
 
-To have the project up and running, please follow the [Quick Start Guide](https://docs.chatbotx.io/quickstart).
+To have the project up and running, please follow the [Quick Start Guide](https://chatbotx.io/docs/quickstart).
 
 ## Project Structure
 
@@ -184,12 +174,4 @@ The default Docker Compose stack includes:
 
 ## License
 
-See `LICENSE` in `ChatbotXIO/ChatbotX`. The repository includes AGPLv3-licensed code and commercial-license portions as defined in the license file.
-
-## Star History
-
-<p align="center">
-  <a href="https://www.star-history.com/#ChatbotXIO/ChatbotX&Date">
-    <img alt="Star History Chart" src=".github/assets/readme/star-history-chart.svg">
-  </a>
-</p>
+ChatbotX' Community Edition is released as open source under the [AGPLv3 license](https://github.com/ChatbotXIO/ChatbotX/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/ChatbotXIO/ChatbotX/blob/main/apps/builder/src/enterprise/LICENSE)

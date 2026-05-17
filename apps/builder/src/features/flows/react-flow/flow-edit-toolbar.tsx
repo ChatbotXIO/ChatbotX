@@ -188,13 +188,16 @@ export function FlowEditToolbar({
       <GetInboxUrlDialog
         onOpenChange={() => setAction(null)}
         open={action === "getDraftLink"}
-        ref={`draft-${flow.id}`}
+        refConfig={{ type: "draft", flowId: flow.id }}
       />
 
       <GetInboxUrlDialog
         onOpenChange={() => setAction(null)}
         open={action === "getPublishedLink"}
-        ref={`flow-${flow.id}`}
+        refConfig={{
+          type: "flow",
+          flowId: flow.id,
+        }}
       />
     </div>
   )

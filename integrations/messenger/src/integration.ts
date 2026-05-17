@@ -3,7 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { updatePersona } from "./apis/page"
+import { unsubscribePageFromAppWebhook, updatePersona } from "./apis/page"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
@@ -43,12 +43,11 @@ const config: IntegrationDefinition<
       default:
         throw new MessengerAPIException(
           `${props.req.method} ${props.req.url} is not implemented`,
-          props.req.url,
         )
     }
   },
-  disconnect: (_props: MessengerAuthValue): Promise<void> => {
-    throw new Error("Method is not implemented.")
+  disconnect: async (auth: MessengerAuthValue): Promise<void> => {
+    await unsubscribePageFromAppWebhook(auth)
   },
 }
 

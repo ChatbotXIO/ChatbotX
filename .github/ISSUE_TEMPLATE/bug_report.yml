@@ -1,0 +1,99 @@
+name: "🐛 Bug Report"
+description: "Create a report to help us improve ChatbotX by fixing a bug."
+title: "<Short description>"
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report a bug! Please provide as much technical detail as possible to help us quickly reproduce and fix it. 🐞
+
+  - type: checkboxes
+    id: search
+    attributes:
+      label: "Have you checked for existing requests?"
+      description: "Please search the existing issues to ensure your bug hasn't already been reported."
+      options:
+        - label: "I have searched the existing issues and found no similar request."
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Affected Component"
+      description: "Which area of ChatbotX is experiencing the issue?"
+      options:
+        - "📊 Analytics"
+        - "💬 Inbox & Live Chat"
+        - "🔀 Flow Builder (Flows, Tags, Custom Fields)"
+        - "👥 Contacts & CRM"
+        - "🤖 AI Agents, Knowledge & MCP"
+        - "⚙️ Keywords Automation"
+        - "📢 Broadcasts & Sequences"
+        - "⚡ Triggers & Webhooks"
+        - "🛠️ Tools & Extensions (Ecommerce, QR, etc.)"
+        - "🔧 Settings, Channels & Integrations"
+        - "🌐 Other / Unknown"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: "Deployment Environment"
+      description: "How are you running ChatbotX?"
+      options:
+        - "Self-Hosted (Docker Compose)"
+        - "Self-Hosted (Source Code / Node.js)"
+        - "ChatbotX Cloud"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: "ChatbotX Version"
+      description: "Which version are you currently running? (Provide the version tag, e.g., v1.2.0)"
+      placeholder: "e.g., v1.2.0 or 'latest'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the bug"
+      description: "A clear and concise description of what the bug is."
+      placeholder: "When I click on X, instead of Y happening, Z happens..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "Steps To Reproduce"
+      description: "Detailed steps to reproduce the behavior. The more specific, the faster we can fix it."
+      value: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected behavior"
+      description: "A clear and concise description of what you expected to happen."
+      placeholder: "I expected the node to save successfully without throwing an error."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Screenshots or Error Logs"
+      description: "If applicable, drag and drop screenshots, browser console errors, or server terminal logs here."
+      placeholder: "Paste your error logs or drop screenshots here..."
+    validations:
+      required: false

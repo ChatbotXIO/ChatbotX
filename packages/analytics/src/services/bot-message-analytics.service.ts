@@ -1,4 +1,4 @@
-import { botMessageStatsRepository } from "../repositories/bot-message-stats.repository"
+import { botMessageStatsRepository } from "../repositories/clickhouse/bot-message-stats.repository"
 import type {
   BotMessageAIProviderStats,
   BotMessageStats,

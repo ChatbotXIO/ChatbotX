@@ -26,11 +26,12 @@ sequenceDiagram
   participant NextServer
   participant Partysocket
 
-  NextServer->>Partysocket: POST /parties/xxx <br> X-API-KEY: xxxxxxx
-  critical API key is correct
+  NextServer->>NextServer: sign 60s JWT <br> aud=room:id, HS256(REALTIME_BROADCAST_SECRET)
+  NextServer->>Partysocket: POST /parties/xxx <br> Authorization: Bearer <jwt>
+  critical JWT verifies and aud matches room
     Partysocket-->>Browser: return ok
     Partysocket->>Browser: broadcast messages
-  option API key is incorrect
-    Partysocket-->>NextServer: return error
+  option JWT invalid, expired, or wrong audience
+    Partysocket-->>NextServer: 401 Unauthorized
   end
 ```

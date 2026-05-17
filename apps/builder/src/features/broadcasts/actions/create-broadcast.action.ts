@@ -1,11 +1,8 @@
 "use server"
 
 import { db } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
-import {
-  broadcastModel,
-  contactsOnBroadcastsModel,
-} from "@chatbotx.io/database/schema"
+import { broadcastModel } from "@chatbotx.io/database/schema"
+import { startOfMinute } from "date-fns"
 import { returnValidationErrors } from "next-safe-action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -61,85 +58,19 @@ export const createBroadcastAction = workspaceActionClient
       broadcastName = template.name
     }
 
-    let inboxIds: string[] = []
-    if (parsedInput.integrationWhatsappId) {
-      const integrationWhatsapp =
-        await db.query.integrationWhatsappModel.findFirst({
-          where: {
-            workspaceId,
-            id: parsedInput.integrationWhatsappId,
-          },
-        })
-      if (integrationWhatsapp) {
-        inboxIds = [integrationWhatsapp.inboxId]
-      }
-    } else {
-      const inboxes = await db.query.inboxModel.findMany({
-        where: {
-          workspaceId,
-          ...(parsedInput.channel &&
-            parsedInput.channel !== channelTypes.enum.omnichannel && {
-              channel: parsedInput.channel,
-            }),
-        },
+    const [broadcast] = await db
+      .insert(broadcastModel)
+      .values({
+        ...parsedInput,
+        name: broadcastName,
+        workspaceId,
+        status: "scheduled",
+        schedulesAt: startOfMinute(
+          new Date(parsedInput.schedulesAt ?? new Date()),
+        ),
+        templateData: parsedInput.templateData ?? "{}",
       })
-      if (inboxes.length > 0) {
-        inboxIds = inboxes.map((inbox) => inbox.id)
-      }
-    }
-
-    const data: typeof broadcastModel.$inferInsert = {
-      ...parsedInput,
-      name: broadcastName,
-      workspaceId,
-      status: "scheduled",
-      schedulesAt: new Date(parsedInput.schedulesAt ?? new Date()),
-      templateData: parsedInput.templateData ?? "{}",
-    }
-
-    if (inboxIds.length === 0) {
-      data.status = "sent"
-    }
-
-    const contactInboxes = await db.query.contactInboxModel.findMany({
-      where: {
-        inboxId: {
-          in: inboxIds,
-        },
-      },
-      with: {
-        conversation: {
-          columns: {
-            id: true,
-            contactId: true,
-          },
-        },
-      },
-    })
-
-    if (contactInboxes.length === 0) {
-      data.status = "sent"
-    }
-
-    const broadcast = await db.transaction(async (tx) => {
-      const [newBroadcast] = await tx
-        .insert(broadcastModel)
-        .values(data)
-        .returning()
-
-      if (contactInboxes.length > 0) {
-        await tx.insert(contactsOnBroadcastsModel).values(
-          contactInboxes.map((contactInbox) => ({
-            broadcastId: newBroadcast.id,
-            contactId: contactInbox.contactId,
-            contactInboxId: contactInbox.id,
-            conversationId: contactInbox.conversation?.id || "",
-          })),
-        )
-      }
-
-      return newBroadcast
-    })
+      .returning()
 
     return broadcast
   })

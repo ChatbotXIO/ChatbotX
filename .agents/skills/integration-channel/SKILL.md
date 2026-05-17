@@ -9,6 +9,21 @@ description: >-
 
 # Integration Channel Development
 
+## Table of Contents
+
+1. [Architecture Overview](#architecture-overview)
+2. [Pre-Creation Confirmation](#pre-creation-confirmation-mandatory) — resolve name, auth type, org settings before coding
+3. [Phase 1: Integration Package](#phase-1-integration-package) — create `integrations/<channel>/`
+4. [Phase 2: Database](#phase-2-database) — schema + register in 7 files
+5. [Phase 3: Registration](#phase-3-registration) — builder, worker, UI
+6. [Phase 4: Builder Feature](#phase-4-builder-feature--settings-page) — settings page + feature directory
+7. [Post-Creation Verification](#post-creation-verification) — lint, install, build
+8. [Organization Settings](#organization-settings-only-if-needed) — optional OAuth app settings
+9. [Webhook Flow](#webhook-flow)
+10. [Existing Integrations Reference](#existing-integrations-reference)
+
+---
+
 ## Architecture Overview
 
 Integrations are standalone packages under `integrations/` that implement the `IntegrationDefinition` contract from `@chatbotx.io/sdk`.

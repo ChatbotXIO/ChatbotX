@@ -30,6 +30,16 @@ export function SequencesTableToolbarActions({
     <div className="flex items-center gap-2">
       {table.getFilteredSelectedRowModel().rows.length > 0 ? (
         <>
+          <BulkDeleteSequenceDialog
+            onOpenChange={() => setRowAction(null)}
+            onSuccess={() => {
+              table.toggleAllRowsSelected(false)
+              router.refresh()
+            }}
+            sequences={table
+              .getFilteredSelectedRowModel()
+              .rows.map((row) => row.original)}
+          />
           <BulkMoveFolderDialog
             onOpenChange={() => setRowAction(null)}
             onSuccess={() => {
@@ -40,16 +50,6 @@ export function SequencesTableToolbarActions({
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original)}
             workspaceId={workspaceId}
-          />
-          <BulkDeleteSequenceDialog
-            onOpenChange={() => setRowAction(null)}
-            onSuccess={() => {
-              table.toggleAllRowsSelected(false)
-              router.refresh()
-            }}
-            sequences={table
-              .getFilteredSelectedRowModel()
-              .rows.map((row) => row.original)}
           />
         </>
       ) : null}

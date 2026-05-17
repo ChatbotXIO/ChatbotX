@@ -1,6 +1,9 @@
 "use client"
 
-import { smtpHostMap, smtpProviders } from "@chatbotx.io/integration-smtp"
+import {
+  smtpHostMap,
+  smtpProviders,
+} from "@chatbotx.io/integration-smtp/schema"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"

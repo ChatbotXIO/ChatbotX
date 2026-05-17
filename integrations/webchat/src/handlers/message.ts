@@ -9,23 +9,30 @@ export const sendMessage: MessageHandlers<WebchatAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
 
+    const headers = await ctx.platform.getRealtimeAuthHeaders({
+      kind: "guest",
+      id: contact.sourceId,
+    })
+
     await ky
-      .post(`${ctx.auth.websocketUrl}/parties/guests/${contact.sourceId}`, {
-        headers: {
-          "X-API-Key": ctx.auth.apiKey,
-        },
+      .post(`${ctx.platform.realtimeUrl}/parties/guests/${contact.sourceId}`, {
+        headers,
         json: {
           eventType: "messageCreated",
           data: message,
         },
       })
-      .json()
+      .text()
 
     return {
       messageIds: [],
     }
   }
 
+export const sendFlowStep: MessageHandlers<WebchatAuthValue>["sendFlowStep"] =
+  () => Promise.resolve({ messageIds: [] })
+
 export const messageHandlers = {
   sendMessage,
+  sendFlowStep,
 }

@@ -36,11 +36,14 @@ export const getUserProfile = ({
     )
 
     if (response.error !== 0) {
-      throw new ZaloException(response.message).setOriginError({
-        response: {
-          error: response,
-        },
-      })
+      throw new ZaloException(
+        response.message,
+        undefined,
+        response.error,
+        undefined,
+        undefined,
+        { response: { error: response } },
+      )
     }
 
     const result: IncomingContact = {

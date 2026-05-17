@@ -1,7 +1,7 @@
 import { Button, Link, Section, Text } from "@react-email/components"
-import BaseTempate, { type BaseTempateProps } from "./base-template"
+import BaseTemplate, { type BaseTemplateProps } from "./base-template"
 
-export type SignInMagicLinkProps = BaseTempateProps & {
+export type SignInMagicLinkProps = BaseTemplateProps & {
   userName: string
   magicUrl: string
 }
@@ -10,7 +10,7 @@ function SignInMagicLink(props: SignInMagicLinkProps) {
   const { userName, brandName, magicUrl } = props
 
   return (
-    <BaseTempate {...props}>
+    <BaseTemplate {...props}>
       <Text>Hi {userName},</Text>
       <Text>
         Click the button below to securely sign in to your {brandName} account.
@@ -23,7 +23,7 @@ function SignInMagicLink(props: SignInMagicLinkProps) {
         </Text>
       </Section>
       <Text>If you didn't request this, you can safely ignore this email.</Text>
-    </BaseTempate>
+    </BaseTemplate>
   )
 }
 

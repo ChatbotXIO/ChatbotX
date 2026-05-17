@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.{ts,tsx,js,jsx}"
+applyTo: "**"
 ---
 
 # Project Context
@@ -453,3 +453,9 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 ---
 
 Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
+
+---
+
+# Git Conventions
+
+See **`.agents/rules/git.md`** for the full canonical rules (commit format, branch naming, staging, PRs, changelog).

@@ -17,7 +17,6 @@ import {
   emitConversationTransferredToHuman,
   emitConversationUnassigned,
 } from "@chatbotx.io/events"
-import { getStoragePrefix } from "@chatbotx.io/filesystem"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -36,8 +35,12 @@ import { createId } from "@chatbotx.io/utils"
 import { subHours } from "date-fns"
 import {
   allIntegrations,
-  integrationService,
+  resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
+import {
+  disableConversationState,
+  enableConversationState,
+} from "./conversation"
 import type { ExecuteStepProps } from "./flow"
 
 export async function stepBlockContact({
@@ -508,12 +511,10 @@ export async function stepUnfollowConversation({
 export async function stepDisableBot({
   conversation,
 }: ExecuteStepProps<DisableBotStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      botEnabled: false,
-    })
-    .where(eq(conversationModel.id, conversation.id))
+  await disableConversationState({
+    workspaceId: conversation.workspaceId,
+    conversationIds: [conversation.id],
+  })
 
   // Emit conversation transferred to human event
   try {
@@ -550,12 +551,10 @@ export async function stepDisableBot({
 export async function stepEnableBot({
   conversation,
 }: ExecuteStepProps<EnableBotStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      botEnabled: true,
-    })
-    .where(eq(conversationModel.id, conversation.id))
+  await enableConversationState({
+    workspaceId: conversation.workspaceId,
+    conversationIds: [conversation.id],
+  })
 
   // Emit conversation transferred to bot event
   try {
@@ -609,19 +608,17 @@ export const stepSendTyping = async (
     return
   }
 
-  const { auth } =
-    await integrationService.getIntegrationFromContactInbox(contactInbox)
+  if (!allIntegrations[contactInbox.channel]) {
+    return
+  }
 
-  await allIntegrations[
-    contactInbox.channel
-  ]?.channels.channel?.conversation?.sendTyping?.({
-    ctx: {
-      storagePrefix: getStoragePrefix(
-        conversation.workspaceId,
-        contactInbox.inboxId,
-      ),
-      auth,
-    },
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  await integration.runChannelHandler("conversation", "sendTyping", {
+    ctx,
     data: {
       contact: contactInbox,
       typing: true,

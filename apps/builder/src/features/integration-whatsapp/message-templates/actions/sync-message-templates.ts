@@ -1,11 +1,11 @@
 "use server"
 
+import { buildContext } from "@chatbotx.io/business"
 import { db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import {
   integrationWhatsappModel,
   whatsappMessageTemplateModel,
 } from "@chatbotx.io/database/schema"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
@@ -28,12 +28,14 @@ export const syncMessageTemplateAction = workspaceActionClient
       message: "Whatsapp integration not found",
     })
 
-    const ctx = {
-      auth: integrationWhatsapp.auth as WhatsappAuthValue,
-      uploader,
-      storagePrefix: getStoragePrefix(workspaceId, integrationWhatsapp.inboxId),
-    }
-
+    const ctx = await buildContext({
+      workspaceId,
+      integrationType: "whatsapp",
+      integration: {
+        ...integrationWhatsapp,
+        auth: integrationWhatsapp.auth as WhatsappAuthValue,
+      },
+    })
     const res = await integrations.whatsapp.runAction("listMessageTemplates", {
       ctx,
     })

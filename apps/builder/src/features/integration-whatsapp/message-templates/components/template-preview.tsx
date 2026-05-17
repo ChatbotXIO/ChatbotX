@@ -21,7 +21,7 @@ export function TemplatePreview({
   }
 
   return (
-    <div className="space-y-2 rounded-lg bg-gray-100 p-3">
+    <div className="space-y-2 rounded-lg bg-muted p-3">
       {components.map((component) => {
         if (component.type === "HEADER") {
           if (component.format === "TEXT" && component.text) {

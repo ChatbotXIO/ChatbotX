@@ -46,35 +46,6 @@ const nextConfig: NextConfig = {
         source: "/zalo_verifier:verifier.html",
         destination: "/api/zalo-verifier/:verifier",
       },
-      ...(env.NEXT_PUBLIC_BILLING_URL
-        ? [
-            {
-              source: "/pricing",
-              destination: `${env.NEXT_PUBLIC_BILLING_URL}/pricing`,
-            },
-            {
-              source: "/billing-static/:path+",
-              destination: `${env.NEXT_PUBLIC_BILLING_URL}/billing-static/:path+`,
-            },
-          ]
-        : []),
-
-      ...(env.NEXT_PUBLIC_MANAGE_URL
-        ? [
-            {
-              source: "/manage",
-              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage`,
-            },
-            {
-              source: "/manage/:path+",
-              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage/:path+`,
-            },
-            {
-              source: "/manage-static/:path+",
-              destination: `${env.NEXT_PUBLIC_MANAGE_URL}/manage-static/:path+`,
-            },
-          ]
-        : []),
     ]
   },
   headers() {

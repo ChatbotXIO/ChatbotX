@@ -41,17 +41,22 @@ export const useConfiguredInboxTypeOptions = () => {
   useEffect(() => {
     const setOfInboxTypes = new Set<string>(["omnichannel"])
     for (const inbox of inboxes) {
-      setOfInboxTypes.add(inbox.channel)
+      // Ignore SMTP inbox type
+      if (inbox.channel !== channelTypes.enum.smtp) {
+        setOfInboxTypes.add(inbox.channel)
+      }
     }
     setInboxTypes(Array.from(setOfInboxTypes))
   }, [inboxes])
 
   return useMemo(
     () =>
-      inboxTypes.map(
-        (inboxType) =>
-          allInboxConfigs[inboxType as keyof typeof allInboxConfigs],
-      ),
+      inboxTypes
+        .filter((inboxType) => inboxType in allInboxConfigs)
+        .map(
+          (inboxType) =>
+            allInboxConfigs[inboxType as keyof typeof allInboxConfigs],
+        ),
     [inboxTypes],
   )
 }
@@ -65,7 +70,25 @@ export const useWhatsappInboxOptions = (): SelectOption[] => {
         .filter((inbox) => inbox.channel === channelTypes.enum.whatsapp)
         .map((inbox) => ({
           label: inbox.name,
-          value: inbox.integrationWhatsapp?.id ?? "",
+          value: inbox.id,
+        })),
+    [inboxes],
+  )
+}
+
+export const useSmtpInboxOptions = (): SelectOption[] => {
+  const inboxes = useInboxStore((state) => state.inboxes)
+
+  return useMemo(
+    () =>
+      inboxes
+        .filter(
+          (inbox) =>
+            inbox.channel === channelTypes.enum.smtp && !!inbox.integrationSmtp,
+        )
+        .map((inbox) => ({
+          label: inbox.name,
+          value: inbox.integrationSmtp?.id ?? "-",
         })),
     [inboxes],
   )

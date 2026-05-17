@@ -1,6 +1,5 @@
 import { conversationTrackingService } from "@chatbotx.io/analytics"
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { emitConversationTransferredToHuman } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
@@ -12,6 +11,7 @@ import {
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { disableConversationState } from "../queries/bot-state"
 
 export const enableLiveChatConversationAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -36,17 +36,10 @@ export const enableLiveChatConversationAction = workspaceActionClient
         },
       })
 
-      await db
-        .update(conversationModel)
-        .set({
-          botEnabled: false,
-        })
-        .where(
-          and(
-            eq(conversationModel.workspaceId, workspaceId),
-            inArray(conversationModel.id, parsedInput.ids),
-          ),
-        )
+      await disableConversationState({
+        workspaceId,
+        conversationIds: parsedInput.ids,
+      })
 
       // Emit conversation transferred to human events
       for (const conv of conversations) {

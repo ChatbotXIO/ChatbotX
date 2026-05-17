@@ -1,6 +1,14 @@
 import ky, { isHTTPError, type KyInstance } from "ky"
-import { TelegramAPIException } from "../exception"
+import { parseOriginError, TelegramAPIException } from "../exception"
 import { logger } from "./logger"
+
+type GetOptions = {
+  searchParams?: Record<string, string>
+}
+
+type PostOptions = {
+  json?: unknown
+}
 
 class TelegramHttpClient {
   private readonly client: KyInstance
@@ -34,29 +42,33 @@ class TelegramHttpClient {
     })
   }
 
-  async post<T>(endpoint: string, options?: { json?: unknown }): Promise<T> {
+  private toException(error: unknown): TelegramAPIException {
+    const sdkException = parseOriginError(error)
+
+    return new TelegramAPIException(
+      sdkException.message ?? "Telegram API call failed",
+      sdkException.httpStatusCode,
+      sdkException.code,
+      sdkException.subCode,
+      sdkException.type,
+      error,
+    )
+  }
+
+  private async request<T>(call: () => Promise<T>): Promise<T> {
     try {
-      return await this.client.post(endpoint, options).json<T>()
+      return await call()
     } catch (error) {
-      throw new TelegramAPIException(
-        `POST ${endpoint} failed: ${String(error)}`,
-        endpoint,
-      )
+      throw this.toException(error)
     }
   }
 
-  async get<T>(
-    endpoint: string,
-    options?: { searchParams?: Record<string, string> },
-  ): Promise<T> {
-    try {
-      return await this.client.get(endpoint, options).json<T>()
-    } catch (error) {
-      throw new TelegramAPIException(
-        `GET ${endpoint} failed: ${String(error)}`,
-        endpoint,
-      )
-    }
+  get<T>(endpoint: string, options?: GetOptions): Promise<T> {
+    return this.request(() => this.client.get(endpoint, options).json<T>())
+  }
+
+  post<T>(endpoint: string, options?: PostOptions): Promise<T> {
+    return this.request(() => this.client.post(endpoint, options).json<T>())
   }
 }
 

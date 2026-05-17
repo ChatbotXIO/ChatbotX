@@ -1,7 +1,7 @@
 import { db } from "@chatbotx.io/database/client"
 import type { AIFunctionModel } from "@chatbotx.io/database/types"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import type { ListAIFunctionsRequest } from "../schema/action"
+import type { ListAIFunctionsRequest } from "../schemas/action"
 
 export async function listAIFunctions(
   input: ListAIFunctionsRequest,

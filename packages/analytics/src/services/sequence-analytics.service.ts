@@ -1,4 +1,3 @@
-import { clickhouse } from "@chatbotx.io/clickhouse/client"
 import type { SequenceScheduleEventType } from "@chatbotx.io/clickhouse/schemas"
 import { toClickHouseDateTime } from "@chatbotx.io/clickhouse/utils"
 import { db, sql } from "@chatbotx.io/database/client"
@@ -12,13 +11,15 @@ import {
   messageEventTypeSchema,
   SEQUENCE_SCHEDULE_PAYLOAD_TYPE,
 } from "@chatbotx.io/flow-config"
-import { sequenceStatsRepository } from "../repositories/sequence-stats.repository"
+import { sequenceStatsRepository } from "../repositories/clickhouse"
+import { sequenceStatsPgRepository } from "../repositories/postgres"
 import type { ContactEventData } from "../schemas/common"
 import type {
   SequenceSchemaPayload,
   SequenceStepEventType,
   SequenceStepStats,
 } from "../schemas/sequence-stats"
+import { BaseService } from "./base.service"
 
 function groupBy<T>(
   arr: T[],
@@ -35,22 +36,6 @@ function groupBy<T>(
     },
     {} as Record<string, T[]>,
   )
-}
-
-async function saveToClickhouse(data: SequenceScheduleEventType[]) {
-  if (data.length === 0) {
-    return
-  }
-
-  try {
-    await clickhouse.insert({
-      table: "sequence_schedule_events",
-      values: data,
-      format: "JSONEachRow",
-    })
-  } catch (error) {
-    console.error("Failed to save sequence stats to ClickHouse:", error)
-  }
 }
 
 type SequenceUpdateItem = {
@@ -127,12 +112,15 @@ async function processSequenceEvents(
   }
 }
 
-export class SequenceAnalyticsService {
+export class SequenceAnalyticsService extends BaseService {
   getStepStats(input: {
     workspaceId: string
     sequenceId: string
     stepId: string
   }): Promise<SequenceStepStats> {
+    if (!this.isAnalyticsEnabled) {
+      return sequenceStatsPgRepository.getStepStats(input)
+    }
     return sequenceStatsRepository.getStepStats(input)
   }
 
@@ -174,7 +162,7 @@ export class SequenceAnalyticsService {
         inserted_at: toClickHouseDateTime(new Date()),
       }))
 
-    await saveToClickhouse(insertedData)
+    await sequenceStatsRepository.insertEvents(insertedData)
 
     const updateItems: SequenceUpdateItem[] = sequenceSchedulePayloads.map(
       (p) => ({
@@ -211,7 +199,7 @@ export class SequenceAnalyticsService {
         inserted_at: toClickHouseDateTime(new Date()),
       }))
 
-    await saveToClickhouse(insertedData)
+    await sequenceStatsRepository.insertEvents(insertedData)
 
     const updateItems = sequenceSchedulePayloads.map((p) => ({
       sequenceId: (p.metadata as { sequenceId: string }).sequenceId,
@@ -220,7 +208,7 @@ export class SequenceAnalyticsService {
       occurredAt: new Date(p.occurredAt),
       errorContent: JSON.stringify(p.errorData),
     }))
-    await sequenceStatsRepository.updateFailedBulk(updateItems)
+    await sequenceStatsPgRepository.updateFailedBulk(updateItems)
   }
 
   async onDelivered(payloads: MessageDeliveredPayload[]) {
@@ -245,7 +233,7 @@ export class SequenceAnalyticsService {
         inserted_at: toClickHouseDateTime(new Date()),
       }))
 
-    await saveToClickhouse(insertedData)
+    await sequenceStatsRepository.insertEvents(insertedData)
 
     const updateItems: SequenceUpdateItem[] = sequenceSchedulePayloads.map(
       (p) => ({
@@ -328,7 +316,7 @@ export class SequenceAnalyticsService {
         },
       )
 
-      await saveToClickhouse(insertedData)
+      await sequenceStatsRepository.insertEvents(insertedData)
     }
   }
 
@@ -376,7 +364,7 @@ export class SequenceAnalyticsService {
         }),
       )
 
-      await saveToClickhouse(insertedData)
+      await sequenceStatsRepository.insertEvents(insertedData)
 
       const updateItems: SequenceUpdateItem[] = sequenceClicks.map((p) => ({
         workspaceId: p.context.workspaceId,

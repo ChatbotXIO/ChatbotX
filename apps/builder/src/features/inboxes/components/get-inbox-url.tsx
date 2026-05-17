@@ -1,4 +1,7 @@
+import type { RefConfig } from "@chatbotx.io/business"
+import { buildInboxLink } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -11,22 +14,23 @@ import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
-import { getInboxLink } from "@/features/inboxes/helpers"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
+import { usePlatformUrls } from "@/features/platform"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 
 type GetInboxUrlDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  ref?: string
+  refConfig?: RefConfig
 }
 export function GetInboxUrlDialog({
   open,
   onOpenChange,
-  ref,
+  refConfig,
 }: GetInboxUrlDialogProps) {
   const { inboxes } = useInboxStore((state) => state)
+  const { appUrl } = usePlatformUrls()
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -36,10 +40,17 @@ export function GetInboxUrlDialog({
           <DialogDescription />
         </DialogHeader>
 
-        <div className="flex flex-col">
-          {inboxes.map((inbox) => (
-            <GetInboxUrlItem inbox={inbox} key={inbox.id} ref={ref} />
-          ))}
+        <div className="flex max-h-[60vh] flex-col overflow-y-auto">
+          {inboxes
+            .filter((inbox) => inbox.channel !== "smtp")
+            .map((inbox) => (
+              <GetInboxUrlItem
+                appUrl={appUrl}
+                inbox={inbox}
+                key={inbox.id}
+                refConfig={refConfig}
+              />
+            ))}
         </div>
       </DialogContent>
     </Dialog>
@@ -47,20 +58,29 @@ export function GetInboxUrlDialog({
 }
 
 function GetInboxUrlItem({
+  appUrl,
   inbox,
-  ref,
+  refConfig,
 }: {
+  appUrl: string
   inbox: ListInboxesResponse["data"][number]
-  ref?: string
+  refConfig?: RefConfig
 }) {
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
 
-  const url = getInboxLink({ inbox, ref })
+  const url = buildInboxLink(appUrl, inbox as InboxWithIntegrations, refConfig)
   const handleCopy = async () => {
-    console.log("copied url", url)
-    await copy(url)
-    toast.success(t("messages.copiedToClipboard"))
+    if (url) {
+      await copy(url)
+      toast.success(t("messages.copiedToClipboard"))
+    } else {
+      toast.error(t("messages.copyFailed"))
+    }
+  }
+
+  if (!url) {
+    return null
   }
 
   return (

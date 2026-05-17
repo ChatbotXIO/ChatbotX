@@ -1,13 +1,13 @@
 "use server"
 
+import { organizationCredentialService } from "@chatbotx.io/business"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { organizationService } from "@/features/organization/services"
 import { integrations } from "@/integration"
 import { getOriginUrlFromHeader } from "@/lib/domain"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ConnectGoogleSheetsSchema,
@@ -27,18 +27,19 @@ export const connectGoogleSheets = workspaceActionClient
       }
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
-      const organization = await organizationService.findById(
-        ctx.workspace.organizationId,
-      )
-      const googleSheetsSetting = organization.settings.google
-      if (!googleSheetsSetting) {
+      const googleCredential =
+        await organizationCredentialService.findDecrypted({
+          organizationId: ctx.workspace.organizationId,
+          type: "google",
+        })
+      if (!googleCredential) {
         throw new ChatbotXException("Google Sheets App settings is not valid")
       }
 
       const originUrl = await getOriginUrlFromHeader()
       const redirectUrl = (await integrations.googleSheets.handleRequest?.({
         config: {
-          ...googleSheetsSetting,
+          ...googleCredential.config,
           redirectUrl: new URL(
             "/integrations/google-sheets/callback",
             parsedInput.referer,

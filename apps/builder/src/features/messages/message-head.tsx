@@ -12,10 +12,10 @@ import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { getFullName } from "../contacts/utils"
 import { enableBotAction } from "../conversations/actions/enable-bot.action"
 import { UpdateConversationAssignee } from "../conversations/components/update-conversation-assignee"
 import { ConversationAction } from "../conversations/conversation-action"
+import { isConversationActive } from "../conversations/utils/bot-state"
 
 export default function MessageHead() {
   const t = useTranslations()
@@ -39,6 +39,7 @@ export default function MessageHead() {
         if (activeConversation) {
           updateConversation(activeConversation.id, {
             botEnabled: true,
+            botResumeAt: null,
           })
         }
       },
@@ -55,14 +56,14 @@ export default function MessageHead() {
       <div className="flex items-center gap-2 border-b px-3 pb-3">
         <div className="flex flex-1 flex-col">
           <div className="truncate font-medium text-semibold">
-            {getFullName(activeConversation?.contact)}
+            {activeConversation?.contact?.fullName}
           </div>
           <UpdateConversationAssignee
             conversation={activeConversation}
             onChange={setAssignee}
           />
         </div>
-        {!activeConversation.botEnabled && (
+        {!isConversationActive(activeConversation) && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

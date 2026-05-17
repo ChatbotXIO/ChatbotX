@@ -1,49 +1,48 @@
 "use client"
 
-import type { FlowNode } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import { ExternalLink } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useMemo } from "react"
+import { useFormContext, useWatch } from "react-hook-form"
+import {
+  getFlowNodesOptions,
+  useFlowSelectOptions,
+} from "@/features/flows/provider/flow-hook"
 import { useFlowStore } from "@/features/flows/provider/flow-store-context"
 import { useStepStore } from "../../stores/step-store-provider"
 import { BaseStepEditor } from "../base/editor"
 
-const StartExternalNodeStepEditor = ({
-  parentName,
-}: {
+type StartExternalNodeStepEditorProps = {
   parentName: string
-}) => {
+}
+
+const StartExternalNodeStepEditor = (
+  props: StartExternalNodeStepEditorProps,
+) => {
+  const { parentName } = props
+
   const t = useTranslations()
-  const [nodeOptions, setNodeOptions] = useState<
-    { value: string; label: string }[]
-  >([])
-
   const flowOptions = useFlowSelectOptions()
-  const { flows } = useFlowStore((state) => state)
-  const { activeFlowId } = useStepStore((state) => state)
+  const flows = useFlowStore((state) => state.flows)
+  const activeFlowId = useStepStore((state) => state.activeFlowId)
+  const { control } = useFormContext()
 
-  const onFlowChange = (value?: string) => {
-    if (!value) {
-      setNodeOptions([])
-      return
-    }
+  const flowIdField = `${parentName}.flowId`
+  const nodeIdField = `${parentName}.nodeId`
 
-    const targetFlow = flows.find((f) => f.id === value)
-    if (targetFlow) {
-      setNodeOptions(
-        (
-          (targetFlow.flowVersions?.[0]?.nodes || []) as unknown as FlowNode[]
-        ).map((node) => ({
-          value: node.id,
-          label: node.data.name,
-        })),
-      )
-    } else {
-      setNodeOptions([])
+  const currentFlowId = useWatch({ control, name: flowIdField })
+
+  const nodeOptions = useMemo(() => {
+    if (!currentFlowId) {
+      return []
     }
-  }
+    const targetFlow = flows.find((f) => f.id === currentFlowId)
+    if (!targetFlow) {
+      return []
+    }
+    return getFlowNodesOptions(targetFlow.flowVersions)
+  }, [currentFlowId, flows])
 
   return (
     <BaseStepEditor
@@ -54,15 +53,14 @@ const StartExternalNodeStepEditor = ({
         <ComboboxField
           disableValues={activeFlowId ? [activeFlowId] : undefined}
           label={t("fields.flow.label")}
-          name={`${parentName}.flowId`}
+          name={flowIdField}
           options={flowOptions}
           required={true}
-          triggerValueChange={onFlowChange}
         />
 
         <ComboboxField
           label={t("fields.node.label")}
-          name={`${parentName}.nodeId`}
+          name={nodeIdField}
           options={nodeOptions}
           required={true}
         />

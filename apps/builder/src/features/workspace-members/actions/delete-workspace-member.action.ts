@@ -1,11 +1,11 @@
 "use server"
 
+import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { ChatbotXException } from "@/lib/errors/exception"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteWorkspaceMemberAction = workspaceActionClient
@@ -13,7 +13,6 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],
-      ctx,
     } = props
 
     const workspaceMember = await findOrFail({
@@ -21,11 +20,7 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
       where: { id, workspaceId },
       message: "Workspace member not found",
     })
-    if (workspaceMember.userId === ctx.user.id) {
-      throw new ChatbotXException(
-        "You cannot delete yourself from the workspace",
-      )
-    }
+
     if (workspaceMember.role === "owner") {
       throw new ChatbotXException(
         "You cannot delete the owner of the workspace",

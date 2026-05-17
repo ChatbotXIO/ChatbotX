@@ -1,5 +1,4 @@
 import { render } from "@react-email/components"
-import nodemailer from "nodemailer"
 import type { ResetPasswordProps } from "./emails/reset-password"
 import ResetPassword from "./emails/reset-password"
 import type { SignInMagicLinkProps } from "./emails/sign-in-magic-link"
@@ -8,9 +7,10 @@ import SignUpVerification, {
   type SignUpVerificationProps,
 } from "./emails/sign-up-verification"
 import { keys } from "./keys"
+import { createSmtpTransporter } from "./transport"
 
 const env = keys()
-const transporter = nodemailer.createTransport(env.SMTP_SERVER)
+const transporter = createSmtpTransporter()
 
 async function sendMail(email: string, subject: string, html: string) {
   await transporter.sendMail({

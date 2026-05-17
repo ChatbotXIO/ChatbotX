@@ -1,15 +1,5 @@
 import { z } from "zod"
-import { emailButtonStepSchema } from "../steps/email-button"
-import { emailCodeStepSchema } from "../steps/email-code"
-import { emailH3StepSchema } from "../steps/email-h3"
-import {
-  emailHeaderStepDefaultFn,
-  emailHeaderStepSchema,
-} from "../steps/email-header"
-import { emailImageStepSchema } from "../steps/email-image"
-import { emailLineStepSchema } from "../steps/email-line"
-import { emailSpacingStepSchema } from "../steps/email-spacing"
-import { emailTextStepSchema } from "../steps/email-text"
+import { emailStepDefaultFn, emailStepSchema } from "../steps/email"
 import {
   baseNodeDataSchema,
   baseNodeSchema,
@@ -22,18 +12,7 @@ export const sendMailNodeSchema = baseNodeSchema.extend({
   type: z.literal(nodeTypeSchema.enum.sendMail),
   data: baseNodeDataSchema.extend({
     details: z.object({
-      beforeStep: emailHeaderStepSchema,
-      steps: z.array(
-        z.union([
-          emailH3StepSchema,
-          emailTextStepSchema,
-          emailImageStepSchema,
-          emailButtonStepSchema,
-          emailSpacingStepSchema,
-          emailCodeStepSchema,
-          emailLineStepSchema,
-        ]),
-      ),
+      steps: z.array(emailStepSchema),
     }),
   }),
 })
@@ -51,9 +30,7 @@ export const sendMailNodeDefaultFn = (
     isStartNode: false,
     ...props.dataProps,
     details: {
-      beforeStep: emailHeaderStepDefaultFn(),
-      steps: [],
-      ...props.detailProps,
+      steps: [emailStepDefaultFn()],
     },
   },
 })

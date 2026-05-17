@@ -49,7 +49,7 @@ export default function BarChart({ title, data, helpText }: BarChartProps) {
         >
           <BC data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" />
+            <XAxis dataKey="name" />
             <YAxis width="auto" />
             {barLabels.map((label, index) => (
               <Bar

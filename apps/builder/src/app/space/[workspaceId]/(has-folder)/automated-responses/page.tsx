@@ -1,3 +1,4 @@
+import { rootFolderId } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -17,10 +18,12 @@ export default async function AutomatedResponesPage(props: {
 
   const searchParams = await props.searchParams
   const search = listAutomatedResponsesSearchParams.parse(searchParams)
+  const folderId = search.folderId ?? rootFolderId
 
   const promises = Promise.all([
     listAutomatedResponses({
       ...search,
+      folderId,
       workspaceId,
     }),
   ])

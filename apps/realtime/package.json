@@ -1,0 +1,29 @@
+{
+  "name": "realtime",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "dev": "dotenv -e ../../.env -- partykit dev",
+    "https": "dotenv -e ../../.env -- partykit dev --https --https-key-path certificates/partysocket.pem --https-cert-path certificates/partysocket.pem",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "@chatbotx.io/partysocket-config": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
+    "jose": "^6.2.3",
+    "ky": "^2.0.2",
+    "partykit": "0.0.115",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
+    "@types/node": "24.x",
+    "dotenv-cli": "^11.0.0",
+    "vitest": "^3.2.4"
+  }
+}

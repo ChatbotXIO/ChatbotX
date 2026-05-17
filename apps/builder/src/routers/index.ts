@@ -13,6 +13,7 @@ import { errorLogsAPI } from "@/features/error-logs/api"
 import { flowsAPI } from "@/features/flows/api"
 import { foldersAPI } from "@/features/folders/api"
 import { inboxesAPI } from "@/features/inboxes/api"
+import { integrationSmtpAPI } from "@/features/integration-smtp/api"
 import { integrationWhatsappAPIs } from "@/features/integration-whatsapp/api"
 import { whatsappMessageTemplateAPIs } from "@/features/integration-whatsapp/message-templates/api"
 import { messagesAPI } from "@/features/messages/api"
@@ -39,6 +40,7 @@ export const router = {
     // @ts-expect-error
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
     .router(analyticsRoutes),
+  integrationSmtpAPI,
   integrationWhatsappAPIs,
   whatsappMessageTemplateAPIs,
   savedRepliesAPI,

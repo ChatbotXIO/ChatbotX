@@ -1,0 +1,10 @@
+{
+  "$schema": "https://www.partykit.io/schema.json",
+  "name": "realtime",
+  "main": "src/server.ts",
+  "compatibilityDate": "2025-01-03",
+  "parties": {
+    "workspaces": "src/parties/workspaces.ts",
+    "guests": "src/parties/guests.ts"
+  }
+}

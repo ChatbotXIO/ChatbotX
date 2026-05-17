@@ -17,21 +17,25 @@
     ]
   },
   "scripts": {
-    "generate:component": "turbo gen react-component",
+    "check-types": "tsc --noEmit --emitDeclarationOnly false",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "check-types": "tsc --noEmit --emitDeclarationOnly false"
+    "generate:component": "turbo gen react-component",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
+    "@chatbotx.io/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/color": "^4.2.1",
     "@types/mime-types": "^3.0.1",
     "@types/node": "^24.10.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",
@@ -81,7 +85,7 @@
     "frimousse": "^0.3.0",
     "input-otp": "^1.4.2",
     "ky": "^2.0.2",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.14.0",
     "mime-types": "^3.0.2",
     "motion": "^12.38.0",
     "next-themes": "^0.4.6",
@@ -92,11 +96,11 @@
     "react-day-picker": "^9.14.0",
     "react-dom": "19.2.5",
     "react-easy-sort": "^1.8.0",
-    "react-hook-form": "^7.73.1",
+    "react-hook-form": "^7.74.0",
     "react-number-format": "^5.4.5",
     "react-resizable-panels": "^4.10.0",
     "recharts": "^3.8.1",
-    "remeda": "^2.33.7",
+    "remeda": "^2.34.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tw-animate-css": "^1.4.0",

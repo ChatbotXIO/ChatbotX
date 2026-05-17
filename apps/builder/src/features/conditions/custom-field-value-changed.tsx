@@ -19,8 +19,8 @@ import { Controller, useFormContext } from "react-hook-form"
 import {
   convertCustomFieldTypeToConditionType,
   getConditionOptions,
-  MAPPING_CONDITIONS,
-} from "@/features/contacts/components/contact-filter"
+} from "@/features/contacts/components/contact-filter-config"
+import { mappingConditions } from "@/features/contacts/schemas/contact-filter"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 
@@ -53,7 +53,7 @@ export const CustomFieldValueChanged = ({
       return []
     }
 
-    const enableOperators = MAPPING_CONDITIONS[conditionType]
+    const enableOperators = mappingConditions[conditionType]
     return conditionOptions.map((option) => ({
       ...option,
       disabled: !enableOperators.includes(option.value),
@@ -181,7 +181,7 @@ export const CustomFieldValueChanged = ({
 
           {customFieldType === customFieldTypes.enum.boolean &&
             form.getValues(`${parentName}.operator`) ===
-              operatorTypes.enum.is && (
+              operatorTypes.enum.eq && (
               <Controller
                 control={form.control}
                 name={`${parentName}.value`}

@@ -11,8 +11,9 @@ import { BaseHandle } from "@/components/base-handle"
 
 export const BaseStateViewer = (props: {
   data: SuccessStateSchema | ErrorStateSchema | SkipStateSchema
+  label?: string
 }) => {
-  const { data } = props
+  const { data, label } = props
   const t = useTranslations()
 
   const variants = {
@@ -34,7 +35,7 @@ export const BaseStateViewer = (props: {
         `text-${variants[data.stateType]}-500!`,
       )}
     >
-      <div className="mr-4">{labelVariants[data.stateType]}</div>
+      <div className="mr-4">{label || labelVariants[data.stateType]}</div>
       <BaseHandle
         className={cn(
           "transform-none! top-0.5!",

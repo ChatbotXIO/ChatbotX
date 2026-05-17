@@ -35,7 +35,7 @@ export const analyticsContactRoutes = os.router({
     .input(timeRangeQuerySchema)
     .output(getContactCountsResponseSchema)
     .handler(async ({ input }) => {
-      const data = await contactAnalyticsService.getContactCountsPerDay(input)
+      const data = await contactAnalyticsService.getNewContactsPerDay(input)
       return { data }
     }),
   newContactsCountAnalyticsAPI: os

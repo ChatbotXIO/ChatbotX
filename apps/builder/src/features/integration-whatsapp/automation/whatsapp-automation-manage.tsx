@@ -12,12 +12,17 @@ import {
 } from "@chatbotx.io/ui/components/ui/table"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { use } from "react"
+import { use, useEffect } from "react"
+import { toast } from "sonner"
 import type { findWhatsappAutomation } from "./queries"
+
+type WhatsappAutomationResponse = Awaited<
+  ReturnType<typeof findWhatsappAutomation>
+> & { error?: string }
 
 type WhatsappAutomationManageProps = {
   integrationWhatsapp: IntegrationWhatsappModel
-  promises: Promise<[Awaited<ReturnType<typeof findWhatsappAutomation>>]>
+  promises: Promise<[WhatsappAutomationResponse]>
 }
 
 export function WhatsappAutomationManage({
@@ -25,7 +30,13 @@ export function WhatsappAutomationManage({
   promises,
 }: WhatsappAutomationManageProps) {
   const t = useTranslations()
-  const [{ prompts, commands }] = use(promises)
+  const [{ prompts, commands, error }] = use(promises)
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
 
   const auth = integrationWhatsapp.auth as unknown as WhatsappAuthValue
   const managerUrl = `https://business.facebook.com/latest/whatsapp_manager/phone_numbers?business_id=${auth.metadata.businessId}&asset_id=${auth.metadata.wabaId}`
