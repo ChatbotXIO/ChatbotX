@@ -30,18 +30,6 @@ class AiFunctionService extends BaseService {
     })
   }
 
-  async list(props: {
-    tx?: DatabaseClient
-    where: Partial<{
-      workspaceId?: string
-    }>
-  }): Promise<AIFunctionModel[]> {
-    const { tx = db, where } = props
-    return await tx.query.aiFunctionModel.findMany({
-      where,
-    })
-  }
-
   async create(workspaceId: string, data: CreateAIFunctionRequest) {
     return await db
       .insert(aiFunctionModel)

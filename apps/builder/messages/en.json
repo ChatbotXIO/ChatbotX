@@ -1411,6 +1411,7 @@
     "createFeature": "Create {feature}",
     "noItemsFound": "No items found",
     "editFeature": "Edit {feature}",
+    "duplicateFeature": "Duplicate {feature}",
     "deleteFeature": "Delete {feature}",
     "deleteConfirmation": "Are you absolutely sure?\nThis action cannot be undone.\nThis will permanently delete your {feature} from our servers.",
     "addFeature": "Add {feature}",

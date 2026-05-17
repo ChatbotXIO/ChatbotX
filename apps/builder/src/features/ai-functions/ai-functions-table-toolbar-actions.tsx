@@ -1,13 +1,10 @@
 "use client"
 
-import type { AIFunctionModel } from "@chatbotx.io/database/types"
-import type { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { AIFunctionsCreate } from "./ai-functions-create"
 
 type AIFunctionsTableToolbarActionsProps = {
   workspaceId: string
-  table: Table<AIFunctionModel>
 }
 
 export function AIFunctionsTableToolbarActions({

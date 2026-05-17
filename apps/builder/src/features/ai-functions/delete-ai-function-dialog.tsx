@@ -14,6 +14,7 @@ import {
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { useMemo } from "react"
 import { toast } from "sonner"
 import { deleteAIFunctionAction } from "./actions/delete-ai-function.action"
 
@@ -32,25 +33,27 @@ export function DeleteAIFunctionDialog({
 }) {
   const t = useTranslations()
 
-  const { execute, isPending } = useAction(
-    deleteAIFunctionAction.bind(null, workspaceId, aiFunction?.id ?? ""),
-    {
-      onSuccess: () => {
-        toast.success(
-          t("messages.deletedSuccess", {
-            feature: t("fields.aiFunction.label"),
-          }),
-        )
-        onOpenChange(false)
-        onSuccess?.()
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
+  const boundAction = useMemo(
+    () => deleteAIFunctionAction.bind(null, workspaceId, aiFunction?.id ?? ""),
+    [workspaceId, aiFunction?.id],
   )
+
+  const { execute, isPending } = useAction(boundAction, {
+    onSuccess: () => {
+      toast.success(
+        t("messages.deletedSuccess", {
+          feature: t("fields.aiFunction.label"),
+        }),
+      )
+      onOpenChange(false)
+      onSuccess?.()
+    },
+    onError: ({ error }) => {
+      if (error.serverError) {
+        toast.error(error.serverError)
+      }
+    },
+  })
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>

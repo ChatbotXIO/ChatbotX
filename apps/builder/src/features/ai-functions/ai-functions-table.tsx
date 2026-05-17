@@ -63,10 +63,7 @@ export function AIFunctionsTable({
       <CardContent>
         <DataTable table={table}>
           <DataTableToolbar table={table}>
-            <AIFunctionsTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
+            <AIFunctionsTableToolbarActions workspaceId={workspaceId} />
           </DataTableToolbar>
         </DataTable>
 

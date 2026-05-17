@@ -22,35 +22,34 @@ export const updateAIFunctionAction = workspaceActionClient
     } = props
     const t = await getTranslations()
 
-    if (parsedInput.name) {
-      const existing = await aiFunctionService.findBy({
-        where: {
-          workspaceId,
-          name: parsedInput.name,
+    const existing = await aiFunctionService.findBy({
+      where: {
+        workspaceId,
+        name: parsedInput.name,
+      },
+    })
+
+    if (existing && existing.id !== id) {
+      return returnValidationErrors(updateAIFunctionRequest, {
+        name: {
+          _errors: [
+            t("messages.nameAlreadyExists", {
+              feature: t("fields.aiFunction.label"),
+            }),
+          ],
         },
       })
-
-      if (existing && existing.id !== id) {
-        return returnValidationErrors(updateAIFunctionRequest, {
-          name: {
-            _errors: [
-              t("messages.nameAlreadyExists", {
-                feature: t("fields.aiFunction.label"),
-              }),
-            ],
-          },
-        })
-      }
     }
 
-    return await updateAIFunction({ workspaceId, id }, parsedInput)
+    return await updateAIFunction({ workspaceId, id }, parsedInput, t)
   })
 
 export const updateAIFunction = async (
   ctx: { workspaceId: string; id: string },
   parsedInput: UpdateAIFunctionRequest,
+  t?: Awaited<ReturnType<typeof getTranslations>>,
 ) => {
-  const t = await getTranslations()
+  const translations = t ?? (await getTranslations())
 
   const aiFunction = await aiFunctionService.findBy({
     where: {
@@ -61,7 +60,7 @@ export const updateAIFunction = async (
 
   if (!aiFunction) {
     throw notFoundException(
-      t("messages.featureNotFound", { feature: "AIFunction" }),
+      translations("messages.featureNotFound", { feature: "AIFunction" }),
     )
   }
 

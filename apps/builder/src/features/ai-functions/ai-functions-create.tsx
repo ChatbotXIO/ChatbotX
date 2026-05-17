@@ -101,7 +101,10 @@ export function AIFunctionsCreate({
 
     if (initialData) {
       form.reset({
-        name: initialData.name,
+        name:
+          mode === "duplicate"
+            ? `${initialData.name} (copy)`
+            : initialData.name,
         purpose: initialData.purpose ?? "",
         dataCollect:
           (initialData.dataCollect as { from: string; to: string }[]) ?? [],
@@ -117,17 +120,22 @@ export function AIFunctionsCreate({
         triggerFlowId: null,
       })
     }
-  }, [isOpen, initialData, form])
+  }, [isOpen, initialData, form, mode])
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "dataCollect",
   })
 
-  const title =
-    mode === "edit"
-      ? t("messages.editFeature", { feature: t("fields.aiFunction.label") })
-      : t("messages.createFeature", { feature: t("fields.aiFunction.label") })
+  let titleKey = "messages.createFeature"
+  if (mode === "edit") {
+    titleKey = "messages.editFeature"
+  }
+  if (mode === "duplicate") {
+    titleKey = "messages.duplicateFeature"
+  }
+
+  const title = t(titleKey, { feature: t("fields.aiFunction.label") })
 
   const trigger = controlledOpen === undefined && (
     <DialogTrigger asChild>

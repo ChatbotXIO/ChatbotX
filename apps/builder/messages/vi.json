@@ -1425,6 +1425,7 @@
     "createFeature": "Tạo {feature}",
     "noItemsFound": "Không tìm thấy mục nào",
     "editFeature": "Chỉnh sửa {feature}",
+    "duplicateFeature": "Nhân bản {feature}",
     "deleteFeature": "Xóa {feature}",
     "deleteConfirmation": "Bạn có thực sự chắc chắn?\nHành động này không thể hoàn tác.\nĐiều này sẽ xóa vĩnh viễn {feature} khỏi máy chủ của chúng tôi.",
     "addFeature": "Thêm {feature}",
