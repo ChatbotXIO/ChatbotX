@@ -55,14 +55,19 @@ const NETWORK_ERROR_CODES = new Set([
   2, // Service unavailable
 ])
 
+// FB Send API: recipient cannot receive messages (blocked page / opted out / unreachable).
+const USER_BLOCKED_CODES = new Set([
+  551, // This person isn't available right now
+])
+
+// FB Send API: code 200 (permission) + subcode 1545041 = user opted out of messages.
+const USER_BLOCKED_SUBCODES = new Set([1_545_041])
+
 function categorize(
   code: number | undefined,
+  subCode: number | string | undefined,
   type: string | undefined,
 ): ChannelErrorCategory {
-  if (type === "OAuthException") {
-    return ChannelErrorCategory.AUTH_FAILED
-  }
-
   if (code === undefined) {
     return ChannelErrorCategory.UNKNOWN
   }
@@ -73,6 +78,18 @@ function categorize(
 
   if (RATE_LIMITED_CODES.has(code)) {
     return ChannelErrorCategory.RATE_LIMITED
+  }
+
+  if (USER_BLOCKED_CODES.has(code)) {
+    return ChannelErrorCategory.USER_BLOCKED
+  }
+
+  if (
+    code === 200 &&
+    subCode !== undefined &&
+    USER_BLOCKED_SUBCODES.has(Number(subCode))
+  ) {
+    return ChannelErrorCategory.USER_BLOCKED
   }
 
   // 200-299 = API Permission range
@@ -86,6 +103,10 @@ function categorize(
 
   if (PAYLOAD_INVALID_CODES.has(code)) {
     return ChannelErrorCategory.PAYLOAD_INVALID
+  }
+
+  if (type === "OAuthException") {
+    return ChannelErrorCategory.AUTH_FAILED
   }
 
   return ChannelErrorCategory.UNKNOWN
@@ -109,7 +130,7 @@ function defaultHttpStatus(category: ChannelErrorCategory): number {
 
 function mapApiFields(fields: ChannelErrorSource): ChannelError {
   const numCode = typeof fields.code === "number" ? fields.code : undefined
-  const category = categorize(numCode, fields.type)
+  const category = categorize(numCode, fields.subCode ?? undefined, fields.type)
   return new ChannelError(fields.message ?? UNKNOWN_ERROR.message, category, {
     code: fields.code ?? UNKNOWN_ERROR.code,
     httpStatusCode: fields.httpStatusCode ?? defaultHttpStatus(category),

@@ -9,6 +9,7 @@ import {
 export const analyticsDashboardEventTypeSchema = z.enum([
   "contact:created",
   "contact:deleted",
+  "contact:blocked",
   "message:human_sent",
   "message:bot_sent",
   "conversation:created",
@@ -51,6 +52,13 @@ export const contactDeletedEventSchema = baseContactEventPayloadSchema.extend({
 })
 export type ContactDeletedEventPayload = z.infer<
   typeof contactDeletedEventSchema
+>
+
+export const contactBlockedEventSchema = baseContactEventPayloadSchema.extend({
+  eventType: z.literal("contact:blocked"),
+})
+export type ContactBlockedEventPayload = z.infer<
+  typeof contactBlockedEventSchema
 >
 
 export const humanMessageSentEventSchema = baseContactEventPayloadSchema.extend(
@@ -146,6 +154,7 @@ export type MessageBotReceivedEventPayload = z.infer<
 export const analyticsDashboardEventSchema = z.discriminatedUnion("eventType", [
   contactCreatedEventSchema,
   contactDeletedEventSchema,
+  contactBlockedEventSchema,
   humanMessageSentEventSchema,
   botMessageSentEventSchema,
   conversationCreatedEventSchema,

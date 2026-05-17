@@ -71,6 +71,8 @@ const SUBCODE_OVERRIDES = new Map<number, ChannelErrorCategory>([
   [2_018_028, ChannelErrorCategory.QUOTA_EXCEEDED],
   // Invalid IGID / no matching user
   [2_018_001, ChannelErrorCategory.INVALID_RECIPIENT],
+  // User opted out of messages (FB Send API subcode under code 200)
+  [1_545_041, ChannelErrorCategory.USER_BLOCKED],
   // IG Content Publishing subcodes
   [2_207_042, ChannelErrorCategory.QUOTA_EXCEEDED], // Daily publishing limit
   [2_207_050, ChannelErrorCategory.PERMISSION_DENIED], // Account restricted
@@ -84,10 +86,6 @@ function categorize(
   subcode: number | undefined,
   type: string | undefined,
 ): ChannelErrorCategory {
-  if (type === "OAuthException") {
-    return ChannelErrorCategory.AUTH_FAILED
-  }
-
   if (subcode !== undefined && SUBCODE_OVERRIDES.has(subcode)) {
     const override = SUBCODE_OVERRIDES.get(subcode)
     if (override !== undefined) {
@@ -126,6 +124,10 @@ function categorize(
 
   if (PAYLOAD_INVALID_CODES.has(code)) {
     return ChannelErrorCategory.PAYLOAD_INVALID
+  }
+
+  if (type === "OAuthException") {
+    return ChannelErrorCategory.AUTH_FAILED
   }
 
   return ChannelErrorCategory.UNKNOWN

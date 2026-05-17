@@ -3,6 +3,7 @@ export type {
   AnalyticsDashboardEventMap,
   AnalyticsDashboardEventType,
   BotMessageSentEventPayload,
+  ContactBlockedEventPayload,
   ContactCreatedEventPayload,
   ContactDeletedEventPayload,
   HumanMessageSentEventPayload,

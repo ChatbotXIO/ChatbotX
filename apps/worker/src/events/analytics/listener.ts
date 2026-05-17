@@ -5,7 +5,11 @@ import type {
 } from "@chatbotx.io/event-bus"
 import { logger } from "../../lib/logger"
 import { handleMessageBotReceived } from "./bot-message"
-import { handleContactCreated, handleContactDeleted } from "./contact"
+import {
+  handleContactBlocked,
+  handleContactCreated,
+  handleContactDeleted,
+} from "./contact"
 import {
   handleConversationArchived,
   handleConversationAssigned,
@@ -78,6 +82,13 @@ export const analyticsDashboardListeners: Partial<
             handleContactDeleted,
             grouped.get("contact:deleted") as Parameters<
               typeof handleContactDeleted
+            >[0],
+          ),
+          runHandler(
+            "contact:blocked",
+            handleContactBlocked,
+            grouped.get("contact:blocked") as Parameters<
+              typeof handleContactBlocked
             >[0],
           ),
           runHandler(

@@ -3,6 +3,7 @@ import { z } from "zod"
 export const analyticsContactEventTypes = z.enum([
   "contact_created",
   "contact_deleted",
+  "contact_blocked",
 ])
 export type AnalyticsContactEventType = z.infer<
   typeof analyticsContactEventTypes

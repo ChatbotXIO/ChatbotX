@@ -1,62 +1,29 @@
 "use client"
 
 import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
+import { format } from "date-fns"
 import { useTranslations } from "next-intl"
+import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { getTimeRangeDateFormat } from "../../utils/date-format"
 
 export function BlockedContactsChart() {
   const t = useTranslations()
+  const { blockedContactCounts, from, to } = useAnalysisStore((state) => state)
+  const dateFormat = getTimeRangeDateFormat(from, to)
 
   return (
     <BarChart
-      data={[
-        {
-          name: "Jan 7",
-          value: [
-            {
-              label: t("analytics.conversations"),
-              value: 1,
-            },
-          ],
-        },
-        {
-          name: "Jan 8",
-          value: [
-            {
-              label: t("analytics.conversations"),
-              value: 2,
-            },
-          ],
-        },
-        {
-          name: "Jan 9",
-          value: [
-            {
-              label: t("analytics.conversations"),
-              value: 0,
-            },
-          ],
-        },
-        {
-          name: "Jan 10",
-          value: [
-            {
-              label: t("analytics.conversations"),
-              value: 3,
-            },
-          ],
-        },
-        {
-          name: "Jan 11",
-          value: [
-            {
-              label: t("analytics.conversations"),
-              value: 1,
-            },
-          ],
-        },
-      ]}
-      helpText={t("analytics.blockedConversationsHelp")}
-      title={t("analytics.blockedConversations")}
+      data={blockedContactCounts.map((count) => ({
+        name: format(count.date, dateFormat),
+        value: [
+          {
+            label: t("analytics.blockedContacts"),
+            value: count.count,
+          },
+        ],
+      }))}
+      helpText={t("analytics.blockedContactsHelp")}
+      title={t("analytics.blockedContacts")}
     />
   )
 }

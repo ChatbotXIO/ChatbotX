@@ -1,5 +1,6 @@
 import {
   broadcastAnalyticsService,
+  contactAnalyticsService,
   flowAnalyticsService,
   sequenceAnalyticsService,
 } from "@chatbotx.io/analytics"
@@ -39,6 +40,12 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "flow-ops",
       handler: flowAnalyticsService.onMessageFailed.bind(flowAnalyticsService),
+    },
+    {
+      name: "contact-blocked-detection",
+      handler: contactAnalyticsService.handleBlocked.bind(
+        contactAnalyticsService,
+      ),
     },
   ],
   [messageEventTypeSchema.enum["message:delivered"]]: [

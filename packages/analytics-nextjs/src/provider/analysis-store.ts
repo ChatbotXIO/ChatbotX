@@ -42,9 +42,11 @@ export type AnalysisState = {
   // stats
   contactCounts: ContactCountsSchema[]
   newContactCounts: ContactCountsSchema[]
+  blockedContactCounts: ContactCountsSchema[]
   inboxTotalContacts: number
   inboxNewContacts: number
   inboxActiveContacts: number
+  inboxBlockedContacts: number
   botMessagesByResult: BotMessageStats[]
   botMessagesAIProviders: BotMessageAIProviderStats[]
   messagesBySender: MessagesBySenderStats[]
@@ -71,9 +73,11 @@ export type AnalysisActions = {
 
   getContactCounts: () => Promise<void>
   getNewContactCounts: () => Promise<void>
+  getBlockedContactCounts: () => Promise<void>
   getInboxTotalContacts: () => Promise<void>
   getInboxNewContacts: () => Promise<void>
   getInboxActiveContacts: () => Promise<void>
+  getInboxBlockedContacts: () => Promise<void>
   getBotMessagesByResult: () => Promise<void>
   getBotMessagesAIProviders: () => Promise<void>
   getMessagesBySender: () => Promise<void>
@@ -108,9 +112,11 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     // Default stats
     contactCounts: [],
     newContactCounts: [],
+    blockedContactCounts: [],
     inboxTotalContacts: 0,
     inboxNewContacts: 0,
     inboxActiveContacts: 0,
+    inboxBlockedContacts: 0,
     botMessagesByResult: [],
     botMessagesAIProviders: [],
     messagesBySender: [],
@@ -151,9 +157,11 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
       const {
         getContactCounts,
         getNewContactCounts,
+        getBlockedContactCounts,
         getInboxTotalContacts,
         getInboxNewContacts,
         getInboxActiveContacts,
+        getInboxBlockedContacts,
         getBotMessagesByResult,
         getBotMessagesAIProviders,
         getMessagesBySender,
@@ -176,9 +184,11 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
       await Promise.all([
         getContactCounts(),
         getNewContactCounts(),
+        getBlockedContactCounts(),
         getInboxTotalContacts(),
         getInboxNewContacts(),
         getInboxActiveContacts(),
+        getInboxBlockedContacts(),
         getBotMessagesByResult(),
         getBotMessagesAIProviders(),
         getMessagesBySender(),
@@ -243,6 +253,47 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
         set({ newContactCounts })
       } catch (error: unknown) {
         get().handleError("getNewContactCounts", error)
+      }
+    },
+
+    getBlockedContactCounts: async () => {
+      const { defaultSearchParams, from, to } = get()
+
+      try {
+        const { data: blockedContactCounts } = await ky
+          .get("/api/analytics/blocked-contacts-per-day", {
+            searchParams: {
+              ...defaultSearchParams,
+              from: from.toISOString(),
+              to: to.toISOString(),
+            },
+          })
+          .json<GetContactCountsResponseSchema>()
+
+        set({ blockedContactCounts })
+      } catch (error: unknown) {
+        get().handleError("getBlockedContactCounts", error)
+      }
+    },
+
+    getInboxBlockedContacts: async () => {
+      const { defaultSearchParams, from, to } = get()
+
+      try {
+        const result = await ky
+          .get("/api/analytics/blocked-contacts-count", {
+            searchParams: {
+              ...defaultSearchParams,
+              from: from.toISOString(),
+              to: to.toISOString(),
+            },
+          })
+          .json<GetContactsCountResponseSchema>()
+
+        set({ inboxBlockedContacts: result.data.count })
+      } catch (error: unknown) {
+        get().handleError("getInboxBlockedContacts", error)
+        set({ inboxBlockedContacts: 0 })
       }
     },
 

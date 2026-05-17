@@ -1183,6 +1183,9 @@ importers:
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger
+      '@chatbotx.io/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../utils

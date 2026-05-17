@@ -205,17 +205,17 @@ export class SequenceStatsRepository extends BaseRepository {
     )
     const failedCases = items.map(
       (i) =>
-        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt}`,
+        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt.toISOString()}::timestamptz`,
     )
     const errorCases = items.map(
       (i) =>
-        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.errorContent}`,
+        sql`WHEN "sequenceId" = ${i.sequenceId} AND "stepId" = ${i.stepId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.errorContent}::text`,
     )
 
     await db.execute(sql`
       UPDATE "SequenceDispatch"
-      SET "failedAt" = COALESCE("failedAt", CASE ${sql.join(failedCases, sql` `)} END),
-          "errorContent" = COALESCE("errorContent", CASE ${sql.join(errorCases, sql` `)} END)
+      SET "failedAt" = COALESCE("failedAt", CASE ${sql.join(failedCases, sql` `)} ELSE NULL::timestamptz END),
+          "errorContent" = COALESCE("errorContent", CASE ${sql.join(errorCases, sql` `)} ELSE NULL::text END)
       WHERE ("sequenceId", "stepId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
   }

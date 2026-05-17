@@ -60,6 +60,7 @@ const USER_BLOCKED_CODES = new Set([
   -139, // User refused this template type
   -140, // User not eligible under delivery policy
   -141, // User refused phone messages from OA
+  -216, // User blocked OA
 ])
 
 const INVALID_RECIPIENT_CODES = new Set([

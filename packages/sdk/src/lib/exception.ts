@@ -14,6 +14,9 @@ export class SdkException extends Error {
   subCode?: string | number | null
   originError?: Error
   type?: string
+  category?: string
+  isRetryable?: boolean
+  isPermanent?: boolean
 
   constructor(
     message: string,
@@ -52,6 +55,9 @@ export class SdkException extends Error {
       code: this.code ?? UNKNOWN_ERROR.code,
       statusCode: this.httpStatusCode ?? UNKNOWN_ERROR.statusCode,
       subcode: this.subCode ?? UNKNOWN_ERROR.subcode,
+      category: this.category,
+      isRetryable: this.isRetryable,
+      isPermanent: this.isPermanent,
     })
   }
 

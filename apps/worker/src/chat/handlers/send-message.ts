@@ -4,8 +4,12 @@ import type {
   ContactInboxModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
-import type { SendFlowStepData } from "@chatbotx.io/sdk"
+import { emit } from "@chatbotx.io/event-bus"
+import {
+  type MetadataPayload,
+  messageEventTypeSchema,
+} from "@chatbotx.io/flow-config"
+import { parseSdkError, type SendFlowStepData } from "@chatbotx.io/sdk"
 import type {
   ChatJobSendChannelMessage,
   ChatJobSendTyping,
@@ -26,14 +30,34 @@ export async function sendMessageToChannel(
     contactInbox,
   })
 
-  await integration.runChannelHandler("message", "sendMessage", {
-    ctx,
-    data: {
-      contact: contactInbox,
-      message,
+  try {
+    await integration.runChannelHandler("message", "sendMessage", {
+      ctx,
+      data: {
+        contact: contactInbox,
+        message,
+        metadata,
+      },
+    })
+  } catch (error) {
+    logger.error(error, "An error occurred while sending the message")
+    await emit(messageEventTypeSchema.enum["message:failed"], {
+      context: {
+        workspaceId: conversation.workspaceId,
+        contactId: conversation.contactId,
+        conversationId: conversation.id,
+        channel: contactInbox.channel,
+        contactInboxId: contactInbox.id,
+      },
+      action: {
+        messageId: message?.id ?? "",
+      },
+      errorData: await parseSdkError(error),
+      occurredAt: new Date(),
       metadata,
-    },
-  })
+    })
+    throw error
+  }
 }
 
 export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {

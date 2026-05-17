@@ -262,16 +262,22 @@ export class ContactStatsRepository extends BaseRepository {
 
     const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
 
+    // Baseline must query the raw hypertable, not the
+    // `analytics_contact_events_hourly` continuous aggregate. The cagg refresh
+    // policy materializes only the last 7 days; events older than that are
+    // below the invalidation watermark and never appear in the cagg, so a
+    // cagg-based baseline returns 0 for any workspace whose first contact
+    // pre-dates the cagg window.
     const [baselineResult, seriesResult] = await Promise.all([
       db.execute(sql`
         SELECT COALESCE(
-          SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END) -
-          SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END),
+          COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
+          COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
           0
         )::int AS baseline
-        FROM analytics_contact_events_hourly
+        FROM "AnalyticsContactEvent"
         WHERE "workspaceId" = ${workspaceId}
-          AND bucket < ${dayStart}
+          AND "occurredAt" < ${dayStart}
           AND "eventType" IN ('contact_created', 'contact_deleted')
       `),
       db.execute(sql`
@@ -376,14 +382,18 @@ export class ContactStatsRepository extends BaseRepository {
 
     const { workspaceId, from, to, timezone } = props
 
+    // Use raw table with COUNT(DISTINCT contactId) so duplicate
+    // `contact_created` events for the same contact within a day collapse to
+    // 1. Matches the legacy ClickHouse `uniqMerge` semantic and keeps the sum
+    // of daily values consistent with `getNewContactsCount`.
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
-        SUM(count)::int AS new_contacts
-      FROM analytics_contact_events_hourly
+        time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+        COUNT(DISTINCT "contactId")::int AS new_contacts
+      FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
       GROUP BY 1
       ORDER BY 1 ASC
@@ -406,12 +416,12 @@ export class ContactStatsRepository extends BaseRepository {
 
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
-        SUM(count)::int AS new_contacts
-      FROM analytics_contact_events_hourly
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+        COUNT(DISTINCT "contactId")::int AS new_contacts
+      FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
       GROUP BY 1
       ORDER BY 1 ASC
@@ -437,6 +447,83 @@ export class ContactStatsRepository extends BaseRepository {
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
         AND "eventType" = 'contact_created'
+    `)
+
+    return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)
+  }
+
+  async getBlockedContactsPerDay(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    if (shouldUseMonthlyGranularity(props)) {
+      return this.getBlockedContactsPerMonth(props)
+    }
+
+    const { workspaceId, from, to, timezone } = props
+
+    // COUNT(DISTINCT contactId) — same contact blocked twice in a day (manual
+    // path + auto-detect via message:failed) collapses to 1.
+    const result = await db.execute(sql`
+      SELECT
+        time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+        COUNT(DISTINCT "contactId")::int AS blocked_contacts
+      FROM "AnalyticsContactEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
+        AND "eventType" = 'contact_blocked'
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `)
+
+    const raw = (result.rows as { day: Date; blocked_contacts: number }[]).map(
+      (row) => ({
+        date: row.day,
+        count: Number(row.blocked_contacts),
+      }),
+    )
+
+    return fillDailyNewContactsSeries({ ...props, raw })
+  }
+
+  private async getBlockedContactsPerMonth(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    const { workspaceId, from, to, timezone } = props
+
+    const result = await db.execute(sql`
+      SELECT
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+        COUNT(DISTINCT "contactId")::int AS blocked_contacts
+      FROM "AnalyticsContactEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
+        AND "eventType" = 'contact_blocked'
+      GROUP BY 1
+      ORDER BY 1 ASC
+    `)
+
+    const raw = (
+      result.rows as { month: Date; blocked_contacts: number }[]
+    ).map((row) => ({
+      date: row.month,
+      count: Number(row.blocked_contacts),
+    }))
+
+    return fillMonthlyNewContactsSeries({ ...props, raw })
+  }
+
+  async getBlockedContactsCount(props: TimeRangeQuery): Promise<number> {
+    const { workspaceId, from, to } = props
+
+    const result = await db.execute(sql`
+      SELECT COUNT(DISTINCT "contactId")::int AS count
+      FROM "AnalyticsContactEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
+        AND "eventType" = 'contact_blocked'
     `)
 
     return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)

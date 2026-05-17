@@ -30,17 +30,17 @@ export class BroadcastStatsRepository extends BaseRepository {
     )
     const failedCases = items.map(
       (i) =>
-        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt}`,
+        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt.toISOString()}::timestamptz`,
     )
     const errorCases = items.map(
       (i) =>
-        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.errorContent}`,
+        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.errorContent}::text`,
     )
 
     await db.execute(sql`
       UPDATE "ContactOnBroadcast"
-      SET "failedAt" = COALESCE("failedAt", CASE ${sql.join(failedCases, sql` `)} END),
-          "errorContent" = COALESCE("errorContent", CASE ${sql.join(errorCases, sql` `)} END)
+      SET "failedAt" = COALESCE("failedAt", CASE ${sql.join(failedCases, sql` `)} ELSE NULL::timestamptz END),
+          "errorContent" = COALESCE("errorContent", CASE ${sql.join(errorCases, sql` `)} ELSE NULL::text END)
       WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
   }
@@ -55,12 +55,12 @@ export class BroadcastStatsRepository extends BaseRepository {
     )
     const cases = items.map(
       (i) =>
-        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt}`,
+        sql`WHEN "broadcastId" = ${i.broadcastId} AND "contactInboxId" = ${i.contactInboxId} THEN ${i.occurredAt.toISOString()}::timestamptz`,
     )
 
     await db.execute(sql`
       UPDATE "ContactOnBroadcast"
-      SET "clickedAt" = COALESCE("clickedAt", CASE ${sql.join(cases, sql` `)} END)
+      SET "clickedAt" = COALESCE("clickedAt", CASE ${sql.join(cases, sql` `)} ELSE NULL::timestamptz END)
       WHERE ("broadcastId", "contactInboxId") IN (${sql.join(tuples, sql`, `)})
     `)
   }

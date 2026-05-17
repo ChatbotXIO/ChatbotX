@@ -1,7 +1,11 @@
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
-export const contactEventTypes = z.enum(["contact_created", "contact_deleted"])
+export const contactEventTypes = z.enum([
+  "contact_created",
+  "contact_deleted",
+  "contact_blocked",
+])
 export type ContactEventType = z.infer<typeof contactEventTypes>
 
 export const contactSenderTypes = z.enum(["bot", "human"])

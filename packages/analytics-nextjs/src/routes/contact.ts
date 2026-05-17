@@ -59,6 +59,56 @@ export const analyticsContactRoutes = os.router({
         throw error
       }
     }),
+  blockedContactsPerDayAnalyticsAPI: os
+    .route({
+      method: "GET",
+      path: "/analytics/blocked-contacts-per-day",
+      summary: "Get blocked contacts per day",
+      tags: ["Analytics"],
+    })
+    .input(timeRangeQuerySchema)
+    .output(getContactCountsResponseSchema)
+    .handler(async ({ input }) => {
+      try {
+        const data =
+          await contactAnalyticsService.getBlockedContactsPerDay(input)
+        return { data }
+      } catch (error) {
+        console.log("[analytics:blockedContactsPerDay] failed", error)
+        throw error
+      }
+    }),
+  blockedContactsCountAnalyticsAPI: os
+    .route({
+      method: "GET",
+      path: "/analytics/blocked-contacts-count",
+      summary: "Get blocked contacts count",
+      tags: ["Analytics"],
+    })
+    .input(timeRangeQuerySchema)
+    .output(getContactsCountResponseSchema)
+    .handler(async ({ input }) =>
+      withCache(
+        timeRangeKey(
+          "blocked-contacts-count",
+          input.workspaceId,
+          input.from,
+          input.to,
+          input.timezone,
+        ),
+        async () => {
+          try {
+            const count =
+              await contactAnalyticsService.getBlockedContactsCount(input)
+            return { data: { count } }
+          } catch (error) {
+            console.log("[analytics:blockedContactsCount] failed", error)
+            throw error
+          }
+        },
+        { ttl: 120 },
+      ),
+    ),
   newContactsCountAnalyticsAPI: os
     .route({
       method: "GET",

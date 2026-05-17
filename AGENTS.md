@@ -22,7 +22,7 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 | `apps/realtime` | Realtime server; builder exposes `NEXT_PUBLIC_REALTIME_URL` (e.g. `http://localhost:1999`). |
 | `apps/cli` | Command-line client (`chatbotx-cli`). |
 | `apps/mcp-server` | MCP server exposing public API surfaces. |
-| `packages/*` | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `public-apis`, `sdk`, `worker-config`, `clickhouse`, `ai`, etc. |
+| `packages/*` | Shared libraries: `database` (Drizzle + PostgreSQL), `ui`, `public-apis`, `sdk`, `worker-config`, `ai`, etc. |
 | `integrations/*` | Channel and vendor integrations (WhatsApp, Messenger, Telegram, Zalo, webchat, SMTP, OpenAI, Google Sheets, …). |
 
 ## Stack (high level)
@@ -30,7 +30,6 @@ This file summarizes how **ChatbotX** (this repository) is structured and how to
 - **TypeScript 5**, **React 19**, **Next.js 16** (builder)
 - **Drizzle ORM** + **PostgreSQL** (with **pgvector**)
 - **Redis** + **BullMQ** for queues
-- **ClickHouse** for analytics
 - **S3-compatible** storage (e.g. RustFS locally via Docker)
 - Lint/format: **Ultracite** (Biome)
 
@@ -66,7 +65,7 @@ pnpm --filter @chatbotx.io/database make:migration <name>
 
 ## Local infrastructure
 
-- **Docker Compose** provides PostgreSQL, Redis, object storage, MailHog, Adminer, RedisInsight, and ClickHouse-related services. See `docker-compose.yml` and project docs.
+- **Docker Compose** provides PostgreSQL, Redis, object storage, MailHog, Adminer, and RedisInsight services. See `docker-compose.yml` and project docs.
 - Copy **`.env.example`** → **`.env`** (or per-app env as documented). Never commit secrets.
 
 ## Where to change what

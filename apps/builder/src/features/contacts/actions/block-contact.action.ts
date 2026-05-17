@@ -2,6 +2,7 @@
 
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
+import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
@@ -46,6 +47,27 @@ export const blockContact = async (ctx: {
     `workspaces:${ctx.workspaceId}#contacts`,
     `workspaces:${ctx.workspaceId}#conversations`,
   ])
+
+  emit("analytics:dashboard", {
+    eventType: "contact:blocked",
+    workspaceId: ctx.workspaceId,
+    contactId: contact.id,
+    occurredAt: contact.blockedAt ?? new Date(),
+    country: contact.country,
+    metadata: {
+      triggerContext: {
+        triggerSource: "api",
+        triggerHandler: "blockContactAction",
+        triggerType: "contact_blocked",
+        origin: "manual",
+      },
+    },
+  }).catch((error) => {
+    console.error(
+      "[blockContactAction] Failed to emit contact:blocked event",
+      error,
+    )
+  })
 
   await integrationQueue.add(IntegrationJobAction.blockContact, {
     type: IntegrationJobAction.blockContact,

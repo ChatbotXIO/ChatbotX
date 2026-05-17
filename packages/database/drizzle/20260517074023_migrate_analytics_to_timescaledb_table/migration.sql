@@ -1,23 +1,23 @@
-DROP TABLE IF EXISTS "AnalyticsManifestStatus" CASCADE;
-DROP MATERIALIZED VIEW IF EXISTS analytics_contact_events_hourly CASCADE;--> statement-breakpoint
-DROP MATERIALIZED VIEW IF EXISTS analytics_bot_message_events_hourly CASCADE;--> statement-breakpoint
-DROP MATERIALIZED VIEW IF EXISTS analytics_conversation_events_hourly CASCADE;--> statement-breakpoint
-DROP MATERIALIZED VIEW IF EXISTS analytics_message_events_hourly CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "AnalyticsBotMessageEvent" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "AnalyticsContactEvent" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "AnalyticsConversationEvent" CASCADE;--> statement-breakpoint
-DROP TABLE IF EXISTS "AnalyticsMessageEvent" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsBotResponseType" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsBotResult" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsBotRouteType" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsContactEventType" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsMessageEventType" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsContactSenderType" CASCADE;--> statement-breakpoint
-DROP TYPE IF EXISTS "analyticsConversationEventType" CASCADE;--> statement-breakpoint
+-- DROP TABLE IF EXISTS "AnalyticsManifestStatus" CASCADE;
+-- DROP MATERIALIZED VIEW IF EXISTS analytics_contact_events_hourly CASCADE;--> statement-breakpoint
+-- DROP MATERIALIZED VIEW IF EXISTS analytics_bot_message_events_hourly CASCADE;--> statement-breakpoint
+-- DROP MATERIALIZED VIEW IF EXISTS analytics_conversation_events_hourly CASCADE;--> statement-breakpoint
+-- DROP MATERIALIZED VIEW IF EXISTS analytics_message_events_hourly CASCADE;--> statement-breakpoint
+-- DROP TABLE IF EXISTS "AnalyticsBotMessageEvent" CASCADE;--> statement-breakpoint
+-- DROP TABLE IF EXISTS "AnalyticsContactEvent" CASCADE;--> statement-breakpoint
+-- DROP TABLE IF EXISTS "AnalyticsConversationEvent" CASCADE;--> statement-breakpoint
+-- DROP TABLE IF EXISTS "AnalyticsMessageEvent" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsBotResponseType" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsBotResult" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsBotRouteType" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsContactEventType" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsMessageEventType" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsContactSenderType" CASCADE;--> statement-breakpoint
+-- DROP TYPE IF EXISTS "analyticsConversationEventType" CASCADE;--> statement-breakpoint
 CREATE TYPE "analyticsBotResponseType" AS ENUM('automated_response', 'ai_agent', 'flow', 'none');--> statement-breakpoint
 CREATE TYPE "analyticsBotResult" AS ENUM('success', 'fallback');--> statement-breakpoint
 CREATE TYPE "analyticsBotRouteType" AS ENUM('flow', 'agent', 'fallback');--> statement-breakpoint
-CREATE TYPE "analyticsContactEventType" AS ENUM('contact_created', 'contact_deleted');--> statement-breakpoint
+CREATE TYPE "analyticsContactEventType" AS ENUM('contact_created', 'contact_deleted', 'contact_blocked');--> statement-breakpoint
 CREATE TYPE "analyticsMessageEventType" AS ENUM('message_human_sent', 'message_bot_sent');--> statement-breakpoint
 CREATE TYPE "analyticsContactSenderType" AS ENUM('bot', 'human');--> statement-breakpoint
 CREATE TYPE "analyticsConversationEventType" AS ENUM('conversation_created', 'conversation_assigned', 'conversation_unassigned', 'conversation_transferred_to_human', 'conversation_transferred_to_bot', 'conversation_followed', 'conversation_unfollowed', 'conversation_archived', 'conversation_unarchived');--> statement-breakpoint

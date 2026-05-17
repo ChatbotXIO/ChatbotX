@@ -1,3 +1,7 @@
+import { and, db, inArray, isNull } from "@chatbotx.io/database/client"
+import { contactModel } from "@chatbotx.io/database/schema"
+import type { MessageFailedPayload } from "@chatbotx.io/flow-config"
+import { parsedErrorSchema } from "@chatbotx.io/sdk"
 import {
   contactStatsRepository,
   type InsertContactEventRow,
@@ -9,6 +13,8 @@ import type {
   TimeRangeQuery,
 } from "../schemas"
 import type { ContactEventType } from "../schemas/contact-event"
+
+const USER_BLOCKED_CATEGORY = "user_blocked"
 
 export class ContactAnalyticsService {
   recordEvents(
@@ -56,6 +62,16 @@ export class ContactAnalyticsService {
     return contactStatsRepository.getNewContactsCount(props)
   }
 
+  getBlockedContactsPerDay(
+    props: TimeRangeQuery,
+  ): Promise<ContactCountsSchema[]> {
+    return contactStatsRepository.getBlockedContactsPerDay(props)
+  }
+
+  getBlockedContactsCount(props: TimeRangeQuery): Promise<number> {
+    return contactStatsRepository.getBlockedContactsCount(props)
+  }
+
   getContactsCount(props: TimeRangeQuery): Promise<number> {
     return contactStatsRepository.getContactsCount(props)
   }
@@ -74,6 +90,74 @@ export class ContactAnalyticsService {
 
   getContactsBySource(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
     return contactStatsRepository.getContactsBySource(props)
+  }
+
+  async handleBlocked(payloads: MessageFailedPayload[]): Promise<void> {
+    const contacts = new Map<string, InsertContactEventRow>()
+
+    for (const payload of payloads) {
+      const parsed = parsedErrorSchema.safeParse(payload.errorData)
+      if (!parsed.success) {
+        continue
+      }
+      if (parsed.data.category !== USER_BLOCKED_CATEGORY) {
+        continue
+      }
+
+      const contactId = payload.context.contactId
+      if (contacts.has(contactId)) {
+        continue
+      }
+
+      contacts.set(contactId, {
+        workspaceId: payload.context.workspaceId,
+        contactId,
+        occurredAt: payload.occurredAt,
+        channel: payload.context.channel,
+        metadata: {
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "messageFailedListener",
+            triggerType: "contact_blocked",
+            origin: "auto_detected",
+            errorCode: parsed.data.code,
+            errorSubcode: parsed.data.subcode,
+            errorStatusCode: parsed.data.statusCode,
+            errorCategory: parsed.data.category,
+          },
+        },
+      })
+    }
+
+    if (contacts.size === 0) {
+      return
+    }
+
+    const contactIds = Array.from(contacts.keys())
+    const transitioned = await db
+      .update(contactModel)
+      .set({ blockedAt: new Date() })
+      .where(
+        and(
+          inArray(contactModel.id, contactIds),
+          isNull(contactModel.blockedAt),
+        ),
+      )
+      .returning({ id: contactModel.id })
+
+    if (transitioned.length === 0) {
+      return
+    }
+
+    const rows = transitioned
+      .map((c) => contacts.get(c.id))
+      .filter((r): r is InsertContactEventRow => r !== undefined)
+
+    if (rows.length === 0) {
+      return
+    }
+
+    await this.recordEvents(rows, "contact_blocked")
   }
 }
 

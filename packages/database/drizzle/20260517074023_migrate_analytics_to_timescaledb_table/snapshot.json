@@ -1,21 +1,16 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "9700c688-db4a-44ce-bc69-c2676ac0159c",
+  "id": "699b2f6e-501d-4419-a1a2-6d64aae6b644",
   "prevIds": [
     "09ed3cf2-078f-4ad2-9686-1a5f05cd8385",
-    "4b0f1294-b928-4d3c-bde0-89f4bb143e13"
+    "4b0f1294-b928-4d3c-bde0-89f4bb143e13",
+    "98045d7c-e972-420e-937f-9cf4d92e6076"
   ],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
       "name": "aiEmbeddingStatus",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["processing", "ingested", "failed"],
-      "name": "analyticsStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -50,12 +45,7 @@
       "schema": "public"
     },
     {
-      "values": [
-        "contact_created",
-        "contact_deleted",
-        "contact_message_in",
-        "contact_message_out"
-      ],
+      "values": ["contact_created", "contact_deleted", "contact_blocked"],
       "name": "analyticsContactEventType",
       "entityType": "enums",
       "schema": "public"
@@ -83,6 +73,18 @@
       "schema": "public"
     },
     {
+      "values": ["message_human_sent", "message_bot_sent"],
+      "name": "analyticsMessageEventType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["processing", "ingested", "failed"],
+      "name": "analyticsStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["image", "video", "audio", "gif", "file"],
       "name": "fileType",
       "entityType": "enums",
@@ -103,6 +105,18 @@
     {
       "values": ["male", "female", "unknown"],
       "name": "gender",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["pending", "completed", "failed"],
+      "name": "ContactOnSmartDelayStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["waitNode"],
+      "name": "ContactOnSmartDelayType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -209,12 +223,6 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "AnalyticsManifestStatus",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "AnalyticsBotMessageEvent",
       "entityType": "tables",
       "schema": "public"
@@ -245,7 +253,19 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "AnalyticsMessageEvent",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "AnalyticsSequenceEvent",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AnalyticsManifestStatus",
       "entityType": "tables",
       "schema": "public"
     },
@@ -342,6 +362,12 @@
     {
       "isRlsEnabled": false,
       "name": "ContactOnSequence",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ContactOnSmartDelay",
       "entityType": "tables",
       "schema": "public"
     },
@@ -1542,71 +1568,6 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "objectKey",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "analyticsStatus",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "attempts",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "timestamp",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "ingestedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "lastError",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
       "name": "eventId",
       "entityType": "columns",
       "schema": "public",
@@ -2289,6 +2250,162 @@
       "table": "AnalyticsFlowNodeEvent"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "analyticsMessageEventType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "eventType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "occurredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "analyticsContactSenderType",
+      "typeSchema": "public",
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "senderType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "adminId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "source",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "insertedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -2378,6 +2495,71 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AnalyticsSequenceEvent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "objectKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "analyticsStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "ingestedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
     },
     {
       "type": "bigint",
@@ -4698,6 +4880,162 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ContactOnSequence"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "flowVersionId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "nodeId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "stepId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "ContactOnSmartDelayType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "type": "ContactOnSmartDelayStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
     },
     {
       "type": "bigint",
@@ -11227,27 +11565,6 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "objectKey",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "AnalyticsManifestStatus_objectKey_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "AnalyticsManifestStatus"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -11682,6 +11999,146 @@
           "opclass": null
         },
         {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "eventType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsMessageEvent_workspaceId_occurredAt_eventType_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "eventType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsMessageEvent_workspaceId_eventType_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "adminId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsMessageEvent_workspaceId_adminId_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "senderType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "occurredAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsMessageEvent_workspaceId_senderType_occurredAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
           "value": "sequenceId",
           "isExpression": false,
           "asc": true,
@@ -11719,6 +12176,27 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "AnalyticsSequenceEvent"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "objectKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsManifestStatus_objectKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsManifestStatus"
     },
     {
       "nameExplicit": true,
@@ -12244,6 +12722,76 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "ContactOnSequence"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "flowId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "stepId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnSmartDelay_workspaceId_flowId_contactInboxId_stepId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "triggerAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactOnSmartDelay_status_triggerAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
     },
     {
       "nameExplicit": true,
@@ -14609,6 +15157,19 @@
       "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
+      "name": "AnalyticsMessageEvent_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
       "name": "AnalyticsSequenceEvent_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -15003,6 +15564,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "ContactOnSequence"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnSmartDelay_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactOnSmartDelay_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactOnSmartDelay"
     },
     {
       "nameExplicit": false,
@@ -16432,6 +17019,14 @@
       "table": "AnalyticsFlowNodeEvent"
     },
     {
+      "columns": ["occurredAt", "eventId"],
+      "nameExplicit": false,
+      "name": "AnalyticsMessageEvent_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "AnalyticsMessageEvent"
+    },
+    {
       "columns": [
         "sequenceId",
         "stepId",
@@ -16643,6 +17238,14 @@
       "name": "ContactOnSequence_pkey",
       "schema": "public",
       "table": "ContactOnSequence",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "ContactOnSmartDelay_pkey",
+      "schema": "public",
+      "table": "ContactOnSmartDelay",
       "entityType": "pks"
     },
     {
