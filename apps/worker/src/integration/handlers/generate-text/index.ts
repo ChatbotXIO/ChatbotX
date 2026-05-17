@@ -39,6 +39,7 @@ export async function handleAIGenerateText(
     })
 
     if (!aiConfig) {
+      await sendFlow(props, false)
       return
     }
 

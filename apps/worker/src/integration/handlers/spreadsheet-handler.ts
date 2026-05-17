@@ -5,7 +5,6 @@ import {
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
-  flowVersionModel,
   spreadsheetModel,
 } from "@chatbotx.io/database/schema"
 import type {
@@ -14,26 +13,17 @@ import type {
 } from "@chatbotx.io/database/types"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import type {
-  EdgeSchema,
   FilterMode,
   Operator,
-  SpreadsheetClearRowSchema,
-  SpreadsheetGetRandomRowSchema,
   SpreadsheetGetRowSchema,
-  SpreadsheetSendDataSchema,
-  SpreadsheetUpdateRowSchema,
 } from "@chatbotx.io/flow-config"
 import {
   type GoogleSheetsAuthValue,
   integration as integrationGooglesheets,
 } from "@chatbotx.io/integration-google-sheets"
 import { createId } from "@chatbotx.io/utils"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
-import type { ExecuteStepProps } from "./flow"
+import { type ExecuteStepProps, sendFlow } from "./flow"
 import { isMatchedRow } from "./operator-handler"
 
 const findRowType = {
@@ -433,53 +423,4 @@ const getRandomRow = (rows: string[][]): string[] | null => {
   }
   const i = Math.floor(Math.random() * rows.length)
   return rows[i]
-}
-
-const sendFlow = async (
-  {
-    conversation,
-    contactInbox,
-    flowVersion,
-    step,
-  }: ExecuteStepProps<
-    | SpreadsheetGetRowSchema
-    | SpreadsheetSendDataSchema
-    | SpreadsheetGetRandomRowSchema
-    | SpreadsheetClearRowSchema
-    | SpreadsheetUpdateRowSchema
-  >,
-  isSuccess: boolean,
-) => {
-  if (!flowVersion) {
-    return
-  }
-
-  const currentFlowVersion = await findOrFail({
-    table: flowVersionModel,
-    where: {
-      id: flowVersion.id,
-      workspaceId: conversation.workspaceId,
-    },
-    message: "FlowVersion not found",
-  })
-
-  const edges = currentFlowVersion.edges || []
-  const nodeId: string | undefined = isSuccess
-    ? step.successNodeId
-    : step.errorNodeId
-  const foundEdge = (edges as EdgeSchema[]).find(
-    ({ sourceHandle }) => sourceHandle === nodeId,
-  )
-
-  if (foundEdge) {
-    await integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: conversation,
-        contactInboxId: contactInbox,
-        flowId: currentFlowVersion.flowId,
-        nodeId: foundEdge.target,
-      },
-    })
-  }
 }
