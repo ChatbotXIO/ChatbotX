@@ -4,9 +4,13 @@ import {
   parseAsInteger,
   parseAsString,
 } from "nuqs/server"
-import type z from "zod"
+import z from "zod"
 import { parseAsBigInt } from "@/lib/nuqs"
-import { type BotFieldResource, botFieldResource } from "./resource"
+import {
+  type BotFieldResource,
+  botFieldResource,
+  publicBotFieldResource,
+} from "./resource"
 
 export const listBotFieldsSearchParams = createSearchParamsCache({
   page: parseAsInteger.withDefault(1),
@@ -28,3 +32,7 @@ export const findBotFieldRequest = botFieldResource
   .pick({ id: true, workspaceId: true, name: true })
   .partial()
 export type FindBotFieldRequest = z.infer<typeof findBotFieldRequest>
+
+export const publicListBotFieldsResponse = z.object({
+  data: z.array(publicBotFieldResource),
+})

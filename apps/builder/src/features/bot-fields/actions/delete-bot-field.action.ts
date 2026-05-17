@@ -1,12 +1,10 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { botFieldModel } from "@chatbotx.io/database/schema"
+import { botFieldService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteBotFieldsAction = workspaceActionClient
@@ -18,19 +16,5 @@ export const deleteBotFieldsAction = workspaceActionClient
       parsedInput,
     } = props
 
-    await db
-      .delete(botFieldModel)
-      .where(
-        and(
-          eq(botFieldModel.workspaceId, workspaceId),
-          inArray(botFieldModel.id, parsedInput.ids),
-        ),
-      )
-
-    revalidateCacheTags([
-      `workspaces:${workspaceId}#botFields`,
-      ...parsedInput.ids.map(
-        (id) => `workspaces:${workspaceId}#botFields:${id}`,
-      ),
-    ])
+    await botFieldService.bulkDelete({ workspaceId, ids: parsedInput.ids })
   })

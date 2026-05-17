@@ -1,4 +1,8 @@
-import { type FolderType, folderTypes } from "@chatbotx.io/database/partials"
+import {
+  type FolderType,
+  folderTypes,
+  rootFolderId,
+} from "@chatbotx.io/database/partials"
 import type { FolderModel } from "@chatbotx.io/database/types"
 import {
   Card,
@@ -69,7 +73,7 @@ export default async function SharedFolderSlot(props: {
     listFolders({
       workspaceId: props.workspaceId,
       folderType,
-      folderId,
+      folderId: folderId ?? rootFolderId,
     }),
   ])
 

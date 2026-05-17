@@ -1,11 +1,7 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
-import { botFieldModel } from "@chatbotx.io/database/schema"
-import { createId } from "@chatbotx.io/utils"
+import { botFieldService } from "@chatbotx.io/business"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBotFieldRequest } from "../schemas/action"
 
@@ -18,19 +14,5 @@ export const createBotFieldAction = workspaceActionClient
       parsedInput,
     } = props
 
-    if (parsedInput.folderId) {
-      await ensureFolderIsExists(
-        parsedInput.folderId,
-        workspaceId,
-        "customField",
-      )
-    }
-
-    await db.insert(botFieldModel).values({
-      ...parsedInput,
-      id: createId(),
-      workspaceId,
-    })
-
-    revalidateCacheTags(`workspaces:${workspaceId}#botFields`)
+    return await botFieldService.create({ workspaceId, data: parsedInput })
   })
