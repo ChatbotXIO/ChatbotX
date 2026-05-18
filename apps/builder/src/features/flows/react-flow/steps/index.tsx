@@ -10,6 +10,7 @@ import { aiGenerateImageStep } from "./ai-generate-image/index"
 import { aiGenerateTextStep } from "./ai-generate-text"
 import { aiGenerateTextAgentStep } from "./ai-generate-text-agent"
 import { aiSpeechToTextStep } from "./ai-speech-to-text"
+import { aiTextToSpeechStep } from "./ai-text-to-speech"
 import { archiveConversationStep } from "./archive-conversation"
 import { assignConversationStep } from "./assign-conversation"
 import { autoAssignConversationStep } from "./auto-assign-conversation"
@@ -124,7 +125,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.aiEditImage]: aiEditImageStep,
   [stepTypes.enum.aiAnalyzeImage]: aiAnalyzeImageStep,
   [stepTypes.enum.aiSpeechToText]: aiSpeechToTextStep,
-  [stepTypes.enum.aiTextToSpeech]: undefined,
+  [stepTypes.enum.aiTextToSpeech]: aiTextToSpeechStep,
   [stepTypes.enum.aiDeleteMessageHistory]: undefined,
   [stepTypes.enum.spreadsheetGetRow]: spreadsheetGetRowStep,
   [stepTypes.enum.spreadsheetGetRandomRow]: spreadsheetGetRandomRowStep,

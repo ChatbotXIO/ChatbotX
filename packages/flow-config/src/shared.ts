@@ -7,6 +7,7 @@ import { aiGenerateImageSchema } from "./steps/ai-generate-image"
 import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { aiGenerateTextAgentSchema } from "./steps/ai-generate-text-agent"
 import { aiSpeechToTextSchema } from "./steps/ai-speech-to-text"
+import { aiTextToSpeechSchema } from "./steps/ai-text-to-speech"
 import { archiveConversationStepSchema } from "./steps/archive-conversation"
 import { assignConversationStepSchema } from "./steps/assign-conversation"
 import { autoAssignConversationStepSchema } from "./steps/auto-assign-conversation"
@@ -100,6 +101,7 @@ const aiSteps = [
   aiGenerateTextAgentSchema,
   aiExtractDataSchema,
   aiSpeechToTextSchema,
+  aiTextToSpeechSchema,
 ]
 
 const googleSheetStep = [

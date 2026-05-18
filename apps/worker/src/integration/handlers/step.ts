@@ -69,6 +69,7 @@ import {
   stepUnassignConversation,
   stepUnfollowConversation,
 } from "./step-handlers"
+import { handleAITextToSpeech } from "./text-to-speech"
 import {
   countCharacters,
   formatDate,
@@ -333,7 +334,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.aiGenerateText]: handleAIGenerateText,
   [stepTypes.enum.aiExtractData]: handleAIExtractData,
   [stepTypes.enum.aiSpeechToText]: handleAISpeechToText,
-  [stepTypes.enum.aiTextToSpeech]: undefined,
+  [stepTypes.enum.aiTextToSpeech]: handleAITextToSpeech,
   [stepTypes.enum.optInEmail]: optInEmail,
   [stepTypes.enum.optOutEmail]: optOutEmail,
   [stepTypes.enum.performAction]: undefined,
