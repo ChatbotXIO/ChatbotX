@@ -324,16 +324,19 @@ export class ContactStatsRepository extends BaseRepository {
 
     const monthStart = sql`date_trunc('month', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
 
+    // Baseline uses the raw hypertable (not the cagg) for the same reason as
+    // the daily path: the cagg refresh policy only materializes the last 7
+    // days, so older data is absent from analytics_contact_events_hourly.
     const [baselineResult, seriesResult] = await Promise.all([
       db.execute(sql`
         SELECT COALESCE(
-          SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END) -
-          SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END),
+          COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
+          COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
           0
         )::int AS baseline
-        FROM analytics_contact_events_hourly
+        FROM "AnalyticsContactEvent"
         WHERE "workspaceId" = ${workspaceId}
-          AND bucket < ${monthStart}
+          AND "occurredAt" < ${monthStart}
           AND "eventType" IN ('contact_created', 'contact_deleted')
       `),
       db.execute(sql`
@@ -595,6 +598,7 @@ export class ContactStatsRepository extends BaseRepository {
       WHERE "workspaceId" = ${workspaceId}
         AND "occurredAt" >= ${from}
         AND "occurredAt" <= ${to}
+        AND "eventType" = 'contact_created'
     `)
 
     return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)

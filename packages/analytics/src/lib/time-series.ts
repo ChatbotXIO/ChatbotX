@@ -293,7 +293,7 @@ export function fillBotMessageStatsDaySeries(
       const key = keyOf(getUtcDayKey(r.timestamp), r.result)
       const existing = byKey.get(key)
       if (existing) {
-        existing.count += r.count
+        byKey.set(key, { ...existing, count: existing.count + r.count })
       } else {
         byKey.set(key, { ...r })
       }
@@ -336,7 +336,7 @@ export function fillBotMessageStatsMonthSeries(
       const key = keyOf(getUtcMonthKey(r.timestamp), r.result)
       const existing = byKey.get(key)
       if (existing) {
-        existing.count += r.count
+        byKey.set(key, { ...existing, count: existing.count + r.count })
       } else {
         byKey.set(key, { ...r })
       }

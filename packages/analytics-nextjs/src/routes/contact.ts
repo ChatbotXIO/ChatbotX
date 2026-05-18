@@ -12,6 +12,7 @@ import {
 import { withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
 import z from "zod"
+import { logger } from "../lib/log"
 
 const timeRangeKey = (
   route: string,
@@ -37,7 +38,7 @@ export const analyticsContactRoutes = os.router({
         const data = await contactAnalyticsService.getContactCountsPerDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:contactCountsPerDay] failed", error)
+        logger.error({ err: error }, "[analytics:contactCountsPerDay] failed")
         throw error
       }
     }),
@@ -55,7 +56,10 @@ export const analyticsContactRoutes = os.router({
         const data = await contactAnalyticsService.getNewContactsPerDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:newContactCountsPerDay] failed", error)
+        logger.error(
+          { err: error },
+          "[analytics:newContactCountsPerDay] failed",
+        )
         throw error
       }
     }),
@@ -74,7 +78,7 @@ export const analyticsContactRoutes = os.router({
           await contactAnalyticsService.getBlockedContactsPerDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:blockedContactsPerDay] failed", error)
+        logger.error({ err: error }, "[analytics:blockedContactsPerDay] failed")
         throw error
       }
     }),
@@ -102,7 +106,10 @@ export const analyticsContactRoutes = os.router({
               await contactAnalyticsService.getBlockedContactsCount(input)
             return { data: { count } }
           } catch (error) {
-            console.log("[analytics:blockedContactsCount] failed", error)
+            logger.error(
+              { err: error },
+              "[analytics:blockedContactsCount] failed",
+            )
             throw error
           }
         },
@@ -133,7 +140,7 @@ export const analyticsContactRoutes = os.router({
               await contactAnalyticsService.getNewContactsCount(input)
             return { data: { count } }
           } catch (error) {
-            console.log("[analytics:newContactsCount] failed", error)
+            logger.error({ err: error }, "[analytics:newContactsCount] failed")
             throw error
           }
         },
@@ -163,7 +170,7 @@ export const analyticsContactRoutes = os.router({
             const count = await contactAnalyticsService.getContactsCount(input)
             return { data: { count } }
           } catch (error) {
-            console.log("[analytics:contactsCount] failed", error)
+            logger.error({ err: error }, "[analytics:contactsCount] failed")
             throw error
           }
         },
@@ -194,7 +201,10 @@ export const analyticsContactRoutes = os.router({
               await contactAnalyticsService.getActiveContactsCount(input)
             return { data: { count } }
           } catch (error) {
-            console.log("[analytics:activeContactsCount] failed", error)
+            logger.error(
+              { err: error },
+              "[analytics:activeContactsCount] failed",
+            )
             throw error
           }
         },
@@ -234,7 +244,7 @@ export const analyticsContactRoutes = os.router({
 
         return { data }
       } catch (error) {
-        console.log("[analytics:contactsByDimension] failed", error)
+        logger.error({ err: error }, "[analytics:contactsByDimension] failed")
         throw error
       }
     }),
@@ -252,7 +262,7 @@ export const analyticsContactRoutes = os.router({
         const data = await messageAnalyticsService.getMessagesByAdmin(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:messagesByAdmin] failed", error)
+        logger.error({ err: error }, "[analytics:messagesByAdmin] failed")
         throw error
       }
     }),
@@ -270,7 +280,7 @@ export const analyticsContactRoutes = os.router({
         const data = await messageAnalyticsService.getHumanAgentStats(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:humanAgentStats] failed", error)
+        logger.error({ err: error }, "[analytics:humanAgentStats] failed")
         throw error
       }
     }),

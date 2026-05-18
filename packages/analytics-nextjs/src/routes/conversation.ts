@@ -9,6 +9,7 @@ import {
   timeRangeQuerySchema,
 } from "@chatbotx.io/analytics/schemas"
 import { os } from "@orpc/server"
+import { logger } from "../lib/log"
 
 export const analyticsConversationRoutes = os.router({
   conversationHandoffsAnalyticsAPI: os
@@ -25,7 +26,7 @@ export const analyticsConversationRoutes = os.router({
         const data = await conversationAnalyticsService.getHandoffsByDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:conversationHandoffs] failed", error)
+        logger.error({ err: error }, "[analytics:conversationHandoffs] failed")
         throw error
       }
     }),
@@ -43,7 +44,7 @@ export const analyticsConversationRoutes = os.router({
         const data = await conversationAnalyticsService.getFollowUpsByDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:conversationFollowUps] failed", error)
+        logger.error({ err: error }, "[analytics:conversationFollowUps] failed")
         throw error
       }
     }),
@@ -61,7 +62,7 @@ export const analyticsConversationRoutes = os.router({
         const data = await conversationAnalyticsService.getArchivedByDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:conversationArchived] failed", error)
+        logger.error({ err: error }, "[analytics:conversationArchived] failed")
         throw error
       }
     }),
@@ -79,7 +80,7 @@ export const analyticsConversationRoutes = os.router({
         const data = await conversationAnalyticsService.getAssignedByDay(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:conversationAssigned] failed", error)
+        logger.error({ err: error }, "[analytics:conversationAssigned] failed")
         throw error
       }
     }),
@@ -98,7 +99,10 @@ export const analyticsConversationRoutes = os.router({
           await conversationAnalyticsService.getAssignedByAdmin(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:conversationAssignedByAdmin] failed", error)
+        logger.error(
+          { err: error },
+          "[analytics:conversationAssignedByAdmin] failed",
+        )
         throw error
       }
     }),
@@ -119,7 +123,10 @@ export const analyticsConversationRoutes = os.router({
           )
         return { data }
       } catch (error) {
-        console.log("[analytics:uniqueConversationsByAdmin] failed", error)
+        logger.error(
+          { err: error },
+          "[analytics:uniqueConversationsByAdmin] failed",
+        )
         throw error
       }
     }),

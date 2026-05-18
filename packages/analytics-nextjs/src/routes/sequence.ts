@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/analytics/schemas"
 import { withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
+import { logger } from "../lib/log"
 
 export const analyticsSequenceRoutes = os.router({
   getSequenceStepStatsAnalyticsAPI: os
@@ -27,7 +28,10 @@ export const analyticsSequenceRoutes = os.router({
               stepId: input.stepId,
             })
           } catch (error) {
-            console.log("[analytics:getSequenceStepStats] failed", error)
+            logger.error(
+              { err: error },
+              "[analytics:getSequenceStepStats] failed",
+            )
             throw error
           }
         },

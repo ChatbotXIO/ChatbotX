@@ -1,6 +1,7 @@
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
+import { emitConversationTransferredToHuman } from "@chatbotx.io/events"
 import baseLogger from "@chatbotx.io/logger"
 import { normalizeError } from "universal-error-normalizer"
 
@@ -18,8 +19,15 @@ const DEFAULT_CHANNEL = "webchat"
 
 export class HandoffExecutorService {
   async execute(request: HandoffRequest): Promise<void> {
-    const { workspaceId, conversationId, reason, source, channel, metadata } =
-      request
+    const {
+      workspaceId,
+      conversationId,
+      reason,
+      source,
+      channel,
+      metadata,
+      contactId,
+    } = request
 
     try {
       // Atomic update acts as idempotency guard: only proceeds when bot is still enabled.
@@ -41,6 +49,17 @@ export class HandoffExecutorService {
 
       const resolvedChannel = channel ?? DEFAULT_CHANNEL
 
+      emitConversationTransferredToHuman(
+        workspaceId,
+        contactId,
+        conversationId,
+      ).catch((error) => {
+        baseLogger.error(
+          { error, conversationId },
+          "[handoffExecutor] Failed to emit realtime handoff event",
+        )
+      })
+
       emit("analytics:dashboard", {
         eventType: "conversation:transferred_to_human",
         workspaceId,
@@ -57,7 +76,10 @@ export class HandoffExecutorService {
           },
         },
       }).catch((error) => {
-        console.error("[disableBotAction] Failed to emit", error)
+        baseLogger.error(
+          { error, conversationId },
+          "[handoffExecutor] Failed to emit analytics event",
+        )
       })
     } catch (error) {
       const normalizedError = normalizeError(error)

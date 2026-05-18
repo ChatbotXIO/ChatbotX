@@ -11,6 +11,7 @@ import {
   timeRangeQueryWithGranularityDMSchema,
 } from "@chatbotx.io/analytics/schemas"
 import { os } from "@orpc/server"
+import { logger } from "../lib/log"
 
 export const analyticsMessageRoutes = os.router({
   botMessagesByResultAnalyticsAPI: os
@@ -27,7 +28,7 @@ export const analyticsMessageRoutes = os.router({
         const data = await botMessageAnalyticsService.getMessagesByResult(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:botMessagesByResult] failed", error)
+        logger.error({ err: error }, "[analytics:botMessagesByResult] failed")
         throw error
       }
     }),
@@ -47,7 +48,10 @@ export const analyticsMessageRoutes = os.router({
           await botMessageAnalyticsService.getMessagesWithResponse(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:botMessagesWithResponse] failed", error)
+        logger.error(
+          { err: error },
+          "[analytics:botMessagesWithResponse] failed",
+        )
         throw error
       }
     }),
@@ -67,7 +71,7 @@ export const analyticsMessageRoutes = os.router({
           await botMessageAnalyticsService.getMessagesWithNoResponse(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:botMessagesNoResponse] failed", error)
+        logger.error({ err: error }, "[analytics:botMessagesNoResponse] failed")
         throw error
       }
     }),
@@ -86,7 +90,10 @@ export const analyticsMessageRoutes = os.router({
         const data = await botMessageAnalyticsService.getAIProviderStats(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:botMessagesAIProviders] failed", error)
+        logger.error(
+          { err: error },
+          "[analytics:botMessagesAIProviders] failed",
+        )
         throw error
       }
     }),
@@ -105,7 +112,7 @@ export const analyticsMessageRoutes = os.router({
         const data = await messageAnalyticsService.getMessagesBySender(input)
         return { data }
       } catch (error) {
-        console.log("[analytics:messagesBySender] failed", error)
+        logger.error({ err: error }, "[analytics:messagesBySender] failed")
         throw error
       }
     }),

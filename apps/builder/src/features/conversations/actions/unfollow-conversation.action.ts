@@ -5,6 +5,7 @@ import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const unfollowConversationAction = workspaceActionClient
@@ -62,7 +63,7 @@ export const unfollowConversation = async (ctx: {
         },
       },
     }).catch((error) => {
-      console.error("[unfollowConversation] Failed to emit", error)
+      logger.error({ err: error }, "[unfollowConversation] Failed to emit")
     })
   }
 

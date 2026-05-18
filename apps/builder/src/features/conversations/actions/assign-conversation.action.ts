@@ -19,6 +19,7 @@ import {
   assignConversationSchema,
 } from "@/features/conversations/schema/action"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const assignConversationAction = workspaceActionClient
@@ -116,7 +117,10 @@ export const assignConversationAction = workspaceActionClient
             assignedBy,
           )
         } catch (error) {
-          console.error("Failed to emit conversationAssigned event:", error)
+          logger.error(
+            { err: error },
+            "Failed to emit conversationAssigned event:",
+          )
         }
       }
 
@@ -140,7 +144,10 @@ export const assignConversationAction = workspaceActionClient
                 },
               },
             }).catch((error) => {
-              console.error("[assignConversation] Failed to emit", error)
+              logger.error(
+                { err: error },
+                "[assignConversation] Failed to emit",
+              )
             })
           }
         }
@@ -161,7 +168,10 @@ export const assignConversationAction = workspaceActionClient
                 },
               },
             }).catch((error) => {
-              console.error("[assignConversation] Failed to emit", error)
+              logger.error(
+                { err: error },
+                "[assignConversation] Failed to emit",
+              )
             })
           }
         }

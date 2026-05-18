@@ -12,6 +12,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const archiveConversationAction = workspaceActionClient
@@ -59,7 +60,10 @@ export const archiveConversationAction = workspaceActionClient
             ctx.user.id,
           )
         } catch (error) {
-          console.error("Failed to emit conversationArchived event:", error)
+          logger.error(
+            { err: error },
+            "Failed to emit conversationArchived event:",
+          )
         }
       }
 
@@ -78,7 +82,7 @@ export const archiveConversationAction = workspaceActionClient
             },
           },
         }).catch((error) => {
-          console.error("[archiveConversation] Failed to emit", error)
+          logger.error({ err: error }, "[archiveConversation] Failed to emit")
         })
       }
 

@@ -10,6 +10,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const unarchiveConversationAction = workspaceActionClient
@@ -63,7 +64,10 @@ export const unarchiveConversationAction = workspaceActionClient
               },
             },
           }).catch((error) => {
-            console.error("[unarchiveConversation] Failed to emit", error)
+            logger.error(
+              { err: error },
+              "[unarchiveConversation] Failed to emit",
+            )
           })
         }
       }

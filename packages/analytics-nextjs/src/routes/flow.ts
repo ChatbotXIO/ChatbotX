@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/analytics/schemas"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { os } from "@orpc/server"
+import { logger } from "../lib/log"
 
 const flowStatsCacheTag = (flowId: string) => `flow-stats:${flowId}`
 const flowStatsCacheKey = (workspaceId: string, flowId: string) =>
@@ -27,7 +28,7 @@ export const analyticsFlowRoutes = os.router({
         })
         await invalidateCacheByTags([flowStatsCacheTag(input.flowId)])
       } catch (error) {
-        console.log("[analytics:resetFlowAnalytics] failed", error)
+        logger.error({ err: error }, "[analytics:resetFlowAnalytics] failed")
         throw error
       }
     }),
@@ -50,7 +51,7 @@ export const analyticsFlowRoutes = os.router({
               flowId: input.flowId,
             })
           } catch (error) {
-            console.log("[analytics:getFlowAnalytics] failed", error)
+            logger.error({ err: error }, "[analytics:getFlowAnalytics] failed")
             throw error
           }
         },

@@ -13,6 +13,7 @@
   "dependencies": {
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",

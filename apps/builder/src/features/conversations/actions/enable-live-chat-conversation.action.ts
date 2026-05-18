@@ -9,6 +9,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { disableConversationState } from "../queries/bot-state"
 
@@ -50,9 +51,9 @@ export const enableLiveChatConversationAction = workspaceActionClient
             ctx.user.id,
           )
         } catch (error) {
-          console.error(
+          logger.error(
+            { err: error },
             "Failed to emit conversationTransferredToHuman event:",
-            error,
           )
         }
       }
@@ -72,9 +73,9 @@ export const enableLiveChatConversationAction = workspaceActionClient
             },
           },
         }).catch((error) => {
-          console.error(
+          logger.error(
+            { err: error },
             "[enableLiveChatConversationAction] Failed to emit",
-            error,
           )
         })
       }

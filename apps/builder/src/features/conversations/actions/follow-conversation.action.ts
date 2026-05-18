@@ -6,6 +6,7 @@ import { emit } from "@chatbotx.io/event-bus"
 import { emitConversationFollowUp } from "@chatbotx.io/events"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
+import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const followConversationAction = workspaceActionClient
@@ -51,7 +52,7 @@ export const followConversation = async (ctx: {
       ctx.userId,
     )
   } catch (error) {
-    console.error("Failed to emit conversationFollowUp event:", error)
+    logger.error({ err: error }, "Failed to emit conversationFollowUp event:")
   }
 
   emit("analytics:dashboard", {
@@ -68,7 +69,7 @@ export const followConversation = async (ctx: {
       },
     },
   }).catch((error) => {
-    console.error("[followConversation] Failed to emit", error)
+    logger.error({ err: error }, "[followConversation] Failed to emit")
   })
 
   revalidateCacheTags([
