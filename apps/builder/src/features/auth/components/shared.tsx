@@ -4,25 +4,26 @@ import { CardTitle } from "@chatbotx.io/ui/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useTheme } from "next-themes"
+import { usePlatformSettings } from "@/features/platform"
+import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 export type AuthHeaderProps = {
-  brandName: string
   title: string
 }
 
-export const AuthHeader = ({ brandName, title }: AuthHeaderProps) => {
-  const { theme, systemTheme } = useTheme()
+export const AuthHeader = ({ title }: AuthHeaderProps) => {
+  const currentTheme = useCurrentTheme()
+  const { name, logo } = usePlatformSettings()
 
-  const currentTheme = theme === "system" ? systemTheme : theme
-  const logoSrc =
+  const baseLogoSrc =
     currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
+  const logoSrc = logo || baseLogoSrc
 
   return (
     <>
       <div className="flex items-center justify-center gap-4">
         <Image
-          alt={brandName}
+          alt={name}
           height={80}
           priority={true}
           src={logoSrc}

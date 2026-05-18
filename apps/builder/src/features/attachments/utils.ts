@@ -1,10 +1,10 @@
-import { usePlatformUrls } from "@/features/platform"
+import { usePlatformSettings } from "@/features/platform"
 import type { AttachmentResource } from "./schema/resource"
 
 export function useAttachmentUrl(
   attachment?: AttachmentResource | null,
 ): string | undefined {
-  const { assetUrl } = usePlatformUrls()
+  const { assetUrl } = usePlatformSettings()
 
   if (!attachment) {
     return

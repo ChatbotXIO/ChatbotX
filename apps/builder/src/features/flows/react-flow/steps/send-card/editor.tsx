@@ -1,6 +1,7 @@
 "use client"
 
 import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useFormContext } from "react-hook-form"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
@@ -10,10 +11,11 @@ type SendCardStepEditorProps = {
   parentName: string
 }
 
-const SendCardStepEditor = (props: SendCardStepEditorProps) => {
-  const { parentName } = props
-  const { register } = useFormContext()
+const SendCardStepEditor = ({ parentName }: SendCardStepEditorProps) => {
+  const params = useParams<{ workspaceId: string; flowId: string }>()
+  const { register, getValues } = useFormContext()
   const t = useTranslations()
+  const stepId = getValues(`${parentName}.id`)
 
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200">
@@ -21,6 +23,7 @@ const SendCardStepEditor = (props: SendCardStepEditorProps) => {
         <DirectUploadOrInsertLink
           fileType="image"
           parentName={`${parentName}.image`}
+          uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/steps/${stepId}`}
         />
         <Input
           placeholder={`${t("fields.title.placeholder")} (required)`}

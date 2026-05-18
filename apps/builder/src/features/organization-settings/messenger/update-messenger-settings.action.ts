@@ -7,6 +7,7 @@ import {
   messengerCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { getTranslations } from "next-intl/server"
 import { organizationActionClient } from "@/lib/safe-action"
 
 export const updateMessengerSettingAction = organizationActionClient
@@ -24,10 +25,14 @@ export const updateMessengerSettingAction = organizationActionClient
         type: "messenger",
       })
 
+      const t = await getTranslations()
+
       const clientSecret =
         parsedInput.clientSecret || existing?.config.clientSecret
       if (!clientSecret) {
-        throw new Error("App Secret is required to configure Messenger.")
+        throw new Error(
+          t("organizationSettings.errors.messengerAppSecretRequired"),
+        )
       }
 
       const config: MessengerCredential = {

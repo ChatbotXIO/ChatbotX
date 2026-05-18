@@ -16,7 +16,7 @@ import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { usePlatformUrls } from "@/features/platform"
+import { usePlatformSettings } from "@/features/platform"
 
 type EmbedCodeDialogProps = {
   webchat: IntegrationWebchatModel
@@ -27,7 +27,7 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
   const [_, copyToClipboard] = useCopyToClipboard()
   const t = useTranslations()
 
-  const { appUrl } = usePlatformUrls()
+  const { appUrl } = usePlatformSettings()
   const baseUrl =
     appUrl || (typeof window === "undefined" ? "" : window.location.origin)
 

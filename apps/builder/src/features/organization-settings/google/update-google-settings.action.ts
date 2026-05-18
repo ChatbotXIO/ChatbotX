@@ -7,6 +7,7 @@ import {
   googleCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { getTranslations } from "next-intl/server"
 
 import { organizationActionClient } from "@/lib/safe-action"
 
@@ -25,16 +26,22 @@ export const updateGoogleSettingsAction = organizationActionClient
         type: "google",
       })
 
+      const t = await getTranslations()
+
       const clientSecret =
         parsedInput.clientSecret || existing?.config.clientSecret
       if (!clientSecret) {
-        throw new Error("Client Secret is required to configure Google.")
+        throw new Error(
+          t("organizationSettings.errors.googleClientSecretRequired"),
+        )
       }
 
       const verifyToken =
         parsedInput.verifyToken || existing?.config.verifyToken
       if (!verifyToken) {
-        throw new Error("Verify Token is required to configure Google.")
+        throw new Error(
+          t("organizationSettings.errors.googleVerifyTokenRequired"),
+        )
       }
 
       const config: GoogleCredential = {

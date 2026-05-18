@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { useClipboard } from "@/hooks/use-clipboard"
 import { updateWhatsappSettingsAction } from "./update-whatsapp-settings.action"
 
 export function WhatsappSettings({
@@ -38,7 +38,7 @@ export function WhatsappSettings({
   publicConfig: WhatsappCredentialPublic | null
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
   useEffect(() => {
@@ -56,16 +56,6 @@ export function WhatsappSettings({
     )
   }, [])
 
-  const handleCopy = (text: string) => () => {
-    copy(text)
-      .then(() => {
-        toast.success("Copied to clipboard")
-      })
-      .catch((error) => {
-        console.error("Failed to copy!", error)
-      })
-  }
-
   return (
     <Card>
       <CardHeader className="items-center justify-center">
@@ -81,7 +71,7 @@ export function WhatsappSettings({
         {publicConfig?.clientId ? (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <div className="font-bold">App ID:</div>
+              <div className="font-bold">{t("fields.appId.label")}:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.clientId}</span>
                 <Button className="flex-none" size="icon" variant="outline">
@@ -95,7 +85,9 @@ export function WhatsappSettings({
 
             {publicConfig.businessName && (
               <div className="flex flex-col gap-2">
-                <div className="font-bold">Business Name:</div>
+                <div className="font-bold">
+                  {t("fields.businessName.label")}:
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="truncate">{publicConfig.businessName}</span>
                   <Button className="flex-none" size="icon" variant="outline">
@@ -109,7 +101,9 @@ export function WhatsappSettings({
             )}
 
             <div className="flex flex-col gap-2">
-              <div className="font-bold">Auth Callback URL:</div>
+              <div className="font-bold">
+                {t("fields.authCallbackUrl.label")}:
+              </div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{authCallbackUrl}</span>
                 <Button className="flex-none" size="icon" variant="outline">
@@ -122,7 +116,7 @@ export function WhatsappSettings({
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="font-bold">Webhook URL:</div>
+              <div className="font-bold">{t("fields.webhookUrl.label")}:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{webhookUrl}</span>
                 <Button className="flex-none" size="icon" variant="outline">
@@ -135,7 +129,9 @@ export function WhatsappSettings({
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="font-bold">Webhook Verify Token:</div>
+              <div className="font-bold">
+                {t("fields.webhookVerifyToken.label")}:
+              </div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.verifyToken}</span>
                 <Button className="flex-none" size="icon" variant="outline">

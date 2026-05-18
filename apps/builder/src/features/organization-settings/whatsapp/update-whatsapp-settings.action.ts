@@ -7,6 +7,7 @@ import {
   whatsappCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { getTranslations } from "next-intl/server"
 
 import { organizationActionClient } from "@/lib/safe-action"
 
@@ -25,16 +26,22 @@ export const updateWhatsappSettingsAction = organizationActionClient
         type: "whatsapp",
       })
 
+      const t = await getTranslations()
+
       const clientSecret =
         parsedInput.clientSecret || existing?.config.clientSecret
       if (!clientSecret) {
-        throw new Error("App Secret is required to configure WhatsApp.")
+        throw new Error(
+          t("organizationSettings.errors.whatsappAppSecretRequired"),
+        )
       }
 
       const systemUserToken =
         parsedInput.systemUserToken || existing?.config.systemUserToken
       if (!systemUserToken) {
-        throw new Error("System User Token is required to configure WhatsApp.")
+        throw new Error(
+          t("organizationSettings.errors.whatsappSystemUserTokenRequired"),
+        )
       }
 
       const config: WhatsappCredential = {

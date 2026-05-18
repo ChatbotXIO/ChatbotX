@@ -544,6 +544,18 @@
     "customCss": {
       "label": "Custom CSS"
     },
+    "theme": {
+      "label": "Theme",
+      "placeholder": "Select a theme"
+    },
+    "customJS": {
+      "label": "Custom JS",
+      "placeholder": "Enter custom JavaScript"
+    },
+    "customCSS": {
+      "label": "Custom CSS",
+      "placeholder": "Enter custom CSS"
+    },
     "customField": {
       "label": "Custom Field",
       "savePayloadTo": "Save response to Custom Field",
@@ -835,6 +847,9 @@
     },
     "search": {
       "placeholder": "Search..."
+    },
+    "logo": {
+      "label": "Logo"
     },
     "showLogo": {
       "label": "Show Personal Logo"
@@ -1212,6 +1227,12 @@
     "code": {
       "label": "Code",
       "placeholder": "Enter code"
+    },
+    "authCallbackUrl": {
+      "label": "Auth Callback URL"
+    },
+    "webhookUrl": {
+      "label": "Webhook URL"
     }
   },
   "flows": {
@@ -1387,6 +1408,20 @@
   },
   "integrations": {
     "title": "Integrations"
+  },
+  "organizationSettings": {
+    "title": "Organization Settings",
+    "errors": {
+      "giphyApiKeyRequired": "API Key is required to configure GIPHY.",
+      "giphyApiKeyInvalid": "Invalid GIPHY API key",
+      "googleClientSecretRequired": "Client Secret is required to configure Google.",
+      "googleVerifyTokenRequired": "Verify Token is required to configure Google.",
+      "messengerAppSecretRequired": "App Secret is required to configure Messenger.",
+      "zaloAppSecretRequired": "App Secret is required to configure Zalo.",
+      "stripeSecretKeyRequired": "Secret Key is required to configure Stripe.",
+      "whatsappAppSecretRequired": "App Secret is required to configure WhatsApp.",
+      "whatsappSystemUserTokenRequired": "System User Token is required to configure WhatsApp."
+    }
   },
   "messages": {
     "moveFeature": "Move {feature}",

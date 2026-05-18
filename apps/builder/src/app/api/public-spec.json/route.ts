@@ -1,7 +1,8 @@
-import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
-import "@/polyfill"
 import { getPublicOriginFromRequest } from "@chatbotx.io/sdk"
 import { OpenAPIGenerator } from "@orpc/openapi"
+import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
+import "@/polyfill"
+import { getPlatformSettings } from "@/features/platform/utils"
 import { publicRouter } from "@/routers/public"
 
 const openAPIGenerator = new OpenAPIGenerator({
@@ -9,9 +10,11 @@ const openAPIGenerator = new OpenAPIGenerator({
 })
 
 async function handleRequest(request: Request) {
+  const { name } = await getPlatformSettings()
+
   const spec = await openAPIGenerator.generate(publicRouter, {
     info: {
-      title: "ChatbotX",
+      title: name,
       version: "0.0.1",
     },
 

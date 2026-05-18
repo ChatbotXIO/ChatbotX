@@ -27,14 +27,7 @@ import {
   forgotPasswordRequest,
 } from "./schemas/action"
 
-export type ForgotPasswordProps = {
-  brandName: string
-}
-
-export const ForgotPassword = ({
-  brandName,
-  ...props
-}: ForgotPasswordProps) => {
+export const ForgotPassword = () => {
   const t = useTranslations()
 
   const [isSent, setIsSent] = useState(false)
@@ -63,13 +56,10 @@ export const ForgotPassword = ({
   }
 
   return (
-    <div className="flex flex-col gap-6" {...props}>
+    <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <AuthHeader
-            brandName={brandName}
-            title={t("auth.forgotPasswordTitle")}
-          />
+          <AuthHeader title={t("auth.forgotPasswordTitle")} />
         </CardHeader>
 
         <CardContent>

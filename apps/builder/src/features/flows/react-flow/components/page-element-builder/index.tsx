@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { Separator } from "@chatbotx.io/ui/components/ui/separator"
 import Image from "next/image"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
@@ -18,6 +19,8 @@ type BuilderProps = {
   type: PageElementType
 }
 export function PageElementBuilder({ type, parentName }: BuilderProps) {
+  const params = useParams<{ workspaceId: string; flowId: string }>()
+
   const t = useTranslations()
   switch (type) {
     case pageElementTypes.enum.heading:
@@ -36,7 +39,11 @@ export function PageElementBuilder({ type, parentName }: BuilderProps) {
       )
     case pageElementTypes.enum.image:
       return (
-        <DirectUploadOrInsertLink fileType="image" parentName={parentName} />
+        <DirectUploadOrInsertLink
+          fileType="image"
+          parentName={parentName}
+          uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/elements/${parentName}`}
+        />
       )
     case pageElementTypes.enum.button:
       return <ButtonStepEditor parentName={`${parentName}`} />

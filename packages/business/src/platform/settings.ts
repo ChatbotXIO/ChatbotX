@@ -1,25 +1,35 @@
 import { integrationContextEnv } from "../integration-context/keys"
-import { isCommunity } from "../keys"
+import { isEnterprise } from "../keys"
 import { organizationService } from "../organization/service"
-import { getOrganizationUrls } from "../organization/urls"
+import { resolvePlatformSettingsByOrganization } from "../organization/urls"
 import { workspaceService } from "../workspace/service"
 
-export type PlatformUrls = {
+export type PlatformSettings = {
   appUrl: string
   realtimeUrl: string
   assetUrl: string
+  name: string
+  logo: string | null
+  theme: string | null
+  customJS: string | null
+  customCSS: string | null
 }
 
-const getCommunityUrls = (): PlatformUrls => {
+const getDefaultSettings = (): PlatformSettings => {
   const env = integrationContextEnv()
   return {
     appUrl: env.NEXT_PUBLIC_BUILDER_URL,
     realtimeUrl: env.NEXT_PUBLIC_REALTIME_URL,
     assetUrl: env.NEXT_PUBLIC_ASSET_URL,
+    name: "ChatbotX",
+    logo: null,
+    theme: null,
+    customJS: null,
+    customCSS: null,
   }
 }
 
-type ResolvePlatformUrlsArgs =
+type ResolvePlatformSettingsArgs =
   | { workspaceId: string }
   | { organizationId: string }
 
@@ -30,11 +40,11 @@ type ResolvePlatformUrlsArgs =
  * On enterprise/cloud, uses the per-org `appUrl`/`wsUrl`/`assetUrl`
  * (with `app.<domain>` etc. fallbacks).
  */
-export const resolvePlatformUrls = async (
-  args: ResolvePlatformUrlsArgs,
-): Promise<PlatformUrls> => {
-  if (isCommunity()) {
-    return getCommunityUrls()
+export const resolvePlatformSettings = async (
+  args: ResolvePlatformSettingsArgs,
+): Promise<PlatformSettings> => {
+  if (!isEnterprise()) {
+    return getDefaultSettings()
   }
 
   const organizationId =
@@ -44,12 +54,7 @@ export const resolvePlatformUrls = async (
           .organizationId
 
   const organization = await organizationService.findById(organizationId)
-  const orgUrls = getOrganizationUrls(organization)
-  return {
-    appUrl: orgUrls.appUrl,
-    realtimeUrl: orgUrls.wsUrl,
-    assetUrl: orgUrls.assetUrl,
-  }
+  return resolvePlatformSettingsByOrganization(organization)
 }
 
 /**
@@ -60,26 +65,40 @@ export const resolvePlatformUrls = async (
  * TODO: on enterprise/cloud, fetch the per-org broadcast secret from the database.
  */
 export const resolveBroadcastSecret = (
-  _args: ResolvePlatformUrlsArgs,
+  _args: ResolvePlatformSettingsArgs,
 ): string => integrationContextEnv().REALTIME_BROADCAST_SECRET
 
 /**
- * Like {@link resolvePlatformUrls} but identifies the org by request hostname
+ * Like {@link resolvePlatformSettings} but identifies the org by request hostname
  * (typically the `x-domain` header set by the builder proxy). Useful for
  * routes/server actions that don't have a `workspaceId` yet.
  */
-export const resolvePlatformUrlsByDomain = async (
+export const resolvePlatformSettingsByDomain = async (
   domain: string | null | undefined,
-): Promise<PlatformUrls> => {
-  if (isCommunity() || !domain) {
-    return getCommunityUrls()
+): Promise<PlatformSettings> => {
+  const defaultSettings = getDefaultSettings()
+
+  // On enterprise, domain is required to identify the org; without it fall back to defaults.
+  // On community/cloud a single org exists, so we still look it up (ignoring domain).
+  if (isEnterprise() && !domain) {
+    return defaultSettings
   }
 
-  const organization = await organizationService.findByDomain(domain)
-  const orgUrls = getOrganizationUrls(organization)
-  return {
-    appUrl: orgUrls.appUrl,
-    realtimeUrl: orgUrls.wsUrl,
-    assetUrl: orgUrls.assetUrl,
+  const where = isEnterprise() && domain ? { domain } : {}
+  const organization = await organizationService.find({ where })
+
+  if (!organization) {
+    return defaultSettings
   }
+
+  if (!isEnterprise()) {
+    return {
+      ...defaultSettings,
+      theme: organization.theme,
+      customJS: organization.customJS,
+      customCSS: organization.customCSS,
+    }
+  }
+
+  return resolvePlatformSettingsByOrganization(organization)
 }

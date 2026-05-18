@@ -25,6 +25,9 @@ export const organizationModel = pgTable(
     // @deprecated
     settings: jsonb().$type<OrganizationSettings>().default({}).notNull(),
     defaultMaxContacts: integer().default(999_999_999).notNull(),
+    theme: text(),
+    customJS: text(),
+    customCSS: text(),
   },
   (table) => [
     index("Organization_domain_idx").using(

@@ -1,7 +1,6 @@
-import { resolvePlatformUrlsByDomain } from "@chatbotx.io/business"
 import { createPresignedUploadRequest, uploader } from "@chatbotx.io/filesystem"
 import { type NextRequest, NextResponse } from "next/server"
-import { getDomainFromHeader } from "@/lib/domain"
+import { getPlatformSettings } from "@/features/platform/utils"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { safeJsonParse } from "@/lib/serialize"
 
@@ -10,8 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await safeJsonParse(req)
     const data = createPresignedUploadRequest.parse(body)
 
-    const domain = await getDomainFromHeader()
-    const { assetUrl } = await resolvePlatformUrlsByDomain(domain)
+    const { assetUrl } = await getPlatformSettings()
 
     const result = await Promise.all(
       data.map(async (d) => {

@@ -30,7 +30,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { isCommunity } from "@/env"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { usePlatformUrls } from "@/features/platform"
+import { usePlatformSettings } from "@/features/platform"
 import { BRANDING_TITLE, getBrandingUrl } from "../lib"
 
 type PersistentMenuTypeOption = {
@@ -98,7 +98,7 @@ export default function PersistentMenuField({
   const t = useTranslations()
   const { control } = useFormContext()
   const flowOptions = useFlowSelectOptions()
-  const { appUrl } = usePlatformUrls()
+  const { appUrl } = usePlatformSettings()
   const brandingURL = useMemo(
     () => getBrandingUrl(channel, appUrl),
     [channel, appUrl],

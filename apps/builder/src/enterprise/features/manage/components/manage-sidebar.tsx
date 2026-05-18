@@ -7,6 +7,7 @@ import {
   SidebarHeader,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import {
+  BuildingIcon,
   CoinsIcon,
   CreditCardIcon,
   Grid2x2PlusIcon,
@@ -35,7 +36,11 @@ export function ManageSidebar() {
         title: t("integrations.title"),
         url: "/manage/integrations",
         icon: Grid2x2PlusIcon,
-        isActive: true,
+      },
+      {
+        title: t("organizationSettings.title"),
+        url: "/manage/settings",
+        icon: BuildingIcon,
       },
       ...(isCommunity
         ? []

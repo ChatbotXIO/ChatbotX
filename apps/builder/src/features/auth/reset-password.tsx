@@ -22,11 +22,7 @@ import {
   resetPasswordRequest,
 } from "./schemas/action"
 
-export type ResetPasswordProps = {
-  brandName: string
-}
-
-export const ResetPassword = ({ brandName, ...props }: ResetPasswordProps) => {
+export const ResetPassword = () => {
   const t = useTranslations()
   const searchParams = useSearchParams()
 
@@ -56,13 +52,10 @@ export const ResetPassword = ({ brandName, ...props }: ResetPasswordProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-6" {...props}>
+    <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <AuthHeader
-            brandName={brandName}
-            title={t("auth.resetPasswordTitle")}
-          />
+          <AuthHeader title={t("auth.resetPasswordTitle")} />
         </CardHeader>
 
         <CardContent>

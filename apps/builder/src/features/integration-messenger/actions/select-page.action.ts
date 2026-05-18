@@ -4,7 +4,7 @@ import {
   buildContext,
   organizationCredentialService,
   organizationService,
-  resolvePlatformUrls,
+  resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -58,7 +58,7 @@ export const selectPageAction = authActionClient
         }
         const messengerSettings = messengerCredential.config
 
-        const { appUrl } = await resolvePlatformUrls({
+        const { appUrl } = await resolvePlatformSettings({
           organizationId: organization.id,
         })
 

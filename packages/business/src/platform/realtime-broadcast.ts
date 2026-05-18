@@ -6,13 +6,13 @@ import {
   type RealtimeEventData,
   type RealtimeEventNotifyExportResult,
 } from "@chatbotx.io/partysocket-config"
-import { resolveBroadcastSecret, resolvePlatformUrls } from "./urls"
+import { resolveBroadcastSecret, resolvePlatformSettings } from "./settings"
 
 const resolveTargetByWorkspace = async (
   workspaceId: string,
 ): Promise<BroadcastTarget> => {
   const [{ realtimeUrl }, secret] = await Promise.all([
-    resolvePlatformUrls({ workspaceId }),
+    resolvePlatformSettings({ workspaceId }),
     Promise.resolve(resolveBroadcastSecret({ workspaceId })),
   ])
   return { url: realtimeUrl, secret }
@@ -22,7 +22,7 @@ const resolveTargetByOrganization = async (
   organizationId: string,
 ): Promise<BroadcastTarget> => {
   const [{ realtimeUrl }, secret] = await Promise.all([
-    resolvePlatformUrls({ organizationId }),
+    resolvePlatformSettings({ organizationId }),
     Promise.resolve(resolveBroadcastSecret({ organizationId })),
   ])
   return { url: realtimeUrl, secret }

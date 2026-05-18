@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import ky from "ky"
+import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 
 import { logger } from "@/lib/log"
@@ -45,9 +46,10 @@ export const updateGiphySettingsAction = organizationActionClient
       if (parsedInput.apiKey) {
         const isValid = await isValidGiphyApiKey(parsedInput.apiKey)
         if (!isValid) {
+          const t = await getTranslations()
           return returnValidationErrors(giphyCredentialUpdateSchema, {
             apiKey: {
-              _errors: ["Invalid GIPHY API key"],
+              _errors: [t("organizationSettings.errors.giphyApiKeyInvalid")],
             },
           })
         }
@@ -55,7 +57,8 @@ export const updateGiphySettingsAction = organizationActionClient
 
       const apiKey = parsedInput.apiKey || existing?.config.apiKey
       if (!apiKey) {
-        throw new Error("API Key is required to configure GIPHY.")
+        const t = await getTranslations()
+        throw new Error(t("organizationSettings.errors.giphyApiKeyRequired"))
       }
 
       const config: GiphyCredential = { apiKey }

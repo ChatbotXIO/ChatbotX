@@ -2,8 +2,9 @@
 
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import Image from "next/image"
-import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
+import { usePlatformSettings } from "@/features/platform"
+import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 type BrandIconProps = {
   alt?: string
@@ -14,8 +15,9 @@ export const BrandIcon = ({
   alt = "Brand Icon",
   className,
 }: BrandIconProps) => {
-  const { theme, systemTheme } = useTheme()
+  const currentTheme = useCurrentTheme()
   const [mounted, setMounted] = useState(false)
+  const { logo } = usePlatformSettings()
 
   useEffect(() => {
     setMounted(true)
@@ -25,11 +27,13 @@ export const BrandIcon = ({
     return <div className={cn(className, "h-8 w-auto")} />
   }
 
-  const currentTheme = theme === "system" ? systemTheme : theme
-  const logoSrc =
+  const baseLogoSrc =
     currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
-  const iconSrc =
+  const logoSrc = logo || baseLogoSrc
+
+  const baseIconSrc =
     currentTheme === "dark" ? "/brand/icon_white.svg" : "/brand/icon_black.svg"
+  const iconSrc = logo || baseIconSrc
 
   return (
     <>

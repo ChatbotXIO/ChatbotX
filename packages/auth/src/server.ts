@@ -1,6 +1,7 @@
 import {
   organizationCredentialService,
   organizationService,
+  resolvePlatformSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -20,14 +21,14 @@ import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 
-export type AuthConfig = {
-  brandName?: string
-  brandUrl: string
+const getPlatformSettings = async (request: Request) => {
+  const domain = request.headers.get("x-domain") ?? ""
+  return await resolvePlatformSettingsByDomain(domain)
 }
 
-export function createAuth(config: AuthConfig) {
-  const brandName = config.brandName ?? "ChatbotX"
+export type AuthConfig = Record<string, never>
 
+export function createAuth(_config: AuthConfig) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -81,13 +82,16 @@ export function createAuth(config: AuthConfig) {
           })
         }
 
-        const originUrl = await getPublicOriginFromRequest(
-          request as unknown as Request,
-        )
+        const [originUrl, platformInfo] = await Promise.all([
+          getPublicOriginFromRequest(request as unknown as Request),
+          getPlatformSettings(request),
+        ])
 
+        const { name: brandName, logo } = platformInfo
         await sendResetPassword(user.email, {
           brandName,
-          brandLogoUrl: new URL("/brand/logo_white.svg", originUrl).toString(),
+          brandLogoUrl:
+            logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
           brandUrl: new URL("/", originUrl).toString(),
           subject: "Reset your password",
           userName: user.name ?? user.email,
@@ -103,13 +107,16 @@ export function createAuth(config: AuthConfig) {
           })
         }
 
-        const originUrl = await getPublicOriginFromRequest(
-          request as unknown as Request,
-        )
+        const [originUrl, platformInfo] = await Promise.all([
+          getPublicOriginFromRequest(request as unknown as Request),
+          getPlatformSettings(request),
+        ])
+        const { name: brandName, logo } = platformInfo
 
         await sendSignUpVerification(user.email, {
           brandName,
-          brandLogoUrl: new URL("/brand/logo_white.svg", originUrl).toString(),
+          brandLogoUrl:
+            logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
           brandUrl: new URL("/", originUrl).toString(),
           subject: `${brandName} Email Verification`,
           userName: user.name ?? user.email,
@@ -126,23 +133,23 @@ export function createAuth(config: AuthConfig) {
             })
           }
 
-          const originUrl = await getPublicOriginFromRequest(
-            request as unknown as Request,
-          )
+          const [originUrl, platformInfo] = await Promise.all([
+            getPublicOriginFromRequest(request as unknown as Request),
+            getPlatformSettings(request as unknown as Request),
+          ])
+          const { name: brandName, logo } = platformInfo
 
           const user = await db.query.userModel.findFirst({ where: { email } })
           if (!user) {
             throw new APIError(400, {
-              message: "Your email is not registered with ChatbotX",
+              message: `Your email is not registered with ${brandName}`,
             })
           }
 
           await sendMagicLink(email, {
             brandName,
-            brandLogoUrl: new URL(
-              "/brand/logo_white.svg",
-              originUrl,
-            ).toString(),
+            brandLogoUrl:
+              logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
             brandUrl: new URL("/", originUrl).toString(),
             subject: "Verify your email",
             userName: user.name ?? email,

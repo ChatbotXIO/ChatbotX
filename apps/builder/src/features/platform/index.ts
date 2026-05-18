@@ -1,1 +1,1 @@
-export * from "./platform-urls-provider"
+export * from "./platform-settings-provider"

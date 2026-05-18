@@ -16,7 +16,7 @@ import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
-import { usePlatformUrls } from "@/features/platform"
+import { usePlatformSettings } from "@/features/platform"
 import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
 
 type GetInboxUrlDialogProps = {
@@ -30,7 +30,7 @@ export function GetInboxUrlDialog({
   refConfig,
 }: GetInboxUrlDialogProps) {
   const { inboxes } = useInboxStore((state) => state)
-  const { appUrl } = usePlatformUrls()
+  const { appUrl } = usePlatformSettings()
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>

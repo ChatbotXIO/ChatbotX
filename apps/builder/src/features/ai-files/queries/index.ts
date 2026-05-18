@@ -1,6 +1,6 @@
 "use server"
 
-import { resolvePlatformUrls } from "@chatbotx.io/business"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { AIEmbeddingStatus } from "@chatbotx.io/database/partials"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
@@ -25,7 +25,7 @@ export async function listAIFiles(
         },
       },
     }),
-    resolvePlatformUrls({ workspaceId: input.workspaceId }),
+    resolvePlatformSettings({ workspaceId: input.workspaceId }),
   ])
 
   const transformedData = data.map((file) => {

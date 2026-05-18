@@ -9,18 +9,17 @@ import {
 import { MailIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { usePlatformSettings } from "../platform"
 import { AuthHeader } from "./components/shared"
 
-export default function MagicLinkSent({ brandName }: { brandName: string }) {
+export default function MagicLinkSent() {
   const t = useTranslations()
+  const { name } = usePlatformSettings()
 
   return (
     <Card>
       <CardHeader className="text-center">
-        <AuthHeader
-          brandName={brandName}
-          title={t("auth.magicLinkSentTitle", { name: brandName })}
-        />
+        <AuthHeader title={t("auth.magicLinkSentTitle", { name })} />
       </CardHeader>
 
       <CardContent className="text-center">

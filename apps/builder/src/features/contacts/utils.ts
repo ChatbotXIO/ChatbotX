@@ -1,10 +1,10 @@
-import { usePlatformUrls } from "@/features/platform"
+import { usePlatformSettings } from "@/features/platform"
 import type { ContactResource } from "./schemas/resource"
 
 export function useAvatarUrl(
   contact?: ContactResource | null,
 ): string | undefined {
-  const { assetUrl } = usePlatformUrls()
+  const { assetUrl } = usePlatformSettings()
   if (!contact) {
     return
   }

@@ -12,3 +12,4 @@ export const keys = () =>
   })
 
 export const isCommunity = () => keys().NEXT_PUBLIC_EDITION === "community"
+export const isEnterprise = () => keys().NEXT_PUBLIC_EDITION === "enterprise"

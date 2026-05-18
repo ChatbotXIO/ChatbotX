@@ -4,7 +4,7 @@ import {
   buildContext,
   organizationCredentialService,
   organizationService,
-  resolvePlatformUrls,
+  resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -60,7 +60,7 @@ export const selectAccountAction = authActionClient
         }
         const instagramSettings = instagramCredential.config
 
-        const { appUrl } = await resolvePlatformUrls({
+        const { appUrl } = await resolvePlatformSettings({
           organizationId: organization.id,
         })
 

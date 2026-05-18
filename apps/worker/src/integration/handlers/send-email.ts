@@ -2,7 +2,7 @@ import {
   buildContext,
   inboxService,
   integrationSmtpService,
-  resolvePlatformUrls,
+  resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
@@ -120,7 +120,7 @@ export async function sendEmail({
   })
 
   const variables = await contactVariableService.getAll(conversation.contactId)
-  const { appUrl } = await resolvePlatformUrls({
+  const { appUrl } = await resolvePlatformSettings({
     workspaceId: conversation.workspaceId,
   })
 

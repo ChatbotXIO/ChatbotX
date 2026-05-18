@@ -7,6 +7,7 @@ import {
   stripeCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
+import { getTranslations } from "next-intl/server"
 
 import { organizationActionClient } from "@/lib/safe-action"
 
@@ -25,9 +26,13 @@ export const updateStripeSettingsAction = organizationActionClient
         type: "stripe",
       })
 
+      const t = await getTranslations()
+
       const secretKey = parsedInput.secretKey || existing?.config.secretKey
       if (!secretKey) {
-        throw new Error("Secret Key is required to configure Stripe.")
+        throw new Error(
+          t("organizationSettings.errors.stripeSecretKeyRequired"),
+        )
       }
 
       const config: StripeCredential = {

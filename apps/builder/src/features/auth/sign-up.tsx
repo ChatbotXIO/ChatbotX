@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { isCommunity } from "@/env"
 import SSOSignUp from "@/features/auth/sso-sign-in"
+import { usePlatformSettings } from "../platform"
 import { EmailPasswordSignUp } from "./components/email-password-sign-up"
 import {
   AcceptTermsAndPolicy,
@@ -17,25 +18,18 @@ import {
 } from "./components/shared"
 
 export type SignUpFormProps = {
-  brandName: string
   callbackUrl?: string
 }
 
-export const SignUpForm = ({
-  brandName,
-  callbackUrl,
-  ...props
-}: SignUpFormProps) => {
+export const SignUpForm = ({ callbackUrl, ...props }: SignUpFormProps) => {
   const t = useTranslations()
+  const { name } = usePlatformSettings()
 
   return (
     <div className="flex flex-col gap-6" {...props}>
       <Card>
         <CardHeader className="text-center">
-          <AuthHeader
-            brandName={brandName}
-            title={t("auth.signUpTitle", { name: brandName })}
-          />
+          <AuthHeader title={t("auth.signUpTitle", { name })} />
         </CardHeader>
 
         <CardContent>

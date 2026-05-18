@@ -4,58 +4,61 @@ import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import { router } from "@/routers"
 import "@/polyfill"
+import { getPlatformSettings } from "@/features/platform/utils"
 
-const openAPIHandler = new OpenAPIHandler(router, {
-  plugins: [
-    new SmartCoercionPlugin({
-      schemaConverters: [new ZodToJsonSchemaConverter()],
-    }),
-    new OpenAPIReferencePlugin({
-      schemaConverters: [new ZodToJsonSchemaConverter()],
-      specGenerateOptions: {
-        info: {
-          title: "ChatbotX",
-          version: "0.0.1",
-        },
-        commonSchemas: {
-          UndefinedError: { error: "UndefinedError" },
-        },
-        security: [{ bearerAuth: [] }, { developerAccessToken: [] }],
-        components: {
-          securitySchemes: {
-            bearerAuth: {
-              type: "http",
-              scheme: "bearer",
-            },
-            developerAccessToken: {
-              type: "http",
-              scheme: "bearer",
+const buildOpenAPIHandler = (title: string) =>
+  new OpenAPIHandler(router, {
+    plugins: [
+      new SmartCoercionPlugin({
+        schemaConverters: [new ZodToJsonSchemaConverter()],
+      }),
+      new OpenAPIReferencePlugin({
+        schemaConverters: [new ZodToJsonSchemaConverter()],
+        specGenerateOptions: {
+          info: {
+            title,
+            version: "0.0.1",
+          },
+          commonSchemas: {
+            UndefinedError: { error: "UndefinedError" },
+          },
+          security: [{ bearerAuth: [] }, { developerAccessToken: [] }],
+          components: {
+            securitySchemes: {
+              bearerAuth: {
+                type: "http",
+                scheme: "bearer",
+              },
+              developerAccessToken: {
+                type: "http",
+                scheme: "bearer",
+              },
             },
           },
         },
-      },
-      docsConfig: {
-        authentication: {
-          securitySchemes: {
-            bearerAuth: {
-              token: "default-token",
-            },
-            developerAccessToken: {
-              token: "default-workspace-token",
+        docsConfig: {
+          authentication: {
+            securitySchemes: {
+              bearerAuth: {
+                token: "default-token",
+              },
+              developerAccessToken: {
+                token: "default-workspace-token",
+              },
             },
           },
         },
-      },
-    }),
-  ],
-})
+      }),
+    ],
+  })
 
 export async function handleRequest(request: Request) {
-  const { response } = await openAPIHandler.handle(request, {
+  const { name } = await getPlatformSettings()
+
+  const { response } = await buildOpenAPIHandler(name).handle(request, {
     prefix: "/api",
     context: { headers: request.headers },
   })
-
   return response ?? new Response("Not found", { status: 404 })
 }
 

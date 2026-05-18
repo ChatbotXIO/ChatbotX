@@ -15,7 +15,6 @@ import {
   XIcon,
 } from "lucide-react"
 import Image from "next/image"
-import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useMemo, useRef } from "react"
 import { useFormContext, useWatch } from "react-hook-form"
@@ -24,11 +23,12 @@ import { toast } from "sonner"
 export function DirectUploadOrInsertLink({
   parentName,
   fileType,
+  uploadPath,
 }: {
   parentName: string
   fileType: FileType
+  uploadPath: string
 }) {
-  const params = useParams<{ workspaceId: string; flowId: string }>()
   const t = useTranslations()
 
   const { setValue, getValues } = useFormContext()
@@ -81,7 +81,7 @@ export function DirectUploadOrInsertLink({
   }
 
   return (
-    <div className="relative flex min-h-40 flex-col items-center justify-center">
+    <div className="relative flex h-36 flex-col items-center justify-center">
       <FormFieldWrapper name={`${parentName}.mode`}>
         {(field) => <Input type="hidden" {...field} />}
       </FormFieldWrapper>
@@ -102,7 +102,7 @@ export function DirectUploadOrInsertLink({
           setValue(`${parentName}.mode`, "file")
         }}
         triggerRef={triggerRef}
-        uploadPath={`public/space/${params.workspaceId}/flows/${params.flowId}/steps/${stepId}`}
+        uploadPath={uploadPath}
       />
 
       {uploadMode === "file" ? (
@@ -113,7 +113,7 @@ export function DirectUploadOrInsertLink({
 
           {publicUrl && publicUrl.length > 0 ? (
             <Button
-              className="relative flex h-40 w-full p-0!"
+              className="relative flex h-full w-full p-0!"
               onClick={chooseUploadFile}
               type="button"
               variant="ghost"
@@ -160,10 +160,10 @@ export function DirectUploadOrInsertLink({
           )}
         </>
       ) : (
-        <div className="flex h-40 w-full items-center gap-2 py-2">
-          {publicUrl?.length ? (
+        <div className="flex w-full items-center gap-2 py-2">
+          {publicUrl.length ? (
             <Button
-              className="relative h-40 w-full p-0!"
+              className="h-full p-0!"
               onClick={chooseUploadFile}
               type="button"
               variant="ghost"

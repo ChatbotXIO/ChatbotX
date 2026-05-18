@@ -9,7 +9,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { httpLogger } from "./lib/log"
 
-const publicRoutes = ["/integrations", "/r"]
+const publicRoutes = ["/integrations", "/r", "/auth", "/api/auth"]
 const signinPath = "/auth/sign-in"
 
 async function _logRequest(request: NextRequest) {
@@ -67,7 +67,11 @@ function attachProxyUrl(request: NextRequest): NextResponse {
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", originUrl.toString())
-  requestHeaders.set("x-domain", originUrl.hostname)
+
+  const hostname = originUrl.hostname
+  const parts = hostname.split(".")
+  const domain = parts.slice(-2).join(".")
+  requestHeaders.set("x-domain", domain)
 
   return NextResponse.next({
     request: {
@@ -101,6 +105,6 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!api|webchat|auth|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
+    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
   ],
 }

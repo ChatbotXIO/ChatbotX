@@ -1,2 +1,2 @@
 export * from "./realtime-broadcast"
-export * from "./urls"
+export * from "./settings"
