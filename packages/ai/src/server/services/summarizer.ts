@@ -4,18 +4,11 @@ import type {
 } from "@chatbotx.io/database/types"
 import { defaultAIModels } from "@chatbotx.io/flow-config"
 import { generateText } from "ai"
+import { helpTexts, MAX_SUMMARY_LENGTH } from "../../constants"
 import { logger } from "../../logger"
+import { aiProviders } from "../../schemas/ai-model"
 import { getCachedAIIntegration } from "../cache"
 import { createAIModelInstance } from "../factory"
-
-const PROVIDER_PRIORITY: Array<"openai" | "gemini" | "claude" | "deepseek"> = [
-  "openai",
-  "gemini",
-  "claude",
-  "deepseek",
-]
-
-const MAX_SUMMARY_LENGTH = 1000
 
 export async function summarizeConversation(props: {
   workspaceId: string
@@ -28,7 +21,7 @@ export async function summarizeConversation(props: {
   let selectedProvider: string | undefined
   let selectedModel: IntegrationOpenAIModel | IntegrationGeminiModel | undefined
 
-  for (const provider of PROVIDER_PRIORITY) {
+  for (const provider of aiProviders.options) {
     const integration = await getCachedAIIntegration({
       workspaceId,
       provider,
@@ -68,16 +61,17 @@ export async function summarizeConversation(props: {
     .join("\n")
 
   const prompt = existingSummary
-    ? `This is the previous summary of the conversation: "${existingSummary}"
-
-Here are the latest messages:
-${messagesToSummarize}
-
-Please update the previous summary by incorporating the new information. Keep the summary concise and succinct (under 1000 characters), focusing on key information such as: customer name, issues encountered, needs, order status, and agreed decisions. Return the new summary.`
-    : `Below is the conversation history:
-${messagesToSummarize}
-
-Please summarize the above conversation concisely and succinctly (under 1000 characters). Focus on key information such as: customer name, issues encountered, needs, order status, and agreed decisions. Return the summary.`
+    ? [
+        helpTexts.summarizer.previousSummary(existingSummary),
+        helpTexts.summarizer.latestMessages,
+        messagesToSummarize,
+        helpTexts.summarizer.updateSummaryPrompt,
+      ].join("\n\n")
+    : [
+        helpTexts.summarizer.conversationHistory,
+        messagesToSummarize,
+        helpTexts.summarizer.newSummaryPrompt,
+      ].join("\n\n")
 
   try {
     const { text } = await generateText({
@@ -93,7 +87,7 @@ Please summarize the above conversation concisely and succinctly (under 1000 cha
     if (finalSummary.length > MAX_SUMMARY_LENGTH) {
       const { text: compressedText } = await generateText({
         model: aiModel,
-        prompt: `The following summary is too long: "${finalSummary}". Please shorten it to under 1000 characters while still retaining the most important key points.`,
+        prompt: helpTexts.summarizer.shortenPrompt(finalSummary),
         maxOutputTokens: 400,
         temperature: 0.2,
       })

@@ -1,14 +1,17 @@
 import { createHash } from "node:crypto"
 import { db } from "@chatbotx.io/database/client"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import { aiMessageRoles, senderTypes } from "@chatbotx.io/database/partials"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
+import { MAX_CONVERSATION_HISTORY, MAX_SUMMARY_LENGTH } from "../../constants"
 import { logger } from "../../logger"
 import { aiContextStore } from "../cache/ai-context-store"
-import type { AIContext, AIMessage } from "../cache/schema"
+import {
+  type AIContext,
+  type AIMessage,
+  aiContextSchema,
+} from "../cache/schema"
 import { summarizeConversation } from "./summarizer"
-
-const HISTORY_LIMIT = 20
 
 type DBConversationMessage = {
   id: string
@@ -68,104 +71,8 @@ function isSameContextMessage(
 
 export const aiContextService = {
   /**
-   * Map database messages to AI SDK ModelMessage format
+   * Normalize any message format to AIMessage for context storage
    */
-  mapMessages(dbMessages: Array<{ text: string | null; senderType: string }>) {
-    const messages: ModelMessage[] = []
-    for (const msg of dbMessages) {
-      if (!msg.text) {
-        continue
-      }
-
-      if (msg.senderType === "contact") {
-        messages.push({
-          role: aiMessageRoles.enum.user,
-          content: msg.text,
-        })
-      } else if (msg.senderType === "user" || msg.senderType === "bot") {
-        messages.push({
-          role: aiMessageRoles.enum.assistant,
-          content: msg.text,
-        })
-      }
-    }
-    return messages
-  },
-
-  mapMessagesForContext(dbMessages: DBConversationMessage[]): AIMessage[] {
-    return dbMessages
-      .flatMap((msg) => {
-        if (!msg.text) {
-          return []
-        }
-
-        if (
-          msg.senderType !== "contact" &&
-          msg.senderType !== "user" &&
-          msg.senderType !== "bot"
-        ) {
-          return []
-        }
-
-        const role =
-          msg.senderType === "contact"
-            ? aiMessageRoles.enum.user
-            : aiMessageRoles.enum.assistant
-
-        const createdAt = normalizeTimestamp(msg.createdAt)
-        const normalized = this.normalizeMessageForContext(
-          {
-            role,
-            content: msg.text,
-          },
-          {
-            messageId: msg.id,
-            createdAt,
-          },
-        )
-
-        return normalized ? [normalized] : []
-      })
-      .slice(-HISTORY_LIMIT)
-  },
-
-  mapContextToModelMessages(history: AIMessage[]): ModelMessage[] {
-    const modelMessages: ModelMessage[] = []
-    for (const message of history) {
-      if (message.role === "tool") {
-        continue
-      }
-
-      const content =
-        typeof message.content === "string"
-          ? message.content
-          : JSON.stringify(message.content)
-
-      if (message.role === "user") {
-        modelMessages.push({
-          role: "user",
-          content,
-        })
-        continue
-      }
-
-      if (message.role === "assistant") {
-        modelMessages.push({
-          role: "assistant",
-          content,
-        })
-        continue
-      }
-
-      modelMessages.push({
-        role: "system",
-        content,
-      })
-    }
-
-    return modelMessages
-  },
-
   normalizeMessageForContext(
     message: ModelMessage,
     metadata?: { messageId?: string; createdAt?: number | Date },
@@ -176,12 +83,12 @@ export const aiContextService = {
     if (typeof message.content === "string") {
       const normalizedContent = message.content
       return {
-        role: message.role,
+        role: message.role as AIMessage["role"],
         content: normalizedContent,
         messageId:
           messageId ??
           fallbackMessageId({
-            role: message.role,
+            role: message.role as AIMessage["role"],
             content: normalizedContent,
             createdAt,
           }),
@@ -237,17 +144,71 @@ export const aiContextService = {
     }
 
     return {
-      role: message.role,
+      role: message.role as AIMessage["role"],
       content: normalizedParts,
       messageId:
         messageId ??
         fallbackMessageId({
-          role: message.role,
+          role: message.role as AIMessage["role"],
           content: normalizedParts,
           createdAt,
         }),
       createdAt,
     }
+  },
+
+  /**
+   * Map database messages to AIMessage format for context
+   */
+  mapDbMessagesToContext(dbMessages: DBConversationMessage[]): AIMessage[] {
+    return dbMessages
+      .flatMap((msg) => {
+        if (!msg.text) {
+          return []
+        }
+
+        const senderTypeResult = senderTypes.safeParse(msg.senderType)
+        if (!senderTypeResult.success) {
+          return []
+        }
+
+        const role =
+          senderTypeResult.data === "contact"
+            ? aiMessageRoles.enum.user
+            : aiMessageRoles.enum.assistant
+
+        const normalized = this.normalizeMessageForContext(
+          {
+            role,
+            content: msg.text,
+          },
+          {
+            messageId: msg.id,
+            createdAt: msg.createdAt,
+          },
+        )
+
+        return normalized ? [normalized] : []
+      })
+      .slice(-MAX_CONVERSATION_HISTORY)
+  },
+
+  /**
+   * Map AIMessage (context format) to ModelMessage (AI SDK format)
+   */
+  mapContextToModelMessages(history: AIMessage[]): ModelMessage[] {
+    return history
+      .filter((msg) => msg.role !== "tool")
+      .map((msg) => {
+        const content = serializeMessageContent(msg.content)
+        if (msg.role === "user") {
+          return { role: "user", content }
+        }
+        if (msg.role === "assistant") {
+          return { role: "assistant", content }
+        }
+        return { role: "system", content }
+      })
   },
 
   /**
@@ -264,32 +225,31 @@ export const aiContextService = {
         let context = await aiContextStore.get(conversationId)
 
         if (!context) {
-          const last100Messages = await db.query.messageModel.findMany({
+          const lastMessages = await db.query.messageModel.findMany({
             where: { conversationId },
             orderBy: (table, { desc }) => [desc(table.createdAt)],
-            limit: 100,
+            limit: MAX_CONVERSATION_HISTORY,
           })
 
-          const dbMessages = [...last100Messages].reverse()
-          const aiMessages = this.mapMessages(dbMessages)
-          const aiHistory = this.mapMessagesForContext(dbMessages)
+          const dbMessages = [...lastMessages].reverse()
+          const aiHistory = this.mapDbMessagesToContext(dbMessages)
+          const modelMessages = this.mapContextToModelMessages(aiHistory)
 
           const summary = await summarizeConversation({
             workspaceId,
-            messages: aiMessages,
+            messages: modelMessages,
           })
 
-          const nextContext = {
-            summary,
+          const nextContext = aiContextSchema.parse({
+            summary: summary.slice(0, MAX_SUMMARY_LENGTH),
             history: aiHistory,
             summarizing: false,
             needsResummarize: false,
-          }
-          context = {
-            ...nextContext,
             updatedAt: Date.now(),
-          }
+          })
+
           await aiContextStore.update(conversationId, nextContext)
+          context = nextContext
         }
 
         return context
@@ -345,7 +305,7 @@ export const aiContextService = {
           return
         }
 
-        const shouldSummarize = currentHistory.length > HISTORY_LIMIT
+        const shouldSummarize = currentHistory.length > MAX_CONVERSATION_HISTORY
         const isSummarizing = context.summarizing === true
 
         await aiContextStore.update(conversationId, {
