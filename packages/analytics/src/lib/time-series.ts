@@ -6,6 +6,7 @@ import {
   format,
   parseISO,
   startOfMonth,
+  subDays,
 } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
 import {
@@ -47,6 +48,14 @@ export function generateDaySeries(from: Date, to: Date) {
 
 export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
   return differenceInDays(props.to, props.from) > 60
+}
+
+// cagg (_hourly) materializes only the last 7 days.
+// Use it only when the query window starts within that window.
+// Checking range WIDTH (differenceInDays) is wrong — a 5-day window from
+// 30 days ago to 25 days ago would pass a width check but the cagg has no data.
+export function shouldUseCagg(props: TimeRangeQuery): boolean {
+  return props.from >= subDays(new Date(), 7)
 }
 
 export function getUtcDayKey(date: Date | string | number): string {

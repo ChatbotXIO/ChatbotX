@@ -4,6 +4,7 @@ import { createId } from "@chatbotx.io/utils"
 import {
   fillDailyMessageStats,
   fillMessageStatsMonthlySeries,
+  shouldUseCagg,
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
 import type {
@@ -171,19 +172,35 @@ export class MessageStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        "eventType",
-        SUM(count)::int AS count
-      FROM analytics_message_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        ${eventTypeFilter}
-      GROUP BY 1, 2
-      ORDER BY 1 ASC, 2 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            "eventType",
+            SUM(count)::int AS count
+          FROM analytics_message_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            "eventType",
+            COUNT(*)::int AS count
+          FROM "AnalyticsMessageEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+
+    const result = await db.execute(query)
 
     const rows = (
       result.rows as {
@@ -220,15 +237,16 @@ export class MessageStatsRepository extends BaseRepository {
           )})`
         : sql``
 
+    // Month granularity always > 7 days — use raw hypertable
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
-        SUM(count)::int AS count
-      FROM analytics_message_events_hourly
+        COUNT(*)::int AS count
+      FROM "AnalyticsMessageEvent"
       WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
         ${eventTypeFilter}
       GROUP BY 1, 2
       ORDER BY 1 ASC, 2 ASC
@@ -262,21 +280,40 @@ export class MessageStatsRepository extends BaseRepository {
       props.granularity === "month" || shouldUseMonthlyGranularity(props)
     const interval = useMonth ? "1 month" : "1 day"
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket(${interval}, bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        "channel",
-        "senderType",
-        SUM(count)::int AS count
-      FROM analytics_message_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "senderType" IS NOT NULL
-        AND "channel" IS NOT NULL
-      GROUP BY 1, 2, 3
-      ORDER BY 1 ASC, 2 ASC, 3 ASC
-    `)
+    const query =
+      useMonth || !shouldUseCagg(props)
+        ? sql`
+            SELECT
+              time_bucket(${interval}, "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "channel",
+              "senderType",
+              COUNT(*)::int AS count
+            FROM "AnalyticsMessageEvent"
+            WHERE "workspaceId" = ${workspaceId}
+              AND "occurredAt" >= ${from}
+              AND "occurredAt" <= ${to}
+              AND "senderType" IS NOT NULL
+              AND "channel" IS NOT NULL
+            GROUP BY 1, 2, 3
+            ORDER BY 1 ASC, 2 ASC, 3 ASC
+          `
+        : sql`
+            SELECT
+              time_bucket(${interval}, bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "channel",
+              "senderType",
+              SUM(count)::int AS count
+            FROM analytics_message_events_hourly
+            WHERE "workspaceId" = ${workspaceId}
+              AND bucket >= ${from}
+              AND bucket <= ${to}
+              AND "senderType" IS NOT NULL
+              AND "channel" IS NOT NULL
+            GROUP BY 1, 2, 3
+            ORDER BY 1 ASC, 2 ASC, 3 ASC
+          `
+
+    const result = await db.execute(query)
 
     return (
       result.rows as {

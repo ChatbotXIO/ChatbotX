@@ -8,6 +8,7 @@ import {
   fillDailyTotalContactsSeries,
   fillMonthlyNewContactsSeries,
   fillTotalContactsMonthlySeries,
+  shouldUseCagg,
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
 import type {
@@ -168,19 +169,35 @@ export class ContactStatsRepository extends BaseRepository {
           )})`
         : sql``
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        "eventType",
-        SUM(count)::int AS count
-      FROM analytics_contact_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        ${eventTypeFilter}
-      GROUP BY 1, 2
-      ORDER BY 1 ASC, 2 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            "eventType",
+            SUM(count)::int AS count
+          FROM analytics_contact_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            "eventType",
+            COUNT(*)::int AS count
+          FROM "AnalyticsContactEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            ${eventTypeFilter}
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+
+    const result = await db.execute(query)
 
     const rows = (
       result.rows as {
@@ -217,15 +234,16 @@ export class ContactStatsRepository extends BaseRepository {
           )})`
         : sql``
 
+    // Month granularity always > 7 days — use raw hypertable
     const result = await db.execute(sql`
       SELECT
-        time_bucket('1 month', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+        time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
         "eventType",
-        SUM(count)::int AS count
-      FROM analytics_contact_events_hourly
+        COUNT(*)::int AS count
+      FROM "AnalyticsContactEvent"
       WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
+        AND "occurredAt" >= ${from}
+        AND "occurredAt" <= ${to}
         ${eventTypeFilter}
       GROUP BY 1, 2
       ORDER BY 1 ASC, 2 ASC
@@ -262,37 +280,52 @@ export class ContactStatsRepository extends BaseRepository {
 
     const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
 
-    // Baseline must query the raw hypertable, not the
-    // `analytics_contact_events_hourly` continuous aggregate. The cagg refresh
-    // policy materializes only the last 7 days; events older than that are
-    // below the invalidation watermark and never appear in the cagg, so a
-    // cagg-based baseline returns 0 for any workspace whose first contact
-    // pre-dates the cagg window.
+    const baselineQuery = sql`
+      SELECT COALESCE(
+        COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
+        COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
+        0
+      )::int AS baseline
+      FROM "AnalyticsContactEvent"
+      WHERE "workspaceId" = ${workspaceId}
+        AND "occurredAt" < ${dayStart}
+        AND "eventType" IN ('contact_created', 'contact_deleted')
+    `
+
+    // Baseline always queries the raw hypertable: the cagg refresh policy only
+    // materializes the last 7 days, so older events are absent from the cagg
+    // and would return 0 as the baseline for any workspace with older data.
+    const seriesQuery = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+            SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END)::int -
+            SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END)::int AS net
+          FROM analytics_contact_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${dayStart}
+            AND bucket <= ${to}
+            AND "eventType" IN ('contact_created', 'contact_deleted')
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
+            SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
+            SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
+          FROM "AnalyticsContactEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${dayStart}
+            AND "occurredAt" <= ${to}
+            AND "eventType" IN ('contact_created', 'contact_deleted')
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+
     const [baselineResult, seriesResult] = await Promise.all([
-      db.execute(sql`
-        SELECT COALESCE(
-          COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -
-          COUNT(*) FILTER (WHERE "eventType" = 'contact_deleted'),
-          0
-        )::int AS baseline
-        FROM "AnalyticsContactEvent"
-        WHERE "workspaceId" = ${workspaceId}
-          AND "occurredAt" < ${dayStart}
-          AND "eventType" IN ('contact_created', 'contact_deleted')
-      `),
-      db.execute(sql`
-        SELECT
-          time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS day,
-          SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END)::int -
-          SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END)::int AS net
-        FROM analytics_contact_events_hourly
-        WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${dayStart}
-          AND bucket <= ${to}
-          AND "eventType" IN ('contact_created', 'contact_deleted')
-        GROUP BY 1
-        ORDER BY 1 ASC
-      `),
+      db.execute(baselineQuery),
+      db.execute(seriesQuery),
     ])
 
     const baseline = Number(
@@ -341,13 +374,13 @@ export class ContactStatsRepository extends BaseRepository {
       `),
       db.execute(sql`
         SELECT
-          time_bucket('1 month', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
-          SUM(CASE WHEN "eventType" = 'contact_created' THEN count ELSE 0 END)::int -
-          SUM(CASE WHEN "eventType" = 'contact_deleted' THEN count ELSE 0 END)::int AS net
-        FROM analytics_contact_events_hourly
+          time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS month,
+          SUM(CASE WHEN "eventType" = 'contact_created' THEN 1 ELSE 0 END)::int -
+          SUM(CASE WHEN "eventType" = 'contact_deleted' THEN 1 ELSE 0 END)::int AS net
+        FROM "AnalyticsContactEvent"
         WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${monthStart}
-          AND bucket <= ${to}
+          AND "occurredAt" >= ${monthStart}
+          AND "occurredAt" <= ${to}
           AND "eventType" IN ('contact_created', 'contact_deleted')
         GROUP BY 1
         ORDER BY 1 ASC

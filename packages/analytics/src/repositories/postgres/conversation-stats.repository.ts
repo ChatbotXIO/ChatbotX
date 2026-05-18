@@ -1,6 +1,7 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { analyticsConversationEventModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
+import { shouldUseCagg } from "../../lib/time-series"
 import type {
   ConversationArchivedStats,
   ConversationAssignedByAdminStats,
@@ -56,22 +57,41 @@ export class ConversationStatsRepository extends BaseRepository {
   ): Promise<ConversationHandoffStats[]> {
     const { workspaceId, from, to, timezone } = props
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        CASE
-          WHEN "eventType" = 'conversation_transferred_to_human' THEN 'to_human'
-          WHEN "eventType" = 'conversation_transferred_to_bot' THEN 'to_bot'
-        END AS direction,
-        SUM(count)::int AS count
-      FROM analytics_conversation_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "eventType" IN ('conversation_transferred_to_human', 'conversation_transferred_to_bot')
-      GROUP BY 1, 2
-      ORDER BY 1 ASC, 2 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            CASE
+              WHEN "eventType" = 'conversation_transferred_to_human' THEN 'to_human'
+              WHEN "eventType" = 'conversation_transferred_to_bot' THEN 'to_bot'
+            END AS direction,
+            SUM(count)::int AS count
+          FROM analytics_conversation_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "eventType" IN ('conversation_transferred_to_human', 'conversation_transferred_to_bot')
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            CASE
+              WHEN "eventType" = 'conversation_transferred_to_human' THEN 'to_human'
+              WHEN "eventType" = 'conversation_transferred_to_bot' THEN 'to_bot'
+            END AS direction,
+            COUNT(*)::int AS count
+          FROM "AnalyticsConversationEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "eventType" IN ('conversation_transferred_to_human', 'conversation_transferred_to_bot')
+          GROUP BY 1, 2
+          ORDER BY 1 ASC, 2 ASC
+        `
+
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -92,18 +112,33 @@ export class ConversationStatsRepository extends BaseRepository {
   ): Promise<ConversationFollowUpStats[]> {
     const { workspaceId, from, to, timezone } = props
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        SUM(count)::int AS count
-      FROM analytics_conversation_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "eventType" = 'conversation_followed'
-      GROUP BY 1
-      ORDER BY 1 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            SUM(count)::int AS count
+          FROM analytics_conversation_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "eventType" = 'conversation_followed'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            COUNT(*)::int AS count
+          FROM "AnalyticsConversationEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "eventType" = 'conversation_followed'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -122,18 +157,33 @@ export class ConversationStatsRepository extends BaseRepository {
   ): Promise<ConversationArchivedStats[]> {
     const { workspaceId, from, to, timezone } = props
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        SUM(count)::int AS count
-      FROM analytics_conversation_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "eventType" = 'conversation_archived'
-      GROUP BY 1
-      ORDER BY 1 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            SUM(count)::int AS count
+          FROM analytics_conversation_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "eventType" = 'conversation_archived'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            COUNT(*)::int AS count
+          FROM "AnalyticsConversationEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "eventType" = 'conversation_archived'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -152,18 +202,33 @@ export class ConversationStatsRepository extends BaseRepository {
   ): Promise<ConversationAssignedStats[]> {
     const { workspaceId, from, to, timezone } = props
 
-    const result = await db.execute(sql`
-      SELECT
-        time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-        SUM(count)::int AS count
-      FROM analytics_conversation_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "eventType" = 'conversation_assigned'
-      GROUP BY 1
-      ORDER BY 1 ASC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            SUM(count)::int AS count
+          FROM analytics_conversation_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "eventType" = 'conversation_assigned'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+      : sql`
+          SELECT
+            time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+            COUNT(*)::int AS count
+          FROM "AnalyticsConversationEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "eventType" = 'conversation_assigned'
+          GROUP BY 1
+          ORDER BY 1 ASC
+        `
+
+    const result = await db.execute(query)
 
     return (
       result.rows as {
@@ -182,20 +247,36 @@ export class ConversationStatsRepository extends BaseRepository {
   ): Promise<ConversationAssignedByAdminStats[]> {
     const { workspaceId, from, to } = props
 
+    const statsQuery = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            "toAssignee",
+            SUM(count)::int AS count
+          FROM analytics_conversation_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "eventType" = 'conversation_assigned'
+            AND "toAssignee" IS NOT NULL
+          GROUP BY "toAssignee"
+          ORDER BY count DESC
+        `
+      : sql`
+          SELECT
+            "toAssignee",
+            COUNT(*)::int AS count
+          FROM "AnalyticsConversationEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "eventType" = 'conversation_assigned'
+            AND "toAssignee" IS NOT NULL
+          GROUP BY "toAssignee"
+          ORDER BY count DESC
+        `
+
     const [statsResult, members] = await Promise.all([
-      db.execute(sql`
-        SELECT
-          "toAssignee",
-          SUM(count)::int AS count
-        FROM analytics_conversation_events_hourly
-        WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${from}
-          AND bucket <= ${to}
-          AND "eventType" = 'conversation_assigned'
-          AND "toAssignee" IS NOT NULL
-        GROUP BY "toAssignee"
-        ORDER BY count DESC
-      `),
+      db.execute(statsQuery),
       db.query.workspaceMemberModel.findMany({
         where: { workspaceId },
         with: {

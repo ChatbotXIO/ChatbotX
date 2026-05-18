@@ -7,6 +7,7 @@ import {
   fillBotMessageStatsMonthSeries,
   getUtcDayKey,
   iterateTzDays,
+  shouldUseCagg,
   shouldUseMonthlyGranularity,
 } from "../../lib/time-series"
 import type {
@@ -100,15 +101,15 @@ export class BotMessageStatsRepository extends BaseRepository {
     if (granularity === "day" && shouldUseMonthlyGranularity(props)) {
       const result = await db.execute(sql`
         SELECT
-          time_bucket('1 month', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+          time_bucket('1 month', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
           "result",
           "responseType",
           "aiProvider",
-          SUM(count)::int AS count
-        FROM analytics_bot_message_events_hourly
+          COUNT(*)::int AS count
+        FROM "AnalyticsBotMessageEvent"
         WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${from}
-          AND bucket <= ${to}
+          AND "occurredAt" >= ${from}
+          AND "occurredAt" <= ${to}
           AND "result" IS NOT NULL
         GROUP BY 1, 2, 3, 4
         ORDER BY 1 ASC
@@ -123,22 +124,39 @@ export class BotMessageStatsRepository extends BaseRepository {
     }
 
     if (granularity === "day") {
-      const result = await db.execute(sql`
-        SELECT
-          time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-          "result",
-          "responseType",
-          "aiProvider",
-          SUM(count)::int AS count
-        FROM analytics_bot_message_events_hourly
-        WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${from}
-          AND bucket <= ${to}
-          AND "result" IS NOT NULL
-        GROUP BY 1, 2, 3, 4
-        ORDER BY 1 ASC
-      `)
+      const query = shouldUseCagg(props)
+        ? sql`
+            SELECT
+              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "result",
+              "responseType",
+              "aiProvider",
+              SUM(count)::int AS count
+            FROM analytics_bot_message_events_hourly
+            WHERE "workspaceId" = ${workspaceId}
+              AND bucket >= ${from}
+              AND bucket <= ${to}
+              AND "result" IS NOT NULL
+            GROUP BY 1, 2, 3, 4
+            ORDER BY 1 ASC
+          `
+        : sql`
+            SELECT
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "result",
+              "responseType",
+              "aiProvider",
+              COUNT(*)::int AS count
+            FROM "AnalyticsBotMessageEvent"
+            WHERE "workspaceId" = ${workspaceId}
+              AND "occurredAt" >= ${from}
+              AND "occurredAt" <= ${to}
+              AND "result" IS NOT NULL
+            GROUP BY 1, 2, 3, 4
+            ORDER BY 1 ASC
+          `
 
+      const result = await db.execute(query)
       const rows = mapBotMessageRows(
         workspaceId,
         result.rows as RawBotMessageRow[],
@@ -194,20 +212,37 @@ export class BotMessageStatsRepository extends BaseRepository {
     const { granularity, workspaceId, from, to, timezone } = props
 
     if (granularity === "day") {
-      const result = await db.execute(sql`
-        SELECT
-          time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-          "hasResponse",
-          "responseType",
-          SUM(count)::int AS count
-        FROM analytics_bot_message_events_hourly
-        WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${from}
-          AND bucket <= ${to}
-          AND "hasResponse" = false
-        GROUP BY 1, 2, 3
-        ORDER BY 1 ASC
-      `)
+      const query = shouldUseCagg(props)
+        ? sql`
+            SELECT
+              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "hasResponse",
+              "responseType",
+              SUM(count)::int AS count
+            FROM analytics_bot_message_events_hourly
+            WHERE "workspaceId" = ${workspaceId}
+              AND bucket >= ${from}
+              AND bucket <= ${to}
+              AND "hasResponse" = false
+            GROUP BY 1, 2, 3
+            ORDER BY 1 ASC
+          `
+        : sql`
+            SELECT
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "hasResponse",
+              "responseType",
+              COUNT(*)::int AS count
+            FROM "AnalyticsBotMessageEvent"
+            WHERE "workspaceId" = ${workspaceId}
+              AND "occurredAt" >= ${from}
+              AND "occurredAt" <= ${to}
+              AND "hasResponse" = false
+            GROUP BY 1, 2, 3
+            ORDER BY 1 ASC
+          `
+
+      const result = await db.execute(query)
 
       return (
         result.rows as {
@@ -299,22 +334,39 @@ export class BotMessageStatsRepository extends BaseRepository {
     const { granularity, workspaceId, from, to, timezone } = props
 
     if (granularity === "day") {
-      const result = await db.execute(sql`
-        SELECT
-          time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
-          "responseType",
-          "result",
-          "aiProvider",
-          SUM(count)::int AS count
-        FROM analytics_bot_message_events_hourly
-        WHERE "workspaceId" = ${workspaceId}
-          AND bucket >= ${from}
-          AND bucket <= ${to}
-          AND "hasResponse" = true
-        GROUP BY 1, 2, 3, 4
-        ORDER BY 1 ASC
-      `)
+      const query = shouldUseCagg(props)
+        ? sql`
+            SELECT
+              time_bucket('1 day', bucket AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "responseType",
+              "result",
+              "aiProvider",
+              SUM(count)::int AS count
+            FROM analytics_bot_message_events_hourly
+            WHERE "workspaceId" = ${workspaceId}
+              AND bucket >= ${from}
+              AND bucket <= ${to}
+              AND "hasResponse" = true
+            GROUP BY 1, 2, 3, 4
+            ORDER BY 1 ASC
+          `
+        : sql`
+            SELECT
+              time_bucket('1 day', "occurredAt" AT TIME ZONE ${timezone} AT TIME ZONE 'UTC') AS bucket,
+              "responseType",
+              "result",
+              "aiProvider",
+              COUNT(*)::int AS count
+            FROM "AnalyticsBotMessageEvent"
+            WHERE "workspaceId" = ${workspaceId}
+              AND "occurredAt" >= ${from}
+              AND "occurredAt" <= ${to}
+              AND "hasResponse" = true
+            GROUP BY 1, 2, 3, 4
+            ORDER BY 1 ASC
+          `
 
+      const result = await db.execute(query)
       const rows = mapBotMessageRows(
         workspaceId,
         result.rows as RawBotMessageRow[],
@@ -394,22 +446,39 @@ export class BotMessageStatsRepository extends BaseRepository {
   ): Promise<BotMessageAIProviderStats[]> {
     const { workspaceId, from, to } = props
 
-    const result = await db.execute(sql`
-      SELECT
-        "aiProvider",
-        SUM(count)::int AS count
-      FROM analytics_bot_message_events_hourly
-      WHERE "workspaceId" = ${workspaceId}
-        AND bucket >= ${from}
-        AND bucket <= ${to}
-        AND "hasResponse" = true
-        AND "responseType" = 'ai_agent'
-        AND "aiProvider" IS NOT NULL
-        AND "aiProvider" != 'none'
-      GROUP BY "aiProvider"
-      ORDER BY count DESC
-    `)
+    const query = shouldUseCagg(props)
+      ? sql`
+          SELECT
+            "aiProvider",
+            SUM(count)::int AS count
+          FROM analytics_bot_message_events_hourly
+          WHERE "workspaceId" = ${workspaceId}
+            AND bucket >= ${from}
+            AND bucket <= ${to}
+            AND "hasResponse" = true
+            AND "responseType" = 'ai_agent'
+            AND "aiProvider" IS NOT NULL
+            AND "aiProvider" != 'none'
+          GROUP BY "aiProvider"
+          ORDER BY count DESC
+        `
+      : sql`
+          SELECT
+            "aiProvider",
+            COUNT(*)::int AS count
+          FROM "AnalyticsBotMessageEvent"
+          WHERE "workspaceId" = ${workspaceId}
+            AND "occurredAt" >= ${from}
+            AND "occurredAt" <= ${to}
+            AND "hasResponse" = true
+            AND "responseType" = 'ai_agent'
+            AND "aiProvider" IS NOT NULL
+            AND "aiProvider" != 'none'
+          GROUP BY "aiProvider"
+          ORDER BY count DESC
+        `
 
+    const result = await db.execute(query)
     const rows = result.rows as { aiProvider: string; count: number }[]
     const total = rows.reduce((sum, row) => sum + Number(row.count), 0)
 
