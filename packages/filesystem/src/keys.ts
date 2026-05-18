@@ -13,3 +13,5 @@ export const keys = () =>
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
+
+export const filesystemEnv = keys()

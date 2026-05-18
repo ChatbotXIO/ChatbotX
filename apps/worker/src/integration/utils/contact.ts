@@ -35,7 +35,7 @@ export async function getIntegrationContext(props: {
   return {
     contactInbox,
     auth,
-    storagePrefix: getStoragePrefix(workspaceId, contactInbox.inboxId),
+    storagePrefix: getStoragePrefix(workspaceId),
     uploader,
   }
 }
