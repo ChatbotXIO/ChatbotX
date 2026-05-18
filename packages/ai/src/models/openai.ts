@@ -189,3 +189,43 @@ export const openaiImageModelOptions: {
     value: openaiImageModels.enum["dall-e-2"],
   },
 ]
+
+export const openAITTSModelTypes = z.enum([
+  "gpt-4o-mini-tts",
+  "tts-1",
+  "tts-1-hd",
+])
+export type OpenAITTSModelType = z.infer<typeof openAITTSModelTypes>
+
+export const openAITTSVoiceTypes = z.enum([
+  "alloy",
+  "ash",
+  "ballad",
+  "coral",
+  "echo",
+  "fable",
+  "onyx",
+  "nova",
+  "sage",
+  "shimmer",
+  "verse",
+])
+export type OpenAITTSVoiceType = z.infer<typeof openAITTSVoiceTypes>
+
+export const openAITTSModelOptions: {
+  label: string
+  value: OpenAITTSModelType
+}[] = [
+  {
+    label: "GPT-4o mini TTS",
+    value: openAITTSModelTypes.enum["gpt-4o-mini-tts"],
+  },
+  {
+    label: "TTS-1",
+    value: openAITTSModelTypes.enum["tts-1"],
+  },
+  {
+    label: "TTS-1 HD",
+    value: openAITTSModelTypes.enum["tts-1-hd"],
+  },
+]

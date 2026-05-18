@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   images: {
     // dangerouslyAllowLocalIP: true,
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "storage.chatbotx.online",
+        pathname: "/**",
+      },
       new URL("**", env.NEXT_PUBLIC_ASSET_URL),
       {
         protocol: "https",

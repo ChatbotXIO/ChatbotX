@@ -11,9 +11,19 @@ export async function sendMessageWithRender(
   conversationId: string,
   text: string,
   trackingContext?: BotResponseTrackingContext,
+  options?: {
+    forceUrl?: boolean
+    storagePath?: string
+  },
 ): Promise<void> {
-  const data = isImageUrl(text)
-    ? { conversationId, url: text, trackingContext }
+  const shouldSendAsUrl = options?.forceUrl || isImageUrl(text)
+  const data = shouldSendAsUrl
+    ? {
+        conversationId,
+        url: text,
+        storagePath: options?.storagePath,
+        trackingContext,
+      }
     : { conversationId, text, trackingContext }
 
   const conversation = await findOrFail({

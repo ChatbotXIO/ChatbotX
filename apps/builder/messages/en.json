@@ -606,6 +606,7 @@
       "aiGenerateImage": "{aiName}: Generate Image",
       "aiAnalyzeImage": "{aiName}: AI Analyze Image",
       "aiSpeechToText": "{aiName}: AI Speech to Text",
+      "aiTextToSpeech": "{aiName}: AI Text to Speech",
       "label": "Flows",
       "placeholder": "Select flow"
     },
@@ -1009,8 +1010,19 @@
     "inputFieldId": {
       "label": "Input Custom Field"
     },
+    "inputText": {
+      "label": "Input Text"
+    },
     "outputFieldId": {
       "label": "Save result to a custom field"
+    },
+    "voiceType": {
+      "label": "Voice Type",
+      "placeholder": "Select a voice type"
+    },
+    "voiceTone": {
+      "label": "Voice tone (Optional)",
+      "placeholder": "Speak in a cheerful tone."
     },
     "jsonPath": {
       "placeholder": "Enter JSON path"
