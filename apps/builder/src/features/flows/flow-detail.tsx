@@ -2,6 +2,7 @@
 
 import { ReactFlowProvider } from "@xyflow/react"
 import { PlatformCredentialsStoreProvider } from "@/features/platform-credentials/provider/platform-credentials-store-context"
+import { AIAgentStoreProvider } from "../ai-agents/provider/ai-agent-store-context"
 import { AIToolsStoreProvider } from "../ai-tools/provider/ai-tools-store-context"
 import { CustomFieldStoreProvider } from "../custom-fields/provider/custom-field-store-context"
 import type { FlowVersionResource } from "../flow-versions/schema/resource"
@@ -35,7 +36,12 @@ export function FlowDetail({ flow, flowVersion }: FlowDetailProps) {
                   <CustomFieldStoreProvider workspaceId={flow.workspaceId}>
                     <AIToolsStoreProvider workspaceId={flow.workspaceId}>
                       <PlatformCredentialsStoreProvider>
-                        <ReactFlowFrame flow={flow} flowVersion={flowVersion} />
+                        <AIAgentStoreProvider workspaceId={flow.workspaceId}>
+                          <ReactFlowFrame
+                            flow={flow}
+                            flowVersion={flowVersion}
+                          />
+                        </AIAgentStoreProvider>
                       </PlatformCredentialsStoreProvider>
                     </AIToolsStoreProvider>
                   </CustomFieldStoreProvider>

@@ -1,12 +1,11 @@
 import {
-  aiPolicies,
   aiTimeouts,
   helpTexts,
   processStreamingText,
-  systemFunctionNames,
   toolPrefixes,
 } from "@chatbotx.io/ai"
 import {
+  aiContextService,
   aiIntegrationService,
   createAIModelInstance,
   getAIToolset,
@@ -18,24 +17,54 @@ import type {
   AIAgentProviderModel,
   AIAgentProviderModels,
 } from "@chatbotx.io/database/partials"
+import type {
+  AIAgentModel,
+  ConversationModel,
+} from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
-import type { BotResponseTrackingContext } from "@chatbotx.io/worker-config"
-import { stepCountIs, streamText, type ToolSet } from "ai"
+import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
-import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageWithRender } from "../../utils/message"
 
-import type {
-  ReplyByAIExecutionResult,
-  ReplyByAIProps,
-} from "../shared/ai-agent-runner"
+export type ReplyByAIProps = {
+  conversation: ConversationModel
+  messages: ModelMessage[]
+  aiAgent: AIAgentModel
+  summary?: string
+  preferredProvider?: AIAgentProvider
+}
 
-export async function replyByAI(
+export type ReplyByAIExecutionResult = {
+  responded: boolean
+  provider: AIAgentProvider
+  modelId: string
+  usedFallbackText: boolean
+  fullText: string
+  toolStats: {
+    steps: number
+    toolCallsCount: number
+    toolResultsCount: number
+    toolErrorsCount: number
+    toolNames: string[]
+    finishReasons: Array<{
+      stepNumber: number
+      finishReason: string
+      rawFinishReason?: string
+    }>
+  }
+}
+
+export async function runAIAgentRunner(
   props: ReplyByAIProps,
 ): Promise<null | ReplyByAIExecutionResult> {
-  const { aiAgent, conversation, trackingContext } = props
+  const { aiAgent, preferredProvider } = props
   const providers = aiAgent.models as AIAgentProviderModels
+  const providersToRun = preferredProvider
+    ? providers.filter(
+        (providerInfo) => providerInfo.provider === preferredProvider,
+      )
+    : providers
 
   const { tools, cleanup } = await getAIToolset({
     workspaceId: aiAgent.workspaceId,
@@ -45,14 +74,6 @@ export async function replyByAI(
       fn: toolPrefixes.enum.fn,
       mcp: toolPrefixes.enum.mcp,
       sys: toolPrefixes.enum.sys,
-    },
-    systemFunctionContextGetter: async () => ({
-      workspaceId: conversation.workspaceId,
-      conversationId: conversation.id,
-      contactId: conversation.contactId,
-    }),
-    executeSystemHandoff: async (request) => {
-      await handoffExecutorService.execute(request)
     },
     fileSearch: {
       fileSearchDescription: helpTexts.fileSearchDescription,
@@ -69,18 +90,13 @@ export async function replyByAI(
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
-  const trackingContextHolder = trackingContext
-    ? { current: trackingContext as BotResponseTrackingContext | undefined }
-    : undefined
-
   try {
-    for (const providerInfo of providers) {
-      const result = await runAIReply(
+    for (const providerInfo of providersToRun) {
+      const result = await runAIReplyInternal(
         props,
         providerInfo,
         tools,
         controller.signal,
-        trackingContextHolder,
       )
       if (result?.responded) {
         return result
@@ -94,12 +110,11 @@ export async function replyByAI(
   return null
 }
 
-async function runAIReply(
+async function runAIReplyInternal(
   props: ReplyByAIProps,
   providerInfo: AIAgentProviderModel,
   tools: ToolSet,
   abortSignal: AbortSignal,
-  trackingContextHolder?: { current: BotResponseTrackingContext | undefined },
 ): Promise<null | ReplyByAIExecutionResult> {
   const { conversation, messages, aiAgent } = props
   const provider = providerInfo.provider
@@ -127,16 +142,17 @@ async function runAIReply(
     const variables = await contactVariableService.getAll(
       conversation.contactId,
     )
-    const completePrompt = aiAgent.prompt
+    const promptBase = aiAgent.prompt
       ? await contactVariableService.replaceAll({
           text: aiAgent.prompt,
           variables,
         })
       : ""
-    const systemPrompt = appendHandoffPolicy(
-      appendToolOutputGuard(completePrompt),
-      tools,
-    )
+    const completePrompt = props.summary
+      ? `Conversation Context: ${props.summary}\n\n${promptBase}`
+      : promptBase
+
+    const systemPrompt = appendToolOutputGuard(completePrompt)
 
     const toolNamesSet = new Set<string>()
     const finishReasons: Array<{
@@ -185,10 +201,8 @@ async function runAIReply(
         }
 
         toolResultsCount += toolResults.length
-        for (const tr of toolResults as unknown as Array<{
-          isError?: boolean
-        }>) {
-          if (tr?.isError) {
+        for (const tr of toolResults) {
+          if (hasToolResultError(tr)) {
             toolErrorsCount += 1
           }
         }
@@ -215,51 +229,58 @@ async function runAIReply(
               errorCause: error instanceof Error ? error.cause : undefined,
               errorStack: error instanceof Error ? error.stack : undefined,
             },
-            "[automated-response] tool execution failed",
+            "[ai-agent-runner] tool execution failed",
           )
         }
       },
       abortSignal,
     })
 
-    const { messageCount } = await processStreamingText(
+    const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       async (_segment, parts) => {
         for (const part of parts) {
-          const trackingForThisPart = trackingContextHolder?.current
-          if (trackingContextHolder) {
-            trackingContextHolder.current = undefined
-          }
-          await sendMessageWithRender(
-            conversation.id,
-            part,
-            trackingForThisPart
-              ? { ...trackingForThisPart, aiProvider: provider }
-              : undefined,
-          )
+          await sendMessageWithRender(conversation.id, part)
         }
       },
       { sendParts: true },
     ).catch((streamError) => {
-      const normalizedError = normalizeError(streamError)
       logger.error(
         {
           provider,
           modelId: selectedModelId,
           conversationId: conversation.id,
-          error: normalizedError,
+          error: streamError,
+          errorMessage:
+            streamError instanceof Error
+              ? streamError.message
+              : String(streamError),
         },
-        "[automated-response] processStreamingText threw error",
+        "[ai-agent-runner] processStreamingText threw error",
       )
-      return { messageCount: 0 }
+      return { messageCount: 0, fullText: "" }
     })
 
-    if (messageCount > 0) {
+    if (messageCount > 0 && fullText) {
+      await aiContextService.appendHistory({
+        conversationId: conversation.id,
+        newMessages: [
+          {
+            message: {
+              role: "assistant",
+              content: fullText,
+            },
+            createdAt: Date.now(),
+          },
+        ],
+      })
+
       return {
         responded: true,
         provider: provider as AIAgentProvider,
         modelId: selectedModelId,
         usedFallbackText: false,
+        fullText,
         toolStats: {
           steps: stepCount,
           toolCallsCount,
@@ -271,8 +292,6 @@ async function runAIReply(
       }
     }
 
-    // Last-resort fallback: loop finished but no assistant text was produced.
-    // Do NOT leak raw tool outputs; ask a clarifying question instead.
     if (toolCallsCount > 0 || toolResultsCount > 0) {
       await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
       return {
@@ -280,6 +299,7 @@ async function runAIReply(
         provider: provider as AIAgentProvider,
         modelId: selectedModelId,
         usedFallbackText: true,
+        fullText: helpTexts.fallbackLookup,
         toolStats: {
           steps: stepCount,
           toolCallsCount,
@@ -293,19 +313,17 @@ async function runAIReply(
 
     return null
   } catch (error) {
-    const normalizedError = normalizeError(error)
+    const parsedError = normalizeError(error)
     logger.error(
       {
-        error: normalizedError,
+        error: parsedError,
         provider,
         conversationId: conversation.id,
         workspaceId: conversation.workspaceId,
       },
-      "[automated-response] runAIReply failed",
+      "[ai-agent-runner] runAIReplyInternal failed",
     )
     return null
-  } finally {
-    // Parent replyByAI handles global timeout and signal cleanup
   }
 }
 
@@ -313,10 +331,14 @@ function appendToolOutputGuard(systemPrompt: string): string {
   return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
 }
 
-function appendHandoffPolicy(systemPrompt: string, tools: ToolSet): string {
-  if (!tools[systemFunctionNames.connectUserToHuman]) {
-    return systemPrompt
+function hasToolResultError(value: unknown): boolean {
+  if (!value || typeof value !== "object") {
+    return false
   }
 
-  return `${systemPrompt}\n\n${aiPolicies.handoff}`.trim()
+  if (!("isError" in value)) {
+    return false
+  }
+
+  return Boolean(value.isError)
 }

@@ -1,16 +1,18 @@
 import {
-  AIGenerateTextAgentDefaultFn,
-  AIGenerateTextAgentSchema,
+  type AIGenerateTextAgentSchema,
+  aiGenerateTextAgentDefaultFn,
+  aiGenerateTextAgentSchema,
 } from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
-import AIGenerateTextAgentEditor from "./editor"
-import AIGenerateTextAgentViewer from "./viewer"
+import { AIGenerateTextAgentEditor } from "./editor"
+import { AIGenerateTextAgentViewer } from "./viewer"
 
-const AIGenerateTextAgentStep: StepDefinition<AIGenerateTextAgentSchema> = {
-  editor: AIGenerateTextAgentEditor,
-  viewer: AIGenerateTextAgentViewer,
-  validator: AIGenerateTextAgentSchema,
-  defaultFn: AIGenerateTextAgentDefaultFn,
-}
+export const aiGenerateTextAgentStep: StepDefinition<AIGenerateTextAgentSchema> =
+  {
+    editor: AIGenerateTextAgentEditor,
+    viewer: AIGenerateTextAgentViewer,
+    validator: aiGenerateTextAgentSchema,
+    defaultFn: aiGenerateTextAgentDefaultFn,
+  }
 
-export default AIGenerateTextAgentStep
+export default aiGenerateTextAgentStep
