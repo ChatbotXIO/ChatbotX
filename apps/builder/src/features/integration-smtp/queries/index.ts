@@ -3,7 +3,9 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
+import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import type { IntegrationSmtpResource } from "../schemas/resource"
 
 export const findIntegrationSmtp = async (
   input: Partial<Pick<IntegrationSmtpModel, "id" | "workspaceId">>,
@@ -12,7 +14,7 @@ export const findIntegrationSmtp = async (
 
 export const listIntegrationSmtps = async (input: {
   workspaceId: string
-}): Promise<{ data: IntegrationSmtpModel[] }> => {
+}): Promise<{ data: IntegrationSmtpResource[] }> => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
   const data = await db.query.integrationSmtpModel.findMany({
@@ -24,5 +26,11 @@ export const listIntegrationSmtps = async (input: {
     },
   })
 
-  return { data }
+  return {
+    data: data.map(({ id, name, auth }) => ({
+      id,
+      name,
+      auth: auth as SmtpAuthValue,
+    })),
+  }
 }

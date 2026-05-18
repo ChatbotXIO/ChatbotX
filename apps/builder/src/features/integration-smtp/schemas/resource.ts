@@ -2,7 +2,10 @@ import {
   createSelectSchema,
   integrationSmtpModel,
 } from "@chatbotx.io/database/schema"
-import type { smtpProviders } from "@chatbotx.io/integration-smtp/schema"
+import {
+  smtpAuthSchema,
+  type smtpProviders,
+} from "@chatbotx.io/integration-smtp/schema"
 import { z } from "zod"
 
 export const smtpProviderLabels: Record<
@@ -25,10 +28,13 @@ export const integrationSmtpResource = createSelectSchema(
   integrationSmtpModel,
   {
     id: z.string(),
+    name: z.string(),
+    auth: smtpAuthSchema,
   },
 ).pick({
   id: true,
   name: true,
+  auth: true,
 })
 export type IntegrationSmtpResource = z.infer<typeof integrationSmtpResource>
 

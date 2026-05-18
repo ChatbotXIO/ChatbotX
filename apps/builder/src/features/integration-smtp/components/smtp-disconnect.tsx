@@ -1,6 +1,5 @@
 "use client"
 
-import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +19,10 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { deleteSmtpAction } from "../actions/delete-smtp.action"
+import type { IntegrationSmtpResource } from "../schemas/resource"
 
 type SmtpDisconnectProps = {
-  readonly integrationSmtp: IntegrationSmtpModel
+  readonly integrationSmtp: IntegrationSmtpResource
 }
 
 export const SmtpDisconnect = ({ integrationSmtp }: SmtpDisconnectProps) => {

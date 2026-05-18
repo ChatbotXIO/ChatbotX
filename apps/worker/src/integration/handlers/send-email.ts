@@ -1,15 +1,18 @@
 import {
   buildContext,
+  contactService,
   inboxService,
   integrationSmtpService,
   resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
+import { generateUnsubscribeToken } from "@chatbotx.io/encryption"
 import type {
   EmailStepSchema,
   PageElementSchema,
 } from "@chatbotx.io/flow-config"
+import { UNSUBSCRIBE_PLACEHOLDER } from "@chatbotx.io/flow-config"
 import {
   integration as integrationSmtp,
   smtpAuthSchema,
@@ -30,12 +33,14 @@ async function resolveElements({
   variables,
   inbox,
   flowId,
+  unsubscribeUrl,
 }: {
   appUrl: string
   rawElements: PageElementSchema[]
   variables: Awaited<ReturnType<typeof contactVariableService.getAll>>
   inbox: InboxWithIntegrations | undefined
   flowId: string | undefined
+  unsubscribeUrl: string
 }): Promise<MailElementSchema[]> {
   const resolved: MailElementSchema[] = []
 
@@ -43,15 +48,20 @@ async function resolveElements({
     switch (el.type) {
       case "heading":
       case "text":
-      case "code":
+      case "code": {
+        const resolvedText = await contactVariableService.replaceAll({
+          text: el.text,
+          variables,
+        })
         resolved.push({
           type: el.type,
-          text: await contactVariableService.replaceAll({
-            text: el.text,
-            variables,
-          }),
+          text: resolvedText.replaceAll(
+            UNSUBSCRIBE_PLACEHOLDER,
+            unsubscribeUrl,
+          ),
         })
         break
+      }
       case "image":
         resolved.push({
           type: "image",
@@ -90,6 +100,17 @@ export async function sendEmail({
   contactInbox,
   metadata: _metadata,
 }: ExecuteStepProps<EmailStepSchema>) {
+  const contact = await contactService.find({
+    where: { id: conversation.contactId },
+  })
+  if (!contact?.emailOptIn) {
+    logger.info(
+      { contactId: conversation.contactId },
+      "handleSendEmail: contact has opted out of email, skipping",
+    )
+    return
+  }
+
   const smtpIntegration = await integrationSmtpService.find({
     where: {
       workspaceId: conversation.workspaceId,
@@ -130,12 +151,15 @@ export async function sendEmail({
     contactVariableService.replaceAll({ text: step.preheader, variables }),
   ])
 
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${await generateUnsubscribeToken(conversation.contactId, conversation.workspaceId)}`
+
   const elements = await resolveElements({
     appUrl,
     rawElements: step.elements,
     variables,
     inbox,
     flowId: flowVersion.flowId,
+    unsubscribeUrl,
   })
 
   const props: DynamicEmailProps = {

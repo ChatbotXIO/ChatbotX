@@ -2229,5 +2229,9 @@
     "portalUsage": "Usage",
     "portalCustomDomain": "Custom Domain",
     "portalPaymentProcessor": "Payment Processor"
+  },
+  "unsubscribePage": {
+    "title": "You have been unsubscribed.",
+    "description": "You will no longer receive emails from this sender."
   }
 }

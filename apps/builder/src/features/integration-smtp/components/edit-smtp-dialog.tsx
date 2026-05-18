@@ -1,6 +1,5 @@
 "use client"
 
-import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
 import {
   Dialog,
   DialogContent,
@@ -12,11 +11,12 @@ import {
 import { useTranslations } from "next-intl"
 import type { ReactNode } from "react"
 import { useState } from "react"
+import type { IntegrationSmtpResource } from "../schemas/resource"
 import { EditSmtpForm } from "./edit-smtp-form"
 
 type EditSmtpDialogProps = {
   readonly workspaceId: string
-  readonly integrationSmtp: IntegrationSmtpModel
+  readonly integrationSmtp: IntegrationSmtpResource
   readonly children: ReactNode
 }
 

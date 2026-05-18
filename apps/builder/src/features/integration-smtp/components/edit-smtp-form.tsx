@@ -1,6 +1,5 @@
 "use client"
 
-import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
 import {
   smtpHostMap,
   smtpProviders,
@@ -19,11 +18,12 @@ import { useMemo } from "react"
 import { toast } from "sonner"
 import { updateSmtpAction } from "../actions/update-smtp.action"
 import { updateSmtpRequest } from "../schemas/mutation"
+import type { IntegrationSmtpResource } from "../schemas/resource"
 import { smtpProviderLabels } from "../schemas/resource"
 
 type EditSmtpFormProps = {
   readonly workspaceId: string
-  readonly integrationSmtp: IntegrationSmtpModel
+  readonly integrationSmtp: IntegrationSmtpResource
   readonly onSuccess?: () => void
   readonly onCancel?: () => void
 }

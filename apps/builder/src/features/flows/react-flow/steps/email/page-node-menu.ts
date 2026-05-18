@@ -86,7 +86,7 @@ function imageElementDefaultFn(): PageElementSchema {
 function buttonElementDefaultFn(): PageElementSchema {
   return {
     id: createId(),
-    label: "",
+    label: "Button",
     type: pageElementTypes.enum.button,
     buttonType: null,
     beforeStep: null,

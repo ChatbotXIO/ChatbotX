@@ -26,7 +26,7 @@ export const contactModel = pgTable("Contact", {
   phoneNumber: text(),
   email: text(),
   emailVerified: boolean().default(false).notNull(),
-  emailOptIn: boolean().default(false).notNull(),
+  emailOptIn: boolean().default(true).notNull(),
   firstName: text(),
   lastName: text(),
   fullName: text().generatedAlwaysAs(sql`"firstName" || ' ' || "lastName"`),

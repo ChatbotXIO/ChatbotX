@@ -75,6 +75,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@chatbotx.io/encryption':
+        specifier: workspace:*
+        version: link:../../packages/encryption
       '@chatbotx.io/event-bus':
         specifier: workspace:*
         version: link:../../packages/event-bus
@@ -556,6 +559,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@chatbotx.io/encryption':
+        specifier: workspace:*
+        version: link:../../packages/encryption
       '@chatbotx.io/event-bus':
         specifier: workspace:*
         version: link:../../packages/event-bus

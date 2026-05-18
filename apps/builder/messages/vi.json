@@ -2251,5 +2251,9 @@
     "portalUsage": "Mức sử dụng",
     "portalCustomDomain": "Tên miền tùy chỉnh",
     "portalPaymentProcessor": "Cổng thanh toán"
+  },
+  "unsubscribePage": {
+    "title": "Bạn đã hủy đăng ký.",
+    "description": "Bạn sẽ không còn nhận email từ người gửi này nữa."
   }
 }

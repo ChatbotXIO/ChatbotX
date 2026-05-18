@@ -93,3 +93,24 @@ export const useSmtpInboxOptions = (): SelectOption[] => {
     [inboxes],
   )
 }
+
+export const useSmtpInboxFromAddressMap = (): Record<string, string> => {
+  const inboxes = useInboxStore((state) => state.inboxes)
+
+  return useMemo(
+    () =>
+      Object.fromEntries(
+        inboxes
+          .filter(
+            (inbox) =>
+              inbox.channel === channelTypes.enum.smtp &&
+              !!inbox.integrationSmtp,
+          )
+          .map((inbox) => [
+            inbox.integrationSmtp?.id ?? "",
+            inbox.integrationSmtp?.auth.fromAddress ?? "",
+          ]),
+      ),
+    [inboxes],
+  )
+}
