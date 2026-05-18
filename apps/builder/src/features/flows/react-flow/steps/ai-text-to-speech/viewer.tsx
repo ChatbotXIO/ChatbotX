@@ -1,21 +1,20 @@
 "use client"
 
-import type { AISpeechToTextSchema } from "@chatbotx.io/flow-config"
+import type { AITextToSpeechSchema } from "@chatbotx.io/flow-config"
 import { useTranslations } from "next-intl"
 import { AIIcon } from "../ai-generate-text/components/ai-icon"
 
-type AISpeechToTextViewerProps = {
-  data: AISpeechToTextSchema
+type AITextToSpeechViewerProps = {
+  data: AITextToSpeechSchema
 }
 
-const AISpeechToTextViewer = (props: AISpeechToTextViewerProps) => {
-  const { data } = props
+const AITextToSpeechViewer = ({ data }: AITextToSpeechViewerProps) => {
   const t = useTranslations()
 
   return (
     <div className="flex w-full items-center justify-center gap-2 py-4 text-center font-bold">
       <AIIcon
-        label={t("fields.flows.aiSpeechToText", {
+        label={t("fields.flows.aiTextToSpeech", {
           aiName: t(`aiProviders.${data.provider}`),
         })}
         provider={data.provider}
@@ -24,4 +23,4 @@ const AISpeechToTextViewer = (props: AISpeechToTextViewerProps) => {
   )
 }
 
-export default AISpeechToTextViewer
+export default AITextToSpeechViewer

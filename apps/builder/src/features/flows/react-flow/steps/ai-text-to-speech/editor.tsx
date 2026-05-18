@@ -5,18 +5,17 @@ import { useTranslations } from "next-intl"
 import { BaseStepEditor } from "../base/editor"
 import { AIModelDialog } from "./components/ai-model-dialog"
 
-type AISpeechToTextEditorProps = {
+type AITextToSpeechEditorProps = {
   parentName: string
 }
 
-const AISpeechToTextEditor = (props: AISpeechToTextEditorProps) => {
-  const { parentName } = props
+const AITextToSpeechEditor = ({ parentName }: AITextToSpeechEditorProps) => {
   const t = useTranslations()
 
   return (
     <BaseStepEditor
       icon={BotIcon}
-      title={t("fields.flows.aiSpeechToText", {
+      title={t("fields.flows.aiTextToSpeech", {
         aiName: t("aiProviders.openai"),
       })}
     >
@@ -25,4 +24,4 @@ const AISpeechToTextEditor = (props: AISpeechToTextEditorProps) => {
   )
 }
 
-export default AISpeechToTextEditor
+export default AITextToSpeechEditor

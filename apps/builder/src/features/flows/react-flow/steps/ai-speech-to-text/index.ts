@@ -1,14 +1,15 @@
 import {
   AISpeechToTextDefaultFn,
-  AISpeechToTextSchema,
+  type AISpeechToTextSchema,
+  aiSpeechToTextSchema,
 } from "@chatbotx.io/flow-config"
 import type { StepDefinition } from "../definition"
 import AISpeechToTextEditor from "./editor"
 import AISpeechToTextViewer from "./viewer"
 
-export const AISpeechToTextStep: StepDefinition<AISpeechToTextSchema> = {
+export const aiSpeechToTextStep: StepDefinition<AISpeechToTextSchema> = {
   editor: AISpeechToTextEditor,
   viewer: AISpeechToTextViewer,
-  validator: AISpeechToTextSchema,
+  validator: aiSpeechToTextSchema,
   defaultFn: AISpeechToTextDefaultFn,
 }

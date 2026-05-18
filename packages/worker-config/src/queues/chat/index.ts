@@ -75,6 +75,7 @@ export type ChatJobSendChatMessage = {
     contactInbox?: ContactInboxModel
     text?: string
     url?: string
+    storagePath?: string
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
   }
