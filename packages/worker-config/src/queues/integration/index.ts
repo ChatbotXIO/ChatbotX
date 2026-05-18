@@ -100,7 +100,7 @@ export type IntegrationJobProcessAutomatedResponse = {
   data: {
     conversationId: string | ConversationModel
     contactInboxId: string | ContactInboxModel
-    messageId?: string
+    messageId: string
   }
 }
 

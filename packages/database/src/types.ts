@@ -42,6 +42,10 @@ export type IntegrationTelegramModel =
 export type MessageModel = typeof schema.messageModel.$inferSelect
 export type AttachmentModel = typeof schema.attachmentModel.$inferSelect
 export type SpreadsheetModel = typeof schema.spreadsheetModel.$inferSelect
+export type AIConversationSourceModel =
+  typeof schema.aiConversationSourceModel.$inferSelect
+export type AIConversationEmbeddingModel =
+  typeof schema.aiConversationEmbeddingModel.$inferSelect
 export type AIEmbeddingModel = typeof schema.aiEmbeddingModel.$inferSelect
 export type AIFileModel = typeof schema.aiFileModel.$inferSelect
 export type ContactCustomFieldModel =

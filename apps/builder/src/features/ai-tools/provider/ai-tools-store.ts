@@ -43,7 +43,7 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
     systemFunctions: [
       {
         id: systemFunctionNames.connectUserToHuman,
-        name: "Connect to Human Agent",
+        name: systemFunctionNames.connectUserToHuman,
       },
     ],
 

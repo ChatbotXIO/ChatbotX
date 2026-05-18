@@ -19,6 +19,24 @@ export const aiEmbeddingStatuses = z.enum([
 ])
 export type AIEmbeddingStatus = z.infer<typeof aiEmbeddingStatuses>
 
+export const aiConversationSourceTypes = z.enum([
+  "document",
+  "image",
+  "url",
+  "web_search",
+])
+export type AIConversationSourceType = z.infer<typeof aiConversationSourceTypes>
+
+export const aiConversationSourceStatuses = z.enum([
+  "pending",
+  "processing",
+  "success",
+  "error",
+])
+export type AIConversationSourceStatus = z.infer<
+  typeof aiConversationSourceStatuses
+>
+
 export const aiAgentProviders = z.enum(["openai", "gemini"])
 export type AIAgentProvider = z.infer<typeof aiAgentProviders>
 

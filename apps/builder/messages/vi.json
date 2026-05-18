@@ -746,7 +746,14 @@
       "label": "MCP Server"
     },
     "systemFunction": {
-      "label": "Hàm hệ thống"
+      "label": "Hàm hệ thống",
+      "names": {
+        "connectUserToHuman": "Kết nối người dùng với nhân viên",
+        "documentReader": "Trình đọc tài liệu",
+        "imageReader": "Trình đọc hình ảnh",
+        "urlContext": "Trình đọc URL",
+        "webSearch": "Tìm kiếm web"
+      }
     },
     "min": {
       "label": "Tối thiểu"

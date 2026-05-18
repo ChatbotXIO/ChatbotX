@@ -779,7 +779,14 @@
       "label": "MCP Server"
     },
     "systemFunction": {
-      "label": "System Function"
+      "label": "System Function",
+      "names": {
+        "connectUserToHuman": "Connect user to Human",
+        "documentReader": "Document Reader",
+        "imageReader": "Image Reader",
+        "urlContext": "Url Reader",
+        "webSearch": "Web search"
+      }
     },
     "min": {
       "label": "Minimum"

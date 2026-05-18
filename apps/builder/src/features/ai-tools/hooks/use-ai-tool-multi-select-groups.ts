@@ -1,5 +1,6 @@
 "use client"
 
+import { systemFunctionNames } from "@chatbotx.io/ai"
 import type {
   AIFileModel,
   AIFunctionModel,
@@ -14,17 +15,10 @@ import {
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import {
-  fileToolId,
-  fncToolId,
-  mcpToolId,
-  sysToolId,
-  type ToolId,
-} from "../lib/tool-id"
 
 export type AIToolMultiSelectGroupOption = {
   label: string
-  value: ToolId
+  value: string
   icon: LucideIcon
 }
 
@@ -40,13 +34,14 @@ export type AIToolMultiSelectSource = {
   systemFunctions?: { id: string; name: string }[]
 }
 
-const buildAIToolMultiSelectGroups = (
+export const buildAIToolMultiSelectGroups = (
   source: AIToolMultiSelectSource,
   labels: {
     file: string
     fn: string
     mcp: string
     sys: string
+    systemFunctions: Record<string, string>
   },
 ): AIToolMultiSelectGroup[] => {
   const { files, functions, mcpServers, systemFunctions = [] } = source
@@ -56,7 +51,7 @@ const buildAIToolMultiSelectGroups = (
       heading: labels.file,
       options: files.map((file) => ({
         label: file.name,
-        value: fileToolId(file.id),
+        value: `file:${file.id}`,
         icon: FileIcon,
       })),
     },
@@ -64,7 +59,7 @@ const buildAIToolMultiSelectGroups = (
       heading: labels.fn,
       options: functions.map((fn) => ({
         label: fn.name,
-        value: fncToolId(fn.id),
+        value: `fn:${fn.id}`,
         icon: FunctionSquareIcon,
       })),
     },
@@ -72,18 +67,19 @@ const buildAIToolMultiSelectGroups = (
       heading: labels.mcp,
       options: mcpServers.map((mcpServer) => ({
         label: mcpServer.name,
-        value: mcpToolId(mcpServer.id),
+        value: `mcp:${mcpServer.id}`,
         icon: ServerIcon,
       })),
     },
   ]
 
+  // System functions always at the end
   if (systemFunctions.length > 0) {
     groups.push({
       heading: labels.sys,
       options: systemFunctions.map((sysFn) => ({
-        label: sysFn.name,
-        value: sysToolId(sysFn.id),
+        label: labels.systemFunctions[sysFn.id] ?? sysFn.name,
+        value: `sys:${sysFn.id}`,
         icon: SettingsIcon,
       })),
     })
@@ -109,6 +105,23 @@ export const useAIToolMultiSelectGroups = ({
           fn: t("fields.function.label"),
           mcp: t("fields.mcpServer.label"),
           sys: t("fields.systemFunction.label"),
+          systemFunctions: {
+            [systemFunctionNames.connectUserToHuman]: t(
+              "fields.systemFunction.names.connectUserToHuman",
+            ),
+            [systemFunctionNames.documentReader]: t(
+              "fields.systemFunction.names.documentReader",
+            ),
+            [systemFunctionNames.imageReader]: t(
+              "fields.systemFunction.names.imageReader",
+            ),
+            [systemFunctionNames.urlContext]: t(
+              "fields.systemFunction.names.urlContext",
+            ),
+            [systemFunctionNames.webSearch]: t(
+              "fields.systemFunction.names.webSearch",
+            ),
+          },
         },
       ),
     [files, functions, mcpServers, systemFunctions, t],

@@ -10,13 +10,10 @@ import {
   type McpClientConstructor,
   type McpClientLike,
   type SystemFunctionContext,
-  type SystemFunctionHandoffRequest,
+  type SystemToolExecutors,
 } from "./tools"
 
 export interface ToolsetOptions {
-  executeSystemHandoff?: (
-    request: SystemFunctionHandoffRequest,
-  ) => Promise<void>
   fileSearch?: {
     fileSearchDescription: string
     fileSearchQueryDescription: string
@@ -30,6 +27,7 @@ export interface ToolsetOptions {
     normalizeMcpContent: (content: JsonValue) => JsonValue
   }
   systemFunctionContextGetter?: () => Promise<SystemFunctionContext | null>
+  systemToolExecutors?: SystemToolExecutors
   toolPrefixes: {
     file: string
     fn: string
@@ -63,10 +61,12 @@ export async function getAIToolset(
           ? getAIFileTools(workspaceId, fileIds, fileSearch)
           : Promise.resolve({}),
         getAIFunctionTools(workspaceId, functionIds),
-        getAISystemTools(
-          systemIds,
-          options.systemFunctionContextGetter,
-          options.executeSystemHandoff,
+        Promise.resolve(
+          getAISystemTools({
+            selectedSystemIds: systemIds,
+            systemFunctionContextGetter: options.systemFunctionContextGetter,
+            systemToolExecutors: options.systemToolExecutors,
+          }),
         ),
         mcp && mcpIds.length > 0
           ? getMCPServerTools(workspaceId, mcpIds, mcp)

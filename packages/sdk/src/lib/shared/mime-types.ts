@@ -24,6 +24,16 @@ export type AIFileMimeType = (typeof AI_FILE_MIME_TYPES)[number]
 
 export const PDF_MIME_TYPES = ["application/pdf"] as const
 
+export const IMAGE_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+] as const
+
+export type ImageMimeType = (typeof IMAGE_MIME_TYPES)[number]
+
 export const DOCX_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",

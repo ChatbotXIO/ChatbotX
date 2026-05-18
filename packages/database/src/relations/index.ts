@@ -1,5 +1,6 @@
 import { aiAgentRelations } from "./ai-agent"
 import { aiAssistantRelations } from "./ai-assistant"
+import { aiConversationSourceRelations } from "./ai-conversation-source"
 import { aiEmbeddingRelations } from "./ai-embedding"
 import { aiFileRelations } from "./ai-file"
 import { aiFunctionRelations } from "./ai-function"
@@ -89,6 +90,7 @@ export const relations = {
   ...workspaceRelations,
   ...aiAgentRelations,
   ...aiAssistantRelations,
+  ...aiConversationSourceRelations,
   ...aiFileRelations,
   ...flowRelations,
   ...aiMCPServerRelations,

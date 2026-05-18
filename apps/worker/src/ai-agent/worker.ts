@@ -9,6 +9,8 @@ import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { processAIFile } from "./handlers/process-ai-file"
+import { processConversationSource } from "./handlers/process-conversation-source"
+import { processConversationSourceEmbedding } from "./handlers/process-conversation-source-embedding"
 import { processPendingEmbedding } from "./handlers/process-pending-embeddings"
 import { handleSummarizeConversation } from "./handlers/summarize-conversation"
 
@@ -35,6 +37,12 @@ async function startAIAgentWorker() {
           return
         case AIJobAction.summarizeConversation:
           await handleSummarizeConversation(job.data.data)
+          return
+        case AIJobAction.processConversationSource:
+          await processConversationSource(job.data.data)
+          return
+        case AIJobAction.processConversationSourceEmbedding:
+          await processConversationSourceEmbedding(job.data.data)
           return
         default:
           logger.warn(`Unknown job name: ${job.name}`)
