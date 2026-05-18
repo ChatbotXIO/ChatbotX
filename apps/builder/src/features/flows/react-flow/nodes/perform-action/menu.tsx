@@ -88,6 +88,16 @@ const openaiMenus = (t: TranslationFn): MenuItem[] => [
           provider: "openai",
         },
       },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "OpenAI",
+        }),
+        icon: OpenAIIcon,
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        props: {
+          provider: "openai",
+        },
+      },
     ],
   },
 ]
@@ -104,6 +114,16 @@ const claudeMenus = (t: TranslationFn): MenuItem[] => [
         }),
         icon: SiClaude,
         stepType: stepTypes.enum.aiGenerateText,
+        props: {
+          provider: "claude",
+        },
+      },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "Claude",
+        }),
+        icon: SiClaude,
+        stepType: stepTypes.enum.aiAnalyzeImage,
         props: {
           provider: "claude",
         },
@@ -134,6 +154,16 @@ const geminiMenus = (t: TranslationFn): MenuItem[] => [
         }),
         icon: SiGooglegemini,
         stepType: stepTypes.enum.aiGenerateImage,
+        props: {
+          provider: "gemini",
+        },
+      },
+      {
+        label: t("flows.aiAnalyzeImage.label", {
+          name: "Gemini",
+        }),
+        icon: SiGooglegemini,
+        stepType: stepTypes.enum.aiAnalyzeImage,
         props: {
           provider: "gemini",
         },

@@ -329,6 +329,9 @@
     "messenger": {
       "label": "Messenger"
     },
+    "image": {
+      "label": "Image"
+    },
     "instagram": {
       "label": "Instagram"
     },
@@ -634,6 +637,7 @@
     "flows": {
       "aiGenerateText": "{aiName}: Generate Text",
       "aiGenerateImage": "{aiName}: Generate Image",
+      "aiAnalyzeImage": "{aiName}: AI Analyze Image",
       "label": "Flows",
       "placeholder": "Select flow"
     },
@@ -1283,6 +1287,7 @@
       "addContactNotes": "Add Contact Notes",
       "addContactTag": "Add Contact Tag",
       "aiAnalyzeImage": "AI Analyze Image",
+      "aiGenerateImage": "AI Generate Image",
       "aiGenerateTextAgent": "AI Generate Text Agent",
       "aiSpeechToText": "AI Speech to Text",
       "aiTextToSpeech": "AI Text to Speech",

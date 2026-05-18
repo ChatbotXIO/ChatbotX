@@ -41,6 +41,7 @@ import {
 } from "./contact"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
 import { handleAIGenerateImage } from "./generate-image"
+import { handleAIAnalyzeImage } from "./analyze-image"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
 import { sendEmail } from "./send-email"
@@ -331,7 +332,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.markEmailVerified]: markEmailVerified,
   [stepTypes.enum.notifyAgent]: undefined,
   [stepTypes.enum.openWebsite]: undefined,
-  [stepTypes.enum.aiAnalyzeImage]: undefined,
+  [stepTypes.enum.aiAnalyzeImage]: handleAIAnalyzeImage,
   [stepTypes.enum.aiDeleteMessageHistory]: undefined,
   [stepTypes.enum.aiGenerateImage]: handleAIGenerateImage,
   [stepTypes.enum.aiGenerateTextAgent]: undefined,
