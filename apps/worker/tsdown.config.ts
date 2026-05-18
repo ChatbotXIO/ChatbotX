@@ -9,7 +9,6 @@ export default defineConfig({
     "src/default/worker.ts",
     "src/trigger/worker.ts",
     "src/webhook/worker.ts",
-    "src/analytics/worker.ts",
     "src/sequence-scheduler/worker.ts",
     "src/sequence-scheduler/worker-producer.ts",
     "src/sequence-scheduler/worker-consumer.ts",

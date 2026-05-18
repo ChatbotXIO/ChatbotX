@@ -24,7 +24,6 @@ Workers run as separate Node processes in `apps/worker/`. They consume jobs from
 | default | `default` | `src/default/worker.ts` |
 | trigger | `trigger` | `src/trigger/worker.ts` |
 | webhook | `webhook` | `src/webhook/worker.ts` |
-| analytics | `analytics` | `src/analytics/worker.ts` |
 | schedule | (cron) | `src/schedule/worker.ts` |
 | sequence-scheduler | Kafka | `src/sequence-scheduler/worker*.ts` |
 
