@@ -1,6 +1,7 @@
 import { addContactNotesStepSchema } from "./steps/add-contact-notes"
 import { addContactTagStepSchema } from "./steps/add-contact-tag"
 import { aiAnalyzeImageSchema } from "./steps/ai-analyze-image"
+import { aiExtractDataSchema } from "./steps/ai-extract-data"
 import { aiGenerateImageSchema } from "./steps/ai-generate-image"
 import { aiGenerateTextSchema } from "./steps/ai-generate-text"
 import { aiGenerateTextAgentSchema } from "./steps/ai-generate-text-agent"
@@ -94,6 +95,7 @@ const aiSteps = [
   aiGenerateImageSchema,
   aiAnalyzeImageSchema,
   aiGenerateTextAgentSchema,
+  aiExtractDataSchema,
 ]
 
 const googleSheetStep = [
