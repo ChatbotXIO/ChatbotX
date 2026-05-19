@@ -2247,6 +2247,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
+      '@chatbotx.io/integration-instagram':
+        specifier: workspace:*
+        version: link:../../integrations/instagram
       '@chatbotx.io/logger':
         specifier: workspace:*
         version: link:../logger

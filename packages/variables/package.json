@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/integration-instagram": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/redis": "workspace:*",
     "@chatbotx.io/business": "workspace:*",

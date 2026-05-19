@@ -54,3 +54,4 @@ test-webchat
 packages/database/src/clickhouse/.migrations.local.json
 
 .pnpm-store/
+.plans/

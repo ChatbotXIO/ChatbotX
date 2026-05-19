@@ -33,3 +33,10 @@ export const listContactNotesString = async (
   })
   return contactNotes.map((note) => note.text).join("\n")
 }
+
+export const getLatestContactNoteString = async (
+  contactId: string,
+): Promise<string | null> => {
+  const notes = await contactNoteService.listByContactId({ contactId })
+  return notes[0]?.text ?? null
+}

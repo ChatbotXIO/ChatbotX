@@ -8,12 +8,16 @@ import {
   getAssignedAdminEmail,
   getAssignedAdminId,
   getAssignedAdminName,
+  getAssignedMemberName,
+  getAssignedTeamName,
 } from "./helpers/assigned"
 import {
   findPrimaryContactChannel,
+  getLatestContactNoteString,
   listContactNotesString,
   listContactTagsString,
 } from "./helpers/contact"
+import { getIntegrationField } from "./helpers/integration-fields"
 import {
   getContactLastInput,
   getContactLastInputType,
@@ -135,7 +139,6 @@ export const getSystemFieldValue = async (
       return contact.workspaceId
     case systemFieldTypes.enum.account_image:
       return await getWorkspaceImageUrl(contact.workspaceId)
-    // Unresolved fields — no data source available at this layer.
     case systemFieldTypes.enum.page_user_name:
     case systemFieldTypes.enum.inbox_link:
     case systemFieldTypes.enum.ig_user_name:
@@ -147,14 +150,29 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.fb_chat_link:
     case systemFieldTypes.enum.me:
     case systemFieldTypes.enum.user_code:
-    case systemFieldTypes.enum.last_btn_title:
+    case systemFieldTypes.enum.webchat:
+      return await getIntegrationField(contact, key)
+    case systemFieldTypes.enum.last_ref:
+      return contact.ref
     case systemFieldTypes.enum.last_interaction:
+      return contact.lastActivityAt
+        ? formatInTimeZone(
+            contact.lastActivityAt,
+            contact.timezone ?? "UTC",
+            "yyyy-MM-dd HH:mm:ss",
+          )
+        : null
+    case systemFieldTypes.enum.last_user_note:
+      return await getLatestContactNoteString(contact.id)
+    case systemFieldTypes.enum.member_name:
+      return await getAssignedMemberName(contact.id, contact.workspaceId)
+    case systemFieldTypes.enum.team_name:
+      return await getAssignedTeamName(contact.id)
+    // No upstream tracking yet — intentionally null
+    case systemFieldTypes.enum.last_btn_title:
     case systemFieldTypes.enum.last_order:
     case systemFieldTypes.enum.consecutive_failed_reply:
-    case systemFieldTypes.enum.last_ref:
     case systemFieldTypes.enum.user_external_id:
-    case systemFieldTypes.enum.last_user_note:
-    case systemFieldTypes.enum.webchat:
     case systemFieldTypes.enum.webchat_parent_url:
     case systemFieldTypes.enum.api_key:
     case systemFieldTypes.enum.last_ad:
@@ -163,8 +181,6 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.last_ad_source_platform:
     case systemFieldTypes.enum.last_step:
     case systemFieldTypes.enum.current_step:
-    case systemFieldTypes.enum.member_name:
-    case systemFieldTypes.enum.team_name:
     case systemFieldTypes.enum.last_input_failure:
       return null
     default: {
