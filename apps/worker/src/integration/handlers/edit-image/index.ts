@@ -93,7 +93,16 @@ export async function handleAIEditImage({
         modelId: step.model,
         abortSignal: controller.signal,
       })
-    } catch {
+    } catch (modelError) {
+      logger.warn(
+        {
+          error: normalizeError(modelError),
+          modelId: step.model,
+          provider: step.provider,
+          conversationId: conversation.id,
+        },
+        "[ai-edit-image] Failed to create model, attempting fallback",
+      )
       if (step.provider === aiProviders.enum.openai) {
         model = createAIImageModelInstance({
           model: aiConfig,

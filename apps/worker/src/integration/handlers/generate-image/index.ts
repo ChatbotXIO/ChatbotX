@@ -13,7 +13,7 @@ import {
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
-import { generateImage, type ImageModel } from "ai"
+import { generateImage } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import {
@@ -32,16 +32,6 @@ export async function handleAIGenerateImage({
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const ctx = await getIntegrationContext({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
-      contactInbox: baseContactInbox,
-    })
-
-    if (!ctx) {
-      return
-    }
-
     const aiConfig = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,
       provider: step.provider,
@@ -51,12 +41,29 @@ export async function handleAIGenerateImage({
       return
     }
 
+    const ctx = await getIntegrationContext({
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      contactInbox: baseContactInbox,
+    })
+
+    if (!ctx) {
+      logger.warn(
+        {
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+        },
+        "[ai-generate-image] Integration context not found, skipping",
+      )
+      return
+    }
+
     const model = createAIImageModelInstance({
       model: aiConfig,
       provider: step.provider,
       modelId: step.model,
       abortSignal: controller.signal,
-    }) as ImageModel
+    })
 
     const size =
       step.provider === aiProviders.enum.openai &&

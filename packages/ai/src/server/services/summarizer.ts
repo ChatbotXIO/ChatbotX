@@ -1,7 +1,3 @@
-import type {
-  IntegrationGeminiModel,
-  IntegrationOpenAIModel,
-} from "@chatbotx.io/database/types"
 import { defaultAIModels } from "@chatbotx.io/flow-config"
 import { generateText } from "ai"
 import { helpTexts, MAX_SUMMARY_LENGTH } from "../../constants"
@@ -17,31 +13,36 @@ export async function summarizeConversation(props: {
 }): Promise<string> {
   const { workspaceId, messages, existingSummary } = props
 
-  // 1. Find the best available AI integration
-  let selectedProvider: string | undefined
-  let selectedModel: IntegrationOpenAIModel | IntegrationGeminiModel | undefined
-
-  for (const provider of aiProviders.options) {
-    const integration = await getCachedAIIntegration({
-      workspaceId,
-      provider,
-      autoReply: true,
-    })
-
-    if (integration) {
-      selectedProvider = provider
-      selectedModel = integration
-      break
-    }
+  // 1. Find the best available AI integration — probe all providers in parallel
+  type ProviderResult = {
+    provider: string
+    integration: NonNullable<Awaited<ReturnType<typeof getCachedAIIntegration>>>
   }
 
-  if (!(selectedProvider && selectedModel)) {
+  const providerResult = await Promise.any(
+    aiProviders.options.map(async (provider): Promise<ProviderResult> => {
+      const integration = await getCachedAIIntegration({
+        workspaceId,
+        provider,
+        autoReply: true,
+      })
+      if (!integration) {
+        throw new Error(`no integration for ${provider}`)
+      }
+      return { provider, integration }
+    }),
+  ).catch(() => null)
+
+  if (!providerResult) {
     logger.warn(
       { workspaceId },
       "[summarizer] No active AI integration found for summarization",
     )
     return existingSummary || ""
   }
+
+  const { provider: selectedProvider, integration: selectedModel } =
+    providerResult
 
   const modelId =
     defaultAIModels[selectedProvider as keyof typeof defaultAIModels]

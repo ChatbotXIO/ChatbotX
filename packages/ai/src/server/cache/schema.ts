@@ -11,13 +11,7 @@ export const aiMessageSchema = z.object({
         z.object({ type: z.literal("text"), text: z.string() }),
         z.object({
           type: z.literal("image"),
-          image: z.union([
-            z.string(),
-            z.instanceof(Uint8Array),
-            z.instanceof(Buffer),
-            z.instanceof(ArrayBuffer),
-            z.instanceof(URL),
-          ]),
+          image: z.string(),
           mimeType: z.string().optional(),
         }),
       ]),

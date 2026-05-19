@@ -1,3 +1,4 @@
+import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { db } from "@chatbotx.io/database/client"
 import { aiAgentProviders } from "@chatbotx.io/database/partials"
@@ -16,6 +17,9 @@ export async function handleAIGenerateTextAgent({
   conversation,
   step: rawStep,
 }: ExecuteStepProps<AIGenerateTextAgentSchema>) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
+
   try {
     const step = ZodSchema.parse(rawStep)
 
@@ -84,5 +88,7 @@ export async function handleAIGenerateTextAgent({
       "[ai-generate-text-agent] Step failed",
     )
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }

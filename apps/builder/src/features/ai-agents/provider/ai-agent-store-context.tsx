@@ -28,17 +28,25 @@ export const AIAgentStoreProvider = ({
   children,
 }: AIAgentStoreProviderProps) => {
   const storeRef = useRef<AIAgentStoreApi>(null)
-  if (!storeRef.current) {
-    storeRef.current = createAIAgentStore({
-      workspaceId,
-    })
+
+  // Recreate store when workspaceId changes so context consumers get fresh state
+  if (
+    !storeRef.current ||
+    storeRef.current.getState().workspaceId !== workspaceId
+  ) {
+    storeRef.current = createAIAgentStore({ workspaceId })
   }
 
   useEffect(() => {
-    if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize()
+    const store = storeRef.current
+    if (
+      store &&
+      autoInitialize &&
+      store.getState().workspaceId === workspaceId
+    ) {
+      store.getState().initialize()
     }
-  }, [autoInitialize])
+  }, [workspaceId, autoInitialize])
 
   return (
     <AIAgentStoreContext.Provider value={storeRef.current}>

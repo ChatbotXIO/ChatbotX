@@ -6,7 +6,7 @@ export const claudeModels = z.enum([
   "claude-3-opus-20240229",
   "claude-3-sonnet-20240229",
   "claude-3-haiku-20240307",
-  "claude-4.6-opus",
+  "claude-opus-4.6",
   "claude-4.5-haiku-20251001",
   "claude-4.5-sonnet-20250929",
   "claude-4.5-opus-20251101",
@@ -19,7 +19,7 @@ export const claudeAnalyzeImageModelOptions: {
 }[] = [
   {
     label: "Claude Opus 4.6",
-    value: claudeModels.enum["claude-4.6-opus"],
+    value: claudeModels.enum["claude-opus-4.6"],
   },
   {
     label: "Claude 4.5 Haiku (2025-October-01)",
