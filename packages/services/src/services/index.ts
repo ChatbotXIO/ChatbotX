@@ -1,3 +1,4 @@
+export * from "./contact.service"
 export * from "./contact-inbox.service"
 export * from "./contact-note.service"
 export * from "./conversation.service"

@@ -18,7 +18,8 @@ import {
   getContactLastInput,
   getContactLastInputType,
 } from "./helpers/last-input"
-import { listLastMessages } from "./helpers/message"
+import { getChatHistory } from "./helpers/message"
+import { getWorkspaceName } from "./helpers/workspace"
 
 export const extractVariables = (text: string): string[] => {
   const regex = /\{\{(\w+)\}\}/g
@@ -110,13 +111,13 @@ export const getSystemFieldValue = async (
         "yyyy-MM-dd HH:mm:ss",
       )
     case systemFieldTypes.enum.chat_history:
-      return await listLastMessages(contact.workspaceId, 50)
+      return await getChatHistory(contact.id, 50)
     case systemFieldTypes.enum.chat_history_large:
-      return await listLastMessages(contact.workspaceId, 200)
+      return await getChatHistory(contact.id, 200)
     case systemFieldTypes.enum.chat_history_details:
-      return await listLastMessages(contact.workspaceId, 50, true)
+      return await getChatHistory(contact.id, 50, true)
     case systemFieldTypes.enum.chat_history_details_large:
-      return await listLastMessages(contact.workspaceId, 200, true)
+      return await getChatHistory(contact.id, 200, true)
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id)
     // Non-contact-backed fields are intentionally unresolved here.
@@ -153,9 +154,9 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.team_name:
     case systemFieldTypes.enum.last_input_failure:
     case systemFieldTypes.enum.workspace_name:
-      return null
+      return await getWorkspaceName(contact.workspaceId)
     default: {
-      return await null
+      return null
     }
   }
 }

@@ -73,8 +73,8 @@ class ContactInboxService extends BaseService {
     const allContactInboxes = await this.listByContactId(props)
     return allContactInboxes.sort(
       (a, b) =>
-        new Date(b.lastMessageAt ?? new Date()).getTime() -
-        new Date(a.lastMessageAt ?? new Date()).getTime(),
+        new Date(b.lastMessageAt ?? 0).getTime() -
+        new Date(a.lastMessageAt ?? 0).getTime(),
     )[0]
   }
 }

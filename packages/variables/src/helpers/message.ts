@@ -1,5 +1,5 @@
 import { senderTypes } from "@chatbotx.io/database/partials"
-import { messageService } from "@chatbotx.io/services"
+import { conversationService, messageService } from "@chatbotx.io/services"
 
 export const listLastMessages = async (
   conversationId: string,
@@ -24,4 +24,18 @@ export const listLastMessages = async (
       return text
     })
     .join("\n")
+}
+
+export const getChatHistory = async (
+  contactId: string,
+  limit: number,
+  includeDetail = false,
+): Promise<string | null> => {
+  const conversation = await conversationService.findBy({
+    where: { contactId },
+  })
+  if (!conversation) {
+    return null
+  }
+  return listLastMessages(conversation.id, limit, includeDetail)
 }
