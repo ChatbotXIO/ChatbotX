@@ -16,6 +16,7 @@ export const defaultQueue =
 
 export const DefaultJobAction = {
   exportContacts: "exportContacts",
+  runImport: "runImport",
   sendErrorLog: "sendErrorLog",
   sendAuditLog: "sendAuditLog",
 } as const
@@ -33,6 +34,13 @@ export type JobExportContacts = {
       createdAt: string
       id: string
     }
+  }
+}
+
+export type JobRunImport = {
+  type: typeof DefaultJobAction.runImport
+  data: {
+    importId: string
   }
 }
 
@@ -60,5 +68,6 @@ export type JobSendAuditLog = {
 
 export type DefaultJobData =
   | JobExportContacts
+  | JobRunImport
   | JobSendErrorLog
   | JobSendAuditLog

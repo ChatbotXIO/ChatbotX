@@ -2,6 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { ImportContactsForm } from "@/features/contacts/import-contact-form"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { ImportForm } from "@/features/import/components/import-form"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
@@ -22,7 +23,9 @@ export default async function ImportContactsPage({
           autoInitialize={true}
           workspaceId={workspaceId}
         >
-          <ImportContactsForm workspaceId={workspaceId} />
+          <ImportForm>
+            <ImportContactsForm workspaceId={workspaceId} />
+          </ImportForm>
         </CustomFieldStoreProvider>
       </TagStoreProvider>
     </InboxStoreProvider>

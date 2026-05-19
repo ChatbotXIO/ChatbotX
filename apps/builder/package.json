@@ -29,6 +29,7 @@
     "@chatbotx.io/events": "workspace:*",
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
+    "@chatbotx.io/imports": "workspace:*",
     "@chatbotx.io/integration-chatbotx": "workspace:*",
     "@chatbotx.io/integration-google-sheets": "workspace:*",
     "@chatbotx.io/integration-instagram": "workspace:*",

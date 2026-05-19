@@ -61,6 +61,28 @@ export const useConfiguredInboxTypeOptions = () => {
   )
 }
 
+export const useInboxOptionsByChannel = (
+  channel?: string,
+  excludeChannels: string[] = [channelTypes.enum.smtp],
+): SelectOption[] => {
+  const inboxes = useInboxStore((state) => state.inboxes)
+
+  return useMemo(
+    () =>
+      inboxes
+        .filter((inbox) =>
+          !channel || channel === channelTypes.enum.omnichannel
+            ? !excludeChannels.includes(inbox.channel)
+            : inbox.channel === channel,
+        )
+        .map((inbox) => ({
+          label: inbox.name,
+          value: inbox.id,
+        })),
+    [inboxes, channel, excludeChannels],
+  )
+}
+
 export const useWhatsappInboxOptions = (): SelectOption[] => {
   const inboxes = useInboxStore((state) => state.inboxes)
 

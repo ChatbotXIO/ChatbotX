@@ -1,4 +1,4 @@
-import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
+import { genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
@@ -34,23 +34,3 @@ export const exportContactsRequest = z.object({
   contactIds: z.array(zodBigintAsString()).min(1),
 })
 export type ExportContactsRequest = z.infer<typeof exportContactsRequest>
-
-export const importContactsRequest = z.object({
-  file: z.instanceof(File),
-  channel: channelTypes,
-  phoneNumber: z.string().optional(),
-  contactId: z.string(),
-  email: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  tagId: z.string().optional(),
-  fieldMapping: z
-    .array(
-      z.object({
-        column: z.string(),
-        customFieldId: z.string(),
-      }),
-    )
-    .optional(),
-})
-export type ImportContactsRequest = z.infer<typeof importContactsRequest>

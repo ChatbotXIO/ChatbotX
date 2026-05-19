@@ -7,6 +7,7 @@ x-network: &network
 x-rustfs-environment: &rustfs-environment
   RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-chatbotx}
   RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-secretkey}
+  RUSTFS_API_CORS_ALLOW_ORIGIN: ${RUSTFS_API_CORS_ALLOW_ORIGIN:-*}
 
 services:
   postgres:

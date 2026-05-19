@@ -1324,6 +1324,16 @@
       "label": "Tiêu đề",
       "placeholder": "Nhập tiêu đề"
     },
+    "import": {
+      "label": "Nhập",
+      "histories": {
+        "title": "Lịch sử nhập",
+        "progress": "Tiến độ",
+        "success": "Thành công",
+        "failed": "Thất bại",
+        "completedAt": "Hoàn thành lúc"
+      }
+    },
     "line": {
       "label": "Đường kẻ"
     },

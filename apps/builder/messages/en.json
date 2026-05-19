@@ -1309,6 +1309,16 @@
       "label": "Heading",
       "placeholder": "Enter heading"
     },
+    "import": {
+      "label": "Import",
+      "histories": {
+        "title": "Import history",
+        "progress": "Progress",
+        "success": "Success",
+        "failed": "Failed",
+        "completedAt": "Completed at"
+      }
+    },
     "line": {
       "label": "Line"
     },
