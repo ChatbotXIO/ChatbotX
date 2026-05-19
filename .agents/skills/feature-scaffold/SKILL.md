@@ -415,6 +415,27 @@ Before submitting any feature:
 4. **Use interpolation** — for dynamic text, use `{feature}`, `{name}` params
 5. **Feature namespace** — feature-specific text goes under `<featureName>.*`
 
+## Logging
+
+Never use `console.log`, `console.error`, or `console.warn` in server-side code (actions, queries, API handlers). Use the structured logger instead.
+
+```typescript
+// ✅ correct — server action / query
+import baseLogger from "@chatbotx.io/logger"
+const logger = baseLogger.child({ feature: "myFeature" })
+
+try {
+  return await doWork(input)
+} catch (error) {
+  logger.error({ err: error }, "[myFeature] operation failed")
+  throw error
+}
+```
+
+Use `err: error` (not `error: error`) — pino's serializer is keyed on `err`.
+
+Client components may use `console` only for local development debugging that is removed before merge.
+
 ## Checklist for New Feature
 
 1. Create feature directory under `src/features/<name>/`

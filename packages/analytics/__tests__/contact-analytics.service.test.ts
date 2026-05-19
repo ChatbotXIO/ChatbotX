@@ -52,14 +52,14 @@ function makePayload(
   } as MessageFailedPayload
 }
 
-describe("ContactAnalyticsService.onMessageFailed", () => {
+describe("ContactAnalyticsService.handleBlocked", () => {
   beforeEach(() => {
     insertEvents.mockClear()
     transitionResult.current = [{ id: "c-1" }, { id: "c-2" }]
   })
 
   test("inserts contact_blocked event when category is user_blocked", async () => {
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload({
         code: 551,
         statusCode: 400,
@@ -88,7 +88,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
   })
 
   test("skips payloads with non-blocked category", async () => {
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload({
         code: 429,
         statusCode: 429,
@@ -102,7 +102,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
   })
 
   test("skips payloads with unparseable errorData", async () => {
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload(null),
       makePayload("string-error"),
       makePayload({ random: "shape" }),
@@ -112,7 +112,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
   })
 
   test("filters mixed batch and only inserts blocked rows", async () => {
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload({
         code: 429,
         statusCode: 429,
@@ -149,7 +149,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
 
   test("dedups duplicate failed payloads for same contact", async () => {
     transitionResult.current = [{ id: "c-1" }]
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload({
         code: 551,
         statusCode: 400,
@@ -180,7 +180,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
 
   test("skips when contact already blocked (no transition)", async () => {
     transitionResult.current = []
-    await contactAnalyticsService.onMessageFailed([
+    await contactAnalyticsService.handleBlocked([
       makePayload({
         code: 551,
         statusCode: 400,
@@ -194,7 +194,7 @@ describe("ContactAnalyticsService.onMessageFailed", () => {
   })
 
   test("no-op on empty array", async () => {
-    await contactAnalyticsService.onMessageFailed([])
+    await contactAnalyticsService.handleBlocked([])
     expect(insertEvents).not.toHaveBeenCalled()
   })
 })

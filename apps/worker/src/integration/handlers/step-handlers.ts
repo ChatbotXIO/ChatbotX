@@ -32,6 +32,7 @@ import {
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
 import { subHours } from "date-fns"
+import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
@@ -71,7 +72,10 @@ export async function stepArchiveConversation({
       conversation.id,
     )
   } catch (error) {
-    console.error("Failed to emit conversationArchived event:", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepArchiveConversation] Failed to emit realtime event",
+    )
   }
 
   emit("analytics:dashboard", {
@@ -87,7 +91,10 @@ export async function stepArchiveConversation({
       },
     },
   }).catch((error) => {
-    console.error("[stepArchiveConversation] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepArchiveConversation] Failed to emit analytics event",
+    )
   })
 }
 
@@ -114,7 +121,10 @@ export async function stepUnarchiveConversation({
       },
     },
   }).catch((error) => {
-    console.error("[stepUnarchiveConversation] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepUnarchiveConversation] Failed to emit analytics event",
+    )
   })
 }
 
@@ -170,7 +180,10 @@ export async function stepAssignConversation({
         assignedTo,
       )
     } catch (error) {
-      console.error("Failed to emit conversationAssigned event:", error)
+      logger.error(
+        { err: error, conversationId: conversation.id },
+        "[stepAssignConversation] Failed to emit realtime event",
+      )
     }
 
     emit("analytics:dashboard", {
@@ -187,7 +200,10 @@ export async function stepAssignConversation({
         },
       },
     }).catch((error) => {
-      console.error("[stepAssignConversation] Failed to emit", error)
+      logger.error(
+        { err: error, conversationId: conversation.id },
+        "[stepAssignConversation] Failed to emit analytics event",
+      )
     })
   }
 }
@@ -363,7 +379,10 @@ export async function stepAutoAssignConversation({
         assignedTo,
       )
     } catch (error) {
-      console.error("Failed to emit conversationAssigned event:", error)
+      logger.error(
+        { err: error, conversationId: conversation.id },
+        "[stepAutoAssignConversation] Failed to emit realtime event",
+      )
     }
 
     emit("analytics:dashboard", {
@@ -380,7 +399,10 @@ export async function stepAutoAssignConversation({
         },
       },
     }).catch((error) => {
-      console.error("[stepAutoAssignConversation] Failed to emit", error)
+      logger.error(
+        { err: error, conversationId: conversation.id },
+        "[stepAutoAssignConversation] Failed to emit analytics event",
+      )
     })
   }
 }
@@ -404,7 +426,10 @@ export async function stepUnassignConversation({
       conversation.id,
     )
   } catch (error) {
-    console.error("Failed to emit conversationUnassigned event:", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepUnassignConversation] Failed to emit realtime event",
+    )
   }
 
   emit("analytics:dashboard", {
@@ -422,7 +447,10 @@ export async function stepUnassignConversation({
       },
     },
   }).catch((error) => {
-    console.error("[stepUnassignConversation] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepUnassignConversation] Failed to emit analytics event",
+    )
   })
 }
 
@@ -449,7 +477,10 @@ export async function stepFollowConversation({
       },
     },
   }).catch((error) => {
-    console.error("[stepFollowConversation] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepFollowConversation] Failed to emit analytics event",
+    )
   })
 }
 
@@ -476,7 +507,10 @@ export async function stepUnfollowConversation({
       },
     },
   }).catch((error) => {
-    console.error("[stepUnfollowConversation] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepUnfollowConversation] Failed to emit analytics event",
+    )
   })
 }
 
@@ -496,7 +530,10 @@ export async function stepDisableBot({
       conversation.id,
     )
   } catch (error) {
-    console.error("Failed to emit conversationTransferredToHuman event:", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepDisableBot] Failed to emit realtime event",
+    )
   }
 
   emit("analytics:dashboard", {
@@ -512,7 +549,10 @@ export async function stepDisableBot({
       },
     },
   }).catch((error) => {
-    console.error("[stepDisableBot] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepDisableBot] Failed to emit analytics event",
+    )
   })
 }
 
@@ -532,7 +572,10 @@ export async function stepEnableBot({
       conversation.id,
     )
   } catch (error) {
-    console.error("Failed to emit conversationTransferredToBot event:", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepEnableBot] Failed to emit realtime event",
+    )
   }
 
   emit("analytics:dashboard", {
@@ -548,7 +591,10 @@ export async function stepEnableBot({
       },
     },
   }).catch((error) => {
-    console.error("[stepEnableBot] Failed to emit", error)
+    logger.error(
+      { err: error, conversationId: conversation.id },
+      "[stepEnableBot] Failed to emit analytics event",
+    )
   })
 }
 

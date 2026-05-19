@@ -74,6 +74,47 @@ docker compose exec postgres psql -U chatbotx chatbotx \
 pnpm --filter @chatbotx.io/database db:migrate
 ```
 
+### 6a. Configure continuous aggregate refresh policies
+
+After migrations run, the three hourly caggs exist but have no auto-refresh policy. Without this step they will only ever contain data from the initial `REFRESH MATERIALIZED VIEW` call and will go stale.
+
+```sql
+-- Run inside the chatbotx database
+SELECT add_continuous_aggregate_policy(
+  'analytics_contact_events_hourly',
+  start_offset => INTERVAL '8 days',
+  end_offset   => INTERVAL '1 hour',
+  schedule_interval => INTERVAL '1 hour'
+);
+
+SELECT add_continuous_aggregate_policy(
+  'analytics_message_events_hourly',
+  start_offset => INTERVAL '8 days',
+  end_offset   => INTERVAL '1 hour',
+  schedule_interval => INTERVAL '1 hour'
+);
+
+SELECT add_continuous_aggregate_policy(
+  'analytics_bot_message_events_hourly',
+  start_offset => INTERVAL '8 days',
+  end_offset   => INTERVAL '1 hour',
+  schedule_interval => INTERVAL '1 hour'
+);
+```
+
+**Why these intervals?**
+- `start_offset = 8 days` keeps the last 8 days materialized. The analytics API only routes to the cagg when `from >= now() - 6 days` (a 6-day threshold with a 1-day safety buffer). Having 8 days of cagg data provides an additional day of headroom.
+- `end_offset = 1 hour` avoids materializing the current in-flight hour, which would require a re-materialization on the next refresh.
+- `schedule_interval = 1 hour` matches the bucket granularity.
+
+**Backfill existing data** (only needed on a fresh TimescaleDB install with pre-existing rows):
+
+```sql
+CALL refresh_continuous_aggregate('analytics_contact_events_hourly',    now() - INTERVAL '8 days', now());
+CALL refresh_continuous_aggregate('analytics_message_events_hourly',    now() - INTERVAL '8 days', now());
+CALL refresh_continuous_aggregate('analytics_bot_message_events_hourly', now() - INTERVAL '8 days', now());
+```
+
 ### 7. Smoke test
 
 ```bash

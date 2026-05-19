@@ -33,7 +33,7 @@ function runHandler<T extends AnalyticsDashboardEvent>(
   }
   return handler(events).catch((error) => {
     logger.error(
-      { error, eventType, count: events.length },
+      { err: error, eventType, count: events.length },
       "[analytics] dashboard handler failed",
     )
   })

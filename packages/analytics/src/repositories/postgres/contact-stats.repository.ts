@@ -280,6 +280,10 @@ export class ContactStatsRepository extends BaseRepository {
 
     const dayStart = sql`date_trunc('day', ${from}::timestamptz AT TIME ZONE ${timezone}) AT TIME ZONE ${timezone}`
 
+    // KNOWN PERF: baseline scans all historical rows before dayStart with no
+    // upper bound. On large workspaces this can be the dominant query cost.
+    // Future improvement: materialize a periodic running-total per workspace
+    // and cache it, then only sum incremental rows from that snapshot forward.
     const baselineQuery = sql`
       SELECT COALESCE(
         COUNT(*) FILTER (WHERE "eventType" = 'contact_created') -

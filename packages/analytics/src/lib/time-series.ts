@@ -54,8 +54,12 @@ export function shouldUseMonthlyGranularity(props: TimeRangeQuery): boolean {
 // Use it only when the query window starts within that window.
 // Checking range WIDTH (differenceInDays) is wrong — a 5-day window from
 // 30 days ago to 25 days ago would pass a width check but the cagg has no data.
+//
+// We use 6 days (not 7) as the threshold to give a 1-day buffer against the
+// cagg refresh lag and the 120-second Redis cache TTL. A query that uses the
+// cagg now will still be within the materialized window when the cache expires.
 export function shouldUseCagg(props: TimeRangeQuery): boolean {
-  return props.from >= subDays(new Date(), 7)
+  return props.from >= subDays(new Date(), 6)
 }
 
 export function getUtcDayKey(date: Date | string | number): string {

@@ -197,3 +197,22 @@ import { ChatbotXException, notFoundException } from "@chatbotx.io/sdk"
 throw notFoundException("Item not found")
 throw new ChatbotXException("Custom error", "BAD_REQUEST", 400)
 ```
+
+## Logging
+
+Import the logger from the nearest `lib/log` or `lib/logger` module. Never use `console` in handlers.
+
+```typescript
+import { logger } from "../lib/log"
+
+.handler(async ({ input }) => {
+  try {
+    return await doWork(input)
+  } catch (error) {
+    logger.error({ err: error, ...input }, "[myFeature] handler failed")
+    throw error
+  }
+})
+```
+
+**Key rule:** always use `err: error` (not `error: error`) so pino serializes the stack trace.

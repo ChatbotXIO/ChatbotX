@@ -431,6 +431,22 @@ If org settings ARE needed, also update:
 | 3 | `manage-organization-settings.tsx` | Import and render new panel |
 | 4 | `<channel>-manage.tsx` | Gate "Add" button on `organizationSettings.<channel>` |
 
+## Logging
+
+Never use `console` in integration code. Import `@chatbotx.io/logger` for shared packages, or the app-local logger for worker/builder code.
+
+```typescript
+import logger from "@chatbotx.io/logger"
+
+// ✅ correct — preserves stack trace
+logger.error({ err: error, channel: "<channel>" }, "Webhook handler failed")
+
+// ❌ wrong — stack trace lost
+logger.error({ error }, "Webhook handler failed")
+```
+
+Always use `err: error` (not `error: error`) — pino's built-in serializer is registered under the `err` key.
+
 ## Webhook Flow
 
 1. External platform sends webhook to `/integrations/<channel>/webhook`

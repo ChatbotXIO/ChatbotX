@@ -95,6 +95,8 @@ function getLastMonthRange(): DateRangeResult {
   return { from: start, to: end }
 }
 
+// 2020 aligns with the earliest TimescaleDB hypertable partition; data before
+// this date is not expected to exist and a wider floor wastes partition scans.
 const LIFETIME_FLOOR = new Date("2020-01-01T00:00:00.000Z")
 
 function getLifeTimeRange(workspaceCreatedAt?: Date): DateRangeResult {
