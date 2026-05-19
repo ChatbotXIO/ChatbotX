@@ -1,6 +1,7 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
+  UserModel,
   WorkspaceMemberModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
@@ -51,6 +52,32 @@ export class WorkspaceMemberService extends BaseService {
       async () => await this.listByUserIdUncached(props),
       {
         tags: [`users:${props.userId}:workspace-members`],
+      },
+    )
+  }
+
+  async listByWorkspaceId(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+  }): Promise<(WorkspaceMemberModel & { user: UserModel })[]> {
+    const { tx = db, workspaceId } = props
+    const key = `workspaces:${workspaceId}:workspace-members`
+
+    return await withCache(
+      key,
+      async () =>
+        await tx.query.workspaceMemberModel.findMany({
+          where: { workspaceId },
+          with: {
+            user: true,
+          },
+          orderBy: { createdAt: "asc" },
+        }),
+      {
+        tags: [
+          `workspaces:${workspaceId}`,
+          `workspaces:${workspaceId}:workspace-members`,
+        ],
       },
     )
   }

@@ -114,9 +114,9 @@ export const integrationService = {
       )
     }
 
-    const workspace = await workspaceService.findById(
-      result.rows[0].workspaceId,
-    )
+    const workspace = await workspaceService.findById({
+      id: result.rows[0].workspaceId,
+    })
 
     const inbox = await findOrFail({
       table: inboxModel,
@@ -168,7 +168,7 @@ export const integrationService = {
     workspace: WorkspaceModel
     organization: OrganizationModel
   }> => {
-    const workspace = await workspaceService.findById(workspaceId)
+    const workspace = await workspaceService.findById({ id: workspaceId })
     const organization = await organizationService.findById(
       workspace.organizationId,
     )

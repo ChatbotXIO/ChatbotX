@@ -19,7 +19,7 @@ import {
   getContactLastInputType,
 } from "./helpers/last-input"
 import { getChatHistory } from "./helpers/message"
-import { getWorkspaceName } from "./helpers/workspace"
+import { getWorkspaceImageUrl, getWorkspaceName } from "./helpers/workspace"
 
 export const extractVariables = (text: string): string[] => {
   const regex = /\{\{(\w+)\}\}/g
@@ -120,7 +120,23 @@ export const getSystemFieldValue = async (
       return await getChatHistory(contact.id, 200, true)
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id)
-    // Non-contact-backed fields are intentionally unresolved here.
+    case systemFieldTypes.enum.avatar:
+      return contact.avatar
+    case systemFieldTypes.enum.current_time:
+      return formatInTimeZone(
+        new Date(),
+        contact.timezone ?? "UTC",
+        "yyyy-MM-dd HH:mm:ss",
+      )
+    case systemFieldTypes.enum.workspace_name:
+    case systemFieldTypes.enum.account_name:
+      return await getWorkspaceName(contact.workspaceId)
+    case systemFieldTypes.enum.account_id:
+      return contact.workspaceId
+    case systemFieldTypes.enum.account_image:
+      return await getWorkspaceImageUrl(contact.workspaceId)
+    // Unresolved fields — no data source available at this layer.
+    case systemFieldTypes.enum.page_user_name:
     case systemFieldTypes.enum.inbox_link:
     case systemFieldTypes.enum.ig_user_name:
     case systemFieldTypes.enum.ig_followers:
@@ -140,9 +156,6 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.last_user_note:
     case systemFieldTypes.enum.webchat:
     case systemFieldTypes.enum.webchat_parent_url:
-    case systemFieldTypes.enum.account_id:
-    case systemFieldTypes.enum.account_name:
-    case systemFieldTypes.enum.account_image:
     case systemFieldTypes.enum.api_key:
     case systemFieldTypes.enum.last_ad:
     case systemFieldTypes.enum.last_ctwa:
@@ -153,8 +166,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.member_name:
     case systemFieldTypes.enum.team_name:
     case systemFieldTypes.enum.last_input_failure:
-    case systemFieldTypes.enum.workspace_name:
-      return await getWorkspaceName(contact.workspaceId)
+      return null
     default: {
       return null
     }

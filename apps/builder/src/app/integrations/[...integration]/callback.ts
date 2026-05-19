@@ -60,7 +60,7 @@ export const handleCallback = async (
   }
 
   const workspace = stateParams.workspaceId
-    ? await workspaceService.findById(stateParams.workspaceId)
+    ? await workspaceService.findById({ id: stateParams.workspaceId })
     : await workspaceService.create({
         data: {
           organizationId: organization.id,

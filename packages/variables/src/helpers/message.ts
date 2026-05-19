@@ -1,5 +1,5 @@
+import { conversationService, messageService } from "@chatbotx.io/business"
 import { senderTypes } from "@chatbotx.io/database/partials"
-import { conversationService, messageService } from "@chatbotx.io/services"
 
 export const listLastMessages = async (
   conversationId: string,

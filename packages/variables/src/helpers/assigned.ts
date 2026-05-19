@@ -1,4 +1,4 @@
-import { workspaceMemberService } from "@chatbotx.io/services"
+import { workspaceMemberService } from "@chatbotx.io/business"
 
 const getAssignedAdmin = async (workspaceId: string) => {
   const members = await workspaceMemberService.listByWorkspaceId({

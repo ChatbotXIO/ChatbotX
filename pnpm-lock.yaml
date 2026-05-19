@@ -138,9 +138,6 @@ importers:
       '@chatbotx.io/sequence-scheduler':
         specifier: workspace:*
         version: link:../../packages/sequence-scheduler
-      '@chatbotx.io/services':
-        specifier: workspace:*
-        version: link:../../packages/services
       '@chatbotx.io/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -631,9 +628,6 @@ importers:
       '@chatbotx.io/sequence-scheduler':
         specifier: workspace:*
         version: link:../../packages/sequence-scheduler
-      '@chatbotx.io/services':
-        specifier: workspace:*
-        version: link:../../packages/services
       '@chatbotx.io/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -1970,25 +1964,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.12.2)(jiti@2.6.1)(jsdom@25.0.1)(lightningcss@1.32.0)(msw@2.14.6(@types/node@24.12.2)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.3)
 
-  packages/services:
-    dependencies:
-      '@chatbotx.io/database':
-        specifier: workspace:*
-        version: link:../database
-      '@chatbotx.io/redis':
-        specifier: workspace:*
-        version: link:../redis
-    devDependencies:
-      '@chatbotx.io/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/node':
-        specifier: 24.x
-        version: 24.12.2
-      typescript:
-        specifier: ^5
-        version: 5.9.3
-
   packages/typescript-config:
     dependencies:
       '@types/node':
@@ -2266,6 +2241,9 @@ importers:
 
   packages/variables:
     dependencies:
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
@@ -2275,9 +2253,6 @@ importers:
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis
-      '@chatbotx.io/services':
-        specifier: workspace:*
-        version: link:../services
       date-fns-tz:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.1.0)

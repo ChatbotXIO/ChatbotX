@@ -28,8 +28,11 @@ class WorkspaceService extends BaseService {
     return workspace
   }
 
-  async findById(id: string): Promise<WorkspaceModel> {
-    return await this.findOrFail({ where: { id } })
+  async findById(props: {
+    id: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel> {
+    return await this.findOrFail({ where: { id: props.id }, tx: props.tx })
   }
 
   async find(props: {

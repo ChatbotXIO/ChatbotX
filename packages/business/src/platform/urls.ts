@@ -40,7 +40,8 @@ export const resolvePlatformUrls = async (
   const organizationId =
     "organizationId" in args
       ? args.organizationId
-      : (await workspaceService.findById(args.workspaceId)).organizationId
+      : (await workspaceService.findById({ id: args.workspaceId }))
+          .organizationId
 
   const organization = await organizationService.findById(organizationId)
   const orgUrls = getOrganizationUrls(organization)

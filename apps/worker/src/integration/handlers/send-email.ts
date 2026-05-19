@@ -108,7 +108,9 @@ export async function sendEmail({
     ...(smtpIntegration.auth as Record<string, unknown>),
   })
 
-  const workspace = await workspaceService.findById(conversation.workspaceId)
+  const workspace = await workspaceService.findById({
+    id: conversation.workspaceId,
+  })
 
   const inbox = await inboxService.find({
     where: {

@@ -1,7 +1,7 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import type { TagModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
-import { BaseService } from "./base.service"
+import { BaseService } from "../base.service"
 
 class TagService extends BaseService {
   protected readonly cachePrefix: string = "tags"
