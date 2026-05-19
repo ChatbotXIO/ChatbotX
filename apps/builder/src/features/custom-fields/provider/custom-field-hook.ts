@@ -55,7 +55,7 @@ const reservedCustomFieldIds: {
     labelKey: "fields.email.label",
   },
   {
-    id: systemFieldTypes.enum.phone_number,
+    id: systemFieldTypes.enum.phone,
     type: "shortText",
     labelKey: "fields.phoneNumber.label",
   },

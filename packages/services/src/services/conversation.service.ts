@@ -32,12 +32,9 @@ class ConversationService extends BaseService {
       cacheKey,
       async () => await this.findByUncached(props),
       {
-        dynamicTags: async (distributedStore, result) => {
+        dynamicTags: (result) => {
           if (result) {
-            await distributedStore.addTag(
-              `${this.cachePrefix}:${result.id}`,
-              cacheKey,
-            )
+            return [`${this.cachePrefix}:${result.id}`]
           }
         },
       },

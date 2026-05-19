@@ -56,6 +56,7 @@ export const systemFieldTypes = z.enum([
   "last_user_note",
   "webchat",
   "webchat_parent_url",
+  "avatar",
 
   "account_id",
   "account_name",
@@ -75,6 +76,8 @@ export const systemFieldTypes = z.enum([
 
   "workspace_id",
   "workspace_name",
+  "current_time",
+  "page_user_name",
 ])
 export type SystemFieldType = z.infer<typeof systemFieldTypes>
 

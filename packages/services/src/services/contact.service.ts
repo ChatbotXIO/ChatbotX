@@ -24,9 +24,9 @@ class ContactService extends BaseService {
           where,
         }),
       {
-        dynamicTags: async (distributedStore, result) => {
+        dynamicTags: (result) => {
           if (result) {
-            await distributedStore.sadd(`contacts:${result.id}`, key)
+            return [`contacts:${result.id}`]
           }
         },
       },

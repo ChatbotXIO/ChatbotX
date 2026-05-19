@@ -36,14 +36,8 @@ class ContactInboxService extends BaseService {
       async () => await this.findByUncached(props),
       {
         ttl: props.ttlInSeconds,
-        dynamicTags: async (distributedStore, result) => {
-          if (result) {
-            await distributedStore.sadd(
-              `tags:contacts:${result.contactId}`,
-              cacheKey,
-            )
-          }
-        },
+        dynamicTags: (result) =>
+          result ? [`tags:contacts:${result.contactId}`] : undefined,
       },
     )
   }

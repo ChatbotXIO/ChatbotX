@@ -34,12 +34,9 @@ class MessageService extends BaseService {
       cacheKey,
       async () => await this.findByUncached(props),
       {
-        dynamicTags: async (distributedStore, result) => {
+        dynamicTags: (result) => {
           if (result) {
-            await distributedStore.sadd(
-              `tags:${this.cachePrefix}:${result.id}`,
-              cacheKey,
-            )
+            return [`tags:${this.cachePrefix}:${result.id}`]
           }
         },
         ttl: props.ttlInSeconds,
