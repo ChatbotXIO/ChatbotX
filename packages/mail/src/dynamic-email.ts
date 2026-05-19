@@ -1,5 +1,4 @@
-import { createRequire } from "node:module"
-import type { MJMLParseResults } from "mjml-core"
+import mjml2html from "mjml"
 import type nodemailer from "nodemailer"
 import {
   buildMjmlTemplate,
@@ -7,12 +6,6 @@ import {
 } from "./emails/dynamic-template"
 import { keys } from "./keys"
 import { createSmtpTransporter } from "./transport"
-
-const _require = createRequire(import.meta.url)
-const mjml2html = _require("mjml") as (
-  template: string,
-  options?: { validationLevel?: string },
-) => Promise<MJMLParseResults>
 
 export type {
   DynamicEmailProps,
