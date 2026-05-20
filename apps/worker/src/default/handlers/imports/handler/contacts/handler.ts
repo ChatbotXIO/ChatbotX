@@ -11,6 +11,8 @@ import {
   contactModel,
   contactsToTagsModel,
   conversationModel,
+  type inboxModel,
+  type tagModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import {
@@ -18,16 +20,18 @@ import {
   extractRowData,
 } from "@chatbotx.io/imports/modules/contacts"
 import { createId } from "@chatbotx.io/utils"
-import { logger } from "../../../lib/logger"
+import { logger } from "../../../../../lib/logger"
 import type {
   ImportPrepareResult,
   ImportRow,
   ImportTypeHandler,
-} from "./base-import"
-import { validateCustomFieldValue } from "./validations/custom-field-value"
+} from "../../base-import"
+import { validateCustomFieldValue } from "../../validations/custom-field-value"
 
 type ContactDeps = {
   customFieldTypes: Map<string, CustomFieldType>
+  inbox: typeof inboxModel.$inferSelect
+  tag: typeof tagModel.$inferSelect | null
 }
 
 const prepareContacts = async ({
@@ -38,16 +42,20 @@ const prepareContacts = async ({
   meta: ContactImportMeta
 }): Promise<ImportPrepareResult<ContactDeps>> => {
   const inbox = await db.query.inboxModel.findFirst({
-    where: { id: meta.inboxId, workspaceId: row.workspaceId },
+    where: { id: row.inboxId, workspaceId: row.workspaceId },
   })
+
   if (!inbox) {
     return { ok: false, reason: "Inbox not found" }
   }
 
+  let tag: typeof tagModel.$inferSelect | null = null
   if (meta.tagId) {
-    const tag = await db.query.tagModel.findFirst({
-      where: { id: meta.tagId, workspaceId: row.workspaceId },
-    })
+    tag =
+      (await db.query.tagModel.findFirst({
+        where: { id: meta.tagId, workspaceId: row.workspaceId },
+      })) || null
+
     if (!tag) {
       return { ok: false, reason: "Tag not found in workspace" }
     }
@@ -56,16 +64,18 @@ const prepareContacts = async ({
   const customFieldTypes = new Map<string, CustomFieldType>()
   if (meta.fieldMapping?.length) {
     const ids = meta.fieldMapping.map((m) => m.customFieldId)
+
     const fields = await db.query.customFieldModel.findMany({
       where: { id: { in: ids }, workspaceId: row.workspaceId },
       columns: { id: true, type: true },
     })
+
     for (const field of fields) {
       customFieldTypes.set(field.id, field.type)
     }
   }
 
-  return { ok: true, deps: { customFieldTypes } }
+  return { ok: true, deps: { customFieldTypes, inbox, tag } }
 }
 
 const extractContactRow = (
@@ -86,18 +96,22 @@ const processContactRow = (
     if (!type) {
       return []
     }
+
     const normalized = validateCustomFieldValue(type, field.value)
     if (normalized === null) {
       return []
     }
+
     return [{ customFieldId: field.customFieldId, value: normalized }]
   })
+
   return tryCreateContact({
     mapped: { ...mapped, customFields: safeCustomFields },
     workspaceId: ctx.row.workspaceId,
-    inboxId: ctx.meta.inboxId,
+    inboxId: ctx.row.inboxId,
     channel: ctx.meta.channel,
     tagId: ctx.meta.tagId,
+    deps,
   })
 }
 
@@ -107,22 +121,30 @@ type CreateContactInput = {
   inboxId: string
   channel: ContactImportMeta["channel"]
   tagId?: string
+  deps: ContactDeps
 }
 
 const tryCreateContact = async (
   input: CreateContactInput,
 ): Promise<boolean> => {
   try {
-    if (input.mapped.phoneNumber) {
-      const existing = await db.query.contactModel.findFirst({
-        where: {
-          workspaceId: input.workspaceId,
-          phoneNumber: input.mapped.phoneNumber,
-        },
-      })
-      if (existing) {
-        return false
-      }
+    const externalId = input.mapped.externalId
+    if (!externalId) {
+      return false
+    }
+
+    const existing = await db.query.contactInboxModel.findFirst({
+      where: {
+        inboxId: input.inboxId,
+        sourceId: externalId,
+      },
+      columns: {
+        id: true,
+      },
+    })
+
+    if (existing) {
+      return false
     }
 
     const usage = await db.query.workspaceUsageModel.findFirst({
@@ -148,9 +170,9 @@ const tryCreateContact = async (
         originalContactId: contactId,
         contactId,
         inboxId: input.inboxId,
-        channel: input.channel,
-        source: contactSources.enum.imported,
-        sourceId: createId(),
+        channel: input.deps.inbox.channel,
+        source: contactSources.enum.imported as string,
+        sourceId: externalId,
       })
 
       await tx.insert(conversationModel).values({

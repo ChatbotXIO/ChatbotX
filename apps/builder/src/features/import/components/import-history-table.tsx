@@ -34,6 +34,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
   const columns = useMemo<ColumnDef<ListImportsItem>[]>(
     () => [
       {
+        id: "keyword",
         accessorKey: "fileName",
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -46,6 +47,12 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
             {row.original.fileName}
           </div>
         ),
+        meta: {
+          label: t("fields.name.label"),
+          placeholder: t("fields.name.searchPlaceholder"),
+          variant: "text",
+        },
+        enableColumnFilter: true,
         enableSorting: false,
         enableHiding: false,
       },

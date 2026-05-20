@@ -15,6 +15,7 @@ import {
 } from "../partials/shared"
 import { userModel } from "./auth-user"
 import { fileModel } from "./file"
+import { inboxModel } from "./inbox"
 import { workspaceModel } from "./workspace"
 
 export const importType = pgEnum(
@@ -37,6 +38,12 @@ export const importModel = pgTable(
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    inboxId: bigintAsString()
+      .notNull()
+      .references(() => inboxModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
@@ -70,6 +77,11 @@ export const importModel = pgTable(
     index("Import_workspaceId_type_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
+      table.type.asc().nullsLast(),
+    ),
+    index("Import_inboxId_type_idx").using(
+      "btree",
+      table.inboxId.asc().nullsLast(),
       table.type.asc().nullsLast(),
     ),
     index("Import_fileId_idx").using("btree", table.fileId.asc().nullsLast()),

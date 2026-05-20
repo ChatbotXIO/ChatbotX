@@ -137,7 +137,9 @@ export class Uploader {
     })
   }
 
-  async getObjectStream(path: string): Promise<Readable> {
+  async getObjectStream(
+    path: string,
+  ): Promise<{ stream: Readable; contentLength?: number }> {
     const command = new GetObjectCommand({
       Bucket: env.S3_BUCKET,
       Key: path,
@@ -147,7 +149,10 @@ export class Uploader {
     if (!response.Body) {
       throw new Error(`No body found for object: ${path}`)
     }
-    return response.Body as Readable
+    return {
+      stream: response.Body as Readable,
+      contentLength: response.ContentLength,
+    }
   }
 
   async copyObject(sourcePath: string, destinationPath: string) {

@@ -246,7 +246,7 @@ export async function extractTextFromFile(
     }
   }
 
-  const fileStream = await uploader.getObjectStream(remotePath)
+  const { stream: fileStream } = await uploader.getObjectStream(remotePath)
   const buffer = await streamToBuffer(fileStream)
 
   if (isMimeType(finalMimeType, PDF_MIME_TYPES)) {

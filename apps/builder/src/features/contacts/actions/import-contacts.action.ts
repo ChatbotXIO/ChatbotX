@@ -1,12 +1,13 @@
 "use server"
 
-import { db } from "@chatbotx.io/database/client"
+import { and, db, eq } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
   fileContextTypes,
+  fileStatuses,
   importTypes,
 } from "@chatbotx.io/database/partials"
-import { importModel } from "@chatbotx.io/database/schema"
+import { fileModel, importModel } from "@chatbotx.io/database/schema"
 import { getImportEntry, inferImportFormat } from "@chatbotx.io/imports"
 import { createId } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
@@ -69,8 +70,17 @@ export const importContactsAction = workspaceActionClient
         })
       }
 
+      const inbox = await db.query.inboxModel.findFirst({
+        where: { id: parsedInput.inboxId, workspaceId },
+      })
+
+      if (!inbox) {
+        return returnValidationErrors(importContactsRequest, {
+          inboxId: { _errors: ["Inbox not found"] },
+        })
+      }
+
       const meta: ContactImportMeta = {
-        inboxId: parsedInput.inboxId,
         channel: parsedInput.channel,
         countryCode: parsedInput.countryCode,
         columnMap: {
@@ -86,10 +96,24 @@ export const importContactsAction = workspaceActionClient
         tagId: parsedInput.tagId || undefined,
       }
 
+      await db
+        .update(fileModel)
+        .set({
+          status: fileStatuses.enum.uploaded,
+          uploadedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(fileModel.id, file.id),
+            eq(fileModel.workspaceId, workspaceId),
+          ),
+        )
+
       const importId = createId()
       await db.insert(importModel).values({
         id: importId,
         workspaceId,
+        inboxId: parsedInput.inboxId,
         userId: user.id,
         fileId: file.id,
         type: importTypes.enum.contacts,

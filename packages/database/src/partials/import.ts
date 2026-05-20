@@ -45,7 +45,6 @@ export const countryCodeSchema = z
   .regex(/^\+\d{1,4}$/, "Country code must be in E.164 format (e.g. +1, +84)")
 
 export const contactImportMetaSchema = z.object({
-  inboxId: bigintAsStringSchema,
   channel: channelTypes,
   countryCode: countryCodeSchema.optional(),
   columnMap: contactImportColumnMapSchema,

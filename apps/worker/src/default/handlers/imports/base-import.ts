@@ -67,23 +67,21 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
   const maxRows = config.maxRows
   const maxBytes = config.maxFileSizeMB * BYTES_PER_MB
 
-  try {
-    const head = await uploader.headObject(row.file.path)
-    const size = head.ContentLength ?? 0
-    if (size > maxBytes) {
-      await failImport(row.id, `File exceeds ${config.maxFileSizeMB}MB limit`)
-      return
-    }
-  } catch (error) {
-    logger.error(error, `Import ${row.id} headObject failed`)
-    await failImport(row.id, "File not found or inaccessible")
-    return
-  }
-
   const counters: Counters = { processed: 0, success: 0, failed: 0 }
   let parser: AsyncIterable<Record<string, unknown>>
   try {
-    const stream = await uploader.getObjectStream(row.file.path)
+    const { stream, contentLength } = await uploader.getObjectStream(
+      row.file.path,
+    )
+    console.log({
+      contentLength,
+      maxBytes,
+    })
+    if ((contentLength ?? 0) > maxBytes) {
+      stream.destroy()
+      await failImport(row.id, `File exceeds ${config.maxFileSizeMB}MB limit`)
+      return
+    }
     parser = createImportRowParser(row.format, stream)
   } catch (error) {
     const message = error instanceof Error ? error.message : "Parser error"

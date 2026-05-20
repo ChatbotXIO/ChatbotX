@@ -34,6 +34,7 @@ CREATE TABLE "Import" (
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"workspaceId" bigint NOT NULL,
+	"inboxId" bigint NOT NULL,
 	"userId" bigint,
 	"fileId" bigint NOT NULL,
 	"type" "importType" NOT NULL,
@@ -57,5 +58,6 @@ CREATE INDEX "Import_fileId_idx" ON "Import" ("fileId");--> statement-breakpoint
 ALTER TABLE "File" ADD CONSTRAINT "File_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "File" ADD CONSTRAINT "File_userId_User_id_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Import" ADD CONSTRAINT "Import_workspaceId_Workspace_id_fkey" FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "Import" ADD CONSTRAINT "Import_inboxId_Inbox_id_fkey" FOREIGN KEY ("inboxId") REFERENCES "Inbox"("id") ON DELETE CASCADE ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Import" ADD CONSTRAINT "Import_userId_User_id_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;--> statement-breakpoint
 ALTER TABLE "Import" ADD CONSTRAINT "Import_fileId_File_id_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE RESTRICT ON UPDATE CASCADE;--> statement-breakpoint

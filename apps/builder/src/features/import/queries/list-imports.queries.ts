@@ -1,9 +1,17 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import {
+  and,
+  count,
+  db,
+  desc,
+  eq,
+  ilike,
+  type SQL,
+} from "@chatbotx.io/database/client"
 import type { ImportStatus, ImportType } from "@chatbotx.io/database/partials"
-import { importModel } from "@chatbotx.io/database/schema"
+import { fileModel, importModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
-  parseOrderByAsObject,
+  parseOrderBy,
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
@@ -17,35 +25,66 @@ export async function listImports(
 ): Promise<ListImportsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const where: Record<string, unknown> = {
-    workspaceId: input.workspaceId,
-    ...(input.type ? { type: input.type } : {}),
-    ...(input.status ? { status: input.status } : {}),
+  const keyword = input.keyword?.trim()
+
+  const conditions: SQL[] = [eq(importModel.workspaceId, input.workspaceId)]
+  if (input.type) {
+    conditions.push(eq(importModel.type, input.type))
   }
+  if (input.status) {
+    conditions.push(eq(importModel.status, input.status))
+  }
+  if (keyword) {
+    conditions.push(ilike(fileModel.fileName, `%${keyword}%`))
+  }
+  const where = and(...conditions)
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(importModel, input)
+  const orderBy = parseOrderBy(importModel, {
+    sort: input.sort ?? undefined,
+  })
+  const finalOrderBy = orderBy.length ? orderBy : [desc(importModel.createdAt)]
 
-  const [rows, totalRows] = await Promise.all([
-    db.query.importModel.findMany({
-      where,
-      ...pagination,
-      orderBy: Object.keys(orderBy).length ? orderBy : { createdAt: "desc" },
-      with: { file: { columns: { fileName: true } } },
-    }),
-    db.$count(
-      importModel,
-      // biome-ignore lint/suspicious/noExplicitAny: relationsFilterToSQL requires typed Drizzle filter
-      relationsFilterToSQL(importModel, where as any),
-    ),
+  const [rows, totalResult] = await Promise.all([
+    db
+      .select({
+        id: importModel.id,
+        workspaceId: importModel.workspaceId,
+        userId: importModel.userId,
+        fileId: importModel.fileId,
+        fileName: fileModel.fileName,
+        type: importModel.type,
+        status: importModel.status,
+        totalCount: importModel.totalCount,
+        processedCount: importModel.processedCount,
+        successCount: importModel.successCount,
+        failedCount: importModel.failedCount,
+        errorMessage: importModel.errorMessage,
+        completedAt: importModel.completedAt,
+        createdAt: importModel.createdAt,
+        updatedAt: importModel.updatedAt,
+      })
+      .from(importModel)
+      .innerJoin(fileModel, eq(importModel.fileId, fileModel.id))
+      .where(where)
+      .orderBy(...finalOrderBy)
+      .limit(pagination.limit)
+      .offset(pagination.offset),
+    db
+      .select({ value: count() })
+      .from(importModel)
+      .innerJoin(fileModel, eq(importModel.fileId, fileModel.id))
+      .where(where),
   ])
+
+  const totalRows = totalResult[0]?.value ?? 0
 
   const data: ListImportsItem[] = rows.map((row) => ({
     id: row.id,
     workspaceId: row.workspaceId,
     userId: row.userId,
     fileId: row.fileId,
-    fileName: row.file?.fileName ?? "",
+    fileName: row.fileName,
     type: row.type as ImportType,
     status: row.status as ImportStatus,
     totalCount: row.totalCount,
