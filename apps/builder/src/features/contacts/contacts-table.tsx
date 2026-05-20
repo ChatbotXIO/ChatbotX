@@ -21,15 +21,21 @@ import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
+import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 
 type ContactsTableProps = {
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
+  filter?: ExportContactsFilter
 }
 
-export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
+export function ContactsTable({
+  workspaceId,
+  promises,
+  filter,
+}: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
 
@@ -216,7 +222,11 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
     <DataTable table={table}>
       <DataTableToolbar table={table}>
         <CreateContactDialog workspaceId={workspaceId} />
-        <ContactListAction table={table} workspaceId={workspaceId} />
+        <ContactListAction
+          filter={filter}
+          table={table}
+          workspaceId={workspaceId}
+        />
       </DataTableToolbar>
     </DataTable>
   )

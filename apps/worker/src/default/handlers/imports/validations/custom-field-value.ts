@@ -4,13 +4,7 @@ import { EMAIL_RE, NON_DIGIT_RE, PHONE_RE } from "@chatbotx.io/imports/parsers"
 const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
 const BOOL_RE = /^(true|false|1|0)$/i
 const NUMERIC_RE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/
-const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
-
-const stripFormulaEscape = (raw: string): string =>
-  raw.startsWith("'") ? raw.slice(1) : raw
-
-const normalizeBoolean = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
+const normalizeBoolean = (value: string): string | null => {
   if (!BOOL_RE.test(value)) {
     return null
   }
@@ -18,8 +12,7 @@ const normalizeBoolean = (raw: string): string | null => {
   return lower === "true" || lower === "1" ? "true" : "false"
 }
 
-const normalizeNumber = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
+const normalizeNumber = (value: string): string | null => {
   if (!NUMERIC_RE.test(value)) {
     return null
   }
@@ -27,8 +20,7 @@ const normalizeNumber = (raw: string): string | null => {
   return Number.isFinite(parsed) ? String(parsed) : null
 }
 
-const normalizeDate = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
+const normalizeDate = (value: string): string | null => {
   if (!DATE_ONLY_RE.test(value)) {
     return null
   }
@@ -36,8 +28,7 @@ const normalizeDate = (raw: string): string | null => {
   return Number.isNaN(ms) ? null : value
 }
 
-const normalizeDateTime = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
+const normalizeDateTime = (value: string): string | null => {
   if (!value.includes("T")) {
     return null
   }
@@ -49,16 +40,11 @@ const normalizeDateTime = (raw: string): string | null => {
 }
 
 const normalizeEmail = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
-  if (FORMULA_PREFIX_RE.test(value)) {
-    return null
-  }
-  const lower = value.toLowerCase()
+  const lower = raw.toLowerCase()
   return EMAIL_RE.test(lower) ? lower : null
 }
 
-const normalizePhone = (raw: string): string | null => {
-  const value = stripFormulaEscape(raw)
+const normalizePhone = (value: string): string | null => {
   if (!PHONE_RE.test(value)) {
     return null
   }

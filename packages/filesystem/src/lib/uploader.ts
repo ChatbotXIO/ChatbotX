@@ -1,4 +1,4 @@
-import type { Readable } from "node:stream"
+import { PassThrough, type Readable } from "node:stream"
 import {
   CopyObjectCommand,
   DeleteObjectCommand,
@@ -10,6 +10,7 @@ import {
   type PutObjectCommandInput,
   S3Client,
 } from "@aws-sdk/client-s3"
+import { Upload } from "@aws-sdk/lib-storage"
 import { AwsClient } from "aws4fetch"
 import { keys } from "../keys"
 
@@ -82,6 +83,29 @@ export class Uploader {
     return await this.#client.send(command)
   }
 
+  /**
+   * Opens a streaming multipart upload. Write data to `stream`; call
+   * `stream.end()` when finished, then `await done`. Parts buffer at ~5MB and
+   * flush to S3 as they fill, so the full payload never lives in memory.
+   */
+  createUpload(
+    path: string,
+    options?: { contentType?: string },
+  ): { stream: PassThrough; done: Promise<void> } {
+    const stream = new PassThrough()
+    const upload = new Upload({
+      client: this.#client,
+      params: {
+        Bucket: this.#bucketName,
+        Key: path,
+        Body: stream,
+        ContentType: options?.contentType,
+      },
+    })
+    const done = upload.done().then(() => undefined)
+    return { stream, done }
+  }
+
   async getPresignedUpload(filePath: string): Promise<string> {
     const client = new AwsClient({
       service: "s3",
@@ -96,6 +120,32 @@ export class Uploader {
           `${env.S3_ENDPOINT}/${env.S3_BUCKET}/${filePath}?X-Amz-Expires=${5 * 60}`,
           {
             method: "PUT",
+          },
+        ),
+        {
+          aws: { signQuery: true },
+        },
+      )
+    ).url.toString()
+  }
+
+  async getPresignedDownload(
+    filePath: string,
+    expiresInSeconds = 60 * 60,
+  ): Promise<string> {
+    const client = new AwsClient({
+      service: "s3",
+      region: env.S3_REGION,
+      accessKeyId: env.S3_ACCESS_KEY_ID ?? "",
+      secretAccessKey: env.S3_SECRET_ACCESS_KEY ?? "",
+    })
+
+    return (
+      await client.sign(
+        new Request(
+          `${env.S3_ENDPOINT}/${env.S3_BUCKET}/${filePath}?X-Amz-Expires=${expiresInSeconds}`,
+          {
+            method: "GET",
           },
         ),
         {

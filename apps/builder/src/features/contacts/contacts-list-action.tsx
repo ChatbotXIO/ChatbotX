@@ -42,21 +42,25 @@ import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactSequenceDialog from "./components/remove-contact-sequence-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
 import { ExportContactDialog } from "./export-contact-dialog"
+import type { ExportContactsFilter } from "./schemas/action"
 import type { ContactResponse } from "./schemas/query"
 
 type ContactListActionProps = {
   workspaceId: string
   table: Table<ContactResponse>
+  filter?: ExportContactsFilter
 }
 
 export function ContactListAction({
   workspaceId,
   table,
+  filter,
 }: ContactListActionProps) {
   const t = useTranslations()
   const router = useRouter()
 
   const rows = table.getFilteredSelectedRowModel().rows
+  const exportAll = table.getIsAllPageRowsSelected()
 
   return (
     <DropdownMenu>
@@ -139,6 +143,8 @@ export function ContactListAction({
 
         <ExportContactDialog
           contactIds={rows.map((r) => r.original.id)}
+          exportAll={exportAll}
+          filter={filter}
           trigger={
             <DropdownMenuItem
               disabled={rows.length === 0}

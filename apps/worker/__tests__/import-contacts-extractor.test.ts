@@ -157,15 +157,15 @@ describe("extractRowData field handling", () => {
     ])
   })
 
-  it("neutralizes CSV formula injection prefixes", () => {
+  it("stores values raw without formula escaping (escaping happens at export)", () => {
     const result = extractRowData(
       { id: "=CMD()", first: "+DANGER", last: "@evil" },
       columnMap,
     )
 
-    expect(result?.externalId).toBe("'=CMD()")
-    expect(result?.firstName).toBe("'+DANGER")
-    expect(result?.lastName).toBe("'@evil")
+    expect(result?.externalId).toBe("=CMD()")
+    expect(result?.firstName).toBe("+DANGER")
+    expect(result?.lastName).toBe("@evil")
   })
 
   it("ignores non-string row values", () => {

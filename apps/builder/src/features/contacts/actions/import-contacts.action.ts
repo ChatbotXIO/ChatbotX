@@ -96,30 +96,35 @@ export const importContactsAction = workspaceActionClient
         tagId: parsedInput.tagId || undefined,
       }
 
-      await db
-        .update(fileModel)
-        .set({
-          status: fileStatuses.enum.uploaded,
-          uploadedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(fileModel.id, file.id),
-            eq(fileModel.workspaceId, workspaceId),
-          ),
-        )
-
       const importId = createId()
-      await db.insert(importModel).values({
-        id: importId,
-        workspaceId,
-        inboxId: parsedInput.inboxId,
-        userId: user.id,
-        fileId: file.id,
-        type: importTypes.enum.contacts,
-        format,
-        status: "pending",
-        meta,
+
+      // Mark the file uploaded and create the import row atomically so the
+      // queued job can never reference an import row that failed to persist.
+      await db.transaction(async (tx) => {
+        await tx
+          .update(fileModel)
+          .set({
+            status: fileStatuses.enum.uploaded,
+            uploadedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(fileModel.id, file.id),
+              eq(fileModel.workspaceId, workspaceId),
+            ),
+          )
+
+        await tx.insert(importModel).values({
+          id: importId,
+          workspaceId,
+          inboxId: parsedInput.inboxId,
+          userId: user.id,
+          fileId: file.id,
+          type: importTypes.enum.contacts,
+          format,
+          status: "pending",
+          meta,
+        })
       })
 
       await defaultQueue.add(DefaultJobAction.runImport, {

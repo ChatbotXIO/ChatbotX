@@ -8,11 +8,17 @@ import { createContact } from "../actions/create-contact.action"
 import { deleteContactCustomFields } from "../actions/delete-contact-custom-field.action"
 import { removeContactTags } from "../actions/remove-contact-tag.action"
 import { getContact } from "../queries/get-contact.query"
+import { getExportFile } from "../queries/get-export-file.query"
 import { listContactCustomFields } from "../queries/list-contact-fields.query"
 import { countContactInboxes } from "../queries/list-contact-inboxes.queries"
 import { listContactTags } from "../queries/list-contact-tags.query"
 import { countContacts, listContacts } from "../queries/list-contacts.queries"
-import { createContactRequest, createContactResponse } from "../schemas/action"
+import {
+  createContactRequest,
+  createContactResponse,
+  getExportFileRequest,
+  getExportFileResponse,
+} from "../schemas/action"
 import {
   deleteContactCustomFieldRequest,
   listContactCustomFieldsRequest,
@@ -101,6 +107,18 @@ export const contactsAuthenticatedAPI = {
       const { workspaceId, ...parsedInput } = input
       return await createContact({ workspaceId, parsedInput })
     }),
+
+  getExportFileAuthenticatedAPI: authorizedAPI
+    .route({
+      method: "GET",
+      path: "/workspaces/{workspaceId}/contacts/export-files/{fileId}",
+      summary: "Get contact export file status",
+      tags: ["Contacts"],
+    })
+    .input(getExportFileRequest)
+    .output(getExportFileResponse)
+    .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
+    .handler(async ({ input }) => await getExportFile(input)),
 
   listContactTagsAuthenticatedAPI: authorizedAPI
     .route({

@@ -7,7 +7,10 @@ export const importContactsRequest = z
     fileId: zodBigintAsString(),
     channel: channelTypes,
     inboxId: zodBigintAsString(),
-    countryCode: countryCodeSchema.optional(),
+    countryCode: z.preprocess(
+      (val) => (val === "" ? undefined : val),
+      countryCodeSchema.optional(),
+    ),
     phoneNumber: z.string().max(255).optional(),
     contactId: z.string().max(255).optional(),
     email: z.string().max(255).optional(),
@@ -39,7 +42,7 @@ export const importContactsRequest = z
           message: "Phone number is required for WhatsApp imports",
         })
       }
-    } else {
+    } else if (!data.contactId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["contactId"],

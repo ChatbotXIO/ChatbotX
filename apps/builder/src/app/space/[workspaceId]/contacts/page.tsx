@@ -40,7 +40,14 @@ export default async function ContactsPage(props: {
           <TagStoreProvider workspaceId={workspaceId}>
             <CustomFieldStoreProvider workspaceId={workspaceId}>
               <InboxStoreProvider workspaceId={workspaceId}>
-                <ContactsTable promises={promises} workspaceId={workspaceId} />
+                <ContactsTable
+                  filter={{
+                    keyword: search?.keyword,
+                    contactFilter: search?.contactFilter,
+                  }}
+                  promises={promises}
+                  workspaceId={workspaceId}
+                />
               </InboxStoreProvider>
             </CustomFieldStoreProvider>
           </TagStoreProvider>

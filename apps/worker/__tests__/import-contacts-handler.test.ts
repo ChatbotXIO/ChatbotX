@@ -40,6 +40,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
     transaction: (cb: (tx: unknown) => unknown) => {
       transactionFn()
       return cb({
+        select: () => ({
+          from: () => ({
+            where: () => ({
+              for: async () => {
+                const usage = await findFirstUsage()
+                return usage ? [usage] : []
+              },
+            }),
+          }),
+        }),
         insert: () => ({
           values: (v: unknown) => {
             insertValues(v)
@@ -252,7 +262,32 @@ describe("contacts import pipeline", () => {
       successCount: 0,
       failedCount: 1,
     })
-    expect(transactionFn).not.toHaveBeenCalled()
+    // The quota check now runs inside the transaction (FOR UPDATE lock), so
+    // the transaction is opened even when no room remains.
+    expect(transactionFn).toHaveBeenCalledTimes(1)
+  })
+
+  test("inserts only up to the remaining quota and fails the overflow", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    // Room for one more contact only.
+    findFirstUsage.mockResolvedValue({ contactsCount: 99, maxContacts: 100 })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+        "ext-2,+15557654321,second@example.com",
+      ]),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      totalCount: 2,
+      successCount: 1,
+      failedCount: 1,
+    })
+    expect(transactionFn).toHaveBeenCalledTimes(1)
   })
 
   test("marks row failed when CSV is malformed", async () => {
@@ -352,5 +387,37 @@ describe("contacts import pipeline", () => {
       status: "failed",
       errorMessage: expect.stringContaining("xlsx"),
     })
+  })
+
+  test("fails the row when the file exceeds the size limit", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue({
+      stream: Readable.from("external_id,phone\next-1,+15551234567"),
+      // 21 MB — over the 20 MB contacts import cap.
+      contentLength: 21 * 1024 * 1024,
+    })
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
+      status: "failed",
+      errorMessage: expect.stringContaining("MB limit"),
+    })
+    // The size check rejects the file before any rows are parsed.
+    expect(transactionFn).not.toHaveBeenCalled()
+  })
+
+  test("fails the row when meta is malformed", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone", "ext-1,+15551234567"]),
+    )
+
+    // columnMap is required; an empty meta object fails parseMeta.
+    await runContactsImport(buildRow({ meta: {} }))
+
+    expect(lastUpdate()).toMatchObject({ status: "failed" })
+    // Bad meta is rejected before the object stream is ever fetched.
+    expect(getObjectStream).not.toHaveBeenCalled()
   })
 })

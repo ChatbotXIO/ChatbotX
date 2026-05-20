@@ -7,7 +7,12 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
-import { importFormats, importStatuses, importTypes } from "../partials"
+import {
+  type ContactImportMeta,
+  importFormats,
+  importStatuses,
+  importTypes,
+} from "../partials"
 import {
   bigintAsString,
   sharedColumns,
@@ -60,7 +65,7 @@ export const importModel = pgTable(
     type: importType().notNull(),
     format: importFormat().notNull(),
     status: importStatus().notNull(),
-    meta: jsonb().notNull(),
+    meta: jsonb().$type<ContactImportMeta>().notNull(),
     totalCount: integer().default(0).notNull(),
     processedCount: integer().default(0).notNull(),
     successCount: integer().default(0).notNull(),

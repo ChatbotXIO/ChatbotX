@@ -110,10 +110,38 @@ const processContactRow = (
 
 const insertContactBatch = async (
   deps: ContactDeps,
-  accepted: AcceptedContact[],
+  eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
-): Promise<void> => {
-  await db.transaction(async (tx) => {
+): Promise<number> =>
+  db.transaction(async (tx) => {
+    // Lock the usage row so concurrent import batches serialize their quota
+    // check — without FOR UPDATE two batches could both read the same count
+    // and insert past maxContacts.
+    const [usage] = await tx
+      .select({
+        maxContacts: workspaceUsageModel.maxContacts,
+        contactsCount: workspaceUsageModel.contactsCount,
+      })
+      .from(workspaceUsageModel)
+      .where(eq(workspaceUsageModel.workspaceId, ctx.row.workspaceId))
+      .for("update")
+
+    if (!usage) {
+      return 0
+    }
+
+    const remaining = usage.maxContacts - usage.contactsCount
+    if (remaining <= 0) {
+      return 0
+    }
+
+    const accepted: AcceptedContact[] = eligible
+      .slice(0, remaining)
+      .map((row) => ({ contactId: createId(), row }))
+    if (accepted.length === 0) {
+      return 0
+    }
+
     await tx.insert(contactModel).values(
       accepted.map(({ contactId, row }) => ({
         id: contactId,
@@ -171,8 +199,9 @@ const insertContactBatch = async (
         contactsCount: sql`${workspaceUsageModel.contactsCount} + ${accepted.length}`,
       })
       .where(eq(workspaceUsageModel.workspaceId, ctx.row.workspaceId))
+
+    return accepted.length
   })
-}
 
 const processContactBatch = async (
   deps: ContactDeps,
@@ -205,31 +234,16 @@ const processContactBatch = async (
 
     const existing = new Set(existingRows.map((e) => e.sourceId))
 
-    const usage = await db.query.workspaceUsageModel.findFirst({
-      where: { workspaceId: ctx.row.workspaceId },
-    })
-
-    if (!usage) {
+    const eligible = contacts.filter(
+      (row) => !existing.has(row.externalId as string),
+    )
+    if (eligible.length === 0) {
       return { success: 0, failed: total }
     }
 
-    let remaining = usage.maxContacts - usage.contactsCount
+    const inserted = await insertContactBatch(deps, eligible, ctx)
 
-    const accepted: AcceptedContact[] = []
-    for (const row of contacts) {
-      if (existing.has(row.externalId as string) || remaining <= 0) {
-        continue
-      }
-      remaining -= 1
-      accepted.push({ contactId: createId(), row })
-    }
-    if (accepted.length === 0) {
-      return { success: 0, failed: total }
-    }
-
-    await insertContactBatch(deps, accepted, ctx)
-
-    return { success: accepted.length, failed: total - accepted.length }
+    return { success: inserted, failed: total - inserted }
   } catch (error) {
     logger.error(error, "Import batch failed")
     return { success: 0, failed: total }

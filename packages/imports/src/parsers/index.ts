@@ -27,4 +27,4 @@ export {
   IMPORT_CSV_PARSE_OPTIONS,
   type ImportCsvRow,
 } from "./csv"
-export { extractCsvHeaders } from "./headers"
+export { extractCsvHeaders, parseCsvLine } from "./headers"

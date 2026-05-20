@@ -1,5 +1,6 @@
 import {
   index,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -14,6 +15,10 @@ import {
 } from "../partials/shared"
 import { userModel } from "./auth-user"
 import { workspaceModel } from "./workspace"
+
+export type FileMeta = {
+  totalRecords?: number
+}
 
 export const fileContextType = pgEnum(
   "fileContextType",
@@ -46,6 +51,7 @@ export const fileModel = pgTable(
     mimeType: text().notNull(),
     fileSize: bigintAsString(),
     status: fileStatus().notNull().default("pending"),
+    meta: jsonb().$type<FileMeta>(),
     uploadedAt: timestamp(timestampConfig),
   },
   (table) => [

@@ -1,6 +1,6 @@
+import nodeConfig from "@chatbotx.io/vitest-config/node"
 import react from "@vitejs/plugin-react"
 import { mergeConfig, type ViteUserConfig } from "vitest/config"
-import nodeConfig from "./node"
 
 /**
  * Vitest preset for React libraries.

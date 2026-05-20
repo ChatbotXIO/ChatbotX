@@ -4,7 +4,6 @@ import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-f
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -12,12 +11,16 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2 } from "lucide-react"
+import { CheckCircle2, CopyIcon, DownloadIcon, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
 import { toast } from "sonner"
+import useSWR from "swr"
+import { client } from "@/lib/orpc/orpc"
 import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
 import { exportContactsAction } from "./actions/export-contacts.action"
@@ -25,19 +28,31 @@ import {
   contactFieldPrefix,
   contactPrefix,
   contactTagPrefix,
+  type ExportContactsFilter,
   exportContactsRequest,
 } from "./schemas/action"
+
+type ExportState = {
+  fileId: string
+}
 
 export function ExportContactDialog({
   workspaceId,
   contactIds,
+  exportAll = false,
+  filter,
   trigger,
 }: {
   workspaceId: string
   contactIds: string[]
+  exportAll?: boolean
+  filter?: ExportContactsFilter
   trigger: React.ReactElement
 }) {
   const t = useTranslations()
+
+  const [open, setOpen] = useState(false)
+  const [exportState, setExportState] = useState<ExportState | null>(null)
 
   const customFieldOptions = useCustomFieldSelectOptions({
     prefix: contactFieldPrefix,
@@ -77,76 +92,206 @@ export function ExportContactDialog({
     },
   ]
 
-  const { form, handleSubmitWithAction } = useHookFormAction(
-    exportContactsAction.bind(null, workspaceId),
-    zodResolver(exportContactsRequest),
+  const { form, handleSubmitWithAction, resetFormAndAction } =
+    useHookFormAction(
+      exportContactsAction.bind(null, workspaceId),
+      zodResolver(exportContactsRequest),
+      {
+        actionProps: {
+          onSuccess: ({ data }) => {
+            if (data) {
+              setExportState({ fileId: data.fileId })
+            }
+          },
+          onError: ({ error }) => {
+            if (error.serverError) {
+              toast.error(error.serverError)
+            }
+          },
+        },
+        formProps: {
+          mode: "onChange",
+          defaultValues: {
+            fields: options[0].options.slice(0, 5).map((opt) => opt.value),
+            ...(exportAll ? { exportAll: true, filter } : { contactIds }),
+          },
+        },
+        errorMapProps: {},
+      },
+    )
+
+  const fileId = exportState?.fileId
+  const { data: exportFile } = useSWR(
+    fileId ? (["contact-export-file", workspaceId, fileId] as const) : null,
+    ([, ws, id]) =>
+      client.contactsAPIs.getExportFileAuthenticatedAPI({
+        workspaceId: ws,
+        fileId: id,
+      }),
     {
-      actionProps: {
-        onSuccess: () => {
-          toast.success(
-            t("messages.exportedSuccess", {
-              feature: t("fields.contact.label"),
-            }),
-          )
-        },
-        onError: ({ error }) => {
-          if (error.serverError) {
-            toast.error(error.serverError)
-          }
-        },
-      },
-      formProps: {
-        mode: "onChange",
-        defaultValues: {
-          contactIds,
-          fields: options[0].options.slice(0, 5).map((opt) => opt.value), // Get first 5 options from the account
-        },
-      },
-      errorMapProps: {},
+      refreshInterval: (latest) =>
+        latest?.status === "uploaded" || latest?.status === "failed" ? 0 : 5000,
     },
   )
 
+  const resetDialog = () => {
+    setExportState(null)
+    resetFormAndAction()
+  }
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) {
+      resetDialog()
+    }
+  }
+
+  const closeDialog = () => handleOpenChange(false)
+
+  const handleCopyLink = async () => {
+    if (!exportFile?.downloadUrl) {
+      return
+    }
+    await navigator.clipboard.writeText(exportFile.downloadUrl)
+    toast.success(t("contacts.linkCopied"))
+  }
+
+  const handleDownload = () => {
+    if (exportFile?.downloadUrl) {
+      window.open(exportFile.downloadUrl, "_blank", "noopener,noreferrer")
+    }
+  }
+
+  const renderBody = () => {
+    if (!exportState) {
+      return (
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+            {exportAll && (
+              <p className="text-muted-foreground text-sm">
+                {t("contacts.exportAllNotice")}
+              </p>
+            )}
+
+            <MultiSelectField maxCount={100} name="fields" options={options} />
+
+            <div className="flex justify-between gap-4">
+              <Button onClick={closeDialog} type="button" variant="outline">
+                {t("actions.cancel")}
+              </Button>
+
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2 className="animate-spin" />
+                )}
+                {t("actions.export")}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      )
+    }
+
+    if (exportFile?.status === "failed") {
+      return (
+        <div className="space-y-4">
+          <p className="text-destructive text-sm">
+            {t("contacts.exportFailed")}
+          </p>
+          <div className="flex justify-between gap-4">
+            <Button onClick={closeDialog} type="button" variant="outline">
+              {t("actions.cancel")}
+            </Button>
+            <Button onClick={resetDialog} type="button" variant="secondary">
+              {t("actions.back")}
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    if (exportFile?.status === "uploaded" && exportFile.downloadUrl) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
+            <div className="space-y-1">
+              <p className="font-medium text-sm">
+                {t("contacts.exportReadyTitle")}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {t("contacts.exportReadyDescription")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Input readOnly value={exportFile.downloadUrl} />
+            <Button
+              onClick={handleCopyLink}
+              size="icon"
+              type="button"
+              variant="outline"
+            >
+              <CopyIcon />
+            </Button>
+          </div>
+
+          <div className="flex justify-between gap-4">
+            <Button onClick={closeDialog} type="button" variant="outline">
+              {t("actions.cancel")}
+            </Button>
+            <Button onClick={handleDownload} type="button">
+              <DownloadIcon />
+              {t("contacts.exportDownloadCount", {
+                count: exportFile.totalRecords ?? 0,
+              })}
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 py-4">
+          <Loader2 className="size-5 shrink-0 animate-spin text-muted-foreground" />
+          <div className="space-y-1">
+            <p className="font-medium text-sm">
+              {t("contacts.exportPreparing")}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {t("contacts.exportPreparingDescription")}
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-start">
+          <Button onClick={closeDialog} type="button" variant="outline">
+            {t("actions.cancel")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
 
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent
+        className="max-h-screen max-w-lg overflow-y-scroll"
+        onInteractOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("actions.exportContacts")}</DialogTitle>
           <DialogDescription />
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
-            >
-              <MultiSelectField
-                maxCount={100}
-                name="fields"
-                options={options}
-              />
-
-              <div className="flex justify-end gap-4">
-                <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
-                </DialogClose>
-
-                <Button
-                  disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
-                  }
-                  type="submit"
-                >
-                  {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
-                  )}
-                  {t("actions.export")}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+        {renderBody()}
       </DialogContent>
     </Dialog>
   )

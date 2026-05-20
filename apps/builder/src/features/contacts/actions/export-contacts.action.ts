@@ -1,10 +1,15 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { db } from "@chatbotx.io/database/client"
+import {
+  exportSubTypes,
+  fileContextTypes,
+  fileStatuses,
+} from "@chatbotx.io/database/partials"
+import { fileModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
+import { createId } from "@chatbotx.io/utils"
 import { DefaultJobAction, defaultQueue } from "@chatbotx.io/worker-config"
-import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -12,6 +17,7 @@ import {
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type ExportContactsRequest,
+  type ExportContactsResponse,
   exportContactsRequest,
 } from "../schemas/action"
 
@@ -27,25 +33,36 @@ export const exportContactsAction = workspaceActionClient
       ctx: { user: UserModel }
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: ExportContactsRequest
-    }) => {
-      const { contactIds, fields } = parsedInput
+    }): Promise<ExportContactsResponse> => {
+      const { fields } = parsedInput
 
-      // Make sure the contacts exist
-      const contactsCount = await db.$count(
-        contactModel,
-        and(
-          eq(contactModel.workspaceId, workspaceId),
-          inArray(contactModel.id, contactIds),
-        ),
-      )
-      if (contactsCount === 0) {
-        return returnValidationErrors(exportContactsRequest, {
-          _errors: ["Validation Exception"],
-          fields: {
-            _errors: ["No contacts found"],
-          },
-        })
-      }
+      // The worker resolves the filter and counts records. The action only
+      // records the export request and enqueues the job.
+      const filter = parsedInput.exportAll
+        ? {
+            keyword: parsedInput.filter?.keyword,
+            contactFilter: parsedInput.filter?.contactFilter,
+          }
+        : undefined
+      const contactIds = parsedInput.exportAll
+        ? undefined
+        : (parsedInput.contactIds ?? [])
+
+      const fileId = createId()
+      const fileName = `contacts-${new Date().toISOString().slice(0, 10)}.csv`
+      const outputPath = `workspaces/${workspaceId}/exports/contacts/contact_${fileId}.csv`
+
+      await db.insert(fileModel).values({
+        id: fileId,
+        workspaceId,
+        userId: user.id,
+        contextType: fileContextTypes.enum.export,
+        subType: exportSubTypes.enum.contacts,
+        path: outputPath,
+        fileName,
+        mimeType: "text/csv",
+        status: fileStatuses.enum.pending,
+      })
 
       await Promise.all([
         defaultQueue.add(DefaultJobAction.exportContacts, {
@@ -53,10 +70,11 @@ export const exportContactsAction = workspaceActionClient
           data: {
             workspaceId,
             requestedUserId: user.id,
-            contactIds,
+            fileId,
             fields,
-            outputPath: `/tmp/contacts-list-${Date.now()}.csv`,
+            outputPath,
             outputFormat: "csv",
+            ...(filter ? { filter } : { contactIds: contactIds ?? [] }),
           },
         }),
         defaultQueue.add(DefaultJobAction.sendAuditLog, {
@@ -69,5 +87,7 @@ export const exportContactsAction = workspaceActionClient
           },
         }),
       ])
+
+      return { fileId }
     },
   )

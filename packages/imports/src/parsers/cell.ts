@@ -1,4 +1,3 @@
-const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/
 const MIN_PHONE_DIGITS = 5
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -17,13 +16,12 @@ export const cleanCell = (
   return trimmed.length > 0 ? trimmed : undefined
 }
 
-export const escapeFormula = (text: string | undefined): string | undefined =>
-  text && FORMULA_PREFIX_RE.test(text) ? `'${text}` : text
-
+// Formula-injection escaping is intentionally NOT done here. Imported values
+// are stored raw; escaping happens only at CSV export time.
 export const cleanText = (
   raw: unknown,
   maxLength: number = DEFAULT_MAX_LENGTH,
-): string | undefined => escapeFormula(cleanCell(raw, maxLength))
+): string | undefined => cleanCell(raw, maxLength)
 
 export const cleanEmail = (
   raw: unknown,

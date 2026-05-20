@@ -42,6 +42,7 @@
     "./schema": "./src/schema/index.ts",
     "./errors": "./src/errors.ts",
     "./utils": "./src/utils.ts",
-    "./partials": "./src/partials/index.ts"
+    "./partials": "./src/partials/index.ts",
+    "./queries": "./src/queries/index.ts"
   }
 }

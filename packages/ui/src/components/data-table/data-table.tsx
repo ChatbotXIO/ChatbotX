@@ -42,6 +42,10 @@ export function DataTable<TData>({
                     colSpan={header.colSpan}
                     style={{
                       ...getCommonPinningStyles({ column: header.column }),
+                      width:
+                        header.column.columnDef.size === undefined
+                          ? undefined
+                          : header.getSize(),
                     }}
                   >
                     {header.isPlaceholder
@@ -67,6 +71,10 @@ export function DataTable<TData>({
                       key={cell.id}
                       style={{
                         ...getCommonPinningStyles({ column: cell.column }),
+                        width:
+                          cell.column.columnDef.size === undefined
+                            ? undefined
+                            : cell.column.getSize(),
                       }}
                     >
                       {flexRender(

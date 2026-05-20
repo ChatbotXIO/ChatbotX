@@ -215,7 +215,9 @@ export default function FileDropzone({
     return (
       <div className="flex flex-col items-center gap-2 px-4">
         <FileIcon />
-        <span className="text-sm">{preview}</span>
+        <span className="line-clamp-2 break-all text-center text-sm">
+          {preview}
+        </span>
       </div>
     )
   }

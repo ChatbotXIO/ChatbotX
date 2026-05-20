@@ -22,18 +22,12 @@ describe("validateCustomFieldValue", () => {
     })
     it("drops invalid", () => {
       expect(validateCustomFieldValue("email", "not-an-email")).toBeNull()
-      expect(validateCustomFieldValue("email", "'=foo@bar.com")).toBeNull()
     })
   })
 
   describe("phoneNumber", () => {
     it("strips formatting, preserves +", () => {
       expect(validateCustomFieldValue("phoneNumber", "+1 (555) 123-4567")).toBe(
-        "+15551234567",
-      )
-    })
-    it("accepts formula-escaped + prefix from cleanText", () => {
-      expect(validateCustomFieldValue("phoneNumber", "'+15551234567")).toBe(
         "+15551234567",
       )
     })
@@ -49,7 +43,6 @@ describe("validateCustomFieldValue", () => {
       ["-42.5", "-42.5"],
       ["0", "0"],
       ["1.5e2", "150"],
-      ["'-42", "-42"],
     ])("accepts %s → %s", (raw, normalized) => {
       expect(validateCustomFieldValue("number", raw)).toBe(normalized)
     })

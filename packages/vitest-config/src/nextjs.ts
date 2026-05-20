@@ -1,5 +1,5 @@
+import reactConfig from "@chatbotx.io/vitest-config/react"
 import { mergeConfig, type ViteUserConfig } from "vitest/config"
-import reactConfig from "./react"
 
 /**
  * Vitest preset for the Next.js builder app.

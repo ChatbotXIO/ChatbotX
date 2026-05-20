@@ -6,10 +6,10 @@ import {
   channelTypes,
   conversationBotCategories,
 } from "@chatbotx.io/database/partials"
+import { applyContactFilter } from "@chatbotx.io/database/queries"
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { applyContactFilter } from "@/features/contacts/apply-contact-filter"
 import type { ListConversationsRequest } from "@/features/conversations/schema/query"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"

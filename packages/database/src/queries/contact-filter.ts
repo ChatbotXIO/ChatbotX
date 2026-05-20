@@ -1,14 +1,29 @@
-import { sql } from "@chatbotx.io/database/client"
-import { operatorTypes } from "@chatbotx.io/database/partials"
-import type {
-  ContactFilterCondition,
-  ContactFilterCriteria,
-} from "./schemas/contact-filter"
+import { sql } from "../client"
+import { operatorTypes } from "../partials"
+
+export type ContactFilterConditionInput = {
+  field: string
+  operator: string
+  value?: unknown
+}
+
+/**
+ * `conditions` is typed `unknown[]` because the builder's Zod schema uses a
+ * discriminated union with a `@ts-expect-error`, which degrades its inferred
+ * element type. Each entry is validated by Zod at the request boundary, so it
+ * is safely narrowed to {@link ContactFilterConditionInput} inside this module.
+ */
+export type ContactFilterCriteriaInput = {
+  operator: "and" | "or"
+  conditions: unknown[]
+}
 
 type ContactWhere = Record<string, unknown>
 
 /**
- * Maps a ContactFilterCriteria to a Drizzle relational `where` object for ContactModel.
+ * Maps a contact filter criteria to a Drizzle relational `where` object for
+ * ContactModel. Shared between the builder app (contact list) and the worker
+ * (contact export) so both resolve the same contacts for a given filter.
  *
  * Handles:
  *  - Direct columns (fullName, email, gender, country, locale)
@@ -18,12 +33,12 @@ type ContactWhere = Record<string, unknown>
  *  - Relations (tags, customFields, source / currentChannel → contactInboxes)
  *  - Conversation relations (archived, conversationTransferredToHuman)
  *
- * Fields that require complex SQL and are not yet implemented simply produce no condition.
+ * Fields that require complex SQL and are not yet implemented produce no condition.
  */
 export function applyContactFilter(
-  criteria: ContactFilterCriteria,
+  criteria: ContactFilterCriteriaInput,
 ): ContactWhere {
-  const conditions = criteria.conditions as ContactFilterCondition[]
+  const conditions = criteria.conditions as ContactFilterConditionInput[]
   if (conditions.length === 0) {
     return {}
   }
@@ -44,9 +59,10 @@ export function applyContactFilter(
   return Object.assign({}, ...conditionWheres) as ContactWhere
 }
 
-function buildConditionWhere(condition: ContactFilterCondition): ContactWhere {
-  const { field, operator } = condition
-  const value = "value" in condition ? condition.value : undefined
+function buildConditionWhere(
+  condition: ContactFilterConditionInput,
+): ContactWhere {
+  const { field, operator, value } = condition
 
   switch (field) {
     // ── Direct contact columns ────────────────────────────────────────────────

@@ -36,6 +36,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       {
         id: "keyword",
         accessorKey: "fileName",
+        size: 320,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -43,7 +44,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-[280px] truncate font-medium">
+          <div className="truncate font-medium" title={row.original.fileName}>
             {row.original.fileName}
           </div>
         ),
@@ -58,6 +59,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         accessorKey: "status",
+        size: 120,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -78,6 +80,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         id: "progress",
+        size: 120,
         header: t("fields.import.histories.progress"),
         cell: ({ row }) => {
           const { processedCount, totalCount } = row.original
@@ -93,6 +96,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         accessorKey: "successCount",
+        size: 100,
         header: t("fields.import.histories.success"),
         cell: ({ row }) => (
           <span className="text-emerald-600 tabular-nums">
@@ -104,6 +108,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         accessorKey: "failedCount",
+        size: 100,
         header: t("fields.import.histories.failed"),
         cell: ({ row }) => (
           <span className="text-red-600 tabular-nums">
@@ -115,6 +120,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         accessorKey: "createdAt",
+        size: 150,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -127,6 +133,7 @@ export function ImportHistoryTable({ promises }: ImportHistoryTableProps) {
       },
       {
         accessorKey: "completedAt",
+        size: 150,
         header: t("fields.import.histories.completedAt"),
         cell: ({ row }) =>
           row.original.completedAt
