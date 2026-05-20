@@ -1,6 +1,6 @@
 "use client"
 
-import type { ImportType } from "@chatbotx.io/database/partials"
+import type { ImportType, UploadTypes } from "@chatbotx.io/database/partials"
 import { useCallback } from "react"
 
 export type UploadResult = {
@@ -10,7 +10,11 @@ export type UploadResult = {
   mimeType: string
 }
 
-export function usePresignedUpload(workspaceId: string, type: ImportType) {
+export function usePresignedUpload(
+  workspaceId: string,
+  type: UploadTypes,
+  subType: ImportType,
+) {
   const upload = useCallback(
     async (file: File): Promise<UploadResult> => {
       const mimeType = file.type || "text/csv"
@@ -20,6 +24,7 @@ export function usePresignedUpload(workspaceId: string, type: ImportType) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
+          subType,
           workspaceId,
           fileName: file.name,
           mimeType,
@@ -48,7 +53,7 @@ export function usePresignedUpload(workspaceId: string, type: ImportType) {
         mimeType,
       }
     },
-    [workspaceId, type],
+    [workspaceId, type, subType],
   )
 
   return { upload }

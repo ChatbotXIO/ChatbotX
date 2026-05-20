@@ -14,22 +14,36 @@ export const importContactsRequest = z
     firstName: z.string().max(255).optional(),
     lastName: z.string().max(255).optional(),
     tagId: zodBigintAsString().optional(),
-    fieldMapping: z
-      .array(
-        z.object({
-          column: z.string().min(1).max(255),
-          customFieldId: zodBigintAsString(),
-        }),
-      )
-      .max(100)
-      .optional(),
+    fieldMapping: z.preprocess(
+      (val) =>
+        Array.isArray(val)
+          ? val.filter((row) => row?.column && row?.customFieldId)
+          : val,
+      z
+        .array(
+          z.object({
+            column: z.string().min(1).max(255),
+            customFieldId: zodBigintAsString(),
+          }),
+        )
+        .max(10)
+        .optional(),
+    ),
   })
   .superRefine((data, ctx) => {
-    if (data.channel === channelTypes.enum.whatsapp && !data.countryCode) {
+    if (data.channel === channelTypes.enum.whatsapp) {
+      if (!data.phoneNumber) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["phoneNumber"],
+          message: "Phone number is required for WhatsApp imports",
+        })
+      }
+    } else {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["countryCode"],
-        message: "Country code is required for WhatsApp imports",
+        path: ["contactId"],
+        message: "Contact ID is required",
       })
     }
   })

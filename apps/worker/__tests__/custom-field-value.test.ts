@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { validateCustomFieldValue } from "../src/default/handlers/imports/custom-field-value"
+import { validateCustomFieldValue } from "../src/default/handlers/imports/validations/custom-field-value"
 
 describe("validateCustomFieldValue", () => {
   describe("shortText / longText", () => {

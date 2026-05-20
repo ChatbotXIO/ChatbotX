@@ -8,6 +8,7 @@ import { logger } from "../../../lib/logger"
 
 const BYTES_PER_MB = 1024 * 1024
 const COUNTER_FLUSH_EVERY = 100
+const IMPORT_BATCH_SIZE = 1000
 
 export type ImportRow = typeof importModel.$inferSelect & {
   file: typeof fileModel.$inferSelect
@@ -16,6 +17,11 @@ export type ImportRow = typeof importModel.$inferSelect & {
 
 type Counters = {
   processed: number
+  success: number
+  failed: number
+}
+
+export type BatchResult = {
   success: number
   failed: number
 }
@@ -31,12 +37,18 @@ export type ImportTypeHandler<TMeta, TDeps, TRow> = {
     row: ImportRow
     meta: TMeta
   }) => Promise<ImportPrepareResult<TDeps>>
-  extractRow: (rawRow: Record<string, unknown>, meta: TMeta) => TRow | null
+  // Per-record CPU transform. No DB access — runs once per parsed row.
   processRow: (
     deps: TDeps,
-    mapped: TRow,
+    rawRow: Record<string, unknown>,
+    meta: TMeta,
+  ) => TRow | null
+  // Bulk DB write for a chunk of up to IMPORT_BATCH_SIZE transformed rows.
+  processBatch: (
+    deps: TDeps,
+    rows: TRow[],
     ctx: { row: ImportRow; meta: TMeta },
-  ) => Promise<boolean>
+  ) => Promise<BatchResult>
 }
 
 export const runImportPipeline = async <TMeta, TDeps, TRow>(
@@ -73,10 +85,6 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
     const { stream, contentLength } = await uploader.getObjectStream(
       row.file.path,
     )
-    console.log({
-      contentLength,
-      maxBytes,
-    })
     if ((contentLength ?? 0) > maxBytes) {
       stream.destroy()
       await failImport(row.id, `File exceeds ${config.maxFileSizeMB}MB limit`)
@@ -90,6 +98,21 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
     return
   }
 
+  let buffer: TRow[] = []
+  const flushBatch = async (): Promise<void> => {
+    if (buffer.length === 0) {
+      return
+    }
+    const batch = buffer
+    buffer = []
+    const result = await handler.processBatch(prepared.deps, batch, {
+      row,
+      meta,
+    })
+    counters.success += result.success
+    counters.failed += result.failed
+  }
+
   let lastFlushAt = 0
   try {
     for await (const rawRow of parser) {
@@ -97,16 +120,12 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
         throw new Error(`Row limit exceeded (${maxRows})`)
       }
       counters.processed += 1
-      const mapped = handler.extractRow(rawRow, meta)
+
+      const mapped = handler.processRow(prepared.deps, rawRow, meta)
       if (mapped) {
-        const ok = await handler.processRow(prepared.deps, mapped, {
-          row,
-          meta,
-        })
-        if (ok) {
-          counters.success += 1
-        } else {
-          counters.failed += 1
+        buffer.push(mapped)
+        if (buffer.length >= IMPORT_BATCH_SIZE) {
+          await flushBatch()
         }
       } else {
         counters.failed += 1
@@ -119,6 +138,7 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
         )
       }
     }
+    await flushBatch()
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error"
     logger.error(error, `Import ${row.id} stream error`)

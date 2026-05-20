@@ -2,9 +2,10 @@ import { Readable } from "node:stream"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstInbox = vi.fn()
-const findFirstContact = vi.fn()
+const findFirstTag = vi.fn()
 const findFirstUsage = vi.fn()
 const findManyCustomFields = vi.fn()
+const findManyContactInbox = vi.fn()
 
 const updateSet = vi.fn()
 const updateWhere = vi.fn()
@@ -17,8 +18,8 @@ vi.mock("@chatbotx.io/database/client", () => ({
       inboxModel: {
         findFirst: (...args: unknown[]) => findFirstInbox(...args),
       },
-      contactModel: {
-        findFirst: (...args: unknown[]) => findFirstContact(...args),
+      tagModel: {
+        findFirst: (...args: unknown[]) => findFirstTag(...args),
       },
       workspaceUsageModel: {
         findFirst: (...args: unknown[]) => findFirstUsage(...args),
@@ -26,17 +27,14 @@ vi.mock("@chatbotx.io/database/client", () => ({
       customFieldModel: {
         findMany: (...args: unknown[]) => findManyCustomFields(...args),
       },
+      contactInboxModel: {
+        findMany: (...args: unknown[]) => findManyContactInbox(...args),
+      },
     },
     update: () => ({
       set: (values: unknown) => {
         updateSet(values)
         return { where: (cond: unknown) => updateWhere(cond) }
-      },
-    }),
-    insert: () => ({
-      values: (v: unknown) => {
-        insertValues(v)
-        return { onConflictDoNothing: () => undefined }
       },
     }),
     transaction: (cb: (tx: unknown) => unknown) => {
@@ -64,16 +62,14 @@ vi.mock("@chatbotx.io/database/schema", () => ({
   contactModel: {},
   contactsToTagsModel: {},
   conversationModel: {},
-  importModel: { id: "Import.id", contactsCount: "wu.cc" },
+  importModel: { id: "Import.id" },
   workspaceUsageModel: { contactsCount: "wu.cc", workspaceId: "wu.wid" },
 }))
 
 const getObjectStream = vi.fn()
-const headObject = vi.fn(async () => ({ ContentLength: 1024 }))
 vi.mock("@chatbotx.io/filesystem", () => ({
   uploader: {
     getObjectStream: (path: string) => getObjectStream(path),
-    headObject: (path: string) => headObject(path),
   },
 }))
 
@@ -104,18 +100,22 @@ const { runImportPipeline } = await import(
   "../src/default/handlers/imports/base-import"
 )
 const { contactsImportHandler } = await import(
-  "../src/default/handlers/imports/contacts"
+  "../src/default/handlers/imports/handler/contacts/handler"
 )
 
 const baseMeta = {
-  inboxId: "100",
   channel: "messenger",
-  columnMap: { phoneNumber: "phone", email: "email" },
+  columnMap: {
+    contactId: "external_id",
+    phoneNumber: "phone",
+    email: "email",
+  },
 }
 
 const buildRow = (overrides: Record<string, unknown> = {}) => ({
   id: "imp-1",
   workspaceId: "ws-1",
+  inboxId: "inbox-1",
   fileId: "file-1",
   type: "contacts",
   format: "csv",
@@ -130,19 +130,27 @@ const buildRow = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
+const streamOf = (lines: string[]) => ({
+  stream: Readable.from(lines.join("\n")),
+  contentLength: 4096,
+})
+
+const lastUpdate = () =>
+  updateSet.mock.calls.at(-1)?.[0] as Record<string, unknown>
+
 beforeEach(() => {
   findFirstInbox.mockReset()
-  findFirstContact.mockReset()
+  findFirstTag.mockReset()
   findFirstUsage.mockReset()
   findManyCustomFields.mockReset()
   findManyCustomFields.mockResolvedValue([])
+  findManyContactInbox.mockReset()
+  findManyContactInbox.mockResolvedValue([])
   updateSet.mockReset()
   updateWhere.mockReset()
   insertValues.mockReset()
   transactionFn.mockReset()
   getObjectStream.mockReset()
-  headObject.mockReset()
-  headObject.mockResolvedValue({ ContentLength: 1024 })
 })
 
 const runContactsImport = (row: unknown) =>
@@ -162,81 +170,109 @@ describe("contacts import pipeline", () => {
     })
   })
 
-  test("processes valid CSV and marks completed with counts", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
-    findFirstContact.mockResolvedValue(undefined)
+  test("inserts a batch and marks completed with counts", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findFirstUsage.mockResolvedValue({ contactsCount: 0, maxContacts: 100 })
     getObjectStream.mockResolvedValue(
-      Readable.from(
-        ["phone,email", "+1,first@example.com", "+2,second@example.com"].join(
-          "\n",
-        ),
-      ),
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,first@example.com",
+        "ext-2,+15557654321,second@example.com",
+      ]),
     )
 
     await runContactsImport(buildRow())
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({
+    expect(lastUpdate()).toMatchObject({
       status: "completed",
       totalCount: 2,
       processedCount: 2,
       successCount: 2,
       failedCount: 0,
     })
-    expect(transactionFn).toHaveBeenCalledTimes(2)
+    // One bulk transaction for the whole chunk, not one per row.
+    expect(transactionFn).toHaveBeenCalledTimes(1)
   })
 
   test("counts blank row as failed but continues", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
-    findFirstContact.mockResolvedValue(undefined)
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findFirstUsage.mockResolvedValue({ contactsCount: 0, maxContacts: 100 })
     getObjectStream.mockResolvedValue(
-      Readable.from(["phone,email", ",", "+1,ok@example.com"].join("\n")),
+      streamOf([
+        "external_id,phone,email",
+        ",,",
+        "ext-1,+15551234567,ok@example.com",
+      ]),
     )
 
     await runContactsImport(buildRow())
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({
+    expect(lastUpdate()).toMatchObject({
       status: "completed",
       successCount: 1,
       failedCount: 1,
     })
   })
 
-  test("marks row failed when CSV is malformed", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
+  test("skips a row that already exists in the inbox", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findFirstUsage.mockResolvedValue({ contactsCount: 0, maxContacts: 100 })
+    findManyContactInbox.mockResolvedValue([{ sourceId: "ext-1" }])
     getObjectStream.mockResolvedValue(
-      Readable.from(["phone,email", '"unterminated,quote'].join("\n")),
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,ok@example.com",
+      ]),
     )
 
     await runContactsImport(buildRow())
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({ status: "failed" })
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 0,
+      failedCount: 1,
+    })
+    expect(transactionFn).not.toHaveBeenCalled()
   })
 
-  test("empty CSV finishes as completed with zero counts", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
-    getObjectStream.mockResolvedValue(Readable.from(["phone,email"].join("\n")))
+  test("rejects rows that exceed the contact quota", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    findFirstUsage.mockResolvedValue({ contactsCount: 100, maxContacts: 100 })
+    getObjectStream.mockResolvedValue(
+      streamOf([
+        "external_id,phone,email",
+        "ext-1,+15551234567,ok@example.com",
+      ]),
+    )
 
     await runContactsImport(buildRow())
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({
+    expect(lastUpdate()).toMatchObject({
+      status: "completed",
+      successCount: 0,
+      failedCount: 1,
+    })
+    expect(transactionFn).not.toHaveBeenCalled()
+  })
+
+  test("marks row failed when CSV is malformed", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(
+      streamOf(["external_id,phone", '"unterminated,quote']),
+    )
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({ status: "failed" })
+  })
+
+  test("empty CSV finishes as completed with zero counts", async () => {
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(streamOf(["external_id,phone,email"]))
+
+    await runContactsImport(buildRow())
+
+    expect(lastUpdate()).toMatchObject({
       status: "completed",
       totalCount: 0,
       successCount: 0,
@@ -245,29 +281,24 @@ describe("contacts import pipeline", () => {
   })
 
   test("drops invalid custom field value, keeps contact", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
-    findFirstContact.mockResolvedValue(undefined)
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findFirstUsage.mockResolvedValue({ contactsCount: 0, maxContacts: 100 })
     findManyCustomFields.mockResolvedValue([{ id: "1", type: "number" }])
     getObjectStream.mockResolvedValue(
-      Readable.from(["phone,score", "+15551234567,abc"].join("\n")),
+      streamOf(["external_id,phone,score", "ext-1,+15551234567,abc"]),
     )
 
     await runContactsImport(
       buildRow({
         meta: {
           ...baseMeta,
-          columnMap: { phoneNumber: "phone" },
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
           fieldMapping: [{ customFieldId: "1", column: "score" }],
         },
       }),
     )
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({
+    expect(lastUpdate()).toMatchObject({
       status: "completed",
       successCount: 1,
       failedCount: 0,
@@ -282,19 +313,18 @@ describe("contacts import pipeline", () => {
   })
 
   test("keeps valid custom field value", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
-    findFirstContact.mockResolvedValue(undefined)
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findFirstUsage.mockResolvedValue({ contactsCount: 0, maxContacts: 100 })
     findManyCustomFields.mockResolvedValue([{ id: "1", type: "number" }])
     getObjectStream.mockResolvedValue(
-      Readable.from(["phone,score", "+15551234567,42"].join("\n")),
+      streamOf(["external_id,phone,score", "ext-1,+15551234567,42"]),
     )
 
     await runContactsImport(
       buildRow({
         meta: {
           ...baseMeta,
-          columnMap: { phoneNumber: "phone" },
+          columnMap: { contactId: "external_id", phoneNumber: "phone" },
           fieldMapping: [{ customFieldId: "1", column: "score" }],
         },
       }),
@@ -313,15 +343,12 @@ describe("contacts import pipeline", () => {
   })
 
   test("fails when format is unsupported", async () => {
-    findFirstInbox.mockResolvedValue({ id: "100" })
+    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
+    getObjectStream.mockResolvedValue(streamOf(["external_id,phone"]))
 
     await runContactsImport(buildRow({ format: "xlsx" }))
 
-    const finalUpdate = updateSet.mock.calls.at(-1)?.[0] as Record<
-      string,
-      unknown
-    >
-    expect(finalUpdate).toMatchObject({
+    expect(lastUpdate()).toMatchObject({
       status: "failed",
       errorMessage: expect.stringContaining("xlsx"),
     })

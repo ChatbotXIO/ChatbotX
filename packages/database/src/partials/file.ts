@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+export const uploadTypes = z.enum(["import", "generic"])
+export type UploadTypes = z.infer<typeof uploadTypes>
+
 export const fileTypes = z.enum(["image", "video", "audio", "gif", "file"])
 export type FileType = z.infer<typeof fileTypes>
 

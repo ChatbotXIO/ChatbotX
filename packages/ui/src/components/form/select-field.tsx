@@ -34,6 +34,7 @@ export type SelectFieldProps<T extends FieldValues> = SelectProps & {
   fetchOptionsUrl?: string
   className?: string
   allowClear?: boolean
+  clearLabel?: string
   triggerValueChange?: (value?: string) => void
   disableValues?: string[]
 } & React.ComponentProps<typeof Select>
@@ -45,7 +46,7 @@ const SelectClear = ({
   ...props
 }: Omit<React.ComponentProps<typeof SelectItem>, "value">) => (
   <SelectItem className="opacity-50" value={CLEAR_VALUE} {...props}>
-    {children ?? "----"}
+    {children || "----"}
   </SelectItem>
 )
 
@@ -61,6 +62,7 @@ export const SelectField = <T extends FieldValues>(
     options = [],
     fetchOptionsUrl,
     allowClear,
+    clearLabel,
     triggerValueChange,
     disableValues,
     ...rest
@@ -153,7 +155,7 @@ export const SelectField = <T extends FieldValues>(
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {allowClear ? <SelectClear /> : null}
+              {allowClear ? <SelectClear>{clearLabel}</SelectClear> : null}
               {optionItems}
             </SelectContent>
           </Select>

@@ -15,6 +15,8 @@ import {
  * Props for the DirectUploadButton component
  */
 export type DirectUploadButtonProps = FileUploadProps & {
+  /** Workspace ID for the upload */
+  workspaceId?: string
   /** The base path where files will be uploaded to S3 */
   uploadPath?: string
   /** Custom upload handler URL, defaults to /api/presigned-upload */
@@ -44,6 +46,7 @@ export type DirectUploadButtonProps = FileUploadProps & {
  * ```
  */
 export function DirectUploadButton({
+  workspaceId,
   uploadPath = "public/uploads",
   uploadHandlerUrl = "/api/presigned-upload",
   onUploadSuccess,
@@ -76,7 +79,10 @@ export function DirectUploadButton({
               body: JSON.stringify([
                 {
                   path: filePath,
-                  name: file.name,
+                  workspaceId,
+                  fileName: file.name,
+                  type: "generic",
+                  subType: "generic",
                   mimeType,
                 },
               ]),
@@ -153,7 +159,7 @@ export function DirectUploadButton({
         setIsUploading(false)
       }
     },
-    [uploadPath, uploadHandlerUrl, onUploadSuccess, onUploadError],
+    [workspaceId, uploadPath, uploadHandlerUrl, onUploadSuccess, onUploadError],
   )
 
   const onFileReject = useCallback((file: File, message: string) => {

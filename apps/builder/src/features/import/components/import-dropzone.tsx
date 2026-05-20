@@ -1,6 +1,6 @@
 "use client"
 
-import type { ImportType } from "@chatbotx.io/database/partials"
+import type { ImportType, UploadTypes } from "@chatbotx.io/database/partials"
 import { getImportEntry } from "@chatbotx.io/imports"
 import { extractCsvHeaders } from "@chatbotx.io/imports/parsers/headers"
 import { Card } from "@chatbotx.io/ui/components/ui/card"
@@ -14,7 +14,8 @@ import {
 
 type ImportDropzoneProps = {
   workspaceId: string
-  type: ImportType
+  type: UploadTypes
+  subType: ImportType
   onUploaded: (result: UploadResult, csvHeaders: string[]) => void
   onCleared: () => void
   onUploadingChange?: (isUploading: boolean) => void
@@ -25,24 +26,25 @@ const noop = () => undefined
 export function ImportDropzone({
   workspaceId,
   type,
+  subType,
   onUploaded,
   onCleared,
   onUploadingChange,
 }: ImportDropzoneProps) {
-  const { upload } = usePresignedUpload(workspaceId, type)
+  const { upload } = usePresignedUpload(workspaceId, type, subType)
   const [isUploading, setIsUploading] = useState(false)
-  const config = getImportEntry(type).config
+  const config = getImportEntry(subType).config
   const maxBytes = config.maxFileSizeMB * 1024 * 1024
 
   const handleDrop = async (file: File) => {
     if (file.size > maxBytes) {
       toast.error(
-        `File exceeds ${config.maxFileSizeMB}MB limit for ${type} import`,
+        `File exceeds ${config.maxFileSizeMB}MB limit for ${subType} import`,
       )
       return
     }
     if (!config.acceptedMimeTypes.includes(file.type || "text/csv")) {
-      toast.error(`Unsupported file type for ${type} import`)
+      toast.error(`Unsupported file type for ${subType} import`)
       return
     }
     setIsUploading(true)

@@ -71,6 +71,7 @@
     "image-size": "^2.0.2",
     "ioredis": "5.10.1",
     "ky": "^2.0.2",
+    "libphonenumber-js": "^1.12.42",
     "mailparser": "^3.9.8",
     "mammoth": "^1.12.0",
     "mime-types": "^3.0.2",

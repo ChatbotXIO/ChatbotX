@@ -121,7 +121,11 @@ export function ExportContactDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <MultiSelectField name="fields" options={options} />
+              <MultiSelectField
+                maxCount={100}
+                name="fields"
+                options={options}
+              />
 
               <div className="flex justify-end gap-4">
                 <DialogClose asChild>

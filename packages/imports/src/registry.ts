@@ -12,6 +12,9 @@ const configs: Record<ImportType, ImportConfig> = {
     acceptedExtensions: {
       "text/csv": [".csv"],
     },
+    paths: {
+      storageUrl: "workspaces/:workspaceId/imports/contacts/:fileName",
+    },
   },
 }
 
@@ -27,3 +30,7 @@ export const importRegistry = {
 } satisfies { [T in ImportType]: ImportEntry<T> }
 
 export type ImportRegistry = typeof importRegistry
+
+export const getImportEntry = <T extends ImportType>(
+  type: T,
+): ImportRegistry[T] => importRegistry[type]

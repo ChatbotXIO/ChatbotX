@@ -670,6 +670,9 @@ importers:
       ky:
         specifier: ^2.0.2
         version: 2.0.2
+      libphonenumber-js:
+        specifier: ^1.12.42
+        version: 1.12.42
       mailparser:
         specifier: ^3.9.8
         version: 3.9.8
@@ -1668,6 +1671,9 @@ importers:
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database
+      '@chatbotx.io/utils':
+        specifier: workspace:*
+        version: link:../utils
       csv-parse:
         specifier: ^6.2.1
         version: 6.2.1

@@ -1,9 +1,4 @@
-import type { ImportFormat, ImportType } from "@chatbotx.io/database/partials"
-import { type ImportRegistry, importRegistry } from "./registry"
-
-export const getImportEntry = <T extends ImportType>(
-  type: T,
-): ImportRegistry[T] => importRegistry[type]
+import type { ImportFormat } from "@chatbotx.io/database/partials"
 
 const MIME_TO_FORMAT: Record<string, ImportFormat> = {
   "text/csv": "csv",
@@ -17,6 +12,15 @@ const EXTENSION_TO_FORMAT: Record<string, ImportFormat> = {
   xlsx: "xlsx",
   xls: "xls",
 }
+
+export const replaceTemplate = (
+  template: string,
+  params: Record<string, string>,
+): string =>
+  Object.entries(params).reduce(
+    (path, [key, value]) => path.replace(`:${key}`, value),
+    template,
+  )
 
 export const inferImportFormat = (input: {
   mimeType?: string | null

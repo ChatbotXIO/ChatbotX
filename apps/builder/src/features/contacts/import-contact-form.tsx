@@ -1,6 +1,10 @@
 "use client"
 
-import { channelTypes, importTypes } from "@chatbotx.io/database/partials"
+import {
+  channelTypes,
+  importTypes,
+  uploadTypes,
+} from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import {
@@ -14,12 +18,17 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { ArrowRightIcon, HistoryIcon, Loader2Icon } from "lucide-react"
+import {
+  ArrowRightIcon,
+  HistoryIcon,
+  Loader2Icon,
+  Trash2Icon,
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { useFormContext } from "react-hook-form"
+import { useFieldArray, useFormContext } from "react-hook-form"
 import { toast } from "sonner"
 import { importContactsAction } from "@/features/contacts/actions/import-contacts.action"
 import { importContactsRequest } from "@/features/contacts/schemas/contact-import"
@@ -55,7 +64,18 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
         onError: ({ error }) => {
           if (error.serverError) {
             toast.error(error.serverError)
+            return
           }
+
+          const rootErrors = error.validationErrors?._errors
+          if (rootErrors?.length) {
+            toast.error(rootErrors[0])
+            return
+          }
+
+          toast.error(
+            t("messages.createdFailed", { feature: t("fields.import.label") }),
+          )
         },
       },
       formProps: {
@@ -64,6 +84,7 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
           fileId: "",
           inboxId: "",
           countryCode: undefined,
+          fieldMapping: [{ column: "", customFieldId: "" }],
         },
       },
       errorMapProps: {},
@@ -95,7 +116,8 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
           setCsvHeaders(headers)
         }}
         onUploadingChange={setIsUploading}
-        type={importTypes.enum.contacts}
+        subType={importTypes.enum.contacts}
+        type={uploadTypes.enum.import}
         workspaceId={workspaceId}
       />
       {hasFile && (
@@ -133,7 +155,9 @@ export function ImportContactsForm({ workspaceId }: { workspaceId: string }) {
 
 function SettingsSection({ csvHeaders }: { csvHeaders: string[] }) {
   const t = useTranslations()
-  const channelOptions = useConfiguredInboxTypeOptions()
+  const channelOptions = useConfiguredInboxTypeOptions().filter(
+    (option) => option.value !== channelTypes.enum.omnichannel,
+  )
   const [channel, setChannel] = useState<string | undefined>(undefined)
   const inboxOptions = useInboxOptionsByChannel(channel)
   const { setValue } = useFormContext()
@@ -165,27 +189,33 @@ function SettingsSection({ csvHeaders }: { csvHeaders: string[] }) {
         />
       )}
       <div className="mt-8 flex flex-col gap-4">
+        {channel !== channelTypes.enum.whatsapp && (
+          <HeaderConnectField
+            csvHeaders={csvHeaders}
+            label={t("fields.contactId.label")}
+            name="contactId"
+          />
+        )}
         <HeaderConnectField
-          csvHeaders={csvHeaders}
-          label={t("fields.contactId.label")}
-          name="contactId"
-        />
-        <HeaderConnectField
+          allowClear={channel !== channelTypes.enum.whatsapp}
           csvHeaders={csvHeaders}
           label={t("fields.phoneNumber.label")}
           name="phoneNumber"
         />
         <HeaderConnectField
+          allowClear
           csvHeaders={csvHeaders}
           label={t("fields.email.label")}
           name="email"
         />
         <HeaderConnectField
+          allowClear
           csvHeaders={csvHeaders}
           label={t("fields.firstName.label")}
           name="firstName"
         />
         <HeaderConnectField
+          allowClear
           csvHeaders={csvHeaders}
           label={t("fields.lastName.label")}
           name="lastName"
@@ -200,15 +230,18 @@ function HeaderConnectField({
   csvHeaders,
   name,
   label,
+  allowClear,
 }: {
   csvHeaders: string[]
   name: string
   label: string
+  allowClear?: boolean
 }) {
   return (
     <div className="flex items-center gap-4">
       <div className="flex-1">
         <SelectField
+          allowClear={allowClear}
           name={name}
           options={csvHeaders.map((col) => ({ label: col, value: col }))}
         />
@@ -224,7 +257,11 @@ function HeaderConnectField({
 function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
   const t = useTranslations()
   const tagOptions = useTagSelectOptions()
-  const [fieldLength, setFieldLength] = useState<number>(1)
+  const { control } = useFormContext()
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "fieldMapping",
+  })
 
   return (
     <Accordion className="w-full" collapsible type="single">
@@ -250,11 +287,11 @@ function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
               <div className="select-none font-medium text-sm leading-none">
                 {t("actions.setCustomField")}
               </div>
-              {Array.from({ length: fieldLength }).map((_, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: stable for session
-                <div className="flex items-center gap-4" key={index}>
+              {fields.map((field, index) => (
+                <div className="flex items-center gap-4" key={field.id}>
                   <div className="flex-1">
                     <SelectField
+                      allowClear
                       name={`fieldMapping.${index}.column`}
                       options={csvHeaders.map((col) => ({
                         label: col,
@@ -269,12 +306,22 @@ function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
                       name={`fieldMapping.${index}.customFieldId`}
                     />
                   </div>
+                  <Button
+                    aria-label={t("actions.delete")}
+                    disabled={fields.length <= 1}
+                    onClick={() => remove(index)}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2Icon size={16} />
+                  </Button>
                 </div>
               ))}
             </div>
 
             <Button
-              onClick={() => setFieldLength((prev) => prev + 1)}
+              onClick={() => append({ column: "", customFieldId: "" })}
               type="button"
               variant="outline"
             >
