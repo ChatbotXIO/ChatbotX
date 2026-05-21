@@ -23,7 +23,7 @@
 
       // Load icon
       const iconUrl = new URL(
-        "/brand/icon_black.svg",
+        "/chat-widget/plugin-toggle.svg",
         csmChatWidget.webchatUrl,
       ).toString()
 
@@ -50,11 +50,30 @@
 
       url.searchParams.set("domain", window.location.hostname)
 
-      csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}"></button>`
-      csmChatWidget.floatHtml = `<div class="ahc-iframe"><iframe id="ahc-iframe" src="${url.toString()}" class="ahc-iframe"></iframe></div>`
+      csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
+      csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}" frameborder="0"></iframe></div>`
 
       appendHtml(document.body, csmChatWidget.floatButton)
       appendHtml(document.body, csmChatWidget.floatHtml)
+
+      const btn = document.querySelector(".ahc-btn")
+      const container = document.querySelector(".ahc-iframe-container")
+
+      if (btn && config.brandColor) {
+        btn.style.backgroundColor = config.brandColor
+      }
+
+      btn.addEventListener("click", () => {
+        const isOpen = container.classList.toggle("ahc-iframe-container--open")
+        btn.classList.toggle("ahc-btn--open", isOpen)
+      })
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "ahc:hide") {
+          container.classList.remove("ahc-iframe-container--open")
+          btn.classList.remove("ahc-btn--open")
+        }
+      })
     },
   }
 
@@ -94,7 +113,7 @@
   }
 
   function loadStylesheet(href) {
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const link = document.createElement("link")
       link.rel = "stylesheet"
       link.href = href

@@ -13,10 +13,8 @@ export const WebchatHeader = () => {
   // }
 
   const hideWebchatIframe = () => {
-    const iframe = document.getElementById("ahc-iframe")
-    if (iframe) {
-      iframe.style.display = "none"
-    }
+    // "*" is intentional — widget is embedded in unknown customer domains
+    window.parent.postMessage({ type: "ahc:hide" }, "*")
   }
 
   return (
