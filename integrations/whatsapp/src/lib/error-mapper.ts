@@ -184,6 +184,13 @@ function mapApiFields(fields: ChannelErrorSource): ChannelError {
 // === Revoked / invalidated access token detection ===
 // WA Cloud API signals revoked permission via GraphMethodException + code 100 + subcode 33
 // (system user / phone number disconnected, or permission revoked).
+// FB Graph signals revoked tokens via OAuthException + code 190 + specific subcodes:
+//   458 = app not installed / user not authenticated
+//   460 = password changed
+//   463 = access token expired
+//   467 = invalid access token
+const REVOKED_TOKEN_SUBCODES = new Set([458, 460, 463, 467])
+
 export function isRevokedTokenError(error: unknown): boolean {
   if (!(error instanceof WhatsappException)) {
     return false
@@ -191,11 +198,18 @@ export function isRevokedTokenError(error: unknown): boolean {
 
   const mappedError = mapToChannelError(error)
 
-  return (
+  const isGraphMethodRevoked =
     mappedError.type === "GraphMethodException" &&
     mappedError.code === 100 &&
     Number(mappedError.subCode) === 33
-  )
+
+  const isOAuthRevoked =
+    mappedError.category === ChannelErrorCategory.AUTH_FAILED &&
+    mappedError.code === 190 &&
+    mappedError.subCode !== null &&
+    REVOKED_TOKEN_SUBCODES.has(Number(mappedError.subCode))
+
+  return isGraphMethodRevoked || isOAuthRevoked
 }
 
 export function mapToChannelError(rawError: unknown): ChannelError {
