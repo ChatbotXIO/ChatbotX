@@ -1,14 +1,23 @@
 /* ChatbotX Widget Styles */
+
+/* Layout tokens — kept in sync so bottom offset stays correct if sizes change */
+:root {
+  --ahc-btn-size: 60px;
+  --ahc-btn-bottom: 20px;
+  --ahc-btn-right: 20px;
+  --ahc-iframe-gap: 16px;
+}
+
 .ahc-btn {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  right: var(--ahc-btn-right);
+  bottom: var(--ahc-btn-bottom);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 60px;
+  width: var(--ahc-btn-size);
+  height: var(--ahc-btn-size);
   cursor: pointer;
   background-color: #333333;
   border: none;
@@ -40,15 +49,31 @@
   outline-offset: 2px;
 }
 
+.ahc-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ahc-btn:disabled:hover,
+.ahc-btn:disabled:active {
+  opacity: 0.5;
+  transform: none;
+}
+
 .ahc-btn--open img {
   opacity: 0.85;
 }
 
 /* Iframe container — hidden by default */
+/* bottom = button height + gap + button bottom offset */
 .ahc-iframe-container {
   position: fixed;
-  right: 20px;
-  bottom: 96px;
+  right: var(--ahc-btn-right);
+  bottom: calc(
+    var(--ahc-btn-size) +
+    var(--ahc-btn-bottom) +
+    var(--ahc-iframe-gap)
+  );
   z-index: 9998;
   visibility: hidden;
   width: 350px;
@@ -86,4 +111,12 @@
   width: 100%;
   height: 100%;
   border: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ahc-btn,
+  .ahc-iframe-container,
+  .ahc-iframe-container--open {
+    transition: none;
+  }
 }

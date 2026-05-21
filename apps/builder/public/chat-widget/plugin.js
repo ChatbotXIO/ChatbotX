@@ -19,7 +19,9 @@
         "/chat-widget/plugin.css",
         csmChatWidget.webchatUrl,
       ).toString()
-      loadStylesheet(cssUrl)
+      loadStylesheet(cssUrl).catch(() => {
+        // stylesheet load failure is non-fatal; widget renders without custom styles
+      })
 
       // Load icon
       const iconUrl = new URL(
@@ -51,7 +53,7 @@
       url.searchParams.set("domain", window.location.hostname)
 
       csmChatWidget.floatButton = `<button type="button" class="ahc-btn"><img src="${iconUrl}" alt="Chat"></button>`
-      csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}" frameborder="0"></iframe></div>`
+      csmChatWidget.floatHtml = `<div class="ahc-iframe-container"><iframe id="ahc-iframe" src="${url.toString()}"></iframe></div>`
 
       appendHtml(document.body, csmChatWidget.floatButton)
       appendHtml(document.body, csmChatWidget.floatHtml)
@@ -59,7 +61,11 @@
       const btn = document.querySelector(".ahc-btn")
       const container = document.querySelector(".ahc-iframe-container")
 
-      if (btn && config.brandColor) {
+      if (!(btn && container)) {
+        return
+      }
+
+      if (config.brandColor) {
         btn.style.backgroundColor = config.brandColor
       }
 
@@ -68,7 +74,12 @@
         btn.classList.toggle("ahc-btn--open", isOpen)
       })
 
+      const iframeOrigin = new URL(csmChatWidget.webchatUrl).origin
+
       window.addEventListener("message", (event) => {
+        if (event.origin !== iframeOrigin) {
+          return
+        }
         if (event.data?.type === "ahc:hide") {
           container.classList.remove("ahc-iframe-container--open")
           btn.classList.remove("ahc-btn--open")
