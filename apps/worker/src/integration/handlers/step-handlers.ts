@@ -42,6 +42,7 @@ import {
   enableConversationState,
 } from "./conversation"
 import type { ExecuteStepProps } from "./flow"
+import type { ExecuteStepResult } from "./step"
 
 export async function stepBlockContact({
   conversation,
@@ -211,9 +212,9 @@ export async function stepAssignConversation({
 export async function stepAutoAssignConversation({
   conversation,
   step,
-}: ExecuteStepProps<AutoAssignConversationStepSchema>) {
+}: ExecuteStepProps<AutoAssignConversationStepSchema>): Promise<ExecuteStepResult> {
   if (step.assignedIds.length === 0) {
-    return
+    return { status: "error", result: undefined }
   }
 
   const userIds: string[] = []
@@ -305,7 +306,7 @@ export async function stepAutoAssignConversation({
   }
 
   if (Object.keys(allocation).length === 0) {
-    return
+    return { status: "error", result: undefined }
   }
 
   // Count conversations of assignee during time
@@ -405,6 +406,8 @@ export async function stepAutoAssignConversation({
       )
     })
   }
+
+  return { status: "success", result: undefined }
 }
 
 export async function stepUnassignConversation({

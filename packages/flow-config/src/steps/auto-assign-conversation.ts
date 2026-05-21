@@ -1,5 +1,11 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  errorStateDefaultFn,
+  errorStateSchema,
+  successStateDefaultFn,
+  successStateSchema,
+} from "../states"
 import { stepTypes } from "./step-action"
 
 export const AutoAssignConversationRule = {
@@ -14,6 +20,7 @@ export const autoAssignConversationStepSchema = z.object({
   stepType: z.literal(stepTypes.enum.autoAssignConversation),
   assignedIds: z.array(z.string()),
   rule: z.enum(AutoAssignConversationRule),
+  states: z.tuple([successStateSchema, errorStateSchema]),
 })
 
 export type AutoAssignConversationStepSchema = z.infer<
@@ -27,5 +34,6 @@ export const autoAssignConversationStepDefaultFn = (
   stepType: stepTypes.enum.autoAssignConversation,
   assignedIds: [],
   rule: AutoAssignConversationRule.ALL_TIME,
+  states: [successStateDefaultFn(), errorStateDefaultFn()],
   ...props,
 })
