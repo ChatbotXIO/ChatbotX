@@ -1,8 +1,8 @@
-import { organizationService } from "@chatbotx.io/business"
 import {
-  type OrganizationSettings,
-  organizationSettingsSchema,
-} from "@chatbotx.io/database/partials"
+  organizationCredentialService,
+  organizationService,
+} from "@chatbotx.io/business"
+import { organizationCredentialTypes } from "@chatbotx.io/database/partials"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
@@ -22,9 +22,27 @@ export const handleWebhook = async (
   const domain = await getDomainFromHeader()
   const organization = await organizationService.findByDomain(domain)
 
-  // Verify organization settings
-  const orgSettings = organizationSettingsSchema.parse(organization?.settings)
-  if (!orgSettings?.[integrationType as keyof OrganizationSettings]) {
+  const credentialTypeResult =
+    organizationCredentialTypes.safeParse(integrationType)
+  if (!credentialTypeResult.success) {
+    logger.debug(
+      `Integration ${integrationType} is not a supported credential type`,
+    )
+    return new Response(
+      JSON.stringify({ message: "Integration is not configured" }),
+      {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      },
+    )
+  }
+
+  const credential = await organizationCredentialService.findDecrypted({
+    organizationId: organization.id,
+    type: credentialTypeResult.data,
+  })
+
+  if (!credential) {
     logger.debug(`Integration ${integrationType} is not configured`)
     return new Response(
       JSON.stringify({ message: "Integration is not configured" }),
@@ -51,24 +69,10 @@ export const handleWebhook = async (
     req.nextUrl,
   ).toString()
 
-  const settings = orgSettings[integration.name as keyof OrganizationSettings]
-
-  if (!settings) {
-    return new Response(
-      JSON.stringify({
-        message: `Integration ${integration.name} is not configured`,
-      }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      },
-    )
-  }
-
   try {
     const result = await integration.handleRequest({
       config: {
-        ...settings,
+        ...credential.config,
         redirectUrl,
         stateParams: {
           workspaceId: req.nextUrl.searchParams.get("workspaceId") ?? "",

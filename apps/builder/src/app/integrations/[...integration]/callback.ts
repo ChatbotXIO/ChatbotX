@@ -1,4 +1,8 @@
-import { organizationService, workspaceService } from "@chatbotx.io/business"
+import {
+  organizationCredentialService,
+  organizationService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -52,7 +56,6 @@ export const handleCallback = async (
 
   // find organization from domain and current user
   const organization = await organizationService.findByDomain(url.hostname)
-  const organizationSettings = organization.settings
 
   const userId = await getCurrentUserId()
   if (!userId) {
@@ -74,12 +77,16 @@ export const handleCallback = async (
   let googleSheetsAuth: Oauth2AuthValue | null = null
   switch (integrationType) {
     case "zalo": {
-      if (!organizationSettings.zalo) {
+      const zaloCredential = await organizationCredentialService.findDecrypted({
+        organizationId: organization.id,
+        type: "zalo",
+      })
+      if (!zaloCredential) {
         return notFound()
       }
 
       await connectZaloHandler({
-        zaloSettings: organizationSettings.zalo,
+        zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
         req,
       })
@@ -88,7 +95,12 @@ export const handleCallback = async (
     }
 
     case "googleSheets": {
-      if (!organizationSettings.google) {
+      const googleCredential =
+        await organizationCredentialService.findDecrypted({
+          organizationId: organization.id,
+          type: "google",
+        })
+      if (!googleCredential) {
         return notFound()
       }
 
@@ -100,7 +112,7 @@ export const handleCallback = async (
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
-          ...organizationSettings.google,
+          ...googleCredential.config,
           redirectUrl: callbackUrl,
         },
         req,
