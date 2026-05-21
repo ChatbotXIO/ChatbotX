@@ -1,7 +1,6 @@
 "use client"
 
 import type { PlatformSettings } from "@chatbotx.io/business"
-import { injectCSS, injectJS } from "@chatbotx.io/ui/lib/utils"
 import { createContext, type ReactNode, useContext, useEffect } from "react"
 
 const PlatformSettingsContext = createContext<PlatformSettings | null>(null)
@@ -16,9 +15,24 @@ export const PlatformSettingsProvider = ({
   children,
 }: PlatformSettingsProviderProps) => {
   useEffect(() => {
-    injectCSS(settings.customCSS)
-    injectJS(settings.customJS)
-  }, [settings.customCSS, settings.customJS])
+    if (!settings.customCSS) {
+      return
+    }
+    const style = document.createElement("style")
+    style.textContent = settings.customCSS
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, [settings.customCSS])
+
+  useEffect(() => {
+    if (!settings.customJS) {
+      return
+    }
+    const script = document.createElement("script")
+    script.textContent = settings.customJS
+    document.body.appendChild(script)
+    return () => script.remove()
+  }, [settings.customJS])
 
   return (
     <PlatformSettingsContext.Provider value={settings}>

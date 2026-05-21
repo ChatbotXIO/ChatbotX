@@ -24,10 +24,10 @@ export const themeOptions = [
 export const updateOrganizationSchema = z.object({
   name: z.string().min(1),
   logo: z.object({
-    url: z.string(),
-    mode: z.enum(["file", "link"]).default("file"),
+    url: z.union([z.url(), z.literal("")]),
+    mode: z.enum(["file", "url"]).default("file"),
   }),
-  theme: z.string().nullable().default("blue"),
+  theme: z.enum(themeOptions).nullable().default(null),
   customJS: z.string().nullable(),
   customCSS: z.string().nullable(),
 })

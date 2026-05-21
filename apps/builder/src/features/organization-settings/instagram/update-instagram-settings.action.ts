@@ -8,9 +8,9 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 
-export const updateInstagramSettingAction = organizationActionClient
+export const updateInstagramSettingAction = orgAdminActionClient
   .inputSchema(instagramCredentialUpdateSchema)
   .action(
     async ({

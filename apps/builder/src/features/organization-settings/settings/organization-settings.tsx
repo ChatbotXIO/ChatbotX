@@ -24,7 +24,10 @@ import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { themeOptions, updateOrganizationSchema } from "./schema"
 import { updateOrganizationAction } from "./update-organization.action"
 
-const THEME_SELECT_OPTIONS = themeOptions.map((t) => ({ value: t, label: t }))
+const THEME_SELECT_OPTIONS = themeOptions.map((theme) => ({
+  value: theme,
+  label: theme,
+}))
 
 type OrganizationSettingsProps = {
   organization: OrganizationModel
@@ -62,7 +65,11 @@ export function OrganizationSettings({
             url: organization.logo ?? "",
             mode: "file" as const,
           },
-          theme: organization.theme ?? undefined,
+          theme:
+            themeOptions.find(
+              (opt) =>
+                opt.toLowerCase() === (organization.theme ?? "").toLowerCase(),
+            ) ?? null,
           customJS: organization.customJS ?? "",
           customCSS: organization.customCSS ?? "",
         },

@@ -9,9 +9,9 @@ import {
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
 
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 
-export const updateWhatsappSettingsAction = organizationActionClient
+export const updateWhatsappSettingsAction = orgAdminActionClient
   .inputSchema(whatsappCredentialUpdateSchema)
   .action(
     async ({

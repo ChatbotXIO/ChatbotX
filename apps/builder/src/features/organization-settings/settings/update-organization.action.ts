@@ -2,13 +2,13 @@
 
 import { organizationService } from "@chatbotx.io/business"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 import {
   type UpdateOrganizationSchema,
   updateOrganizationSchema,
 } from "./schema"
 
-export const updateOrganizationAction = organizationActionClient
+export const updateOrganizationAction = orgAdminActionClient
   .inputSchema(updateOrganizationSchema)
   .action(
     async ({

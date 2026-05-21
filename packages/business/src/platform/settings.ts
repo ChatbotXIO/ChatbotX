@@ -43,9 +43,7 @@ type ResolvePlatformSettingsArgs =
 export const resolvePlatformSettings = async (
   args: ResolvePlatformSettingsArgs,
 ): Promise<PlatformSettings> => {
-  if (!isEnterprise()) {
-    return getDefaultSettings()
-  }
+  const defaultSettings = getDefaultSettings()
 
   const organizationId =
     "organizationId" in args
@@ -54,6 +52,18 @@ export const resolvePlatformSettings = async (
           .organizationId
 
   const organization = await organizationService.findById(organizationId)
+
+  if (!isEnterprise()) {
+    return {
+      ...defaultSettings,
+      name: organization.name,
+      logo: organization.logo ?? null,
+      theme: organization.theme,
+      customJS: organization.customJS,
+      customCSS: organization.customCSS,
+    }
+  }
+
   return resolvePlatformSettingsByOrganization(organization)
 }
 

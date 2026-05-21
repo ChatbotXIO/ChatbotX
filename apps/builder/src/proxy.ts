@@ -9,7 +9,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { httpLogger } from "./lib/log"
 
-const publicRoutes = ["/integrations", "/r", "/auth", "/api/auth"]
+const publicRoutes = ["/integrations", "/r", "/auth", "/api"]
 const signinPath = "/auth/sign-in"
 
 async function _logRequest(request: NextRequest) {
@@ -70,7 +70,8 @@ function attachProxyUrl(request: NextRequest): NextResponse {
 
   const hostname = originUrl.hostname
   const parts = hostname.split(".")
-  const domain = parts.slice(-2).join(".")
+  // For single-part hostnames (localhost, bare IP), use as-is to avoid breaking local dev.
+  const domain = parts.length > 1 ? parts.slice(-2).join(".") : hostname
   requestHeaders.set("x-domain", domain)
 
   return NextResponse.next({

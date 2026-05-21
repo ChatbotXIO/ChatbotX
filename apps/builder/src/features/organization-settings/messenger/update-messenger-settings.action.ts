@@ -8,9 +8,9 @@ import {
 } from "@chatbotx.io/database/partials"
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 
-export const updateMessengerSettingAction = organizationActionClient
+export const updateMessengerSettingAction = orgAdminActionClient
   .inputSchema(messengerCredentialUpdateSchema)
   .action(
     async ({

@@ -12,7 +12,7 @@ import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
 
 import { logger } from "@/lib/log"
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 
 const isValidGiphyApiKey = async (apiKey: string) => {
   try {
@@ -28,7 +28,7 @@ const isValidGiphyApiKey = async (apiKey: string) => {
   }
 }
 
-export const updateGiphySettingsAction = organizationActionClient
+export const updateGiphySettingsAction = orgAdminActionClient
   .inputSchema(giphyCredentialUpdateSchema)
   .action(
     async ({

@@ -1245,10 +1245,10 @@
       "placeholder": "Nhập mã"
     },
     "authCallbackUrl": {
-      "label": "Auth Callback URL"
+      "label": "URL xác thực"
     },
     "webhookUrl": {
-      "label": "Webhook URL"
+      "label": "URL webhook"
     }
   },
   "flows": {

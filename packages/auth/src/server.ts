@@ -26,7 +26,7 @@ const getPlatformSettings = async (request: Request) => {
   return await resolvePlatformSettingsByDomain(domain)
 }
 
-export type AuthConfig = Record<string, never>
+export type AuthConfig = Record<string, unknown>
 
 export function createAuth(_config: AuthConfig) {
   return betterAuth({

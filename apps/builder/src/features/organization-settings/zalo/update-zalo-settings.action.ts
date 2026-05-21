@@ -9,9 +9,9 @@ import {
 import type { OrganizationModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
 
-import { organizationActionClient } from "@/lib/safe-action"
+import { orgAdminActionClient } from "@/lib/safe-action"
 
-export const updateZaloSettingsAction = organizationActionClient
+export const updateZaloSettingsAction = orgAdminActionClient
   .inputSchema(zaloCredentialUpdateSchema)
   .action(
     async ({

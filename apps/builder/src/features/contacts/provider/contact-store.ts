@@ -91,7 +91,6 @@ export const createContactStore = (props: Partial<ContactState>) =>
             workspaceId,
             sort: [],
             channels: [params?.channel || channelTypes.enum.omnichannel],
-            // @ts-expect-error
             contactFilter: params?.contactFilter,
           })
 
