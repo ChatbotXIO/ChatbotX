@@ -28,7 +28,7 @@ export function buildInboxLink(
     whatsapp: {
       url: `https://wa.me/${inbox.integrationWhatsapp?.displayPhoneNumber ?? ""}`,
       refKey: "text",
-      refValue: refValue ? `/${refValue}` : undefined,
+      refValue: refValue ? `/ref-${refValue}` : undefined,
     },
     telegram: {
       url: `https://t.me/${inbox.name}`,

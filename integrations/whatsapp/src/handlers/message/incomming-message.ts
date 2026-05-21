@@ -48,11 +48,18 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       firstName: data.name,
     }
     let postbackAction: string | null = null
+    let ref: string | null = null
 
     switch (data.message.type) {
-      case "text":
-        message.text = (data.message as ServerTextMessage).text.body
+      case "text": {
+        const body = (data.message as ServerTextMessage).text.body
+        if (body.startsWith("/ref-")) {
+          ref = body.slice(5)
+        } else {
+          message.text = body
+        }
         break
+      }
       case "audio": {
         const attached = (data.message as ServerAudioMessage).audio
         const mediaSpecs = await fetchMedia(ctx, whatsappClient, attached.id)
@@ -190,7 +197,7 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
       contact,
       postbackAction,
       quickReplyAction: null,
-      ref: null,
+      ref,
     }
   }
 
