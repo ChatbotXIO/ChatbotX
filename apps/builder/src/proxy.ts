@@ -67,12 +67,7 @@ function attachProxyUrl(request: NextRequest): NextResponse {
 
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-url", originUrl.toString())
-
-  const hostname = originUrl.hostname
-  const parts = hostname.split(".")
-  // For single-part hostnames (localhost, bare IP), use as-is to avoid breaking local dev.
-  const domain = parts.length > 1 ? parts.slice(-2).join(".") : hostname
-  requestHeaders.set("x-domain", domain)
+  requestHeaders.set("x-domain", originUrl.hostname)
 
   return NextResponse.next({
     request: {
