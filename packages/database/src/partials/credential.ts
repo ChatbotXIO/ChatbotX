@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const organizationCredentialTypes = z.enum([
+export const credentialTypes = z.enum([
   "whatsapp",
   "messenger",
   "instagram",
@@ -8,10 +8,9 @@ export const organizationCredentialTypes = z.enum([
   "zalo",
   "giphy",
   "stripe",
+  "paddle",
 ])
-export type OrganizationCredentialType = z.infer<
-  typeof organizationCredentialTypes
->
+export type CredentialType = z.infer<typeof credentialTypes>
 
 // ─── Per-provider full credential schemas (every field, public + secret) ─────
 // `value` stores the full object encrypted. `publicConfig` is a `.pick()`
@@ -118,18 +117,35 @@ export const stripeCredentialSchema = z.object({
   publishableKey: z.string(),
   verifyToken: z.string(),
   secretKey: z.string(),
+  connectClientId: z.string().optional(),
 })
 export type StripeCredential = z.infer<typeof stripeCredentialSchema>
 
 export const stripeCredentialPublicSchema = stripeCredentialSchema.pick({
   publishableKey: true,
   verifyToken: true,
+  connectClientId: true,
 })
 export type StripeCredentialPublic = z.infer<
   typeof stripeCredentialPublicSchema
 >
 
-export const organizationCredentialSchemas = {
+export const paddleCredentialSchema = z.object({
+  vendorId: z.string(),
+  vendorAuthCode: z.string(),
+  publicKey: z.string().optional(),
+  verifyToken: z.string().optional(),
+})
+export type PaddleCredential = z.infer<typeof paddleCredentialSchema>
+
+export const paddleCredentialPublicSchema = paddleCredentialSchema.pick({
+  vendorId: true,
+})
+export type PaddleCredentialPublic = z.infer<
+  typeof paddleCredentialPublicSchema
+>
+
+export const credentialSchemas = {
   whatsapp: whatsappCredentialSchema,
   messenger: messengerCredentialSchema,
   instagram: instagramCredentialSchema,
@@ -137,9 +153,10 @@ export const organizationCredentialSchemas = {
   zalo: zaloCredentialSchema,
   giphy: giphyCredentialSchema,
   stripe: stripeCredentialSchema,
+  paddle: paddleCredentialSchema,
 } as const
 
-export const organizationCredentialPublicSchemas = {
+export const credentialPublicSchemas = {
   whatsapp: whatsappCredentialPublicSchema,
   messenger: messengerCredentialPublicSchema,
   instagram: instagramCredentialPublicSchema,
@@ -147,9 +164,10 @@ export const organizationCredentialPublicSchemas = {
   zalo: zaloCredentialPublicSchema,
   giphy: giphyCredentialPublicSchema,
   stripe: stripeCredentialPublicSchema,
+  paddle: paddleCredentialPublicSchema,
 } as const
 
-export type OrganizationCredentialByType = {
+export type CredentialByType = {
   whatsapp: WhatsappCredential
   messenger: MessengerCredential
   instagram: InstagramCredential
@@ -157,9 +175,10 @@ export type OrganizationCredentialByType = {
   zalo: ZaloCredential
   giphy: GiphyCredential
   stripe: StripeCredential
+  paddle: PaddleCredential
 }
 
-export type OrganizationCredentialPublicByType = {
+export type CredentialPublicByType = {
   whatsapp: WhatsappCredentialPublic
   messenger: MessengerCredentialPublic
   instagram: InstagramCredentialPublic
@@ -167,14 +186,10 @@ export type OrganizationCredentialPublicByType = {
   zalo: ZaloCredentialPublic
   giphy: GiphyCredentialPublic
   stripe: StripeCredentialPublic
+  paddle: PaddleCredentialPublic
 }
 
 // ─── Update schemas (secrets optional — empty means "keep current") ─────────
-// Used by edit forms and update actions. Every field is trimmed at parse time
-// so "   " collapses to "" and the merge logic in each action can rely on
-// truthiness alone (no per-call .trim() needed). The action merges submitted
-// non-empty secrets over the existing decrypted config server-side; secrets
-// never round-trip through the browser.
 
 export const whatsappCredentialUpdateSchema = z.object({
   clientId: z.string().trim(),
@@ -242,15 +257,13 @@ export type StripeCredentialUpdate = z.infer<
   typeof stripeCredentialUpdateSchema
 >
 
-// ─── Encrypted blob shape stored in OrganizationCredential.value ─────────────
+// ─── Encrypted blob shape stored in Credential.value ─────────────────────────
 
-export const organizationCredentialEncryptedSchema = z.object({
+export const credentialEncryptedSchema = z.object({
   v: z.literal(1),
   kid: z.string().optional(),
   iv: z.string(),
   text: z.string(),
   tag: z.string(),
 })
-export type OrganizationCredentialEncrypted = z.infer<
-  typeof organizationCredentialEncryptedSchema
->
+export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>

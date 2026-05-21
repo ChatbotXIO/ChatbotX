@@ -1,11 +1,9 @@
-import {
-  organizationCredentialService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InstagramManage } from "@/features/integration-instagram/components/instagram-manage"
 import { listIntegrationInstagrams } from "@/features/integration-instagram/queries"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function SettingChannelInstagramPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -17,11 +15,9 @@ export default async function SettingChannelInstagramPage(props: {
     return notFound()
   }
 
-  const workspace = await workspaceService.findOrFail({
-    where: { id: workspaceId },
-  })
-  const credential = await organizationCredentialService.find({
-    organizationId: workspace.organizationId,
+  const userId = await getCurrentUserId()
+  const credential = await credentialService.resolveForUser({
+    userId,
     type: "instagram",
   })
   const promises = Promise.all([

@@ -1,4 +1,4 @@
-import { organizationCredentialService } from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { InstagramSettings } from "./instagram/instagram-settings"
@@ -8,42 +8,21 @@ import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
 import { ZaloSettings } from "./zalo/zalo-settings"
 
 type ManageOrganizationSettingsProps = {
-  organizationId: string
+  userId: string
 }
 
 export async function ManageOrganizationSettings({
-  organizationId,
+  userId,
 }: ManageOrganizationSettingsProps) {
   const [whatsapp, messenger, instagram, google, zalo, giphy, stripe] =
     await Promise.all([
-      organizationCredentialService.find({
-        organizationId,
-        type: "whatsapp",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "messenger",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "instagram",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "google",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "zalo",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "giphy",
-      }),
-      organizationCredentialService.find({
-        organizationId,
-        type: "stripe",
-      }),
+      credentialService.findForUser({ userId, type: "whatsapp" }),
+      credentialService.findForUser({ userId, type: "messenger" }),
+      credentialService.findForUser({ userId, type: "instagram" }),
+      credentialService.findForUser({ userId, type: "google" }),
+      credentialService.findForUser({ userId, type: "zalo" }),
+      credentialService.findForUser({ userId, type: "giphy" }),
+      credentialService.findForUser({ userId, type: "stripe" }),
     ])
 
   return (

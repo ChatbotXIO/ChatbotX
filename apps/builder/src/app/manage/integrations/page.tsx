@@ -1,16 +1,14 @@
-import { organizationService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 import { ManageOrganizationSettings } from "@/features/organization-settings/manage-organization-settings"
-import { getDomainFromHeader } from "@/lib/domain"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function ManageIntegrationsPage() {
   const t = await getTranslations()
 
-  const domain = await getDomainFromHeader()
-  const organization = await organizationService.findByDomain(domain)
-  if (!organization) {
+  const userId = await getCurrentUserId()
+  if (!userId) {
     return notFound()
   }
 
@@ -21,7 +19,7 @@ export default async function ManageIntegrationsPage() {
       </h3>
 
       <Suspense>
-        <ManageOrganizationSettings organizationId={organization.id} />
+        <ManageOrganizationSettings userId={userId} />
       </Suspense>
     </div>
   )

@@ -1,8 +1,8 @@
 "use server"
 
-import { organizationCredentialService } from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import type { WorkspaceModel } from "@chatbotx.io/database/types"
+import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
 import { redirect } from "next/navigation"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
@@ -23,15 +23,15 @@ export const connectGoogleSheets = workspaceActionClient
       parsedInput,
     }: {
       ctx: {
+        user: UserModel
         workspace: WorkspaceModel
       }
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
-      const googleCredential =
-        await organizationCredentialService.findDecrypted({
-          organizationId: ctx.workspace.organizationId,
-          type: "google",
-        })
+      const googleCredential = await credentialService.resolveForUser({
+        userId: ctx.user.id,
+        type: "google",
+      })
       if (!googleCredential) {
         throw new ChatbotXException("Google Sheets App settings is not valid")
       }

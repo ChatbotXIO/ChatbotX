@@ -1,7 +1,7 @@
 "use server"
 
 import {
-  organizationCredentialService,
+  credentialService,
   organizationService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -342,11 +342,10 @@ export const connectWhatsappAction = authActionClient
       try {
         const domain = await getDomainFromHeader()
         const organization = await organizationService.findByDomain(domain)
-        const whatsappCredential =
-          await organizationCredentialService.findDecrypted({
-            organizationId: organization.id,
-            type: "whatsapp",
-          })
+        const whatsappCredential = await credentialService.resolveForUser({
+          userId: ctx.user.id,
+          type: "whatsapp",
+        })
 
         if (!whatsappCredential) {
           throw new ChatbotXException("Whatsapp App settings not found")

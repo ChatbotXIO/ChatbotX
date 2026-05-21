@@ -1,11 +1,9 @@
-import {
-  organizationCredentialService,
-  workspaceService,
-} from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { MessengerManage } from "@/features/integration-messenger/messenger-manage"
 import { listIntegrationMessengers } from "@/features/integration-messenger/queries"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function SettingChannelMessengerPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -15,11 +13,9 @@ export default async function SettingChannelMessengerPage(props: {
     return notFound()
   }
 
-  const workspace = await workspaceService.findOrFail({
-    where: { id: workspaceId },
-  })
-  const credential = await organizationCredentialService.find({
-    organizationId: workspace.organizationId,
+  const userId = await getCurrentUserId()
+  const credential = await credentialService.resolveForUser({
+    userId,
     type: "messenger",
   })
 

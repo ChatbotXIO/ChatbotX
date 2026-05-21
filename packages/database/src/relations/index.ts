@@ -31,6 +31,7 @@ import { contactOnSmartDelayRelations } from "./contact-on-smart-delay"
 import { contactsToTagsRelations } from "./contact-to-tag"
 import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
+import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
 import { errorLogRelations } from "./error-log"
 import { flowRelations } from "./flow"
@@ -57,9 +58,7 @@ import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { organizationRelations } from "./organization"
-import { organizationCredentialRelations } from "./organization-credential"
 import { organizationMemberRelations } from "./organization-member"
-import { planRelations } from "./plan"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
 import { sequenceRelations } from "./sequence"
@@ -98,7 +97,7 @@ export const relations = {
   ...messageRelations,
   ...automatedResponseRelations,
   ...organizationRelations,
-  ...organizationCredentialRelations,
+  ...platformCredentialRelations,
   ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
@@ -146,7 +145,6 @@ export const relations = {
   ...triggerContactHistoryRelations,
   ...triggerExecutionRelations,
   ...contactInboxRelations,
-  ...planRelations,
   ...aiFunctionRelations,
   ...botFieldRelations,
   ...savedReplyRelations,

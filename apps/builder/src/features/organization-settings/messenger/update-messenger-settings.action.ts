@@ -1,12 +1,12 @@
 "use server"
 
-import { organizationCredentialService } from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import {
   type MessengerCredential,
   type MessengerCredentialUpdate,
   messengerCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
-import type { OrganizationModel } from "@chatbotx.io/database/types"
+import type { UserModel } from "@chatbotx.io/database/types"
 import { getTranslations } from "next-intl/server"
 import { orgAdminActionClient } from "@/lib/safe-action"
 
@@ -17,11 +17,11 @@ export const updateMessengerSettingAction = orgAdminActionClient
       ctx,
       parsedInput,
     }: {
-      ctx: { organization: OrganizationModel }
+      ctx: { user: UserModel }
       parsedInput: MessengerCredentialUpdate
     }) => {
-      const existing = await organizationCredentialService.findDecrypted({
-        organizationId: ctx.organization.id,
+      const existing = await credentialService.findDecryptedForUser({
+        userId: ctx.user.id,
         type: "messenger",
       })
 
@@ -42,8 +42,8 @@ export const updateMessengerSettingAction = orgAdminActionClient
         clientSecret,
       }
 
-      await organizationCredentialService.upsert({
-        organizationId: ctx.organization.id,
+      await credentialService.upsertForUser({
+        userId: ctx.user.id,
         type: "messenger",
         config,
       })

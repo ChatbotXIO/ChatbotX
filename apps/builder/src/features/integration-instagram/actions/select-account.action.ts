@@ -2,7 +2,7 @@
 
 import {
   buildContext,
-  organizationCredentialService,
+  credentialService,
   organizationService,
   resolvePlatformSettings,
   workspaceService,
@@ -50,11 +50,10 @@ export const selectAccountAction = authActionClient
 
         const domain = await getDomainFromHeader()
         const organization = await organizationService.findByDomain(domain)
-        const instagramCredential =
-          await organizationCredentialService.findDecrypted({
-            organizationId: organization.id,
-            type: "instagram",
-          })
+        const instagramCredential = await credentialService.resolveForUser({
+          userId: ctx.user.id,
+          type: "instagram",
+        })
         if (!instagramCredential) {
           throw new ChatbotXException("Instagram App settings not found")
         }

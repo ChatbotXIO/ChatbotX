@@ -2,7 +2,7 @@
 
 import {
   buildContext,
-  organizationCredentialService,
+  credentialService,
   organizationService,
   resolvePlatformSettings,
   workspaceService,
@@ -48,11 +48,10 @@ export const selectPageAction = authActionClient
 
         const domain = await getDomainFromHeader()
         const organization = await organizationService.findByDomain(domain)
-        const messengerCredential =
-          await organizationCredentialService.findDecrypted({
-            organizationId: organization.id,
-            type: "messenger",
-          })
+        const messengerCredential = await credentialService.resolveForUser({
+          userId: ctx.user.id,
+          type: "messenger",
+        })
         if (!messengerCredential) {
           throw new ChatbotXException("Messenger App settings not found")
         }

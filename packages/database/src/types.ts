@@ -48,8 +48,8 @@ export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type OrganizationModel = typeof schema.organizationModel.$inferSelect
-export type OrganizationCredentialModel =
-  typeof schema.organizationCredentialModel.$inferSelect
+export type PlatformCredentialModel =
+  typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
 export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
 export type InboxTeamMemberModel =

@@ -1,6 +1,5 @@
 import {
-  organizationCredentialService,
-  organizationService,
+  credentialService,
   resolvePlatformSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -41,22 +40,9 @@ export function createAuth(_config: AuthConfig) {
     }),
     socialProviders: {
       google: async () => {
-        // TODO: support white-labeling
-        // TODO: ignore if the organization is a community
-        const organization = await organizationService.find({ where: {} })
-        if (!organization) {
-          return await {
-            enabled: false,
-            clientId: "",
-            clientSecret: "",
-          }
-        }
-
-        const googleCredential =
-          await organizationCredentialService.findDecrypted({
-            organizationId: organization.id,
-            type: "google",
-          })
+        const googleCredential = await credentialService.findDecryptedPlatform({
+          type: "google",
+        })
         if (!googleCredential) {
           return await {
             enabled: false,

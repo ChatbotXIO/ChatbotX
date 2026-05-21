@@ -1,7 +1,4 @@
-import {
-  organizationCredentialService,
-  organizationService,
-} from "@chatbotx.io/business"
+import { credentialService } from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
@@ -10,7 +7,7 @@ import { TelegramConnect } from "@/features/integration-telegram/components/tele
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
 import WhatsappCreate from "@/features/integration-whatsapp/components/whatsapp-create"
 import { generateZaloRedirectUri } from "@/features/integration-zalo/libs/zalo"
-import { getDomainFromHeader } from "@/lib/domain"
+import { getCurrentUserId } from "@/lib/auth/utils"
 
 export const dynamic = "force-dynamic"
 
@@ -34,25 +31,12 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
     return <SimpleCreateWebchat workspaceId={workspaceId} />
   }
 
-  const domain = await getDomainFromHeader()
-  const organization = await organizationService.findByDomain(domain)
+  const userId = await getCurrentUserId()
   const [whatsapp, messenger, instagram, zalo] = await Promise.all([
-    organizationCredentialService.find({
-      organizationId: organization.id,
-      type: "whatsapp",
-    }),
-    organizationCredentialService.find({
-      organizationId: organization.id,
-      type: "messenger",
-    }),
-    organizationCredentialService.find({
-      organizationId: organization.id,
-      type: "instagram",
-    }),
-    organizationCredentialService.find({
-      organizationId: organization.id,
-      type: "zalo",
-    }),
+    credentialService.resolveForUser({ userId, type: "whatsapp" }),
+    credentialService.resolveForUser({ userId, type: "messenger" }),
+    credentialService.resolveForUser({ userId, type: "instagram" }),
+    credentialService.resolveForUser({ userId, type: "zalo" }),
   ])
 
   if (selectedChannel === "whatsapp" && whatsapp) {

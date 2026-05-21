@@ -6,19 +6,12 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import {
-  BuildingIcon,
-  CoinsIcon,
-  CreditCardIcon,
-  Grid2x2PlusIcon,
-  Users2Icon,
-} from "lucide-react"
+import { BuildingIcon, Grid2x2PlusIcon, Users2Icon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { isCommunity } from "@/env"
 import { authClient } from "@/lib/auth/auth-client"
 
 export function ManageSidebar() {
@@ -42,20 +35,6 @@ export function ManageSidebar() {
         url: "/manage/settings",
         icon: BuildingIcon,
       },
-      ...(isCommunity
-        ? []
-        : [
-            {
-              title: t("plans.title"),
-              url: "/manage/plans",
-              icon: CoinsIcon,
-            },
-            {
-              title: t("subscriptions.title"),
-              url: "/manage/subscriptions",
-              icon: CreditCardIcon,
-            },
-          ]),
       {
         title: t("users.title"),
         url: "/manage/users",

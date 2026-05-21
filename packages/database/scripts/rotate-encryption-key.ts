@@ -1,6 +1,5 @@
 /**
- * Re-encrypts all OrganizationCredential rows from the previous key to the
- * current key.
+ * Re-encrypts all Credential rows from the previous key to the current key.
  *
  * Usage:
  *   pnpm --filter @chatbotx.io/database rotate:encryption-key [--dry-run]
@@ -22,12 +21,12 @@ import { eq } from "drizzle-orm"
 import type { z } from "zod"
 import { db } from "../src/client"
 import {
-  type OrganizationCredentialByType,
-  type OrganizationCredentialType,
-  organizationCredentialEncryptedSchema,
-  organizationCredentialSchemas,
-} from "../src/partials/organization-credential"
-import { organizationCredentialModel } from "../src/schema/organization-credential"
+  type CredentialByType,
+  type CredentialType,
+  credentialEncryptedSchema,
+  credentialSchemas,
+} from "../src/partials/credential"
+import { platformCredentialModel } from "../src/schema/platform-credential"
 
 const isDryRun = process.argv.includes("--dry-run")
 const activeKid = process.env.ENCRYPTION_KEY_ID ?? "default"
@@ -40,10 +39,10 @@ const main = async (): Promise<void> => {
     process.exit(1)
   }
 
-  const rows = await db.select().from(organizationCredentialModel)
+  const rows = await db.select().from(platformCredentialModel)
 
   const toRotate = rows.filter((row) => {
-    const result = organizationCredentialEncryptedSchema.safeParse(row.value)
+    const result = credentialEncryptedSchema.safeParse(row.value)
     return result.success && result.data.kid !== activeKid
   })
 
@@ -61,27 +60,27 @@ const main = async (): Promise<void> => {
 
   for (const row of toRotate) {
     try {
-      const blob = organizationCredentialEncryptedSchema.parse(row.value)
-      const type = row.type as OrganizationCredentialType
-      const aad = `${row.organizationId}:${type}`
-      const schema = organizationCredentialSchemas[
-        type
-      ] as unknown as z.ZodType<
-        OrganizationCredentialByType[OrganizationCredentialType]
+      const blob = credentialEncryptedSchema.parse(row.value)
+      const type = row.type as CredentialType
+      const aad = row.userId
+        ? `user:${row.userId}:${type}:${row.livemode}`
+        : `platform:${type}:${row.livemode}`
+      const schema = credentialSchemas[type] as unknown as z.ZodType<
+        CredentialByType[CredentialType]
       >
 
       const config = await encryptUtils.decryptObject(blob, schema, aad)
       const newValue = await encryptUtils.encryptObject(config, aad)
 
       await db
-        .update(organizationCredentialModel)
+        .update(platformCredentialModel)
         .set({ value: newValue })
-        .where(eq(organizationCredentialModel.id, row.id))
+        .where(eq(platformCredentialModel.id, row.id))
 
       rotated++
     } catch (error) {
       console.error(
-        `[id:${row.id} org:${row.organizationId} type:${row.type}] Failed:`,
+        `[id:${row.id} userId:${row.userId ?? "platform"} type:${row.type}] Failed:`,
         error,
       )
       errors++
