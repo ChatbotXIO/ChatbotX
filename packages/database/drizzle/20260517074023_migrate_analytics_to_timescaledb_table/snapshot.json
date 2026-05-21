@@ -1,12 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "699b2f6e-501d-4419-a1a2-6d64aae6b644",
-  "prevIds": [
-    "09ed3cf2-078f-4ad2-9686-1a5f05cd8385",
-    "4b0f1294-b928-4d3c-bde0-89f4bb143e13",
-    "98045d7c-e972-420e-937f-9cf4d92e6076"
-  ],
+  "id": "56f296f5-91c3-4d51-91cb-587cc29d50ea",
+  "prevIds": ["6bf1cea5-5d30-42ec-b13e-4fc3c2ee138e"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -566,6 +562,12 @@
     {
       "isRlsEnabled": false,
       "name": "Organization",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "OrganizationCredential",
       "entityType": "tables",
       "schema": "public"
     },
@@ -9143,6 +9145,97 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "organizationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "publicConfig",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "value",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "OrganizationMember"
     },
     {
@@ -13952,6 +14045,55 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "organizationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrganizationCredential_organizationId_type_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "organizationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "OrganizationCredential_organizationId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "workspaceId",
           "isExpression": false,
           "asc": true,
@@ -16431,6 +16573,19 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "OrganizationCredential_organizationId_Organization_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "OrganizationCredential"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["organizationId"],
+      "schemaTo": "public",
+      "tableTo": "Organization",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "OrganizationMember_organizationId_Organization_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -17494,6 +17649,14 @@
       "name": "Organization_pkey",
       "schema": "public",
       "table": "Organization",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "OrganizationCredential_pkey",
+      "schema": "public",
+      "table": "OrganizationCredential",
       "entityType": "pks"
     },
     {
