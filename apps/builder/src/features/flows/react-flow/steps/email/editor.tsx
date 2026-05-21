@@ -18,7 +18,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/sortable"
 import { MoveVerticalIcon, PlusIcon, XIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import {
@@ -37,17 +37,19 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
   const t = useTranslations()
   const smtpInboxOptions = useSmtpInboxOptions()
   const smtpFromAddressMap = useSmtpInboxFromAddressMap()
+  const smtpFromAddressMapRef = useRef(smtpFromAddressMap)
+  smtpFromAddressMapRef.current = smtpFromAddressMap
   const { control, setValue } = useFormContext()
 
   const integrationSmtpId = useWatch({
     name: `${parentName}.integrationSmtpId`,
   })
   useEffect(() => {
-    const fromAddress = smtpFromAddressMap[integrationSmtpId]
+    const fromAddress = smtpFromAddressMapRef.current[integrationSmtpId]
     if (fromAddress) {
       setValue(`${parentName}.from`, fromAddress)
     }
-  }, [integrationSmtpId, smtpFromAddressMap, setValue, parentName])
+  }, [integrationSmtpId, setValue, parentName])
 
   const { fields, append, move, remove } = useFieldArray({
     control,

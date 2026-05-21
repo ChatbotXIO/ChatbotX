@@ -1,1 +1,0 @@
-ALTER TABLE "Contact" ALTER COLUMN "emailOptIn" SET DEFAULT true;

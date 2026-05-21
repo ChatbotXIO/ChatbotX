@@ -41,7 +41,6 @@ export const smtpAuthSchema = customAuthSchema.extend({
   port: z.number().int().positive().max(65_535),
   username: z.string().trim().min(1).max(255),
   password: z.string().trim().min(1).max(255),
-  fromAddress: z.email(),
 })
 export type SmtpAuthValue = z.infer<typeof smtpAuthSchema>
 

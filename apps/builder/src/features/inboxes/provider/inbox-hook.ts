@@ -100,16 +100,11 @@ export const useSmtpInboxFromAddressMap = (): Record<string, string> => {
   return useMemo(
     () =>
       Object.fromEntries(
-        inboxes
-          .filter(
-            (inbox) =>
-              inbox.channel === channelTypes.enum.smtp &&
-              !!inbox.integrationSmtp,
-          )
-          .map((inbox) => [
-            inbox.integrationSmtp?.id ?? "",
-            inbox.integrationSmtp?.auth.fromAddress ?? "",
-          ]),
+        inboxes.flatMap((inbox) =>
+          inbox.channel === channelTypes.enum.smtp && inbox.integrationSmtp
+            ? [[inbox.integrationSmtp.id, inbox.integrationSmtp.fromAddress]]
+            : [],
+        ),
       ),
     [inboxes],
   )

@@ -3,7 +3,6 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { integrationSmtpModel } from "@chatbotx.io/database/schema"
 import type { IntegrationSmtpModel } from "@chatbotx.io/database/types"
-import type { SmtpAuthValue } from "@chatbotx.io/integration-smtp/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { IntegrationSmtpResource } from "../schemas/resource"
 
@@ -27,10 +26,10 @@ export const listIntegrationSmtps = async (input: {
   })
 
   return {
-    data: data.map(({ id, name, auth }) => ({
+    data: data.map(({ id, name, fromAddress }) => ({
       id,
       name,
-      auth: auth as SmtpAuthValue,
+      fromAddress,
     })),
   }
 }

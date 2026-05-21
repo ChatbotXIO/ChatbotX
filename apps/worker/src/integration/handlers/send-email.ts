@@ -1,5 +1,6 @@
 import {
   buildContext,
+  buildUnsubscribeUrl,
   contactService,
   inboxService,
   integrationSmtpService,
@@ -7,7 +8,6 @@ import {
   workspaceService,
 } from "@chatbotx.io/business"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
-import { generateUnsubscribeToken } from "@chatbotx.io/encryption"
 import type {
   EmailStepSchema,
   PageElementSchema,
@@ -100,7 +100,7 @@ export async function sendEmail({
   contactInbox,
   metadata: _metadata,
 }: ExecuteStepProps<EmailStepSchema>) {
-  const contact = await contactService.find({
+  const contact = await contactService.findBy({
     where: { id: conversation.contactId },
   })
   if (!contact?.emailOptIn) {
@@ -151,7 +151,11 @@ export async function sendEmail({
     contactVariableService.replaceAll({ text: step.preheader, variables }),
   ])
 
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${await generateUnsubscribeToken(conversation.contactId, conversation.workspaceId)}`
+  const unsubscribeUrl = await buildUnsubscribeUrl(
+    appUrl,
+    conversation.contactId,
+    conversation.workspaceId,
+  )
 
   const elements = await resolveElements({
     appUrl,
@@ -178,7 +182,7 @@ export async function sendEmail({
   try {
     await integrationSmtp.runAction("sendMail", {
       ctx: botContext,
-      from: step.from || auth.fromAddress,
+      from: step.from || smtpIntegration.fromAddress,
       to,
       subject,
       html: await renderDynamicEmailHtml(props),

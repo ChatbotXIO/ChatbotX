@@ -41,7 +41,7 @@ export async function createSmtp(
   workspaceId: string,
   input: CreateSmtpRequest,
 ) {
-  let { host, port, ...rest } = input
+  let { host, port, fromAddress, ...rest } = input
   await verifySmtpConnection(input)
 
   if (input.provider !== "other") {
@@ -75,6 +75,7 @@ export async function createSmtp(
           name,
           workspaceId,
           inboxId,
+          fromAddress,
           auth: {
             authType: "custom" as const,
             ...rest,
@@ -121,14 +122,13 @@ export async function updateSmtp(
     port,
     username: input.username ?? currentAuth.username,
     password: input.password ?? currentAuth.password,
-    fromAddress: input.fromAddress ?? currentAuth.fromAddress,
   }
 
   const name = input.username ?? integration.name
 
   return db
     .update(integrationSmtpModel)
-    .set({ auth: updatedAuth, name })
+    .set({ auth: updatedAuth, name, fromAddress: input.fromAddress })
     .where(eq(integrationSmtpModel.id, integration.id))
     .returning()
     .then((result) => result[0])

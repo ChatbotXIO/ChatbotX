@@ -1,5 +1,5 @@
+import { encryptedDataSchema, encryptUtils } from "@chatbotx.io/encryption"
 import { z } from "zod"
-import { encryptedDataSchema, encryptUtils } from "./encryption"
 
 const payloadSchema = z.object({
   cid: z.string(),
@@ -7,7 +7,15 @@ const payloadSchema = z.object({
 })
 type UnsubscribePayload = z.infer<typeof payloadSchema>
 
-export async function generateUnsubscribeToken(
+export async function buildUnsubscribeUrl(
+  appUrl: string,
+  contactId: string,
+  workspaceId: string,
+): Promise<string> {
+  return `${appUrl}/unsubscribe?token=${await generateUnsubscribeToken(contactId, workspaceId)}`
+}
+
+async function generateUnsubscribeToken(
   contactId: string,
   workspaceId: string,
 ): Promise<string> {

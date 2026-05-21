@@ -34,7 +34,6 @@ export type CreateSmtpRequest = z.infer<typeof createSmtpRequest>
 
 export const updateSmtpRequest = z
   .object({
-    name: z.string().min(1).max(40),
     provider: smtpProviders,
     host: z.string(),
     port: z.coerce.number().int().positive(),

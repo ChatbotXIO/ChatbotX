@@ -9,6 +9,7 @@ export const integrationSmtpModel = pgTable(
     ...sharedColumns,
     auth: jsonb().notNull(),
     name: text().notNull(),
+    fromAddress: text().notNull(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

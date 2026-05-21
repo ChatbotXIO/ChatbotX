@@ -2232,6 +2232,8 @@
   },
   "unsubscribePage": {
     "title": "You have been unsubscribed.",
-    "description": "You will no longer receive emails from this sender."
+    "description": "You will no longer receive emails from this sender.",
+    "invalidTitle": "Invalid unsubscribe link.",
+    "invalidDescription": "This link is invalid or has expired."
   }
 }
