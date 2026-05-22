@@ -16,6 +16,7 @@ import { faker } from "@faker-js/faker"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
 import type { ExecuteStepProps } from "./flow"
+import type { ExecuteStepResult } from "./step"
 
 export async function countCharacters({
   conversation,
@@ -215,7 +216,7 @@ export async function generateCode({
 export async function getDataFromJSON({
   conversation,
   step,
-}: ExecuteStepProps<GetDataFromJsonStepSchema>) {
+}: ExecuteStepProps<GetDataFromJsonStepSchema>): Promise<ExecuteStepResult> {
   const inputValue = await db.query.contactCustomFieldModel.findFirst({
     where: {
       contactId: conversation.contactId,
@@ -223,10 +224,16 @@ export async function getDataFromJSON({
     },
   })
   if (!inputValue) {
-    return
+    return { status: "error", result: undefined }
   }
 
-  const dataJSON = JSON.parse(inputValue.value)
+  let dataJSON: unknown
+  try {
+    dataJSON = JSON.parse(inputValue.value)
+  } catch {
+    return { status: "error", result: undefined }
+  }
+
   const mapping = step.mapping as {
     jsonPath: string
     outputFieldId: string
@@ -260,8 +267,9 @@ export async function getDataFromJSON({
       if (validCustomFieldIds.includes(data.outputFieldId)) {
         const value = getProperty(dataJSON, data.jsonPath)
 
-        if (value) {
-          const encodedValue = JSON.stringify(value)
+        if (value !== undefined && value !== null) {
+          const encodedValue =
+            typeof value === "string" ? value : JSON.stringify(value)
 
           // Get existing value
           const existing = await tx.query.contactCustomFieldModel.findFirst({
@@ -314,4 +322,6 @@ export async function getDataFromJSON({
       field.newValue,
     )
   }
+
+  return { status: "success", result: undefined }
 }
