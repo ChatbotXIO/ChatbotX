@@ -121,12 +121,16 @@ export const useCustomFieldSelectOptions = (
     customFieldTypes?: CustomFieldType[]
     includeReserved?: boolean
     prefix?: string
+    customFieldValueKey?: "id" | "name"
   } = {},
 ): SelectOption[] => {
-  const { customFieldTypes, includeReserved, prefix } = props
+  const { customFieldTypes, includeReserved, prefix, customFieldValueKey } =
+    props
   const t = useTranslations()
 
-  const { customFields } = useCustomFieldStore((state) => state)
+  const { customFields: rawCustomFields } = useCustomFieldStore(
+    (state) => state,
+  )
 
   const reservedCustomFieldOptions = useMemo(
     () =>
@@ -138,6 +142,11 @@ export const useCustomFieldSelectOptions = (
   )
 
   return useMemo(() => {
+    const customFields =
+      customFieldValueKey === "name"
+        ? rawCustomFields.map((field) => ({ ...field, id: field.name }))
+        : rawCustomFields
+
     const allFields = includeReserved
       ? [...reservedCustomFieldOptions, ...customFields]
       : customFields
@@ -163,8 +172,9 @@ export const useCustomFieldSelectOptions = (
     }))
   }, [
     customFieldTypes,
+    customFieldValueKey,
     includeReserved,
-    customFields,
+    rawCustomFields,
     prefix,
     reservedCustomFieldOptions,
   ])
