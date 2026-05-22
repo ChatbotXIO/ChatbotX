@@ -1,52 +1,49 @@
-import {
-  macAnalyticsService,
-  macTotalResponseSchema,
-  macTrendResponseSchema,
-} from "@chatbotx.io/analytics"
+import { macAnalyticsService } from "@chatbotx.io/analytics"
 import { os } from "@orpc/server"
 import { z } from "zod"
-
-const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 
 const workspaceIdInput = z.object({
   workspaceId: z.string(),
 })
 
-const activeCountInput = workspaceIdInput.extend({
+const billingIdInput = z.object({
   billingId: z.string(),
 })
 
-const dailyBreakdownInput = workspaceIdInput.extend({
-  from: dateString,
-  to: dateString,
+const macCountResponseSchema = z.object({
+  data: z.object({
+    macCount: z.number(),
+  }),
 })
 
 export const analyticsMacRoutes = os.router({
-  macActiveContactCountAPI: os
+  macActiveContactCountByWorkspaceAPI: os
     .route({
       method: "GET",
-      path: "/analytics/mac/active-count",
-      summary: "Get current period active contact count",
+      path: "/analytics/mac/active-count/workspace",
+      summary: "Get current period MAC count for a workspace",
       tags: ["Analytics", "MAC"],
     })
-    .input(activeCountInput)
-    .output(macTotalResponseSchema)
+    .input(workspaceIdInput)
+    .output(macCountResponseSchema)
     .handler(async ({ input }) => {
-      const data = await macAnalyticsService.getActiveContactCount(input)
-      return { data }
+      const macCount =
+        await macAnalyticsService.getActiveContactCountByWorkspaceId(input)
+      return { data: { macCount } }
     }),
 
-  macDailyBreakdownAnalyticsAPI: os
+  macActiveContactCountByBillingAPI: os
     .route({
       method: "GET",
-      path: "/analytics/mac/daily",
-      summary: "Get MAC daily breakdown within a range",
+      path: "/analytics/mac/active-count/billing",
+      summary: "Get current period MAC count for a billing identity",
       tags: ["Analytics", "MAC"],
     })
-    .input(dailyBreakdownInput)
-    .output(macTrendResponseSchema)
+    .input(billingIdInput)
+    .output(macCountResponseSchema)
     .handler(async ({ input }) => {
-      const data = await macAnalyticsService.getDailyBreakdown(input)
-      return { data }
+      const macCount =
+        await macAnalyticsService.getActiveContactCountByBillingId(input)
+      return { data: { macCount } }
     }),
 })

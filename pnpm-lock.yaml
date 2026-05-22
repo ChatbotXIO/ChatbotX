@@ -1400,6 +1400,9 @@ importers:
 
   packages/business:
     dependencies:
+      '@chatbotx.io/analytics':
+        specifier: workspace:*
+        version: link:../analytics
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database

@@ -1,4 +1,5 @@
 import {
+  billingService,
   platformCredentialService,
   resolvePlatformSettingsByDomain,
 } from "@chatbotx.io/business"
@@ -183,6 +184,29 @@ export function createAuth(_config: AuthConfig) {
         generateName: () => `Anonymous ${createId()}`,
       }),
     ],
+    databaseHooks: {
+      user: {
+        create: {
+          // A fresh user always gets a Billing record right after sign-up.
+          after: async (user) => {
+            await billingService.ensureForUserSafe({
+              userId: String(user.id),
+            })
+          },
+        },
+      },
+      session: {
+        create: {
+          // Login success: backfill Billing for users created before this
+          // feature shipped (no-op once a row exists).
+          after: async (session) => {
+            await billingService.ensureForUserSafe({
+              userId: String(session.userId),
+            })
+          },
+        },
+      },
+    },
     session: {
       cookieCache: {
         enabled: true,

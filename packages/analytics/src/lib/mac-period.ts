@@ -1,96 +1,8 @@
-import { addMonths, lastDayOfMonth as dfLastDayOfMonth } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
-
-type LocalDateParts = { year: number; month: number; day: number }
-
-function partsInTimezone(date: Date, timezone: string): LocalDateParts {
-  const formatted = formatInTimeZone(date, timezone, "yyyy-MM-dd")
-  const [yearRaw, monthRaw, dayRaw] = formatted.split("-")
-  return {
-    year: Number.parseInt(yearRaw, 10),
-    month: Number.parseInt(monthRaw, 10),
-    day: Number.parseInt(dayRaw, 10),
-  }
-}
-
-function lastDayOfMonth(year: number, month: number): number {
-  return dfLastDayOfMonth(new Date(Date.UTC(year, month - 1, 1))).getUTCDate()
-}
-
-function toIsoDate({ year, month, day }: LocalDateParts): string {
-  return `${year.toString().padStart(4, "0")}-${month
-    .toString()
-    .padStart(2, "0")}-${day.toString().padStart(2, "0")}`
-}
-
-function addMonth(
-  parts: LocalDateParts,
-  months: number,
-  anchorDay: number,
-): LocalDateParts {
-  const base = new Date(Date.UTC(parts.year, parts.month - 1, anchorDay))
-  const shifted = addMonths(base, months)
-  const year = shifted.getUTCFullYear()
-  const month = shifted.getUTCMonth() + 1
-  const day = Math.min(anchorDay, lastDayOfMonth(year, month))
-  return { year, month, day }
-}
-
-export function formatLocalDate(date: Date, timezone: string): string {
-  return formatInTimeZone(date, timezone, "yyyy-MM-dd")
-}
 
 export function truncateHourInTimezone(date: Date, timezone: string): Date {
   const zonedIso = formatInTimeZone(date, timezone, "yyyy-MM-dd'T'HH:00:00XXX")
   return new Date(zonedIso)
-}
-
-export type PeriodBounds = {
-  start: string
-  end: string
-}
-
-export function periodContaining(
-  date: Date,
-  timezone: string,
-  anchorDay: number,
-): PeriodBounds {
-  const local = partsInTimezone(date, timezone)
-  const clampedAnchorThisMonth = Math.min(
-    anchorDay,
-    lastDayOfMonth(local.year, local.month),
-  )
-
-  const startParts =
-    local.day >= clampedAnchorThisMonth
-      ? { year: local.year, month: local.month, day: clampedAnchorThisMonth }
-      : addMonth(local, -1, anchorDay)
-
-  const endParts = addMonth(startParts, 1, anchorDay)
-
-  return {
-    start: toIsoDate(startParts),
-    end: toIsoDate(endParts),
-  }
-}
-
-export function resolveAnchorDay(input: {
-  subscriptionPeriodStart?: Date | null
-  subscriptionStatus?: string | null
-  workspaceCreatedAt: Date
-  timezone: string
-}): number {
-  const isActive =
-    input.subscriptionStatus === "active" ||
-    input.subscriptionStatus === "trialing"
-  const anchorSource =
-    isActive && input.subscriptionPeriodStart
-      ? input.subscriptionPeriodStart
-      : input.workspaceCreatedAt
-  return Number.parseInt(
-    formatInTimeZone(anchorSource, input.timezone, "d"),
-    10,
-  )
 }
 
 export function calcEndOfDayTtl(timezone = "UTC"): number {
@@ -105,9 +17,84 @@ export function calcEndOfDayTtl(timezone = "UTC"): number {
   return Math.max(Math.floor(diffMs / 1000), 60)
 }
 
-export function macCountCacheKey(
-  workspaceId: string,
-  billingId: string,
-): string {
-  return `mac:count:${workspaceId}:${billingId}`
+export function workspaceMacCacheKey(workspaceId: string): string {
+  return `mac:count:ws:${workspaceId}`
+}
+
+export function billingMacCacheKey(billingId: string): string {
+  return `mac:count:bl:${billingId}`
+}
+
+function startOfMinuteUtc(date: Date): Date {
+  const truncated = new Date(date)
+  truncated.setUTCSeconds(0, 0)
+  return truncated
+}
+
+/**
+ * Adds `months` to `anchor`, clamping the day to the last day of the target
+ * month. This mirrors PostgreSQL `timestamp + interval 'N month'` semantics
+ * (e.g. Jan 31 + 1 month = Feb 28) so JS-computed period bounds stay identical
+ * to those produced by the SQL backfill. Naive `Date.setUTCMonth` overflows
+ * instead (Jan 31 + 1 month = Mar 3), which would create mismatched period
+ * rows.
+ */
+function addMonthsClampedUtc(anchor: Date, months: number): Date {
+  const monthIndex = anchor.getUTCMonth() + months
+  const targetYear = anchor.getUTCFullYear() + Math.floor(monthIndex / 12)
+  const targetMonth = ((monthIndex % 12) + 12) % 12
+  // Day 0 of next month resolves to the last day of the target month.
+  const lastDay = new Date(
+    Date.UTC(targetYear, targetMonth + 1, 0),
+  ).getUTCDate()
+  const day = Math.min(anchor.getUTCDate(), lastDay)
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      day,
+      anchor.getUTCHours(),
+      anchor.getUTCMinutes(),
+      0,
+      0,
+    ),
+  )
+}
+
+export type AnchoredPeriodBounds = {
+  start: Date
+  end: Date
+}
+
+/**
+ * Returns the billing period containing `occurredAt`, anchored to the
+ * day/hour/minute of `billingPeriodStart` (the `Billing.periodStart` of the
+ * active billing record). Bounds are always computed as `anchor + k months`
+ * (clamped) so they are stable and overflow-free. End = start + 1 month.
+ */
+export function anchoredPeriod(
+  occurredAt: Date,
+  billingPeriodStart: Date,
+): AnchoredPeriodBounds {
+  const anchor = startOfMinuteUtc(billingPeriodStart)
+
+  // Estimate the month offset, then correct for clamping/boundary drift.
+  let months =
+    (occurredAt.getUTCFullYear() - anchor.getUTCFullYear()) * 12 +
+    (occurredAt.getUTCMonth() - anchor.getUTCMonth())
+
+  let start = addMonthsClampedUtc(anchor, months)
+  while (start.getTime() > occurredAt.getTime()) {
+    months -= 1
+    start = addMonthsClampedUtc(anchor, months)
+  }
+
+  let end = addMonthsClampedUtc(anchor, months + 1)
+  while (end.getTime() <= occurredAt.getTime()) {
+    months += 1
+    start = end
+    end = addMonthsClampedUtc(anchor, months + 1)
+  }
+
+  return { start, end }
 }

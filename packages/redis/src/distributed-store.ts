@@ -1,5 +1,35 @@
 import type Redis from "ioredis"
 
+// Server-side Redis (Lua) script: atomically increments a counter only when
+// the key already exists. Registered once per client via `defineCommand`.
+const INCR_IF_EXISTS_LUA = `
+if redis.call('EXISTS', KEYS[1]) == 0 then return false end
+local next = redis.call('INCRBY', KEYS[1], ARGV[1])
+if tonumber(ARGV[2]) > 0 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end
+return next
+`
+
+type IncrIfExistsClient = Redis & {
+  incrIfExists: (
+    key: string,
+    delta: string,
+    ttlSeconds: string,
+  ) => Promise<number | false>
+}
+
+const clientsWithIncrIfExists = new WeakSet<Redis>()
+
+function withIncrIfExists(client: Redis): IncrIfExistsClient {
+  if (!clientsWithIncrIfExists.has(client)) {
+    client.defineCommand("incrIfExists", {
+      numberOfKeys: 1,
+      lua: INCR_IF_EXISTS_LUA,
+    })
+    clientsWithIncrIfExists.add(client)
+  }
+  return client as IncrIfExistsClient
+}
+
 export const distributedStoreFactory = (
   getRedisClient: () => Promise<Redis>,
 ) => ({
@@ -204,6 +234,57 @@ export const distributedStoreFactory = (
   async smembers(key: string): Promise<string[]> {
     const redisClient = await getRedisClient()
     return await redisClient.smembers(key)
+  },
+
+  /**
+   * Atomically increments an existing counter. If the key does not exist this
+   * is a no-op and returns null — the counter is intentionally NOT created
+   * from zero, so a stale/expired cache is repopulated from the source of
+   * truth (via `getNumber` + `setNumberIfNotExists`) instead of drifting to a
+   * delta-only value.
+   */
+  async incrementCounter(
+    key: string,
+    delta: number,
+    ttlInSeconds?: number,
+  ): Promise<number | null> {
+    if (delta === 0) {
+      return null
+    }
+    const redisClient = withIncrIfExists(await getRedisClient())
+    const ttl = ttlInSeconds && ttlInSeconds > 0 ? ttlInSeconds : 0
+    const result = await redisClient.incrIfExists(
+      key,
+      String(delta),
+      String(ttl),
+    )
+    return typeof result === "number" ? result : null
+  },
+
+  async getNumber(key: string): Promise<number | null> {
+    const redisClient = await getRedisClient()
+    const value = await redisClient.get(key)
+    if (value === null) {
+      return null
+    }
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  },
+
+  async setNumberIfNotExists(
+    key: string,
+    value: number,
+    ttlInSeconds: number,
+  ): Promise<boolean> {
+    const redisClient = await getRedisClient()
+    const result = await redisClient.set(
+      key,
+      String(value),
+      "EX",
+      ttlInSeconds,
+      "NX",
+    )
+    return result === "OK"
   },
 })
 

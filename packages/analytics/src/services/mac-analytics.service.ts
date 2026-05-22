@@ -1,60 +1,77 @@
+import { db } from "@chatbotx.io/database/client"
 import { distributedStore } from "@chatbotx.io/redis"
 import { logger } from "../lib/logger"
-import { calcEndOfDayTtl, macCountCacheKey } from "../lib/mac-period"
-import { macRepository } from "../repositories/mac.repository"
-import type {
-  GetBreakdownInput,
-  GetPeriodTotalInput,
-  GetPeriodTotalOutput,
-  MacCountCacheValue,
-  MacTrendPoint,
-  ReconcilePeriodInput,
-} from "../schemas/mac"
+import {
+  billingMacCacheKey,
+  calcEndOfDayTtl,
+  workspaceMacCacheKey,
+} from "../lib/mac-period"
+import { macRepository } from "../repositories/postgres/mac.repository"
+import type { ReconcilePeriodInput } from "../schemas/mac"
+
+async function readOrPopulate(
+  cacheKey: string,
+  load: () => Promise<number>,
+): Promise<number> {
+  try {
+    const cached = await distributedStore.getNumber(cacheKey)
+    if (cached !== null) {
+      return cached
+    }
+  } catch (error) {
+    logger.error(error, "[MacAnalyticsService] cache get failed")
+  }
+
+  const macCount = await load()
+
+  try {
+    await distributedStore.setNumberIfNotExists(
+      cacheKey,
+      macCount,
+      calcEndOfDayTtl(),
+    )
+  } catch (error) {
+    logger.error(error, "[MacAnalyticsService] cache populate failed")
+  }
+
+  return macCount
+}
 
 export class MacAnalyticsService {
-  async getActiveContactCount(
-    input: GetPeriodTotalInput,
-  ): Promise<GetPeriodTotalOutput> {
-    const cacheKey = macCountCacheKey(input.workspaceId, input.billingId)
-
-    try {
-      const cached = await distributedStore.get<MacCountCacheValue>(cacheKey)
-      if (cached) {
-        return cached
-      }
-    } catch (error) {
-      logger.error(
-        error,
-        "[MacAnalyticsService] cache get failed for mac count",
-      )
-    }
-
-    const result = await macRepository.getActiveContactCount(input)
-
-    if (result.periodStart) {
-      try {
-        await distributedStore.put(
-          cacheKey,
-          result satisfies MacCountCacheValue,
-          calcEndOfDayTtl(),
-        )
-      } catch (error) {
-        logger.error(
-          error,
-          "[MacAnalyticsService] cache set failed for mac count",
-        )
-      }
-    }
-
-    return result
+  async getActiveContactCountByWorkspaceId(input: {
+    workspaceId: string
+  }): Promise<number> {
+    return await readOrPopulate(
+      workspaceMacCacheKey(input.workspaceId),
+      async () => {
+        const { macCount } =
+          await macRepository.getActiveContactCountByWorkspaceId(input)
+        return macCount
+      },
+    )
   }
 
-  getDailyBreakdown(input: GetBreakdownInput): Promise<MacTrendPoint[]> {
-    return macRepository.getDailyBreakdown(input)
+  async getActiveContactCountByBillingId(input: {
+    billingId: string
+  }): Promise<number> {
+    return await readOrPopulate(
+      billingMacCacheKey(input.billingId),
+      async () => {
+        const { macCount } =
+          await macRepository.getActiveContactCountByBillingId(input)
+        return macCount
+      },
+    )
   }
 
+  /**
+   * Reconciles the period inside a transaction: the WorkspaceMac rebuild and
+   * the BillingMac re-sum must commit together, or a concurrent increment
+   * landing between them would leave the billing counter summing a stale
+   * snapshot.
+   */
   reconcilePeriod(input: ReconcilePeriodInput): Promise<void> {
-    return macRepository.reconcilePeriod(input)
+    return db.transaction((tx) => macRepository.reconcilePeriod(input, tx))
   }
 }
 

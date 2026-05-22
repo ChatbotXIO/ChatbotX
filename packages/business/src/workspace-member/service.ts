@@ -1,4 +1,5 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import type {
   UserModel,
@@ -52,6 +53,38 @@ export class WorkspaceMemberService extends BaseService {
       async () => await this.listByUserIdUncached(props),
       {
         tags: [`users:${props.userId}:workspace-members`],
+      },
+    )
+  }
+
+  async findOwnerUserIdByWorkspaceId(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+  }): Promise<string | undefined> {
+    const { tx = db, workspaceId } = props
+    const key = `workspaces:${workspaceId}:owner-user-id`
+
+    return await withCache(
+      key,
+      async () => {
+        const [row] = await tx
+          .select({ userId: workspaceMemberModel.userId })
+          .from(workspaceMemberModel)
+          .where(
+            and(
+              eq(workspaceMemberModel.workspaceId, workspaceId),
+              eq(workspaceMemberModel.role, workspaceMemberRoles.enum.owner),
+            ),
+          )
+          .limit(1)
+
+        return row?.userId
+      },
+      {
+        tags: [
+          `workspaces:${workspaceId}`,
+          `workspaces:${workspaceId}:workspace-members`,
+        ],
       },
     )
   }

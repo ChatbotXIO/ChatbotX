@@ -8,6 +8,7 @@
     "./utils": "./src/utils.ts"
   },
   "dependencies": {
+    "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/encryption": "workspace:*",
     "@chatbotx.io/event-bus": "workspace:*",
