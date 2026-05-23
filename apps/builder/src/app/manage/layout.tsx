@@ -1,10 +1,8 @@
-import { organizationService } from "@chatbotx.io/business"
-import { organizationMemberRoles } from "@chatbotx.io/database/partials"
+import { platformSettingService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
+import { env, isCloud } from "@/env"
 import { ManageLayout } from "@/features/manage/manage-layout"
-import { organizationMemberService } from "@/features/organization-members/services"
 import { getCurrentUser } from "@/lib/auth/utils"
-import { getDomainFromHeader } from "@/lib/domain"
 
 export default async function ManageLayoutPage({
   children,
@@ -16,28 +14,21 @@ export default async function ManageLayoutPage({
     return notFound()
   }
 
-  // Find organization by domain
-  const currentDomain = await getDomainFromHeader()
-  try {
-    const organization = await organizationService.findByDomain(currentDomain)
-
-    // Check if user is a member of the organization
-    const organizationMember = await organizationMemberService.findBy({
-      where: {
-        organizationId: organization.id,
-        userId: user.id,
-      },
-    })
-
-    if (
-      !organizationMember ||
-      organizationMember.role !== organizationMemberRoles.enum.admin
-    ) {
+  /**
+   * Cloud edition only allows access to the platform settings page if the user is the platform admin.
+   * Enterprise and Community edition allows access to the platform settings page if the user is the platform admin.
+   */
+  if (isCloud()) {
+    const setting = await platformSettingService.findForUser(user.id)
+    if (!setting?.isEnabled) {
       return notFound()
     }
-
-    return <ManageLayout>{children}</ManageLayout>
-  } catch {
+  } else if (
+    !env.PLATFORM_ADMIN_EMAIL ||
+    user.email !== env.PLATFORM_ADMIN_EMAIL
+  ) {
     return notFound()
   }
+
+  return <ManageLayout>{children}</ManageLayout>
 }

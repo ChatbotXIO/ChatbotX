@@ -11,7 +11,7 @@ export async function listAIFiles(
 ): Promise<ListAIFilesResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const [data, { assetUrl }] = await Promise.all([
+  const [data, { storageUrl }] = await Promise.all([
     db.query.aiFileModel.findMany({
       where: {
         workspaceId: input.workspaceId,
@@ -51,7 +51,7 @@ export async function listAIFiles(
       size: file.size,
       name: file.name,
       path: file.path,
-      url: new URL(file.path, assetUrl).toString(),
+      url: new URL(file.path, storageUrl).toString(),
       chunksCount: file.aiEmbeddings.length,
       processingStatus,
     }

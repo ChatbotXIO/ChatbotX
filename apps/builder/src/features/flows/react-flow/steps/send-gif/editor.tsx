@@ -16,12 +16,13 @@ import { useTranslations } from "next-intl"
 import { type SyntheticEvent, useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { GifFinder } from "@/components/gif-finder"
-import { useStepStore } from "../../stores/step-store-provider"
+import { usePlatformCredentialsStore } from "@/features/platform-credentials/provider/platform-credentials-store-context"
 import { BaseStepEditor } from "../base/editor"
 
 const FindGifDialog = ({ parentName }: { parentName: string }) => {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
+  const giphyApiKey = usePlatformCredentialsStore((s) => s.giphyApiKey)
   const { setValue, getValues } = useFormContext()
   const gifUrl = getValues(`${parentName}.url`)
 
@@ -33,10 +34,6 @@ const FindGifDialog = ({ parentName }: { parentName: string }) => {
     setValue(`${parentName}.url`, gif.images.preview_gif.url)
     setOpen(false)
   }
-
-  const organizationSettings = useStepStore(
-    (state) => state.organizationSetings,
-  )
 
   return (
     <Dialog onOpenChange={setOpen} open={open}>
@@ -66,13 +63,10 @@ const FindGifDialog = ({ parentName }: { parentName: string }) => {
         </DialogHeader>
 
         <div className="h-[calc(100vh-300px)] overflow-y-auto overflow-x-hidden">
-          {organizationSettings?.giphy?.apiKey && (
-            <GifFinder
-              apiKey={organizationSettings.giphy.apiKey}
-              onSelect={handleSelectGif}
-            />
+          {giphyApiKey && (
+            <GifFinder apiKey={giphyApiKey} onSelect={handleSelectGif} />
           )}
-          {!organizationSettings?.giphy?.apiKey && (
+          {!giphyApiKey && (
             <div className="flex flex-col items-center justify-center">
               <p className="text-gray-500 text-sm">
                 {t("messages.noGiphyApiKey")}

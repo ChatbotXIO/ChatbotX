@@ -17,6 +17,7 @@ import { integrationSmtpAPI } from "@/features/integration-smtp/api"
 import { integrationWhatsappAPIs } from "@/features/integration-whatsapp/api"
 import { whatsappMessageTemplateAPIs } from "@/features/integration-whatsapp/message-templates/api"
 import { messagesAPI } from "@/features/messages/api"
+import { platformCredentialsAPI } from "@/features/platform-credentials/api"
 import { savedRepliesAPI } from "@/features/saved-replies/api"
 import { sequencesAPI } from "@/features/sequences/api"
 import { spreadsheetsAPI } from "@/features/spreadsheets/api"
@@ -55,4 +56,5 @@ export const router = {
   errorLogsAPI,
   workspacesAPI,
   aiFunctionsAPI,
+  platformCredentialsAPI,
 }

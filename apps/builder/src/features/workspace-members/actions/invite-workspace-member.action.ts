@@ -21,7 +21,6 @@ export const inviteWorkspaceMemberAction = workspaceActionClient
           permissions: parsedInput.permissions,
           expiresAt: addDays(new Date(), 1),
           workspaceId,
-          organizationId: ctx.workspace.organizationId,
           invitedBy: ctx.user.id,
         })
         .returning()

@@ -15,7 +15,6 @@ import {
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
-import { identifyWorkspaceAndOrganizationFromRequest } from "@/features/integrations/uitls"
 import { integrations } from "@/integration"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
@@ -37,9 +36,6 @@ export const connectTelegramAction = authActionClient
       ctx: { user: UserModel }
     }) => {
       try {
-        const { organization } =
-          await identifyWorkspaceAndOrganizationFromRequest(workspaceId)
-
         // Validate bot token and fetch bot info from Telegram
         const botData = await integrations.telegram.runAction("connect", {
           botToken,
@@ -60,15 +56,18 @@ export const connectTelegramAction = authActionClient
             secretText: botToken,
           }
 
-          if (!workspaceId) {
+          if (workspaceId) {
+            await workspaceService.findOrFail({
+              where: { id: workspaceId },
+            })
+          } else {
             const workspace = await workspaceService.create({
               tx,
               createdBy: ctx.user.id,
-              organization,
               data: {
                 name: botData.username,
                 timezone: "UTC",
-                organizationId: organization.id,
+                ownerId: ctx.user.id,
               },
             })
             workspaceId = workspace.id

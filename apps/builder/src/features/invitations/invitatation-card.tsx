@@ -2,7 +2,6 @@
 
 import type {
   InvitationModel,
-  OrganizationModel,
   UserModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
@@ -17,19 +16,16 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
-import { useOrganizationLogoUrl } from "../organization/utils"
 import { useWorkspaceLogoUrl } from "../workspaces/helpers"
 import { acceptInvitationAction } from "./actions/accept-invitation"
 
 export function InvitationCard({
   invitation,
   workspace,
-  organization,
   user,
 }: {
   invitation: InvitationModel
   workspace: WorkspaceModel | null
-  organization: OrganizationModel
   user: UserModel
 }) {
   const router = useRouter()
@@ -50,13 +46,11 @@ export function InvitationCard({
     <Card className="max-w-lg">
       <CardContent className="flex flex-col gap-4">
         {workspace ? (
-          <WorkspaceInvitationCard
-            organization={organization}
-            user={user}
-            workspace={workspace}
-          />
+          <WorkspaceInvitationCard user={user} workspace={workspace} />
         ) : (
-          <OrganizationInvitationCard organization={organization} user={user} />
+          <p className="text-muted-foreground">
+            {t("invitation.invalidInvitation")}
+          </p>
         )}
         <div className="mt-4 flex justify-center gap-2">
           <Button
@@ -68,7 +62,7 @@ export function InvitationCard({
             {t("actions.cancel")}
           </Button>
           <Button
-            disabled={isPending}
+            disabled={isPending || !workspace}
             onClick={() => execute({ code: invitation.code })}
             type="button"
             variant="default"
@@ -83,11 +77,9 @@ export function InvitationCard({
 
 export function WorkspaceInvitationCard({
   workspace,
-  organization,
   user,
 }: {
   workspace: WorkspaceModel
-  organization: OrganizationModel
   user: UserModel
 }) {
   const t = useTranslations()
@@ -108,7 +100,6 @@ export function WorkspaceInvitationCard({
       <h3 className="font-bold text-lg">
         {t("invitation.chatbotInvitationDescription1", {
           chatbotName: workspace.name,
-          organizationName: organization.name,
         })}
       </h3>
 
@@ -118,42 +109,6 @@ export function WorkspaceInvitationCard({
         {t("invitation.chatbotInvitationDescription2", {
           userName: user.name ?? "",
           chatbotName: workspace.name,
-          organizationName: organization.name,
-        })}
-      </p>
-    </>
-  )
-}
-
-export function OrganizationInvitationCard({
-  organization,
-  user,
-}: {
-  organization: OrganizationModel
-  user: UserModel
-}) {
-  const t = useTranslations()
-  const logoUrl = useOrganizationLogoUrl(organization)
-
-  return (
-    <>
-      <Avatar>
-        <AvatarImage src={logoUrl} />
-        <AvatarFallback>{organization.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-
-      <h3 className="font-bold text-lg">
-        {t("invitation.organizationInvitationDescription1", {
-          organizationName: organization.name,
-        })}
-      </h3>
-
-      <p>Hello,</p>
-
-      <p>
-        {t("invitation.organizationInvitationDescription2", {
-          userName: user.name ?? "",
-          organizationName: organization.name,
         })}
       </p>
     </>

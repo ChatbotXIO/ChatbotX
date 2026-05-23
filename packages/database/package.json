@@ -28,7 +28,6 @@
     "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
-    "backfill:organization-credentials": "dotenv -e ../../.env -- tsx scripts/backfill-organization-credentials.ts",
     "rotate:encryption-key": "dotenv -e ../../.env -- tsx scripts/rotate-encryption-key.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

@@ -222,7 +222,7 @@ export default function PersistentMenuField({
                   <AccordionTrigger>{BRANDING_TITLE}</AccordionTrigger>
                 </div>
 
-                {!isCommunity && (
+                {!isCommunity() && (
                   <Button
                     className="mt-2 text-destructive"
                     onClick={handleRemoveBranding}

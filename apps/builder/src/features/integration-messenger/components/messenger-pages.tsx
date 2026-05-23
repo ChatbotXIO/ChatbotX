@@ -45,9 +45,7 @@ export function FacebookPages({
         onSuccess: ({ data }) => {
           onSuccess?.()
           if (workspaceId) {
-            router.push(
-              `/space/${data.workspaceId}/settings/channels?channel=messenger`,
-            )
+            router.push(`/space/${data.workspaceId}/dashboard`)
           } else {
             router.push("/")
           }

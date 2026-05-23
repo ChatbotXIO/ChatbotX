@@ -4,9 +4,9 @@ import * as schema from "../schema"
 
 export const workspaceRelations = defineRelationsPart(schema, (r) => ({
   workspaceModel: {
-    organization: r.one.organizationModel({
-      from: r.workspaceModel.organizationId,
-      to: r.organizationModel.id,
+    owner: r.one.userModel({
+      from: r.workspaceModel.ownerId,
+      to: r.userModel.id,
     }),
     workspaceUsage: r.one.workspaceUsageModel({
       from: r.workspaceModel.id,

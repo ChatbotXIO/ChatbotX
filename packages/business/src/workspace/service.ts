@@ -4,17 +4,14 @@ import {
   workspaceModel,
   workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
-import type {
-  OrganizationModel,
-  WorkspaceModel,
-} from "@chatbotx.io/database/types"
+import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
 import { workspaceMemberService } from "../workspace-member/service"
 
-type WorkspaceWhere = Partial<{ id: string; organizationId: string }>
+type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
 
 class WorkspaceService extends BaseService {
   async findOrFail(props: {
@@ -40,6 +37,7 @@ class WorkspaceService extends BaseService {
     tx?: DatabaseClient
   }): Promise<WorkspaceModel | undefined> {
     const { where, tx = db } = props
+
     return await withCache(
       `workspaces:${JSON.stringify(props.where)}`,
       async () =>
@@ -54,7 +52,6 @@ class WorkspaceService extends BaseService {
 
   async create(props: {
     data: typeof workspaceModel.$inferInsert
-    organization: OrganizationModel
     createdBy: string
     tx?: DatabaseClient
   }): Promise<WorkspaceModel> {
@@ -69,7 +66,6 @@ class WorkspaceService extends BaseService {
     await tx.insert(workspaceUsageModel).values({
       id: createId(),
       workspaceId: newWorkspace.id,
-      maxContacts: props.organization.defaultMaxContacts,
     })
 
     // Create workspace member

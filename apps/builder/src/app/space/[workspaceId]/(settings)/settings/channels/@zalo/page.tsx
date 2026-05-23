@@ -1,9 +1,11 @@
-import { credentialService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationZalo } from "@/features/integration-zalo/queries"
 import { ZaloManage } from "@/features/integration-zalo/zalo-manage"
-import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function SettingChannelZaloPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -13,9 +15,12 @@ export default async function SettingChannelZaloPage(props: {
     return notFound()
   }
 
-  const userId = await getCurrentUserId()
-  const credential = await credentialService.resolveForUser({
-    userId,
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    return notFound()
+  }
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: workspace.ownerId,
     type: "zalo",
   })
   const hasZaloSettings = Boolean(credential?.publicConfig.clientId)

@@ -24,12 +24,14 @@ type InboxSelectCardProps = {
   messengerPublicConfig: MessengerCredentialPublic | null
   instagramPublicConfig: InstagramCredentialPublic | null
   configuredChannels: ChannelType[]
+  workspaceId?: string | null | undefined
 }
 
 function InboxSelectCard({
   messengerPublicConfig,
   instagramPublicConfig,
   configuredChannels,
+  workspaceId,
 }: InboxSelectCardProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -41,6 +43,7 @@ function InboxSelectCard({
         <MessengerConnect
           publicConfig={messengerPublicConfig}
           trigger={t("actions.continue")}
+          workspaceId={workspaceId}
         />
       )
     }
@@ -50,7 +53,7 @@ function InboxSelectCard({
         {t("actions.continue")}
       </Button>
     )
-  }, [messengerPublicConfig, t])
+  }, [messengerPublicConfig, t, workspaceId])
 
   const connectInstagramTrigger = useMemo(() => {
     if (instagramPublicConfig) {

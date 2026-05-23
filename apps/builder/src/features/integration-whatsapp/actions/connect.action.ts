@@ -1,8 +1,7 @@
 "use server"
 
 import {
-  credentialService,
-  organizationService,
+  platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -16,7 +15,7 @@ import {
   inboxModel,
   integrationWhatsappModel,
 } from "@chatbotx.io/database/schema"
-import type { OrganizationModel, UserModel } from "@chatbotx.io/database/types"
+import type { UserModel } from "@chatbotx.io/database/types"
 import {
   addSystemUser,
   registerPhoneNumber,
@@ -36,7 +35,8 @@ import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
-import { getDomainFromHeader, getOriginUrlFromHeader } from "@/lib/domain"
+import { getOriginUrlFromHeader } from "@/lib/domain"
+import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {
   type ConnectWhatsappResult,
@@ -192,18 +192,17 @@ async function setupOAuthResources(
   whatsappSettings: WhatsappCredential,
 ): Promise<void> {
   await addSystemUser({ auth, whatsappSettings })
-  console.info("addSystemUser")
+  logger.info("addSystemUser")
 
   if (whatsappSettings.businessId) {
     await shareCreditLine({ auth, whatsappSettings })
-    console.info("shareCreditLine")
+    logger.info("shareCreditLine")
   }
 }
 
 async function persistIntegration(params: {
   tx: Transaction
   userId: string
-  organization: OrganizationModel
   workspaceId: string | null | undefined
   integrationId: string
   phoneNumber: WhatsappPhoneNumber
@@ -214,7 +213,6 @@ async function persistIntegration(params: {
   const {
     tx,
     userId,
-    organization,
     workspaceId,
     integrationId,
     phoneNumber,
@@ -229,11 +227,10 @@ async function persistIntegration(params: {
     const workspace = await workspaceService.create({
       tx,
       createdBy: userId,
-      organization,
       data: {
         name: phoneNumber.verified_name,
         timezone: "UTC",
-        organizationId: organization.id,
+        ownerId: userId,
       },
     })
     resolvedWorkspaceId = workspace.id
@@ -300,9 +297,9 @@ async function subscribeManualWebhook(
       })
       .where(eq(integrationWhatsappModel.id, integrationId))
 
-    console.info("subscribeWebhook")
-  } catch (subscribeError) {
-    console.error(subscribeError, "Failed to subscribe webhook")
+    logger.info("subscribeWebhook")
+  } catch (err) {
+    logger.error({ err }, "Failed to subscribe webhook")
   }
 }
 
@@ -340,12 +337,18 @@ export const connectWhatsappAction = authActionClient
       parsedInput: ConnectWhatsappSchema
     }): Promise<ConnectWhatsappResult> => {
       try {
-        const domain = await getDomainFromHeader()
-        const organization = await organizationService.findByDomain(domain)
-        const whatsappCredential = await credentialService.resolveForUser({
-          userId: ctx.user.id,
-          type: "whatsapp",
-        })
+        const ownerId = parsedInput.workspaceId
+          ? ((
+              await workspaceService.find({
+                where: { id: parsedInput.workspaceId },
+              })
+            )?.ownerId ?? ctx.user.id)
+          : ctx.user.id
+        const whatsappCredential =
+          await platformCredentialService.resolveForOwner({
+            ownerId,
+            type: "whatsapp",
+          })
 
         if (!whatsappCredential) {
           throw new ChatbotXException("Whatsapp App settings not found")
@@ -395,13 +398,12 @@ export const connectWhatsappAction = authActionClient
         }
 
         await registerPhoneNumber({ auth })
-        console.info("registerPhoneNumber")
+        logger.info("registerPhoneNumber")
 
         const workspaceId = await db.transaction((tx) =>
           persistIntegration({
             tx,
             userId: ctx.user.id,
-            organization,
             workspaceId: parsedInput.workspaceId,
             integrationId,
             phoneNumber,
@@ -427,7 +429,7 @@ export const connectWhatsappAction = authActionClient
           verifyToken,
         })
       } catch (err: unknown) {
-        console.error(err, "Unable to verify whatsapp token")
+        logger.error({ err }, "Unable to verify whatsapp token")
 
         if (err instanceof ChatbotXException) {
           throw err

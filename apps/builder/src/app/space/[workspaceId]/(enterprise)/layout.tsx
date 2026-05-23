@@ -6,7 +6,7 @@ export default function EnterpriseLayout({
 }: {
   children: React.ReactNode
 }) {
-  if (isCommunity) {
+  if (isCommunity()) {
     notFound()
   }
   return <div>{children}</div>

@@ -2,11 +2,7 @@
 
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  invitationModel,
-  organizationModel,
-  userModel,
-} from "@chatbotx.io/database/schema"
+import { invitationModel, userModel } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 
 export async function findInvitation({ code }: { code: string }) {
@@ -39,18 +35,9 @@ export async function findInvitation({ code }: { code: string }) {
       })) ?? null
   }
 
-  const organization = await findOrFail({
-    table: organizationModel,
-    where: {
-      id: invitation.organizationId,
-    },
-    message: "Organization not found",
-  })
-
   return {
     invitation,
     user,
     workspace,
-    organization,
   }
 }

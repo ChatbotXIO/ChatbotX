@@ -7,9 +7,13 @@ export const keys = () =>
       NEXT_PUBLIC_EDITION: z
         .enum(["community", "enterprise", "cloud"])
         .default("community"),
+      NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
     },
     runtimeEnv: process.env,
   })
 
+export const env = keys()
+
 export const isCommunity = () => keys().NEXT_PUBLIC_EDITION === "community"
 export const isEnterprise = () => keys().NEXT_PUBLIC_EDITION === "enterprise"
+export const isCloud = () => keys().NEXT_PUBLIC_EDITION === "cloud"

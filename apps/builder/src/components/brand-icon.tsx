@@ -17,7 +17,7 @@ export const BrandIcon = ({
 }: BrandIconProps) => {
   const currentTheme = useCurrentTheme()
   const [mounted, setMounted] = useState(false)
-  const { logo } = usePlatformSettings()
+  const { logoLightUrl, logoDarkUrl, faviconUrl } = usePlatformSettings()
 
   useEffect(() => {
     setMounted(true)
@@ -27,13 +27,7 @@ export const BrandIcon = ({
     return <div className={cn(className, "h-8 w-auto")} />
   }
 
-  const baseLogoSrc =
-    currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
-  const logoSrc = logo || baseLogoSrc
-
-  const baseIconSrc =
-    currentTheme === "dark" ? "/brand/icon_white.svg" : "/brand/icon_black.svg"
-  const iconSrc = logo || baseIconSrc
+  const logoUrl = currentTheme === "dark" ? logoLightUrl : logoDarkUrl
 
   return (
     <>
@@ -42,10 +36,10 @@ export const BrandIcon = ({
         alt={alt}
         className={cn(
           className,
-          "h-8 w-auto group-data-[collapsible=icon]:hidden",
+          "brand-expanded h-8 w-auto group-data-[collapsible=icon]:hidden",
         )}
         height={5}
-        src={logoSrc}
+        src={logoUrl}
         width={10}
       />
       {/* Icon - shown when collapsed */}
@@ -53,11 +47,11 @@ export const BrandIcon = ({
         alt={alt}
         className={cn(
           className,
-          "hidden h-8 w-(--sidebar-width-icon) group-data-[collapsible=icon]:block",
+          "brand-collapsed hidden h-8 w-(--sidebar-width-icon) group-data-[collapsible=icon]:block dark:invert",
         )}
         height={5}
         loading="eager"
-        src={iconSrc}
+        src={faviconUrl}
         width={10}
       />
     </>

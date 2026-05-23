@@ -1,4 +1,3 @@
-import type { OrganizationSettings } from "@chatbotx.io/database/partials"
 import type { ButtonStepProps } from "@chatbotx.io/flow-config"
 import { createStore } from "zustand"
 
@@ -15,7 +14,6 @@ export type StepState = {
   openButtonEditorDialog: boolean
 
   openNodeDetailSheet: boolean
-  organizationSetings: OrganizationSettings | null
 }
 
 export type StepStore = StepState & {
@@ -24,9 +22,6 @@ export type StepStore = StepState & {
   setOpenButtonEditorDialog: (open: boolean) => void
   setButtonPath: (buttonPath: string | null) => void
   setOpenNodeDetailSheet: (openNodeDetailSheet: boolean) => void
-  setOrganizationSetings: (
-    organizationSetings: OrganizationSettings | null,
-  ) => void
   onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => void
 }
 
@@ -37,7 +32,6 @@ export const createStepStore = (initState?: Partial<StepState>) => {
     openButtonEditorDialog: false,
 
     openNodeDetailSheet: false,
-    organizationSetings: null,
     activeFlowId: null,
   }
 
@@ -49,8 +43,6 @@ export const createStepStore = (initState?: Partial<StepState>) => {
     setButtonPath: (buttonPath) => set({ buttonPath }),
     setOpenNodeDetailSheet: (openNodeDetailSheet) =>
       set({ openNodeDetailSheet }),
-    setOrganizationSetings: (organizationSetings) =>
-      set({ organizationSetings }),
     onChangeButtonData: (updatedButtonData: UpdatedButtonData | null) => {
       set({ updatedButtonData })
     },

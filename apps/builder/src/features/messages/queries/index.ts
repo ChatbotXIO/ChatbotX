@@ -1,11 +1,10 @@
 "use server"
 
+import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db } from "@chatbotx.io/database/client"
 import type { MessageModel } from "@chatbotx.io/database/types"
-import {
-  getPaginationWithDefaults,
-  getPublicUrl,
-} from "@chatbotx.io/database/utils"
+import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { z } from "zod"
 import { decodeCursor, encodeCursor } from "@/lib/pagination"
 import type {
@@ -18,6 +17,10 @@ import type { MessageResourceWithRelations } from "../schema/resource"
 export const listMessages = async (
   input: ListMessagesRequest,
 ): Promise<ListMessagesResponse> => {
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: input.workspaceId,
+  })
+
   // await assertCurrentUserCanAccessChatbot(workspaceId)
   const where: Record<string, unknown> = {
     workspaceId: input.workspaceId,
@@ -67,7 +70,7 @@ export const listMessages = async (
             ...message,
             attachments: message.attachments.map((attachment) => ({
               ...attachment,
-              url: getPublicUrl(attachment.originPath),
+              url: getPublicFileUrl(attachment.originPath, storageUrl),
             })),
           }
         }
@@ -94,6 +97,10 @@ export const listMessages = async (
 export const findMessage = async (
   input: FindMessageRequest,
 ): Promise<MessageResourceWithRelations> => {
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: input.workspaceId,
+  })
+
   const message = await db.query.messageModel.findFirst({
     with: {
       attachments: true,
@@ -109,7 +116,7 @@ export const findMessage = async (
     ...message,
     attachments: message.attachments.map((attachment) => ({
       ...attachment,
-      url: getPublicUrl(attachment.originPath),
+      url: getPublicFileUrl(attachment.originPath, storageUrl),
     })),
   }
 }

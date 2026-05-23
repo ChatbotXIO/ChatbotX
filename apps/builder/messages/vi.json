@@ -841,6 +841,25 @@
     "logo": {
       "label": "Logo"
     },
+    "logoLight": {
+      "label": "Logo (Sáng)"
+    },
+    "logoDark": {
+      "label": "Logo (Tối)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Tên thương hiệu",
+      "placeholder": "Nhập tên thương hiệu"
+    },
+    "policyUrl": {
+      "label": "URL Chính sách bảo mật"
+    },
+    "termsOfServiceUrl": {
+      "label": "URL Điều khoản dịch vụ"
+    },
     "showLogo": {
       "label": "Hiển thị logo cá nhân"
     },
@@ -1425,8 +1444,8 @@
   "integrations": {
     "title": "Tích hợp"
   },
-  "organizationSettings": {
-    "title": "Cài đặt tổ chức",
+  "platformSettings": {
+    "title": "Cài đặt Nền tảng",
     "errors": {
       "giphyApiKeyRequired": "API Key là bắt buộc để cấu hình GIPHY.",
       "giphyApiKeyInvalid": "API key GIPHY không hợp lệ",
@@ -1442,7 +1461,7 @@
   "messages": {
     "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
-    "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
+    "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm vào Cài đặt Nền tảng.",
     "connectedSuccess": "{feature} đã được kết nối thành công",
     "connectFailed": "Không thể kết nối {feature}",
     "connectSuccess": "Đã kết nối {feature} thành công",
@@ -1825,10 +1844,8 @@
     "title": "Telegram"
   },
   "invitation": {
-    "chatbotInvitationDescription1": "Tham gia {chatbotName} trên {organizationName}",
-    "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName} trên {organizationName}.",
-    "organizationInvitationDescription1": "Tham gia {organizationName}",
-    "organizationInvitationDescription2": "{userName} đã mời bạn tham gia {organizationName}."
+    "chatbotInvitationDescription1": "Tham gia {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} đã mời bạn tham gia {chatbotName}."
   },
   "inboxTeams": {
     "title": "Nhóm hộp thư"
@@ -2076,5 +2093,29 @@
   "QRCode": {
     "title": "QR Code",
     "description": "Share this code so people open your tracking link."
+  },
+  "platformCredentials": {
+    "title": "Thông tin nền tảng"
+  },
+  "platformBranding": {
+    "title": "Thương hiệu nền tảng",
+    "sections": {
+      "identity": {
+        "title": "Nhận diện thương hiệu",
+        "description": "Tên và màu chủ đề hiển thị trên toàn nền tảng"
+      },
+      "assets": {
+        "title": "Tài sản hình ảnh",
+        "description": "Logo và favicon hiển thị trên trình duyệt và giao diện"
+      },
+      "legal": {
+        "title": "Liên kết pháp lý",
+        "description": "Liên kết hiển thị trong phần footer và luồng xác nhận"
+      },
+      "advanced": {
+        "title": "Nâng cao",
+        "description": "Chèn CSS hoặc JavaScript tùy chỉnh vào mọi trang"
+      }
+    }
   }
 }

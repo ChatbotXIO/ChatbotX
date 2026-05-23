@@ -2,8 +2,7 @@
 
 import {
   buildContext,
-  credentialService,
-  organizationService,
+  platformCredentialService,
   resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -27,7 +26,6 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
-import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {
@@ -48,35 +46,41 @@ export const selectAccountAction = authActionClient
       try {
         let workspaceId = parsedInput.workspaceId
 
-        const domain = await getDomainFromHeader()
-        const organization = await organizationService.findByDomain(domain)
-        const instagramCredential = await credentialService.resolveForUser({
-          userId: ctx.user.id,
-          type: "instagram",
-        })
+        const ownerId = parsedInput.workspaceId
+          ? ((
+              await workspaceService.find({
+                where: { id: parsedInput.workspaceId },
+              })
+            )?.ownerId ?? ctx.user.id)
+          : ctx.user.id
+        const instagramCredential =
+          await platformCredentialService.resolveForOwner({
+            ownerId,
+            type: "instagram",
+          })
         if (!instagramCredential) {
           throw new ChatbotXException("Instagram App settings not found")
         }
         const instagramSettings = instagramCredential.config
-
-        const { appUrl } = await resolvePlatformSettings({
-          organizationId: organization.id,
-        })
 
         await db.transaction(async (tx) => {
           if (!workspaceId) {
             const workspace = await workspaceService.create({
               tx,
               createdBy: ctx.user.id,
-              organization,
               data: {
                 name: parsedInput.igName,
                 timezone: "UTC",
-                organizationId: organization.id,
+                ownerId: ctx.user.id,
               },
             })
             workspaceId = workspace.id
           }
+
+          const { appUrl } = await resolvePlatformSettings({
+            workspaceId,
+            tx,
+          })
 
           const longLivedToken = await exchangeLongLivedToken(
             instagramSettings,

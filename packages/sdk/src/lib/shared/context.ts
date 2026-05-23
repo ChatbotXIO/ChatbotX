@@ -43,7 +43,8 @@ export type Context<AO extends AuthValue, ID = Record<string, unknown>> = {
   integrationDetail?: ID
   platform: {
     appUrl: string
-    realtimeUrl: string
+    wsUrl: string
+    storageUrl: string
     getRealtimeAuthHeaders: (target: {
       kind: "guest" | "workspace" | "user"
       id: string

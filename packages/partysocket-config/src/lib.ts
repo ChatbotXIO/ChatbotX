@@ -1,10 +1,7 @@
 import ky from "ky"
 import { type RealtimeAudience, signRealtimeToken } from "./auth"
 import { logger } from "./logger"
-import type {
-  RealtimeEventData,
-  RealtimeEventNotifyExportResult,
-} from "./schemas"
+import type { RealtimeEventData } from "./schemas"
 
 export interface BroadcastTarget {
   secret: string
@@ -61,26 +58,5 @@ export async function broadcastToGuestParty(
   } catch (error) {
     logger.error(error, "Failed to broadcast to guest party")
     throw error
-  }
-}
-
-export async function broadcastToUserParty(
-  target: BroadcastTarget,
-  userId: string,
-  json: RealtimeEventNotifyExportResult,
-) {
-  try {
-    return await ky.post(`${target.url}/parties/users/${userId}`, {
-      headers: {
-        Authorization: await buildAuthHeader(
-          { kind: "user", id: userId },
-          target.secret,
-        ),
-      },
-      json,
-    })
-  } catch (error) {
-    logger.error(error, `Failed to broadcast to user ${userId} party`)
-    return null
   }
 }

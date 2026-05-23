@@ -1,4 +1,7 @@
-import { organizationService, workspaceService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -50,10 +53,6 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // find organization from domain and current user
-  const organization = await organizationService.findByDomain(url.hostname)
-  const organizationSettings = organization.settings
-
   const userId = await getCurrentUserId()
   if (!userId) {
     return notFound()
@@ -63,10 +62,9 @@ export const handleCallback = async (
     ? await workspaceService.findById({ id: stateParams.workspaceId })
     : await workspaceService.create({
         data: {
-          organizationId: organization.id,
           name: "New Workspace",
+          ownerId: userId,
         },
-        organization,
         createdBy: userId,
       })
 
@@ -74,12 +72,16 @@ export const handleCallback = async (
   let googleSheetsAuth: Oauth2AuthValue | null = null
   switch (integrationType) {
     case "zalo": {
-      if (!organizationSettings.zalo) {
+      const zaloCredential = await platformCredentialService.resolveForOwner({
+        ownerId: workspace.ownerId,
+        type: "zalo",
+      })
+      if (!zaloCredential) {
         return notFound()
       }
 
       await connectZaloHandler({
-        zaloSettings: organizationSettings.zalo,
+        zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
         req,
       })
@@ -88,7 +90,11 @@ export const handleCallback = async (
     }
 
     case "googleSheets": {
-      if (!organizationSettings.google) {
+      const googleCredential = await platformCredentialService.resolveForOwner({
+        ownerId: workspace.ownerId,
+        type: "google",
+      })
+      if (!googleCredential) {
         return notFound()
       }
 
@@ -100,7 +106,7 @@ export const handleCallback = async (
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
-          ...organizationSettings.google,
+          ...googleCredential.config,
           redirectUrl: callbackUrl,
         },
         req,

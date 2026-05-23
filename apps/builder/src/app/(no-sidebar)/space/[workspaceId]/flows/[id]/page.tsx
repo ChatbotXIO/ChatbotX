@@ -40,21 +40,11 @@ export default async function FlowPage({ params }: FlowPageProps) {
     return notFound()
   }
 
-  const organization = await db.query.organizationModel.findFirst({
-    where: {
-      id: userAndWorkspace.targetWorkspace.organizationId,
-    },
-  })
-  if (!organization) {
-    return notFound()
-  }
-
   return (
     <div className="flex h-screen w-screen flex-col">
       <FlowDetail
         flow={flow}
         flowVersion={draftFlowVersion as FlowVersionResource}
-        organization={organization}
       />
     </div>
   )

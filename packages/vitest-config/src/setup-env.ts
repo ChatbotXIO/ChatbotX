@@ -10,10 +10,9 @@
  */
 
 const TEST_DEFAULTS: Readonly<Record<string, string>> = {
-  NODE_ENV: "test",
+  DATABASE_DEBUG: "true",
 
   // App environment
-  NEXT_PUBLIC_ENVIRONMENT: "test",
   NEXT_PUBLIC_EDITION: "community",
 
   // Database — non-routable host so accidental real connections fail fast
@@ -28,24 +27,21 @@ const TEST_DEFAULTS: Readonly<Record<string, string>> = {
   S3_BUCKET: "test",
   S3_REGION: "us-west-2",
   S3_SECRET_ACCESS_KEY: "test",
-  S3_ENPOINT: "http://127.0.0.1:1",
+  S3_ENDPOINT: "http://127.0.0.1:1",
 
   // Better Auth
   BETTER_AUTH_SECRET: "test-secret-32-bytes-padding-padding=",
   BETTER_AUTH_URL: "http://localhost:3123",
 
   // Next.js public
-  NEXT_PUBLIC_ASSET_URL: "http://localhost:9000/chatbotx/",
   NEXT_PUBLIC_BUILDER_URL: "http://localhost:3123",
-  NEXT_PUBLIC_REALTIME_URL: "http://localhost:1999",
-  NEXT_PUBLIC_SMTP_FROM: "test@localhost",
 
   // Realtime
-  REALTIME_SESSION_VERIFY_URL: "http://localhost:3123",
   REALTIME_BROADCAST_SECRET: "test-broadcast-secret",
 
   // SMTP
   SMTP_SERVER: "smtp://test:test@127.0.0.1:1",
+  SMTP_FROM: "test@localhost",
 
   // Scheduler
   SCHEDULER_BUCKET_RANGE: "0-255",

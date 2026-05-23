@@ -14,6 +14,8 @@ import { withCache } from "@chatbotx.io/redis"
 import { and, eq, isNull } from "drizzle-orm"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
+import { platformSettingService } from "../enterprise/platform-setting/service"
+import { logger } from "../logger"
 
 type CredentialRow<T extends CredentialType> = Omit<
   PlatformCredentialModel,
@@ -33,7 +35,7 @@ type DecryptedCredential<T extends CredentialType> = {
   updatedAt: Date
 }
 
-class CredentialService extends BaseService {
+class PlatformCredentialService extends BaseService {
   // ─── User-scoped ─────────────────────────────────────────────────────────────
 
   async findForUser<T extends CredentialType>(props: {
@@ -44,7 +46,7 @@ class CredentialService extends BaseService {
   }): Promise<CredentialRow<T> | undefined> {
     const { userId, type, livemode = false, tx = db } = props
     const row = await withCache(
-      `credentials:${userId}:${type}:${livemode}`,
+      `cred:u:${userId}:${type}:${livemode}`,
       async () => {
         const [result] = await tx
           .select()
@@ -60,10 +62,7 @@ class CredentialService extends BaseService {
         return result
       },
       {
-        dynamicTags: (cached) =>
-          cached
-            ? [`credentials:${userId}`, `credentials:${userId}:${type}`]
-            : undefined,
+        tags: [`cred:u:${userId}`],
       },
     )
     return row as CredentialRow<T> | undefined
@@ -75,12 +74,16 @@ class CredentialService extends BaseService {
     livemode?: boolean
     tx?: DatabaseClient
   }): Promise<DecryptedCredential<T> | undefined> {
-    const row = await this.findForUser(props)
-    if (!row) {
+    try {
+      const row = await this.findForUser(props)
+      if (!row) {
+        return
+      }
+      return this._decrypt(row)
+    } catch (err) {
+      logger.error({ props, err }, "Failed to decrypt credential")
       return
     }
-    const { userId, type, livemode = false } = props
-    return this._decrypt(row, `user:${userId}:${type}:${livemode}`)
   }
 
   async upsertForUser<T extends CredentialType>(props: {
@@ -134,10 +137,7 @@ class CredentialService extends BaseService {
         },
       })
 
-    await this.invalidateCacheTags([
-      `credentials:${userId}:${type}`,
-      `credentials:${userId}:${type}:${livemode}`,
-    ])
+    await this.invalidateCacheTags(`cred:u:${userId}`)
   }
 
   async removeForUser(props: {
@@ -156,10 +156,7 @@ class CredentialService extends BaseService {
           eq(platformCredentialModel.livemode, livemode),
         ),
       )
-    await this.invalidateCacheTags([
-      `credentials:${userId}:${type}`,
-      `credentials:${userId}:${type}:${livemode}`,
-    ])
+    await this.invalidateCacheTags(`cred:u:${userId}`)
   }
 
   // ─── Platform-scoped (system / super-admin registers these) ─────────────────
@@ -171,7 +168,7 @@ class CredentialService extends BaseService {
   }): Promise<CredentialRow<T> | undefined> {
     const { type, livemode = false, tx = db } = props
     const row = await withCache(
-      `credentials:platform:${type}:${livemode}`,
+      `cred:p:${type}:${livemode}`,
       async () => {
         const [result] = await tx
           .select()
@@ -187,13 +184,7 @@ class CredentialService extends BaseService {
         return result
       },
       {
-        dynamicTags: (cached) =>
-          cached
-            ? [
-                `credentials:platform:${type}`,
-                `credentials:platform:${type}:${livemode}`,
-              ]
-            : undefined,
+        tags: [`cred:p:${type}`],
       },
     )
     return row as CredentialRow<T> | undefined
@@ -204,12 +195,16 @@ class CredentialService extends BaseService {
     livemode?: boolean
     tx?: DatabaseClient
   }): Promise<DecryptedCredential<T> | undefined> {
-    const row = await this.findPlatform(props)
-    if (!row) {
+    try {
+      const row = await this.findPlatform(props)
+      if (!row) {
+        return
+      }
+      return this._decrypt(row)
+    } catch (err) {
+      logger.error({ props, err }, "Failed to decrypt platform credential")
       return
     }
-    const { type, livemode = false } = props
-    return this._decrypt(row, `platform:${type}:${livemode}`)
   }
 
   async upsertPlatform<T extends CredentialType>(props: {
@@ -235,10 +230,46 @@ class CredentialService extends BaseService {
         set: { publicConfig, value },
       })
 
-    await this.invalidateCacheTags([
-      `credentials:platform:${type}`,
-      `credentials:platform:${type}:${livemode}`,
-    ])
+    await this.invalidateCacheTags(`cred:p:${type}`)
+  }
+
+  // ─── Scoped helpers (userId=undefined → platform-scoped) ────────────────────
+
+  find<T extends CredentialType>(props: {
+    userId: string | undefined
+    type: T
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<CredentialRow<T> | undefined> {
+    if (props.userId !== undefined) {
+      return this.findForUser({ ...props, userId: props.userId })
+    }
+    return this.findPlatform(props)
+  }
+
+  findDecrypted<T extends CredentialType>(props: {
+    userId: string | undefined
+    type: T
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    if (props.userId !== undefined) {
+      return this.findDecryptedForUser({ ...props, userId: props.userId })
+    }
+    return this.findDecryptedPlatform(props)
+  }
+
+  upsert<T extends CredentialType>(props: {
+    userId: string | undefined
+    type: T
+    config: CredentialByType[T]
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<void> {
+    if (props.userId !== undefined) {
+      return this.upsertForUser({ ...props, userId: props.userId })
+    }
+    return this.upsertPlatform(props)
   }
 
   // ─── Resolver: user → platform fallback ─────────────────────────────────────
@@ -253,12 +284,32 @@ class CredentialService extends BaseService {
     const userRow = await this.findForUser(props)
 
     if (userRow && !userRow.usePlatformCredential) {
-      return this._decrypt(
-        userRow,
-        `user:${props.userId}:${props.type}:${livemode}`,
-      )
+      return this._decrypt(userRow)
     }
 
+    return this.findDecryptedPlatform({
+      type: props.type,
+      livemode,
+      tx: props.tx,
+    })
+  }
+
+  async resolveForOwner<T extends CredentialType>(props: {
+    ownerId: string
+    type: T
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<DecryptedCredential<T> | undefined> {
+    const setting = await platformSettingService.findForUser(props.ownerId)
+    const livemode = props.livemode ?? false
+    if (setting?.isEnabled) {
+      return this.findDecryptedForUser({
+        userId: props.ownerId,
+        type: props.type,
+        livemode,
+        tx: props.tx,
+      })
+    }
     return this.findDecryptedPlatform({
       type: props.type,
       livemode,
@@ -280,13 +331,12 @@ class CredentialService extends BaseService {
 
   private async _decrypt<T extends CredentialType>(
     row: CredentialRow<T>,
-    aad: string,
   ): Promise<DecryptedCredential<T>> {
     const blob = credentialEncryptedSchema.parse(row.value)
     const schema = credentialSchemas[row.type] as unknown as z.ZodType<
       CredentialByType[T]
     >
-    const config = await encryptUtils.decryptObject(blob, schema, aad)
+    const config = await encryptUtils.decryptObject(blob, schema)
     return {
       id: row.id,
       userId: row.userId ?? null,
@@ -299,4 +349,4 @@ class CredentialService extends BaseService {
   }
 }
 
-export const credentialService = new CredentialService()
+export const platformCredentialService = new PlatformCredentialService()

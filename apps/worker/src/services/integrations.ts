@@ -1,7 +1,6 @@
 import {
   buildContext,
   type IntegrationContext,
-  organizationService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, findOrFail, sql } from "@chatbotx.io/database/client"
@@ -10,7 +9,6 @@ import { inboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   InboxModel,
-  OrganizationModel,
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { integration as integrationChatbotx } from "@chatbotx.io/integration-chatbotx"
@@ -160,23 +158,6 @@ export const integrationService = {
     }
 
     return result.rows[0]
-  },
-
-  getWorkspaceAndOrganizationFromWorkspaceId: async (
-    workspaceId: string,
-  ): Promise<{
-    workspace: WorkspaceModel
-    organization: OrganizationModel
-  }> => {
-    const workspace = await workspaceService.findById({ id: workspaceId })
-    const organization = await organizationService.findById(
-      workspace.organizationId,
-    )
-
-    return {
-      workspace,
-      organization,
-    }
   },
 }
 

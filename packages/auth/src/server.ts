@@ -1,5 +1,5 @@
 import {
-  credentialService,
+  platformCredentialService,
   resolvePlatformSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -40,21 +40,30 @@ export function createAuth(_config: AuthConfig) {
     }),
     socialProviders: {
       google: async () => {
-        const googleCredential = await credentialService.findDecryptedPlatform({
-          type: "google",
-        })
-        if (!googleCredential) {
+        try {
+          const googleCredential =
+            await platformCredentialService.findDecryptedPlatform({
+              type: "google",
+            })
+          if (!googleCredential) {
+            return await {
+              enabled: false,
+              clientId: "",
+              clientSecret: "",
+            }
+          }
+
+          return await {
+            enabled: true,
+            clientId: googleCredential.config.clientId,
+            clientSecret: googleCredential.config.clientSecret,
+          }
+        } catch {
           return await {
             enabled: false,
             clientId: "",
             clientSecret: "",
           }
-        }
-
-        return await {
-          enabled: true,
-          clientId: googleCredential.config.clientId,
-          clientSecret: googleCredential.config.clientSecret,
         }
       },
     },
@@ -73,11 +82,10 @@ export function createAuth(_config: AuthConfig) {
           getPlatformSettings(request),
         ])
 
-        const { name: brandName, logo } = platformInfo
+        const { name: brandName, logoLightUrl } = platformInfo
         await sendResetPassword(user.email, {
           brandName,
-          brandLogoUrl:
-            logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
+          brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
           subject: "Reset your password",
           userName: user.name ?? user.email,
@@ -97,12 +105,11 @@ export function createAuth(_config: AuthConfig) {
           getPublicOriginFromRequest(request as unknown as Request),
           getPlatformSettings(request),
         ])
-        const { name: brandName, logo } = platformInfo
+        const { name: brandName, logoLightUrl } = platformInfo
 
         await sendSignUpVerification(user.email, {
           brandName,
-          brandLogoUrl:
-            logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
+          brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
           subject: `${brandName} Email Verification`,
           userName: user.name ?? user.email,
@@ -123,7 +130,7 @@ export function createAuth(_config: AuthConfig) {
             getPublicOriginFromRequest(request as unknown as Request),
             getPlatformSettings(request as unknown as Request),
           ])
-          const { name: brandName, logo } = platformInfo
+          const { name: brandName, logoLightUrl } = platformInfo
 
           const user = await db.query.userModel.findFirst({ where: { email } })
           if (!user) {
@@ -134,8 +141,7 @@ export function createAuth(_config: AuthConfig) {
 
           await sendMagicLink(email, {
             brandName,
-            brandLogoUrl:
-              logo ?? new URL("/brand/logo_white.svg", originUrl).toString(),
+            brandLogoUrl: logoLightUrl,
             brandUrl: new URL("/", originUrl).toString(),
             subject: "Verify your email",
             userName: user.name ?? email,

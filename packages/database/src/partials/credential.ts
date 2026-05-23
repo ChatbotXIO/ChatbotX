@@ -265,5 +265,6 @@ export const credentialEncryptedSchema = z.object({
   iv: z.string(),
   text: z.string(),
   tag: z.string(),
+  aad: z.string().optional(),
 })
 export type CredentialEncrypted = z.infer<typeof credentialEncryptedSchema>

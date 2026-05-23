@@ -36,7 +36,7 @@ export const SignUpForm = ({ callbackUrl, ...props }: SignUpFormProps) => {
           <div className="grid gap-6">
             <EmailPasswordSignUp />
 
-            {!isCommunity && (
+            {!isCommunity() && (
               <>
                 <OrSeparator />
                 <SSOSignUp />

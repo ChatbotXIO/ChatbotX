@@ -18,6 +18,7 @@ export const encryptedDataSchema = z.object({
   iv: z.string().length(IV_LENGTH_BYTES * 2),
   text: z.string().min(1),
   tag: z.string().length(AUTH_TAG_LENGTH_BYTES * 2),
+  aad: z.string().optional(),
 })
 export type EncryptedData = z.infer<typeof encryptedDataSchema>
 
@@ -118,6 +119,7 @@ export const encryptUtils = {
       iv: bytesToHex(iv),
       text: bytesToHex(ciphertext),
       tag: bytesToHex(tag),
+      ...(aad !== undefined && { aad }),
     }
   },
 
@@ -133,8 +135,9 @@ export const encryptUtils = {
       hexToBytes(encryptedData.text),
       hexToBytes(encryptedData.tag),
     )
+    const resolvedAad = encryptedData.aad ?? aad
     const raw = await crypto.subtle.decrypt(
-      buildAlgorithm(iv, aad),
+      buildAlgorithm(iv, resolvedAad),
       key,
       combined,
     )

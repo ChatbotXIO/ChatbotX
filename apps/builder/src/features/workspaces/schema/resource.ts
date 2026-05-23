@@ -7,7 +7,6 @@ import z from "zod"
 
 export const chatbotResource = createSelectSchema(workspaceModel, {
   id: zodBigintAsString(),
-  organizationId: zodBigintAsString(),
 })
 export type WorkspaceResource = z.infer<typeof chatbotResource>
 

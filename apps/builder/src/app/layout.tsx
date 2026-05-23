@@ -9,7 +9,7 @@ import { PlatformSettingsProvider } from "@/features/platform"
 import { getPlatformSettings } from "@/features/platform/utils"
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { name, logo } = await getPlatformSettings()
+  const { name, faviconUrl } = await getPlatformSettings()
 
   return {
     title: name,
@@ -17,12 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: [
       {
         rel: "icon",
-        url: logo ?? "/brand/favicon/favicon-96x96.png",
+        url: faviconUrl ?? "/brand/favicon/favicon-96x96.png",
         type: "image/png",
       },
       {
         rel: "apple-touch-icon",
-        url: logo ?? "/brand/favicon/apple-touch-icon.png",
+        url: faviconUrl ?? "/brand/favicon/apple-touch-icon.png",
         sizes: "180x180",
       },
     ],

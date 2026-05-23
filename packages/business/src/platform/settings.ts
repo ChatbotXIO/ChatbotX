@@ -1,114 +1,127 @@
+import type { DatabaseClient } from "@chatbotx.io/database/client"
+import type { PlatformSettingModel } from "@chatbotx.io/database/types"
+import { customDomainService } from "../enterprise/custom-domain/service"
+import { platformSettingService } from "../enterprise/platform-setting/service"
 import { integrationContextEnv } from "../integration-context/keys"
-import { isEnterprise } from "../keys"
-import { organizationService } from "../organization/service"
-import { resolvePlatformSettingsByOrganization } from "../organization/urls"
+import { isCloud, isEnterprise } from "../keys"
 import { workspaceService } from "../workspace/service"
+import { deriveUrls } from "./derive-urls"
 
 export type PlatformSettings = {
   appUrl: string
-  realtimeUrl: string
-  assetUrl: string
+  wsUrl: string
+  storageUrl: string
   name: string
-  logo: string | null
+  logoLightUrl: string
+  logoDarkUrl: string
+  faviconUrl: string
   theme: string | null
   customJS: string | null
   customCSS: string | null
+  policyUrl: string | null
+  termsOfServiceUrl: string | null
 }
 
 const getDefaultSettings = (): PlatformSettings => {
   const env = integrationContextEnv()
+  const derived = deriveUrls(env.NEXT_PUBLIC_BUILDER_URL)
   return {
-    appUrl: env.NEXT_PUBLIC_BUILDER_URL,
-    realtimeUrl: env.NEXT_PUBLIC_REALTIME_URL,
-    assetUrl: env.NEXT_PUBLIC_ASSET_URL,
+    appUrl: derived.appUrl,
+    wsUrl: derived.wsUrl,
+    storageUrl: derived.storageUrl,
     name: "ChatbotX",
-    logo: null,
+    logoLightUrl: `${derived.appUrl}/brand/logo_white.svg`,
+    logoDarkUrl: `${derived.appUrl}/brand/logo_black.svg`,
+    faviconUrl: `${derived.appUrl}/brand/icon_black.svg`,
     theme: null,
     customJS: null,
     customCSS: null,
+    policyUrl: `${derived.appUrl}/privacy-policy`,
+    termsOfServiceUrl: `${derived.appUrl}/terms-of-service`,
   }
 }
 
-type ResolvePlatformSettingsArgs =
-  | { workspaceId: string }
-  | { organizationId: string }
-
-/**
- * Resolve the public-facing URLs (app, realtime, asset) for a workspace or
- * organization.
- * On community edition, returns the global `NEXT_PUBLIC_*` env vars.
- * On enterprise/cloud, uses the per-org `appUrl`/`wsUrl`/`assetUrl`
- * (with `app.<domain>` etc. fallbacks).
- */
-export const resolvePlatformSettings = async (
-  args: ResolvePlatformSettingsArgs,
-): Promise<PlatformSettings> => {
-  const defaultSettings = getDefaultSettings()
-
-  const organizationId =
-    "organizationId" in args
-      ? args.organizationId
-      : (await workspaceService.findById({ id: args.workspaceId }))
-          .organizationId
-
-  const organization = await organizationService.findById(organizationId)
-
-  if (!isEnterprise()) {
-    return {
-      ...defaultSettings,
-      name: organization.name,
-      logo: organization.logo ?? null,
-      theme: organization.theme,
-      customJS: organization.customJS,
-      customCSS: organization.customCSS,
-    }
+const applyPlatformSetting = (
+  defaults: PlatformSettings,
+  setting: PlatformSettingModel | null | undefined,
+): PlatformSettings => {
+  if (!setting) {
+    return defaults
   }
-
-  return resolvePlatformSettingsByOrganization(organization)
+  return {
+    ...defaults,
+    name: setting.brandName ?? defaults.name,
+    logoLightUrl: setting.logoLightPath
+      ? new URL(setting.logoLightPath, defaults.storageUrl).toString()
+      : defaults.logoLightUrl,
+    logoDarkUrl: setting.logoDarkPath
+      ? new URL(setting.logoDarkPath, defaults.storageUrl).toString()
+      : defaults.logoDarkUrl,
+    faviconUrl: setting.faviconPath
+      ? new URL(setting.faviconPath, defaults.storageUrl).toString()
+      : defaults.faviconUrl,
+    theme: null,
+    // customJs is gated to Enterprise/Cloud only
+    customJS: isEnterprise() || isCloud() ? (setting.customJs ?? null) : null,
+    customCSS: setting.customCss ?? defaults.customCSS,
+    policyUrl: setting.policyUrl ?? defaults.policyUrl,
+    termsOfServiceUrl: setting.termsOfServiceUrl ?? defaults.termsOfServiceUrl,
+  }
 }
 
 /**
- * Resolve the `REALTIME_BROADCAST_SECRET` for a workspace or organization.
- * On community edition (and until per-org secrets are wired up), returns the
- * global `REALTIME_BROADCAST_SECRET` env var.
- *
- * TODO: on enterprise/cloud, fetch the per-org broadcast secret from the database.
+ * Resolve the public-facing platform settings for a workspace.
+ * On community edition, returns env-based defaults merged with any
+ * PlatformSetting row found for the workspace owner.
+ * On enterprise/cloud, also applies CustomDomain URL overrides via
+ * the private enterprise source.
  */
-export const resolveBroadcastSecret = (
-  _args: ResolvePlatformSettingsArgs,
-): string => integrationContextEnv().REALTIME_BROADCAST_SECRET
+export const resolvePlatformSettings = async (args: {
+  workspaceId: string
+  tx?: DatabaseClient
+}): Promise<PlatformSettings> => {
+  const defaults = getDefaultSettings()
+
+  const workspace = await workspaceService.findById({
+    id: args.workspaceId,
+    tx: args.tx,
+  })
+  const setting = await platformSettingService.findForUser(workspace.ownerId)
+
+  if (!setting?.isEnabled) {
+    return defaults
+  }
+
+  return applyPlatformSetting(defaults, setting)
+}
 
 /**
- * Like {@link resolvePlatformSettings} but identifies the org by request hostname
- * (typically the `x-domain` header set by the builder proxy). Useful for
- * routes/server actions that don't have a `workspaceId` yet.
+ * Resolve the `REALTIME_BROADCAST_SECRET` for a workspace.
+ * Returns the global env var (per-user secrets are an enterprise concern).
+ */
+export const resolveBroadcastSecret = (_args: {
+  workspaceId: string
+}): string => integrationContextEnv().REALTIME_BROADCAST_SECRET
+
+/**
+ * Resolve platform settings by request hostname (from the `x-domain` header
+ * set by the builder proxy). On enterprise/cloud, looks up the CustomDomain
+ * record to find the user's PlatformSetting. On community, returns env defaults.
  */
 export const resolvePlatformSettingsByDomain = async (
   domain: string | null | undefined,
 ): Promise<PlatformSettings> => {
-  const defaultSettings = getDefaultSettings()
+  const defaults = getDefaultSettings()
 
-  // On enterprise, domain is required to identify the org; without it fall back to defaults.
-  // On community/cloud a single org exists, so we still look it up (ignoring domain).
-  if (isEnterprise() && !domain) {
-    return defaultSettings
+  if (!(domain && (isEnterprise() || isCloud()))) {
+    return defaults
   }
 
-  const where = isEnterprise() && domain ? { domain } : {}
-  const organization = await organizationService.find({ where })
-
-  if (!organization) {
-    return defaultSettings
+  const customDomain = await customDomainService.findActiveByDomain(domain)
+  if (!customDomain) {
+    return defaults
   }
 
-  if (!isEnterprise()) {
-    return {
-      ...defaultSettings,
-      theme: organization.theme,
-      customJS: organization.customJS,
-      customCSS: organization.customCSS,
-    }
-  }
-
-  return resolvePlatformSettingsByOrganization(organization)
+  const setting = await platformSettingService.findForUser(customDomain.userId)
+  return applyPlatformSetting(defaults, setting)
 }

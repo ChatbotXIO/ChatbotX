@@ -37,7 +37,7 @@ export const sendDynamicEmail = async (
   const html = await renderDynamicEmailHtml(props)
   const transporter = options?.transporter ?? createSmtpTransporter()
   await transporter.sendMail({
-    from: options?.from ?? env.NEXT_PUBLIC_SMTP_FROM,
+    from: options?.from ?? env.SMTP_FROM,
     to: email,
     subject: props.subject,
     html,

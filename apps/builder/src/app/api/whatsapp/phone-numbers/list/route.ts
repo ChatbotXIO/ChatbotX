@@ -1,4 +1,4 @@
-import { credentialService } from "@chatbotx.io/business"
+import { platformCredentialService } from "@chatbotx.io/business"
 import { listPhoneNumbers as whatsappListPhoneNumbers } from "@chatbotx.io/integration-whatsapp/api/phone-number"
 import { DEFAULT_API_VERSION } from "@chatbotx.io/integration-whatsapp/constants"
 import { type NextRequest, NextResponse } from "next/server"
@@ -9,9 +9,11 @@ import { serverErrorHandler } from "@/lib/errors/server-handler"
 export async function POST(request: NextRequest) {
   try {
     const userId = await getCurrentUserId()
-
-    const credential = await credentialService.resolveForUser({
-      userId,
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const credential = await platformCredentialService.resolveForOwner({
+      ownerId: userId,
       type: "whatsapp",
     })
     const version = credential?.publicConfig.version ?? DEFAULT_API_VERSION

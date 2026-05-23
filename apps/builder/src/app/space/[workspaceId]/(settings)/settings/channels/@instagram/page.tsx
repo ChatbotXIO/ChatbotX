@@ -1,9 +1,11 @@
-import { credentialService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InstagramManage } from "@/features/integration-instagram/components/instagram-manage"
 import { listIntegrationInstagrams } from "@/features/integration-instagram/queries"
-import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function SettingChannelInstagramPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -15,9 +17,12 @@ export default async function SettingChannelInstagramPage(props: {
     return notFound()
   }
 
-  const userId = await getCurrentUserId()
-  const credential = await credentialService.resolveForUser({
-    userId,
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    return notFound()
+  }
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: workspace.ownerId,
     type: "instagram",
   })
   const promises = Promise.all([

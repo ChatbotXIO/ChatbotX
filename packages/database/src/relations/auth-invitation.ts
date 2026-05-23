@@ -12,9 +12,5 @@ export const invitationRelations = defineRelationsPart(schema, (r) => ({
       from: r.invitationModel.invitedBy,
       to: r.userModel.id,
     }),
-    organization: r.one.organizationModel({
-      from: r.invitationModel.organizationId,
-      to: r.organizationModel.id,
-    }),
   },
 }))

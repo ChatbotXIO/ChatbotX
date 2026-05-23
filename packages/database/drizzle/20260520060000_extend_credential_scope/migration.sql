@@ -1,3 +1,10 @@
+-- Embed the old AAD (organizationId:type) into each encrypted blob so that
+-- decryptObject can read it from blob.aad without needing an external AAD argument.
+-- Must run before organizationId is dropped (Phase 2+).
+UPDATE "OrganizationCredential"
+SET "value" = "value" || jsonb_build_object('aad', "organizationId"::text || ':' || "type")
+WHERE NOT ("value" ? 'aad');
+
 -- Restructure OrganizationCredential → Credential.
 -- Remove organizationId scope entirely; credentials are user-scoped or platform-scoped.
 -- userId IS NOT NULL → owned by that user/reseller

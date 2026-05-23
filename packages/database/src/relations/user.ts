@@ -24,19 +24,9 @@ export const userRelations = defineRelationsPart(schema, (r) => ({
       from: r.userModel.id,
       to: r.auditLogModel.userId,
     }),
-    organizations: r.many.organizationModel({
-      from: r.userModel.id.through(r.organizationMemberModel.userId),
-      to: r.organizationModel.id.through(
-        r.organizationMemberModel.organizationId,
-      ),
-    }),
     sessions: r.many.sessionModel({
       from: r.userModel.id,
       to: r.sessionModel.userId,
-    }),
-    organizationMembers: r.many.organizationMemberModel({
-      from: r.userModel.id,
-      to: r.organizationMemberModel.userId,
     }),
   },
 }))

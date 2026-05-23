@@ -2,48 +2,20 @@ import { createId } from "@chatbotx.io/utils"
 import { db } from "../client"
 import {
   accountModel,
-  organizationMemberModel,
-  organizationModel,
   userModel,
   workspaceMemberModel,
   workspaceModel,
   workspaceUsageModel,
 } from "../schema"
 
-const resolveBuilderHostname = () => {
-  const raw = process.env.NEXT_PUBLIC_BUILDER_URL?.trim()
-  if (!raw) {
-    return "localhost"
-  }
-  try {
-    return new URL(raw).hostname
-  } catch {
-    return "localhost"
-  }
-}
-
 async function main() {
-  let organization = await db.query.organizationModel.findFirst()
-  if (organization) {
-    return
-  }
-  organization = await db
-    .insert(organizationModel)
-    .values({
-      id: createId(),
-      name: "ChatbotX",
-      createdAt: new Date(),
-      domain: resolveBuilderHostname(),
-    })
-    .returning()
-    .then((result) => result[0])
-
+  // Skip if a user already exists (idempotent seed)
   let user = await db.query.userModel.findFirst()
   if (user) {
     return
   }
 
-  // create user
+  // Create demo user
   user = await db
     .insert(userModel)
     .values({
@@ -63,21 +35,14 @@ async function main() {
     userId: user?.id ?? "",
   })
 
-  // add user to organization
-  await db.insert(organizationMemberModel).values({
-    organizationId: organization?.id ?? "",
-    userId: user?.id ?? "",
-    role: "admin",
-  })
-
-  // create workspace
+  // Create workspace
   const workspacesCount = await db.$count(workspaceModel)
   if (workspacesCount === 0) {
     const workspace = await db
       .insert(workspaceModel)
       .values({
         id: createId(),
-        organizationId: organization?.id ?? "",
+        ownerId: user?.id ?? "",
         name: "DEMO",
         timezone: "Asia/Saigon",
       })

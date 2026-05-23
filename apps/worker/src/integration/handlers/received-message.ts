@@ -1,4 +1,9 @@
-import { broadcastToWorkspaceParty, buildContext } from "@chatbotx.io/business"
+import {
+  broadcastToWorkspaceParty,
+  buildContext,
+  resolvePlatformSettings,
+} from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -16,7 +21,6 @@ import type {
   InboxModel,
   MessageModel,
 } from "@chatbotx.io/database/types"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   emitContactCreated,
@@ -70,6 +74,9 @@ export const receiveMessage = async (
       `No integration registered for channel: ${integrationType}`,
     )
   }
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: inbox.workspaceId,
+  })
   const ctx = await buildContext({
     workspaceId: inbox.workspaceId,
     integrationType,
@@ -148,7 +155,7 @@ export const receiveMessage = async (
             messageId: newMessage.id,
             workspaceId: inbox.workspaceId,
             conversationId: conversation.id,
-            url: getPublicUrl(attachment.originPath),
+            url: getPublicFileUrl(attachment.originPath, storageUrl),
           })),
         )
       }

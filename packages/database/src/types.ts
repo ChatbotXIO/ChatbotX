@@ -47,7 +47,9 @@ export type AIFileModel = typeof schema.aiFileModel.$inferSelect
 export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
-export type OrganizationModel = typeof schema.organizationModel.$inferSelect
+export type CustomDomainModel = typeof schema.customDomainModel.$inferSelect
+export type PlatformSettingModel =
+  typeof schema.platformSettingModel.$inferSelect
 export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
@@ -75,8 +77,6 @@ export type CustomFieldModel = typeof schema.customFieldModel.$inferSelect
 export type BotFieldModel = typeof schema.botFieldModel.$inferSelect
 export type ReflinkModel = typeof schema.reflinkModel.$inferSelect
 export type MagicLinkModel = typeof schema.magicLinkModel.$inferSelect
-export type OrganizationMember =
-  typeof schema.organizationMemberModel.$inferSelect
 export type IntegrationInstagramModel =
   typeof schema.integrationInstagramModel.$inferSelect
 export type WhatsappMessageTemplateModel =

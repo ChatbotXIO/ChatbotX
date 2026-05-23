@@ -9,7 +9,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { httpLogger } from "./lib/log"
 
-const publicRoutes = ["/integrations", "/r", "/auth", "/api"]
+const publicRoutes = ["/integrations", "/r", "/auth", "/api", "/ws", "/storage"]
 const signinPath = "/auth/sign-in"
 
 async function _logRequest(request: NextRequest) {
@@ -101,6 +101,6 @@ function isPublicRoute(pathname: string) {
 
 export const config = {
   matcher: [
-    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
+    "/((?!webchat|zalo_verifier|pricing|chat-widget|assets|ws|storage|_next/static|_next/image|favicon.ico|avatars|.*.svg|brand|openapi.json).*)",
   ],
 }

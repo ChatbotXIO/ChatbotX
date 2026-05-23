@@ -13,11 +13,8 @@ export type AuthHeaderProps = {
 
 export const AuthHeader = ({ title }: AuthHeaderProps) => {
   const currentTheme = useCurrentTheme()
-  const { name, logo } = usePlatformSettings()
-
-  const baseLogoSrc =
-    currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
-  const logoSrc = logo || baseLogoSrc
+  const { name, logoLightUrl, logoDarkUrl } = usePlatformSettings()
+  const logoUrl = currentTheme === "dark" ? logoLightUrl : logoDarkUrl
 
   return (
     <>
@@ -26,7 +23,7 @@ export const AuthHeader = ({ title }: AuthHeaderProps) => {
           alt={name}
           height={80}
           priority={true}
-          src={logoSrc}
+          src={logoUrl}
           width={271}
         />
       </div>

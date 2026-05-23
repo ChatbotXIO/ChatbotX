@@ -13,14 +13,14 @@ import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
-  const { realtimeUrl } = usePlatformSettings()
+  const { wsUrl } = usePlatformSettings()
 
   const { handleNewMessage, updateContact, updateConversations } = useChatStore(
     (state) => state,
   )
 
   usePartySocket({
-    host: realtimeUrl,
+    host: wsUrl,
     room: workspaceId,
     party: "workspaces",
     // protocol: "ws",

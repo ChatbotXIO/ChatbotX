@@ -1,6 +1,6 @@
 "use server"
 
-import { credentialService } from "@chatbotx.io/business"
+import { platformCredentialService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import type { UserModel, WorkspaceModel } from "@chatbotx.io/database/types"
 import { HandleRequestType } from "@chatbotx.io/sdk"
@@ -28,8 +28,8 @@ export const connectGoogleSheets = workspaceActionClient
       }
       parsedInput: ConnectGoogleSheetsSchema
     }) => {
-      const googleCredential = await credentialService.resolveForUser({
-        userId: ctx.user.id,
+      const googleCredential = await platformCredentialService.resolveForOwner({
+        ownerId: ctx.workspace.ownerId,
         type: "google",
       })
       if (!googleCredential) {

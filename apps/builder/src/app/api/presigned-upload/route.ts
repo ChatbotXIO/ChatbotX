@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await safeJsonParse(req)
     const data = createPresignedUploadRequest.parse(body)
 
-    const { assetUrl } = await getPlatformSettings()
+    const { storageUrl } = await getPlatformSettings()
 
     const result = await Promise.all(
       data.map(async (d) => {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
           // d.mimeType,
         )
 
-        const publicUrl = new URL(d.path, assetUrl).toString()
+        const publicUrl = new URL(d.path, storageUrl).toString()
 
         return {
           presignedPostUrl,

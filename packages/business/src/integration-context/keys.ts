@@ -8,8 +8,6 @@ export const integrationContextEnv = () =>
         .enum(["community", "enterprise", "cloud"])
         .default("community"),
       NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
-      NEXT_PUBLIC_REALTIME_URL: z.url().default("http://localhost:1999"),
-      NEXT_PUBLIC_ASSET_URL: z.url().default("http://localhost:3000"),
       REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
     },
     runtimeEnv: process.env,

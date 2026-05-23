@@ -12,7 +12,6 @@ import {
 } from "../partials/shared"
 import type { WorkspaceMemberPermissions } from "../partials/workspace"
 import { userModel } from "./auth-user"
-import { organizationModel } from "./organization"
 import { workspaceModel } from "./workspace"
 
 export const invitationModel = pgTable(
@@ -22,12 +21,6 @@ export const invitationModel = pgTable(
     code: text().notNull(),
     permissions: jsonb().$type<WorkspaceMemberPermissions>().notNull(),
     expiresAt: timestamp(timestampConfig).notNull(),
-    organizationId: bigintAsString()
-      .notNull()
-      .references(() => organizationModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
     workspaceId: bigintAsString().references(() => workspaceModel.id, {
       onDelete: "cascade",
       onUpdate: "cascade",

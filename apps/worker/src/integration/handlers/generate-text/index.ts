@@ -18,7 +18,7 @@ import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { sendMessageWithRender } from "../../utils/message"
-import { type ExecuteStepProps, sendFlow } from "../flow"
+import { type ExecuteStepProps, sendFlow } from "../flow-utils"
 import { buildAIMessages } from "./messages"
 
 export async function handleAIGenerateText(

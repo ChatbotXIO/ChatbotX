@@ -31,27 +31,15 @@ import {
   detectFlowVersion,
 } from "../../lib/db"
 import { logger } from "../../lib/logger"
+import { type ExecuteMultipleStepsProps, seekConnectedNode } from "./flow-utils"
 import { flowStepHandlers } from "./step"
 
-export type ExecuteMultipleStepsProps = {
-  conversation: ConversationModel
-  contactInbox: ContactInboxModel
-  flowVersion: FlowVersionModel
-  useLatestFlowVersion?: boolean
-  targetType?: "node" | "button" | "step" | "quickReply"
-  targetId?: string
-  targetNodeId?: string
-  ctx?: {
-    variables: Variables
-  }
-  steps: BaseStepSchema[]
-  trackingContext?: BotResponseTrackingContext
-  metadata?: MetadataPayload
-}
-
-export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
-  step: T
-}
+export type {
+  ExecuteMultipleStepsProps,
+  ExecuteStepProps,
+  SuccessErrorStepSchema,
+} from "./flow-utils"
+export { seekConnectedNode, sendFlow } from "./flow-utils"
 
 type ExecuteStepsAndQuickRepliesProps = {
   conversation: ConversationModel
@@ -73,54 +61,6 @@ type ExecuteStepsAndQuickRepliesProps = {
   }
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
-}
-
-export const seekConnectedNode = (
-  flowVersion: FlowVersionModel,
-  sourceId: string,
-) => {
-  const connectedNode = (flowVersion.edges as EdgeSchema[]).find(
-    (edge) => edge.sourceHandle === sourceId,
-  )
-  return connectedNode?.target
-}
-
-export type SuccessErrorStepSchema = BaseStepSchema & {
-  successNodeId?: string
-  errorNodeId?: string
-}
-
-export async function sendFlow(
-  props: ExecuteStepProps<SuccessErrorStepSchema>,
-  isSuccess: boolean,
-) {
-  const { conversation, contactInbox, flowVersion, step } = props
-  if (!flowVersion) {
-    return
-  }
-
-  const nodeId: string | undefined = isSuccess
-    ? step.successNodeId
-    : step.errorNodeId
-
-  if (!nodeId) {
-    return
-  }
-
-  const connectedNodeId = seekConnectedNode(flowVersion, nodeId)
-
-  if (connectedNodeId) {
-    await integrationQueue.add(IntegrationJobAction.sendFlow, {
-      type: IntegrationJobAction.sendFlow,
-      data: {
-        conversationId: conversation,
-        contactInboxId: contactInbox,
-        flowId: flowVersion.flowId,
-        nodeId: connectedNodeId,
-        metadata: props.metadata,
-      },
-    })
-  }
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {

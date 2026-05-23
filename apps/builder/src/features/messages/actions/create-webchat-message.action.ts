@@ -1,7 +1,9 @@
 "use server"
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   db,
   eq,
@@ -22,7 +24,6 @@ import type {
   ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -56,6 +57,10 @@ export async function handleCreateWebchatMessage({
     await db.transaction(
       async (tx) => await getConversationFromInput(tx, parsedInput),
     )
+
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: parsedInput.workspaceId,
+  })
 
   // Process flow if exists
   if ("flowId" in parsedInput) {
@@ -141,7 +146,7 @@ export async function handleCreateWebchatMessage({
           .then((result) =>
             result.map((attachment) => ({
               ...attachment,
-              url: getPublicUrl(attachment.originPath),
+              url: getPublicFileUrl(attachment.originPath, storageUrl),
             })),
           )
 

@@ -1,3 +1,5 @@
+import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
   attachmentModel,
@@ -11,7 +13,6 @@ import type {
   MessageModel,
   UserModel,
 } from "@chatbotx.io/database/types"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -31,6 +32,10 @@ export const createMessage = async (props: {
   user?: UserModel
 }) => {
   const { conversation, parsedInput, user, contactInbox } = props
+
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: conversation.workspaceId,
+  })
 
   // Handle send flow
   if ("flowId" in parsedInput) {
@@ -96,7 +101,7 @@ export const createMessage = async (props: {
         .then((result) =>
           result.map((attachment) => ({
             ...attachment,
-            url: getPublicUrl(attachment.originPath),
+            url: getPublicFileUrl(attachment.originPath, storageUrl),
           })),
         )
 

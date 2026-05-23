@@ -1,6 +1,6 @@
 import { boolean, pgTable, text } from "drizzle-orm/pg-core"
 import { bigintAsString, sharedColumns } from "../partials/shared"
-import { organizationModel } from "./organization"
+import { userModel } from "./auth-user"
 
 export const workspaceModel = pgTable("Workspace", {
   ...sharedColumns,
@@ -12,12 +12,11 @@ export const workspaceModel = pgTable("Workspace", {
   brandColor: text().notNull().default("#016DFF"),
   developmentMode: boolean().default(false).notNull(),
   logo: text(),
-  organizationId: bigintAsString()
+  ownerId: bigintAsString()
     .notNull()
-    .references(() => organizationModel.id, {
+    .references(() => userModel.id, {
       onDelete: "restrict",
       onUpdate: "cascade",
     }),
-  plan: text().notNull().default("free"),
   token: text(),
 })

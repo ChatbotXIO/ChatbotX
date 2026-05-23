@@ -1,6 +1,5 @@
 import ky from "ky"
 import type * as Party from "partykit/server"
-import { env } from "../env"
 
 export type Session = {
   user: {
@@ -31,10 +30,7 @@ export const getAuthSession = async (
   }
 
   const headers = proxiedRequest.headers
-  const origin =
-    env.REALTIME_SESSION_VERIFY_URL ??
-    headers.get("origin") ??
-    "https://example.com"
+  const origin = headers.get("origin") ?? "https://example.com"
 
   const verificationUrl = new URL(
     "/api/auth/one-time-token/verify",

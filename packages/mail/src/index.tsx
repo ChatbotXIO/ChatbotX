@@ -14,7 +14,7 @@ const transporter = createSmtpTransporter()
 
 async function sendMail(email: string, subject: string, html: string) {
   await transporter.sendMail({
-    from: env.NEXT_PUBLIC_SMTP_FROM,
+    from: env.SMTP_FROM,
     to: email,
     subject,
     html,

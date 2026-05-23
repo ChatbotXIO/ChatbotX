@@ -26,7 +26,7 @@ export const db = drizzle({
   client: pool,
   schema,
   relations,
-  logger: env.NODE_ENV !== "production",
+  logger: env.DATABASE_DEBUG,
 })
 
 export * from "drizzle-orm"

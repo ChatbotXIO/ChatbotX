@@ -1,9 +1,11 @@
-import { credentialService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { listIntegrationWhatsapps } from "@/features/integration-whatsapp/queries"
 import { WhatsappManage } from "@/features/integration-whatsapp/whatsapp-manage"
-import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function SettingChannelWhatsappPage(props: {
   params: Promise<{ workspaceId: string }>
@@ -13,9 +15,12 @@ export default async function SettingChannelWhatsappPage(props: {
     return notFound()
   }
 
-  const userId = await getCurrentUserId()
-  const credential = await credentialService.resolveForUser({
-    userId,
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    return notFound()
+  }
+  const credential = await platformCredentialService.resolveForOwner({
+    ownerId: workspace.ownerId,
     type: "whatsapp",
   })
 

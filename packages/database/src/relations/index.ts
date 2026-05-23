@@ -14,7 +14,6 @@ import {
   analyticsSequenceEventRelations,
 } from "./analytics"
 import { attachmentRelations } from "./attachment"
-import { auditLogRelations } from "./audit-log"
 import { accountRelations } from "./auth-account"
 import { invitationRelations } from "./auth-invitation"
 import { sessionRelations } from "./auth-session"
@@ -33,6 +32,9 @@ import { conversationRelations } from "./conversation"
 import { conversationParticipantRelations } from "./conversation-participant"
 import { platformCredentialRelations } from "./credential"
 import { customFieldRelations } from "./custom-field"
+import { auditLogRelations } from "./enterprise/audit-log"
+import { customDomainRelations } from "./enterprise/custom-domain"
+import { platformSettingRelations } from "./enterprise/platform-setting"
 import { errorLogRelations } from "./error-log"
 import { flowRelations } from "./flow"
 import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
@@ -57,8 +59,6 @@ import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
-import { organizationRelations } from "./organization"
-import { organizationMemberRelations } from "./organization-member"
 import { reflinkRelations } from "./reflink"
 import { savedReplyRelations } from "./save-reply"
 import { sequenceRelations } from "./sequence"
@@ -96,7 +96,8 @@ export const relations = {
   ...conversationRelations,
   ...messageRelations,
   ...automatedResponseRelations,
-  ...organizationRelations,
+  ...customDomainRelations,
+  ...platformSettingRelations,
   ...platformCredentialRelations,
   ...workspaceUsageRelations,
   ...contactCustomFieldRelations,
@@ -137,7 +138,6 @@ export const relations = {
   ...contactsOnSequenceRelations,
   ...sequenceDispatchRelations,
   ...inboxContactStatsRelations,
-  ...organizationMemberRelations,
   ...triggerRelations,
   ...webhookRelations,
   ...conditionRelations,

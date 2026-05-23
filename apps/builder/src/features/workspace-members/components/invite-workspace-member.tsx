@@ -175,7 +175,7 @@ export function AddWorkspaceMemberForm({
         <Label>{t("fields.permissions.label")}</Label>
         <div className="flex flex-col gap-4">
           <SwitchField
-            disabled={isCommunity}
+            disabled={isCommunity()}
             formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
             label={t("fields.permissions.superAdmin")}
             name="permissions.superAdmin"

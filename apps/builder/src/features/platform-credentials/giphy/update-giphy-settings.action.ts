@@ -1,0 +1,74 @@
+"use server"
+
+import { platformCredentialService } from "@chatbotx.io/business"
+import {
+  type GiphyCredential,
+  type GiphyCredentialUpdate,
+  giphyCredentialUpdateSchema,
+} from "@chatbotx.io/database/partials"
+import type { UserModel } from "@chatbotx.io/database/types"
+import ky from "ky"
+import { getTranslations } from "next-intl/server"
+import { returnValidationErrors } from "next-safe-action"
+
+import { isCloud } from "@/env"
+import { logger } from "@/lib/log"
+import { authActionClient } from "@/lib/safe-action"
+
+const isValidGiphyApiKey = async (apiKey: string) => {
+  try {
+    await ky.get("https://api.giphy.com/v1/gifs/random", {
+      searchParams: {
+        api_key: apiKey,
+      },
+    })
+    return true
+  } catch (error) {
+    logger.error(error, "Invalid GIPHY API key")
+    return false
+  }
+}
+
+export const updateGiphySettingsAction = authActionClient
+  .inputSchema(giphyCredentialUpdateSchema)
+  .action(
+    async ({
+      ctx,
+      parsedInput,
+    }: {
+      ctx: { user: UserModel }
+      parsedInput: GiphyCredentialUpdate
+    }) => {
+      const scopedUserId = isCloud() ? ctx.user.id : undefined
+      const existing = await platformCredentialService.findDecrypted({
+        userId: scopedUserId,
+        type: "giphy",
+      })
+
+      if (parsedInput.apiKey) {
+        const isValid = await isValidGiphyApiKey(parsedInput.apiKey)
+        if (!isValid) {
+          const t = await getTranslations()
+          return returnValidationErrors(giphyCredentialUpdateSchema, {
+            apiKey: {
+              _errors: [t("platformSettings.errors.giphyApiKeyInvalid")],
+            },
+          })
+        }
+      }
+
+      const apiKey = parsedInput.apiKey || existing?.config.apiKey
+      if (!apiKey) {
+        const t = await getTranslations()
+        throw new Error(t("platformSettings.errors.giphyApiKeyRequired"))
+      }
+
+      const config: GiphyCredential = { apiKey }
+
+      await platformCredentialService.upsert({
+        userId: scopedUserId,
+        type: "giphy",
+        config,
+      })
+    },
+  )

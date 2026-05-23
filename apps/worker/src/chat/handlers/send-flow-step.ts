@@ -7,7 +7,9 @@ import {
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
+  resolvePlatformSettings,
 } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, type Transaction } from "@chatbotx.io/database/client"
 import {
   channelTypes,
@@ -17,7 +19,6 @@ import {
 } from "@chatbotx.io/database/partials"
 import { attachmentModel, messageModel } from "@chatbotx.io/database/schema"
 import type { AttachmentModel } from "@chatbotx.io/database/types"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { emit } from "@chatbotx.io/event-bus"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
@@ -63,6 +64,10 @@ const insertAttachmentForMessage = async (
     props.url,
     `public/space/${props.workspaceId}/conversations/${props.conversationId}/${createId()}`,
   )
+
+  const { storageUrl } = await resolvePlatformSettings({
+    workspaceId: props.workspaceId,
+  })
   const row = await tx
     .insert(attachmentModel)
     .values({
@@ -77,7 +82,7 @@ const insertAttachmentForMessage = async (
 
   return {
     ...row,
-    url: getPublicUrl(row.originPath),
+    url: getPublicFileUrl(row.originPath, storageUrl),
   }
 }
 

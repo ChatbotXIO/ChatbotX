@@ -1,7 +1,7 @@
 import { db } from "@chatbotx.io/database/client"
 import {
   inboxStatuses,
-  type OrganizationSettings,
+  type ZaloCredential,
 } from "@chatbotx.io/database/partials"
 import { inboxModel, integrationZaloModel } from "@chatbotx.io/database/schema"
 import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
@@ -14,7 +14,7 @@ export async function connectZaloHandler({
   workspaceId,
   req,
 }: {
-  zaloSettings: NonNullable<OrganizationSettings["zalo"]>
+  zaloSettings: ZaloCredential
   workspaceId: string
   req: Request
 }) {

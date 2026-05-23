@@ -1,14 +1,18 @@
-import { organizationService } from "@chatbotx.io/business"
 import {
-  type OrganizationSettings,
-  organizationSettingsSchema,
-} from "@chatbotx.io/database/partials"
+  customDomainService,
+  platformCredentialService,
+  platformSettingService,
+} from "@chatbotx.io/business"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
+import { env, isCloud } from "@/env"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
 import { type IntegrationKey, integrations } from "@/integration"
-import { getDomainFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
+
+type CredentialType = Parameters<
+  typeof platformCredentialService.resolveForOwner
+>[0]["type"]
 
 export const handleWebhook = async (
   integrationType: string,
@@ -19,12 +23,66 @@ export const handleWebhook = async (
     return handleTelegramWebhook(req)
   }
 
-  const domain = await getDomainFromHeader()
-  const organization = await organizationService.findByDomain(domain)
+  const type = integrationType as CredentialType
 
-  // Verify organization settings
-  const orgSettings = organizationSettingsSchema.parse(organization?.settings)
-  if (!orgSettings?.[integrationType as keyof OrganizationSettings]) {
+  let credential:
+    | Awaited<
+        ReturnType<typeof platformCredentialService.findDecryptedPlatform>
+      >
+    | undefined
+
+  if (isCloud()) {
+    const domain = req.headers.get("x-domain") ?? ""
+    const defaultDomain = new URL(env.NEXT_PUBLIC_BUILDER_URL).hostname
+
+    if (domain === defaultDomain) {
+      // Default platform domain: use global platform credential
+      credential = await platformCredentialService.findDecryptedPlatform({
+        type,
+      })
+    } else {
+      // Custom domain: tenant-specific lookup
+      const customDomain = domain
+        ? await customDomainService.findActiveByDomain(domain)
+        : undefined
+
+      if (!customDomain) {
+        logger.debug(
+          { integrationType, domain },
+          "No active custom domain for integration webhook",
+        )
+        return new Response(
+          JSON.stringify({ message: "Integration is not configured" }),
+          { status: 404, headers: { "Content-Type": "application/json" } },
+        )
+      }
+
+      const platformSetting = await platformSettingService.findForUser(
+        customDomain.userId,
+      )
+      if (!platformSetting?.isEnabled) {
+        logger.debug(
+          { integrationType, domain },
+          "Platform disabled for integration webhook",
+        )
+        return new Response(
+          JSON.stringify({ message: "Integration is not configured" }),
+          { status: 404, headers: { "Content-Type": "application/json" } },
+        )
+      }
+
+      // Tenant's own credential — no fallback to global platform
+      credential = await platformCredentialService.findDecryptedForUser({
+        userId: customDomain.userId,
+        type,
+      })
+    }
+  } else {
+    // Non-cloud (OSS/enterprise): single-tenant, always use global platform credential
+    credential = await platformCredentialService.findDecryptedPlatform({ type })
+  }
+
+  if (!credential) {
     logger.debug(`Integration ${integrationType} is not configured`)
     return new Response(
       JSON.stringify({ message: "Integration is not configured" }),
@@ -51,19 +109,7 @@ export const handleWebhook = async (
     req.nextUrl,
   ).toString()
 
-  const settings = orgSettings[integration.name as keyof OrganizationSettings]
-
-  if (!settings) {
-    return new Response(
-      JSON.stringify({
-        message: `Integration ${integration.name} is not configured`,
-      }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      },
-    )
-  }
+  const settings = credential.config
 
   try {
     const result = await integration.handleRequest({

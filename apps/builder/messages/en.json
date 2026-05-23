@@ -851,6 +851,25 @@
     "logo": {
       "label": "Logo"
     },
+    "logoLight": {
+      "label": "Logo (Light)"
+    },
+    "logoDark": {
+      "label": "Logo (Dark)"
+    },
+    "favicon": {
+      "label": "Favicon"
+    },
+    "brandName": {
+      "label": "Brand Name",
+      "placeholder": "Enter brand name"
+    },
+    "policyUrl": {
+      "label": "Privacy Policy URL"
+    },
+    "termsOfServiceUrl": {
+      "label": "Terms of Service URL"
+    },
     "showLogo": {
       "label": "Show Personal Logo"
     },
@@ -1409,8 +1428,8 @@
   "integrations": {
     "title": "Integrations"
   },
-  "organizationSettings": {
-    "title": "Organization Settings",
+  "platformSettings": {
+    "title": "Platform Settings",
     "errors": {
       "giphyApiKeyRequired": "API Key is required to configure GIPHY.",
       "giphyApiKeyInvalid": "Invalid GIPHY API key",
@@ -1426,7 +1445,7 @@
   "messages": {
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
-    "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
+    "noGiphyApiKey": "No GIPHY API key found. Please add one in Platform Settings.",
     "connectedSuccess": "{feature} connected successfully",
     "connectFailed": "Failed to connect {feature}",
     "connectSuccess": "Connected {feature} successfully",
@@ -1819,10 +1838,8 @@
     "title": "Telegram"
   },
   "invitation": {
-    "chatbotInvitationDescription1": "Join {chatbotName} on {organizationName}",
-    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName} on {organizationName}.",
-    "organizationInvitationDescription1": "Join {organizationName}",
-    "organizationInvitationDescription2": "{userName} has invited you to join {organizationName}."
+    "chatbotInvitationDescription1": "Join {chatbotName}",
+    "chatbotInvitationDescription2": "{userName} has invited you to join {chatbotName}."
   },
   "inboxTeams": {
     "title": "Inbox Teams"
@@ -2062,5 +2079,29 @@
   "qrCodeGenerator": {
     "title": "QR Code Generator",
     "description": "Create and manage your QR codes."
+  },
+  "platformCredentials": {
+    "title": "Platform Credentials"
+  },
+  "platformBranding": {
+    "title": "Platform Branding",
+    "sections": {
+      "identity": {
+        "title": "Brand Identity",
+        "description": "Name and color theme shown across the platform"
+      },
+      "assets": {
+        "title": "Visual Assets",
+        "description": "Logos and favicon displayed in the browser and UI"
+      },
+      "legal": {
+        "title": "Legal Links",
+        "description": "Links shown in footers and consent flows"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Inject custom CSS or JavaScript into every page"
+      }
+    }
   }
 }

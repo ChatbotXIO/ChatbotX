@@ -15,7 +15,7 @@ export const sendTyping: ConversationHandlers<WebchatAuthValue>["sendTyping"] =
     })
 
     await ky
-      .post(`${ctx.platform.realtimeUrl}/parties/guests/${contact.sourceId}`, {
+      .post(`${ctx.platform.wsUrl}/parties/guests/${contact.sourceId}`, {
         headers,
         json: {
           eventType: "typing",

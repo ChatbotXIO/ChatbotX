@@ -41,7 +41,7 @@ export const SignInForm = ({ callbackUrl, ...props }: SignInFormProps) => {
 
             <MagicLinkSignIn />
 
-            {!isCommunity && (
+            {!isCommunity() && (
               <>
                 <OrSeparator />
                 <SSOSignIn />

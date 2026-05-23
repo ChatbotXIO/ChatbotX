@@ -12,13 +12,13 @@ description: >-
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Pre-Creation Confirmation](#pre-creation-confirmation-mandatory) — resolve name, auth type, org settings before coding
+2. [Pre-Creation Confirmation](#pre-creation-confirmation-mandatory) — resolve name, auth type, platform credentials before coding
 3. [Phase 1: Integration Package](#phase-1-integration-package) — create `integrations/<channel>/`
 4. [Phase 2: Database](#phase-2-database) — schema + register in 7 files
 5. [Phase 3: Registration](#phase-3-registration) — builder, worker, UI
 6. [Phase 4: Builder Feature](#phase-4-builder-feature--settings-page) — settings page + feature directory
 7. [Post-Creation Verification](#post-creation-verification) — lint, install, build
-8. [Organization Settings](#organization-settings-only-if-needed) — optional OAuth app settings
+8. [Platform Credentials](#platform-credentials-only-if-needed) — optional OAuth app credentials
 9. [Webhook Flow](#webhook-flow)
 10. [Existing Integrations Reference](#existing-integrations-reference)
 
@@ -47,10 +47,10 @@ Channel name → determines package name (`@chatbotx.io/integration-<channel>`),
 
 For EACH field: name, Zod type, required or optional. Infer types from context (e.g. "port" → `z.number().int().positive()`).
 
-### Question 3: Organization settings
+### Question 3: Platform credentials
 
-| Scenario | Org settings? | Examples |
-|----------|--------------|---------|
+| Scenario | Platform credentials? | Examples |
+|----------|----------------------|---------|
 | OAuth app (clientId/clientSecret shared across workspaces) | YES | messenger, whatsapp, zalo |
 | Per-workspace credentials only | NO | email, webchat, smtp |
 | Shared third-party API key | YES | giphy, stripe |
@@ -63,7 +63,7 @@ Auth type: custom / oauth2
 Auth fields:
   - fieldA: z.string().min(1)        [required]
   - fieldB: z.number().int()          [required]
-Organization settings: YES / NO
+Platform credentials: YES / NO
 ```
 
 Wait for user confirmation before proceeding.
@@ -420,16 +420,16 @@ Run these checks **in order**:
 | `Type 'string' is not assignable to type ChannelType` | Passing untyped string to InboxIcon | Cast with `as ChannelType` and add import |
 | `Argument of type '{}' ... parameter of type 'void'` | Calling `execute({})` on no-input action | Use `execute()` with no arguments |
 
-## Organization Settings (only if needed)
+## Platform Credentials (only if needed)
 
-If org settings ARE needed, also update:
+If platform credentials ARE needed, also update:
 
 | # | File | What to add |
 |---|------|-------------|
-| 1 | `packages/database/src/partials/organization.ts` | New `<channel>SettingsSchema` + add to `organizationSettingsSchema` |
-| 2 | `apps/builder/src/enterprise/features/organization-settings/` | Settings panel component + action |
-| 3 | `manage-organization-settings.tsx` | Import and render new panel |
-| 4 | `<channel>-manage.tsx` | Gate "Add" button on `organizationSettings.<channel>` |
+| 1 | `packages/database/src/partials/credential.ts` | New `<channel>CredentialSchema` + add to `platformCredentialSchema` |
+| 2 | `apps/builder/src/features/platform-settings/` | Settings panel component + action |
+| 3 | `manage-platform-settings.tsx` | Import and render new panel |
+| 4 | `<channel>-manage.tsx` | Gate "Add" button on presence of a verified credential via `credentialService.findForUser({ userId, type: '<channel>' })` |
 
 ## Logging
 
@@ -457,12 +457,12 @@ Always use `err: error` (not `error: error`) — pino's built-in serializer is r
 
 ## Existing Integrations Reference
 
-| Integration | Auth type | Org settings? | Notes |
-|-------------|-----------|---------------|-------|
-| messenger | OAuth2 | YES | clientId/clientSecret in org |
-| whatsapp | OAuth2 | YES | clientId/clientSecret + systemUser in org |
-| zalo | OAuth2 | YES | clientId/clientSecret in org |
-| google-sheets | OAuth2 | YES | clientId/clientSecret in org |
+| Integration | Auth type | Platform credentials? | Notes |
+|-------------|-----------|----------------------|-------|
+| messenger | OAuth2 | YES | clientId/clientSecret as platform credential |
+| whatsapp | OAuth2 | YES | clientId/clientSecret + systemUser as platform credential |
+| zalo | OAuth2 | YES | clientId/clientSecret as platform credential |
+| google-sheets | OAuth2 | YES | clientId/clientSecret as platform credential |
 | email | Custom | NO | SMTP credentials per workspace |
 | smtp | Custom | NO | SMTP with provider presets |
 | webchat | Custom | NO | PartySocket-based |

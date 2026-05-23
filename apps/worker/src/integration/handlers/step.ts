@@ -39,7 +39,7 @@ import {
   removeContactTag,
   setContactCustomField,
 } from "./contact"
-import { type ExecuteStepProps, seekConnectedNode } from "./flow"
+import { type ExecuteStepProps, seekConnectedNode } from "./flow-utils"
 import { handleAIGenerateText } from "./generate-text"
 import { getUserData } from "./get-user-data"
 import { sendEmail } from "./send-email"

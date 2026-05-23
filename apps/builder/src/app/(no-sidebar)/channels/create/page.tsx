@@ -1,7 +1,10 @@
-import { credentialService } from "@chatbotx.io/business"
+import {
+  platformCredentialService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import { getIdFromParams } from "@chatbotx.io/utils"
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import InboxSelectCard from "@/features/inboxes/components/inbox-select-card"
 import { TelegramConnect } from "@/features/integration-telegram/components/telegram-connect"
 import { SimpleCreateWebchat } from "@/features/integration-webchat/simple-create-webchat"
@@ -32,11 +35,32 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
   }
 
   const userId = await getCurrentUserId()
+  if (!userId) {
+    return notFound()
+  }
+
+  const platformOwnerId = workspaceId
+    ? ((await workspaceService.find({ where: { id: workspaceId } }))?.ownerId ??
+      userId)
+    : userId
+
   const [whatsapp, messenger, instagram, zalo] = await Promise.all([
-    credentialService.resolveForUser({ userId, type: "whatsapp" }),
-    credentialService.resolveForUser({ userId, type: "messenger" }),
-    credentialService.resolveForUser({ userId, type: "instagram" }),
-    credentialService.resolveForUser({ userId, type: "zalo" }),
+    platformCredentialService.resolveForOwner({
+      ownerId: platformOwnerId,
+      type: "whatsapp",
+    }),
+    platformCredentialService.resolveForOwner({
+      ownerId: platformOwnerId,
+      type: "messenger",
+    }),
+    platformCredentialService.resolveForOwner({
+      ownerId: platformOwnerId,
+      type: "instagram",
+    }),
+    platformCredentialService.resolveForOwner({
+      ownerId: platformOwnerId,
+      type: "zalo",
+    }),
   ])
 
   if (selectedChannel === "whatsapp" && whatsapp) {
@@ -75,6 +99,7 @@ export default async function CreateChannelPage(props: CreateChannelPageProps) {
       configuredChannels={configuredChannels}
       instagramPublicConfig={instagram?.publicConfig ?? null}
       messengerPublicConfig={messenger?.publicConfig ?? null}
+      workspaceId={workspaceId}
     />
   )
 }
