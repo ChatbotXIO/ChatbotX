@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  type ButtonStepInput,
   type ButtonStepProps,
   type ButtonType,
   buttonStepSchema,
@@ -229,7 +230,7 @@ export function ButtonEditorDialog() {
   )
   const onChangeButtonData = useStepStore((state) => state.onChangeButtonData)
 
-  const form = useForm<ButtonStepProps>({
+  const form = useForm<ButtonStepInput, object, ButtonStepProps>({
     resolver: zodResolver(buttonStepSchema),
     defaultValues: {},
     mode: "onChange",
@@ -281,7 +282,7 @@ export function ButtonEditorDialog() {
     setOpenButtonEditorDialog(false)
     onChangeButtonData({
       path: buttonPath,
-      data: values,
+      data: values as unknown as ButtonStepProps,
     })
   }, [
     activeNode,

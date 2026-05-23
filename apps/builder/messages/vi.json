@@ -1593,7 +1593,8 @@
   "validation": {
     "maxSize": "Kích thước tệp vượt quá giới hạn tối đa",
     "maxItemsReached": "Tối đa {max} {feature} cho mỗi workspace",
-    "invalidApiKey": "API key không hợp lệ"
+    "invalidApiKey": "API key không hợp lệ",
+    "maxMustBeGreaterThanMin": "{maxField} phải lớn hơn hoặc bằng {minField}"
   },
   "webchat": {
     "description": "Cho phép khách hàng của bạn nhận phản hồi tự động ngay lập tức từ doanh nghiệp của bạn trực tiếp từ trang web của bạn",

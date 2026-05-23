@@ -1578,7 +1578,8 @@
   "validation": {
     "maxSize": "File size exceeds maximum limit",
     "maxItemsReached": "Maximum {max} {feature} allowed per workspace",
-    "invalidApiKey": "Invalid API key"
+    "invalidApiKey": "Invalid API key",
+    "maxMustBeGreaterThanMin": "{maxField} must be greater than or equal to {minField}"
   },
   "webchat": {
     "description": "Let your customers get instant automated responses from your business directly from your website",

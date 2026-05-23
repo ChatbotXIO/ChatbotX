@@ -1,11 +1,12 @@
 "use client"
 
 import {
+  type GenerateCodeStepInput,
   type GenerateCodeStepSchema,
   GenerateCodeType,
   generateCodeStepSchema,
 } from "@chatbotx.io/flow-config"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -22,8 +23,13 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ShuffleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
-import { useForm, useFormContext } from "react-hook-form"
+import { useCallback, useEffect, useState } from "react"
+import {
+  type Resolver,
+  useForm,
+  useFormContext,
+  useWatch,
+} from "react-hook-form"
 import { CustomFieldSelect } from "@/features/custom-fields/custom-field-select"
 import { BaseStepEditor } from "../base/editor"
 
@@ -42,19 +48,55 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
   const [open, setOpen] = useState(false)
   const { setValue, getValues } = useFormContext()
 
-  const form = useForm<GenerateCodeStepSchema>({
-    resolver: zodResolver(generateCodeStepSchema),
+  const resolver = useCallback<
+    Resolver<GenerateCodeStepInput, object, GenerateCodeStepSchema>
+  >(
+    async (values, context, options) => {
+      const zodResolve = zodResolver(generateCodeStepSchema) as Resolver<
+        GenerateCodeStepInput,
+        object,
+        GenerateCodeStepSchema
+      >
+      const result = await zodResolve(values, context, options)
+      if (Number(values.min) > Number(values.max)) {
+        result.errors.max = {
+          type: "manual",
+          message: t("validation.maxMustBeGreaterThanMin", {
+            maxField: t("fields.max.label"),
+            minField: t("fields.min.label"),
+          }),
+        }
+      }
+      return result
+    },
+    [t],
+  )
+
+  const form = useForm<GenerateCodeStepInput, object, GenerateCodeStepSchema>({
+    resolver,
     defaultValues: {
       ...getValues(parentName),
     },
     mode: "onChange",
   })
 
+  const min = useWatch({
+    control: form.control,
+    name: "min",
+  })
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-trigger max validation when min changes
+  useEffect(() => {
+    form.trigger("max")
+  }, [min, form])
+
+  useEffect(() => {
+    if (open) {
+      form.reset(getValues(parentName))
+    }
+  }, [open, form, getValues, parentName])
+
   const onSubmit = (data: GenerateCodeStepSchema) => {
-    setValue(`${parentName}.type`, data.type)
-    setValue(`${parentName}.min`, data.min)
-    setValue(`${parentName}.max`, data.max)
-    setValue(`${parentName}.outputFieldId`, data.outputFieldId)
+    setValue(parentName, data)
     setOpen(false)
   }
 
@@ -67,7 +109,7 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen overflow-y-scroll lg:max-w-5xl"}>
+      <DialogContent className="max-h-screen overflow-y-scroll lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{t("flows.actions.generateCode")}</DialogTitle>
           <DialogDescription />
@@ -98,9 +140,17 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
               required
             />
 
-            <InputField label={t("fields.min.label")} name="min" required />
+            <InputNumberField
+              label={t("fields.min.label")}
+              name="min"
+              required
+            />
 
-            <InputField label={t("fields.max.label")} name="max" required />
+            <InputNumberField
+              label={t("fields.max.label")}
+              name="max"
+              required
+            />
 
             <CustomFieldSelect
               allowCreate={true}

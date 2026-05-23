@@ -67,6 +67,7 @@ export const buttonStepSchema = z
     ]),
   )
 export type ButtonStepProps = z.infer<typeof buttonStepSchema>
+export type ButtonStepInput = z.input<typeof buttonStepSchema>
 
 export const buttonStepDefaultFn = (
   props?: Pick<ButtonStepProps, "label">,
