@@ -27,15 +27,15 @@ const logoField = z.object({
 })
 
 export const updatePlatformBrandingSchema = z.object({
-  brandName: z.string().nullable(),
+  brandName: z.string().trim().min(1).nullable(),
   logoLight: logoField,
   logoDark: logoField,
   favicon: logoField,
   theme: z.enum(themeOptions).nullable().default(null),
-  customCss: z.string().nullable(),
-  customJs: z.string().nullable(),
-  policyUrl: z.string().nullable(),
-  termsOfServiceUrl: z.string().nullable(),
+  customCss: z.string().max(50_000).nullable(),
+  customJs: z.string().max(50_000).nullable(),
+  policyUrl: z.union([z.url(), z.literal(""), z.null()]),
+  termsOfServiceUrl: z.union([z.url(), z.literal(""), z.null()]),
 })
 
 export type UpdatePlatformBrandingSchema = z.infer<

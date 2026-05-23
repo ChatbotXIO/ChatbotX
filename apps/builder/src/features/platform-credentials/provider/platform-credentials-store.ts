@@ -28,9 +28,11 @@ export const createPlatformCredentialsStore = () =>
       set({ isLoading: true })
       try {
         const result = await client.platformCredentialsAPI.getGiphyApiKeyAPI()
-        set({ giphyApiKey: result.apiKey })
+        set({ giphyApiKey: result.apiKey, initialized: true })
+      } catch {
+        // leave initialized: false so callers can retry on next mount
       } finally {
-        set({ isLoading: false, initialized: true })
+        set({ isLoading: false })
       }
     },
   }))

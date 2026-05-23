@@ -30,8 +30,10 @@ export type PlatformData = {
 const resolvePlatformData = async (
   workspaceId: string,
 ): Promise<PlatformData> => {
-  const platformSettings = await resolvePlatformSettings({ workspaceId })
-  const realtimeSecret = await resolveBroadcastSecret({ workspaceId })
+  const [platformSettings, realtimeSecret] = await Promise.all([
+    resolvePlatformSettings({ workspaceId }),
+    resolveBroadcastSecret({ workspaceId }),
+  ])
 
   return {
     ...platformSettings,

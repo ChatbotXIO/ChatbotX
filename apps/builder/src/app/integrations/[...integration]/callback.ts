@@ -17,15 +17,28 @@ import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
+import { env } from "@/env"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { type IntegrationKey, integrations } from "@/integration"
 import { getCurrentUserId } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
 
+const FALLBACK_REDIRECT = "/manage"
+
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
   referer: z.url(),
 })
+
+function sanitizeReferer(referer: string): string {
+  try {
+    const refererOrigin = new URL(referer).origin
+    const builderOrigin = new URL(env.NEXT_PUBLIC_BUILDER_URL).origin
+    return refererOrigin === builderOrigin ? referer : FALLBACK_REDIRECT
+  } catch {
+    return FALLBACK_REDIRECT
+  }
+}
 
 export const handleCallback = async (
   integrationType: IntegrationType,
@@ -37,12 +50,21 @@ export const handleCallback = async (
 
   // Parse state params to get workspace info
   const url = new URL(getPublicUrlFromRequest(req))
-  const rawState = JSON.parse(
-    atob(decodeURIComponent(url.searchParams.get("state") || "")),
-  )
+  let rawState: unknown
+  try {
+    rawState = JSON.parse(
+      atob(decodeURIComponent(url.searchParams.get("state") || "")),
+    )
+  } catch {
+    logger.debug(
+      { url: url.toString() },
+      "state param is not valid base64/JSON",
+    )
+    return notFound()
+  }
   const { data: stateParams } = stateValidationSchema.safeParse(rawState)
   if (!stateParams) {
-    logger.debug(url, "state is not valid")
+    logger.debug({ url: url.toString() }, "state is not valid")
     return notFound()
   }
 
@@ -68,6 +90,16 @@ export const handleCallback = async (
         createdBy: userId,
       })
 
+  if (stateParams.workspaceId && workspace.ownerId !== userId) {
+    logger.warn(
+      { userId, workspaceId: stateParams.workspaceId },
+      "workspace ownership mismatch in OAuth callback",
+    )
+    return notFound()
+  }
+
+  const safeReferer = sanitizeReferer(stateParams.referer)
+
   let authResult: AuthValue
   let googleSheetsAuth: Oauth2AuthValue | null = null
   switch (integrationType) {
@@ -86,7 +118,7 @@ export const handleCallback = async (
         req,
       })
 
-      return redirect(stateParams.referer)
+      return redirect(safeReferer)
     }
 
     case "googleSheets": {

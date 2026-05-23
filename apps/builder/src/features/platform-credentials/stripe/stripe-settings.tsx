@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { useClipboard } from "@/hooks/use-clipboard"
 import { updateStripeSettingsAction } from "./update-stripe-settings.action"
 
 export function StripeSettings({
@@ -37,7 +37,7 @@ export function StripeSettings({
   publicConfig: StripeCredentialPublic | null
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
   useEffect(() => {
     setWebhookUrl(
@@ -47,16 +47,6 @@ export function StripeSettings({
       ).toString(),
     )
   }, [])
-
-  const handleCopy = (text: string) => () => {
-    copy(text)
-      .then(() => {
-        toast.success("Copied to clipboard")
-      })
-      .catch((error) => {
-        console.error("Failed to copy!", error)
-      })
-  }
 
   return (
     <Card>

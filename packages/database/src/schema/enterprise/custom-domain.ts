@@ -10,12 +10,18 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../../partials/shared"
+import { userModel } from "../auth-user"
 
 export const customDomainModel = pgTable(
   "CustomDomain",
   {
     ...sharedColumns,
-    userId: bigintAsString().notNull(),
+    userId: bigintAsString()
+      .notNull()
+      .references(() => userModel.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
     domain: text().notNull(),
     status: text().notNull().default("pending"), // 'pending' | 'active' | 'failed'
     txtRecord: text().notNull(),

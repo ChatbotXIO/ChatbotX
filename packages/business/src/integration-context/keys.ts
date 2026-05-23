@@ -8,7 +8,7 @@ export const integrationContextEnv = () =>
         .enum(["community", "enterprise", "cloud"])
         .default("community"),
       NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
-      REALTIME_BROADCAST_SECRET: z.string().min(1).default("secretkey"),
+      REALTIME_BROADCAST_SECRET: z.string().min(32),
     },
     runtimeEnv: process.env,
     skipValidation: process.env.SKIP_ENV_CHECK === "true",

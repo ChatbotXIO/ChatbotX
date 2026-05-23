@@ -128,7 +128,12 @@ export const handleWebhook = async (
 
     return new Response(result as BodyInit)
   } catch (e: unknown) {
-    return new Response(JSON.stringify({ message: (e as Error).message }), {
+    const message = e instanceof Error ? e.message : String(e)
+    logger.error(
+      { err: e, integrationType },
+      "Integration handleRequest failed",
+    )
+    return new Response(JSON.stringify({ message }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     })
@@ -178,7 +183,12 @@ const handleTelegramWebhook = async (req: NextRequest) => {
 
     return new Response(result as BodyInit)
   } catch (e: unknown) {
-    return new Response(JSON.stringify({ message: (e as Error).message }), {
+    const message = e instanceof Error ? e.message : String(e)
+    logger.error(
+      { err: e, integrationType: "telegram" },
+      "Telegram handleRequest failed",
+    )
+    return new Response(JSON.stringify({ message }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     })

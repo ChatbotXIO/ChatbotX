@@ -8,9 +8,14 @@ const editionRule = z
   .enum(["community", "enterprise", "cloud"])
   .default("community")
 
-const baseEnv = {
+export const env = createEnv({
+  extends: [partysocket(), database(), mail()],
   server: {
-    PLATFORM_ADMIN_EMAIL: z.string().email().optional(),
+    PLATFORM_ADMIN_EMAIL: z.email().optional(),
+    BETTER_AUTH_SECRET: z
+      .string()
+      .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+    BETTER_AUTH_URL: z.url(),
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
@@ -24,45 +29,15 @@ const baseEnv = {
       .optional()
       .default("http://localhost:9000/chatbotx/"),
   },
-  runtimeEnv: {
+  experimental__runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL:
       process.env.NEXT_PUBLIC_BUILDER_URL || "http://localhost:3123",
     NEXT_PUBLIC_INTERNAL_WS_URL:
-      process.env.NEXT_PUBLIC_WS_URL || "http://localhost:1999",
+      process.env.NEXT_PUBLIC_INTERNAL_WS_URL || "http://localhost:1999",
     NEXT_PUBLIC_INTERNAL_STORAGE_URL:
       process.env.NEXT_PUBLIC_INTERNAL_STORAGE_URL ||
       "http://localhost:9000/chatbotx/",
     NEXT_PUBLIC_EDITION: process.env.NEXT_PUBLIC_EDITION || "community",
-    PLATFORM_ADMIN_EMAIL: process.env.PLATFORM_ADMIN_EMAIL,
-  },
-}
-
-const googleAuthEnv = {
-  server: {
-    GOOGLE_CLIENT_ID: z.string().optional(),
-    GOOGLE_CLIENT_SECRET: z.string().optional(),
-  },
-}
-
-const authEnv = {
-  server: {
-    BETTER_AUTH_SECRET: z.string(),
-    BETTER_AUTH_URL: z.url(),
-  },
-}
-
-export const env = createEnv({
-  extends: [partysocket(), database(), mail()],
-  server: {
-    ...baseEnv.server,
-    ...googleAuthEnv.server,
-    ...authEnv.server,
-  },
-  client: {
-    ...baseEnv.client,
-  },
-  experimental__runtimeEnv: {
-    ...baseEnv.runtimeEnv,
   },
   emptyStringAsUndefined: true,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

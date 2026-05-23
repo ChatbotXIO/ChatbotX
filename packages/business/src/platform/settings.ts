@@ -60,10 +60,10 @@ const applyPlatformSetting = (
     faviconUrl: setting.faviconPath
       ? new URL(setting.faviconPath, defaults.storageUrl).toString()
       : defaults.faviconUrl,
-    theme: null,
-    // customJs is gated to Enterprise/Cloud only
+    theme: setting.theme ?? null,
+    // customJs and customCSS are gated to Enterprise/Cloud only
     customJS: isEnterprise() || isCloud() ? (setting.customJs ?? null) : null,
-    customCSS: setting.customCss ?? defaults.customCSS,
+    customCSS: isEnterprise() || isCloud() ? (setting.customCss ?? null) : null,
     policyUrl: setting.policyUrl ?? defaults.policyUrl,
     termsOfServiceUrl: setting.termsOfServiceUrl ?? defaults.termsOfServiceUrl,
   }

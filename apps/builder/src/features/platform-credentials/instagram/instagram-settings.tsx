@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { useClipboard } from "@/hooks/use-clipboard"
 import { updateInstagramSettingAction } from "./update-instagram-settings.action"
 
 export function InstagramSettings({
@@ -38,7 +38,7 @@ export function InstagramSettings({
   publicConfig: InstagramCredentialPublic | null
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
   useEffect(() => {
@@ -55,16 +55,6 @@ export function InstagramSettings({
       ).toString(),
     )
   }, [])
-
-  const handleCopy = (text: string) => () => {
-    copy(text)
-      .then(() => {
-        toast.success("Copied to clipboard")
-      })
-      .catch((error) => {
-        console.error("Failed to copy!", error)
-      })
-  }
 
   return (
     <Card>

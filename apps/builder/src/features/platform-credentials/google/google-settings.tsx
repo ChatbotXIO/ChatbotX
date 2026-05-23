@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { useClipboard } from "@/hooks/use-clipboard"
 import { updateGoogleSettingsAction } from "./update-google-settings.action"
 
 export function GoogleSettings({
@@ -38,7 +38,7 @@ export function GoogleSettings({
   publicConfig: GoogleCredentialPublic | null
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
   useEffect(() => {
     setAuthCallbackUrl(
@@ -48,16 +48,6 @@ export function GoogleSettings({
       ).toString(),
     )
   }, [])
-
-  const handleCopy = (text: string) => () => {
-    copy(text)
-      .then(() => {
-        toast.success("Copied to clipboard")
-      })
-      .catch((error) => {
-        console.error("Failed to copy!", error)
-      })
-  }
 
   return (
     <Card>
