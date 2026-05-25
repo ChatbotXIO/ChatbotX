@@ -52,13 +52,13 @@ const GenerateCodeDialog = ({ parentName }: { parentName: string }) => {
     Resolver<GenerateCodeStepInput, object, GenerateCodeStepSchema>
   >(
     async (values, context, options) => {
-      const zodResolve = zodResolver(generateCodeStepSchema) as Resolver<
+      const base = zodResolver(generateCodeStepSchema) as Resolver<
         GenerateCodeStepInput,
         object,
         GenerateCodeStepSchema
       >
-      const result = await zodResolve(values, context, options)
-      if (Number(values.min) > Number(values.max)) {
+      const result = await base(values, context, options)
+      if (result.errors.max?.type === "custom") {
         result.errors.max = {
           type: "manual",
           message: t("validation.maxMustBeGreaterThanMin", {
