@@ -1390,7 +1390,7 @@
       "delayTypeLabel": "Đây là độ trễ",
       "fixed": "Cố định",
       "randomized": "Ngẫu nhiên",
-      "delay": "",
+      "delay": "độ trễ",
       "durationDetailPrefix": "Độ trễ là",
       "dateDetailPrefix": "Độ trễ đến",
       "customFieldDetailPrefix": "Độ trễ đến",
@@ -1478,6 +1478,7 @@
     "failedToCopy": "Sao chép thất bại",
     "failedToPreviewImage": "Không thể xem trước hình ảnh",
     "loadingData": "Đang tải dữ liệu...",
+    "leaveEmptyToKeepSecret": "Để trống để giữ nguyên secret hiện tại",
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
     "noDataAvailable": "Không có dữ liệu",
     "savedSuccessfully": "Đã lưu thành công",
@@ -1640,6 +1641,15 @@
       "label": "Câu mở đầu"
     },
     "manualConnect": "Kết nối thủ công bằng token truy cập System User.",
+    "manualOnboarding": {
+      "title": "Inbox WhatsApp của bạn đã sẵn sàng!",
+      "description": "Cấu hình URL webhook và mã xác minh trong ứng dụng Meta của bạn. Sử dụng các giá trị bên dưới.",
+      "webhookUrl": "URL Webhook",
+      "verifyToken": "Mã xác minh webhook",
+      "qrCodeHint": "Quét mã QR để mở URL webhook",
+      "moreSettings": "Cài đặt thêm",
+      "goToInbox": "Đưa tôi đến đó"
+    },
     "marketingMessageLite": "Tin nhắn tiếp thị Lite",
     "messageTemplate": {
       "carouselImage": {
@@ -2117,6 +2127,43 @@
         "title": "Nâng cao",
         "description": "Chèn CSS hoặc JavaScript tùy chỉnh vào mọi trang"
       }
+    }
+  },
+  "platformEmailTemplates": {
+    "title": "Email Templates",
+    "description": "Để trống subject và body sẽ dùng template mặc định của hệ thống.",
+    "sections": {
+      "signup": {
+        "title": "Email Xác Nhận Đăng Ký",
+        "description": "Gửi khi người dùng đăng ký tài khoản mới"
+      },
+      "forgotPassword": {
+        "title": "Email Quên Mật Khẩu",
+        "description": "Gửi khi người dùng yêu cầu đặt lại mật khẩu"
+      },
+      "magicLink": {
+        "title": "Email Magic Link Đăng Nhập",
+        "description": "Gửi khi người dùng yêu cầu magic link để đăng nhập"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "Tiêu đề",
+        "placeholder": "Để trống để dùng tiêu đề mặc định"
+      },
+      "body": {
+        "label": "Nội dung HTML",
+        "placeholder": "Để trống để dùng template mặc định"
+      }
+    },
+    "status": {
+      "custom": "Tùy chỉnh",
+      "default": "Mặc định"
+    },
+    "availableVariables": "Biến có thể dùng",
+    "preview": {
+      "title": "Xem trước",
+      "empty": "Nhập nội dung template để xem trước"
     }
   }
 }

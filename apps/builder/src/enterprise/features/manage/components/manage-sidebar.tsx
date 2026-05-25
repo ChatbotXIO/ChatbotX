@@ -6,7 +6,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { Grid2x2PlusIcon, PaletteIcon } from "lucide-react"
+import { Grid2x2PlusIcon, MailIcon, PaletteIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
@@ -34,6 +34,11 @@ export function ManageSidebar() {
         title: t("platformBranding.title"),
         url: "/manage/branding",
         icon: PaletteIcon,
+      },
+      {
+        title: t("platformEmailTemplates.title"),
+        url: "/manage/email-templates",
+        icon: MailIcon,
       },
     ],
   }

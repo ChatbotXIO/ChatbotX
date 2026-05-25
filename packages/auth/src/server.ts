@@ -10,6 +10,9 @@ import {
   verificationModel,
 } from "@chatbotx.io/database/schema"
 import {
+  DEFAULT_FORGOT_PASSWORD_SUBJECT,
+  DEFAULT_MAGIC_LINK_SUBJECT,
+  DEFAULT_SIGNUP_SUBJECT,
   sendMagicLink,
   sendResetPassword,
   sendSignUpVerification,
@@ -91,14 +94,20 @@ export function createAuth(_config: AuthConfig) {
           getPlatformSettings(request),
         ])
 
-        const { name: brandName, logoLightUrl } = platformInfo
+        const {
+          name: brandName,
+          logoLightUrl,
+          forgotPasswordEmailTemplate,
+        } = platformInfo
+
         await sendResetPassword(user.email, {
           brandName,
           brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
-          subject: "Reset your password",
+          subject: DEFAULT_FORGOT_PASSWORD_SUBJECT,
           userName: user.name ?? user.email,
           resetPasswordUrl: url,
+          customTemplate: forgotPasswordEmailTemplate,
         })
       },
     },
@@ -114,15 +123,20 @@ export function createAuth(_config: AuthConfig) {
           getPublicOriginFromRequest(request as unknown as Request),
           getPlatformSettings(request),
         ])
-        const { name: brandName, logoLightUrl } = platformInfo
+        const {
+          name: brandName,
+          logoLightUrl,
+          signupEmailTemplate,
+        } = platformInfo
 
         await sendSignUpVerification(user.email, {
           brandName,
           brandLogoUrl: logoLightUrl,
           brandUrl: new URL("/", originUrl).toString(),
-          subject: `${brandName} Email Verification`,
+          subject: DEFAULT_SIGNUP_SUBJECT,
           userName: user.name ?? user.email,
           verificationUrl: url,
+          customTemplate: signupEmailTemplate,
         })
       },
     },
@@ -139,7 +153,11 @@ export function createAuth(_config: AuthConfig) {
             getPublicOriginFromRequest(request as unknown as Request),
             getPlatformSettings(request as unknown as Request),
           ])
-          const { name: brandName, logoLightUrl } = platformInfo
+          const {
+            name: brandName,
+            logoLightUrl,
+            magicLinkEmailTemplate,
+          } = platformInfo
 
           const user = await db.query.userModel.findFirst({ where: { email } })
           if (!user) {
@@ -152,9 +170,10 @@ export function createAuth(_config: AuthConfig) {
             brandName,
             brandLogoUrl: logoLightUrl,
             brandUrl: new URL("/", originUrl).toString(),
-            subject: "Verify your email",
+            subject: DEFAULT_MAGIC_LINK_SUBJECT,
             userName: user.name ?? email,
             magicUrl: url,
+            customTemplate: magicLinkEmailTemplate,
           })
         },
       }),

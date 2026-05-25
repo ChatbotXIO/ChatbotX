@@ -5,34 +5,28 @@
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
     "@chatbotx.io/vitest-config": "workspace:*",
-    "@react-email/preview-server": "5.2.10",
     "@types/mjml": "^5.0.0",
     "@types/mjml-core": "^5.0.0",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^8.0.0",
-    "@types/react": "19.2.14",
-    "react-email": "6.0.5",
     "typescript": "^5",
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@react-email/components": "1.0.12",
     "@t3-oss/env-core": "^0.13.11",
     "mjml": "^5.2.0",
     "nodemailer": "^8.0.7",
-    "react": "19.2.5",
     "zod": "^4.3.6"
   },
   "exports": {
-    ".": "./src/index.tsx",
+    ".": "./src/index.ts",
+    "./preview": "./src/preview.ts",
     "./transport": "./src/transport.ts",
     "./dynamic": "./src/dynamic-email.ts",
-    "./emails/*": "./src/emails/*.tsx",
     "./keys": "./src/keys.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "packages:dev": "email dev -d src/emails -p 3201",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   }

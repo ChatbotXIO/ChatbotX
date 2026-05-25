@@ -2104,5 +2104,42 @@
         "description": "Inject custom CSS or JavaScript into every page"
       }
     }
+  },
+  "platformEmailTemplates": {
+    "title": "Email Templates",
+    "description": "Leave subject and body blank to use the system default template.",
+    "sections": {
+      "signup": {
+        "title": "Signup Verification Email",
+        "description": "Sent when a new user registers an account"
+      },
+      "forgotPassword": {
+        "title": "Forgot Password Email",
+        "description": "Sent when a user requests a password reset"
+      },
+      "magicLink": {
+        "title": "Magic Link Sign-in Email",
+        "description": "Sent when a user requests a magic link to sign in"
+      }
+    },
+    "fields": {
+      "subject": {
+        "label": "Subject",
+        "placeholder": "Leave blank to use the default subject"
+      },
+      "body": {
+        "label": "HTML Body",
+        "placeholder": "Leave blank to use the default template"
+      }
+    },
+    "status": {
+      "custom": "Custom",
+      "default": "Default"
+    },
+    "availableVariables": "Available variables",
+    "preview": {
+      "title": "Preview",
+      "empty": "Enter template body to see a preview"
+    }
   }
 }

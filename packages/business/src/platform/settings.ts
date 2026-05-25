@@ -7,6 +7,8 @@ import { isCloud, isEnterprise } from "../keys"
 import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
+export type EmailTemplate = { subject?: string; body?: string }
+
 export type PlatformSettings = {
   appUrl: string
   wsUrl: string
@@ -20,6 +22,9 @@ export type PlatformSettings = {
   customCSS: string | null
   policyUrl: string | null
   termsOfServiceUrl: string | null
+  signupEmailTemplate: EmailTemplate | null
+  forgotPasswordEmailTemplate: EmailTemplate | null
+  magicLinkEmailTemplate: EmailTemplate | null
 }
 
 const getDefaultSettings = (): PlatformSettings => {
@@ -38,6 +43,9 @@ const getDefaultSettings = (): PlatformSettings => {
     customCSS: null,
     policyUrl: `${derived.appUrl}/privacy-policy`,
     termsOfServiceUrl: `${derived.appUrl}/terms-of-service`,
+    signupEmailTemplate: null,
+    forgotPasswordEmailTemplate: null,
+    magicLinkEmailTemplate: null,
   }
 }
 
@@ -66,6 +74,9 @@ const applyPlatformSetting = (
     customCSS: isEnterprise() || isCloud() ? (setting.customCss ?? null) : null,
     policyUrl: setting.policyUrl ?? defaults.policyUrl,
     termsOfServiceUrl: setting.termsOfServiceUrl ?? defaults.termsOfServiceUrl,
+    signupEmailTemplate: setting.signupEmailTemplate,
+    forgotPasswordEmailTemplate: setting.forgotPasswordEmailTemplate,
+    magicLinkEmailTemplate: setting.magicLinkEmailTemplate,
   }
 }
 

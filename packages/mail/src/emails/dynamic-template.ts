@@ -1,13 +1,5 @@
 import { z } from "zod"
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
-}
+import { esc } from "./base-template"
 
 export const mailElementTypes = z.enum([
   "heading",
@@ -61,7 +53,7 @@ export function elementToMjml(element: MailElementSchema): string {
           <mj-column>
             <mj-raw>
               <div style="font-size:20px;font-weight:700;color:#1d1c1d;line-height:28px;padding:0;">
-                ${escapeHtml(element.text)}
+                ${esc(element.text)}
               </div>
             </mj-raw>
           </mj-column>
@@ -73,7 +65,7 @@ export function elementToMjml(element: MailElementSchema): string {
           <mj-column>
             <mj-raw>
               <div style="font-size:16px;color:#3c3f44;line-height:24px;padding:0;">
-                ${escapeHtml(element.text)}
+                ${esc(element.text)}
               </div>
             </mj-raw>
           </mj-column>
@@ -85,7 +77,7 @@ export function elementToMjml(element: MailElementSchema): string {
           <mj-column>
             <mj-raw>
               <div style="font-family:monospace,'Courier New';font-size:14px;color:#3c3f44;line-height:22px;background-color:#f4f4f5;padding:12px;">
-                ${escapeHtml(element.text).replace(/\n/g, "<br />")}
+                ${esc(element.text).replace(/\n/g, "<br />")}
               </div>
             </mj-raw>
           </mj-column>
@@ -96,7 +88,7 @@ export function elementToMjml(element: MailElementSchema): string {
         ? `
         <mj-section>
           <mj-column>
-            <mj-image src="${escapeHtml(element.url)}" alt="" />
+            <mj-image src="${esc(element.url)}" alt="" />
           </mj-column>
         </mj-section>`
         : ""
@@ -107,8 +99,8 @@ export function elementToMjml(element: MailElementSchema): string {
         <mj-section>
           <mj-column>
             <mj-button background-color="#111111" color="#ffffff" font-size="14px"
-              font-weight="700" border-radius="4px" href="${escapeHtml(element.url)}">
-              ${escapeHtml(element.label ?? "Click here")}
+              font-weight="700" border-radius="4px" href="${esc(element.url)}">
+              ${esc(element.label ?? "Click here")}
             </mj-button>
           </mj-column>
         </mj-section>`
@@ -138,7 +130,7 @@ export function buildMjmlTemplate(props: DynamicEmailProps): string {
     <mjml>
       <mj-head>
         <mj-preview>
-          ${escapeHtml(props.preheader)}
+          ${esc(props.preheader)}
         </mj-preview>
       </mj-head>
       <mj-body background-color="#ffffff">

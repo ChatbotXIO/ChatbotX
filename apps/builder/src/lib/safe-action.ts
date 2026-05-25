@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
 import { userModel } from "@chatbotx.io/database/schema"
@@ -40,6 +41,15 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
   return next({ ctx: { user } })
 })
+
+export const platformAdminActionClient = authActionClient.use(
+  async ({ ctx, next }) => {
+    if (!(await isPlatformAdmin(ctx.user))) {
+      throw new Error("Unauthorized")
+    }
+    return next({ ctx })
+  },
+)
 
 export const workspaceActionClient = authActionClient.use(
   async ({ bindArgsClientInputs, ctx, next }) => {
