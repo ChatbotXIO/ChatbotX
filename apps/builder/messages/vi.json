@@ -2336,6 +2336,10 @@
       "warning": "{count} bản trùng sẽ bị xóa sau khi hợp nhất. Không thể hoàn tác.",
       "confirm": "Hợp nhất",
       "success": "Đã hợp nhất {count} liên hệ"
+    },
+    "sidebar": {
+      "all": "Tất cả liên hệ",
+      "blocked": "Liên hệ bị chặn"
     }
   },
   "errorLogs": {

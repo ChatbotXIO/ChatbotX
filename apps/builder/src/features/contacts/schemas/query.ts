@@ -48,6 +48,8 @@ export const listContactsRequest = basePaginationRequest.extend({
   channels: z.array(channelTypes).optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
   lifecycleStageIds: z.array(zodBigintAsString()).optional(),
+  // Quando true filtra `blockedAt IS NOT NULL` (sidebar Contatos bloqueados).
+  blocked: z.coerce.boolean().optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 

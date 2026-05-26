@@ -113,5 +113,12 @@ const generateWhere = (input: ListContactsRequest) => {
     where.lifecycleStageId = { in: input.lifecycleStageIds }
   }
 
+  // Filtro "Contatos bloqueados" (sidebar) — quando blocked=true mostra só
+  // contatos com `blockedAt IS NOT NULL`; quando undefined/false, default
+  // do schema do contact (todos visíveis incluindo bloqueados).
+  if (input.blocked) {
+    where.blockedAt = { isNotNull: true }
+  }
+
   return where
 }

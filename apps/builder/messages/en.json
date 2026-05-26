@@ -2348,6 +2348,10 @@
       "warning": "{count} duplicate(s) will be deleted after merging. This action cannot be undone.",
       "confirm": "Merge",
       "success": "{count} contact(s) merged"
+    },
+    "sidebar": {
+      "all": "All contacts",
+      "blocked": "Blocked contacts"
     }
   },
   "auditLogs": {
