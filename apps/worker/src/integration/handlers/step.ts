@@ -283,11 +283,22 @@ async function startExternalNode({
   })
 }
 
+/** Triggers `step.states` routing to a connected node */
+export type StepRoutingStatus = "success" | "error" | "skip"
+
+/**
+ * Stops the step execution loop without routing to another node.
+ * - `wait`: resume at a scheduled future time via smart delay
+ * - `retry`: resume when the user sends their next message (getUserData challenge)
+ */
+export type StepControlStatus = "wait" | "retry"
+
+export type ExecuteStepStatus = StepRoutingStatus | StepControlStatus
+
 export type ExecuteStepResult = {
-  status: "success" | "skip" | "error" | "retry" | "wait"
+  status: ExecuteStepStatus
   errorMessage?: string
-  // biome-ignore lint/suspicious/noExplicitAny: safe ignore
-  result: any
+  result: unknown
 }
 
 export const flowStepHandlers: Record<

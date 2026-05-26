@@ -18,9 +18,8 @@ import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
 export type GetUserDataResult = {
-  valid: boolean
-  errorMessage?: string
   userInput?: string
+  errorMessage?: string
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -68,7 +67,7 @@ async function handleSkipOrError(
   }
 
   // if user data is valid, save to custom field if configured
-  if (validUserData.valid && validUserData.userInput) {
+  if (validUserData.userInput) {
     if (step.outputFieldId) {
       await findOrFail({
         table: customFieldModel,
@@ -127,7 +126,7 @@ async function handleSkipOrError(
   await sendMessage(
     props,
     step.retryMessage ?? step.message,
-    (ctx?.variables.conversation.challengeAttempts?.value as number) ?? 1 + 1,
+    ((ctx?.variables.conversation.challengeAttempts?.value as number) ?? 1) + 1,
   )
 
   return { result: undefined, status: "retry" }
@@ -149,17 +148,10 @@ async function validateUserData(
     },
   })
 
-  const result: GetUserDataResult = {
-    valid: false,
-    errorMessage: undefined,
-    userInput: undefined,
-  }
-
   if (!lastUserMessage) {
-    result.valid = false
-    result.errorMessage = `getUserData: unable to find last message of conversation ${props.conversation.id}`
-
-    return result
+    return {
+      errorMessage: `getUserData: unable to find last message of conversation ${props.conversation.id}`,
+    }
   }
 
   if (lastUserMessage.attachments.length > 0) {
@@ -167,76 +159,56 @@ async function validateUserData(
       props.step.replyFormat === ReplyFormat.image &&
       lastUserMessage.attachments[0].fileType === "image"
     ) {
-      result.valid = true
-      result.userInput = lastUserMessage.attachments[0].originPath
-      return result
+      return { userInput: lastUserMessage.attachments[0].originPath }
     }
     if (props.step.replyFormat === ReplyFormat.file) {
-      result.valid = true
-      result.userInput = lastUserMessage.attachments[0].originPath
-      return result
+      return { userInput: lastUserMessage.attachments[0].originPath }
     }
-    result.errorMessage = "getUserData: invalid user data"
-    return result
+    return { errorMessage: "getUserData: invalid user data" }
   }
 
   if (lastUserMessage.text) {
     switch (props.step.replyFormat) {
       case ReplyFormat.number: {
-        const valid = !Number.isNaN(Number.parseFloat(lastUserMessage.text))
-        if (valid) {
-          result.userInput = lastUserMessage.text
-        } else {
-          result.errorMessage = "getUserData: invalid email address"
+        if (!Number.isNaN(Number.parseFloat(lastUserMessage.text))) {
+          return { userInput: lastUserMessage.text }
         }
-        return result
+        return { errorMessage: "getUserData: invalid number" }
       }
       case ReplyFormat.email: {
-        const valid = emailPattern.test(lastUserMessage.text)
-        if (valid) {
-          result.userInput = lastUserMessage.text
-        } else {
-          result.errorMessage = "getUserData: invalid email address"
+        if (emailPattern.test(lastUserMessage.text)) {
+          return { userInput: lastUserMessage.text }
         }
-        return result
+        return { errorMessage: "getUserData: invalid email address" }
       }
       case ReplyFormat.phone: {
-        const valid = phoneRegex.test(lastUserMessage.text)
-        if (valid) {
-          result.userInput = lastUserMessage.text
-        } else {
-          result.errorMessage = "getUserData: invalid phone number"
+        if (phoneRegex.test(lastUserMessage.text)) {
+          return { userInput: lastUserMessage.text }
         }
-        return result
+        return { errorMessage: "getUserData: invalid phone number" }
       }
       case ReplyFormat.link: {
         try {
           new URL(lastUserMessage.text)
-          result.userInput = lastUserMessage.text
+          return { userInput: lastUserMessage.text }
         } catch {
-          result.errorMessage = "getUserData: invalid link"
+          return { errorMessage: "getUserData: invalid link" }
         }
-        return result
       }
       case ReplyFormat.date:
       case ReplyFormat.datetime: {
         const dateObj = new Date(lastUserMessage.text)
         if (Number.isNaN(dateObj.getTime())) {
-          result.errorMessage = "getUserData: invalid date"
-        } else {
-          result.userInput = dateObj.toISOString()
+          return { errorMessage: "getUserData: invalid date" }
         }
-        return result
+        return { userInput: dateObj.toISOString() }
       }
       default:
-        result.valid = true
-        result.userInput = lastUserMessage.text
-        return result
+        return { userInput: lastUserMessage.text }
     }
   }
 
-  result.errorMessage = "getUserData: invalid user data"
-  return result
+  return { errorMessage: "getUserData: invalid user data" }
 }
 
 async function sendMessage(

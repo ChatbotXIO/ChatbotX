@@ -15,6 +15,7 @@ import { createId } from "@chatbotx.io/utils"
 import { faker } from "@faker-js/faker"
 import { format } from "date-fns"
 import { getProperty } from "dot-prop"
+import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 
 export async function countCharacters({
@@ -86,7 +87,7 @@ export async function countCharacters({
       value,
     )
   } catch (error) {
-    console.error("Failed to emit customFieldChanged event:", error)
+    logger.error({ err: error }, "Failed to emit customFieldChanged event")
   }
 }
 
@@ -150,7 +151,7 @@ export async function formatDate({
       newValue,
     )
   } catch (error) {
-    console.error("Failed to emit customFieldChanged event:", error)
+    logger.error({ err: error }, "Failed to emit customFieldChanged event")
   }
 }
 
@@ -222,7 +223,7 @@ export async function generateCode({
         value,
       )
     } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
+      logger.error({ err: error }, "Failed to emit customFieldChanged event")
     }
   }
 }
@@ -331,7 +332,7 @@ export async function getDataFromJSON({
         field.newValue,
       )
     } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
+      logger.error({ err: error }, "Failed to emit customFieldChanged event")
     }
   }
 }

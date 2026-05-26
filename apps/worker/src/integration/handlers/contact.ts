@@ -31,6 +31,7 @@ import {
   enrollContactInSequence,
 } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
+import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -79,7 +80,7 @@ export async function setContactCustomField({
         step.value,
       )
     } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
+      logger.error({ err: error }, "Failed to emit customFieldChanged event")
     }
   }
 }
@@ -121,7 +122,7 @@ export async function clearContactCustomField({
         null,
       )
     } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
+      logger.error({ err: error }, "Failed to emit customFieldChanged event")
     }
   }
 }
@@ -214,18 +215,17 @@ export async function addContactTag({
     }
   })
 
-  // Emit tag applied events
-  for (const tag of insertedTags) {
-    try {
-      await emitTagApplied(
+  await Promise.allSettled(
+    insertedTags.map((tag) =>
+      emitTagApplied(
         conversation.workspaceId,
         conversation.contactId,
         tag.id,
-      )
-    } catch (error) {
-      console.error("Failed to emit tagApplied event:", error)
-    }
-  }
+      ).catch((err) =>
+        logger.error({ err }, "Failed to emit tagApplied event"),
+      ),
+    ),
+  )
 }
 
 export async function removeContactTag({
@@ -257,18 +257,17 @@ export async function removeContactTag({
     ),
   )
 
-  // Emit tag removed events
-  for (const tag of tags) {
-    try {
-      await emitTagRemoved(
+  await Promise.allSettled(
+    tags.map((tag) =>
+      emitTagRemoved(
         conversation.workspaceId,
         conversation.contactId,
         tag.id,
-      )
-    } catch (error) {
-      console.error("Failed to emit tagRemoved event:", error)
-    }
-  }
+      ).catch((err) =>
+        logger.error({ err }, "Failed to emit tagRemoved event"),
+      ),
+    ),
+  )
 }
 
 export async function deleteContact({
@@ -308,8 +307,8 @@ export async function deleteContact({
             triggerType: "contact_deleted",
           },
         },
-      }).catch((error) => {
-        console.error("[deleteContact] Failed to emit contact:deleted", error)
+      }).catch((err) => {
+        logger.error({ err }, "[deleteContact] Failed to emit contact:deleted")
       })
     }
   }

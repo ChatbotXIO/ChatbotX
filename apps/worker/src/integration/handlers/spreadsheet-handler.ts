@@ -134,6 +134,7 @@ export const getSpreadsheetRow = async (
       type: findRowType.SINGLE,
     }) as string[] | null
     if (!foundRow) {
+      await sendFlow(props, false)
       return
     }
 
@@ -214,6 +215,7 @@ export const updateSpreadsheetRow = async (
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
+      await sendFlow(props, false)
       return
     }
 
@@ -280,6 +282,7 @@ export const clearSpreadsheetRow = async (
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
+      await sendFlow(props, false)
       return
     }
 
@@ -329,6 +332,7 @@ export const getSpreadsheetRandomRow = async (
       type: findRowType.RANDOM,
     }) as string[] | null
     if (!foundRow) {
+      await sendFlow(props, false)
       return
     }
 
@@ -411,7 +415,7 @@ const updateContactCustomFields = async ({
           value,
         )
       } catch (error) {
-        console.error("Failed to emit customFieldChanged event:", error)
+        logger.error({ err: error }, "Failed to emit customFieldChanged event")
       }
     }
   }

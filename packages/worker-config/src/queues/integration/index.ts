@@ -64,6 +64,7 @@ export type IntegrationJobRunFlowNode = {
     flowId?: string
     flowVersionId?: string
     nodeId?: string
+    startFromStepId?: string
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
   }

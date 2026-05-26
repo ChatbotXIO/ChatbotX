@@ -34,7 +34,7 @@ async function startIntegrationWorker() {
   try {
     await ensureBootstrapped()
   } catch (err) {
-    logger.error(err, "Failed to bootstrap integration worker")
+    logger.error({ err }, "Failed to bootstrap integration worker")
     process.exit(1)
   }
 
@@ -169,12 +169,12 @@ async function startIntegrationWorker() {
 
   worker.on("failed", (job, err) => {
     if (job) {
-      logger.error(err, `Job ${job.id} has failed`)
+      logger.error({ err }, `Job ${job.id} has failed`)
     }
   })
 }
 
 startIntegrationWorker().catch((err) => {
-  logger.error(err, "Failed to start integration worker")
+  logger.error({ err }, "Failed to start integration worker")
   process.exit(1)
 })

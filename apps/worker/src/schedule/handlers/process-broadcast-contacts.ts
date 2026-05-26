@@ -14,6 +14,7 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { logger } from "../../lib/logger"
 
 const DEFAULT_BROADCAST_RATE_LIMIT = 500
 
@@ -109,10 +110,9 @@ export const processBroadcastContacts = async () => {
 
           totalProcessed++
         } catch (error) {
-          console.error(
+          logger.error(
+            { err: error, contactOnBroadcast },
             "Error processing broadcast contact",
-            contactOnBroadcast,
-            error,
           )
         }
       }),
