@@ -28,6 +28,7 @@ import {
   TagIcon,
   UserIcon,
   UserRoundXIcon,
+  UsersIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -41,6 +42,7 @@ import AddContactSequenceDialog from "./components/add-contact-sequence-dialog"
 import AddContactTagDialog from "./components/add-contact-tag-dialog"
 import AddContactCustomFieldDialog from "./components/add-custom-field-dialog"
 import ClearContactCustomFieldDialog from "./components/delete-contact-custom-field"
+import { MergeContactsDialog } from "./components/merge-contacts-dialog"
 import DeleteContactDialog from "./components/remove-contact-dialog"
 import RemoveContactSequenceDialog from "./components/remove-contact-sequence-dialog"
 import RemoveContactTagDialog from "./components/remove-contact-tag-dialog"
@@ -143,6 +145,24 @@ export function ContactListAction({
               {t("actions.setCustomField")}
             </DropdownMenuItem>
           }
+        />
+
+        <MergeContactsDialog
+          contacts={rows.map((r) => r.original)}
+          onSuccess={() => {
+            table.toggleAllRowsSelected(false)
+            router.refresh()
+          }}
+          trigger={
+            <DropdownMenuItem
+              disabled={rows.length < 2}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <UsersIcon />
+              {t("contacts.merge.action")}
+            </DropdownMenuItem>
+          }
+          workspaceId={workspaceId}
         />
 
         <DeleteContactDialog

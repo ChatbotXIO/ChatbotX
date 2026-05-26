@@ -2326,6 +2326,16 @@
       "lastMessage": "Tin nhắn cuối",
       "statusOpen": "Mở",
       "statusClosed": "Đã đóng"
+    },
+    "merge": {
+      "action": "Hợp nhất liên hệ",
+      "title": "Hợp nhất liên hệ",
+      "description": "Chọn liên hệ chính. Các liên hệ khác sẽ được hợp nhất bên dưới (thẻ, trường tùy chỉnh và hội thoại chuyển sang chính) rồi bị xóa.",
+      "selectPrimary": "Liên hệ chính",
+      "unnamed": "chưa đặt tên",
+      "warning": "{count} bản trùng sẽ bị xóa sau khi hợp nhất. Không thể hoàn tác.",
+      "confirm": "Hợp nhất",
+      "success": "Đã hợp nhất {count} liên hệ"
     }
   },
   "errorLogs": {

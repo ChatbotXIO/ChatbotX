@@ -2338,6 +2338,16 @@
       "lastMessage": "Last Message",
       "statusOpen": "Open",
       "statusClosed": "Closed"
+    },
+    "merge": {
+      "action": "Merge contacts",
+      "title": "Merge contacts",
+      "description": "Choose which contact stays as primary. The others get merged under it (tags, custom fields and conversations move to the primary) and then deleted.",
+      "selectPrimary": "Primary contact",
+      "unnamed": "unnamed",
+      "warning": "{count} duplicate(s) will be deleted after merging. This action cannot be undone.",
+      "confirm": "Merge",
+      "success": "{count} contact(s) merged"
     }
   },
   "auditLogs": {

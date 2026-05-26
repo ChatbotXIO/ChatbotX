@@ -2338,6 +2338,16 @@
       "lastMessage": "Última mensagem",
       "statusOpen": "Abertas",
       "statusClosed": "Fechadas"
+    },
+    "merge": {
+      "action": "Mesclar contatos",
+      "title": "Mesclar contatos",
+      "description": "Escolha qual contato fica como principal. Os outros serão mesclados sob ele (tags, campos personalizados e conversas migram pro principal) e depois excluídos.",
+      "selectPrimary": "Contato principal",
+      "unnamed": "sem nome",
+      "warning": "{count} duplicata(s) será(ão) excluída(s) após a mesclagem. Esta ação não pode ser desfeita.",
+      "confirm": "Mesclar",
+      "success": "{count} contato(s) mesclado(s)"
     }
   },
   "auditLogs": {
