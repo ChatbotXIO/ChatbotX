@@ -1,7 +1,21 @@
 {
-  "extends": "@chatbotx.io/typescript-config/base.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
   "include": ["src/**/*.ts"],
   "compilerOptions": {
-    "strictNullChecks": true
+    "target": "ES2022",
+    "lib": ["ESNext"],
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "allowJs": false,
+    "noEmit": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "types": ["node"]
   }
 }

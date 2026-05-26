@@ -5,21 +5,19 @@ import {
   type ServerResponse,
 } from "node:http"
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 import { env } from "../env"
 import type { CreateMcpServerOptions } from "./create-mcp-server"
-import { LegacySseTransport } from "./legacy-sse-transport"
 
 type SseSession = {
   server: McpServer
   transport: StreamableHTTPServerTransport
-  setApiKey: (apiKey: string | undefined) => void
 }
 
 type LegacySseSession = {
   server: McpServer
-  transport: LegacySseTransport
-  setApiKey: (apiKey: string | undefined) => void
+  transport: SSEServerTransport
 }
 
 const sseSessions = new Map<string, SseSession>()
@@ -45,28 +43,25 @@ const resolveHeaderValue = (value: string | string[] | undefined): string => {
 }
 
 const getApiTokenFromRequest = (req: IncomingMessage): string | undefined => {
+  const url = new URL(req.url ?? "", "http://localhost")
+  const urlToken = (
+    url.searchParams.get("workspace_token") ?? url.searchParams.get("token")
+  )?.trim()
+  if (urlToken) {
+    return urlToken
+  }
+
   for (const headerName of apiTokenHeaderNames) {
     const token = resolveHeaderValue(req.headers[headerName])
     if (token.length > 0) {
       return token
     }
   }
-
-  return
 }
 
-const createSessionApiKeyState = (initialApiKey: string | undefined) => {
-  let apiKey = initialApiKey?.trim() || env.CHATBOTX_API_KEY
-
-  return {
-    getApiKey: () => apiKey,
-    setApiKey: (nextApiKey: string | undefined) => {
-      const trimmed = nextApiKey?.trim()
-      if (trimmed) {
-        apiKey = trimmed
-      }
-    },
-  }
+const makeGetApiKey = (req: IncomingMessage): (() => string) => {
+  const token = getApiTokenFromRequest(req) || env.CHATBOTX_API_KEY
+  return () => token
 }
 
 const enableCors = (res: ServerResponse): void => {
@@ -144,29 +139,21 @@ const handleSseRequest = async (
   }
 
   const sessionId = getSessionId(req)
+
+  // No session ID → old SSE protocol (Claude Desktop, Claude CLI -t sse)
   if (!sessionId) {
-    const apiKeyState = createSessionApiKeyState(getApiTokenFromRequest(req))
-    const server = createMcpServer({
-      getApiKey: apiKeyState.getApiKey,
-    })
-    const transport = new LegacySseTransport(
+    const server = createMcpServer({ getApiKey: makeGetApiKey(req) })
+    const transport = new SSEServerTransport(
       env.CHATBOTX_MCP_MESSAGES_PATH,
       res,
     )
-    legacySseSessions.set(transport.sessionId, {
-      server,
-      transport,
-      setApiKey: apiKeyState.setApiKey,
-    })
-
-    res.on("close", () => {
-      legacySseSessions.delete(transport.sessionId)
-    })
-
+    legacySseSessions.set(transport.sessionId, { server, transport })
+    res.on("close", () => legacySseSessions.delete(transport.sessionId))
     await server.connect(transport)
     return
   }
 
+  // Has session ID → Streamable HTTP GET for server-initiated messages
   const session = sseSessions.get(sessionId)
   if (!session) {
     writePlainText(res, 404, "Unknown sessionId")
@@ -201,7 +188,6 @@ const handleMessagesRequest = async (
     if (sessionId) {
       const streamableSession = sseSessions.get(sessionId)
       if (streamableSession) {
-        streamableSession.setApiKey(getApiTokenFromRequest(req))
         setSessionIdHeader(req, sessionId)
         await streamableSession.transport.handleRequest(req, res, parsedBody)
         return
@@ -209,7 +195,6 @@ const handleMessagesRequest = async (
 
       const legacySession = legacySseSessions.get(sessionId)
       if (legacySession) {
-        legacySession.setApiKey(getApiTokenFromRequest(req))
         await legacySession.transport.handlePostMessage(req, res, parsedBody)
         return
       }
@@ -227,20 +212,13 @@ const handleMessagesRequest = async (
       return
     }
 
-    const apiKeyState = createSessionApiKeyState(getApiTokenFromRequest(req))
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (initializedSessionId) => {
-        sseSessions.set(initializedSessionId, {
-          server,
-          transport,
-          setApiKey: apiKeyState.setApiKey,
-        })
+        sseSessions.set(initializedSessionId, { server, transport })
       },
     })
-    const server = createMcpServer({
-      getApiKey: apiKeyState.getApiKey,
-    })
+    const server = createMcpServer({ getApiKey: makeGetApiKey(req) })
 
     transport.onclose = () => {
       const activeSessionId = transport.sessionId
@@ -251,8 +229,12 @@ const handleMessagesRequest = async (
 
     await server.connect(transport)
     await transport.handleRequest(req, res, parsedBody)
-  } catch {
-    writePlainText(res, 400, "Invalid JSON body")
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      writePlainText(res, 400, "Invalid JSON body")
+      return
+    }
+    throw error
   }
 }
 
@@ -275,7 +257,7 @@ export const runSseServer = async (
     }
 
     if (url.pathname === "/") {
-      writePlainText(res, 200, "ChatbotX MCP SSE server is running")
+      writePlainText(res, 200, "MCP SSE server is running")
       return
     }
 
@@ -287,6 +269,6 @@ export const runSseServer = async (
   })
 
   console.error(
-    `ChatbotX MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${env.CHATBOTX_MCP_SSE_PATH}`,
+    `MCP Server running on http://${env.CHATBOTX_MCP_HOST}:${env.CHATBOTX_MCP_PORT}${env.CHATBOTX_MCP_SSE_PATH}`,
   )
 }

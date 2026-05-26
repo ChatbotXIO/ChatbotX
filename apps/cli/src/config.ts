@@ -1,17 +1,18 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import {
-  type ChatbotXAPI,
-  type ChatbotXConfig,
-  createChatbotXAPI,
-} from "@chatbotx.io/public-apis"
 import { parseBooleanEnv } from "./commands/utils"
 import { env } from "./env"
 
 export type ConfigOptions = {
   apiKey?: string
   apiUrl?: string
+  allowSelfSignedCert?: boolean
+}
+
+export type CliConfig = {
+  apiKey: string
+  apiUrl: string
   allowSelfSignedCert?: boolean
 }
 
@@ -72,11 +73,7 @@ export const setAllowSelfSignedCert = (allowSelfSignedCert: boolean): void => {
   })
 }
 
-export const getConfig = (overrides?: ConfigOptions): ChatbotXConfig => {
-  if (overrides?.apiKey) {
-    setApiKey(overrides.apiKey)
-  }
-
+export const getConfig = (overrides?: ConfigOptions): CliConfig => {
   const stored = readStoredConfig()
 
   const apiKey = overrides?.apiKey ?? env.CHATBOTX_API_KEY ?? stored.apiKey
@@ -105,9 +102,4 @@ export const getConfig = (overrides?: ConfigOptions): ChatbotXConfig => {
     apiUrl,
     allowSelfSignedCert,
   }
-}
-
-export const createApiClient = (overrides?: ConfigOptions): ChatbotXAPI => {
-  const config = getConfig(overrides)
-  return createChatbotXAPI(config)
 }

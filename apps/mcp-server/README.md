@@ -1,204 +1,176 @@
-# MCP Server - ChatbotX
+# ChatbotX MCP Server
 
-MCP (Model Context Protocol) Server for ChatbotX API management. This server registers tools for tags, custom fields, contacts, bot fields, flows, and broadcasts.
+[Model Context Protocol](https://modelcontextprotocol.io) server for ChatbotX. Gives AI agents (Claude, Cursor, ChatGPT, etc.) access to your ChatbotX workspace through tools that are **automatically generated** from the ChatbotX OpenAPI spec — no manual tool definitions needed.
+
+## How it works
+
+On startup the server fetches `{CHATBOTX_API_URL}/api/public-spec.json` and registers one MCP tool per API operation. Adding a new API endpoint in ChatbotX automatically makes it available as a tool on the next server restart — no code changes required.
 
 ## Prerequisites
 
-- Node.js v20+ recommended
-- pnpm v10.30.3+
-- Environment variable: `CHATBOTX_API_KEY`
+- Node.js >= 18
+- A ChatbotX workspace token (`Settings → Developer → API Keys`)
 
-## Installation
+## Quick start
 
-1. Install dependencies:
+### Option A — stdio (recommended for local use)
 
+Claude spawns the server process on demand. No server needs to be running. The workspace token is supplied via `CHATBOTX_API_KEY`.
+
+**Claude Code CLI:**
 ```bash
-pnpm install
+claude mcp add chatbotx \
+  -e CHATBOTX_API_KEY=<your-token> \
+  -e CHATBOTX_API_URL=https://your-instance.com \
+  -e CHATBOTX_MCP_TRANSPORT=stdio \
+  -s user \
+  -- node /path/to/dist/index.mjs
 ```
 
-2. Configure environment (example):
-
-```bash
-# .env
-CHATBOTX_API_KEY=your-api-key-here
-CHATBOTX_API_URL=https://api.chatbotx.io
-CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "chatbotx": {
+      "command": "node",
+      "args": ["/path/to/dist/index.mjs"],
+      "env": {
+        "CHATBOTX_API_KEY": "<your-token>",
+        "CHATBOTX_API_URL": "https://your-instance.com",
+        "CHATBOTX_MCP_TRANSPORT": "stdio"
+      }
+    }
+  }
+}
 ```
 
-## Available Scripts
+### Option B — SSE (for shared / remote access)
+
+Run the server once and multiple clients connect via URL. Pass the workspace token in the request header.
 
 ```bash
-# Development (watch mode)
-pnpm dev
-
-# Build
-pnpm build
-
-# Run compiled server
+# Start the server
 pnpm start
 
-# Run test script
-pnpm test
+# Add to Claude Code CLI
+claude mcp add chatbotx \
+  -t sse \
+  -H "x-workspace-token: <your-token>" \
+  -s user \
+  "https://your-mcp-server.com/sse"
 ```
 
-## Transport Modes
+**Claude Desktop:**
+```json
+{
+  "mcpServers": {
+    "chatbotx": {
+      "type": "sse",
+      "url": "https://your-mcp-server.com/sse",
+      "headers": {
+        "x-workspace-token": "<your-token>"
+      }
+    }
+  }
+}
+```
 
-This server now supports two transport modes:
+### Option C — ChatGPT.com (remote SSE)
 
-- `stdio` (default): for local MCP clients that spawn the process
-- `sse`: HTTP + SSE endpoints for remote MCP usage
-- `both`: run `stdio` and `sse` together in one process
+ChatGPT.com connects via SSE. The server must be publicly reachable. Because ChatGPT does not support custom request headers, pass the workspace token directly in the URL:
 
-Set mode with environment variable:
+1. Start the server with `CHATBOTX_MCP_TRANSPORT=sse` (or `both`).
+2. In ChatGPT Settings → Connectors → Add custom connector, set the URL:
+   ```
+   https://your-mcp-server.com/sse?workspace_token=<your-token>
+   ```
+   When using this URL in a shell command, always quote it to prevent `?` being interpreted as a glob:
+   ```bash
+   claude mcp add chatbotx -t sse -s user "https://your-mcp-server.com/sse?workspace_token=<your-token>"
+   ```
+3. Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` so ChatGPT uses tools instead of its training data (see `.env.example` for the recommended value).
+
+## Token resolution order
+
+| Transport | Priority |
+|-----------|----------|
+| SSE / Streamable HTTP | `?workspace_token=` or `?token=` query param → `x-workspace-token` / `x-chatbo-token` header → `CHATBOTX_API_KEY` env |
+| stdio | `CHATBOTX_API_KEY` env |
+
+## Configuration
+
+Copy `.env.example` to `.env` and fill in the values:
 
 ```bash
-CHATBOTX_MCP_TRANSPORT=stdio
-# or
-CHATBOTX_MCP_TRANSPORT=sse
-# or
-CHATBOTX_MCP_TRANSPORT=both
+cp .env.example .env
 ```
 
-When running in `sse` mode, endpoints are:
+| Variable | Description | Default | Required |
+|---|---|---|---|
+| `CHATBOTX_API_KEY` | Workspace token (stdio) | — | Yes (stdio) |
+| `CHATBOTX_API_URL` | ChatbotX instance URL | `https://api.chatbotx.io` | Yes |
+| `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Disable TLS verification (`true`/`false`) | — | No |
+| `CHATBOTX_MCP_TRANSPORT` | `stdio` \| `sse` \| `both` | `both` | No |
+| `CHATBOTX_MCP_HOST` | SSE server host | `0.0.0.0` | No |
+| `CHATBOTX_MCP_PORT` | SSE server port | `3333` | No |
+| `CHATBOTX_MCP_SSE_PATH` | SSE endpoint path | `/sse` | No |
+| `CHATBOTX_MCP_MESSAGES_PATH` | JSON-RPC messages path | `/messages` | No |
+| `CHATBOTX_MCP_SERVER_NAME` | Display name sent to AI clients | package name | No |
+| `CHATBOTX_MCP_SERVER_INSTRUCTIONS` | Instructions sent to AI clients on connect (helps ChatGPT know when to call tools) | built-in default | No |
 
-- `POST /messages` for `initialize` (returns `mcp-session-id` header)
-- `POST /messages` with `mcp-session-id` header for subsequent messages
-- `GET /sse?sessionId=<id>` (or `mcp-session-id` header) to open/refresh SSE stream
-
-Default SSE server address:
-
-- `http://127.0.0.1:3333/sse`
-
-Example run:
+## Scripts
 
 ```bash
-CHATBOTX_MCP_TRANSPORT=sse CHATBOTX_MCP_PORT=3333 pnpm dev
+# Development with watch mode
+pnpm dev:mcp
+
+# Build for production
+pnpm build
+
+# Run built server
+pnpm start
+
+# Type check
+pnpm check-types
+
+# List loaded tools (requires CHATBOTX_API_URL and CHATBOTX_API_KEY in .env)
+dotenv -e .env -- tsx src/test-tools.ts
 ```
 
-## Tool Coverage
+## Project structure
 
-The server currently registers these tools.
-
-### Tags
-
-- `list_tags`
-  - Input: none
-- `create_tag`
-  - Input: `{ name: string }`
-- `get_tag`
-  - Input: `{ id: string }`
-- `get_tag_by_name`
-  - Input: `{ name: string }`
-- `update_tag`
-  - Input: `{ id: string; name: string }`
-- `delete_tag`
-  - Input: `{ id: string }`
-
-### Custom Fields
-
-- `list_custom_fields`
-  - Input: none
-- `create_custom_field`
-  - Input: `{ name: string; customFieldType: "shortText" | "number" | "date" | "datetime" | "boolean" | "longText" }`
-- `get_custom_field`
-  - Input: `{ id: string }`
-- `get_custom_field_by_name`
-  - Input: `{ name: string }`
-
-### Contacts
-
-- `get_contact_by_id`
-  - Input: `{ contactId: string }`
-- `list_contacts_by_custom_field`
-  - Input: `{ customFieldId: string; value: string }`
-- `list_tags_by_contact_id`
-  - Input: `{ contactId: string }`
-- `add_tag_to_contact`
-  - Input: `{ contactId: string; tagId: string }`
-- `delete_tag_from_contact`
-  - Input: `{ contactId: string; tagId: string }`
-- `list_custom_fields_by_contact_id`
-  - Input: `{ contactId: string }`
-- `get_contact_custom_field_value`
-  - Input: `{ contactId: string; customFieldId: string }`
-- `update_contact_custom_field_value`
-  - Input: `{ contactId: string; customFieldId: string; value: string }`
-- `delete_contact_custom_field`
-  - Input: `{ contactId: string; customFieldId: string }`
-- `send_message_to_contact`
-  - Input: `{ contactId: string; channel: "webchat" | "messenger" | "whatsapp" | "zalo"; content?: string; files?: unknown[]; flowId?: string; clientId?: string }`
-- `create_contact`
-  - Input: `{ phoneNumber: string; email: string; gender: "male" | "female" | "unknown"; firstName?: string; lastName?: string }`
-
-### Bot Fields
-
-- `get_bot_field`
-  - Input: `{ id: string }`
-- `update_bot_field`
-  - Input: `{ id: string; value: string }`
-- `delete_bot_field`
-  - Input: `{ id: string }`
-
-### Flows
-
-- `list_flows`
-  - Input: none
-
-### Broadcasts
-
-- `list_broadcasts`
-  - Input: none
-
-## Test Script Notes
-
-`pnpm test` currently runs `src/test-tools.ts` and only exercises:
-
-- `list_tags`
-- `list_custom_fields`
-
-If you need broader smoke coverage, extend `src/test-tools.ts` with the additional tools listed above.
-
-## Project Structure
-
-```text
+```
 src/
-├── index.ts
-├── env.ts
-├── config.ts
-├── utils.ts
-├── types.ts
-├── test-tools.ts
-└── tools/
-    ├── tag.ts
-    ├── custom-fields.ts
-    ├── contacts.ts
-    ├── bot-fields.ts
-    ├── flows.ts
-    └── broadcasts.ts
+├── index.ts              # Entry point — loads spec, starts transport(s)
+├── env.ts                # Environment variable schema
+├── openapi-loader.ts     # Fetches OpenAPI spec → DynamicTool list
+├── test-tools.ts         # Dev utility — prints loaded tools
+└── server/
+    ├── create-mcp-server.ts   # MCP server factory
+    ├── sse-server.ts          # SSE / Streamable HTTP transport
+    └── stdio-server.ts        # stdio transport
 ```
-
-## Environment Variables
-
-| Variable                          | Description                                    | Default                   | Required |
-| --------------------------------- | ---------------------------------------------- | ------------------------- | -------- |
-| `CHATBOTX_API_KEY`                | ChatbotX API key                               | none                      | Yes      |
-| `CHATBOTX_API_URL`                | ChatbotX API base URL                          | `https://api.chatbotx.io` | No       |
-| `CHATBOTX_ALLOW_SELF_SIGNED_CERT` | Allow self-signed cert in TLS (`true`/`false`) | none                      | No       |
-| `CHATBOTX_MCP_TRANSPORT`          | MCP transport mode (`stdio`, `sse`, `both`)    | `stdio`                   | No       |
-| `CHATBOTX_MCP_HOST`               | Host for SSE HTTP server                       | `127.0.0.1`               | No       |
-| `CHATBOTX_MCP_PORT`               | Port for SSE HTTP server                       | `3333`                    | No       |
-| `CHATBOTX_MCP_SSE_PATH`           | SSE connection path                            | `/sse`                    | No       |
-| `CHATBOTX_MCP_MESSAGES_PATH`      | POST message path                              | `/messages`               | No       |
 
 ## Troubleshooting
 
-### API connection errors
+**Tools not showing up**
+- Check that `CHATBOTX_API_URL` is reachable and `{CHATBOTX_API_URL}/api/public-spec.json` returns a valid OpenAPI spec.
+- Check stderr output on startup — the server logs `Loaded N tools from OpenAPI spec`.
 
-- Verify `CHATBOTX_API_KEY`
-- Verify `CHATBOTX_API_URL`
-- For local/self-signed TLS, set `CHATBOTX_ALLOW_SELF_SIGNED_CERT=true`
+**Port already in use**
+```bash
+lsof -ti:3333 | xargs kill -9
+```
 
-### Build issues
+**Self-signed certificate errors**
+```bash
+CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
+```
 
-- Run `pnpm build` for detailed errors
-- Check TypeScript install in workspace
+**SSE connection fails in Claude**
+- Prefer stdio mode for local use — it has no network dependency.
+- For SSE, verify the server is running and the URL/port are reachable from the client.
+
+**ChatGPT uses its training knowledge instead of calling tools**
+- Set `CHATBOTX_MCP_SERVER_INSTRUCTIONS` to explicitly instruct ChatGPT to use tools (see `.env.example`).
+- Make sure the connector URL includes `?workspace_token=<your-token>` so authentication is handled automatically.

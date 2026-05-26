@@ -22,4 +22,7 @@ export default defineConfig({
   // },
   sourcemap: false,
   treeshake: true,
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
 })

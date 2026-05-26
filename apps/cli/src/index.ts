@@ -1,121 +1,74 @@
 import type { Argv } from "yargs"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
-import {
-  type BotFieldCommandName,
-  botFieldCommands,
-  executeBotFieldCommand,
-} from "./commands/bot-fields"
-import {
-  type BroadcastCommandName,
-  broadcastCommands,
-  executeBroadcastCommand,
-} from "./commands/broadcasts"
 import { setConfig } from "./commands/config"
-import {
-  type ContactCommandName,
-  contactCommands,
-  executeContactCommand,
-} from "./commands/contacts"
-import {
-  type CustomFieldCommandName,
-  customFieldCommands,
-  executeCustomFieldCommand,
-} from "./commands/custom-fields"
-import {
-  executeFlowCommand,
-  type FlowCommandName,
-  flowCommands,
-} from "./commands/flows"
-import {
-  executeTagCommand,
-  type TagCommandName,
-  tagCommands,
-} from "./commands/tags"
-import { type CliCommand, toCliCommands } from "./commands/utils"
 import type { ConfigOptions } from "./config"
+import { getConfig } from "./config"
+import { executeDynamicCommand } from "./dynamic-executor"
+import { type DynamicTool, loadOpenApiSpecForCli } from "./openapi-loader"
 
-const allCommands: Record<string, CliCommand> = {
-  ...toCliCommands<
-    BroadcastCommandName,
-    NonNullable<Parameters<typeof executeBroadcastCommand>[1]>
-  >(broadcastCommands, executeBroadcastCommand),
-  ...toCliCommands<
-    FlowCommandName,
-    NonNullable<Parameters<typeof executeFlowCommand>[1]>
-  >(flowCommands, executeFlowCommand),
-  ...toCliCommands<
-    BotFieldCommandName,
-    NonNullable<Parameters<typeof executeBotFieldCommand>[1]>
-  >(botFieldCommands, executeBotFieldCommand),
-  ...toCliCommands<
-    TagCommandName,
-    NonNullable<Parameters<typeof executeTagCommand>[1]>
-  >(tagCommands, executeTagCommand),
-  ...toCliCommands<
-    CustomFieldCommandName,
-    NonNullable<Parameters<typeof executeCustomFieldCommand>[1]>
-  >(customFieldCommands, executeCustomFieldCommand),
-  ...toCliCommands<
-    ContactCommandName,
-    NonNullable<Parameters<typeof executeContactCommand>[1]>
-  >(contactCommands, executeContactCommand),
-}
-
-const groupCommands = (
-  commands: Record<string, CliCommand>,
-): Record<string, Record<string, CliCommand>> => {
-  const grouped: Record<string, Record<string, CliCommand>> = {}
-  for (const [key, command] of Object.entries(commands)) {
-    const colonIndex = key.indexOf(":")
-    const group = key.slice(0, colonIndex)
-    const action = key.slice(colonIndex + 1)
-    if (!grouped[group]) {
-      grouped[group] = {}
-    }
-    grouped[group][action] = command
-  }
-  return grouped
-}
-
-const registerActionArgs = (actionCli: Argv, command: CliCommand): Argv => {
-  let nextCli = actionCli
-  for (const arg of command.args) {
-    nextCli = nextCli.option(arg.key, {
-      describe: arg.description,
+const registerActionArgs = (actionCli: Argv, tool: DynamicTool): Argv => {
+  // Positional path params are declared in the command string itself,
+  // so we only register them here via .positional() for description/type.
+  let next = actionCli
+  for (const name of tool.pathParamNames) {
+    next = next.positional(name, {
+      describe: name,
       type: "string",
-      demandOption: arg.required,
+      demandOption: true,
     })
   }
-  return nextCli
+  for (const name of [...tool.queryParamNames, ...tool.bodyParamNames]) {
+    const required = tool.inputSchema.required?.includes(name) ?? false
+    next = next.option(name, {
+      describe: name,
+      type: "string",
+      demandOption: required,
+    })
+  }
+  return next
+}
+
+const buildActionCommandString = (
+  action: string,
+  tool: DynamicTool,
+): string => {
+  const positionals = tool.pathParamNames.map((p) => `<${p}>`).join(" ")
+  return positionals ? `${action} ${positionals}` : action
 }
 
 const buildActionHandler =
-  (command: CliCommand) =>
+  (tool: DynamicTool, config: { apiKey: string; apiUrl: string }) =>
   async (argv: Record<string, unknown>): Promise<void> => {
     const params: Record<string, string> = {}
-    for (const arg of command.args) {
-      const value = argv[arg.key]
+    for (const name of [
+      ...tool.pathParamNames,
+      ...tool.queryParamNames,
+      ...tool.bodyParamNames,
+    ]) {
+      const value = argv[name]
       if (typeof value === "string") {
-        params[arg.key] = value
+        params[name] = value
       }
     }
-    await command.run(params)
+    await executeDynamicCommand(tool, params, config)
   }
 
 const registerGroupCommand = (
   cli: ReturnType<typeof yargs>,
   groupName: string,
-  actions: Record<string, CliCommand>,
+  actions: Record<string, { tool: DynamicTool; name: string }>,
+  config: { apiKey: string; apiUrl: string },
 ): void => {
   cli.command(groupName, `${groupName} commands`, (groupCli: Argv) => {
-    for (const [actionName, command] of Object.entries(actions)) {
+    for (const [actionName, { tool, name }] of Object.entries(actions)) {
+      const commandStr = buildActionCommandString(actionName, tool)
       groupCli.command(
-        actionName,
-        command.name,
-        (actionCli: Argv) => registerActionArgs(actionCli, command),
+        commandStr,
+        name,
+        (actionCli: Argv) => registerActionArgs(actionCli, tool),
         async (argv) =>
-          buildActionHandler(command)(argv as Record<string, unknown>),
+          buildActionHandler(tool, config)(argv as Record<string, unknown>),
       )
     }
     return groupCli.demandCommand(1, "You need at least one action")
@@ -153,6 +106,30 @@ const registerConfigCommand = (cli: ReturnType<typeof yargs>): void => {
   )
 }
 
+const toolsToCommands = (
+  tools: DynamicTool[],
+  _config: { apiKey: string; apiUrl: string },
+): Record<string, Record<string, { tool: DynamicTool; name: string }>> => {
+  const grouped: Record<
+    string,
+    Record<string, { tool: DynamicTool; name: string }>
+  > = {}
+
+  for (const tool of tools) {
+    const colonIndex = tool.commandName.indexOf(":")
+    const group = tool.commandName.slice(0, colonIndex)
+    const action = tool.commandName.slice(colonIndex + 1)
+
+    if (!grouped[group]) {
+      grouped[group] = {}
+    }
+
+    grouped[group][action] = { tool, name: tool.description }
+  }
+
+  return grouped
+}
+
 const main = async (): Promise<void> => {
   const cli = yargs(hideBin(process.argv))
     .scriptName("chatbotx")
@@ -172,12 +149,48 @@ const main = async (): Promise<void> => {
       type: "boolean",
       global: true,
     })
+    .option("refresh-spec", {
+      describe: "Force refresh the cached OpenAPI spec",
+      type: "boolean",
+      global: true,
+      default: false,
+    })
 
   registerConfigCommand(cli)
 
-  const groupedCommands = groupCommands(allCommands)
-  for (const [groupName, actions] of Object.entries(groupedCommands)) {
-    registerGroupCommand(cli, groupName, actions)
+  // Read flags directly from process.argv to avoid a second yargs instance
+  // that would intercept --help and exit before commands are registered.
+  const rawArgs = process.argv.slice(2)
+  const readFlag = (name: string): string | undefined => {
+    const idx = rawArgs.indexOf(`--${name}`)
+    return idx !== -1 && idx + 1 < rawArgs.length ? rawArgs[idx + 1] : undefined
+  }
+  const configOverrides: ConfigOptions = {
+    apiKey: readFlag("apiKey"),
+    apiUrl: readFlag("apiUrl"),
+  }
+  const forceRefresh = rawArgs.includes("--refresh-spec")
+
+  let config: { apiKey: string; apiUrl: string }
+  try {
+    config = getConfig(configOverrides)
+  } catch {
+    // Config not set yet — only config command will work
+    await cli
+      .demandCommand(1, "You need at least one command")
+      .help()
+      .alias("h", "help")
+      .version("0.1.0")
+      .alias("v", "version")
+      .parseAsync()
+    return
+  }
+
+  const tools = await loadOpenApiSpecForCli(config.apiUrl, forceRefresh)
+  const grouped = toolsToCommands(tools, config)
+
+  for (const [groupName, actions] of Object.entries(grouped)) {
+    registerGroupCommand(cli, groupName, actions, config)
   }
 
   await cli

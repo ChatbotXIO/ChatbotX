@@ -1,33 +1,56 @@
 {
   "name": "chatbotx-mcp-server",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MCP Server for ChatbotX — gives AI agents access to your ChatbotX workspace via the Model Context Protocol",
+  "keywords": [
+    "mcp",
+    "chatbotx",
+    "ai",
+    "model-context-protocol"
+  ],
+  "license": "ISC",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "bin": {
+    "chatbotx-mcp-server": "./dist/index.mjs"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc --noEmit",
     "dev:mcp": "dotenv -e .env -- tsx --watch src/index.ts",
+    "prepublishOnly": "pnpm build",
     "start": "node dist/index.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
-  "keywords": [],
-  "license": "ISC",
-  "packageManager": "pnpm@10.30.3",
   "dependencies": {
-    "@chatbotx.io/public-apis": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@t3-oss/env-core": "^0.13.11",
     "dotenv": "^17.4.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@chatbotx.io/typescript-config": "workspace:*",
-    "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "24.x",
     "dotenv-cli": "^11.0.0",
     "tsdown": "0.21.10",
+    "tsx": "^4.0.0",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

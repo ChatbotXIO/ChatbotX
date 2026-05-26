@@ -1,10 +1,13 @@
 import "dotenv/config"
 import { env } from "./env"
+import { loadOpenApiSpec } from "./openapi-loader"
 import { createMcpServer } from "./server/create-mcp-server"
 import { runSseServer } from "./server/sse-server"
 import { runStdioServer } from "./server/stdio-server"
 
 async function main() {
+  await loadOpenApiSpec()
+
   if (env.CHATBOTX_MCP_TRANSPORT === "both") {
     await Promise.all([
       runStdioServer(createMcpServer),

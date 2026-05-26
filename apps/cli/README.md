@@ -2,229 +2,253 @@
 
 CLI for interacting with the ChatbotX API.
 
-## 1. Set API Configuration (Required)
+Commands are automatically generated from the ChatbotX public API spec — no manual update needed when new APIs are added.
 
-Before running other commands, save your API key:
+---
 
-```bash
-chatbotx config set --apiKey <yourApiKey>
-```
-
-You can also save a custom API URL:
+## Installation
 
 ```bash
-chatbotx config set --apiUrl https://cloud.chatbotx.io
+npm install -g chatbotx-cli
+# or
+pnpm add -g chatbotx-cli
 ```
 
-Save both API key and API URL in one command:
+---
+
+## Setup
+
+### 1. Set API Configuration
+
+Before running any command, save your API key and URL:
 
 ```bash
 chatbotx config set --apiKey <yourApiKey> --apiUrl <yourApiUrl>
 ```
 
-If you are in local/dev environment with a self-signed certificate, you can temporarily disable TLS certificate validation:
+- `--apiKey` — Workspace API key (found in ChatbotX Settings → Developer → API Keys)
+- `--apiUrl` — Base API URL of your instance, e.g. `https://app.chatbotx.io/api`
+
+You can also set them individually:
+
+```bash
+chatbotx config set --apiKey <yourApiKey>
+chatbotx config set --apiUrl https://app.chatbotx.io/api
+```
+
+Or via environment variables:
+
+```bash
+export CHATBOTX_API_KEY=your_api_key
+export CHATBOTX_API_URL=https://app.chatbotx.io/api
+```
+
+For local dev with a self-signed certificate:
 
 ```bash
 chatbotx config set --allowSelfSignedCert true
+# or
+export CHATBOTX_ALLOW_SELF_SIGNED_CERT=true
 ```
 
-You can also set it per-run using environment variable:
+### 2. Global Options
+
+Available on every command:
+
+| Option | Description |
+|---|---|
+| `--apiKey` | Override API key for this run |
+| `--apiUrl` | Override API URL for this run |
+| `--allowSelfSignedCert` | Disable TLS cert validation |
+| `--refresh-spec` | Force re-fetch the OpenAPI spec (clears cache) |
+
+---
+
+## Commands
+
+### `config`
 
 ```bash
-CHATBOTX_ALLOW_SELF_SIGNED_CERT=true chatbotx tags list
+chatbotx config set --apiKey <key> --apiUrl <url>
 ```
 
-Preferred (more secure) approach is to trust your CA certificate:
+---
+
+### `workspace`
 
 ```bash
-NODE_EXTRA_CA_CERTS=/path/to/ca.pem chatbotx tags list
+chatbotx workspace list                  # Get workspace info
 ```
 
-Notes:
+---
 
-- The CLI supports the global option `--apiUrl` if you want to override the stored base URL for a single run.
-- The default base URL is `https://cloud.chatbotx.io`.
-
-## 2. Commands: `tags`
-
-### List all tags
+### `workspace-members`
 
 ```bash
-chatbotx tags list
+chatbotx workspace-members list          # List workspace members
 ```
 
-### Create a new tag
+---
+
+### `channels`
 
 ```bash
-chatbotx tags create --name <tagName>
+chatbotx channels list                   # List channels
 ```
 
-### Show tag details
+---
+
+### `inbox-teams`
 
 ```bash
-chatbotx tags show --id <tagId>
+chatbotx inbox-teams list                # List inbox teams
 ```
 
-### Show tag details by name
+---
+
+### `tags`
 
 ```bash
-chatbotx tags show-by-name --name <tagName>
+chatbotx tags list                       # Get all tags
+chatbotx tags create --name <name>       # Create a new tag
+chatbotx tags show <id>                  # Get tag by ID
+chatbotx tags update <id> --name <name>  # Update tag name
+chatbotx tags delete <id>                # Delete tag
+chatbotx tags find-by-name <name>        # Find tag by name
 ```
 
-### Update a tag
+---
+
+### `custom-fields`
 
 ```bash
-chatbotx tags update --id <tagId> --name <newTagName>
+chatbotx custom-fields list                        # Get all custom fields
+chatbotx custom-fields create --name <name> ...    # Create a custom field
+chatbotx custom-fields show <id>                   # Get custom field by ID
+chatbotx custom-fields find-by-name <name>         # Find custom field by name
 ```
 
-### Delete a tag
+---
+
+### `bot-fields`
 
 ```bash
-chatbotx tags delete --id <tagId>
+chatbotx bot-fields list                           # Get all bot fields
+chatbotx bot-fields create ...                     # Create a bot field
+chatbotx bot-fields show <key>                     # Get bot field by key/name
+chatbotx bot-fields update <key> --value <value>   # Update bot field value
+chatbotx bot-fields delete <key>                   # Unset bot field value
 ```
 
-## 3. Commands: `custom-fields`
+---
 
-### List all custom fields
+### `contacts`
 
 ```bash
-chatbotx custom-fields list
+# Basic CRUD
+chatbotx contacts create --phoneNumber <phone> --email <email> --gender <gender>
+chatbotx contacts show <contactId>
+chatbotx contacts find-by-custom-field --customFieldId <id> --value <value>
+
+# Tags
+chatbotx contacts list-tags <contactId>
+chatbotx contacts add-tag <contactId> <tagId>
+chatbotx contacts delete-tag <contactId> <tagId>
+
+# Custom fields
+chatbotx contacts list-custom-fields <contactId>
+chatbotx contacts show-custom-field <contactId> <customFieldId>
+chatbotx contacts add-custom-field <contactId> <customFieldId> --value <value>
+chatbotx contacts delete-custom-field <contactId> <customFieldId>
+
+# Messaging
+chatbotx contacts add-message <contactId> --text <message>
+chatbotx contacts add-message <contactId> --flowId <id> --nodeId <id>
 ```
 
-### Create a new custom field
+---
+
+### `conversations`
 
 ```bash
-chatbotx custom-fields create --name <fieldName> --customFieldType <type>
+chatbotx conversations create ...        # Create a conversation
 ```
 
-Valid `customFieldType` values:
+---
 
-- `shortText`
-- `number`
-- `date`
-- `datetime`
-- `boolean`
-- `longText`
-
-### Show custom field details
+### `broadcasts`
 
 ```bash
-chatbotx custom-fields show --id <customFieldId>
+chatbotx broadcasts list                 # Get all broadcasts
 ```
 
-### Show custom field details by name
+---
+
+### `flows`
 
 ```bash
-chatbotx custom-fields show-by-name --name <fieldName>
+chatbotx flows list                      # Get all flows
 ```
 
-## 4. Commands: `contacts`
+---
 
-### Get contact by ID
+### `sequences`
 
 ```bash
-chatbotx contacts show --contactId <contactId>
+chatbotx sequences list                  # List sequences
+chatbotx sequences show <id>             # Get sequence details
 ```
 
-### List contacts by custom field value
+---
+
+### `saved-replies`
 
 ```bash
-chatbotx contacts list-by-custom-field --customFieldId <customFieldId> --customFieldValue <value>
+chatbotx saved-replies list              # List saved replies
 ```
 
-### List tags of a contact
+---
+
+### `whatsapp-message-templates`
 
 ```bash
-chatbotx contacts list-tags --contactId <contactId>
+chatbotx whatsapp-message-templates list # List WhatsApp message templates
 ```
 
-### Add a tag to a contact
+---
+
+### `error-logs`
 
 ```bash
-chatbotx contacts add-tag --contactId <contactId> --tagId <tagId>
+chatbotx error-logs list                 # List error logs
 ```
 
-### Delete a tag from a contact
+---
+
+## Caching
+
+The CLI caches the API spec at `~/.chatbotX/openapi-cache.json` for 1 hour to avoid fetching on every run.
 
 ```bash
-chatbotx contacts delete-tag --contactId <contactId> --tagId <tagId>
+# Force refresh the spec cache
+chatbotx --refresh-spec <command>
+
+# Or delete the cache manually
+rm ~/.chatbotX/openapi-cache.json
 ```
 
-### List custom fields of a contact
+Cache TTL can be overridden via environment variable:
 
 ```bash
-chatbotx contacts list-custom-fields --contactId <contactId>
+CHATBOTX_SPEC_CACHE_TTL_SECONDS=300 chatbotx tags list
 ```
 
-### Get a contact's custom field value
+---
+
+## Getting Help
 
 ```bash
-chatbotx contacts get-custom-field-value --contactId <contactId> --customFieldId <customFieldId>
-```
-
-### Update a contact custom field value
-
-```bash
-chatbotx contacts update-custom-field-value --contactId <contactId> --customFieldId <customFieldId> --value <customFieldValue>
-```
-
-### Delete a contact custom field
-
-```bash
-chatbotx contacts delete-custom-field --contactId <contactId> --customFieldId <customFieldId>
-```
-
-### Send a message to a contact
-
-```bash
-chatbotx contacts send-message --contactId <contactId> --channel <channel> --content <message> --files <file1,file2> --flowId <flowId> --clientId <clientId>
-```
-
-Valid `channel` values:
-
-- `webchat`
-- `messenger`
-- `whatsapp`
-- `zalo`
-
-### Create a new contact
-
-```bash
-chatbotx contacts create --phoneNumber <phoneNumber> --email <email> --gender <male|female|unknown> --firstName <firstName> --lastName <lastName>
-```
-
-## 5. Commands: `bot-fields`
-
-### Get bot field by ID
-
-```bash
-chatbotx bot-fields show --id <botFieldId>
-```
-
-### Update bot field value
-
-```bash
-chatbotx bot-fields update --id <botFieldId> --value <value>
-```
-
-### Unset bot field value
-
-```bash
-chatbotx bot-fields delete --id <botFieldId>
-```
-
-## 6. Commands: `flows`
-
-### List all flows
-
-```bash
-chatbotx flows list
-```
-
-## 7. Commands: `broadcasts`
-
-### List all broadcasts
-
-```bash
-chatbotx broadcasts list
+chatbotx --help                          # List all command groups
+chatbotx tags --help                     # List actions for a group
+chatbotx tags create --help              # Show options for a specific action
 ```
