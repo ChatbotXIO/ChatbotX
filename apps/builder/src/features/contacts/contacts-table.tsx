@@ -25,6 +25,7 @@ import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ListContactsItem } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
+import { getAvatarInitials, getRespondAvatarUrl } from "./utils"
 
 type ContactsTableProps = {
   workspaceId: string
@@ -112,24 +113,54 @@ export function ContactsTable({
             title={t("fields.name.label")}
           />
         ),
-        cell: ({ row }) => (
-          <div className="max-w-[200px] truncate">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  className="max-w-[200px] truncate text-blue-500"
-                  href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
-                  target="_blank"
-                >
-                  {row.original.fullName}
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{row.original.fullName}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const name =
+            row.original.fullName ||
+            row.original.phoneNumber ||
+            row.original.email ||
+            "?"
+          const avatar = getRespondAvatarUrl(name)
+          const initials = getAvatarInitials(name)
+          return (
+            <div className="flex items-center gap-2">
+              {/* Avatar pixel-perfect Respond.io 2026-05-26 — span circular
+                  28px com img de fundo (mesmo CDN visual). Não usa Avatar
+                  shadcn porque ele força size-8 + rounded-lg + border que
+                  conflitam com Respond.io. */}
+              <span
+                className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[11px] text-white"
+                style={{ backgroundColor: avatar.color }}
+                title={name}
+              >
+                {/* biome-ignore lint/performance/noImgElement: avatar de fundo simples sem Next/Image */}
+                <img
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 size-full object-cover"
+                  height={28}
+                  src={avatar.url}
+                  width={28}
+                />
+                <span className="relative">{initials}</span>
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    className="max-w-[170px] truncate text-blue-500"
+                    href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
+                    target="_blank"
+                  >
+                    {name}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )
+        },
+        size: 220,
         meta: {
           label: t("fields.name.label"),
           placeholder: t("fields.name.placeholder"),
