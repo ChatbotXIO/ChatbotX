@@ -13,6 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
@@ -108,13 +113,20 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex justify-start">
-            <Link
-              className="font-medium text-primary hover:underline"
-              href={`/space/${workspaceId}/sequences/${row.original.id}`}
-            >
-              {row.original.name ?? ""}
-            </Link>
+          <div className="max-w-75 truncate">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  className="truncate"
+                  href={`/space/${workspaceId}/sequences/${row.original.id}`}
+                >
+                  {row.original.name ?? ""}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{row.original.name}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
         meta: {

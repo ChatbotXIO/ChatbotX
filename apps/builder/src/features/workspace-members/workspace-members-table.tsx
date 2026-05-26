@@ -88,7 +88,7 @@ export function WorkspaceMembersTable({
         ),
         cell: ({ row }) =>
           row.original.permissions.contacts ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
+            <CheckCircle2Icon className="size-5 text-primary" />
           ) : (
             <XCircleIcon className="size-5" />
           ),
@@ -101,7 +101,7 @@ export function WorkspaceMembersTable({
         ),
         cell: ({ row }) =>
           row.original.permissions.analytics ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
+            <CheckCircle2Icon className="size-5 text-primary" />
           ) : (
             <XCircleIcon className="size-5" />
           ),
@@ -114,7 +114,7 @@ export function WorkspaceMembersTable({
         ),
         cell: ({ row }) =>
           row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
+            <CheckCircle2Icon className="size-5 text-primary" />
           ) : (
             <XCircleIcon className="size-5" />
           ),
@@ -128,7 +128,7 @@ export function WorkspaceMembersTable({
         ),
         cell: ({ row }) =>
           row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
+            <CheckCircle2Icon className="size-5 text-primary" />
           ) : (
             <XCircleIcon className="size-5" />
           ),

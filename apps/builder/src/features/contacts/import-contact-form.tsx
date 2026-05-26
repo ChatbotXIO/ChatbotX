@@ -235,7 +235,7 @@ export function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
   return (
     <Accordion className="w-full" collapsible type="single">
       <AccordionItem
-        className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
+        className="transition-all hover:data-[state=open]:rounded-none"
         key="moreOptions"
         value="moreOptions"
       >

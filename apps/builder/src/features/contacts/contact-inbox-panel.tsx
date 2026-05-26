@@ -132,12 +132,12 @@ export const ContactInboxPanel = ({
       <Accordion className="w-full" collapsible type="single">
         {accordionModules.map((module, index) => (
           <AccordionItem
-            className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
+            className="transition-all hover:data-[state=open]:rounded-none"
             key={module.keyName}
             value={module.keyName}
           >
             <AccordionTrigger
-              className={`rounded-none p-2 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200 ${index === 0 ? "border-t" : ""}`}
+              className={`rounded-none p-2 transition-all ${index === 0 ? "border-t" : ""}`}
             >
               <div className="flex items-center gap-2">{module.keyName}</div>
             </AccordionTrigger>

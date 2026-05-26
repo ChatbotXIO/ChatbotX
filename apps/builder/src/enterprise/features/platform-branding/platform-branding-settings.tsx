@@ -45,7 +45,7 @@ const THEME_COLORS: Record<(typeof themeOptions)[number], string> = {
   Red: "#ef4444",
   Rose: "#f43f5e",
   Sky: "#0ea5e9",
-  Stone: "#78716c",
+  Stone: "#1c1917",
   Teal: "#14b8a6",
   Violet: "#8b5cf6",
   Yellow: "#eab308",

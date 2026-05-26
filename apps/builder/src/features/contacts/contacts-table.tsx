@@ -70,11 +70,11 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-[200px] truncate">
+          <div className="max-w-50 truncate">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  className="max-w-[200px] truncate text-blue-500"
+                  className="max-w-50 truncate"
                   href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
                   target="_blank"
                 >
