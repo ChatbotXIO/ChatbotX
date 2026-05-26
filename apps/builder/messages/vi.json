@@ -2317,6 +2317,15 @@
       "showAlways": "Luôn hiển thị",
       "alwaysHide": "Luôn ẩn",
       "saved": "Đã cập nhật hiển thị"
+    },
+    "column": {
+      "channels": "Kênh",
+      "country": "Quốc gia/khu vực",
+      "language": "Ngôn ngữ",
+      "conversationStatus": "Trạng thái hội thoại",
+      "lastMessage": "Tin nhắn cuối",
+      "statusOpen": "Mở",
+      "statusClosed": "Đã đóng"
     }
   },
   "errorLogs": {

@@ -2329,6 +2329,15 @@
       "showAlways": "Always show",
       "alwaysHide": "Always hide",
       "saved": "View updated"
+    },
+    "column": {
+      "channels": "Channel(s)",
+      "country": "Country/region",
+      "language": "Language",
+      "conversationStatus": "Conversation Status",
+      "lastMessage": "Last Message",
+      "statusOpen": "Open",
+      "statusClosed": "Closed"
     }
   },
   "auditLogs": {

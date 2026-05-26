@@ -28,6 +28,8 @@ export async function listContacts(
       orderBy,
       with: {
         contactInboxes: true,
+        tags: true,
+        lifecycleStage: true,
         conversation: {
           with: {
             assignedUser: true,

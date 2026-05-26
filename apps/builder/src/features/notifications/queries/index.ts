@@ -2,7 +2,11 @@
 
 import { db } from "@chatbotx.io/database/client"
 
-export function getMyWorkspaceMember(workspaceId: string, userId: string) {
+// biome-ignore lint/suspicious/useAwait: "use server" requires async functions (Next.js)
+export async function getMyWorkspaceMember(
+  workspaceId: string,
+  userId: string,
+) {
   return db.query.workspaceMemberModel.findFirst({
     where: {
       workspaceId,

@@ -1,4 +1,8 @@
 import { channelTypes } from "@chatbotx.io/database/partials"
+import {
+  createSelectSchema,
+  lifecycleStageModel,
+} from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { inboxTeamResource } from "@/enterprise/features/inbox-teams/schema/resource"
@@ -10,6 +14,12 @@ import { publicCustomFieldResource } from "@/features/custom-fields/schemas/reso
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
+
+const lifecycleStageInResource = createSelectSchema(lifecycleStageModel, {
+  id: z.string(),
+  workspaceId: z.string(),
+})
+
 import { basePaginationRequest } from "@/lib/pagination"
 import {
   contactCustomFieldResource,
@@ -45,6 +55,7 @@ export const listContactsItem = contactResource.and(
   z.object({
     contactCustomFields: z.array(contactCustomFieldResource).optional(),
     tags: z.array(tagResource).optional(),
+    lifecycleStage: lifecycleStageInResource.nullish(),
     contactNotes: z.array(contactNoteResource).optional(),
     contactInboxes: z.array(contactInboxResource).optional(),
     conversation: conversationResource

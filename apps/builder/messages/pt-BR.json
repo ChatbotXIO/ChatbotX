@@ -2329,6 +2329,15 @@
       "showAlways": "Exibir sempre",
       "alwaysHide": "Sempre ocultar",
       "saved": "Visualização atualizada"
+    },
+    "column": {
+      "channels": "Canal(ais)",
+      "country": "País/região",
+      "language": "Idioma",
+      "conversationStatus": "Status da conversa",
+      "lastMessage": "Última mensagem",
+      "statusOpen": "Abertas",
+      "statusClosed": "Fechadas"
     }
   },
   "auditLogs": {

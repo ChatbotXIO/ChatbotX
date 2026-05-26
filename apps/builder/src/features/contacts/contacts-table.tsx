@@ -13,11 +13,12 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
-import { format, formatDistance } from "date-fns"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo } from "react"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
+import { LifecycleStagePill } from "../lifecycle-stages/lifecycle-stage-pill"
+import { getTagChipStyle } from "../tags/tag-colors"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
@@ -31,12 +32,48 @@ type ContactsTableProps = {
   lifecycleStages?: LifecycleStageModel[]
 }
 
+// Formato de data no padrão Respond.io ("abr 21, 2026 12:19 PM").
+function formatRespondDate(
+  value: Date | string | null,
+  locale: string,
+): string {
+  if (!value) {
+    return "—"
+  }
+  const d = typeof value === "string" ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) {
+    return "—"
+  }
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d)
+}
+
+// ISO 2-letter country code → bandeira emoji (regional indicator unicode).
+function countryCodeToFlag(code: string | null | undefined): string {
+  if (!code || code.length !== 2) {
+    return "🌐"
+  }
+  const upper = code.toUpperCase()
+  const base = 0x1_f1_e6
+  return (
+    String.fromCodePoint(base + upper.charCodeAt(0) - 65) +
+    String.fromCodePoint(base + upper.charCodeAt(1) - 65)
+  )
+}
+
 export function ContactsTable({
   workspaceId,
   promises,
-  lifecycleStages = [],
+  lifecycleStages: _lifecycleStages = [],
 }: ContactsTableProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const [{ data, pageCount }] = use(promises)
 
   const columns = useMemo<ColumnDef<ListContactsItem>[]>(
@@ -102,15 +139,16 @@ export function ContactsTable({
         enableHiding: false,
       },
       {
-        accessorKey: "source",
+        id: "channels",
+        accessorKey: "channels",
         header: ({ column }: { column: Column<ContactResource, unknown> }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.source.label")}
+            title={t("contacts.column.channels")}
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {row.original.contactInboxes?.map((contactInbox) => (
               <InboxIcon
                 channel={contactInbox.channel as ChannelType}
@@ -121,12 +159,175 @@ export function ContactsTable({
           </div>
         ),
         enableSorting: false,
-        enableHiding: false,
-        meta: {
-          label: t("fields.source.label"),
-        },
       },
       {
+        id: "lifecycleStage",
+        accessorKey: "lifecycleStage",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t("lifecycle.title")} />
+        ),
+        cell: ({ row }) => {
+          const stage = row.original.lifecycleStage
+          if (!stage) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return <LifecycleStagePill stage={stage} />
+        },
+        enableSorting: false,
+      },
+      {
+        id: "email",
+        accessorKey: "email",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.email.label")}
+          />
+        ),
+        cell: ({ row }) => {
+          const email = row.original.email
+          if (!email) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="max-w-[180px] truncate text-sm">{email}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{email}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        id: "phoneNumber",
+        accessorKey: "phoneNumber",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.phoneNumber.label")}
+          />
+        ),
+        cell: ({ row }) => {
+          const phone = row.original.phoneNumber
+          if (!phone) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return <span className="font-mono text-sm">{phone}</span>
+        },
+        enableSorting: false,
+      },
+      {
+        id: "tags",
+        accessorKey: "tags",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t("tags.title")} />
+        ),
+        cell: ({ row }) => {
+          const tags = row.original.tags ?? []
+          if (tags.length === 0) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {tags.slice(0, 3).map((tag) => (
+                <span
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold text-[11px] leading-4"
+                  key={tag.id}
+                  style={getTagChipStyle(tag.color)}
+                >
+                  {tag.emoji && <span aria-hidden>{tag.emoji}</span>}
+                  <span className="max-w-[80px] truncate">{tag.name}</span>
+                </span>
+              ))}
+              {tags.length > 3 && (
+                <span className="text-muted-foreground text-xs">
+                  +{tags.length - 3}
+                </span>
+              )}
+            </div>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        id: "country",
+        accessorKey: "country",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("contacts.column.country")}
+          />
+        ),
+        cell: ({ row }) => {
+          const country = row.original.country
+          if (!country) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return (
+            <span className="inline-flex items-center gap-1.5 text-sm">
+              <span aria-hidden className="text-base leading-none">
+                {countryCodeToFlag(country)}
+              </span>
+              <span>{country}</span>
+            </span>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        id: "locale",
+        accessorKey: "locale",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("contacts.column.language")}
+          />
+        ),
+        cell: ({ row }) => {
+          const loc = row.original.locale
+          if (!loc) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          return <span className="text-sm">{loc}</span>
+        },
+        enableSorting: false,
+      },
+      {
+        id: "conversationStatus",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("contacts.column.conversationStatus")}
+          />
+        ),
+        cell: ({ row }) => {
+          const conv = row.original.conversation
+          if (!conv) {
+            return <span className="text-muted-foreground text-xs">—</span>
+          }
+          const isOpen = !conv.archivedAt
+          return (
+            <span
+              className={
+                isOpen
+                  ? "rounded px-1.5 py-0.5 font-medium text-[11px] text-emerald-600 dark:text-emerald-400"
+                  : "rounded px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground"
+              }
+            >
+              {isOpen
+                ? t("contacts.column.statusOpen")
+                : t("contacts.column.statusClosed")}
+            </span>
+          )
+        },
+        enableSorting: false,
+      },
+      {
+        id: "assignee",
         accessorKey: "assignee",
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -134,75 +335,66 @@ export function ContactsTable({
             title={t("fields.assignee.label")}
           />
         ),
-        cell: ({ row }) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">
-                {getUserName(
-                  row.original.conversation?.assignedUser,
-                  t("assignAdmin.unAssigned"),
-                )}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {getUserName(
-                row.original.conversation?.assignedUser,
-                t("assignAdmin.unAssigned"),
-              )}
-            </TooltipContent>
-          </Tooltip>
-        ),
+        cell: ({ row }) => {
+          const name = getUserName(
+            row.original.conversation?.assignedUser,
+            t("assignAdmin.unAssigned"),
+          )
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="max-w-[140px] truncate text-sm">{name}</div>
+              </TooltipTrigger>
+              <TooltipContent>{name}</TooltipContent>
+            </Tooltip>
+          )
+        },
         meta: {
           label: t("fields.assignee.label"),
         },
         enableSorting: false,
-        enableHiding: false,
       },
       {
-        id: "lastReadAt",
-        accessorKey: "lastReadAt",
+        id: "lastMessage",
+        accessorKey: "lastMessageAt",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.lastRead.label")}
+            title={t("contacts.column.lastMessage")}
           />
         ),
-        cell: ({ row }) => (
-          <div>
-            {row.original.conversation?.contactLastReadAt
-              ? formatDistance(
-                  new Date(),
-                  row.original.conversation.contactLastReadAt,
-                  {
-                    addSuffix: true,
-                  },
-                )
-              : null}
-          </div>
-        ),
-        meta: {
-          label: t("fields.lastRead.label"),
+        cell: ({ row }) => {
+          const lastReadAt = row.original.conversation?.contactLastReadAt
+          return (
+            <span className="text-muted-foreground text-sm">
+              {formatRespondDate(lastReadAt ?? null, locale)}
+            </span>
+          )
         },
         enableSorting: true,
-        enableHiding: false,
       },
       {
+        id: "createdAt",
         accessorKey: "createdAt",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.createdAt.label")}
+            title={t("fields.addedAt.label")}
           />
         ),
-        cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd"),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {formatRespondDate(row.original.createdAt, locale)}
+          </span>
+        ),
         meta: {
-          label: t("fields.createdAt.label"),
+          label: t("fields.addedAt.label"),
         },
         enableSorting: true,
         enableHiding: false,
       },
     ],
-    [workspaceId, t],
+    [workspaceId, t, locale],
   )
 
   const { table } = useDataTable({
@@ -223,7 +415,7 @@ export function ContactsTable({
       <DataTableToolbar table={table}>
         <CreateContactDialog workspaceId={workspaceId} />
         <ContactListAction
-          lifecycleStages={lifecycleStages}
+          lifecycleStages={_lifecycleStages}
           table={table}
           workspaceId={workspaceId}
         />
