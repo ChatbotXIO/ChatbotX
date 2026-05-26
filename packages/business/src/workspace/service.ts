@@ -1,14 +1,11 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
-import {
-  workspaceModel,
-  workspaceUsageModel,
-} from "@chatbotx.io/database/schema"
+import { workspaceModel } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
-import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { notFoundException } from "../errors"
+import { userQuotaService } from "../user-quota/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
 type WorkspaceWhere = Partial<{ id: string; ownerId: string }>
@@ -57,16 +54,18 @@ class WorkspaceService extends BaseService {
   }): Promise<WorkspaceModel> {
     const { data, tx = db } = props
 
+    const allowed = await userQuotaService.tryIncrement(
+      props.createdBy,
+      "workspaces",
+    )
+    if (!allowed) {
+      throw new Error("Workspace limit reached for this plan")
+    }
+
     const [newWorkspace] = await tx
       .insert(workspaceModel)
       .values(data)
       .returning()
-
-    // Create workspace usage
-    await tx.insert(workspaceUsageModel).values({
-      id: createId(),
-      workspaceId: newWorkspace.id,
-    })
 
     // Create workspace member
     await workspaceMemberService.create({

@@ -1,3 +1,7 @@
+import {
+  connectChannelIntegration,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes, inboxStatuses } from "@chatbotx.io/database/partials"
@@ -46,31 +50,38 @@ export async function createSmtp(
     port = defaultHostAndPort.port
   }
 
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
+  if (!workspace) {
+    throw new ChatbotXException("Workspace not found")
+  }
+
   return db.transaction(async (tx) => {
     const smtpId = createId()
     const name = input.username
-    const inbox = await tx
-      .insert(inboxModel)
-      .values({
+
+    const { inbox } = await connectChannelIntegration({
+      tx,
+      ownerId: workspace.ownerId,
+      inboxData: {
         id: smtpId,
         workspaceId,
         channel: channelTypes.enum.smtp,
         name,
         sourceId: smtpId,
-      })
-      .returning()
-      .then((result) => result[0])
-
-    await tx.insert(integrationSmtpModel).values({
-      id: smtpId,
-      name,
-      workspaceId,
-      inboxId: inbox.id,
-      auth: {
-        authType: "custom" as const,
-        ...rest,
-        host,
-        port,
+      },
+      insertIntegration: async (inboxId) => {
+        await tx.insert(integrationSmtpModel).values({
+          id: smtpId,
+          name,
+          workspaceId,
+          inboxId,
+          auth: {
+            authType: "custom" as const,
+            ...rest,
+            host,
+            port,
+          },
+        })
       },
     })
 

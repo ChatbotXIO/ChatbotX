@@ -35,6 +35,7 @@ import { customFieldRelations } from "./custom-field"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
 import { platformSettingRelations } from "./enterprise/platform-setting"
+import { userQuotaRelations } from "./enterprise/user-quota"
 import { errorLogRelations } from "./error-log"
 import { flowRelations } from "./flow"
 import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
@@ -77,7 +78,6 @@ import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { workspaceRelations } from "./workspace"
 import { workspaceMemberRelations } from "./workspace-member"
-import { workspaceUsageRelations } from "./workspace-usage"
 
 export const relations = {
   ...aiTriggerRelations,
@@ -99,7 +99,7 @@ export const relations = {
   ...customDomainRelations,
   ...platformSettingRelations,
   ...platformCredentialRelations,
-  ...workspaceUsageRelations,
+  ...userQuotaRelations,
   ...contactCustomFieldRelations,
   ...customFieldRelations,
   ...broadcastRelations,

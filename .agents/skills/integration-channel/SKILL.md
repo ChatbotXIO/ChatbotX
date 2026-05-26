@@ -429,7 +429,7 @@ If platform credentials ARE needed, also update:
 | 1 | `packages/database/src/partials/credential.ts` | New `<channel>CredentialSchema` + add to `platformCredentialSchema` |
 | 2 | `apps/builder/src/features/platform-settings/` | Settings panel component + action |
 | 3 | `manage-platform-settings.tsx` | Import and render new panel |
-| 4 | `<channel>-manage.tsx` | Gate "Add" button on presence of a verified credential via `credentialService.findForUser({ userId, type: '<channel>' })` |
+| 4 | `<channel>-manage.tsx` | Gate "Add" button on presence of a verified credential via `platformCredentialService.findForUser({ userId, type: '<channel>' })` |
 
 ## Logging
 

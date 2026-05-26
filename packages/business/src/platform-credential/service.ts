@@ -123,6 +123,7 @@ class PlatformCredentialService extends BaseService {
         verifiedAt,
       })
       .onConflictDoUpdate({
+        targetWhere: eq(platformCredentialModel.userId, userId),
         target: [
           platformCredentialModel.userId,
           platformCredentialModel.type,

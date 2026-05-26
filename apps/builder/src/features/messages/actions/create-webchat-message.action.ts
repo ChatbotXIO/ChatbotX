@@ -18,7 +18,6 @@ import {
   conversationModel,
   integrationWebchatModel,
   messageModel,
-  workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import type {
   ContactModel,
@@ -298,17 +297,6 @@ async function getConversationFromInput(
       },
     })
   } else {
-    const workspaceUsage = await findOrFail({
-      table: workspaceUsageModel,
-      where: {
-        workspaceId: parsedInput.workspaceId,
-      },
-      message: "Workspace usage not found",
-    })
-    if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
-      throw new ChatbotXException("Max contacts reached")
-    }
-
     // Create new contact
     contact = await tx
       .insert(contactModel)

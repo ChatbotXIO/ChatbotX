@@ -115,6 +115,7 @@ export const handleCallback = async (
       await connectZaloHandler({
         zaloSettings: zaloCredential.config,
         workspaceId: workspace.id,
+        ownerId: workspace.ownerId,
         req,
       })
 

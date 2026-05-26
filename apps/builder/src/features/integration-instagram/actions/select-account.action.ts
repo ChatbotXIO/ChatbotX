@@ -2,17 +2,14 @@
 
 import {
   buildContext,
+  connectChannelIntegration,
   platformCredentialService,
   resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
-import {
-  inboxModel,
-  integrationInstagramModel,
-} from "@chatbotx.io/database/schema"
+import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import {
@@ -109,50 +106,41 @@ export const selectAccountAction = authActionClient
             },
           }
 
-          const inbox = await tx
-            .insert(inboxModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              name: parsedInput.igName,
-              channel: "instagram",
-              sourceId: parsedInput.igId,
-            })
-            .onConflictDoUpdate({
-              target: [
-                inboxModel.workspaceId,
-                inboxModel.channel,
-                inboxModel.sourceId,
-              ],
-              set: {
-                status: inboxStatuses.enum.connected,
+          const { integration: integrationRow } =
+            await connectChannelIntegration({
+              tx,
+              ownerId,
+              inboxData: {
+                id: createId(),
+                workspaceId: workspaceId as string,
+                name: parsedInput.igName,
+                channel: "instagram",
+                sourceId: parsedInput.igId,
               },
+              insertIntegration: async (inboxId) =>
+                tx
+                  .insert(integrationInstagramModel)
+                  .values({
+                    id: createId(),
+                    workspaceId: workspaceId as string,
+                    inboxId,
+                    igId: parsedInput.igId,
+                    pageId: parsedInput.pageId,
+                    auth,
+                    name: parsedInput.igName,
+                    username: parsedInput.igUsername,
+                    persistentMenus: [
+                      {
+                        label: BRANDING_TITLE,
+                        type: "url" as const,
+                        url: getBrandingUrl("instagram", appUrl),
+                      },
+                    ],
+                    conversationStarters: [],
+                  })
+                  .returning()
+                  .then((result) => result[0]),
             })
-            .returning()
-            .then((result) => result[0])
-
-          const integrationRow = await tx
-            .insert(integrationInstagramModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              inboxId: inbox.id,
-              igId: parsedInput.igId,
-              pageId: parsedInput.pageId,
-              auth,
-              name: parsedInput.igName,
-              username: parsedInput.igUsername,
-              persistentMenus: [
-                {
-                  label: BRANDING_TITLE,
-                  type: "url" as const,
-                  url: getBrandingUrl("instagram", appUrl),
-                },
-              ],
-              conversationStarters: [],
-            })
-            .returning()
-            .then((result) => result[0])
 
           const brandingCtx = await buildContext({
             workspaceId,

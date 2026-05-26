@@ -1,20 +1,14 @@
 "use server"
 
 import {
+  connectChannelIntegration,
   platformCredentialService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, type Transaction } from "@chatbotx.io/database/client"
-import {
-  inboxStatuses,
-  type WhatsappCredential,
-} from "@chatbotx.io/database/partials"
-
-import {
-  inboxModel,
-  integrationWhatsappModel,
-} from "@chatbotx.io/database/schema"
+import type { WhatsappCredential } from "@chatbotx.io/database/partials"
+import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import {
   addSystemUser,
@@ -202,6 +196,7 @@ async function setupOAuthResources(
 
 async function persistIntegration(params: {
   tx: Transaction
+  ownerId: string
   userId: string
   workspaceId: string | null | undefined
   integrationId: string
@@ -212,6 +207,7 @@ async function persistIntegration(params: {
 }): Promise<string> {
   const {
     tx,
+    ownerId,
     userId,
     workspaceId,
     integrationId,
@@ -236,46 +232,40 @@ async function persistIntegration(params: {
     resolvedWorkspaceId = workspace.id
   }
 
-  const inbox = await tx
-    .insert(inboxModel)
-    .values({
+  const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
+    phoneNumber.display_phone_number,
+  )
+
+  await connectChannelIntegration({
+    tx,
+    ownerId,
+    inboxData: {
       id: createId(),
       workspaceId: resolvedWorkspaceId,
       channel: "whatsapp",
       sourceId: phoneNumber.id,
       name: phoneNumber.verified_name,
-    })
-    .onConflictDoUpdate({
-      target: [inboxModel.workspaceId, inboxModel.channel, inboxModel.sourceId],
-      set: { status: inboxStatuses.enum.connected },
-    })
-    .returning()
-    .then((result) => result[0])
-
-  const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
-    phoneNumber.display_phone_number,
-  )
-
-  await tx
-    .insert(integrationWhatsappModel)
-    .values({
-      id: integrationId,
-      workspaceId: resolvedWorkspaceId,
-      inboxId: inbox.id,
-      auth,
-      phoneNumberId: phoneNumber.id,
-      wabaId,
-      businessId,
-      name: phoneNumber.verified_name,
-      displayPhoneNumber,
-    })
-    .onConflictDoUpdate({
-      target: [integrationWhatsappModel.inboxId],
-      set: {
-        displayPhoneNumber,
-        updatedAt: new Date(),
-      },
-    })
+    },
+    insertIntegration: async (inboxId) => {
+      await tx
+        .insert(integrationWhatsappModel)
+        .values({
+          id: integrationId,
+          workspaceId: resolvedWorkspaceId as string,
+          inboxId,
+          auth,
+          phoneNumberId: phoneNumber.id,
+          wabaId,
+          businessId,
+          name: phoneNumber.verified_name,
+          displayPhoneNumber,
+        })
+        .onConflictDoUpdate({
+          target: [integrationWhatsappModel.inboxId],
+          set: { displayPhoneNumber, updatedAt: new Date() },
+        })
+    },
+  })
 
   return resolvedWorkspaceId
 }
@@ -403,6 +393,7 @@ export const connectWhatsappAction = authActionClient
         const workspaceId = await db.transaction((tx) =>
           persistIntegration({
             tx,
+            ownerId,
             userId: ctx.user.id,
             workspaceId: parsedInput.workspaceId,
             integrationId,

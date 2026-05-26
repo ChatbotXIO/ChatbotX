@@ -1,5 +1,6 @@
 "use server"
 
+import { userQuotaService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
@@ -44,6 +45,14 @@ export const deleteWorkspaceMemberAction = workspaceActionClient
     }
 
     await db.delete(workspaceMemberModel).where(eq(workspaceMemberModel.id, id))
+
+    const workspace = await db.query.workspaceModel.findFirst({
+      where: { id: workspaceId },
+      columns: { ownerId: true },
+    })
+    if (workspace) {
+      await userQuotaService.decrement(workspace.ownerId, "teamMembers")
+    }
 
     revalidateCacheTags(`workspaces:${workspaceId}#workspaceMembers`)
   })

@@ -1,17 +1,17 @@
 "use server"
 
-import { workspaceService } from "@chatbotx.io/business"
+import {
+  connectChannelIntegration,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import {
   db,
   isDatabaseError,
   throwIfExists,
 } from "@chatbotx.io/database/client"
-import { inboxStatuses, integrationTypes } from "@chatbotx.io/database/partials"
-import {
-  inboxModel,
-  integrationTelegramModel,
-} from "@chatbotx.io/database/schema"
+import { integrationTypes } from "@chatbotx.io/database/partials"
+import { integrationTelegramModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
@@ -44,11 +44,18 @@ export const connectTelegramAction = authActionClient
         // Make sure the bot is not already connected
         await throwIfExists({
           table: integrationTelegramModel,
-          where: {
-            botId: botData.id,
-          },
+          where: { botId: botData.id },
           message: "Bot is already connected",
         })
+
+        // Resolve ownerId before the transaction to avoid an extra read inside it
+        let ownerId = ctx.user.id
+        if (workspaceId) {
+          const workspace = await workspaceService.findOrFail({
+            where: { id: workspaceId },
+          })
+          ownerId = workspace.ownerId
+        }
 
         return await db.transaction(async (tx) => {
           const auth: TelegramAuthValue = {
@@ -56,11 +63,7 @@ export const connectTelegramAction = authActionClient
             secretText: botToken,
           }
 
-          if (workspaceId) {
-            await workspaceService.findOrFail({
-              where: { id: workspaceId },
-            })
-          } else {
+          if (!workspaceId) {
             const workspace = await workspaceService.create({
               tx,
               createdBy: ctx.user.id,
@@ -73,39 +76,26 @@ export const connectTelegramAction = authActionClient
             workspaceId = workspace.id
           }
 
-          const inbox = await tx
-            .insert(inboxModel)
-            .values({
+          await connectChannelIntegration({
+            tx,
+            ownerId,
+            inboxData: {
               id: createId(),
-              workspaceId,
+              workspaceId: workspaceId as string,
               name: botData.username,
               channel: integrationTypes.enum.telegram,
               sourceId: botData.id,
-            })
-            .onConflictDoUpdate({
-              target: [
-                inboxModel.workspaceId,
-                inboxModel.channel,
-                inboxModel.sourceId,
-              ],
-              set: {
-                status: inboxStatuses.enum.connected,
-              },
-            })
-            .returning()
-            .then((result) => result[0])
-
-          if (!inbox) {
-            throw new Error("Failed to create inbox")
-          }
-
-          await tx.insert(integrationTelegramModel).values({
-            id: createId(),
-            inboxId: inbox.id,
-            workspaceId,
-            botId: botData.id,
-            name: botData.username,
-            auth,
+            },
+            insertIntegration: async (inboxId) => {
+              await tx.insert(integrationTelegramModel).values({
+                id: createId(),
+                inboxId,
+                workspaceId: workspaceId as string,
+                botId: botData.id,
+                name: botData.username,
+                auth,
+              })
+            },
           })
 
           // Register webhook URL with Telegram
@@ -124,9 +114,7 @@ export const connectTelegramAction = authActionClient
             `workspaces:${workspaceId}#inboxes`,
           ])
 
-          return {
-            workspaceId,
-          }
+          return { workspaceId }
         })
       } catch (error) {
         if (isDatabaseError(error) && error.cause.code === "23505") {

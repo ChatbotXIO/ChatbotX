@@ -5,7 +5,6 @@ import {
   userModel,
   workspaceMemberModel,
   workspaceModel,
-  workspaceUsageModel,
 } from "../schema"
 
 async function main() {
@@ -48,12 +47,6 @@ async function main() {
       })
       .returning()
       .then((result) => result[0])
-
-    await db.insert(workspaceUsageModel).values({
-      id: createId(),
-      workspaceId: workspace?.id ?? "",
-      maxContacts: 999_999,
-    })
 
     await db.insert(workspaceMemberModel).values({
       id: createId(),

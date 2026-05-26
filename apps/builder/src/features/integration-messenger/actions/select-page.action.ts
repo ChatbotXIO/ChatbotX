@@ -2,17 +2,14 @@
 
 import {
   buildContext,
+  connectChannelIntegration,
   platformCredentialService,
   resolvePlatformSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
-import { inboxStatuses } from "@chatbotx.io/database/partials"
-import {
-  inboxModel,
-  integrationMessengerModel,
-} from "@chatbotx.io/database/schema"
+import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { integration as integrationMessenger } from "@chatbotx.io/integration-messenger"
@@ -119,49 +116,40 @@ export const selectPageAction = authActionClient
             },
           }
 
-          const inbox = await tx
-            .insert(inboxModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              name: parsedInput.pageName,
-              channel: "messenger",
-              sourceId: parsedInput.pageId,
-            })
-            .onConflictDoUpdate({
-              target: [
-                inboxModel.workspaceId,
-                inboxModel.channel,
-                inboxModel.sourceId,
-              ],
-              set: {
-                status: inboxStatuses.enum.connected,
+          const { integration: integrationRow } =
+            await connectChannelIntegration({
+              tx,
+              ownerId: platformOwnerId,
+              inboxData: {
+                id: createId(),
+                workspaceId: workspaceId as string,
+                name: parsedInput.pageName,
+                channel: "messenger",
+                sourceId: parsedInput.pageId,
               },
+              insertIntegration: async (inboxId) =>
+                tx
+                  .insert(integrationMessengerModel)
+                  .values({
+                    id: createId(),
+                    workspaceId: workspaceId as string,
+                    inboxId,
+                    pageId: parsedInput.pageId,
+                    auth,
+                    name: parsedInput.pageName,
+                    persistentMenus: [
+                      {
+                        label: BRANDING_TITLE,
+                        type: "url" as const,
+                        url: getBrandingUrl("messenger", appUrl),
+                      },
+                    ],
+                    conversationStarters: [],
+                    personas: [],
+                  })
+                  .returning()
+                  .then((result) => result[0]),
             })
-            .returning()
-            .then((result) => result[0])
-
-          const integrationRow = await tx
-            .insert(integrationMessengerModel)
-            .values({
-              id: createId(),
-              workspaceId,
-              inboxId: inbox.id,
-              pageId: parsedInput.pageId,
-              auth,
-              name: parsedInput.pageName,
-              persistentMenus: [
-                {
-                  label: BRANDING_TITLE,
-                  type: "url" as const,
-                  url: getBrandingUrl("messenger", appUrl),
-                },
-              ],
-              conversationStarters: [],
-              personas: [],
-            })
-            .returning()
-            .then((result) => result[0])
 
           const brandingCtx = await buildContext({
             workspaceId,

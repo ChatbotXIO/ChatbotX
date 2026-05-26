@@ -9,7 +9,13 @@ const env = keys()
 
 export const cacheConnections = {
   async create(): Promise<Redis> {
-    return await createRedisConnection(env.REDIS_CACHE_URL ?? env.REDIS_URL)
+    return await createRedisConnection(env.REDIS_CACHE_URL ?? env.REDIS_URL, {
+      // Fail commands immediately if Redis is down so callers can fall back fast.
+      // BullMQ queue connections need null (retry forever); cache reads do not.
+      maxRetriesPerRequest: 0,
+      commandTimeout: 200, // 200ms max per command
+      enableOfflineQueue: false, // don't queue commands while disconnected
+    })
   },
 
   async useExisting(): Promise<Redis> {

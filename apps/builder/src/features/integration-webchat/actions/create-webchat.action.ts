@@ -1,11 +1,8 @@
 "use server"
 
-import { workspaceService } from "@chatbotx.io/business"
+import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
-import {
-  inboxModel,
-  integrationWebchatModel,
-} from "@chatbotx.io/database/schema"
+import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
@@ -17,6 +14,8 @@ export const createWebchatAction = authActionClient
     const { authorizedDomains, ...rest } = parsedInput
 
     let workspaceId = parsedInput.workspaceId
+    const ownerId = ctx.user.id
+
     await db.transaction(async (tx) => {
       if (workspaceId) {
         await workspaceService.findOrFail({
@@ -25,28 +24,28 @@ export const createWebchatAction = authActionClient
       } else {
         const newChatbot = await workspaceService.create({
           tx,
-          createdBy: ctx.user.id,
+          createdBy: ownerId,
           data: {
             name: parsedInput.name,
             timezone: "UTC",
-            ownerId: ctx.user.id,
+            ownerId,
           },
         })
         workspaceId = newChatbot.id
       }
 
       const webchatId = createId()
-      const inbox = await tx
-        .insert(inboxModel)
-        .values({
+      const { inbox } = await inboxService.create({
+        tx,
+        ownerId,
+        data: {
           id: webchatId,
           workspaceId,
           channel: "webchat",
           name: rest.name,
           sourceId: webchatId,
-        })
-        .returning()
-        .then((result) => result[0])
+        },
+      })
 
       await tx.insert(integrationWebchatModel).values({
         ...rest,

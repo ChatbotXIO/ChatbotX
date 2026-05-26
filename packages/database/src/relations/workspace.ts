@@ -8,10 +8,6 @@ export const workspaceRelations = defineRelationsPart(schema, (r) => ({
       from: r.workspaceModel.ownerId,
       to: r.userModel.id,
     }),
-    workspaceUsage: r.one.workspaceUsageModel({
-      from: r.workspaceModel.id,
-      to: r.workspaceUsageModel.workspaceId,
-    }),
     savedReplies: r.many.savedReplyModel({
       from: r.workspaceModel.id,
       to: r.savedReplyModel.workspaceId,

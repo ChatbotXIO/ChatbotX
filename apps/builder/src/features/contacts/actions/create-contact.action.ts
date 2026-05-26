@@ -1,13 +1,13 @@
 "use server"
 
-import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
+import { db, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
   conversationModel,
   inboxModel,
-  workspaceUsageModel,
+  userQuotaModel,
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
@@ -70,17 +70,28 @@ export const createContact = async ({
     message: "Inbox not found",
   })
 
-  const workspaceUsage = await findOrFail({
-    table: workspaceUsageModel,
-    where: { workspaceId },
-    message: "Workspace usage not found",
+  const workspace = await db.query.workspaceModel.findFirst({
+    where: { id: workspaceId },
+    columns: { ownerId: true },
   })
-  if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
+  if (!workspace) {
+    return returnValidationErrors(createContactRequest, {
+      _errors: ["Workspace not found"],
+      phoneNumber: { _errors: [] },
+    })
+  }
+
+  const quota = await db.query.userQuotaModel.findFirst({
+    where: { userId: workspace.ownerId },
+  })
+  if (
+    quota !== undefined &&
+    quota.contactsLimit !== null &&
+    quota.contactsUsed >= quota.contactsLimit
+  ) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
-      phoneNumber: {
-        _errors: ["Max contacts reached"],
-      },
+      phoneNumber: { _errors: ["Contact limit reached"] },
     })
   }
 
@@ -107,11 +118,19 @@ export const createContact = async ({
       .returning()
 
     await tx
-      .update(workspaceUsageModel)
-      .set({
-        contactsCount: sql`${workspaceUsageModel.contactsCount} + 1`,
+      .insert(userQuotaModel)
+      .values({
+        userId: workspace.ownerId,
+        contactsUsed: 1,
+        syncedAt: new Date(),
       })
-      .where(eq(workspaceUsageModel.workspaceId, workspaceId))
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          contactsUsed: sql`${userQuotaModel.contactsUsed} + 1`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
 
     await tx.insert(conversationModel).values({
       workspaceId,
