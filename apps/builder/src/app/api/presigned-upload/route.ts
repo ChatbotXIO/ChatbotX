@@ -1,4 +1,4 @@
-import { resolvePlatformUrlsByDomain } from "@chatbotx.io/business"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { fileContextTypes, fileStatuses } from "@chatbotx.io/database/partials"
 import { fileModel } from "@chatbotx.io/database/schema"
@@ -8,9 +8,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import { presignImportUploadRequest } from "@/features/import/schemas/presign"
 import {
   assertCurrentUserCanAccessChatbot,
-  getCurrentUser,
+  getCurrentUserId,
 } from "@/lib/auth/utils"
-import { getDomainFromHeader } from "@/lib/domain"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { safeJsonParse } from "@/lib/serialize"
 import { getUploadHandler } from "@/lib/upload/handlers"
@@ -20,11 +19,10 @@ export async function POST(req: NextRequest) {
     const body = await safeJsonParse(req)
     const input = presignImportUploadRequest.parse(body)
 
-    const user = await getCurrentUser()
-    if (!user) {
+    const userId = await getCurrentUserId()
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
     await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
     const handler = getUploadHandler(input.type)
@@ -41,15 +39,16 @@ export async function POST(req: NextRequest) {
 
     const presignedPostUrl = await uploader.getPresignedUpload(path)
 
-    const domain = await getDomainFromHeader()
-    const { assetUrl } = await resolvePlatformUrlsByDomain(domain)
-    const publicUrl = new URL(path, assetUrl).toString()
+    const { storageUrl } = await resolvePlatformSettings({
+      workspaceId: input.workspaceId,
+    })
+    const publicUrl = new URL(path, storageUrl).toString()
 
     const fileId = createId()
     await db.insert(fileModel).values({
       id: fileId,
       workspaceId: input.workspaceId,
-      userId: user.id,
+      userId,
       contextType: fileContextTypes.enum.import,
       subType: input.subType,
       path,
