@@ -112,7 +112,8 @@
     "onFailure": "On failure",
     "onSkip": "On skip",
     "onSuccess": "On success",
-    "trigger": "Trigger"
+    "trigger": "Trigger",
+    "close": "Close"
   },
   "states": {
     "success": "Success",
@@ -2352,6 +2353,10 @@
     "sidebar": {
       "all": "All contacts",
       "blocked": "Blocked contacts"
+    },
+    "drawer": {
+      "title": "Contact details",
+      "openInInbox": "Open in Inbox"
     }
   },
   "auditLogs": {

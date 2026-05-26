@@ -1,4 +1,8 @@
-import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
+import {
+  flexRender,
+  type Row,
+  type Table as TanstackTable,
+} from "@tanstack/react-table"
 import type * as React from "react"
 
 import { DataTablePagination } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
@@ -16,11 +20,36 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>
   actionBar?: React.ReactNode
+  // Callback ao clicar numa row (excluindo cliques no <a> / <button> /
+  // <input>). Adicionado 2026-05-26 pra suportar abrir drawer de detalhes
+  // na página /contacts (Pedro pediu "click no contato vê o que aparece").
+  onRowClick?: (row: Row<TData>) => void
+}
+
+// Tags que NÃO devem disparar onRowClick (clique no checkbox, link, botão).
+const INTERACTIVE_TAGS = new Set(["A", "BUTTON", "INPUT", "LABEL"])
+
+function shouldIgnoreRowClick(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+  let el: HTMLElement | null = target
+  while (el && el.tagName !== "TR") {
+    if (INTERACTIVE_TAGS.has(el.tagName)) {
+      return true
+    }
+    if (el.getAttribute("role") === "button") {
+      return true
+    }
+    el = el.parentElement
+  }
+  return false
 }
 
 export function DataTable<TData>({
   table,
   actionBar,
+  onRowClick,
   children,
   className,
   ...props
@@ -60,7 +89,17 @@ export function DataTable<TData>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  className={onRowClick ? "cursor-pointer" : undefined}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={
+                    onRowClick
+                      ? (e) => {
+                          if (!shouldIgnoreRowClick(e.target)) {
+                            onRowClick(row)
+                          }
+                        }
+                      : undefined
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

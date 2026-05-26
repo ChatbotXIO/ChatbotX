@@ -112,7 +112,8 @@
     "onFailure": "Khi thất bại",
     "onSkip": "Khi bỏ qua",
     "onSuccess": "Khi thành công",
-    "trigger": "Trigger"
+    "trigger": "Trigger",
+    "close": "Đóng"
   },
   "states": {
     "success": "Thành công",
@@ -2340,6 +2341,10 @@
     "sidebar": {
       "all": "Tất cả liên hệ",
       "blocked": "Liên hệ bị chặn"
+    },
+    "drawer": {
+      "title": "Chi tiết liên hệ",
+      "openInInbox": "Mở trong hộp thư"
     }
   },
   "errorLogs": {

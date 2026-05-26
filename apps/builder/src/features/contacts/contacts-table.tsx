@@ -15,11 +15,12 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { use, useMemo, useState } from "react"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { LifecycleStagePill } from "../lifecycle-stages/lifecycle-stage-pill"
 import { getTagChipStyle } from "../tags/tag-colors"
 import { getUserName } from "../users/schemas/resource"
+import { ContactDetailDrawer } from "./components/contact-detail-drawer"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
@@ -76,6 +77,10 @@ export function ContactsTable({
   const t = useTranslations()
   const locale = useLocale()
   const [{ data, pageCount }] = use(promises)
+  // Drawer "Detalhes do contato" — abre ao clicar na linha. Pedro 2026-05-26:
+  // pixel-perfect Respond.io (350px à direita).
+  const [selectedContact, setSelectedContact] =
+    useState<ListContactsItem | null>(null)
 
   const columns = useMemo<ColumnDef<ListContactsItem>[]>(
     () => [
@@ -442,15 +447,28 @@ export function ContactsTable({
   })
 
   return (
-    <DataTable table={table}>
-      <DataTableToolbar table={table}>
-        <CreateContactDialog workspaceId={workspaceId} />
-        <ContactListAction
-          lifecycleStages={_lifecycleStages}
+    <div className="flex h-full gap-0">
+      <div className="flex-1 overflow-hidden">
+        <DataTable
+          onRowClick={(row) => setSelectedContact(row.original)}
           table={table}
-          workspaceId={workspaceId}
-        />
-      </DataTableToolbar>
-    </DataTable>
+        >
+          <DataTableToolbar table={table}>
+            <CreateContactDialog workspaceId={workspaceId} />
+            <ContactListAction
+              lifecycleStages={_lifecycleStages}
+              table={table}
+              workspaceId={workspaceId}
+            />
+          </DataTableToolbar>
+        </DataTable>
+      </div>
+      <ContactDetailDrawer
+        contact={selectedContact}
+        onClose={() => setSelectedContact(null)}
+        open={selectedContact !== null}
+        workspaceId={workspaceId}
+      />
+    </div>
   )
 }

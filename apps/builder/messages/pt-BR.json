@@ -112,7 +112,8 @@
     "onFailure": "Em caso de falha",
     "onSkip": "Em caso de pulo",
     "onSuccess": "Em caso de sucesso",
-    "trigger": "Gatilho"
+    "trigger": "Gatilho",
+    "close": "Fechar"
   },
   "states": {
     "success": "Sucesso",
@@ -2352,6 +2353,10 @@
     "sidebar": {
       "all": "Todos os contatos",
       "blocked": "Contatos bloqueados"
+    },
+    "drawer": {
+      "title": "Detalhes do contato",
+      "openInInbox": "Abrir no Inbox"
     }
   },
   "auditLogs": {
