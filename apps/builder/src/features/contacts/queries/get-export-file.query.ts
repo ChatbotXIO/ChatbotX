@@ -1,6 +1,10 @@
 import { db } from "@chatbotx.io/database/client"
 import { uploader } from "@chatbotx.io/filesystem"
-import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
+import { ORPCError } from "@orpc/server"
+import {
+  assertCurrentUserCanAccessChatbot,
+  getCurrentUserId,
+} from "@/lib/auth/utils"
 import type {
   GetExportFileRequest,
   GetExportFileResponse,
@@ -9,14 +13,21 @@ import type {
 export async function getExportFile(
   input: GetExportFileRequest,
 ): Promise<GetExportFileResponse> {
-  await assertCurrentUserCanAccessChatbot(input.workspaceId)
+  const [, userId] = await Promise.all([
+    assertCurrentUserCanAccessChatbot(input.workspaceId),
+    getCurrentUserId(),
+  ])
+
+  if (!userId) {
+    throw new ORPCError("UNAUTHORIZED", { message: "Unauthorized" })
+  }
 
   const file = await db.query.fileModel.findFirst({
-    where: { id: input.fileId, workspaceId: input.workspaceId },
+    where: { id: input.fileId, workspaceId: input.workspaceId, userId },
   })
 
   if (!file) {
-    throw new Error("Export file not found")
+    throw new ORPCError("NOT_FOUND", { message: "Export file not found" })
   }
 
   const status = file.status as GetExportFileResponse["status"]

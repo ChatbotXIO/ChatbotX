@@ -4,6 +4,7 @@ import type { ImportType, UploadTypes } from "@chatbotx.io/database/partials"
 import { getImportEntry } from "@chatbotx.io/imports"
 import { extractCsvHeaders } from "@chatbotx.io/imports/parsers/headers"
 import { Card } from "@chatbotx.io/ui/components/ui/card"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import FileDropzone from "@/components/file-dropzone"
@@ -31,6 +32,7 @@ export function ImportDropzone({
   onCleared,
   onUploadingChange,
 }: ImportDropzoneProps) {
+  const t = useTranslations()
   const { upload } = usePresignedUpload(workspaceId, type, subType)
   const [isUploading, setIsUploading] = useState(false)
   const config = getImportEntry(subType).config
@@ -82,7 +84,7 @@ export function ImportDropzone({
       />
       {isUploading && (
         <div className="px-4 pb-2 text-muted-foreground text-xs">
-          Uploading…
+          {t("fields.import.uploading")}
         </div>
       )}
     </Card>

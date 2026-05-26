@@ -1326,6 +1326,7 @@
     },
     "import": {
       "label": "Nhập",
+      "uploading": "Đang tải lên…",
       "histories": {
         "title": "Lịch sử nhập",
         "progress": "Tiến độ",

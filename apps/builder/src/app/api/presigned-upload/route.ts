@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
       fileId,
       presignedPostUrl,
       publicUrl,
-      path,
     })
   } catch (error) {
     return serverErrorHandler(error)

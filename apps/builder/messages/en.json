@@ -1311,6 +1311,7 @@
     },
     "import": {
       "label": "Import",
+      "uploading": "Uploading…",
       "histories": {
         "title": "Import history",
         "progress": "Progress",

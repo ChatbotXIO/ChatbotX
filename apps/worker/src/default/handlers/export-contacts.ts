@@ -187,14 +187,16 @@ export const buildSelectedFields = async (
   const idsOfType = (type: RawField["type"]): string[] =>
     rawFields.filter((field) => field.type === type).map((field) => field.value)
 
-  const tagNameById = await loadNameMap(idsOfType("tag"), (ids) =>
-    db.query.tagModel.findMany({ where: { id: { in: ids }, workspaceId } }),
-  )
-  const customFieldNameById = await loadNameMap(idsOfType("custom"), (ids) =>
-    db.query.customFieldModel.findMany({
-      where: { id: { in: ids }, workspaceId },
-    }),
-  )
+  const [tagNameById, customFieldNameById] = await Promise.all([
+    loadNameMap(idsOfType("tag"), (ids) =>
+      db.query.tagModel.findMany({ where: { id: { in: ids }, workspaceId } }),
+    ),
+    loadNameMap(idsOfType("custom"), (ids) =>
+      db.query.customFieldModel.findMany({
+        where: { id: { in: ids }, workspaceId },
+      }),
+    ),
+  ])
 
   return rawFields.map((field) => {
     if (field.type === "contact") {
