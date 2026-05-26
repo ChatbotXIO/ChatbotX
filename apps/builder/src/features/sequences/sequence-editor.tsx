@@ -109,11 +109,11 @@ export function SequenceEditor({ sequence, workspaceId }: SequenceEditorProps) {
                         <div className="min-w-[320px] flex-1" />
                         <div className="w-[280px]" />
                         <div className="ml-2 flex w-[400px] items-center justify-between gap-4 text-xs">
-                          <span className="w-12 text-center">Sent</span>
-                          <span className="w-12 text-center">Delivered</span>
-                          <span className="w-12 text-center">Seen</span>
-                          <span className="w-12 text-center">Clicked</span>
-                          <span className="w-12 text-center">Failed</span>
+                          <span className="w-12 text-center">Enviado</span>
+                          <span className="w-12 text-center">Entregue</span>
+                          <span className="w-12 text-center">Visto</span>
+                          <span className="w-12 text-center">Clicado</span>
+                          <span className="w-12 text-center">Falhou</span>
                         </div>
                         <div className="w-[68px]" />
                       </div>

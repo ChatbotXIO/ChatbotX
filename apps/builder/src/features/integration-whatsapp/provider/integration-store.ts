@@ -47,7 +47,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
           error:
             error instanceof Error
               ? error.message
-              : "Failed to fetch integrations",
+              : "Falha ao buscar integrações",
         })
       } finally {
         set({ initialized: true })
@@ -74,7 +74,7 @@ export const createIntegrationStore = (props: Partial<IntegrationState>) =>
           error:
             error instanceof Error
               ? error.message
-              : "Failed to fetch integrations",
+              : "Falha ao buscar integrações",
           integrations: [],
         })
       } finally {

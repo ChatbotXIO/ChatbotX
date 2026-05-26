@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEvent,
+} from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
@@ -16,9 +22,30 @@ export const blockContactAction = workspaceActionClient
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],
+      ctx: { user },
     } = props
 
-    await blockContact({ workspaceId, id })
+    const contact = await blockContact({ workspaceId, id })
+    const label =
+      [contact.firstName, contact.lastName].filter(Boolean).join(" ") ||
+      contact.phoneNumber ||
+      contact.email ||
+      contact.id
+    await Promise.all([
+      logAudit({
+        workspaceId,
+        userId: user.id,
+        action: auditLogActions.CONTACT_BLOCKED,
+        detail: `Contato "${label}" bloqueado`,
+      }),
+      recordContactEvent({
+        contactId: contact.id,
+        workspaceId,
+        eventType: contactEventTypes.BLOCKED,
+        meta: { label },
+        actorUserId: user.id,
+      }),
+    ])
   })
 
 export const blockContact = async (ctx: {
@@ -31,7 +58,7 @@ export const blockContact = async (ctx: {
       workspaceId: ctx.workspaceId,
       id: ctx.id,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   const contact = await db
@@ -75,4 +102,6 @@ export const blockContact = async (ctx: {
       contact,
     },
   })
+
+  return contact
 }

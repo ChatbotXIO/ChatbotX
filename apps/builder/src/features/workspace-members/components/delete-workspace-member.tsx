@@ -27,7 +27,8 @@ export function DeleteWorkspaceMemberDialog({
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {
-  const t = useTranslations()
+  const t = useTranslations("admins.revokeDialog")
+  const tActions = useTranslations("actions")
   const router = useRouter()
   const { data: session } = authClient.useSession()
 
@@ -58,21 +59,15 @@ export function DeleteWorkspaceMemberDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t("messages.deleteFeature", {
-              feature: t("fields.workspaceMember.label"),
-            })}
-          </DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("messages.deleteConfirmation", {
-              feature: t("fields.workspaceMember.label"),
-            })}
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
-            {t("actions.cancel")}
+          <Button onClick={() => onOpenChange(false)} variant="ghost">
+            {tActions("cancel")}
           </Button>
           <Button
             disabled={isPending}
@@ -80,7 +75,7 @@ export function DeleteWorkspaceMemberDialog({
             variant="destructive"
           >
             {isPending && <Loader2Icon className="animate-spin" />}
-            {t("actions.delete")}
+            {t("confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

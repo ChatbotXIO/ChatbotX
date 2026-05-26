@@ -20,6 +20,13 @@ export class ConditionEvaluator {
           eventData.eventData.tagId as string,
         )
 
+      case triggerEventTypes.enum.lifecycleStageChanged:
+        return this.evaluateLifecycleStageCondition(
+          sourceId,
+          value,
+          eventData.eventData,
+        )
+
       case triggerEventTypes.enum.customFieldValueChanged:
         return await this.evaluateCustomFieldCondition(
           sourceId,
@@ -67,6 +74,37 @@ export class ConditionEvaluator {
       return false
     }
     return expectedTagId === actualTagId
+  }
+
+  /**
+   * Lifecycle stage change condition.
+   * Semantics:
+   *  - sourceId NULL → "any change" (fire whenever stage changes)
+   *  - sourceId = X  → only when stage moves TO X
+   *  - value.fromStageId = Y (optional) → AND only when stage moved FROM Y
+   */
+  private evaluateLifecycleStageCondition(
+    expectedToStageId: string | null,
+    conditionValue: unknown,
+    metadata: Record<string, unknown>,
+  ): boolean {
+    const actualToStageId = (metadata.toStageId as string | null) ?? null
+    const actualFromStageId = (metadata.fromStageId as string | null) ?? null
+
+    // Match destination stage (sourceId == null means "any to-stage")
+    if (expectedToStageId && expectedToStageId !== actualToStageId) {
+      return false
+    }
+
+    // Optional fromStageId filter via condition.value
+    if (conditionValue && typeof conditionValue === "object") {
+      const cfg = conditionValue as { fromStageId?: string | null }
+      if (cfg.fromStageId && cfg.fromStageId !== actualFromStageId) {
+        return false
+      }
+    }
+
+    return true
   }
 
   private async evaluateCustomFieldCondition(

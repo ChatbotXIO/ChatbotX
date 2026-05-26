@@ -24,7 +24,7 @@ export const updateWebhookSettingsAction = workspaceActionClient
     })
 
     if (!webhook) {
-      throw new Error("Webhook not found")
+      throw new Error("Webhook não encontrado")
     }
 
     await db

@@ -5,7 +5,7 @@ export function formatDate(
   if (!date) return ""
 
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("pt-BR", {
       month: opts.month ?? "long",
       day: opts.day ?? "numeric",
       year: opts.year ?? "numeric",

@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import {
@@ -18,11 +19,25 @@ export const deleteFieldsAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
+      ctx: { user: { id: string } }
     }) => {
+      const names = await db.query.customFieldModel.findMany({
+        columns: { name: true },
+        where: { workspaceId, id: { in: parsedInput.ids } },
+      })
       await deleteCustomFields({ workspaceId, ids: parsedInput.ids })
+      if (names.length > 0) {
+        await logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.CUSTOM_FIELD_DELETED,
+          detail: `Campo(s) personalizado(s) excluído(s): ${names.map((f) => `"${f.name}"`).join(", ")}`,
+        })
+      }
     },
   )
 

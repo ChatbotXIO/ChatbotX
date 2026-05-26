@@ -22,6 +22,7 @@ import {
   getContactLastInput,
   getContactLastInputType,
 } from "./helpers/last-input"
+import { getLifecycleStageName } from "./helpers/lifecycle"
 import { getChatHistory } from "./helpers/message"
 import { getWorkspaceImageUrl, getWorkspaceName } from "./helpers/workspace"
 
@@ -168,6 +169,8 @@ export const getSystemFieldValue = async (
       return await getAssignedMemberName(contact.id, contact.workspaceId)
     case systemFieldTypes.enum.team_name:
       return await getAssignedTeamName(contact.id)
+    case systemFieldTypes.enum.lifecycle_stage:
+      return await getLifecycleStageName(contact.id)
     // No upstream tracking yet — intentionally null
     case systemFieldTypes.enum.last_btn_title:
     case systemFieldTypes.enum.last_order:

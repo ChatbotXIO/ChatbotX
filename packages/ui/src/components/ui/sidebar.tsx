@@ -201,7 +201,7 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
+            <SheetTitle>Barra Lateral</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>
@@ -283,7 +283,7 @@ function SidebarTrigger({
       ) : (
         <ChevronRightIcon className="size-5" />
       )}
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">Alternar Barra Lateral</span>
     </Button>
   )
 }

@@ -35,7 +35,7 @@ export const updateDraftFlowVersion = async (
       workspaceId: ctx.workspaceId,
       isDraft: true,
     },
-    message: "Draft flow version not found",
+    message: "Versão rascunho do fluxo não encontrada",
   })
 
   await db

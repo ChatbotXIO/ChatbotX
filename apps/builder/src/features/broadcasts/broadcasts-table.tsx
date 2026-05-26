@@ -266,13 +266,13 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Ações",
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

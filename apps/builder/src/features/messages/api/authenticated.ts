@@ -13,8 +13,8 @@ export const messagesAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/messages",
-      summary: "List messages",
-      tags: ["Messages"],
+      summary: "Listar mensagens",
+      tags: ["Mensagens"],
     })
     .input(listMessagesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -25,8 +25,8 @@ export const messagesAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/messages/{id}",
-      summary: "Find message by message id",
-      tags: ["Messages"],
+      summary: "Buscar mensagem pelo ID",
+      tags: ["Mensagens"],
     })
     .input(findMessageRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

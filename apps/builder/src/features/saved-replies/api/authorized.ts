@@ -11,8 +11,8 @@ export const savedRepliesAuthorizedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/saved-replies",
-      summary: "List saved replies",
-      tags: ["Saved Replies"],
+      summary: "Listar respostas salvas",
+      tags: ["Respostas Salvas"],
     })
     .input(listSavedRepliesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

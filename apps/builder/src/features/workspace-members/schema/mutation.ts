@@ -1,41 +1,34 @@
+import { workspaceMemberPermissionsSchema } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
 export const inviteWorkspaceMemberRequest = z.object({
-  permissions: z
-    .object({
-      superAdmin: z.boolean(),
-      analytics: z.boolean(),
-      flows: z.boolean(),
-      contacts: z.boolean(),
-      onlyAssignedContacts: z.boolean(),
-      emailAndPhone: z.boolean(),
-      broadcast: z.boolean(),
-      ecommerce: z.boolean(),
-    })
-    .refine((val) => Object.values(val).some(Boolean), {
-      message: "At least one permission must be selected.",
-      path: ["permissions"],
-    }),
+  email: z.string().email().max(255),
+  role: z.enum(["manager", "agent"]),
+  permissions: workspaceMemberPermissionsSchema,
 })
 export type InviteWorkspaceMemberRequest = z.infer<
   typeof inviteWorkspaceMemberRequest
 >
 
-export const updateWorkspaceMemberRequest = inviteWorkspaceMemberRequest.extend(
-  {
-    notificationTypes: z.object({
+export const updateWorkspaceMemberRequest = z.object({
+  role: z.enum(["owner", "manager", "agent"]),
+  permissions: workspaceMemberPermissionsSchema,
+  notificationTypes: z
+    .object({
       notifyAdmin: z.boolean(),
       newMessageToHuman: z.boolean(),
       newOrder: z.boolean(),
-    }),
-    notificationChannels: z.object({
+    })
+    .optional(),
+  notificationChannels: z
+    .object({
       messenger: z.boolean(),
       email: z.boolean(),
       telegram: z.boolean(),
       browser: z.boolean(),
-    }),
-  },
-)
+    })
+    .optional(),
+})
 export type UpdateWorkspaceMemberRequest = z.infer<
   typeof updateWorkspaceMemberRequest
 >

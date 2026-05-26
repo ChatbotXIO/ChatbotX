@@ -36,7 +36,7 @@ export function getAITriggersColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label="Selecionar todos"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -49,7 +49,7 @@ export function getAITriggersColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label="Selecionar linha"
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -62,7 +62,7 @@ export function getAITriggersColumns({
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title="Nome" />
       ),
       cell: ({ row }) => (
         <Tooltip>
@@ -81,7 +81,7 @@ export function getAITriggersColumns({
     {
       accessorKey: "modified",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Modified" />
+        <DataTableColumnHeader column={column} title="Modificado" />
       ),
       cell: ({ row }) => (
         <div>
@@ -96,12 +96,12 @@ export function getAITriggersColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Ações",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Open menu"
+              aria-label="Abrir menu"
               className="flex size-8 p-0 data-[state=open]:bg-muted"
               variant="ghost"
             >

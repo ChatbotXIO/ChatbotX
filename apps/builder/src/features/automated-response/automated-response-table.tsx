@@ -4,12 +4,6 @@ import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -69,7 +63,7 @@ export function AutomatedResponsesTable({
         size: 32,
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label="Selecionar todos"
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -81,7 +75,7 @@ export function AutomatedResponsesTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label="Selecionar linha"
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
@@ -196,7 +190,7 @@ export function AutomatedResponsesTable({
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -245,49 +239,41 @@ export function AutomatedResponsesTable({
     clearOnDefault: true,
   })
 
+  // Sem Card wrapper — Pedro pediu UI flat estilo Respond.io (2026-05-24).
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("keywords.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <AutomatedResponseTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-            />
-            <AddAutomatedResponseButton />
-          </DataTableToolbar>
-        </DataTable>
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <AutomatedResponseTableToolbarActions
+            table={table}
+            workspaceId={workspaceId}
+          />
+          <AddAutomatedResponseButton />
+        </DataTableToolbar>
+      </DataTable>
 
-        <DeleteAutomatedResponsesDialog
-          automatedResponses={
-            rowAction?.row.original ? [rowAction?.row.original] : []
-          }
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+      <DeleteAutomatedResponsesDialog
+        automatedResponses={
+          rowAction?.row.original ? [rowAction?.row.original] : []
+        }
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
 
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="automatedResponse"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
-      </CardContent>
-    </Card>
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType="automatedResponse"
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
   )
 }
 

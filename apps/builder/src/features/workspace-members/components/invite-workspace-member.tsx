@@ -1,6 +1,7 @@
 "use client"
 
-import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -11,36 +12,46 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { isCommunity } from "@/env"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
-export function InviteWorkspaceMemberDialog() {
-  const t = useTranslations()
+import { AdvancedRestrictions } from "./restrictions-form"
 
+const defaultPermissions = {
+  restrictDataExport: false,
+  restrictContactDeletion: false,
+  restrictWorkspaceSettings: false,
+  restrictIntegrationSettings: false,
+  contactVisibility: "all" as const,
+  restrictCalling: false,
+  restrictWorkflows: false,
+  maskPhoneAndEmail: false,
+}
+
+export function InviteWorkspaceMemberDialog() {
+  const t = useTranslations("admins")
   const [open, setOpen] = useState(false)
   const [invitationUrl, setInvitationUrl] = useState<string | null>(null)
+  const [, copy] = useCopyToClipboard()
 
-  const [_, copy] = useCopyToClipboard()
   const handleCopy = () => {
     copy(invitationUrl ?? "").then(() => {
-      toast.success(t("messages.copiedToClipboard"))
+      toast.success("Copiado!")
     })
   }
 
-  const handleOpenChange = (open1: boolean) => {
-    setOpen(open1)
-    if (!open1) {
+  const handleOpenChange = (val: boolean) => {
+    setOpen(val)
+    if (!val) {
       setInvitationUrl(null)
     }
   }
@@ -48,33 +59,27 @@ export function InviteWorkspaceMemberDialog() {
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="sm">
           <PlusIcon className="size-4" />
-          {t("actions.inviteFeature", {
-            feature: t("fields.member.label"),
-          })}
+          {t("addUser")}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {t("actions.inviteFeature", {
-              feature: t("fields.member.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription />
+          <DialogTitle>{t("inviteDialog.title")}</DialogTitle>
+          <DialogDescription>{t("inviteDialog.description")}</DialogDescription>
         </DialogHeader>
-        {invitationUrl && (
-          <div className="break-word flex flex-col gap-2">
-            <p>{t("messages.copyInvitationUrlSuccess")}</p>
+        {invitationUrl ? (
+          <div className="flex flex-col gap-3 break-words">
+            <p className="text-sm">Convite gerado. Compartilhe este link:</p>
             <Link
-              className="text-blue-500"
+              className="text-primary text-sm underline"
               href={invitationUrl}
               target="_blank"
             >
               {invitationUrl}
             </Link>
-            <div className="flex items-center gap-2">
+            <div>
               <Button
                 onClick={handleCopy}
                 size="sm"
@@ -82,15 +87,14 @@ export function InviteWorkspaceMemberDialog() {
                 variant="default"
               >
                 <CopyIcon className="size-4" />
-                {t("actions.copy")}
+                Copiar link
               </Button>
             </div>
           </div>
-        )}
-        {!invitationUrl && (
-          <AddWorkspaceMemberForm
-            cancelHandler={() => setOpen(false)}
-            submitHandler={(url: string) => setInvitationUrl(url)}
+        ) : (
+          <InviteForm
+            onClose={() => setOpen(false)}
+            onSuccess={(url: string) => setInvitationUrl(url)}
           />
         )}
       </DialogContent>
@@ -98,155 +102,87 @@ export function InviteWorkspaceMemberDialog() {
   )
 }
 
-type AddWorkspaceMemberFormProps = {
-  cancelHandler?: () => void
-  submitHandler?: (invitationUrl: string) => void
-}
-
-export function AddWorkspaceMemberForm({
-  cancelHandler,
-  submitHandler,
-}: AddWorkspaceMemberFormProps) {
+function InviteForm({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void
+  onSuccess: (url: string) => void
+}) {
+  const t = useTranslations("admins")
+  const tActions = useTranslations("actions")
   const workspaceId = useWorkspaceId()
 
-  const t = useTranslations()
-
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      inviteWorkspaceMemberAction.bind(null, workspaceId),
-      zodResolver(inviteWorkspaceMemberRequest),
-      {
-        actionProps: {
-          onSuccess: ({ data }) => {
-            resetFormAndAction()
-            toast.success(
-              t("messages.createdSuccess", {
-                feature: t("fields.workspaceMember.label"),
-              }),
-            )
-            submitHandler?.(
-              `${window.location.origin}/invitations/${data.code}`,
-            )
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError)
-            }
-          },
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    inviteWorkspaceMemberAction.bind(null, workspaceId),
+    zodResolver(inviteWorkspaceMemberRequest),
+    {
+      actionProps: {
+        onSuccess: ({ data }) => {
+          if (data?.code) {
+            onSuccess(`${window.location.origin}/invitations/${data.code}`)
+          }
         },
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            permissions: {
-              superAdmin: true,
-              analytics: false,
-              flows: false,
-              contacts: false,
-              onlyAssignedContacts: false,
-              emailAndPhone: false,
-              broadcast: false,
-              ecommerce: false,
-            },
-          },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
         },
       },
-    )
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          email: "",
+          role: "agent" as const,
+          permissions: defaultPermissions,
+        },
+      },
+    },
+  )
 
-  const { setValue } = form
-  const isSuperAdmin = useWatch({
-    control: form.control,
-    name: "permissions.superAdmin",
-  })
-  useEffect(() => {
-    if (isSuperAdmin) {
-      setValue("permissions.analytics", true)
-      setValue("permissions.flows", true)
-      setValue("permissions.contacts", true)
-      setValue("permissions.onlyAssignedContacts", true)
-      setValue("permissions.emailAndPhone", true)
-      setValue("permissions.broadcast", true)
-      setValue("permissions.ecommerce", true)
-    }
-  }, [isSuperAdmin, setValue])
+  const role = useWatch({ control: form.control, name: "role" })
 
   return (
     <Form {...form}>
-      <form className="flex-1 space-y-6" onSubmit={handleSubmitWithAction}>
-        <Label>{t("fields.permissions.label")}</Label>
-        <div className="flex flex-col gap-4">
-          <SwitchField
-            disabled={isCommunity}
-            formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-            label={t("fields.permissions.superAdmin")}
-            name="permissions.superAdmin"
+      <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField
+            label={t("inviteDialog.emailLabel")}
+            name="email"
+            placeholder={t("inviteDialog.emailPlaceholder")}
+            required
+            type="email"
+          />
+          <SelectField
+            label={t("inviteDialog.accessLevelLabel")}
+            name="role"
+            options={[
+              { value: "manager", label: t("roles.manager") },
+              { value: "agent", label: t("roles.agent") },
+            ]}
             required
           />
-          {!isSuperAdmin && (
-            <>
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.analytics")}
-                name="permissions.analytics"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.flows")}
-                name="permissions.flows"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.contacts")}
-                name="permissions.contacts"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.onlyAssignedContacts")}
-                name="permissions.onlyAssignedContacts"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.emailAndPhone")}
-                name="permissions.emailAndPhone"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.broadcast")}
-                name="permissions.broadcast"
-                required
-              />
-              <SwitchField
-                formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                label={t("fields.permissions.ecommerce")}
-                name="permissions.ecommerce"
-                required
-              />
-            </>
-          )}
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              onClick={() => cancelHandler?.()}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              {t("actions.cancel")}
-            </Button>
-            <Button
-              disabled={!form.formState.isValid || form.formState.isSubmitting}
-              size="sm"
-              type="submit"
-            >
-              {form.formState.isSubmitting && (
-                <Loader2Icon className="animate-spin" />
-              )}
-              {t("actions.confirm")}
-            </Button>
-          </div>
+        </div>
+
+        <p className="text-sm text-text-secondary">
+          {t(`roleDescriptions.${role}`)}
+        </p>
+
+        <AdvancedRestrictions role={role} />
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button onClick={onClose} type="button" variant="ghost">
+            {tActions("cancel")}
+          </Button>
+          <Button
+            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            type="submit"
+          >
+            {form.formState.isSubmitting && (
+              <Loader2Icon className="animate-spin" />
+            )}
+            {t("inviteDialog.submit")}
+          </Button>
         </div>
       </form>
     </Form>

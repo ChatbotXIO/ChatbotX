@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   inboxTeamMemberModel,
@@ -17,14 +18,17 @@ export const createInboxTeamAction = workspaceActionClient
   .action(async (props) => {
     const {
       parsedInput,
+      ctx: { user },
       bindArgsParsedInputs: [workspaceId],
     } = props
 
+    const inboxTeamId = createId()
+
     await db.transaction(async (tx) => {
-      const inboxTeamId = createId()
       await tx.insert(inboxTeamModel).values({
         id: inboxTeamId,
         name: parsedInput.name,
+        description: parsedInput.description ?? null,
         workspaceId,
       })
 
@@ -33,11 +37,17 @@ export const createInboxTeamAction = workspaceActionClient
           parsedInput.userIds.map((userId) => ({
             id: createId(),
             userId,
-            workspaceId,
             inboxTeamId,
           })),
         )
       }
+    })
+
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.TEAM_CREATED,
+      detail: `Equipe "${parsedInput.name}" criada com ${parsedInput.userIds.length} membro(s)`,
     })
 
     revalidateCacheTags(`workspaces:${workspaceId}#inboxTeams`)

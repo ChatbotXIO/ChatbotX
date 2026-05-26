@@ -109,7 +109,7 @@ class BotFieldService extends BaseService {
   }): Promise<BotFieldModel> {
     const botField = await this.find(props)
     if (!botField) {
-      throw notFoundException("Bot field not found")
+      throw notFoundException("Campo do Bot não encontrado")
     }
     return botField
   }
@@ -149,7 +149,7 @@ class BotFieldService extends BaseService {
   }): Promise<BotFieldModel> {
     const botField = await this.findByKey(props)
     if (!botField) {
-      throw notFoundException("Bot field not found")
+      throw notFoundException("Campo do Bot não encontrado")
     }
     return botField
   }

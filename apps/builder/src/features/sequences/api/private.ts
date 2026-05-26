@@ -15,8 +15,8 @@ export const sequencesPrivateAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/sequences/{sequenceId}/steps/{stepId}/stats",
-      summary: "Get sequence step stats",
-      tags: ["Sequences"],
+      summary: "Obter estatísticas da etapa da sequência",
+      tags: ["Sequências"],
     })
     .input(getSequenceStepStatsRequest)
     .output(getSequenceStepStatsResponse)
@@ -34,8 +34,8 @@ export const sequencesPrivateAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/sequences/{sequenceId}/steps/{stepId}/contacts",
-      summary: "List sequence step contacts by event type",
-      tags: ["Sequences"],
+      summary: "Listar contatos da etapa da sequência por tipo de evento",
+      tags: ["Sequências"],
     })
     .input(listSequenceStepContactsRequest)
     .output(listSequenceStepContactsResponse)

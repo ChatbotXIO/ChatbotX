@@ -14,7 +14,7 @@ type WorksheetSelectProps = {
 export const WorksheetSelect = ({
   name,
   spreadsheetId,
-  label = "Worksheet",
+  label = "Aba",
   required = true,
 }: WorksheetSelectProps) => {
   const workspaceId = useWorkspaceId()
@@ -39,7 +39,7 @@ export const WorksheetSelect = ({
       label={label}
       name={name}
       options={worksheetOptions}
-      placeholder="Please select"
+      placeholder="Por favor selecione"
       required={required}
     />
   )

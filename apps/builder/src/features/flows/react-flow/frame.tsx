@@ -5,7 +5,7 @@ import type { FlowVersionResource } from "@/features/flow-versions/schema/resour
 import type { FlowResource } from "../schemas/resource"
 import { ButtonEditorDialog } from "./button-editor-dialog"
 import { FrameHeader } from "./frame-header"
-import { NodeDetailSheet } from "./nodes/node-detail-sheet"
+import { NodeDetailPanel } from "./nodes/node-detail-panel"
 import { ReactFlowWrapper } from "./react-flow-wrapper"
 import { useStepStore } from "./stores/step-store-provider"
 
@@ -24,15 +24,23 @@ export function ReactFlowFrame({ flow, flowVersion }: ReactFlowFrameProps) {
     <>
       <FrameHeader flow={flow} />
 
-      <ReactFlowWrapper
-        flowVersion={flowVersion}
-        setOpenNodeDetailSheet={setOpenNodeDetailSheet}
-      />
+      {/*
+        Wrapper relative pra ancorar o painel não-modal (NodeDetailPanel) com
+        `absolute right-0` dentro da área do canvas. `overflow-hidden` impede
+        que o `translate-x-full` do painel (quando fechado) crie scroll
+        horizontal no body. `min-w-0` impede que o canvas force largura > pai.
+      */}
+      <div className="relative flex-1 overflow-hidden">
+        <ReactFlowWrapper
+          flowVersion={flowVersion}
+          setOpenNodeDetailSheet={setOpenNodeDetailSheet}
+        />
 
-      <NodeDetailSheet
-        onOpenChange={setOpenNodeDetailSheet}
-        open={openNodeDetailSheet}
-      />
+        <NodeDetailPanel
+          onOpenChange={setOpenNodeDetailSheet}
+          open={openNodeDetailSheet}
+        />
+      </div>
 
       <ButtonEditorDialog />
     </>

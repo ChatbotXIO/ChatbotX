@@ -46,7 +46,7 @@ const getWorksheet = async ({
       id,
       workspaceId,
     },
-    message: "Spreadsheet not found",
+    message: "Planilha não encontrada",
   })
 
 const getSheetData = async ({

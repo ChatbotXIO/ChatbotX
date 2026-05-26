@@ -19,7 +19,7 @@ export async function listWhatsappFlows(
       workspaceId: input.workspaceId,
       id: input.id,
     },
-    message: "Whatsapp integration not found",
+    message: "Integração WhatsApp não encontrada",
   })
 
   return await listFlows({

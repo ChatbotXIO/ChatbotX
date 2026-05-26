@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
@@ -18,11 +19,24 @@ export const createTagAction = workspaceActionClient
   .action(
     async ({
       parsedInput,
+      ctx: { user },
       bindArgsParsedInputs: [workspaceId],
     }: {
       parsedInput: CreateTagRequest
+      ctx: { user: { id: string } }
       bindArgsParsedInputs: WorkspaceIdRequestParams
-    }) => await createTag({ workspaceId, ...parsedInput }),
+    }) => {
+      const result = await createTag({ workspaceId, ...parsedInput })
+      if ("data" in result && result.data) {
+        await logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.TAG_CREATED,
+          detail: `Etiqueta "${result.data.name}" criada`,
+        })
+      }
+      return result
+    },
   )
 
 export const createTag = async (

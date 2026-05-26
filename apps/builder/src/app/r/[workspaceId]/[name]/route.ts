@@ -25,7 +25,7 @@ export const GET = async (
   })
 
   if (!row) {
-    return NextResponse.json({ message: "Not found" }, { status: 404 })
+    return NextResponse.json({ message: "Não encontrado" }, { status: 404 })
   }
 
   let destination: string
@@ -35,7 +35,7 @@ export const GET = async (
     })
   } catch {
     return NextResponse.json(
-      { message: "Invalid link configuration" },
+      { message: "Configuração de link inválida" },
       { status: 400 },
     )
   }
@@ -49,11 +49,11 @@ export const GET = async (
   // Decode the button payload
   const decodedButton = decodeButtonPayload(code)
   if (!decodedButton) {
-    return NextResponse.json({ message: "Invalid code" }, { status: 400 })
+    return NextResponse.json({ message: "Código inválido" }, { status: 400 })
   }
   if (!decodedButton.contactInboxId) {
     return NextResponse.json(
-      { message: "Contact inbox ID is missing" },
+      { message: "ID da caixa de entrada do contato ausente" },
       { status: 400 },
     )
   }
@@ -69,7 +69,7 @@ export const GET = async (
 
   if (!contactInbox) {
     return NextResponse.json(
-      { message: "Contact inbox not found" },
+      { message: "Caixa de entrada do contato não encontrada" },
       { status: 404 },
     )
   }
@@ -89,10 +89,13 @@ export const GET = async (
   )
 
   if (!foundedButton) {
-    return NextResponse.json({ message: "Button not found" }, { status: 404 })
+    return NextResponse.json(
+      { message: "Botão não encontrado" },
+      { status: 404 },
+    )
   }
   if (!foundedNodeId) {
-    return NextResponse.json({ message: "Node ID is missing" }, { status: 400 })
+    return NextResponse.json({ message: "ID do Nó ausente" }, { status: 400 })
   }
 
   await emit(flowEventTypeSchema.enum["flow:clicked"], {

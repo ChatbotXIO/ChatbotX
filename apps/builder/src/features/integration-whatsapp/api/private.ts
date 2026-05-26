@@ -9,8 +9,8 @@ export const integrationWhatsappInternalAPIs = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/integrations/whatsapp",
-      summary: "List whatsapp integration",
-      tags: ["Integrations"],
+      summary: "Listar integrações WhatsApp",
+      tags: ["Integrações"],
     })
     .input(withWorkspaceIdSchema)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

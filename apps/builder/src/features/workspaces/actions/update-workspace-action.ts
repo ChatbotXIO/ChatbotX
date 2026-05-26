@@ -1,7 +1,11 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { workspaceModel } from "@chatbotx.io/database/schema"
+import {
+  auditLogActions,
+  logAudit,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { revalidatePath } from "next/cache"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -20,15 +24,24 @@ export const updateWorkspaceBasicAction = workspaceActionClient
   .action(
     async ({
       bindArgsParsedInputs: [workspaceId],
+      ctx,
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
+      ctx: { user: { id: string }; workspaceId: string; workspace: unknown }
       parsedInput: UpdateWorkspaceBasicRequest
     }) => {
-      await db
-        .update(workspaceModel)
-        .set(parsedInput)
-        .where(eq(workspaceModel.id, workspaceId))
+      await workspaceService.update({
+        id: workspaceId,
+        data: parsedInput,
+      })
+      await logAudit({
+        workspaceId,
+        userId: ctx.user.id,
+        action: auditLogActions.WORKSPACE_UPDATED,
+        detail: `Workspace renomeado para "${parsedInput.name}"`,
+      })
+      revalidatePath("/space", "layout")
     },
   )
 
@@ -43,9 +56,10 @@ export const updateWorkspaceAdvancedAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateWorkspaceAdvancedRequest
     }) => {
-      await db
-        .update(workspaceModel)
-        .set(parsedInput)
-        .where(eq(workspaceModel.id, workspaceId))
+      await workspaceService.update({
+        id: workspaceId,
+        data: parsedInput,
+      })
+      revalidatePath("/space", "layout")
     },
   )

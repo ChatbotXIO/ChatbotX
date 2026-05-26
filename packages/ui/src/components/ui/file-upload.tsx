@@ -467,7 +467,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
                   fileType.startsWith(type.replace("/*", "/"))),
             )
           ) {
-            rejectionMessage = "File type not accepted"
+            rejectionMessage = "Tipo de arquivo não aceito"
             onFileReject?.(file, rejectionMessage)
             rejected = true
             invalid = true
@@ -475,7 +475,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
         }
 
         if (maxSize && file.size > maxSize) {
-          rejectionMessage = "File too large"
+          rejectionMessage = "Arquivo muito grande"
           onFileReject?.(file, rejectionMessage)
           rejected = true
           invalid = true
@@ -553,7 +553,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
               store.dispatch({
                 type: "SET_ERROR",
                 file,
-                error: error.message ?? "Upload failed",
+                error: error.message ?? "Falha no envio",
               })
             },
           })
@@ -564,7 +564,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "Upload failed"
+          error instanceof Error ? error.message : "Falha no envio"
         for (const file of files) {
           store.dispatch({
             type: "SET_ERROR",
@@ -629,7 +629,7 @@ function FileUploadRoot(props: FileUploadRootProps) {
             onChange={onInputChange}
           />
           <span id={labelId} className="sr-only">
-            {label ?? "File upload"}
+            {label ?? "Envio de arquivo"}
           </span>
         </RootPrimitive>
       </FileUploadContext.Provider>
@@ -972,8 +972,8 @@ function FileUploadItem(props: FileUploadItemProps) {
     : fileState.status === "uploading"
       ? `Uploading: ${fileState.progress}% complete`
       : fileState.status === "success"
-        ? "Upload complete"
-        : "Ready to upload"
+        ? "Envio concluído"
+        : "Pronto para enviar"
 
   const ItemPrimitive = asChild ? Slot : "div"
 

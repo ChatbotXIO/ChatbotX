@@ -2,7 +2,6 @@
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -61,67 +60,57 @@ export function UpdateWorkspaceBasicForm({
     },
   )
 
+  // Card wrapper removido — UI flat estilo Respond.io 2026-05-24.
   return (
-    <Card>
-      <CardContent>
-        <Form {...form}>
-          <form
-            className="flex flex-col gap-2"
-            onSubmit={handleSubmitWithAction}
+    <div>
+      <Form {...form}>
+        <form className="flex flex-col gap-2" onSubmit={handleSubmitWithAction}>
+          <SettingRow
+            description={t("fields.workspaceId.description")}
+            label={t("fields.workspaceId.label")}
           >
-            <SettingRow
-              description={t("fields.workspaceId.description")}
-              label={t("fields.workspaceId.label")}
-            >
-              <div className="flex gap-x-2">
-                <Input
-                  className="flex-1"
-                  defaultValue={workspace.id}
-                  disabled
-                />
-                <Button onClick={() => onCopy(workspace.id)} size={"icon"}>
-                  <CopyIcon />
-                </Button>
-              </div>
-            </SettingRow>
-
-            <SettingRow description={""} label={t("fields.userId.label")}>
-              <div className="flex gap-x-2">
-                <Input
-                  className="flex-1"
-                  defaultValue={session?.data?.user.id}
-                  disabled
-                />
-                <Button
-                  onClick={() => onCopy(session?.data?.user.id ?? "")}
-                  size={"icon"}
-                >
-                  <CopyIcon />
-                </Button>
-              </div>
-            </SettingRow>
-
-            <SettingRow description={""} label={t("fields.name.label")}>
-              <InputField name="name" />
-            </SettingRow>
-
-            <div className="flex justify-start">
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                size="sm"
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
-                )}
-                {t("actions.confirm")}
+            <div className="flex gap-x-2">
+              <Input className="flex-1" defaultValue={workspace.id} disabled />
+              <Button onClick={() => onCopy(workspace.id)} size={"icon"}>
+                <CopyIcon />
               </Button>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </SettingRow>
+
+          <SettingRow description={""} label={t("fields.userId.label")}>
+            <div className="flex gap-x-2">
+              <Input
+                className="flex-1"
+                defaultValue={session?.data?.user.id}
+                disabled
+              />
+              <Button
+                onClick={() => onCopy(session?.data?.user.id ?? "")}
+                size={"icon"}
+              >
+                <CopyIcon />
+              </Button>
+            </div>
+          </SettingRow>
+
+          <SettingRow description={""} label={t("fields.name.label")}>
+            <InputField name="name" />
+          </SettingRow>
+
+          <div className="flex justify-start">
+            <Button
+              disabled={!form.formState.isValid || form.formState.isSubmitting}
+              size="sm"
+              type="submit"
+            >
+              {form.formState.isSubmitting && (
+                <Loader2Icon className="animate-spin" />
+              )}
+              {t("actions.confirm")}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }

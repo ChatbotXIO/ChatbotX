@@ -38,7 +38,7 @@ class OrganizationService extends BaseService {
     const { where, tx = db } = props
     const organization = await this.find({ where, tx })
     if (!organization) {
-      throw notFoundException("Organization not found")
+      throw notFoundException("Organização não encontrada")
     }
     return organization
   }
@@ -57,9 +57,11 @@ class OrganizationService extends BaseService {
 
   async update(props: {
     id: string
-    data: Pick<
-      OrganizationModel,
-      "name" | "logo" | "theme" | "customJS" | "customCSS"
+    data: Partial<
+      Pick<
+        OrganizationModel,
+        "name" | "logo" | "theme" | "customJS" | "customCSS"
+      >
     >
     tx?: DatabaseClient
   }): Promise<void> {

@@ -114,6 +114,11 @@ const reservedCustomFieldIds: {
     type: "shortText",
     labelKey: "fields.currentTime.label",
   },
+  {
+    id: systemFieldTypes.enum.lifecycle_stage,
+    type: "shortText",
+    labelKey: "lifecycle.title",
+  },
 ]
 
 export const useCustomFieldSelectOptions = (

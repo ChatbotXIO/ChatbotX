@@ -75,7 +75,7 @@ const TemplateHeaderComponent = ({ parentName }: { parentName: string }) => {
             autoFocus
             maxLength={1024}
             onChange={(e) => onChangeValue(e.target.value)}
-            placeholder="Enter text"
+            placeholder="Digite o texto"
             value={localHeader}
           />
           <Button

@@ -23,7 +23,7 @@ const isValidGiphyApiKey = async (apiKey: string) => {
     })
     return true
   } catch (error) {
-    logger.error(error, "Invalid GIPHY API key")
+    logger.error(error, "API Key do GIPHY inválida")
     return false
   }
 }

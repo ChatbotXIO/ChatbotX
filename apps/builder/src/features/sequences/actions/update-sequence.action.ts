@@ -51,7 +51,7 @@ export const updateSequence = async (
       id: ctx.id,
       workspaceId: ctx.workspaceId,
     },
-    message: "Sequence not found",
+    message: "Sequência não encontrada",
   })
 
   try {
@@ -69,7 +69,7 @@ export const updateSequence = async (
       })
     }
 
-    throw new Error("Failed to update sequence")
+    throw new Error("Falha ao atualizar sequência")
   }
 
   revalidateCacheTags([`workspaces:${ctx.workspaceId}#sequences`])

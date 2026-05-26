@@ -27,6 +27,13 @@ export class OrganizationMemberService extends BaseService {
       },
     )
   }
+
+  invalidateForOrganization(organizationId: string) {
+    return this.invalidateCacheTags([
+      `organizations:${organizationId}`,
+      `organizations:${organizationId}:members`,
+    ])
+  }
 }
 
 export const organizationMemberService = new OrganizationMemberService()

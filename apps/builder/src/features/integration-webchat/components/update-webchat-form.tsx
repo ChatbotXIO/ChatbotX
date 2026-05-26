@@ -87,7 +87,7 @@ export function UpdateWebchatForm({
           router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {
-          toast.error(error.serverError || "Failed to update webchat")
+          toast.error(error.serverError || "Falha ao atualizar webchat")
         },
       },
       formProps: {
@@ -141,7 +141,7 @@ export function UpdateWebchatForm({
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField label="Name" name="name" required />
+        <InputField label="Nome" name="name" required />
         <ComboboxField
           description={t("fields.welcomeFlowId.description")}
           label={t("fields.welcomeFlowId.label")}

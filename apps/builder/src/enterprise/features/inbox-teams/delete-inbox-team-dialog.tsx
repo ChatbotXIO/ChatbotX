@@ -28,18 +28,15 @@ export function DeleteInboxTeamDialog({
   workspaceId: string
   inboxTeam: InboxTeamModel | null
 }) {
-  const t = useTranslations()
+  const t = useTranslations("inboxTeams")
+  const tActions = useTranslations("actions")
   const router = useRouter()
 
   const { execute, isPending } = useAction(
     deleteInboxTeamAction.bind(null, workspaceId),
     {
       onSuccess: () => {
-        toast.success(
-          t("messages.deletedSuccess", {
-            feature: t("fields.inboxTeam.label"),
-          }),
-        )
+        toast.success(t("deleteDialog.title"))
         onOpenChange(false)
         router.refresh()
       },
@@ -53,17 +50,11 @@ export function DeleteInboxTeamDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {t("messages.deleteFeature", {
-              feature: t("fields.inboxTeam.label"),
-            })}
-          </DialogTitle>
+          <DialogTitle>{t("deleteDialog.title")}</DialogTitle>
           <DialogDescription className="whitespace-pre-wrap text-sm/6">
-            {t("messages.deleteConfirmation", {
-              feature: t("fields.inboxTeam.label"),
-            })}
+            {t("deleteDialog.description", { name: inboxTeam?.name ?? "" })}
           </DialogDescription>
         </DialogHeader>
 
@@ -74,16 +65,17 @@ export function DeleteInboxTeamDialog({
             type="button"
             variant="ghost"
           >
-            {t("actions.cancel")}
+            {tActions("cancel")}
           </Button>
           <Button
-            disabled={isPending}
+            disabled={isPending || !inboxTeam}
             onClick={() => execute({ ids: [inboxTeam?.id ?? ""] })}
             size="sm"
-            type="submit"
+            type="button"
+            variant="destructive"
           >
             {isPending && <Loader2 className="animate-spin" />}
-            {t("actions.delete")}
+            {t("deleteDialog.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

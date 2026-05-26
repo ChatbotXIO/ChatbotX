@@ -121,7 +121,7 @@ export const integrationService = {
     const inbox = await findOrFail({
       table: inboxModel,
       where: { id: result.rows[0].inboxId },
-      message: "Inbox not found",
+      message: "Caixa de entrada não encontrada",
     })
 
     return {

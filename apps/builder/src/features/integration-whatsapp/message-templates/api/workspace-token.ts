@@ -10,8 +10,8 @@ export const whatsappMessageTemplateWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/whatsapp-message-templates",
-      summary: "List WhatsApp message templates",
-      tags: ["Template Messages"],
+      summary: "Listar templates de mensagem do WhatsApp",
+      tags: ["Mensagens Template"],
     })
     .input(
       listWhatsappMessageTemplatesRequest.omit({

@@ -161,7 +161,12 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     contactInbox,
     flowVersion,
     useLatestFlowVersion,
-    details: targetNode.data.details,
+    // Cast: TriggerNode (start node novo) tem config tipo
+    // `{ triggerType, ...filters }` sem `steps/quickReplies/beforeStep`.
+    // `runStepsAndQuickReplies` internamente faz `"steps" in details` checks
+    // então é safe — mas o type union do Drizzle não bate. Cast pra liberar.
+    details: targetNode.data
+      .details as ExecuteStepsAndQuickRepliesProps["details"],
     targetType: "node",
     targetId: targetNode.id,
     targetNodeId: targetNode.id,
@@ -222,7 +227,7 @@ export async function runStepsAndQuickReplies(
       steps: [
         {
           stepType: stepTypes.enum.sendQuickReply,
-          message: "Please select an option",
+          message: "Por favor selecione uma opção",
           buttons: details.quickReplies,
         } as SendQuickReplyStepSchema,
       ],
@@ -254,7 +259,10 @@ export async function runStepsAndQuickReplies(
   if (nextNode) {
     await runStepsAndQuickReplies({
       ...props,
-      details: nextNode.data.details,
+      // Cast: TriggerNode tem details sem steps/quickReplies — checks
+      // internos com `"steps" in details` cobrem o caso. Ver linha 164.
+      details: nextNode.data
+        .details as ExecuteStepsAndQuickRepliesProps["details"],
       targetType: "node",
       targetId: nextNode.id,
       targetNodeId: nextNode.id,

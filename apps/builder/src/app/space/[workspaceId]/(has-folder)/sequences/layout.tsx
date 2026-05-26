@@ -7,11 +7,9 @@ import { FolderStoreProvider } from "@/features/folders/provider/folder-store-co
 
 export default async function FolderableLayout({
   children,
-  folders,
   params,
 }: {
   children: ReactNode
-  folders: ReactNode
   params: Promise<{ workspaceId: string }>
 }) {
   const workspaceId = getIdFromParams(await params, "workspaceId")
@@ -25,7 +23,6 @@ export default async function FolderableLayout({
       folderType={folderTypes.enum.sequence}
       workspaceId={workspaceId}
     >
-      {folders}
       <Suspense>
         <FlowStoreProvider autoInitialize={true} workspaceId={workspaceId}>
           {children}

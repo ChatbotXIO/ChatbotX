@@ -1,17 +1,12 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
-import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
+import { AutomationTabs } from "@/components/automation-tabs"
 import { listSequences } from "@/features/sequences/queries"
 import { listSequencesSearchParamsCache } from "@/features/sequences/schema/action"
 import { SequencesTable } from "@/features/sequences/sequences-table"
 
+// Card wrapper removido — Pedro pediu UI flat estilo Respond.io 2026-05-24.
 export default async function SequencesPage(props: {
   params: Promise<{ workspaceId: string }>
   searchParams: Promise<SearchParams>
@@ -23,7 +18,6 @@ export default async function SequencesPage(props: {
 
   const searchParams = await props.searchParams
   const search = await listSequencesSearchParamsCache.parse(searchParams)
-  const t = await getTranslations()
 
   const promises = Promise.all([
     listSequences({
@@ -33,15 +27,9 @@ export default async function SequencesPage(props: {
   ])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("sequences.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <SequencesTable promises={promises} workspaceId={workspaceId} />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <AutomationTabs />
+      <SequencesTable promises={promises} workspaceId={workspaceId} />
+    </div>
   )
 }

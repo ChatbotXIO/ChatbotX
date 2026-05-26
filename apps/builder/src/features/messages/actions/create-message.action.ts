@@ -24,7 +24,7 @@ export const createMessageAction = workspaceActionClient
         id: conversationId,
         workspaceId,
       },
-      message: "Conversation not found",
+      message: "Conversa não encontrada",
     })
 
     // Find target contact inbox, or fallback to latest interactive contactInbox

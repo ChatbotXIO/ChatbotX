@@ -254,7 +254,7 @@ export class SequenceAnalyticsService {
 
       await processSequenceEvents(updateItems, "clickedAt")
     } catch (error) {
-      logger.error(error, "Failed to save clicked events")
+      logger.error(error, "Falha ao salvar eventos de clique")
     }
   }
 }

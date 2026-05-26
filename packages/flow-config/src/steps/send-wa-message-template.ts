@@ -320,8 +320,8 @@ export const sendWaTemplateMessageStepSchema = baseStepSchema.extend({
 
       if (templateButtons.length === 0) {
         return [
-          buttonStepDefaultFn({ label: "Delivered" }),
-          buttonStepDefaultFn({ label: "Failed" }),
+          buttonStepDefaultFn({ label: "Entregue" }),
+          buttonStepDefaultFn({ label: "Falhou" }),
         ]
       }
 
@@ -343,8 +343,8 @@ export const sendWaTemplateMessageStepDefaultFn = (
     params: {},
   },
   buttons: [
-    buttonStepDefaultFn({ label: "Delivered" }),
-    buttonStepDefaultFn({ label: "Failed" }),
+    buttonStepDefaultFn({ label: "Entregue" }),
+    buttonStepDefaultFn({ label: "Falhou" }),
   ],
   ...props,
   id: createId(),

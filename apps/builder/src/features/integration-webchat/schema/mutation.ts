@@ -16,7 +16,7 @@ export const createWebchatRequest = z.object({
   ),
   conversationStarters: z.array(webchatConversationStarter),
   persistentMenus: z.array(webchatPersistentMenu),
-  brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
+  brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Formato de cor inválido"),
   hideHeader: z.boolean().default(true),
   showLogo: z.boolean().default(false),
   hideMessageInput: z.boolean().default(true),

@@ -29,7 +29,7 @@ export const disconnectGoogleSheets = authActionClient
         where: {
           workspaceId,
         },
-        message: "Integration Google Sheets not found",
+        message: "Integração Google Sheets não encontrada",
       })
       try {
         await integrationGoogleSheets.disconnect?.(

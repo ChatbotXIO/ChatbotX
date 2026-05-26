@@ -25,7 +25,7 @@ export const addNotesNodeDefaultFn = (
   type: nodeTypeSchema.enum.addNotes,
   ...props.nodeProps,
   data: {
-    name: "Add Notes",
+    name: "Adicionar Notas",
     ...props.dataProps,
     isStartNode: false,
     details: {

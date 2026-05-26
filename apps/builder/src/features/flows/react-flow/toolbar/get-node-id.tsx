@@ -24,7 +24,7 @@ export function GetNodeId() {
     const activeNode = allNodes.find((n) => n.data.forceToolbarVisible)
     if (activeNode) {
       copy(activeNode.id).then(() => {
-        toast.success("Copied Node ID")
+        toast.success("ID do Nó Copiado")
       })
     }
   }

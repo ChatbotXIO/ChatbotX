@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { and, db, inArray } from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
@@ -19,9 +20,11 @@ export const deleteContactAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
+      ctx: { user: { id: string } }
     }) => {
       const contacts = await db.query.contactModel.findMany({
         where: {
@@ -43,6 +46,25 @@ export const deleteContactAction = workspaceActionClient
           ),
         ),
       )
+
+      if (contacts.length > 0) {
+        const labels = contacts
+          .map(
+            (c) =>
+              [c.firstName, c.lastName].filter(Boolean).join(" ") ||
+              c.phoneNumber ||
+              c.email ||
+              c.id,
+          )
+          .slice(0, 5)
+        const more = contacts.length > 5 ? ` (+${contacts.length - 5})` : ""
+        await logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.CONTACT_DELETED,
+          detail: `Contato(s) excluído(s): ${labels.map((l) => `"${l}"`).join(", ")}${more}`,
+        })
+      }
 
       const occurredAt = new Date()
 

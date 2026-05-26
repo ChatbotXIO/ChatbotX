@@ -61,7 +61,10 @@ export function ChatRealtime() {
             break
         }
       } catch (error) {
-        console.error("Unable to parse realtime message", error)
+        console.error(
+          "Não foi possível processar mensagem em tempo real",
+          error,
+        )
       }
     },
     // onClose() {},

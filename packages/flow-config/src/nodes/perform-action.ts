@@ -25,7 +25,7 @@ export const performActionNodeDefaultFn = (
   type: nodeTypeSchema.enum.performAction,
   ...props.nodeProps,
   data: {
-    name: "Perform Action",
+    name: "Executar Ação",
     isStartNode: false,
     ...props.dataProps,
     details: {

@@ -85,7 +85,7 @@ export const BroadcastContactsDialog = memo(function BroadcastContactsDialog({
       setContacts(result.data)
       setPageCount(result.pageCount)
     } catch (error) {
-      console.error("Failed to fetch broadcast contacts:", error)
+      console.error("Falha ao buscar contatos do broadcast:", error)
     } finally {
       setIsLoading(false)
     }

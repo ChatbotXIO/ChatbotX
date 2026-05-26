@@ -116,7 +116,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
             type="button"
           >
             <PlusIcon />
-            <span className="sr-only">Add slide</span>
+            <span className="sr-only">Adicionar slide</span>
           </Button>
 
           <Button
@@ -128,7 +128,7 @@ const SendCarouselStepEditor = (props: SendCarouselStepEditorProps) => {
             variant="destructive"
           >
             <TrashIcon />
-            <span className="sr-only">Remove slide</span>
+            <span className="sr-only">Remover slide</span>
           </Button>
         </div>
 

@@ -1,5 +1,5 @@
 import { broadcastToWorkspaceParty, buildContext } from "@chatbotx.io/business"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
   attachmentModel,
@@ -20,6 +20,7 @@ import { getPublicUrl } from "@chatbotx.io/database/utils"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   emitContactCreated,
+  emitConversationOpened,
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
@@ -240,6 +241,11 @@ const detectContactAndConversation = async (props: {
     workspaceId: inbox.workspaceId,
   }
 
+  // Sinalizadores pra emitir conversationOpened FORA da transaction (evita
+  // race com triggers/webhooks que dependem do estado já commitado).
+  let wasNewConversation = false
+  let wasReopenedConversation = false
+
   const { contactInbox, conversation, newContact } = await db.transaction(
     async (tx) => {
       let contactInbox: ContactInboxModel | null | undefined = null
@@ -262,6 +268,17 @@ const detectContactAndConversation = async (props: {
             contactId: contactInbox.contactId,
           },
         })
+
+        // Reabertura: contato voltou a mandar msg numa conversa arquivada.
+        // Limpa archivedAt e marca pra emitir conversationOpened.
+        if (conversation.archivedAt) {
+          await tx
+            .update(conversationModel)
+            .set({ archivedAt: null })
+            .where(eq(conversationModel.id, conversation.id))
+          conversation = { ...conversation, archivedAt: null }
+          wasReopenedConversation = true
+        }
       } else {
         if (canGetUserProfileIfNeeded(inbox.channel)) {
           const profileIntegration = allIntegrations[inbox.channel]
@@ -289,10 +306,10 @@ const detectContactAndConversation = async (props: {
         const workspaceUsage = await findOrFail({
           table: workspaceUsageModel,
           where: { workspaceId: inbox.workspaceId },
-          message: "Workspace usage not found",
+          message: "Uso do workspace não encontrado",
         })
         if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
-          throw new Error("Max contacts reached")
+          throw new Error("Limite máximo de contatos atingido")
         }
 
         newContact = await tx
@@ -331,6 +348,7 @@ const detectContactAndConversation = async (props: {
           })
           .returning()
           .then((result) => result[0])
+        wasNewConversation = true
       }
       if (!contactInbox) {
         throw new Error("Contact inbox not found")
@@ -342,6 +360,25 @@ const detectContactAndConversation = async (props: {
       return { contactInbox, conversation, newContact }
     },
   )
+
+  // Emit conversationOpened pro TriggerNode "Conversa Aberta".
+  //  - Nova conversa criada agora → source = "contact" (1ª msg do contato)
+  //  - Conversa reaberta (estava arquivada e o contato voltou a falar)
+  //    → também emite com source = "contact". Esse é o caso mais útil pra
+  //    automações de re-engajamento.
+  if (wasNewConversation || wasReopenedConversation) {
+    try {
+      await emitConversationOpened(
+        conversation.workspaceId,
+        conversation.contactId,
+        conversation.id,
+        "contact",
+        contactInbox.channel,
+      )
+    } catch (error) {
+      logger.error(error, "[receiveMessage] Failed to emit conversationOpened")
+    }
+  }
 
   if (newContact) {
     try {

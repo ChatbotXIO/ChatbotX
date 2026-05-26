@@ -23,6 +23,7 @@ import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { contactRelations } from "./contact"
 import { contactCustomFieldRelations } from "./contact-custom-field"
+import { contactEventRelations } from "./contact-event"
 import { contactInboxRelations } from "./contact-inbox"
 import { contactNoteRelations } from "./contact-note"
 import { contactsOnBroadcastsRelations } from "./contact-on-broadcast"
@@ -54,6 +55,7 @@ import { integrationTelegramRelations } from "./integration-telegram"
 import { integrationWebchatRelations } from "./integration-webchat"
 import { integrationWhatsappRelations } from "./integration-whatsapp"
 import { integrationZaloRelations } from "./integration-zalo"
+import { lifecycleStageRelations } from "./lifecycle-stage"
 import { magicLinkRelations } from "./magic-link"
 import { messageRelations } from "./message"
 import { organizationRelations } from "./organization"
@@ -77,6 +79,7 @@ import { webhookRelations } from "./webhook"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
 import { workspaceRelations } from "./workspace"
+import { workspaceContactFieldVisibilityRelations } from "./workspace-contact-field-visibility"
 import { workspaceMemberRelations } from "./workspace-member"
 import { workspaceUsageRelations } from "./workspace-usage"
 
@@ -114,6 +117,8 @@ export const relations = {
   ...integrationMessengerRelations,
   ...integrationWebchatRelations,
   ...integrationZaloRelations,
+  ...lifecycleStageRelations,
+  ...contactEventRelations,
   ...invitationRelations,
   ...errorLogRelations,
   ...auditLogRelations,
@@ -123,6 +128,7 @@ export const relations = {
   ...integrationWhatsappRelations,
   ...whatsappMessageTemplateRelations,
   ...contactCustomFieldRelations,
+  ...workspaceContactFieldVisibilityRelations,
   ...workspaceMemberRelations,
   ...contactNoteRelations,
   ...aiEmbeddingRelations,

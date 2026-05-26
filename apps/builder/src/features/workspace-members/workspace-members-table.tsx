@@ -1,29 +1,13 @@
 "use client"
 
-import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
-import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
-import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@chatbotx.io/ui/components/ui/tooltip"
-import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
-import { CheckCircle2Icon, MoreHorizontalIcon, XCircleIcon } from "lucide-react"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { PencilIcon, SearchIcon, UsersIcon, XCircleIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import { DeleteWorkspaceMemberDialog } from "./components/delete-workspace-member"
@@ -32,184 +16,152 @@ import { UpdateWorkspaceMemberDialog } from "./components/update-workspace-membe
 import type { listWorkspaceMembers } from "./queries"
 import type { ListWorkspaceMembersResponse } from "./schema/query"
 
+type Member = ListWorkspaceMembersResponse["data"][number]
+
 type WorkspaceMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listWorkspaceMembers>>]>
+}
+
+function MemberRow({
+  member,
+  onEdit,
+  onRevoke,
+}: {
+  member: Member
+  onEdit: (m: Member) => void
+  onRevoke: (m: Member) => void
+}) {
+  const t = useTranslations("admins")
+  const isOwner = member.role === "owner"
+
+  return (
+    <div className="flex items-center gap-3 rounded-md border border-white/[0.06] bg-app-surface px-4 py-3">
+      <Avatar className="size-9">
+        <AvatarImage
+          alt={member.user.name ?? ""}
+          src={member.user.image ?? undefined}
+        />
+        <AvatarFallback>
+          {(member.user.name || member.user.email || "?")
+            .charAt(0)
+            .toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-semibold text-foreground">
+            {member.user.name || member.user.email}
+          </span>
+          <span className="text-text-secondary text-xs">
+            (ID: {member.user.id.slice(-6)})
+          </span>
+        </div>
+        <div className="mt-0.5 truncate text-text-secondary text-xs">
+          {t(`roles.${member.role}`)} – {member.user.email}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          className="text-destructive"
+          disabled={isOwner}
+          onClick={() => onRevoke(member)}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          <XCircleIcon className="h-4 w-4" />
+          {t("revoke")}
+        </Button>
+        <Button
+          onClick={() => onEdit(member)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <PencilIcon className="h-4 w-4" />
+          {t("edit")}
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 export function WorkspaceMembersTable({
   promises,
 }: WorkspaceMembersTableProps) {
-  const [{ data, pageCount }] = use(promises)
-  const t = useTranslations()
+  const [{ data }] = use(promises)
+  const t = useTranslations("admins")
 
-  const [rowAction, setRowAction] = useState<DataTableRowAction<
-    ListWorkspaceMembersResponse["data"][number]
-  > | null>(null)
+  const [search, setSearch] = useState("")
+  const [editMember, setEditMember] = useState<Member | null>(null)
+  const [revokeMember, setRevokeMember] = useState<Member | null>(null)
 
-  const columns = useMemo<
-    ColumnDef<ListWorkspaceMembersResponse["data"][number]>[]
-  >(
-    () => [
-      {
-        id: "name",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Avatar className="size-7 justify-items-center">
-              <AvatarImage
-                alt="avatar"
-                src={row.original.user.image ?? undefined}
-              />
-              <AvatarFallback>
-                {(row.original.user.name || "").charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
-                  {row.original.user.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{row.original.user.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        ),
-        enableHiding: false,
-      },
-      {
-        id: "enableContacts",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Contacts" />
-        ),
-        cell: ({ row }) =>
-          row.original.permissions.contacts ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
-      {
-        id: "enableAnalytics",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Analytics" />
-        ),
-        cell: ({ row }) =>
-          row.original.permissions.analytics ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
-      {
-        id: "enableFlows",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Flows" />
-        ),
-        cell: ({ row }) =>
-          row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
-      {
-        id: "flows",
-        className: "justify-center",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Flows" />
-        ),
-        cell: ({ row }) =>
-          row.original.permissions.flows ? (
-            <CheckCircle2Icon className="size-5 text-green-500" />
-          ) : (
-            <XCircleIcon className="size-5" />
-          ),
-        enableHiding: false,
-      },
-      // {
-      //   id: "notificationTypes",
-      //   header: ({ column }) => (
-      //     <DataTableColumnHeader column={column} title="Notifications" />
-      //   ),
-      //   cell: ({ row }) =>
-      //     isEnableAtLeastOneNotification(row.original.notificationTypes) ? (
-      //       <CheckCircle2Icon className="size-5 text-green-500" />
-      //     ) : (
-      //       <XCircleIcon className="size-5" />
-      //     ),
-      //   enableHiding: false,
-      // },
-      {
-        id: "actions",
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "update" })}
-              >
-                {t("actions.edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setRowAction({ row, variant: "delete" })}
-                variant="destructive"
-              >
-                {t("actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-        enableHiding: false,
-      },
-    ],
-    [t],
-  )
-
-  const { table } = useDataTable({
-    data,
-    columns,
-    pageCount,
-    initialState: {
-      sorting: [{ id: "createdAt", desc: true }],
-      columnPinning: { right: ["actions"] },
-    },
-    getRowId: (originalRow) => originalRow.id,
-    shallow: false,
-    clearOnDefault: true,
-  })
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) {
+      return data
+    }
+    return data.filter((m) => {
+      const name = (m.user.name ?? "").toLowerCase()
+      const email = m.user.email.toLowerCase()
+      return name.includes(q) || email.includes(q)
+    })
+  }, [data, search])
 
   return (
-    <>
-      <DataTable table={table}>
-        <DataTableToolbar table={table}>
-          <InviteWorkspaceMemberDialog />
-        </DataTableToolbar>
-      </DataTable>
+    <div className="space-y-4">
+      <div>
+        <h2 className="flex items-center gap-2 font-semibold text-foreground text-xl">
+          <UsersIcon className="h-5 w-5" />
+          {t("title")}
+        </h2>
+        <p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+      </div>
 
-      <DeleteWorkspaceMemberDialog
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "delete"}
-        workspaceMember={rowAction?.row.original || undefined}
-      />
+      <div className="flex items-center justify-between gap-4">
+        <InviteWorkspaceMemberDialog />
+        <div className="relative max-w-sm flex-1">
+          <SearchIcon className="absolute top-2.5 left-3 h-4 w-4 text-text-secondary" />
+          <Input
+            className="pl-9"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("searchPlaceholder")}
+            value={search}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <div className="rounded-md border border-white/[0.06] bg-app-surface p-8 text-center text-sm text-text-secondary">
+            {search.trim()
+              ? "Nenhum usuário encontrado."
+              : "Nenhum usuário no espaço de trabalho."}
+          </div>
+        ) : (
+          filtered.map((member) => (
+            <MemberRow
+              key={member.id}
+              member={member}
+              onEdit={setEditMember}
+              onRevoke={setRevokeMember}
+            />
+          ))
+        )}
+      </div>
 
       <UpdateWorkspaceMemberDialog
-        onOpenChange={() => setRowAction(null)}
-        open={rowAction?.variant === "update"}
-        workspaceMember={rowAction?.row.original || null}
+        onOpenChange={() => setEditMember(null)}
+        open={Boolean(editMember)}
+        workspaceMember={editMember}
       />
-    </>
+      <DeleteWorkspaceMemberDialog
+        onOpenChange={() => setRevokeMember(null)}
+        open={Boolean(revokeMember)}
+        workspaceMember={revokeMember ?? undefined}
+      />
+    </div>
   )
 }

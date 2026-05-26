@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -18,9 +19,16 @@ export const updateCustomFieldAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
+      ctx: { user },
     } = props
 
     await updateCustomField({ workspaceId, id }, parsedInput)
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.CUSTOM_FIELD_UPDATED,
+      detail: `Campo personalizado "${parsedInput.name}" atualizado`,
+    })
   })
 
 export const updateCustomField = async (

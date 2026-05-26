@@ -14,7 +14,7 @@ export const templateImageSchema = z
             file instanceof File &&
             ["image/png", "image/jpg", "image/jpeg"].includes(file.type),
           {
-            message: "File must be a Image png, jpg, jpeg",
+            message: "O arquivo deve ser uma imagem png, jpg ou jpeg",
           },
         )
         .refine((file) => file && file.size <= 2 * 1024 * 1024, {
@@ -32,7 +32,7 @@ export const templateImageSchema = z
     if (data.showFooter && !data.footer?.length) {
       ctx.addIssue({
         path: ["footer"],
-        message: "Footer text is required",
+        message: "Texto do rodapé é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }

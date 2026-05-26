@@ -20,7 +20,7 @@ function AttachedImage({
   return (
     <div className="relative h-full w-full">
       <Image
-        alt="Uploaded Image"
+        alt="Imagem carregada"
         className="object-contain"
         fill={true}
         src={image}

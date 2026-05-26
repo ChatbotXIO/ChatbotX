@@ -105,7 +105,7 @@ class FolderService extends BaseService {
   }): Promise<FolderModel> {
     const folder = await this.find(props)
     if (!folder) {
-      throw notFoundException("Folder not found")
+      throw notFoundException("Pasta não encontrada")
     }
     return folder
   }
@@ -210,7 +210,7 @@ class FolderService extends BaseService {
       )
 
     if (!resources || resources.length === 0) {
-      throw new ChatbotXException("Resource not found")
+      throw new ChatbotXException("Recurso não encontrado")
     }
 
     const resolvedFolderId =
@@ -248,7 +248,7 @@ class FolderService extends BaseService {
       case folderTypes.enum.webhook:
         return webhookModel
       default:
-        throw new ChatbotXException("Invalid folder type")
+        throw new ChatbotXException("Tipo de pasta inválido")
     }
   }
 }

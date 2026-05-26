@@ -82,7 +82,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
           router.push(`/space/${workspaceId}/settings/channels`)
         },
         onError: ({ error }) => {
-          toast.error(error.serverError || "Failed to create webchat")
+          toast.error(error.serverError || "Falha ao criar webchat")
         },
       },
       formProps: {
@@ -121,7 +121,7 @@ export function CreateWebchatForm({ workspaceId }: { workspaceId: string }) {
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-        <InputField label="Name" name="name" required />
+        <InputField label="Nome" name="name" required />
 
         <ComboboxField
           description={t("fields.welcomeFlowId.description")}

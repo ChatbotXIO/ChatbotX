@@ -44,7 +44,7 @@ export function WhatsappMessageTemplateCategorySelect({
           value: whatsappTemplateCategories.enum.MARKETING,
         },
         {
-          label: "Utility",
+          label: "Utilidade",
           value: whatsappTemplateCategories.enum.UTILITY,
         },
       ].filter((option) => allowOptions.includes(option.value)),
@@ -57,7 +57,7 @@ export function WhatsappMessageTemplateCategorySelect({
         label={label}
         name={name}
         options={options}
-        placeholder="Please select"
+        placeholder="Por favor selecione"
         required={required}
       />
       {category === whatsappTemplateCategories.enum.MARKETING && (

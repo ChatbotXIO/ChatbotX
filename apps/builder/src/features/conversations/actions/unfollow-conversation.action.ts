@@ -33,7 +33,7 @@ export const unfollowConversation = async (ctx: {
   })
 
   if (!conversation) {
-    throw new Error("Conversation not found")
+    throw new Error("Conversa não encontrada")
   }
 
   await db

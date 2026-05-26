@@ -1,12 +1,5 @@
-import { notFound } from "next/navigation"
-import WorkspacesList from "@/features/workspaces/components/workspaces-list"
-import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
+import { redirect } from "next/navigation"
 
-export default async function MainPage() {
-  const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
-  if (!userAndWorkspaces) {
-    return notFound()
-  }
-
-  return <WorkspacesList workspaces={userAndWorkspaces.allWorkspaces} />
+export default function MainPage() {
+  redirect("/manage")
 }

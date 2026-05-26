@@ -36,7 +36,7 @@ const loadManualIntegration = async (integrationId: string) => {
 const handleGet = async (req: NextRequest, integrationId: string) => {
   const result = await loadManualIntegration(integrationId)
   if (!result) {
-    return json({ message: "Integration not found" }, 404)
+    return json({ message: "Integração não encontrada" }, 404)
   }
 
   const { auth } = result
@@ -46,11 +46,11 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
   const challenge = params.get("hub.challenge")
 
   if (mode !== "subscribe" || !challenge) {
-    return json({ message: "Invalid handshake" }, 400)
+    return json({ message: "Handshake inválido" }, 400)
   }
 
   if (challenge.length > MAX_CHALLENGE_LENGTH) {
-    return json({ message: "Challenge too long" }, 400)
+    return json({ message: "Challenge muito longo" }, 400)
   }
 
   if (token !== auth.verifyToken) {
@@ -58,7 +58,7 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
       { integrationId },
       "Whatsapp manual webhook verify_token mismatch",
     )
-    return json({ message: "Forbidden" }, 403)
+    return json({ message: "Proibido" }, 403)
   }
 
   await markWhatsappWebhookVerified(integrationId, auth)
@@ -72,26 +72,26 @@ const handleGet = async (req: NextRequest, integrationId: string) => {
 const handlePost = async (req: NextRequest, integrationId: string) => {
   const result = await loadManualIntegration(integrationId)
   if (!result) {
-    return json({ message: "Integration not found" }, 404)
+    return json({ message: "Integração não encontrada" }, 404)
   }
 
   const { auth } = result
 
   const signature = req.headers.get(SIGNATURE_HEADER)
   if (!signature?.startsWith(SIGNATURE_PREFIX)) {
-    return json({ message: "Missing signature" }, 401)
+    return json({ message: "Assinatura ausente" }, 401)
   }
 
   const verified =
     Boolean(auth.metadata?.webhookVerifiedAt) ||
     Boolean(auth.metadata?.subscribeOverrideOk)
   if (!verified) {
-    return json({ message: "Webhook not verified" }, 403)
+    return json({ message: "Webhook não verificado" }, 403)
   }
 
   const integration = integrations.whatsapp
   if (!integration?.handleRequest) {
-    return json({ message: "Method is not implemented" }, 400)
+    return json({ message: "Método não implementado" }, 400)
   }
 
   try {

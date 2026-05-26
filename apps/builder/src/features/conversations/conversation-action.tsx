@@ -7,27 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import {
-  ArchiveIcon,
-  ArchiveXIcon,
-  EllipsisVerticalIcon,
-  MailIcon,
-  StarIcon,
-  StarOffIcon,
-  TrashIcon,
-  UserLockIcon,
-} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
+import { RespondIcon } from "@/components/respond-icon"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { blockContactAction } from "../contacts/actions/block-contact.action"
 import { unblockContactAction } from "../contacts/actions/unblock-contact.action"
 import DeleteContactDialog from "../contacts/components/remove-contact-dialog"
-import { archiveConversationAction } from "./actions/archive-conversation.action"
 import { followConversationAction } from "./actions/follow-conversation.action"
-import { unarchiveConversationAction } from "./actions/unarchive-conversation.action"
 import { unfollowConversationAction } from "./actions/unfollow-conversation.action"
 import { unreadConversationAction } from "./actions/unread-conversation.action"
 import type { ListConversationItemResource } from "./schema/resource"
@@ -43,6 +32,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   const {
     deleteConversation,
     updateConversation,
+    setActiveConversationId,
     resetState: resetConversationState,
     loadMoreConversations,
   } = useChatStore((state) => state)
@@ -84,9 +74,21 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     unreadConversationAction.bind(null, workspaceId, conversation.id),
     {
       onSuccess: (result) => {
+        // Pedro pediu 2026-05-25 — comportamento "marcar como não lido"
+        // igual WhatsApp:
+        // (1) backend retrocede `agentLastReadAt` pro penúltimo incoming
+        // (2) frontend força `unreadCount = 1` na lista de conversas
+        //     (pill azul aparece imediatamente no card SEM esperar polling)
+        // (3) **SAI da conversa** (`setActiveConversationId(null)`) — senão
+        //     o `useEffect` do ConversationItem dispara `read()` ao reabrir
+        //     a conversa ativa e remarca como lida, escondendo a pill.
+        const newReadAt = result.data?.agentLastReadAt
         updateConversation(conversation.id, {
-          agentLastReadAt: new Date(result.data?.agentLastReadAt ?? new Date()),
+          agentLastReadAt: newReadAt ? new Date(newReadAt) : null,
+          unreadCount: 1,
         })
+        setActiveConversationId(null)
+        toast.success(t("actions.markAsUnread"))
       },
       onError: ({ error }) => {
         if (error.serverError) {
@@ -96,45 +98,8 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
     },
   )
 
-  const { execute: archiveFn, isExecuting: isArchiving } = useAction(
-    archiveConversationAction.bind(null, workspaceId),
-    {
-      onSuccess: () => {
-        // updateConversation(conversation.id, {
-        //   archivedAt: new Date(),
-        // })
-
-        // Reload conversation list
-        resetConversationState()
-        loadMoreConversations(workspaceId)
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
-
-  const { execute: unarchiveFn, isExecuting: isUnarchiving } = useAction(
-    unarchiveConversationAction.bind(null, workspaceId),
-    {
-      onSuccess: () => {
-        // updateConversation(conversation.id, {
-        //   archivedAt: null,
-        // })
-
-        // Reload conversation list
-        resetConversationState()
-        loadMoreConversations(workspaceId)
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  // Arquivar/desarquivar saiu daqui. Agora é botão primário no header
+  // (CloseConversationButton em message-head.tsx), igual Respond.io.
 
   const { execute: blockContactFn, isExecuting: isBlockingContact } = useAction(
     blockContactAction.bind(null, workspaceId, conversation.contactId),
@@ -179,8 +144,8 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <EllipsisVerticalIcon />
+        <Button className="size-8" size="icon" variant="ghost">
+          <RespondIcon name="more" size="lg" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
@@ -189,7 +154,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             disabled={isRemovingFollowUp}
             onSelect={() => removeFollowUpFn()}
           >
-            <StarOffIcon />
+            <RespondIcon name="star" size="md" />
             {t("actions.removeFromFollowUp")}
           </DropdownMenuItem>
         ) : (
@@ -197,7 +162,11 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             disabled={isFollowingUp}
             onSelect={() => followUpFn()}
           >
-            <StarIcon className="fill-yellow-400 text-yellow-400" />
+            <RespondIcon
+              className="text-yellow-400"
+              name="star-bold"
+              size="md"
+            />
             {t("actions.markAsFollowUp")}
           </DropdownMenuItem>
         )}
@@ -205,29 +174,12 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
           disabled={isMarkingUnread}
           onSelect={() => unreadFn()}
         >
-          <MailIcon />
+          <RespondIcon name="email" size="md" />
           {t("actions.markAsUnread")}
         </DropdownMenuItem>
-        {conversation.archivedAt ? (
-          <DropdownMenuItem
-            disabled={isUnarchiving}
-            onSelect={() => unarchiveFn({ ids: [conversation.id] })}
-          >
-            <ArchiveXIcon />
-            {t("actions.unarchive")}
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            disabled={isArchiving}
-            onSelect={() => archiveFn({ ids: [conversation.id] })}
-          >
-            <ArchiveIcon />
-            {t("actions.archive")}
-          </DropdownMenuItem>
-        )}
         {conversation.contact?.blockedAt ? (
           <DropdownMenuItem onSelect={() => unblockContactFn()}>
-            <UserLockIcon />
+            <RespondIcon name="forbidden" size="md" />
             {t("actions.unblockContact")}
           </DropdownMenuItem>
         ) : (
@@ -235,7 +187,7 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
             disabled={isBlockingContact}
             onSelect={() => blockContactFn()}
           >
-            <UserLockIcon />
+            <RespondIcon name="forbidden" size="md" />
             {t("actions.blockContact")}
           </DropdownMenuItem>
         )}
@@ -247,7 +199,11 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
           }}
           trigger={
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <TrashIcon className="text-destructive" />
+              <RespondIcon
+                className="text-destructive"
+                name="trash"
+                size="md"
+              />
               {t("actions.deleteContact")}
             </DropdownMenuItem>
           }

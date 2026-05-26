@@ -173,7 +173,7 @@ const GetUserDataStepEditor = ({ parentName }: { parentName: string }) => {
     <BaseStepEditor icon={KeyboardIcon} title={t("flows.actions.getUserData")}>
       <div className="flex flex-col gap-3">
         <TiptapEditorField
-          label="Message"
+          label="Mensagem"
           name={`${parentName}.message`}
           required
         />

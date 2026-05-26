@@ -1,5 +1,6 @@
 "use client"
 
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import {
   ListIcon,
   MessageCirclePlusIcon,
   OctagonXIcon,
+  RefreshCwIcon,
   SaveIcon,
   SaveOffIcon,
   TagIcon,
@@ -29,6 +31,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { BulkMoveLifecycleDialog } from "@/features/lifecycle-stages/bulk-move-lifecycle-dialog"
 import { SequenceStoreProvider } from "@/features/sequences/provider/sequence-store-context"
 import ArchiveConversationDialog from "../conversations/components/archive-conversation"
 import AssignConversationDialog from "../conversations/components/assign-conversation-dialog"
@@ -47,11 +50,13 @@ import type { ListContactsItem } from "./schemas/query"
 type ContactListActionProps = {
   workspaceId: string
   table: Table<ListContactsItem>
+  lifecycleStages?: LifecycleStageModel[]
 }
 
 export function ContactListAction({
   workspaceId,
   table,
+  lifecycleStages = [],
 }: ContactListActionProps) {
   const t = useTranslations()
   const router = useRouter()
@@ -95,6 +100,22 @@ export function ContactListAction({
             </DropdownMenuItem>
           }
         />
+
+        {lifecycleStages.length > 0 && (
+          <BulkMoveLifecycleDialog
+            contactIds={rows.map((r) => r.id)}
+            stages={lifecycleStages}
+            trigger={
+              <DropdownMenuItem
+                disabled={rows.length === 0}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <RefreshCwIcon />
+                {t("lifecycle.bulkMove")}
+              </DropdownMenuItem>
+            }
+          />
+        )}
 
         <SequenceStoreProvider autoInitialize={true} workspaceId={workspaceId}>
           <AddContactSequenceDialog

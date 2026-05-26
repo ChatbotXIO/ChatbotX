@@ -85,7 +85,7 @@ export function DeleteAIFileDialog({
             <Button variant="ghost">{t("actions.cancel")}</Button>
           </DialogClose>
           <Button
-            aria-label="Delete AI file"
+            aria-label="Excluir arquivo de IA"
             disabled={isPending}
             onClick={() => execute()}
             variant="destructive"

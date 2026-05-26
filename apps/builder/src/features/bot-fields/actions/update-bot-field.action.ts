@@ -1,6 +1,10 @@
 "use server"
 
-import { botFieldService } from "@chatbotx.io/business"
+import {
+  auditLogActions,
+  botFieldService,
+  logAudit,
+} from "@chatbotx.io/business"
 import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
@@ -18,13 +22,25 @@ export const updateBotFieldAction = workspaceActionClient
     async ({
       parsedInput,
       bindArgsParsedInputs: [workspaceId, id],
+      ctx: { user },
     }: {
       parsedInput: UpdateBotFieldRequest
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
-    }) =>
-      await botFieldService.updateByKey({
+      ctx: { user: { id: string } }
+    }) => {
+      const updated = await botFieldService.updateByKey({
         workspaceId,
         key: id,
         data: parsedInput,
-      }),
+      })
+
+      await logAudit({
+        workspaceId,
+        userId: user.id,
+        action: auditLogActions.BOT_FIELD_UPDATED,
+        detail: `Campo do bot "${parsedInput.name ?? id}" atualizado`,
+      })
+
+      return updated
+    },
   )

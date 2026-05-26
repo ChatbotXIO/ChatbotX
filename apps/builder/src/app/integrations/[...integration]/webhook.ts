@@ -27,7 +27,7 @@ export const handleWebhook = async (
   if (!orgSettings?.[integrationType as keyof OrganizationSettings]) {
     logger.debug(`Integration ${integrationType} is not configured`)
     return new Response(
-      JSON.stringify({ message: "Integration is not configured" }),
+      JSON.stringify({ message: "Integração não configurada" }),
       {
         status: 404,
         headers: { "Content-Type": "application/json" },
@@ -38,7 +38,7 @@ export const handleWebhook = async (
   const integration = integrations[integrationType as IntegrationKey]
   if (!integration?.handleRequest) {
     return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
+      JSON.stringify({ message: "Método não implementado" }),
       {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -93,7 +93,7 @@ const handleTelegramWebhook = async (req: NextRequest) => {
   const botId = req.nextUrl.searchParams.get("botId")
   if (!botId) {
     return new Response(
-      JSON.stringify({ message: "Missing botId query param" }),
+      JSON.stringify({ message: "Parâmetro botId ausente" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     )
   }
@@ -101,14 +101,14 @@ const handleTelegramWebhook = async (req: NextRequest) => {
   const integration = integrations.telegram
   if (!integration?.handleRequest) {
     return new Response(
-      JSON.stringify({ message: "Method is not implemented" }),
+      JSON.stringify({ message: "Método não implementado" }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     )
   }
 
   const integrationTelegram = await findIntegrationTelegramByBotId({ botId })
   if (!integrationTelegram) {
-    return new Response(JSON.stringify({ message: "Bot not found" }), {
+    return new Response(JSON.stringify({ message: "Bot não encontrado" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     })

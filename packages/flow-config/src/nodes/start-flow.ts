@@ -28,7 +28,7 @@ export const startFlowNodeDefaultFn = (
   type: nodeTypeSchema.enum.startFlow,
   ...props.nodeProps,
   data: {
-    name: "Start Flow",
+    name: "Iniciar Fluxo",
     isStartNode: false,
     ...props.dataProps,
     details: {

@@ -51,7 +51,7 @@ export const connectTelegramAction = authActionClient
           where: {
             botId: botData.id,
           },
-          message: "Bot is already connected",
+          message: "Bot já conectado",
         })
 
         return await db.transaction(async (tx) => {
@@ -97,7 +97,7 @@ export const connectTelegramAction = authActionClient
             .then((result) => result[0])
 
           if (!inbox) {
-            throw new Error("Failed to create inbox")
+            throw new Error("Falha ao criar caixa de entrada")
           }
 
           await tx.insert(integrationTelegramModel).values({

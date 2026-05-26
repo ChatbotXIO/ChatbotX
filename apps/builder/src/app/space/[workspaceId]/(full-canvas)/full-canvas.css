@@ -1,0 +1,14 @@
+/*
+ * Estilo aplicado quando uma rota está dentro do route group `(full-canvas)`.
+ * O wrapper JS adiciona `data-full-canvas` no body — daí seletores CSS
+ * sobrescrevem o padding e overflow do <main> do layout pai.
+ *
+ * Necessário porque o layout `space/[workspaceId]/layout.tsx` aplica
+ * `p-6 gap-4 overflow-auto` no <main>, o que quebra páginas tipo flow
+ * editor que precisam de canvas full-bleed sem padding.
+ */
+body[data-full-canvas="true"] main {
+  gap: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}

@@ -63,7 +63,7 @@ export const createTagStore = (props: Partial<TagState>) =>
       } catch (error: unknown) {
         set({
           error:
-            error instanceof HTTPError ? error.message : "Failed to fetch tags",
+            error instanceof HTTPError ? error.message : "Falha ao buscar tags",
         })
       } finally {
         set({ loading: false })

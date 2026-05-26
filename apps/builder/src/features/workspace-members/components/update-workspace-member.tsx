@@ -1,6 +1,7 @@
 "use client"
 
-import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -10,9 +11,6 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { ScrollArea } from "@chatbotx.io/ui/components/ui/scroll-area"
-import { cn } from "@chatbotx.io/ui/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2Icon } from "lucide-react"
@@ -21,292 +19,144 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
-import { isCommunity } from "@/env"
 import { updateWorkspaceMemberAction } from "../actions/update-workspace-member.action"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 import type { WorkspaceMemberResource } from "../schema/resource"
+import { AdvancedRestrictions } from "./restrictions-form"
+
+const defaultPermissions = {
+  restrictDataExport: false,
+  restrictContactDeletion: false,
+  restrictWorkspaceSettings: false,
+  restrictIntegrationSettings: false,
+  contactVisibility: "all" as const,
+  restrictCalling: false,
+  restrictWorkflows: false,
+  maskPhoneAndEmail: false,
+}
 
 export function UpdateWorkspaceMemberDialog({
   workspaceMember,
   open,
   onOpenChange,
 }: {
-  workspaceMember: WorkspaceMemberResource | null
+  workspaceMember:
+    | (WorkspaceMemberResource & { user?: { email?: string } })
+    | null
   open: boolean
   onOpenChange: (val: boolean) => void
 }) {
-  const t = useTranslations()
+  const t = useTranslations("admins")
+  const tActions = useTranslations("actions")
   const router = useRouter()
 
-  const onCancel = () => {
-    onOpenChange(false)
-  }
-
-  const onSuccess = () => {
-    onOpenChange(false)
-    router.refresh()
-  }
-
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {t("messages.editFeature", {
-              feature: t("fields.workspaceMember.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
-
-        <ScrollArea className="h-75">
-          <UpdateWorkspaceMemberForm
-            cancelHandler={onCancel}
-            className="mr-3"
-            submitHandler={onSuccess}
-            workspaceMember={workspaceMember}
-          />
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export function UpdateWorkspaceMemberForm({
-  workspaceMember,
-  cancelHandler,
-  submitHandler,
-  className,
-}: {
-  workspaceMember: WorkspaceMemberResource | null
-  cancelHandler?: () => void
-  submitHandler?: () => void
-  className?: string
-}) {
-  const t = useTranslations()
-
-  const { form, handleSubmitWithAction, resetFormAndAction } =
-    useHookFormAction(
-      updateWorkspaceMemberAction.bind(
-        null,
-        workspaceMember?.workspaceId ?? "",
-        workspaceMember?.id ?? "",
-      ),
-      zodResolver(updateWorkspaceMemberRequest),
-      {
-        actionProps: {
-          onSuccess: () => {
-            resetFormAndAction()
-            toast.success(
-              t("messages.updatedSuccess", {
-                feature: t("fields.workspaceMember.label"),
-              }),
-            )
-            submitHandler?.()
-          },
-          onError: ({ error }) => {
-            if (error.serverError) {
-              toast.error(error.serverError)
-            }
-          },
+  const { form, handleSubmitWithAction } = useHookFormAction(
+    updateWorkspaceMemberAction.bind(
+      null,
+      workspaceMember?.workspaceId ?? "",
+      workspaceMember?.id ?? "",
+    ),
+    zodResolver(updateWorkspaceMemberRequest),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success(t("editDialog.title"))
+          onOpenChange(false)
+          router.refresh()
         },
-        formProps: {
-          mode: "onChange",
-          defaultValues: {
-            permissions: {
-              superAdmin: true,
-              analytics: true,
-              flows: true,
-              contacts: true,
-              onlyAssignedContacts: true,
-              emailAndPhone: true,
-              broadcast: true,
-              ecommerce: true,
-            },
-            notificationTypes: {
-              notifyAdmin: false,
-              newMessageToHuman: false,
-              newOrder: false,
-            },
-            notificationChannels: {
-              messenger: false,
-              email: false,
-              browser: false,
-              telegram: false,
-            },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            toast.error(error.serverError)
+          }
+        },
+      },
+      formProps: {
+        mode: "onChange",
+        defaultValues: {
+          role:
+            (workspaceMember?.role as "owner" | "manager" | "agent") ?? "agent",
+          permissions: {
+            ...defaultPermissions,
+            ...(workspaceMember?.permissions ?? {}),
           },
         },
       },
-    )
-
-  const { setValue, reset } = form
-  const isSuperAdmin = useWatch({
-    control: form.control,
-    name: "permissions.superAdmin",
-  })
-
-  useEffect(() => {
-    if (isSuperAdmin) {
-      setValue("permissions.analytics", true)
-      setValue("permissions.flows", true)
-      setValue("permissions.contacts", true)
-      setValue("permissions.onlyAssignedContacts", true)
-      setValue("permissions.emailAndPhone", true)
-      setValue("permissions.broadcast", true)
-      setValue("permissions.ecommerce", true)
-    }
-  }, [isSuperAdmin, setValue])
+    },
+  )
 
   useEffect(() => {
     if (workspaceMember) {
-      reset({
-        permissions: workspaceMember.permissions,
-        // notificationTypes: workspaceMember.notificationTypes,
-        // notificationChannels: workspaceMember.notificationChannels,
+      form.reset({
+        role: workspaceMember.role as "owner" | "manager" | "agent",
+        permissions: {
+          ...defaultPermissions,
+          ...(workspaceMember.permissions ?? {}),
+        },
       })
     }
-  }, [workspaceMember, reset])
+  }, [workspaceMember, form])
+
+  const role = useWatch({ control: form.control, name: "role" })
+
+  const email = workspaceMember?.user?.email ?? ""
 
   return (
-    <Form {...form}>
-      <form
-        className={cn("flex flex-col gap-6", className)}
-        onSubmit={handleSubmitWithAction}
-      >
-        <div className="flex flex-col gap-4">
-          <Label>{t("fields.permissions.label")}</Label>
-          <div className="flex flex-col gap-4">
-            <SwitchField
-              disabled={isCommunity}
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.permissions.superAdmin")}
-              name="permissions.superAdmin"
-              required
-            />
-            {!isSuperAdmin && (
-              <>
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.analytics")}
-                  name="permissions.analytics"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.flows")}
-                  name="permissions.flows"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.contacts")}
-                  name="permissions.contacts"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.onlyAssignedContacts")}
-                  name="permissions.onlyAssignedContacts"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.emailAndPhone")}
-                  name="permissions.emailAndPhone"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.broadcast")}
-                  name="permissions.broadcast"
-                  required
-                />
-                <SwitchField
-                  formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-                  label={t("fields.permissions.ecommerce")}
-                  name="permissions.ecommerce"
-                  required
-                />
-              </>
-            )}
-          </div>
-        </div>
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="max-h-screen max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("editDialog.title")}</DialogTitle>
+          <DialogDescription>{t("editDialog.description")}</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                disabled
+                label={t("inviteDialog.emailLabel")}
+                name="__email"
+                placeholder={email}
+              />
+              <SelectField
+                label={t("inviteDialog.accessLevelLabel")}
+                name="role"
+                options={[
+                  { value: "owner", label: t("roles.owner") },
+                  { value: "manager", label: t("roles.manager") },
+                  { value: "agent", label: t("roles.agent") },
+                ]}
+                required
+              />
+            </div>
 
-        <div className="flex flex-col gap-4">
-          <Label>{t("fields.notificationType.label")}</Label>
-          <div className="flex flex-col gap-4">
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationType.notifyAdmin")}
-              name="notificationTypes.notifyAdmin"
-              required
-            />
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationType.newMessageToHuman")}
-              name="notificationTypes.newMessageToHuman"
-              required
-            />
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationType.newOrder")}
-              name="notificationTypes.newOrder"
-              required
-            />
-          </div>
-        </div>
+            <p className="text-sm text-text-secondary">
+              {t(`roleDescriptions.${role}`)}
+            </p>
 
-        <div className="flex flex-col gap-4">
-          <Label>{t("fields.notificationChannel.label")}</Label>
-          <div className="flex flex-col gap-4">
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationChannel.messenger")}
-              name="notificationChannels.messenger"
-              required
-            />
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationChannel.email")}
-              name="notificationChannels.email"
-              required
-            />
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationChannel.telegram")}
-              name="notificationChannels.telegram"
-              required
-            />
-            <SwitchField
-              formItemClassName="flex flex-row-reverse items-center justify-end gap-2"
-              label={t("fields.notificationChannel.browser")}
-              name="notificationChannels.browser"
-              required
-            />
-          </div>
-        </div>
+            <AdvancedRestrictions role={role} />
 
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            onAbort={() => cancelHandler?.()}
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            {t("actions.cancel")}
-          </Button>
-          <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
-            size="sm"
-            type="submit"
-          >
-            {form.formState.isSubmitting && (
-              <Loader2Icon className="animate-spin" />
-            )}
-            {t("actions.confirm")}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="ghost"
+              >
+                {tActions("cancel")}
+              </Button>
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="animate-spin" />
+                )}
+                {t("editDialog.submit")}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   )
 }

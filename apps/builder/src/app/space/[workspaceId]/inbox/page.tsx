@@ -2,13 +2,8 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { ChatLayout } from "@/features/chat/chat-layout"
-import { ChatStoreProvider } from "@/features/chat/store/chat-store-provider"
-import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
-import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
-import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
-import { SavedReplyStoreProvider } from "@/features/saved-replies/provider/saved-reply-store-context"
-import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
-import { UserStoreProvider } from "@/features/users/provider/user-store-context"
+import { listHiddenContactFieldKeys } from "@/features/custom-fields/queries/visibility"
+import { listLifecycleStages } from "@/features/lifecycle-stages/queries"
 
 type InboxPageProps = {
   params: Promise<{ workspaceId: string }>
@@ -21,31 +16,26 @@ export default async function InboxPage({ params }: InboxPageProps) {
   }
 
   const layout = (await cookies()).get("csm:layout:inbox")
-  const savedLayout = layout ? JSON.parse(layout.value) : [25, 50, 25]
+  // Default Respond.io (Pedro iter 36, medido via Chrome MCP, viewport 2560
+  // sidebar Inbox colapsada):
+  //   - Lista chats:  477px (19.34% da área redimensionável)
+  //   - Mensagens:   1640px (66.48%)
+  //   - Drawer:       350px (14.18%)
+  // Cookie persistido tem prioridade — usuário mantém ajustes próprios.
+  const savedLayout = layout ? JSON.parse(layout.value) : [19, 67, 14]
+  const [lifecycleStages, hiddenFieldKeys] = await Promise.all([
+    listLifecycleStages(workspaceId),
+    listHiddenContactFieldKeys(workspaceId),
+  ])
 
   return (
-    <div className="-m-6">
-      <ChatStoreProvider>
-        <InboxStoreProvider workspaceId={workspaceId}>
-          <UserStoreProvider workspaceId={workspaceId}>
-            <CustomFieldStoreProvider workspaceId={workspaceId}>
-              <SavedReplyStoreProvider
-                autoInitialize={false}
-                workspaceId={workspaceId}
-              >
-                <TagStoreProvider workspaceId={workspaceId}>
-                  <FlowStoreProvider workspaceId={workspaceId}>
-                    <ChatLayout
-                      layout={savedLayout}
-                      workspaceId={workspaceId}
-                    />
-                  </FlowStoreProvider>
-                </TagStoreProvider>
-              </SavedReplyStoreProvider>
-            </CustomFieldStoreProvider>
-          </UserStoreProvider>
-        </InboxStoreProvider>
-      </ChatStoreProvider>
+    <div className="flex-1">
+      <ChatLayout
+        hiddenFieldKeys={hiddenFieldKeys}
+        layout={savedLayout}
+        lifecycleStages={lifecycleStages}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

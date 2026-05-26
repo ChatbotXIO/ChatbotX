@@ -45,7 +45,7 @@ export const createSavedReplyStore = (props: Partial<SavedReplyStoreState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch saved replies",
+              : "Falha ao buscar respostas salvas",
         })
       } finally {
         set({ initialized: true })
@@ -82,7 +82,7 @@ export const createSavedReplyStore = (props: Partial<SavedReplyStoreState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch saved replies",
+              : "Falha ao buscar respostas salvas",
         })
       } finally {
         set({ isLoading: false })

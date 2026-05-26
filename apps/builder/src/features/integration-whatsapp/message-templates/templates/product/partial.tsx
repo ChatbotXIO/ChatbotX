@@ -23,7 +23,7 @@ const VariableInput = memo(
         <InputField
           label={type === "body" ? "" : undefined}
           name={`${parentName}.${type}.variables.${index}`}
-          placeholder="Type a message"
+          placeholder="Digite uma mensagem"
         />
       </div>
     </div>
@@ -62,7 +62,7 @@ const TemplateProductPartialComponent = (props: { parentName?: string }) => {
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: "Mostrar rodapé",
               value: "showFooter",
             },
           ]}

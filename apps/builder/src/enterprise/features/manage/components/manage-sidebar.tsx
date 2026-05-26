@@ -10,7 +10,7 @@ import {
   BuildingIcon,
   CoinsIcon,
   CreditCardIcon,
-  Grid2x2PlusIcon,
+  LayersIcon,
   Users2Icon,
 } from "lucide-react"
 import Link from "next/link"
@@ -33,14 +33,14 @@ export function ManageSidebar() {
     },
     navMain: [
       {
-        title: t("integrations.title"),
-        url: "/manage/integrations",
-        icon: Grid2x2PlusIcon,
-      },
-      {
         title: t("organizationSettings.title"),
         url: "/manage/settings",
         icon: BuildingIcon,
+      },
+      {
+        title: t("manageWorkspaces.sidebarTitle"),
+        url: "/manage/workspaces",
+        icon: LayersIcon,
       },
       ...(isCommunity
         ? []
@@ -71,7 +71,7 @@ export function ManageSidebar() {
           className="flex h-12 items-center justify-center border-b"
           href="/"
         >
-          <BrandIcon alt="Brand" />
+          <BrandIcon alt="Marca" />
         </Link>
       </SidebarHeader>
       <SidebarContent>

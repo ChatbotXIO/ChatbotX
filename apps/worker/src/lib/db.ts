@@ -24,7 +24,7 @@ export async function detectConversationAndContactInbox(props: {
           where: {
             id: props.conversationId,
           },
-          message: "Conversation not found",
+          message: "Conversa não encontrada",
         })
       : props.conversationId
 
@@ -36,7 +36,7 @@ export async function detectConversationAndContactInbox(props: {
             id: props.contactInboxId,
             contactId: conversation.contactId,
           },
-          message: "Contact inbox not found",
+          message: "Caixa de entrada do contato não encontrada",
         })
       : props.contactInboxId
 

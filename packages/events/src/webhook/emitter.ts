@@ -21,6 +21,10 @@ const SUPPORTED_EVENT_TYPES: Set<TriggerEventType> = new Set([
   triggerEventTypes.enum.conversationUnassigned,
   triggerEventTypes.enum.subscribedToSequence,
   triggerEventTypes.enum.unsubscribedFromSequence,
+  triggerEventTypes.enum.lifecycleStageChanged,
+  triggerEventTypes.enum.conversationOpened,
+  triggerEventTypes.enum.conversationClosed,
+  triggerEventTypes.enum.shortcut,
 ])
 
 class WebhookEventEmitterImpl extends BaseEventEmitter {

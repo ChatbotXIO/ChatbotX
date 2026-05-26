@@ -69,7 +69,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch contacts count",
+              : "Falha ao buscar contagem de contatos",
         })
       } finally {
         set({ loadingCounts: false })
@@ -100,7 +100,7 @@ export const createContactStore = (props: Partial<ContactState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch contacts count",
+              : "Falha ao buscar contagem de contatos",
         })
       } finally {
         set({ loadingCounts: false })

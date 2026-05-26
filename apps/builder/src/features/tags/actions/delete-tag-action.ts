@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
 import {
@@ -18,11 +19,27 @@ export const deleteTagAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: BulkUpdateIdsRequest
+      ctx: { user: { id: string } }
     }) => {
+      const names = await db.query.tagModel.findMany({
+        columns: { name: true },
+        where: { workspaceId, id: { in: parsedInput.ids } },
+      })
+
       await deleteTags({ workspaceId, ids: parsedInput.ids })
+
+      if (names.length > 0) {
+        await logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.TAG_DELETED,
+          detail: `Etiqueta(s) excluída(s): ${names.map((t) => `"${t.name}"`).join(", ")}`,
+        })
+      }
     },
   )
 

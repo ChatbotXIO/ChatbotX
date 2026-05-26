@@ -28,7 +28,7 @@ export async function getContact(
   })
 
   if (!contact) {
-    throw notFoundException("Contact not found")
+    throw notFoundException("Contato não encontrado")
   }
 
   const { contactCustomFields, ...contactFields } = contact

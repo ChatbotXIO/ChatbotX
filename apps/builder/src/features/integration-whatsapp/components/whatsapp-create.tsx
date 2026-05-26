@@ -434,7 +434,7 @@ function ManualConnectSection({
   // Event handlers
   const handleListPhoneNumbers = useCallback(() => {
     if (!(getValues().wabaId && getValues().accessToken)) {
-      toast.error("Please fill in all required fields")
+      toast.error("Por favor preencha todos os campos obrigatórios")
       return
     }
 

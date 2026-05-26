@@ -13,8 +13,8 @@ export const integrationSmtpAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/integrations/smtp",
-      summary: "List SMTP integrations",
-      tags: ["Integrations"],
+      summary: "Listar integrações SMTP",
+      tags: ["Integrações"],
     })
     .input(listIntegrationSmtpsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

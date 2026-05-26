@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEvent,
+} from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type FillableContactKey,
@@ -27,9 +33,29 @@ export const updateContactFieldAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
+      ctx: { user },
     } = props
 
     await updateContactFields({ workspaceId, id }, parsedInput)
+
+    const keys = Object.keys(parsedInput)
+    if (keys.length > 0) {
+      await Promise.all([
+        logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.CONTACT_FIELD_UPDATED,
+          detail: `Campo(s) ${keys.map((k) => `"${k}"`).join(", ")} atualizado(s) no contato ${id}`,
+        }),
+        recordContactEvent({
+          contactId: id,
+          workspaceId,
+          eventType: contactEventTypes.FIELD_UPDATED,
+          meta: { keys },
+          actorUserId: user.id,
+        }),
+      ])
+    }
   })
 
 export const updateContactFields = async (
@@ -45,7 +71,7 @@ export const updateContactFields = async (
       workspaceId: ctx.workspaceId,
       id: ctx.id,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   const allCustomFields = await listCustomFields({

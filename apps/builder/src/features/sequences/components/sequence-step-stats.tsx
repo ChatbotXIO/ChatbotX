@@ -48,7 +48,10 @@ export const SequenceStepStats = memo(function SequenceStepStats({
           setStats(result)
         }
       } catch (error) {
-        console.error("Failed to fetch sequence step stats:", error)
+        console.error(
+          "Falha ao buscar estatísticas da etapa da sequência:",
+          error,
+        )
       } finally {
         if (isMounted) {
           setIsLoading(false)

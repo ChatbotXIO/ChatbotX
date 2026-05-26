@@ -75,6 +75,11 @@ export const createMessage = async (props: {
           senderId: user?.id,
           contactInboxId: contactInbox.id,
           contentType: "text",
+          // Comentário interno fica só na database — não vai pro canal.
+          // 2026-05-24 — Sprint Inbox 4.
+          isInternal: Boolean(
+            (parsedInput as { isInternal?: boolean }).isInternal,
+          ),
         })
         .returning()
         .then((result) => result[0])
@@ -115,6 +120,10 @@ export const createMessage = async (props: {
     return newMessage
   })
 
+  // Comentário interno: só broadcast pra realtime (equipe vê), NÃO envia
+  // pro canal externo. 2026-05-24 — Sprint Inbox 4 (padrão Respond.io).
+  const isInternalMsg = Boolean(message.isInternal)
+
   const promises: Promise<unknown>[] = [
     chatQueue.add(ChatJobAction.broadcastEvent, {
       type: ChatJobAction.broadcastEvent,
@@ -129,18 +138,22 @@ export const createMessage = async (props: {
         },
       },
     }),
-    chatQueue.add(ChatJobAction.sendChannelMessage, {
-      type: ChatJobAction.sendChannelMessage,
-      data: {
-        conversation,
-        contactInbox,
-        message: {
-          ...message,
-          clientId: parsedInput.clientId,
-        },
-      },
-    }),
   ]
+  if (!isInternalMsg) {
+    promises.push(
+      chatQueue.add(ChatJobAction.sendChannelMessage, {
+        type: ChatJobAction.sendChannelMessage,
+        data: {
+          conversation,
+          contactInbox,
+          message: {
+            ...message,
+            clientId: parsedInput.clientId,
+          },
+        },
+      }),
+    )
+  }
 
   if (user) {
     emit("analytics:dashboard", {

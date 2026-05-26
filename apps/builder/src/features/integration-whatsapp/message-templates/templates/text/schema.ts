@@ -20,7 +20,7 @@ export const templateTextSchema = z
     if (data.hideHeader && !data.header.text?.length) {
       ctx.addIssue({
         path: ["header", "text"],
-        message: "Header text is required",
+        message: "Texto do cabeçalho é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }
@@ -29,7 +29,7 @@ export const templateTextSchema = z
     if (data.showFooter && !data.footer?.length) {
       ctx.addIssue({
         path: ["footer"],
-        message: "Footer text is required",
+        message: "Texto do rodapé é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }

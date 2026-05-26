@@ -29,13 +29,12 @@ import {
   enableConversationState,
 } from "../../integration/handlers/conversation"
 import type { ExecuteStepProps } from "../../integration/handlers/flow"
-import {
-  clearSpreadsheetRow,
-  getSpreadsheetRandomRow,
-  getSpreadsheetRow,
-  sendSpreadsheetData,
-  updateSpreadsheetRow,
-} from "../../integration/handlers/spreadsheet-handler"
+// NOTE: `spreadsheet-handler` is intentionally NOT imported at the top level.
+// It participates in a circular import cycle with `flow.ts` and `step.ts`
+// (spreadsheet-handler → flow → step → spreadsheet-handler), which crashes
+// the trigger worker on boot with a TDZ ReferenceError. We resolve the
+// circular only at call time via a dynamic import inside the runGoogleSheet
+// branch below.
 import type { ActionExecutionContext } from "../types"
 
 export class ActionExecutor {
@@ -313,6 +312,16 @@ export class ActionExecutor {
         break
 
       case triggerActions.enum.runGoogleSheet: {
+        // Lazy-load to avoid the spreadsheet-handler ↔ flow.ts ↔ step.ts
+        // circular import that would otherwise crash the worker on boot.
+        const {
+          clearSpreadsheetRow,
+          getSpreadsheetRandomRow,
+          getSpreadsheetRow,
+          sendSpreadsheetData,
+          updateSpreadsheetRow,
+        } = await import("../../integration/handlers/spreadsheet-handler")
+
         const spreadsheetAction = action.action as StepType
         const spreadsheetId = action.spreadsheetId as string
         const sheetName = action.sheetName as string

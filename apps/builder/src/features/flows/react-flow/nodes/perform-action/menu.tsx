@@ -20,6 +20,7 @@ import {
   MessagesSquareIcon,
   OctagonXIcon,
   PackageOpenIcon,
+  RefreshCwIcon,
   SaveIcon,
   SaveOffIcon,
   SheetIcon,
@@ -224,6 +225,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.clearCustomField"),
         icon: SaveOffIcon,
         stepType: stepTypes.enum.clearCustomField,
+      },
+      {
+        label: t("flows.actions.updateContactLifecycleStage"),
+        icon: RefreshCwIcon,
+        stepType: stepTypes.enum.updateContactLifecycleStage,
       },
       {
         label: t("flows.actions.blockContact"),

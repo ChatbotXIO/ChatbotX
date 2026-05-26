@@ -19,7 +19,7 @@ export const useContactAssigneeOptions = (props?: {
   return useMemo(() => {
     const result: SelectOption[] = [
       {
-        label: "Agents",
+        label: "Agentes",
         value: "agents",
         children: workspaceMembers.map((v) => ({
           label: v.user?.name ?? "--",
@@ -27,7 +27,7 @@ export const useContactAssigneeOptions = (props?: {
         })),
       },
       {
-        label: "Inbox Teams",
+        label: "Times da Caixa de Entrada",
         value: "inbox-teams",
         children: inboxTeams.map((v) => ({
           label: v.name,
@@ -38,14 +38,14 @@ export const useContactAssigneeOptions = (props?: {
 
     if (includeUnassigned) {
       result.unshift({
-        label: "Unassigned",
+        label: "Não atribuído",
         value: "unassigned",
       })
     }
 
     if (includeAll) {
       result.unshift({
-        label: "All",
+        label: "Todos",
         value: "all",
       })
     }
@@ -65,14 +65,14 @@ export const useContactAssigneeMultiSelectOptions = (): MultiSelectGroup[] => {
   return useMemo(
     () => [
       {
-        heading: "Agents",
+        heading: "Agentes",
         options: workspaceMembers.map((v) => ({
           label: v.user?.name ?? "--",
           value: `u_${v.user?.id}`,
         })),
       },
       {
-        heading: "Inbox Teams",
+        heading: "Times da Caixa de Entrada",
         options: inboxTeams.map((v) => ({
           label: v.name,
           value: `t_${v.id}`,

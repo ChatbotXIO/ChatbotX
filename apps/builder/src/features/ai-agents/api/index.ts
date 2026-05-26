@@ -8,8 +8,8 @@ const listAIAgentsAPI = authorizedAPI
   .route({
     method: "GET",
     path: "/workspaces/{workspaceId}/ai-agents",
-    summary: "List AI agents",
-    tags: ["AI"],
+    summary: "Listar agentes de IA",
+    tags: ["IA"],
   })
   .input(listAIAgentsRequest.and(withWorkspaceIdSchema))
   .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

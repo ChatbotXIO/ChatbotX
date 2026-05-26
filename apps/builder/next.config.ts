@@ -11,6 +11,9 @@ const withNextIntl = createNextIntlPlugin({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // Desliga o popup "Route/Bundler/Turbopack" do Next.js que aparece em dev.
+  // Pedro reclamou 2026-05-24 que o popup atrapalha. Não afeta o app.
+  devIndicators: false,
   images: {
     // dangerouslyAllowLocalIP: true,
     remotePatterns: [
@@ -45,6 +48,27 @@ const nextConfig: NextConfig = {
       {
         source: "/zalo_verifier:verifier.html",
         destination: "/api/zalo-verifier/:verifier",
+      },
+    ]
+  },
+  async redirects() {
+    return [
+      // Camada 2 — Dados Mestres movidos pra /settings/* (Respond.io match).
+      // Mantém redirects pras URLs antigas pra não quebrar bookmarks.
+      {
+        source: "/space/:workspaceId/tags",
+        destination: "/space/:workspaceId/settings/tags",
+        permanent: true,
+      },
+      {
+        source: "/space/:workspaceId/custom-fields",
+        destination: "/space/:workspaceId/settings/contact-fields",
+        permanent: true,
+      },
+      {
+        source: "/space/:workspaceId/bot-fields",
+        destination: "/space/:workspaceId/settings/bot-fields",
+        permanent: true,
       },
     ]
   },

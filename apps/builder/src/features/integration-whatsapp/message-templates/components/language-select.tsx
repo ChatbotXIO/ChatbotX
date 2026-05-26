@@ -17,7 +17,7 @@ export function WhatsappMessageTemplateLanguageSelect({
       label={label}
       name={name}
       options={languageOptions}
-      placeholder="Please select"
+      placeholder="Por favor selecione"
       required={required}
     />
   )

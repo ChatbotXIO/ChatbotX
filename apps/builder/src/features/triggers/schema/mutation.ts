@@ -4,7 +4,7 @@ import { allConditions } from "../../conditions/schemas"
 import { allActions } from "../components/actions/schemas"
 
 export const createTriggerSchema = z.object({
-  name: z.string().min(1, "Trigger name is required"),
+  name: z.string().min(1, "Nome do gatilho é obrigatório"),
   folderId: zodBigintAsString().nullable(),
 })
 export type CreateTriggerSchema = z.infer<typeof createTriggerSchema>

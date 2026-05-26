@@ -5,6 +5,7 @@ import "./themes.css"
 import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
+import { DevClickToComponent } from "@/components/dev-click-to-component"
 import { PlatformSettingsProvider } from "@/features/platform"
 import { getPlatformSettings } from "@/features/platform/utils"
 
@@ -54,6 +55,9 @@ export default async function RootLayout({ children }: Props) {
             <NextIntlClientProvider>{children}</NextIntlClientProvider>
           </UiProvider>
         </PlatformSettingsProvider>
+        {/* Dev only — segurando ⌥ Option e clicando em qualquer elemento abre
+            o arquivo React correspondente no Cursor (linha exata). NULL em prod. */}
+        <DevClickToComponent />
       </body>
     </html>
   )

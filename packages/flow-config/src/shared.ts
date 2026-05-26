@@ -34,6 +34,7 @@ import { unassignConversationStepSchema } from "./steps/unassign-conversation"
 import { unfollowConversationStepSchema } from "./steps/unfollow-conversation"
 import { unsubscribeBroadcastStepSchema } from "./steps/unsubscribe-broadcast"
 import { unsubscribeSequenceStepSchema } from "./steps/unsubscribe-sequence"
+import { updateContactLifecycleStageStepSchema } from "./steps/update-contact-lifecycle-stage"
 
 const inboxSteps = [
   enableBotStepSchema,
@@ -55,6 +56,7 @@ const contactSteps = [
   setCustomFieldStepSchema,
   clearCustomFieldStepSchema,
   deleteContactStepSchema,
+  updateContactLifecycleStageStepSchema,
 ]
 
 const broadcastSteps = [

@@ -33,7 +33,7 @@ export async function listWorkspaceMembers(
       ...pagination,
       where,
       with: {
-        user: true,
+        user: { columns: { id: true, name: true, email: true, image: true } },
       },
     }),
     db.$count(

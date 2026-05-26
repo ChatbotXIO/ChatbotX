@@ -1,6 +1,7 @@
 "use client"
 
 import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
@@ -27,9 +28,14 @@ import type { ContactResource } from "./schemas/resource"
 type ContactsTableProps = {
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
+  lifecycleStages?: LifecycleStageModel[]
 }
 
-export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
+export function ContactsTable({
+  workspaceId,
+  promises,
+  lifecycleStages = [],
+}: ContactsTableProps) {
   const t = useTranslations()
   const [{ data, pageCount }] = use(promises)
 
@@ -39,7 +45,7 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
         id: "select",
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label="Selecionar todos"
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -51,7 +57,7 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label="Selecionar linha"
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
@@ -216,7 +222,11 @@ export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
     <DataTable table={table}>
       <DataTableToolbar table={table}>
         <CreateContactDialog workspaceId={workspaceId} />
-        <ContactListAction table={table} workspaceId={workspaceId} />
+        <ContactListAction
+          lifecycleStages={lifecycleStages}
+          table={table}
+          workspaceId={workspaceId}
+        />
       </DataTableToolbar>
     </DataTable>
   )

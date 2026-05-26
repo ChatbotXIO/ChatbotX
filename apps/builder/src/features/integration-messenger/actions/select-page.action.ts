@@ -69,7 +69,7 @@ export const selectPageAction = authActionClient
           },
         })
         if (existedPage) {
-          throw new ChatbotXException("Page is already connected")
+          throw new ChatbotXException("Página já conectada")
         }
 
         await db.transaction(async (tx) => {

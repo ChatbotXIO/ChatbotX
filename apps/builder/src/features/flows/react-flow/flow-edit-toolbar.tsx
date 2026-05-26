@@ -22,7 +22,6 @@ import {
   RotateCcwIcon,
   RotateCwIcon,
   Trash2Icon,
-  TypeIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -34,7 +33,6 @@ import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
 import { updateFlowVersionSchema } from "../schemas/action"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
-import { RenameFlowDialog } from "./components/rename-flow"
 
 export function FlowEditToolbar({
   workspaceId,
@@ -47,9 +45,10 @@ export function FlowEditToolbar({
   const router = useRouter()
 
   const [isValidating, setIsValidating] = useState<boolean>(false)
+  // "rename" foi removido daqui — agora o botão de renomear vive no FrameHeader
+  // ao lado do nome do flow (estilo Respond.io).
   const [action, setAction] = useState<
     | "publish"
-    | "rename"
     | "duplicate"
     | "getDraftLink"
     | "getPublishedLink"
@@ -67,7 +66,7 @@ export function FlowEditToolbar({
     publishFlowAction.bind(null, workspaceId, flow.id),
     {
       onSuccess: () => {
-        toast.success("A new version has been published")
+        toast.success("Uma nova versão foi publicada")
       },
     },
   )
@@ -87,7 +86,7 @@ export function FlowEditToolbar({
     if (success) {
       executePublish()
     } else {
-      toast.error("Some configurations are incomplete")
+      toast.error("Algumas configurações estão incompletas")
     }
     setIsValidating(false)
   }
@@ -120,10 +119,6 @@ export function FlowEditToolbar({
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setAction("rename")}>
-              <TypeIcon />
-              {t("actions.rename")}
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setAction("duplicate")}>
               <CopyIcon />
               {t("actions.duplicate")}
@@ -161,12 +156,6 @@ export function FlowEditToolbar({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <RenameFlowDialog
-        flow={flow}
-        onOpenChange={() => setAction(null)}
-        open={action === "rename"}
-      />
 
       <DuplicateFlowDialog
         flow={flow}

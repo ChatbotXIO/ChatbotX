@@ -100,7 +100,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       const flowVersion = await findOrFail({
         table: flowVersionModel,
         where: { flowId, isDraft: true },
-        message: "Flow version not found",
+        message: "Versão do fluxo não encontrada",
       })
 
       await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -127,7 +127,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
       const flow = await findOrFail({
         table: flowModel,
         where: { id: flowId, workspaceId: conversation.workspaceId },
-        message: "Flow not found",
+        message: "Fluxo não encontrado",
       })
 
       await integrationQueue.add(IntegrationJobAction.sendFlow, {
@@ -170,7 +170,7 @@ async function handleReflink(props: {
       name: refData.name,
       workspaceId: conversation.workspaceId,
     },
-    message: "Reflink not found",
+    message: "Link de entrada não encontrado",
   })
 
   await emit(flowEventTypeSchema.enum["flow:ref"], {

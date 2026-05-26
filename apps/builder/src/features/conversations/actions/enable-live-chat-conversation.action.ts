@@ -53,7 +53,7 @@ export const enableLiveChatConversationAction = workspaceActionClient
         } catch (error) {
           logger.error(
             { err: error },
-            "Failed to emit conversationTransferredToHuman event:",
+            "Falha ao emitir evento conversationTransferredToHuman:",
           )
         }
       }

@@ -12,7 +12,7 @@ import { organizationMemberResource } from "./resource"
 export const listOrganizationMembersSearchParams = {
   page: parseAsInteger,
   perPage: parseAsInteger,
-  name: parseAsString,
+  keyword: parseAsString,
   sort: getSortingStateParser<
     ListOrganizationMembersResponse["data"][number]
   >().withDefault([{ id: "createdAt", desc: true }]),
@@ -32,7 +32,12 @@ export type ListOrganizationMembersRequest = Awaited<
 
 export const listOrganizationMembersResponse = z.object({
   data: z.array(
-    organizationMemberResource.and(z.object({ user: userResource })),
+    organizationMemberResource.and(
+      z.object({
+        user: userResource,
+        lastActiveAt: z.date().nullable(),
+      }),
+    ),
   ),
   pageCount: z.number(),
 })

@@ -60,7 +60,7 @@ export const sendMessageNodeDefaultFn = (
   type: nodeTypeSchema.enum.sendMessage,
   ...props.nodeProps,
   data: {
-    name: "Send Message",
+    name: "Enviar Mensagem",
     isStartNode: false,
     ...props.dataProps,
     details: {

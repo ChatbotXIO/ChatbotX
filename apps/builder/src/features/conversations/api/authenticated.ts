@@ -16,8 +16,8 @@ export const conversationsAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/conversations",
-      summary: "List conversations by cursor pagination",
-      tags: ["Conversations"],
+      summary: "Listar conversas com paginação por cursor",
+      tags: ["Conversas"],
     })
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -28,8 +28,8 @@ export const conversationsAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/conversations/list",
-      summary: "List conversations by cursor pagination using POST request",
-      tags: ["Conversations"],
+      summary: "Listar conversas com paginação por cursor via POST",
+      tags: ["Conversas"],
     })
     .input(listConversationsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -40,8 +40,8 @@ export const conversationsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/conversations/{id}",
-      summary: "Find conversation by conversation id",
-      tags: ["Conversations"],
+      summary: "Buscar conversa pelo ID",
+      tags: ["Conversas"],
     })
     .input(findConversationRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

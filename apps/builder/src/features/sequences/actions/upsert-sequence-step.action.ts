@@ -28,7 +28,7 @@ async function validateSequenceOwnership(
       id: sequenceId,
       workspaceId,
     },
-    message: "Sequence not found",
+    message: "Sequência não encontrada",
   })
 }
 
@@ -276,11 +276,11 @@ async function updateSequenceStep(
   })
 
   if (!step) {
-    throw new Error("Step not found")
+    throw new Error("Passo não encontrado")
   }
 
   if (step.sequence.workspaceId !== workspaceId) {
-    throw new Error("Unauthorized: Step does not belong to this workspace")
+    throw new Error("Não autorizado: passo não pertence a este workspace")
   }
 
   const [updated] = await db

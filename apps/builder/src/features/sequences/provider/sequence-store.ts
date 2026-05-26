@@ -52,7 +52,7 @@ export const createSequenceStore = (props: Partial<SequenceState> = {}) =>
           })
         } else {
           set({
-            error: "Failed to fetch sequences",
+            error: "Falha ao buscar sequências",
             loading: false,
           })
         }

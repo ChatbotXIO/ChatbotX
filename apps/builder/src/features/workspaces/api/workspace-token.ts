@@ -6,7 +6,7 @@ export const workspaceWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/workspace",
-      summary: "Get workspace",
+      summary: "Obter workspace",
       tags: ["Workspace"],
     })
     .output(getWorkspacePublicResource)

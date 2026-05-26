@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEvent,
+} from "@chatbotx.io/business"
 import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
@@ -33,11 +39,38 @@ export const createContactAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateContactRequest
+      ctx: { user: { id: string } }
     }) => {
-      await createContact({ workspaceId, parsedInput })
+      const result = await createContact({ workspaceId, parsedInput })
+      if (result && "id" in result) {
+        const label =
+          [parsedInput.firstName, parsedInput.lastName]
+            .filter(Boolean)
+            .join(" ") ||
+          parsedInput.phoneNumber ||
+          parsedInput.email ||
+          "(sem nome)"
+        await Promise.all([
+          logAudit({
+            workspaceId,
+            userId: user.id,
+            action: auditLogActions.CONTACT_CREATED,
+            detail: `Contato "${label}" criado`,
+          }),
+          recordContactEvent({
+            contactId: result.id,
+            workspaceId,
+            eventType: contactEventTypes.CREATED,
+            meta: { label },
+            actorUserId: user.id,
+          }),
+        ])
+      }
+      return result
     },
   )
 
@@ -57,7 +90,7 @@ export const createContact = async ({
   })
   if (existedContact) {
     return returnValidationErrors(createContactRequest, {
-      _errors: ["Validation Exception"],
+      _errors: ["Exceção de Validação"],
       phoneNumber: {
         _errors: ["Phone number is exists"],
       },
@@ -77,7 +110,7 @@ export const createContact = async ({
   })
   if (workspaceUsage.contactsCount >= workspaceUsage.maxContacts) {
     return returnValidationErrors(createContactRequest, {
-      _errors: ["Validation Exception"],
+      _errors: ["Exceção de Validação"],
       phoneNumber: {
         _errors: ["Max contacts reached"],
       },

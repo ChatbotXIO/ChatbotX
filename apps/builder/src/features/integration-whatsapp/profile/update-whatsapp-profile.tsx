@@ -29,11 +29,11 @@ export function UpdateWhatsappProfile({
   return (
     <Form {...form}>
       <form className="flex flex-col gap-2" onSubmit={handleSubmitWithAction}>
-        <InputField label="About" name="about" />
-        <InputField label="Description" name="description" />
-        <InputField label="Address" name="address" />
-        <InputField label="Email" name="email" />
-        <InputField label="Website URL" name="websiteUrl" />
+        <InputField label="Sobre" name="about" />
+        <InputField label="Descrição" name="description" />
+        <InputField label="Endereço" name="address" />
+        <InputField label="E-mail" name="email" />
+        <InputField label="URL do Site" name="websiteUrl" />
 
         <div className="flex w-full justify-center">
           <Button>{t("actions.confirm")}</Button>

@@ -34,7 +34,7 @@ export const followConversation = async (ctx: {
   })
 
   if (!conversation) {
-    throw new Error("Conversation not found")
+    throw new Error("Conversa não encontrada")
   }
 
   await db
@@ -52,7 +52,7 @@ export const followConversation = async (ctx: {
       ctx.userId,
     )
   } catch (error) {
-    logger.error({ err: error }, "Failed to emit conversationFollowUp event:")
+    logger.error({ err: error }, "Falha ao emitir evento conversationFollowUp:")
   }
 
   emit("analytics:dashboard", {

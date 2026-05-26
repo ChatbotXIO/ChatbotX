@@ -8,8 +8,8 @@ export const sequencesWorkspaceAuthAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/sequences",
-      summary: "List sequences",
-      tags: ["Sequences"],
+      summary: "Listar sequências",
+      tags: ["Sequências"],
     })
     .input(listSequencesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

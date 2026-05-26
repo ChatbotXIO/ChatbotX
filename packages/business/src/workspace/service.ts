@@ -1,4 +1,4 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
 import {
   workspaceModel,
@@ -23,7 +23,7 @@ class WorkspaceService extends BaseService {
   }): Promise<WorkspaceModel> {
     const workspace = await this.find(props)
     if (!workspace) {
-      throw notFoundException("Workspace not found")
+      throw notFoundException("Workspace não encontrado")
     }
     return workspace
   }
@@ -80,14 +80,14 @@ class WorkspaceService extends BaseService {
         workspaceId: newWorkspace.id,
         role: workspaceMemberRoles.enum.owner,
         permissions: {
-          superAdmin: true,
-          analytics: true,
-          flows: true,
-          contacts: true,
-          onlyAssignedContacts: true,
-          emailAndPhone: true,
-          broadcast: true,
-          ecommerce: true,
+          restrictDataExport: false,
+          restrictContactDeletion: false,
+          restrictWorkspaceSettings: false,
+          restrictIntegrationSettings: false,
+          contactVisibility: "all",
+          restrictCalling: false,
+          restrictWorkflows: false,
+          maskPhoneAndEmail: false,
         },
         notificationTypes: {
           notifyAdmin: true,
@@ -106,6 +106,57 @@ class WorkspaceService extends BaseService {
     this.invalidateCacheTags([`users:${props.createdBy}:workspace-members`])
 
     return newWorkspace
+  }
+
+  async update(props: {
+    id: string
+    data: Partial<typeof workspaceModel.$inferInsert>
+    tx?: DatabaseClient
+  }): Promise<void> {
+    const { id, data, tx = db } = props
+
+    await tx.update(workspaceModel).set(data).where(eq(workspaceModel.id, id))
+
+    // Busca todos os membros pra invalidar o cache de cada user
+    // (listByUserId cacheia por usuário e é o que alimenta o sidebar)
+    const members = await tx.query.workspaceMemberModel.findMany({
+      where: { workspaceId: id },
+    })
+
+    await this.invalidateCacheTags([
+      "workspaces",
+      `workspaces:${id}`,
+      `workspaces:${id}:workspace-members`,
+      ...members.map((m) => `users:${m.userId}:workspace-members`),
+    ])
+  }
+
+  async delete(props: { id: string; tx?: DatabaseClient }): Promise<void> {
+    const { id, tx = db } = props
+
+    const members = await tx.query.workspaceMemberModel.findMany({
+      where: { workspaceId: id },
+    })
+
+    await tx.delete(workspaceModel).where(eq(workspaceModel.id, id))
+
+    await this.invalidateCacheTags([
+      "workspaces",
+      `workspaces:${id}`,
+      `workspaces:${id}:workspace-members`,
+      ...members.map((m) => `users:${m.userId}:workspace-members`),
+    ])
+  }
+
+  async listByOrganizationId(props: {
+    organizationId: string
+    tx?: DatabaseClient
+  }): Promise<WorkspaceModel[]> {
+    const { organizationId, tx = db } = props
+    return await tx.query.workspaceModel.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "asc" },
+    })
   }
 }
 

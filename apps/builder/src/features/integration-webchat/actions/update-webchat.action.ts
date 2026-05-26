@@ -23,7 +23,7 @@ export const updateWebchatAction = workspaceActionClient
         id,
         workspaceId,
       },
-      message: "Webchat integration not found",
+      message: "Integração Webchat não encontrada",
     })
 
     await db.transaction(async (tx) => {

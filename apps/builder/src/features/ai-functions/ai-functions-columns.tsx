@@ -38,7 +38,7 @@ export const getAIFunctionsColumns = (
     id: "select",
     header: ({ table: innerTable }) => (
       <Checkbox
-        aria-label="Select all"
+        aria-label="Selecionar todos"
         checked={
           innerTable.getIsAllPageRowsSelected() ||
           (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -50,7 +50,7 @@ export const getAIFunctionsColumns = (
     ),
     cell: ({ row }) => (
       <Checkbox
-        aria-label="Select row"
+        aria-label="Selecionar linha"
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
       />

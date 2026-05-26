@@ -127,7 +127,7 @@ export async function saveResultToCustomField(props: {
     where: {
       id: contactId,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   const customField = await findOrFail({
@@ -136,7 +136,7 @@ export async function saveResultToCustomField(props: {
       id: customFieldId,
       workspaceId: contact.workspaceId,
     },
-    message: "Custom field not found",
+    message: "Campo personalizado não encontrado",
   })
 
   await db

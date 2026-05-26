@@ -195,7 +195,7 @@ export default function FileDropzone({
       return (
         <>
           <Image
-            alt="Thumbnail"
+            alt="Miniatura"
             className="h-full w-full object-cover"
             src={preview}
           />
@@ -257,7 +257,7 @@ export default function FileDropzone({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Upload File</p>
+                <p>Enviar Arquivo</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

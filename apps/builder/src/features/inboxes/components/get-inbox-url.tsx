@@ -36,7 +36,7 @@ export function GetInboxUrlDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Get Link</DialogTitle>
+          <DialogTitle>Obter Link</DialogTitle>
           <DialogDescription />
         </DialogHeader>
 

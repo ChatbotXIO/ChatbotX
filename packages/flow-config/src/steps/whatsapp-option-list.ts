@@ -78,8 +78,8 @@ export const whatsappOptionListStepDefaultFn = (
   text: "",
   buttonLabel: "button #1",
   buttons: [
-    whatsappOptionListButtonDefaultFn({ label: "Title #1" }),
-    whatsappOptionListButtonDefaultFn({ label: "Title #2" }),
+    whatsappOptionListButtonDefaultFn({ label: "Título #1" }),
+    whatsappOptionListButtonDefaultFn({ label: "Título #2" }),
   ],
   ...props,
   id: createId(),

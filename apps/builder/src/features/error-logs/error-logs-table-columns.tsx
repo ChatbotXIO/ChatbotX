@@ -39,7 +39,7 @@ export function getColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label="Selecionar todos"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -52,7 +52,7 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label="Selecionar linha"
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -66,7 +66,7 @@ export function getColumns({
       id: "action",
       accessorKey: "type",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
+        <DataTableColumnHeader column={column} title="Tipo" />
       ),
       cell: ({ row }) => <div>{row.original.action}</div>,
       meta: {
@@ -81,7 +81,7 @@ export function getColumns({
     {
       accessorKey: "detail",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
+        <DataTableColumnHeader column={column} title="Descrição" />
       ),
       cell: ({ row }) => (
         <Tooltip>
@@ -103,7 +103,7 @@ export function getColumns({
       id: "contact",
       accessorKey: "contact",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Contact" />
+        <DataTableColumnHeader column={column} title="Contato" />
       ),
       cell: ({ row }) => (
         <div>{row.original.contactId ? <UserRoundIcon size={16} /> : null}</div>
@@ -118,7 +118,7 @@ export function getColumns({
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Date" />
+        <DataTableColumnHeader column={column} title="Data" />
       ),
       cell: ({ row }) => format(row.original.createdAt, "yyyy/MM/dd HH:mm"),
       meta: {
@@ -129,12 +129,12 @@ export function getColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Ações",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Open menu"
+              aria-label="Abrir menu"
               className="flex size-8 p-0 data-[state=open]:bg-muted"
               variant="ghost"
             >

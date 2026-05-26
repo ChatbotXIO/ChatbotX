@@ -22,8 +22,8 @@ export const privateCustomFieldsAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/custom-fields",
-      summary: "List custom fields",
-      tags: ["Custom Fields"],
+      summary: "Listar campos personalizados",
+      tags: ["Campos Personalizados"],
     })
     .input(listCustomFieldsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -37,8 +37,8 @@ export const privateCustomFieldsAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/custom-fields",
-      summary: "Create custom field",
-      tags: ["Custom Fields"],
+      summary: "Criar campo personalizado",
+      tags: ["Campos Personalizados"],
     })
     .input(createCustomFieldRequest.and(withWorkspaceIdSchema))
     .output(createCustomFieldResponse)
@@ -53,8 +53,8 @@ export const privateCustomFieldsAPI = {
     .route({
       method: "PUT",
       path: "/workspaces/{workspaceId}/custom-fields/{id}",
-      summary: "Update custom field",
-      tags: ["Custom Fields"],
+      summary: "Atualizar campo personalizado",
+      tags: ["Campos Personalizados"],
     })
     .input(
       updateCustomFieldRequest
@@ -77,8 +77,8 @@ export const privateCustomFieldsAPI = {
     .route({
       method: "DELETE",
       path: "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
-      summary: "Delete custom field",
-      tags: ["Custom Fields"],
+      summary: "Excluir campo personalizado",
+      tags: ["Campos Personalizados"],
     })
     .input(
       z.object({

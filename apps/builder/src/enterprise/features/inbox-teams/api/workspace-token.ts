@@ -7,8 +7,8 @@ export const inboxTeamsWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/inbox-teams",
-      summary: "List inbox teams",
-      tags: ["Inbox Teams"],
+      summary: "Listar times da caixa de entrada",
+      tags: ["Times da Caixa de Entrada"],
     })
     .output(listInboxTeamsResponse)
     .handler(

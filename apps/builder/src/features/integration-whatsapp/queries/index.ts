@@ -32,7 +32,7 @@ export const findIntegrationWhatsapp = async (
   await findOrFail({
     table: integrationWhatsappModel,
     where: props,
-    message: "Whatsapp integration not found",
+    message: "Integração WhatsApp não encontrada",
   })
 
 export const findIntegrationWhatsappById = async (

@@ -6,9 +6,10 @@ import { useImperativeHandle } from "react"
 import { useDropzone } from "react-dropzone"
 import { Controller, useFormContext } from "react-hook-form"
 
+// Pixel-perfect Respond.io 2026-05-24: 50 arquivos por mensagem, 20MB cada.
 export const FileUploadPreview = ({
   ref,
-  maxFiles = 1,
+  maxFiles = 50,
 }: {
   maxFiles?: number
 } & {
@@ -19,7 +20,7 @@ export const FileUploadPreview = ({
   const { getRootProps, getInputProps, open } = useDropzone({
     noClick: true,
     maxFiles,
-    maxSize: 5 * 1024 * 1024,
+    maxSize: 20 * 1024 * 1024, // 20MB (era 5MB)
     multiple: maxFiles > 1,
     noKeyboard: true,
     onDrop: (acceptedFiles) => {

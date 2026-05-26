@@ -33,12 +33,15 @@ export class TriggerMatcherService {
       },
     })
 
-    // Filter triggers that have matching conditions
+    // Filter triggers that have matching conditions. A condition.sourceId of
+    // NULL means "any source" — used by event types like lifecycleStageChanged
+    // where the user may want to fire on any stage change rather than a
+    // specific destination stage.
     const filteredTriggers = triggers.filter((trigger) =>
       trigger.conditions.some(
         (c) =>
           conditionTypes.includes(c.type) &&
-          (sourceId ? c.sourceId === sourceId : true),
+          (sourceId ? c.sourceId === null || c.sourceId === sourceId : true),
       ),
     )
 
@@ -128,6 +131,9 @@ export class TriggerMatcherService {
       ],
       [triggerEventTypes.enum.unsubscribedFromSequence]: [
         triggerEventTypes.enum.unsubscribedFromSequence,
+      ],
+      [triggerEventTypes.enum.lifecycleStageChanged]: [
+        triggerEventTypes.enum.lifecycleStageChanged,
       ],
     }
 

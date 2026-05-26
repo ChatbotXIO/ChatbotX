@@ -69,7 +69,7 @@ export const waitStepSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["max"],
-        message: "Max must be ≥ Min",
+        message: "Máx deve ser ≥ Mín",
       })
     }
 

@@ -30,7 +30,7 @@ export const duplicateFlow = async (ctx: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
     },
-    message: "Flow not found",
+    message: "Fluxo não encontrado",
   })
 
   const draftVersion = await findOrFail({
@@ -39,7 +39,7 @@ export const duplicateFlow = async (ctx: {
       flowId: flow.id,
       isDraft: true,
     },
-    message: "Draft version not found",
+    message: "Versão rascunho não encontrada",
   })
 
   await db.transaction(async (tx) => {

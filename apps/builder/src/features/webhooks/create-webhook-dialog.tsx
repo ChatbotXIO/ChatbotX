@@ -98,7 +98,7 @@ export function CreateWebhookDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
-              <InputField label="Name" name="name" required />
+              <InputField label="Nome" name="name" required />
 
               <DialogFooter className="justify-end">
                 <DialogClose asChild>

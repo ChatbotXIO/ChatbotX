@@ -91,6 +91,47 @@ export const listMessages = async (
   return { data: items, nextCursor, prevCursor }
 }
 
+/**
+ * Busca mensagens dentro de uma conversa por keyword. Usado pela "lupa"
+ * do header da conversa (Sprint Inbox 1.2). Filtra por content ILIKE
+ * `%keyword%` + conversationId + workspaceId. Limita a 100 resultados pra
+ * não sobrecarregar. Ordena por createdAt desc (mais recentes primeiro).
+ */
+export const searchMessagesInConversation = async (input: {
+  workspaceId: string
+  conversationId: string
+  keyword: string
+}): Promise<MessageResourceWithRelations[]> => {
+  const keyword = input.keyword.trim()
+  if (!keyword) {
+    return []
+  }
+
+  const messages = await db.query.messageModel.findMany({
+    where: {
+      workspaceId: input.workspaceId,
+      conversationId: input.conversationId,
+      text: { ilike: `%${keyword}%` },
+    },
+    with: {
+      attachments: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+      id: "desc",
+    },
+    limit: 100,
+  })
+
+  return messages.map((message) => ({
+    ...message,
+    attachments: message.attachments.map((attachment) => ({
+      ...attachment,
+      url: getPublicUrl(attachment.originPath),
+    })),
+  }))
+}
+
 export const findMessage = async (
   input: FindMessageRequest,
 ): Promise<MessageResourceWithRelations> => {

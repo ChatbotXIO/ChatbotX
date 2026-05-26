@@ -45,7 +45,7 @@ const getMessagesFromStoreAndProcess = async (props: {
 
   const messageIds = await simpleQueue.getAll(key)
   if (messageIds.length === 0) {
-    logger.debug(props, "Automated response queue is empty")
+    logger.debug(props, "Fila de resposta automatizada vazia")
     return false
   }
 
@@ -65,7 +65,7 @@ const getMessagesFromStoreAndProcess = async (props: {
     })
     .then((data) => data.filter((v) => Boolean(v.text)))
   if (messages.length === 0) {
-    logger.debug(props, "No message to process")
+    logger.debug(props, "Sem mensagem para processar")
     return false
   }
 

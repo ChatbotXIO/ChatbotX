@@ -55,5 +55,24 @@ export const triggerEventTypes = z.enum([
   "productOrdered",
   "contactReferredANewContact",
   "contactReferredExistingContact",
+  "lifecycleStageChanged",
+  "conversationOpened",
+  "conversationClosed",
+  "shortcut",
 ])
 export type TriggerEventType = z.infer<typeof triggerEventTypes>
+
+/**
+ * Subset dos triggerEventTypes que podem ser usados como **TriggerNode** no
+ * flow builder — replica o comportamento "Trigger como primeiro node" do
+ * Respond.io. Pedro pediu apenas 6 tipos pra começar.
+ */
+export const flowTriggerNodeTypes = z.enum([
+  "conversationOpened",
+  "conversationClosed",
+  "contactFieldUpdated",
+  "contactTagUpdated",
+  "shortcut",
+  "lifecycleStageChanged",
+])
+export type FlowTriggerNodeType = z.infer<typeof flowTriggerNodeTypes>

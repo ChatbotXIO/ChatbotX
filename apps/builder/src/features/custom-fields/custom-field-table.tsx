@@ -5,12 +5,6 @@ import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   DropdownMenu,
@@ -18,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import {
   Tooltip,
   TooltipContent,
@@ -27,16 +20,11 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import type { ColumnDef } from "@tanstack/react-table"
-import {
-  FolderUpIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  Trash2Icon,
-} from "lucide-react"
-import { useTranslations } from "next-intl"
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
-import { ChangeFolderDialog } from "../folders/change-folder"
 import CustomFieldTypeLabel from "./components/custom-field-label"
+import { CustomizeContactFieldsDialog } from "./components/customize-contact-fields-dialog"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
@@ -44,32 +32,47 @@ import type { listCustomFieldsRSC } from "./queries"
 import type { CustomFieldResource } from "./schemas/resource"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
+// Formata datas no padrão Respond.io ("abr 21, 2026"). Função pura no
+// top-level pra não invalidar o useMemo das columns a cada render.
+function formatRespondDate(
+  value: Date | string | null,
+  locale: string,
+): string {
+  if (!value) {
+    return "—"
+  }
+  const d = typeof value === "string" ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) {
+    return "—"
+  }
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(d)
+}
+
 type FieldsTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listCustomFieldsRSC>>]>
   workspaceId: string
   folderId: string | null
+  initialHiddenKeys: string[]
+  /** Lista completa (não paginada) pra alimentar o dialog Personalizar visualização. */
+  allCustomFields: CustomFieldResource[]
 }
 
 export function CustomFieldsTable({
   promises,
   workspaceId,
   folderId,
+  initialHiddenKeys,
+  allCustomFields,
 }: FieldsTableProps) {
   const t = useTranslations()
+  const locale = useLocale()
   const [{ data, pageCount }] = use(promises)
   const [rowAction, setRowAction] =
     useState<DataTableRowAction<CustomFieldResource> | null>(null)
-  // const [_, copyFieldId] = useCopyToClipboard()
-
-  // const handleCopy = (id: string) => {
-  //   copyFieldId(id)
-  //     .then(() => {
-  //       toast.success("Copied to clipboard!")
-  //     })
-  //     .catch(() => {
-  //       toast.error("Failed to copy!")
-  //     })
-  // }
 
   const columns = useMemo<ColumnDef<CustomFieldResource>[]>(
     () => [
@@ -77,7 +80,7 @@ export function CustomFieldsTable({
         id: "select",
         header: ({ table: innerTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label="Selecionar todos"
             checked={
               innerTable.getIsAllPageRowsSelected() ||
               (innerTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -89,7 +92,7 @@ export function CustomFieldsTable({
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label="Selecionar linha"
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
           />
@@ -111,7 +114,7 @@ export function CustomFieldsTable({
           <div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
+                <div className="max-w-[200px] truncate font-medium">
                   {row.original.name}
                 </div>
               </TooltipTrigger>
@@ -128,6 +131,34 @@ export function CustomFieldsTable({
         },
         enableColumnFilter: true,
         enableSorting: true,
+        enableHiding: false,
+      },
+      {
+        // "ID do campo" — Respond.io expõe slug imutável usado em APIs e
+        // variáveis de template. ChatbotX usa Snowflake id por enquanto;
+        // quando schema evoluir pra ter slug user-facing, troca o accessor.
+        id: "fieldId",
+        accessorKey: "id",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.fieldId.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
+                {row.original.id}
+              </code>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{row.original.id}</p>
+            </TooltipContent>
+          </Tooltip>
+        ),
+        size: 140,
+        enableSorting: false,
         enableHiding: false,
       },
       {
@@ -176,30 +207,59 @@ export function CustomFieldsTable({
         enableHiding: false,
       },
       {
-        id: "Inbox",
+        id: "visibility",
         accessorKey: "showInInbox",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title={t("fields.inbox.label")}
+            title={t("fields.visibility.label")}
           />
         ),
-        cell: ({ row }) => <Switch checked={row.original.showInInbox} />,
+        // Visibilidade no estilo Respond.io ("Exibir sempre" / "Sempre ocultar")
+        // espelha o boolean `showInInbox` atual. Quando schema evoluir pra ter
+        // enum 3-state (alwaysShow/alwaysHide/hideWhenEmpty), troca a label aqui.
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {row.original.showInInbox
+              ? t("fields.visibility.alwaysShow")
+              : t("fields.visibility.alwaysHide")}
+          </span>
+        ),
         enableSorting: false,
         enableHiding: false,
         meta: {
-          label: t("fields.inbox.label"),
+          label: t("fields.visibility.label"),
+        },
+      },
+      {
+        id: "addedAt",
+        accessorKey: "createdAt",
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.addedAt.label")}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {formatRespondDate(row.original.createdAt, locale)}
+          </span>
+        ),
+        size: 140,
+        enableSorting: true,
+        meta: {
+          label: t("fields.addedAt.label"),
         },
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Ações",
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost">
                 <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">Abrir menu</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -209,12 +269,7 @@ export function CustomFieldsTable({
                 <PencilIcon />
                 {t("actions.edit")}
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => setRowAction({ row, variant: "move" })}
-              >
-                <FolderUpIcon />
-                {t("actions.move")}
-              </DropdownMenuItem>
+              {/* Item "Mover" (folder) removido — Pedro tirou pastas de /custom-fields */}
               <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "delete" })}
                 variant="destructive"
@@ -230,7 +285,7 @@ export function CustomFieldsTable({
         enableHiding: false,
       },
     ],
-    [t],
+    [t, locale],
   )
 
   const { table } = useDataTable({
@@ -246,55 +301,52 @@ export function CustomFieldsTable({
     clearOnDefault: true,
   })
 
+  // Header de página pixel-perfect Respond.io (Camada 2 — Dados Mestres).
+  // UI flat (sem Card wrapper) — heading só identifica a seção em /settings/.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-semibold text-2xl tracking-tight">
           {t("customFields.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <CustomFieldsTableToolbarActions
-              table={table}
-              workspaceId={workspaceId}
-              // setRowAction={setRowAction}
-            />
-            <CreateCustomFieldDialog
-              folderId={folderId}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          {t("customFields.subtitle")}
+        </p>
+      </header>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <CustomFieldsTableToolbarActions
+            table={table}
+            workspaceId={workspaceId}
+          />
+          <CustomizeContactFieldsDialog
+            customFields={allCustomFields}
+            initialHiddenKeys={initialHiddenKeys}
+            workspaceId={workspaceId}
+          />
+          <CreateCustomFieldDialog
+            folderId={folderId}
+            workspaceId={workspaceId}
+          />
+        </DataTableToolbar>
+      </DataTable>
 
-        <DeleteFieldsDialog
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => rowAction?.row.toggleSelected(false)}
-          open={rowAction?.variant === "delete"}
-          records={rowAction?.row.original ? [rowAction?.row.original] : []}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+      <DeleteFieldsDialog
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => rowAction?.row.toggleSelected(false)}
+        open={rowAction?.variant === "delete"}
+        records={rowAction?.row.original ? [rowAction?.row.original] : []}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
 
-        <UpdateCustomFieldDialog
-          customField={rowAction?.row.original || null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "update"}
-          workspaceId={workspaceId}
-        />
-
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="customField"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
-      </CardContent>
-    </Card>
+      <UpdateCustomFieldDialog
+        customField={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "update"}
+        workspaceId={workspaceId}
+      />
+      {/* ChangeFolderDialog removido — Pedro tirou pastas de /custom-fields 2026-05-23 */}
+    </div>
   )
 }

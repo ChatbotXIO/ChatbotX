@@ -10,8 +10,8 @@ export const errorLogsWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/error-logs",
-      summary: "List error logs",
-      tags: ["Error Logs"],
+      summary: "Listar logs de erro",
+      tags: ["Logs de Erro"],
     })
     .input(listErrorLogsRequest.omit({ workspaceId: true }))
     .output(publicListErrorLogsResponse)

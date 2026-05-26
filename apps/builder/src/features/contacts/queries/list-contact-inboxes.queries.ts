@@ -23,7 +23,7 @@ async function parseContactFilters(
   input: ListContactsRequest,
 ): Promise<ListContactsRequest> {
   if (!input.channels?.length) {
-    throw new Error("Channels are required")
+    throw new Error("Os canais são obrigatórios")
   }
 
   const isOmnichannel = input.channels.includes("omnichannel")

@@ -1,6 +1,10 @@
 "use server"
 
-import { botFieldService } from "@chatbotx.io/business"
+import {
+  auditLogActions,
+  botFieldService,
+  logAudit,
+} from "@chatbotx.io/business"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createBotFieldRequest } from "../schemas/action"
@@ -12,7 +16,20 @@ export const createBotFieldAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     } = props
 
-    return await botFieldService.create({ workspaceId, data: parsedInput })
+    const result = await botFieldService.create({
+      workspaceId,
+      data: parsedInput,
+    })
+
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.BOT_FIELD_CREATED,
+      detail: `Campo do bot "${parsedInput.name}" (${parsedInput.type}) criado`,
+    })
+
+    return result
   })

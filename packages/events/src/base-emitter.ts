@@ -253,4 +253,101 @@ export abstract class BaseEventEmitter {
       metadata: { sourceId: sequenceId, sequenceId, sequenceName },
     })
   }
+
+  async lifecycleStageChanged(
+    workspaceId: string,
+    contactId: string,
+    toStageId: string | null,
+    fromStageId: string | null,
+    toStageName?: string | null,
+    fromStageName?: string | null,
+  ): Promise<void> {
+    // sourceId is the destination stage (most common matching case).
+    // We also expose fromStageId/toStageId in metadata so evaluators can
+    // implement "from any to X", "from X to any", "from X to Y" semantics.
+    await this.emit(triggerEventTypes.enum.lifecycleStageChanged, {
+      workspaceId,
+      contactId,
+      metadata: {
+        sourceId: toStageId ?? undefined,
+        toStageId,
+        fromStageId,
+        toStageName,
+        fromStageName,
+      },
+    })
+  }
+
+  /**
+   * Emitido quando uma conversa é aberta — seja criação inicial (1ª msg do
+   * contato) ou reabertura (contato manda msg após conversa arquivada/fechada).
+   * Source identifica origem da abertura (contact/user/workflow/api).
+   */
+  async conversationOpened(
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
+    source: "contact" | "user" | "workflow" | "api" = "contact",
+    channel?: string | null,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.conversationOpened, {
+      workspaceId,
+      contactId,
+      metadata: {
+        conversationId,
+        source,
+        channel,
+      },
+    })
+  }
+
+  /**
+   * Emitido quando uma conversa é fechada (agente clica "fechar", workflow
+   * fecha, etc). closedBy identifica quem fechou (user/workflow/bot/api).
+   */
+  async conversationClosed(
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
+    closedBy: "user" | "workflow" | "bot" | "api" = "user",
+    closingCategoryId?: string | null,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.conversationClosed, {
+      workspaceId,
+      contactId,
+      metadata: {
+        conversationId,
+        closedBy,
+        closingCategoryId,
+        // sourceId permite filtrar por categoria de fechamento, se houver.
+        sourceId: closingCategoryId ?? undefined,
+      },
+    })
+  }
+
+  /**
+   * Emitido quando o agente clica num atalho (shortcut) no Inbox pra disparar
+   * um flow manualmente. flowId é o flow alvo — o dispatcher usa pra rotear
+   * direto sem matcher.
+   */
+  async shortcut(
+    workspaceId: string,
+    contactId: string,
+    conversationId: string,
+    flowId: string,
+    triggeredByUserId?: string | null,
+  ): Promise<void> {
+    await this.emit(triggerEventTypes.enum.shortcut, {
+      workspaceId,
+      contactId,
+      metadata: {
+        conversationId,
+        flowId,
+        triggeredByUserId,
+        // sourceId == flowId garante que o dispatcher só matcha esse flow
+        // específico (atalhos disparam exatamente 1 flow).
+        sourceId: flowId,
+      },
+    })
+  }
 }

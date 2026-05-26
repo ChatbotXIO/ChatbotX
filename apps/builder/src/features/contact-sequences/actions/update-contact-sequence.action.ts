@@ -146,7 +146,7 @@ export const updateContactSequenceAction = workspaceActionClient
         id: parsedInput.contactId,
         workspaceId,
       },
-      message: "Contact not found",
+      message: "Contato não encontrado",
     })
 
     const currentIds = await getCurrentSequenceIds(db, contact.id, workspaceId)

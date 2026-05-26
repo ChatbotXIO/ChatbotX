@@ -43,6 +43,6 @@ export const enqueueMessage = async (props: {
       ),
     ])
   } catch (error) {
-    logger.error(error, "Unable to trigger automated response")
+    logger.error(error, "Não foi possível disparar resposta automatizada")
   }
 }

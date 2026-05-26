@@ -76,7 +76,7 @@ async function handleSkipOrError(
           id: step.outputFieldId,
           workspaceId: props.conversation.workspaceId,
         },
-        message: "Field not found",
+        message: "Campo não encontrado",
       })
 
       await db.transaction(async (tx) => {

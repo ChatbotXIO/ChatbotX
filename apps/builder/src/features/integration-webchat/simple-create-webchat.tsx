@@ -43,7 +43,7 @@ export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
           return router.push("/")
         },
         onError: ({ error }) => {
-          toast.error(error.serverError || "Failed to create webchat")
+          toast.error(error.serverError || "Falha ao criar webchat")
         },
       },
       formProps: {
@@ -75,7 +75,7 @@ export function SimpleCreateWebchat({ workspaceId }: SimpleCreateWebchatProps) {
         <CardContent>
           <Form {...form}>
             <form className="space-y-6" onSubmit={handleSubmitWithAction}>
-              <InputField label="Name" name="name" required />
+              <InputField label="Nome" name="name" required />
 
               <div className="flex justify-end gap-2">
                 <Button

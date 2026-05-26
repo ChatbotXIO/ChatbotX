@@ -13,7 +13,7 @@ const distanceSchema = z
     if (!Number.isFinite(parsed)) {
       ctx.addIssue({
         code: "custom",
-        message: "Invalid distance",
+        message: "Distância inválida",
       })
       return z.NEVER
     }

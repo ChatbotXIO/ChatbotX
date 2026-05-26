@@ -13,7 +13,7 @@ class IntegrationGoogleSheetService extends BaseService {
   async findByWorkspaceIdOrFail(workspaceId: string) {
     const integration = await this.findByWorkspaceId(workspaceId)
     if (!integration) {
-      throw new Error("Integration Google Sheet not found")
+      throw new Error("Integração Google Sheets não encontrada")
     }
     return integration
   }

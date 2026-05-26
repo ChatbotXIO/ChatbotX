@@ -125,7 +125,7 @@ export function DirectUploadButton({
               })
 
               xhr.addEventListener("abort", () => {
-                const error = new Error("Upload was aborted")
+                const error = new Error("Upload abortado")
                 onError(file, error)
                 onUploadError?.(error, file)
                 reject(error)
@@ -136,7 +136,7 @@ export function DirectUploadButton({
             })
           } catch (error) {
             const uploadError =
-              error instanceof Error ? error : new Error("Upload failed")
+              error instanceof Error ? error : new Error("Falha no envio")
             onError(file, uploadError)
             onUploadError?.(uploadError, file)
           }
@@ -146,7 +146,7 @@ export function DirectUploadButton({
         await Promise.all(uploadPromises)
       } catch {
         // This handles any error that might occur outside the individual upload processes
-        toast.error("Upload failed", {
+        toast.error("Falha no envio", {
           description: "An unexpected error occurred during upload",
         })
       } finally {

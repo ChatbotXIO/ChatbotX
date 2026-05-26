@@ -32,5 +32,5 @@ export async function resolveEmbeddingModel(
     return gemini.embedding(geminiEmbeddingModels.enum["text-embedding-004"])
   }
 
-  throw new Error("No embedding provider configured")
+  throw new Error("Nenhum provedor de embedding configurado")
 }

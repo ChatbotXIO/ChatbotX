@@ -16,8 +16,8 @@ export const privateFlowsAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/flows",
-      summary: "List flows",
-      tags: ["Flows"],
+      summary: "Listar fluxos",
+      tags: ["Fluxos"],
     })
     .input(listFlowsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -32,8 +32,8 @@ export const privateFlowsAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/flows/{flowId}/stats",
-      summary: "Get flow stats",
-      tags: ["Flows"],
+      summary: "Obter estatísticas do fluxo",
+      tags: ["Fluxos"],
     })
     .input(flowStatsRequest)
     .output(flowNodeStatsResponse)
@@ -50,8 +50,8 @@ export const privateFlowsAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/flows/{flowId}/contacts",
-      summary: "Get flow event contacts",
-      tags: ["Flows"],
+      summary: "Obter contatos do evento do fluxo",
+      tags: ["Fluxos"],
     })
     .input(flowContactStatsRequest)
     .output(listFlowNodeContactsResponse)

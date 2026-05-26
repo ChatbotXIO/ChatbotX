@@ -8,12 +8,14 @@ import {
 } from "@chatbotx.io/worker-config"
 import { type Job, Worker } from "bullmq"
 import { logger } from "../lib/logger"
+import { FlowEventDispatcherService } from "./services/flow-event-dispatcher.service"
 import { TriggerExecutorService } from "./services/trigger-executor.service"
 import { TriggerMatcherService } from "./services/trigger-matcher.service"
 import type { TriggerEventData } from "./types"
 
 const triggerMatcher = new TriggerMatcherService()
 const triggerExecutor = new TriggerExecutorService()
+const flowEventDispatcher = new FlowEventDispatcherService()
 
 const worker = new Worker(
   queueNames.enum.trigger,
@@ -27,23 +29,38 @@ const worker = new Worker(
           return
         }
 
-        const matchedTriggers = await triggerMatcher.findMatchingTriggers(
-          eventData as TriggerEventData,
-        )
+        // 2 caminhos paralelos:
+        // (a) triggers tradicionais (entidade `trigger` em Settings)
+        // (b) TriggerNodes dentro de flows publicados (entry point estilo
+        //     Respond.io — `flow-event-dispatcher.service.ts`)
+        // Rodam em paralelo e independentes — um não bloqueia o outro.
+        const [matchedTriggers, dispatchedFlowCount] = await Promise.all([
+          triggerMatcher.findMatchingTriggers(eventData as TriggerEventData),
+          flowEventDispatcher
+            .dispatch(eventData as TriggerEventData)
+            .catch((err) => {
+              logger.error(err, "[FlowEventDispatcher] dispatch failed")
+              return 0
+            }),
+        ])
 
-        if (matchedTriggers.length === 0) {
-          return
+        if (matchedTriggers.length > 0) {
+          logger.info(
+            `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
+          )
+
+          await Promise.allSettled(
+            matchedTriggers.map((trigger) =>
+              triggerExecutor.execute(trigger, eventData.contactId),
+            ),
+          )
         }
 
-        logger.info(
-          `Found ${matchedTriggers.length} triggers for event type ${eventData.eventType}`,
-        )
-
-        await Promise.allSettled(
-          matchedTriggers.map((trigger) =>
-            triggerExecutor.execute(trigger, eventData.contactId),
-          ),
-        )
+        if (dispatchedFlowCount > 0) {
+          logger.info(
+            `Dispatched ${dispatchedFlowCount} TriggerNode flows for event ${eventData.eventType}`,
+          )
+        }
         return
       }
 

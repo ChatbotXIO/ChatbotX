@@ -86,7 +86,7 @@ export async function createDispatch(
     })
 
   if (!dispatch) {
-    throw new Error("Failed to create dispatch")
+    throw new Error("Falha ao criar dispatch")
   }
 
   return dispatch

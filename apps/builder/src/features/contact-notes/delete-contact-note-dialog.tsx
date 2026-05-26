@@ -77,7 +77,7 @@ export function DeleteContactNoteDialog({
             </Button>
           </DialogClose>
           <Button
-            aria-label="Delete selected rows"
+            aria-label="Excluir linhas selecionadas"
             disabled={isPending}
             onClick={() => execute({ contactNoteId: contactNoteId ?? "" })}
             size="sm"

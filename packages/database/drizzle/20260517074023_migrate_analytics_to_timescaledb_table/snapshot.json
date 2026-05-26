@@ -2,7 +2,7 @@
   "version": "8",
   "dialect": "postgres",
   "id": "56f296f5-91c3-4d51-91cb-587cc29d50ea",
-  "prevIds": ["6bf1cea5-5d30-42ec-b13e-4fc3c2ee138e"],
+  "prevIds": ["3b63dd72-cf02-461c-b324-216c13411079"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -9130,6 +9130,45 @@
       "generated": null,
       "identity": null,
       "name": "defaultMaxContacts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Organization"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "theme",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Organization"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customJS",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Organization"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customCSS",
       "entityType": "columns",
       "schema": "public",
       "table": "Organization"

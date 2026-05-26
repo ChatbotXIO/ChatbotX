@@ -2,11 +2,14 @@
 
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
 
+// bindArgsSchemas usa array exportado de common/schemas (não inline) pra
+// evitar quirk Next 16 standalone. Documentado em
+// memory/reference_next16_standalone_use_server_quirk.md.
 export const readConversationAction = workspaceActionClient
-  .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .bindArgsSchemas(workspaceIdAndIdRequestParams)
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],

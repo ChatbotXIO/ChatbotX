@@ -45,7 +45,7 @@ const createConditionWithSourceId = (type: TriggerEventType) =>
   z.object({
     id: zodBigintAsString().optional(),
     type: z.literal(type),
-    sourceId: z.string().min(1, "Required"),
+    sourceId: z.string().min(1, "Obrigatório"),
   })
 
 export const subscribedToSequence = createConditionWithSourceId(

@@ -111,7 +111,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         })
       } catch (error) {
         set({ isLoadMoreMessage: false })
-        console.error("Failed to load more messages:", error)
+        console.error("Falha ao carregar mais mensagens:", error)
         throw error
       }
     },
@@ -171,7 +171,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
           })
         }
       } catch (error) {
-        console.error("Failed to send postback:", error)
+        console.error("Falha ao enviar postback:", error)
         throw error
       }
     },
@@ -193,6 +193,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         senderId: "",
         clientId: createId(),
         contactInboxId: "",
+        isInternal: false,
         ...message,
       }
 

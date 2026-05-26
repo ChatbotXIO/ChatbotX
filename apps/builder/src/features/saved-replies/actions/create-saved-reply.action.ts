@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
@@ -15,6 +16,7 @@ export const createSavedReplyAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     } = props
     const savedReply = await db
       .insert(savedReplyModel)
@@ -28,6 +30,13 @@ export const createSavedReplyAction = workspaceActionClient
       .then((result) => result[0])
 
     revalidateCacheTags(`workspaces:${workspaceId}#savedReplies`)
+
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.SNIPPET_CREATED,
+      detail: `Trecho "${parsedInput.shortcut}" criado`,
+    })
 
     return savedReply
   })

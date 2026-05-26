@@ -37,7 +37,7 @@ export const createContactNote = async (
       workspaceId: ctx.workspaceId,
       id: ctx.id,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   return await db

@@ -26,7 +26,7 @@ export const deleteSequence = async (ctx: {
       id: ctx.id,
       workspaceId: ctx.workspaceId,
     },
-    message: "Sequence not found",
+    message: "Sequência não encontrada",
   })
 
   await db.delete(sequenceModel).where(and(eq(sequenceModel.id, ctx.id)))

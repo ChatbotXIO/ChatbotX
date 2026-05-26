@@ -25,7 +25,7 @@ export const syncMessageTemplateAction = workspaceActionClient
         workspaceId,
         id,
       },
-      message: "Whatsapp integration not found",
+      message: "Integração WhatsApp não encontrada",
     })
 
     const ctx = await buildContext({

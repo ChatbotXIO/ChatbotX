@@ -58,7 +58,7 @@ export function WhatsappManage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>Nome</TableHead>
               <TableHead className="w-[200px]" />
             </TableRow>
           </TableHeader>
@@ -83,7 +83,7 @@ export function WhatsappManage({
             ))}
             {integrationWhatsapps.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2}>No data</TableCell>
+                <TableCell colSpan={2}>Sem dados</TableCell>
               </TableRow>
             )}
           </TableBody>

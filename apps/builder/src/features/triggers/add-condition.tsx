@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { defaultFn as addCustomFieldValueChangedCondition } from "../conditions/schemas/custom-field-value-changed"
 import { defaultFn as addDateTimeBaseTriggerCondition } from "../conditions/schemas/date-time-based-trigger"
+import { defaultFn as addLifecycleStageChangedCondition } from "../conditions/schemas/lifecycle-stage-changed"
 import {
   createDefaultFn,
   createDefaultFnWithSourceId,
@@ -204,6 +205,17 @@ export function AddCondition({
             defaultFn: createDefaultFnWithSourceId(
               triggerEventTypes.enum.unsubscribedFromSequence,
             ),
+          },
+        ],
+      },
+
+      {
+        label: t("lifecycle.title"),
+        children: [
+          {
+            label: t("trigger.conditions.lifecycleStageChanged"),
+            value: triggerEventTypes.enum.lifecycleStageChanged,
+            defaultFn: addLifecycleStageChangedCondition,
           },
         ],
       },

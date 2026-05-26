@@ -49,6 +49,6 @@ export async function findIntegrationWebchat(
   return await findOrFail({
     table: integrationWebchatModel,
     where,
-    message: "Integration webchat not found",
+    message: "Integração webchat não encontrada",
   })
 }

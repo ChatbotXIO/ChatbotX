@@ -7,7 +7,7 @@ export const broadcastWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/broadcasts",
-      summary: "Get all broadcasts",
+      summary: "Obter todos os broadcasts",
       tags: ["Broadcasts"],
     })
     .output(publicListBroadcastsResponse)

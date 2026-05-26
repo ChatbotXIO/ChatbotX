@@ -17,8 +17,8 @@ export const aiMcpServersAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/ai-mcp-servers/validate",
-      summary: "Validate an MCP server",
-      tags: ["AI"],
+      summary: "Validar servidor MCP",
+      tags: ["IA"],
     })
     .input(validateAIMcpServerRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -36,8 +36,8 @@ export const aiMcpServersAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/ai-mcp-servers",
-      summary: "List AI MCP servers",
-      tags: ["AI MCP Servers"],
+      summary: "Listar servidores MCP de IA",
+      tags: ["Servidores MCP de IA"],
     })
     .input(listAIMcpServersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

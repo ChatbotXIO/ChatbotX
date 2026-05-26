@@ -47,7 +47,7 @@ export function getFlowColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label="Selecionar todos"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -60,7 +60,7 @@ export function getFlowColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label="Selecionar linha"
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -198,12 +198,12 @@ export function getFlowColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Ações",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Open menu"
+              aria-label="Abrir menu"
               className="flex size-8 p-0 data-[state=open]:bg-muted"
               variant="ghost"
             >

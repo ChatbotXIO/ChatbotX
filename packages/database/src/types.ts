@@ -13,6 +13,8 @@ export type AutomatedResponseModel =
 export type FlowModel = typeof schema.flowModel.$inferSelect
 export type FolderModel = typeof schema.folderModel.$inferSelect
 export type TagModel = typeof schema.tagModel.$inferSelect
+export type LifecycleStageModel = typeof schema.lifecycleStageModel.$inferSelect
+export type ContactEventModel = typeof schema.contactEventModel.$inferSelect
 export type FlowVersionModel = typeof schema.flowVersionModel.$inferSelect
 export type InvitationModel = typeof schema.invitationModel.$inferSelect
 export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
@@ -47,6 +49,8 @@ export type AIFileModel = typeof schema.aiFileModel.$inferSelect
 export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
+export type WorkspaceContactFieldVisibilityModel =
+  typeof schema.workspaceContactFieldVisibilityModel.$inferSelect
 export type OrganizationModel = typeof schema.organizationModel.$inferSelect
 export type OrganizationCredentialModel =
   typeof schema.organizationCredentialModel.$inferSelect

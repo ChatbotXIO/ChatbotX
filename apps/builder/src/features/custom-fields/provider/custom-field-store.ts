@@ -44,7 +44,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch custom fields",
+              : "Falha ao buscar campos personalizados",
         })
       } finally {
         set({ initialized: true })
@@ -79,7 +79,7 @@ export const createCustomFieldStore = (props: Partial<CustomFieldState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch custom fields",
+              : "Falha ao buscar campos personalizados",
         })
       } finally {
         set({ loading: false })

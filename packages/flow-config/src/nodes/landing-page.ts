@@ -23,7 +23,7 @@ export const landingPageNodeDefaultFn = (
   type: nodeTypeSchema.enum.landingPage,
   ...props.nodeProps,
   data: {
-    name: "Landing Page",
+    name: "Página de Captura",
     isStartNode: false,
     ...props.dataProps,
     details: {},

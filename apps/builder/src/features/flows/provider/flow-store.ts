@@ -49,7 +49,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch flows",
+              : "Falha ao buscar fluxos",
         })
       } finally {
         set({ initialized: true })
@@ -92,7 +92,7 @@ export const createFlowStore = (props: Partial<FlowState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch flows",
+              : "Falha ao buscar fluxos",
         })
       } finally {
         set({ loading: false })

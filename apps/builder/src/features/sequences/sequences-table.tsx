@@ -75,7 +75,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         id: "select",
         header: ({ table: dataTable }) => (
           <Checkbox
-            aria-label="Select all"
+            aria-label="Selecionar todos"
             checked={
               dataTable.getIsAllPageRowsSelected() ||
               (dataTable.getIsSomePageRowsSelected() && "indeterminate")
@@ -88,7 +88,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         ),
         cell: ({ row }) => (
           <Checkbox
-            aria-label="Select row"
+            aria-label="Selecionar linha"
             checked={row.getIsSelected()}
             className="translate-y-0.5 cursor-pointer"
             onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -166,9 +166,9 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
         cell: ({ row }) => (
           <div className="flex justify-center">
             {row.original.active ? (
-              <Badge variant="default">Active</Badge>
+              <Badge variant="default">Ativo</Badge>
             ) : (
-              <Badge variant="outline">Inactive</Badge>
+              <Badge variant="outline">Inativo</Badge>
             )}
           </div>
         ),
@@ -184,7 +184,7 @@ export function SequencesTable({ workspaceId, promises }: SequencesTableProps) {
               <DropdownMenuTrigger asChild>
                 <Button size="icon" variant="ghost">
                   <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">Abrir menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

@@ -8,8 +8,8 @@ export const aiFileAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/ai-files",
-      summary: "List AI files",
-      tags: ["AI Files"],
+      summary: "Listar arquivos de IA",
+      tags: ["Arquivos de IA"],
     })
     .input(listAIFilesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

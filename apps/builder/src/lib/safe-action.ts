@@ -62,16 +62,16 @@ export const workspaceActionClient = authActionClient.use(
       throw new Error("Workspace not found")
     }
 
-    return next({ ctx: { workspaceId: workspace.id, workspace } })
+    return next({ ctx: { user, workspaceId: workspace.id, workspace } })
   },
 )
 
 export const organizationActionClient = authActionClient.use(
-  async ({ next }) => {
+  async ({ ctx, next }) => {
     const domain = await getDomainFromHeader()
     const organization = await organizationService.findByDomain(domain)
 
-    return next({ ctx: { organization } })
+    return next({ ctx: { user: ctx.user, organization } })
   },
 )
 
@@ -86,14 +86,16 @@ export const orgAdminActionClient = authActionClient.use(
 
     if (
       !member ||
-      (member.role !== organizationMemberRoles.enum.admin &&
-        member.role !== organizationMemberRoles.enum.owner)
+      (member.role !== organizationMemberRoles.enum.owner &&
+        member.role !== organizationMemberRoles.enum.manager)
     ) {
       throw new ChatbotXException(
         "You do not have permission to manage organization settings.",
       )
     }
 
-    return next({ ctx: { organization } })
+    return next({
+      ctx: { user: ctx.user, organization, callerMember: member },
+    })
   },
 )

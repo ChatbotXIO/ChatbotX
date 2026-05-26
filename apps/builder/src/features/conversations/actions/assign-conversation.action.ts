@@ -54,7 +54,7 @@ export const assignConversationAction = workspaceActionClient
         if (!workspaceMember) {
           returnValidationErrors(assignConversationSchema, {
             assignedId: {
-              _errors: ["User is not valid"],
+              _errors: ["Usuário inválido"],
             },
           })
         }
@@ -70,7 +70,7 @@ export const assignConversationAction = workspaceActionClient
         if (!inboxTeam) {
           returnValidationErrors(assignConversationSchema, {
             assignedId: {
-              _errors: ["Inbox Team is not valid"],
+              _errors: ["Time da Caixa de Entrada inválido"],
             },
           })
         }
@@ -119,7 +119,7 @@ export const assignConversationAction = workspaceActionClient
         } catch (error) {
           logger.error(
             { err: error },
-            "Failed to emit conversationAssigned event:",
+            "Falha ao emitir evento conversationAssigned:",
           )
         }
       }

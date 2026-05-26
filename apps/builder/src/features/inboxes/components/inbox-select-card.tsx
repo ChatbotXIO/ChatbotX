@@ -113,7 +113,10 @@ function InboxSelectCard({
         <CardDescription />
       </CardHeader>
       <CardContent>
-        <ul aria-label="Available inbox types" className="flex flex-col gap-4">
+        <ul
+          aria-label="Tipos de caixa de entrada disponíveis"
+          className="flex flex-col gap-4"
+        >
           {inboxOptions.map((inbox) => (
             <li className="flex items-center gap-2" key={inbox.value}>
               <div className="flex-1">

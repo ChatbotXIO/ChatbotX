@@ -19,8 +19,8 @@ export const spreadsheetsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/spreadsheets",
-      summary: "List spreadsheets",
-      tags: ["Spreadsheets"],
+      summary: "Listar planilhas",
+      tags: ["Planilhas"],
     })
     .input(listSpreadsheetsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -30,8 +30,8 @@ export const spreadsheetsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/worksheets",
-      summary: "List worksheets",
-      tags: ["Worksheets"],
+      summary: "Listar abas da planilha",
+      tags: ["Abas"],
     })
     .input(listWorksheetsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -41,8 +41,8 @@ export const spreadsheetsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/worksheets/{spreadsheetId}/headers",
-      summary: "List worksheet headers",
-      tags: ["Worksheet Headers"],
+      summary: "Listar cabeçalhos da aba",
+      tags: ["Cabeçalhos da Aba"],
     })
     .input(listWorksheetHeadersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

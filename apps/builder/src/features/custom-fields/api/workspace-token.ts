@@ -14,8 +14,8 @@ const customFieldsWorkspaceTokenAPI = {
     .route({
       method: "GET",
       path: "/v1/custom-fields",
-      summary: "Get all custom fields",
-      tags: ["Custom Fields"],
+      summary: "Obter todos os campos personalizados",
+      tags: ["Campos Personalizados"],
     })
     .input(z.object({}))
     .output(z.object({ data: z.array(publicCustomFieldResource) }))
@@ -31,8 +31,8 @@ const customFieldsWorkspaceTokenAPI = {
     .route({
       method: "POST",
       path: "/v1/custom-fields",
-      summary: "Create a custom field",
-      tags: ["Custom Fields"],
+      summary: "Criar campo personalizado",
+      tags: ["Campos Personalizados"],
     })
     .input(createCustomFieldRequest.pick({ name: true, type: true }))
     .output(publicCustomFieldResource)
@@ -45,8 +45,8 @@ const customFieldsWorkspaceTokenAPI = {
     .route({
       method: "GET",
       path: "/v1/custom-fields/{id}",
-      summary: "Get custom field by id",
-      tags: ["Custom Fields"],
+      summary: "Obter campo personalizado por ID",
+      tags: ["Campos Personalizados"],
     })
     .input(z.object({ id: zodBigintAsString() }))
     .output(publicCustomFieldResource)
@@ -65,8 +65,8 @@ const customFieldsWorkspaceTokenAPI = {
     .route({
       method: "GET",
       path: "/v1/custom-fields/name/{name}",
-      summary: "Get custom field by name",
-      tags: ["Custom Fields"],
+      summary: "Obter campo personalizado por nome",
+      tags: ["Campos Personalizados"],
     })
     .input(z.object({ name: z.string() }))
     .output(publicCustomFieldResource)

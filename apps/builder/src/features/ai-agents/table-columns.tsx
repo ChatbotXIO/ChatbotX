@@ -53,7 +53,7 @@ export function getAIAgentsColumns({
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+        <DataTableColumnHeader column={column} title="Nome" />
       ),
       cell: ({ row }) => (
         <Tooltip>
@@ -85,7 +85,7 @@ export function getAIAgentsColumns({
     {
       accessorKey: "modified",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Modified" />
+        <DataTableColumnHeader column={column} title="Modificado" />
       ),
       cell: ({ row }) => (
         <div>
@@ -100,12 +100,12 @@ export function getAIAgentsColumns({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Ações",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Open menu"
+              aria-label="Abrir menu"
               className="flex size-8 p-0 data-[state=open]:bg-muted"
               variant="ghost"
             >

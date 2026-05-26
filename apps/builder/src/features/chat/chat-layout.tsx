@@ -1,74 +1,79 @@
 "use client"
 
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@chatbotx.io/ui/components/ui/resizable"
-import {
-  BotIcon,
-  Loader2Icon,
-  MessagesSquareIcon,
-  UserRoundIcon,
-} from "lucide-react"
+import { Loader2Icon, MessagesSquareIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useAction } from "next-safe-action/hooks"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
-import { disableBotAction } from "../conversations/actions/disable-bot.action"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schema/resource"
-import {
-  BOT_DISABLE_DURATION_MS,
-  isConversationActive,
-} from "../conversations/utils/bot-state"
 import { MessageInput } from "../messages/components/message-input"
 import MessageHead from "../messages/message-head"
 import { MessageList } from "../messages/message-list"
 import { ChatRealtime } from "./chat-realtime"
+import { InboxSideRail } from "./inbox-side-rail"
 import { useChatStore } from "./store/chat-store-provider"
 
 type ChatLayoutProps = {
   workspaceId: string
   layout?: [number, number, number]
+  lifecycleStages?: LifecycleStageModel[]
+  /** Lista de `fieldKey`s marcadas como `alwaysHide` no workspace. */
+  hiddenFieldKeys?: string[]
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
   const t = useTranslations()
-  const { workspaceId, layout = [25, 50, 25] } = props
+  const {
+    workspaceId,
+    layout = [25, 50, 25],
+    lifecycleStages = [],
+    hiddenFieldKeys = [],
+  } = props
 
   const {
     conversations,
     isFirstLoadConversation,
     isLoadingConversation,
     activeConversationId,
-    updateConversation,
   } = useChatStore((state) => state)
 
   const [activeConversation, setActiveConversation] =
     useState<ConversationResource | null>(null)
 
-  const { execute: disableBot, isExecuting: isDisablingBot } = useAction(
-    disableBotAction.bind(null, workspaceId),
-    {
-      onSuccess: () => {
-        if (activeConversation) {
-          updateConversation(activeConversation.id, {
-            botEnabled: false,
-            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
-          })
-        }
-      },
-      onError: ({ error }) => {
-        if (error.serverError) {
-          toast.error(error.serverError)
-        }
-      },
-    },
-  )
+  // Pedro iter 40: drawer (Detalhes do contato) abre por default.
+  // Toggle via sideRail (botão único). Persistido em localStorage pra
+  // próxima sessão lembrar do estado.
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(true)
+  useEffect(() => {
+    const saved =
+      typeof window === "undefined"
+        ? null
+        : window.localStorage.getItem("chatbotx.inbox.drawer.open")
+    if (saved !== null) {
+      setDrawerOpen(saved === "1")
+    }
+  }, [])
+  const toggleDrawer = () => {
+    setDrawerOpen((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem(
+          "chatbotx.inbox.drawer.open",
+          next ? "1" : "0",
+        )
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const selectedConversation = conversations.find(
@@ -85,104 +90,134 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     }
   }, [activeConversationId, conversations])
 
+  // Pedro 2026-05-25 iteração 34 (pixel-perfect Respond.io):
+  // O TOPBAR (MessageHead) deve cobrir tanto a coluna de mensagens
+  // QUANTO o drawer de detalhes — ficar full-width na parte direita.
+  // Antes ficava só dentro do panel de msgs; agora a estrutura é:
+  //
+  //   [Lista convs] | (MessageHead + [msgs | drawer+sideRail])
+  //
+  // Dois ResizablePanelGroups aninhados pra resize independente entre:
+  //   1. (lista convs)  vs  (área direita: header+msgs+drawer)
+  //   2. (coluna msgs)  vs  (coluna drawer+sideRail)
+  //
+  // Layout cookie original era [convs, msgs, drawer]. Convertemos:
+  //   - externo: [convs%, 100-convs%]
+  //   - interno: [msgs / (msgs+drawer), drawer / (msgs+drawer)] %
+  const convsSize = layout[0] ?? 24
+  const rightSize = 100 - convsSize
+  const inner = (layout[1] ?? 63) + (layout[2] ?? 13)
+  const innerMsgsSize = Math.round(((layout[1] ?? 63) / inner) * 100)
+  const innerDrawerSize = 100 - innerMsgsSize
+
   return (
     <ResizablePanelGroup className="h-full items-stretch">
-      {/* CONVERSATION LIST */}
+      {/* CONVERSATION LIST — full-height (não é coberto pelo topbar). */}
       <ResizablePanel
-        className="p-3"
-        defaultSize={`${layout[0] ?? 25}%`}
+        defaultSize={`${convsSize}%`}
         maxSize={"30%"}
-        minSize={"20%"}
+        minSize={"15%"}
       >
-        <ConversationList workspaceId={workspaceId} />
+        <ConversationList
+          lifecycleStages={lifecycleStages}
+          workspaceId={workspaceId}
+        />
       </ResizablePanel>
 
       <ResizableHandle withHandle />
 
-      {/* MESSAGE LIST */}
-      <ResizablePanel className="pt-3" defaultSize={`${layout[1] ?? 50}%`}>
-        {isFirstLoadConversation && isLoadingConversation && (
-          <Loader2Icon className="mx-auto my-4 animate-spin" />
-        )}
-        {activeConversation && (
+      {/* ÁREA DIREITA — Pedro iter 40:
+          TOPBAR cobre TUDO (msgs + drawer + sideRail). Antes o
+          sideRail ficava SOBRE o topbar (errado). Agora o topbar é
+          full-width e o sideRail vive na linha de baixo.
+
+          Estrutura:
+            flex column [
+              MessageHead (topbar full-width),
+              flex row [
+                ResizablePanelGroup [msgs, drawer? (toggle)],
+                InboxSideRail (45px botão único)
+              ]
+            ]
+      */}
+      <ResizablePanel defaultSize={`${rightSize}%`}>
+        {activeConversation ? (
           <div className="flex h-full w-full flex-col">
-            <MessageHead />
-            {isConversationActive(activeConversation) && (
-              <Button
-                className="rounded-none"
-                disabled={isDisablingBot}
-                onClick={() => {
-                  disableBot({ ids: [activeConversation.id] })
-                }}
-                variant="secondary"
-              >
-                <BotIcon />
-                {t("messages.botIsActive")}
-              </Button>
-            )}
-            <MessageList />
-            <MessageInput />
-          </div>
-        )}
-        {!(activeConversation || isFirstLoadConversation) && (
-          <div
-            aria-live="polite"
-            className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
-          >
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
-              <MessagesSquareIcon
-                aria-hidden="true"
-                className="size-7 text-muted-foreground"
+            {/* TOPBAR full-width — cobre msgs + drawer + sideRail */}
+            <MessageHead lifecycleStages={lifecycleStages} />
+
+            {/* LINHA DE BAIXO: msgs | drawer | sideRail */}
+            <div className="flex min-h-0 flex-1">
+              <ResizablePanelGroup className="items-stretch">
+                <ResizablePanel
+                  defaultSize={drawerOpen ? innerMsgsSize : 100}
+                  minSize={"30%"}
+                >
+                  <div className="flex h-full w-full min-w-0 flex-col">
+                    <MessageList />
+                    <MessageInput />
+                  </div>
+                </ResizablePanel>
+
+                {drawerOpen && (
+                  <>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel
+                      className="overflow-hidden!"
+                      defaultSize={innerDrawerSize}
+                      maxSize={"40%"}
+                      minSize={"18%"}
+                    >
+                      <div className="@container/drawer flex h-full w-full min-w-0 bg-app-surface">
+                        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col px-4 py-3">
+                          <ContactInboxPanel
+                            activeConversationId={activeConversation.id}
+                            hiddenFieldKeys={hiddenFieldKeys}
+                            lifecycleStages={lifecycleStages}
+                            workspaceId={workspaceId}
+                          />
+                        </div>
+                      </div>
+                    </ResizablePanel>
+                  </>
+                )}
+              </ResizablePanelGroup>
+
+              {/* SIDERAIL — 45px à direita, ABAIXO do topbar (iter 40).
+                  Botão único toggle do drawer. */}
+              <InboxSideRail
+                drawerOpen={drawerOpen}
+                onToggleDrawer={toggleDrawer}
               />
             </div>
-            <h3 className="font-semibold text-base">
-              {t("messages.selectConversationTitle")}
-            </h3>
-            <p className="mt-1 max-w-sm text-muted-foreground text-sm">
-              {t("messages.selectConversationDescription")}
-            </p>
+          </div>
+        ) : (
+          <div className="flex h-full w-full">
+            {isFirstLoadConversation && isLoadingConversation && (
+              <Loader2Icon className="mx-auto my-4 animate-spin" />
+            )}
+            {!(activeConversation || isFirstLoadConversation) && (
+              <div
+                aria-live="polite"
+                className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
+              >
+                <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
+                  <MessagesSquareIcon
+                    aria-hidden="true"
+                    className="size-7 text-muted-foreground"
+                  />
+                </div>
+                <h3 className="font-semibold text-base">
+                  {t("messages.selectConversationTitle")}
+                </h3>
+                <p className="mt-1 max-w-sm text-muted-foreground text-sm">
+                  {t("messages.selectConversationDescription")}
+                </p>
+              </div>
+            )}
           </div>
         )}
         <ChatRealtime />
-      </ResizablePanel>
-
-      <ResizableHandle withHandle />
-
-      {/* CONTACT DETAIL */}
-      <ResizablePanel
-        className="overflow-y-auto! h-screen px-4 py-3"
-        defaultSize={`${layout[2] ?? 25}%`}
-        maxSize={"30%"}
-        minSize={"20%"}
-      >
-        {isFirstLoadConversation && isLoadingConversation && (
-          <Loader2Icon className="mx-auto my-4 animate-spin" />
-        )}
-        {activeConversation && (
-          <ContactInboxPanel
-            activeConversationId={activeConversation.id}
-            workspaceId={workspaceId}
-          />
-        )}
-        {!(activeConversation || isFirstLoadConversation) && (
-          <div
-            aria-live="polite"
-            className="flex h-full w-full flex-col items-center justify-center px-6 text-center"
-          >
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
-              <UserRoundIcon
-                aria-hidden="true"
-                className="size-7 text-muted-foreground"
-              />
-            </div>
-            <h3 className="font-semibold text-base">
-              {t("messages.selectConversationContactTitle")}
-            </h3>
-            <p className="mt-1 max-w-sm text-muted-foreground text-sm">
-              {t("messages.selectConversationContactDescription")}
-            </p>
-          </div>
-        )}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

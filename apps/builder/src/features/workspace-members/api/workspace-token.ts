@@ -10,8 +10,8 @@ export const workspaceMembersAPIs = {
     .route({
       method: "GET",
       path: "/v1/workspace-members",
-      summary: "List workspace members",
-      tags: ["Members"],
+      summary: "Listar membros do workspace",
+      tags: ["Membros"],
     })
     .input(listWorkspaceMembersRequest.omit({ workspaceId: true }))
     .output(listWorkspaceMembersResponse)

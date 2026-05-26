@@ -55,7 +55,7 @@ export default memo((props: EdgeProps) => {
           y={centerY}
         >
           <Button
-            aria-label="Delete edge"
+            aria-label="Excluir conexão"
             className={cn(
               "nodrag nopan pointer-events-auto cursor-pointer rounded-full px-1.5! font-bold text-destructive hover:bg-color-none hover:text-destructive",
               props.data && "inline-flex",

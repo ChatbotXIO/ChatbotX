@@ -16,7 +16,13 @@ const TimeSelect = (props: TimeSelectProps) => {
     })
   }
 
-  return <SelectField name={name} options={times} placeholder="Select a time" />
+  return (
+    <SelectField
+      name={name}
+      options={times}
+      placeholder="Selecione um horário"
+    />
+  )
 }
 
 export default TimeSelect

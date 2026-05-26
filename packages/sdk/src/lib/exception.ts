@@ -39,7 +39,7 @@ export class SdkException extends Error {
   }
 
   static methodNotImplemented() {
-    return new SdkException("Method is not implemented")
+    return new SdkException("Método não implementado")
   }
 
   setOriginError(originError: Error | unknown) {

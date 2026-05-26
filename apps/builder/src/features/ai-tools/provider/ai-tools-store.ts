@@ -43,7 +43,7 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
     systemFunctions: [
       {
         id: systemFunctionNames.connectUserToHuman,
-        name: "Connect to Human Agent",
+        name: "Conectar com Atendente Humano",
       },
     ],
 
@@ -81,7 +81,7 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch AI files",
+              : "Falha ao buscar arquivos de IA",
         })
       } finally {
         set({ loadingAIFiles: false })
@@ -110,7 +110,7 @@ export const createAIToolsStore = (props: Pick<AIToolsState, "workspaceId">) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch AI functions",
+              : "Falha ao buscar funções de IA",
         })
       } finally {
         set({ loadingAIFunctions: false })

@@ -8,6 +8,7 @@ import { sendMailNodeSchema } from "./send-mail"
 import { sendMessageNodeSchema } from "./send-message"
 import { splitTrafficNodeSchema } from "./split-traffic"
 import { startFlowNodeSchema } from "./start-flow"
+import { triggerNodeSchema } from "./trigger"
 import { waitNodeSchema } from "./wait"
 
 export const flowVersionSchema = z.union([
@@ -19,6 +20,7 @@ export const flowVersionSchema = z.union([
   addNotesNodeSchema,
   landingPageNodeSchema,
   sendMailNodeSchema,
+  triggerNodeSchema,
 ])
 export type FlowVersionSchema = z.infer<typeof flowVersionSchema>
 

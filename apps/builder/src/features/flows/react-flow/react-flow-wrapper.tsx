@@ -13,7 +13,6 @@ import {
   addEdge,
   Background,
   type Connection,
-  Controls,
   type Edge,
   type FinalConnectionState,
   MarkerType,
@@ -31,11 +30,9 @@ import {
   useEffect,
 } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
+import { TriggerNodeViewer } from "./nodes/trigger/viewer"
 import { NodeViewer } from "./nodes/viewer"
-import AddNodeButton from "./panel-buttons/add-node-button"
-import FocusButton from "./panel-buttons/focus-button"
-import ZoomInButton from "./panel-buttons/zoom-in-button"
-import ZoomOutButton from "./panel-buttons/zoom-out-button"
+import { FlowControls } from "./panel-buttons/flow-controls"
 import "./react-flow-wrapper.css"
 import { createId } from "@chatbotx.io/utils"
 import type { ButtonProps } from "react-day-picker"
@@ -51,6 +48,10 @@ const viewerNodeTypes = {
   [nodeTypeSchema.enum.wait]: NodeViewer,
   [nodeTypeSchema.enum.startFlow]: NodeViewer,
   [nodeTypeSchema.enum.splitTraffic]: NodeViewer,
+  // TriggerNode tem visual próprio (estilo Respond.io) — entry point com
+  // source handle só no bottom, sem target. NodeViewer genérico não serve
+  // porque assume steps[]/quickReplies[] no details.
+  [nodeTypeSchema.enum.trigger]: TriggerNodeViewer,
 }
 
 const edgeTypes = {
@@ -261,7 +262,7 @@ export function ReactFlowWrapper({
               position,
             },
             dataProps: {
-              name: `Send Message #${messageNodesLength + 1}`,
+              name: `Enviar Mensagem #${messageNodesLength + 1}`,
             },
           })
           addNodes([newNode])
@@ -457,19 +458,13 @@ export function ReactFlowWrapper({
     >
       {/* <MiniMap /> */}
       <Background />
-      <Panel className="w-[254px]" position="bottom-center">
-        <Controls
-          className="overflow-hidden rounded-md shadow-none!"
-          orientation="horizontal"
-          showFitView={false}
-          showInteractive={false}
-          showZoom={false}
-        >
-          <FocusButton />
-          <ZoomInButton />
-          <ZoomOutButton />
-          <AddNodeButton />
-        </Controls>
+      {/*
+        FlowControls = card único com Add + Zoom In/Out + Fit View no canto
+        SUPERIOR DIREITO. Inverteu de esquerda → direita pra harmonizar com o
+        painel de edição que agora abre na esquerda (estilo BotConversa).
+      */}
+      <Panel position="top-right">
+        <FlowControls />
       </Panel>
     </ReactFlow>
   )

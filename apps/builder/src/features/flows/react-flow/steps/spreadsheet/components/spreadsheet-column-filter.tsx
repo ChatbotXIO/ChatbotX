@@ -67,7 +67,7 @@ export const SpreadsheetColumnFilter = ({
           />
           <InputField
             name={getFieldName(`lookup.conditions.${idx}.value`)}
-            placeholder="Value"
+            placeholder="Valor"
           />
           <Button onClick={() => remove(idx)} type="button" variant="ghost">
             <TrashIcon size={20} />

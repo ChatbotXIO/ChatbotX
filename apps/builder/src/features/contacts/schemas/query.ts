@@ -37,6 +37,7 @@ export const listContactsRequest = basePaginationRequest.extend({
   contactFilter: contactFilterCriteriaSchema.optional(),
   channels: z.array(channelTypes).optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
+  lifecycleStageIds: z.array(zodBigintAsString()).optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 

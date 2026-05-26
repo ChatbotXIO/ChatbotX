@@ -14,10 +14,12 @@ export async function processPendingEmbedding(
     where: {
       id: data.aiEmbeddingId,
     },
-    message: "AI embedding not found",
+    message: "Embedding de IA não encontrado",
   })
   if (aiEmbedding.status !== "pending" && aiEmbedding.status !== "processing") {
-    throw new Error("AI embedding is processing or already processed")
+    throw new Error(
+      "Embedding de IA está em processamento ou já foi processado",
+    )
   }
 
   try {

@@ -19,6 +19,8 @@
     "archive": "Lưu trữ",
     "unarchive": "Bỏ lưu trữ",
     "archiveConversation": "Lưu trữ cuộc trò chuyện",
+    "closeConversation": "Đóng",
+    "openConversation": "Mở",
     "assign": "Gán",
     "assignConversation": "Gán cuộc trò chuyện",
     "back": "Quay lại",
@@ -109,15 +111,94 @@
     "deactivate": "Tắt",
     "onFailure": "Khi thất bại",
     "onSkip": "Khi bỏ qua",
-    "onSuccess": "Khi thành công"
+    "onSuccess": "Khi thành công",
+    "trigger": "Trigger"
   },
   "states": {
     "success": "Thành công",
     "error": "Lỗi",
-    "skip": "Bỏ qua"
+    "skip": "Bỏ qua",
+    "closed": "Đã đóng",
+    "blocked": "Đã chặn"
   },
   "admins": {
-    "title": "Quản trị viên"
+    "title": "Cài đặt người dùng",
+    "subtitle": "Quản lý và mời thành viên vào Không gian làm việc của bạn.",
+    "addUser": "Thêm Người dùng",
+    "searchPlaceholder": "Tìm trong Cài đặt người dùng",
+    "revoke": "Thu hồi",
+    "edit": "Sửa",
+    "roles": {
+      "owner": "Chủ sở hữu",
+      "manager": "Quản trị viên",
+      "agent": "Đại diện"
+    },
+    "lastSeen": "Hoạt động gần nhất",
+    "inviteDialog": {
+      "title": "Thêm Người dùng",
+      "description": "Nhập địa chỉ email và chọn cấp truy cập để mời người dùng mới vào Không gian làm việc của bạn.",
+      "emailLabel": "Địa chỉ Email",
+      "emailPlaceholder": "user@company.com",
+      "accessLevelLabel": "Cấp truy cập",
+      "submit": "Thêm"
+    },
+    "editDialog": {
+      "title": "Chỉnh sửa Người dùng",
+      "description": "Để chỉnh sửa người dùng này, chọn cấp truy cập mới và bấm \"Sửa\". Cấp truy cập xác định những gì người dùng có thể làm.",
+      "submit": "Cập nhật"
+    },
+    "revokeDialog": {
+      "title": "Thu hồi truy cập",
+      "description": "Nếu bạn thu hồi người dùng này, tất cả các liên hệ được gán cho họ sẽ bị bỏ gán. Bạn có chắc muốn thu hồi quyền truy cập của người dùng này?",
+      "confirm": "Thu hồi"
+    },
+    "roleDescriptions": {
+      "owner": "Chủ sở hữu có thể truy cập tất cả các mô-đun và có toàn quyền kiểm soát mà không có hạn chế.",
+      "manager": "Quản trị viên có quyền truy cập tất cả các mô-đun bao gồm Cài đặt. Tuy nhiên, họ không thể mời/xóa quản trị viên khác hoặc xóa kênh.",
+      "agent": "Đại diện chỉ có quyền truy cập tin nhắn trong không gian làm việc. Tùy chọn, bạn có thể giới hạn khả năng xem trong Liên hệ."
+    },
+    "advancedRestrictions": "Hạn chế nâng cao",
+    "managerRestrictions": {
+      "restrictDataExport": {
+        "label": "Hạn chế Xuất Dữ liệu",
+        "description": "Người dùng này sẽ không thể xuất dữ liệu từ không gian làm việc."
+      },
+      "restrictContactDeletion": {
+        "label": "Hạn chế Xóa Liên hệ",
+        "description": "Người dùng này sẽ không thể xóa bất kỳ liên hệ nào."
+      },
+      "restrictWorkspaceSettings": {
+        "label": "Hạn chế truy cập Cài đặt Workspace",
+        "description": "Người dùng này sẽ không thể truy cập cài đặt không gian làm việc."
+      },
+      "restrictIntegrationSettings": {
+        "label": "Hạn chế truy cập Cài đặt Tích hợp",
+        "description": "Người dùng này sẽ không thể truy cập cài đặt tích hợp."
+      }
+    },
+    "agentRestrictions": {
+      "contactVisibility": {
+        "label": "Hạn chế Hiển thị Liên hệ",
+        "description": "Người dùng này chỉ xem liên hệ được gán cho",
+        "options": {
+          "all": "tất cả",
+          "team": "bất kỳ ai trong nhóm",
+          "self": "người dùng"
+        }
+      },
+      "restrictCalling": {
+        "label": "Hạn chế Khả năng Gọi",
+        "description": "Người dùng này không thể nhận hoặc thực hiện cuộc gọi."
+      },
+      "restrictWorkflows": {
+        "label": "Nút Hạn chế Luồng công việc",
+        "description": "Nút Luồng công việc trong mô-đun Tin nhắn sẽ bị tắt cho người dùng này. Bao gồm Phím tắt và dừng Luồng cho Liên hệ."
+      },
+      "maskPhoneAndEmail": {
+        "label": "Che Số điện thoại và Địa chỉ Email",
+        "description": "Người dùng này sẽ không thể xem số điện thoại và email của tất cả Liên hệ."
+      }
+    }
   },
   "assignAdmin": {
     "assignConversation": "Gán cuộc trò chuyện",
@@ -214,6 +295,9 @@
       "description": "Mô tả phản hồi tự động",
       "label": "Phản hồi tự động"
     }
+  },
+  "automation": {
+    "title": "Tự động hóa"
   },
   "billing": {
     "title": "Thanh toán"
@@ -315,9 +399,86 @@
   "channels": {
     "title": "Kênh"
   },
+  "organization": {
+    "manage": "Quản lý Tổ chức"
+  },
+  "personalSettings": {
+    "title": "Cài đặt cá nhân",
+    "account": "Tài khoản",
+    "profile": "Hồ sơ",
+    "notifications": "Cài đặt thông báo",
+    "profileSection": {
+      "title": "Hồ sơ",
+      "subtitle": "Quản lý hồ sơ và chi tiết đăng nhập của bạn.",
+      "statusAvailable": "Sẵn sàng",
+      "changeAvatar": "Đổi ảnh",
+      "avatarUpdated": "Đã cập nhật ảnh.",
+      "firstNameLabel": "Tên",
+      "lastNameLabel": "Họ",
+      "languageLabel": "Ngôn ngữ",
+      "changePassword": "Đổi mật khẩu",
+      "saveProfile": "Lưu Hồ sơ",
+      "savedSuccess": "Hồ sơ đã cập nhật.",
+      "twoFA": {
+        "title": "Xác thực hai yếu tố (2FA)",
+        "toggle": "Bật xác thực hai yếu tố (2FA)"
+      },
+      "darkMode": {
+        "title": "Chế độ tối",
+        "system": "Dùng cài đặt hệ thống",
+        "light": "Tắt",
+        "dark": "Bật"
+      }
+    },
+    "notificationsSection": {
+      "title": "Cài đặt thông báo",
+      "subtitle": "Chọn cách bạn nhận thông báo workspace."
+    }
+  },
+  "manageWorkspaces": {
+    "sidebarTitle": "Workspaces",
+    "title": "Workspaces",
+    "subtitle": "Quản lý các workspace của tổ chức.",
+    "addWorkspace": "Thêm Workspace",
+    "searchPlaceholder": "Tìm workspace",
+    "open": "Mở",
+    "rename": "Đổi tên",
+    "delete": "Xóa",
+    "empty": "Chưa có workspace nào.",
+    "columns": {
+      "name": "Tên",
+      "members": "Người dùng",
+      "createdAt": "Ngày tạo",
+      "actions": "Hành động"
+    },
+    "renameDialog": {
+      "title": "Đổi tên Workspace",
+      "description": "Cập nhật tên workspace.",
+      "nameLabel": "Tên Workspace",
+      "submit": "Lưu",
+      "success": "Đã đổi tên workspace."
+    },
+    "deleteDialog": {
+      "title": "Xóa Workspace",
+      "description": "Xóa workspace \"{name}\" sẽ xóa vĩnh viễn tất cả liên hệ, kênh, trường và dữ liệu liên quan. Hành động không thể hoàn tác.",
+      "confirmLabel": "Nhập \"{name}\" để xác nhận",
+      "submit": "Xóa",
+      "success": "Đã xóa workspace."
+    }
+  },
   "workspaces": {
     "list": {
       "title": "Danh sách workspace"
+    },
+    "searchPlaceholder": "Tìm kiếm dự án",
+    "addWorkspace": "Thêm Workspace",
+    "createDialog": {
+      "title": "Thêm Workspace",
+      "description": "Tạo một workspace mới để tách kênh, liên hệ, nhóm và cài đặt.",
+      "nameLabel": "Tên Workspace",
+      "namePlaceholder": "Ví dụ: Bán hàng, Thu nợ, Hỗ trợ",
+      "submit": "Tạo",
+      "success": "Đã tạo workspace \"{name}\"."
     }
   },
   "workspaceToken": {
@@ -715,11 +876,15 @@
     "isDefault": {
       "label": "Đánh dấu làm mặc định"
     },
+    "country": {
+      "label": "Quốc gia"
+    },
     "language": {
       "description": "Liên hệ được gán ngôn ngữ mặc định khi ngôn ngữ liên hệ không xác định.",
       "english": "Tiếng Anh",
       "label": "Ngôn ngữ",
       "placeholder": "Chọn ngôn ngữ",
+      "portuguese": "Tiếng Bồ Đào Nha (Brazil)",
       "vietnamese": "Tiếng Việt"
     },
     "lastName": {
@@ -1249,6 +1414,21 @@
     },
     "webhookUrl": {
       "label": "URL webhook"
+    },
+    "addedAt": {
+      "label": "Ngày thêm"
+    },
+    "lastEditedAt": {
+      "label": "Lần chỉnh sửa cuối"
+    },
+    "visibility": {
+      "label": "Hiển thị",
+      "alwaysShow": "Luôn hiển thị",
+      "alwaysHide": "Luôn ẩn",
+      "hideWhenEmpty": "Ẩn khi rỗng"
+    },
+    "fieldId": {
+      "label": "ID trường"
     }
   },
   "flows": {
@@ -1327,7 +1507,8 @@
       "subscribeSequence": "Đăng ký chăm sóc",
       "unsubscribeSequence": "Hủy đăng ký chăm sóc",
       "noTemplatesAvailable": "No templates available",
-      "splitTraffic": "Chia lưu lượng"
+      "splitTraffic": "Chia lưu lượng",
+      "updateContactLifecycleStage": "Cập nhật giai đoạn vòng đời"
     },
     "splitTraffic": {
       "balanceHint": "Tổng phần trăm phải bằng 100%.",
@@ -1439,7 +1620,56 @@
       "whatsappSystemUserTokenRequired": "System User Token là bắt buộc để cấu hình WhatsApp."
     }
   },
+  "conversations": {
+    "searchInConversation": "Tìm trong cuộc trò chuyện",
+    "searchInConversationPlaceholder": "Tìm tin nhắn…",
+    "searchNoResults": "Không có kết quả",
+    "searchPrevious": "Trước",
+    "searchNext": "Sau",
+    "composerHint": "Dùng '/' cho snippets, '$' cho biến, ':' cho emoji",
+    "channelPrefix": "đến:",
+    "todayLabel": "Hôm nay",
+    "yesterdayLabel": "Hôm qua",
+    "unassignedAgent": "Chưa được phân công"
+  },
+  "inboxSideRail": {
+    "details": "Chi tiết liên hệ",
+    "channels": "Kênh",
+    "activities": "Hoạt động",
+    "attachments": "Tệp đính kèm"
+  },
   "messages": {
+    "actions": {
+      "menu": "Tùy chọn khác",
+      "copy": "Sao chép",
+      "copyLink": "Sao chép liên kết",
+      "reply": "Trả lời",
+      "copied": "Đã sao chép",
+      "linkCopied": "Đã sao chép liên kết"
+    },
+    "tooltip": {
+      "sent": "Đã gửi",
+      "delivered": "Đã chuyển",
+      "read": "Đã đọc",
+      "received": "Đã nhận"
+    },
+    "composer": {
+      "internalComment": "Ghi chú nội bộ",
+      "addComment": "Thêm bình luận",
+      "exitInternal": "Quay lại tin nhắn",
+      "internalLabel": "Ghi chú nội bộ",
+      "internalPlaceholder": "Dùng @ để nhắc đồng đội. Ghi chú chỉ nhóm của bạn thấy.",
+      "internalHint": "Ghi chú chỉ nhóm của bạn thấy",
+      "channelHint": "Kênh dùng để gửi tin nhắn",
+      "formLabel": "Biểu mẫu tin nhắn",
+      "textareaLabel": "Nhập tin nhắn",
+      "emoji": "Biểu tượng cảm xúc",
+      "emojiSearch": "Tìm kiếm",
+      "attach": "Đính kèm tệp",
+      "snippets": "Trả lời nhanh",
+      "send": "Gửi tin nhắn"
+    },
+    "runningWorkflows": "Quy trình đang chạy",
     "moveFeature": "Di chuyển {feature}",
     "poweredBy": "Được cung cấp bởi {name}",
     "noGiphyApiKey": "Không tìm thấy khóa API GIPHY. Vui lòng thêm khóa API GIPHY trong cài đặt tổ chức.",
@@ -1551,6 +1781,82 @@
   "settings": {
     "title": "Cài đặt"
   },
+  "settingsGroups": {
+    "general": "Cài đặt chung",
+    "rolesAndTeams": "Vai trò và nhóm",
+    "apps": "Ứng dụng",
+    "advanced": "Nâng cao",
+    "inbox": "Hộp thư",
+    "data": "Dữ liệu"
+  },
+  "lifecycle": {
+    "title": "Vòng đời",
+    "subtitle": "Theo dõi và quản lý liên hệ qua các giai đoạn của quy trình bán hàng",
+    "learnMore": "Tìm hiểu",
+    "toggleTitle": "Hiện/ẩn giai đoạn vòng đời",
+    "toggleSubtitle": "Hiển thị giai đoạn vòng đời trong hộp thư và liên hệ.",
+    "configureTitle": "Cấu hình các giai đoạn vòng đời",
+    "activeTitle": "Giai đoạn vòng đời",
+    "activeSubtitle": "Tổ chức và theo dõi liên hệ qua các giai đoạn của phễu.",
+    "lostTitle": "Giai đoạn thất bại",
+    "lostSubtitle": "Theo dõi nơi liên hệ rời khỏi phễu.",
+    "addStage": "Thêm giai đoạn",
+    "stageNumber": "Giai đoạn {n}",
+    "stageName": "Tên giai đoạn",
+    "newStage": "Giai đoạn mới",
+    "defaultBadge": "Mặc định",
+    "saved": "Đã lưu",
+    "saveError": "Lỗi khi lưu",
+    "saving": "Đang lưu…",
+    "emptyNameError": "Tất cả các giai đoạn cần có tên",
+    "emojiSearch": "Tìm",
+    "emojiCategories": {
+      "suggested": "Đã dùng",
+      "smileys": "Mặt cười & cảm xúc",
+      "animals": "Động vật & thiên nhiên",
+      "food": "Đồ ăn & thức uống",
+      "travel": "Du lịch & địa điểm",
+      "activities": "Hoạt động",
+      "objects": "Đồ vật",
+      "symbols": "Ký hiệu",
+      "flags": "Cờ"
+    },
+    "deleteConfirm": "Xóa giai đoạn \"{name}\"?",
+    "selectPlaceholder": "Chọn giai đoạn",
+    "noStage": "Không có giai đoạn",
+    "nextStageTooltip": "Giai đoạn tiếp theo: {name}",
+    "lastStageTooltip": "Đã ở giai đoạn cuối",
+    "contactLifecycle": "Vòng đời liên hệ",
+    "activeStages": "Giai đoạn hoạt động",
+    "lostStages": "Giai đoạn đã mất",
+    "contactUpdated": "Đã cập nhật",
+    "contactUpdateError": "Lỗi",
+    "bulkMove": "Di chuyển",
+    "bulkMoved": "{count} liên hệ đã di chuyển",
+    "deleteModalTitle": "Xóa \"{name}\"",
+    "deleteModalDescription": "Giai đoạn này có {count} liên hệ.",
+    "deleteModalReassignTo": "Di chuyển đến",
+    "deleteModalNoContacts": "Không có liên hệ.",
+    "deleteModalNoTarget": "Bỏ trống",
+    "deleteModalConfirm": "Xóa và di chuyển",
+    "deleteModalCancel": "Hủy",
+    "stageBadgeLabel": "Giai đoạn",
+    "activityLog": "Lịch sử giai đoạn",
+    "activityLogEmpty": "Không có thay đổi",
+    "menu": {
+      "setAsDefault": "Đặt làm mặc định",
+      "delete": "Xóa"
+    },
+    "anyStage": "Bất kỳ giai đoạn nào",
+    "triggerFromStage": "Từ (gốc)",
+    "triggerToStage": "Đến (đích)",
+    "stepHint": "Cập nhật giai đoạn vòng đời của liên hệ sang giai đoạn mới.",
+    "stepUpdateAction": "Cập nhật giai đoạn",
+    "stepUpdateActionHint": "Cập nhật giai đoạn của liên hệ sang giai đoạn khác",
+    "stepRemoveAction": "Xóa giai đoạn",
+    "stepRemoveActionHint": "Xóa giai đoạn của liên hệ",
+    "stepStageLabel": "Giai đoạn vòng đời"
+  },
   "auth": {
     "orContinueWith": "Hoặc tiếp tục với",
     "dontHaveAnAccount": "Chưa có tài khoản?",
@@ -1580,7 +1886,16 @@
     "signUpTitle": "Đăng ký vào {name}"
   },
   "tags": {
-    "title": "Thẻ"
+    "title": "Thẻ",
+    "subtitle": "Tạo và quản lý thẻ để sắp xếp cuộc trò chuyện và liên hệ",
+    "formDescription": "Cấu hình giao diện thẻ — chọn emoji, màu sắc và mô tả.",
+    "namePlaceholder": "Ví dụ: Khách tiềm năng",
+    "emojiLabel": "Biểu tượng",
+    "clearEmoji": "Xóa biểu tượng",
+    "colorLabel": "Màu",
+    "descriptionLabel": "Mô tả",
+    "descriptionPlaceholder": "Tùy chọn — thẻ này dùng để làm gì?",
+    "preview": "Xem trước"
   },
   "texts": {
     "or": "hoặc"
@@ -1831,7 +2146,35 @@
     "organizationInvitationDescription2": "{userName} đã mời bạn tham gia {organizationName}."
   },
   "inboxTeams": {
-    "title": "Nhóm hộp thư"
+    "title": "Cài đặt nhóm",
+    "subtitle": "Tạo và quản lý các nhóm để gom người dùng trong Không gian làm việc của bạn.",
+    "addTeam": "Thêm Nhóm",
+    "searchPlaceholder": "Tìm trong Cài đặt nhóm",
+    "manage": "Quản lý",
+    "delete": "Xóa",
+    "createDialog": {
+      "title": "Thêm Nhóm",
+      "description": "Tạo một Nhóm để gom người dùng. Nhóm có thể được dùng thay cho người dùng để chia sẻ tài nguyên như Chế độ xem."
+    },
+    "manageDialog": {
+      "title": "Quản lý Nhóm",
+      "description": "Quản lý nhóm bằng cách đổi tên, thay đổi mô tả và thêm hoặc xóa thành viên."
+    },
+    "deleteDialog": {
+      "title": "Xóa Nhóm",
+      "description": "Bạn có chắc muốn xóa nhóm \"{name}\"? Hành động này không thể hoàn tác. Thành viên sẽ không bị xóa.",
+      "confirm": "Xóa"
+    },
+    "fields": {
+      "name": "Tên Nhóm",
+      "namePlaceholder": "Nhập tên nhóm tại đây, ví dụ Nhóm Marketing",
+      "description": "Mô tả Nhóm",
+      "descriptionPlaceholder": "Nhập mô tả nhóm tại đây, ví dụ Quản lý liên hệ marketing.",
+      "members": "Thành viên Nhóm",
+      "membersPlaceholder": "Thêm người dùng tại đây, ví dụ John."
+    },
+    "membersCount": "{count, plural, =0 {Không có thành viên} =1 {1 thành viên} other {# thành viên}}",
+    "save": "Lưu"
   },
   "trigger": {
     "when": "Khi điều này xảy ra",
@@ -1871,7 +2214,8 @@
       "productRemovedFromCart": "Sản phẩm xóa khỏi giỏ",
       "productOrdered": "Sản phẩm đã đặt",
       "contactReferredANewContact": "Liên hệ giới thiệu liên hệ mới",
-      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có"
+      "contactReferredExistingContact": "Liên hệ giới thiệu liên hệ hiện có",
+      "lifecycleStageChanged": "Giai đoạn vòng đời đã thay đổi"
     },
     "actions": {
       "addTag": "Thêm thẻ",
@@ -1889,23 +2233,118 @@
     "day": "Ngày",
     "hour": "Giờ",
     "minute": "Phút",
-    "at": "Lúc"
+    "at": "Lúc",
+    "shortcutMenu": {
+      "button": "Phím tắt",
+      "title": "Kích hoạt luồng",
+      "loading": "Đang tải...",
+      "empty": "Chưa có phím tắt nào.",
+      "fired": "Đã kích hoạt",
+      "fireError": "Không thể kích hoạt"
+    },
+    "flowNode": {
+      "helperText": "Mọi luồng đều bắt đầu với một trigger. Khi sự kiện được cấu hình xảy ra, luồng này tự động được kích hoạt cho liên hệ.",
+      "typeLabel": "Loại trigger",
+      "typePlaceholder": "Chọn một trigger",
+      "noFilters": "Không có bộ lọc — kích hoạt trên mọi sự kiện loại này.",
+      "anyOption": "Bất kỳ",
+      "conversationOpened": {
+        "label": "Cuộc trò chuyện mở",
+        "hint": "Kích hoạt khi mở cuộc trò chuyện (mới hoặc mở lại)."
+      },
+      "conversationClosed": {
+        "label": "Cuộc trò chuyện đóng",
+        "hint": "Kích hoạt khi cuộc trò chuyện đóng."
+      },
+      "contactFieldUpdated": {
+        "label": "Trường liên hệ cập nhật",
+        "hint": "Kích hoạt khi trường thay đổi.",
+        "fieldsLabel": "Trường kích hoạt",
+        "empty": "Không có trường tùy chỉnh."
+      },
+      "contactTagUpdated": {
+        "label": "Thẻ liên hệ cập nhật",
+        "hint": "Kích hoạt khi thẻ được thêm/xóa.",
+        "actionLabel": "Hành động trên thẻ",
+        "actionAny": "Bất kỳ (thêm hoặc xóa)",
+        "actionAdded": "Khi thẻ được thêm",
+        "actionRemoved": "Khi thẻ bị xóa",
+        "tagsLabel": "Thẻ kích hoạt",
+        "empty": "Không có thẻ."
+      },
+      "shortcut": {
+        "label": "Phím tắt",
+        "hint": "Kích hoạt khi nhân viên nhấn phím tắt.",
+        "iconLabel": "Biểu tượng (emoji)",
+        "iconHint": "Hiển thị trên nút phím tắt trong Inbox.",
+        "labelLabel": "Văn bản nút",
+        "labelPlaceholder": "VD: Gửi lại ưu đãi",
+        "note": "Trigger này không kích hoạt tự động. Nó hiển thị như một nút trong Inbox."
+      },
+      "lifecycleStageChanged": {
+        "label": "Giai đoạn vòng đời thay đổi",
+        "hint": "Kích hoạt khi giai đoạn thay đổi.",
+        "toStagesLabel": "Đến giai đoạn",
+        "fromStagesLabel": "Từ giai đoạn",
+        "triggerOnCleared": "Cũng kích hoạt khi giai đoạn bị xóa",
+        "loading": "Đang tải...",
+        "emptyStages": "Không có giai đoạn."
+      }
+    }
   },
   "developerAccessToken": {
     "title": "Token truy cập API ChatbotX",
     "description": "Tạo token để cho phép workspace của bạn truy cập API ChatbotX. Giữ token này bí mật và không chia sẻ với ai."
   },
   "contacts": {
-    "title": "Liên hệ"
+    "title": "Liên hệ",
+    "fieldsTitle": "Trường liên hệ",
+    "admin": "Quản lý",
+    "details": "Chi tiết liên hệ",
+    "channels": "Kênh",
+    "tagsTitle": "Thẻ",
+    "ownerLabel": "Quản trị viên",
+    "noTags": "Không có thẻ",
+    "addTag": "Thêm thẻ",
+    "searchTag": "Tìm và chọn thẻ",
+    "hiddenFields": "Trường liên hệ ẩn",
+    "visibility": {
+      "customize": "Tùy chỉnh hiển thị",
+      "title": "Tùy chỉnh hiển thị",
+      "description": "Tùy chỉnh khả năng hiển thị của các trường liên hệ ở khung phải Inbox. Thay đổi áp dụng cho mọi người trong workspace.",
+      "fieldHeader": "Trường liên hệ",
+      "visibilityHeader": "Hiển thị",
+      "showAlways": "Luôn hiển thị",
+      "alwaysHide": "Luôn ẩn",
+      "saved": "Đã cập nhật hiển thị"
+    }
   },
   "errorLogs": {
     "title": "Nhật ký lỗi"
   },
   "auditLogs": {
-    "title": "Nhật ký kiểm tra"
+    "title": "Nhật ký hoạt động",
+    "subtitle": "Lịch sử đầy đủ các hành động đã thực hiện trong không gian làm việc.",
+    "searchPlaceholder": "Tìm theo chi tiết, hành động hoặc người dùng",
+    "filterUser": "Tất cả người dùng",
+    "filterUserAll": "Tất cả người dùng",
+    "filterAction": "Tất cả hành động",
+    "filterActionAll": "Tất cả hành động",
+    "exportCsv": "Xuất CSV",
+    "exportSuccess": "Xuất nhật ký thành công.",
+    "exportError": "Lỗi xuất nhật ký.",
+    "empty": "Chưa có hoạt động nào.",
+    "totalRows": "{count, plural, =0 {Không có bản ghi} =1 {1 bản ghi} other {# bản ghi}}",
+    "columns": {
+      "user": "Người dùng",
+      "action": "Hành động",
+      "detail": "Chi tiết",
+      "when": "Thời gian"
+    }
   },
   "customFields": {
-    "title": "Trường tùy chỉnh"
+    "title": "Trường tùy chỉnh",
+    "subtitle": "Tạo và quản lý các trường tùy chỉnh để làm phong phú hồ sơ liên hệ"
   },
   "keywords": {
     "title": "Từ khóa"
@@ -2015,6 +2454,43 @@
   "tools": {
     "title": "Công cụ"
   },
+  "organizationUsers": {
+    "pageTitle": "Cài đặt quản trị viên",
+    "pageSubtitle": "Quản lý người dùng tổ chức của bạn tại đây.",
+    "addButton": "Thêm người dùng",
+    "searchPlaceholder": "Tìm kiếm người dùng",
+    "empty": "Không tìm thấy người dùng.",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "addTitle": "Thêm người dùng",
+    "addDescription": "Đặt quyền truy cập của người dùng vào tổ chức và workspace.",
+    "addSubmit": "Thêm",
+    "created": "Đã thêm người dùng.",
+    "editTitle": "Chỉnh sửa người dùng",
+    "editDescription": "Cập nhật quyền truy cập của người dùng vào tổ chức và workspace.",
+    "editSubmit": "Lưu",
+    "updated": "Đã cập nhật người dùng.",
+    "deleteTitle": "Xóa người dùng",
+    "deleteConfirm": "Bạn có chắc muốn xóa {name}? Hành động này không thể hoàn tác.",
+    "deleteSubmit": "Xóa",
+    "deleted": "Đã xóa người dùng.",
+    "orgAccess": "Quyền truy cập tổ chức",
+    "workspaceAccess": "Quyền truy cập workspace",
+    "selectWorkspace": "Chọn workspace",
+    "selectRole": "Chọn quyền",
+    "addWorkspace": "Thêm workspace",
+    "noWorkspaces": "Chưa có workspace nào được gán.",
+    "orgRoles": {
+      "owner": "Chủ sở hữu",
+      "manager": "Quản trị viên",
+      "agent": "Thành viên"
+    },
+    "wsRoles": {
+      "owner": "Chủ sở hữu",
+      "manager": "Quản trị viên",
+      "agent": "Đại diện"
+    }
+  },
   "plans": {
     "title": "Billing Plans"
   },
@@ -2082,5 +2558,51 @@
   "QRCode": {
     "title": "QR Code",
     "description": "Share this code so people open your tracking link."
+  },
+  "inboxFilters": {
+    "all": "Tất cả",
+    "mine": "Của tôi",
+    "unassigned": "Chưa gán",
+    "teamInbox": "Hộp thư nhóm",
+    "collapseSidebar": "Thu gọn thanh bên",
+    "expandSidebar": "Mở rộng thanh bên",
+    "newMessageIndicator": "Tin nhắn mới",
+    "blockedContacts": "Liên hệ bị chặn"
+  },
+  "inboxDisplayFilter": {
+    "showLabel": "Hiển thị",
+    "sortLabel": "Sắp xếp",
+    "advanced": "Bộ lọc nâng cao",
+    "noReply": "Chưa trả lời",
+    "show": {
+      "all": "Tất cả",
+      "open": "Đang mở",
+      "closed": "Đã đóng"
+    },
+    "sort": {
+      "recent": "Mới nhất",
+      "oldest": "Cũ nhất"
+    },
+    "searchContact": "Tìm liên hệ"
+  },
+  "snippets": {
+    "title": "Đoạn mẫu",
+    "subtitle": "Tạo và quản lý các câu trả lời tái sử dụng để tăng tốc cuộc trò chuyện",
+    "feature": "Đoạn mẫu",
+    "addButton": "Thêm đoạn mẫu",
+    "createTitle": "Thêm đoạn mẫu",
+    "createConfirm": "Tạo",
+    "searchPlaceholder": "Tìm đoạn mẫu",
+    "nameLabel": "Tên",
+    "namePlaceholder": "Đặt tên đoạn mẫu (ví dụ: chao1)",
+    "messageLabel": "Tin nhắn",
+    "messagePlaceholder": "Nhập nội dung đoạn mẫu tại đây",
+    "formDescription": "Đoạn mẫu là các câu trả lời tái sử dụng. Dùng \"/\" trong khung soạn để chèn vào cuộc trò chuyện.",
+    "deleteTitle": "Xoá đoạn mẫu",
+    "deleteDescription": "Bạn có chắc muốn xoá đoạn mẫu \"{name}\"? Thao tác này không thể hoàn tác."
+  },
+  "botFields": {
+    "title": "Trường bot",
+    "subtitle": "Biến toàn cục của workspace dùng trong luồng và tin nhắn tự động"
   }
 }

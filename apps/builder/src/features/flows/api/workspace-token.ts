@@ -8,8 +8,8 @@ const flowWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/flows",
-      summary: "Get all flows",
-      tags: ["Flows"],
+      summary: "Obter todos os fluxos",
+      tags: ["Fluxos"],
     })
     .input(z.object({}))
     .output(

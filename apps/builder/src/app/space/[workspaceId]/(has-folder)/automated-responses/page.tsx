@@ -3,6 +3,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
+import { AutomationTabs } from "@/components/automation-tabs"
 import { AutomatedResponsesTable } from "@/features/automated-response/automated-response-table"
 import { listAutomatedResponses } from "@/features/automated-response/queries"
 import { listAutomatedResponsesSearchParams } from "@/features/automated-response/schema/query"
@@ -29,8 +30,14 @@ export default async function AutomatedResponesPage(props: {
   ])
 
   return (
-    <Suspense>
-      <AutomatedResponsesTable promises={promises} workspaceId={workspaceId} />
-    </Suspense>
+    <div className="space-y-4">
+      <AutomationTabs />
+      <Suspense>
+        <AutomatedResponsesTable
+          promises={promises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </div>
   )
 }

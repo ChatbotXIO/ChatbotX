@@ -40,9 +40,15 @@ export function MessageList() {
   }
 
   return (
+    // FASE A/B revisão 2026-05-25 (Pedro feedback):
+    // - alignToBottom REMOVIDO → mensagens começam DO TOPO do canvas
+    //   (antes ficavam grudadas no rodapé deixando espaço em branco
+    //   acima quando havia poucas msgs).
+    // - followOutput mantido pra rolar pro fim quando chega msg nova.
+    // - initialTopMostItemIndex LAST → ao ENTRAR na conversa, scroll já
+    //   posiciona na última mensagem (igual WhatsApp/Respond.io).
     <div className="flex flex-1 flex-col">
       <Virtuoso
-        alignToBottom={true}
         components={{
           List: MessageComponentList,
           Header: MessageComponentHeader,
@@ -50,8 +56,15 @@ export function MessageList() {
         data={messages}
         followOutput
         initialTopMostItemIndex={{ index: "LAST" }}
-        itemContent={(_, message) => (
-          <MessageItem key={message.id} message={message} />
+        itemContent={(index, message) => (
+          <MessageItem
+            key={message.id}
+            message={message}
+            nextMessage={
+              index < messages.length - 1 ? messages[index + 1] : undefined
+            }
+            prevMessage={index > 0 ? messages[index - 1] : undefined}
+          />
         )}
         rangeChanged={({ startIndex }) => {
           if (startIndex <= 5 && page !== 1) {
@@ -73,13 +86,19 @@ const MessageComponentHeader: GridComponents["Header"] = () => {
   ) : null
 }
 
+// Padding lateral horizontal pra que avatar+bubble não fiquem colados
+// nas bordas do canvas. Pedro pegou 2026-05-25 iteração 7: tinha px-4
+// (16px) mas Respond.io ao vivo usa exatamente 12px (`dls-px-3` no
+// container .dls-flex-row.dls-items-end da linha de mensagem). Confirmado
+// via Chrome MCP getComputedStyle: padding "0px 12px 6px 12px".
+// gap-1.5 entre mensagens.
 const MessageComponentList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
   <div
     {...props}
-    className="virtuoso-item-list flex flex-col gap-1.5 [&>div:first-child]:mt-3"
+    className="virtuoso-item-list flex flex-col gap-1.5 px-3 [&>div:first-child]:mt-3"
   >
     {children}
   </div>

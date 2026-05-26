@@ -128,7 +128,7 @@ interface MultiSelectProps
 
   /**
    * Placeholder text to be displayed when no values are selected.
-   * Optional, defaults to "Select options".
+   * Optional, defaults to "Selecione opções".
    */
   placeholder?: string
 
@@ -310,7 +310,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       onValueChange,
       variant,
       defaultValue = [],
-      placeholder = "Select options",
+      placeholder = "Selecione opções",
       animation = 0,
       animationConfig,
       maxCount = 3,
@@ -556,7 +556,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           )}. ` +
             `${
               deduplicateOptions
-                ? "Duplicates have been removed automatically."
+                ? "Duplicatas removidas automaticamente."
                 : "This may cause unexpected behavior. Consider setting 'deduplicateOptions={true}' or ensure all option values are unique."
             }`,
         )
@@ -780,7 +780,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           </div>
           <div aria-live="polite" className="sr-only" id={selectedCountId}>
             {selectedValues.length === 0
-              ? "No options selected"
+              ? "Nenhuma opção selecionada"
               : `${selectedValues.length} option${
                   selectedValues.length === 1 ? "" : "s"
                 } selected: ${selectedValues
@@ -1004,7 +1004,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            aria-label="Available options"
+            aria-label="Opções disponíveis"
             aria-multiselectable="true"
             className={cn(
               "w-auto p-0",
@@ -1029,7 +1029,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               {searchable && (
                 <CommandInput
                   aria-describedby={`${multiSelectId}-search-help`}
-                  aria-label="Search through available options"
+                  aria-label="Buscar entre opções disponíveis"
                   onKeyDown={handleInputKeyDown}
                   onValueChange={setSearchValue}
                   placeholder="Search options..."

@@ -1,6 +1,6 @@
 "use client"
 
-import type { ChannelType } from "@chatbotx.io/database/partials"
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
   AvatarFallback,
@@ -13,57 +13,150 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { cn } from "@chatbotx.io/ui/lib/utils"
-import { formatDistanceToNowStrict, isAfter } from "date-fns"
-import { StarIcon, UsersRoundIcon } from "lucide-react"
+import { format, isToday, isYesterday } from "date-fns"
+import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+  UserIcon,
+  UsersRoundIcon,
+} from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
+import { RespondIcon } from "@/components/respond-icon"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { useAvatarUrl } from "../contacts/utils"
-import { InboxIcon } from "../inboxes/components/inbox-icon"
+import {
+  getAvatarInitials,
+  getRespondAvatarUrl,
+  useAvatarUrl,
+} from "../contacts/utils"
+import { LifecycleStagePill } from "../lifecycle-stages/lifecycle-stage-pill"
 import { readConversationAction } from "./actions/read-conversation.action"
 import type { ListConversationItemResource } from "./schema/resource"
 
 type ConversationItemProps = {
   conversation: ListConversationItemResource
+  lifecycleStages?: LifecycleStageModel[]
   onSelect: () => void
 }
 
-const assignedIcon = (conversation: ListConversationItemResource) => {
-  if (conversation.assignedUserId) {
+// Mini-avatar 16 px do atendente atribuído (canto direito da linha 3 do
+// card). Pixel-perfect Respond.io (doc inbox/assigning-and-closing-a-conversation.md
+// + imagem ae86d99a8a8cedde.jpg):
+//
+// - Atribuído a USER  → avatar com foto (user.image) OU fallback colorido
+//   com iniciais (cor consistente via getRespondAvatarUrl-hash do nome)
+// - Atribuído a TEAM  → círculo neutro com ícone UsersRound
+// - NÃO atribuído     → círculo VERMELHO/BORDÔ com silhueta humana branca
+//   (Pedro pediu explicitamente 2026-05-25 — fica visível em todos os
+//   cards sem agente, sinal claro de "ninguém pegou ainda")
+function AssignedAvatar({
+  conversation,
+  unassignedLabel,
+}: {
+  conversation: ListConversationItemResource
+  unassignedLabel: string
+}) {
+  // 1. Atribuído a um agente
+  if (conversation.assignedUserId && conversation.assignedUser) {
+    const user = conversation.assignedUser
+    const displayName = user.name || user.email || ""
+    // Iter 41: seed = user.id (consistente em todos os lugares).
+    const avatarSpec = getRespondAvatarUrl(user.id ?? displayName)
+    const initials = getAvatarInitials(displayName) || "?"
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Avatar className="size-4">
-            <AvatarImage src={conversation.assignedUser?.image ?? ""} />
-
-            <AvatarFallback className="text-[0.5rem]">
-              {conversation.assignedUser?.name?.slice(0, 2) ?? " "}
+          <Avatar className="size-4 shrink-0">
+            {/* Iter 42 (Pedro): src de fallback = respond-avatar gerado
+                pelo id. Antes ficava "" quando user.image=null → caía
+                pra iniciais. Agora mesmo sem user.image mostra avatar
+                consistente com o resto do app. */}
+            <AvatarImage
+              alt={displayName}
+              className="object-cover"
+              src={user.image || avatarSpec.url}
+            />
+            <AvatarFallback
+              className="font-semibold text-[8px] text-white"
+              style={{ backgroundColor: avatarSpec.color }}
+            >
+              {initials}
             </AvatarFallback>
           </Avatar>
         </TooltipTrigger>
         <TooltipContent align="center" side="bottom">
-          {conversation.assignedUser?.name ||
-            conversation.assignedUser?.email ||
-            "User"}
+          {displayName || "User"}
         </TooltipContent>
       </Tooltip>
     )
   }
+
+  // 2. Atribuído a uma equipe
   if (conversation.assignedInboxTeamId) {
+    const teamName = conversation.assignedInboxTeam?.name || "Team"
     return (
-      <div className="overflow-hidden rounded-full border border-zinc-600 bg-secondary">
-        <UsersRoundIcon size={16} strokeWidth={1} />
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="grid size-4 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-600 bg-secondary text-text-secondary">
+            <UsersRoundIcon size={10} strokeWidth={1.75} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent align="center" side="bottom">
+          {teamName}
+        </TooltipContent>
+      </Tooltip>
     )
   }
-  return
+
+  // 3. Não atribuído → placeholder vermelho/bordô
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className="grid size-4 shrink-0 place-items-center rounded-full text-white"
+          style={{ backgroundColor: "#A63D40" }}
+        >
+          <UserIcon size={10} strokeWidth={2.25} />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent align="center" side="bottom">
+        {unassignedLabel}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+// Formato pixel-perfect Respond.io: "7:19 PM" se hoje (12h com AM/PM —
+// validado no Respond ao vivo 2026-05-24, Pedro pediu igual), "Ontem" se
+// ontem, dia da semana se semana, "dd/MM/yy" antigo. Cor #97A0AA (12/16).
+function formatConversationTimestamp(
+  date: Date | string,
+  _todayLabel: string,
+  yesterdayLabel: string,
+): string {
+  const d = typeof date === "string" ? new Date(date) : date
+  if (isToday(d)) {
+    return format(d, "h:mm a")
+  }
+  if (isYesterday(d)) {
+    return yesterdayLabel
+  }
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  if (d > sevenDaysAgo) {
+    return format(d, "EEE")
+  }
+  return format(d, "dd/MM/yy")
 }
 
 export default function ConversationItem({
   conversation,
+  lifecycleStages = [],
   onSelect,
 }: ConversationItemProps) {
+  const t = useTranslations()
   const lastMessage = conversation.messages?.[0]
   const { activeConversationId, readConversation } = useChatStore(
     (state) => state,
@@ -71,23 +164,50 @@ export default function ConversationItem({
   const isActive = conversation.id === activeConversationId
   const avatarUrl = useAvatarUrl(conversation.contact)
 
+  // Lookup local do stage do contato (lifecycleStages vem do layout via
+  // ChatLayout → ConversationList → ConversationItem). Evita N+1 fetch.
+  // Pixel-perfect Respond.io: pill aparece na linha 3 do card.
+  const lifecycleStage = useMemo(() => {
+    const contactStageId = conversation.contact?.lifecycleStageId
+    if (!contactStageId) {
+      return null
+    }
+    return lifecycleStages.find((s) => s.id === contactStageId) ?? null
+  }, [conversation.contact?.lifecycleStageId, lifecycleStages])
+
+  // Avatar 32x32 pixel-perfect Respond.io. Se contato tem avatar próprio,
+  // usa; senão cai no avatar real do Respond (pasta /public/respond-avatars).
+  // Cor + expressão determinada por hash do nome — mesmo contato sempre o
+  // mesmo avatar. Logo do canal WhatsApp REMOVIDO (Pedro pediu 2026-05-24).
+  const fullName = conversation.contact?.fullName ?? ""
+  // Iter 41 (Pedro): seed = ID do contato (snowflake imutável).
+  // Antes era `fullName || id` — risco de mudar cor se renomear contato.
+  // Garante consistência em TODOS os lugares que renderizam esse avatar.
+  const respondAvatar = getRespondAvatarUrl(
+    conversation.contact?.id ?? fullName,
+  )
+  const finalAvatarUrl = avatarUrl || respondAvatar.url
+  const initials = getAvatarInitials(fullName)
   const contactAvatar = useMemo(
     () => (
-      <Avatar className="h-12 w-12">
+      <Avatar className="size-8 shrink-0">
         <AvatarImage
-          alt={conversation.contact?.fullName ?? ""}
+          alt={fullName}
           className="object-cover"
-          src={avatarUrl}
+          src={finalAvatarUrl}
         />
-        <AvatarFallback className="bg-gray-300 dark:bg-zinc-100 dark:text-zinc-800">
-          {conversation.contact?.fullName?.slice(0, 2)}
+        <AvatarFallback
+          className="font-medium text-[13px] text-white"
+          style={{ backgroundColor: respondAvatar.color }}
+        >
+          {initials}
         </AvatarFallback>
       </Avatar>
     ),
-    [conversation.contact, avatarUrl],
+    [fullName, finalAvatarUrl, respondAvatar.color, initials],
   )
 
-  const { execute } = useAction(
+  const { execute: read } = useAction(
     readConversationAction.bind(
       null,
       conversation.workspaceId,
@@ -108,74 +228,160 @@ export default function ConversationItem({
   // biome-ignore lint/correctness/useExhaustiveDependencies: execute is not a dependency
   useEffect(() => {
     if (isActive) {
-      execute()
+      read()
     }
   }, [isActive])
 
+  // -------- Indicadores visuais --------
+
+  // Não-lida: tem mensagem incoming nova após última leitura do agente.
+  // unreadCount vem do backend (subquery em listConversations). hasUnread
+  // = unreadCount > 0 — assim quando agente clica e marca como lida
+  // (agentLastReadAt = NOW), unreadCount vai pra 0 e pill some imediato.
+  // Não usar contactLastReadAt aqui — esse pode estar setado mas agente
+  // já leu, daria pill vazio com "0".
+  const hasUnread = conversation.unreadCount > 0
+
+  // Seta direção: outgoing (agente/bot) = ↗ azul, incoming (contato) = ↙
+  // laranja. Mostra origem da última mensagem (igual Respond.io).
+  const lastIsOutgoing = lastMessage?.messageType === "outgoing"
+  const lastIsIncoming = lastMessage?.messageType === "incoming"
+
+  const isClosed = Boolean(conversation.archivedAt)
+  const isBlocked = Boolean(conversation.contact?.blockedAt)
+
+  const timestamp = formatConversationTimestamp(
+    lastMessage?.createdAt
+      ? lastMessage.createdAt
+      : (conversation.lastActivityAt ?? new Date()),
+    t("conversations.todayLabel"),
+    t("conversations.yesterdayLabel"),
+  )
+
   return (
-    <div className="w-full">
+    // border-bottom sutil entre cards (rgba(255,255,255,.06) = white/[0.06]
+    // do Tailwind). Igual Respond.io ao vivo — separa cada card sem ficar
+    // pesado visualmente. Decisão Pedro 2026-05-24.
+    <div className="group relative w-full border-white/[0.06] border-b">
       <Button
         className={cn(
-          "h-auto w-full justify-center px-3 py-2 font-normal hover:bg-zinc-200 hover:text-foreground dark:hover:bg-muted",
-          isActive ? "bg-zinc-200 dark:bg-muted!" : "",
+          // Card altura 98 px pixel-perfect Respond.io § 5 do
+          // _visual-respond-mapping.md (12 top + conteúdo ~70 + 14 bottom ≈ 98).
+          // Padding px-3 alinhado com filter bar acima e linha border-b.
+          "flex h-auto min-h-[98px] w-full items-start gap-3 rounded-none border-0 px-3 pt-3 pb-3.5 text-left font-normal hover:bg-white/[0.03]",
+          isActive && "bg-white/[0.06] hover:bg-white/[0.06]",
         )}
         onClick={() => onSelect()}
         type="button"
-        variant={isActive ? "secondary" : "ghost"}
+        variant="ghost"
       >
-        <div className="relative">
+        <div className="relative shrink-0">
           {contactAvatar}
-          <div className="absolute bottom-0 left-0 transform">
-            {assignedIcon(conversation)}
-          </div>
-          <div className="absolute right-0 bottom-0 transform">
-            {conversation.contactInboxes?.map((contactInbox) => (
-              <InboxIcon
-                channel={contactInbox.channel as ChannelType}
-                key={contactInbox.id}
-                showLabel={false}
-                size="small"
-              />
-            ))}
-          </div>
+          {/* Mini-avatar do atendente migrou pra LINHA 3 inline (pixel-perfect
+              Respond.io § 5 do _visual-respond-mapping.md). Antes ficava
+              overlay no avatar do contato. */}
+          {/* Logo do canal (WhatsApp etc) REMOVIDO — Pedro pediu 2026-05-24 */}
           {conversation.followed && (
-            <div className="absolute top-0 right-0 transform">
-              <StarIcon className="fill-yellow-400 text-zinc-500" />
+            <div className="absolute top-0 right-0">
+              <RespondIcon
+                className="text-yellow-400"
+                name="star-bold"
+                size="xs"
+              />
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <div className="truncate text-left font-medium dark:text-gray-200">
-            {conversation.contact?.fullName}
-          </div>
-          <div
-            className={cn(
-              "w-full truncate text-left text-sm",
-              !(
-                conversation.agentLastReadAt && conversation.contactLastReadAt
-              ) ||
-                (conversation.agentLastReadAt &&
-                  conversation.contactLastReadAt &&
-                  isAfter(
-                    conversation.agentLastReadAt,
-                    conversation.contactLastReadAt,
-                  ))
-                ? "text-gray-500"
-                : "font-semibold",
-            )}
-          >
-            {conversation.messages?.[0]?.text ?? " "}
-          </div>
-          <p className="text-right text-neutral-400 text-xs">
-            <span>
-              {formatDistanceToNowStrict(
-                lastMessage?.createdAt ? lastMessage.createdAt : new Date(),
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {/* Linha 1: nome (14/22 weight 600) + timestamp HH:mm à direita */}
+          <div className="flex items-center justify-between gap-2">
+            <div
+              className={cn(
+                "min-w-0 truncate text-left font-semibold text-[14px] leading-[22px]",
+                hasUnread ? "text-foreground" : "text-text-secondary",
               )}
+            >
+              {conversation.contact?.fullName}
+            </div>
+            <span
+              className={cn(
+                "shrink-0 text-[12px] leading-[16px]",
+                // Quando unread, hora branca (Pedro pediu 2026-05-24).
+                // Quando lida, cinza muted.
+                hasUnread ? "font-semibold text-foreground" : "text-[#97A0AA]",
+              )}
+            >
+              {timestamp}
             </span>
-          </p>
+          </div>
+
+          {/* Linha 2: seta direção + snippet + badge não-lida */}
+          <div className="mt-0.5 flex items-center gap-1.5">
+            {/* Setas Lucide (eram OK antes). Pedro pediu pra NÃO trocar
+                quando trocou tudo pra iconfont 2026-05-24. */}
+            {lastIsOutgoing && (
+              <ArrowUpRightIcon className="size-3.5 shrink-0 text-primary" />
+            )}
+            {lastIsIncoming && (
+              <ArrowDownLeftIcon className="size-3.5 shrink-0 text-orange-400" />
+            )}
+            <div
+              className={cn(
+                "min-w-0 flex-1 truncate text-left text-[14px] leading-[20px]",
+                hasUnread
+                  ? "font-medium text-foreground"
+                  : "text-muted-foreground",
+              )}
+            >
+              {lastMessage?.text ?? " "}
+            </div>
+            {conversation.unreadCount > 0 && (
+              // Pill azul com NÚMERO de mensagens incoming não lidas.
+              // SÓ renderiza quando count > 0 — quando agente clica e
+              // marca como lida, pill some por completo (não fica "0"
+              // vazio dentro).
+              <span className="inline-grid h-5 min-w-[20px] shrink-0 place-items-center rounded-[10px] bg-primary px-1.5 font-bold text-[12px] text-primary-foreground">
+                {conversation.unreadCount > 99
+                  ? "99+"
+                  : conversation.unreadCount}
+              </span>
+            )}
+          </div>
+
+          {/* Linha 3: StagePill (opcional) + mini-avatar atendente (UNIVERSAL).
+              Pixel-perfect Respond.io § 5 do _visual-respond-mapping.md.
+              Mini-avatar SEMPRE aparece — quando não atribuído, mostra
+              placeholder vermelho com silhueta humana (sinal visual claro
+              de "ninguém pegou ainda"). Pedro pediu 2026-05-25. */}
+          <div className="mt-1 flex h-5 items-center gap-2">
+            <LifecycleStagePill stage={lifecycleStage} />
+            <div className="ml-auto">
+              <AssignedAvatar
+                conversation={conversation}
+                unassignedLabel={t("conversations.unassignedAgent")}
+              />
+            </div>
+          </div>
+
+          {/* Linha 4 (opcional): rótulo de status — Fechada ou Bloqueada */}
+          {(isClosed || isBlocked) && (
+            <div className="mt-1 flex items-center gap-2 text-[10px] uppercase tracking-wide">
+              {isClosed && (
+                <span className="rounded-sm bg-secondary px-1.5 py-0.5 text-muted-foreground">
+                  {t("states.closed")}
+                </span>
+              )}
+              {isBlocked && (
+                <span className="rounded-sm bg-destructive/15 px-1.5 py-0.5 text-destructive">
+                  {t("states.blocked")}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </Button>
+      {/* Hover actions REMOVIDOS — Pedro pediu 2026-05-24. Fechar/reabrir
+          fica só pelo botão primário do header da conversa. */}
     </div>
   )
 }

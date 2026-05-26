@@ -19,7 +19,7 @@ export function DuplicateNode() {
   const duplicateNode = useCallback(
     (node: FlowNode) => {
       const newNodeData = {
-        name: `${node.data.name} Copy`,
+        name: `${node.data.name} ${t("flowEditor.copySuffix")}`,
         details: clone(node.data.details),
       }
       if ("beforeStep" in newNodeData.details) {
@@ -53,7 +53,7 @@ export function DuplicateNode() {
         },
       ])
     },
-    [addNodes],
+    [addNodes, t],
   )
 
   const onClick = (e: MouseEvent) => {

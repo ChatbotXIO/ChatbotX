@@ -8,8 +8,8 @@ export const savedReplyWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/saved-replies",
-      summary: "List saved replies",
-      tags: ["Saved Replies"],
+      summary: "Listar respostas salvas",
+      tags: ["Respostas Salvas"],
     })
     .input(z.object({}))
     .output(listSavedReplyResponse)

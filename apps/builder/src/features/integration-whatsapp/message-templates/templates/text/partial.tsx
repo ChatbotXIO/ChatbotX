@@ -22,7 +22,7 @@ const VariableInput = memo(
       <div className="flex-1">
         <InputField
           name={`${parentName}.${type}.variables.${index}`}
-          placeholder="Type a message"
+          placeholder="Digite uma mensagem"
         />
       </div>
     </div>
@@ -84,7 +84,7 @@ const TemplateTextPartialComponent = (
           name={`${parentName}.hideHeader`}
           options={[
             {
-              label: "Show header",
+              label: "Mostrar cabeçalho",
               value: "hideHeader",
             },
           ]}
@@ -95,7 +95,7 @@ const TemplateTextPartialComponent = (
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: "Mostrar rodapé",
               value: "showFooter",
             },
           ]}

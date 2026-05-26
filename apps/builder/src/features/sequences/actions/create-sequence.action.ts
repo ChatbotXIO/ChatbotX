@@ -52,7 +52,7 @@ export const createSequenceAction = workspaceActionClient
           })
         }
 
-        throw new Error("Failed to create sequence")
+        throw new Error("Falha ao criar sequência")
       }
     },
   )

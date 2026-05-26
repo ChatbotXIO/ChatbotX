@@ -8,7 +8,6 @@ import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
 import type {
-  ConversationResource,
   ListConversationItemResource,
   ListConversationsResponse,
 } from "@/features/conversations/schema/resource"
@@ -27,6 +26,9 @@ export type ConversationFilters = {
   keyword?: string
   tags?: ("noAdminReply" | "unread" | "followUp" | "archived" | "blocked")[]
   contactFilter?: ContactFilterRequest["contactFilter"]
+  archiveFilter?: "open" | "closed" | "all"
+  sortOrder?: "asc" | "desc"
+  lifecycleStageId?: string | null
 }
 
 export type ChatState = {
@@ -53,11 +55,20 @@ export type ChatActions = {
   setActiveConversationId: (activeConversationId: string | null) => void
   updateConversation: (
     conversationId: string,
-    data: Partial<ConversationResource>,
+    data: Partial<ListConversationItemResource>,
   ) => void
   updateConversations: (
     conversationIds: string[],
-    data: Partial<ConversationResource>,
+    data: Partial<ListConversationItemResource>,
+  ) => void
+  // Atualiza o objeto `contact` de TODAS as conversations que pertencem
+  // a um contactId. Usado pra propagar mudanças instantâneas (lifecycle
+  // stage, nome, etc) por todos os componentes do Inbox sem precisar
+  // refresh. Pedro pediu 2026-05-25 — "tudo instantâneo, trocou em um
+  // canto vai trocar em todos os outros".
+  updateContactInConversations: (
+    contactId: string,
+    contactData: Record<string, unknown>,
   ) => void
   updateConversationViaMessage: (message: MessageResource) => void
 
@@ -193,6 +204,10 @@ export const createChatStore = () => {
         const updatedConversations = [...conversations]
         const conversation = { ...updatedConversations[conversationIndex] }
         conversation.agentLastReadAt = new Date()
+        // Zerar contagem unread pro pill azul sumir imediatamente no card
+        // da lista. Pedro 2026-05-24: bug era pill ficar "0" vazio depois
+        // de marcar lida — agora pill some por completo.
+        conversation.unreadCount = 0
 
         updatedConversations[conversationIndex] = conversation
         set({ conversations: updatedConversations })
@@ -320,7 +335,7 @@ export const createChatStore = () => {
 
     updateConversation: (
       conversationId: string,
-      data: Partial<ConversationResource>,
+      data: Partial<ListConversationItemResource>,
     ) => {
       const { conversations } = get()
       const conversationIndex = conversations.findIndex(
@@ -339,7 +354,7 @@ export const createChatStore = () => {
 
     updateConversations: (
       conversationIds: string[],
-      data: Partial<ConversationResource>,
+      data: Partial<ListConversationItemResource>,
     ) => {
       if (conversationIds.length === 0) {
         return
@@ -360,6 +375,32 @@ export const createChatStore = () => {
         }
       }
       set({ conversations: updatedConversations })
+    },
+
+    // Atualiza o sub-objeto `contact` de TODAS as conversations que
+    // pertencem a um contactId específico. Propaga mudanças (lifecycle
+    // stage, nome, blockedAt, etc) instantaneamente pra card da lista +
+    // header da conversa + drawer direito sem precisar refresh.
+    // Pedro pediu 2026-05-25.
+    updateContactInConversations: (
+      contactId: string,
+      contactData: Record<string, unknown>,
+    ) => {
+      const { conversations } = get()
+      let changed = false
+      const updatedConversations = conversations.map((c) => {
+        if (c.contact?.id !== contactId) {
+          return c
+        }
+        changed = true
+        return {
+          ...c,
+          contact: { ...c.contact, ...contactData } as typeof c.contact,
+        }
+      })
+      if (changed) {
+        set({ conversations: updatedConversations })
+      }
     },
 
     handleNewMessage: async (message: MessageResourceWithRelations) => {

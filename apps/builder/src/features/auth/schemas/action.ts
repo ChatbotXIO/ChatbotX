@@ -23,7 +23,7 @@ export const emailPasswordSignUpRequest = z
   .refine(
     (data) => data.password && data.password === data.passwordConfirmation,
     {
-      message: "Passwords do not match",
+      message: "As senhas não coincidem",
       path: ["passwordConfirmation"],
     },
   )
@@ -46,7 +46,7 @@ export const resetPasswordRequest = z
     (data) =>
       data.newPassword && data.newPassword === data.passwordConfirmation,
     {
-      message: "Passwords do not match",
+      message: "As senhas não coincidem",
       path: ["passwordConfirmation"],
     },
   )

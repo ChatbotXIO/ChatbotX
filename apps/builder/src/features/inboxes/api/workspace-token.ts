@@ -10,8 +10,8 @@ export const inboxesWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/channels",
-      summary: "List channels",
-      tags: ["Channels"],
+      summary: "Listar canais",
+      tags: ["Canais"],
     })
     .input(publishInboxesRequest)
     .output(publicListInboxesResponse)

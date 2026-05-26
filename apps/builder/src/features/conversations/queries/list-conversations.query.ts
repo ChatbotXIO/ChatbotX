@@ -1,5 +1,6 @@
 "use server"
 
+import { conversationService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db, sql } from "@chatbotx.io/database/client"
 import {
@@ -27,11 +28,14 @@ export const listConversations = async (
 
   const where: Record<string, unknown> = {
     workspaceId,
-    archivedAt: { isNull: true },
+    ...filterByArchiveStatus(data),
     ...filterByConversation(data),
     contact: filterByContact(data),
     contactInboxes: filterByContactInbox(data),
   }
+
+  // Constrói condições OR adicionais (cursor) num AND combinado
+  const andConditions: Record<string, unknown>[] = []
 
   // Handle cursor pagination
   const decodedCursor = cursor
@@ -43,19 +47,29 @@ export const listConversations = async (
         }),
       )
     : null
+  const useAsc = data.sortOrder === "asc"
   if (decodedCursor) {
-    where.OR = [
-      {
-        lastActivityAt: { lt: decodedCursor.lastActivityAt },
-      },
-      {
-        lastActivityAt: { eq: decodedCursor.lastActivityAt },
-        id: { gt: decodedCursor.id },
-      },
-    ]
+    andConditions.push({
+      OR: [
+        {
+          lastActivityAt: useAsc
+            ? { gt: decodedCursor.lastActivityAt }
+            : { lt: decodedCursor.lastActivityAt },
+        },
+        {
+          lastActivityAt: { eq: decodedCursor.lastActivityAt },
+          id: useAsc ? { lt: decodedCursor.id } : { gt: decodedCursor.id },
+        },
+      ],
+    })
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions
   }
 
   const limit = pagination.limit + 1 // +1 to check if there is a next page
+  const direction: "asc" | "desc" = data.sortOrder ?? "desc"
   const conversations = await db.query.conversationModel.findMany({
     with: {
       contact: true,
@@ -71,8 +85,8 @@ export const listConversations = async (
     offset: pagination.offset,
     limit,
     orderBy: {
-      lastActivityAt: "desc",
-      id: "asc",
+      lastActivityAt: direction,
+      id: direction === "desc" ? "asc" : "desc",
     },
   })
 
@@ -80,6 +94,18 @@ export const listConversations = async (
   const items = hasNext
     ? conversations.slice(0, pagination.limit)
     : conversations
+
+  // Conta mensagens incoming NÃO LIDAS pelo agente, agrupadas por
+  // conversa. Usado pro badge azul do card (igual Respond.io "8" no pill).
+  // Lógica mora no conversationService pra evitar quirk Next 16 standalone
+  // que reclama de imports de Drizzle models em "use server" files.
+  const unreadCountMap = await conversationService.countUnreadByConversationIds(
+    { conversationIds: items.map((c) => c.id) },
+  )
+  const itemsWithUnread = items.map((c) => ({
+    ...c,
+    unreadCount: unreadCountMap.get(c.id) ?? 0,
+  }))
 
   const nextCursor = hasNext
     ? encodeCursor({
@@ -89,7 +115,7 @@ export const listConversations = async (
     : null
 
   return {
-    data: items,
+    data: itemsWithUnread,
     nextCursor,
     prevCursor: null,
   }
@@ -122,7 +148,7 @@ export const findConversation = async (
     where: input,
   })
   if (!conversation) {
-    throw notFoundException("Conversation not found")
+    throw notFoundException("Conversa não encontrada")
   }
 
   const lastMessage = await db.query.messageModel.findFirst({
@@ -139,8 +165,30 @@ export const findConversation = async (
     data: {
       ...conversation,
       messages: lastMessage ? [lastMessage] : [],
+      // findConversation é chamado quando agente abre a conversa — por
+      // definição "marcando como lida". Zero é coerente. O badge azul do
+      // card só usa unreadCount na lista (listConversations).
+      unreadCount: 0,
     },
   }
+}
+
+const filterByArchiveStatus = (
+  input: ListConversationsRequest,
+): Record<string, unknown> => {
+  // Compatibilidade: se tag "archived" foi passada (UI antiga), trata como "closed"
+  const effectiveFilter: "open" | "closed" | "all" | undefined =
+    input.archiveFilter ??
+    (input.tags?.includes("archived") ? "closed" : undefined)
+
+  if (effectiveFilter === "all") {
+    return {}
+  }
+  if (effectiveFilter === "closed") {
+    return { archivedAt: { isNotNull: true } }
+  }
+  // default: open
+  return { archivedAt: { isNull: true } }
 }
 
 const filterByConversation = (
@@ -175,9 +223,7 @@ const filterByConversation = (
     if (input.tags.includes("followUp")) {
       where.followed = true
     }
-    if (input.tags.includes("archived")) {
-      where.archivedAt = { isNotNull: true }
-    }
+    // tag "archived" agora é tratado em filterByArchiveStatus pra compatibilidade
   }
 
   return where
@@ -199,6 +245,10 @@ const filterByContact = (
 
   if (input.tags?.includes("blocked")) {
     where.blockedAt = { isNotNull: true }
+  }
+
+  if (input.lifecycleStageId) {
+    where.lifecycleStageId = input.lifecycleStageId
   }
 
   if (input.contactFilter) {

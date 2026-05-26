@@ -4,6 +4,15 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Tokens custom inspecionados do Respond.io (Pedro pediu pixel-perfect
+     2026-05-24). Disponíveis como utility classes: bg-bubble-outgoing,
+     bg-bubble-incoming, bg-app-bg, bg-app-surface. */
+  --color-bubble-outgoing: var(--bubble-outgoing);
+  --color-bubble-incoming: var(--bubble-incoming);
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-2: var(--app-surface-2);
+  --color-text-secondary: var(--text-secondary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -99,37 +108,48 @@
 }
 
 .dark {
-  --background: oklab(18.288% 0.00014 -0.01275);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.488 0.243 264.376);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Paleta dark — inspecionada do Respond.io ao vivo via Chrome MCP
+     2026-05-24 (Pedro pediu "100% igual cor, ícone, tamanho").
+     Refs no arquivo de gap analysis: inbox-gap-analysis.md */
+  --background: #101113; /* rgb(16,17,19) — fundo app principal */
+  --foreground: #ffffff;
+  --card: #222225; /* rgb(34,34,37) — header, sub-painéis */
+  --card-foreground: #ffffff;
+  --popover: #222225;
+  --popover-foreground: #ffffff;
+  --primary: #6ba4ff; /* rgb(107,164,255) — azul accent */
+  --primary-foreground: #101113;
+  --secondary: #2f2f32; /* rgb(47,47,50) — bubble incoming + bg secundário */
+  --secondary-foreground: #ffffff;
+  --muted: #2f2f32;
+  --muted-foreground: #cfd3d8; /* rgb(207,211,216) — texto secundário, placeholder */
+  --accent: #353c45; /* rgb(53,60,69) — hover/states neutros */
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #3e3e41; /* rgb(62,62,65) — divisores */
+  --input: #3e3e41;
+  --ring: #6ba4ff;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar: #101113;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #6ba4ff;
+  --sidebar-primary-foreground: #101113;
+  --sidebar-accent: #2f2f32;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #3e3e41;
+  --sidebar-ring: #6ba4ff;
+
+  /* Tokens custom Respond.io */
+  --bubble-outgoing: #2c3a58; /* rgb(44,58,88) — bubble do agente/bot */
+  --bubble-incoming: #2f2f32; /* rgb(47,47,50) — bubble do contato */
+  --app-bg: #101113;
+  --app-surface: #222225;
+  --app-surface-2: #2f2f32;
+  --text-secondary: #cfd3d8;
 }
 
 @layer base {

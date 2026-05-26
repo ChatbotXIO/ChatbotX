@@ -13,6 +13,7 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../partials/shared"
+import { lifecycleStageModel } from "./lifecycle-stage"
 import { workspaceModel } from "./workspace"
 
 export const gender = pgEnum(
@@ -50,5 +51,9 @@ export const contactModel = pgTable("Contact", {
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
+  lifecycleStageId: bigintAsString().references(() => lifecycleStageModel.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
   lastActivityAt: timestamp(timestampConfig).defaultNow().notNull(),
 })

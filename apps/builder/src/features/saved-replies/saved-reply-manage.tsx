@@ -6,9 +6,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@chatbotx.io/ui/components/ui/popover"
-import { Loader2Icon, MessageSquareMoreIcon, PlusIcon } from "lucide-react"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
+import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useState } from "react"
+import { RespondIcon } from "@/components/respond-icon"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useSavedReplyStore } from "./provider/saved-reply-store-context"
 import { SavedReplyCreateForm } from "./saved-reply-create-form"
@@ -62,11 +68,26 @@ const SavedReplyManage = (props: { onSelect: (text: string) => void }) => {
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost">
-          <MessageSquareMoreIcon size={20} />
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              aria-label={t("messages.composer.snippets")}
+              className="size-8 rounded-md text-text-secondary hover:bg-white/[0.06] hover:text-foreground"
+              size="icon"
+              variant="ghost"
+            >
+              {/* Ícone `receipt` — pixel-perfect Respond.io 2026-05-25
+                  (Pedro pediu mesma ordem de ícones do composer Respond.io).
+                  Substituiu Lucide MessageSquareMoreIcon. */}
+              <RespondIcon name="receipt" size="lg" />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {t("messages.composer.snippets")}
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent align="end" className="w-100 p-0">
         {view.type === "create" ? (
           <SavedReplyCreateForm

@@ -22,7 +22,7 @@ export const dateTimeBasedTrigger = z
     if (!data.sourceId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Custom field is required",
+        message: "Campo personalizado é obrigatório",
         path: ["sourceId"],
       })
     }

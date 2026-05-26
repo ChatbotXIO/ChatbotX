@@ -1,6 +1,14 @@
 import { organizationService } from "@chatbotx.io/business"
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { organizationMemberModel } from "@chatbotx.io/database/schema"
+import {
+  db,
+  desc,
+  inArray,
+  relationsFilterToSQL,
+} from "@chatbotx.io/database/client"
+import {
+  organizationMemberModel,
+  sessionModel,
+} from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
@@ -56,7 +64,28 @@ export const listOrganizationMembers = async (
     ),
   ])
 
+  const userIds = data.map((d) => d.userId)
+  const lastSessions = userIds.length
+    ? await db
+        .selectDistinctOn([sessionModel.userId], {
+          userId: sessionModel.userId,
+          updatedAt: sessionModel.updatedAt,
+        })
+        .from(sessionModel)
+        .where(inArray(sessionModel.userId, userIds))
+        .orderBy(sessionModel.userId, desc(sessionModel.updatedAt))
+    : []
+
+  const lastActiveByUserId = new Map(
+    lastSessions.map((s) => [s.userId, s.updatedAt]),
+  )
+
+  const dataWithLastActive = data.map((member) => ({
+    ...member,
+    lastActiveAt: lastActiveByUserId.get(member.userId) ?? null,
+  }))
+
   const pageCount = Math.ceil(totalRows / pagination.limit)
 
-  return { data, pageCount, ...pagination }
+  return { data: dataWithLastActive, pageCount, ...pagination }
 }

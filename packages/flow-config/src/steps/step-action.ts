@@ -35,6 +35,7 @@ export const stepTypes = z.enum([
   "clearCustomField",
   "cancelContactInput",
   "filterContact",
+  "updateContactLifecycleStage",
 
   // Inbox Operations (I_)
   "disableBot",

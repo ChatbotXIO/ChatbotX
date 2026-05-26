@@ -90,7 +90,7 @@ export async function getSequence(workspaceId: string, sequenceId: string) {
   })
 
   if (!sequence) {
-    throw new Error("Sequence not found")
+    throw new Error("Sequência não encontrada")
   }
 
   return {

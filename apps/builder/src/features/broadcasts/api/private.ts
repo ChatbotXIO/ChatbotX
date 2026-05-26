@@ -25,7 +25,7 @@ export const broadcastPrivateAPIs = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/broadcasts/stats",
-      summary: "Get batch broadcast stats",
+      summary: "Obter estatísticas de broadcast em lote",
       tags: ["Broadcasts"],
     })
     .input(getBatchBroadcastStatsRequest)
@@ -43,7 +43,7 @@ export const broadcastPrivateAPIs = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/broadcasts/{broadcastId}/contacts",
-      summary: "List broadcast contacts by event type",
+      summary: "Listar contatos do broadcast por tipo de evento",
       tags: ["Broadcasts"],
     })
     .input(listBroadcastContactsRequest)

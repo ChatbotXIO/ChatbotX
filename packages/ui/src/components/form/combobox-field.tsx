@@ -133,7 +133,7 @@ export function ComboboxField<T extends FieldValues>({
               side={side}
             >
               <Command>
-                <CommandInput className="h-9" placeholder="Search..." />
+                <CommandInput className="h-9" placeholder="Buscar..." />
                 <CommandList>
                   <CommandEmpty>No record found.</CommandEmpty>
                   {options.map((option) =>

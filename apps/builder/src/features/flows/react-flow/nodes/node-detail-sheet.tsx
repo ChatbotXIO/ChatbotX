@@ -62,7 +62,12 @@ export const NodeDetailSheetContent = memo(
     onOpenChange: (open: boolean) => void
   }) => (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="flex flex-col gap-0" side="left">
+      {/*
+        Painel lateral de edição do node fica na DIREITA (estilo Respond.io).
+        Antes ficava à esquerda; Pedro pediu na direita pra manter o canvas
+        livre e os controles no canto superior esquerdo do canvas.
+      */}
+      <SheetContent className="flex flex-col gap-0" side="right">
         <SheetTitle>
           <NodeNameEditor activeNode={activeNode} />
         </SheetTitle>

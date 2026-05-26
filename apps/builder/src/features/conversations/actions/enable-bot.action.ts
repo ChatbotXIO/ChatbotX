@@ -55,7 +55,7 @@ export const enableBotAction = workspaceActionClient
         } catch (error) {
           logger.error(
             { err: error },
-            "Failed to emit conversationTransferredToBot event:",
+            "Falha ao emitir evento conversationTransferredToBot:",
           )
         }
       }

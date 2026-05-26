@@ -44,7 +44,7 @@ export const EmailPasswordSignIn = () => {
     })
 
     if (data) {
-      toast.success("Signed in successfully")
+      toast.success("Login realizado com sucesso")
       redirect("/")
     } else {
       toast.error(error.message)

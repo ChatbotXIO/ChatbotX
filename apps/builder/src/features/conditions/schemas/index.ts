@@ -1,5 +1,6 @@
 import { customFieldValueChanged } from "./custom-field-value-changed"
 import { dateTimeBasedTrigger } from "./date-time-based-trigger"
+import { lifecycleStageChanged } from "./lifecycle-stage-changed"
 import {
   archived,
   contactReferredANewContact,
@@ -34,4 +35,5 @@ export const allConditions = {
   unsubscribedFromSequence,
   contactReferredANewContact,
   contactReferredExistingContact,
+  lifecycleStageChanged,
 }

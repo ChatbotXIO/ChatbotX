@@ -1,0 +1,321 @@
+/* Iconfont do Respond.io — 848 ícones extraídos do CDN oficial
+   2026-05-24. Pedro pediu "ícones idênticos ao Respond.io".
+   Arquivos em /public/respond-icons/ (woff2 + woff + ttf).
+
+   Uso: <i class="icon icon-tick-circle" />
+   Ou via componente: <RespondIcon name="tick-circle" />
+*/
+
+@font-face {
+  font-family: "respond-iconfont";
+  font-display: block;
+  src:
+    url("/respond-icons/iconfont.woff2") format("woff2"),
+    url("/respond-icons/iconfont.woff") format("woff"),
+    url("/respond-icons/iconfont.ttf") format("truetype");
+}
+
+.icon {
+  display: inline-block;
+  font-family: "respond-iconfont", sans-serif !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1;
+  vertical-align: middle;
+  text-transform: none;
+}
+
+/* Tamanhos canônicos do Respond.io */
+.icon-xs {
+  font-size: 12px;
+}
+.icon-sm {
+  font-size: 14px;
+}
+.icon-md {
+  font-size: 16px;
+}
+.icon-lg {
+  font-size: 18px;
+}
+.icon-xl {
+  font-size: 20px;
+}
+.icon-2xl {
+  font-size: 24px;
+}
+
+/* Mapa de ícones essenciais (~65 dos 848 totais). Ampliar conforme uso. */
+.icon-tick-circle::before {
+  content: "\00f156";
+}
+.icon-tick-square::before {
+  content: "\00f154";
+}
+.icon-tick-square-bold::before {
+  content: "\00f155";
+}
+.icon-tick::before {
+  content: "\00f153";
+}
+.icon-send::before {
+  content: "\00f1ad";
+}
+.icon-search-normal::before {
+  content: "\00f1b6";
+}
+.icon-more::before {
+  content: "\00f215";
+}
+.icon-message-text::before {
+  content: "\00f236";
+}
+.icon-message-question::before {
+  content: "\00f23b";
+}
+.icon-message-2::before {
+  content: "\00f243";
+}
+.icon-emoji-happy::before {
+  content: "\00f352";
+}
+.icon-close-circle::before {
+  content: "\00f3ac";
+}
+.icon-attach-square::before {
+  content: "\00f417";
+}
+.icon-arrow-down::before {
+  content: "\00f42b";
+}
+.icon-arrow-down-1::before {
+  content: "\00f42f";
+}
+.icon-arrow-up::before {
+  content: "\00f41b";
+}
+.icon-arrow-up-1::before {
+  content: "\00f41f";
+}
+.icon-arrow-left::before {
+  content: "\00f427";
+}
+.icon-arrow-right::before {
+  content: "\00f421";
+}
+.icon-ai-assist::before {
+  content: "\00f447";
+}
+.icon-ai-agent::before {
+  content: "\00f449";
+}
+.icon-add::before {
+  content: "\00f44b";
+}
+.icon-workflow::before {
+  content: "\00f105";
+}
+.icon-user::before {
+  content: "\00f11d";
+}
+.icon-user-add::before {
+  content: "\00f128";
+}
+.icon-flash::before {
+  content: "\00f337";
+}
+.icon-sticker::before {
+  content: "\00f17c";
+}
+.icon-document::before {
+  content: "\00f364";
+}
+.icon-star::before {
+  content: "\00f180";
+}
+.icon-star-bold::before {
+  content: "\00f181";
+}
+.icon-volume-high::before {
+  content: "\00f112";
+}
+.icon-eye::before {
+  content: "\00f343";
+}
+.icon-eye-bold::before {
+  content: "\00f344";
+}
+.icon-edit::before {
+  content: "\00f35d";
+}
+.icon-edit-bold::before {
+  content: "\00f35e";
+}
+.icon-trash::before {
+  content: "\00f137";
+}
+.icon-trash-bold::before {
+  content: "\00f138";
+}
+.icon-forbidden::before {
+  content: "\00f333";
+}
+.icon-forbidden-bold::before {
+  content: "\00f334";
+}
+.icon-reply::before {
+  content: "\00f1c9";
+}
+.icon-copy::before {
+  content: "\00f38f";
+}
+.icon-link-1::before {
+  content: "\00f2f0";
+}
+.icon-message-delivered::before {
+  content: "\00f241";
+}
+.icon-magicpen-bold::before {
+  content: "\00f2de";
+}
+.icon-emoji-normal::before {
+  content: "\00f350";
+}
+.icon-i-microphone::before {
+  content: "\00f317";
+}
+.icon-receipt::before {
+  content: "\00f1da";
+}
+.icon-message-programming::before {
+  content: "\00f23d";
+}
+.icon-send-bold::before {
+  content: "\00f1b1";
+}
+.icon-comments-ai::before {
+  content: "\00f399";
+}
+.icon-ai-assist-bold::before {
+  content: "\00f448";
+}
+.icon-channels::before {
+  content: "\00f3c0";
+}
+.icon-at::before {
+  content: "\00f419";
+}
+.icon-close-square::before {
+  content: "\00f3aa";
+}
+.icon-custom-user-square-bold::before {
+  content: "\00f382";
+}
+.icon-translate::before {
+  content: "\00f139";
+}
+.icon-code::before {
+  content: "\00f3a0";
+}
+.icon-clock::before {
+  content: "\00f3ae";
+}
+.icon-clock-bold::before {
+  content: "\00f3af";
+}
+.icon-sms::before {
+  content: "\00f18e";
+}
+.icon-sms-bold::before {
+  content: "\00f18f";
+}
+.icon-phone::before {
+  content: "\00f1f3";
+}
+.icon-call-calling::before {
+  content: "\00f3de";
+}
+.icon-home::before {
+  content: "\00f31d";
+}
+.icon-global::before {
+  content: "\00f327";
+}
+.icon-profile::before {
+  content: "\00f1e5";
+}
+.icon-profile-2user::before {
+  content: "\00f1ea";
+}
+.icon-note::before {
+  content: "\00f20a";
+}
+.icon-notification::before {
+  content: "\00f206";
+}
+.icon-notification-bing::before {
+  content: "\00f208";
+}
+.icon-tag::before {
+  content: "\00f169";
+}
+.icon-tag-bold::before {
+  content: "\00f16a";
+}
+.icon-filter::before {
+  content: "\00f33b";
+}
+.icon-filter-bold::before {
+  content: "\00f33e";
+}
+.icon-sort::before {
+  content: "\00f18c";
+}
+.icon-verify-bold::before {
+  content: "\00f11b";
+}
+.icon-received::before {
+  content: "\00f1d8";
+}
+.icon-whatsapp-bold::before {
+  content: "\00f10a";
+}
+.icon-instagram::before {
+  content: "\00f306";
+}
+.icon-facebook::before {
+  content: "\00f341";
+}
+.icon-email::before {
+  content: "\00f354";
+}
+.icon-menu::before {
+  content: "\00f245";
+}
+.icon-sidebar-left::before {
+  content: "\00f19b";
+}
+.icon-sidebar-right::before {
+  content: "\00f199";
+}
+.icon-refresh::before {
+  content: "\00f1cc";
+}
+.icon-refresh-circle::before {
+  content: "\00f1cd";
+}
+.icon-archive::before {
+  content: "\00f434";
+}
+.icon-minus::before {
+  content: "\00f223";
+}
+.icon-play::before {
+  content: "\00f1f1";
+}
+.icon-pause::before {
+  content: "\00f1fa";
+}

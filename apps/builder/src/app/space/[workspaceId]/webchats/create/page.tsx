@@ -15,7 +15,7 @@ export default async function CreateWebchatPage({
   }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Carregando...</div>}>
       <FlowStoreProvider workspaceId={workspaceId}>
         <CreateWebchatForm workspaceId={workspaceId} />
       </FlowStoreProvider>

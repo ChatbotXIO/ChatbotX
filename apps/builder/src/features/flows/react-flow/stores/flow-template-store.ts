@@ -46,7 +46,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch WA templates",
+              : "Falha ao buscar templates do WhatsApp",
         })
       } finally {
         set({ initialized: true })
@@ -81,7 +81,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch WA templates",
+              : "Falha ao buscar templates do WhatsApp",
         })
       } finally {
         set({ loadingWhatsappTemplates: false })

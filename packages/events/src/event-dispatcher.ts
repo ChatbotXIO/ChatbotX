@@ -195,3 +195,72 @@ export const emitSequenceUnsubscribed = async (
     sequenceId,
     sequenceName,
   )
+
+// Lifecycle stage events
+export const emitLifecycleStageChanged = async (
+  workspaceId: string,
+  contactId: string,
+  toStageId: string | null,
+  fromStageId: string | null,
+  toStageName?: string | null,
+  fromStageName?: string | null,
+) =>
+  await emitToAllEmitters(
+    "lifecycleStageChanged",
+    workspaceId,
+    contactId,
+    toStageId,
+    fromStageId,
+    toStageName,
+    fromStageName,
+  )
+
+// Conversation open/close (used by TriggerNode in flow builder)
+export const emitConversationOpened = async (
+  workspaceId: string,
+  contactId: string,
+  conversationId: string,
+  source: "contact" | "user" | "workflow" | "api" = "contact",
+  channel?: string | null,
+) =>
+  await emitToAllEmitters(
+    "conversationOpened",
+    workspaceId,
+    contactId,
+    conversationId,
+    source,
+    channel,
+  )
+
+export const emitConversationClosed = async (
+  workspaceId: string,
+  contactId: string,
+  conversationId: string,
+  closedBy: "user" | "workflow" | "bot" | "api" = "user",
+  closingCategoryId?: string | null,
+) =>
+  await emitToAllEmitters(
+    "conversationClosed",
+    workspaceId,
+    contactId,
+    conversationId,
+    closedBy,
+    closingCategoryId,
+  )
+
+// Shortcut: agent-triggered manual flow run from Inbox
+export const emitShortcut = async (
+  workspaceId: string,
+  contactId: string,
+  conversationId: string,
+  flowId: string,
+  triggeredByUserId?: string | null,
+) =>
+  await emitToAllEmitters(
+    "shortcut",
+    workspaceId,
+    contactId,
+    conversationId,
+    flowId,
+    triggeredByUserId,
+  )

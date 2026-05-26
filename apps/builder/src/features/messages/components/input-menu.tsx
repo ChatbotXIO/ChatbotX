@@ -1,7 +1,3 @@
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { WorkflowIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
-import { SelectFlowDialog } from "@/features/flows/components/select-flow-dialog"
 import SavedReplyManage from "@/features/saved-replies/saved-reply-manage"
 import EmojiPicker from "./emoji-picker"
 
@@ -9,21 +5,13 @@ type InputMenuProps = {
   setContent: (text: string, insert?: boolean) => void
 }
 
-export const InputMenu = ({ setContent }: InputMenuProps) => {
-  const t = useTranslations()
-
-  return (
-    <>
-      <SelectFlowDialog
-        submitText={t("actions.send")}
-        title={t("actions.sendFlow")}
-      >
-        <Button type="button" variant="ghost">
-          <WorkflowIcon size={20} />
-        </Button>
-      </SelectFlowDialog>
-      <EmojiPicker onSelectEmoji={(emoji) => setContent(emoji, true)} />
-      <SavedReplyManage onSelect={setContent} />
-    </>
-  )
-}
+// Toolbar do composer. Antes tinha botão de SelectFlowDialog (workflow) mas
+// foi removido porque era redundante com o ShortcutMenu (raio ⚡) no header
+// da conversa — Respond.io também só tem o atalho em um lugar (header).
+// 2026-05-24 — Sprint Inbox 1.1.
+export const InputMenu = ({ setContent }: InputMenuProps) => (
+  <>
+    <EmojiPicker onSelectEmoji={(emoji) => setContent(emoji, true)} />
+    <SavedReplyManage onSelect={setContent} />
+  </>
+)

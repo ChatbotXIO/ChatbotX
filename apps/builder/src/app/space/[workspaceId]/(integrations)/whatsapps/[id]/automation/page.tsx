@@ -28,7 +28,7 @@ export default async function WhatsappAutomationPage(props: {
       error:
         err instanceof Error
           ? err.message
-          : "Failed to load automation settings",
+          : "Falha ao carregar configurações de automação",
     })),
   ])
 

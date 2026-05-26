@@ -24,6 +24,11 @@ export const listConversationsItemResource = conversationResource.and(
     contact: contactResource.nullable(),
     assignedUser: userResource.nullable(),
     assignedInboxTeam: inboxTeamResource.nullable(),
+    // Contagem de mensagens incoming não lidas pelo agente (createdAt >
+    // agentLastReadAt OR agentLastReadAt IS NULL). Calculada via subquery
+    // separada no listConversations. Usado no badge azul do card (igual
+    // Respond.io "8" no pill azul).
+    unreadCount: z.number().default(0),
   }),
 )
 export type ListConversationItemResource = z.infer<

@@ -6,12 +6,15 @@ import { inboxTeamResource } from "./resource"
 
 export const createInboxTeamRequest = z.object({
   name: z.string().trim().min(1).max(255),
-  userIds: z.array(zodBigintAsString()),
+  description: z.string().trim().max(500).optional().nullable(),
+  userIds: z.array(zodBigintAsString()).min(1),
 })
 export type CreateInboxTeamRequest = z.infer<typeof createInboxTeamRequest>
 
 export const updateInboxTeamRequest = z.object({
   name: z.string().trim().min(1).max(255).optional(),
+  description: z.string().trim().max(500).optional().nullable(),
+  userIds: z.array(zodBigintAsString()).optional(),
 })
 export type UpdateInboxTeamRequest = z.infer<typeof updateInboxTeamRequest>
 

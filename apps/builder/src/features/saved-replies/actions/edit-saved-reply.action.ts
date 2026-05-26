@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -14,6 +15,7 @@ export const editSavedReplyAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId, id],
       parsedInput,
+      ctx: { user },
     } = props
 
     const savedReply = await findOrFail({
@@ -22,7 +24,7 @@ export const editSavedReplyAction = workspaceActionClient
         id,
         workspaceId,
       },
-      message: "Saved reply not found",
+      message: "Resposta salva não encontrada",
     })
     const [updatedSavedReply] = await db
       .update(savedReplyModel)
@@ -34,6 +36,13 @@ export const editSavedReplyAction = workspaceActionClient
       .returning()
 
     revalidateCacheTags(`workspaces:${workspaceId}#savedReplies`)
+
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.SNIPPET_UPDATED,
+      detail: `Trecho "${parsedInput.shortcut}" atualizado`,
+    })
 
     return updatedSavedReply
   })

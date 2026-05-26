@@ -19,7 +19,7 @@ export const findWhatsappAutomation = async (
       workspaceId: input.workspaceId,
       id: input.id,
     },
-    message: "Whatsapp integration not found",
+    message: "Integração WhatsApp não encontrada",
   })
 
   return await findConversationalAutomation(

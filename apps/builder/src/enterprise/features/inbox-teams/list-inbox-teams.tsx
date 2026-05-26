@@ -1,47 +1,19 @@
 "use client"
 
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@chatbotx.io/ui/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@chatbotx.io/ui/components/ui/table"
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
+import { SearchIcon, SettingsIcon, Trash2Icon, UsersIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { use, useState } from "react"
+import { use, useMemo, useState } from "react"
 import type { listWorkspaceMembers } from "@/features/workspace-members/queries"
 import type { ListWorkspaceMembersResponse } from "@/features/workspace-members/schema/query"
-import type { InboxTeamMemberResource } from "../inbox-team-members/schema/resource"
-import { AddInboxTeamMemberDialog } from "./add-inbox-team-member-dialog"
 import { CreateInboxTeamDialog } from "./create-inbox-team-dialog"
 import { DeleteInboxTeamDialog } from "./delete-inbox-team-dialog"
-import { DeleteInboxTeamMembersDialog } from "./delete-inbox-team-member-dialog"
+import { ManageInboxTeamDialog } from "./manage-inbox-team-dialog"
 import type { listInboxTeams } from "./queries"
-import { RenameInboxTeamDialog } from "./rename-inbox-team-dialog"
 import type { ListInboxTeamsResponse } from "./schema/action"
-import type { InboxTeamResource } from "./schema/resource"
+
+type Team = ListInboxTeamsResponse["data"][number]
 
 type ListInboxTeamsProps = {
   workspaceId: string
@@ -53,220 +25,143 @@ type ListInboxTeamsProps = {
   >
 }
 
-function ListInboxTeamsDetail({
-  workspaceId,
-  inboxTeams,
-  workspaceMembers,
+function TeamRow({
+  team,
+  onManage,
+  onDelete,
 }: {
-  workspaceId: string
-  inboxTeams: ListInboxTeamsResponse["data"]
-  workspaceMembers: ListWorkspaceMembersResponse["data"]
+  team: Team
+  onManage: (team: Team) => void
+  onDelete: (team: Team) => void
 }) {
-  const t = useTranslations()
-  const [renameInboxTeam, setRenameInboxTeam] =
-    useState<InboxTeamResource | null>(null)
-  const [deleteInboxTeam, setDeleteInboxTeam] =
-    useState<InboxTeamResource | null>(null)
-  const [addInboxTeamMember, setAddInboxTeamMember] =
-    useState<InboxTeamResource | null>(null)
-  const [deleteInboxTeamMember, setDeleteInboxTeamMember] =
-    useState<InboxTeamMemberResource | null>(null)
-  const [openTeams, setOpenTeams] = useState<Record<string, boolean>>({})
-
-  const rows: Array<{
-    showMembers: boolean
-    team: ListInboxTeamsResponse["data"][number]
-  }> = []
-  for (const team of inboxTeams) {
-    rows.push({ showMembers: true, team })
-    if (openTeams[team.id]) {
-      rows.push({ showMembers: false, team })
-    }
-  }
+  const t = useTranslations("inboxTeams")
+  const memberCount = team.inboxTeamMembers?.length ?? 0
+  const description =
+    (team as Team & { description?: string | null }).description ?? null
 
   return (
-    <>
-      <div className="overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-2.5" />
-              <TableHead>{t("fields.team.label")}</TableHead>
-              <TableHead>{t("fields.teamMembers.label")}</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length ? (
-              rows.map((row, _index) => {
-                if (row.showMembers) {
-                  return (
-                    <TableRow key={row.team.id}>
-                      <TableCell>
-                        <Button
-                          className="cursor-pointer"
-                          onClick={() =>
-                            setOpenTeams((prev) => ({
-                              ...prev,
-                              [row.team.id]: !prev[row.team.id],
-                            }))
-                          }
-                          type="button"
-                          variant="ghost"
-                        >
-                          {openTeams[row.team.id] ? (
-                            <ChevronDownIcon size={16} />
-                          ) : (
-                            <ChevronRightIcon size={16} />
-                          )}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          className="cursor-pointer"
-                          onClick={() =>
-                            setOpenTeams((prev) => ({
-                              ...prev,
-                              [row.team.id]: !prev[row.team.id],
-                            }))
-                          }
-                          type="button"
-                          variant="ghost"
-                        >
-                          {row.team.name}
-                        </Button>
-                      </TableCell>
-                      <TableCell>
-                        {row.team.inboxTeamMembers?.length || 0}
-                      </TableCell>
-                      <TableCell className="w-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button size="icon" variant="ghost">
-                              <MoreHorizontalIcon className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent className="flex flex-col gap-1 p-3">
-                            <DropdownMenuItem
-                              className="cursor-pointer text-sm"
-                              onClick={() => setRenameInboxTeam(row.team)}
-                            >
-                              <PencilIcon />
-                              {t("actions.rename")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="cursor-pointer text-sm"
-                              onClick={() => setAddInboxTeamMember(row.team)}
-                            >
-                              <PlusIcon />
-                              {t("actions.addFeature", {
-                                feature: t("fields.member.label"),
-                              })}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="cursor-pointer text-destructive text-sm"
-                              onClick={() => setDeleteInboxTeam(row.team)}
-                            >
-                              <Trash2Icon />
-                              {t("actions.delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  )
-                }
-                return (
-                  <TableRow key={`${row.team.id}-members`}>
-                    <TableCell />
-                    <TableCell colSpan={4}>
-                      <ul className="pl-2">
-                        {(row.team.inboxTeamMembers || []).map((member) => (
-                          <li
-                            className="flex items-center justify-between border-b py-2 last:border-b-0"
-                            key={member.id}
-                          >
-                            <span>{member.user?.name}</span>
-                            <Button
-                              className="size-6 px-4"
-                              onClick={() => setDeleteInboxTeamMember(member)}
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <Trash2Icon className="text-destructive" />
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            ) : (
-              <TableRow>
-                <TableCell className="h-24 text-center" colSpan={3}>
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+    <div className="flex items-center gap-3 rounded-md border border-white/[0.06] bg-app-surface px-4 py-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/30">
+        <UsersIcon className="h-4 w-4 text-primary" />
       </div>
 
-      <RenameInboxTeamDialog
-        inboxTeam={renameInboxTeam}
-        onOpenChange={() => setRenameInboxTeam(null)}
-        open={Boolean(renameInboxTeam)}
-        workspaceId={workspaceId}
-      />
-      <AddInboxTeamMemberDialog
-        inboxTeam={addInboxTeamMember}
-        onOpenChange={() => setAddInboxTeamMember(null)}
-        open={Boolean(addInboxTeamMember)}
-        workspaceId={workspaceId}
-        workspaceMembers={workspaceMembers}
-      />
-      <DeleteInboxTeamDialog
-        inboxTeam={deleteInboxTeam}
-        onOpenChange={() => setDeleteInboxTeam(null)}
-        open={Boolean(deleteInboxTeam)}
-        workspaceId={workspaceId}
-      />
-      <DeleteInboxTeamMembersDialog
-        onOpenChange={() => setDeleteInboxTeamMember(null)}
-        open={Boolean(deleteInboxTeamMember)}
-        teamMember={deleteInboxTeamMember}
-        workspaceId={workspaceId}
-      />
-    </>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-semibold text-foreground">{team.name}</span>
+          <span className="text-text-secondary text-xs">
+            (ID: {team.id.slice(-6)})
+          </span>
+        </div>
+        <div className="mt-0.5 truncate text-text-secondary text-xs">
+          {description?.trim()
+            ? description
+            : t("membersCount", { count: memberCount })}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          className="text-destructive"
+          onClick={() => onDelete(team)}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          <Trash2Icon className="h-4 w-4" />
+          {t("delete")}
+        </Button>
+        <Button
+          onClick={() => onManage(team)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <SettingsIcon className="h-4 w-4" />
+          {t("manage")}
+        </Button>
+      </div>
+    </div>
   )
 }
 
 export function ListInboxTeams({ workspaceId, promises }: ListInboxTeamsProps) {
-  const t = useTranslations()
+  const t = useTranslations("inboxTeams")
   const [{ data: allInboxTeams }, { data: allWorkspaceMembers }] = use(promises)
 
+  const [search, setSearch] = useState("")
+  const [manageTeam, setManageTeam] = useState<Team | null>(null)
+  const [deleteTeam, setDeleteTeam] = useState<Team | null>(null)
+
+  const teams: ListInboxTeamsResponse["data"] = allInboxTeams ?? []
+  const members: ListWorkspaceMembersResponse["data"] =
+    allWorkspaceMembers ?? []
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) {
+      return teams
+    }
+    const q = search.toLowerCase()
+    return teams.filter((tm) => tm.name.toLowerCase().includes(q))
+  }, [teams, search])
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("fields.inboxTeam.label")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex justify-end">
-          <CreateInboxTeamDialog
-            workspaceId={workspaceId}
-            workspaceMembers={allWorkspaceMembers}
+    <div className="space-y-4">
+      <div>
+        <h2 className="flex items-center gap-2 font-semibold text-foreground text-xl">
+          <UsersIcon className="h-5 w-5" />
+          {t("title")}
+        </h2>
+        <p className="mt-1 text-sm text-text-secondary">{t("subtitle")}</p>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <CreateInboxTeamDialog
+          workspaceId={workspaceId}
+          workspaceMembers={members}
+        />
+        <div className="relative max-w-sm flex-1">
+          <SearchIcon className="absolute top-2.5 left-3 h-4 w-4 text-text-secondary" />
+          <Input
+            className="pl-9"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("searchPlaceholder")}
+            value={search}
           />
         </div>
-        <ListInboxTeamsDetail
-          inboxTeams={allInboxTeams || []}
-          workspaceId={workspaceId}
-          workspaceMembers={allWorkspaceMembers || []}
-        />
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <div className="rounded-md border border-white/[0.06] bg-app-surface p-8 text-center text-sm text-text-secondary">
+            {search.trim()
+              ? "Nenhuma equipe encontrada."
+              : "Nenhuma equipe criada ainda."}
+          </div>
+        ) : (
+          filtered.map((team) => (
+            <TeamRow
+              key={team.id}
+              onDelete={setDeleteTeam}
+              onManage={setManageTeam}
+              team={team}
+            />
+          ))
+        )}
+      </div>
+
+      <ManageInboxTeamDialog
+        inboxTeam={manageTeam}
+        onOpenChange={() => setManageTeam(null)}
+        open={Boolean(manageTeam)}
+        workspaceId={workspaceId}
+        workspaceMembers={members}
+      />
+      <DeleteInboxTeamDialog
+        inboxTeam={deleteTeam}
+        onOpenChange={() => setDeleteTeam(null)}
+        open={Boolean(deleteTeam)}
+        workspaceId={workspaceId}
+      />
+    </div>
   )
 }

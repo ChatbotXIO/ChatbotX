@@ -1,11 +1,150 @@
-.epr-main {
-  background-color: var(--background) !important;
+/* Pixel-perfect Respond.io 2026-05-25 (iteração 16) — Pedro pediu:
+   "deixar exatamente igual do responde io, com a mesma quantidade de
+   emojis cabendo na tela, os icones em cima, exatamente igual".
+
+   Mapeado via Chrome MCP no emoji-mart do Respond.io ao vivo:
+   - Picker 345×420 px
+   - bg #222225 (app-surface) + radius 5px
+   - Header anchors 42px com 33×42 cada
+   - Inativo: branco. Ativo: #AE65C5 (roxo) + underline 3px
+   - Search "Pesquisa" 32px
+   - Apple-style emojis
+*/
+
+aside.EmojiPickerReact,
+.EmojiPickerReact {
+  /* TAMANHOS — match exato Respond.io: 9 emojis por linha.
+     Cada CÉLULA (button) = 36 px (24px emoji + 6px padding cada lado).
+     9 × 36 = 324 px de emojis. Picker 345 px - container padding = ok. */
+  --epr-emoji-size: 24px;
+  --epr-emoji-padding: 6px;
+  --epr-emoji-fullsize: 36px;
+  --epr-category-navigation-button-size: 24px;
+  --epr-header-padding: 8px 12px;
+  --epr-category-padding: 0 6px;
+  --epr-horizontal-padding: 6px;
+  --epr-search-input-padding: 0 12px;
+  --epr-search-input-height: 32px;
+  --epr-picker-border-radius: 5px;
+  --epr-category-label-height: 28px;
+
+  /* CORES — dark theme Respond.io */
+  --epr-bg-color: #222225;
+  --epr-category-label-bg-color: #222225;
+  --epr-text-color: #ffffff;
+  --epr-search-input-bg-color: rgba(255, 255, 255, 0.04);
+  --epr-search-input-bg-color-active: rgba(255, 255, 255, 0.08);
+  --epr-search-input-text-color: #ffffff;
+  --epr-search-input-placeholder-color: #97a0aa;
+  --epr-search-border-color: transparent;
+  --epr-picker-border-color: transparent;
+  --epr-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --epr-focus-bg-color: rgba(255, 255, 255, 0.12);
+
+  /* ROXO ativo (categoria + highlight) — #AE65C5 confirmado Chrome MCP */
+  --epr-category-icon-active-color: #ae65c5;
+  --epr-highlight-color: #ae65c5;
+  --epr-skin-tone-picker-menu-color: rgba(34, 34, 37, 0.95);
 }
 
-.epr-main h2 {
-  background-color: var(--muted) !important;
+/* Estrutura geral */
+.EmojiPickerReact {
+  border: none !important;
 }
 
-.epr-skin-tones {
-  border: 0 !important;
+/* Search bar — Respond.io tem placeholder "Pesquisa" + bg sutil.
+   Iteração 17 (Pedro): emoji-picker-react renderiza ícone de lupa
+   sobre o input, criando sobreposição visual ("Resquisa" no print).
+   Esconder o ícone interno e dar padding-left normal. */
+.EmojiPickerReact .epr-search-container input.epr-search {
+  padding-right: 32px !important;
+  padding-left: 12px !important;
+  font-size: 13px !important;
+  color: var(--epr-search-input-text-color) !important;
+  background: var(--epr-search-input-bg-color) !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+}
+.EmojiPickerReact .epr-search-container input.epr-search:focus {
+  outline: none !important;
+  background: var(--epr-search-input-bg-color-active) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+/* Esconder ícone de lupa interno (lib renderiza svg dentro do input) */
+.EmojiPickerReact .epr-search-container .epr-icn-search {
+  display: none !important;
+}
+/* Mover botão "limpar" (X) — quando user digita algo. Mantém pequeno
+   e na direita. */
+.EmojiPickerReact .epr-search-container .epr-btn-clear-search {
+  right: 8px !important;
+}
+
+/* Category label "Usados Frequentemente", "Emoticon & Sorrisos" — 12px medium muted */
+.EmojiPickerReact .epr-emoji-category-label {
+  padding: 6px 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background: var(--epr-category-label-bg-color) !important;
+}
+
+/* Anchors top — 10 ícones de categoria em linha */
+.EmojiPickerReact .epr-category-nav {
+  padding: 4px 8px !important;
+  border-bottom: 1px solid transparent !important;
+}
+.EmojiPickerReact .epr-category-nav > button.epr-cat-btn {
+  color: #ffffff !important;
+  opacity: 0.6;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+.EmojiPickerReact .epr-category-nav > button.epr-cat-btn:hover {
+  opacity: 1;
+}
+.EmojiPickerReact .epr-category-nav > button.epr-cat-btn.epr-active {
+  position: relative;
+  color: var(--epr-category-icon-active-color) !important;
+  opacity: 1;
+}
+/* Underline roxo do ativo — barra 3px embaixo */
+.EmojiPickerReact .epr-category-nav > button.epr-cat-btn.epr-active::after {
+  position: absolute;
+  right: 4px;
+  bottom: -4px;
+  left: 4px;
+  height: 3px;
+  content: "";
+  background: var(--epr-category-icon-active-color);
+  border-radius: 2px 2px 0 0;
+}
+
+/* Emoji hover */
+.EmojiPickerReact .epr-emoji-img,
+.EmojiPickerReact .epr-emoji {
+  border-radius: 4px !important;
+}
+.EmojiPickerReact button.epr-emoji:hover > .epr-emoji-img,
+.EmojiPickerReact button.epr-emoji:hover {
+  background: var(--epr-hover-bg-color) !important;
+}
+
+/* Esconder elementos que Respond.io NÃO TEM */
+.EmojiPickerReact .epr-preview,
+.EmojiPickerReact .epr-skin-tones {
+  display: none !important;
+}
+
+/* Scrollbar sutil */
+.EmojiPickerReact .epr-body::-webkit-scrollbar {
+  width: 6px;
+}
+.EmojiPickerReact .epr-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+.EmojiPickerReact .epr-body::-webkit-scrollbar-track {
+  background: transparent;
 }

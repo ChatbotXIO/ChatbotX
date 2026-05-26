@@ -260,7 +260,7 @@ export function UpdateMessengerForm({
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              aria-label="Open menu"
+                              aria-label="Abrir menu"
                               className="flex size-8 p-0 data-[state=open]:bg-muted"
                               variant="ghost"
                             >

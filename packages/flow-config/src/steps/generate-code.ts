@@ -22,7 +22,7 @@ export const generateCodeStepSchema = z
     outputFieldId: z.string().trim().min(1),
   })
   .refine((data) => data.min <= data.max, {
-    message: "Max must be larger than Min",
+    message: "Máx deve ser maior que Mín",
     path: ["max"],
   })
 export type GenerateCodeStepSchema = z.infer<typeof generateCodeStepSchema>

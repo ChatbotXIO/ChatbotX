@@ -8,8 +8,8 @@ export const foldersAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/folders",
-      summary: "List folders",
-      tags: ["Folders"],
+      summary: "Listar pastas",
+      tags: ["Pastas"],
     })
     .input(listFoldersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

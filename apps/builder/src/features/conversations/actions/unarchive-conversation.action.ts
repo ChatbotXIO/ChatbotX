@@ -3,6 +3,7 @@
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
+import { emitConversationOpened } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -49,6 +50,24 @@ export const unarchiveConversationAction = workspaceActionClient
         )
 
       for (const conv of conversations) {
+        // Emit conversationOpened pro TriggerNode "Conversa Aberta" (source =
+        // user — agente desarquivou manualmente).
+        const firstChannel = conv.contactInboxes[0]?.channel
+        try {
+          await emitConversationOpened(
+            workspaceId,
+            conv.contactId,
+            conv.id,
+            "user",
+            firstChannel,
+          )
+        } catch (error) {
+          logger.error(
+            { err: error },
+            "Falha ao emitir evento conversationOpened (unarchive):",
+          )
+        }
+
         for (const contactInbox of conv.contactInboxes) {
           emit("analytics:dashboard", {
             eventType: "conversation:unarchived",

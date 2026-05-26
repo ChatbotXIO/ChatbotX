@@ -6,14 +6,15 @@ export function clientErrorHandler(error: unknown) {
     try {
       const result = error.data
       toast.error(
-        result.message || "An unexpected error occurred. Please contact admin",
+        result.message ||
+          "Ocorreu um erro inesperado. Por favor contate o admin",
       )
     } catch {
-      toast.error("An unexpected error occurred. Please contact admin")
+      toast.error("Ocorreu um erro inesperado. Por favor contate o admin")
     }
   } else if (error instanceof Error) {
     toast.error(error.message)
   } else {
-    toast.error("An unexpected error occurred. Please contact admin")
+    toast.error("Ocorreu um erro inesperado. Por favor contate o admin")
   }
 }

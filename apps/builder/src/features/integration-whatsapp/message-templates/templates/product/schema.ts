@@ -20,7 +20,7 @@ export const templateProductSchema = z
     if (data.showFooter && !data.footer?.length) {
       ctx.addIssue({
         path: ["footer"],
-        message: "Footer text is required",
+        message: "Texto do rodapé é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }

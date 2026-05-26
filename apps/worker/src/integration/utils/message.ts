@@ -21,7 +21,7 @@ export async function sendMessageWithRender(
     where: {
       id: conversationId,
     },
-    message: "Conversation not found",
+    message: "Conversa não encontrada",
   })
 
   await chatQueue.add(ChatJobAction.sendChatMessage, {

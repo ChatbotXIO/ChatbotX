@@ -20,11 +20,23 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { BadgeCheck, Bell, ChevronsUpDown, Crown } from "lucide-react"
+import {
+  ArrowSwapVertical,
+  Buildings2,
+  Crown,
+  ShieldTick,
+} from "iconsax-reactjs"
+import { type IconsaxComponent, wrapIconsax } from "@/components/iconsax-icon"
+
+const BadgeCheck = wrapIconsax(ShieldTick as IconsaxComponent)
+const ChevronsUpDown = wrapIconsax(ArrowSwapVertical as IconsaxComponent)
+const CrownIcon = wrapIconsax(Crown as IconsaxComponent)
+const OrgIcon = wrapIconsax(Buildings2 as IconsaxComponent)
+
+import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { SignOut } from "@/features/auth/sign-out"
-import { LangSelector } from "./lang-selector"
-import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
@@ -37,6 +49,8 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const t = useTranslations()
+  const params = useParams()
+  const workspaceId = params.workspaceId as string
 
   return (
     <SidebarMenu>
@@ -87,33 +101,23 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Crown className="mr-2 h-4 w-4" />
+                <CrownIcon className="mr-2 size-4" />
                 {t("actions.upgradeToPro")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                Language
-                <LangSelector />
+              <DropdownMenuItem asChild>
+                <Link href={`/space/${workspaceId}/account`}>
+                  <BadgeCheck />
+                  {t("personalSettings.account")}
+                </Link>
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                Theme
-                <ThemeSwitcher />
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem asChild>
+                <Link href="/manage/workspaces">
+                  <OrgIcon />
+                  {t("organization.manage")}
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

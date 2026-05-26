@@ -54,6 +54,8 @@ export const BaseEditor = ({
         return t("trigger.conditions.conversationAssigned")
       case triggerEventTypes.enum.conversationUnassigned:
         return t("trigger.conditions.conversationUnassigned")
+      case triggerEventTypes.enum.lifecycleStageChanged:
+        return t("trigger.conditions.lifecycleStageChanged")
       case triggerEventTypes.enum.incomingCall:
         return t("trigger.conditions.incomingCall")
       case triggerEventTypes.enum.missedAudioCall:

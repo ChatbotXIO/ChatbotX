@@ -49,7 +49,7 @@ export function getColumns({
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          aria-label="Select all"
+          aria-label="Selecionar todos"
           checked={
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && "indeterminate")
@@ -62,7 +62,7 @@ export function getColumns({
       ),
       cell: ({ row }) => (
         <Checkbox
-          aria-label="Select row"
+          aria-label="Selecionar linha"
           checked={row.getIsSelected()}
           className="translate-y-0.5"
           onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
@@ -147,13 +147,13 @@ export function getColumns({
     {
       id: "action",
       size: 10,
-      header: "Actions",
+      header: "Ações",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost">
               <MoreHorizontalIcon className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">Abrir menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

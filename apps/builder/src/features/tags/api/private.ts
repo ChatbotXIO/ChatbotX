@@ -14,7 +14,7 @@ const privateListWorkspaceTagsAPI = authorizedAPI
   .route({
     method: "GET",
     path: "/workspaces/{workspaceId}/tags",
-    summary: "List tags",
+    summary: "Listar tags",
     tags: ["Tags"],
   })
   .input(listTagsRequest.and(withWorkspaceIdSchema))
@@ -26,7 +26,7 @@ const privateCreateWorkspaceTagAPI = authorizedAPI
   .route({
     method: "POST",
     path: "/workspaces/{workspaceId}/tags",
-    summary: "Create a tag",
+    summary: "Criar tag",
     tags: ["Tags"],
   })
   .input(createTagRequest.and(withWorkspaceIdSchema))
@@ -41,7 +41,7 @@ const privateUpdateTagAPI = authorizedAPI
   .route({
     method: "PUT",
     path: "/workspaces/{workspaceId}/tags/{id}",
-    summary: "Update tag",
+    summary: "Atualizar tag",
     tags: ["Tags"],
   })
   .input(
@@ -65,7 +65,7 @@ const privateDeleteTagsAPI = authorizedAPI
   .route({
     method: "DELETE",
     path: "/workspaces/{workspaceId}/tags/{id}",
-    summary: "Delete tag",
+    summary: "Excluir tag",
     tags: ["Tags"],
   })
   .input(

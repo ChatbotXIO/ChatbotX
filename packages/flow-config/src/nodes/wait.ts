@@ -23,7 +23,7 @@ export const waitNodeDefaultFn = (props: DefaultNodeProps): WaitNodeSchema => ({
   type: nodeTypeSchema.enum.wait,
   ...props.nodeProps,
   data: {
-    name: "Wait",
+    name: "Aguardar",
     isStartNode: false,
     ...props.dataProps,
     details: {

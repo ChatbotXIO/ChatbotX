@@ -318,7 +318,7 @@ async function getConversationFromInput(
       .returning()
       .then((result) => result[0])
     if (!contact) {
-      throw new ChatbotXException("Contact not found")
+      throw new ChatbotXException("Contato não encontrado")
     }
 
     isNewContact = true
@@ -354,13 +354,13 @@ async function getConversationFromInput(
   }
 
   if (!conversation) {
-    throw new ChatbotXException("Conversation not found")
+    throw new ChatbotXException("Conversa não encontrada")
   }
   if (!contactInbox) {
     throw new ChatbotXException("Contact inbox not found")
   }
   if (!contact) {
-    throw new ChatbotXException("Contact not found")
+    throw new ChatbotXException("Contato não encontrado")
   }
 
   return {

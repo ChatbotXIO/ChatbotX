@@ -18,6 +18,8 @@
     "archive": "Archive",
     "unarchive": "Unarchive",
     "archiveConversation": "Archive Conversation",
+    "closeConversation": "Close",
+    "openConversation": "Open",
     "assign": "Assign",
     "assignConversation": "Assign Conversation",
     "back": "Back",
@@ -109,15 +111,94 @@
     "deactivate": "Deactivate",
     "onFailure": "On failure",
     "onSkip": "On skip",
-    "onSuccess": "On success"
+    "onSuccess": "On success",
+    "trigger": "Trigger"
   },
   "states": {
     "success": "Success",
     "error": "Error",
-    "skip": "Skip"
+    "skip": "Skip",
+    "closed": "Closed",
+    "blocked": "Blocked"
   },
   "admins": {
-    "title": "Admins"
+    "title": "User settings",
+    "subtitle": "Manage and invite team members to your Workspace.",
+    "addUser": "Add User",
+    "searchPlaceholder": "Search User settings",
+    "revoke": "Revoke",
+    "edit": "Edit",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "agent": "Agent"
+    },
+    "lastSeen": "Last seen",
+    "inviteDialog": {
+      "title": "Add User",
+      "description": "Enter the email address and select an access level to invite a new user to your Workspace.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "user@company.com",
+      "accessLevelLabel": "Access Level",
+      "submit": "Add"
+    },
+    "editDialog": {
+      "title": "Edit User",
+      "description": "To edit this user select a new access level and click \"Edit\". The Access Level defines what the user can do on the workspace.",
+      "submit": "Update"
+    },
+    "revokeDialog": {
+      "title": "Revoke Access",
+      "description": "If you revoke this user all contacts assigned to this user will be marked unassigned. Are you sure you want to revoke this user's access?",
+      "confirm": "Revoke"
+    },
+    "roleDescriptions": {
+      "owner": "Owners can access all modules within the workspace and have full control of the settings with no restrictions.",
+      "manager": "Managers have access to all modules within the workspace including Settings. However, they are not able to invite/delete other managers or delete channels.",
+      "agent": "Agents only have access to messages within the workspace. Optionally, you can limit visibility in Contacts."
+    },
+    "advancedRestrictions": "Advanced Restrictions",
+    "managerRestrictions": {
+      "restrictDataExport": {
+        "label": "Restrict Data Export",
+        "description": "This user will not be able to export data from the workspace."
+      },
+      "restrictContactDeletion": {
+        "label": "Restrict Contact Deletion",
+        "description": "This user will not be able to delete any contacts from the workspace."
+      },
+      "restrictWorkspaceSettings": {
+        "label": "Restrict Workspace Settings Access",
+        "description": "This user will not be able to access the workspace settings."
+      },
+      "restrictIntegrationSettings": {
+        "label": "Restrict Integration Settings Access",
+        "description": "This user will not be able to access the integration settings."
+      }
+    },
+    "agentRestrictions": {
+      "contactVisibility": {
+        "label": "Restrict Contacts Visibility",
+        "description": "This user only view contacts assigned to",
+        "options": {
+          "all": "anyone",
+          "team": "anyone in the user's team",
+          "self": "user"
+        }
+      },
+      "restrictCalling": {
+        "label": "Restrict Calls Capabilities",
+        "description": "This user will not be able to receive or initiate calls."
+      },
+      "restrictWorkflows": {
+        "label": "Restrict Workflows Button",
+        "description": "The Workflows button in the Messages module will be disabled for this user. This includes Shortcuts and stopping a Workflow for a Contact."
+      },
+      "maskPhoneAndEmail": {
+        "label": "Mask Phone Number and Email Address",
+        "description": "This user will not be able to view all Contacts' phone numbers and email addresses."
+      }
+    }
   },
   "assignAdmin": {
     "assignConversation": "Assign conversation",
@@ -214,6 +295,9 @@
       "description": "Automated responses description",
       "label": "Automated Responses"
     }
+  },
+  "automation": {
+    "title": "Automation"
   },
   "billing": {
     "title": "Billing"
@@ -314,9 +398,86 @@
   "channels": {
     "title": "Channels"
   },
+  "organization": {
+    "manage": "Manage Organization"
+  },
+  "personalSettings": {
+    "title": "Personal settings",
+    "account": "Account",
+    "profile": "Profile",
+    "notifications": "Notification settings",
+    "profileSection": {
+      "title": "Profile",
+      "subtitle": "Manage your profile and login details.",
+      "statusAvailable": "Available",
+      "changeAvatar": "Change photo",
+      "avatarUpdated": "Photo updated.",
+      "firstNameLabel": "First Name",
+      "lastNameLabel": "Last Name",
+      "languageLabel": "Language",
+      "changePassword": "Change password",
+      "saveProfile": "Save Profile",
+      "savedSuccess": "Profile updated.",
+      "twoFA": {
+        "title": "Two-factor authentication (2FA)",
+        "toggle": "Enable two-factor authentication (2FA)"
+      },
+      "darkMode": {
+        "title": "Dark mode",
+        "system": "Use system settings",
+        "light": "Off",
+        "dark": "On"
+      }
+    },
+    "notificationsSection": {
+      "title": "Notification settings",
+      "subtitle": "Choose how you receive workspace alerts."
+    }
+  },
+  "manageWorkspaces": {
+    "sidebarTitle": "Workspaces",
+    "title": "Workspaces",
+    "subtitle": "Manage your organization's workspaces.",
+    "addWorkspace": "Add Workspace",
+    "searchPlaceholder": "Search workspace",
+    "open": "Open",
+    "rename": "Rename",
+    "delete": "Delete",
+    "empty": "No workspaces created yet.",
+    "columns": {
+      "name": "Name",
+      "members": "Users",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "renameDialog": {
+      "title": "Rename Workspace",
+      "description": "Update the workspace name.",
+      "nameLabel": "Workspace Name",
+      "submit": "Save",
+      "success": "Workspace renamed."
+    },
+    "deleteDialog": {
+      "title": "Delete Workspace",
+      "description": "Deleting the workspace \"{name}\" permanently removes all contacts, channels, fields and associated data. This action cannot be undone.",
+      "confirmLabel": "Type \"{name}\" to confirm",
+      "submit": "Delete",
+      "success": "Workspace deleted."
+    }
+  },
   "workspaces": {
     "list": {
       "title": "Workspaces List"
+    },
+    "searchPlaceholder": "Search project",
+    "addWorkspace": "Add Workspace",
+    "createDialog": {
+      "title": "Add Workspace",
+      "description": "Create a new workspace to separate channels, contacts, teams and settings.",
+      "nameLabel": "Workspace Name",
+      "namePlaceholder": "Ex: Sales, Collections, Support",
+      "submit": "Create",
+      "success": "Workspace \"{name}\" created."
     }
   },
   "workspaceToken": {
@@ -707,11 +868,15 @@
     "isDefault": {
       "label": "Mark as default"
     },
+    "country": {
+      "label": "Country"
+    },
     "language": {
       "description": "Contacts are assigned the default language when the contact language is unknown.",
       "english": "English",
       "label": "Language",
       "placeholder": "Select language",
+      "portuguese": "Português (Brasil)",
       "vietnamese": "Tiếng Việt"
     },
     "lastName": {
@@ -1233,6 +1398,21 @@
     },
     "webhookUrl": {
       "label": "Webhook URL"
+    },
+    "addedAt": {
+      "label": "Date added"
+    },
+    "lastEditedAt": {
+      "label": "Last edited"
+    },
+    "visibility": {
+      "label": "Visibility",
+      "alwaysShow": "Always show",
+      "alwaysHide": "Always hide",
+      "hideWhenEmpty": "Hide when empty"
+    },
+    "fieldId": {
+      "label": "Field ID"
     }
   },
   "flows": {
@@ -1311,7 +1491,8 @@
       "sequenceActions": "Sequence Actions",
       "subscribeSequence": "Subscribe Sequence",
       "unsubscribeSequence": "Unsubscribe Sequence",
-      "splitTraffic": "Split Traffic"
+      "splitTraffic": "Split Traffic",
+      "updateContactLifecycleStage": "Update Contact Lifecycle Stage"
     },
     "splitTraffic": {
       "balanceHint": "The total sum must equal 100%.",
@@ -1423,7 +1604,56 @@
       "whatsappSystemUserTokenRequired": "System User Token is required to configure WhatsApp."
     }
   },
+  "conversations": {
+    "searchInConversation": "Search in this conversation",
+    "searchInConversationPlaceholder": "Search messages…",
+    "searchNoResults": "No results",
+    "searchPrevious": "Previous result",
+    "searchNext": "Next result",
+    "composerHint": "Use '/' for snippets, '$' for variables, ':' for emoji",
+    "channelPrefix": "to:",
+    "todayLabel": "Today",
+    "yesterdayLabel": "Yesterday",
+    "unassignedAgent": "Unassigned"
+  },
+  "inboxSideRail": {
+    "details": "Contact details",
+    "channels": "Channels",
+    "activities": "Activities",
+    "attachments": "Attachments"
+  },
   "messages": {
+    "actions": {
+      "menu": "More options",
+      "copy": "Copy text",
+      "copyLink": "Copy message link",
+      "reply": "Reply",
+      "copied": "Message copied",
+      "linkCopied": "Link copied"
+    },
+    "tooltip": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "read": "Read",
+      "received": "Received"
+    },
+    "composer": {
+      "internalComment": "Internal comment",
+      "addComment": "Add Comment",
+      "exitInternal": "Back to message",
+      "internalLabel": "Internal comment",
+      "internalPlaceholder": "Use @ to mention a teammate. Comments are only visible to your team.",
+      "internalHint": "Comment visible only to your team",
+      "channelHint": "Channel used to send the message",
+      "formLabel": "Message form",
+      "textareaLabel": "Type your message",
+      "emoji": "Emoji",
+      "emojiSearch": "Search",
+      "attach": "Attach file",
+      "snippets": "Quick replies",
+      "send": "Send message"
+    },
+    "runningWorkflows": "Running workflows",
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
     "noGiphyApiKey": "No GIPHY API key found. Please add a GIPHY API key in the organization settings.",
@@ -1536,6 +1766,82 @@
   "settings": {
     "title": "Settings"
   },
+  "settingsGroups": {
+    "general": "General settings",
+    "rolesAndTeams": "Roles and teams",
+    "apps": "Apps",
+    "advanced": "Advanced",
+    "inbox": "Inbox",
+    "data": "Data"
+  },
+  "lifecycle": {
+    "title": "Lifecycle",
+    "subtitle": "Track and manage contacts through each stage of your sales process",
+    "learnMore": "Learn more",
+    "toggleTitle": "Show/hide lifecycle stages",
+    "toggleSubtitle": "Display lifecycle stages in the inbox and contacts modules.",
+    "configureTitle": "Configure lifecycle stages",
+    "activeTitle": "Lifecycle stages",
+    "activeSubtitle": "Organize and track contacts through your active funnel stages.",
+    "lostTitle": "Lost stages",
+    "lostSubtitle": "Track where contacts drop out of the funnel.",
+    "addStage": "Add stage",
+    "stageNumber": "Stage {n}",
+    "stageName": "Stage name",
+    "newStage": "New stage",
+    "defaultBadge": "Default",
+    "saved": "Stages saved",
+    "saveError": "Error saving stages",
+    "saving": "Saving…",
+    "emptyNameError": "All stages need a name",
+    "emojiSearch": "Search",
+    "emojiCategories": {
+      "suggested": "Recently used",
+      "smileys": "Smileys & emotion",
+      "animals": "Animals & nature",
+      "food": "Food & drink",
+      "travel": "Travel & places",
+      "activities": "Activities",
+      "objects": "Objects",
+      "symbols": "Symbols",
+      "flags": "Flags"
+    },
+    "deleteConfirm": "Delete stage \"{name}\"? Contacts on this stage will be unassigned.",
+    "selectPlaceholder": "Select stage",
+    "noStage": "No stage",
+    "nextStageTooltip": "Next stage: {name}",
+    "lastStageTooltip": "Already at the last stage of the funnel",
+    "contactLifecycle": "Contact lifecycle",
+    "activeStages": "Active stages",
+    "lostStages": "Lost stages",
+    "contactUpdated": "Contact stage updated",
+    "contactUpdateError": "Error updating stage",
+    "bulkMove": "Move stage",
+    "bulkMoved": "{count} contact(s) moved",
+    "deleteModalTitle": "Delete stage \"{name}\"",
+    "deleteModalDescription": "This stage has {count} contact(s). Choose which stage to move them to before deleting.",
+    "deleteModalReassignTo": "Move contacts to",
+    "deleteModalNoContacts": "This stage has no contacts. Confirm to delete.",
+    "deleteModalNoTarget": "Leave unassigned",
+    "deleteModalConfirm": "Delete and migrate",
+    "deleteModalCancel": "Cancel",
+    "stageBadgeLabel": "Stage",
+    "activityLog": "Stage history",
+    "activityLogEmpty": "No stage changes yet",
+    "menu": {
+      "setAsDefault": "Set as default",
+      "delete": "Delete"
+    },
+    "anyStage": "Any stage",
+    "triggerFromStage": "From (origin)",
+    "triggerToStage": "To (destination)",
+    "stepHint": "Update the contact's lifecycle stage to a new stage.",
+    "stepUpdateAction": "Update stage",
+    "stepUpdateActionHint": "Update contact stage to another stage",
+    "stepRemoveAction": "Remove stage",
+    "stepRemoveActionHint": "Removes the stage from the contact",
+    "stepStageLabel": "Lifecycle stage"
+  },
   "auth": {
     "orContinueWith": "Or continue with",
     "dontHaveAnAccount": "Don't have an account?",
@@ -1565,7 +1871,16 @@
     "signUpTitle": "Sign up to {name}"
   },
   "tags": {
-    "title": "Tags"
+    "title": "Tags",
+    "subtitle": "Create and manage tags to organize conversations and contacts",
+    "formDescription": "Configure the tag appearance — pick an emoji, color and description.",
+    "namePlaceholder": "Ex: Hot lead",
+    "emojiLabel": "Emoji",
+    "clearEmoji": "Clear emoji",
+    "colorLabel": "Color",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional — what is this tag for?",
+    "preview": "Preview"
   },
   "texts": {
     "or": "or"
@@ -1825,7 +2140,35 @@
     "organizationInvitationDescription2": "{userName} has invited you to join {organizationName}."
   },
   "inboxTeams": {
-    "title": "Inbox Teams"
+    "title": "Team settings",
+    "subtitle": "Create and manage teams to group the users in your Workspace.",
+    "addTeam": "Add Team",
+    "searchPlaceholder": "Search Team settings",
+    "manage": "Manage",
+    "delete": "Delete",
+    "createDialog": {
+      "title": "Add Team",
+      "description": "Create a Team to group users. Teams can be used in place of Users to share resources like Views."
+    },
+    "manageDialog": {
+      "title": "Manage Team",
+      "description": "Manage team by renaming it, change its description and adding or removing of team members."
+    },
+    "deleteDialog": {
+      "title": "Delete Team",
+      "description": "Are you sure you want to delete the team \"{name}\"? This action cannot be undone. Members will not be deleted.",
+      "confirm": "Delete"
+    },
+    "fields": {
+      "name": "Team Name",
+      "namePlaceholder": "Add team name here e.g. Marketing Team",
+      "description": "Team Description",
+      "descriptionPlaceholder": "Add team description here e.g. Manage marketing contacts.",
+      "members": "Team Members",
+      "membersPlaceholder": "Add a user here e.g. John."
+    },
+    "membersCount": "{count, plural, =0 {No members} =1 {1 member} other {# members}}",
+    "save": "Save"
   },
   "webhooks": {
     "title": "Webhooks"
@@ -1880,7 +2223,8 @@
       "productRemovedFromCart": "Product Removed From Cart",
       "productOrdered": "Product Ordered",
       "contactReferredANewContact": "Contact Referred A New Contact",
-      "contactReferredExistingContact": "Contact Referred Existing Contact"
+      "contactReferredExistingContact": "Contact Referred Existing Contact",
+      "lifecycleStageChanged": "Lifecycle stage changed"
     },
     "actions": {
       "addTag": "Add Tag",
@@ -1898,7 +2242,64 @@
     "day": "Day",
     "hour": "Hour",
     "minute": "Minute",
-    "at": "At"
+    "at": "At",
+    "shortcutMenu": {
+      "button": "Shortcuts",
+      "title": "Fire flow",
+      "loading": "Loading shortcuts...",
+      "empty": "No shortcut configured. Create a flow with a Shortcut trigger in Flows.",
+      "fired": "Shortcut fired",
+      "fireError": "Failed to fire shortcut"
+    },
+    "flowNode": {
+      "helperText": "Every flow starts with a trigger. When the configured event happens, this flow is fired automatically for the contact.",
+      "typeLabel": "Trigger type",
+      "typePlaceholder": "Select a trigger",
+      "noFilters": "No filters — fires on any event of this type. Refine using a condition step after the trigger.",
+      "anyOption": "Any",
+      "conversationOpened": {
+        "label": "Conversation Opened",
+        "hint": "Fires when a conversation is opened with the contact (new or re-opened after archive)."
+      },
+      "conversationClosed": {
+        "label": "Conversation Closed",
+        "hint": "Fires when a conversation is closed."
+      },
+      "contactFieldUpdated": {
+        "label": "Contact Field Updated",
+        "hint": "Fires when any contact field is changed.",
+        "fieldsLabel": "Fields that fire the trigger",
+        "empty": "No custom fields configured in this workspace."
+      },
+      "contactTagUpdated": {
+        "label": "Contact Tag Updated",
+        "hint": "Fires when a tag is added or removed from the contact.",
+        "actionLabel": "Tag action",
+        "actionAny": "Any (added or removed)",
+        "actionAdded": "When tag is added",
+        "actionRemoved": "When tag is removed",
+        "tagsLabel": "Tags that fire the trigger",
+        "empty": "No tags configured in this workspace."
+      },
+      "shortcut": {
+        "label": "Shortcut",
+        "hint": "Fires when an agent clicks a shortcut inside the Inbox.",
+        "iconLabel": "Icon (emoji)",
+        "iconHint": "Shown on the shortcut button inside the Inbox.",
+        "labelLabel": "Button text",
+        "labelPlaceholder": "Ex: Resend offer",
+        "note": "This trigger does not fire automatically. It appears as a button in the Inbox for agents to click when they want to run this flow manually."
+      },
+      "lifecycleStageChanged": {
+        "label": "Lifecycle Stage Changed",
+        "hint": "Fires when the contact's lifecycle stage changes.",
+        "toStagesLabel": "To stages (destination)",
+        "fromStagesLabel": "From stages (origin)",
+        "triggerOnCleared": "Also fire when stage is cleared",
+        "loading": "Loading stages...",
+        "emptyStages": "No lifecycle stages configured in this workspace."
+      }
+    }
   },
   "errorLogs": {
     "title": "Error Logs"
@@ -1908,13 +2309,51 @@
     "description": "Generate a token to allow your workspace to access ChatbotX APIs. Keep this token secret and do not share it with anyone."
   },
   "contacts": {
-    "title": "Contacts"
+    "title": "Contacts",
+    "fieldsTitle": "Contact fields",
+    "admin": "Administrate",
+    "details": "Contact details",
+    "channels": "Channels",
+    "tagsTitle": "Tags",
+    "ownerLabel": "Administrator",
+    "noTags": "No tags",
+    "addTag": "Add tag",
+    "searchTag": "Search and select tags",
+    "hiddenFields": "Hidden contact fields",
+    "visibility": {
+      "customize": "Customize view",
+      "title": "Customize view",
+      "description": "Customize the visibility of contact fields in the Inbox right panel. The change will apply to all workspace users.",
+      "fieldHeader": "Contact field",
+      "visibilityHeader": "Visibility",
+      "showAlways": "Always show",
+      "alwaysHide": "Always hide",
+      "saved": "View updated"
+    }
   },
   "auditLogs": {
-    "title": "Audit Logs"
+    "title": "Activity Logs",
+    "subtitle": "Full history of actions performed in the workspace.",
+    "searchPlaceholder": "Search by detail, action or user",
+    "filterUser": "All users",
+    "filterUserAll": "All users",
+    "filterAction": "All actions",
+    "filterActionAll": "All actions",
+    "exportCsv": "Export CSV",
+    "exportSuccess": "Logs exported successfully.",
+    "exportError": "Failed to export logs.",
+    "empty": "No activity recorded yet.",
+    "totalRows": "{count, plural, =0 {No records} =1 {1 record} other {# records}}",
+    "columns": {
+      "user": "User",
+      "action": "Action",
+      "detail": "Detail",
+      "when": "When"
+    }
   },
   "customFields": {
-    "title": "Custom Fields"
+    "title": "Custom Fields",
+    "subtitle": "Create and manage custom fields to enrich your contact profiles"
   },
   "keywords": {
     "title": "Keywords"
@@ -1924,6 +2363,43 @@
   },
   "users": {
     "title": "Users"
+  },
+  "organizationUsers": {
+    "pageTitle": "Admin settings",
+    "pageSubtitle": "Manage your organization's users here.",
+    "addButton": "Add User",
+    "searchPlaceholder": "Search users",
+    "empty": "No users found.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "addTitle": "Add User",
+    "addDescription": "Set this user's access to the organization and workspaces.",
+    "addSubmit": "Add",
+    "created": "User added.",
+    "editTitle": "Edit User",
+    "editDescription": "Update this user's access to the organization and workspaces.",
+    "editSubmit": "Save",
+    "updated": "User updated.",
+    "deleteTitle": "Delete User",
+    "deleteConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",
+    "deleteSubmit": "Delete",
+    "deleted": "User deleted.",
+    "orgAccess": "Organization Access",
+    "workspaceAccess": "Workspace access",
+    "selectWorkspace": "Select workspace",
+    "selectRole": "Select access",
+    "addWorkspace": "Add workspace",
+    "noWorkspaces": "No workspaces assigned.",
+    "orgRoles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "agent": "Member"
+    },
+    "wsRoles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "agent": "Agent"
+    }
   },
   "plans": {
     "title": "Billing Plans"
@@ -2068,5 +2544,64 @@
   "qrCodeGenerator": {
     "title": "QR Code Generator",
     "description": "Create and manage your QR codes."
+  },
+  "flowEditor": {
+    "startBadge": "Start",
+    "copySuffix": "Copy",
+    "addNode": "Add block",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fitView": "Fit to view"
+  },
+  "conversationFilter": {
+    "all": "All",
+    "human": "Human",
+    "bot": "Bot"
+  },
+  "inboxFilters": {
+    "all": "All",
+    "mine": "Mine",
+    "unassigned": "Unassigned",
+    "teamInbox": "Team Inbox",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "newMessageIndicator": "New message",
+    "blockedContacts": "Blocked Contacts"
+  },
+  "inboxDisplayFilter": {
+    "showLabel": "Show",
+    "sortLabel": "Sort by",
+    "advanced": "Advanced filters",
+    "noReply": "No reply",
+    "show": {
+      "all": "All",
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "sort": {
+      "recent": "Recent",
+      "oldest": "Oldest"
+    },
+    "searchContact": "Search contact"
+  },
+  "snippets": {
+    "title": "Snippets",
+    "subtitle": "Create and manage reusable replies to speed up your conversations",
+    "feature": "Snippet",
+    "addButton": "Add Snippet",
+    "createTitle": "Add Snippet",
+    "createConfirm": "Create",
+    "searchPlaceholder": "Search Snippets",
+    "nameLabel": "Name",
+    "namePlaceholder": "Name your Snippet (e.g. greeting1)",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Type the snippet message here",
+    "formDescription": "Snippets are reusable pre-written replies. Use \"/\" in the composer to insert them in conversations.",
+    "deleteTitle": "Delete Snippet",
+    "deleteDescription": "Are you sure you want to delete snippet \"{name}\"? This action cannot be undone."
+  },
+  "botFields": {
+    "title": "Bot Fields",
+    "subtitle": "Global workspace variables used in flows and automated messages"
   }
 }

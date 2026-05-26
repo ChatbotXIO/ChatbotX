@@ -54,5 +54,9 @@ export const contactRelations = defineRelationsPart(schema, (r) => ({
       from: r.contactModel.id,
       to: r.contactInboxModel.contactId,
     }),
+    lifecycleStage: r.one.lifecycleStageModel({
+      from: r.contactModel.lifecycleStageId,
+      to: r.lifecycleStageModel.id,
+    }),
   },
 }))

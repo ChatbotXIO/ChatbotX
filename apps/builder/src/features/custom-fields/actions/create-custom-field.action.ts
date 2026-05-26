@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, isDatabaseError } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
@@ -24,11 +25,19 @@ export const createCustomFieldAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: CreateCustomFieldRequest
+      ctx: { user: { id: string } }
     }) => {
       await createCustomField(workspaceId, parsedInput)
+      await logAudit({
+        workspaceId,
+        userId: user.id,
+        action: auditLogActions.CUSTOM_FIELD_CREATED,
+        detail: `Campo personalizado "${parsedInput.name}" (${parsedInput.type}) criado`,
+      })
     },
   )
 
@@ -57,11 +66,11 @@ export const createCustomField = async (
   } catch (error) {
     if (isDatabaseError(error) && error.cause.code === "23505") {
       return returnValidationErrors(createCustomFieldRequest, {
-        _errors: ["Validation Exception"],
+        _errors: ["Exceção de Validação"],
         name: { _errors: ["Name is already taken"] },
       })
     }
 
-    throw new ChatbotXException("Failed to create custom field")
+    throw new ChatbotXException("Falha ao criar campo personalizado")
   }
 }

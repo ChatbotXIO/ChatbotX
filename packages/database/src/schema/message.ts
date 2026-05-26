@@ -1,4 +1,5 @@
 import {
+  boolean,
   index,
   jsonb,
   pgEnum,
@@ -63,6 +64,10 @@ export const messageModel = pgTable(
     senderType: senderType().$type<SenderType>().notNull(),
     senderId: bigintAsString(),
     sourceId: text(),
+    // Comentário interno (só visível pra equipe, não vai pro contato).
+    // Padrão Respond.io — substitui a feature "Notas" separada.
+    // 2026-05-24 — Inbox Sprint 4.
+    isInternal: boolean().default(false).notNull(),
   },
   (table) => [
     index("Message_workspaceId_idx").using(
@@ -86,6 +91,10 @@ export const messageModel = pgTable(
       "btree",
       table.senderType.asc().nullsLast(),
       table.senderId.asc().nullsLast(),
+    ),
+    index("Message_isInternal_idx").using(
+      "btree",
+      table.isInternal.asc().nullsLast(),
     ),
   ],
 )

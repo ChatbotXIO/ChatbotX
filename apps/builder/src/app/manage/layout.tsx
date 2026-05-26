@@ -31,7 +31,8 @@ export default async function ManageLayoutPage({
 
     if (
       !organizationMember ||
-      organizationMember.role !== organizationMemberRoles.enum.admin
+      (organizationMember.role !== organizationMemberRoles.enum.owner &&
+        organizationMember.role !== organizationMemberRoles.enum.manager)
     ) {
       return notFound()
     }

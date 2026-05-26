@@ -1,33 +1,28 @@
 "use client"
 
-import {
-  assignerFilterTypes,
-  channelTypes,
-  conversationBotCategories,
-} from "@chatbotx.io/database/partials"
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Input } from "@chatbotx.io/ui/components/ui/input"
 import { Skeleton } from "@chatbotx.io/ui/components/ui/skeleton"
+import { Switch } from "@chatbotx.io/ui/components/ui/switch"
 import { SearchIcon, UserPlusIcon } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
 import { type GridComponents, Virtuoso } from "react-virtuoso"
 import { useDebouncedCallback } from "use-debounce"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
-import type { ConversationFilters } from "../chat/store/chat-store"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import { CreateContactDialog } from "../contacts/create-contact-dialog"
-import { ConversationFilter } from "./conversation-filter"
+import { ConversationDisplayFilter } from "./conversation-display-filter"
 import ConversationItem from "./conversation-item"
 
 export default function ConversationList({
   workspaceId,
+  lifecycleStages = [],
 }: {
   workspaceId: string
+  lifecycleStages?: LifecycleStageModel[]
 }) {
   const t = useTranslations()
   const router = useRouter()
@@ -44,6 +39,7 @@ export default function ConversationList({
   } = useChatStore((state) => state)
 
   const [showSearchInput, setShowSearchInput] = useState(false)
+  const [searchValue, setSearchValue] = useState(filters.keyword ?? "")
 
   // Check if there are more pages to load
   const hasNextPage =
@@ -62,87 +58,94 @@ export default function ConversationList({
     }
   }
 
-  const handleChange = useDebouncedCallback(() => {
+  const triggerReload = useDebouncedCallback(() => {
     resetState()
     loadMoreConversations(workspaceId)
   }, 300)
 
-  const form = useForm<ConversationFilters>({
-    defaultValues: {
-      keyword: "",
-      botCategory: conversationBotCategories.enum.all,
-      channel: channelTypes.enum.omnichannel,
-      assignedId: assignerFilterTypes.enum.all,
-      tags: [],
-      contactFilter: {
-        operator: "and",
-        conditions: [],
-      },
-    },
-  })
+  const updateFilters = (next: Partial<typeof filters>) => {
+    setFilters({ ...filters, ...next })
+    triggerReload()
+  }
 
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      setFilters(values as ConversationFilters)
-      handleChange()
-    })
-    return () => subscription.unsubscribe()
-  }, [form, handleChange, setFilters])
+  const debouncedSearch = useDebouncedCallback((value: string) => {
+    setFilters({ ...filters, keyword: value })
+    resetState()
+    loadMoreConversations(workspaceId)
+  }, 400)
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value)
+    debouncedSearch(value)
+  }
+
+  const noReplyEnabled = filters.tags?.includes("noAdminReply") ?? false
+  const toggleNoReply = (next: boolean) => {
+    const current = filters.tags ?? []
+    const cleaned = current.filter((tag) => tag !== "noAdminReply")
+    const tagsNext = next ? [...cleaned, "noAdminReply" as const] : cleaned
+    updateFilters({ tags: tagsNext })
+  }
 
   return (
-    <Form {...form}>
-      <form className="flex h-full flex-col">
-        <div className="mb-2 flex items-center gap-1">
-          <SelectField
-            name="botCategory"
-            options={[
-              { label: "All", value: conversationBotCategories.enum.all },
-              { label: "Human", value: conversationBotCategories.enum.human },
-              { label: "Bot", value: conversationBotCategories.enum.bot },
-            ]}
+    // Pixel-perfect Respond.io § 5: container bg #222225 (app-surface),
+    // separator border-bottom abaixo do filter bar, cards com border-bottom
+    // sutil (rgba(255,255,255,.06)). Pedro pediu 2026-05-24 alinhando ao
+    // print do Respond.io ao vivo. ResizablePanel pai já não tem padding.
+    <div className="flex h-full flex-col bg-app-surface">
+      <div className="flex items-center gap-2 border-white/[0.06] border-b px-3 py-2">
+        <ConversationDisplayFilter workspaceId={workspaceId} />
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Switch
+            checked={noReplyEnabled}
+            id="inbox-no-reply-toggle"
+            onCheckedChange={toggleNoReply}
           />
-
-          <Button
-            className="px-2"
-            onClick={() => {
-              setShowSearchInput(!showSearchInput)
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
+          <label
+            className="cursor-pointer truncate text-muted-foreground text-sm"
+            htmlFor="inbox-no-reply-toggle"
           >
-            <SearchIcon className={filters.keyword ? "text-primary" : ""} />
-          </Button>
-
+            {t("inboxDisplayFilter.noReply")}
+          </label>
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <CreateContactDialog
             trigger={
-              <Button className="px-2" size="sm" variant="outline">
-                <UserPlusIcon />
+              <Button className="size-8 p-0" size="sm" variant="ghost">
+                <UserPlusIcon className="size-4" />
               </Button>
             }
             workspaceId={workspaceId}
           />
-
-          <TagStoreProvider workspaceId={workspaceId}>
-            <ConversationFilter />
-          </TagStoreProvider>
-        </div>
-
-        <div className="flex-1">
-          {showSearchInput && (
-            <InputField
-              className="mb-2"
-              name="keyword"
-              placeholder={t("actions.search")}
-              {...{
-                onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault()
-                  }
-                },
-              }}
+          <Button
+            className="size-8 p-0"
+            onClick={() => setShowSearchInput((prev) => !prev)}
+            size="sm"
+            variant="ghost"
+          >
+            <SearchIcon
+              className={`size-4 ${searchValue ? "text-primary" : ""}`}
             />
-          )}
+          </Button>
+        </div>
+      </div>
+
+      {showSearchInput && (
+        <Input
+          className="mx-3 mt-2"
+          onChange={(event) => handleSearchChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault()
+            }
+          }}
+          placeholder={t("inboxDisplayFilter.searchContact")}
+          value={searchValue}
+        />
+      )}
+
+      <div className="flex-1 overflow-hidden">
+        <TagStoreProvider workspaceId={workspaceId}>
           <Virtuoso
             components={{
               List: ConversationListList,
@@ -152,6 +155,7 @@ export default function ConversationList({
             itemContent={(_, item) => (
               <ConversationItem
                 conversation={item}
+                lifecycleStages={lifecycleStages}
                 onSelect={() => {
                   const params = new URLSearchParams(searchParams.toString())
                   params.set("conversationId", item.id.toString())
@@ -166,9 +170,9 @@ export default function ConversationList({
               }
             }}
           />
-        </div>
-      </form>
-    </Form>
+        </TagStoreProvider>
+      </div>
+    </div>
   )
 }
 
@@ -190,7 +194,9 @@ const ConversationListList: GridComponents["List"] = ({
   children,
   ...props
 }) => (
-  <div {...props} className="virtuoso-item-list flex flex-col gap-1">
+  // Sem gap entre cards — separação visual vem do border-bottom de cada
+  // ConversationItem (igual Respond.io ao vivo).
+  <div {...props} className="virtuoso-item-list flex flex-col">
     {children}
   </div>
 )

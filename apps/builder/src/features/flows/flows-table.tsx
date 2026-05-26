@@ -2,12 +2,6 @@
 
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { DataTableRowAction } from "@chatbotx.io/ui/types/data-table"
 import { useRouter } from "next/navigation"
@@ -55,52 +49,47 @@ export function FlowsTable({
     clearOnDefault: true,
   })
 
+  // Sem Card wrapper — Pedro pediu UI flat estilo Respond.io em todas as
+  // páginas (2026-05-24). ChangeFolderDialog mantido pra ação no row dropdown.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">{t("flows.title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <DataTable table={table}>
-          <DataTableToolbar table={table}>
-            <FlowsTableToolbarActions
-              setRowAction={setRowAction}
-              table={table}
-              workspaceId={workspaceId}
-            />
-            <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
-          </DataTableToolbar>
-        </DataTable>
+    <>
+      <DataTable table={table}>
+        <DataTableToolbar table={table}>
+          <FlowsTableToolbarActions
+            setRowAction={setRowAction}
+            table={table}
+            workspaceId={workspaceId}
+          />
+          <CreateFlowDialog folderId={folderId} workspaceId={workspaceId} />
+        </DataTableToolbar>
+      </DataTable>
 
-        <DeleteFlowsDialog
-          flows={rowAction?.row.original ? [rowAction?.row.original] : []}
-          onOpenChange={() => setRowAction(null)}
-          onSuccess={() => {
-            rowAction?.row.toggleSelected(false)
-            router.refresh()
-          }}
-          open={rowAction?.variant === "delete"}
-          showTrigger={false}
-          workspaceId={workspaceId}
-        />
+      <DeleteFlowsDialog
+        flows={rowAction?.row.original ? [rowAction?.row.original] : []}
+        onOpenChange={() => setRowAction(null)}
+        onSuccess={() => {
+          rowAction?.row.toggleSelected(false)
+          router.refresh()
+        }}
+        open={rowAction?.variant === "delete"}
+        showTrigger={false}
+        workspaceId={workspaceId}
+      />
 
-        <RenameFlowDialog
-          flow={rowAction?.row.original || null}
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "rename"}
-        />
+      <RenameFlowDialog
+        flow={rowAction?.row.original || null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "rename"}
+      />
 
-        <ChangeFolderDialog
-          currentFolderId={rowAction?.row.original?.folderId || null}
-          folderType="flow"
-          modelIds={
-            rowAction?.row.original ? [rowAction?.row.original.id] : null
-          }
-          onOpenChange={() => setRowAction(null)}
-          open={rowAction?.variant === "move"}
-          workspaceId={workspaceId}
-        />
-      </CardContent>
-    </Card>
+      <ChangeFolderDialog
+        currentFolderId={rowAction?.row.original?.folderId || null}
+        folderType="flow"
+        modelIds={rowAction?.row.original ? [rowAction?.row.original.id] : null}
+        onOpenChange={() => setRowAction(null)}
+        open={rowAction?.variant === "move"}
+        workspaceId={workspaceId}
+      />
+    </>
   )
 }

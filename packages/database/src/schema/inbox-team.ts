@@ -11,4 +11,5 @@ export const inboxTeamModel = pgTable("InboxTeam", {
       onUpdate: "cascade",
     }),
   name: text().notNull(),
+  description: text(),
 })

@@ -11,5 +11,7 @@ export type TagResource = z.infer<typeof tagResource>
 export const publicTagResource = tagResource.pick({
   id: true,
   name: true,
+  color: true,
+  emoji: true,
 })
 export type PublicTagResource = z.infer<typeof publicTagResource>

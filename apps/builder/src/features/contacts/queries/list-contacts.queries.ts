@@ -107,5 +107,9 @@ const generateWhere = (input: ListContactsRequest) => {
     Object.assign(where, applyContactFilter(input.contactFilter))
   }
 
+  if (input.lifecycleStageIds && input.lifecycleStageIds.length > 0) {
+    where.lifecycleStageId = { in: input.lifecycleStageIds }
+  }
+
   return where
 }

@@ -41,8 +41,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "GET",
       path: "/v1/contacts/{contactId}",
-      summary: "Get contact by contact id",
-      tags: ["Contacts"],
+      summary: "Obter contato pelo ID",
+      tags: ["Contatos"],
     })
     .input(z.object({ contactId: zodBigintAsString() }))
     .output(publicFindContactResponse)
@@ -53,7 +53,7 @@ export const workspaceTokenAuthAPIs = {
       })
 
       if (!contact) {
-        throw notFoundException("Contact not found")
+        throw notFoundException("Contato não encontrado")
       }
 
       return contact
@@ -63,8 +63,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "POST",
       path: "/v1/contacts",
-      summary: "Create a contact",
-      tags: ["Contacts"],
+      summary: "Criar contato",
+      tags: ["Contatos"],
     })
     .input(createContactRequest)
     .output(publicFindContactResponse)
@@ -76,7 +76,7 @@ export const workspaceTokenAuthAPIs = {
 
       const newContact = await publicFindContact({ id: contact.id })
       if (!newContact) {
-        throw notFoundException("Contact not found")
+        throw notFoundException("Contato não encontrado")
       }
       return newContact
     }),
@@ -85,10 +85,10 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "GET",
       path: "/v1/contacts/find-by-custom-field",
-      summary: "List contacts by custom field",
+      summary: "Listar contatos por campo personalizado",
       description:
         "Find contacts by custom field value. It will return maximum 100 contacts. The results are sorted by the last custom field value update for a contact.",
-      tags: ["Contacts"],
+      tags: ["Contatos"],
     })
     .input(publicListContactsByCustomFieldRequest)
     .output(publicListContactsResponse)
@@ -104,8 +104,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "GET",
       path: "/v1/contacts/{contactId}/tags",
-      summary: "Get all tags added to this contact",
-      tags: ["Contacts"],
+      summary: "Obter todas as tags do contato",
+      tags: ["Contatos"],
     })
     .input(z.object({ contactId: zodBigintAsString() }))
     .output(publicListTagsResponse)
@@ -121,9 +121,9 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "POST",
       path: "/v1/contacts/{contactId}/tags/{tagId}",
-      summary: "Add a tag to the contact",
+      summary: "Adicionar tag ao contato",
       successStatus: 204,
-      tags: ["Contacts"],
+      tags: ["Contatos"],
     })
     .input(
       z.object({ contactId: zodBigintAsString(), tagId: zodBigintAsString() }),
@@ -139,9 +139,9 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{contactId}/tags/{tagId}",
-      summary: "Remove a tag from the contact",
+      summary: "Remover tag do contato",
       successStatus: 204,
-      tags: ["Contacts"],
+      tags: ["Contatos"],
     })
     .input(removeContactTagRequest)
     .handler(async ({ context, input }) => {
@@ -155,8 +155,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "GET",
       path: "/v1/contacts/{contactId}/custom-fields",
-      summary: "Get all custom fields from a contact",
-      tags: ["Contacts"],
+      summary: "Obter todos os campos personalizados do contato",
+      tags: ["Contatos"],
     })
     .input(z.object({ contactId: zodBigintAsString() }))
     .output(listPublicContactCustomFieldsResponse)
@@ -172,8 +172,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "GET",
       path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
-      summary: "Get contact custom field value",
-      tags: ["Contacts"],
+      summary: "Obter valor de campo personalizado do contato",
+      tags: ["Contatos"],
     })
     .input(
       z.object({
@@ -197,8 +197,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "POST",
       path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
-      summary: "Set contact custom field value",
-      tags: ["Contacts"],
+      summary: "Definir valor de campo personalizado do contato",
+      tags: ["Contatos"],
     })
     .input(setContactCustomFieldValueRequest)
     .handler(async ({ context, input }) => {
@@ -217,9 +217,9 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "DELETE",
       path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
-      summary: "Delete contact custom field",
+      summary: "Excluir campo personalizado do contato",
       successStatus: 204,
-      tags: ["Contacts"],
+      tags: ["Contatos"],
     })
     .input(deleteContactCustomFieldRequest)
     .handler(async ({ context, input }) => {
@@ -236,8 +236,8 @@ export const workspaceTokenAuthAPIs = {
     .route({
       method: "POST",
       path: "/v1/contacts/{contactId}/messages",
-      summary: "Send message to contact",
-      tags: ["Contacts"],
+      summary: "Enviar mensagem para o contato",
+      tags: ["Contatos"],
     })
     .input(
       createMessageRequest.and(
@@ -259,14 +259,14 @@ export const workspaceTokenAuthAPIs = {
         },
       })
       if (!conversation) {
-        throw notFoundException("Conversation not found")
+        throw notFoundException("Conversa não encontrada")
       }
 
       const contactInbox = input.inboxId
         ? conversation.contactInboxes.find((ci) => ci.inboxId === input.inboxId)
         : conversation.contactInboxes[0]
       if (!contactInbox) {
-        throw notFoundException("Conversation not found")
+        throw notFoundException("Conversa não encontrada")
       }
 
       await createMessage({

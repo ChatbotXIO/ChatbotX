@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { inboxTeamModel } from "@chatbotx.io/database/schema"
 import {
@@ -15,8 +16,17 @@ export const deleteInboxTeamAction = workspaceActionClient
   .action(async (props) => {
     const {
       parsedInput,
+      ctx: { user },
       bindArgsParsedInputs: [workspaceId],
     } = props
+
+    const teamsToDelete = await db.query.inboxTeamModel.findMany({
+      where: {
+        workspaceId,
+        id: { in: parsedInput.ids },
+      },
+      columns: { name: true },
+    })
 
     await db
       .delete(inboxTeamModel)
@@ -26,6 +36,14 @@ export const deleteInboxTeamAction = workspaceActionClient
           inArray(inboxTeamModel.id, parsedInput.ids),
         ),
       )
+
+    const names = teamsToDelete.map((t) => `"${t.name}"`).join(", ")
+    await logAudit({
+      workspaceId,
+      userId: user.id,
+      action: auditLogActions.TEAM_DELETED,
+      detail: `Equipe(s) excluída(s): ${names || "(nenhuma)"}`,
+    })
 
     revalidateCacheTags(`workspaces:${workspaceId}#inboxTeams`)
   })

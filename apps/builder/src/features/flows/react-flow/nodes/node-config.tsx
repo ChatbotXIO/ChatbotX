@@ -4,6 +4,7 @@ import sendMailNodeConfig from "./send-mail"
 import sendMessageNodeConfig from "./send-message"
 import splitTrafficNodeConfig from "./split-traffic"
 import startFlowNodeConfig from "./start-flow"
+import triggerNodeConfig from "./trigger"
 import waitNodeConfig from "./wait"
 
 export const allNodesConfig = {
@@ -16,4 +17,5 @@ export const allNodesConfig = {
   [nodeTypeSchema.enum.wait]: waitNodeConfig,
   [nodeTypeSchema.enum.landingPage]: undefined,
   [nodeTypeSchema.enum.addNotes]: undefined,
+  [nodeTypeSchema.enum.trigger]: triggerNodeConfig,
 }

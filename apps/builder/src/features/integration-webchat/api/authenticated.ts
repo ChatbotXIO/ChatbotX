@@ -12,8 +12,8 @@ export const integrationWebchatAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/integration-webchats",
-      summary: "List Integration Webchats",
-      tags: ["Integration Webchats"],
+      summary: "Listar integrações Webchat",
+      tags: ["Integrações Webchat"],
     })
     .input(listIntegrationWebchatsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

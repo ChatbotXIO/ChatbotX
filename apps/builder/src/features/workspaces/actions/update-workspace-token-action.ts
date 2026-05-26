@@ -22,7 +22,7 @@ const updateWorkspaceToken = async ({
 }) => {
   if (!token.startsWith(workspaceId)) {
     return returnValidationErrors(updateWorkspaceTokenRequest, {
-      _errors: ["Validation Exception"],
+      _errors: ["Exceção de Validação"],
       token: {
         _errors: ["Token format is not valid"],
       },

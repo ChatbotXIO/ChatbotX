@@ -32,7 +32,12 @@ export type ListWorkspaceMembersRequest = z.infer<
 export const listWorkspaceMembersResponse = z.object({
   data: z.array(
     workspaceMemberResource.extend({
-      user: userResource.pick({ id: true, name: true, image: true }),
+      user: userResource.pick({
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      }),
     }),
   ),
   pageCount: z.number(),

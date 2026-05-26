@@ -11,8 +11,8 @@ export const workspaceMembersAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/members",
-      summary: "List workspace members",
-      tags: ["Workspace Members"],
+      summary: "Listar membros do workspace",
+      tags: ["Membros do Workspace"],
     })
     .input(listWorkspaceMembersRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

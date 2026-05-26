@@ -2,6 +2,7 @@
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { MultiSelectField } from "@chatbotx.io/ui/components/form/multi-select-field"
+import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -31,7 +32,8 @@ export function CreateInboxTeamDialog({
   workspaceId: string
   workspaceMembers: ListWorkspaceMembersResponse["data"]
 }) {
-  const t = useTranslations()
+  const t = useTranslations("inboxTeams")
+  const tActions = useTranslations("actions")
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
@@ -43,12 +45,7 @@ export function CreateInboxTeamDialog({
       {
         actionProps: {
           onSuccess: () => {
-            toast.success(
-              t("messages.createdSuccess", {
-                feature: t("fields.inboxTeam.label"),
-              }),
-            )
-
+            toast.success(t("createDialog.title"))
             setOpen(false)
             resetFormAndAction()
             router.refresh()
@@ -63,6 +60,7 @@ export function CreateInboxTeamDialog({
           mode: "onChange",
           defaultValues: {
             name: "",
+            description: "",
             userIds: [],
           },
         },
@@ -80,52 +78,55 @@ export function CreateInboxTeamDialog({
       <DialogTrigger asChild>
         <Button size="sm">
           <PlusIcon />
-          {t("actions.createFeature", { feature: t("fields.inboxTeam.label") })}
+          {t("addTeam")}
         </Button>
       </DialogTrigger>
-      <DialogContent className={"max-h-screen max-w-lg overflow-y-scroll"}>
+      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {t("messages.createFeature", {
-              feature: t("fields.inboxTeam.label"),
-            })}
-          </DialogTitle>
-          <DialogDescription />
+          <DialogTitle>{t("createDialog.title")}</DialogTitle>
+          <DialogDescription>{t("createDialog.description")}</DialogDescription>
         </DialogHeader>
-        <div className="flex items-center space-x-2">
-          <Form {...form}>
-            <form
-              className="flex-1 space-y-4"
-              onSubmit={handleSubmitWithAction}
-            >
-              <InputField label="Name" name="name" required />
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={handleSubmitWithAction}>
+            <InputField
+              label={t("fields.name")}
+              name="name"
+              placeholder={t("fields.namePlaceholder")}
+              required
+            />
+            <TextareaField
+              label={t("fields.description")}
+              name="description"
+              placeholder={t("fields.descriptionPlaceholder")}
+              rows={3}
+            />
+            <MultiSelectField
+              label={t("fields.members")}
+              name="userIds"
+              options={userOptions}
+              placeholder={t("fields.membersPlaceholder")}
+            />
 
-              <MultiSelectField
-                label="Select users"
-                name="userIds"
-                options={userOptions}
-              />
-
-              <div className="flex justify-end gap-4">
-                <DialogClose asChild>
-                  <Button variant="outline">{t("actions.cancel")}</Button>
-                </DialogClose>
-
-                <Button
-                  disabled={
-                    !form.formState.isValid || form.formState.isSubmitting
-                  }
-                  type="submit"
-                >
-                  {form.formState.isSubmitting && (
-                    <Loader2 className="animate-spin" />
-                  )}
-                  {t("actions.confirm")}
+            <div className="flex justify-end gap-2 pt-2">
+              <DialogClose asChild>
+                <Button type="button" variant="ghost">
+                  {tActions("cancel")}
                 </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+              </DialogClose>
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2 className="animate-spin" />
+                )}
+                {t("save")}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

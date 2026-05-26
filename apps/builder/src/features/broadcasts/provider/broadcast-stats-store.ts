@@ -71,7 +71,9 @@ export function createBroadcastStatsStore(props: BroadcastStatsStoreProps) {
         set({
           isLoading: false,
           error:
-            error instanceof Error ? error.message : "Failed to fetch stats",
+            error instanceof Error
+              ? error.message
+              : "Falha ao buscar estatísticas",
         })
       }
     },

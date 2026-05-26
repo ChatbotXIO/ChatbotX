@@ -17,6 +17,7 @@ export const allCountryOptions = [
 export const allSupportedLanguages = [
   { label: "English", value: "en" },
   { label: "Tiếng Việt", value: "vi" },
+  { label: "Português (Brasil)", value: "pt-BR" },
 ]
 export const allLanguageCodes = allSupportedLanguages.map(
   (language) => language.value,

@@ -29,7 +29,7 @@ export const splitTrafficNodeDefaultFn = (
   type: nodeTypeSchema.enum.splitTraffic,
   ...props.nodeProps,
   data: {
-    name: "Split Traffic",
+    name: "Dividir Tráfego",
     isStartNode: false,
     ...props.dataProps,
     details: {

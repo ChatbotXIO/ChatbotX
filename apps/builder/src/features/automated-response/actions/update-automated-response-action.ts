@@ -52,9 +52,9 @@ export const updateAutomatedResponse = async (
     })
     if (!exists) {
       return returnValidationErrors(updateAutomatedResponseRequest, {
-        _errors: ["Validation Exception"],
+        _errors: ["Exceção de Validação"],
         flowId: {
-          _errors: ["Flow not found"],
+          _errors: ["Fluxo não encontrado"],
         },
       })
     }

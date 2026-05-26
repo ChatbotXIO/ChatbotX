@@ -8,8 +8,8 @@ export const inboxTeamsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/inbox-teams",
-      summary: "List inbox teams",
-      tags: ["Inbox Teams"],
+      summary: "Listar times da caixa de entrada",
+      tags: ["Times da Caixa de Entrada"],
     })
     .input(listInboxTeamsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

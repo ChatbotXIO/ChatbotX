@@ -201,7 +201,7 @@ export default function AIFilesTable({ promises }: AIFilesTableProps) {
         ),
         cell: ({ row }) => (
           <span className="text-muted-foreground">
-            {format(row.original.createdAt, "MMM dd, yyyy")}
+            {format(row.original.createdAt, "dd/MM/yyyy")}
           </span>
         ),
         enableSorting: true,

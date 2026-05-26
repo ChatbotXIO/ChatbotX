@@ -23,7 +23,7 @@ export const SendWaTemplateMessageStepViewer = (
           <div className="mb-1 flex items-center gap-2">
             <MessageSquareIcon size={16} />
             <span className="font-medium text-sm">
-              {data.template.name || "Template Message"}
+              {data.template.name || "Mensagem Template"}
             </span>
           </div>
           {data.template.language && (

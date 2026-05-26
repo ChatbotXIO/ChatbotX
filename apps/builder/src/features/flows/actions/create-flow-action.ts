@@ -6,7 +6,7 @@ import {
   flowModel,
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
-import { sendMessageNodeDefaultFn } from "@chatbotx.io/flow-config"
+import { triggerNodeDefaultFn } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
@@ -32,9 +32,11 @@ export const createFlowAction = workspaceActionClient
         await ensureFolderIsExists(parsedInput.folderId, workspaceId, "flow")
       }
 
-      const defaultNode = sendMessageNodeDefaultFn({
+      // Novo fluxo SEMPRE começa com TriggerNode (replica Respond.io).
+      // Tipo default: conversationOpened (mais comum). User customiza no editor.
+      const defaultNode = triggerNodeDefaultFn({
         dataProps: {
-          name: "Send Message #1",
+          name: "Gatilho",
           isStartNode: true,
         },
       })

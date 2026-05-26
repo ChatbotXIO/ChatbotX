@@ -37,7 +37,7 @@ export const createReflinkAction = workspaceActionClient
       } catch (error) {
         if (isUniqueViolationError(error)) {
           return returnValidationErrors(createReflinkRequest, {
-            _errors: ["Validation Exception"],
+            _errors: ["Exceção de Validação"],
             name: { _errors: ["Name is already taken"] },
           })
         }

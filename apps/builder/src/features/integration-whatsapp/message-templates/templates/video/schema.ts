@@ -11,7 +11,7 @@ export const templateVideoSchema = z
         .refine(
           (file) => file && file instanceof File && file.type === "video/mp4",
           {
-            message: "File must be a Video",
+            message: "O arquivo deve ser um vídeo",
           },
         )
         .refine((file) => file && file.size <= 20 * 1024 * 1024, {
@@ -29,7 +29,7 @@ export const templateVideoSchema = z
     if (data.showFooter && !data.footer?.length) {
       ctx.addIssue({
         path: ["footer"],
-        message: "Footer text is required",
+        message: "Texto do rodapé é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }

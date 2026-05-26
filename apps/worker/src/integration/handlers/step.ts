@@ -38,6 +38,7 @@ import {
   removeContactSequence,
   removeContactTag,
   setContactCustomField,
+  updateContactLifecycleStage,
 } from "./contact"
 import { type ExecuteStepProps, seekConnectedNode } from "./flow"
 import { handleAIGenerateText } from "./generate-text"
@@ -363,6 +364,7 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.waitUserReply]: undefined,
   [stepTypes.enum.subscribeSequence]: addContactSequence,
   [stepTypes.enum.unsubscribeSequence]: removeContactSequence,
+  [stepTypes.enum.updateContactLifecycleStage]: updateContactLifecycleStage,
   [stepTypes.enum.sendQuickReply]: sendFlowMessage,
   [stepTypes.enum.email]: sendEmail,
   [stepTypes.enum.typing]: stepSendTyping,

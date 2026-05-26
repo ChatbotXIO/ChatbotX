@@ -15,16 +15,16 @@ export const SpreadsheetOperatorSelect = ({
 }: ISpreadsheetOperatorSelectProps) => {
   const operators = useMemo(
     () => [
-      { label: "Is", value: Operator.IS },
-      { label: "Is Not", value: Operator.IS_NOT },
-      { label: "Greater than or Equal to", value: Operator.GTE },
-      { label: "Less than or Equal to", value: Operator.LTE },
-      { label: "Greater than", value: Operator.GT },
-      { label: "Less than", value: Operator.LT },
-      { label: "Contains", value: Operator.CONTAINS },
-      { label: "Not Contains", value: Operator.NOT_CONTAINS },
-      { label: "Starts With", value: Operator.STARTS_WITH },
-      { label: "Ends With", value: Operator.ENDS_WITH },
+      { label: "É", value: Operator.IS },
+      { label: "Não é", value: Operator.IS_NOT },
+      { label: "Maior ou igual a", value: Operator.GTE },
+      { label: "Menor ou igual a", value: Operator.LTE },
+      { label: "Maior que", value: Operator.GT },
+      { label: "Menor que", value: Operator.LT },
+      { label: "Contém", value: Operator.CONTAINS },
+      { label: "Não contém", value: Operator.NOT_CONTAINS },
+      { label: "Começa com", value: Operator.STARTS_WITH },
+      { label: "Termina com", value: Operator.ENDS_WITH },
     ],
     [],
   )
@@ -34,7 +34,7 @@ export const SpreadsheetOperatorSelect = ({
       label={label}
       name={name}
       options={operators}
-      placeholder="Please select"
+      placeholder="Por favor selecione"
     />
   )
 }

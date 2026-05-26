@@ -52,6 +52,7 @@ import { unassignConversationStep } from "./unassign-conversation"
 import { unfollowConversationStep } from "./unfollow-conversation"
 import { unsubscribeBroadcastStep } from "./unsubscribe-broadcast"
 import { unsubscribeSequenceStep } from "./unsubscribe-sequence"
+import { updateContactLifecycleStageStep } from "./update-contact-lifecycle-stage"
 import { waitStep } from "./wait"
 import whatsappOptionListStep from "./whatsapp-option-list"
 
@@ -107,6 +108,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.unsubscribeBroadcast]: unsubscribeBroadcastStep,
   [stepTypes.enum.subscribeSequence]: subscribeSequenceStep,
   [stepTypes.enum.unsubscribeSequence]: unsubscribeSequenceStep,
+  [stepTypes.enum.updateContactLifecycleStage]: updateContactLifecycleStageStep,
   [stepTypes.enum.chooseChannel]: chooseChannelStep,
   [stepTypes.enum.filterContact]: undefined,
   [stepTypes.enum.addNotes]: addNotesStep,

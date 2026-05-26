@@ -25,7 +25,7 @@ class ReconcileJob {
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
-      throw new Error("Scheduler not initialized. Call start() first.")
+      throw new Error("Scheduler não inicializado. Chame start() primeiro.")
     }
     return this._scheduler
   }

@@ -67,7 +67,7 @@ async function main() {
   await db.insert(organizationMemberModel).values({
     organizationId: organization?.id ?? "",
     userId: user?.id ?? "",
-    role: "admin",
+    role: "owner",
   })
 
   // create workspace
@@ -96,14 +96,14 @@ async function main() {
       userId: user?.id ?? "",
       role: "owner",
       permissions: {
-        superAdmin: true,
-        analytics: true,
-        flows: true,
-        contacts: true,
-        onlyAssignedContacts: true,
-        emailAndPhone: true,
-        broadcast: true,
-        ecommerce: true,
+        restrictDataExport: false,
+        restrictContactDeletion: false,
+        restrictWorkspaceSettings: false,
+        restrictIntegrationSettings: false,
+        contactVisibility: "all",
+        restrictCalling: false,
+        restrictWorkflows: false,
+        maskPhoneAndEmail: false,
       },
     })
   }

@@ -78,7 +78,7 @@ async function fetchAndValidatePhoneNumber(params: {
   })
 
   if (phoneNumbers.data.length === 0) {
-    throw new ChatbotXException("No phone numbers found")
+    throw new ChatbotXException("Nenhum número de telefone encontrado")
   }
 
   const foundPhoneNumber = phoneNumbers.data.find(
@@ -302,7 +302,7 @@ async function subscribeManualWebhook(
 
     console.info("subscribeWebhook")
   } catch (subscribeError) {
-    console.error(subscribeError, "Failed to subscribe webhook")
+    console.error(subscribeError, "Falha ao inscrever webhook")
   }
 }
 
@@ -428,13 +428,15 @@ export const connectWhatsappAction = authActionClient
           verifyToken,
         })
       } catch (err: unknown) {
-        console.error(err, "Unable to verify whatsapp token")
+        console.error(err, "Não foi possível verificar token do WhatsApp")
 
         if (err instanceof ChatbotXException) {
           throw err
         }
 
-        throw new ChatbotXException("Unable to verify Whatsapp token")
+        throw new ChatbotXException(
+          "Não foi possível verificar token do WhatsApp",
+        )
       }
     },
   )

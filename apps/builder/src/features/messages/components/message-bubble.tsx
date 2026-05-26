@@ -3,7 +3,14 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import type { HTMLAttributes } from "react"
 
-const messageBubbleVariant = cva("flex gap-2", {
+// items-end (Pedro 2026-05-25 iteração 9): garante que avatar e bubble
+// fiquem alinhados pelo BOTTOM em qualquer situação. Sem isso, o flex
+// default (align-items: stretch) deixava o avatar `self-end` ir pro
+// fundo do container — e como tinha min-h-11 (44px) no wrapper, o
+// avatar ficava ABAIXO da bubble quando ela era menor que 44px (1 linha).
+// Confirmado no Respond.io ao vivo: `dls-items-end` no parent + sem
+// min-height na bubble = avatar sempre encosta no bottom da bubble real.
+const messageBubbleVariant = cva("flex items-end gap-2", {
   variants: {
     variant: {
       left: "flex self-start",

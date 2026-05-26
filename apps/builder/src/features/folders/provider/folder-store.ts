@@ -48,7 +48,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch folders",
+              : "Falha ao buscar pastas",
         })
       } finally {
         set({ initialized: true })
@@ -80,7 +80,7 @@ export const createFolderStore = (props: Partial<FolderState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch folders",
+              : "Falha ao buscar pastas",
         })
       } finally {
         set({ loading: false })

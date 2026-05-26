@@ -50,7 +50,7 @@ export async function processAIFile(
     where: {
       id: aiFileId,
     },
-    message: "AI file not found",
+    message: "Arquivo de IA não encontrado",
   })
 
   const text = await extractTextFromFile(aiFile.path, aiFile.mimeType)

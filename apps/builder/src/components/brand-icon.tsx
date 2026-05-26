@@ -12,7 +12,7 @@ type BrandIconProps = {
 }
 
 export const BrandIcon = ({
-  alt = "Brand Icon",
+  alt = "Ícone da marca",
   className,
 }: BrandIconProps) => {
   const currentTheme = useCurrentTheme()
@@ -31,8 +31,11 @@ export const BrandIcon = ({
     currentTheme === "dark" ? "/brand/logo_white.svg" : "/brand/logo_black.svg"
   const logoSrc = logo || baseLogoSrc
 
+  // Icon collapsed — usa os novos PNGs do logo X1 do Pedro (2026-05-24).
+  // PNGs originais: x1_white.png pro dark, x1_black.png pro light.
+  // Caso o arquivo não exista, cai pros SVGs antigos.
   const baseIconSrc =
-    currentTheme === "dark" ? "/brand/icon_white.svg" : "/brand/icon_black.svg"
+    currentTheme === "dark" ? "/brand/x1_white.png" : "/brand/x1_black.png"
   const iconSrc = logo || baseIconSrc
 
   return (
@@ -48,17 +51,20 @@ export const BrandIcon = ({
         src={logoSrc}
         width={10}
       />
-      {/* Icon - shown when collapsed */}
+      {/* Icon - shown when collapsed (default state do sidebar global do app).
+          h-8/w-8 (32px display) com width/height=128 pra Next/Image gerar uma
+          variant maior e nítida — antes ficava 32×32 borrado parecendo um X
+          de close button. */}
       <Image
         alt={alt}
         className={cn(
           className,
-          "hidden h-8 w-(--sidebar-width-icon) group-data-[collapsible=icon]:block",
+          "hidden h-8 w-8 object-contain group-data-[collapsible=icon]:block",
         )}
-        height={5}
+        height={128}
         loading="eager"
         src={iconSrc}
-        width={10}
+        width={128}
       />
     </>
   )

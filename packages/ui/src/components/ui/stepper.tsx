@@ -343,7 +343,7 @@ const CircleStepIndicator = ({
       className="relative inline-flex items-center justify-center"
     >
       <svg width={size} height={size}>
-        <title>Step Indicator</title>
+        <title>Indicador de Passo</title>
         <circle
           cx={size / 2}
           cy={size / 2}

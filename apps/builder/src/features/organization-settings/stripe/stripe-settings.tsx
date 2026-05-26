@@ -51,10 +51,10 @@ export function StripeSettings({
   const handleCopy = (text: string) => () => {
     copy(text)
       .then(() => {
-        toast.success("Copied to clipboard")
+        toast.success("Copiado para a área de transferência")
       })
       .catch((error) => {
-        console.error("Failed to copy!", error)
+        console.error("Falha ao copiar!", error)
       })
   }
 

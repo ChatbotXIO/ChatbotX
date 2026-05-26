@@ -47,7 +47,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch inboxes",
+              : "Falha ao buscar caixas de entrada",
         })
       } finally {
         set({ initialized: true })
@@ -82,7 +82,7 @@ export const createInboxStore = (props: Partial<InboxState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch inboxes",
+              : "Falha ao buscar caixas de entrada",
         })
       } finally {
         set({ loadingInboxes: false })

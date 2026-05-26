@@ -56,7 +56,7 @@ export function TemplatePreview({
                 {imageUrl ? (
                   <div className="relative h-32 w-full">
                     <Image
-                      alt="Header preview"
+                      alt="Pré-visualização do cabeçalho"
                       className="h-full w-full rounded object-contain object-left"
                       fill={true}
                       src={imageUrl.toString()}

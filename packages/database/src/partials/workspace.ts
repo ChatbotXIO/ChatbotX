@@ -1,21 +1,35 @@
 import { z } from "zod"
 
-export const workspaceMemberRoles = z.enum(["owner", "agent"])
+export const workspaceMemberRoles = z.enum(["owner", "manager", "agent"])
 export type WorkspaceMemberRole = z.infer<typeof workspaceMemberRoles>
 
+export const contactVisibilityModes = z.enum(["all", "team", "self"])
+export type ContactVisibilityMode = z.infer<typeof contactVisibilityModes>
+
 export const workspaceMemberPermissionsSchema = z.object({
-  superAdmin: z.boolean(),
-  analytics: z.boolean(),
-  flows: z.boolean(),
-  contacts: z.boolean(),
-  onlyAssignedContacts: z.boolean(),
-  emailAndPhone: z.boolean(),
-  broadcast: z.boolean(),
-  ecommerce: z.boolean(),
+  restrictDataExport: z.boolean().default(false),
+  restrictContactDeletion: z.boolean().default(false),
+  restrictWorkspaceSettings: z.boolean().default(false),
+  restrictIntegrationSettings: z.boolean().default(false),
+  contactVisibility: contactVisibilityModes.default("all"),
+  restrictCalling: z.boolean().default(false),
+  restrictWorkflows: z.boolean().default(false),
+  maskPhoneAndEmail: z.boolean().default(false),
 })
 export type WorkspaceMemberPermissions = z.infer<
   typeof workspaceMemberPermissionsSchema
 >
+
+export const defaultWorkspaceMemberPermissions: WorkspaceMemberPermissions = {
+  restrictDataExport: false,
+  restrictContactDeletion: false,
+  restrictWorkspaceSettings: false,
+  restrictIntegrationSettings: false,
+  contactVisibility: "all",
+  restrictCalling: false,
+  restrictWorkflows: false,
+  maskPhoneAndEmail: false,
+}
 
 export const workspaceMemberNotificationTypesSchema = z.object({
   notifyAdmin: z.boolean(),

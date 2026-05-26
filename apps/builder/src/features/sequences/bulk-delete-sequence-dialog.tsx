@@ -88,7 +88,7 @@ export function BulkDeleteSequenceDialog({
             </Button>
           </DialogClose>
           <Button
-            aria-label="Delete selected rows"
+            aria-label="Excluir linhas selecionadas"
             onClick={handleBulkDelete}
             size="sm"
             variant="destructive"

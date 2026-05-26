@@ -197,7 +197,7 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes])
 
   return (
-    <NodeHeaderAction label="Delete node" onClick={handleClick} variant="ghost">
+    <NodeHeaderAction label="Excluir nó" onClick={handleClick} variant="ghost">
       <Trash />
     </NodeHeaderAction>
   )

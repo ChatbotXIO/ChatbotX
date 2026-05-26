@@ -20,7 +20,7 @@ const listTagsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "GET",
     path: "/v1/tags",
-    summary: "Get all tags",
+    summary: "Obter todas as tags",
     tags: ["Tags"],
   })
   .input(z.object({}))
@@ -40,7 +40,7 @@ const createTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "POST",
     path: "/v1/tags",
-    summary: "Create a new tag",
+    summary: "Criar nova tag",
     successStatus: 201,
     tags: ["Tags"],
   })
@@ -60,7 +60,7 @@ const findTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "GET",
     path: "/v1/tags/{id}",
-    summary: "Get tag by id",
+    summary: "Obter tag pelo ID",
     tags: ["Tags"],
   })
   .input(z.object({ id: zodBigintAsString() }))
@@ -83,7 +83,7 @@ const findTagByNameWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "GET",
     path: "/v1/tags/name/{name}",
-    summary: "Get tag by name",
+    summary: "Obter tag pelo nome",
     tags: ["Tags"],
   })
   .input(z.object({ name: z.string() }))
@@ -105,7 +105,7 @@ const updateTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "PUT",
     path: "/v1/tags/{id}",
-    summary: "Update tag",
+    summary: "Atualizar tag",
     tags: ["Tags"],
   })
   .input(
@@ -128,7 +128,7 @@ const deleteTagsWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({
     method: "DELETE",
     path: "/v1/tags/{id}",
-    summary: "Delete tag",
+    summary: "Excluir tag",
     successStatus: 204,
     tags: ["Tags"],
   })

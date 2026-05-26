@@ -10,7 +10,7 @@ const VariableInput = memo(
   ({
     parentName,
     index,
-    placeholder = "Type a message",
+    placeholder = "Digite uma mensagem",
   }: {
     parentName: string
     index: number

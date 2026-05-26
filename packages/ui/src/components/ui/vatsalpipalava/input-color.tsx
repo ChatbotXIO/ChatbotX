@@ -35,7 +35,7 @@ export const colorSchema = z
   .string()
   .regex(
     /^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/,
-    "Color must be a valid hex color (e.g., #FF0000 or #FF0000FF)"
+    "A cor deve ser hexadecimal válida (ex: #FF0000 ou #FF0000FF)"
   )
   .transform((val) => val.toUpperCase());
 
@@ -271,7 +271,7 @@ export default function InputColor({
   // Handle eyedropper click
   const handleEyeDropper = async () => {
     if (!isEyeDropperAvailable()) {
-      alert("Eyedropper is not supported in your browser");
+      alert("Conta-gotas não suportado no seu navegador");
       return;
     }
     try {

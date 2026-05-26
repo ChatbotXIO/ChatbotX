@@ -8,6 +8,8 @@ export const organizationMemberResource = createSelectSchema(
   organizationMemberModel,
   {
     id: z.string(),
+    userId: z.string(),
+    organizationId: z.string(),
   },
 )
 export const OrganizationMemberResource = organizationMemberResource

@@ -40,9 +40,9 @@ export const exportContactsAction = workspaceActionClient
       )
       if (contactsCount === 0) {
         return returnValidationErrors(exportContactsRequest, {
-          _errors: ["Validation Exception"],
+          _errors: ["Exceção de Validação"],
           fields: {
-            _errors: ["No contacts found"],
+            _errors: ["Nenhum contato encontrado"],
           },
         })
       }
@@ -65,7 +65,7 @@ export const exportContactsAction = workspaceActionClient
             userId: user.id,
             workspaceId,
             action: "export",
-            detail: "Contacts",
+            detail: "Contatos",
           },
         }),
       ])

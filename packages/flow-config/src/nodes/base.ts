@@ -11,6 +11,7 @@ export const nodeTypeSchema = z.enum([
   "wait",
   "landingPage",
   "addNotes",
+  "trigger",
 ])
 export type NodeType = z.infer<typeof nodeTypeSchema>
 

@@ -10,8 +10,8 @@ export const sequencesWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/sequences",
-      summary: "List sequences",
-      tags: ["Sequences"],
+      summary: "Listar sequências",
+      tags: ["Sequências"],
     })
     .input(basePaginationRequest)
     .output(listSequencesResponse)
@@ -27,8 +27,8 @@ export const sequencesWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/sequences/{id}",
-      summary: "Get sequence details",
-      tags: ["Sequences"],
+      summary: "Obter detalhes da sequência",
+      tags: ["Sequências"],
     })
     .input(z.object({ id: z.string() }))
     .output(sequenceResource)

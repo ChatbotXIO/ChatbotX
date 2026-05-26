@@ -52,7 +52,7 @@ export const updateContactTags = async ({
       id: parsedInput.contactId,
       workspaceId,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   // Get old tags before update
@@ -126,7 +126,7 @@ export const updateContactTags = async ({
     try {
       await emitTagApplied(workspaceId, contact.id, tag.id)
     } catch (error) {
-      console.error("Failed to emit tagApplied event:", error)
+      console.error("Falha ao emitir evento tagApplied:", error)
     }
   }
 
@@ -135,7 +135,7 @@ export const updateContactTags = async ({
     try {
       await emitTagRemoved(workspaceId, contact.id, tagId)
     } catch (error) {
-      console.error("Failed to emit tagRemoved event:", error)
+      console.error("Falha ao emitir evento tagRemoved:", error)
     }
   }
 

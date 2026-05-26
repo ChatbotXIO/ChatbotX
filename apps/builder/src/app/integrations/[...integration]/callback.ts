@@ -64,7 +64,7 @@ export const handleCallback = async (
     : await workspaceService.create({
         data: {
           organizationId: organization.id,
-          name: "New Workspace",
+          name: "Novo Workspace",
         },
         organization,
         createdBy: userId,

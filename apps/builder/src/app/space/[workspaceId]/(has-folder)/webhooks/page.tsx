@@ -1,9 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -34,21 +28,15 @@ export default async function WebhooksPage(props: {
   ])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">
-          {t("webhooks.title")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Suspense>
-          <WebhooksTable
-            folderId={search.folderId}
-            promises={promises}
-            workspaceId={workspaceId}
-          />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h2 className="font-bold text-xl">{t("webhooks.title")}</h2>
+      <Suspense>
+        <WebhooksTable
+          folderId={search.folderId}
+          promises={promises}
+          workspaceId={workspaceId}
+        />
+      </Suspense>
+    </div>
   )
 }

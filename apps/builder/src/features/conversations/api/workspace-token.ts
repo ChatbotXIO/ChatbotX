@@ -8,8 +8,8 @@ export const conversationWorkspaceTokenAPIs = {
     .route({
       method: "POST",
       path: "/v1/conversations",
-      summary: "List conversations",
-      tags: ["Conversations"],
+      summary: "Listar conversas",
+      tags: ["Conversas"],
     })
     .input(
       listConversationsRequest.omit({

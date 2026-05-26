@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEventBulk,
+} from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -26,12 +32,31 @@ export const addContactCustomFieldAction = workspaceActionClient
     const {
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     } = props
 
     await addContactCustomFields({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     })
+
+    if (parsedInput.ids.length > 0) {
+      await Promise.all([
+        logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.CONTACT_FIELD_UPDATED,
+          detail: `Campo personalizado "${parsedInput.customFieldId}" atualizado em ${parsedInput.ids.length} contato(s)`,
+        }),
+        recordContactEventBulk({
+          contactIds: parsedInput.ids,
+          workspaceId,
+          eventType: contactEventTypes.FIELD_UPDATED,
+          meta: { customFieldId: parsedInput.customFieldId },
+          actorUserId: user.id,
+        }),
+      ])
+    }
   })
 
 export const addContactCustomFields = async ({
@@ -129,7 +154,7 @@ export const addContactCustomFields = async ({
         parsedInput.value,
       )
     } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
+      console.error("Falha ao emitir evento customFieldChanged:", error)
     }
   }
 
@@ -197,7 +222,7 @@ export const setContactCustomFieldValue = async ({
       value,
     )
   } catch (error) {
-    console.error("Failed to emit customFieldChanged event:", error)
+    console.error("Falha ao emitir evento customFieldChanged:", error)
   }
 
   revalidateCacheTags(`workspaces:${workspaceId}#contacts`)

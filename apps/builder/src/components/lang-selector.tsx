@@ -33,6 +33,7 @@ export const LangSelector: React.FC = () => {
       <SelectContent>
         <SelectItem value="en">{t("fields.language.english")}</SelectItem>
         <SelectItem value="vi">{t("fields.language.vietnamese")}</SelectItem>
+        <SelectItem value="pt-BR">{t("fields.language.portuguese")}</SelectItem>
       </SelectContent>
     </Select>
   )

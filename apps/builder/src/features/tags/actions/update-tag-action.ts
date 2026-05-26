@@ -1,5 +1,6 @@
 "use server"
 
+import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { tagModel } from "@chatbotx.io/database/schema"
 import { returnValidationErrors } from "next-safe-action"
@@ -17,12 +18,22 @@ export const updateTagAction = workspaceActionClient
   .action(
     async ({
       parsedInput,
+      ctx: { user },
       bindArgsParsedInputs: [workspaceId, id],
     }: {
       parsedInput: UpdateTagSchema
+      ctx: { user: { id: string } }
       bindArgsParsedInputs: WorkspaceIdAndIdRequestParams
     }) => {
-      await updateTag({ workspaceId, id, parsedInput })
+      const updated = await updateTag({ workspaceId, id, parsedInput })
+      if (updated && !("validationErrors" in updated)) {
+        await logAudit({
+          workspaceId,
+          userId: user.id,
+          action: auditLogActions.TAG_UPDATED,
+          detail: `Etiqueta "${parsedInput.name}" atualizada`,
+        })
+      }
     },
   )
 
@@ -59,6 +70,13 @@ export const updateTag = async ({
     .update(tagModel)
     .set({
       name: parsedInput.name,
+      // Cor sempre definida — se o usuário não enviou, mantém a default do schema.
+      // Pra emoji/description, undefined = não tocar, null = limpar campo.
+      ...(parsedInput.color !== undefined && { color: parsedInput.color }),
+      ...(parsedInput.emoji !== undefined && { emoji: parsedInput.emoji }),
+      ...(parsedInput.description !== undefined && {
+        description: parsedInput.description,
+      }),
     })
     .where(eq(tagModel.id, id))
     .returning()

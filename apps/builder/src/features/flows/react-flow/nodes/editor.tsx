@@ -1,9 +1,15 @@
-import type { FlowNode, NodeType, StepType } from "@chatbotx.io/flow-config"
+import type {
+  FlowNode,
+  NodeType,
+  StepType,
+  TriggerNodeConfig,
+} from "@chatbotx.io/flow-config"
 import {
   buttonStepDefaultFn,
   disabledCopyActionTypes,
   hiddenActionsStepTypes,
   MAX_QUICK_REPLIES,
+  nodeTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
@@ -42,6 +48,7 @@ import { ErrorAlert } from "../steps/error-alert"
 import { useFlowTemplate } from "../stores/flow-template-store-provider"
 import { useStepStore } from "../stores/step-store-provider"
 import { allNodesConfig } from "./node-config"
+import { TriggerNodeEditor } from "./trigger/editor"
 import type { MenuItem } from "./types"
 
 const collectErrorMessages = (node: unknown): string[] => {
@@ -174,10 +181,29 @@ const NodeEditorMenu = memo(
   },
 )
 
+// Wrapper externo que despacha por nodeType — TriggerNode tem editor próprio
+// (discriminated union, sem `steps[]`). Refatorado 2026-05-26 pra cumprir regra
+// biome `useHookAtTopLevel`: o early return anterior deixava 9 hooks após ele,
+// invalidando a ordem fixa de hooks do React. Agora todos os hooks vivem em
+// `NodeStepsEditor` que só monta quando o tipo de fato precisa de steps.
 export const NodeEditor = memo((props: NodeEditorProps) => {
+  const { nodeId, nodeType, nodeDetails } = props
+  if (nodeType === nodeTypeSchema.enum.trigger) {
+    return (
+      <TriggerNodeEditor
+        nodeDetails={nodeDetails as unknown as TriggerNodeConfig}
+        nodeId={nodeId}
+      />
+    )
+  }
+  return <NodeStepsEditor {...props} />
+})
+
+const NodeStepsEditor = memo((props: NodeEditorProps) => {
   const { nodeId, nodeType, nodeDetails } = props
 
   const t = useTranslations()
+
   const nodeConfig = nodeType ? allNodesConfig[nodeType]?.(t) : null
   const validator = nodeConfig?.validator.shape.data.shape.details
 

@@ -87,7 +87,7 @@ export const SequenceStepContactsDialog = memo(
         setContacts(result.data)
         setPageCount(result.pageCount)
       } catch (error) {
-        console.error("Failed to fetch sequence step contacts:", error)
+        console.error("Falha ao buscar contatos da etapa da sequência:", error)
       } finally {
         setIsLoading(false)
       }

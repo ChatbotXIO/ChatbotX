@@ -102,7 +102,7 @@ const TemplateCarouselImagePreviewComponent = (
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Delete</p>
+                        <p>Excluir</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -119,7 +119,7 @@ const TemplateCarouselImagePreviewComponent = (
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Move Left</p>
+                        <p>Mover Esquerda</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -137,7 +137,7 @@ const TemplateCarouselImagePreviewComponent = (
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Move Right</p>
+                        <p>Mover Direita</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -149,7 +149,7 @@ const TemplateCarouselImagePreviewComponent = (
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Add</p>
+                        <p>Adicionar</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -175,7 +175,7 @@ const TemplateCarouselImagePreviewComponent = (
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Next</p>
+                  <p>Próximo</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -194,7 +194,7 @@ const TemplateCarouselImagePreviewComponent = (
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Prev</p>
+                  <p>Anterior</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

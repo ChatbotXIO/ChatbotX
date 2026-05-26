@@ -14,7 +14,7 @@ const VariableInput = memo(
       <div className="flex-1">
         <InputField
           name={`${parentName}.body.variables.${index}`}
-          placeholder="Type a message"
+          placeholder="Digite uma mensagem"
         />
       </div>
     </div>
@@ -49,7 +49,7 @@ const TemplateImagePartialComponent = (props: { parentName?: string }) => {
           name={`${parentName}.showFooter`}
           options={[
             {
-              label: "Show footer",
+              label: "Mostrar rodapé",
               value: "showFooter",
             },
           ]}

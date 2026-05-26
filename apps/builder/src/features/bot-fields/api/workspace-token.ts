@@ -16,8 +16,8 @@ const botFieldWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/bot-fields",
-      summary: "Get all bot fields",
-      tags: ["Bot Fields"],
+      summary: "Obter todos os campos do bot",
+      tags: ["Campos do Bot"],
     })
     .input(z.object({}))
     .output(publicListBotFieldsResponse)
@@ -38,9 +38,9 @@ const botFieldWorkspaceTokenAPIs = {
     .route({
       method: "POST",
       path: "/v1/bot-fields",
-      summary: "Create a new bot field",
+      summary: "Criar novo campo do bot",
       successStatus: 201,
-      tags: ["Bot Fields"],
+      tags: ["Campos do Bot"],
     })
     .input(createBotFieldRequest)
     .output(publicBotFieldResource)
@@ -57,8 +57,8 @@ const botFieldWorkspaceTokenAPIs = {
     .route({
       method: "GET",
       path: "/v1/bot-fields/{key}",
-      summary: "Search bot field by id or name",
-      tags: ["Bot Fields"],
+      summary: "Buscar campo do bot por ID ou nome",
+      tags: ["Campos do Bot"],
     })
     .input(z.object({ key: z.string().max(255) }))
     .output(publicBotFieldResource)
@@ -75,8 +75,8 @@ const botFieldWorkspaceTokenAPIs = {
     .route({
       method: "PUT",
       path: "/v1/bot-fields/{key}",
-      summary: "Update bot field by id or name",
-      tags: ["Bot Fields"],
+      summary: "Atualizar campo do bot por ID ou nome",
+      tags: ["Campos do Bot"],
     })
     .input(z.object({ key: z.string().max(255), value: z.string().max(255) }))
     .output(publicBotFieldResource)
@@ -94,9 +94,9 @@ const botFieldWorkspaceTokenAPIs = {
     .route({
       method: "DELETE",
       path: "/v1/bot-fields/{key}",
-      summary: "Unset the value of the bot field by id or name",
+      summary: "Limpar valor do campo do bot por ID ou nome",
       successStatus: 204,
-      tags: ["Bot Fields"],
+      tags: ["Campos do Bot"],
     })
     .input(z.object({ key: z.string().max(255) }))
     .errors(posibleErrorsOnDeletingResource)

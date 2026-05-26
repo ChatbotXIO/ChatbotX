@@ -11,6 +11,7 @@ import {
 import { emit } from "@chatbotx.io/event-bus"
 import {
   emitCustomFieldChanged,
+  emitLifecycleStageChanged,
   emitTagApplied,
   emitTagRemoved,
 } from "@chatbotx.io/events"
@@ -25,6 +26,7 @@ import type {
   SetCustomFieldStepSchema,
   SubscribeSequenceStepSchema,
   UnsubscribeSequenceStepSchema,
+  UpdateContactLifecycleStageStepSchema,
 } from "@chatbotx.io/flow-config"
 import {
   cancelPendingDispatches,
@@ -135,6 +137,81 @@ export async function addContactNotes({
     text: step.text,
     id: createId(),
   })
+}
+
+/**
+ * Step "Atualizar ciclo de vida" — replica o node "Update Lifecycle" do
+ * Respond.io. Dois modos:
+ *  - action="update": joga o contato na stage configurada.
+ *  - action="remove": tira o contato de qualquer etapa (null).
+ * Emite `lifecycleStageChanged` se a stage mudou de fato, permitindo
+ * encadear gatilhos / webhooks.
+ */
+export async function updateContactLifecycleStage({
+  conversation,
+  step,
+}: ExecuteStepProps<UpdateContactLifecycleStageStepSchema>) {
+  const isRemove = step.action === "remove"
+  const targetStageId = isRemove ? null : (step.lifecycleStageId ?? null)
+
+  // Quando "update" sem stage selecionada → no-op defensivo
+  if (!(isRemove || targetStageId)) {
+    return
+  }
+
+  // Snapshot da etapa anterior pra emitir o evento corretamente
+  const previous = await db.query.contactModel.findFirst({
+    where: {
+      id: conversation.contactId,
+      workspaceId: conversation.workspaceId,
+    },
+    columns: { lifecycleStageId: true },
+  })
+  const fromStageId = previous?.lifecycleStageId ?? null
+
+  if (fromStageId === targetStageId) {
+    // Já está na stage alvo (ou ambos null) — nada a fazer
+    return
+  }
+
+  await db
+    .update(contactModel)
+    .set({ lifecycleStageId: targetStageId })
+    .where(
+      and(
+        eq(contactModel.id, conversation.contactId),
+        eq(contactModel.workspaceId, conversation.workspaceId),
+      ),
+    )
+
+  // Buscar nomes (best-effort, só pra metadata do evento — não bloqueia)
+  const [fromStage, toStage] = await Promise.all([
+    fromStageId
+      ? db.query.lifecycleStageModel.findFirst({
+          where: { id: fromStageId, workspaceId: conversation.workspaceId },
+          columns: { name: true },
+        })
+      : Promise.resolve(null),
+    targetStageId
+      ? db.query.lifecycleStageModel.findFirst({
+          where: { id: targetStageId, workspaceId: conversation.workspaceId },
+          columns: { name: true },
+        })
+      : Promise.resolve(null),
+  ])
+
+  try {
+    await emitLifecycleStageChanged(
+      conversation.workspaceId,
+      conversation.contactId,
+      targetStageId,
+      fromStageId,
+      toStage?.name ?? null,
+      fromStage?.name ?? null,
+    )
+  } catch (error) {
+    console.error("Failed to emit lifecycleStageChanged event:", error)
+  }
 }
 
 export async function markEmailVerified({

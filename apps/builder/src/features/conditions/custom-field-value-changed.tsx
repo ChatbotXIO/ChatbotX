@@ -82,7 +82,7 @@ export const CustomFieldValueChanged = ({
             value={currentOperator}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select operator" />
+              <SelectValue placeholder="Selecione o operador" />
             </SelectTrigger>
             <SelectContent>
               {operatorOptions.map((option) => (
@@ -198,8 +198,8 @@ export const CustomFieldValueChanged = ({
                       <SelectValue placeholder="Select value" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">True</SelectItem>
-                      <SelectItem value="false">False</SelectItem>
+                      <SelectItem value="true">Verdadeiro</SelectItem>
+                      <SelectItem value="false">Falso</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

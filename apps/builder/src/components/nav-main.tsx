@@ -6,9 +6,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import type { ComponentType } from "react"
+
+/**
+ * Componente genérico de ícone — aceita qualquer componente que recebe
+ * `className`. Compatível com Lucide (`LucideIcon`) e com wrappers de
+ * outras libs (ex.: Iconsax via wrapIconsax no app-sidebar).
+ */
+type NavIcon = ComponentType<{ className?: string }>
 
 export function NavMain({
   items,
@@ -16,7 +23,7 @@ export function NavMain({
   items: {
     title: string
     url: string
-    icon?: LucideIcon
+    icon?: NavIcon
     isActive?: boolean
     items?: {
       title: string

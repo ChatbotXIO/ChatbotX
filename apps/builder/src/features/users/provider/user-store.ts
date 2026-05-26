@@ -52,7 +52,7 @@ export const createUserStore = (props: Partial<UserState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch agents",
+              : "Falha ao buscar agentes",
         })
       } finally {
         set({ initialized: true })
@@ -84,7 +84,7 @@ export const createUserStore = (props: Partial<UserState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch workspace members",
+              : "Falha ao buscar membros do workspace",
         })
       } finally {
         set({ loadingWorkspaceMembers: false })
@@ -118,7 +118,7 @@ export const createUserStore = (props: Partial<UserState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch inbox teams",
+              : "Falha ao buscar times da caixa de entrada",
         })
       } finally {
         set({ loadingInboxTeams: false })

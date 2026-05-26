@@ -90,7 +90,7 @@ export function MessengerManage({
             ))}
             {integrationMessengers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2}>No data</TableCell>
+                <TableCell colSpan={2}>Sem dados</TableCell>
               </TableRow>
             )}
           </TableBody>

@@ -11,8 +11,8 @@ export const whatsappMessageTemplateInternalAPIs = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/whatsapp-message-templates",
-      summary: "List whatsapp message templates",
-      tags: ["Integrations"],
+      summary: "Listar templates de mensagem do WhatsApp",
+      tags: ["Integrações"],
     })
     .input(listWhatsappMessageTemplatesRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

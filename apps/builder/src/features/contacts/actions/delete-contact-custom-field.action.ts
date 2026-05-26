@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEventBulk,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type WorkspaceIdRequestParams,
@@ -19,15 +25,38 @@ export const deleteContactCustomFieldAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: DeleteContactCustomFieldsRequest
+      ctx: { user: { id: string } }
     }) => {
       await deleteContactCustomFields({
         workspaceId,
         contactIds: parsedInput.ids,
         customFieldId: parsedInput.customFieldId,
       })
+
+      if (parsedInput.ids.length > 0) {
+        await Promise.all([
+          logAudit({
+            workspaceId,
+            userId: user.id,
+            action: auditLogActions.CONTACT_FIELD_UPDATED,
+            detail: `Campo personalizado "${parsedInput.customFieldId}" limpo em ${parsedInput.ids.length} contato(s)`,
+          }),
+          recordContactEventBulk({
+            contactIds: parsedInput.ids,
+            workspaceId,
+            eventType: contactEventTypes.FIELD_UPDATED,
+            meta: {
+              customFieldId: parsedInput.customFieldId,
+              cleared: true,
+            },
+            actorUserId: user.id,
+          }),
+        ])
+      }
     },
   )
 

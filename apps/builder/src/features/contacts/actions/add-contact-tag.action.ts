@@ -1,5 +1,11 @@
 "use server"
 
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEventBulk,
+} from "@chatbotx.io/business"
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactModel,
@@ -26,14 +32,34 @@ export const addContactTagAction = workspaceActionClient
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
+      ctx: { user },
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: AddContactTagRequest
+      ctx: { user: { id: string } }
     }) => {
       await addContactTags({
         workspaceId,
         parsedInput,
       })
+
+      if (parsedInput.ids.length > 0 && parsedInput.tags.length > 0) {
+        await Promise.all([
+          logAudit({
+            workspaceId,
+            userId: user.id,
+            action: auditLogActions.CONTACT_TAG_ADDED,
+            detail: `Etiqueta(s) ${parsedInput.tags.map((t) => `"${t}"`).join(", ")} aplicada(s) em ${parsedInput.ids.length} contato(s)`,
+          }),
+          recordContactEventBulk({
+            contactIds: parsedInput.ids,
+            workspaceId,
+            eventType: contactEventTypes.TAG_ADDED,
+            meta: { tagNames: parsedInput.tags },
+            actorUserId: user.id,
+          }),
+        ])
+      }
     },
   )
 
@@ -110,7 +136,7 @@ export const addContactTags = async ({
       try {
         await emitTagApplied(workspaceId, contact.id, tag.id)
       } catch (error) {
-        console.error("Failed to emit tagApplied event:", error)
+        console.error("Falha ao emitir evento tagApplied:", error)
       }
     }
   }
@@ -151,7 +177,7 @@ export const attachContactTag = async ({
   try {
     await emitTagApplied(workspaceId, contactId, tagId)
   } catch (error) {
-    console.error("Failed to emit tagApplied event:", error)
+    console.error("Falha ao emitir evento tagApplied:", error)
   }
 }
 
@@ -192,6 +218,6 @@ export const detachContactTag = async ({
   try {
     await emitTagRemoved(workspaceId, contactId, tagId)
   } catch (error) {
-    console.error("Failed to emit tagRemoved event:", error)
+    console.error("Falha ao emitir evento tagRemoved:", error)
   }
 }

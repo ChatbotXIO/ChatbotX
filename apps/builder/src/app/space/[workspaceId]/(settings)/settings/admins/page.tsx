@@ -1,9 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@chatbotx.io/ui/components/ui/card"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -31,13 +25,9 @@ export default async function SettingsAdminPage({
   ])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-bold text-xl">{t("admins.title")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <WorkspaceMembersTable promises={promises} />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h2 className="font-bold text-xl">{t("admins.title")}</h2>
+      <WorkspaceMembersTable promises={promises} />
+    </div>
   )
 }

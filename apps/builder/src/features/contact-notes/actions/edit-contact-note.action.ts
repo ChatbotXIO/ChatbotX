@@ -35,7 +35,7 @@ export const editContactNote = async (
       workspaceId: ctx.workspaceId,
       id: ctx.id,
     },
-    message: "Contact not found",
+    message: "Contato não encontrado",
   })
 
   const foundContactNote = await findOrFail({

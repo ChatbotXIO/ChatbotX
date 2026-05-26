@@ -52,7 +52,7 @@ export function CalendarField<T extends FieldValues>({
                 {field.value ? (
                   format(field.value, "PPP")
                 ) : (
-                  <span>{placeholder ?? "Pick a date"}</span>
+                  <span>{placeholder ?? "Escolha uma data"}</span>
                 )}
                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
               </Button>

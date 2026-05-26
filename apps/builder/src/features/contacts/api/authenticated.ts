@@ -37,8 +37,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts/{contactId}",
-      summary: "Get contact",
-      tags: ["Contacts"],
+      summary: "Obter contato",
+      tags: ["Contatos"],
     })
     .input(getContactRequest)
     .output(getContactResponse)
@@ -52,8 +52,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts",
-      summary: "List contacts",
-      tags: ["Contacts"],
+      summary: "Listar contatos",
+      tags: ["Contatos"],
     })
     .input(listContactsRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -67,8 +67,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts/count",
-      summary: "Count contacts",
-      tags: ["Contacts"],
+      summary: "Contar contatos",
+      tags: ["Contatos"],
     })
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -79,8 +79,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts/inboxes/count",
-      summary: "Count contact inboxes",
-      tags: ["Contacts"],
+      summary: "Contar caixas de entrada de contato",
+      tags: ["Contatos"],
     })
     .input(listContactsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -91,8 +91,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/contacts",
-      summary: "Create a contact",
-      tags: ["Contacts"],
+      summary: "Criar contato",
+      tags: ["Contatos"],
     })
     .input(createContactRequest.and(withWorkspaceIdSchema))
     .output(createContactResponse)
@@ -106,8 +106,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts/{contactId}/tags",
-      summary: "List contact tags",
-      tags: ["Contacts"],
+      summary: "Listar tags do contato",
+      tags: ["Contatos"],
     })
     .input(listContactTagsRequest)
     .output(listContactTagsResponse)
@@ -124,8 +124,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/contacts/tags",
-      summary: "Add tags to contact",
-      tags: ["Contacts"],
+      summary: "Adicionar tags ao contato",
+      tags: ["Contatos"],
     })
     .input(addContactTagRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -144,8 +144,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "DELETE",
       path: "/workspaces/{workspaceId}/contacts/{contactId}/tags/{tagId}",
-      summary: "Remove tag from contact",
-      tags: ["Contacts"],
+      summary: "Remover tag do contato",
+      tags: ["Contatos"],
     })
     .input(removeContactTagRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -164,8 +164,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/contacts/{contactId}/fields",
-      summary: "List contact custom fields",
-      tags: ["Contacts"],
+      summary: "Listar campos personalizados do contato",
+      tags: ["Contatos"],
     })
     .input(listContactCustomFieldsRequest)
     .output(listPublicContactCustomFieldsResponse)
@@ -183,8 +183,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "POST",
       path: "/workspaces/{workspaceId}/contacts/{contactId}/fields",
-      summary: "Set contact custom field value",
-      tags: ["Contacts"],
+      summary: "Definir valor de campo personalizado do contato",
+      tags: ["Contatos"],
     })
     .input(setContactCustomFieldValueRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
@@ -202,8 +202,8 @@ export const contactsAuthenticatedAPI = {
     .route({
       method: "DELETE",
       path: "/workspaces/{workspaceId}/contacts/{contactId}/fields/{customFieldId}",
-      summary: "Delete contact custom field",
-      tags: ["Contacts"],
+      summary: "Excluir campo personalizado do contato",
+      tags: ["Contatos"],
     })
     .input(deleteContactCustomFieldRequest.and(withWorkspaceIdSchema))
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

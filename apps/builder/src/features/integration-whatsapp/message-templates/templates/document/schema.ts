@@ -12,7 +12,7 @@ export const templateDocumentSchema = z
           (file) =>
             file && file instanceof File && file.type === "application/pdf",
           {
-            message: "File must be a PDF document",
+            message: "O arquivo deve ser um documento PDF",
           },
         )
         .refine((file) => file && file.size <= 5 * 1024 * 1024, {
@@ -30,7 +30,7 @@ export const templateDocumentSchema = z
     if (data.showFooter && !data.footer?.length) {
       ctx.addIssue({
         path: ["footer"],
-        message: "Footer text is required",
+        message: "Texto do rodapé é obrigatório",
         code: z.ZodIssueCode.custom,
       })
     }

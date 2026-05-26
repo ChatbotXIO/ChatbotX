@@ -43,7 +43,7 @@ export function AITriggersTable({
     if (rowAction && rowAction.variant === "duplicate") {
       execute()
       setRowAction(null)
-      toast.success("Duplicate successfully!")
+      toast.success("Duplicado com sucesso!")
       router.refresh()
     }
   }, [rowAction, execute, router])

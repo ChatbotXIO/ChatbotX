@@ -4,7 +4,10 @@ import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
-import { emitConversationArchived } from "@chatbotx.io/events"
+import {
+  emitConversationArchived,
+  emitConversationClosed,
+} from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -50,7 +53,11 @@ export const archiveConversationAction = workspaceActionClient
           ),
         )
 
-      // Emit conversation archived events
+      // Emit conversation archived + closed events. No ChatbotX o conceito
+      // de "fechada" = archivedAt != null (não há coluna `closedAt`). O
+      // evento `conversationClosed` alimenta o TriggerNode "Conversa Fechada"
+      // dentro de flows; `conversationArchived` continua existindo pro trigger
+      // tradicional (Settings → Gatilhos) que já existia antes.
       for (const conv of conversations) {
         try {
           await emitConversationArchived(
@@ -62,7 +69,20 @@ export const archiveConversationAction = workspaceActionClient
         } catch (error) {
           logger.error(
             { err: error },
-            "Failed to emit conversationArchived event:",
+            "Falha ao emitir evento conversationArchived:",
+          )
+        }
+        try {
+          await emitConversationClosed(
+            workspaceId,
+            conv.contactId,
+            conv.id,
+            "user",
+          )
+        } catch (error) {
+          logger.error(
+            { err: error },
+            "Falha ao emitir evento conversationClosed:",
           )
         }
       }

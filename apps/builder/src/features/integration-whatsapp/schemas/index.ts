@@ -36,7 +36,7 @@ export const connectWhatsappSchema = z
     if (!(data.manualConnect || data.businessId)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Required business id",
+        message: "ID do negócio obrigatório",
         path: ["businessId"],
       })
     }
@@ -44,7 +44,7 @@ export const connectWhatsappSchema = z
     if (!(data.accessToken || data.code)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Required access token or code",
+        message: "Token de acesso ou código obrigatório",
       })
     }
   })

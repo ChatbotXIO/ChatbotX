@@ -19,9 +19,9 @@ export default function PricingTableFourDemo() {
       plans={samplePlans}
       showBillingToggle={false}
       size="medium"
-      subtitle="Simple Pricing"
+      subtitle="Preços Simples"
       theme="classic"
-      title="Choose Your Perfect Plan"
+      title="Escolha Seu Plano Ideal"
     />
   )
 }

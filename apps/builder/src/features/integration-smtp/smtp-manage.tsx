@@ -65,7 +65,7 @@ export const SmtpManage = ({ workspaceId, promises }: SmtpManageProps) => {
             ))}
             {integrationSmtps.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3}>No data</TableCell>
+                <TableCell colSpan={3}>Sem dados</TableCell>
               </TableRow>
             )}
           </TableBody>

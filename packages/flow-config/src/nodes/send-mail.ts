@@ -26,7 +26,7 @@ export const sendMailNodeDefaultFn = (
   type: nodeTypeSchema.enum.sendMail,
   ...props.nodeProps,
   data: {
-    name: "Send Mail",
+    name: "Enviar E-mail",
     isStartNode: false,
     ...props.dataProps,
     details: {

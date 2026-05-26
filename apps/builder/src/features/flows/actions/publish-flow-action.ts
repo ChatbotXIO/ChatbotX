@@ -1,8 +1,12 @@
 "use server"
 
-import { notFoundException } from "@chatbotx.io/business/errors"
+import {
+  badRequestException,
+  notFoundException,
+} from "@chatbotx.io/business/errors"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
+import { nodeTypeSchema } from "@chatbotx.io/flow-config"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -34,7 +38,7 @@ export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
   })
 
   if (!flow || flow.flowVersions.length === 0) {
-    throw notFoundException("Flow not found")
+    throw notFoundException("Fluxo não encontrado")
   }
 
   const draftVersion = flow.flowVersions[0]
@@ -42,6 +46,32 @@ export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
     nodes: draftVersion?.nodes,
     edges: draftVersion?.edges,
   })
+
+  // Validação estilo Respond.io: todo flow precisa ter EXATAMENTE 1 TriggerNode
+  // como entry point, com pelo menos 1 edge saindo. Sem isso, o flow não
+  // dispara automaticamente — fica órfão.
+  const triggerNodes = validated.nodes.filter(
+    (n) => n.type === nodeTypeSchema.enum.trigger,
+  )
+  if (triggerNodes.length === 0) {
+    throw badRequestException(
+      "O fluxo precisa ter um Gatilho como primeiro bloco. Configure o tipo de evento que dispara o fluxo.",
+    )
+  }
+  if (triggerNodes.length > 1) {
+    throw badRequestException(
+      "O fluxo só pode ter um Gatilho. Remova os Gatilhos extras antes de publicar.",
+    )
+  }
+  const triggerNode = triggerNodes[0]
+  const hasOutEdge = validated.edges.some(
+    (e) => e.source === triggerNode.id || e.sourceHandle === triggerNode.id,
+  )
+  if (!hasOutEdge) {
+    throw badRequestException(
+      "O Gatilho precisa estar conectado a pelo menos um próximo bloco.",
+    )
+  }
 
   await db.transaction(async (tx) => {
     // Remove all other latest versions

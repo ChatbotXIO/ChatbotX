@@ -1,14 +1,17 @@
-import { workspaceMemberService } from "@chatbotx.io/business"
+import {
+  organizationService,
+  workspaceMemberService,
+} from "@chatbotx.io/business"
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
-import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
+import { SettingsAreaSidebar } from "@/components/settings-area-sidebar"
 import { getCurrentUserId } from "@/lib/auth/utils"
+import { getDomainFromHeader } from "@/lib/domain"
 
 export default async function WorkspaceLayout({
   children,
@@ -43,16 +46,32 @@ export default async function WorkspaceLayout({
     (workspaceMember) => workspaceMember.workspace,
   )
 
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
+  const domain = await getDomainFromHeader()
+  let organization: Awaited<
+    ReturnType<typeof organizationService.findByDomain>
+  > | null = null
+  try {
+    organization = await organizationService.findByDomain(domain)
+  } catch {
+    organization = null
+  }
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar allWorkspaces={allWorkspaces} workspaceId={workspaceId} />
+    <SidebarProvider open={false}>
+      <AppSidebar
+        allWorkspaces={allWorkspaces}
+        organization={
+          organization ? { id: organization.id, name: organization.name } : null
+        }
+        workspaceId={workspaceId}
+      />
       <SidebarInset>
-        <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
-
-        <main className="flex flex-1 flex-col gap-4 p-6">{children}</main>
+        <div className="flex flex-1">
+          <SettingsAreaSidebar />
+          <main className="flex flex-1 flex-col gap-4 overflow-auto p-6">
+            {children}
+          </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )

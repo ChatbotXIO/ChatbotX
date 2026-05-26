@@ -60,7 +60,7 @@ export const updateReflink = async (
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return returnValidationErrors(updateReflinkRequest, {
-        _errors: ["Validation Exception"],
+        _errors: ["Exceção de Validação"],
         name: { _errors: ["Name is already taken"] },
       })
     }

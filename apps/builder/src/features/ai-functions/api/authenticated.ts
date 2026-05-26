@@ -11,8 +11,8 @@ export const aiFunctionsAuthenticatedAPI = {
     .route({
       method: "GET",
       path: "/workspaces/{workspaceId}/ai-functions",
-      summary: "List AI functions",
-      tags: ["AI Functions"],
+      summary: "Listar funções de IA",
+      tags: ["Funções de IA"],
     })
     .input(listAIFunctionsRequest)
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)

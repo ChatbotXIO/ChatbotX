@@ -1,39 +1,29 @@
 "use client"
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@chatbotx.io/ui/components/ui/accordion"
-import { useTranslations } from "next-intl"
+import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import { useEffect, useMemo, useState } from "react"
 import { client } from "@/lib/orpc/orpc"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { ContactNotesManage } from "../contact-notes/contact-notes-manage"
-import type { ContactOnSequenceWithRelations } from "../contact-sequences/schema"
-import UpdateContactSequenceField from "../contact-sequences/update-contact-sequence-field"
-import { SequenceStoreProvider } from "../sequences/provider/sequence-store-context"
-import { TagStoreProvider } from "../tags/provider/tag-store-context"
-import type { TagResource } from "../tags/schema/resource"
-import UpdateContactTagField from "./components/update-contact-tag-field"
 import { ContactDetail } from "./contact-detail"
 import type { GetContactResponse } from "./schemas/query"
 
-type AccordionModule = {
-  readonly keyName: string
-  readonly content: React.ReactNode
-}
-
+// Painel direito pixel-perfect Respond.io 2026-05-25 iteração 31 (Pedro):
+// REMOVIDO: Notas, Ciclo de vida, Histórico de etapas, Sequências.
+// Respond.io só tem Header + Campos de contatos (rolável) + Etiquetas
+// (fixa embaixo). Tudo aqui agora é só wrapper de `<ContactDetail>`.
 export const ContactInboxPanel = ({
   workspaceId,
   activeConversationId,
+  hiddenFieldKeys = [],
 }: {
   workspaceId: string
   activeConversationId: string | null
+  // Mantido na assinatura por compat com chat-layout, mesmo que esta
+  // versão não use mais (já que removemos lifecycle do drawer).
+  lifecycleStages?: LifecycleStageModel[]
+  /** Keys de fields marcadas como `alwaysHide` no workspace. */
+  hiddenFieldKeys?: string[]
 }) => {
-  const t = useTranslations()
-
   const { conversations } = useChatStore((state) => state)
 
   const storeContact = useMemo(
@@ -69,82 +59,20 @@ export const ContactInboxPanel = ({
       })
   }, [activeConversationId, storeContact?.id, workspaceId])
 
-  const accordionModules: AccordionModule[] = useMemo(() => {
-    if (!contactData) {
-      return []
-    }
-
-    return [
-      {
-        keyName: t("fields.tags.label"),
-        content: (
-          <TagStoreProvider workspaceId={workspaceId}>
-            <UpdateContactTagField
-              contact={contactData}
-              onSuccess={(updatedTags: TagResource[]) => {
-                setContactData({ ...contactData, tags: updatedTags })
-              }}
-              tags={contactData.tags}
-              workspaceId={workspaceId}
-            />
-          </TagStoreProvider>
-        ),
-      },
-      {
-        keyName: t("sequences.title"),
-        content: (
-          <SequenceStoreProvider
-            autoInitialize={true}
-            workspaceId={workspaceId}
-          >
-            <UpdateContactSequenceField
-              contact={contactData}
-              onSuccess={(updatedSequences) => {
-                setContactData({
-                  ...contactData,
-                  contactsOnSequences:
-                    updatedSequences as ContactOnSequenceWithRelations[],
-                })
-              }}
-              sequences={
-                contactData.contactsOnSequences as ContactOnSequenceWithRelations[]
-              }
-            />
-          </SequenceStoreProvider>
-        ),
-      },
-    ]
-  }, [contactData, workspaceId, t])
-
   if (!storeContact) {
     return null
   }
 
   return (
-    <div className="flex w-full flex-col gap-2">
-      <ContactDetail
-        activeConversationId={activeConversationId}
-        contact={contactData}
-      />
-
-      <ContactNotesManage contactNotes={contactData?.contactNotes ?? []} />
-
-      <Accordion className="w-full" collapsible type="single">
-        {accordionModules.map((module, index) => (
-          <AccordionItem
-            className="transition-all hover:rounded-lg hover:data-[state=open]:rounded-none"
-            key={module.keyName}
-            value={module.keyName}
-          >
-            <AccordionTrigger
-              className={`rounded-none p-2 transition-all hover:bg-gray-200 hover:no-underline data-[state=open]:bg-gray-200 ${index === 0 ? "border-t" : ""}`}
-            >
-              <div className="flex items-center gap-2">{module.keyName}</div>
-            </AccordionTrigger>
-            <AccordionContent>{module.content}</AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
+    <ContactDetail
+      activeConversationId={activeConversationId}
+      contact={contactData}
+      hiddenFieldKeys={hiddenFieldKeys}
+      onTagsChange={(updatedTags) => {
+        if (contactData) {
+          setContactData({ ...contactData, tags: updatedTags })
+        }
+      }}
+    />
   )
 }

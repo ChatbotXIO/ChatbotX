@@ -32,7 +32,7 @@ const updateFlow = async (
       id: ctx.id,
       workspaceId: ctx.workspaceId,
     },
-    message: "Flow not found",
+    message: "Fluxo não encontrado",
   })
 
   await db.update(flowModel).set(parsedInput).where(eq(flowModel.id, flow.id))

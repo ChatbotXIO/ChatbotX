@@ -46,7 +46,7 @@ export const WorksheetColumnSelect = ({
       label={label}
       name={getFieldName(name)}
       options={headers}
-      placeholder="Please select"
+      placeholder="Por favor selecione"
     />
   )
 }

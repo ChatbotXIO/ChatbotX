@@ -23,7 +23,7 @@ export const unreadConversation = async (ctx: {
     const conversation = await findOrFail({
       table: conversationModel,
       where: { id: ctx.id, workspaceId: ctx.workspaceId },
-      message: "Conversation not found",
+      message: "Conversa não encontrada",
     })
 
     const last2Messages = await tx.query.messageModel.findMany({

@@ -8,7 +8,7 @@ export function encodeBase62(input: string): string {
     return CHARS[0]
   }
   if (num < 0n) {
-    throw new Error("Input must be a non-negative integer string")
+    throw new Error("Entrada deve ser uma string de inteiro não-negativo")
   }
 
   let result = ""

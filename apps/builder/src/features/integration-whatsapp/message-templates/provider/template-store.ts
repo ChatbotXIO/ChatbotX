@@ -44,7 +44,7 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch templates",
+              : "Falha ao buscar templates",
         })
       } finally {
         set({ initialized: true })
@@ -80,7 +80,7 @@ export const createTemplateStore = (props: Partial<TemplateState>) =>
           error:
             error instanceof HTTPError
               ? error.message
-              : "Failed to fetch templates",
+              : "Falha ao buscar templates",
           templates: [],
         })
       } finally {

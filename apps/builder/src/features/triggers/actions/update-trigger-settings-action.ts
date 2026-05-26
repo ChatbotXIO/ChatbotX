@@ -47,7 +47,7 @@ export const updateTriggerSettings = async (
   })
 
   if (!trigger) {
-    throw new Error("Trigger not found")
+    throw new Error("Gatilho não encontrado")
   }
 
   await db

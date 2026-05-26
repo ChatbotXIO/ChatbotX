@@ -28,9 +28,9 @@ export const createBroadcastAction = workspaceActionClient
       })
       if (!flow) {
         return returnValidationErrors(createBroadcastRequest, {
-          _errors: ["Validation Exception"],
+          _errors: ["Exceção de Validação"],
           flowId: {
-            _errors: ["Flow not found"],
+            _errors: ["Fluxo não encontrado"],
           },
         })
       }
@@ -49,7 +49,7 @@ export const createBroadcastAction = workspaceActionClient
       })
       if (!template) {
         return returnValidationErrors(createBroadcastRequest, {
-          _errors: ["Validation Exception"],
+          _errors: ["Exceção de Validação"],
           templateId: {
             _errors: ["Template not found"],
           },

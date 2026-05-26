@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <title>Respond.io avatars (156)</title>
+    <style>
+    body {
+      padding: 24px;
+      font: 13px system-ui;
+      color: #fff;
+      background: #0e1116;
+    }
+    h1 {
+      margin: 0 0 4px;
+    }
+    .meta {
+      margin-bottom: 24px;
+      color: #888;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .label {
+      width: 200px;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: #bbb;
+    }
+    .imgs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .imgs img {
+      width: 60px;
+      height: 60px;
+      background: #1a1d23;
+      border-radius: 50%;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>Respond.io — Galeria de avatares (156)</h1>
+    <div class="meta">
+      13 cores × 12 expressões — extraídos de cdn.respond.io
+    </div>
+    <div id="grid"></div>
+    <script>
+    "use strict"
+    const colors = [
+      "red-lighten-2",
+      "pink-lighten-2",
+      "purple-lighten-2",
+      "deep-purple-lighten-2",
+      "indigo-lighten-2",
+      "blue-darken-1",
+      "teal-lighten-2",
+      "light-green-darken-2",
+      "lime-darken-2",
+      "amber-lighten-1",
+      "orange-lighten-1",
+      "deep-orange-lighten-1",
+      "brown-lighten-2",
+    ]
+    const grid = document.getElementById("grid")
+    for (const c of colors) {
+      const row = document.createElement("div")
+      row.className = "row"
+      const label = document.createElement("div")
+      label.className = "label"
+      label.textContent = c
+      const imgs = document.createElement("div")
+      imgs.className = "imgs"
+      for (let n = 1; n <= 12; n++) {
+        const img = document.createElement("img")
+        img.src = `${c}/${n}.webp`
+        img.alt = `${c}-${n}`
+        imgs.appendChild(img)
+      }
+      row.appendChild(label)
+      row.appendChild(imgs)
+      grid.appendChild(row)
+    }
+    </script>
+  </body>
+</html>

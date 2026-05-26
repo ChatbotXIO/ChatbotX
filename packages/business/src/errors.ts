@@ -21,3 +21,6 @@ export class ChatbotXException extends Error {
 
 export const notFoundException = (message: string) =>
   new ChatbotXException(message, "notFound", 404)
+
+export const badRequestException = (message: string) =>
+  new ChatbotXException(message, "badRequest", 400)

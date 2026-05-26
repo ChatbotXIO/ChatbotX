@@ -37,7 +37,7 @@ export const createMagicLinkAction = workspaceActionClient
       } catch (error) {
         if (isUniqueViolationError(error)) {
           return returnValidationErrors(createMagicLinkRequest, {
-            _errors: ["Validation Exception"],
+            _errors: ["Exceção de Validação"],
             name: { _errors: ["Name is already taken"] },
           })
         }

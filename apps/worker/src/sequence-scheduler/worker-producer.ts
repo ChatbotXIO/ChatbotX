@@ -28,14 +28,14 @@ class SchedulerWorker {
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
-      throw new Error("Scheduler not initialized. Call start() first.")
+      throw new Error("Scheduler não inicializado. Chame start() primeiro.")
     }
     return this._scheduler
   }
 
   private get producer(): MessagingProducer {
     if (!this._producer) {
-      throw new Error("Producer not initialized. Call start() first.")
+      throw new Error("Producer não inicializado. Chame start() primeiro.")
     }
     return this._producer
   }

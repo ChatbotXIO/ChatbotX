@@ -5,6 +5,43 @@
   }
 }
 
+/*
+ * Canvas do flow builder — cor NEUTRA (zinc, não slate) pra ficar igual o
+ * Respond.io / BotConversa. Pedro recusou o azulado (slate) explicitamente:
+ * "ficou azul, não quero azul, quero um cinza claro igual ao Respond.io".
+ *
+ * Light mode: zinc-100 (#f4f4f5) — cinza muito claro neutro
+ * Dark mode: zinc-900 (#18181b) — cinza escuro neutro, sem tom azulado
+ *   (anteriormente usava slate-800 que é azulado e ficou ruim)
+ *
+ * Header e sidebar continuam com bg-background do tema (que no dark é
+ * zinc-950 ou similar — mais escuro que o canvas, dando contraste).
+ */
+/* Theme overrides em CSS cascade exigem dark selector com mais specificity
+ * DEPOIS do default — refactor pra mesma specificity quebraria tema dark. */
+/* biome-ignore lint/style/noDescendingSpecificity: theme override pattern */
+.react-flow {
+  background-color: #f4f4f5; /* light: zinc-100 */
+}
+
+[data-theme="dark"] .react-flow,
+.dark .react-flow {
+  background-color: #18181b; /* dark: zinc-900 — neutro, sem azul */
+}
+
+/* Pontinhos do background pattern sutis em ambos modos */
+.react-flow .react-flow__background {
+  --xy-background-color: transparent;
+}
+.react-flow .react-flow__background-pattern {
+  color: rgba(161, 161, 170, 0.4); /* zinc-400 com alpha */
+}
+
+.dark .react-flow .react-flow__background-pattern,
+[data-theme="dark"] .react-flow .react-flow__background-pattern {
+  color: rgba(82, 82, 91, 0.5); /* zinc-600 com alpha */
+}
+
 .react-flow__handle {
   width: 12px;
   height: 12px;
