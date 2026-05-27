@@ -45,6 +45,9 @@ export function AppSidebar({
       email: session?.user.email ?? "",
       avatar: session?.user.image ?? "",
     },
+    // Ordem definida pelo Pedro 2026-05-26:
+    // Análises → Inbox → Contatos → Agentes de IA → Transmissão → Fluxos →
+    // Configurações.
     navMain: [
       {
         title: t("fields.analytics.label"),
@@ -57,13 +60,6 @@ export function AppSidebar({
         url: `/space/${workspaceId}/inbox`,
         // Equivale ao `icon-direct-inbox` (Inbox no Respond.io)
         icon: wrapIconsax(DirectInbox as IconsaxComponent),
-      },
-      {
-        title: t("fields.flows.label"),
-        url: `/space/${workspaceId}/flows`,
-        // Flow — ícone do Respond.io extraído da fonte deles (pixel-perfect).
-        // Substitui o Hierarchy3 da Iconsax que era só aproximação visual.
-        icon: RespondFlowIcon,
       },
       {
         title: t("fields.contacts.label"),
@@ -83,6 +79,13 @@ export function AppSidebar({
         // Equivale ao `icon-custom-broadcast` (Broadcast/Automação).
         // Usamos `Brodcast` (sic — nome real na lib).
         icon: wrapIconsax(Brodcast as IconsaxComponent),
+      },
+      {
+        title: t("fields.flows.label"),
+        url: `/space/${workspaceId}/flows`,
+        // Flow — ícone do Respond.io extraído da fonte deles (pixel-perfect).
+        // Substitui o Hierarchy3 da Iconsax que era só aproximação visual.
+        icon: RespondFlowIcon,
       },
       {
         title: t("settings.title"),
