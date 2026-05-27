@@ -87,19 +87,26 @@ const reconcileUser = async (userId: string): Promise<void> => {
       .onConflictDoUpdate({
         target: userQuotaModel.userId,
         set: {
-          contactsUsed,
-          teamMembersUsed,
+          contactsUsed: sql`GREATEST(${userQuotaModel.contactsUsed}, ${contactsUsed})`,
+          teamMembersUsed: sql`GREATEST(${userQuotaModel.teamMembersUsed}, ${teamMembersUsed})`,
           syncedAt: new Date(),
           updatedAt: sql`CURRENT_TIMESTAMP`,
         },
       })
 
+    // Fetch the stored values after upsert so the live cache reflects the
+    // cumulative high-water mark, not just the current DB count.
+    const stored = await db.query.userQuotaModel.findFirst({
+      where: { userId },
+      columns: { contactsUsed: true, teamMembersUsed: true },
+    })
+
     await client.hset(
       `${LIVE_KEY_PREFIX}${userId}`,
       "contacts",
-      String(contactsUsed),
+      String(stored?.contactsUsed ?? contactsUsed),
       "teamMembers",
-      String(teamMembersUsed),
+      String(stored?.teamMembersUsed ?? teamMembersUsed),
     )
 
     await distributedStore.delete(`user-quota:${userId}`)

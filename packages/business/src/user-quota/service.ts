@@ -160,23 +160,10 @@ class UserQuotaService extends BaseService {
       }
     }
 
-    await this.upsertMetric(userId, metric, "increment")
+    await this.upsertMetric(userId, metric)
     await this.cacheDelete(userId)
 
     return true
-  }
-
-  async decrement(userId: string, metric: QuotaMetric): Promise<void> {
-    const exists = await db.query.userQuotaModel.findFirst({
-      where: { userId },
-      columns: { userId: true },
-    })
-    if (!exists) {
-      return
-    }
-
-    await this.upsertMetric(userId, metric, "decrement")
-    await this.cacheDelete(userId)
   }
 
   private readMetricValues(
@@ -200,60 +187,48 @@ class UserQuotaService extends BaseService {
   private async upsertMetric(
     userId: string,
     metric: QuotaMetric,
-    direction: "increment" | "decrement",
   ): Promise<void> {
-    const inc = direction === "increment"
-    const initialUsed = inc ? 1 : 0
-
     if (metric === "workspaces") {
       await db
         .insert(userQuotaModel)
-        .values({ userId, workspacesUsed: initialUsed, syncedAt: new Date() })
+        .values({ userId, workspacesUsed: 1, syncedAt: new Date() })
         .onConflictDoUpdate({
           target: userQuotaModel.userId,
           set: {
-            workspacesUsed: inc
-              ? sql`${userQuotaModel.workspacesUsed} + 1`
-              : sql`GREATEST(0, ${userQuotaModel.workspacesUsed} - 1)`,
+            workspacesUsed: sql`${userQuotaModel.workspacesUsed} + 1`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })
     } else if (metric === "channels") {
       await db
         .insert(userQuotaModel)
-        .values({ userId, channelsUsed: initialUsed, syncedAt: new Date() })
+        .values({ userId, channelsUsed: 1, syncedAt: new Date() })
         .onConflictDoUpdate({
           target: userQuotaModel.userId,
           set: {
-            channelsUsed: inc
-              ? sql`${userQuotaModel.channelsUsed} + 1`
-              : sql`GREATEST(0, ${userQuotaModel.channelsUsed} - 1)`,
+            channelsUsed: sql`${userQuotaModel.channelsUsed} + 1`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })
     } else if (metric === "teamMembers") {
       await db
         .insert(userQuotaModel)
-        .values({ userId, teamMembersUsed: initialUsed, syncedAt: new Date() })
+        .values({ userId, teamMembersUsed: 1, syncedAt: new Date() })
         .onConflictDoUpdate({
           target: userQuotaModel.userId,
           set: {
-            teamMembersUsed: inc
-              ? sql`${userQuotaModel.teamMembersUsed} + 1`
-              : sql`GREATEST(0, ${userQuotaModel.teamMembersUsed} - 1)`,
+            teamMembersUsed: sql`${userQuotaModel.teamMembersUsed} + 1`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })
     } else {
       await db
         .insert(userQuotaModel)
-        .values({ userId, contactsUsed: initialUsed, syncedAt: new Date() })
+        .values({ userId, contactsUsed: 1, syncedAt: new Date() })
         .onConflictDoUpdate({
           target: userQuotaModel.userId,
           set: {
-            contactsUsed: inc
-              ? sql`${userQuotaModel.contactsUsed} + 1`
-              : sql`GREATEST(0, ${userQuotaModel.contactsUsed} - 1)`,
+            contactsUsed: sql`${userQuotaModel.contactsUsed} + 1`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })
