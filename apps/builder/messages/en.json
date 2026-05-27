@@ -1163,6 +1163,12 @@
     "datetime": {
       "label": "Datetime"
     },
+    "time": {
+      "label": "Time"
+    },
+    "list": {
+      "label": "List (multi-select)"
+    },
     "boolean": {
       "label": "Boolean",
       "placeholder": "Select true or false",
@@ -2436,7 +2442,9 @@
   "customFields": {
     "title": "Custom Fields",
     "subtitle": "Create and manage custom fields to enrich your contact profiles",
-    "addValue": "Add a value for {field}"
+    "addValue": "Add a value for {field}",
+    "valuesLabel": "Options",
+    "valuesPlaceholder": "Type and press Enter to add"
   },
   "keywords": {
     "title": "Keywords"

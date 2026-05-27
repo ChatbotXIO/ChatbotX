@@ -1163,6 +1163,12 @@
     "datetime": {
       "label": "Data e Hora"
     },
+    "time": {
+      "label": "Hora"
+    },
+    "list": {
+      "label": "Lista (multi-seleção)"
+    },
     "boolean": {
       "label": "Booleano",
       "placeholder": "Selecione verdadeiro ou falso",
@@ -2436,7 +2442,9 @@
   "customFields": {
     "title": "Campos Personalizados",
     "subtitle": "Crie e gerencie campos personalizados para enriquecer os perfis dos seus contatos",
-    "addValue": "Adicione um valor para {field}"
+    "addValue": "Adicione um valor para {field}",
+    "valuesLabel": "Opções",
+    "valuesPlaceholder": "Digite e Enter para adicionar"
   },
   "keywords": {
     "title": "Palavras-chave"

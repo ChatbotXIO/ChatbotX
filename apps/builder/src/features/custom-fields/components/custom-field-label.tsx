@@ -4,22 +4,22 @@ import type { CustomFieldType } from "@chatbotx.io/database/partials"
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
-const getTranslationKey = (type: CustomFieldType): string => {
-  switch (type) {
-    case "number":
-      return "fields.number.label"
-    case "date":
-      return "fields.date.label"
-    case "datetime":
-      return "fields.datetime.label"
-    case "boolean":
-      return "fields.boolean.label"
-    case "longText":
-      return "fields.longText.label"
-    default:
-      return "fields.shortText.label"
-  }
+const TYPE_LABEL_KEY: Record<CustomFieldType, string> = {
+  shortText: "fields.shortText.label",
+  longText: "fields.longText.label",
+  number: "fields.number.label",
+  date: "fields.date.label",
+  datetime: "fields.datetime.label",
+  time: "fields.time.label",
+  url: "fields.url.label",
+  list: "fields.list.label",
+  boolean: "fields.boolean.label",
+  email: "fields.email.label",
+  phoneNumber: "fields.phoneNumber.label",
 }
+
+const getTranslationKey = (type: CustomFieldType): string =>
+  TYPE_LABEL_KEY[type] ?? "fields.shortText.label"
 
 export default function CustomFieldTypeLabel({
   type,

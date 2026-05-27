@@ -19,8 +19,10 @@ import { Loader2Icon, PlusIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { createCustomFieldAction } from "./actions/create-custom-field.action"
+import { ValuesEditor } from "./components/values-editor"
 import { createCustomFieldRequest } from "./schemas/action"
 
 type CreateCustomFieldDialogProps = {
@@ -96,32 +98,29 @@ function CreateCustomFieldForm({
 }) {
   const t = useTranslations()
 
+  // 11 tipos paridade Respond.io (gap #10 — 2026-05-27).
   const customFieldTypeOptions = useMemo(
     () => [
-      {
-        value: "shortText",
-        label: t("fields.shortText.label"),
-      },
-      {
-        value: "number",
-        label: t("fields.number.label"),
-      },
-      {
-        value: "date",
-        label: t("fields.date.label"),
-      },
-      {
-        value: "datetime",
-        label: t("fields.datetime.label"),
-      },
-      {
-        value: "boolean",
-        label: t("fields.boolean.label"),
-      },
-      {
-        value: "longText",
-        label: t("fields.longText.label"),
-      },
+      { value: "shortText", label: t("fields.shortText.label") },
+      { value: "longText", label: t("fields.longText.label") },
+      { value: "list", label: t("fields.list.label") },
+      { value: "boolean", label: t("fields.boolean.label") },
+      { value: "email", label: t("fields.email.label") },
+      { value: "phoneNumber", label: t("fields.phoneNumber.label") },
+      { value: "number", label: t("fields.number.label") },
+      { value: "url", label: t("fields.url.label") },
+      { value: "date", label: t("fields.date.label") },
+      { value: "datetime", label: t("fields.datetime.label") },
+      { value: "time", label: t("fields.time.label") },
+    ],
+    [t],
+  )
+
+  const visibilityOptions = useMemo(
+    () => [
+      { value: "alwaysShow", label: t("fields.visibility.alwaysShow") },
+      { value: "alwaysHide", label: t("fields.visibility.alwaysHide") },
+      { value: "hideWhenEmpty", label: t("fields.visibility.hideWhenEmpty") },
     ],
     [t],
   )
@@ -155,13 +154,16 @@ function CreateCustomFieldForm({
             type: "shortText",
             description: "",
             folderId: null,
+            visibility: "alwaysShow",
+            values: [],
           },
         },
         errorMapProps: {},
       },
     )
 
-  const { setValue } = form
+  const { setValue, control } = form
+  const watchedType = useWatch({ control, name: "type" })
 
   useEffect(() => {
     if (folderId && folderId !== rootFolderId) {
@@ -186,10 +188,30 @@ function CreateCustomFieldForm({
           required
         />
 
+        {watchedType === "list" && (
+          <Controller
+            control={control}
+            name="values"
+            render={({ field }) => (
+              <ValuesEditor
+                label={t("customFields.valuesLabel")}
+                onChange={field.onChange}
+                value={field.value ?? []}
+              />
+            )}
+          />
+        )}
+
         <TextareaField
           label={t("fields.description.label")}
           name="description"
           placeholder={t("fields.description.placeholder")}
+        />
+
+        <SelectField
+          label={t("fields.visibility.label")}
+          name="visibility"
+          options={visibilityOptions}
         />
 
         <div className="flex justify-end space-x-2">

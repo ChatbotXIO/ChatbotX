@@ -1,6 +1,7 @@
 "use client"
 
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { TextareaField } from "@chatbotx.io/ui/components/form/textarea-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -16,9 +17,11 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
+import { Controller } from "react-hook-form"
 import { toast } from "sonner"
 import { updateCustomFieldAction } from "./actions/update-custom-field.action"
+import { ValuesEditor } from "./components/values-editor"
 import { updateCustomFieldRequest } from "./schemas/action"
 import type { CustomFieldResource } from "./schemas/resource"
 
@@ -70,12 +73,37 @@ export function UpdateCustomFieldDialog({
     },
   )
 
+  const visibilityOptions = useMemo(
+    () => [
+      { value: "alwaysShow", label: t("fields.visibility.alwaysShow") },
+      { value: "alwaysHide", label: t("fields.visibility.alwaysHide") },
+      { value: "hideWhenEmpty", label: t("fields.visibility.hideWhenEmpty") },
+    ],
+    [t],
+  )
+
   useEffect(() => {
     if (customField) {
       setValue("name", customField.name)
       setValue("description", customField.description ?? "")
+      setValue(
+        "visibility",
+        (customField as unknown as { visibility?: string }).visibility as
+          | "alwaysShow"
+          | "alwaysHide"
+          | "hideWhenEmpty"
+          | undefined,
+      )
+      setValue(
+        "values",
+        ((customField as unknown as { values?: string[] }).values ??
+          []) as string[],
+      )
     }
   }, [customField, setValue])
+
+  const isList =
+    (customField as unknown as { type?: string } | null)?.type === "list"
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -101,10 +129,30 @@ export function UpdateCustomFieldDialog({
                 required
               />
 
+              {isList && (
+                <Controller
+                  control={form.control}
+                  name="values"
+                  render={({ field }) => (
+                    <ValuesEditor
+                      label={t("customFields.valuesLabel")}
+                      onChange={field.onChange}
+                      value={field.value ?? []}
+                    />
+                  )}
+                />
+              )}
+
               <TextareaField
                 label={t("fields.description.label")}
                 name="description"
                 placeholder={t("fields.description.placeholder")}
+              />
+
+              <SelectField
+                label={t("fields.visibility.label")}
+                name="visibility"
+                options={visibilityOptions}
               />
 
               <div className="flex justify-end gap-4">
