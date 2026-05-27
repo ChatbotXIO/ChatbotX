@@ -25,6 +25,7 @@ import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { saveLifecycleStagesAction } from "./actions/save-lifecycle-stages-action"
 import { DeleteStageDialog } from "./delete-stage-dialog"
+import { MAX_LIFECYCLE_STAGES } from "./schema"
 
 const LIFECYCLE_VISIBILITY_KEY = "chatbotx.lifecycle.visible"
 
@@ -201,7 +202,17 @@ export function LifecycleStagesEditor({
     setMenuOpenFor(null)
   }
 
+  // Paridade Respond.io: até 20 fases no total (active + lost combinados).
+  const totalActiveStages = editedStages.filter((s) => !s._deleted).length
+  const hasReachedLimit = totalActiveStages >= MAX_LIFECYCLE_STAGES
+
   function addStage(type: "active" | "lost") {
+    if (hasReachedLimit) {
+      toast.error(
+        t("lifecycle.maxStagesReached", { max: MAX_LIFECYCLE_STAGES }),
+      )
+      return
+    }
     const isLost = type === "lost"
     const sameTypeStages = editedStages.filter(
       (s) => s.isLost === isLost && !s._deleted,
@@ -375,6 +386,7 @@ export function LifecycleStagesEditor({
       {/* 2 colunas */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Column
+          disableAdd={hasReachedLimit}
           draggingId={draggingId}
           dragOverId={dragOverId}
           emojiPickerFor={emojiPickerFor}
@@ -397,6 +409,7 @@ export function LifecycleStagesEditor({
           title={t("lifecycle.activeTitle")}
         />
         <Column
+          disableAdd={hasReachedLimit}
           draggingId={draggingId}
           dragOverId={dragOverId}
           emojiPickerFor={emojiPickerFor}
@@ -472,6 +485,7 @@ type ColumnProps = {
   emojiPickerFor: string | null
   setEmojiPickerFor: (id: string | null) => void
   onAdd: () => void
+  disableAdd?: boolean
   onUpdate: (id: string, patch: Partial<EditableStage>) => void
   onDelete: (id: string) => void
   onSetDefault: (id: string) => void
@@ -496,6 +510,7 @@ function Column({
   emojiPickerFor,
   setEmojiPickerFor,
   onAdd,
+  disableAdd = false,
   onUpdate,
   onDelete,
   onSetDefault,
@@ -674,8 +689,14 @@ function Column({
         ))}
 
         <button
-          className="mt-1 flex w-full items-center justify-center gap-2 rounded-md border border-border border-dashed px-3 py-2 text-primary text-sm hover:bg-primary/5"
+          className="mt-1 flex w-full items-center justify-center gap-2 rounded-md border border-border border-dashed px-3 py-2 text-primary text-sm hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+          disabled={disableAdd}
           onClick={onAdd}
+          title={
+            disableAdd
+              ? t("lifecycle.maxStagesReached", { max: MAX_LIFECYCLE_STAGES })
+              : undefined
+          }
           type="button"
         >
           <PlusIcon className="size-4" />

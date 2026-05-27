@@ -1798,6 +1798,7 @@
     "lostTitle": "Etapas de perda",
     "lostSubtitle": "Acompanhe por onde os contatos saem do funil.",
     "addStage": "Adicionar etapa",
+    "maxStagesReached": "Máximo de {max} etapas atingido (ativas + perdidas).",
     "stageNumber": "Etapa {n}",
     "stageName": "Nome da etapa",
     "newStage": "Nova etapa",
@@ -1895,7 +1896,11 @@
     "preview": "Pré-visualização",
     "addTag": "Adicionar etiqueta",
     "searchPlaceholder": "Pesquisar etiquetas",
-    "emptyState": "Nenhuma etiqueta encontrada"
+    "emptyState": "Nenhuma etiqueta encontrada",
+    "delete": {
+      "usageDescription": "Você está prestes a excluir {tagCount, plural, =1 {1 etiqueta} other {# etiquetas}} atribuída(s) a {contactCount, plural, =1 {1 contato} other {# contatos}}. Essa ação remove a etiqueta de todos os contatos e não pode ser desfeita.",
+      "confirmInputLabel": "Para confirmar, digite {count} abaixo:"
+    }
   },
   "texts": {
     "or": "ou"

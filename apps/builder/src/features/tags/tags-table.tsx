@@ -23,8 +23,9 @@ type TagsTableProps = {
 
 export function TagsTable({ promises, workspaceId, folderId }: TagsTableProps) {
   const [{ data, pageCount }] = React.use(promises)
-  const [rowAction, setRowAction] =
-    React.useState<DataTableRowAction<TagModel> | null>(null)
+  const [rowAction, setRowAction] = React.useState<DataTableRowAction<
+    TagModel & { contactsCount?: number | null }
+  > | null>(null)
   const [_, copy] = useCopyToClipboard()
   const t = useTranslations()
   const locale = useLocale()

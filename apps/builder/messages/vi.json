@@ -1813,6 +1813,7 @@
     "lostTitle": "Giai đoạn thất bại",
     "lostSubtitle": "Theo dõi nơi liên hệ rời khỏi phễu.",
     "addStage": "Thêm giai đoạn",
+    "maxStagesReached": "Đã đạt tối đa {max} giai đoạn (đang hoạt động + đã mất).",
     "stageNumber": "Giai đoạn {n}",
     "stageName": "Tên giai đoạn",
     "newStage": "Giai đoạn mới",
@@ -1910,7 +1911,11 @@
     "preview": "Xem trước",
     "addTag": "Thêm nhãn",
     "searchPlaceholder": "Tìm kiếm nhãn",
-    "emptyState": "Không tìm thấy nhãn"
+    "emptyState": "Không tìm thấy nhãn",
+    "delete": {
+      "usageDescription": "Bạn sắp xóa {tagCount, plural, =1 {1 thẻ} other {# thẻ}} đã được gán cho {contactCount, plural, =1 {1 liên hệ} other {# liên hệ}}. Hành động này sẽ gỡ thẻ khỏi tất cả các liên hệ và không thể hoàn tác.",
+      "confirmInputLabel": "Để xác nhận, hãy nhập {count} bên dưới:"
+    }
   },
   "texts": {
     "or": "hoặc"

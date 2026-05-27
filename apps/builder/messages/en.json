@@ -1798,6 +1798,7 @@
     "lostTitle": "Lost stages",
     "lostSubtitle": "Track where contacts drop out of the funnel.",
     "addStage": "Add stage",
+    "maxStagesReached": "Maximum of {max} stages reached (active + lost).",
     "stageNumber": "Stage {n}",
     "stageName": "Stage name",
     "newStage": "New stage",
@@ -1895,7 +1896,11 @@
     "preview": "Preview",
     "addTag": "Add tag",
     "searchPlaceholder": "Search tags",
-    "emptyState": "No tags found"
+    "emptyState": "No tags found",
+    "delete": {
+      "usageDescription": "You're about to delete {tagCount, plural, =1 {1 tag} other {# tags}} assigned to {contactCount, plural, =1 {1 contact} other {# contacts}}. This removes the tag from all contacts and cannot be undone.",
+      "confirmInputLabel": "To confirm, type {count} below:"
+    }
   },
   "texts": {
     "or": "or"

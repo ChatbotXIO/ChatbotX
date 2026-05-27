@@ -4,8 +4,10 @@ import type { TagModel } from "@chatbotx.io/database/types"
 import type { Table } from "@tanstack/react-table"
 import { DeleteTagsDialog } from "./delete-tag-dialog"
 
+type TagWithCount = TagModel & { contactsCount?: number | null }
+
 type TagsTableToolbarActionsProps = {
-  table: Table<TagModel>
+  table: Table<TagWithCount>
   workspaceId: string
 }
 
