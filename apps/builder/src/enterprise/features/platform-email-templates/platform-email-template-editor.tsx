@@ -21,7 +21,6 @@ import { toast } from "sonner"
 import { CodeEditorField } from "@/components/code-editor-field"
 import {
   type EmailTemplateType,
-  type StoredTemplate,
   updateEmailTemplateSchema,
 } from "./email-template.schema"
 import { previewEmailTemplateAction } from "./preview-email-template.action"
@@ -32,7 +31,7 @@ type PlatformEmailTemplateEditorProps = {
   title: string
   description: string
   variables: string[]
-  template: StoredTemplate
+  template: { subject: string; body: string }
 }
 
 export function PlatformEmailTemplateEditor({
@@ -83,18 +82,24 @@ export function PlatformEmailTemplateEditor({
       setPreviewHtml("")
       return
     }
+    let cancelled = false
     const timer = setTimeout(async () => {
       setIsPreviewing(true)
       try {
         const result = await previewEmailTemplateAction({ body: bodyValue })
-        if (result.data) {
+        if (!cancelled && result.data) {
           setPreviewHtml(result.data)
         }
       } finally {
-        setIsPreviewing(false)
+        if (!cancelled) {
+          setIsPreviewing(false)
+        }
       }
     }, 600)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [bodyValue])
 
   return (

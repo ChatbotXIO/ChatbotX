@@ -62,24 +62,40 @@ async function sendMail(email: string, subject: string, html: string) {
   })
 }
 
+async function sendEmailWithTemplate(
+  email: string,
+  defaultSubject: string,
+  customTemplate: EmailTemplate | null | undefined,
+  buildDefaultHtml: () => Promise<string>,
+  templateVars: Record<string, string>,
+): Promise<void> {
+  const customBody = customTemplate?.body?.trim()
+  const subject =
+    (customBody && customTemplate?.subject?.trim()) || defaultSubject
+  const html = customBody
+    ? await renderCustomTemplate(customBody, templateVars)
+    : await buildDefaultHtml()
+  await sendMail(email, subject, html)
+}
+
 export const sendMagicLink = async (
   email: string,
   props: SignInMagicLinkProps & { customTemplate?: EmailTemplate | null },
 ) => {
   const { customTemplate, ...templateProps } = props
-  const customBody = customTemplate?.body?.trim()
-  const subject =
-    (customBody && customTemplate?.subject?.trim()) || props.subject
-  const html = customBody
-    ? await renderCustomTemplate(customBody, {
-        userName: templateProps.userName,
-        magicUrl: templateProps.magicUrl,
-        brandName: templateProps.brandName,
-        brandLogoUrl: templateProps.brandLogoUrl,
-        brandUrl: templateProps.brandUrl,
-      })
-    : await compileMjml(buildSignInMagicLinkMjml(templateProps))
-  await sendMail(email, subject, html)
+  await sendEmailWithTemplate(
+    email,
+    props.subject,
+    customTemplate,
+    () => compileMjml(buildSignInMagicLinkMjml(templateProps)),
+    {
+      userName: templateProps.userName,
+      magicUrl: templateProps.magicUrl,
+      brandName: templateProps.brandName,
+      brandLogoUrl: templateProps.brandLogoUrl,
+      brandUrl: templateProps.brandUrl,
+    },
+  )
 }
 
 export const sendSignUpVerification = async (
@@ -87,19 +103,19 @@ export const sendSignUpVerification = async (
   props: SignUpVerificationProps & { customTemplate?: EmailTemplate | null },
 ) => {
   const { customTemplate, ...templateProps } = props
-  const customBody = customTemplate?.body?.trim()
-  const subject =
-    (customBody && customTemplate?.subject?.trim()) || props.subject
-  const html = customBody
-    ? await renderCustomTemplate(customBody, {
-        userName: templateProps.userName,
-        verificationUrl: templateProps.verificationUrl,
-        brandName: templateProps.brandName,
-        brandLogoUrl: templateProps.brandLogoUrl,
-        brandUrl: templateProps.brandUrl,
-      })
-    : await compileMjml(buildSignUpVerificationMjml(templateProps))
-  await sendMail(email, subject, html)
+  await sendEmailWithTemplate(
+    email,
+    props.subject,
+    customTemplate,
+    () => compileMjml(buildSignUpVerificationMjml(templateProps)),
+    {
+      userName: templateProps.userName,
+      verificationUrl: templateProps.verificationUrl,
+      brandName: templateProps.brandName,
+      brandLogoUrl: templateProps.brandLogoUrl,
+      brandUrl: templateProps.brandUrl,
+    },
+  )
 }
 
 export const sendResetPassword = async (
@@ -107,17 +123,17 @@ export const sendResetPassword = async (
   props: ResetPasswordProps & { customTemplate?: EmailTemplate | null },
 ) => {
   const { customTemplate, ...templateProps } = props
-  const customBody = customTemplate?.body?.trim()
-  const subject =
-    (customBody && customTemplate?.subject?.trim()) || props.subject
-  const html = customBody
-    ? await renderCustomTemplate(customBody, {
-        userName: templateProps.userName,
-        resetPasswordUrl: templateProps.resetPasswordUrl,
-        brandName: templateProps.brandName,
-        brandLogoUrl: templateProps.brandLogoUrl,
-        brandUrl: templateProps.brandUrl,
-      })
-    : await compileMjml(buildResetPasswordMjml(templateProps))
-  await sendMail(email, subject, html)
+  await sendEmailWithTemplate(
+    email,
+    props.subject,
+    customTemplate,
+    () => compileMjml(buildResetPasswordMjml(templateProps)),
+    {
+      userName: templateProps.userName,
+      resetPasswordUrl: templateProps.resetPasswordUrl,
+      brandName: templateProps.brandName,
+      brandLogoUrl: templateProps.brandLogoUrl,
+      brandUrl: templateProps.brandUrl,
+    },
+  )
 }

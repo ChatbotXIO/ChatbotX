@@ -11,7 +11,7 @@ import {
 import { PencilIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import type { StoredTemplate } from "./email-template.schema"
+import { storedEmailTemplateSchema } from "./email-template.schema"
 
 type TemplateConfig = {
   settingKey: keyof Pick<
@@ -72,7 +72,9 @@ export async function PlatformEmailTemplatesSettings({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {TEMPLATES.map((config) => {
-          const template = setting?.[config.settingKey] as StoredTemplate
+          const template = storedEmailTemplateSchema.parse(
+            setting?.[config.settingKey] ?? null,
+          )
           const isCustomized = Boolean(template?.body?.trim())
 
           return (
