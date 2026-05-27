@@ -1,10 +1,4 @@
-import {
-  boolean,
-  pgEnum,
-  pgTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/pg-core"
+import { jsonb, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core"
 import { type CustomFieldType, customFieldTypes } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
 import { folderModel } from "./folder"
@@ -26,7 +20,12 @@ export const customFieldModel = pgTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    showInInbox: boolean().default(false).notNull(),
+    // Visibilidade 3-state (alwaysShow/alwaysHide/hideWhenEmpty) — paridade
+    // Respond.io. Substitui o boolean showInInbox legado (migration backfill).
+    visibility: text().default("alwaysShow").notNull(),
+    // Para type="list" — opções pré-definidas pelo admin (multi-select).
+    // Outros tipos ignoram esse campo.
+    values: jsonb().$type<string[]>().default([]).notNull(),
     workspaceId: bigintAsString()
       .notNull()
       .references(() => workspaceModel.id, {

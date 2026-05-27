@@ -54,7 +54,6 @@ export const createCustomField = async (
       .insert(customFieldModel)
       .values({
         workspaceId,
-        showInInbox: true,
         ...parsedInput,
       })
       .returning()

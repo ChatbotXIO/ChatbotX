@@ -32,6 +32,14 @@ import type { listCustomFieldsRSC } from "./queries"
 import type { CustomFieldResource } from "./schemas/resource"
 import { UpdateCustomFieldDialog } from "./update-custom-field-dialog"
 
+// Map visibility 3-state → i18n key. Top-level pra evitar nested ternary
+// e não invalidar useMemo das columns a cada render.
+const VISIBILITY_LABEL_KEY: Record<string, string> = {
+  alwaysShow: "fields.visibility.alwaysShow",
+  alwaysHide: "fields.visibility.alwaysHide",
+  hideWhenEmpty: "fields.visibility.hideWhenEmpty",
+}
+
 // Formata datas no padrão Respond.io ("abr 21, 2026"). Função pura no
 // top-level pra não invalidar o useMemo das columns a cada render.
 function formatRespondDate(
@@ -208,21 +216,21 @@ export function CustomFieldsTable({
       },
       {
         id: "visibility",
-        accessorKey: "showInInbox",
+        accessorKey: "visibility",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.visibility.label")}
           />
         ),
-        // Visibilidade no estilo Respond.io ("Exibir sempre" / "Sempre ocultar")
-        // espelha o boolean `showInInbox` atual. Quando schema evoluir pra ter
-        // enum 3-state (alwaysShow/alwaysHide/hideWhenEmpty), troca a label aqui.
+        // Visibilidade 3-state Respond.io: alwaysShow / alwaysHide /
+        // hideWhenEmpty. Schema migrou de boolean showInInbox em 2026-05-27.
         cell: ({ row }) => (
           <span className="text-muted-foreground text-sm">
-            {row.original.showInInbox
-              ? t("fields.visibility.alwaysShow")
-              : t("fields.visibility.alwaysHide")}
+            {t(
+              VISIBILITY_LABEL_KEY[row.original.visibility] ??
+                "fields.visibility.alwaysShow",
+            )}
           </span>
         ),
         enableSorting: false,

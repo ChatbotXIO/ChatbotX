@@ -7,10 +7,24 @@ export const customFieldTypes = z.enum([
   "number",
   "date",
   "datetime",
+  "time",
+  "url",
+  "list",
   "boolean",
   "longText",
 ])
 export type CustomFieldType = z.infer<typeof customFieldTypes>
+
+// Visibilidade do Custom Field no Inbox drawer — paridade Respond.io:
+// alwaysShow = sempre renderiza;
+// alwaysHide = nunca renderiza (admin só edita via /settings);
+// hideWhenEmpty = renderiza só se contact tem value preenchido.
+export const customFieldVisibilities = z.enum([
+  "alwaysShow",
+  "alwaysHide",
+  "hideWhenEmpty",
+])
+export type CustomFieldVisibility = z.infer<typeof customFieldVisibilities>
 
 export const operatorTypes = z.enum([
   "in",
