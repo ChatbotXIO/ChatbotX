@@ -113,7 +113,8 @@
     "onSkip": "Khi bỏ qua",
     "onSuccess": "Khi thành công",
     "trigger": "Trigger",
-    "close": "Đóng"
+    "close": "Đóng",
+    "remove": "Xóa"
   },
   "states": {
     "success": "Thành công",
@@ -1899,7 +1900,10 @@
     "colorLabel": "Màu",
     "descriptionLabel": "Mô tả",
     "descriptionPlaceholder": "Tùy chọn — thẻ này dùng để làm gì?",
-    "preview": "Xem trước"
+    "preview": "Xem trước",
+    "addTag": "Thêm nhãn",
+    "searchPlaceholder": "Tìm kiếm nhãn",
+    "emptyState": "Không tìm thấy nhãn"
   },
   "texts": {
     "or": "hoặc"
@@ -2377,6 +2381,12 @@
     "drawer": {
       "title": "Chi tiết liên hệ",
       "openInInbox": "Mở trong hộp thư"
+    },
+    "placeholders": {
+      "addFirstName": "Thêm tên",
+      "addLastName": "Thêm họ",
+      "addEmail": "Thêm email",
+      "selectAssignee": "Chọn người phụ trách"
     }
   },
   "errorLogs": {
@@ -2404,7 +2414,8 @@
   },
   "customFields": {
     "title": "Trường tùy chỉnh",
-    "subtitle": "Tạo và quản lý các trường tùy chỉnh để làm phong phú hồ sơ liên hệ"
+    "subtitle": "Tạo và quản lý các trường tùy chỉnh để làm phong phú hồ sơ liên hệ",
+    "addValue": "Thêm giá trị cho {field}"
   },
   "keywords": {
     "title": "Từ khóa"

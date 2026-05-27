@@ -25,7 +25,7 @@ export function CreateContactDialog({
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
-  const onSubmmited = () => {
+  const onSubmitted = () => {
     setOpen(false)
     router.refresh()
   }
@@ -53,7 +53,7 @@ export function CreateContactDialog({
         <div className="flex items-center space-x-2">
           <CreateContactForm
             onCancelled={() => setOpen(false)}
-            onSubmmited={onSubmmited}
+            onSubmitted={onSubmitted}
             workspaceId={workspaceId}
           />
         </div>

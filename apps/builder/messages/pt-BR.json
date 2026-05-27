@@ -113,7 +113,8 @@
     "onSkip": "Em caso de pulo",
     "onSuccess": "Em caso de sucesso",
     "trigger": "Gatilho",
-    "close": "Fechar"
+    "close": "Fechar",
+    "remove": "Remover"
   },
   "states": {
     "success": "Sucesso",
@@ -1884,7 +1885,10 @@
     "colorLabel": "Cor",
     "descriptionLabel": "Descrição",
     "descriptionPlaceholder": "Opcional — pra que serve essa etiqueta?",
-    "preview": "Pré-visualização"
+    "preview": "Pré-visualização",
+    "addTag": "Adicionar etiqueta",
+    "searchPlaceholder": "Pesquisar etiquetas",
+    "emptyState": "Nenhuma etiqueta encontrada"
   },
   "texts": {
     "or": "ou"
@@ -2389,6 +2393,12 @@
     "drawer": {
       "title": "Detalhes do contato",
       "openInInbox": "Abrir no Inbox"
+    },
+    "placeholders": {
+      "addFirstName": "Adicione um nome",
+      "addLastName": "Adicione um sobrenome",
+      "addEmail": "Adicione um e-mail",
+      "selectAssignee": "Selecione um responsável"
     }
   },
   "auditLogs": {
@@ -2413,7 +2423,8 @@
   },
   "customFields": {
     "title": "Campos Personalizados",
-    "subtitle": "Crie e gerencie campos personalizados para enriquecer os perfis dos seus contatos"
+    "subtitle": "Crie e gerencie campos personalizados para enriquecer os perfis dos seus contatos",
+    "addValue": "Adicione um valor para {field}"
   },
   "keywords": {
     "title": "Palavras-chave"

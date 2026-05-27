@@ -9,8 +9,10 @@ import {
 import { db, eq, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
+  contactCustomFieldModel,
   contactInboxModel,
   contactModel,
+  contactsToTagsModel,
   conversationModel,
   inboxModel,
   workspaceUsageModel,
@@ -74,13 +76,13 @@ export const createContactAction = workspaceActionClient
     },
   )
 
-export const createContact = async ({
+export async function createContact({
   workspaceId,
   parsedInput,
 }: {
   workspaceId: string
   parsedInput: CreateContactRequest
-}): Promise<CreateContactResponse> => {
+}): Promise<CreateContactResponse> {
   // Make sure phone number is not exists in the workspace
   const existedContact = await db.query.contactModel.findFirst({
     where: {
@@ -117,11 +119,12 @@ export const createContact = async ({
     })
   }
 
+  const { assigneeUserId, tagIds, customFields, ...contactValues } = parsedInput
   const [contact, contactInbox] = await db.transaction(async (tx) => {
     const [newContact] = await tx
       .insert(contactModel)
       .values({
-        ...parsedInput,
+        ...contactValues,
         workspaceId,
         id: createId(),
       })
@@ -150,7 +153,32 @@ export const createContact = async ({
       workspaceId,
       contactId: newContact.id,
       id: createId(),
+      ...(assigneeUserId ? { assignedUserId: assigneeUserId } : {}),
     })
+
+    if (tagIds && tagIds.length > 0) {
+      await tx.insert(contactsToTagsModel).values(
+        tagIds.map((tagId) => ({
+          contactId: newContact.id,
+          tagId,
+        })),
+      )
+    }
+
+    if (customFields) {
+      const entries = Object.entries(customFields).filter(
+        ([, value]) => value !== "" && value !== null && value !== undefined,
+      )
+      if (entries.length > 0) {
+        await tx.insert(contactCustomFieldModel).values(
+          entries.map(([customFieldId, value]) => ({
+            contactId: newContact.id,
+            customFieldId,
+            value,
+          })),
+        )
+      }
+    }
 
     return [newContact, newContactInbox]
   })

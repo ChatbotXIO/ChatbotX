@@ -113,7 +113,8 @@
     "onSkip": "On skip",
     "onSuccess": "On success",
     "trigger": "Trigger",
-    "close": "Close"
+    "close": "Close",
+    "remove": "Remove"
   },
   "states": {
     "success": "Success",
@@ -1884,7 +1885,10 @@
     "colorLabel": "Color",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Optional — what is this tag for?",
-    "preview": "Preview"
+    "preview": "Preview",
+    "addTag": "Add tag",
+    "searchPlaceholder": "Search tags",
+    "emptyState": "No tags found"
   },
   "texts": {
     "or": "or"
@@ -2389,6 +2393,12 @@
     "drawer": {
       "title": "Contact details",
       "openInInbox": "Open in Inbox"
+    },
+    "placeholders": {
+      "addFirstName": "Add a first name",
+      "addLastName": "Add a last name",
+      "addEmail": "Add an email",
+      "selectAssignee": "Select an assignee"
     }
   },
   "auditLogs": {
@@ -2413,7 +2423,8 @@
   },
   "customFields": {
     "title": "Custom Fields",
-    "subtitle": "Create and manage custom fields to enrich your contact profiles"
+    "subtitle": "Create and manage custom fields to enrich your contact profiles",
+    "addValue": "Add a value for {field}"
   },
   "keywords": {
     "title": "Keywords"
