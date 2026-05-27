@@ -10,6 +10,7 @@ import {
   BuildingIcon,
   CoinsIcon,
   CreditCardIcon,
+  Grid2x2PlusIcon,
   LayersIcon,
   Users2Icon,
 } from "lucide-react"
@@ -32,6 +33,11 @@ export function ManageSidebar() {
       avatar: session?.user.image ?? "",
     },
     navMain: [
+      {
+        title: t("integrations.title"),
+        url: "/manage/integrations",
+        icon: Grid2x2PlusIcon,
+      },
       {
         title: t("organizationSettings.title"),
         url: "/manage/settings",
