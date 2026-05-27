@@ -2444,7 +2444,8 @@
     "subtitle": "Create and manage custom fields to enrich your contact profiles",
     "addValue": "Add a value for {field}",
     "valuesLabel": "Options",
-    "valuesPlaceholder": "Type and press Enter to add"
+    "valuesPlaceholder": "Type and press Enter to add",
+    "emptyOptions": "No options configured"
   },
   "keywords": {
     "title": "Keywords"

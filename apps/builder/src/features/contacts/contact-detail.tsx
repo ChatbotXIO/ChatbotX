@@ -143,13 +143,21 @@ export const ContactDetail = ({
     // (não só os do contato). Campos sem valor mostram placeholder e
     // ficam editáveis inline — igual Respond.io.
     for (const targetCustomField of customFields) {
+      const cf = targetCustomField as unknown as {
+        id: string
+        name: string
+        type: string
+        visibility?: "alwaysShow" | "alwaysHide" | "hideWhenEmpty"
+        values?: string[]
+      }
       tmpContactFields.push({
-        key: targetCustomField.id.toString(),
-        icon: customFieldIconsMap[targetCustomField.type as CustomFieldType],
-        label: targetCustomField.name,
-        value:
-          contactCustomValuesMap.get(targetCustomField.id.toString()) ?? "",
-        type: targetCustomField.type as CustomFieldType,
+        key: cf.id.toString(),
+        icon: customFieldIconsMap[cf.type as CustomFieldType],
+        label: cf.name,
+        value: contactCustomValuesMap.get(cf.id.toString()) ?? "",
+        type: cf.type as CustomFieldType,
+        visibility: cf.visibility,
+        options: cf.values ?? [],
       })
     }
 
@@ -190,13 +198,29 @@ export const ContactDetail = ({
   // Tags do contato (vem de GetContactResponse já com color/emoji/name)
   const tags = contact.tags ?? []
 
-  // Separa fields em visíveis e ocultos (Pedro iter 33).
-  // Hidden keys vêm do workspace via prop (carregado server-side).
-  // Sistema fields usam a chave do schema ("phoneNumber", etc), custom
-  // fields usam o id stringified.
+  // Separa fields em visíveis e ocultos (Pedro iter 33 + gap #10 Fase D).
+  // Dois sistemas combinados:
+  //   1. hiddenFieldKeys (workspace-contact-field-visibility) = override
+  //      POR USUÁRIO do workspace. Tem prioridade.
+  //   2. customField.visibility (global no field) = setting global do admin.
+  //      alwaysHide vai pro accordion. hideWhenEmpty SUMRINDO quando value
+  //      vazio (paridade Respond.io).
   const hiddenSet = new Set(hiddenFieldKeys)
-  const visibleFields = contactFields.filter((f) => !hiddenSet.has(f.key))
-  const hiddenFields = contactFields.filter((f) => hiddenSet.has(f.key))
+  const visibleFields = contactFields.filter((f) => {
+    if (hiddenSet.has(f.key)) {
+      return false
+    }
+    if (f.visibility === "alwaysHide") {
+      return false
+    }
+    if (f.visibility === "hideWhenEmpty" && !f.value?.trim()) {
+      return false
+    }
+    return true
+  })
+  const hiddenFields = contactFields.filter(
+    (f) => hiddenSet.has(f.key) || f.visibility === "alwaysHide",
+  )
 
   return (
     /* Layout 3 zonas (Pedro 2026-05-25 iteração 31, pixel-perfect Respond.io):

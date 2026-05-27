@@ -2435,7 +2435,8 @@
     "subtitle": "Tạo và quản lý các trường tùy chỉnh để làm phong phú hồ sơ liên hệ",
     "addValue": "Thêm giá trị cho {field}",
     "valuesLabel": "Tùy chọn",
-    "valuesPlaceholder": "Nhập và nhấn Enter để thêm"
+    "valuesPlaceholder": "Nhập và nhấn Enter để thêm",
+    "emptyOptions": "Chưa cấu hình tùy chọn"
   },
   "keywords": {
     "title": "Từ khóa"

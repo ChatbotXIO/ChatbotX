@@ -1,4 +1,7 @@
-import type { CustomFieldType } from "@chatbotx.io/database/partials"
+import type {
+  CustomFieldType,
+  CustomFieldVisibility,
+} from "@chatbotx.io/database/partials"
 import { contactModel, createSelectSchema } from "@chatbotx.io/database/schema"
 import type { LucideIcon } from "lucide-react"
 import { z } from "zod"
@@ -15,6 +18,11 @@ export type ContactEditableField = {
   label: string
   value: string | null | undefined
   type: CustomFieldType
+  // Só populado pra custom fields (defaults firstName/email/phone não usam).
+  // visibility="hideWhenEmpty" + valor vazio = filtrado fora dos visíveis.
+  visibility?: CustomFieldVisibility
+  // Pra type="list" — opções pré-definidas pelo admin (multi-select).
+  options?: string[]
 }
 
 export const publicContactResource = contactResource.pick({

@@ -2444,7 +2444,8 @@
     "subtitle": "Crie e gerencie campos personalizados para enriquecer os perfis dos seus contatos",
     "addValue": "Adicione um valor para {field}",
     "valuesLabel": "Opções",
-    "valuesPlaceholder": "Digite e Enter para adicionar"
+    "valuesPlaceholder": "Digite e Enter para adicionar",
+    "emptyOptions": "Sem opções configuradas"
   },
   "keywords": {
     "title": "Palavras-chave"
