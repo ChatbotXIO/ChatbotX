@@ -2706,5 +2706,36 @@
   "botFields": {
     "title": "Campos do bot",
     "subtitle": "Variáveis globais do workspace usadas em fluxos e mensagens automatizadas"
+  },
+  "closingNotes": {
+    "title": "Notas de Fechamento",
+    "subtitle": "Configure resumo + categoria que atendente preenche ao encerrar uma conversa no Inbox.",
+    "modeTitle": "Modo de operação",
+    "modeSubtitle": "Decide se atendente é obrigado a categorizar e/ou resumir a conversa antes de fechar.",
+    "modeSaved": "Modo atualizado",
+    "savingMode": "Salvando modo…",
+    "categoriesTitle": "Categorias de conversa",
+    "categoriesSubtitle": "Lista de categorias disponíveis pro atendente escolher ao fechar (ex.: Resolvido, Sem resposta, Spam).",
+    "addCategory": "Adicionar categoria",
+    "editCategoryTitle": "Editar categoria",
+    "categoryFormDescription": "Categoria fica disponível ao atendente no diálogo de fechamento da conversa.",
+    "namePlaceholder": "Ex.: Resolvido",
+    "descriptionPlaceholder": "Quando usar esta categoria (opcional)",
+    "categoryCreated": "Categoria criada",
+    "categoryUpdated": "Categoria atualizada",
+    "categoryDeleted": "Categoria removida",
+    "emptyCategories": "Nenhuma categoria ainda. Adicione a primeira pra atendente categorizar conversas ao fechar.",
+    "deleteCategoryTitle": "Excluir categoria",
+    "confirmDelete": "Excluir a categoria \"{name}\"? Conversas que usavam esta categoria ficarão sem ela.",
+    "mode": {
+      "disabled": "Desabilitado",
+      "disabledDesc": "Atendente fecha a conversa direto, sem dialog.",
+      "optional": "Diálogo opcional",
+      "optionalDesc": "Abre dialog ao fechar mas atendente pode pular sem preencher.",
+      "mandatoryDialog": "Categoria obrigatória",
+      "mandatoryDialogDesc": "Abre dialog, atendente precisa escolher uma categoria. Resumo opcional.",
+      "mandatoryBoth": "Categoria + Resumo obrigatórios",
+      "mandatoryBothDesc": "Abre dialog, atendente precisa escolher categoria E escrever resumo da conversa."
+    }
   }
 }

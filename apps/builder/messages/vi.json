@@ -2707,5 +2707,36 @@
   "botFields": {
     "title": "Trường bot",
     "subtitle": "Biến toàn cục của workspace dùng trong luồng và tin nhắn tự động"
+  },
+  "closingNotes": {
+    "title": "Ghi chú khi đóng",
+    "subtitle": "Cấu hình tóm tắt + danh mục mà nhân viên điền khi đóng cuộc trò chuyện trong Inbox.",
+    "modeTitle": "Chế độ hoạt động",
+    "modeSubtitle": "Quyết định xem nhân viên có bắt buộc phải phân loại và/hoặc tóm tắt cuộc trò chuyện trước khi đóng hay không.",
+    "modeSaved": "Đã cập nhật chế độ",
+    "savingMode": "Đang lưu chế độ…",
+    "categoriesTitle": "Danh mục cuộc trò chuyện",
+    "categoriesSubtitle": "Danh sách danh mục nhân viên có thể chọn khi đóng (ví dụ: Đã giải quyết, Không phản hồi, Spam).",
+    "addCategory": "Thêm danh mục",
+    "editCategoryTitle": "Sửa danh mục",
+    "categoryFormDescription": "Danh mục sẽ có sẵn cho nhân viên trong hộp thoại đóng cuộc trò chuyện.",
+    "namePlaceholder": "Ví dụ: Đã giải quyết",
+    "descriptionPlaceholder": "Khi nào dùng danh mục này (tùy chọn)",
+    "categoryCreated": "Đã tạo danh mục",
+    "categoryUpdated": "Đã cập nhật danh mục",
+    "categoryDeleted": "Đã xóa danh mục",
+    "emptyCategories": "Chưa có danh mục. Thêm danh mục đầu tiên để nhân viên có thể phân loại cuộc trò chuyện khi đóng.",
+    "deleteCategoryTitle": "Xóa danh mục",
+    "confirmDelete": "Xóa danh mục \"{name}\"? Các cuộc trò chuyện đã dùng danh mục này sẽ không còn nó.",
+    "mode": {
+      "disabled": "Tắt",
+      "disabledDesc": "Nhân viên đóng cuộc trò chuyện trực tiếp, không có hộp thoại.",
+      "optional": "Hộp thoại tùy chọn",
+      "optionalDesc": "Hộp thoại mở khi đóng nhưng nhân viên có thể bỏ qua không cần điền gì.",
+      "mandatoryDialog": "Bắt buộc danh mục",
+      "mandatoryDialogDesc": "Hộp thoại mở, nhân viên phải chọn một danh mục. Tóm tắt tùy chọn.",
+      "mandatoryBoth": "Bắt buộc danh mục + tóm tắt",
+      "mandatoryBothDesc": "Hộp thoại mở, nhân viên phải chọn danh mục VÀ viết tóm tắt cuộc trò chuyện."
+    }
   }
 }

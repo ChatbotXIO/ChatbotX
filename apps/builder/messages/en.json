@@ -2706,5 +2706,36 @@
   "botFields": {
     "title": "Bot Fields",
     "subtitle": "Global workspace variables used in flows and automated messages"
+  },
+  "closingNotes": {
+    "title": "Closing Notes",
+    "subtitle": "Configure summary + category that agent fills in when closing a conversation in the Inbox.",
+    "modeTitle": "Operation mode",
+    "modeSubtitle": "Decide if agent is required to categorize and/or summarize the conversation before closing.",
+    "modeSaved": "Mode updated",
+    "savingMode": "Saving mode…",
+    "categoriesTitle": "Conversation categories",
+    "categoriesSubtitle": "List of categories the agent can choose from when closing (e.g.: Resolved, No response, Spam).",
+    "addCategory": "Add category",
+    "editCategoryTitle": "Edit category",
+    "categoryFormDescription": "Category becomes available to the agent in the close-conversation dialog.",
+    "namePlaceholder": "Ex.: Resolved",
+    "descriptionPlaceholder": "When to use this category (optional)",
+    "categoryCreated": "Category created",
+    "categoryUpdated": "Category updated",
+    "categoryDeleted": "Category removed",
+    "emptyCategories": "No categories yet. Add the first one so the agent can categorize conversations when closing.",
+    "deleteCategoryTitle": "Delete category",
+    "confirmDelete": "Delete category \"{name}\"? Conversations that used this category will no longer have it.",
+    "mode": {
+      "disabled": "Disabled",
+      "disabledDesc": "Agent closes conversation directly, no dialog.",
+      "optional": "Optional dialog",
+      "optionalDesc": "Dialog opens when closing but agent can skip without filling anything.",
+      "mandatoryDialog": "Category required",
+      "mandatoryDialogDesc": "Dialog opens, agent must choose a category. Summary optional.",
+      "mandatoryBoth": "Category + Summary required",
+      "mandatoryBothDesc": "Dialog opens, agent must choose category AND write conversation summary."
+    }
   }
 }

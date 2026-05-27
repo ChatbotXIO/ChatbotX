@@ -118,6 +118,11 @@ export function SettingsAreaSidebar() {
           href: `${base}/settings/snippets`,
           icon: wrapIconsax(MessageText1 as IconsaxComponent),
         },
+        {
+          label: t("closingNotes.title"),
+          href: `${base}/settings/closing-notes`,
+          icon: wrapIconsax(Note as IconsaxComponent),
+        },
       ],
     },
     {
