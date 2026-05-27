@@ -114,6 +114,9 @@ export type TemplateMessage = {
 }
 
 export type WhatsappActions = {
+  getProfilePicURL: (props: {
+    ctx: Context<WhatsappAuthValue>
+  }) => Promise<string | undefined>
   verifyAccessToken: Handler<
     {
       ctx: Context<WhatsappAuthValue>

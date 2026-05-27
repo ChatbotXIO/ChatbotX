@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/sdk"
 import {
   findConversationalAutomation,
+  getBusinessProfilePictureUrl,
   updateConversationalAutomation,
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
@@ -33,6 +34,7 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
+    getProfilePicURL: getBusinessProfilePictureUrl,
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     listMessageTemplates: async ({ ctx }) =>

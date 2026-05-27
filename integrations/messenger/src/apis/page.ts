@@ -52,6 +52,31 @@ export const exchangeLongLivedToken = (
   })
 }
 
+export const getPagePictureUrl = async (props: {
+  ctx: Context<MessengerAuthValue>
+}): Promise<string | undefined> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const pageId = ctx.auth.metadata.pageId
+  const accessToken = ctx.auth.tokens.accessToken
+  const endpoint = `${version}/${pageId}`
+
+  try {
+    return await rescue(endpoint, async () => {
+      const res: { picture?: { data?: { url?: string } } } =
+        await facebookGraphClient.get(endpoint, {
+          searchParams: {
+            fields: "picture.type(large){url}",
+            access_token: accessToken,
+          },
+        })
+      return res.picture?.data?.url
+    })
+  } catch {
+    return
+  }
+}
+
 export const subscribePageToAppWebhook = (props: {
   pageId: string
   accessToken: string
