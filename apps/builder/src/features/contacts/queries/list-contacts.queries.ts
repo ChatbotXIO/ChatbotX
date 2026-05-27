@@ -1,5 +1,11 @@
-import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import {
+  and,
+  db,
+  eq,
+  isNull,
+  relationsFilterToSQL,
+} from "@chatbotx.io/database/client"
+import { contactModel, conversationModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
   parseOrderByAsObject,
@@ -11,12 +17,64 @@ import type {
   ListContactsResponse,
 } from "../schemas/query"
 
+// Drizzle relational query API não suporta filter aninhado cross-table no
+// `where` (`conversation: { assignedUserId: X }` retorna "Unknown
+// relational filter field"). Solução: pré-buscar IDs dos contatos que
+// têm a conversation no assignment desejado e fazer `{ id: { in: [...] }}`.
+async function resolveContactIdsByAssignment(
+  workspaceId: string,
+  assignedId: string,
+): Promise<string[]> {
+  const baseFilter = eq(conversationModel.workspaceId, workspaceId)
+  const assignmentWhere = (() => {
+    if (assignedId === "unassigned") {
+      return and(
+        baseFilter,
+        isNull(conversationModel.assignedUserId),
+        isNull(conversationModel.assignedInboxTeamId),
+      )
+    }
+    if (assignedId.startsWith("u_")) {
+      return and(
+        baseFilter,
+        eq(conversationModel.assignedUserId, assignedId.slice(2)),
+      )
+    }
+    if (assignedId.startsWith("t_")) {
+      return and(
+        baseFilter,
+        eq(conversationModel.assignedInboxTeamId, assignedId.slice(2)),
+      )
+    }
+    return null
+  })()
+  if (!assignmentWhere) {
+    return []
+  }
+  const rows = await db
+    .select({ contactId: conversationModel.contactId })
+    .from(conversationModel)
+    .where(assignmentWhere)
+  return rows.map((r) => r.contactId)
+}
+
 export async function listContacts(
   input: ListContactsRequest & { workspaceId: string },
 ): Promise<ListContactsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const where = generateWhere(input)
+  let assignmentContactIds: string[] | undefined
+  if (input.assignedId && input.assignedId !== "all") {
+    assignmentContactIds = await resolveContactIdsByAssignment(
+      input.workspaceId,
+      input.assignedId,
+    )
+    if (assignmentContactIds.length === 0) {
+      return { data: [], pageCount: 0 }
+    }
+  }
+
+  const where = generateWhere(input, assignmentContactIds)
 
   const pagination = getPaginationWithDefaults(input)
   const orderBy = parseOrderByAsObject(contactModel, input)
@@ -90,7 +148,10 @@ async function getTotalContactsFromStats(
   }
 }
 
-const generateWhere = (input: ListContactsRequest) => {
+const generateWhere = (
+  input: ListContactsRequest,
+  assignmentContactIds?: string[],
+) => {
   const where: Record<string, unknown> = {
     workspaceId: input.workspaceId,
     ...(input.keyword
@@ -118,6 +179,11 @@ const generateWhere = (input: ListContactsRequest) => {
   // do schema do contact (todos visíveis incluindo bloqueados).
   if (input.blocked) {
     where.blockedAt = { isNotNull: true }
+  }
+
+  // Caixas/Times — IDs já resolvidos via resolveContactIdsByAssignment.
+  if (assignmentContactIds && assignmentContactIds.length > 0) {
+    where.id = { in: assignmentContactIds }
   }
 
   return where
