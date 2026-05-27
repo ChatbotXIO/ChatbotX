@@ -16,6 +16,8 @@ import type { Column, ColumnDef } from "@tanstack/react-table"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
+import { useChatStore } from "../chat/store/chat-store-provider"
+import type { ListConversationItemResource } from "../conversations/schema/resource"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { LifecycleStagePill } from "../lifecycle-stages/lifecycle-stage-pill"
 import { getTagChipStyle } from "../tags/tag-colors"
@@ -26,7 +28,7 @@ import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ListContactsItem } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
-import { getAvatarInitials, getRespondAvatarUrl } from "./utils"
+import { getAvatarInitials, getRespondAvatarUrl, useAvatarUrl } from "./utils"
 
 type ContactsTableProps = {
   workspaceId: string
@@ -77,10 +79,35 @@ export function ContactsTable({
   const t = useTranslations()
   const locale = useLocale()
   const [{ data, pageCount }] = use(promises)
+  const prependConversation = useChatStore((s) => s.prependConversation)
+  const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
   // Drawer "Detalhes do contato" — abre ao clicar na linha. Pedro 2026-05-26:
-  // pixel-perfect Respond.io (350px à direita).
+  // pixel-perfect Respond.io (350px à direita). Drawer reusa o
+  // <ContactDetail> FULL do Inbox via ChatStoreProvider que mora no layout.
   const [selectedContact, setSelectedContact] =
     useState<ListContactsItem | null>(null)
+
+  const handleRowClick = (contact: ListContactsItem) => {
+    setSelectedContact(contact)
+    if (contact.conversation) {
+      // Popula chatStore com a conversation do contato pra que o
+      // <ContactDetail> reuse a mesma fonte de verdade que usa no Inbox
+      // (assignedUser etc vêm de useChatStore.conversations). O shape
+      // do <ListContactsItem>.conversation tem subset do que
+      // ListConversationItemResource precisa — fields extras (messages,
+      // contactInboxes, unreadCount) não são lidos pelo ContactDetail,
+      // então passamos defaults.
+      const conversationForStore: ListConversationItemResource = {
+        ...contact.conversation,
+        contact,
+        contactInboxes: contact.contactInboxes ?? [],
+        messages: [],
+        unreadCount: 0,
+      } as unknown as ListConversationItemResource
+      prependConversation(conversationForStore)
+      setActiveConversationId(contact.conversation.id)
+    }
+  }
 
   const columns = useMemo<ColumnDef<ListContactsItem>[]>(
     () => [
@@ -118,53 +145,13 @@ export function ContactsTable({
             title={t("fields.name.label")}
           />
         ),
-        cell: ({ row }) => {
-          const name =
-            row.original.fullName ||
-            row.original.phoneNumber ||
-            row.original.email ||
-            "?"
-          const avatar = getRespondAvatarUrl(name)
-          const initials = getAvatarInitials(name)
-          return (
-            <div className="flex items-center gap-2">
-              {/* Avatar pixel-perfect Respond.io 2026-05-26 — span circular
-                  28px com img de fundo (mesmo CDN visual). Não usa Avatar
-                  shadcn porque ele força size-8 + rounded-lg + border que
-                  conflitam com Respond.io. */}
-              <span
-                className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[11px] text-white leading-none"
-                style={{ backgroundColor: avatar.color }}
-                title={name}
-              >
-                {/* biome-ignore lint/performance/noImgElement: avatar de fundo simples sem Next/Image */}
-                <img
-                  alt=""
-                  aria-hidden
-                  className="absolute inset-0 size-full object-cover"
-                  height={28}
-                  src={avatar.url}
-                  width={28}
-                />
-                <span className="relative">{initials}</span>
-              </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    className="max-w-[170px] truncate text-blue-500"
-                    href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
-                    target="_blank"
-                  >
-                    {name}
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          )
-        },
+        cell: ({ row }) => (
+          // Mesmo padrão do <ConversationItem> do Inbox (memory:
+          // reference_avatares_consistentes). Seed do CDN = ID do contato
+          // (snowflake imutável) — garante MESMO avatar em qualquer
+          // lugar que renderiza (lista Inbox, topbar, bubble, drawer).
+          <ContactNameCell contact={row.original} workspaceId={workspaceId} />
+        ),
         size: 220,
         meta: {
           label: t("fields.name.label"),
@@ -267,21 +254,27 @@ export function ContactsTable({
           if (tags.length === 0) {
             return <span className="text-muted-foreground text-xs">—</span>
           }
+          // Pixel-perfect Respond.io 2026-05-26 (Pedro): tags em UMA linha
+          // só (sem wrap). Máximo 3 chips visíveis com nome truncado +
+          // "+N" pra restante. Row da tabela mantém altura fixa.
+          const visible = tags.slice(0, 3)
+          const remaining = tags.length - visible.length
           return (
-            <div className="flex flex-wrap gap-1">
-              {tags.slice(0, 3).map((tag) => (
+            <div className="flex max-w-[260px] flex-nowrap items-center gap-1 overflow-hidden">
+              {visible.map((tag) => (
                 <span
-                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold text-[11px] leading-4"
+                  className="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 font-semibold text-[11px] leading-4"
                   key={tag.id}
                   style={getTagChipStyle(tag.color)}
+                  title={tag.name}
                 >
                   {tag.emoji && <span aria-hidden>{tag.emoji}</span>}
-                  <span className="max-w-[80px] truncate">{tag.name}</span>
+                  <span className="max-w-[70px] truncate">{tag.name}</span>
                 </span>
               ))}
-              {tags.length > 3 && (
-                <span className="text-muted-foreground text-xs">
-                  +{tags.length - 3}
+              {remaining > 0 && (
+                <span className="shrink-0 text-muted-foreground text-xs">
+                  +{remaining}
                 </span>
               )}
             </div>
@@ -446,29 +439,98 @@ export function ContactsTable({
     clearOnDefault: true,
   })
 
+  // Pixel-perfect Respond.io 2026-05-26 (Pedro): drawer "Detalhes do
+  // contato" SOBREPÕE a tabela (não empurra encolhendo). Wrapper
+  // `relative` + drawer `absolute right-0 top-0 bottom-0 z-20` cobre o
+  // espaço da tabela. Tabela mantém largura total.
+  // Tipografia + separator pixel-perfect (memory:
+  // reference_fontes_respond_io). Texto = Inter / 14px / weight 400 /
+  // #CFD3D8 (text-text-secondary, NÃO branco puro). Separator entre rows =
+  // `rgba(255,255,255,0.06)` (sutil), substitui `border-border` que ficava
+  // forte demais no dark. Wrapper `[&_...]` targeta tbody/thead/td/th
+  // sem mexer no shared Table.
+  const tableClassName =
+    "[&_tbody_tr]:!border-white/[0.06] [&_thead_tr]:!border-white/[0.06] [&_td]:!text-text-secondary [&_th]:!text-text-secondary [&_th]:!font-medium"
+
   return (
-    <div className="flex h-full gap-0">
-      <div className="flex-1 overflow-hidden">
-        <DataTable
-          onRowClick={(row) => setSelectedContact(row.original)}
-          table={table}
-        >
-          <DataTableToolbar table={table}>
-            <CreateContactDialog workspaceId={workspaceId} />
-            <ContactListAction
-              lifecycleStages={_lifecycleStages}
-              table={table}
-              workspaceId={workspaceId}
-            />
-          </DataTableToolbar>
-        </DataTable>
-      </div>
+    <div className="relative h-full">
+      <DataTable
+        className={tableClassName}
+        onRowClick={(row) => handleRowClick(row.original)}
+        table={table}
+      >
+        <DataTableToolbar table={table}>
+          <CreateContactDialog workspaceId={workspaceId} />
+          <ContactListAction
+            lifecycleStages={_lifecycleStages}
+            table={table}
+            workspaceId={workspaceId}
+          />
+        </DataTableToolbar>
+      </DataTable>
       <ContactDetailDrawer
         contact={selectedContact}
-        onClose={() => setSelectedContact(null)}
+        onClose={() => {
+          setSelectedContact(null)
+          setActiveConversationId(null)
+        }}
         open={selectedContact !== null}
         workspaceId={workspaceId}
       />
+    </div>
+  )
+}
+
+// Cell da coluna Nome com avatar pixel-perfect Respond.io (Pedro 2026-05-26:
+// "preciso que seja o mesmo do Inbox"). Usa o mesmo seed do
+// <ConversationItem> — ID do contato — pra garantir mesma cor + bonequinho
+// em qualquer lugar. `useAvatarUrl` retorna imagem própria do contato
+// (additionalAttributes.avatarUrl) quando existe; senão cai no avatar do
+// CDN local /respond-avatars (mesmo padrão do card do Inbox).
+function ContactNameCell({
+  contact,
+  workspaceId,
+}: {
+  contact: ListContactsItem
+  workspaceId: string
+}) {
+  const name = contact.fullName || contact.phoneNumber || contact.email || "?"
+  const avatarUrl = useAvatarUrl(contact)
+  const respondAvatar = getRespondAvatarUrl(contact.id ?? name)
+  const finalAvatarUrl = avatarUrl || respondAvatar.url
+  const initials = getAvatarInitials(name)
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[11px] text-white"
+        style={{ backgroundColor: respondAvatar.color }}
+        title={name}
+      >
+        <span className="pointer-events-none">{initials}</span>
+        {/* biome-ignore lint/performance/noImgElement: avatar de fundo simples sem Next/Image */}
+        <img
+          alt=""
+          aria-hidden
+          className="absolute inset-0 size-full object-cover"
+          height={28}
+          src={finalAvatarUrl}
+          width={28}
+        />
+      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            className="max-w-[170px] truncate text-blue-500"
+            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`}
+            target="_blank"
+          >
+            {name}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{name}</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }
