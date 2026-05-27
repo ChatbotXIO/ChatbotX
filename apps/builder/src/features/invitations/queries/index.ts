@@ -1,7 +1,8 @@
 "use server"
 
+import { workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { invitationModel, userModel } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 
@@ -28,10 +29,8 @@ export async function findInvitation({ code }: { code: string }) {
   let workspace: WorkspaceModel | null = null
   if (invitation.workspaceId) {
     workspace =
-      (await db.query.workspaceModel.findFirst({
-        where: {
-          id: invitation.workspaceId,
-        },
+      (await workspaceService.find({
+        where: { id: invitation.workspaceId },
       })) ?? null
   }
 

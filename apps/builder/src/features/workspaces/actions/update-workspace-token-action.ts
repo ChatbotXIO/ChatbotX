@@ -1,7 +1,6 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { workspaceModel } from "@chatbotx.io/database/schema"
+import { workspaceService } from "@chatbotx.io/business"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -29,10 +28,7 @@ const updateWorkspaceToken = async ({
     })
   }
 
-  await db
-    .update(workspaceModel)
-    .set({ token })
-    .where(eq(workspaceModel.id, workspaceId))
+  await workspaceService.update({ id: workspaceId, data: { token } })
 }
 
 export const updateWorkspaceTokenAction = workspaceActionClient

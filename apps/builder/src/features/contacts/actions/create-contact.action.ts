@@ -1,5 +1,6 @@
 "use server"
 
+import { workspaceService } from "@chatbotx.io/business"
 import { db, findOrFail, sql } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
@@ -70,10 +71,7 @@ export const createContact = async ({
     message: "Inbox not found",
   })
 
-  const workspace = await db.query.workspaceModel.findFirst({
-    where: { id: workspaceId },
-    columns: { ownerId: true },
-  })
+  const workspace = await workspaceService.find({ where: { id: workspaceId } })
   if (!workspace) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Workspace not found"],

@@ -1,7 +1,6 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { workspaceModel } from "@chatbotx.io/database/schema"
+import { workspaceService } from "@chatbotx.io/business"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
@@ -25,10 +24,7 @@ export const updateWorkspaceBasicAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateWorkspaceBasicRequest
     }) => {
-      await db
-        .update(workspaceModel)
-        .set(parsedInput)
-        .where(eq(workspaceModel.id, workspaceId))
+      await workspaceService.update({ id: workspaceId, data: parsedInput })
     },
   )
 
@@ -43,9 +39,6 @@ export const updateWorkspaceAdvancedAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: UpdateWorkspaceAdvancedRequest
     }) => {
-      await db
-        .update(workspaceModel)
-        .set(parsedInput)
-        .where(eq(workspaceModel.id, workspaceId))
+      await workspaceService.update({ id: workspaceId, data: parsedInput })
     },
   )

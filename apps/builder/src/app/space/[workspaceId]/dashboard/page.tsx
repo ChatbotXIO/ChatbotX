@@ -1,5 +1,5 @@
 import { BaseDashboard } from "@chatbotx.io/analytics-nextjs/components/base-dashboard"
-import { db } from "@chatbotx.io/database/client"
+import { workspaceService } from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import { InboxCardList } from "@/features/inboxes/components/inbox-card-list"
@@ -19,10 +19,7 @@ export default async function Dashboard({
 
   const [inboxesResult, workspace] = await Promise.all([
     listInboxes({ workspaceId, includes: ["integration"] }),
-    db.query.workspaceModel.findFirst({
-      where: { id: workspaceId },
-      columns: { createdAt: true },
-    }),
+    workspaceService.find({ where: { id: workspaceId } }),
   ])
 
   const inboxes = inboxesResult.data.filter((inbox) => inbox.channel !== "smtp")

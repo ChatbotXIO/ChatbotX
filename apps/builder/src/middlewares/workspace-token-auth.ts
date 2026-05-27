@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { workspaceService } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import { base } from "./context"
 
@@ -10,9 +10,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }
 
-    const workspace = await db.query.workspaceModel.findFirst({
-      where: { token },
-    })
+    const workspace = await workspaceService.find({ where: { token } })
     if (!workspace) {
       throw new ORPCError("INVALID_CHATBOT_TOKEN")
     }

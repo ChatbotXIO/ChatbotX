@@ -2,6 +2,7 @@ import {
   broadcastToWorkspaceParty,
   buildContext,
   resolvePlatformSettings,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, findOrFail, sql } from "@chatbotx.io/database/client"
@@ -280,10 +281,7 @@ const detectContactAndConversation = async (props: {
       }
     }
 
-    const ws = await db.query.workspaceModel.findFirst({
-      where: { id: inbox.workspaceId },
-      columns: { ownerId: true },
-    })
+    const ws = await workspaceService.find({ where: { id: inbox.workspaceId } })
     if (!ws) {
       throw new Error("Workspace not found")
     }

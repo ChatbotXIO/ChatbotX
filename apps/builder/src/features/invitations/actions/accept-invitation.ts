@@ -1,6 +1,6 @@
 "use server"
 
-import { userQuotaService } from "@chatbotx.io/business"
+import { userQuotaService, workspaceService } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -46,9 +46,8 @@ export const acceptInvitationAction = authActionClient
       throw new ChatbotXException("You are already a member of this workspace")
     }
 
-    const workspace = await db.query.workspaceModel.findFirst({
+    const workspace = await workspaceService.find({
       where: { id: invitation.workspaceId },
-      columns: { ownerId: true },
     })
     if (workspace) {
       const allowed = await userQuotaService.tryIncrement(

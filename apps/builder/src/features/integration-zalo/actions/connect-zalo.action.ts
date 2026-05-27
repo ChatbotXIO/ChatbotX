@@ -1,4 +1,7 @@
-import { connectChannelIntegration } from "@chatbotx.io/business"
+import {
+  connectChannelIntegration,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { ZaloCredential } from "@chatbotx.io/database/partials"
 import { integrationZaloModel } from "@chatbotx.io/database/schema"
@@ -10,12 +13,10 @@ import { revalidateCacheTags } from "@/lib/cache-helper"
 export async function connectZaloHandler({
   zaloSettings,
   workspaceId,
-  ownerId,
   req,
 }: {
   zaloSettings: ZaloCredential
   workspaceId: string
-  ownerId: string
   req: Request
 }) {
   const authValue = (await integrations.zalo.handleRequest({
@@ -26,6 +27,8 @@ export async function connectZaloHandler({
     },
     req,
   })) as ZaloAuthValue
+
+  const { ownerId } = await workspaceService.findById({ id: workspaceId })
 
   await db.transaction(async (tx) => {
     await connectChannelIntegration({

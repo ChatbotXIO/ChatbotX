@@ -19,6 +19,7 @@ import { createId } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
+import { PHASE_PRODUCTION_BUILD } from "next/constants"
 
 const getPlatformSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -40,6 +41,14 @@ export function createAuth(_config: AuthConfig) {
     }),
     socialProviders: {
       google: async () => {
+        if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
+          return {
+            enabled: false,
+            clientId: "",
+            clientSecret: "",
+          }
+        }
+
         try {
           const googleCredential =
             await platformCredentialService.findDecryptedPlatform({

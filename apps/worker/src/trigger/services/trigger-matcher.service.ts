@@ -1,3 +1,4 @@
+import { workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { triggerEventTypes } from "@chatbotx.io/database/partials"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
@@ -42,10 +43,8 @@ export class TriggerMatcherService {
       ),
     )
 
-    const workspace = await db.query.workspaceModel.findFirst({
-      where: {
-        id: workspaceId,
-      },
+    const workspace = await workspaceService.find({
+      where: { id: workspaceId },
     })
 
     if (filteredTriggers.length === 0 || !workspace) {

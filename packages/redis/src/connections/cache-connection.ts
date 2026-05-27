@@ -14,7 +14,7 @@ export const cacheConnections = {
       // BullMQ queue connections need null (retry forever); cache reads do not.
       maxRetriesPerRequest: 0,
       commandTimeout: 200, // 200ms max per command
-      enableOfflineQueue: false, // don't queue commands while disconnected
+      // enableOfflineQueue: false, // don't queue commands while disconnected
     })
   },
 
