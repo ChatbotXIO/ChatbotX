@@ -3,6 +3,7 @@ import { keys as mail } from "@chatbotx.io/mail/keys"
 import { keys as partysocket } from "@chatbotx.io/partysocket-config/keys"
 import { createEnv } from "@t3-oss/env-nextjs"
 import { z } from "zod"
+import { clientEnv } from "./lib/client-env"
 
 const editionRule = z
   .enum(["community", "enterprise", "cloud"])
@@ -28,16 +29,18 @@ export const env = createEnv({
       .url()
       .optional()
       .default("http://localhost:9000/chatbotx/"),
+    NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL:
-      process.env.NEXT_PUBLIC_BUILDER_URL || "http://localhost:3123",
+      clientEnv("NEXT_PUBLIC_BUILDER_URL") || "http://localhost:3123",
     NEXT_PUBLIC_INTERNAL_WS_URL:
-      process.env.NEXT_PUBLIC_INTERNAL_WS_URL || "http://localhost:1999",
+      clientEnv("NEXT_PUBLIC_INTERNAL_WS_URL") || "http://localhost:1999",
     NEXT_PUBLIC_INTERNAL_STORAGE_URL:
-      process.env.NEXT_PUBLIC_INTERNAL_STORAGE_URL ||
+      clientEnv("NEXT_PUBLIC_INTERNAL_STORAGE_URL") ||
       "http://localhost:9000/chatbotx/",
-    NEXT_PUBLIC_EDITION: process.env.NEXT_PUBLIC_EDITION || "community",
+    NEXT_PUBLIC_EDITION: clientEnv("NEXT_PUBLIC_EDITION") || "community",
+    NEXT_PUBLIC_STORAGE_URL: clientEnv("NEXT_PUBLIC_STORAGE_URL"),
   },
   emptyStringAsUndefined: true,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

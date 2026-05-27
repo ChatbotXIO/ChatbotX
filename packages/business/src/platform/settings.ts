@@ -29,7 +29,10 @@ export type PlatformSettings = {
 
 const getDefaultSettings = (): PlatformSettings => {
   const env = integrationContextEnv()
-  const derived = deriveUrls(env.NEXT_PUBLIC_BUILDER_URL)
+  const derived = deriveUrls(
+    env.NEXT_PUBLIC_BUILDER_URL,
+    env.NEXT_PUBLIC_STORAGE_URL,
+  )
   return {
     appUrl: derived.appUrl,
     wsUrl: derived.wsUrl,
@@ -56,17 +59,19 @@ const applyPlatformSetting = (
   if (!setting) {
     return defaults
   }
+  const storageUrl = setting.storageUrl ?? defaults.storageUrl
   return {
     ...defaults,
+    storageUrl,
     name: setting.brandName ?? defaults.name,
     logoLightUrl: setting.logoLightPath
-      ? new URL(setting.logoLightPath, defaults.storageUrl).toString()
+      ? new URL(setting.logoLightPath, storageUrl).toString()
       : defaults.logoLightUrl,
     logoDarkUrl: setting.logoDarkPath
-      ? new URL(setting.logoDarkPath, defaults.storageUrl).toString()
+      ? new URL(setting.logoDarkPath, storageUrl).toString()
       : defaults.logoDarkUrl,
     faviconUrl: setting.faviconPath
-      ? new URL(setting.faviconPath, defaults.storageUrl).toString()
+      ? new URL(setting.faviconPath, storageUrl).toString()
       : defaults.faviconUrl,
     theme: setting.theme ?? null,
     // customJs and customCSS are gated to Enterprise/Cloud only

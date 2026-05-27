@@ -1,5 +1,5 @@
 {
-  "$schema": "https://v2-7-6.turborepo.dev/schema.json",
+  "$schema": "https://v2-9-15.turborepo.dev/schema.json",
   "ui": "tui",
   "tasks": {
     "build": {

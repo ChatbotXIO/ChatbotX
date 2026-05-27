@@ -22,6 +22,7 @@ x-worker-common: &worker-common
 services:
   builder:
     <<: *service-common
+    # image: chatbotx-builder:latest
     build:
       context: .
       dockerfile: apps/builder/docker/Dockerfile
@@ -35,7 +36,7 @@ services:
       filesystem:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -10,7 +10,6 @@ export const keys = () =>
         .default("smtp://username:password@localhost:1025"),
       SMTP_FROM: z.string().min(1),
     },
-    // client: {},
     runtimeEnv: {
       SMTP_SERVER:
         process.env.SMTP_SERVER || "smtp://username:password@localhost:1025",

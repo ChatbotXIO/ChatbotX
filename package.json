@@ -21,7 +21,7 @@
     "knip": "^6.9.0",
     "lefthook": "^2.1.6",
     "tsx": "^4.21.0",
-    "turbo": "^2.9.14",
+    "turbo": "^2.9.15",
     "typescript": "^5",
     "ultracite": "7.6.2",
     "vitest": "^3.2.4"

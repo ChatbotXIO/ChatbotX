@@ -5,6 +5,7 @@ import "./themes.css"
 import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
+import { PublicEnvScript } from "@/components/public-env-script"
 import { PlatformSettingsProvider } from "@/features/platform"
 import { getPlatformSettings } from "@/features/platform/utils"
 
@@ -40,7 +41,9 @@ export default async function RootLayout({ children }: Props) {
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <head />
+      <head>
+        <PublicEnvScript />
+      </head>
       <body
         className={
           platformSettings.theme

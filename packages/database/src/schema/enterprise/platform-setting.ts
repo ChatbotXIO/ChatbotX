@@ -20,6 +20,7 @@ export const platformSettingModel = pgTable("PlatformSetting", {
   theme: text(),
   isEnabled: boolean().notNull().default(true),
   disabledReason: text(),
+  storageUrl: text(),
   policyUrl: text(),
   termsOfServiceUrl: text(),
   signupEmailTemplate: jsonb().$type<{ subject?: string; body?: string }>(),

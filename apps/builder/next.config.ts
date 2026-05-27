@@ -9,28 +9,13 @@ const withNextIntl = createNextIntlPlugin({
 })
 
 const appUrl = env.NEXT_PUBLIC_BUILDER_URL.replace(/\/$/, "")
-const storageUrl = `${appUrl}/storage`
+const storageUrl = env.NEXT_PUBLIC_STORAGE_URL ?? `${appUrl}/storage`
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   images: {
-    // dangerouslyAllowLocalIP: true,
-    remotePatterns: [
-      new URL("**", storageUrl),
-      {
-        protocol: "https",
-        hostname: "storage.googleapis.com",
-      },
-      {
-        protocol: "https",
-        hostname: "(.*.)?picsum.photos",
-      },
-      {
-        protocol: "https",
-        hostname: "*.giphy.com",
-      },
-    ],
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
   experimental: {
     serverActions: {

@@ -302,7 +302,6 @@ class PlatformCredentialService extends BaseService {
     tx?: DatabaseClient
   }): Promise<DecryptedCredential<T> | undefined> {
     const setting = await platformSettingService.findForUser(props.ownerId)
-    console.log("adfasfdf", setting)
     const livemode = props.livemode ?? false
     if (setting?.isEnabled) {
       return this.findDecryptedForUser({

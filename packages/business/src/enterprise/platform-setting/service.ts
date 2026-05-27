@@ -11,6 +11,7 @@ type PlatformSettingUpsertData = {
   customCss?: string | null
   customJs?: string | null
   theme?: string | null
+  storageUrl?: string | null
   policyUrl?: string | null
   termsOfServiceUrl?: string | null
   signupEmailTemplate?: EmailTemplate | null

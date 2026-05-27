@@ -22,7 +22,8 @@ export async function broadcastToWorkspaceParty(
   json: RealtimeEventData,
 ) {
   try {
-    return await ky.post(`${target.url}/parties/workspaces/${workspaceId}`, {
+    return await ky.post(`parties/workspaces/${workspaceId}`, {
+      baseUrl: target.url,
       headers: {
         Authorization: await buildAuthHeader(
           { kind: "workspace", id: workspaceId },
@@ -43,18 +44,16 @@ export async function broadcastToGuestParty(
   json: RealtimeEventData,
 ) {
   try {
-    return await ky.post(
-      `${target.url}/parties/guests/${guestConversationId}`,
-      {
-        headers: {
-          Authorization: await buildAuthHeader(
-            { kind: "guest", id: guestConversationId },
-            target.secret,
-          ),
-        },
-        json,
+    return await ky.post(`parties/guests/${guestConversationId}`, {
+      baseUrl: target.url,
+      headers: {
+        Authorization: await buildAuthHeader(
+          { kind: "guest", id: guestConversationId },
+          target.secret,
+        ),
       },
-    )
+      json,
+    })
   } catch (error) {
     logger.error(error, "Failed to broadcast to guest party")
     throw error
