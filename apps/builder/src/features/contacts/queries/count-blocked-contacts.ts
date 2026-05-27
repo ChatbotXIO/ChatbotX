@@ -1,4 +1,11 @@
-import { and, count, db, eq, isNotNull } from "@chatbotx.io/database/client"
+import {
+  and,
+  count,
+  db,
+  eq,
+  isNotNull,
+  isNull,
+} from "@chatbotx.io/database/client"
 import { contactModel } from "@chatbotx.io/database/schema"
 
 // Pixel-perfect Respond.io 2026-05-25 — count de contatos bloqueados
@@ -15,6 +22,8 @@ export async function countBlockedContacts(
       and(
         eq(contactModel.workspaceId, workspaceId),
         isNotNull(contactModel.blockedAt),
+        // #17 Unmerge: exclui duplicates fundidos do count do sidebar.
+        isNull(contactModel.mergedIntoId),
       ),
     )
   return row?.count ?? 0

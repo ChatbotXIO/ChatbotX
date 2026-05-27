@@ -2385,6 +2385,13 @@
       "showAll": "Mostrar todas",
       "hideAll": "Ocultar todas"
     },
+    "unmerge": {
+      "loading": "Carregando contatos fundidos…",
+      "bannerTitle": "{count, plural, one {# contato fundido aqui} other {# contatos fundidos aqui}}",
+      "warning": "Desfazer a fusão restaura o contato. Conversas, etiquetas e campos personalizados que foram transferidos continuam neste contato principal — mova de volta manualmente se necessário.",
+      "button": "Desfazer fusão",
+      "successToast": "Contato restaurado"
+    },
     "visibility": {
       "customize": "Personalizar visualização",
       "title": "Personalizar visualização",

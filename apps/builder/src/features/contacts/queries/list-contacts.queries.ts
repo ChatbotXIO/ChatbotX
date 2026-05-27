@@ -154,6 +154,9 @@ const generateWhere = (
 ) => {
   const where: Record<string, unknown> = {
     workspaceId: input.workspaceId,
+    // #17 Unmerge: esconde duplicates fundidos da listagem principal.
+    // Reverter pelo unmergeContactAction limpa mergedIntoId.
+    mergedIntoId: { isNull: true },
     ...(input.keyword
       ? {
           OR: [

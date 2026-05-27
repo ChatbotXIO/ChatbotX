@@ -23,6 +23,7 @@ export const auditLogActions = {
   CONTACT_TAG_REMOVED: "contact.tag.removed",
   CONTACT_FIELD_UPDATED: "contact.field.updated",
   CONTACT_MERGED: "contact.merged",
+  CONTACT_UNMERGED: "contact.unmerged",
   CONTACT_IMPORTED: "contact.imported",
 
   AUTH_LOGIN: "auth.login",

@@ -2373,6 +2373,13 @@
       "showAll": "Hiện tất cả",
       "hideAll": "Ẩn tất cả"
     },
+    "unmerge": {
+      "loading": "Đang tải danh sách hợp nhất…",
+      "bannerTitle": "{count, plural, one {# liên hệ đã được hợp nhất} other {# liên hệ đã được hợp nhất}}",
+      "warning": "Khôi phục liên hệ đã hợp nhất chỉ phục hồi thẻ liên hệ. Cuộc trò chuyện, thẻ và trường tùy chỉnh được chuyển sẽ ở lại liên hệ chính — chuyển lại thủ công nếu cần.",
+      "button": "Hoàn tác hợp nhất",
+      "successToast": "Liên hệ đã được khôi phục"
+    },
     "visibility": {
       "customize": "Tùy chỉnh hiển thị",
       "title": "Tùy chỉnh hiển thị",

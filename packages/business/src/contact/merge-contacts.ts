@@ -1,4 +1,4 @@
-import { and, db, inArray, notInArray } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, notInArray } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   contactInboxModel,
@@ -37,7 +37,9 @@ type MergeContactsResult = {
  *  4. Mover conversation, contactInbox, contactNote, sequences, broadcasts,
  *     errorLogs do duplicate → primary (UPDATE direto, sem unique constraints
  *     problemáticas nessas tabelas)
- *  5. DELETE dos contatos duplicates
+ *  5. Soft-delete dos duplicates (#17): UPDATE Contact SET mergedIntoId =
+ *     primaryId, mergedAt = NOW, mergedByUserId. Não DELETE — permite
+ *     unmerge restaurando os 3 campos pra NULL.
  *  6. Grava ContactEvent MERGED no primary com meta {mergedIds, mergedCount}
  *
  * Validações:
@@ -172,8 +174,23 @@ export async function mergeContacts(
         ),
       )
 
-    // 5. DELETE dos duplicates
-    await tx.delete(contactModel).where(inArray(contactModel.id, duplicateIds))
+    // 5. Soft-delete dos duplicates (#17 Unmerge). Em vez de DELETE,
+    //    marca mergedIntoId+mergedAt+mergedByUserId. Todas as queries
+    //    de listagem filtram mergedIntoId IS NULL → duplicates somem da
+    //    UI mas continuam no banco pra reversão.
+    await tx
+      .update(contactModel)
+      .set({
+        mergedIntoId: primaryId,
+        mergedAt: new Date(),
+        mergedByUserId: actorUserId ?? null,
+      })
+      .where(
+        and(
+          inArray(contactModel.id, duplicateIds),
+          eq(contactModel.workspaceId, workspaceId),
+        ),
+      )
   })
 
   // 6. Registra event no primary (fora da transaction — fire-and-forget)

@@ -2385,6 +2385,13 @@
       "showAll": "Show all",
       "hideAll": "Hide all"
     },
+    "unmerge": {
+      "loading": "Loading merged contacts…",
+      "bannerTitle": "{count, plural, one {# contact merged here} other {# contacts merged here}}",
+      "warning": "Restoring a merged contact recovers the contact card. Conversations, tags and custom fields that were transferred stay with this primary contact — move them back manually if needed.",
+      "button": "Unmerge",
+      "successToast": "Contact restored"
+    },
     "visibility": {
       "customize": "Customize view",
       "title": "Customize view",

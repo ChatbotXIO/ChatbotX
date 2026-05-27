@@ -9,6 +9,7 @@ import { LifecycleStagePill } from "../../lifecycle-stages/lifecycle-stage-pill"
 import { getTagChipStyle } from "../../tags/tag-colors"
 import type { ListContactsItem } from "../schemas/query"
 import { getAvatarInitials, getRespondAvatarUrl } from "../utils"
+import { MergedContactsPanel } from "./merged-contacts-panel"
 
 type ContactDetailDrawerProps = {
   workspaceId: string
@@ -166,6 +167,12 @@ export function ContactDetailDrawer({
             value={contact.locale || "—"}
           />
         </div>
+
+        {/* Panel "contatos fundidos aqui" — só renderiza se existirem */}
+        <MergedContactsPanel
+          primaryContactId={contact.id}
+          workspaceId={workspaceId}
+        />
 
         {/* Botão Ver no Inbox */}
         {contact.conversation?.id && (

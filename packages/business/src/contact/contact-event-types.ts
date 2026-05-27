@@ -17,6 +17,9 @@ export const contactEventTypes = {
   TAG_REMOVED: "contact.tag.removed",
   FIELD_UPDATED: "contact.field.updated",
   MERGED: "contact.merged",
+  // Unmerge #17 — 2026-05-27. Registra no PRIMARY (não no duplicate
+  // restaurado) com meta { unmergedIds, unmergedCount }.
+  UNMERGED: "contact.unmerged",
   // Closing Notes Fase D (#15 — 2026-05-27). Registra quando conversa é
   // fechada via CloseConversationDialog (mode != "disabled") + tem
   // categoria ou summary preenchido. Meta: { categoryName?, summary?,
