@@ -408,10 +408,17 @@
     "account": "Conta",
     "profile": "Perfil",
     "notifications": "Configurações de notificações",
+    "activityStatus": {
+      "sectionLabel": "Meu status",
+      "available": "Disponível",
+      "busy": "Ocupado",
+      "offline": "Desconectado",
+      "updateSuccess": "Status atualizado para {status}",
+      "updateError": "Falha ao atualizar status"
+    },
     "profileSection": {
       "title": "Perfil",
       "subtitle": "Gerencie seu perfil e detalhes de login.",
-      "statusAvailable": "Disponível",
       "changeAvatar": "Alterar foto",
       "avatarUpdated": "Foto atualizada.",
       "firstNameLabel": "Primeiro Nome",

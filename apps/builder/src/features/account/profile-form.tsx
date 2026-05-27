@@ -26,6 +26,11 @@ import type { Locale } from "@/i18n/config"
 import { authClient } from "@/lib/auth/auth-client"
 import { setUserLocale } from "@/lib/locale"
 import {
+  type ActivityStatus,
+  ActivityStatusSelector,
+  isActivityStatus,
+} from "./activity-status"
+import {
   type UpdateAccountRequest,
   updateAccountSchema,
 } from "./schema/update-account-schema"
@@ -125,10 +130,17 @@ export function ProfileForm() {
               triggerRef={uploadTriggerRef}
               uploadPath={user ? `public/user/${user.id}/avatar` : undefined}
             />
-            <div className="flex items-center gap-2 rounded-md border border-white/[0.08] bg-app-surface px-3 py-1.5 text-sm">
-              <span className="size-2 rounded-full bg-emerald-500" />
-              {t("statusAvailable")}
-            </div>
+            <ActivityStatusSelector
+              current={
+                isActivityStatus(
+                  (user as unknown as { activityStatus?: unknown })
+                    ?.activityStatus,
+                )
+                  ? (user as unknown as { activityStatus: ActivityStatus })
+                      .activityStatus
+                  : "available"
+              }
+            />
           </div>
 
           {/* Campos à direita */}

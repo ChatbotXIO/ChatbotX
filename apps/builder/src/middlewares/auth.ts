@@ -20,6 +20,10 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
         ...sessionData.user,
         image: sessionData.user.image || null,
         isAnonymous: sessionData.user.isAnonymous ?? false,
+        // Better-Auth additionalFields são `string | null | undefined`; o
+        // shape do contexto exige `string` (notNull no schema) — coerce default.
+        activityStatus: sessionData.user.activityStatus ?? "available",
+        lastActiveAt: sessionData.user.lastActiveAt ?? null,
         // stripeCustomerId: sessionData.user.stripeCustomerId || null,
       },
     },

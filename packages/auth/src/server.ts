@@ -30,6 +30,15 @@ export type AuthConfig = Record<string, unknown>
 
 export function createAuth(_config: AuthConfig) {
   return betterAuth({
+    // Aceita BETTER_AUTH_URL (prod/ngrok) + localhost dev. Sem isso, sign-in
+    // do localhost falha com "Invalid origin" quando BETTER_AUTH_URL aponta
+    // pra outra coisa (ex: túnel ngrok ativo pra webhooks WhatsApp).
+    trustedOrigins: [
+      "http://localhost:3123",
+      "http://localhost:3000",
+      process.env.BETTER_AUTH_URL ?? "",
+      process.env.NEXT_PUBLIC_BUILDER_URL ?? "",
+    ].filter(Boolean),
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {
@@ -39,6 +48,21 @@ export function createAuth(_config: AuthConfig) {
         account: accountModel,
       },
     }),
+    user: {
+      additionalFields: {
+        activityStatus: {
+          type: "string",
+          required: false,
+          defaultValue: "available",
+          input: true,
+        },
+        lastActiveAt: {
+          type: "date",
+          required: false,
+          input: false,
+        },
+      },
+    },
     socialProviders: {
       google: async () => {
         // TODO: support white-labeling

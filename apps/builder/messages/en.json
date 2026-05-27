@@ -408,10 +408,17 @@
     "account": "Account",
     "profile": "Profile",
     "notifications": "Notification settings",
+    "activityStatus": {
+      "sectionLabel": "My status",
+      "available": "Available",
+      "busy": "Busy",
+      "offline": "Offline",
+      "updateSuccess": "Status updated to {status}",
+      "updateError": "Failed to update status"
+    },
     "profileSection": {
       "title": "Profile",
       "subtitle": "Manage your profile and login details.",
-      "statusAvailable": "Available",
       "changeAvatar": "Change photo",
       "avatarUpdated": "Photo updated.",
       "firstNameLabel": "First Name",

@@ -409,10 +409,17 @@
     "account": "Tài khoản",
     "profile": "Hồ sơ",
     "notifications": "Cài đặt thông báo",
+    "activityStatus": {
+      "sectionLabel": "Trạng thái của tôi",
+      "available": "Sẵn sàng",
+      "busy": "Bận",
+      "offline": "Ngoại tuyến",
+      "updateSuccess": "Đã cập nhật trạng thái thành {status}",
+      "updateError": "Không thể cập nhật trạng thái"
+    },
     "profileSection": {
       "title": "Hồ sơ",
       "subtitle": "Quản lý hồ sơ và chi tiết đăng nhập của bạn.",
-      "statusAvailable": "Sẵn sàng",
       "changeAvatar": "Đổi ảnh",
       "avatarUpdated": "Đã cập nhật ảnh.",
       "firstNameLabel": "Tên",

@@ -28,6 +28,10 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
         ...session.user,
         image: session.user.image || null,
         isAnonymous: session.user.isAnonymous ?? false,
+        // Better-Auth additionalFields são `string | null | undefined`; o
+        // UserModel do Drizzle exige `string` (notNull) — coerce default.
+        activityStatus: session.user.activityStatus ?? "available",
+        lastActiveAt: session.user.lastActiveAt ?? null,
         // stripeCustomerId: session.user.stripeCustomerId || null,
       }
     : null
