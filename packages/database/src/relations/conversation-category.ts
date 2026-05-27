@@ -10,7 +10,14 @@ export const conversationCategoryRelations = defineRelationsPart(
         from: r.conversationCategoryModel.workspaceId,
         to: r.workspaceModel.id,
       }),
-      closingNotes: r.many.conversationClosingNoteModel(),
+      // Drizzle v2 (defineRelationsPart por arquivo) não infere reverse
+      // entre arquivos diferentes — precisa from/to explícito mesmo em
+      // .many. A inversa (`category` em conversationClosingNoteModel)
+      // mora em /relations/conversation-closing-note.ts.
+      closingNotes: r.many.conversationClosingNoteModel({
+        from: r.conversationCategoryModel.id,
+        to: r.conversationClosingNoteModel.categoryId,
+      }),
     },
   }),
 )
