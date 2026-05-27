@@ -14,12 +14,6 @@ import { publicCustomFieldResource } from "@/features/custom-fields/schemas/reso
 import { inboxResource } from "@/features/inboxes/schema/resource"
 import { publicTagResource, tagResource } from "@/features/tags/schema/resource"
 import { userResource } from "@/features/users/schemas/resource"
-
-const lifecycleStageInResource = createSelectSchema(lifecycleStageModel, {
-  id: z.string(),
-  workspaceId: z.string(),
-})
-
 import { basePaginationRequest } from "@/lib/pagination"
 import {
   contactCustomFieldResource,
@@ -27,6 +21,11 @@ import {
 } from "./contact-custom-field"
 import { contactFilterCriteriaSchema } from "./contact-filter"
 import { contactResource, publicContactResource } from "./resource"
+
+const lifecycleStageInResource = createSelectSchema(lifecycleStageModel, {
+  id: z.string(),
+  workspaceId: z.string(),
+})
 
 /** Same as contact filter payload (strict discriminated `conditions`). */
 export const contactFilterSchema = contactFilterCriteriaSchema
@@ -48,8 +47,8 @@ export const listContactsRequest = basePaginationRequest.extend({
   channels: z.array(channelTypes).optional(),
   inboxIds: z.array(zodBigintAsString()).optional(),
   lifecycleStageIds: z.array(zodBigintAsString()).optional(),
-  // Quando true filtra `blockedAt IS NOT NULL` (sidebar Contatos bloqueados).
   blocked: z.coerce.boolean().optional(),
+  assignedId: z.string().optional(),
 })
 export type ListContactsRequest = z.infer<typeof listContactsRequest>
 

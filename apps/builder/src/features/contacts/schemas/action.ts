@@ -15,7 +15,10 @@ export const createContactRequest = z.object({
   email: z.union([z.literal(""), z.email().max(100)]),
   firstName: z.optional(z.string().trim().max(100)),
   lastName: z.optional(z.string().trim().max(100)),
-  gender: genderTypes,
+  gender: z.optional(genderTypes),
+  assigneeUserId: z.optional(z.string()),
+  tagIds: z.optional(z.array(z.string())),
+  customFields: z.optional(z.record(z.string(), z.string())),
 })
 export type CreateContactRequest = z.infer<typeof createContactRequest>
 
