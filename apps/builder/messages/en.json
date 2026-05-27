@@ -2736,6 +2736,22 @@
       "mandatoryDialogDesc": "Dialog opens, agent must choose a category. Summary optional.",
       "mandatoryBoth": "Category + Summary required",
       "mandatoryBothDesc": "Dialog opens, agent must choose category AND write conversation summary."
+    },
+    "dialog": {
+      "title": "Close conversation",
+      "description": {
+        "optional": "Categorize and/or summarize this conversation. Both fields are optional.",
+        "mandatoryDialog": "Choose a category before closing this conversation.",
+        "mandatoryBoth": "Choose a category and write a short summary before closing."
+      },
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "summaryLabel": "Summary",
+      "summaryPlaceholder": "Briefly describe what happened in this conversation…",
+      "noCategories": "No categories registered. Ask the admin to add categories in Settings → Closing Notes.",
+      "skip": "Skip and close",
+      "confirm": "Close conversation",
+      "successToast": "Conversation closed"
     }
   }
 }

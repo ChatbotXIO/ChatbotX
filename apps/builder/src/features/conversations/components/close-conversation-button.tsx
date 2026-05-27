@@ -1,31 +1,40 @@
 "use client"
 
+import type { ClosingNotesMode } from "@chatbotx.io/database/partials"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
 import { RespondIcon } from "@/components/respond-icon"
+import type { ClosingNoteCategoryOption } from "@/features/closing-notes/queries/get-config"
 import { useWorkspaceId } from "@/hooks/routing"
 import { useChatStore } from "../../chat/store/chat-store-provider"
 import { archiveConversationAction } from "../actions/archive-conversation.action"
 import { unarchiveConversationAction } from "../actions/unarchive-conversation.action"
 import type { ListConversationItemResource } from "../schema/resource"
+import { CloseConversationDialog } from "./close-conversation-dialog"
 
 type CloseConversationButtonProps = {
   conversation: ListConversationItemResource
+  closingNotesMode?: ClosingNotesMode
+  closingNoteCategories?: ClosingNoteCategoryOption[]
 }
 
 // Botão primário "Fechar"/"Reabrir" no canto direito do header da conversa,
-// igual Respond.io. Antes a ação estava enterrada em 3 cliques (menu ... →
-// Arquivar) — agora é ação primária, 1 clique. Sem ClosingNote dialog porque
-// Pedro descartou a feature em 2026-05-24.
+// igual Respond.io. Modo "disabled" mantém comportamento legado (1 clique
+// arquiva). Demais modos abrem CloseConversationDialog (pede categoria +
+// summary conforme política do workspace — #15 Fase C 2026-05-27).
 export function CloseConversationButton({
   conversation,
+  closingNotesMode = "disabled",
+  closingNoteCategories = [],
 }: CloseConversationButtonProps) {
   const t = useTranslations()
   const workspaceId = useWorkspaceId()
   const { resetState, loadMoreConversations } = useChatStore((state) => state)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const reload = () => {
     resetState()
@@ -91,24 +100,46 @@ export function CloseConversationButton({
     )
   }
 
+  const handleClick = () => {
+    if (closingNotesMode === "disabled") {
+      archive({ ids: [conversation.id] })
+      return
+    }
+    setDialogOpen(true)
+  }
+
   return (
-    <Button
-      aria-label={t("actions.closeConversation")}
-      className={sharedClasses}
-      disabled={isPending || isBlocked}
-      onClick={() => archive({ ids: [conversation.id] })}
-      size="sm"
-      title={t("actions.closeConversation")}
-      variant="outline"
-    >
-      {isArchiving ? (
-        <Loader2Icon className="animate-spin" />
-      ) : (
-        <RespondIcon name="tick-circle" size="sm" />
+    <>
+      <Button
+        aria-label={t("actions.closeConversation")}
+        className={sharedClasses}
+        disabled={isPending || isBlocked}
+        onClick={handleClick}
+        size="sm"
+        title={t("actions.closeConversation")}
+        variant="outline"
+      >
+        {isArchiving ? (
+          <Loader2Icon className="animate-spin" />
+        ) : (
+          <RespondIcon name="tick-circle" size="sm" />
+        )}
+        <span className="@[680px]/topbar:inline hidden">
+          {t("actions.closeConversation")}
+        </span>
+      </Button>
+
+      {closingNotesMode !== "disabled" && (
+        <CloseConversationDialog
+          categories={closingNoteCategories}
+          conversationId={conversation.id}
+          mode={closingNotesMode}
+          onOpenChange={setDialogOpen}
+          onSuccess={reload}
+          open={dialogOpen}
+          workspaceId={workspaceId}
+        />
       )}
-      <span className="@[680px]/topbar:inline hidden">
-        {t("actions.closeConversation")}
-      </span>
-    </Button>
+    </>
   )
 }

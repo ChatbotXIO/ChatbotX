@@ -1,4 +1,5 @@
 import { closingNotesModes } from "@chatbotx.io/database/partials"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 
 export const createCategoryRequest = z.object({
@@ -15,4 +16,16 @@ export const updateClosingNotesModeRequest = z.object({
 })
 export type UpdateClosingNotesModeRequest = z.infer<
   typeof updateClosingNotesModeRequest
+>
+
+// Validação básica aqui: server faz validação contextual extra baseada
+// no closingNotesMode do workspace (categoryId/summary podem ser exigidos
+// quando modo = mandatoryDialog/mandatoryBoth).
+export const closeConversationWithNoteRequest = z.object({
+  conversationId: zodBigintAsString(),
+  categoryId: zodBigintAsString().optional(),
+  summary: z.string().trim().max(2000).optional(),
+})
+export type CloseConversationWithNoteRequest = z.infer<
+  typeof closeConversationWithNoteRequest
 >

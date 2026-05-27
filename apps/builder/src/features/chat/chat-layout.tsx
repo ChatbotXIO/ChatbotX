@@ -1,6 +1,9 @@
 "use client"
 
-import type { ConversationAttributes } from "@chatbotx.io/database/partials"
+import type {
+  ClosingNotesMode,
+  ConversationAttributes,
+} from "@chatbotx.io/database/partials"
 import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import {
   ResizableHandle,
@@ -10,6 +13,7 @@ import {
 import { Loader2Icon, MessagesSquareIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
+import type { ClosingNoteCategoryOption } from "@/features/closing-notes/queries/get-config"
 import { ContactInboxPanel } from "../contacts/contact-inbox-panel"
 import ConversationList from "../conversations/conversation-list"
 import type { ConversationResource } from "../conversations/schema/resource"
@@ -26,6 +30,10 @@ type ChatLayoutProps = {
   lifecycleStages?: LifecycleStageModel[]
   /** Lista de `fieldKey`s marcadas como `alwaysHide` no workspace. */
   hiddenFieldKeys?: string[]
+  /** Modo de Closing Notes do workspace (default "disabled"). */
+  closingNotesMode?: ClosingNotesMode
+  /** Categorias de fechamento disponíveis pro Inbox. */
+  closingNoteCategories?: ClosingNoteCategoryOption[]
 }
 
 export const ChatLayout = (props: ChatLayoutProps) => {
@@ -35,6 +43,8 @@ export const ChatLayout = (props: ChatLayoutProps) => {
     layout = [25, 50, 25],
     lifecycleStages = [],
     hiddenFieldKeys = [],
+    closingNotesMode = "disabled",
+    closingNoteCategories = [],
   } = props
 
   const {
@@ -144,7 +154,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
         {activeConversation ? (
           <div className="flex h-full w-full flex-col">
             {/* TOPBAR full-width — cobre msgs + drawer + sideRail */}
-            <MessageHead lifecycleStages={lifecycleStages} />
+            <MessageHead
+              closingNoteCategories={closingNoteCategories}
+              closingNotesMode={closingNotesMode}
+              lifecycleStages={lifecycleStages}
+            />
 
             {/* LINHA DE BAIXO: msgs | drawer | sideRail */}
             <div className="flex min-h-0 flex-1">

@@ -2737,6 +2737,22 @@
       "mandatoryDialogDesc": "Hộp thoại mở, nhân viên phải chọn một danh mục. Tóm tắt tùy chọn.",
       "mandatoryBoth": "Bắt buộc danh mục + tóm tắt",
       "mandatoryBothDesc": "Hộp thoại mở, nhân viên phải chọn danh mục VÀ viết tóm tắt cuộc trò chuyện."
+    },
+    "dialog": {
+      "title": "Đóng cuộc trò chuyện",
+      "description": {
+        "optional": "Phân loại và/hoặc tóm tắt cuộc trò chuyện này. Cả hai trường đều tùy chọn.",
+        "mandatoryDialog": "Chọn một danh mục trước khi đóng cuộc trò chuyện này.",
+        "mandatoryBoth": "Chọn một danh mục và viết tóm tắt ngắn trước khi đóng."
+      },
+      "categoryLabel": "Danh mục",
+      "categoryPlaceholder": "Chọn một danh mục",
+      "summaryLabel": "Tóm tắt",
+      "summaryPlaceholder": "Mô tả ngắn gọn điều đã xảy ra trong cuộc trò chuyện này…",
+      "noCategories": "Chưa đăng ký danh mục nào. Yêu cầu quản trị viên thêm danh mục trong Cài đặt → Ghi chú khi đóng.",
+      "skip": "Bỏ qua và đóng",
+      "confirm": "Đóng cuộc trò chuyện",
+      "successToast": "Đã đóng cuộc trò chuyện"
     }
   }
 }

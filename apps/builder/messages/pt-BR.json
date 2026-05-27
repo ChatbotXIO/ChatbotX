@@ -2736,6 +2736,22 @@
       "mandatoryDialogDesc": "Abre dialog, atendente precisa escolher uma categoria. Resumo opcional.",
       "mandatoryBoth": "Categoria + Resumo obrigatórios",
       "mandatoryBothDesc": "Abre dialog, atendente precisa escolher categoria E escrever resumo da conversa."
+    },
+    "dialog": {
+      "title": "Fechar conversa",
+      "description": {
+        "optional": "Categorize e/ou resuma esta conversa. Ambos os campos são opcionais.",
+        "mandatoryDialog": "Escolha uma categoria antes de fechar esta conversa.",
+        "mandatoryBoth": "Escolha uma categoria e escreva um resumo curto antes de fechar."
+      },
+      "categoryLabel": "Categoria",
+      "categoryPlaceholder": "Selecione uma categoria",
+      "summaryLabel": "Resumo",
+      "summaryPlaceholder": "Descreva rapidamente o que aconteceu nesta conversa…",
+      "noCategories": "Nenhuma categoria cadastrada. Peça pro admin adicionar categorias em Configurações → Notas de Fechamento.",
+      "skip": "Pular e fechar",
+      "confirm": "Fechar conversa",
+      "successToast": "Conversa fechada"
     }
   }
 }

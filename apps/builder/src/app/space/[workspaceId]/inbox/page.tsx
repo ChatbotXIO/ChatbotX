@@ -2,6 +2,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { ChatLayout } from "@/features/chat/chat-layout"
+import { getClosingNotesConfig } from "@/features/closing-notes/queries/get-config"
 import { listHiddenContactFieldKeys } from "@/features/custom-fields/queries/visibility"
 import { listLifecycleStages } from "@/features/lifecycle-stages/queries"
 
@@ -23,14 +24,18 @@ export default async function InboxPage({ params }: InboxPageProps) {
   //   - Drawer:       350px (14.18%)
   // Cookie persistido tem prioridade — usuário mantém ajustes próprios.
   const savedLayout = layout ? JSON.parse(layout.value) : [19, 67, 14]
-  const [lifecycleStages, hiddenFieldKeys] = await Promise.all([
-    listLifecycleStages(workspaceId),
-    listHiddenContactFieldKeys(workspaceId),
-  ])
+  const [lifecycleStages, hiddenFieldKeys, closingNotesConfig] =
+    await Promise.all([
+      listLifecycleStages(workspaceId),
+      listHiddenContactFieldKeys(workspaceId),
+      getClosingNotesConfig(workspaceId),
+    ])
 
   return (
     <div className="flex-1">
       <ChatLayout
+        closingNoteCategories={closingNotesConfig.categories}
+        closingNotesMode={closingNotesConfig.mode}
         hiddenFieldKeys={hiddenFieldKeys}
         layout={savedLayout}
         lifecycleStages={lifecycleStages}

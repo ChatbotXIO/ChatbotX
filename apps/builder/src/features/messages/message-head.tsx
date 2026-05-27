@@ -1,5 +1,6 @@
 "use client"
 
+import type { ClosingNotesMode } from "@chatbotx.io/database/partials"
 import type { LifecycleStageModel } from "@chatbotx.io/database/types"
 import {
   Avatar,
@@ -15,6 +16,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { RespondIcon } from "@/components/respond-icon"
+import type { ClosingNoteCategoryOption } from "@/features/closing-notes/queries/get-config"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import {
   getAvatarInitials,
@@ -36,8 +38,12 @@ import { LifecycleNextStageButton } from "../lifecycle-stages/lifecycle-next-sta
 // botão inline no topo direito, exatamente como Respond.io.
 export default function MessageHead({
   lifecycleStages = [],
+  closingNotesMode = "disabled",
+  closingNoteCategories = [],
 }: {
   lifecycleStages?: LifecycleStageModel[]
+  closingNotesMode?: ClosingNotesMode
+  closingNoteCategories?: ClosingNoteCategoryOption[]
 }) {
   const t = useTranslations()
 
@@ -159,7 +165,11 @@ export default function MessageHead({
               ponta solta". */}
 
           {/* FECHAR/ABRIR (discreto, outline cinza) */}
-          <CloseConversationButton conversation={activeConversation} />
+          <CloseConversationButton
+            closingNoteCategories={closingNoteCategories}
+            closingNotesMode={closingNotesMode}
+            conversation={activeConversation}
+          />
 
           {/* Menu ... (Follow, Não-lido, Bloquear, Excluir) */}
           <ConversationAction conversation={activeConversation} />
