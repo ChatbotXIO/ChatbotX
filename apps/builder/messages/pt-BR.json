@@ -2375,6 +2375,16 @@
     "addTag": "Adicionar etiqueta",
     "searchTag": "Pesquisar e selecionar tags",
     "hiddenFields": "Campos de contato ocultos",
+    "delete": {
+      "usageDescription": "Você vai excluir {contactCount, plural, one {# contato} other {# contatos}} com {tagCount, plural, one {# etiqueta} other {# etiquetas}} e {conversationCount, plural, one {# conversa} other {# conversas}} vinculadas. Mensagens, notas e eventos relacionados também serão removidos. Digite o total para confirmar.",
+      "confirmInputLabel": "Digite {count, number} para confirmar"
+    },
+    "columnsPicker": {
+      "button": "Colunas",
+      "title": "Exibir colunas",
+      "showAll": "Mostrar todas",
+      "hideAll": "Ocultar todas"
+    },
     "visibility": {
       "customize": "Personalizar visualização",
       "title": "Personalizar visualização",

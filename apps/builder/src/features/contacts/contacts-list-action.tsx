@@ -176,6 +176,16 @@ export function ContactListAction({
               {t("actions.delete")}
             </DropdownMenuItem>
           }
+          usageCounts={{
+            tags: rows.reduce(
+              (sum, r) => sum + (r.original.tags?.length ?? 0),
+              0,
+            ),
+            conversations: rows.reduce(
+              (sum, r) => sum + (r.original.conversation ? 1 : 0),
+              0,
+            ),
+          }}
         />
 
         <ExportContactDialog

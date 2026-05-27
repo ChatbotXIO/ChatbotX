@@ -207,6 +207,14 @@ export function ConversationAction({ conversation }: ConversationActionProps) {
               {t("actions.deleteContact")}
             </DropdownMenuItem>
           }
+          usageCounts={{
+            // contactResource (no Inbox) não carrega tags — fora do escopo
+            // deste delete dialog. Confirmação numérica considera só a
+            // conversa ativa (sempre 1 aqui). Pra contagem real de tags,
+            // teria que ampliar contactResource ou fazer fetch on-open.
+            tags: 0,
+            conversations: 1,
+          }}
         />
       </DropdownMenuContent>
     </DropdownMenu>

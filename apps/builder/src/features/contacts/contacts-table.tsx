@@ -12,10 +12,10 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
-import type { Column, ColumnDef } from "@tanstack/react-table"
+import type { Column, ColumnDef, VisibilityState } from "@tanstack/react-table"
 import Link from "next/link"
 import { useLocale, useTranslations } from "next-intl"
-import { use, useMemo, useState } from "react"
+import { use, useEffect, useMemo, useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
 import type { ListConversationItemResource } from "../conversations/schema/resource"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
@@ -23,12 +23,28 @@ import { LifecycleStagePill } from "../lifecycle-stages/lifecycle-stage-pill"
 import { getTagChipStyle } from "../tags/tag-colors"
 import { getUserName } from "../users/schemas/resource"
 import { ContactDetailDrawer } from "./components/contact-detail-drawer"
+import { ContactsColumnsPicker } from "./components/contacts-columns-picker"
 import { ContactListAction } from "./contacts-list-action"
 import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ListContactsItem } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
 import { getAvatarInitials, getRespondAvatarUrl, useAvatarUrl } from "./utils"
+
+// Persistência localStorage do columnVisibility da tabela /contacts (#20.3).
+// SSR-safe: retorna {} no server, carrega no client via lazy initializer.
+const COLUMN_VISIBILITY_STORAGE_KEY = "chatbotx.contacts.columnVisibility"
+function loadColumnVisibility(): VisibilityState {
+  if (typeof window === "undefined") {
+    return {}
+  }
+  try {
+    const saved = window.localStorage.getItem(COLUMN_VISIBILITY_STORAGE_KEY)
+    return saved ? (JSON.parse(saved) as VisibilityState) : {}
+  } catch {
+    return {}
+  }
+}
 
 type ContactsTableProps = {
   workspaceId: string
@@ -181,6 +197,7 @@ export function ContactsTable({
             ))}
           </div>
         ),
+        meta: { label: t("contacts.column.channels") },
         enableSorting: false,
       },
       {
@@ -196,6 +213,7 @@ export function ContactsTable({
           }
           return <LifecycleStagePill stage={stage} />
         },
+        meta: { label: t("lifecycle.title") },
         enableSorting: false,
       },
       {
@@ -223,6 +241,7 @@ export function ContactsTable({
             </Tooltip>
           )
         },
+        meta: { label: t("fields.email.label") },
         enableSorting: false,
       },
       {
@@ -241,6 +260,7 @@ export function ContactsTable({
           }
           return <span className="font-mono text-sm">{phone}</span>
         },
+        meta: { label: t("fields.phoneNumber.label") },
         enableSorting: false,
       },
       {
@@ -280,6 +300,7 @@ export function ContactsTable({
             </div>
           )
         },
+        meta: { label: t("tags.title") },
         enableSorting: false,
       },
       {
@@ -305,6 +326,7 @@ export function ContactsTable({
             </span>
           )
         },
+        meta: { label: t("contacts.column.country") },
         enableSorting: false,
       },
       {
@@ -323,6 +345,7 @@ export function ContactsTable({
           }
           return <span className="text-sm">{loc}</span>
         },
+        meta: { label: t("contacts.column.language") },
         enableSorting: false,
       },
       {
@@ -353,6 +376,7 @@ export function ContactsTable({
             </span>
           )
         },
+        meta: { label: t("contacts.column.conversationStatus") },
         enableSorting: false,
       },
       {
@@ -400,6 +424,7 @@ export function ContactsTable({
             </span>
           )
         },
+        meta: { label: t("contacts.column.lastMessage") },
         enableSorting: true,
       },
       {
@@ -426,6 +451,9 @@ export function ContactsTable({
     [workspaceId, t, locale],
   )
 
+  const [initialColumnVisibility] =
+    useState<VisibilityState>(loadColumnVisibility)
+
   const { table } = useDataTable({
     data,
     columns,
@@ -433,11 +461,26 @@ export function ContactsTable({
     initialState: {
       sorting: [{ id: "createdAt", desc: true }],
       columnPinning: { right: ["actions"] },
+      columnVisibility: initialColumnVisibility,
     },
     getRowId: (originalRow) => originalRow.id,
     shallow: false,
     clearOnDefault: true,
   })
+
+  // Persiste visibilidade entre sessões. Lê do state vivo do TanStack
+  // (não do initialState) pra refletir toggles feitos pelo picker.
+  const columnVisibility = table.getState().columnVisibility
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        COLUMN_VISIBILITY_STORAGE_KEY,
+        JSON.stringify(columnVisibility),
+      )
+    } catch {
+      // ignore — localStorage cheio ou private mode
+    }
+  }, [columnVisibility])
 
   // Pixel-perfect Respond.io 2026-05-26 (Pedro): drawer "Detalhes do
   // contato" SOBREPÕE a tabela (não empurra encolhendo). Wrapper
@@ -460,6 +503,7 @@ export function ContactsTable({
         table={table}
       >
         <DataTableToolbar table={table}>
+          <ContactsColumnsPicker table={table} />
           <CreateContactDialog workspaceId={workspaceId} />
           <ContactListAction
             lifecycleStages={_lifecycleStages}

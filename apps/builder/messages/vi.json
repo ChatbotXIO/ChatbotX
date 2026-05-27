@@ -2363,6 +2363,16 @@
     "addTag": "Thêm thẻ",
     "searchTag": "Tìm và chọn thẻ",
     "hiddenFields": "Trường liên hệ ẩn",
+    "delete": {
+      "usageDescription": "Bạn sắp xóa {contactCount, plural, one {# liên hệ} other {# liên hệ}} với {tagCount, plural, one {# thẻ} other {# thẻ}} và {conversationCount, plural, one {# cuộc trò chuyện} other {# cuộc trò chuyện}}. Tin nhắn, ghi chú và sự kiện liên quan cũng sẽ bị xóa. Nhập tổng số để xác nhận.",
+      "confirmInputLabel": "Nhập {count, number} để xác nhận"
+    },
+    "columnsPicker": {
+      "button": "Cột",
+      "title": "Hiển thị cột",
+      "showAll": "Hiện tất cả",
+      "hideAll": "Ẩn tất cả"
+    },
     "visibility": {
       "customize": "Tùy chỉnh hiển thị",
       "title": "Tùy chỉnh hiển thị",

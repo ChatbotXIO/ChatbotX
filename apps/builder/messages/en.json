@@ -2375,6 +2375,16 @@
     "addTag": "Add tag",
     "searchTag": "Search and select tags",
     "hiddenFields": "Hidden contact fields",
+    "delete": {
+      "usageDescription": "You are about to delete {contactCount, plural, one {# contact} other {# contacts}} with {tagCount, plural, one {# tag} other {# tags}} and {conversationCount, plural, one {# conversation} other {# conversations}} attached. This action also removes the linked messages, notes and events. Type the total to confirm.",
+      "confirmInputLabel": "Type {count, number} to confirm"
+    },
+    "columnsPicker": {
+      "button": "Columns",
+      "title": "Show columns",
+      "showAll": "Show all",
+      "hideAll": "Hide all"
+    },
     "visibility": {
       "customize": "Customize view",
       "title": "Customize view",
