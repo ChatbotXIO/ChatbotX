@@ -2436,7 +2436,10 @@
     "addValue": "Thêm giá trị cho {field}",
     "valuesLabel": "Tùy chọn",
     "valuesPlaceholder": "Nhập và nhấn Enter để thêm",
-    "emptyOptions": "Chưa cấu hình tùy chọn"
+    "emptyOptions": "Chưa cấu hình tùy chọn",
+    "defaultsTitle": "Trường liên hệ mặc định",
+    "defaultsTooltip": "7 trường này thuộc hệ thống và có sẵn cho mọi liên hệ. Không thể sửa hoặc xóa — chỉ có thể điều chỉnh hiển thị trong Inbox qua \"Tùy chỉnh hiển thị\".",
+    "defaultsLockTooltip": "Trường mặc định — không thể sửa"
   },
   "keywords": {
     "title": "Từ khóa"

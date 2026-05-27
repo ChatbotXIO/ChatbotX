@@ -15,6 +15,11 @@ export const customFieldModel = pgTable(
     ...sharedColumns,
     name: text().notNull(),
     type: customFieldType().$type<CustomFieldType>().notNull(),
+    // Slug user-facing imutável gerado do nome — paridade Respond.io. Usado
+    // em APIs, integrações e variáveis de template no lugar do Snowflake id.
+    // Único por workspace; uma vez criado, o user pode renomear o `name`
+    // mas o `fieldId` permanece.
+    fieldId: text().notNull(),
     description: text(),
     folderId: bigintAsString().references(() => folderModel.id, {
       onDelete: "set null",
@@ -39,6 +44,11 @@ export const customFieldModel = pgTable(
       table.workspaceId.asc().nullsLast(),
       table.type.asc().nullsLast(),
       table.name.asc().nullsLast(),
+    ),
+    uniqueIndex("CustomField_workspaceId_fieldId_key").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+      table.fieldId.asc().nullsLast(),
     ),
   ],
 )

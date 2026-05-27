@@ -25,6 +25,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { use, useMemo, useState } from "react"
 import CustomFieldTypeLabel from "./components/custom-field-label"
 import { CustomizeContactFieldsDialog } from "./components/customize-contact-fields-dialog"
+import { DefaultFieldsList } from "./components/default-fields-list"
 import { CreateCustomFieldDialog } from "./create-custom-field"
 import { CustomFieldsTableToolbarActions } from "./custom-field-table-toolbar-actions"
 import { DeleteFieldsDialog } from "./delete-fields-dialog"
@@ -142,11 +143,11 @@ export function CustomFieldsTable({
         enableHiding: false,
       },
       {
-        // "ID do campo" — Respond.io expõe slug imutável usado em APIs e
-        // variáveis de template. ChatbotX usa Snowflake id por enquanto;
-        // quando schema evoluir pra ter slug user-facing, troca o accessor.
+        // "ID do campo" — slug user-facing imutável (gap #11 — 2026-05-27).
+        // Usado em APIs/integrações/variáveis de template; muito mais
+        // legível que o Snowflake `id` interno.
         id: "fieldId",
-        accessorKey: "id",
+        accessorKey: "fieldId",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -157,11 +158,11 @@ export function CustomFieldsTable({
           <Tooltip>
             <TooltipTrigger asChild>
               <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
-                {row.original.id}
+                {row.original.fieldId}
               </code>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{row.original.id}</p>
+              <p>{row.original.fieldId}</p>
             </TooltipContent>
           </Tooltip>
         ),
@@ -321,6 +322,7 @@ export function CustomFieldsTable({
           {t("customFields.subtitle")}
         </p>
       </header>
+      <DefaultFieldsList />
       <DataTable table={table}>
         <DataTableToolbar table={table}>
           <CustomFieldsTableToolbarActions

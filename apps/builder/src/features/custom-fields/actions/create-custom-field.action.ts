@@ -2,8 +2,9 @@
 
 import { auditLogActions, logAudit } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
-import { db, isDatabaseError } from "@chatbotx.io/database/client"
+import { db, eq, isDatabaseError } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
+import { slugifyUnique } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -49,11 +50,21 @@ export const createCustomField = async (
     await ensureFolderIsExists(parsedInput.folderId, workspaceId, "customField")
   }
 
+  // Gera fieldId slug user-facing único por workspace (paridade Respond.io).
+  // Consulta slugs existentes pra evitar colisão; sufixa _2, _3 se preciso.
+  const existing = await db
+    .select({ fieldId: customFieldModel.fieldId })
+    .from(customFieldModel)
+    .where(eq(customFieldModel.workspaceId, workspaceId))
+  const existingSlugs = new Set(existing.map((r) => r.fieldId))
+  const fieldId = slugifyUnique(parsedInput.name, existingSlugs)
+
   try {
     const newField = await db
       .insert(customFieldModel)
       .values({
         workspaceId,
+        fieldId,
         ...parsedInput,
       })
       .returning()

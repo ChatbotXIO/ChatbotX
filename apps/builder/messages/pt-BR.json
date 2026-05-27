@@ -2445,7 +2445,10 @@
     "addValue": "Adicione um valor para {field}",
     "valuesLabel": "Opções",
     "valuesPlaceholder": "Digite e Enter para adicionar",
-    "emptyOptions": "Sem opções configuradas"
+    "emptyOptions": "Sem opções configuradas",
+    "defaultsTitle": "Campos padrão do contato",
+    "defaultsTooltip": "Esses 7 campos vêm do sistema e estão disponíveis em todo contato. Não podem ser editados ou removidos — apenas a visibilidade no Inbox pode ser ajustada em \"Personalizar visualização\".",
+    "defaultsLockTooltip": "Campo padrão — não editável"
   },
   "keywords": {
     "title": "Palavras-chave"

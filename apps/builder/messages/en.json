@@ -2445,7 +2445,10 @@
     "addValue": "Add a value for {field}",
     "valuesLabel": "Options",
     "valuesPlaceholder": "Type and press Enter to add",
-    "emptyOptions": "No options configured"
+    "emptyOptions": "No options configured",
+    "defaultsTitle": "Default contact fields",
+    "defaultsTooltip": "These 7 fields come from the system and are available on every contact. They can't be edited or removed — only Inbox visibility can be adjusted in \"Customize view\".",
+    "defaultsLockTooltip": "Default field — not editable"
   },
   "keywords": {
     "title": "Keywords"
