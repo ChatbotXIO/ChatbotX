@@ -14,6 +14,7 @@ export const ScheduleJobData = {
   evaluateTriggers: "evaluateTriggers",
   cleanupTriggers: "cleanupTriggers",
   scanSmartDelay: "scanSmartDelay",
+  syncUserQuota: "syncUserQuota",
 } as const
 
 export type ScheduleJobBroadcast = {
@@ -57,6 +58,11 @@ export type ScheduleJobScanSmartDelay = {
   data: Record<string, never>
 }
 
+export type ScheduleJobSyncUserQuota = {
+  type: typeof ScheduleJobData.syncUserQuota
+  data: Record<string, never>
+}
+
 export type ScheduleJobData =
   | ScheduleJobBroadcast
   | ScheduleJobEnqueueBroadcast
@@ -65,6 +71,7 @@ export type ScheduleJobData =
   | ScheduleJobEvaluateTriggers
   | ScheduleJobCleanupTriggers
   | ScheduleJobScanSmartDelay
+  | ScheduleJobSyncUserQuota
 
 export const scheduleQueue =
   process.env.NEXT_PHASE === "phase-production-build"

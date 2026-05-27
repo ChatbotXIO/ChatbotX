@@ -18,6 +18,7 @@ import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { syncUserQuota } from "./handlers/sync-user-quota"
 
 async function startScheduleWorker() {
   try {
@@ -68,6 +69,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.scanSmartDelay:
           await scanSmartDelay()
+          return
+
+        case ScheduleJobData.syncUserQuota:
+          await syncUserQuota()
           return
 
         default:

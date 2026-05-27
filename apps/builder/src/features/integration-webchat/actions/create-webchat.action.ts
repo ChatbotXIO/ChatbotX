@@ -14,13 +14,14 @@ export const createWebchatAction = authActionClient
     const { authorizedDomains, ...rest } = parsedInput
 
     let workspaceId = parsedInput.workspaceId
-    const ownerId = ctx.user.id
+    let ownerId = ctx.user.id
 
     await db.transaction(async (tx) => {
       if (workspaceId) {
-        await workspaceService.findOrFail({
+        const workspace = await workspaceService.findOrFail({
           where: { id: workspaceId },
         })
+        ownerId = workspace.ownerId
       } else {
         const newChatbot = await workspaceService.create({
           tx,

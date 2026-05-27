@@ -1,18 +1,83 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { userQuotaModel } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
-import { distributedStore } from "@chatbotx.io/redis"
+import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
 
-export type QuotaMetric = "workspaces" | "channels" | "teamMembers"
-// TODO: MAC/contacts counting implemented in separate PR
+export type QuotaMetric = "workspaces" | "channels" | "teamMembers" | "contacts"
 
 const CACHE_TTL = 60 // seconds
 
 class UserQuotaService extends BaseService {
   private cacheKey(userId: string) {
     return `user-quota:${userId}`
+  }
+
+  private liveKey(userId: string) {
+    return `user-quota-live:${userId}`
+  }
+
+  private counterField(metric: QuotaMetric): string {
+    return metric
+  }
+
+  private getUsedValue(
+    quota: UserQuotaModel | null,
+    metric: QuotaMetric,
+  ): number {
+    if (!quota) {
+      return 0
+    }
+    switch (metric) {
+      case "contacts":
+        return quota.contactsUsed
+      case "workspaces":
+        return quota.workspacesUsed
+      case "channels":
+        return quota.channelsUsed
+      case "teamMembers":
+        return quota.teamMembersUsed
+      default:
+        return 0
+    }
+  }
+
+  private async getLiveCount(
+    userId: string,
+    metric: QuotaMetric,
+  ): Promise<number> {
+    try {
+      const client = await cacheConnections.useExisting()
+      const field = this.counterField(metric)
+      const key = this.liveKey(userId)
+
+      const value = await client.hget(key, field)
+      if (value !== null) {
+        return Number(value)
+      }
+
+      // Cold start: seed from DB so HINCRBY doesn't start from 0 for existing users
+      const quota = await db.query.userQuotaModel.findFirst({
+        where: { userId },
+      })
+      const dbValue = this.getUsedValue(quota ?? null, metric)
+
+      // Atomic set-if-not-exists to handle concurrent cold starts
+      await client.hsetnx(key, field, String(dbValue))
+
+      const seeded = await client.hget(key, field)
+      return seeded === null ? dbValue : Number(seeded)
+    } catch (err) {
+      logger.warn(
+        { err },
+        "user-quota: getLiveCount failed, falling back to DB",
+      )
+      const quota = await db.query.userQuotaModel.findFirst({
+        where: { userId },
+      })
+      return this.getUsedValue(quota ?? null, metric)
+    }
   }
 
   private async cacheGet(userId: string): Promise<UserQuotaModel | null> {
@@ -59,6 +124,32 @@ class UserQuotaService extends BaseService {
     return quota ?? null
   }
 
+  async isLimitReached(userId: string, metric: QuotaMetric): Promise<boolean> {
+    const [quota, liveCount] = await Promise.all([
+      this.getForUser(userId),
+      this.getLiveCount(userId, metric),
+    ])
+    if (!quota) {
+      return false
+    }
+    const { limit } = this.readMetricValues(quota, metric)
+    return limit !== null && liveCount >= limit
+  }
+
+  async increment(userId: string, metric: QuotaMetric): Promise<void> {
+    try {
+      const client = await cacheConnections.useExisting()
+      // getLiveCount seeds the key if missing so HINCRBY starts from the correct base
+      await this.getLiveCount(userId, metric)
+      await client.hincrby(this.liveKey(userId), this.counterField(metric), 1)
+    } catch (err) {
+      logger.warn(
+        { err },
+        `user-quota: Redis increment failed for ${metric}, counter will reconcile on next sync`,
+      )
+    }
+  }
+
   async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
     const quota = await this.getForUser(userId)
 
@@ -99,6 +190,8 @@ class UserQuotaService extends BaseService {
         return { limit: quota.channelsLimit, used: quota.channelsUsed }
       case "teamMembers":
         return { limit: quota.teamMembersLimit, used: quota.teamMembersUsed }
+      case "contacts":
+        return { limit: quota.contactsLimit, used: quota.contactsUsed }
       default:
         return { limit: null, used: 0 }
     }
@@ -138,7 +231,7 @@ class UserQuotaService extends BaseService {
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })
-    } else {
+    } else if (metric === "teamMembers") {
       await db
         .insert(userQuotaModel)
         .values({ userId, teamMembersUsed: initialUsed, syncedAt: new Date() })
@@ -148,6 +241,19 @@ class UserQuotaService extends BaseService {
             teamMembersUsed: inc
               ? sql`${userQuotaModel.teamMembersUsed} + 1`
               : sql`GREATEST(0, ${userQuotaModel.teamMembersUsed} - 1)`,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          },
+        })
+    } else {
+      await db
+        .insert(userQuotaModel)
+        .values({ userId, contactsUsed: initialUsed, syncedAt: new Date() })
+        .onConflictDoUpdate({
+          target: userQuotaModel.userId,
+          set: {
+            contactsUsed: inc
+              ? sql`${userQuotaModel.contactsUsed} + 1`
+              : sql`GREATEST(0, ${userQuotaModel.contactsUsed} - 1)`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })

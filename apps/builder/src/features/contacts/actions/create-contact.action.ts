@@ -1,14 +1,13 @@
 "use server"
 
-import { workspaceService } from "@chatbotx.io/business"
-import { db, findOrFail, sql } from "@chatbotx.io/database/client"
+import { userQuotaService, workspaceService } from "@chatbotx.io/business"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
   contactModel,
   conversationModel,
   inboxModel,
-  userQuotaModel,
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
@@ -79,14 +78,7 @@ export const createContact = async ({
     })
   }
 
-  const quota = await db.query.userQuotaModel.findFirst({
-    where: { userId: workspace.ownerId },
-  })
-  if (
-    quota !== undefined &&
-    quota.contactsLimit !== null &&
-    quota.contactsUsed >= quota.contactsLimit
-  ) {
+  if (await userQuotaService.isLimitReached(workspace.ownerId, "contacts")) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
       phoneNumber: { _errors: ["Contact limit reached"] },
@@ -115,21 +107,6 @@ export const createContact = async ({
       })
       .returning()
 
-    await tx
-      .insert(userQuotaModel)
-      .values({
-        userId: workspace.ownerId,
-        contactsUsed: 1,
-        syncedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: userQuotaModel.userId,
-        set: {
-          contactsUsed: sql`${userQuotaModel.contactsUsed} + 1`,
-          updatedAt: sql`CURRENT_TIMESTAMP`,
-        },
-      })
-
     await tx.insert(conversationModel).values({
       workspaceId,
       contactId: newContact.id,
@@ -138,6 +115,8 @@ export const createContact = async ({
 
     return [newContact, newContactInbox]
   })
+
+  await userQuotaService.increment(workspace.ownerId, "contacts")
 
   // Emit contact created event
   try {

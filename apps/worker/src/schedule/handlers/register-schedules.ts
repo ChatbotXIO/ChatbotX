@@ -1,5 +1,6 @@
 import { ScheduleJobData, scheduleQueue } from "@chatbotx.io/worker-config"
 import { Queue } from "bullmq"
+import { env } from "../../env"
 
 export const registerSchedules = async () => {
   if (!(scheduleQueue instanceof Queue)) {
@@ -62,6 +63,15 @@ export const registerSchedules = async () => {
         type: ScheduleJobData.scanSmartDelay,
         data: {},
       },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.syncUserQuota,
+    { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
+    {
+      name: ScheduleJobData.syncUserQuota,
+      data: { type: ScheduleJobData.syncUserQuota, data: {} },
     },
   )
 }
