@@ -1780,7 +1780,7 @@
   },
   "settingsGroups": {
     "general": "Configurações gerais",
-    "rolesAndTeams": "Funções e equipes",
+    "workspace": "Workspace",
     "apps": "Aplicativos",
     "advanced": "Avançado",
     "inbox": "Caixa de entrada",

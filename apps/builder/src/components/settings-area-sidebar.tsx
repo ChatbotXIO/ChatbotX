@@ -76,7 +76,7 @@ export function SettingsAreaSidebar() {
       ],
     },
     {
-      title: t("settingsGroups.rolesAndTeams"),
+      title: t("settingsGroups.workspace"),
       items: [
         {
           label: t("admins.title"),

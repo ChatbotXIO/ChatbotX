@@ -1795,7 +1795,7 @@
   },
   "settingsGroups": {
     "general": "Cài đặt chung",
-    "rolesAndTeams": "Vai trò và nhóm",
+    "workspace": "Workspace",
     "apps": "Ứng dụng",
     "advanced": "Nâng cao",
     "inbox": "Hộp thư",
