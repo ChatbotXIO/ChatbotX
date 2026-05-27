@@ -48,6 +48,13 @@ export const auditLogActions = {
   SNIPPET_CREATED: "snippet.created",
   SNIPPET_UPDATED: "snippet.updated",
   SNIPPET_DELETED: "snippet.deleted",
+
+  // Closing Notes — paridade Respond.io Camada 2 (gap #15 2026-05-27).
+  CONVERSATION_CATEGORY_CREATED: "conversationCategory.created",
+  CONVERSATION_CATEGORY_UPDATED: "conversationCategory.updated",
+  CONVERSATION_CATEGORY_DELETED: "conversationCategory.deleted",
+  CLOSING_NOTES_MODE_UPDATED: "closingNotesMode.updated",
+  CONVERSATION_CLOSED_WITH_NOTE: "conversation.closedWithNote",
 } as const
 
 export type AuditLogAction =

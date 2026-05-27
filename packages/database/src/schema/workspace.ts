@@ -20,4 +20,9 @@ export const workspaceModel = pgTable("Workspace", {
     }),
   plan: text().notNull().default("free"),
   token: text(),
+  // Closing Notes — paridade Respond.io Camada 2 (gap #15 2026-05-27).
+  // 4 modos: disabled (atual — fecha direto), optional (abre dialog mas
+  // pode pular), mandatoryDialog (categoria obrigatória), mandatoryBoth
+  // (categoria + summary obrigatórios).
+  closingNotesMode: text().default("disabled").notNull(),
 })

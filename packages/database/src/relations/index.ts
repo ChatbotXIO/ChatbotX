@@ -31,6 +31,8 @@ import { contactsOnSequenceRelations } from "./contact-on-sequence"
 import { contactOnSmartDelayRelations } from "./contact-on-smart-delay"
 import { contactsToTagsRelations } from "./contact-to-tag"
 import { conversationRelations } from "./conversation"
+import { conversationCategoryRelations } from "./conversation-category"
+import { conversationClosingNoteRelations } from "./conversation-closing-note"
 import { conversationParticipantRelations } from "./conversation-participant"
 import { customFieldRelations } from "./custom-field"
 import { errorLogRelations } from "./error-log"
@@ -109,6 +111,8 @@ export const relations = {
   ...inboxTeamRelations,
   ...inboxRelations,
   ...conversationParticipantRelations,
+  ...conversationCategoryRelations,
+  ...conversationClosingNoteRelations,
   ...folderRelations,
   ...flowRunRelations,
   ...flowVersionRelations,
