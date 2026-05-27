@@ -5,6 +5,7 @@ import {
   pgEnum,
   pgTable,
   text,
+  timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
@@ -15,7 +16,11 @@ import {
   type SenderType,
   senderTypes,
 } from "../partials"
-import { bigintAsString, sharedColumns } from "../partials/shared"
+import {
+  bigintAsString,
+  sharedColumns,
+  timestampConfig,
+} from "../partials/shared"
 import { contactInboxModel } from "./contact-inbox"
 import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
@@ -68,6 +73,12 @@ export const messageModel = pgTable(
     // Padrão Respond.io — substitui a feature "Notas" separada.
     // 2026-05-24 — Inbox Sprint 4.
     isInternal: boolean().default(false).notNull(),
+    // Delivery tracking — populado por webhook do canal (WhatsApp/Messenger/etc).
+    // ✓ enviado (criação implícita), ✓✓ deliveredAt, ✓✓ azul readAt, ⚠️ failedAt.
+    deliveredAt: timestamp(timestampConfig),
+    readAt: timestamp(timestampConfig),
+    failedAt: timestamp(timestampConfig),
+    failureReason: text(),
   },
   (table) => [
     index("Message_workspaceId_idx").using(

@@ -1,6 +1,5 @@
 "use client"
 
-import type { ChannelType } from "@chatbotx.io/database/partials"
 import {
   Avatar,
   AvatarFallback,
@@ -32,7 +31,7 @@ import {
   getAvatarInitials,
   getRespondAvatarUrl,
 } from "@/features/contacts/utils"
-import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
+import { TemplatePickerSheet } from "@/features/conversations/components/template-picker-sheet"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import SavedReplyManage from "@/features/saved-replies/saved-reply-manage"
 import { authClient } from "@/lib/auth/auth-client"
@@ -82,6 +81,13 @@ export const MessageInput = () => {
 
   const [showCommentBox, setShowCommentBox] = useState(false)
   const [commentText, setCommentText] = useState("")
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
+
+  // Detecta se a conversa é WhatsApp (afeta UI: banner 24h + Template
+  // picker). Pedro 2026-05-26 Sprint WhatsApp 3.2.
+  const isWhatsapp = conversation?.contactInboxes?.some(
+    (ci) => ci.inbox?.channel === "whatsapp",
+  )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
@@ -121,6 +127,10 @@ export const MessageInput = () => {
                 senderId: session?.data?.user.id ?? null,
                 clientId: typedInput.clientId,
                 isInternal: typedInput.isInternal ?? false,
+                deliveredAt: null,
+                readAt: null,
+                failedAt: null,
+                failureReason: null,
               })
             }
 
@@ -304,6 +314,10 @@ export const MessageInput = () => {
       senderId: session?.data?.user.id ?? null,
       clientId: createId(),
       isInternal: true,
+      deliveredAt: null,
+      readAt: null,
+      failedAt: null,
+      failureReason: null,
     })
     // Fire-and-forget pra backend
     createMessageAction
@@ -338,7 +352,11 @@ export const MessageInput = () => {
   )
 
   const isDisabled = false
-  const placeholder = t("conversations.composerHint")
+  // Placeholder minimalista (Pedro 2026-05-26): "Digite uma mensagem" em
+  // cor #4A535E — substitui texto antigo "Use '/' para snippets..." que era
+  // verboso e poluía o composer. Hint de atalhos pode voltar como tooltip
+  // ou popup contextual no futuro.
+  const placeholder = t("conversations.composerPlaceholder")
 
   // Avatar do user logado pra mostrar no canto esquerdo da caixa de
   // comentário interno (Pedro iteração 15 — Respond.io mostra ali).
@@ -363,11 +381,11 @@ export const MessageInput = () => {
   }
 
   const activeChannel = conversation?.contactInboxes?.[0]?.channel ?? "webchat"
-  const channelLabel =
+  const _channelLabel =
     activeChannel === "whatsapp"
       ? "WhatsApp Business"
       : activeChannel.charAt(0).toUpperCase() + activeChannel.slice(1)
-  const contactNumber = conversation?.contact?.phoneNumber ?? ""
+  const _contactNumber = conversation?.contact?.phoneNumber ?? ""
 
   return (
     // Wrapper com PADDING LATERAL + TOP — fica afastado das bordas do
@@ -378,37 +396,11 @@ export const MessageInput = () => {
     <div className="flex flex-col px-3 pt-5 pb-3">
       {/* COMPOSER PRINCIPAL — sempre visível. Caixa destacada com bg-card,
           border + radius 8 px que dá sensação de "flutuante" sobre o
-          canvas (#101113) do MessageList. */}
+          canvas (#101113) do MessageList.
+          Pedro 2026-05-26: channel pill (WhatsApp Business · para: …) foi
+          REMOVIDO — informação redundante (avatar+nome do contato já estão
+          no header da conversa). */}
       <div className="rounded-[8px] border border-white/[0.08] bg-card">
-        <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                aria-label={channelLabel}
-                className="inline-flex h-7 items-center gap-1.5 rounded-[4px] border border-white/[0.12] bg-transparent px-2 text-[12px] text-text-secondary transition-colors hover:bg-white/[0.04]"
-                type="button"
-              >
-                <InboxIcon
-                  channel={activeChannel as ChannelType}
-                  size="small"
-                />
-                <span className="font-medium">{channelLabel}</span>
-                {contactNumber && (
-                  <>
-                    <span className="text-text-secondary/40">·</span>
-                    <span className="text-text-secondary/80">
-                      {t("conversations.channelPrefix")} {contactNumber}
-                    </span>
-                  </>
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {t("messages.composer.channelHint")}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
         {/* TEXTAREA + TOOLBAR — COLAPSAM com animação suave quando comment
             box abre (Pedro 2026-05-25 iteração 19). Antes era `hidden`
             (corte seco); agora usa grid-rows trick pra animar max-height
@@ -518,8 +510,7 @@ export const MessageInput = () => {
           OU comentário, é escolha do agente.
           O wrapper externo já tem px-3 pb-3, então uso só mt-2 aqui. */}
       {showCommentBox ? (
-        // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label em region implícita do composer comment — landmark visual
-        <div
+        <section
           aria-label={t("messages.composer.internalLabel")}
           className="fade-in slide-in-from-top-2 relative mt-2 animate-in rounded-[8px] border border-[#FFA024] bg-[#3F3322] px-3 pt-3 pb-2 duration-300 ease-out"
         >
@@ -635,7 +626,7 @@ export const MessageInput = () => {
               </TooltipContent>
             </Tooltip>
           </div>
-        </div>
+        </section>
       ) : (
         // BOTÃO "Adicionar comentário" — abre a caixa suspensa amber.
         // Pixel-perfect Respond.io (Pedro iteração 14): linha discreta
@@ -663,6 +654,15 @@ export const MessageInput = () => {
             {t("messages.composer.addComment")}
           </span>
         </button>
+      )}
+
+      {isWhatsapp && conversation && (
+        <TemplatePickerSheet
+          conversationId={conversation.id}
+          onOpenChange={setTemplatePickerOpen}
+          open={templatePickerOpen}
+          workspaceId={conversation.workspaceId}
+        />
       )}
     </div>
   )

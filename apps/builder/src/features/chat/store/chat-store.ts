@@ -84,6 +84,25 @@ export type ChatActions = {
   appendMessage: (message: MessageResourceWithRelations) => void
   loadMoreMessages: (workspaceId: string, perPage: number) => Promise<void>
   handleNewMessage: (message: MessageResourceWithRelations) => void
+  // Atualiza delivery status (deliveredAt/readAt/failedAt/failureReason)
+  // de uma mensagem outgoing em memória SEM refetch. Recebido via realtime
+  // do listener message-status-persist no worker.
+  updateMessageStatus: (data: {
+    messageId: string
+    conversationId: string
+    deliveredAt: string | null
+    readAt: string | null
+    failedAt: string | null
+    failureReason: string | null
+  }) => void
+  // Atualiza reaction (emoji) de uma Message em memória sem refetch.
+  // Recebido via realtime quando webhook do canal entrega reaction.
+  // Null quando contato removeu a reaction.
+  updateMessageReaction: (data: {
+    messageId: string
+    conversationId: string
+    reaction: { emoji: string; by: "contact" | "agent"; at: string } | null
+  }) => void
 
   // Contact actions
   updateContact: (contactId: string, data: Partial<ContactResource>) => void
@@ -485,6 +504,48 @@ export const createChatStore = () => {
 
         set({ conversations: updatedConversations })
       }
+    },
+
+    updateMessageStatus: (data) => {
+      const { messages, activeConversationId } = get()
+      if (data.conversationId !== activeConversationId) {
+        return
+      }
+      const idx = messages.findIndex((m) => m.id === data.messageId)
+      if (idx === -1) {
+        return
+      }
+      const next = [...messages]
+      next[idx] = {
+        ...next[idx],
+        deliveredAt: data.deliveredAt ? new Date(data.deliveredAt) : null,
+        readAt: data.readAt ? new Date(data.readAt) : null,
+        failedAt: data.failedAt ? new Date(data.failedAt) : null,
+        failureReason: data.failureReason,
+      }
+      set({ messages: next })
+    },
+
+    updateMessageReaction: (data) => {
+      const { messages, activeConversationId } = get()
+      if (data.conversationId !== activeConversationId) {
+        return
+      }
+      const idx = messages.findIndex((m) => m.id === data.messageId)
+      if (idx === -1) {
+        return
+      }
+      const next = [...messages]
+      const prevAttrs =
+        (next[idx].contentAttributes as Record<string, unknown> | null) ?? {}
+      next[idx] = {
+        ...next[idx],
+        contentAttributes: {
+          ...prevAttrs,
+          reaction: data.reaction,
+        },
+      }
+      set({ messages: next })
     },
   }))
 }

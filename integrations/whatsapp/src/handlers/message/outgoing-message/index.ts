@@ -111,6 +111,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
+    const messageIds: string[] = []
 
     try {
       for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
@@ -145,6 +146,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
             },
             "Message sent successfully",
           )
+          messageIds.push(messageId)
           continue
         }
 
@@ -158,9 +160,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
-    return {
-      messageIds: [],
-    }
+    return { messageIds }
   }
 
 export const sendFlowStep: MessageHandlers<WhatsappAuthValue>["sendFlowStep"] =

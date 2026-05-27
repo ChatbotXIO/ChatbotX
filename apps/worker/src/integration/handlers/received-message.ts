@@ -100,6 +100,75 @@ export const receiveMessage = async (
     integrationRow,
   })
 
+  // Detecta reaction recebida do contato. WhatsApp envia reaction como
+  // mensagem tipo "reaction" — em vez de criar mensagem nova, atualizamos
+  // a Message alvo (sourceId === reaction.message_id) com
+  // contentAttributes.reaction = { emoji, by: "contact", at }. UI renderiza
+  // emoji embaixo da bubble. 2026-05-26 — Sprint WhatsApp reactions.
+  const reactionAttrs = incomingMessage?.contentAttributes as
+    | {
+        type?: string
+        targetMessageSourceId?: string
+        emoji?: string
+      }
+    | undefined
+  if (
+    reactionAttrs?.type === "reaction" &&
+    reactionAttrs.targetMessageSourceId
+  ) {
+    const targetMessage = await db.query.messageModel.findFirst({
+      where: {
+        contactInboxId: contactInbox.id,
+        sourceId: reactionAttrs.targetMessageSourceId,
+      },
+    })
+    if (targetMessage) {
+      const prevAttrs =
+        (targetMessage.contentAttributes as Record<string, unknown>) ?? {}
+      const emoji = reactionAttrs.emoji ?? ""
+      const newAttrs = {
+        ...prevAttrs,
+        // Reação removida (Meta envia emoji vazio quando contato remove): apaga.
+        ...(emoji
+          ? { reaction: { emoji, by: "contact", at: new Date().toISOString() } }
+          : { reaction: null }),
+      }
+      const [updated] = await db
+        .update(messageModel)
+        .set({ contentAttributes: newAttrs })
+        .where(eq(messageModel.id, targetMessage.id))
+        .returning()
+      if (updated) {
+        try {
+          broadcastToWorkspaceParty(inbox.workspaceId, {
+            eventType: RealtimeEventType.messageReactionUpdated,
+            data: {
+              messageId: updated.id,
+              conversationId: updated.conversationId,
+              reaction: emoji
+                ? {
+                    emoji,
+                    by: "contact" as const,
+                    at: new Date().toISOString(),
+                  }
+                : null,
+            },
+          })
+        } catch (err) {
+          logger.warn(err, "Unable to emit reaction realtime event")
+        }
+      }
+    }
+    // Reaction não cria Message, não dispara automated response, sai aqui.
+    return {
+      message: null,
+      conversation,
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    }
+  }
+
   let createdMessage: MessageModel | null = null
   if (incomingMessage) {
     const { newMessage, isNewMessage } = await db.transaction(async (tx) => {
@@ -168,6 +237,26 @@ export const receiveMessage = async (
         isNewMessage,
       }
     })
+
+    // Atualiza timestamps da conversation quando mensagem é incoming —
+    // contactRepliedAt + lastActivityAt. Crítico pro detector da janela
+    // de 24h do composer WhatsApp: sem isso, banner "Janela fechada"
+    // aparece mesmo logo após o contato responder. 2026-05-26 — Sprint
+    // WhatsApp 24h fix.
+    if (isNewMessage && incomingMessage.messageType === "incoming") {
+      const now = new Date()
+      try {
+        await db
+          .update(conversationModel)
+          .set({
+            contactRepliedAt: now,
+            lastActivityAt: now,
+          })
+          .where(eq(conversationModel.id, conversation.id))
+      } catch (err) {
+        logger.warn(err, "Unable to update conversation timestamps")
+      }
+    }
 
     if (isNewMessage) {
       // re-assign if is new message

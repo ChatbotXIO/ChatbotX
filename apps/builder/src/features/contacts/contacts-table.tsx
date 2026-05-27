@@ -133,7 +133,7 @@ export function ContactsTable({
                   shadcn porque ele força size-8 + rounded-lg + border que
                   conflitam com Respond.io. */}
               <span
-                className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[11px] text-white"
+                className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-[11px] text-white leading-none"
                 style={{ backgroundColor: avatar.color }}
                 title={name}
               >

@@ -1612,10 +1612,12 @@
     "searchPrevious": "Resultado anterior",
     "searchNext": "Próximo resultado",
     "composerHint": "Use '/' para snippets, '$' para variáveis, ':' para emoji",
+    "composerPlaceholder": "Digite uma mensagem",
     "channelPrefix": "para:",
     "todayLabel": "Hoje",
     "yesterdayLabel": "Ontem",
-    "unassignedAgent": "Não atribuído"
+    "unassignedAgent": "Não atribuído",
+    "unnamedContact": "Contato sem nome"
   },
   "inboxSideRail": {
     "details": "Detalhes do contato",
@@ -1636,7 +1638,8 @@
       "sent": "Enviado",
       "delivered": "Entregue",
       "read": "Lido",
-      "received": "Recebido"
+      "received": "Recebido",
+      "failed": "Falha"
     },
     "composer": {
       "internalComment": "Comentário interno",
@@ -1902,6 +1905,10 @@
   },
   "whatsapp": {
     "category": {
+      "authentication": {
+        "description": "Códigos OTP, verificação em 2 etapas e mensagens de autenticação.",
+        "label": "Autenticação"
+      },
       "marketing": {
         "description": "Descrição da categoria Marketing",
         "label": "Marketing"
@@ -1910,6 +1917,31 @@
         "description": "Descrição da categoria Utilidade",
         "label": "Utilidade"
       }
+    },
+    "connectionType": {
+      "embedded": "Embedded Signup",
+      "manual": "Conexão manual"
+    },
+    "list": {
+      "empty": "Nenhum WhatsApp conectado ainda."
+    },
+    "templatePicker": {
+      "empty": "Nenhum template aprovado disponível.",
+      "preview": "Pré-visualização",
+      "sent": "Template enviado",
+      "title": "Enviar template",
+      "variables": "Variáveis"
+    },
+    "webhook": {
+      "pending": "Webhook pendente",
+      "verified": "Webhook verificado"
+    },
+    "windowAlert": {
+      "description": "A Meta não permite o envio de mensagens após 24 horas da última resposta do contato. Para continuar, envie um modelo de mensagem aprovado ou aguarde uma nova resposta do contato para voltar a enviar mensagens normalmente.",
+      "learnMore": "Saiba mais",
+      "openTemplate": "Abrir lista de templates",
+      "sendTemplateButton": "Enviar modelo de mensagem",
+      "title": "Janela de mensagens do WhatsApp fechada"
     },
     "commands": {
       "description": "São palavras-chave especiais que dizem ao bot do WhatsApp o que fazer",

@@ -31,14 +31,20 @@ export async function sendMessageToChannel(
   })
 
   try {
-    await integration.runChannelHandler("message", "sendMessage", {
-      ctx,
-      data: {
-        contact: contactInbox,
-        message,
-        metadata,
+    const result = await integration.runChannelHandler(
+      "message",
+      "sendMessage",
+      {
+        ctx,
+        data: {
+          contact: contactInbox,
+          message,
+          metadata,
+        },
       },
-    })
+    )
+
+    await updateMessageSourceId(message?.id, result)
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
     await emit(messageEventTypeSchema.enum["message:failed"], {

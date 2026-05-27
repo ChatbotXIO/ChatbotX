@@ -1612,10 +1612,12 @@
     "searchPrevious": "Previous result",
     "searchNext": "Next result",
     "composerHint": "Use '/' for snippets, '$' for variables, ':' for emoji",
+    "composerPlaceholder": "Type a message",
     "channelPrefix": "to:",
     "todayLabel": "Today",
     "yesterdayLabel": "Yesterday",
-    "unassignedAgent": "Unassigned"
+    "unassignedAgent": "Unassigned",
+    "unnamedContact": "Unnamed contact"
   },
   "inboxSideRail": {
     "details": "Contact details",
@@ -1636,7 +1638,8 @@
       "sent": "Sent",
       "delivered": "Delivered",
       "read": "Read",
-      "received": "Received"
+      "received": "Received",
+      "failed": "Failed"
     },
     "composer": {
       "internalComment": "Internal comment",
@@ -1902,6 +1905,10 @@
   },
   "whatsapp": {
     "category": {
+      "authentication": {
+        "description": "OTP codes, 2-step verification, and authentication messages.",
+        "label": "Authentication"
+      },
       "marketing": {
         "description": "Marketing category description",
         "label": "Marketing"
@@ -1910,6 +1917,31 @@
         "description": "Utility category description",
         "label": "Utility"
       }
+    },
+    "connectionType": {
+      "embedded": "Embedded Signup",
+      "manual": "Manual connection"
+    },
+    "list": {
+      "empty": "No WhatsApp connected yet."
+    },
+    "templatePicker": {
+      "empty": "No approved templates available.",
+      "preview": "Preview",
+      "sent": "Template sent",
+      "title": "Send template",
+      "variables": "Variables"
+    },
+    "webhook": {
+      "pending": "Webhook pending",
+      "verified": "Webhook verified"
+    },
+    "windowAlert": {
+      "description": "Meta does not allow sending messages 24 hours after the contact's last reply. To continue, send an approved message template or wait for a new reply from the contact to resume sending messages normally.",
+      "learnMore": "Learn more",
+      "openTemplate": "Open template list",
+      "sendTemplateButton": "Send message template",
+      "title": "WhatsApp messaging window closed"
     },
     "commands": {
       "description": "These are special keywords that tell the WhatsApp bot what to do",

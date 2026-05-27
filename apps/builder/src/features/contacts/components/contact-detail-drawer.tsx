@@ -88,7 +88,7 @@ export function ContactDetailDrawer({
         {/* Avatar + Nome */}
         <div className="flex flex-col items-center gap-2 pb-4">
           <span
-            className="relative inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-base text-white"
+            className="relative inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full font-medium text-base text-white leading-none"
             style={{ backgroundColor: avatar.color }}
           >
             {/* biome-ignore lint/performance/noImgElement: avatar simples sem Next/Image */}

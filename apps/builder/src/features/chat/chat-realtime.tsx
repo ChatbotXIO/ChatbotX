@@ -15,9 +15,13 @@ export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
   const { realtimeUrl } = usePlatformSettings()
 
-  const { handleNewMessage, updateContact, updateConversations } = useChatStore(
-    (state) => state,
-  )
+  const {
+    handleNewMessage,
+    updateContact,
+    updateConversations,
+    updateMessageStatus,
+    updateMessageReaction,
+  } = useChatStore((state) => state)
 
   usePartySocket({
     host: realtimeUrl,
@@ -40,6 +44,31 @@ export function ChatRealtime() {
         switch (eventType) {
           case RealtimeEventType.messageCreated:
             handleNewMessage(data as MessageResourceWithRelations)
+            break
+          case RealtimeEventType.messageStatusUpdated:
+            updateMessageStatus(
+              data as {
+                messageId: string
+                conversationId: string
+                deliveredAt: string | null
+                readAt: string | null
+                failedAt: string | null
+                failureReason: string | null
+              },
+            )
+            break
+          case RealtimeEventType.messageReactionUpdated:
+            updateMessageReaction(
+              data as {
+                messageId: string
+                conversationId: string
+                reaction: {
+                  emoji: string
+                  by: "contact" | "agent"
+                  at: string
+                } | null
+              },
+            )
             break
           case RealtimeEventType.contactBlocked:
             updateContact(data.contactId, {

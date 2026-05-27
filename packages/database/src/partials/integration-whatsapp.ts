@@ -9,7 +9,11 @@ export type WhatsappTemplateStatus = z.infer<
   typeof whatsappTemplateStatusSchema
 >
 
-export const whatsappTemplateCategories = z.enum(["MARKETING", "UTILITY"])
+export const whatsappTemplateCategories = z.enum([
+  "MARKETING",
+  "UTILITY",
+  "AUTHENTICATION",
+])
 export type WhatsappTemplateCategory = z.infer<
   typeof whatsappTemplateCategories
 >

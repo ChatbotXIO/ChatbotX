@@ -104,10 +104,7 @@ export function ContactTagsPanel({
         const style = getTagChipStyle(tag.color)
         return (
           <span
-            // Chip estilo Respond.io adaptado (Pedro 2026-05-26):
-            // radius 4px (quadriculado com pontinhas), padding 4×8,
-            // font 12px/16px weight 600, outline 1px sutil (via style).
-            className="inline-flex items-center gap-1 rounded px-2 py-1 font-semibold text-xs leading-4 transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium text-[12px] transition-opacity hover:opacity-90"
             key={tag.id}
             style={style}
           >

@@ -33,6 +33,7 @@ export function WhatsappMessageTemplateCategorySelect({
     return [
       whatsappTemplateCategories.enum.MARKETING,
       whatsappTemplateCategories.enum.UTILITY,
+      whatsappTemplateCategories.enum.AUTHENTICATION,
     ]
   }, [templateType])
 
@@ -40,15 +41,19 @@ export function WhatsappMessageTemplateCategorySelect({
     () =>
       [
         {
-          label: "Marketing",
+          label: t("whatsapp.category.marketing.label"),
           value: whatsappTemplateCategories.enum.MARKETING,
         },
         {
-          label: "Utilidade",
+          label: t("whatsapp.category.utility.label"),
           value: whatsappTemplateCategories.enum.UTILITY,
         },
+        {
+          label: t("whatsapp.category.authentication.label"),
+          value: whatsappTemplateCategories.enum.AUTHENTICATION,
+        },
       ].filter((option) => allowOptions.includes(option.value)),
-    [allowOptions],
+    [allowOptions, t],
   )
 
   return (
@@ -78,6 +83,15 @@ export function WhatsappMessageTemplateCategorySelect({
             {t("whatsapp.category.utility.label")}
           </span>
           <span>{t("whatsapp.category.utility.description")}</span>
+        </div>
+      )}
+      {category === whatsappTemplateCategories.enum.AUTHENTICATION && (
+        <div className="grid auto-cols-min grid-flow-col items-center rounded bg-slate-200 p-6">
+          <VolumeIcon className="row-span-2" size={36} />
+          <span className="font-bold">
+            {t("whatsapp.category.authentication.label")}
+          </span>
+          <span>{t("whatsapp.category.authentication.description")}</span>
         </div>
       )}
     </>

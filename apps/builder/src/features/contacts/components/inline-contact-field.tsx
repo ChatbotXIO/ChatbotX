@@ -15,8 +15,7 @@ type Props = {
   onUpdated?: (key: string, value: string) => void
 }
 
-// Helper top-level pra evitar nested ternary (regra biome noNestedTernary).
-function getInputType(key: string): "email" | "tel" | "text" {
+function resolveInputType(key: string): string {
   if (key === "email") {
     return "email"
   }
@@ -102,19 +101,19 @@ export function InlineContactField({
           Antes era 12px semibold muted-foreground (negrito errado). */}
       <label
         className="truncate font-normal text-[14px] text-text-secondary"
-        htmlFor={`inline-contact-field-${field.key}`}
+        htmlFor={`field-${field.key}`}
       >
         {field.label}
       </label>
       <Input
         className="!bg-transparent overflow-hidden! dark:!bg-transparent h-7 w-full min-w-0 text-ellipsis whitespace-nowrap border-0 px-1 text-[14px] text-text-secondary shadow-none transition-colors hover:bg-white/[0.04] focus:bg-white/[0.06] focus:ring-1 focus:ring-white/[0.12] focus-visible:ring-1 focus-visible:ring-white/[0.12] dark:focus:bg-white/[0.06] dark:hover:bg-white/[0.04]"
         disabled={isPending}
-        id={`inline-contact-field-${field.key}`}
+        id={`field-${field.key}`}
         onBlur={commit}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={`${t("actions.add") ?? "Adicionar"} ${field.label}`}
-        type={getInputType(field.key)}
+        type={resolveInputType(field.key)}
         value={value}
       />
     </div>

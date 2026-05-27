@@ -42,7 +42,11 @@ function AvatarFallback({
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "bg-muted dark:bg-neutral-500 flex size-full items-center justify-center rounded-full",
+        // leading-none força line-height = font-size pra centralizar
+        // perfeitamente o glyph dentro da pill/circulo (Pedro 2026-05-26).
+        // Sem isso, a fonte herda line-height padrão (~1.4–1.6) e empurra
+        // o glyph pra baixo do centro vertical em badges/avatares pequenos.
+        "bg-muted dark:bg-neutral-500 flex size-full items-center justify-center rounded-full leading-none",
         className,
       )}
       {...props}

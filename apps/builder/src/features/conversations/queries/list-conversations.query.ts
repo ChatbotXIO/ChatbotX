@@ -73,7 +73,13 @@ export const listConversations = async (
   const conversations = await db.query.conversationModel.findMany({
     with: {
       contact: true,
-      contactInboxes: true,
+      contactInboxes: {
+        with: {
+          inbox: {
+            columns: { id: true, name: true, channel: true },
+          },
+        },
+      },
       assignedUser: true,
       assignedInboxTeam: true,
       messages: {
@@ -140,7 +146,13 @@ export const findConversation = async (
           tags: true,
         },
       },
-      contactInboxes: true,
+      contactInboxes: {
+        with: {
+          inbox: {
+            columns: { id: true, name: true, channel: true },
+          },
+        },
+      },
       messages: true,
       assignedUser: true,
       assignedInboxTeam: true,

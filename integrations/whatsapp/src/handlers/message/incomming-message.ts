@@ -184,8 +184,23 @@ export const receiveMessage: MessageHandlers<WhatsappAuthValue>["receiveMessage"
         message.contentAttributes = (data.message as ServerOrderMessage).order
         break
       }
+      case "reaction": {
+        // WhatsApp envia reaction como mensagem tipo "reaction" referenciando
+        // o message_id alvo. O worker received-message detecta esse caso e,
+        // em vez de criar Message nova, atualiza Message existente
+        // (sourceId === reaction.message_id) com contentAttributes.reaction.
+        // 2026-05-26 — Sprint WhatsApp reactions.
+        const reaction = (
+          data.message as { reaction?: { message_id: string; emoji?: string } }
+        ).reaction
+        message.contentAttributes = {
+          type: "reaction",
+          targetMessageSourceId: reaction?.message_id ?? "",
+          emoji: reaction?.emoji ?? "",
+        }
+        break
+      }
       // case "request_welcome": do nothing
-      // case "reaction": do nothing
       // case "system": do nothing
       default:
         message.text = `Received ${data.message.type}`

@@ -1628,10 +1628,12 @@
     "searchPrevious": "Trước",
     "searchNext": "Sau",
     "composerHint": "Dùng '/' cho snippets, '$' cho biến, ':' cho emoji",
+    "composerPlaceholder": "Nhập tin nhắn",
     "channelPrefix": "đến:",
     "todayLabel": "Hôm nay",
     "yesterdayLabel": "Hôm qua",
-    "unassignedAgent": "Chưa được phân công"
+    "unassignedAgent": "Chưa được phân công",
+    "unnamedContact": "Liên hệ chưa đặt tên"
   },
   "inboxSideRail": {
     "details": "Chi tiết liên hệ",
@@ -1652,7 +1654,8 @@
       "sent": "Đã gửi",
       "delivered": "Đã chuyển",
       "read": "Đã đọc",
-      "received": "Đã nhận"
+      "received": "Đã nhận",
+      "failed": "Thất bại"
     },
     "composer": {
       "internalComment": "Ghi chú nội bộ",
@@ -1917,6 +1920,10 @@
   },
   "whatsapp": {
     "category": {
+      "authentication": {
+        "description": "Mã OTP, xác minh 2 bước và tin nhắn xác thực.",
+        "label": "Xác thực"
+      },
       "marketing": {
         "description": "Mô tả danh mục Marketing",
         "label": "Marketing"
@@ -1925,6 +1932,31 @@
         "description": "Mô tả danh mục Tiện ích",
         "label": "Tiện ích"
       }
+    },
+    "connectionType": {
+      "embedded": "Embedded Signup",
+      "manual": "Kết nối thủ công"
+    },
+    "list": {
+      "empty": "Chưa có WhatsApp nào được kết nối."
+    },
+    "templatePicker": {
+      "empty": "Không có mẫu nào được phê duyệt.",
+      "preview": "Xem trước",
+      "sent": "Đã gửi mẫu",
+      "title": "Gửi mẫu",
+      "variables": "Biến"
+    },
+    "webhook": {
+      "pending": "Webhook chờ xử lý",
+      "verified": "Webhook đã xác minh"
+    },
+    "windowAlert": {
+      "description": "Meta không cho phép gửi tin nhắn sau 24 giờ kể từ lần phản hồi cuối của liên hệ. Để tiếp tục, hãy gửi một mẫu tin nhắn đã được phê duyệt hoặc chờ phản hồi mới từ liên hệ để tiếp tục gửi tin nhắn bình thường.",
+      "learnMore": "Tìm hiểu thêm",
+      "openTemplate": "Mở danh sách mẫu",
+      "sendTemplateButton": "Gửi mẫu tin nhắn",
+      "title": "Cửa sổ nhắn tin WhatsApp đã đóng"
     },
     "commands": {
       "description": "Đây là những từ khóa đặc biệt cho bot WhatsApp biết phải làm gì",

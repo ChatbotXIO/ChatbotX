@@ -68,7 +68,7 @@ function AssignedAvatar({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Avatar className="size-4 shrink-0">
+          <Avatar className="size-5 shrink-0">
             {/* Iter 42 (Pedro): src de fallback = respond-avatar gerado
                 pelo id. Antes ficava "" quando user.image=null → caía
                 pra iniciais. Agora mesmo sem user.image mostra avatar
@@ -79,7 +79,7 @@ function AssignedAvatar({
               src={user.image || avatarSpec.url}
             />
             <AvatarFallback
-              className="font-semibold text-[8px] text-white"
+              className="font-semibold text-[10px] text-white"
               style={{ backgroundColor: avatarSpec.color }}
             >
               {initials}
@@ -99,8 +99,8 @@ function AssignedAvatar({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="grid size-4 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-600 bg-secondary text-text-secondary">
-            <UsersRoundIcon size={10} strokeWidth={1.75} />
+          <div className="grid size-5 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-600 bg-secondary text-text-secondary">
+            <UsersRoundIcon size={12} strokeWidth={1.75} />
           </div>
         </TooltipTrigger>
         <TooltipContent align="center" side="bottom">
@@ -115,10 +115,10 @@ function AssignedAvatar({
     <Tooltip>
       <TooltipTrigger asChild>
         <div
-          className="grid size-4 shrink-0 place-items-center rounded-full text-white"
+          className="grid size-5 shrink-0 place-items-center rounded-full text-white"
           style={{ backgroundColor: "#A63D40" }}
         >
-          <UserIcon size={10} strokeWidth={2.25} />
+          <UserIcon size={12} strokeWidth={2.25} />
         </div>
       </TooltipTrigger>
       <TooltipContent align="center" side="bottom">
@@ -265,10 +265,12 @@ export default function ConversationItem({
     <div className="group relative w-full border-white/[0.06] border-b">
       <Button
         className={cn(
-          // Card altura 98 px pixel-perfect Respond.io § 5 do
-          // _visual-respond-mapping.md (12 top + conteúdo ~70 + 14 bottom ≈ 98).
-          // Padding px-3 alinhado com filter bar acima e linha border-b.
-          "flex h-auto min-h-[98px] w-full items-start gap-3 rounded-none border-0 px-3 pt-3 pb-3.5 text-left font-normal hover:bg-white/[0.03]",
+          // Card compacto Respond.io (Pedro 2026-05-26): altura reduzida
+          // de 98 → 76 px (12 top → 8 top, 14 bottom → 8 bottom, mt-1
+          // entre linha 2 e 3 → mt-0.5). Confirmado no Respond.io ao vivo
+          // que cards são mais apertados — antes ficava "soltinho" com
+          // muito espaço vertical em volta do conteúdo.
+          "flex h-auto min-h-[84px] w-full items-start gap-3 rounded-none border-0 px-3 py-2.5 text-left font-normal hover:bg-white/[0.03]",
           isActive && "bg-white/[0.06] hover:bg-white/[0.06]",
         )}
         onClick={() => onSelect()}
@@ -340,7 +342,7 @@ export default function ConversationItem({
               // SÓ renderiza quando count > 0 — quando agente clica e
               // marca como lida, pill some por completo (não fica "0"
               // vazio dentro).
-              <span className="inline-grid h-5 min-w-[20px] shrink-0 place-items-center rounded-[10px] bg-primary px-1.5 font-bold text-[12px] text-primary-foreground">
+              <span className="inline-grid h-5 min-w-[20px] shrink-0 place-items-center rounded-[10px] bg-primary px-1.5 font-bold text-[12px] text-primary-foreground leading-none">
                 {conversation.unreadCount > 99
                   ? "99+"
                   : conversation.unreadCount}

@@ -149,11 +149,8 @@ export const ChatLayout = (props: ChatLayoutProps) => {
             {/* LINHA DE BAIXO: msgs | drawer | sideRail */}
             <div className="flex min-h-0 flex-1">
               <ResizablePanelGroup className="items-stretch">
-                <ResizablePanel
-                  defaultSize={drawerOpen ? innerMsgsSize : 100}
-                  minSize={"30%"}
-                >
-                  <div className="flex h-full w-full min-w-0 flex-col">
+                <ResizablePanel defaultSize={drawerOpen ? innerMsgsSize : 100}>
+                  <div className="flex h-full w-full flex-col">
                     <MessageList />
                     <MessageInput />
                   </div>
@@ -165,11 +162,11 @@ export const ChatLayout = (props: ChatLayoutProps) => {
                     <ResizablePanel
                       className="overflow-hidden!"
                       defaultSize={innerDrawerSize}
-                      maxSize={"40%"}
-                      minSize={"18%"}
+                      maxSize={"30%"}
+                      minSize={"14%"}
                     >
-                      <div className="@container/drawer flex h-full w-full min-w-0 bg-app-surface">
-                        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col px-4 py-3">
+                      <div className="flex h-full w-full bg-app-surface">
+                        <div className="flex h-full min-h-0 flex-1 flex-col px-4 py-3">
                           <ContactInboxPanel
                             activeConversationId={activeConversation.id}
                             hiddenFieldKeys={hiddenFieldKeys}

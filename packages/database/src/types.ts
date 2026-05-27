@@ -21,6 +21,8 @@ export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type WorkspaceMemberModel =
   typeof schema.workspaceMemberModel.$inferSelect
 export type WorkspaceUsageModel = typeof schema.workspaceUsageModel.$inferSelect
+export type WorkspaceContactFieldVisibilityModel =
+  typeof schema.workspaceContactFieldVisibilityModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
@@ -49,8 +51,6 @@ export type AIFileModel = typeof schema.aiFileModel.$inferSelect
 export type ContactCustomFieldModel =
   typeof schema.contactCustomFieldModel.$inferSelect
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
-export type WorkspaceContactFieldVisibilityModel =
-  typeof schema.workspaceContactFieldVisibilityModel.$inferSelect
 export type OrganizationModel = typeof schema.organizationModel.$inferSelect
 export type OrganizationCredentialModel =
   typeof schema.organizationCredentialModel.$inferSelect
