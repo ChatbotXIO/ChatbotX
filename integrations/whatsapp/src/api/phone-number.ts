@@ -1,3 +1,4 @@
+import type { Context } from "@chatbotx.io/sdk"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
@@ -214,6 +215,46 @@ export const findConversationalAutomation = (
       commands: result.conversational_automation?.commands ?? [],
     }
   })
+}
+
+export type WhatsappBusinessProfile = {
+  profile_picture_url?: string
+}
+
+export type WhatsappBusinessProfileResponse = {
+  data: WhatsappBusinessProfile[]
+}
+
+/**
+ * Reference: https://developers.facebook.com/docs/whatsapp/cloud-api/reference/business-profiles
+ */
+export async function getBusinessProfilePictureUrl(props: {
+  ctx: Context<WhatsappAuthValue>
+}): Promise<string | undefined> {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const phoneNumberId = ctx.auth.metadata.phoneNumber.id
+  const accessToken = ctx.auth.tokens.accessToken
+
+  try {
+    const response = await ky
+      .get<WhatsappBusinessProfileResponse>(
+        `${API_URL}/${version}/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          searchParams: {
+            fields: "profile_picture_url",
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      )
+      .json()
+
+    return response.data?.[0]?.profile_picture_url
+  } catch {
+    return
+  }
 }
 
 export function updateConversationalAutomation(

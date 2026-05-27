@@ -3,7 +3,10 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import { unsubscribePageFromInstagramWebhook } from "./apis/page"
+import {
+  getInstagramProfilePictureUrl,
+  unsubscribePageFromInstagramWebhook,
+} from "./apis/page"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
@@ -30,7 +33,9 @@ const config: IntegrationDefinition<
       bot: botHandlers,
     },
   },
-  actions: {},
+  actions: {
+    getProfilePicURL: getInstagramProfilePictureUrl,
+  },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const action = segments.pop()

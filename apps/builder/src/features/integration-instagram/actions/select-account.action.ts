@@ -23,6 +23,7 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
+import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import {
@@ -61,6 +62,12 @@ export const selectAccountAction = authActionClient
         const instagramSettings = instagramCredential.config
 
         await db.transaction(async (tx) => {
+          const longLivedToken = await exchangeLongLivedToken(
+            instagramSettings,
+            parsedInput.accessToken,
+          )
+
+          let createdWorkspace = false
           if (!workspaceId) {
             const workspace = await workspaceService.create({
               tx,
@@ -72,17 +79,13 @@ export const selectAccountAction = authActionClient
               },
             })
             workspaceId = workspace.id
+            createdWorkspace = true
           }
 
           const { appUrl } = await resolvePlatformSettings({
             workspaceId,
             tx,
           })
-
-          const longLivedToken = await exchangeLongLivedToken(
-            instagramSettings,
-            parsedInput.accessToken,
-          )
 
           await subscribePageToInstagramWebhook({
             pageId: parsedInput.pageId,
@@ -150,6 +153,16 @@ export const selectAccountAction = authActionClient
               auth: integrationRow.auth as InstagramAuthValue,
             },
           })
+
+          if (createdWorkspace) {
+            await updateWorkspaceLogo({
+              id: workspaceId,
+              integration: integrationInstagram,
+              ctx: brandingCtx,
+              tx,
+            })
+          }
+
           await integrationInstagram.runChannelHandler("bot", "addBranding", {
             ctx: brandingCtx,
             title: BRANDING_TITLE,

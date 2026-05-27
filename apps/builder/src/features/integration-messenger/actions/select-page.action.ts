@@ -23,6 +23,7 @@ import {
   BRANDING_TITLE,
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
+import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -71,7 +72,12 @@ export const selectPageAction = authActionClient
         }
 
         await db.transaction(async (tx) => {
-          // create new workspace if not exists
+          const longLivedToken = await exchangeLongLivedToken(
+            messengerSettings,
+            parsedInput.accessToken,
+          )
+
+          let createdWorkspace = false
           if (!workspaceId) {
             const workspace = await workspaceService.create({
               tx,
@@ -83,17 +89,13 @@ export const selectPageAction = authActionClient
               },
             })
             workspaceId = workspace.id
+            createdWorkspace = true
           }
 
           const { appUrl } = await resolvePlatformSettings({
             workspaceId,
             tx,
           })
-
-          const longLivedToken = await exchangeLongLivedToken(
-            messengerSettings,
-            parsedInput.accessToken,
-          )
 
           await subscribePageToAppWebhook({
             pageId: parsedInput.pageId,
@@ -156,6 +158,16 @@ export const selectPageAction = authActionClient
             integrationType: "messenger",
             integration: { ...integrationRow, auth },
           })
+
+          if (createdWorkspace) {
+            await updateWorkspaceLogo({
+              id: workspaceId,
+              integration: integrationMessenger,
+              ctx: brandingCtx,
+              tx,
+            })
+          }
+
           await integrationMessenger.runChannelHandler("bot", "addBranding", {
             ctx: brandingCtx,
             title: BRANDING_TITLE,

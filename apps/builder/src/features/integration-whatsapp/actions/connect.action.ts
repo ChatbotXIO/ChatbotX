@@ -1,6 +1,7 @@
 "use server"
 
 import {
+  buildContext,
   connectChannelIntegration,
   platformCredentialService,
   workspaceService,
@@ -9,9 +10,13 @@ import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, type Transaction } from "@chatbotx.io/database/client"
 import type { WhatsappCredential } from "@chatbotx.io/database/partials"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type { UserModel } from "@chatbotx.io/database/types"
+import type {
+  IntegrationWhatsappModel,
+  UserModel,
+} from "@chatbotx.io/database/types"
 import {
   addSystemUser,
+  integration as integrationWhatsapp,
   registerPhoneNumber,
   shareCreditLine,
   type WhatsappAuthValue,
@@ -28,6 +33,7 @@ import {
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
+import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
@@ -204,7 +210,11 @@ async function persistIntegration(params: {
   wabaId: string
   businessId: string
   auth: WhatsappAuthValue
-}): Promise<string> {
+}): Promise<{
+  workspaceId: string
+  createdWorkspace: boolean
+  integrationRow: IntegrationWhatsappModel
+}> {
   const {
     tx,
     ownerId,
@@ -218,6 +228,7 @@ async function persistIntegration(params: {
   } = params
 
   let resolvedWorkspaceId = workspaceId
+  let createdWorkspace = false
 
   if (!resolvedWorkspaceId) {
     const workspace = await workspaceService.create({
@@ -230,11 +241,14 @@ async function persistIntegration(params: {
       },
     })
     resolvedWorkspaceId = workspace.id
+    createdWorkspace = true
   }
 
   const displayPhoneNumber = normalizeWhatsappDisplayPhoneNumber(
     phoneNumber.display_phone_number,
   )
+
+  let integrationRow: IntegrationWhatsappModel | undefined
 
   await connectChannelIntegration({
     tx,
@@ -247,7 +261,7 @@ async function persistIntegration(params: {
       name: phoneNumber.verified_name,
     },
     insertIntegration: async (inboxId) => {
-      await tx
+      const [row] = await tx
         .insert(integrationWhatsappModel)
         .values({
           id: integrationId,
@@ -264,10 +278,20 @@ async function persistIntegration(params: {
           target: [integrationWhatsappModel.inboxId],
           set: { displayPhoneNumber, updatedAt: new Date() },
         })
+        .returning()
+      integrationRow = row
     },
   })
 
-  return resolvedWorkspaceId
+  if (!integrationRow) {
+    throw new ChatbotXException("Failed to persist Whatsapp integration")
+  }
+
+  return {
+    workspaceId: resolvedWorkspaceId,
+    createdWorkspace,
+    integrationRow,
+  }
 }
 
 async function subscribeManualWebhook(
@@ -390,19 +414,33 @@ export const connectWhatsappAction = authActionClient
         await registerPhoneNumber({ auth })
         logger.info("registerPhoneNumber")
 
-        const workspaceId = await db.transaction((tx) =>
-          persistIntegration({
-            tx,
-            ownerId,
-            userId: ctx.user.id,
-            workspaceId: parsedInput.workspaceId,
-            integrationId,
-            phoneNumber,
-            wabaId: parsedInput.wabaId,
-            businessId,
-            auth,
-          }),
-        )
+        const { workspaceId, createdWorkspace, integrationRow } =
+          await db.transaction((tx) =>
+            persistIntegration({
+              tx,
+              ownerId,
+              userId: ctx.user.id,
+              workspaceId: parsedInput.workspaceId,
+              integrationId,
+              phoneNumber,
+              wabaId: parsedInput.wabaId,
+              businessId,
+              auth,
+            }),
+          )
+
+        if (createdWorkspace) {
+          const whatsappCtx = await buildContext({
+            workspaceId,
+            integrationType: "whatsapp",
+            integration: { ...integrationRow, auth },
+          })
+          await updateWorkspaceLogo({
+            id: workspaceId,
+            integration: integrationWhatsapp,
+            ctx: whatsappCtx,
+          })
+        }
 
         await subscribeWebhook({ auth })
 

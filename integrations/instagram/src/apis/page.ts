@@ -54,6 +54,31 @@ export const exchangeLongLivedToken = (
   })
 }
 
+export const getInstagramProfilePictureUrl = async (props: {
+  ctx: Context<InstagramAuthValue>
+}): Promise<string | undefined> => {
+  const { ctx } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const igId = ctx.auth.metadata.igId
+  const accessToken = ctx.auth.tokens.accessToken
+  const endpoint = `${version}/${igId}`
+
+  try {
+    return await rescue(endpoint, async () => {
+      const res: { profile_picture_url?: string } =
+        await instagramGraphClient.get(endpoint, {
+          searchParams: {
+            fields: "profile_picture_url",
+            access_token: accessToken,
+          },
+        })
+      return res.profile_picture_url
+    })
+  } catch {
+    return
+  }
+}
+
 export const subscribePageToInstagramWebhook = (props: {
   pageId: string
   accessToken: string
