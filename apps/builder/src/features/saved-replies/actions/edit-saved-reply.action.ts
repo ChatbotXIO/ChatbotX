@@ -29,8 +29,11 @@ export const editSavedReplyAction = workspaceActionClient
     const [updatedSavedReply] = await db
       .update(savedReplyModel)
       .set({
+        name: parsedInput.name ?? null,
         shortcut: parsedInput.shortcut,
         text: parsedInput.text,
+        topics: parsedInput.topics ?? [],
+        files: parsedInput.files ?? [],
       })
       .where(eq(savedReplyModel.id, savedReply.id))
       .returning()
@@ -41,7 +44,7 @@ export const editSavedReplyAction = workspaceActionClient
       workspaceId,
       userId: user.id,
       action: auditLogActions.SNIPPET_UPDATED,
-      detail: `Trecho "${parsedInput.shortcut}" atualizado`,
+      detail: `Trecho "${parsedInput.name ?? parsedInput.shortcut}" atualizado`,
     })
 
     return updatedSavedReply

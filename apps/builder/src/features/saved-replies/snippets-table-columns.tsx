@@ -1,6 +1,7 @@
 "use client"
 
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
+import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
@@ -19,6 +20,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import {
   EllipsisVerticalIcon,
   FingerprintIcon,
+  PaperclipIcon,
   PencilIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -91,28 +93,32 @@ export function getSnippetColumns({
       enableHiding: false,
     },
     {
-      // `shortcut` no schema atual cumpre o duplo papel de nome + ID estável
-      // do snippet (usado pelo composer com "/shortcut" autocomplete).
-      id: "shortcut",
-      accessorKey: "shortcut",
+      // Coluna Nome: campo descritivo separado do atalho (paridade Respond.io
+      // — gap #12 2026-05-27). Fallback pro shortcut quando nome ainda
+      // não foi preenchido (snippets antigos).
+      id: "name",
+      accessorKey: "name",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t("snippets.nameLabel")}
         />
       ),
-      cell: ({ row }) => (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="max-w-[200px] truncate font-medium">
-              {row.original.shortcut}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{row.original.shortcut}</p>
-          </TooltipContent>
-        </Tooltip>
-      ),
+      cell: ({ row }) => {
+        const displayName = row.original.name?.trim() || row.original.shortcut
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="max-w-[200px] truncate font-medium">
+                {displayName}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{displayName}</p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      },
       meta: {
         label: t("snippets.nameLabel"),
         placeholder: t("snippets.searchPlaceholder"),
@@ -121,6 +127,83 @@ export function getSnippetColumns({
       enableColumnFilter: true,
       enableSorting: true,
       enableHiding: false,
+    },
+    {
+      id: "shortcut",
+      accessorKey: "shortcut",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("snippets.shortcutLabel")}
+        />
+      ),
+      cell: ({ row }) => (
+        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
+          /{row.original.shortcut}
+        </code>
+      ),
+      size: 140,
+      enableSorting: true,
+    },
+    {
+      id: "topics",
+      accessorKey: "topics",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("snippets.topicsLabel")}
+        />
+      ),
+      cell: ({ row }) => {
+        const topics = (row.original.topics ?? []) as string[]
+        if (topics.length === 0) {
+          return <span className="text-muted-foreground text-xs">—</span>
+        }
+        const visible = topics.slice(0, 3)
+        const extra = topics.length - visible.length
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            {visible.map((topic) => (
+              <Badge
+                className="px-1.5 py-0 text-xs"
+                key={topic}
+                variant="secondary"
+              >
+                {topic}
+              </Badge>
+            ))}
+            {extra > 0 && (
+              <span className="text-muted-foreground text-xs">+{extra}</span>
+            )}
+          </div>
+        )
+      },
+      size: 200,
+      enableSorting: false,
+    },
+    {
+      id: "files",
+      accessorKey: "files",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={t("snippets.filesLabel")}
+        />
+      ),
+      cell: ({ row }) => {
+        const files = (row.original.files ?? []) as unknown[]
+        if (files.length === 0) {
+          return <span className="text-muted-foreground text-xs">—</span>
+        }
+        return (
+          <div className="inline-flex items-center gap-1 text-muted-foreground text-sm">
+            <PaperclipIcon className="size-3" />
+            <span>{files.length}</span>
+          </div>
+        )
+      },
+      size: 80,
+      enableSorting: false,
     },
     {
       id: "text",
