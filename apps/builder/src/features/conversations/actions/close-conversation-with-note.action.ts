@@ -1,6 +1,11 @@
 "use server"
 
-import { auditLogActions, logAudit } from "@chatbotx.io/business"
+import {
+  auditLogActions,
+  contactEventTypes,
+  logAudit,
+  recordContactEvent,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import {
@@ -159,6 +164,21 @@ export const closeConversationWithNoteAction = workspaceActionClient
         userId: user.id,
         action: auditLogActions.CONVERSATION_CLOSED_WITH_NOTE,
         detail: `Conversa fechada (${detailParts.join(", ")})`,
+      })
+
+      // Timeline do contato (Fase D). Sem await pra não bloquear o
+      // archive — recordContactEvent já é fire-and-forget internamente.
+      recordContactEvent({
+        contactId: conversation.contactId,
+        workspaceId,
+        eventType: contactEventTypes.CONVERSATION_CLOSED_WITH_NOTE,
+        actorUserId: user.id,
+        meta: {
+          conversationId: conversation.id,
+          categoryName,
+          summary: summary ?? null,
+          closedByUserName: user.name ?? null,
+        },
       })
     }
 

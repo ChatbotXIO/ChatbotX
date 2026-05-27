@@ -17,6 +17,11 @@ export const contactEventTypes = {
   TAG_REMOVED: "contact.tag.removed",
   FIELD_UPDATED: "contact.field.updated",
   MERGED: "contact.merged",
+  // Closing Notes Fase D (#15 — 2026-05-27). Registra quando conversa é
+  // fechada via CloseConversationDialog (mode != "disabled") + tem
+  // categoria ou summary preenchido. Meta: { categoryName?, summary?,
+  // closedByUserName?, conversationId }.
+  CONVERSATION_CLOSED_WITH_NOTE: "contact.conversation.closedWithNote",
 } as const
 
 export type ContactEventType =

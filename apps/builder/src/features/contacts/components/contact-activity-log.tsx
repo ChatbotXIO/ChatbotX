@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import {
   ArrowRightIcon,
   BanIcon,
+  CheckCircle2Icon,
   PencilIcon,
   ShieldCheckIcon,
   TagIcon,
@@ -107,6 +108,34 @@ const EVENT_RENDERERS: Record<string, EventRenderer> = {
     buildLabel: (meta) => {
       const count = (meta.mergedCount as number | undefined) ?? 0
       return `Mesclado com ${count} contato${count === 1 ? "" : "s"}`
+    },
+  },
+  "contact.conversation.closedWithNote": {
+    icon: CheckCircle2Icon,
+    iconClass: "text-emerald-500",
+    buildLabel: (meta) => {
+      const categoryName = meta.categoryName as string | null | undefined
+      const summary = meta.summary as string | null | undefined
+      const closedBy = meta.closedByUserName as string | null | undefined
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span>
+              {closedBy ? `${closedBy} fechou a conversa` : "Conversa fechada"}
+            </span>
+            {categoryName ? (
+              <span className="rounded bg-primary/15 px-1.5 py-0.5 text-primary">
+                {categoryName}
+              </span>
+            ) : null}
+          </div>
+          {summary ? (
+            <div className="rounded border border-white/[0.06] bg-white/[0.02] p-2 text-muted-foreground italic">
+              "{summary}"
+            </div>
+          ) : null}
+        </div>
+      )
     },
   },
 }
