@@ -53,7 +53,10 @@ const nextConfig: NextConfig = {
       afterFiles: [
         ...alwaysRewrites,
         { source: "/ws/:path*", destination: `${wsUrl}/:path*` },
-        { source: "/storage/:path*", destination: `${s3Endpoint}/${s3Bucket}/:path*` },
+        {
+          source: "/storage/:path*",
+          destination: `${s3Endpoint}/${s3Bucket}/:path*`,
+        },
         { source: "/manage/:path*", destination: `${portalUrl}/manage/:path*` },
       ],
       fallback: [],

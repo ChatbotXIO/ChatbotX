@@ -140,7 +140,7 @@ export const handleMessageStatus = async (
       [key: string]: unknown
     }
 
-    if (!contentAttributes || contentAttributes.type !== "whatsapp_template") {
+    if (contentAttributes?.type !== "whatsapp_template") {
       return
     }
 

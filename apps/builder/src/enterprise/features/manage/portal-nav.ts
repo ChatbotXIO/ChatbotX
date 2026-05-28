@@ -11,5 +11,9 @@ export const portalNavItems = [
   { title: "Plans", url: "/manage/plans", icon: LayoutListIcon },
   { title: "Usage", url: "/manage/usage", icon: BarChart2Icon },
   { title: "Custom Domain", url: "/manage/custom-domain", icon: GlobeIcon },
-  { title: "Payment Processor", url: "/manage/settings/payment-processor", icon: SettingsIcon },
+  {
+    title: "Payment Processor",
+    url: "/manage/settings/payment-processor",
+    icon: SettingsIcon,
+  },
 ]

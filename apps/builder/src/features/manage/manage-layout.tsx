@@ -16,7 +16,10 @@ type ManageLayoutProps = {
   showEnterpriseItems: boolean
 }
 
-export function ManageLayout({ children, showEnterpriseItems }: ManageLayoutProps) {
+export function ManageLayout({
+  children,
+  showEnterpriseItems,
+}: ManageLayoutProps) {
   const [open, setOpen] = useState(true)
   const pathname = usePathname()
   const shouldCollapse = SIDEBAR_COLLAPSED_ROUTES.some((pattern) =>

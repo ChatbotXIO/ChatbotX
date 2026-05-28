@@ -11,19 +11,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import {
-  Grid2x2PlusIcon,
-  MailIcon,
-  PaletteIcon,
-} from "lucide-react"
+import { Grid2x2PlusIcon, MailIcon, PaletteIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { authClient } from "@/lib/auth/auth-client"
 import { portalNavItems } from "@/enterprise/features/manage/portal-nav"
+import { authClient } from "@/lib/auth/auth-client"
 
 type Props = {
   showEnterpriseItems: boolean
