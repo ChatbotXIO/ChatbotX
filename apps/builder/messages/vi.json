@@ -2165,5 +2165,14 @@
       "title": "Xem trước",
       "empty": "Nhập nội dung template để xem trước"
     }
+  },
+  "manageSidebar": {
+    "platformGroup": "Nền tảng",
+    "saasGroup": "SaaS",
+    "portalUsers": "Người dùng",
+    "portalPlans": "Gói dịch vụ",
+    "portalUsage": "Mức sử dụng",
+    "portalCustomDomain": "Tên miền tùy chỉnh",
+    "portalPaymentProcessor": "Cổng thanh toán"
   }
 }

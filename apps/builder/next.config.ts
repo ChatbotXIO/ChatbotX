@@ -45,11 +45,10 @@ const nextConfig: NextConfig = {
     const s3Endpoint = process.env.S3_ENDPOINT ?? "http://localhost:9000"
     const portalUrl = process.env.PORTAL_INTERNAL_URL ?? "http://localhost:3201"
 
+    // afterFiles: checked after filesystem routes, so builder's own /manage/* pages
+    // (platform-credentials, branding, email-templates) are served first;
+    // unmatched /manage/* paths fall through to the portal proxy below.
     return {
-      beforeFiles: [],
-      // afterFiles: checked after filesystem routes, so builder's own /manage/* pages
-      // (platform-credentials, branding, email-templates) are served first;
-      // unmatched /manage/* paths fall through to the portal proxy below.
       afterFiles: [
         ...alwaysRewrites,
         { source: "/ws/:path*", destination: `${wsUrl}/:path*` },
@@ -59,7 +58,6 @@ const nextConfig: NextConfig = {
         },
         { source: "/manage/:path*", destination: `${portalUrl}/manage/:path*` },
       ],
-      fallback: [],
     }
   },
   headers() {

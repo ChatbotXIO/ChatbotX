@@ -2141,5 +2141,14 @@
       "title": "Preview",
       "empty": "Enter template body to see a preview"
     }
+  },
+  "manageSidebar": {
+    "platformGroup": "Platform",
+    "saasGroup": "SaaS",
+    "portalUsers": "Users",
+    "portalPlans": "Plans",
+    "portalUsage": "Usage",
+    "portalCustomDomain": "Custom Domain",
+    "portalPaymentProcessor": "Payment Processor"
   }
 }

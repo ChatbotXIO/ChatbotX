@@ -4,21 +4,15 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { Grid2x2PlusIcon, MailIcon, PaletteIcon } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { portalNavItems } from "@/enterprise/features/manage/portal-nav"
+import { portalNavConfigs } from "@/enterprise/features/manage/portal-nav"
 import { authClient } from "@/lib/auth/auth-client"
 
 type Props = {
@@ -27,7 +21,7 @@ type Props = {
 
 export function ManageSidebar({ showEnterpriseItems }: Props) {
   const t = useTranslations()
-  const pathname = usePathname()
+  const tManage = useTranslations("manageSidebar")
   const { data: session } = authClient.useSession()
 
   const user = {
@@ -54,6 +48,12 @@ export function ManageSidebar({ showEnterpriseItems }: Props) {
     },
   ]
 
+  const portalItems = portalNavConfigs.map(({ key, url, icon }) => ({
+    title: tManage(key),
+    url,
+    icon,
+  }))
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-0 px-0 py-0">
@@ -65,38 +65,10 @@ export function ManageSidebar({ showEnterpriseItems }: Props) {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
-          <NavMain items={platformItems} />
-        </SidebarGroup>
+        <NavMain items={platformItems} label={tManage("platformGroup")} />
 
         {showEnterpriseItems && (
-          <SidebarGroup>
-            <SidebarGroupLabel>SaaS</SidebarGroupLabel>
-            <SidebarMenu>
-              {portalNavItems.map(({ title, url, icon: Icon }) => {
-                const isActive = pathname.startsWith(url)
-                return (
-                  <SidebarMenuItem key={title}>
-                    <SidebarMenuButton
-                      className="h-9 cursor-pointer p-0"
-                      isActive={isActive}
-                      tooltip={title}
-                    >
-                      {/* Cross-zone: use <a> to force full navigation to portal */}
-                      <a
-                        className={`flex w-full items-center gap-2 p-2 ${isActive ? "dark:text-gray-50" : "dark:text-gray-400"}`}
-                        href={url}
-                      >
-                        <Icon className="size-5 shrink-0" />
-                        <span>{title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
+          <NavMain crossZone items={portalItems} label={tManage("saasGroup")} />
         )}
       </SidebarContent>
       <SidebarFooter>
