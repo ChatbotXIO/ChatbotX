@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "d2697068-bf23-4f14-a19a-e584fa988117",
-  "prevIds": ["1990f901-3ae9-4683-8178-cd2947b95bb4"],
+  "id": "47788099-2802-4fbb-9bcc-c5581a42561d",
+  "prevIds": ["19b748f8-da99-47c4-b34b-e658e38b45c1"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -5626,19 +5626,6 @@
       "table": "CustomDomain"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "txtRecord",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "CustomDomain"
-    },
-    {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -5828,6 +5815,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "storageUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "policyUrl",
       "entityType": "columns",
       "schema": "public",
@@ -5842,6 +5842,45 @@
       "generated": null,
       "identity": null,
       "name": "termsOfServiceUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "signupEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "forgotPasswordEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "magicLinkEmailTemplate",
       "entityType": "columns",
       "schema": "public",
       "table": "PlatformSetting"

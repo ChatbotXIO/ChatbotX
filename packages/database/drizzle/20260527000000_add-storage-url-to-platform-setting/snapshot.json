@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ccfb87f7-2b27-4a98-8ee0-b4512f4b9f2f",
+  "id": "19b748f8-da99-47c4-b34b-e658e38b45c1",
   "prevIds": ["d2697068-bf23-4f14-a19a-e584fa988117"],
   "ddl": [
     {
@@ -5828,6 +5828,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "storageUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "policyUrl",
       "entityType": "columns",
       "schema": "public",
@@ -5847,14 +5860,40 @@
       "table": "PlatformSetting"
     },
     {
-      "type": "text",
+      "type": "jsonb",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "storageUrl",
+      "name": "signupEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "forgotPasswordEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "magicLinkEmailTemplate",
       "entityType": "columns",
       "schema": "public",
       "table": "PlatformSetting"

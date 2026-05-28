@@ -21,7 +21,8 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "db:check": "dotenv -e ../../.env -- drizzle-kit up",
+    "db:check": "dotenv -e ../../.env -- drizzle-kit check",
+    "db:fix-chain": "node ./scripts/fix-migration-chain.mjs",
     "db:migrate": "dotenv -e ../../.env -- node ./scripts/run-migrations.mjs",
     "db:seed": "dotenv -e ../../.env -- tsx src/seed/index.ts",
     "db:setup": "pnpm db:migrate && pnpm db:seed",

@@ -24,7 +24,6 @@ export const customDomainModel = pgTable(
       }),
     domain: text().notNull(),
     status: text().notNull().default("pending"), // 'pending' | 'active' | 'failed'
-    txtRecord: text().notNull(),
     verifiedAt: timestamp(timestampConfig),
   },
   (table) => [
