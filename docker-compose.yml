@@ -16,13 +16,13 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/home/postgres/pgdata
-    command: [ "postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}" ]
+    command: ["postgres", "-c", "log_statement=${POSTGRES_LOG_STATEMENT:-none}"]
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-chatbotx}
       - POSTGRES_USER=${POSTGRES_USER:-chatbotx}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secretkey}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,13 +56,12 @@ services:
     volumes:
       - filesystem-data:/data
     healthcheck:
-      test:
-        [
+      test: [
           "CMD",
           "sh",
           "-c",
           "curl -f http://127.0.0.1:9000/health && curl -f
-            http://127.0.0.1:9001/rustfs/console/health",
+          http://127.0.0.1:9001/rustfs/console/health",
         ]
       interval: 30s
       timeout: 10s
@@ -91,7 +90,7 @@ services:
     volumes:
       - cache-data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

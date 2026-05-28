@@ -11,7 +11,12 @@ import { ManageSidebar } from "@/enterprise/features/manage/components/manage-si
 
 const SIDEBAR_COLLAPSED_ROUTES = [/^\/manage\/email-templates\/.+/]
 
-export function ManageLayout({ children }: { children: ReactNode }) {
+type ManageLayoutProps = {
+  children: ReactNode
+  showEnterpriseItems: boolean
+}
+
+export function ManageLayout({ children, showEnterpriseItems }: ManageLayoutProps) {
   const [open, setOpen] = useState(true)
   const pathname = usePathname()
   const shouldCollapse = SIDEBAR_COLLAPSED_ROUTES.some((pattern) =>
@@ -39,7 +44,7 @@ export function ManageLayout({ children }: { children: ReactNode }) {
       }}
       open={effectiveOpen}
     >
-      <ManageSidebar />
+      <ManageSidebar showEnterpriseItems={showEnterpriseItems} />
       <SidebarInset>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
         <main className="p-4 pb-24 sm:px-6 sm:pt-6">{children}</main>

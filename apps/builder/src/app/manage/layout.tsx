@@ -30,5 +30,5 @@ export default async function ManageLayoutPage({
     return notFound()
   }
 
-  return <ManageLayout>{children}</ManageLayout>
+  return <ManageLayout showEnterpriseItems={isCloud()}>{children}</ManageLayout>
 }
