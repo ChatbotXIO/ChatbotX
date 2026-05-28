@@ -8,6 +8,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
+import { getPlatformSettings } from "@/features/platform/utils"
 import { getCurrentUserId } from "@/lib/auth/utils"
 
 export default async function WorkspaceLayout({
@@ -28,9 +29,10 @@ export default async function WorkspaceLayout({
   }
 
   // Check if user is a member of the workspace
-  const allWorkspaceMembers = await workspaceMemberService.listByUserId({
-    userId,
-  })
+  const [allWorkspaceMembers, { storageUrl }] = await Promise.all([
+    workspaceMemberService.listByUserId({ userId }),
+    getPlatformSettings(),
+  ])
   if (
     !allWorkspaceMembers.some(
       (workspaceMember) => workspaceMember.workspace.id === workspaceId,
@@ -39,9 +41,12 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const allWorkspaces = allWorkspaceMembers.map(
-    (workspaceMember) => workspaceMember.workspace,
-  )
+  const allWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
+    ...workspaceMember.workspace,
+    logo: workspaceMember.workspace.logo
+      ? new URL(workspaceMember.workspace.logo, storageUrl).toString()
+      : null,
+  }))
 
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"

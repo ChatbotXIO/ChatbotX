@@ -170,6 +170,7 @@ export type BotHandlers<IAuth extends AuthValue> = {
     void
   >
   deleteProfileFields: Handler<{ ctx: Context<IAuth>; fields: string[] }, void>
+  getProfilePicURL: Handler<{ ctx: Context<IAuth> }, string | undefined>
 }
 
 export type IChannel<

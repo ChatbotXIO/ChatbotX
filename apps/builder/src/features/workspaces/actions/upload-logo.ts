@@ -12,10 +12,11 @@ import type { AuthValue, Context } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 
 type ProfilePicProvider<A extends AuthValue> = {
-  runAction(
+  runChannelHandler(
+    group: "bot",
     name: "getProfilePicURL",
     props: { ctx: Context<A> },
-  ): Promise<Promise<string | undefined>>
+  ): Promise<string | undefined>
 }
 
 export async function updateWorkspaceLogo<A extends AuthValue>(props: {
@@ -26,7 +27,9 @@ export async function updateWorkspaceLogo<A extends AuthValue>(props: {
 }): Promise<void> {
   const { id, integration, ctx, tx = db } = props
 
-  const url = await integration.runAction("getProfilePicURL", { ctx })
+  const url = await integration.runChannelHandler("bot", "getProfilePicURL", {
+    ctx,
+  })
   if (!url) {
     return
   }

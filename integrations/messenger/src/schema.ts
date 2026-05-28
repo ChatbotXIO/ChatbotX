@@ -30,9 +30,6 @@ export type MessengerActions<
     ctx: Context<IAuth>
     persona: PersonaRequest
   }) => Promise<{ personaId?: string }>
-  getProfilePicURL: (props: {
-    ctx: Context<IAuth>
-  }) => Promise<string | undefined>
 }
 
 // Common attachment types

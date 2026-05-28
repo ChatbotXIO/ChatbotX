@@ -6,12 +6,12 @@ import {
 } from "@chatbotx.io/sdk"
 import {
   findConversationalAutomation,
-  getBusinessProfilePictureUrl,
   updateConversationalAutomation,
 } from "./api/phone-number"
 import { listFlows, listMessageTemplates } from "./api/waba"
 import { unsubscribeWebhook } from "./api/webhook"
 import { uploadMedia, verifyAccessToken } from "./client"
+import { botHandlers } from "./handlers/bot"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
 import { webhookHandler } from "./handlers/webhook"
@@ -31,10 +31,10 @@ const config: IntegrationDefinition<
     channel: {
       message: messageHandlers,
       conversation: conversationHandlers,
+      bot: botHandlers,
     },
   },
   actions: {
-    getProfilePicURL: getBusinessProfilePictureUrl,
     verifyAccessToken: async ({ ctx }) => await verifyAccessToken(ctx),
     uploadMedia: async ({ ctx, file }) => await uploadMedia(ctx.auth, file),
     listMessageTemplates: async ({ ctx }) =>

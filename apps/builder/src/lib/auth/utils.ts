@@ -8,6 +8,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
+import { getPlatformSettings } from "@/features/platform/utils"
 import { auth } from "./auth"
 
 export const getCurrentUserId = async (): Promise<string | null> => {
@@ -53,21 +54,35 @@ export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
     return null
   }
 
-  const workspaceMembers = await db.query.workspaceMemberModel.findMany({
-    where: {
-      userId: user.id,
+  const [workspaceMembers, { storageUrl }] = await Promise.all([
+    db.query.workspaceMemberModel.findMany({
+      where: {
+        userId: user.id,
+      },
+      with: {
+        workspace: true,
+      },
+    }),
+    getPlatformSettings(),
+  ])
+
+  const resolveLogoUrl = (logo: string | null) =>
+    logo ? new URL(logo, storageUrl).toString() : null
+
+  const membersWithResolvedLogos = workspaceMembers.map((member) => ({
+    ...member,
+    workspace: {
+      ...member.workspace,
+      logo: resolveLogoUrl(member.workspace.logo),
     },
-    with: {
-      workspace: true,
-    },
-  })
+  }))
 
   return {
     user,
-    allWorkspaces: workspaceMembers.map(
+    allWorkspaces: membersWithResolvedLogos.map(
       (workspaceMember) => workspaceMember.workspace,
     ),
-    allWorkspaceMembers: workspaceMembers,
+    allWorkspaceMembers: membersWithResolvedLogos,
   }
 }
 

@@ -3,11 +3,7 @@ import {
   Integration,
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
-import {
-  getPagePictureUrl,
-  unsubscribePageFromAppWebhook,
-  updatePersona,
-} from "./apis/page"
+import { unsubscribePageFromAppWebhook, updatePersona } from "./apis/page"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
 import { contactHandlers } from "./handlers/contact"
@@ -36,7 +32,6 @@ const config: IntegrationDefinition<
   },
   actions: {
     updatePersona,
-    getProfilePicURL: getPagePictureUrl,
   },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
