@@ -13,6 +13,6 @@ export const botHandlers: BotHandlers<InstagramAuthValue> = {
   addBranding: async ({ ctx, title, url }) => addBranding({ ctx, title, url }),
   deleteProfileFields: async ({ ctx, fields }) =>
     deleteInstagramProfileFields({ ctx, fields }),
-  getProfilePicURL: async ({ ctx }) =>
-    await getInstagramProfilePictureUrl({ ctx }),
+  getProfilePictureUrl: async ({ ctx }) =>
+    getInstagramProfilePictureUrl({ ctx }),
 }

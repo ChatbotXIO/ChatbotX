@@ -61,114 +61,117 @@ export const selectAccountAction = authActionClient
         }
         const instagramSettings = instagramCredential.config
 
-        await db.transaction(async (tx) => {
-          const longLivedToken = await exchangeLongLivedToken(
-            instagramSettings,
-            parsedInput.accessToken,
-          )
+        const { createdWorkspace, brandingCtx } = await db.transaction(
+          async (tx) => {
+            const longLivedToken = await exchangeLongLivedToken(
+              instagramSettings,
+              parsedInput.accessToken,
+            )
 
-          let createdWorkspace = false
-          if (!workspaceId) {
-            const workspace = await workspaceService.create({
+            let createdWorkspace = false
+            if (!workspaceId) {
+              const workspace = await workspaceService.create({
+                tx,
+                createdBy: ctx.user.id,
+                data: {
+                  name: parsedInput.igName,
+                  timezone: "UTC",
+                  ownerId: ctx.user.id,
+                },
+              })
+              workspaceId = workspace.id
+              createdWorkspace = true
+            }
+
+            const { appUrl } = await resolvePlatformSettings({
+              workspaceId,
               tx,
-              createdBy: ctx.user.id,
-              data: {
-                name: parsedInput.igName,
-                timezone: "UTC",
-                ownerId: ctx.user.id,
-              },
             })
-            workspaceId = workspace.id
-            createdWorkspace = true
-          }
 
-          const { appUrl } = await resolvePlatformSettings({
-            workspaceId,
-            tx,
-          })
-
-          await subscribePageToInstagramWebhook({
-            pageId: parsedInput.pageId,
-            accessToken: longLivedToken,
-            version: instagramSettings.version,
-          })
-
-          const auth: InstagramAuthValue = {
-            authType: AuthType.oauth2,
-            clientId: instagramSettings.clientId,
-            clientSecret: instagramSettings.clientSecret,
-            redirectUrl: "",
-            tokens: {
-              accessToken: longLivedToken,
-            },
-            metadata: {
-              igId: parsedInput.igId,
-              igName: parsedInput.igName,
+            await subscribePageToInstagramWebhook({
               pageId: parsedInput.pageId,
+              accessToken: longLivedToken,
               version: instagramSettings.version,
-            },
-          }
+            })
 
-          const { integration: integrationRow } =
-            await connectChannelIntegration({
-              tx,
-              ownerId,
-              inboxData: {
-                id: createId(),
-                workspaceId: workspaceId as string,
-                name: parsedInput.igName,
-                channel: "instagram",
-                sourceId: parsedInput.igId,
+            const auth: InstagramAuthValue = {
+              authType: AuthType.oauth2,
+              clientId: instagramSettings.clientId,
+              clientSecret: instagramSettings.clientSecret,
+              redirectUrl: "",
+              tokens: {
+                accessToken: longLivedToken,
               },
-              insertIntegration: async (inboxId) =>
-                tx
-                  .insert(integrationInstagramModel)
-                  .values({
-                    id: createId(),
-                    workspaceId: workspaceId as string,
-                    inboxId,
-                    igId: parsedInput.igId,
-                    pageId: parsedInput.pageId,
-                    auth,
-                    name: parsedInput.igName,
-                    username: parsedInput.igUsername,
-                    persistentMenus: [
-                      {
-                        label: BRANDING_TITLE,
-                        type: "url" as const,
-                        url: getBrandingUrl("instagram", appUrl),
-                      },
-                    ],
-                    conversationStarters: [],
-                  })
-                  .returning()
-                  .then((result) => result[0]),
+              metadata: {
+                igId: parsedInput.igId,
+                igName: parsedInput.igName,
+                pageId: parsedInput.pageId,
+                version: instagramSettings.version,
+              },
+            }
+
+            const { integration: integrationRow } =
+              await connectChannelIntegration({
+                tx,
+                ownerId,
+                inboxData: {
+                  id: createId(),
+                  workspaceId: workspaceId as string,
+                  name: parsedInput.igName,
+                  channel: "instagram",
+                  sourceId: parsedInput.igId,
+                },
+                insertIntegration: async (inboxId) =>
+                  tx
+                    .insert(integrationInstagramModel)
+                    .values({
+                      id: createId(),
+                      workspaceId: workspaceId as string,
+                      inboxId,
+                      igId: parsedInput.igId,
+                      pageId: parsedInput.pageId,
+                      auth,
+                      name: parsedInput.igName,
+                      username: parsedInput.igUsername,
+                      persistentMenus: [
+                        {
+                          label: BRANDING_TITLE,
+                          type: "url" as const,
+                          url: getBrandingUrl("instagram", appUrl),
+                        },
+                      ],
+                      conversationStarters: [],
+                    })
+                    .returning()
+                    .then((result) => result[0]),
+              })
+
+            const brandingCtx = await buildContext({
+              workspaceId,
+              integrationType: "instagram",
+              integration: {
+                ...integrationRow,
+                auth: integrationRow.auth as InstagramAuthValue,
+              },
             })
 
-          const brandingCtx = await buildContext({
-            workspaceId,
-            integrationType: "instagram",
-            integration: {
-              ...integrationRow,
-              auth: integrationRow.auth as InstagramAuthValue,
-            },
-          })
-
-          if (createdWorkspace) {
-            await updateWorkspaceLogo({
-              id: workspaceId,
-              integration: integrationInstagram,
+            await integrationInstagram.runChannelHandler("bot", "addBranding", {
               ctx: brandingCtx,
-              tx,
+              title: BRANDING_TITLE,
+              url: getBrandingUrl("instagram", appUrl),
             })
-          }
 
-          await integrationInstagram.runChannelHandler("bot", "addBranding", {
+            return { createdWorkspace, brandingCtx }
+          },
+        )
+
+        if (createdWorkspace) {
+          await updateWorkspaceLogo({
+            id: workspaceId as string,
+            integration: integrationInstagram,
             ctx: brandingCtx,
-            title: BRANDING_TITLE,
-            url: getBrandingUrl("instagram", appUrl),
           })
-        })
+        }
 
         return {
           workspaceId,
@@ -178,7 +181,7 @@ export const selectAccountAction = authActionClient
           throw new ChatbotXException("Instagram account already connected")
         }
 
-        logger.error(error, "Failed to connect Instagram account")
+        logger.error({ err: error }, "Failed to connect Instagram account")
         throw new ChatbotXException("Failed to connect Instagram account")
       }
     },

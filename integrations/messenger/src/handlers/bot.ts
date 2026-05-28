@@ -13,5 +13,5 @@ export const botHandlers: BotHandlers<MessengerAuthValue> = {
   addBranding: async ({ ctx, title, url }) => addBranding({ ctx, title, url }),
   deleteProfileFields: async ({ ctx, fields }) =>
     deleteMessengerProfileFields({ ctx, fields }),
-  getProfilePicURL: async ({ ctx }) => await getPagePictureUrl({ ctx }),
+  getProfilePictureUrl: async ({ ctx }) => getPagePictureUrl({ ctx }),
 }

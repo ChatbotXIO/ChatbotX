@@ -2,6 +2,7 @@ import type { Context } from "@chatbotx.io/sdk"
 import ky from "ky"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
+import { logger } from "../lib/logger"
 import type { WhatsappAuthValue, WhatsappPagination } from "../schema"
 
 export const normalizeWhatsappDisplayPhoneNumber = (
@@ -217,11 +218,11 @@ export const findConversationalAutomation = (
   })
 }
 
-export type WhatsappBusinessProfile = {
+type WhatsappBusinessProfile = {
   profile_picture_url?: string
 }
 
-export type WhatsappBusinessProfileResponse = {
+type WhatsappBusinessProfileResponse = {
   data: WhatsappBusinessProfile[]
 }
 
@@ -252,7 +253,8 @@ export async function getBusinessProfilePictureUrl(props: {
       .json()
 
     return response.data?.[0]?.profile_picture_url
-  } catch {
+  } catch (err) {
+    logger.error({ err }, "Failed to fetch WhatsApp business profile picture")
     return
   }
 }
