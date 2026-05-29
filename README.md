@@ -15,17 +15,15 @@
 </p>
 
 <p align="center">
-  <strong>Open-source omnichannel chatbot for agentic workflows via APIs, CLI, and MCP.</strong>
+  <strong>Agentic chat marketing platform built for OpenClaw, Hermes, and Claude</strong>
   <br>
-  An alternative to Wati, ManyChat, Chatfuel and Respond.io.
+  An alternative to ManyChat, Chatfuel, Wati, Respond, etc...
 </p>
 
 <p align="center">
   <a href="https://chatbotx.io/">Website</a>
   |
   <a href="https://chatbotx.canny.io/">Roadmap</a>
-  |
-  <a href="https://chatbotx.io/coming-soon/">Cloud</a>
   |
   <a href="https://chatbotx.io/docs">Docs</a>
   |
