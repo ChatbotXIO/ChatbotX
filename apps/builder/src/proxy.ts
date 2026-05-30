@@ -2,14 +2,22 @@ import {
   getPublicHostFromRequest,
   getPublicOriginFromRequest,
   getPublicProtocolFromRequest,
-} from "@chatbotx.io/sdk"
+} from "@chatbotx.io/utils"
 import { getSessionCookie } from "better-auth/cookies"
 import { headers } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/auth"
 import { httpLogger } from "./lib/log"
 
-const publicRoutes = ["/integrations", "/r", "/auth", "/api", "/ws", "/storage"]
+const publicRoutes = [
+  "/integrations",
+  "/r",
+  "/auth",
+  "/api",
+  "/ws",
+  "/storage",
+  "/checkout",
+]
 const signinPath = "/auth/sign-in"
 
 async function _logRequest(request: NextRequest) {

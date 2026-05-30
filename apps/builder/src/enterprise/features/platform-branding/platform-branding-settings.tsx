@@ -24,6 +24,7 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { CodeEditorField } from "@/components/code-editor-field"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
@@ -109,7 +110,7 @@ export function PlatformBrandingSettings({
     },
   )
 
-  const selectedTheme = form.watch("theme")
+  const selectedTheme = useWatch({ control: form.control, name: "theme" })
 
   return (
     <Form {...form}>
@@ -189,7 +190,7 @@ export function PlatformBrandingSettings({
               <div className="rounded-lg border p-3">
                 <DirectUploadOrInsertLink
                   fileType={fileTypes.enum.image}
-                  parentName="logoDark"
+                  parentName="logoDarkPath"
                   uploadPath="public/platform/branding/logo-dark"
                 />
               </div>
@@ -199,7 +200,7 @@ export function PlatformBrandingSettings({
               <div className="rounded-lg border p-3">
                 <DirectUploadOrInsertLink
                   fileType={fileTypes.enum.image}
-                  parentName="favicon"
+                  parentName="faviconPath"
                   uploadPath="public/platform/branding/favicon"
                 />
               </div>

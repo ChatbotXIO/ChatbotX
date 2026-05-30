@@ -14,7 +14,9 @@
     "@chatbotx.io/mail": "workspace:*",
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
-    "better-auth": "^1.6.4"
+    "@t3-oss/env-core": "^0.13.11",
+    "better-auth": "^1.6.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",

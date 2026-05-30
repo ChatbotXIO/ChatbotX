@@ -21,13 +21,13 @@ export type PortalNavConfig = {
 }
 
 export const portalNavConfigs: PortalNavConfig[] = [
-  { key: "portalUsers", url: "/manage/users", icon: UsersIcon },
-  { key: "portalPlans", url: "/manage/plans", icon: LayoutListIcon },
-  { key: "portalUsage", url: "/manage/usage", icon: BarChart2Icon },
-  { key: "portalCustomDomain", url: "/manage/custom-domain", icon: GlobeIcon },
+  { key: "portalUsers", url: "/portal/users", icon: UsersIcon },
+  { key: "portalPlans", url: "/portal/plans", icon: LayoutListIcon },
+  { key: "portalUsage", url: "/portal/usage", icon: BarChart2Icon },
+  { key: "portalCustomDomain", url: "/portal/custom-domain", icon: GlobeIcon },
   {
     key: "portalPaymentProcessor",
-    url: "/manage/settings/payment-processor",
+    url: "/portal/settings/payment-processor",
     icon: SettingsIcon,
   },
 ]

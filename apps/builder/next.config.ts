@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
 
     // afterFiles: checked after filesystem routes, so builder's own /manage/* pages
     // (platform-credentials, branding, email-templates) are served first;
-    // unmatched /manage/* paths fall through to the portal proxy below.
+    // unmatched /portal/* paths fall through to the portal proxy below.
     return {
       afterFiles: [
         ...alwaysRewrites,
@@ -56,7 +56,20 @@ const nextConfig: NextConfig = {
           source: "/storage/:path*",
           destination: `${s3Endpoint}/${s3Bucket}/:path*`,
         },
-        { source: "/manage/:path*", destination: `${portalUrl}/manage/:path*` },
+        { source: "/portal/:path*", destination: `${portalUrl}/portal/:path*` },
+        { source: "/pricing", destination: `${portalUrl}/portal/pricing` },
+        {
+          source: "/checkout/:path*",
+          destination: `${portalUrl}/portal/checkout/:path*`,
+        },
+        {
+          source: "/api/checkout/:path*",
+          destination: `${portalUrl}/portal/api/checkout/:path*`,
+        },
+        {
+          source: "/api/billing/webhook",
+          destination: `${portalUrl}/portal/api/billing/webhook`,
+        },
       ],
     }
   },
@@ -81,7 +94,10 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  allowedDevOrigins: [env.NEXT_PUBLIC_BUILDER_URL.replace(/https?:\/\//, "")],
+  allowedDevOrigins: [
+    new URL(env.NEXT_PUBLIC_BUILDER_URL).host,
+    "supposedly-driven-cheetah.ngrok-free.app",
+  ],
 }
 
 export default withNextIntl(nextConfig)

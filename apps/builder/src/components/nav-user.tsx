@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { BadgeCheck, Bell, ChevronsUpDown, Crown } from "lucide-react"
+import { ChevronsUpDown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { SignOut } from "@/features/auth/sign-out"
 import { LangSelector } from "./lang-selector"
@@ -36,7 +36,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const t = useTranslations()
+  const _t = useTranslations()
 
   return (
     <SidebarMenu>
@@ -85,13 +85,13 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Crown className="mr-2 h-4 w-4" />
                 {t("actions.upgradeToPro")}
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            </DropdownMenuGroup> */}
+            {/* <DropdownMenuSeparator /> */}
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 Language
@@ -100,13 +100,13 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="justify-between">
                 Theme
                 <ThemeSwitcher />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
@@ -116,7 +116,7 @@ export function NavUser({
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator /> */}
             <DropdownMenuItem asChild>
               <SignOut />
             </DropdownMenuItem>

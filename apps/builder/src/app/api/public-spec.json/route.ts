@@ -1,4 +1,4 @@
-import { getPublicOriginFromRequest } from "@chatbotx.io/sdk"
+import { getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import "@/polyfill"

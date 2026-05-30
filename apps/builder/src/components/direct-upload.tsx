@@ -31,9 +31,9 @@ export function DirectUploadOrInsertLink({
 }) {
   const t = useTranslations()
 
-  const { setValue, getValues } = useFormContext()
-  const uploadMode = useWatch({ name: `${parentName}.mode` }) || "file"
-  const publicUrl = useWatch({ name: `${parentName}.url` })
+  const { setValue, getValues, control } = useFormContext()
+  const uploadMode = useWatch({ control, name: `${parentName}.mode` }) || "file"
+  const publicUrl = useWatch({ control, name: `${parentName}.url` }) || ""
   const stepId = getValues(`${parentName}.id`)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 

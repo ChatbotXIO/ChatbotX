@@ -17,12 +17,12 @@ import {
   sendResetPassword,
   sendSignUpVerification,
 } from "@chatbotx.io/mail"
-import { getPublicOriginFromRequest } from "@chatbotx.io/sdk"
-import { createId } from "@chatbotx.io/utils"
+import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
+import { env } from "./keys"
 
 const getPlatformSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -194,6 +194,21 @@ export function createAuth(_config: AuthConfig) {
       database: {
         generateId: "serial",
       },
+    },
+    trustedOrigins: async () => {
+      const domains = await db.query.customDomainModel.findMany({
+        where: {
+          status: "verified",
+        },
+        columns: {
+          domain: true,
+        },
+      })
+
+      return [
+        env.NEXT_PUBLIC_BUILDER_URL,
+        ...domains.map((d) => `https://${d.domain}`),
+      ]
     },
   })
 }
