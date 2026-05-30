@@ -8,6 +8,8 @@ export const keys = () =>
       BETTER_AUTH_SECRET: z.string(),
     },
     runtimeEnv: process.env,
+    emptyStringAsUndefined: true,
+    skipValidation: process.env.SKIP_ENV_CHECK === "true",
   })
 
 export const env = keys()
