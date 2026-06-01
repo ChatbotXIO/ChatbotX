@@ -142,34 +142,34 @@ export const useCustomFieldSelectOptions = (
   )
 
   return useMemo(() => {
-    const customFields =
-      customFieldValueKey === "name"
-        ? rawCustomFields.map((field) => ({ ...field, id: field.name }))
-        : rawCustomFields
+    const matchesType = (type: string) =>
+      !customFieldTypes || customFieldTypes.includes(type as CustomFieldType)
 
-    const allFields = includeReserved
-      ? [...reservedCustomFieldOptions, ...customFields]
-      : customFields
+    const toOption = (
+      field: { id: string | number; name: string; type: string },
+      value: string,
+    ): SelectOption => ({
+      label: field.name,
+      value: prefix ? `${prefix}:${value}` : value,
+      icon: customFieldIconsMap[field.type as CustomFieldType],
+    })
 
-    if (customFieldTypes) {
-      return allFields
-        .filter((customField) =>
-          customFieldTypes.includes(customField.type as CustomFieldType),
-        )
-        .map((customField) => ({
-          label: customField.name,
-          value: prefix
-            ? `${prefix}:${customField.id}`
-            : customField.id.toString(),
-          Icon: customFieldIconsMap[customField.type as CustomFieldType],
-        }))
-    }
+    const reservedOptions = includeReserved
+      ? reservedCustomFieldOptions
+          .filter((field) => matchesType(field.type))
+          .map((field) => toOption(field, field.id.toString()))
+      : []
 
-    return allFields.map((customField) => ({
-      label: customField.name,
-      value: customField.id,
-      Icon: customFieldIconsMap[customField.type as CustomFieldType],
-    }))
+    const customOptions = rawCustomFields
+      .filter((field) => matchesType(field.type))
+      .map((field) =>
+        toOption(
+          field,
+          customFieldValueKey === "name" ? field.name : field.id.toString(),
+        ),
+      )
+
+    return [...reservedOptions, ...customOptions]
   }, [
     customFieldTypes,
     customFieldValueKey,
