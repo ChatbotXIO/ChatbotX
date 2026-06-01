@@ -44,11 +44,13 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
   const integrationSmtpId = useWatch({
     name: `${parentName}.integrationSmtpId`,
   })
+  // Always sync `from` when the inbox changes so the form value stays consistent
+  // with the editor remount triggered by the `key` prop above.
   useEffect(() => {
-    const fromAddress = smtpFromAddressMapRef.current[integrationSmtpId]
-    if (fromAddress) {
-      setValue(`${parentName}.from`, fromAddress)
-    }
+    setValue(
+      `${parentName}.from`,
+      smtpFromAddressMapRef.current[integrationSmtpId] ?? "",
+    )
   }, [integrationSmtpId, setValue, parentName])
 
   const { fields, append, move, remove } = useFieldArray({
@@ -70,12 +72,6 @@ export default function EmailStepEditor(props: EmailStepEditorProps) {
         name={`${parentName}.integrationSmtpId`}
         options={smtpInboxOptions}
       />
-
-      {/* <SelectField
-        label={t("fields.topicId.label")}
-        name={`${parentName}.topicId`}
-        options={[]}
-      /> */}
 
       <TiptapEditorField
         key={`from-${integrationSmtpId}`}

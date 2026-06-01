@@ -4,6 +4,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type { smtpProviders } from "@chatbotx.io/integration-smtp/schema"
 import { z } from "zod"
+import { fromAddressSchema } from "./mutation"
 
 export const smtpProviderLabels: Record<
   z.infer<typeof smtpProviders>,
@@ -26,7 +27,7 @@ export const integrationSmtpResource = createSelectSchema(
   {
     id: z.string(),
     name: z.string(),
-    fromAddress: z.email(),
+    fromAddress: fromAddressSchema,
   },
 ).pick({
   id: true,

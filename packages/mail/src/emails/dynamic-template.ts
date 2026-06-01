@@ -47,6 +47,9 @@ export type DynamicEmailProps = {
 
 export function elementToMjml(element: MailElementSchema): string {
   switch (element.type) {
+    // mj-raw passes content through as raw HTML — intentionally unescaped so that
+    // HTML anchors (e.g. the unsubscribe link placeholder) render correctly.
+    // Email clients strip dangerous tags (<script>, on* handlers) natively.
     case "heading":
       return `
         <mj-section>
