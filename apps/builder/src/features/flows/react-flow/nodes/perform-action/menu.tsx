@@ -62,237 +62,159 @@ const sheetsMenus = (t: TranslationFn): MenuItem[] => [
   },
 ]
 
-const openaiMenus = (t: TranslationFn): MenuItem[] => [
+type StepType = (typeof stepTypes.enum)[keyof typeof stepTypes.enum]
+
+type StepEntry = {
+  stepType: StepType
+  getLabel: (t: TranslationFn, providerName: string) => string
+}
+
+type ProviderConfig = {
+  label: string
+  icon:
+    | typeof import("lucide-react")["BotIcon"]
+    | typeof SiClaude
+    | typeof SiGooglegemini
+    | typeof OpenAIIcon
+  providerKey: string
+  steps: StepEntry[]
+}
+
+const stepWithName =
+  (key: Parameters<TranslationFn>[0]) => (t: TranslationFn, name: string) =>
+    t(key, { name })
+
+const stepWithAiName =
+  (key: Parameters<TranslationFn>[0]) => (t: TranslationFn, aiName: string) =>
+    t(key, { aiName })
+
+const stepNoParam = (key: Parameters<TranslationFn>[0]) => (t: TranslationFn) =>
+  t(key)
+
+const PROVIDER_CONFIGS: ProviderConfig[] = [
   {
     label: "OpenAI",
     icon: OpenAIIcon,
-    stepType: null,
-    children: [
+    providerKey: "openai",
+    steps: [
       {
-        label: t("flows.aiGenerateText.label", {
-          name: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiGenerateText,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithName("flows.aiGenerateText.label"),
       },
       {
-        label: t("flows.aiGenerateImage.label", {
-          name: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiGenerateImage,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithName("flows.aiGenerateImage.label"),
       },
       {
-        label: t("flows.aiEditImage.label", {
-          name: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiEditImage,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithName("flows.aiEditImage.label"),
       },
       {
-        label: t("flows.aiAnalyzeImage.label", {
-          name: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiAnalyzeImage,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
       },
       {
-        label: t("flows.actions.aiGenerateTextAgent"),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiGenerateTextAgent,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepNoParam("flows.actions.aiGenerateTextAgent"),
       },
       {
-        label: t("flows.aiExtractData.label", {
-          name: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiExtractData,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithName("flows.aiExtractData.label"),
       },
       {
-        label: t("fields.flows.aiSpeechToText", {
-          aiName: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiSpeechToText,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithAiName("fields.flows.aiSpeechToText"),
       },
       {
-        label: t("fields.flows.aiTextToSpeech", {
-          aiName: "OpenAI",
-        }),
-        icon: OpenAIIcon,
         stepType: stepTypes.enum.aiTextToSpeech,
-        props: {
-          provider: "openai",
-        },
+        getLabel: stepWithAiName("fields.flows.aiTextToSpeech"),
       },
     ],
   },
-]
-
-const claudeMenus = (t: TranslationFn): MenuItem[] => [
   {
     label: "Claude",
     icon: SiClaude,
-    stepType: null,
-    children: [
+    providerKey: "claude",
+    steps: [
       {
-        label: t("flows.aiGenerateText.label", {
-          name: "Claude",
-        }),
-        icon: SiClaude,
         stepType: stepTypes.enum.aiGenerateText,
-        props: {
-          provider: "claude",
-        },
+        getLabel: stepWithName("flows.aiGenerateText.label"),
       },
       {
-        label: t("flows.aiAnalyzeImage.label", {
-          name: "Claude",
-        }),
-        icon: SiClaude,
         stepType: stepTypes.enum.aiAnalyzeImage,
-        props: {
-          provider: "claude",
-        },
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
       },
       {
-        label: t("flows.actions.aiGenerateTextAgent"),
-        icon: SiClaude,
         stepType: stepTypes.enum.aiGenerateTextAgent,
-        props: {
-          provider: "claude",
-        },
+        getLabel: stepNoParam("flows.actions.aiGenerateTextAgent"),
       },
       {
-        label: t("flows.aiExtractData.label", {
-          name: "Claude",
-        }),
-        icon: SiClaude,
         stepType: stepTypes.enum.aiExtractData,
-        props: {
-          provider: "claude",
-        },
+        getLabel: stepWithName("flows.aiExtractData.label"),
       },
     ],
   },
-]
-
-const geminiMenus = (t: TranslationFn): MenuItem[] => [
   {
     label: "Gemini",
     icon: SiGooglegemini,
-    stepType: null,
-    children: [
+    providerKey: "gemini",
+    steps: [
       {
-        label: t("flows.aiGenerateText.label", {
-          name: "Gemini",
-        }),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiGenerateText,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepWithName("flows.aiGenerateText.label"),
       },
       {
-        label: t("flows.aiGenerateImage.label", {
-          name: "Gemini",
-        }),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiGenerateImage,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepWithName("flows.aiGenerateImage.label"),
       },
       {
-        label: t("flows.aiEditImage.label", {
-          name: "Gemini",
-        }),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiEditImage,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepWithName("flows.aiEditImage.label"),
       },
       {
-        label: t("flows.aiAnalyzeImage.label", {
-          name: "Gemini",
-        }),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiAnalyzeImage,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
       },
       {
-        label: t("flows.actions.aiGenerateTextAgent"),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiGenerateTextAgent,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepNoParam("flows.actions.aiGenerateTextAgent"),
       },
       {
-        label: t("flows.aiExtractData.label", {
-          name: "Gemini",
-        }),
-        icon: SiGooglegemini,
         stepType: stepTypes.enum.aiExtractData,
-        props: {
-          provider: "gemini",
-        },
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+    ],
+  },
+  {
+    label: "Deepseek",
+    icon: BotIcon,
+    providerKey: "deepseek",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateTextAgent,
+        getLabel: stepNoParam("flows.actions.aiGenerateTextAgent"),
       },
     ],
   },
 ]
 
-const deepseekMenus = (t: TranslationFn): MenuItem[] => [
-  {
-    label: "Deepseek",
-    icon: BotIcon,
+function buildProviderMenus(t: TranslationFn): MenuItem[] {
+  return PROVIDER_CONFIGS.map(({ label, icon, providerKey, steps }) => ({
+    label,
+    icon,
     stepType: null,
-    children: [
-      {
-        label: t("flows.aiGenerateText.label", {
-          name: "Deepseek",
-        }),
-        icon: BotIcon,
-        stepType: stepTypes.enum.aiGenerateText,
-        props: {
-          provider: "deepseek",
-        },
-      },
-      {
-        label: t("flows.actions.aiGenerateTextAgent"),
-        icon: BotIcon,
-        stepType: stepTypes.enum.aiGenerateTextAgent,
-        props: {
-          provider: "deepseek",
-        },
-      },
-    ],
-  },
-]
+    children: steps.map((step) => ({
+      label: step.getLabel(t, label),
+      icon,
+      stepType: step.stepType,
+      props: { provider: providerKey },
+    })),
+  }))
+}
 
 export const performActionMenus = (t: TranslationFn): MenuItem[] => [
   {
@@ -500,8 +422,5 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
       },
     ],
   },
-  ...openaiMenus(t),
-  ...geminiMenus(t),
-  ...claudeMenus(t),
-  ...deepseekMenus(t),
+  ...buildProviderMenus(t),
 ]

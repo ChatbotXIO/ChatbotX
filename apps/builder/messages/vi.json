@@ -736,6 +736,28 @@
     "errorLog": {
       "label": "Nhật ký lỗi"
     },
+    "inputType": {
+      "label": "Loại đầu vào",
+      "options": {
+        "text": "Văn bản",
+        "image": "Hình ảnh",
+        "file": "Tệp"
+      }
+    },
+    "extractFields": {
+      "label": "Các trường cần trích xuất",
+      "key": {
+        "label": "Khóa JSON",
+        "placeholder": "Ví dụ: email, phone, address"
+      },
+      "customFieldId": {
+        "label": "Lưu vào trường tùy chỉnh"
+      },
+      "description": {
+        "label": "Mô tả (Tùy chọn)",
+        "placeholder": "Mô tả dữ liệu cần trích xuất"
+      }
+    },
     "max": {
       "label": "Tối đa"
     },
@@ -1325,6 +1347,9 @@
     },
     "aiEditImage": {
       "label": "{name}: AI Chỉnh sửa hình ảnh"
+    },
+    "aiExtractData": {
+      "label": "{name}: AI Trích xuất dữ liệu"
     },
     "actions": {
       "addContactNotes": "Thêm ghi chú liên hệ",

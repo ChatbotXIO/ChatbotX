@@ -15,11 +15,10 @@ export function AIAgentSelect(props: AIAgentSelectProps) {
   const aiAgents = useAIAgentStore((state) => state.aiAgents)
   const loading = useAIAgentStore((state) => state.loading)
 
-  const options =
-    aiAgents.map((agent) => ({
-      value: agent.id as string,
-      label: agent.name as string,
-    })) ?? []
+  const options = aiAgents.map((agent) => ({
+    value: agent.id as string,
+    label: agent.name as string,
+  }))
 
   return (
     <SelectField

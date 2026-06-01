@@ -163,7 +163,9 @@ export async function handleAIExtractData({
     })
 
     const schemaDescription = step.extractFields
-      .map((f) => `- ${f.key}`)
+      .map((f) =>
+        f.description ? `- ${f.key}: ${f.description}` : `- ${f.key}`,
+      )
       .join("\n")
 
     const systemPrompt = `You are a data extraction expert. Extract the following information from the provided ${step.inputType}.
@@ -199,10 +201,9 @@ ${schemaDescription}`
       }),
     })
 
-    const data = extractedData
     await Promise.all(
       step.extractFields.map(async (mapping) => {
-        const value = data[mapping.key]
+        const value = extractedData[mapping.key]
         if (value === undefined || value === null) {
           return
         }
@@ -218,7 +219,7 @@ ${schemaDescription}`
 
     return {
       status: "success",
-      result: data,
+      result: extractedData,
     }
   } catch (error) {
     const parsedError = normalizeError(error)

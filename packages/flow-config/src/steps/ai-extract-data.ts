@@ -18,7 +18,6 @@ export const aiExtractDataModels = {
       "gpt-4.1",
       "gpt-4o-mini",
       "gpt-4o",
-      "chatgpt-image-latest",
     ],
     default: "gpt-4o-mini",
   },
@@ -44,26 +43,43 @@ export const aiExtractDataModels = {
   },
 } as const
 
-export const aiExtractDataSchema = z.object({
+const extractFieldSchema = z.object({
+  key: z.string().trim().min(1),
+  customFieldId: z.string().trim().min(1),
+  description: z.string().trim().optional(),
+})
+
+const extractDataBase = {
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiExtractData),
-  inputType: z.enum(["text", "image", "file"]),
-  inputFieldId: z.string().trim().min(1),
   provider: z.enum(["openai", "gemini", "claude"]),
   model: z.string().trim().min(1),
-  extractFields: z.array(
-    z.object({
-      key: z.string().trim().min(1),
-      customFieldId: z.string().trim().min(1),
-    }),
-  ),
-  file: z
-    .object({
-      attribute: z.string(),
-      value: z.string(),
-    })
-    .optional(),
-})
+  extractFields: z.array(extractFieldSchema),
+}
+
+export const aiExtractDataSchema = z.discriminatedUnion("inputType", [
+  z.object({
+    ...extractDataBase,
+    inputType: z.literal("text"),
+    inputFieldId: z.string().trim().min(1),
+    file: z
+      .object({
+        attribute: z.string(),
+        value: z.string(),
+      })
+      .optional(),
+  }),
+  z.object({
+    ...extractDataBase,
+    inputType: z.literal("image"),
+    inputFieldId: z.string().trim().min(1),
+  }),
+  z.object({
+    ...extractDataBase,
+    inputType: z.literal("file"),
+    inputFieldId: z.string().trim().min(1),
+  }),
+])
 
 export type AIExtractDataSchema = z.infer<typeof aiExtractDataSchema>
 

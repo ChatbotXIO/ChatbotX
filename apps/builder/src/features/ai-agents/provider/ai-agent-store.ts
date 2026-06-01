@@ -19,8 +19,10 @@ export type AIAgentActions = {
 
 export type AIAgentStore = AIAgentState & AIAgentActions
 
-export const createAIAgentStore = (props: Partial<AIAgentState>) =>
-  createStore<AIAgentStore>((set, get) => ({
+export const createAIAgentStore = (props: Partial<AIAgentState>) => {
+  let initPromise: Promise<void> | null = null
+
+  return createStore<AIAgentStore>((set, get) => ({
     loading: false,
     error: null,
     initialized: false,
@@ -30,24 +32,23 @@ export const createAIAgentStore = (props: Partial<AIAgentState>) =>
     ...props,
 
     initialize: async () => {
-      const { initialized } = get()
-
-      if (initialized) {
+      if (get().initialized) {
         return
       }
 
-      try {
-        await get().getAllAIAgents()
-      } catch (error: unknown) {
-        set({
-          error:
-            error instanceof HTTPError
-              ? error.message
-              : "Failed to fetch AI agents",
-        })
-      } finally {
-        set({ initialized: true })
+      if (initPromise) {
+        await initPromise
+        return
       }
+
+      initPromise = get()
+        .getAllAIAgents()
+        .finally(() => {
+          set({ initialized: true })
+          initPromise = null
+        })
+
+      await initPromise
     },
 
     getAllAIAgents: async () => {
@@ -69,9 +70,7 @@ export const createAIAgentStore = (props: Partial<AIAgentState>) =>
           )
           .json()
 
-        set({
-          aiAgents: data,
-        })
+        set({ aiAgents: data })
       } catch (error: unknown) {
         set({
           error:
@@ -84,3 +83,4 @@ export const createAIAgentStore = (props: Partial<AIAgentState>) =>
       }
     },
   }))
+}

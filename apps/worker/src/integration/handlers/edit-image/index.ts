@@ -29,6 +29,40 @@ const FETCH_IMAGE_TIMEOUT_MS = 30_000
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
 
+// RFC-1918, loopback, link-local — reject to prevent SSRF from custom field values
+const PRIVATE_HOST_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,
+  /^::1$/,
+  /^fc[\da-f]{2}:/i,
+  /^fd[\da-f]{2}:/i,
+]
+
+function assertPublicImageUrl(rawUrl: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(rawUrl)
+  } catch {
+    throw new Error(`[ai-edit-image] Invalid URL: ${rawUrl}`)
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `[ai-edit-image] Unsupported URL scheme: ${parsed.protocol}`,
+    )
+  }
+
+  if (PRIVATE_HOST_PATTERNS.some((p) => p.test(parsed.hostname))) {
+    throw new Error(
+      `[ai-edit-image] Image URL hostname not allowed: ${parsed.hostname}`,
+    )
+  }
+}
+
 async function fetchImageAsBuffer(
   url: string,
   signal: AbortSignal,
@@ -126,10 +160,18 @@ export async function handleAIEditImage({
       }
     }
 
+    assertPublicImageUrl(inputValidation.data.imageUrl)
+
     const inputImageBuffer = await fetchImageAsBuffer(
       inputValidation.data.imageUrl,
       controller.signal,
     )
+
+    if (inputImageBuffer.length > MAX_IMAGE_BYTES) {
+      throw new Error(
+        `[ai-edit-image] Input image too large: ${inputImageBuffer.length} bytes`,
+      )
+    }
 
     const size =
       step.provider === aiProviders.enum.openai
