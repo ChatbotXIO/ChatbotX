@@ -57,7 +57,7 @@ export async function processConversationSourceEmbedding(
     const normalizedError = normalizeError(error)
     logger.error(
       {
-        error: normalizedError,
+        err: normalizedError,
         conversationEmbeddingId: embeddingItem.id,
         sourceId: embeddingItem.sourceId,
       },

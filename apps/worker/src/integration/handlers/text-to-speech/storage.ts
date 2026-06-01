@@ -1,4 +1,5 @@
-import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
   AI_TEXT_TO_SPEECH_BASE64_ENCODING,
@@ -62,12 +63,8 @@ export const textToSpeechStorageService = {
       ContentType: contentType,
     })
 
-    const publicUrl = getPublicUrl(storagePath)
-    if (!publicUrl) {
-      throw new Error(
-        "[ai-text-to-speech] Cannot resolve public URL for stored audio",
-      )
-    }
+    const { storageUrl } = await resolvePlatformSettings({ workspaceId })
+    const publicUrl = getPublicFileUrl(storagePath, storageUrl)
 
     return {
       publicUrl,

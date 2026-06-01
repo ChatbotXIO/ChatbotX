@@ -2,11 +2,7 @@ import { aiTimeouts } from "@chatbotx.io/ai"
 import { aiContextService } from "@chatbotx.io/ai/server"
 import { db } from "@chatbotx.io/database/client"
 import { aiAgentProviders } from "@chatbotx.io/database/partials"
-import {
-  type AIGenerateTextAgentSchema,
-  aiGenerateTextAgentSchema as ZodSchema,
-} from "@chatbotx.io/flow-config"
-import { normalizeError } from "universal-error-normalizer"
+import type { AIGenerateTextAgentSchema } from "@chatbotx.io/flow-config"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
 import type { ExecuteStepProps } from "../flow"
@@ -15,14 +11,12 @@ import { buildAIAgentMessages } from "./messages"
 
 export async function handleAIGenerateTextAgent({
   conversation,
-  step: rawStep,
+  step,
 }: ExecuteStepProps<AIGenerateTextAgentSchema>) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), aiTimeouts.aiTotal)
 
   try {
-    const step = ZodSchema.parse(rawStep)
-
     const aiAgent = await db.query.aiAgentModel.findFirst({
       where: {
         id: step.aiAgentId,
@@ -77,13 +71,12 @@ export async function handleAIGenerateTextAgent({
       })
     }
   } catch (error) {
-    const parsedError = normalizeError(error)
     logger.error(
       {
-        error: parsedError,
+        err: error,
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
-        stepId: rawStep.id,
+        stepId: step.id,
       },
       "[ai-generate-text-agent] Step failed",
     )

@@ -47,16 +47,18 @@ export const aiConversationEmbeddingModel = pgTable(
     errorMessage: text(),
   },
   (table) => [
-    index("AIConversationEmbedding_lookup_idx").using(
+    index("AIConversationEmbedding_sourceId_status_idx").using(
       "btree",
-      table.workspaceId.asc().nullsLast(),
-      table.conversationId.asc().nullsLast(),
       table.sourceId.asc().nullsLast(),
       table.status.asc().nullsLast(),
     ),
     uniqueIndex("AIConversationEmbedding_sourceId_chunkIndex_key").on(
       table.sourceId,
       table.chunkIndex,
+    ),
+    index("AIConversationEmbedding_embedding_idx").using(
+      "hnsw",
+      table.embedding.op("vector_cosine_ops"),
     ),
   ],
 )

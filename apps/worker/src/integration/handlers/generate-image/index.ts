@@ -3,7 +3,8 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   type AIGenerateImageSchema,
   getAIGeneratedImagePath,
@@ -12,9 +13,7 @@ import {
   IMAGE_DEFAULT_EXTENSION,
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import { generateImage } from "ai"
-import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import {
   getIntegrationContext,
@@ -23,9 +22,13 @@ import {
 import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
+
 export async function handleAIGenerateImage({
   conversation,
   contactInbox: baseContactInbox,
+  metadata,
   step,
 }: ExecuteStepProps<AIGenerateImageSchema>) {
   const controller = new AbortController()
@@ -77,11 +80,23 @@ export async function handleAIGenerateImage({
         ? (step.size as `${number}:${number}`)
         : undefined
 
+    // Forward quality to OpenAI provider options — "hd" costs 2× but produces
+    // sharper results; all other values ("md", "ld", "auto") map to "standard".
+    const providerOptions =
+      step.provider === aiProviders.enum.openai && step.quality !== "auto"
+        ? {
+            openai: {
+              quality: step.quality === "hd" ? "hd" : "standard",
+            },
+          }
+        : undefined
+
     const { image } = await generateImage({
       model,
       prompt: step.prompt,
       size,
       aspectRatio,
+      providerOptions,
       abortSignal: controller.signal,
     })
 
@@ -97,9 +112,22 @@ export async function handleAIGenerateImage({
       throw new Error("[ai-generate-image] Empty image payload from provider")
     }
 
+    if (buffer.length > MAX_IMAGE_BYTES) {
+      throw new Error(
+        `[ai-generate-image] Image too large: ${buffer.length} bytes`,
+      )
+    }
+
     const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
-    const extension = contentType.split("/")[1] || IMAGE_DEFAULT_EXTENSION
-    const fileName = `${createId()}.${extension}`
+    const rawExt = contentType.split("/")[1]?.split(";")[0]?.trim() ?? ""
+    const extension = ALLOWED_EXTENSIONS.has(rawExt)
+      ? rawExt
+      : IMAGE_DEFAULT_EXTENSION
+
+    // Use a deterministic execution ID so BullMQ retries overwrite the same
+    // S3 object instead of orphaning the previously uploaded file.
+    const executionId = metadata?.stepId ?? step.id
+    const fileName = `${executionId}.${extension}`
     const storagePath = getAIGeneratedImagePath({
       storagePrefix: ctx.storagePrefix,
       fileName,
@@ -110,23 +138,33 @@ export async function handleAIGenerateImage({
       ContentType: contentType,
     })
 
-    const finalImageUrl = getPublicUrl(storagePath)
+    const { storageUrl } = await resolvePlatformSettings({
+      workspaceId: conversation.workspaceId,
+    })
+    const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
 
-    if (finalImageUrl) {
-      await sendMessageWithRender(conversation.id, finalImageUrl)
+    await sendMessageWithRender(conversation.id, finalImageUrl, undefined, {
+      forceUrl: true,
+      storagePath,
+    })
 
-      if (step.outputFieldId) {
-        await saveResultToCustomField({
-          contactId: conversation.contactId,
-          customFieldId: step.outputFieldId,
-          fullText: finalImageUrl,
-          workspaceId: conversation.workspaceId,
-        })
-      }
+    if (step.outputFieldId) {
+      await saveResultToCustomField({
+        contactId: conversation.contactId,
+        customFieldId: step.outputFieldId,
+        fullText: finalImageUrl,
+        workspaceId: conversation.workspaceId,
+      })
     }
   } catch (error) {
-    const parsedError = normalizeError(error)
-    logger.error(parsedError, "[ai-generate-image] Step failed")
+    logger.error(
+      {
+        err: error,
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+      },
+      "[ai-generate-image] Step failed",
+    )
 
     await sendMessageWithRender(conversation.id, "Error generating image")
 

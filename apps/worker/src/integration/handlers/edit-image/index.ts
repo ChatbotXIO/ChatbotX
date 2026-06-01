@@ -3,7 +3,8 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { getPublicUrl } from "@chatbotx.io/database/utils"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
   type AIEditImageSchema,
@@ -12,10 +13,8 @@ import {
   IMAGE_DEFAULT_EXTENSION,
   IMAGE_DEFAULT_MIME_TYPE,
 } from "@chatbotx.io/flow-config"
-import { createId } from "@chatbotx.io/utils"
 import { generateImage, type ImageModel } from "ai"
 import ky from "ky"
-import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import {
   getIntegrationContext,
@@ -26,14 +25,24 @@ import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import { editImageInputSchema } from "./schema"
 
-async function fetchImageAsBuffer(url: string): Promise<Buffer> {
-  const arrayBuffer = await ky.get(url).arrayBuffer()
+const FETCH_IMAGE_TIMEOUT_MS = 30_000
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const ALLOWED_IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"])
+
+async function fetchImageAsBuffer(
+  url: string,
+  signal: AbortSignal,
+): Promise<Buffer> {
+  const arrayBuffer = await ky
+    .get(url, { signal, timeout: FETCH_IMAGE_TIMEOUT_MS })
+    .arrayBuffer()
   return Buffer.from(arrayBuffer)
 }
 
 export async function handleAIEditImage({
   conversation,
   contactInbox: baseContactInbox,
+  metadata,
   step,
 }: ExecuteStepProps<AIEditImageSchema>) {
   const controller = new AbortController()
@@ -96,7 +105,7 @@ export async function handleAIEditImage({
     } catch (modelError) {
       logger.warn(
         {
-          error: normalizeError(modelError),
+          err: modelError,
           modelId: step.model,
           provider: step.provider,
           conversationId: conversation.id,
@@ -119,6 +128,7 @@ export async function handleAIEditImage({
 
     const inputImageBuffer = await fetchImageAsBuffer(
       inputValidation.data.imageUrl,
+      controller.signal,
     )
 
     const size =
@@ -131,6 +141,15 @@ export async function handleAIEditImage({
         ? (step.size as `${number}:${number}`)
         : undefined
 
+    const providerOptions =
+      step.provider === aiProviders.enum.openai && step.quality !== "auto"
+        ? {
+            openai: {
+              quality: step.quality === "hd" ? "hd" : "standard",
+            },
+          }
+        : undefined
+
     const { images } = await generateImage({
       model,
       prompt: {
@@ -139,6 +158,7 @@ export async function handleAIEditImage({
       },
       size,
       aspectRatio,
+      providerOptions,
       abortSignal: controller.signal,
     })
 
@@ -159,9 +179,18 @@ export async function handleAIEditImage({
       throw new Error("[ai-edit-image] Empty image payload from provider")
     }
 
+    if (buffer.length > MAX_IMAGE_BYTES) {
+      throw new Error(`[ai-edit-image] Image too large: ${buffer.length} bytes`)
+    }
+
     const contentType = image.mediaType || IMAGE_DEFAULT_MIME_TYPE
-    const extension = contentType.split("/")[1] || IMAGE_DEFAULT_EXTENSION
-    const fileName = `${createId()}.${extension}`
+    const rawExt = contentType.split("/")[1]?.split(";")[0]?.trim() ?? ""
+    const extension = ALLOWED_IMAGE_EXTENSIONS.has(rawExt)
+      ? rawExt
+      : IMAGE_DEFAULT_EXTENSION
+
+    const executionId = metadata?.stepId ?? step.id
+    const fileName = `${executionId}.${extension}`
     const storagePath = getAIGeneratedImagePath({
       storagePrefix: ctx.storagePrefix,
       fileName,
@@ -172,25 +201,28 @@ export async function handleAIEditImage({
       ContentType: contentType,
     })
 
-    const finalImageUrl = getPublicUrl(storagePath)
+    const { storageUrl } = await resolvePlatformSettings({
+      workspaceId: conversation.workspaceId,
+    })
+    const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
 
-    if (finalImageUrl) {
-      await sendMessageWithRender(conversation.id, finalImageUrl)
+    await sendMessageWithRender(conversation.id, finalImageUrl, undefined, {
+      forceUrl: true,
+      storagePath,
+    })
 
-      if (step.outputFieldId) {
-        await saveResultToCustomField({
-          contactId: conversation.contactId,
-          customFieldId: step.outputFieldId,
-          fullText: finalImageUrl,
-          workspaceId: conversation.workspaceId,
-        })
-      }
+    if (step.outputFieldId) {
+      await saveResultToCustomField({
+        contactId: conversation.contactId,
+        customFieldId: step.outputFieldId,
+        fullText: finalImageUrl,
+        workspaceId: conversation.workspaceId,
+      })
     }
   } catch (error) {
-    const parsedError = normalizeError(error)
     logger.error(
       {
-        ...parsedError,
+        err: error,
         workspaceId: conversation.workspaceId,
         conversationId: conversation.id,
         action: "aiEditImage",

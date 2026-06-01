@@ -5,12 +5,13 @@ import {
 } from "@chatbotx.io/ai/server"
 import { db } from "@chatbotx.io/database/client"
 import type { AIExtractDataSchema } from "@chatbotx.io/flow-config"
-import logger from "@chatbotx.io/logger"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { generateText, Output } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
+import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
+import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 
@@ -198,7 +199,7 @@ ${schemaDescription}`
       }),
     })
 
-    const data = dynamicSchema.parse(extractedData)
+    const data = extractedData
     await Promise.all(
       step.extractFields.map(async (mapping) => {
         const value = data[mapping.key]
@@ -224,11 +225,14 @@ ${schemaDescription}`
     logger.error(
       {
         ...logContext,
-        error: parsedError.message,
+        err: error,
         reason: "ai_generation_failed",
       },
       "Error in handleAIExtractData",
     )
+
+    await sendMessageWithRender(conversation.id, "Error extracting data")
+
     return {
       status: "error",
       errorMessage: parsedError.message,

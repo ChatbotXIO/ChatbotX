@@ -95,25 +95,29 @@ export async function processAutomatedResponse(
     })
 
     if (!aiAgent) {
-      await trackBotResponse({
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-        messageId,
-        hasResponse: false,
-        responseType: "none",
-        routeType: "fallback",
-        result: "fallback",
-        aiProvider: "none",
-        metadata: {
-          fallbackReason: "no_ai_agent",
-        },
-        startTime: Date.now(),
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "triggerAutomatedResponse",
-          triggerType: "bot_response_fallback_no_ai_agent",
-        },
-      })
+      if (messageId) {
+        await emit("analytics:dashboard", {
+          eventType: "message:bot_received",
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+          messageId,
+          occurredAt: new Date(),
+          hasResponse: false,
+          responseType: "none",
+          routeType: "fallback",
+          result: "fallback",
+          aiProvider: "none",
+          metadata: {
+            latency: 0,
+            fallbackReason: "no_ai_agent",
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "triggerAutomatedResponse",
+              triggerType: "bot_response_fallback_no_ai_agent",
+            },
+          },
+        })
+      }
       return
     }
 

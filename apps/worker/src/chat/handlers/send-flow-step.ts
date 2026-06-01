@@ -495,6 +495,9 @@ export const sendChatMessage = async (
         .then((result) => result[0])
 
       if (url) {
+        const { storageUrl } = await resolvePlatformSettings({
+          workspaceId: conversation.workspaceId,
+        })
         const uploadedFile = storagePath
           ? {
               originPath: storagePath,
@@ -519,7 +522,7 @@ export const sendChatMessage = async (
           .returning()
           .then((result) => ({
             ...result[0],
-            url: getPublicUrl(result[0].originPath),
+            url: getPublicFileUrl(result[0].originPath, storageUrl),
           }))
 
         ;(newMessage as { attachments?: AttachmentModel[] }).attachments = [

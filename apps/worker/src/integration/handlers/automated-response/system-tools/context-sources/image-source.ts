@@ -44,6 +44,7 @@ export async function resolveImageAttachment(
     orderBy: {
       createdAt: "desc",
     },
+    limit: 50,
   })
 
   const attachments = allAttachments.filter((attachment) =>

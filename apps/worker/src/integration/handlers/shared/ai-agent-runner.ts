@@ -23,7 +23,6 @@ import type {
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
-import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { sendMessageWithRender } from "../../utils/message"
 
@@ -124,7 +123,6 @@ async function runAIReplyInternal(
     const integration = await aiIntegrationService.findBy({
       workspaceId: conversation.workspaceId,
       provider,
-      autoReply: true,
     })
 
     if (!integration) {
@@ -247,14 +245,10 @@ async function runAIReplyInternal(
     ).catch((streamError) => {
       logger.error(
         {
+          err: streamError,
           provider,
           modelId: selectedModelId,
           conversationId: conversation.id,
-          error: streamError,
-          errorMessage:
-            streamError instanceof Error
-              ? streamError.message
-              : String(streamError),
         },
         "[ai-agent-runner] processStreamingText threw error",
       )
@@ -313,10 +307,9 @@ async function runAIReplyInternal(
 
     return null
   } catch (error) {
-    const parsedError = normalizeError(error)
     logger.error(
       {
-        error: parsedError,
+        err: error,
         provider,
         conversationId: conversation.id,
         workspaceId: conversation.workspaceId,
