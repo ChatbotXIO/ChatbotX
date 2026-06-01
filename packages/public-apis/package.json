@@ -8,7 +8,7 @@
     "@types/node": "~24.12.2",
     "openapi-typescript": "^7.13.0",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "ky": "^2.0.2",

@@ -8,7 +8,7 @@
     "@types/node": "^24.10.4",
     "@types/probe-image-size": "^7.2.5",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1039.0",

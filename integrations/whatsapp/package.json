@@ -22,7 +22,7 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "msw": "^2.7.3",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "exports": {
     ".": "./src/index.ts",

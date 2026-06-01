@@ -12,7 +12,7 @@
     "@chatbotx.io/vitest-config": "workspace:*",
     "@types/node": "^24.10.4",
     "typescript": "6.0.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",

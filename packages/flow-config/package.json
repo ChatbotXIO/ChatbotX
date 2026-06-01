@@ -8,7 +8,7 @@
     "@types/node": "24.x",
     "@types/react": "19.2.14",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
     "@chatbotx.io/utils": "workspace:*",
