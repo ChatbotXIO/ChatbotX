@@ -121,7 +121,7 @@ export const useCustomFieldSelectOptions = (
     customFieldTypes?: CustomFieldType[]
     includeReserved?: boolean
     prefix?: string
-    customFieldValueKey?: "id" | "name"
+    customFieldValueKey?: "name"
   } = {},
 ): SelectOption[] => {
   const { customFieldTypes, includeReserved, prefix, customFieldValueKey } =
