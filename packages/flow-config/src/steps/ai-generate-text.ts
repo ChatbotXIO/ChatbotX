@@ -1,5 +1,11 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  errorStateDefaultFn,
+  errorStateSchema,
+  successStateDefaultFn,
+  successStateSchema,
+} from "../states"
 import { stepTypes } from "./step-action"
 
 export const defaultAIModels = {
@@ -21,8 +27,7 @@ export const aiGenerateTextSchema = z.object({
   remember: z.boolean(),
   temperature: z.number().min(0).max(2),
   maxOutputTokens: z.number().int().min(250).max(4096),
-  successNodeId: zodBigintAsString().optional(),
-  errorNodeId: zodBigintAsString().optional(),
+  states: z.tuple([successStateSchema, errorStateSchema]),
 })
 
 export type AIGenerateTextSchema = z.infer<typeof aiGenerateTextSchema>
@@ -48,7 +53,6 @@ export const aiGenerateTextDefaultFn = (
     maxOutputTokens: 250,
     ...props,
     stepType: stepTypes.enum.aiGenerateText,
-    successNodeId: createId(),
-    errorNodeId: createId(),
+    states: [successStateDefaultFn(), errorStateDefaultFn()],
   }
 }

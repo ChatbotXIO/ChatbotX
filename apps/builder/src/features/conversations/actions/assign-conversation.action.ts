@@ -102,26 +102,18 @@ export const assignConversationAction = workspaceActionClient
         .where(inArray(conversationModel.id, conversationIds))
         .returning()
 
-      // Emit conversation assigned events
       const assignedTo =
         updatedData.assignedUserId || updatedData.assignedInboxTeamId || ""
       const assignedBy = ctx.user.id
 
       for (const conversation of conversations) {
-        try {
-          await emitConversationAssigned(
-            workspaceId,
-            conversation.contactId,
-            conversation.id,
-            assignedTo,
-            assignedBy,
-          )
-        } catch (error) {
-          logger.error(
-            { err: error },
-            "Failed to emit conversationAssigned event:",
-          )
-        }
+        await emitConversationAssigned(
+          workspaceId,
+          conversation.contactId,
+          conversation.id,
+          assignedTo,
+          assignedBy,
+        )
       }
 
       const toAssignee =

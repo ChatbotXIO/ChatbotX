@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/worker-config": "workspace:*",
     "lru-cache": "^11.3.5"
   },

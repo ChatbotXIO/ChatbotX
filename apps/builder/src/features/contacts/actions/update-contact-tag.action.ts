@@ -121,22 +121,12 @@ export const updateContactTags = async ({
   const newlyAppliedTags = returnedTags.filter((tag) => !oldTagIds.has(tag.id))
   const removedTagIds = Array.from(oldTagIds).filter((id) => !newTagIds.has(id))
 
-  // Emit tagApplied for newly added tags
   for (const tag of newlyAppliedTags) {
-    try {
-      await emitTagApplied(workspaceId, contact.id, tag.id)
-    } catch (error) {
-      console.error("Failed to emit tagApplied event:", error)
-    }
+    await emitTagApplied(workspaceId, contact.id, tag.id)
   }
 
-  // Emit tagRemoved for removed tags
   for (const tagId of removedTagIds) {
-    try {
-      await emitTagRemoved(workspaceId, contact.id, tagId)
-    } catch (error) {
-      console.error("Failed to emit tagRemoved event:", error)
-    }
+    await emitTagRemoved(workspaceId, contact.id, tagId)
   }
 
   revalidateCacheTags([

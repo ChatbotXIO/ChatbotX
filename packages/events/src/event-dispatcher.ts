@@ -1,27 +1,30 @@
+import { logger } from "./logger"
 import { TriggerEventEmitter } from "./trigger/emitter"
 import { WebhookEventEmitter } from "./webhook/emitter"
 
 const EMITTER_REGISTRY = [TriggerEventEmitter, WebhookEventEmitter] as const
 
-/**
- * Emit event to all registered emitters in parallel
- */
 async function emitToAllEmitters(
   eventName: string,
   ...args: unknown[]
 ): Promise<void> {
-  const promises = EMITTER_REGISTRY.map((emitter) => {
-    const method = (
-      emitter as unknown as Record<
-        string,
-        (...args: unknown[]) => Promise<void>
-      >
-    )[eventName]
+  const results = await Promise.allSettled(
+    EMITTER_REGISTRY.map((emitter) => {
+      const method = (
+        emitter as unknown as Record<
+          string,
+          (...args: unknown[]) => Promise<void>
+        >
+      )[eventName]
+      return method.call(emitter, ...args)
+    }),
+  )
 
-    return method.call(emitter, ...args)
-  })
-
-  await Promise.all(promises)
+  for (const result of results) {
+    if (result.status === "rejected") {
+      logger.error({ err: result.reason }, `Failed to emit event: ${eventName}`)
+    }
+  }
 }
 
 // Contact events

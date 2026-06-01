@@ -1,5 +1,11 @@
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
+import {
+  errorStateDefaultFn,
+  errorStateSchema,
+  successStateDefaultFn,
+  successStateSchema,
+} from "../states"
 import { stepTypes } from "./step-action"
 
 export const Operator = {
@@ -33,8 +39,7 @@ export const spreadsheetSchema = z.object({
   ]),
   spreadsheetId: zodBigintAsString(),
   sheetName: z.string().min(1),
-  successNodeId: zodBigintAsString().optional(),
-  errorNodeId: zodBigintAsString().optional(),
+  states: z.tuple([successStateSchema, errorStateSchema]),
 })
 export type SpreadsheetSchema = z.infer<typeof spreadsheetSchema>
 
@@ -43,8 +48,7 @@ export const spreadsheetDefaultFn = (): SpreadsheetSchema => ({
   stepType: stepTypes.enum.spreadsheetGetRow,
   spreadsheetId: "",
   sheetName: "",
-  successNodeId: createId(),
-  errorNodeId: createId(),
+  states: [successStateDefaultFn(), errorStateDefaultFn()],
 })
 
 export const spreadsheetMappingSchema = z.object({

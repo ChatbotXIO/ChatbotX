@@ -1,7 +1,5 @@
 import { emitConversationAssigned } from "@chatbotx.io/events"
 import type { IntegrationJobAssignConversation } from "@chatbotx.io/worker-config"
-import { normalizeError } from "universal-error-normalizer"
-import { logger } from "../../lib/logger"
 
 export const assignConversation = async (
   props: IntegrationJobAssignConversation["data"],
@@ -17,22 +15,11 @@ export const assignConversation = async (
       continue
     }
 
-    try {
-      await emitConversationAssigned(
-        conversation.workspaceId,
-        conversation.contactId,
-        conversation.id,
-        conversation.assignedUserId,
-      )
-    } catch (error) {
-      const normalizedError = normalizeError(error)
-      logger.error(
-        {
-          error: normalizedError,
-          conversationId: conversation.id,
-        },
-        "[worker] Failed to emit conversation assignment event",
-      )
-    }
+    await emitConversationAssigned(
+      conversation.workspaceId,
+      conversation.contactId,
+      conversation.id,
+      conversation.assignedUserId,
+    )
   }
 }

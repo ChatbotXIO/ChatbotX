@@ -18,6 +18,7 @@
 | New DB table or migration | `drizzle-database` |
 | New background job or queue | `worker-development` |
 | New channel integration | `integration-channel` |
+| New flow step with states (success/error/skip routing) | `flow-step-development` |
 | Dev/build/lint commands | `turborepo-workflow` |
 
 ### Never do without checking

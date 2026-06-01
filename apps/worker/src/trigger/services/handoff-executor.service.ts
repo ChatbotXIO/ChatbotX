@@ -49,16 +49,11 @@ export class HandoffExecutorService {
 
       const resolvedChannel = channel ?? DEFAULT_CHANNEL
 
-      emitConversationTransferredToHuman(
+      await emitConversationTransferredToHuman(
         workspaceId,
         contactId,
         conversationId,
-      ).catch((error) => {
-        baseLogger.error(
-          { error, conversationId },
-          "[handoffExecutor] Failed to emit realtime handoff event",
-        )
-      })
+      )
 
       emit("analytics:dashboard", {
         eventType: "conversation:transferred_to_human",

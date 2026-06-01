@@ -18,12 +18,13 @@ import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { sendMessageWithRender } from "../../utils/message"
-import { type ExecuteStepProps, sendFlow } from "../flow-utils"
+import type { ExecuteStepProps } from "../flow-utils"
+import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
 
 export async function handleAIGenerateText(
   props: ExecuteStepProps<AIGenerateTextSchema>,
-) {
+): Promise<ExecuteStepResult> {
   const { conversation, step } = props
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 120_000)
@@ -39,8 +40,11 @@ export async function handleAIGenerateText(
     })
 
     if (!aiConfig) {
-      await sendFlow(props, false)
-      return
+      return {
+        status: "error",
+        errorMessage: "AI integration not found",
+        result: null,
+      }
     }
 
     const model = createAIModelInstance({
@@ -102,11 +106,11 @@ export async function handleAIGenerateText(
       text: fullText,
     })
 
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (err) {
-    await sendFlow(props, false)
     const error = normalizeError(err)
     logger.error(error, "An error occurred while generating text")
+    return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)
     if (cleanupToolset) {

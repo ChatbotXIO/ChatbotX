@@ -23,8 +23,9 @@ import {
 } from "@chatbotx.io/integration-google-sheets"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
-import { type ExecuteStepProps, sendFlow } from "./flow"
+import type { ExecuteStepProps } from "./flow"
 import { isMatchedRow } from "./operator-handler"
+import type { ExecuteStepResult } from "./step"
 
 const findRowType = {
   SINGLE: "single",
@@ -124,7 +125,7 @@ type OperatorType = (typeof Operator)[keyof typeof Operator]
 
 export const getSpreadsheetRow = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
-) => {
+): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRow = findRows({
@@ -134,8 +135,7 @@ export const getSpreadsheetRow = async (
       type: findRowType.SINGLE,
     }) as string[] | null
     if (!foundRow) {
-      await sendFlow(props, false)
-      return
+      return { status: "error", errorMessage: "Row not found", result: null }
     }
 
     await updateContactCustomFields({
@@ -144,16 +144,20 @@ export const getSpreadsheetRow = async (
       headers,
       foundRow,
     })
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (error) {
-    await sendFlow(props, false)
     logger.error(error, "Error in getSpreadsheetRow")
+    return {
+      status: "error",
+      errorMessage: "Failed to get spreadsheet row",
+      result: null,
+    }
   }
 }
 
 export const sendSpreadsheetData = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
-) => {
+): Promise<ExecuteStepResult> => {
   try {
     const integrationRow =
       await integrationGoogleSheetService.findByWorkspaceIdOrFail(
@@ -196,16 +200,20 @@ export const sendSpreadsheetData = async (
         data,
       },
     })
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (error) {
-    await sendFlow(props, false)
     logger.error(error, "Error in sendSpreadsheetData")
+    return {
+      status: "error",
+      errorMessage: "Failed to send spreadsheet data",
+      result: null,
+    }
   }
 }
 
 export const updateSpreadsheetRow = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
-) => {
+): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRows = findRows({
@@ -215,8 +223,7 @@ export const updateSpreadsheetRow = async (
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
-      await sendFlow(props, false)
-      return
+      return { status: "error", errorMessage: "No rows found", result: null }
     }
 
     const integrationRow =
@@ -263,16 +270,20 @@ export const updateSpreadsheetRow = async (
         },
       })
     }
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (error) {
-    await sendFlow(props, false)
     logger.error(error, "Error in updateSpreadsheetRow")
+    return {
+      status: "error",
+      errorMessage: "Failed to update spreadsheet row",
+      result: null,
+    }
   }
 }
 
 export const clearSpreadsheetRow = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
-) => {
+): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRows = findRows({
@@ -282,8 +293,7 @@ export const clearSpreadsheetRow = async (
       type: findRowType.ALL,
     }) as string[][] | null
     if (!foundRows) {
-      await sendFlow(props, false)
-      return
+      return { status: "error", errorMessage: "No rows found", result: null }
     }
 
     const integrationRow =
@@ -313,16 +323,20 @@ export const clearSpreadsheetRow = async (
         },
       })
     }
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (error) {
-    await sendFlow(props, false)
     logger.error(error, "Error in clearSpreadsheetRow")
+    return {
+      status: "error",
+      errorMessage: "Failed to clear spreadsheet row",
+      result: null,
+    }
   }
 }
 
 export const getSpreadsheetRandomRow = async (
   props: ExecuteStepProps<SpreadsheetGetRowSchema>,
-) => {
+): Promise<ExecuteStepResult> => {
   try {
     const { headers, rows: values } = await getSheetData(props)
     const foundRow = findRows({
@@ -332,8 +346,7 @@ export const getSpreadsheetRandomRow = async (
       type: findRowType.RANDOM,
     }) as string[] | null
     if (!foundRow) {
-      await sendFlow(props, false)
-      return
+      return { status: "error", errorMessage: "No rows found", result: null }
     }
 
     await updateContactCustomFields({
@@ -342,10 +355,14 @@ export const getSpreadsheetRandomRow = async (
       headers,
       foundRow,
     })
-    await sendFlow(props, true)
+    return { status: "success", result: null }
   } catch (error) {
-    await sendFlow(props, false)
     logger.error(error, "Error in getSpreadsheetRandomRow")
+    return {
+      status: "error",
+      errorMessage: "Failed to get random spreadsheet row",
+      result: null,
+    }
   }
 }
 
@@ -404,19 +421,14 @@ const updateContactCustomFields = async ({
           },
         })
 
-      // Emit custom field changed event
-      try {
-        await emitCustomFieldChanged(
-          conversation.workspaceId,
-          conversation.contactId,
-          mapItem.customFieldId,
-          customFieldMap.get(mapItem.customFieldId) || mapItem.customFieldId,
-          existing?.value || null,
-          value,
-        )
-      } catch (error) {
-        logger.error({ err: error }, "Failed to emit customFieldChanged event")
-      }
+      await emitCustomFieldChanged(
+        conversation.workspaceId,
+        conversation.contactId,
+        mapItem.customFieldId,
+        customFieldMap.get(mapItem.customFieldId) || mapItem.customFieldId,
+        existing?.value || null,
+        value,
+      )
     }
   }
 }

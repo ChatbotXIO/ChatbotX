@@ -41,21 +41,13 @@ export const disableLiveChatConversationAction = workspaceActionClient
         conversationIds: parsedInput.ids,
       })
 
-      // Emit conversation transferred to bot events
       for (const conv of conversations) {
-        try {
-          await emitConversationTransferredToBot(
-            workspaceId,
-            conv.contactId,
-            conv.id,
-            ctx.user.id,
-          )
-        } catch (error) {
-          logger.error(
-            { err: error },
-            "Failed to emit conversationTransferredToBot event:",
-          )
-        }
+        await emitConversationTransferredToBot(
+          workspaceId,
+          conv.contactId,
+          conv.id,
+          ctx.user.id,
+        )
       }
 
       for (const conv of conversations) {

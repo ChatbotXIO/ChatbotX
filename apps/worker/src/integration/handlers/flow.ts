@@ -36,7 +36,11 @@ import {
 } from "../../lib/db"
 import { logger } from "../../lib/logger"
 import { type ExecuteMultipleStepsProps, seekConnectedNode } from "./flow-utils"
-import { flowStepHandlers, type StepRoutingStatus } from "./step"
+import {
+  type ExecuteStepResult,
+  flowStepHandlers,
+  type StepRoutingStatus,
+} from "./step"
 
 const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "success",
@@ -285,8 +289,7 @@ export async function runStepsAndQuickReplies(
 
 export async function executeMultipleSteps(props: ExecuteMultipleStepsProps) {
   const gen = executeMultipleStepsGenerator(props)
-  // biome-ignore lint/suspicious/noExplicitAny: result shape varies by step handler
-  let lastResult: any
+  let lastResult: (ExecuteStepResult & { branched: boolean }) | undefined
 
   for await (const result of gen) {
     logger.debug({ result }, "execute multiple steps result")
@@ -333,14 +336,15 @@ async function* executeMultipleStepsGenerator(
           await integrationQueue.add(IntegrationJobAction.sendFlow, {
             type: IntegrationJobAction.sendFlow,
             data: {
-              conversationId: props.conversation,
-              contactInboxId: props.contactInbox,
+              conversationId: props.conversation.id,
+              contactInboxId: props.contactInbox.id,
               flowId: props.flowVersion.flowId,
               flowVersionId: props.useLatestFlowVersion
                 ? undefined
                 : props.flowVersion.id,
               nodeId: connectedNodeId,
               metadata: props.metadata,
+              trackingContext: props.trackingContext,
             },
           })
           branched = true

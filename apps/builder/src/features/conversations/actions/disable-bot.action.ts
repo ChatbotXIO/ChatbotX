@@ -43,21 +43,13 @@ export const disableBotAction = workspaceActionClient
         conversationIds: parsedInput.ids,
       })
 
-      // Emit conversation transferred to human events
       for (const conv of conversations) {
-        try {
-          await emitConversationTransferredToHuman(
-            workspaceId,
-            conv.contactId,
-            conv.id,
-            ctx.user.id,
-          )
-        } catch (error) {
-          logger.error(
-            { err: error },
-            "Failed to emit conversationTransferredToHuman event:",
-          )
-        }
+        await emitConversationTransferredToHuman(
+          workspaceId,
+          conv.contactId,
+          conv.id,
+          ctx.user.id,
+        )
       }
 
       for (const conv of conversations) {

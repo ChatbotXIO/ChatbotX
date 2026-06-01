@@ -117,20 +117,15 @@ export const addContactCustomFields = async ({
     )
   })
 
-  // Emit custom field changed events for all contacts
   for (const contact of contacts) {
-    try {
-      await emitCustomFieldChanged(
-        workspaceId,
-        contact.id,
-        customField.id,
-        customField.name,
-        null,
-        parsedInput.value,
-      )
-    } catch (error) {
-      console.error("Failed to emit customFieldChanged event:", error)
-    }
+    await emitCustomFieldChanged(
+      workspaceId,
+      contact.id,
+      customField.id,
+      customField.name,
+      null,
+      parsedInput.value,
+    )
   }
 
   revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
@@ -186,19 +181,14 @@ export const setContactCustomFieldValue = async ({
     })
   }
 
-  // Emit custom field changed event
-  try {
-    await emitCustomFieldChanged(
-      workspaceId,
-      contactId,
-      customField.id,
-      customField.name,
-      null,
-      value,
-    )
-  } catch (error) {
-    console.error("Failed to emit customFieldChanged event:", error)
-  }
+  await emitCustomFieldChanged(
+    workspaceId,
+    contactId,
+    customField.id,
+    customField.name,
+    null,
+    value,
+  )
 
   revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }

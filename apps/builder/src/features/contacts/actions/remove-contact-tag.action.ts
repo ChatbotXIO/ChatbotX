@@ -88,14 +88,9 @@ export const removeContactTags = async ({
     return allTags
   })
 
-  // Emit tag removed events for all contacts and tags
   for (const contact of contacts) {
     for (const tag of allTags) {
-      try {
-        await emitTagRemoved(workspaceId, contact.id, tag.id)
-      } catch (error) {
-        console.error("Failed to emit tagRemoved event:", error)
-      }
+      await emitTagRemoved(workspaceId, contact.id, tag.id)
     }
   }
 

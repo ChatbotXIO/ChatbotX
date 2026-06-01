@@ -65,23 +65,18 @@ export async function setContactCustomField({
       },
     })
 
-  // Emit custom field changed event
   const customField = await db.query.customFieldModel.findFirst({
     where: { id: step.inputFieldId },
   })
   if (customField) {
-    try {
-      await emitCustomFieldChanged(
-        conversation.workspaceId,
-        conversation.contactId,
-        step.inputFieldId,
-        customField.name,
-        oldValue,
-        step.value,
-      )
-    } catch (error) {
-      logger.error({ err: error }, "Failed to emit customFieldChanged event")
-    }
+    await emitCustomFieldChanged(
+      conversation.workspaceId,
+      conversation.contactId,
+      step.inputFieldId,
+      customField.name,
+      oldValue,
+      step.value,
+    )
   }
 }
 
@@ -107,23 +102,18 @@ export async function clearContactCustomField({
       ),
     )
 
-  // Emit custom field changed event
   const customField = await db.query.customFieldModel.findFirst({
     where: { id: step.inputFieldId },
   })
   if (customField) {
-    try {
-      await emitCustomFieldChanged(
-        conversation.workspaceId,
-        conversation.contactId,
-        step.inputFieldId,
-        customField.name,
-        oldValue,
-        null,
-      )
-    } catch (error) {
-      logger.error({ err: error }, "Failed to emit customFieldChanged event")
-    }
+    await emitCustomFieldChanged(
+      conversation.workspaceId,
+      conversation.contactId,
+      step.inputFieldId,
+      customField.name,
+      oldValue,
+      null,
+    )
   }
 }
 
@@ -215,15 +205,9 @@ export async function addContactTag({
     }
   })
 
-  await Promise.allSettled(
+  await Promise.all(
     insertedTags.map((tag) =>
-      emitTagApplied(
-        conversation.workspaceId,
-        conversation.contactId,
-        tag.id,
-      ).catch((err) =>
-        logger.error({ err }, "Failed to emit tagApplied event"),
-      ),
+      emitTagApplied(conversation.workspaceId, conversation.contactId, tag.id),
     ),
   )
 }
@@ -257,15 +241,9 @@ export async function removeContactTag({
     ),
   )
 
-  await Promise.allSettled(
+  await Promise.all(
     tags.map((tag) =>
-      emitTagRemoved(
-        conversation.workspaceId,
-        conversation.contactId,
-        tag.id,
-      ).catch((err) =>
-        logger.error({ err }, "Failed to emit tagRemoved event"),
-      ),
+      emitTagRemoved(conversation.workspaceId, conversation.contactId, tag.id),
     ),
   )
 }

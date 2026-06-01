@@ -361,17 +361,13 @@ const detectContactAndConversation = async (props: {
   }
 
   if (newContact) {
-    try {
-      await emitContactCreated(
-        newContact.workspaceId,
-        newContact.id,
-        newContact.firstName || undefined,
-        newContact.phoneNumber || undefined,
-        newContact.email || undefined,
-      )
-    } catch (error) {
-      console.error("Failed to emit contactCreated event:", error)
-    }
+    await emitContactCreated(
+      newContact.workspaceId,
+      newContact.id,
+      newContact.firstName || undefined,
+      newContact.phoneNumber || undefined,
+      newContact.email || undefined,
+    )
 
     if (contactInbox.sourceId) {
       emit("analytics:dashboard", {

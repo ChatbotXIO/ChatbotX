@@ -7,6 +7,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  errorStateDefaultFn,
   FieldOperationType,
   type SpreadsheetClearRowSchema,
   type SpreadsheetColumnFilterSchema,
@@ -17,6 +18,7 @@ import {
   type SpreadsheetUpdateRowSchema,
   type StepType,
   stepTypes,
+  successStateDefaultFn,
 } from "@chatbotx.io/flow-config"
 import baseLogger from "@chatbotx.io/logger"
 import { createId } from "@chatbotx.io/utils"
@@ -333,6 +335,7 @@ export class ActionExecutor {
               sheetName,
               lookup,
               map,
+              states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await getSpreadsheetRow({ ...baseProps, step })
             break
@@ -345,6 +348,7 @@ export class ActionExecutor {
               spreadsheetId,
               sheetName,
               lookup,
+              states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await clearSpreadsheetRow({
               ...baseProps,
@@ -361,6 +365,7 @@ export class ActionExecutor {
               sheetName,
               lookup,
               map,
+              states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await getSpreadsheetRandomRow({
               ...baseProps,
@@ -376,6 +381,7 @@ export class ActionExecutor {
               spreadsheetId,
               sheetName,
               map,
+              states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await sendSpreadsheetData({
               ...baseProps,
@@ -392,6 +398,7 @@ export class ActionExecutor {
               sheetName,
               lookup,
               map,
+              states: [successStateDefaultFn(), errorStateDefaultFn()],
             }
             await updateSpreadsheetRow({
               ...baseProps,

@@ -44,16 +44,12 @@ export const followConversation = async (ctx: {
     })
     .where(eq(conversationModel.id, ctx.id))
 
-  try {
-    await emitConversationFollowUp(
-      ctx.workspaceId,
-      conversation.contactId,
-      conversation.id,
-      ctx.userId,
-    )
-  } catch (error) {
-    logger.error({ err: error }, "Failed to emit conversationFollowUp event:")
-  }
+  await emitConversationFollowUp(
+    ctx.workspaceId,
+    conversation.contactId,
+    conversation.id,
+    ctx.userId,
+  )
 
   emit("analytics:dashboard", {
     eventType: "conversation:followed",

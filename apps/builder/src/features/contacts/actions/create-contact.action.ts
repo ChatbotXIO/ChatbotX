@@ -118,18 +118,13 @@ export const createContact = async ({
 
   await userQuotaService.increment(workspace.ownerId, "contacts")
 
-  // Emit contact created event
-  try {
-    await emitContactCreated(
-      workspaceId,
-      contact.id,
-      contact.firstName || undefined,
-      contact.phoneNumber || undefined,
-      contact.email || undefined,
-    )
-  } catch (error) {
-    console.error("Failed to emit contactCreated event:", error)
-  }
+  await emitContactCreated(
+    workspaceId,
+    contact.id,
+    contact.firstName || undefined,
+    contact.phoneNumber || undefined,
+    contact.email || undefined,
+  )
 
   if (contactInbox.sourceId) {
     emit("analytics:dashboard", {

@@ -50,21 +50,13 @@ export const archiveConversationAction = workspaceActionClient
           ),
         )
 
-      // Emit conversation archived events
       for (const conv of conversations) {
-        try {
-          await emitConversationArchived(
-            workspaceId,
-            conv.contactId,
-            conv.id,
-            ctx.user.id,
-          )
-        } catch (error) {
-          logger.error(
-            { err: error },
-            "Failed to emit conversationArchived event:",
-          )
-        }
+        await emitConversationArchived(
+          workspaceId,
+          conv.contactId,
+          conv.id,
+          ctx.user.id,
+        )
       }
 
       for (const conv of conversations) {
