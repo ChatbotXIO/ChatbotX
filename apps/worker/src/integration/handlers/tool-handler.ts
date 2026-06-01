@@ -36,6 +36,7 @@ export async function countCharacters({
     await db.query.contactCustomFieldModel.findFirst({
       where: {
         customFieldId: step.inputFieldId,
+        contactId: conversation.contactId,
       },
     })
   if (!targetContactCustomField) {
@@ -224,20 +225,25 @@ export async function getDataFromJSON({
     },
   })
   if (!inputValue) {
-    return { status: "error", result: undefined }
+    return {
+      status: "error",
+      errorMessage: "Input custom field not found",
+      result: null,
+    }
   }
 
   let dataJSON: unknown
   try {
     dataJSON = JSON.parse(inputValue.value)
   } catch {
-    return { status: "error", result: undefined }
+    return {
+      status: "error",
+      errorMessage: "Input custom field value is not valid JSON",
+      result: null,
+    }
   }
 
-  const mapping = step.mapping as {
-    jsonPath: string
-    outputFieldId: string
-  }[]
+  const mapping = step.mapping
 
   // Find valid custom fields
   const validCustomFields = await db.query.customFieldModel.findMany({
@@ -263,6 +269,18 @@ export async function getDataFromJSON({
       newValue: string
     }> = []
 
+    // Batch-fetch existing values to avoid N+1 queries
+    const existingFields = await tx.query.contactCustomFieldModel.findMany({
+      where: {
+        contactId: conversation.contactId,
+        customFieldId: { in: validCustomFieldIds },
+      },
+      columns: { customFieldId: true, value: true },
+    })
+    const existingMap = new Map(
+      existingFields.map((f) => [f.customFieldId, f.value]),
+    )
+
     for (const data of mapping) {
       if (validCustomFieldIds.includes(data.outputFieldId)) {
         const value = getProperty(dataJSON, data.jsonPath)
@@ -270,15 +288,7 @@ export async function getDataFromJSON({
         if (value !== undefined && value !== null) {
           const encodedValue =
             typeof value === "string" ? value : JSON.stringify(value)
-
-          // Get existing value
-          const existing = await tx.query.contactCustomFieldModel.findFirst({
-            where: {
-              contactId: conversation.contactId,
-              customFieldId: data.outputFieldId,
-            },
-            columns: { value: true },
-          })
+          const oldValue = existingMap.get(data.outputFieldId) ?? null
 
           await tx
             .insert(contactCustomFieldModel)
@@ -302,7 +312,7 @@ export async function getDataFromJSON({
             customFieldId: data.outputFieldId,
             customFieldName:
               customFieldMap.get(data.outputFieldId) || data.outputFieldId,
-            oldValue: existing?.value || null,
+            oldValue,
             newValue: encodedValue,
           })
         }
@@ -323,5 +333,5 @@ export async function getDataFromJSON({
     )
   }
 
-  return { status: "success", result: undefined }
+  return { status: "success", result: null }
 }
