@@ -1,4 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { applyContactFilter } from "@chatbotx.io/database/queries"
 import { contactModel } from "@chatbotx.io/database/schema"
 import {
   getPaginationWithDefaults,
@@ -6,7 +7,6 @@ import {
 } from "@chatbotx.io/database/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
-import { applyContactFilter } from "../apply-contact-filter"
 import type {
   ListContactsRequest,
   ListContactsResponse,

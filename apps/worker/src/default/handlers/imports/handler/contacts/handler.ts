@@ -1,4 +1,5 @@
-import { db, eq, sql } from "@chatbotx.io/database/client"
+import { userQuotaService, workspaceService } from "@chatbotx.io/business"
+import { db } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
   type CustomFieldType,
@@ -12,7 +13,6 @@ import {
   contactsToTagsModel,
   conversationModel,
   type inboxModel,
-  workspaceUsageModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../../../../lib/logger"
@@ -28,6 +28,7 @@ import { type ContactRow, extractRowData } from "./extractor"
 type ContactDeps = {
   customFieldTypes: Map<string, CustomFieldType>
   inbox: typeof inboxModel.$inferSelect
+  ownerId: string
 }
 
 type AcceptedContact = {
@@ -48,6 +49,13 @@ const prepareContacts = async ({
 
   if (!inbox) {
     return { ok: false, reason: "Inbox not found" }
+  }
+
+  const workspace = await workspaceService.find({
+    where: { id: row.workspaceId },
+  })
+  if (!workspace) {
+    return { ok: false, reason: "Workspace not found" }
   }
 
   if (meta.tagId) {
@@ -75,7 +83,10 @@ const prepareContacts = async ({
     }
   }
 
-  return { ok: true, deps: { customFieldTypes, inbox } }
+  return {
+    ok: true,
+    deps: { customFieldTypes, inbox, ownerId: workspace.ownerId },
+  }
 }
 
 const processContactRow = (
@@ -112,36 +123,25 @@ const insertContactBatch = async (
   deps: ContactDeps,
   eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
-): Promise<number> =>
-  db.transaction(async (tx) => {
-    // Lock the usage row so concurrent import batches serialize their quota
-    // check — without FOR UPDATE two batches could both read the same count
-    // and insert past maxContacts.
-    const [usage] = await tx
-      .select({
-        maxContacts: workspaceUsageModel.maxContacts,
-        contactsCount: workspaceUsageModel.contactsCount,
-      })
-      .from(workspaceUsageModel)
-      .where(eq(workspaceUsageModel.workspaceId, ctx.row.workspaceId))
-      .for("update")
+): Promise<number> => {
+  const remaining = await userQuotaService.getRemainingSlots(
+    deps.ownerId,
+    "contacts",
+  )
+  if (remaining === 0) {
+    return 0
+  }
 
-    if (!usage) {
-      return 0
-    }
+  const toInsert = remaining === null ? eligible : eligible.slice(0, remaining)
+  const accepted: AcceptedContact[] = toInsert.map((row) => ({
+    contactId: createId(),
+    row,
+  }))
+  if (accepted.length === 0) {
+    return 0
+  }
 
-    const remaining = usage.maxContacts - usage.contactsCount
-    if (remaining <= 0) {
-      return 0
-    }
-
-    const accepted: AcceptedContact[] = eligible
-      .slice(0, remaining)
-      .map((row) => ({ contactId: createId(), row }))
-    if (accepted.length === 0) {
-      return 0
-    }
-
+  await db.transaction(async (tx) => {
     await tx.insert(contactModel).values(
       accepted.map(({ contactId, row }) => ({
         id: contactId,
@@ -192,16 +192,12 @@ const insertContactBatch = async (
         .values(accepted.map(({ contactId }) => ({ contactId, tagId })))
         .onConflictDoNothing()
     }
-
-    await tx
-      .update(workspaceUsageModel)
-      .set({
-        contactsCount: sql`${workspaceUsageModel.contactsCount} + ${accepted.length}`,
-      })
-      .where(eq(workspaceUsageModel.workspaceId, ctx.row.workspaceId))
-
-    return accepted.length
   })
+
+  await userQuotaService.incrementBy(deps.ownerId, "contacts", accepted.length)
+
+  return accepted.length
+}
 
 const processContactBatch = async (
   deps: ContactDeps,

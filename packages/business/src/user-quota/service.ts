@@ -136,12 +136,45 @@ class UserQuotaService extends BaseService {
     return limit !== null && liveCount >= limit
   }
 
+  async getRemainingSlots(
+    userId: string,
+    metric: QuotaMetric,
+  ): Promise<number | null> {
+    const [quota, liveCount] = await Promise.all([
+      this.getForUser(userId),
+      this.getLiveCount(userId, metric),
+    ])
+    if (!quota) {
+      return null
+    }
+    const { limit } = this.readMetricValues(quota, metric)
+    if (limit === null) {
+      return null
+    }
+    return Math.max(0, limit - liveCount)
+  }
+
   async increment(userId: string, metric: QuotaMetric): Promise<void> {
+    await this.incrementBy(userId, metric, 1)
+  }
+
+  async incrementBy(
+    userId: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
     try {
       const client = await cacheConnections.useExisting()
       // getLiveCount seeds the key if missing so HINCRBY starts from the correct base
       await this.getLiveCount(userId, metric)
-      await client.hincrby(this.liveKey(userId), this.counterField(metric), 1)
+      await client.hincrby(
+        this.liveKey(userId),
+        this.counterField(metric),
+        count,
+      )
     } catch (err) {
       logger.warn(
         { err },
