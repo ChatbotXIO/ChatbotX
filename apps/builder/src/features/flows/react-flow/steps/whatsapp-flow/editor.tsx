@@ -40,7 +40,9 @@ const WhatsappFlowStepEditor = ({
     () =>
       whatsappFlows
         .filter(
-          (flow) => flow.integrationWhatsapp?.inboxId === integrationInboxId,
+          (flow) =>
+            flow.status === "PUBLISHED" &&
+            flow.integrationWhatsapp?.inboxId === integrationInboxId,
         )
         .map((flow) => ({ value: flow.id, label: flow.name })),
     [whatsappFlows, integrationInboxId],
@@ -50,7 +52,7 @@ const WhatsappFlowStepEditor = ({
     setDialogOpen(true)
   }, [])
 
-  const handleFlowChange = useCallback(() => {
+  const handleFlowSelected = useCallback(() => {
     setValue(`${parentName}.flow.startScreenId`, null)
     setValue(`${parentName}.flow.fieldMappings`, [])
   }, [parentName, setValue])
@@ -80,7 +82,7 @@ const WhatsappFlowStepEditor = ({
           name={`${parentName}.flow.id`}
           options={flowOptions}
           placeholder={t("flows.whatsappFlow.selectFlowPlaceholder")}
-          triggerValueChange={handleFlowChange}
+          triggerValueChange={handleFlowSelected}
         />
       </div>
 

@@ -4,12 +4,17 @@ import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 import type { WhatsappFlowResource } from "@/features/integration-whatsapp/flows/schema/resource"
 import type { MenuData, MenuItem, TranslationFn } from "../../types"
 
+const WHATSAPP_FLOW_PUBLISHED_STATUS = "PUBLISHED"
+
 export const waFlowMenus = (
   t: TranslationFn,
   menuData?: MenuData,
   inbox?: ListInboxesResponse["data"][number],
 ): MenuItem[] => {
-  let flows = menuData?.flows.waFlows ?? []
+  let flows = (menuData?.flows.waFlows ?? []).filter(
+    (flow: WhatsappFlowResource) =>
+      flow.status === WHATSAPP_FLOW_PUBLISHED_STATUS,
+  )
 
   if (inbox) {
     flows = flows.filter(
@@ -18,10 +23,10 @@ export const waFlowMenus = (
     )
   }
 
-  if (!flows || flows.length === 0) {
+  if (flows.length === 0) {
     return [
       {
-        label: t("flows.actions.noTemplatesAvailable"),
+        label: t("flows.actions.noFlowsAvailable"),
         icon: WorkflowIcon,
         stepType: null,
       },

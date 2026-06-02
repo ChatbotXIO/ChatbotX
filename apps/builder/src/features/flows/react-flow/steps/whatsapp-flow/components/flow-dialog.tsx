@@ -50,11 +50,21 @@ type FlowDialogProps = {
 }
 
 const SCREENS_CACHE_TTL_MS = 5 * 60 * 1000
+const SCREENS_CACHE_MAX_ENTRIES = 50
+const WHATSAPP_FLOW_PUBLISHED_STATUS = "PUBLISHED"
+
 type ScreensCacheEntry = {
   screens: WhatsappFlowScreenResource[]
   cachedAt: number
 }
 const screensCache = new Map<string, ScreensCacheEntry>()
+
+const setScreensCache = (key: string, entry: ScreensCacheEntry) => {
+  if (screensCache.size >= SCREENS_CACHE_MAX_ENTRIES) {
+    screensCache.delete(screensCache.keys().next().value ?? "")
+  }
+  screensCache.set(key, entry)
+}
 
 function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   const t = useTranslations()
@@ -65,6 +75,7 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   const loadingFlows = useWhatsappFlow((s) => s.loadingWhatsappFlows)
   const [screens, setScreens] = useState<WhatsappFlowScreenResource[]>([])
   const [loadingScreens, setLoadingScreens] = useState(false)
+  const [screenError, setScreenError] = useState<string | null>(null)
 
   const currentButtonLabel = parentForm.watch(`${parentName}.buttons.0.label`)
   const currentInboxId = parentForm.watch(`${parentName}.inboxId`)
@@ -77,15 +88,16 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
     `${parentName}.flow.fieldMappings`,
   ) as WhatsappFlowFieldMapping[]
 
-  const whatsappFlows = useMemo(
-    () =>
-      currentInboxId
-        ? whatsappFlowsAll.filter(
-            (flow) => flow.integrationWhatsapp?.inboxId === currentInboxId,
-          )
-        : whatsappFlowsAll,
-    [whatsappFlowsAll, currentInboxId],
-  )
+  const whatsappFlows = useMemo(() => {
+    const published = whatsappFlowsAll.filter(
+      (flow) => flow.status === WHATSAPP_FLOW_PUBLISHED_STATUS,
+    )
+    return currentInboxId
+      ? published.filter(
+          (flow) => flow.integrationWhatsapp?.inboxId === currentInboxId,
+        )
+      : published
+  }, [whatsappFlowsAll, currentInboxId])
 
   const form = useForm<WhatsappFlowDialogFormValues>({
     resolver: zodResolver(whatsappFlowDialogFormSchema),
@@ -133,11 +145,13 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   useEffect(() => {
     if (!(open && selectedFlowId)) {
       setScreens([])
+      setScreenError(null)
       return
     }
 
     if (!workspaceId) {
       setScreens([])
+      setScreenError(null)
       return
     }
 
@@ -145,11 +159,13 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
     const cached = screensCache.get(cacheKey)
     if (cached && Date.now() - cached.cachedAt < SCREENS_CACHE_TTL_MS) {
       setScreens(cached.screens)
+      setScreenError(null)
       return
     }
 
     const fetchScreens = async () => {
       setLoadingScreens(true)
+      setScreenError(null)
       try {
         const data = await ky
           .get<GetWhatsappFlowScreensResponse>(
@@ -157,20 +173,21 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
           )
           .json()
         const nextScreens = data.screens ?? []
-        screensCache.set(cacheKey, {
+        setScreensCache(cacheKey, {
           screens: nextScreens,
           cachedAt: Date.now(),
         })
         setScreens(nextScreens)
       } catch {
         setScreens([])
+        setScreenError(t("messages.errorLoadingData"))
       } finally {
         setLoadingScreens(false)
       }
     }
 
     fetchScreens()
-  }, [open, selectedFlowId, workspaceId])
+  }, [open, selectedFlowId, workspaceId, t])
 
   useEffect(() => {
     if (!selectedStartScreenId || screens.length === 0) {
@@ -313,21 +330,24 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
               required
             />
 
-            {selectedFlowId && (
-              <SelectField
-                disabled={loadingScreens}
-                key={`${selectedFlowId}-${screenOptions.length}`}
-                label={t("flows.whatsappFlow.startScreen")}
-                name="flow.startScreenId"
-                options={screenOptions}
-                placeholder={
-                  loadingScreens
-                    ? t("messages.loadingData")
-                    : t("flows.whatsappFlow.selectScreenPlaceholder")
-                }
-                required
-              />
-            )}
+            {selectedFlowId &&
+              (screenError ? (
+                <p className="text-destructive text-sm">{screenError}</p>
+              ) : (
+                <SelectField
+                  disabled={loadingScreens}
+                  key={`${selectedFlowId}-${screenOptions.length}`}
+                  label={t("flows.whatsappFlow.startScreen")}
+                  name="flow.startScreenId"
+                  options={screenOptions}
+                  placeholder={
+                    loadingScreens
+                      ? t("messages.loadingData")
+                      : t("flows.whatsappFlow.selectScreenPlaceholder")
+                  }
+                  required
+                />
+              ))}
 
             {selectedStartScreenId && fields.length > 0 && (
               <div className="mt-6 flex flex-col gap-2 space-y-4">

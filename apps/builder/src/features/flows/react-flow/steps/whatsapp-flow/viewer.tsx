@@ -47,12 +47,6 @@ const WhatsappFlowStepViewer = (props: WhatsappFlowStepViewerProps) => {
       t("flows.whatsappFlow.selectFlow"),
     [whatsappFlows, data.flow.id, t],
   )
-  const screen = useMemo(() => {
-    if (!data.flow.startScreenId) {
-      return ""
-    }
-    return data.flow.startScreenId
-  }, [data.flow.startScreenId])
 
   return (
     <Card className="overflow-hidden p-0">
@@ -61,7 +55,7 @@ const WhatsappFlowStepViewer = (props: WhatsappFlowStepViewerProps) => {
           <div className="mb-1 flex items-center gap-2">
             <WorkflowIcon className="text-muted-foreground" size={16} />
             <span className="font-medium text-muted-foreground text-sm">
-              {flowName} ({screen})
+              {flowName}
             </span>
           </div>
           <p className="bg-gray-200 px-4 py-2 dark:bg-neutral-600">

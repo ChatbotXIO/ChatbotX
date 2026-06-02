@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { ActionFlow, Interactive } from "whatsapp-api-js/messages"
+import { WHATSAPP_FLOW_MESSAGE_VERSION } from "../../../constants"
 import { logger } from "../../../lib/logger"
 import type { WhatsappAuthValue } from "../../../schema"
 import { generateBody } from "../interactive"
@@ -40,7 +41,7 @@ export function* convertFlowStepWhatsappFlow(
 
   yield new Interactive(
     new ActionFlow({
-      flow_message_version: "3",
+      flow_message_version: WHATSAPP_FLOW_MESSAGE_VERSION,
       flow_id: step.flow.sourceId,
       flow_token: flowToken,
       flow_cta: cta,
