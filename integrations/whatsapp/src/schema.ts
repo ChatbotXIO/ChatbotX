@@ -33,6 +33,7 @@ export type WhatsappPagination = {
     before: string
     after: string
   }
+  next?: string
 }
 
 export type WhatsappFlow = {

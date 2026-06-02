@@ -51,8 +51,7 @@ export const encodeButtonPayload = (props: ButtonPayload) =>
 export const decodeButtonPayload = (payload: string): ButtonPayload | null => {
   try {
     return buttonPayloadSchema.parse(JSON.parse(atob(payload)))
-  } catch (error) {
-    console.error("Unable to decode button payload", { error })
+  } catch {
     return null
   }
 }

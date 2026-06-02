@@ -22,9 +22,9 @@ export const whatsappFlowResource = createSelectSchema(whatsappFlowModel, {
     screens: true,
   })
   .extend({
-    categories: z.any(),
-    validationErrors: z.any(),
-    screens: z.any(),
+    categories: z.unknown(),
+    validationErrors: z.unknown(),
+    screens: z.unknown(),
     integrationWhatsapp: z
       .object({
         id: z.string(),

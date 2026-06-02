@@ -74,18 +74,29 @@ export function listFlows({
 }): Promise<ListFlowsResponse> {
   const { version = DEFAULT_API_VERSION } = auth
 
-  return rescue(() =>
-    ky
-      .get<ListFlowsResponse>(
-        `${API_URL}/${version}/${auth.metadata.wabaId}/flows`,
-        {
+  return rescue(async () => {
+    const allFlows: WhatsappFlow[] = []
+    let nextUrl: string | undefined =
+      `${API_URL}/${version}/${auth.metadata.wabaId}/flows`
+
+    while (nextUrl) {
+      const response: ListFlowsResponse = await ky
+        .get<ListFlowsResponse>(nextUrl, {
           headers: {
             Authorization: `Bearer ${auth.tokens.accessToken}`,
           },
-        },
-      )
-      .json(),
-  )
+        })
+        .json()
+
+      allFlows.push(...response.data)
+      nextUrl = response.paging?.next
+    }
+
+    return {
+      data: allFlows,
+      paging: { cursors: { before: "", after: "" } },
+    }
+  })
 }
 
 export type ListMessageTemplatesReponse = {

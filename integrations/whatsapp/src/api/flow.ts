@@ -223,8 +223,8 @@ export async function getFlowAssets({
 
     const flowJson = await ky.get(flowJsonAsset.download_url).json()
     return parseFlowScreens(flowJson)
-  } catch (e) {
-    logger.error(e, "Failed to load flow assets")
+  } catch (err) {
+    logger.error({ err }, "Failed to load flow assets")
     return []
   }
 }
@@ -243,8 +243,8 @@ export async function listFlows({
         { headers: buildAuthHeaders(auth) },
       )
       .json()
-  } catch (e) {
-    logger.error(e, "Failed to list flows")
-    throw new WhatsappException("Failed to list flows").setOriginError(e)
+  } catch (err) {
+    logger.error({ err }, "Failed to list flows")
+    throw new WhatsappException("Failed to list flows").setOriginError(err)
   }
 }

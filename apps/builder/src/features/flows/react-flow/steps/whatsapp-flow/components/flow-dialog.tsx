@@ -49,7 +49,12 @@ type FlowDialogProps = {
   parentName: string
 }
 
-const screensCache = new Map<string, WhatsappFlowScreenResource[]>()
+const SCREENS_CACHE_TTL_MS = 5 * 60 * 1000
+type ScreensCacheEntry = {
+  screens: WhatsappFlowScreenResource[]
+  cachedAt: number
+}
+const screensCache = new Map<string, ScreensCacheEntry>()
 
 function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
   const t = useTranslations()
@@ -137,9 +142,9 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
     }
 
     const cacheKey = `${workspaceId}:${selectedFlowId}`
-    const cachedScreens = screensCache.get(cacheKey)
-    if (cachedScreens) {
-      setScreens(cachedScreens)
+    const cached = screensCache.get(cacheKey)
+    if (cached && Date.now() - cached.cachedAt < SCREENS_CACHE_TTL_MS) {
+      setScreens(cached.screens)
       return
     }
 
@@ -152,7 +157,10 @@ function FlowDialogInner({ open, onOpenChange, parentName }: FlowDialogProps) {
           )
           .json()
         const nextScreens = data.screens ?? []
-        screensCache.set(cacheKey, nextScreens)
+        screensCache.set(cacheKey, {
+          screens: nextScreens,
+          cachedAt: Date.now(),
+        })
         setScreens(nextScreens)
       } catch {
         setScreens([])

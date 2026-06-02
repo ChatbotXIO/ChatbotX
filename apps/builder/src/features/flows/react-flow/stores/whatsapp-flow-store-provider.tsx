@@ -5,7 +5,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
-  useRef,
+  useMemo,
 } from "react"
 import { useStore } from "zustand"
 import {
@@ -29,21 +29,19 @@ export function WhatsappFlowStoreProvider({
   workspaceId,
   autoInitialize = true,
 }: WhatsappFlowProviderProps) {
-  const storeRef = useRef<WhatsappFlowStoreApi>(null)
-  if (!storeRef.current) {
-    storeRef.current = createWhatsappFlowStore({
-      workspaceId,
-    })
-  }
+  const store = useMemo(
+    () => createWhatsappFlowStore({ workspaceId }),
+    [workspaceId],
+  )
 
   useEffect(() => {
-    if (storeRef.current && autoInitialize) {
-      storeRef.current.getState().initialize()
+    if (autoInitialize) {
+      store.getState().initialize()
     }
-  }, [autoInitialize])
+  }, [store, autoInitialize])
 
   return (
-    <WhatsappFlowContext.Provider value={storeRef.current}>
+    <WhatsappFlowContext.Provider value={store}>
       {children}
     </WhatsappFlowContext.Provider>
   )

@@ -6,6 +6,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
 import { ActionFlow, Interactive } from "whatsapp-api-js/messages"
+import { logger } from "../../../lib/logger"
 import type { WhatsappAuthValue } from "../../../schema"
 import { generateBody } from "../interactive"
 
@@ -20,6 +21,10 @@ export function* convertFlowStepWhatsappFlow(
 
   const button = step.buttons[0]
   if (!(button && step.flow.sourceId && step.flow.startScreenId)) {
+    logger.warn(
+      { stepId: step.id, flowId: step.flow.id },
+      "whatsappFlow step skipped: missing button, sourceId, or startScreenId — flow may have been deleted from Meta",
+    )
     return
   }
 

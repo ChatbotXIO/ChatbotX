@@ -7,7 +7,6 @@ import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import { emitCustomFieldChanged } from "@chatbotx.io/events"
 import {
   type FlowNode,
-  type FlowVersionSchema,
   stepTypes,
   type WhatsappFlowFieldMapping,
   type WhatsappFlowStepSchema,
@@ -15,27 +14,49 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../lib/logger"
 
+type AnyStep = { stepType: string; buttons?: Array<{ id: string }> }
+type AnyDetails = {
+  steps?: AnyStep[]
+  beforeStep?: AnyStep
+}
+
+const findWhatsappFlowStepInList = (
+  steps: AnyStep[],
+  buttonId: string,
+): WhatsappFlowStepSchema | null => {
+  for (const step of steps) {
+    if (step.stepType !== stepTypes.enum.whatsappFlow) {
+      continue
+    }
+    const whatsappFlowStep = step as unknown as WhatsappFlowStepSchema
+    if (whatsappFlowStep.buttons.find((b) => b.id === buttonId)) {
+      return whatsappFlowStep
+    }
+  }
+  return null
+}
+
 export const findWhatsappFlowStepByButtonId = (
   nodes: FlowNode[],
   buttonId: string,
 ): WhatsappFlowStepSchema | null => {
   for (const node of nodes) {
-    const details = node.data.details as FlowVersionSchema["data"]["details"]
-    if (!("steps" in details && details.steps)) {
-      continue
+    const details = node.data.details as unknown as AnyDetails
+
+    if (details.steps) {
+      const found = findWhatsappFlowStepInList(details.steps, buttonId)
+      if (found) {
+        return found
+      }
     }
 
-    for (const step of details.steps) {
-      if (step.stepType !== stepTypes.enum.whatsappFlow) {
-        continue
-      }
-
-      const whatsappFlowStep = step as WhatsappFlowStepSchema
-      const matchedButton = whatsappFlowStep.buttons.find(
-        (button) => button.id === buttonId,
-      )
-      if (matchedButton) {
-        return whatsappFlowStep
+    if (details.beforeStep) {
+      const bs = details.beforeStep
+      if (
+        bs.stepType === stepTypes.enum.whatsappFlow &&
+        bs.buttons?.find((b) => b.id === buttonId)
+      ) {
+        return bs as unknown as WhatsappFlowStepSchema
       }
     }
   }
@@ -167,27 +188,21 @@ const upsertContactCustomField = async (props: {
       set: { value },
     })
 
-  const customField = await db.query.customFieldModel.findFirst({
-    where: { id: props.mapping.customFieldId },
-    columns: { name: true },
-  })
-
-  if (customField) {
-    try {
-      await emitCustomFieldChanged(
-        props.workspaceId,
-        props.contactId,
-        props.mapping.customFieldId,
-        customField.name,
-        oldValue,
-        value,
-      )
-    } catch (error) {
-      logger.warn(
-        error,
-        "[whatsapp-flow-response] Failed to emit customFieldChanged",
-      )
-    }
+  const fieldName = props.mapping.paramLabel ?? props.mapping.paramKey
+  try {
+    await emitCustomFieldChanged(
+      props.workspaceId,
+      props.contactId,
+      props.mapping.customFieldId,
+      fieldName,
+      oldValue,
+      value,
+    )
+  } catch (err) {
+    logger.warn(
+      { err },
+      "[whatsapp-flow-response] Failed to emit customFieldChanged",
+    )
   }
 }
 
