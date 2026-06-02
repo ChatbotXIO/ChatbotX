@@ -20,20 +20,19 @@ import {
   FormLabel,
 } from "@chatbotx.io/ui/components/ui/form"
 import { ChevronDownIcon, ChevronUpIcon, Loader2Icon } from "lucide-react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import type { BaseSyntheticEvent } from "react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { type UseFormReturn, useWatch } from "react-hook-form"
-import type { CreateProductRequest } from "../schema/action"
+import type { ProductFormRequest } from "../schema/action"
 import { ProductImagesSection } from "./product-images-section"
 import { ProductMoreOptionsSection } from "./product-more-options-section"
 import { ProductVariantsSection } from "./product-variants-section"
 
 type ProductFormProps = {
   workspaceId: string
-  form: UseFormReturn<CreateProductRequest>
+  form: UseFormReturn<ProductFormRequest>
   handleSubmitWithAction: (event?: BaseSyntheticEvent) => void | Promise<void>
   isEdit?: boolean
 }
@@ -48,16 +47,13 @@ export function ProductForm({
   const router = useRouter()
   const [showMoreOptions, setShowMoreOptions] = useState(isEdit)
 
-  const inventoryPolicyOptions = [
-    {
-      value: "dont_track",
-      label: t("products.inventoryPolicy.dont_track"),
-    },
-    {
-      value: "track",
-      label: t("products.inventoryPolicy.track"),
-    },
-  ]
+  const inventoryPolicyOptions = useMemo(
+    () => [
+      { value: "dont_track", label: t("products.inventoryPolicy.dont_track") },
+      { value: "track", label: t("products.inventoryPolicy.track") },
+    ],
+    [t],
+  )
 
   const longDescription =
     useWatch({ control: form.control, name: "longDescription" }) ?? ""
@@ -197,10 +193,12 @@ export function ProductForm({
           </button>
           {showMoreOptions && <ProductMoreOptionsSection />}
           <div className="flex items-center justify-end gap-2">
-            <Button onClick={() => router.back()} type="button" variant="ghost">
-              <Link href={`/space/${workspaceId}/products`}>
-                {t("actions.cancel")}
-              </Link>
+            <Button
+              onClick={() => router.push(`/space/${workspaceId}/products`)}
+              type="button"
+              variant="ghost"
+            >
+              {t("actions.cancel")}
             </Button>
             <Button
               disabled={form.formState.isSubmitting}

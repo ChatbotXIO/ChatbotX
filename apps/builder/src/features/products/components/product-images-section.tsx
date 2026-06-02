@@ -12,7 +12,7 @@ import Image from "next/image"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
-import type { CreateProductRequest } from "../schema/action"
+import type { ProductFormRequest } from "../schema/action"
 
 type Props = {
   workspaceId: string
@@ -25,7 +25,7 @@ function ImageThumbnail({
   index: number
   onRemove: () => void
 }) {
-  const { control } = useFormContext<CreateProductRequest>()
+  const { control } = useFormContext<ProductFormRequest>()
   const url = useWatch({ control, name: `images.${index}.url` }) as
     | string
     | undefined
@@ -58,7 +58,7 @@ function ImageThumbnail({
 
 export function ProductImagesSection({ workspaceId }: Props) {
   const t = useTranslations()
-  const { control } = useFormContext<CreateProductRequest>()
+  const { control } = useFormContext<ProductFormRequest>()
 
   const { fields, append, remove } = useFieldArray({
     control,

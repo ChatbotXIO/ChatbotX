@@ -33,7 +33,7 @@ import type {
   VariantOptionInsertData,
 } from "../schema/action"
 import type { ListProductsRequest, ListProductsResponse } from "../schema/query"
-import type { ProductResource } from "../schema/resource"
+import type { ProductDetailResource } from "../schema/resource"
 
 class ProductService extends BaseService {
   async create(props: {
@@ -105,18 +105,6 @@ class ProductService extends BaseService {
       )
   }
 
-  async toggleActive(props: {
-    productId: string
-    isActive: boolean
-    tx?: DatabaseClient
-  }): Promise<void> {
-    const { productId, isActive, tx = db } = props
-    await tx
-      .update(productModel)
-      .set({ isActive })
-      .where(eq(productModel.id, productId))
-  }
-
   async list(
     input: ListProductsRequest & {
       workspaceId: string
@@ -156,7 +144,10 @@ class ProductService extends BaseService {
     return this.list(input)
   }
 
-  async findById(id: string, workspaceId: string): Promise<ProductResource> {
+  async findById(
+    id: string,
+    workspaceId: string,
+  ): Promise<ProductDetailResource> {
     const product = await db.query.productModel.findFirst({
       where: { id, workspaceId },
       with: {
@@ -168,7 +159,7 @@ class ProductService extends BaseService {
     if (!product) {
       throw notFoundException("Product does not exist.")
     }
-    return product as unknown as ProductResource
+    return product as ProductDetailResource
   }
 }
 

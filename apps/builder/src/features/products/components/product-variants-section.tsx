@@ -22,7 +22,7 @@ import {
   useFormContext,
   useWatch,
 } from "react-hook-form"
-import type { CreateProductRequest } from "../schema/action"
+import type { ProductFormRequest } from "../schema/action"
 
 function computeCartesianProduct(
   options: Array<{ name: string; values: string[] }>,
@@ -54,7 +54,7 @@ function buildVariantLabel(combination: Record<string, unknown>): string {
 export function ProductVariantsSection() {
   const t = useTranslations("products")
   const tActions = useTranslations("actions")
-  const { control, setValue } = useFormContext<CreateProductRequest>()
+  const { control, setValue } = useFormContext<ProductFormRequest>()
 
   const {
     fields: optionFields,
@@ -74,9 +74,7 @@ export function ProductVariantsSection() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
   useEffect(() => {
-    const parsed: Array<{ name: string; values: string[] }> =
-      JSON.parse(optionsKey)
-    const combinations = computeCartesianProduct(parsed)
+    const combinations = computeCartesianProduct(variantOptions)
 
     const currentVariants = variants
     const updatedVariants = combinations.map((combination) => {
@@ -153,14 +151,6 @@ export function ProductVariantsSection() {
                 </Button>
               </div>
             ))}
-
-            <button
-              className="text-primary text-sm hover:underline"
-              onClick={addOption}
-              type="button"
-            >
-              + {tActions("addMore")}
-            </button>
           </div>
         )}
 

@@ -24,14 +24,14 @@ import { PlusIcon, TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
 import { useProductSelectOptions } from "../provider/product-hook"
-import type { CreateProductRequest } from "../schema/action"
+import type { ProductFormRequest } from "../schema/action"
 
 export function ProductMoreOptionsSection() {
   const productOptions = useProductSelectOptions()
   const t = useTranslations("products")
   const tActions = useTranslations("actions")
   const { control, register, watch, setValue } =
-    useFormContext<CreateProductRequest>()
+    useFormContext<ProductFormRequest>()
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -132,16 +132,6 @@ export function ProductMoreOptionsSection() {
                   </div>
                 )
               })}
-
-              <button
-                className="text-primary text-sm hover:underline"
-                onClick={() =>
-                  append({ name: "", maxSelections: 1, addonProductIds: [] })
-                }
-                type="button"
-              >
-                + {tActions("addMore")}
-              </button>
             </div>
           )}
         </CardContent>
@@ -153,7 +143,7 @@ export function ProductMoreOptionsSection() {
           <CardTitle className="text-base">{t("sections.tags")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <TagsInputField<CreateProductRequest>
+          <TagsInputField<ProductFormRequest>
             className="[&>label]:hidden"
             name="tags"
             placeholder={t("sections.tags")}

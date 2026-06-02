@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const createProductRequest = z.object({
+export const productFormRequest = z.object({
   name: z.string().trim().min(1).max(255).default(""),
   shortDescription: z.string().nullish().default(""),
   longDescription: z.string().max(840).nullish().default(""),
@@ -11,12 +11,6 @@ export const createProductRequest = z.object({
   inventoryPolicy: z.enum(["dont_track", "track"]).default("dont_track"),
   inventoryQuantity: z.coerce.number().int().min(0).default(0),
   allowOutOfStockPurchase: z.boolean().default(false),
-  image: z
-    .object({
-      url: z.string().default(""),
-      mode: z.enum(["link", "file"]).default("file"),
-    })
-    .default({ url: "", mode: "file" }),
   images: z
     .array(
       z.object({
@@ -63,14 +57,16 @@ export const createProductRequest = z.object({
   isAddonOnly: z.boolean().default(false),
 })
 
-export type CreateProductRequest = z.infer<typeof createProductRequest>
+export type ProductFormRequest = z.infer<typeof productFormRequest>
+
+export const toggleProductActiveRequest = z.object({ isActive: z.boolean() })
 
 export type ProductInsertData = Omit<
-  CreateProductRequest,
+  ProductFormRequest,
   "variantOptions" | "variants" | "addons"
 > & { workspaceId: string }
 
 export type VariantOptionInsertData =
-  CreateProductRequest["variantOptions"][number]
-export type VariantInsertData = CreateProductRequest["variants"][number]
-export type AddonInsertData = CreateProductRequest["addons"][number]
+  ProductFormRequest["variantOptions"][number]
+export type VariantInsertData = ProductFormRequest["variants"][number]
+export type AddonInsertData = ProductFormRequest["addons"][number]

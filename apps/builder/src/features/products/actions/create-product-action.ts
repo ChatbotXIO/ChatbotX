@@ -6,10 +6,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type CreateProductRequest,
-  createProductRequest,
-} from "../schema/action"
+import { type ProductFormRequest, productFormRequest } from "../schema/action"
 import {
   productAddonService,
   productService,
@@ -19,19 +16,19 @@ import {
 
 export const createProductAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(createProductRequest)
+  .inputSchema(productFormRequest)
   .action(
     async ({
       bindArgsParsedInputs: [workspaceId],
       parsedInput,
     }: {
       bindArgsParsedInputs: WorkspaceIdRequestParams
-      parsedInput: CreateProductRequest
+      parsedInput: ProductFormRequest
     }) => await createProduct({ workspaceId, ...parsedInput }),
   )
 
 export const createProduct = async (
-  input: CreateProductRequest & { workspaceId: string },
+  input: ProductFormRequest & { workspaceId: string },
 ) => {
   const { variantOptions, variants, addons, ...productData } = input
 

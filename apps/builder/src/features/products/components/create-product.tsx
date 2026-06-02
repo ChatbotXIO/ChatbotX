@@ -8,10 +8,7 @@ import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 import { createProductAction } from "../actions/create-product-action"
 import { ProductStoreProvider } from "../provider/product-store-context"
-import {
-  type CreateProductRequest,
-  createProductRequest,
-} from "../schema/action"
+import { type ProductFormRequest, productFormRequest } from "../schema/action"
 import { ProductForm } from "./product-form"
 
 type CreateProductProps = {
@@ -24,10 +21,10 @@ export function CreateProduct({ workspaceId }: CreateProductProps) {
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     createProductAction.bind(null, workspaceId),
-    zodResolver(createProductRequest),
+    zodResolver(productFormRequest),
     {
       formProps: {
-        defaultValues: createProductRequest.parse({}),
+        defaultValues: productFormRequest.parse({}),
       },
       actionProps: {
         onSuccess: () => {
@@ -49,7 +46,7 @@ export function CreateProduct({ workspaceId }: CreateProductProps) {
   return (
     <ProductStoreProvider workspaceId={workspaceId}>
       <ProductForm
-        form={form as UseFormReturn<CreateProductRequest>}
+        form={form as UseFormReturn<ProductFormRequest>}
         handleSubmitWithAction={handleSubmitWithAction}
         workspaceId={workspaceId}
       />

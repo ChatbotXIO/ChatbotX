@@ -8,20 +8,17 @@ import type { UseFormReturn } from "react-hook-form"
 import { toast } from "sonner"
 import { updateProductAction } from "../actions/update-product-action"
 import { ProductStoreProvider } from "../provider/product-store-context"
-import {
-  type CreateProductRequest,
-  createProductRequest,
-} from "../schema/action"
-import type { ProductResource } from "../schema/resource"
+import { type ProductFormRequest, productFormRequest } from "../schema/action"
+import type { ProductDetailResource } from "../schema/resource"
 import { ProductForm } from "./product-form"
 
 type EditProductProps = {
   workspaceId: string
-  product: ProductResource
+  product: ProductDetailResource
 }
 
-function buildDefaultValues(product: ProductResource) {
-  const defaults = createProductRequest.parse({})
+function buildDefaultValues(product: ProductDetailResource) {
+  const defaults = productFormRequest.parse({})
   const { id, workspaceId, ...rest } = product
   return { ...defaults, ...rest }
 }
@@ -32,7 +29,7 @@ export function EditProduct({ workspaceId, product }: EditProductProps) {
 
   const { form, handleSubmitWithAction } = useHookFormAction(
     updateProductAction.bind(null, workspaceId, product.id),
-    zodResolver(createProductRequest),
+    zodResolver(productFormRequest),
     {
       formProps: {
         defaultValues: buildDefaultValues(product),
@@ -57,7 +54,7 @@ export function EditProduct({ workspaceId, product }: EditProductProps) {
   return (
     <ProductStoreProvider workspaceId={workspaceId}>
       <ProductForm
-        form={form as UseFormReturn<CreateProductRequest>}
+        form={form as UseFormReturn<ProductFormRequest>}
         handleSubmitWithAction={handleSubmitWithAction}
         isEdit
         workspaceId={workspaceId}
