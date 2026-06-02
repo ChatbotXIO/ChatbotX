@@ -24,7 +24,6 @@ import type {
 } from "@chatbotx.io/integration-messenger/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationMessenger } from "../queries"
@@ -113,8 +112,6 @@ export const updateMessenger = async (
           data: profileParams,
         })
       }
-
-      revalidateCacheTags([`workspaces:${ctx.workspace.id}#messenger`])
     })
   } catch (error) {
     logger.debug(error, "Failed to update Facebook page")

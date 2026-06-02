@@ -1,14 +1,9 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { inboxTeamModel } from "@chatbotx.io/database/schema"
+import { inboxTeamService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type UpdateInboxTeamRequest,
-  updateInboxTeamRequest,
-} from "../schema/action"
+import { updateInboxTeamRequest } from "../schema/action"
 
 export const updateInboxTeamAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -19,26 +14,8 @@ export const updateInboxTeamAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await updateInboxTeam({ workspaceId, inboxTeamId }, parsedInput)
+    return await inboxTeamService.update(
+      { workspaceId, inboxTeamId },
+      parsedInput,
+    )
   })
-
-export const updateInboxTeam = async (
-  ctx: { workspaceId: string; inboxTeamId: string },
-  parsedInput: UpdateInboxTeamRequest,
-) => {
-  const inboxTeam = await findOrFail({
-    table: inboxTeamModel,
-    where: {
-      id: ctx.inboxTeamId,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "Inbox team not found",
-  })
-
-  await db
-    .update(inboxTeamModel)
-    .set(parsedInput)
-    .where(eq(inboxTeamModel.id, inboxTeam.id))
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#inboxTeams`)
-}

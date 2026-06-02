@@ -6,7 +6,6 @@ import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { exchangeLongLivedToken } from "@chatbotx.io/integration-messenger/apis/page"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -51,8 +50,6 @@ const refreshMessengerPermissions = async (ctx: {
       .update(integrationMessengerModel)
       .set({ auth: updatedAuth })
       .where(eq(integrationMessengerModel.id, ctx.id))
-
-    revalidateCacheTags([`workspaces:${ctx.workspaceId}#messenger`])
   } catch (error) {
     logger.error(error, "Failed to refresh Messenger token")
     throw new ChatbotXException("Failed to refresh Messenger token")

@@ -1,14 +1,12 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const blockContactAction = workspaceActionClient
@@ -25,28 +23,7 @@ export const blockContact = async (ctx: {
   workspaceId: string
   id: string
 }) => {
-  const existingContact = await findOrFail({
-    table: contactModel,
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
-    },
-    message: "Contact not found",
-  })
-
-  const contact = await db
-    .update(contactModel)
-    .set({
-      blockedAt: new Date(),
-    })
-    .where(eq(contactModel.id, existingContact.id))
-    .returning()
-    .then((result) => result[0])
-
-  revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#contacts`,
-    `workspaces:${ctx.workspaceId}#conversations`,
-  ])
+  const contact = await contactService.block(ctx)
 
   emit("analytics:dashboard", {
     eventType: "contact:blocked",

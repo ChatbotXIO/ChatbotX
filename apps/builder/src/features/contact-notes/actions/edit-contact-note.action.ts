@@ -1,9 +1,9 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
+import { contactNoteModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactNoteRequest,
@@ -29,13 +29,9 @@ export const editContactNote = async (
   },
   parsedInput: UpdateContactNoteRequest,
 ) => {
-  const contact = await findOrFail({
-    table: contactModel,
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
-    },
-    message: "Contact not found",
+  const contact = await contactService.findByIdOrFail({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
   })
 
   const foundContactNote = await findOrFail({
@@ -56,6 +52,5 @@ export const editContactNote = async (
     .returning()
     .then((result) => result[0])
 
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#contacts`)
   return updatedContactNote
 }

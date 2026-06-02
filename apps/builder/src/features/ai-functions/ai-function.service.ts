@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import {
   type DatabaseClient,
   db,
@@ -22,12 +23,65 @@ type FindByProps = {
   }>
 }
 
+type TranslationFn = (
+  key: string,
+  params?: Record<string, string | number | Date>,
+) => string
+
 class AiFunctionService extends BaseService {
   async findBy(props: FindByProps): Promise<AIFunctionModel | undefined> {
     const { tx = db, where } = props
     return await tx.query.aiFunctionModel.findFirst({
       where,
     })
+  }
+
+  async isNameTaken(
+    workspaceId: string,
+    name: string,
+    excludeId?: string,
+  ): Promise<boolean> {
+    const existing = await this.findBy({ where: { workspaceId, name } })
+    return existing ? existing.id !== excludeId : false
+  }
+
+  async deleteAIFunction(
+    ctx: { workspaceId: string; aiFunctionId: string },
+    t: TranslationFn,
+  ): Promise<void> {
+    const aiFunction = await this.findBy({
+      where: { id: ctx.aiFunctionId, workspaceId: ctx.workspaceId },
+    })
+
+    if (!aiFunction) {
+      throw notFoundException(
+        t("messages.featureNotFound", {
+          feature: t("fields.aiFunction.label"),
+        }),
+      )
+    }
+
+    await this.delete(ctx.aiFunctionId)
+  }
+
+  async updateAIFunction(
+    ctx: { workspaceId: string; id: string },
+    data: UpdateAIFunctionRequest,
+    t: TranslationFn,
+  ): Promise<void> {
+    const aiFunction = await this.findBy({
+      where: { id: ctx.id, workspaceId: ctx.workspaceId },
+    })
+
+    if (!aiFunction) {
+      throw notFoundException(
+        t("messages.featureNotFound", {
+          feature: t("fields.aiFunction.label"),
+        }),
+      )
+    }
+
+    await this.update(ctx.id, data)
   }
 
   async create(

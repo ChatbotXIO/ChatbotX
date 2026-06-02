@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteTagAction = workspaceActionClient
@@ -38,8 +37,6 @@ export const deleteTags = async ({
     .where(
       and(eq(tagModel.workspaceId, workspaceId), inArray(tagModel.id, ids)),
     )
-
-  revalidateCacheTags(`workspaces:${workspaceId}#tags`)
 }
 
 export const deleteTag = async ({
@@ -59,6 +56,4 @@ export const deleteTag = async ({
   })
 
   await db.delete(tagModel).where(eq(tagModel.id, tag.id))
-
-  revalidateCacheTags(`workspaces:${workspaceId}#tags`)
 }

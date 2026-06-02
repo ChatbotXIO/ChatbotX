@@ -3,7 +3,6 @@
 import { and, db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { sequenceModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteSequenceAction = workspaceActionClient
@@ -30,6 +29,4 @@ export const deleteSequence = async (ctx: {
   })
 
   await db.delete(sequenceModel).where(and(eq(sequenceModel.id, ctx.id)))
-
-  revalidateCacheTags([`workspaces:${ctx.workspaceId}#sequences`])
 }

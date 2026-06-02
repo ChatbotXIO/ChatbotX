@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteMagicLinksAction = workspaceActionClient
@@ -30,7 +29,5 @@ export const deleteMagicLinksAction = workspaceActionClient
             inArray(magicLinkModel.id, parsedInput.ids),
           ),
         )
-
-      revalidateCacheTags(`workspaces:${workspaceId}#magic-links`)
     },
   )

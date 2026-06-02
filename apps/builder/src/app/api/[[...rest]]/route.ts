@@ -24,7 +24,7 @@ const openAPIHandler = new OpenAPIHandler(router, {
         security: [
           { bearerAuth: [] },
           { developerAccessToken: [] },
-          { apiKeyInUrl: [] },
+          { tokenInSearchParams: [] },
         ],
         components: {
           securitySchemes: {
@@ -36,10 +36,10 @@ const openAPIHandler = new OpenAPIHandler(router, {
               type: "http",
               scheme: "bearer",
             },
-            apiKeyInUrl: {
+            tokenInSearchParams: {
               type: "apiKey",
               in: "query",
-              name: "api_key",
+              name: "token",
             },
           },
         },

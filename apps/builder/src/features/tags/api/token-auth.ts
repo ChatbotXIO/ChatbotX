@@ -1,4 +1,4 @@
-import { notFoundException } from "@chatbotx.io/business/errors"
+import { tagService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
@@ -11,7 +11,7 @@ import { workspaceTokenAuthAPI } from "@/orpc"
 import { createTag } from "../actions/create-tag-action"
 import { deleteTag } from "../actions/delete-tag-action"
 import { updateTag } from "../actions/update-tag-action"
-import { findTag, listTags } from "../queries"
+import { listTags } from "../queries"
 import { createTagRequest } from "../schema/action"
 import { publicListTagsResponse } from "../schema/query"
 import { publicTagResource, tagResource } from "../schema/resource"
@@ -66,18 +66,13 @@ const findTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .input(z.object({ key: z.string() }))
   .output(tagResource.pick({ id: true, name: true }))
   .errors(possibleErrorsOnFindingResource)
-  .handler(async ({ context, input }) => {
-    const tag = await findTag({
-      ...input,
-      workspaceId: context.workspace.id,
-    })
-
-    if (!tag) {
-      throw notFoundException("Tag not found")
-    }
-
-    return tag
-  })
+  .handler(
+    async ({ context, input }) =>
+      await tagService.findByKeyOrFail({
+        key: input.key,
+        workspaceId: context.workspace.id,
+      }),
+  )
 
 const updateTagWorkspaceTokenAPI = workspaceTokenAuthAPI
   .route({

@@ -9,7 +9,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { recalculateAllContactsInSequence } from "@/features/contact-sequences/utils/calculate-next-run-at"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 const deleteSequenceStepRequest = z.object({
@@ -70,8 +69,6 @@ export const deleteSequenceStepAction = workspaceActionClient
       await validateSequenceOwnership(sequenceId, workspaceId)
       await deleteStep(stepId, workspaceId)
       await recalculateAllContactsInSequence(sequenceId, workspaceId)
-
-      revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
       return { success: true }
     },

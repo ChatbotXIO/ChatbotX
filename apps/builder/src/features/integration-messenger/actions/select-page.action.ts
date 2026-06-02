@@ -24,7 +24,6 @@ import {
   getBrandingUrl,
 } from "@/features/integration-webchat/lib"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
 import { type SelectPageRequest, selectPageRequest } from "../schema/action"
@@ -177,11 +176,6 @@ export const selectPageAction = authActionClient
             ctx: brandingCtx,
           })
         }
-
-        revalidateCacheTags([
-          `workspaces:${workspaceId}#messenger`,
-          `workspaces:${workspaceId}#inboxes`,
-        ])
 
         return {
           workspaceId,

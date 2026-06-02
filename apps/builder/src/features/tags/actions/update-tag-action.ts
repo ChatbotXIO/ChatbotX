@@ -7,7 +7,6 @@ import {
   type WorkspaceIdAndIdRequestParams,
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type UpdateTagSchema, updateTagSchema } from "../schema/action"
 
@@ -63,8 +62,6 @@ export const updateTag = async ({
     .where(eq(tagModel.id, id))
     .returning()
     .then((result) => result[0])
-
-  revalidateCacheTags(`workspaces:${workspaceId}#tags`)
 
   return updatedTag
 }

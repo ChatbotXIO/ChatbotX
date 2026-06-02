@@ -1,5 +1,6 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
@@ -12,7 +13,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactCustomFieldRequest,
@@ -41,16 +41,9 @@ export const addContactCustomFields = async ({
   bindArgsParsedInputs: WorkspaceIdRequestParams
   parsedInput: AddContactCustomFieldRequest
 }) => {
-  const contacts = await db.query.contactModel.findMany({
-    where: {
-      workspaceId,
-      id: {
-        in: parsedInput.ids,
-      },
-    },
-    columns: {
-      id: true,
-    },
+  const contacts = await contactService.findManyByIds({
+    workspaceId,
+    ids: parsedInput.ids,
   })
   if (contacts.length === 0) {
     return
@@ -127,8 +120,6 @@ export const addContactCustomFields = async ({
       parsedInput.value,
     )
   }
-
-  revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }
 
 export const setContactCustomFieldValue = async ({
@@ -189,8 +180,6 @@ export const setContactCustomFieldValue = async ({
     null,
     value,
   )
-
-  revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
 }
 
 export const setContactCustomFieldValues = async ({
@@ -202,75 +191,62 @@ export const setContactCustomFieldValues = async ({
   contactId: string
   fields: Array<{ customFieldId: string; value: string }>
 }) => {
-  try {
-    const customFieldIds = fields.map((f) => f.customFieldId)
+  const customFieldIds = fields.map((f) => f.customFieldId)
 
-    const customFields = await db.query.customFieldModel.findMany({
-      where: { workspaceId, id: { in: customFieldIds } },
-      columns: { id: true, name: true },
-    })
+  const customFields = await db.query.customFieldModel.findMany({
+    where: { workspaceId, id: { in: customFieldIds } },
+    columns: { id: true, name: true },
+  })
 
-    if (customFields.length === 0) {
-      return
-    }
+  if (customFields.length === 0) {
+    return
+  }
 
-    const existingValues = await db.query.contactCustomFieldModel.findMany({
-      where: {
-        contactId,
-        customFieldId: { in: customFieldIds },
-      },
-    })
+  const existingValues = await db.query.contactCustomFieldModel.findMany({
+    where: { contactId, customFieldId: { in: customFieldIds } },
+  })
 
-    await db.transaction(async (tx) => {
-      const matchedFields = customFields.flatMap((customField) => {
-        const field = fields.find((f) => f.customFieldId === customField.id)
-        return field ? [{ customField, field }] : []
-      })
-
-      await Promise.all(
-        matchedFields.map(({ customField, field }) => {
-          const existing = existingValues.find(
-            (v) => v.customFieldId === customField.id,
-          )
-
-          if (existing) {
-            return tx
-              .update(contactCustomFieldModel)
-              .set({ value: field.value })
-              .where(eq(contactCustomFieldModel.id, existing.id))
-          }
-
-          return tx.insert(contactCustomFieldModel).values({
-            id: createId(),
-            contactId,
-            customFieldId: customField.id,
-            value: field.value,
-          })
-        }),
-      )
-    })
-
-    for (const customField of customFields) {
+  await db.transaction(async (tx) => {
+    const matchedFields = customFields.flatMap((customField) => {
       const field = fields.find((f) => f.customFieldId === customField.id)
-      if (!field) {
-        continue
-      }
-      try {
-        await emitCustomFieldChanged(
-          workspaceId,
-          contactId,
-          customField.id,
-          customField.name,
-          null,
-          field.value,
-        )
-      } catch (error) {
-        console.error("Failed to emit customFieldChanged event:", error)
-      }
-    }
+      return field ? [{ customField, field }] : []
+    })
 
-    revalidateCacheTags(`workspaces:${workspaceId}#contacts`)
-  } catch (error) {
-    console.error("[setContactCustomFieldValues] Error:", error)
+    await Promise.all(
+      matchedFields.map(({ customField, field }) => {
+        const existing = existingValues.find(
+          (v) => v.customFieldId === customField.id,
+        )
+
+        if (existing) {
+          return tx
+            .update(contactCustomFieldModel)
+            .set({ value: field.value })
+            .where(eq(contactCustomFieldModel.id, existing.id))
+        }
+
+        return tx.insert(contactCustomFieldModel).values({
+          id: createId(),
+          contactId,
+          customFieldId: customField.id,
+          value: field.value,
+        })
+      }),
+    )
+  })
+
+  for (const customField of customFields) {
+    const field = fields.find((f) => f.customFieldId === customField.id)
+    if (!field) {
+      continue
+    }
+    emitCustomFieldChanged(
+      workspaceId,
+      contactId,
+      customField.id,
+      customField.name,
+      null,
+      field.value,
+    )
   }
 }

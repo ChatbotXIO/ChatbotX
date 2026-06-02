@@ -12,7 +12,6 @@ import {
 } from "@chatbotx.io/integration-messenger"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const disconnectMessengerAction = workspaceActionClient
@@ -58,9 +57,4 @@ const disconnectMessenger = async (ctx: {
       .set({ status: inboxStatuses.enum.disconnected })
       .where(eq(inboxModel.id, integrationMessenger.inboxId))
   })
-
-  revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#messenger`,
-    `workspaces:${ctx.workspaceId}#inboxes`,
-  ])
 }

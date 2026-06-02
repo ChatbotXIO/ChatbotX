@@ -16,7 +16,6 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -108,11 +107,6 @@ export const connectTelegramAction = authActionClient
             botToken,
             webhookUrl,
           })
-
-          revalidateCacheTags([
-            `workspaces:${workspaceId}#telegrams`,
-            `workspaces:${workspaceId}#inboxes`,
-          ])
 
           return { workspaceId }
         })

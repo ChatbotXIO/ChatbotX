@@ -1,5 +1,6 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { contactsToTagsModel } from "@chatbotx.io/database/schema"
 import { emitTagRemoved } from "@chatbotx.io/events"
@@ -7,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type RemoveContactTagsRequest,
@@ -39,16 +39,9 @@ export const removeContactTags = async ({
   workspaceId: string
   parsedInput: RemoveContactTagsRequest
 }) => {
-  const contacts = await db.query.contactModel.findMany({
-    where: {
-      workspaceId,
-      id: {
-        in: parsedInput.ids,
-      },
-    },
-    columns: {
-      id: true,
-    },
+  const contacts = await contactService.findManyByIds({
+    workspaceId,
+    ids: parsedInput.ids,
   })
 
   if (contacts.length === 0) {
@@ -93,10 +86,4 @@ export const removeContactTags = async ({
       await emitTagRemoved(workspaceId, contact.id, tag.id)
     }
   }
-
-  revalidateCacheTags([
-    `workspaces:${workspaceId}#contacts`,
-    `workspaces:${workspaceId}#conversations`,
-    `workspaces:${workspaceId}#tags`,
-  ])
 }

@@ -9,7 +9,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSequenceRequest,
@@ -38,8 +37,6 @@ export const createSequenceAction = workspaceActionClient
           name: parsedInput.name,
           folderId: parsedInput.folderId || null,
         })
-
-        revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
         return { sequenceId }
       } catch (error) {

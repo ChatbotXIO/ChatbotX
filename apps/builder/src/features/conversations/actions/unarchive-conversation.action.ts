@@ -9,7 +9,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -71,7 +70,5 @@ export const unarchiveConversationAction = workspaceActionClient
           })
         }
       }
-
-      revalidateCacheTags(`workspaces:${workspaceId}#conversations`)
     },
   )

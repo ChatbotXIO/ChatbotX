@@ -3,7 +3,6 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { flowModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type UpdateFlowSchema, updateFlowSchema } from "../schemas/action"
 
@@ -36,6 +35,4 @@ const updateFlow = async (
   })
 
   await db.update(flowModel).set(parsedInput).where(eq(flowModel.id, flow.id))
-
-  revalidateCacheTags(`workspaces:${flow.workspaceId}#flows`)
 }

@@ -4,7 +4,6 @@ import { inboxService, workspaceService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { integrationWebchatModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 import { createWebchatRequest } from "../schema/mutation"
 
@@ -57,8 +56,6 @@ export const createWebchatAction = authActionClient
         auth: {},
       })
     })
-
-    revalidateCacheTags(`workspaces:${workspaceId}#webchats`)
 
     return {
       workspaceId,

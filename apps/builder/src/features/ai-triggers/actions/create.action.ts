@@ -5,7 +5,6 @@ import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { createAITriggerRequest } from "@/features/ai-triggers/schemas/action"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const createAITriggerAction = workspaceActionClient
@@ -22,6 +21,4 @@ export const createAITriggerAction = workspaceActionClient
       workspaceId,
       id: createId(),
     })
-
-    revalidateCacheTags(`workspaces:${workspaceId}#aiTriggers`)
   })

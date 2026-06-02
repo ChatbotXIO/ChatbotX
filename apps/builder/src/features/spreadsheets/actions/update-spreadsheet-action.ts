@@ -3,7 +3,6 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { spreadsheetModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateSpreadsheetRequest,
@@ -57,6 +56,4 @@ export const updateSpreadsheet = async (
       spreadsheetId,
     })
     .where(eq(spreadsheetModel.id, spreadsheet.id))
-
-  revalidateCacheTags(`workspaces:${spreadsheet.workspaceId}#spreadsheets`)
 }

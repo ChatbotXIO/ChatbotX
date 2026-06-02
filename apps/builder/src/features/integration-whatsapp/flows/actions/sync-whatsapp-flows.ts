@@ -9,7 +9,6 @@ import {
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { integrations } from "@/integration"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const syncWhatsappFlowsAction = workspaceActionClient
@@ -97,6 +96,4 @@ export const syncWhatsappFlowsAction = workspaceActionClient
         }
       }
     })
-
-    revalidateCacheTags(`workspaces:${workspaceId}#whatsapp#flows`)
   })

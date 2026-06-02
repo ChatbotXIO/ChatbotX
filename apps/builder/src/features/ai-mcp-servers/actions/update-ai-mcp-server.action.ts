@@ -4,7 +4,6 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { aiMcpServerService } from "../ai-mcp-server.service"
 import {
@@ -61,6 +60,4 @@ export const updateAIMcpServer = async (
   }
 
   await aiMcpServerService.update(mcpServer.id, parsedInput)
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiMcpServers`)
 }

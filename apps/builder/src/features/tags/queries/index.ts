@@ -5,14 +5,13 @@ import {
   parseOrderByAsObject,
   parsePagination,
 } from "@chatbotx.io/database/utils"
+import { isNumericId } from "@chatbotx.io/utils"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   FindTagRequest,
   ListTagsRequest,
   ListTagsResponse,
 } from "../schema/query"
-
-const TAG_ID_REGEX = /^\d+$/
 
 export const listTagsRSC = async (
   input: ListTagsRequest & { workspaceId: string },
@@ -66,15 +65,18 @@ export async function listTags(
 
 export const findTag = async (input: FindTagRequest) => {
   const { folderId, workspaceId } = input
-  const isNumber = TAG_ID_REGEX.test(input.key)
-  const key = isNumber ? "id" : "name"
+  const folderWhere = folderId === null ? { isNull: true as const } : folderId
+
+  if (isNumericId(input.key)) {
+    const byId = await db.query.tagModel.findFirst({
+      where: { id: input.key, folderId: folderWhere, workspaceId },
+    })
+    if (byId) {
+      return byId
+    }
+  }
+
   return await db.query.tagModel.findFirst({
-    where: {
-      ...{
-        [key]: input.key,
-      },
-      folderId: folderId === null ? { isNull: true as const } : folderId,
-      workspaceId,
-    },
+    where: { name: input.key, folderId: folderWhere, workspaceId },
   })
 }

@@ -34,7 +34,6 @@ import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { AuthType } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { getOriginUrlFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
 import { authActionClient } from "@/lib/safe-action"
@@ -447,8 +446,6 @@ export const connectWhatsappAction = authActionClient
         if (isManual) {
           await subscribeManualWebhook(auth, integrationId)
         }
-
-        revalidateCacheTags(`users:${ctx.user.id}#workspaceMembers`)
 
         return buildResult({
           isManual,

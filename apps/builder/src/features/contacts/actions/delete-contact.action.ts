@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, inArray } from "@chatbotx.io/database/client"
-import { contactModel } from "@chatbotx.io/database/schema"
+import { contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import {
   type BulkUpdateIdsRequest,
@@ -9,36 +8,15 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteContact = async (ctx: {
   workspaceId: string
   ids: string[]
 }) => {
-  const contacts = await db.query.contactModel.findMany({
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: {
-        in: ctx.ids,
-      },
-    },
-    with: {
-      contactInboxes: true,
-    },
-  })
-
-  await db.delete(contactModel).where(
-    and(
-      inArray(
-        contactModel.id,
-        contacts.map((c) => c.id),
-      ),
-    ),
-  )
+  const contacts = await contactService.delete(ctx)
 
   const occurredAt = new Date()
-
   for (const contact of contacts) {
     for (const contactInbox of contact.contactInboxes) {
       emit("analytics:dashboard", {
@@ -64,8 +42,6 @@ export const deleteContact = async (ctx: {
       })
     }
   }
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#contacts`)
 }
 
 export const deleteContactAction = workspaceActionClient

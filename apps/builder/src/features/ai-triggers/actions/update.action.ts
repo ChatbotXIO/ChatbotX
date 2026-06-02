@@ -7,7 +7,6 @@ import {
   type UpdateAITriggerRequest,
   updateAITriggerRequest,
 } from "@/features/ai-triggers/schemas/action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const updateAITriggerAction = workspaceActionClient
@@ -39,6 +38,4 @@ export const updateAITrigger = async (
     .update(aiTriggerModel)
     .set(parsedInput)
     .where(eq(aiTriggerModel.id, aiTrigger.id))
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiTriggers`)
 }

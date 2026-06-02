@@ -4,7 +4,6 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { aiEmbeddingModel, aiFileModel } from "@chatbotx.io/database/schema"
 import { uploader } from "@chatbotx.io/filesystem"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -37,8 +36,6 @@ export const deleteAIFile = async (ctx: {
       await tx.delete(aiEmbeddingModel).where(eq(aiEmbeddingModel.id, ctx.id))
       await tx.delete(aiFileModel).where(eq(aiFileModel.id, ctx.id))
     })
-
-    revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiFiles`)
   } catch (error) {
     logger.warn(error, `deleteAIFileAction failed for id: ${ctx.id}`)
   }

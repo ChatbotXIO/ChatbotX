@@ -13,7 +13,6 @@ import {
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
 
 export const disconnectWhatsappAction = authActionClient
@@ -53,7 +52,5 @@ export const disconnectWhatsappAction = authActionClient
           .set({ status: inboxStatuses.enum.disconnected })
           .where(eq(inboxModel.id, integrationWhatsapp.inboxId))
       })
-
-      revalidateCacheTags(`workspaces:${workspaceId}#inboxes`)
     },
   )

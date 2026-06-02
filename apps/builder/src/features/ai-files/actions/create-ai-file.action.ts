@@ -5,7 +5,6 @@ import { aiFileModel } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 import { AIJobAction, aiAgentQueue } from "@chatbotx.io/worker-config"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { createAIFileRequest } from "../schemas"
 
@@ -31,6 +30,4 @@ export const createAIFileAction = workspaceActionClient
         aiFileId: created[0].id,
       },
     })
-
-    revalidateCacheTags(`workspaces:${workspaceId}#aiFiles`)
   })

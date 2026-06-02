@@ -7,7 +7,6 @@ import {
   flowVersionModel,
 } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const duplicateFlowAction = workspaceActionClient
@@ -62,6 +61,4 @@ export const duplicateFlow = async (ctx: {
       startNodeId: draftVersion.startNodeId,
     })
   })
-
-  revalidateCacheTags(`workspaces:${flow.workspaceId}#flows`)
 }

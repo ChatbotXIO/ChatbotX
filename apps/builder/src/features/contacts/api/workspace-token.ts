@@ -1,3 +1,4 @@
+import { contactCustomFieldService, tagService } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { db } from "@chatbotx.io/database/client"
 import { zodBigintAsString } from "@chatbotx.io/utils"
@@ -6,21 +7,10 @@ import { createMessage } from "@/features/messages/actions/create-message.servic
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import { publicListTagsResponse } from "@/features/tags/schema/query"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import {
-  setContactCustomFieldValue,
-  setContactCustomFieldValues,
-} from "../actions/add-contact-custom-field.action"
-import {
-  attachContactTags,
-  detachContactTags,
-} from "../actions/add-contact-tag.action"
+import { setContactCustomFieldValue } from "../actions/add-contact-custom-field.action"
 import { blockContact } from "../actions/block-contact.action"
 import { createContact } from "../actions/create-contact.action"
 import { deleteContact } from "../actions/delete-contact.action"
-import {
-  deleteContactCustomFields,
-  deleteContactCustomFieldsByFields,
-} from "../actions/delete-contact-custom-field.action"
 import { unblockContact } from "../actions/unblock-contact.action"
 import {
   findContactCustomField,
@@ -34,8 +24,6 @@ import {
 } from "../queries/public-find-contact"
 import { createContactRequest } from "../schemas/action"
 import {
-  deleteBulkContactCustomFieldsRequest,
-  deleteContactCustomFieldRequest,
   listPublicContactCustomFieldsResponse,
   publicContactCustomFieldResource,
   setBulkContactCustomFieldsRequest,
@@ -81,11 +69,9 @@ export const workspaceTokenAuthAPIs = {
         id: input.contactId,
         workspaceId: context.workspace.id,
       })
-
       if (!contact) {
         throw notFoundException("Contact not found")
       }
-
       return contact
     }),
 
@@ -103,7 +89,6 @@ export const workspaceTokenAuthAPIs = {
         workspaceId: context.workspace.id,
         parsedInput: input,
       })
-
       const newContact = await publicFindContact({ id: contact.id })
       if (!newContact) {
         throw notFoundException("Contact not found")
@@ -139,13 +124,13 @@ export const workspaceTokenAuthAPIs = {
     })
     .input(z.object({ contactId: zodBigintAsString() }))
     .output(publicListTagsResponse)
-    .handler(async ({ context, input }) => {
-      const { contactId } = input
-      return await listContactTags({
-        workspaceId: context.workspace.id,
-        contactId,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listContactTags({
+          workspaceId: context.workspace.id,
+          contactId: input.contactId,
+        }),
+    ),
 
   addContactTagsWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
@@ -162,7 +147,7 @@ export const workspaceTokenAuthAPIs = {
       }),
     )
     .handler(async ({ context, input }) => {
-      await attachContactTags({
+      await tagService.attachToContact({
         workspaceId: context.workspace.id,
         contactId: input.contactId,
         tagIds: input.tagIds,
@@ -184,7 +169,7 @@ export const workspaceTokenAuthAPIs = {
       }),
     )
     .handler(async ({ context, input }) => {
-      await detachContactTags({
+      await tagService.detachFromContact({
         workspaceId: context.workspace.id,
         contactId: input.contactId,
         tagIds: input.tagIds,
@@ -200,13 +185,13 @@ export const workspaceTokenAuthAPIs = {
     })
     .input(z.object({ contactId: zodBigintAsString() }))
     .output(listPublicContactCustomFieldsResponse)
-    .handler(async ({ context, input }) => {
-      const { contactId } = input
-      return await listContactCustomFields({
-        workspaceId: context.workspace.id,
-        contactId,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await listContactCustomFields({
+          workspaceId: context.workspace.id,
+          contactId: input.contactId,
+        }),
+    ),
 
   findContactCustomFieldValueWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
@@ -222,16 +207,14 @@ export const workspaceTokenAuthAPIs = {
       }),
     )
     .output(publicContactCustomFieldResource)
-    .handler(async ({ context, input }) => {
-      const { contactId, customFieldId } = input
-      const workspaceId = context.workspace.id
-
-      return await findContactCustomField({
-        contactId,
-        customFieldId,
-        workspaceId,
-      })
-    }),
+    .handler(
+      async ({ context, input }) =>
+        await findContactCustomField({
+          contactId: input.contactId,
+          customFieldId: input.customFieldId,
+          workspaceId: context.workspace.id,
+        }),
+    ),
 
   setContactCustomFieldValueWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
@@ -242,12 +225,9 @@ export const workspaceTokenAuthAPIs = {
     })
     .input(setContactCustomFieldValueRequest)
     .handler(async ({ context, input }) => {
-      const { contactId } = input
-      const workspaceId = context.workspace.id
-
       await setContactCustomFieldValue({
-        workspaceId,
-        contactId,
+        workspaceId: context.workspace.id,
+        contactId: input.contactId,
         customFieldId: input.customFieldId,
         value: input.value,
       })
@@ -263,7 +243,7 @@ export const workspaceTokenAuthAPIs = {
     })
     .input(setBulkContactCustomFieldsRequest)
     .handler(async ({ context, input }) => {
-      await setContactCustomFieldValues({
+      await contactCustomFieldService.setValues({
         workspaceId: context.workspace.id,
         contactId: input.contactId,
         fields: input.fields,
@@ -273,36 +253,22 @@ export const workspaceTokenAuthAPIs = {
   deleteContactCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "DELETE",
-      path: "/v1/contacts/{contactId}/custom-fields/{customFieldId}",
-      summary: "Delete contact custom field",
+      path: "/v1/contacts/{contactId}/custom-fields/{keyword}",
+      summary: "Delete contact custom field by id or name",
       successStatus: 204,
       tags: ["Contacts"],
     })
-    .input(deleteContactCustomFieldRequest)
+    .input(
+      z.object({
+        contactId: zodBigintAsString(),
+        keyword: z.string().min(1),
+      }),
+    )
     .handler(async ({ context, input }) => {
-      const workspaceId = context.workspace.id
-      const { contactId, customFieldId } = input
-      await deleteContactCustomFields({
-        workspaceId,
-        contactIds: [contactId],
-        customFieldId,
-      })
-    }),
-
-  deleteBulkContactCustomFieldsWorkspaceTokenAPI: workspaceTokenAuthAPI
-    .route({
-      method: "DELETE",
-      path: "/v1/contacts/{contactId}/custom-fields",
-      summary: "Delete multiple custom fields from a contact",
-      successStatus: 204,
-      tags: ["Contacts"],
-    })
-    .input(deleteBulkContactCustomFieldsRequest)
-    .handler(async ({ context, input }) => {
-      await deleteContactCustomFieldsByFields({
+      await contactCustomFieldService.deleteByKey({
         workspaceId: context.workspace.id,
         contactId: input.contactId,
-        keys: input.keys,
+        keyword: input.keyword,
       })
     }),
 

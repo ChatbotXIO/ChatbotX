@@ -7,7 +7,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type RemoveContactSequenceRequest,
@@ -63,10 +62,5 @@ export const removeContactSequenceAction = workspaceActionClient
             )
         }
       }
-
-      revalidateCacheTags([
-        `workspaces:${workspaceId}#contacts`,
-        `workspaces:${workspaceId}#sequences`,
-      ])
     },
   )

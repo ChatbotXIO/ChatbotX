@@ -10,7 +10,6 @@ import {
 import { reflinkModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateReflinkRequest,
@@ -55,8 +54,6 @@ export const updateReflink = async (
       .update(reflinkModel)
       .set(parsedInput)
       .where(and(eq(reflinkModel.id, reflink.id)))
-
-    revalidateCacheTags(`workspaces:${ctx.workspaceId}#reflinks`)
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return returnValidationErrors(updateReflinkRequest, {

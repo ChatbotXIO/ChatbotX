@@ -9,7 +9,7 @@ export const workspaceTokenAuthMidddleware = base.middleware(
       ? authHeader.slice(7)
       : null
     const apiKeyToken = context.url
-      ? new URL(context.url).searchParams.get("api_key")
+      ? new URL(context.url).searchParams.get("token")
       : null
     const token = bearerToken ?? apiKeyToken
     if (!token) {

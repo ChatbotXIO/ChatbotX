@@ -1,17 +1,9 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import {
-  inboxTeamMemberModel,
-  inboxTeamModel,
-} from "@chatbotx.io/database/schema"
-import { createId, zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
+import { inboxTeamService } from "@chatbotx.io/business"
+import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type AddInboxTeamMemberRequest,
-  addInboxTeamMemberRequest,
-} from "../schema/action"
+import { addInboxTeamMemberRequest } from "../schema/action"
 
 export const addInboxTeamMemberAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
@@ -22,54 +14,8 @@ export const addInboxTeamMemberAction = workspaceActionClient
       parsedInput,
     } = props
 
-    return await addInboxTeamMember({ workspaceId, inboxTeamId }, parsedInput)
-  })
-
-export const addInboxTeamMember = async (
-  ctx: { workspaceId: string; inboxTeamId: string; userId?: string },
-  parsedInput: AddInboxTeamMemberRequest,
-) => {
-  const inboxTeam = await findOrFail({
-    table: inboxTeamModel,
-    where: {
-      id: ctx.inboxTeamId,
-      workspaceId: ctx.workspaceId,
-    },
-    message: "Inbox team not found",
-  })
-
-  await db.transaction(async (tx) => {
-    const existingMembers = await tx.query.inboxTeamMemberModel.findMany({
-      where: {
-        userId: {
-          in: parsedInput.userIds,
-        },
-        inboxTeamId: inboxTeam.id,
-      },
-      columns: {
-        userId: true,
-      },
-    })
-
-    const existingUserIds = new Set(
-      existingMembers.map((member) => member.userId),
+    return await inboxTeamService.addMembers(
+      { workspaceId, inboxTeamId },
+      parsedInput.userIds,
     )
-
-    const newUserIds = parsedInput.userIds.filter(
-      (userId) => !existingUserIds.has(userId),
-    )
-
-    if (newUserIds.length > 0) {
-      await tx.insert(inboxTeamMemberModel).values(
-        newUserIds.map((userId) => ({
-          id: createId(),
-          userId,
-          workspaceId: ctx.workspaceId,
-          inboxTeamId: ctx.inboxTeamId,
-        })),
-      )
-    }
   })
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#inboxTeams`)
-}

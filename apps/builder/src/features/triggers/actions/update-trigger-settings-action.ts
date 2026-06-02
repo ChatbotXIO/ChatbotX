@@ -4,7 +4,6 @@ import { db, eq } from "@chatbotx.io/database/client"
 import { triggerModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 const updateTriggerSettingsSchema = z.object({
@@ -54,6 +53,4 @@ export const updateTriggerSettings = async (
     .update(triggerModel)
     .set(parsedInput)
     .where(eq(triggerModel.id, trigger.id))
-
-  revalidateCacheTags(`workspaces:${trigger.workspaceId}#triggers`)
 }

@@ -1,23 +1,19 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import {
   and,
   type DatabaseClient,
   db,
   eq,
-  findOrFail,
   inArray,
 } from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  contactsOnSequenceModel,
-} from "@chatbotx.io/database/schema"
+import { contactsOnSequenceModel } from "@chatbotx.io/database/schema"
 import {
   cancelPendingDispatches,
   enrollContactInSequence,
 } from "@chatbotx.io/sequence-scheduler"
 import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateContactSequenceRequest } from "../schema"
 import { calculateNextRunAtBulk } from "../utils/calculate-next-run-at"
@@ -140,13 +136,9 @@ export const updateContactSequenceAction = workspaceActionClient
       parsedInput,
     } = props
 
-    const contact = await findOrFail({
-      table: contactModel,
-      where: {
-        id: parsedInput.contactId,
-        workspaceId,
-      },
-      message: "Contact not found",
+    const contact = await contactService.findByIdOrFail({
+      workspaceId,
+      id: parsedInput.contactId,
     })
 
     const currentIds = await getCurrentSequenceIds(db, contact.id, workspaceId)
@@ -166,12 +158,6 @@ export const updateContactSequenceAction = workspaceActionClient
       },
       with: { sequence: true },
     })
-
-    revalidateCacheTags([
-      `workspaces:${workspaceId}#contacts`,
-      `workspaces:${workspaceId}#conversations`,
-      `workspaces:${workspaceId}#sequences`,
-    ])
 
     return returnedSequences
   })

@@ -5,7 +5,6 @@ import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitConversationFollowUp } from "@chatbotx.io/events"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -67,9 +66,4 @@ export const followConversation = async (ctx: {
   }).catch((error) => {
     logger.error({ err: error }, "[followConversation] Failed to emit")
   })
-
-  revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#contacts`,
-    `workspaces:${ctx.workspaceId}#conversations`,
-  ])
 }

@@ -15,7 +15,6 @@ import {
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { integrations } from "@/integration"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -61,10 +60,5 @@ export const disconnectInstagramAction = workspaceActionClient
           .set({ status: inboxStatuses.enum.disconnected })
           .where(eq(inboxModel.id, integrationInstagram.inboxId))
       })
-
-      revalidateCacheTags([
-        `workspaces:${workspaceId}#instagram`,
-        `workspaces:${workspaceId}#inboxes`,
-      ])
     },
   )

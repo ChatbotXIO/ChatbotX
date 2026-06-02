@@ -1,17 +1,14 @@
-import { notFoundException } from "@chatbotx.io/business/errors"
+import { customFieldService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPI } from "@/orpc"
-import { createCustomField } from "../actions/create-custom-field.action"
-import { deleteCustomFields } from "../actions/delete-custom-field.action"
-import { updateCustomField } from "../actions/update-custom-field.action"
-import { findCustomFieldByKey, listCustomFields } from "../queries"
 import {
   createCustomFieldRequest,
   updateCustomFieldRequest,
@@ -31,7 +28,7 @@ const customFieldsWorkspaceTokenAPI = {
     .output(listPublicCustomFieldsResponse)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context }) => {
-      const result = await listCustomFields({
+      const result = await customFieldService.list({
         workspaceId: context.workspace.id,
         perPage: maxPerPage,
       })
@@ -51,26 +48,29 @@ const customFieldsWorkspaceTokenAPI = {
     .errors(possibleErrorsOnCreatingResource)
     .handler(
       async ({ context, input }) =>
-        await createCustomField(context.workspace.id, input),
+        await customFieldService.create({
+          workspaceId: context.workspace.id,
+          data: input,
+        }),
     ),
 
-  searchCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
+  findCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
     .route({
       method: "GET",
-      path: "/v1/custom-fields/search",
-      summary: "Search custom field by id or name",
+      path: "/v1/custom-fields/{keyword}",
+      summary: "Get custom field by id or name",
       tags: ["Custom Fields"],
     })
-    .input(z.object({ key: z.string() }))
+    .input(z.object({ keyword: z.string() }))
     .output(publicCustomFieldResource)
     .errors(possibleErrorsOnFindingResource)
     .handler(async ({ context, input }) => {
-      const customField = await findCustomFieldByKey({
-        key: input.key,
+      const customField = await customFieldService.findByKey({
+        key: input.keyword,
         workspaceId: context.workspace.id,
       })
       if (!customField) {
-        throw notFoundException("Custom field not found")
+        throw new Error("Custom field not found")
       }
       return customField
     }),
@@ -84,18 +84,13 @@ const customFieldsWorkspaceTokenAPI = {
     })
     .input(updateCustomFieldRequest.and(z.object({ id: zodBigintAsString() })))
     .output(publicCustomFieldResource)
-    .errors(possibleErrorsOnCreatingResource)
+    .errors(possibleErrorsOnUpdatingResource)
     .handler(async ({ context, input }) => {
       const { id, ...rest } = input
-      await updateCustomField({ workspaceId: context.workspace.id, id }, rest)
-      const updated = await findCustomFieldByKey({
-        key: id,
-        workspaceId: context.workspace.id,
-      })
-      if (!updated) {
-        throw notFoundException("Custom field not found")
-      }
-      return updated
+      return await customFieldService.update(
+        { workspaceId: context.workspace.id, id },
+        rest,
+      )
     }),
 
   deleteCustomFieldWorkspaceTokenAPI: workspaceTokenAuthAPI
@@ -110,7 +105,7 @@ const customFieldsWorkspaceTokenAPI = {
     .errors(possibleErrorsOnDeletingResource)
     .handler(
       async ({ context, input }) =>
-        await deleteCustomFields({
+        await customFieldService.delete({
           workspaceId: context.workspace.id,
           ids: [input.id],
         }),

@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteFieldsAction = workspaceActionClient
@@ -41,6 +40,4 @@ export const deleteCustomFields = async ({
         inArray(customFieldModel.id, ids),
       ),
     )
-
-  revalidateCacheTags(`workspaces:${workspaceId}#customFields`)
 }

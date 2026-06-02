@@ -1,13 +1,11 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { aiAgentModel } from "@chatbotx.io/database/schema"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { authActionClient } from "@/lib/safe-action"
+import { aiAgentService } from "../ai-agent.service"
 
 export const deleteAIAgentAction = authActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -18,14 +16,5 @@ export const deleteAIAgentAction = authActionClient
       parsedInput: { ids },
     } = props
 
-    await db
-      .delete(aiAgentModel)
-      .where(
-        and(
-          eq(aiAgentModel.workspaceId, workspaceId),
-          inArray(aiAgentModel.id, ids),
-        ),
-      )
-
-    revalidateCacheTags(`workspaces:${workspaceId}#aiAgents`)
+    await aiAgentService.delete({ workspaceId, ids })
   })

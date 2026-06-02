@@ -1,11 +1,14 @@
 "use server"
 
-import { userQuotaService, workspaceService } from "@chatbotx.io/business"
+import {
+  contactService,
+  userQuotaService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
-  contactModel,
   conversationModel,
   inboxModel,
 } from "@chatbotx.io/database/schema"
@@ -18,7 +21,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateContactRequest,
@@ -48,13 +50,12 @@ export const createContact = async ({
   workspaceId: string
   parsedInput: CreateContactRequest
 }): Promise<CreateContactResponse> => {
-  // Make sure phone number is not exists in the workspace
-  const existedContact = await db.query.contactModel.findFirst({
-    where: {
-      workspaceId,
-      phoneNumber: parsedInput.phoneNumber,
-    },
-  })
+  const existedContact = parsedInput.phoneNumber
+    ? await contactService.findByPhone({
+        workspaceId,
+        phoneNumber: parsedInput.phoneNumber,
+      })
+    : undefined
   if (existedContact) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
@@ -86,14 +87,11 @@ export const createContact = async ({
   }
 
   const [contact, contactInbox] = await db.transaction(async (tx) => {
-    const [newContact] = await tx
-      .insert(contactModel)
-      .values({
-        ...parsedInput,
-        workspaceId,
-        id: createId(),
-      })
-      .returning()
+    const newContact = await contactService.insert({
+      workspaceId,
+      data: parsedInput,
+      tx,
+    })
 
     const [newContactInbox] = await tx
       .insert(contactInboxModel)
@@ -146,11 +144,6 @@ export const createContact = async ({
       console.error("[createContact] Failed to emit contact:created", error)
     })
   }
-
-  revalidateCacheTags([
-    `workspaces:${workspaceId}#contacts`,
-    `workspaces:${workspaceId}#conversations`,
-  ])
 
   return contact
 }

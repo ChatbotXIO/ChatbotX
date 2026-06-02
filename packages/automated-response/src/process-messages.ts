@@ -15,7 +15,7 @@ import {
 } from "@chatbotx.io/worker-config"
 import { getKey } from "./constants"
 import { logger } from "./lib/logger"
-import { getAllWorkspaceAutomatedResponses } from "./utils"
+import { automatedResponseService } from "./utils"
 
 export const processPendingMessages = async (props: {
   conversation: ConversationModel
@@ -82,7 +82,7 @@ const replyByAutomatedResponse = async (props: {
   messages: Pick<MessageModel, "id" | "text">[]
 }): Promise<boolean> => {
   const { conversation, contactInbox, messages } = props
-  const allAutomatedResponses = await getAllWorkspaceAutomatedResponses(
+  const allAutomatedResponses = await automatedResponseService.getAll(
     conversation.workspaceId,
   )
 

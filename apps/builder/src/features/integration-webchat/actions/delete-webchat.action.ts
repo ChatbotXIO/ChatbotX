@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteWebchatAction = workspaceActionClient
@@ -30,7 +29,5 @@ export const deleteWebchatAction = workspaceActionClient
             inArray(integrationWebchatModel.id, parsedInput.ids),
           ),
         )
-
-      revalidateCacheTags(`workspaces:${workspaceId}#webchats`)
     },
   )

@@ -1,5 +1,6 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { enrollContactsInSequenceBulk } from "@chatbotx.io/sequence-scheduler"
 import {
@@ -7,7 +8,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { calculateNextRunAtBulk } from "@/features/contact-sequences/utils/calculate-next-run-at"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactSequenceRequest,
@@ -36,18 +36,6 @@ async function getExistingEnrollments(
   return new Set<string>(
     enrollments.map((e) => `${e.contactId}-${e.sequenceId}`),
   )
-}
-
-function getValidContacts(workspaceId: string, contactIds: string[]) {
-  return db.query.contactModel.findMany({
-    where: {
-      workspaceId,
-      id: { in: contactIds },
-    },
-    columns: {
-      id: true,
-    },
-  })
 }
 
 function buildEnrollmentRecords(
@@ -106,7 +94,10 @@ export const addContactSequenceAction = workspaceActionClient
       for (let i = 0; i < parsedInput.ids.length; i += CHUNK_SIZE) {
         const contactIdChunk = parsedInput.ids.slice(i, i + CHUNK_SIZE)
 
-        const contacts = await getValidContacts(workspaceId, contactIdChunk)
+        const contacts = await contactService.findManyByIds({
+          workspaceId,
+          ids: contactIdChunk,
+        })
 
         if (contacts.length === 0) {
           continue
@@ -136,10 +127,5 @@ export const addContactSequenceAction = workspaceActionClient
           enrolledAt: now,
         })
       }
-
-      revalidateCacheTags([
-        `workspaces:${workspaceId}#contacts`,
-        `workspaces:${workspaceId}#sequences`,
-      ])
     },
   )

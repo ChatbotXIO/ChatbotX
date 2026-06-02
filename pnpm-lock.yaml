@@ -1394,6 +1394,9 @@ importers:
       '@chatbotx.io/encryption':
         specifier: workspace:*
         version: link:../encryption
+      '@chatbotx.io/events':
+        specifier: workspace:*
+        version: link:../events
       '@chatbotx.io/filesystem':
         specifier: workspace:*
         version: link:../filesystem

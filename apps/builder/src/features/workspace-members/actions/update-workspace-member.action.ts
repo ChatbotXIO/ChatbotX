@@ -5,7 +5,6 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { workspaceMemberModel } from "@chatbotx.io/database/schema"
 import { workspaceIdAndIdRequestParams } from "@/features/common/schemas"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { updateWorkspaceMemberRequest } from "../schema/mutation"
 
@@ -39,6 +38,4 @@ export const updateWorkspaceMemberAction = workspaceActionClient
       .update(workspaceMemberModel)
       .set(parsedInput)
       .where(eq(workspaceMemberModel.id, workspaceMember.id))
-
-    revalidateCacheTags(`workspaces:${workspaceId}#workspaceMembers`)
   })

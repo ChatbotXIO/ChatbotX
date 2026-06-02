@@ -1,18 +1,14 @@
 "use server"
 
+import { contactService } from "@chatbotx.io/business"
 import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  contactsToTagsModel,
-  tagModel,
-} from "@chatbotx.io/database/schema"
+import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type AddContactTagRequest,
@@ -44,16 +40,9 @@ export const addContactTags = async ({
   workspaceId: string
   parsedInput: AddContactTagRequest
 }) => {
-  const contacts = await db.query.contactModel.findMany({
-    where: {
-      workspaceId,
-      id: {
-        in: parsedInput.ids,
-      },
-    },
-    columns: {
-      id: true,
-    },
+  const contacts = await contactService.findManyByIds({
+    workspaceId,
+    ids: parsedInput.ids,
   })
   if (contacts.length === 0) {
     return
@@ -109,12 +98,6 @@ export const addContactTags = async ({
       await emitTagApplied(workspaceId, contact.id, tag.id)
     }
   }
-
-  revalidateCacheTags([
-    `workspaces:${workspaceId}#contacts`,
-    `workspaces:${workspaceId}#conversations`,
-    `workspaces:${workspaceId}#tags`,
-  ])
 }
 
 export const attachContactTag = async ({
@@ -126,10 +109,7 @@ export const attachContactTag = async ({
   contactId: string
   tagId: string
 }) => {
-  await findOrFail({
-    table: contactModel,
-    where: { id: contactId, workspaceId },
-  })
+  await contactService.findByIdOrFail({ workspaceId, id: contactId })
   await findOrFail({ table: tagModel, where: { id: tagId, workspaceId } })
 
   await db
@@ -154,20 +134,8 @@ export const detachContactTag = async ({
   contactId: string
   tagId: string
 }) => {
-  await findOrFail({
-    table: contactModel,
-    where: {
-      id: contactId,
-      workspaceId,
-    },
-  })
-  await findOrFail({
-    table: tagModel,
-    where: {
-      id: tagId,
-      workspaceId,
-    },
-  })
+  await contactService.findByIdOrFail({ workspaceId, id: contactId })
+  await findOrFail({ table: tagModel, where: { id: tagId, workspaceId } })
 
   await db
     .delete(contactsToTagsModel)
@@ -190,10 +158,7 @@ export const attachContactTags = async ({
   contactId: string
   tagIds: string[]
 }) => {
-  await findOrFail({
-    table: contactModel,
-    where: { id: contactId, workspaceId },
-  })
+  await contactService.findByIdOrFail({ workspaceId, id: contactId })
 
   const tags = await db.query.tagModel.findMany({
     where: { workspaceId, id: { in: tagIds } },
@@ -227,10 +192,7 @@ export const detachContactTags = async ({
   contactId: string
   tagIds: string[]
 }) => {
-  await findOrFail({
-    table: contactModel,
-    where: { id: contactId, workspaceId },
-  })
+  await contactService.findByIdOrFail({ workspaceId, id: contactId })
 
   await db
     .delete(contactsToTagsModel)

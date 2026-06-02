@@ -31,3 +31,7 @@ export const getIdFromParams = <
   params: T,
   fieldName: keyof T,
 ) => params[fieldName]
+
+const NUMERIC_ID_REGEX = /^\d+$/
+export const isNumericId = (value: string): boolean =>
+  NUMERIC_ID_REGEX.test(value)

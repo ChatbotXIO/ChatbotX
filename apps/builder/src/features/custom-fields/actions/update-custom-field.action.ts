@@ -4,7 +4,6 @@ import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { customFieldModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateCustomFieldRequest,
@@ -51,6 +50,4 @@ export const updateCustomField = async (
     .update(customFieldModel)
     .set(parsedInput)
     .where(eq(customFieldModel.id, ctx.id))
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#customFields`)
 }

@@ -11,7 +11,6 @@ import {
   handleStepCreationImpact,
   handleStepUpdateImpact,
 } from "@/features/contact-sequences/utils/calculate-next-run-at"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpsertSequenceStepRequest,
@@ -330,8 +329,6 @@ export const upsertSequenceStepAction = workspaceActionClient
       } else {
         result = await handleStepCreation(parsedInput, sequenceId, workspaceId)
       }
-
-      revalidateCacheTags([`workspaces:${workspaceId}#sequences`])
 
       return result
     },

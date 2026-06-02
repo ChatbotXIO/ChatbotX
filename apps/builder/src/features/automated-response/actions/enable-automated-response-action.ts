@@ -1,12 +1,9 @@
 "use server"
 
-import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { automatedResponseModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { automatedResponseService } from "../automated-response.service"
 
 const enableRequest = z.object({
   status: z.boolean(),
@@ -29,22 +26,9 @@ export const enableAutomatedResponse = async (
   ctx: { workspaceId: string; id: string },
   parsedInput: EnableRequest,
 ) => {
-  const automatedResponse = await findOrFail({
-    table: automatedResponseModel,
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
-    },
-    message: "Automated response not found",
+  await automatedResponseService.findOrFail({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
   })
-  await db
-    .update(automatedResponseModel)
-    .set({
-      status: parsedInput.status,
-    })
-    .where(eq(automatedResponseModel.id, automatedResponse.id))
-
-  await automatedResponseService.invalidateCache(ctx.workspaceId)
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#automatedResponses`)
+  await automatedResponseService.setStatus(ctx, parsedInput.status)
 }

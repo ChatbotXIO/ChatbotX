@@ -1,12 +1,10 @@
 "use server"
 
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
-import { inboxTeamModel } from "@chatbotx.io/database/schema"
+import { inboxTeamService } from "@chatbotx.io/business"
 import {
   bulkUpdateIdsRequest,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const deleteInboxTeamAction = workspaceActionClient
@@ -18,14 +16,5 @@ export const deleteInboxTeamAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId],
     } = props
 
-    await db
-      .delete(inboxTeamModel)
-      .where(
-        and(
-          eq(inboxTeamModel.workspaceId, workspaceId),
-          inArray(inboxTeamModel.id, parsedInput.ids),
-        ),
-      )
-
-    revalidateCacheTags(`workspaces:${workspaceId}#inboxTeams`)
+    await inboxTeamService.delete({ workspaceId, ids: parsedInput.ids })
   })

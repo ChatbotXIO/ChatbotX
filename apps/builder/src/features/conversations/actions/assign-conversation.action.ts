@@ -18,7 +18,6 @@ import {
   type AssignConversationSchema,
   assignConversationSchema,
 } from "@/features/conversations/schema/action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -168,11 +167,6 @@ export const assignConversationAction = workspaceActionClient
           }
         }
       }
-
-      revalidateCacheTags([
-        `workspaces:${workspaceId}#conversations`,
-        `workspaces:${workspaceId}#contacts`,
-      ])
 
       await integrationQueue.add(IntegrationJobAction.assignConversation, {
         type: IntegrationJobAction.assignConversation,

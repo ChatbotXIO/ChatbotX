@@ -10,7 +10,6 @@ import {
 import { magicLinkModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { returnValidationErrors } from "next-safe-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateMagicLinkRequest,
@@ -55,8 +54,6 @@ export const updateMagicLink = async (
       .update(magicLinkModel)
       .set(parsedInput)
       .where(and(eq(magicLinkModel.id, link.id)))
-
-    revalidateCacheTags(`workspaces:${ctx.workspaceId}#magic-links`)
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return returnValidationErrors(updateMagicLinkRequest, {

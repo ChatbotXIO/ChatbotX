@@ -1,7 +1,8 @@
 "use server"
 
-import { db, findOrFail } from "@chatbotx.io/database/client"
-import { contactModel, contactNoteModel } from "@chatbotx.io/database/schema"
+import { contactService } from "@chatbotx.io/business"
+import { db } from "@chatbotx.io/database/client"
+import { contactNoteModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -30,14 +31,9 @@ export const createContactNote = async (
   ctx: { workspaceId: string; id: string; userId: string },
   parsedInput: AddContactNoteRequest,
 ) => {
-  // Make sure contact exists in the workspace
-  const contact = await findOrFail({
-    table: contactModel,
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
-    },
-    message: "Contact not found",
+  const contact = await contactService.findByIdOrFail({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
   })
 
   return await db

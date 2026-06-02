@@ -1,17 +1,8 @@
 "use server"
 
-import {
-  and,
-  db,
-  eq,
-  findOrFail,
-  notInArray,
-} from "@chatbotx.io/database/client"
-import {
-  contactModel,
-  contactsToTagsModel,
-  tagModel,
-} from "@chatbotx.io/database/schema"
+import { contactService } from "@chatbotx.io/business"
+import { and, db, eq, notInArray } from "@chatbotx.io/database/client"
+import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { createId } from "@chatbotx.io/utils"
 import {
@@ -19,7 +10,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import type { TagResource } from "@/features/tags/schema/resource"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateContactTagRequest,
@@ -46,13 +36,9 @@ export const updateContactTags = async ({
   workspaceId: string
   parsedInput: UpdateContactTagRequest
 }): Promise<TagResource[]> => {
-  const contact = await findOrFail({
-    table: contactModel,
-    where: {
-      id: parsedInput.contactId,
-      workspaceId,
-    },
-    message: "Contact not found",
+  const contact = await contactService.findByIdOrFail({
+    workspaceId,
+    id: parsedInput.contactId,
   })
 
   // Get old tags before update
@@ -128,12 +114,6 @@ export const updateContactTags = async ({
   for (const tagId of removedTagIds) {
     await emitTagRemoved(workspaceId, contact.id, tagId)
   }
-
-  revalidateCacheTags([
-    `workspaces:${workspaceId}#contacts`,
-    `workspaces:${workspaceId}#conversations`,
-    `workspaces:${workspaceId}#tags`,
-  ])
 
   return returnedTags
 }

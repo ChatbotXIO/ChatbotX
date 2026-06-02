@@ -13,7 +13,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { type CreateFlowSchema, createFlowSchema } from "../schemas/action"
 
@@ -70,8 +69,6 @@ export const createFlowAction = workspaceActionClient
 
         return flow
       })
-
-      revalidateCacheTags(`workspaces:${workspaceId}#flows`)
 
       return { id: flow.id }
     },

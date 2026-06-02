@@ -9,7 +9,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { ensureFolderIsExists } from "@/features/folders/actions/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateCustomFieldRequest,
@@ -50,8 +49,6 @@ export const createCustomField = async (
       })
       .returning()
       .then((result) => result[0])
-
-    revalidateCacheTags(`workspaces:${workspaceId}#customFields`)
 
     return newField
   } catch (error) {

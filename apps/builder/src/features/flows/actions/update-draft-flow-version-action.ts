@@ -45,6 +45,4 @@ export const updateDraftFlowVersion = async (
       edges: parsedInput.edges,
     })
     .where(eq(flowVersionModel.id, flowVersion.id))
-
-  // revalidateCacheTags(`workspaces:${ctx.workspaceId}#flows:${ctx.id}`)
 }

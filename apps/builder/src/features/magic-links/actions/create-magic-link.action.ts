@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMagicLinkRequest,
@@ -32,8 +31,6 @@ export const createMagicLinkAction = workspaceActionClient
           workspaceId,
           ...parsedInput,
         })
-
-        revalidateCacheTags(`workspaces:${workspaceId}#magic-links`)
       } catch (error) {
         if (isUniqueViolationError(error)) {
           return returnValidationErrors(createMagicLinkRequest, {

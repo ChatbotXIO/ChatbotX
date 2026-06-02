@@ -1,14 +1,12 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { contactService } from "@chatbotx.io/business"
+import { db } from "@chatbotx.io/database/client"
 import {
   type FillableContactKey,
   fillableContactKeys,
 } from "@chatbotx.io/database/partials"
-import {
-  contactCustomFieldModel,
-  contactModel,
-} from "@chatbotx.io/database/schema"
+import { contactCustomFieldModel } from "@chatbotx.io/database/schema"
 import type { ContactModel } from "@chatbotx.io/database/types"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { listCustomFields } from "@/features/custom-fields/queries"
@@ -39,13 +37,9 @@ export const updateContactFields = async (
   },
   parsedInput: UpdateContactFieldRequest,
 ) => {
-  const contact = await findOrFail({
-    table: contactModel,
-    where: {
-      workspaceId: ctx.workspaceId,
-      id: ctx.id,
-    },
-    message: "Contact not found",
+  await contactService.findByIdOrFail({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
   })
 
   const allCustomFields = await listCustomFields({
@@ -73,10 +67,7 @@ export const updateContactFields = async (
 
   await db.transaction(async (tx) => {
     if (Object.keys(contactFields).length > 0) {
-      await tx
-        .update(contactModel)
-        .set(contactFields)
-        .where(eq(contactModel.id, contact.id))
+      await contactService.update(ctx, contactFields, tx)
     }
 
     if (Object.keys(customFields).length > 0) {

@@ -4,7 +4,6 @@ import { notFoundException } from "@chatbotx.io/business/errors"
 import { and, db, eq } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { publishFlowSchema } from "../schemas/action"
 
@@ -75,9 +74,4 @@ export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
       })
       .where(eq(flowModel.id, flow.id))
   })
-
-  revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#flows`,
-    `workspaces:${ctx.workspaceId}#flows:${ctx.id}`,
-  ])
 }

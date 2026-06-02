@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { inboxTeamService } from "@chatbotx.io/business"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type {
   ListInboxTeamsRequest,
@@ -10,20 +10,8 @@ export async function listInboxTeams(
 ): Promise<ListInboxTeamsResponse> {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const data = await db.query.inboxTeamModel.findMany({
-    where: {
-      workspaceId: input.workspaceId,
-    },
-    with: {
-      inboxTeamMembers: {
-        with: {
-          user: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
+  const data = await inboxTeamService.listByWorkspace({
+    workspaceId: input.workspaceId,
   })
 
   return { data }

@@ -10,7 +10,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { disableConversationState } from "../queries/bot-state"
@@ -70,7 +69,5 @@ export const disableBotAction = workspaceActionClient
           logger.error({ err: error }, "[disableBotAction] Failed to emit")
         })
       }
-
-      revalidateCacheTags(`workspaces:${workspaceId}#conversations`)
     },
   )

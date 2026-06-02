@@ -11,7 +11,6 @@ import { sequenceModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type UpdateSequenceSchema,
@@ -71,6 +70,4 @@ export const updateSequence = async (
 
     throw new Error("Failed to update sequence")
   }
-
-  revalidateCacheTags([`workspaces:${ctx.workspaceId}#sequences`])
 }

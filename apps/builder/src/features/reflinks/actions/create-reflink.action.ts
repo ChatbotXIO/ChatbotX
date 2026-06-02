@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateReflinkRequest,
@@ -32,8 +31,6 @@ export const createReflinkAction = workspaceActionClient
           workspaceId,
           ...parsedInput,
         })
-
-        revalidateCacheTags(`workspaces:${workspaceId}#reflinks`)
       } catch (error) {
         if (isUniqueViolationError(error)) {
           return returnValidationErrors(createReflinkRequest, {

@@ -21,17 +21,17 @@ async function handleRequest(request: Request) {
     commonSchemas: {
       UndefinedError: { error: "UndefinedError" },
     },
-    security: [{ developerAccessToken: [] }, { apiKeyInUrl: [] }],
+    security: [{ developerAccessToken: [] }, { tokenInSearchParams: [] }],
     components: {
       securitySchemes: {
         developerAccessToken: {
           type: "http",
           scheme: "bearer",
         },
-        apiKeyInUrl: {
+        tokenInSearchParams: {
           type: "apiKey",
           in: "query",
-          name: "api_key",
+          name: "token",
         },
       },
     },

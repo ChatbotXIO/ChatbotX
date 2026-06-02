@@ -3,7 +3,6 @@
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { savedReplyModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { editSavedReplyRequest } from "../schema/mutation"
 
@@ -32,8 +31,6 @@ export const editSavedReplyAction = workspaceActionClient
       })
       .where(eq(savedReplyModel.id, savedReply.id))
       .returning()
-
-    revalidateCacheTags(`workspaces:${workspaceId}#savedReplies`)
 
     return updatedSavedReply
   })

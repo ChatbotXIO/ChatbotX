@@ -29,7 +29,6 @@ import {
   workspaceIdAndIdRequestParams,
 } from "@/features/common/schemas"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { findIntegrationInstagram } from "../queries"
 import {
@@ -44,7 +43,7 @@ export const updateInstagramAction = workspaceActionClient
     async ({
       ctx,
       parsedInput,
-      bindArgsParsedInputs: [workspaceId, id],
+      bindArgsParsedInputs: [_workspaceId, id],
     }: {
       ctx: { workspace: WorkspaceModel }
       parsedInput: UpdateInstagramRequest
@@ -112,8 +111,6 @@ export const updateInstagramAction = workspaceActionClient
               )
             }
           }
-
-          revalidateCacheTags([`workspaces:${workspaceId}#instagram`])
         })
       } catch {
         throw new ChatbotXException("Failed to update Instagram integration")

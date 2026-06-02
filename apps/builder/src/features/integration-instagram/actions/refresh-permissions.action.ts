@@ -6,7 +6,6 @@ import { integrationInstagramModel } from "@chatbotx.io/database/schema"
 import type { InstagramAuthValue } from "@chatbotx.io/integration-instagram"
 import { exchangeLongLivedToken } from "@chatbotx.io/integration-instagram"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -51,8 +50,6 @@ const refreshInstagramPermissions = async (ctx: {
       .update(integrationInstagramModel)
       .set({ auth: updatedAuth })
       .where(eq(integrationInstagramModel.id, ctx.id))
-
-    revalidateCacheTags([`workspaces:${ctx.workspaceId}#instagram`])
   } catch (error) {
     logger.error(error, "Failed to refresh Instagram token")
     throw new ChatbotXException("Failed to refresh Instagram token")

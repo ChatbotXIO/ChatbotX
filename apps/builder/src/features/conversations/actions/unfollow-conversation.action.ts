@@ -4,7 +4,6 @@ import { and, db, eq } from "@chatbotx.io/database/client"
 import { conversationModel } from "@chatbotx.io/database/schema"
 import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -66,9 +65,4 @@ export const unfollowConversation = async (ctx: {
       logger.error({ err: error }, "[unfollowConversation] Failed to emit")
     })
   }
-
-  revalidateCacheTags([
-    `workspaces:${ctx.workspaceId}#contacts`,
-    `workspaces:${ctx.workspaceId}#conversations`,
-  ])
 }

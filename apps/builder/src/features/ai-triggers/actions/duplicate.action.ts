@@ -3,7 +3,6 @@
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import { aiTriggerModel } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const duplicateAITriggerAction = workspaceActionClient
@@ -34,6 +33,4 @@ export const duplicateAITrigger = async (ctx: {
     ...rest,
     name: `${name} _copy`,
   })
-
-  revalidateCacheTags(`workspaces:${ctx.workspaceId}#aiTriggers`)
 }
