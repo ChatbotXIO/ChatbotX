@@ -29,6 +29,7 @@ export const createReflinkAction = workspaceActionClient
         await db.insert(reflinkModel).values({
           id: createId(),
           workspaceId,
+          type: "refLink",
           ...parsedInput,
         })
       } catch (error) {

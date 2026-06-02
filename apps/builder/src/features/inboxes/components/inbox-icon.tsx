@@ -21,18 +21,20 @@ import {
 import type { ComponentType, SVGProps } from "react"
 import { memo } from "react"
 
-type IconSize = "small" | "medium" | "large"
+type IconSize = "small" | "medium" | "large" | "xlarge"
 
 const ICON_SIZE_CLASSES: Record<IconSize, string> = {
   small: "size-4",
   medium: "size-5",
   large: "size-6",
+  xlarge: "size-10",
 }
 
 const LABEL_SIZE_CLASSES: Record<IconSize, string> = {
   small: "text-xs truncate",
   medium: "text-sm truncate",
   large: "text-base truncate",
+  xlarge: "text-base truncate",
 }
 
 type InboxIconConfig = {

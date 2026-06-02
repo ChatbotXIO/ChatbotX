@@ -1,10 +1,10 @@
+import type { ListInboxesResponse } from "@chatbotx.io/business"
 import type {
   ChooseChannelStepSchema,
   StepType,
 } from "@chatbotx.io/flow-config"
 import type { LucideIcon } from "lucide-react"
 import type { useTranslations } from "next-intl"
-import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 import type { WhatsappFlowResource } from "@/features/integration-whatsapp/flows/schema/resource"
 import type { FlowTemplateResource } from "@/features/integration-whatsapp/message-templates/schema/resource"
 

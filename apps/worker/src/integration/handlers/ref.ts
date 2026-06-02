@@ -1,4 +1,4 @@
-import { decodeRef, type RefConfig } from "@chatbotx.io/business"
+import { decodeRef, encodeRef, type RefConfig } from "@chatbotx.io/business"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   flowModel,
@@ -157,7 +157,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
 async function handleReflink(props: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
-  refData: Extract<RefConfig, { type: "reflink" }>
+  refData: Extract<RefConfig, { type: "reflink" | "qr-code" }>
 }) {
   const { conversation, contactInbox } = props
   const refData = props.refData
@@ -165,7 +165,7 @@ async function handleReflink(props: {
   const reflink = await findOrFail({
     table: reflinkModel,
     where: {
-      name: refData.name,
+      name: encodeRef(refData),
       workspaceId: conversation.workspaceId,
     },
     message: "Reflink not found",

@@ -1,8 +1,8 @@
+import { listIntegrationWhatsappsResponse } from "@chatbotx.io/business"
 import { withWorkspaceIdSchema } from "@/features/workspaces/schema/resource"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listIntegrationWhatsapps } from "../queries"
-import { listIntegrationWhatsappsResponse } from "../schemas/query"
 
 export const integrationWhatsappInternalAPIs = {
   listIntegrationWhatsappInternalAPI: authorizedAPI

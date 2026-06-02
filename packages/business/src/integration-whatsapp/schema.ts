@@ -3,7 +3,7 @@ import {
   integrationWhatsappModel,
 } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import type { z } from "zod"
+import { z } from "zod"
 
 export const integrationWhatsappResource = createSelectSchema(
   integrationWhatsappModel,
@@ -20,4 +20,11 @@ export const integrationWhatsappResource = createSelectSchema(
 
 export type IntegrationWhatsappResource = z.infer<
   typeof integrationWhatsappResource
+>
+
+export const listIntegrationWhatsappsResponse = z.array(
+  integrationWhatsappResource,
+)
+export type ListIntegrationWhatsappResponse = z.infer<
+  typeof listIntegrationWhatsappsResponse
 >

@@ -487,6 +487,9 @@
     "reflink": {
       "label": "Liên kết giới thiệu"
     },
+    "qrCode": {
+      "label": "Mã QR"
+    },
     "savePayloadToCustomField": {
       "label": "Lưu payload vào trường tùy chỉnh"
     },
@@ -2058,6 +2061,10 @@
   "reflinks": {
     "title": "Liên kết giới thiệu",
     "description": "Liên kết từ khóa để mở kịch bản và nhận ref từ kênh."
+  },
+  "qrCodes": {
+    "title": "Mã QR",
+    "description": "Tạo mã QR liên kết đến kịch bản chatbot của bạn."
   },
   "magicLinks": {
     "title": "Magic Link",

@@ -1,7 +1,7 @@
+import { listInboxesRequest, listInboxesResponse } from "@chatbotx.io/business"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
 import { authorizedAPI } from "@/orpc"
 import { listInboxes } from "../queries"
-import { listInboxesRequest, listInboxesResponse } from "../schema/action"
 
 export const inboxesAuthenticatedAPI = {
   listInboxesAuthenticatedAPI: authorizedAPI

@@ -1,6 +1,6 @@
+import { integrationWhatsappResource } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { integrationWhatsappResource } from "../../schemas/resource"
 import { whatsappFlowResource } from "./resource"
 
 export const listWhatsappFlowsRequest = z.object({

@@ -1,7 +1,7 @@
+import type { IntegrationZaloResource } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import type { IntegrationZaloModel } from "@chatbotx.io/database/types"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import type { IntegrationZaloResource } from "../schemas/resource"
 
 export const findIntegrationZalo = async ({
   workspaceId,

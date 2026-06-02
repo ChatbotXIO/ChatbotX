@@ -1,8 +1,8 @@
+import type { ListInboxesResponse } from "@chatbotx.io/business"
 import { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import { client } from "@/lib/orpc/orpc"
 import { maxPerPageString } from "@/lib/shared-request"
-import type { ListInboxesResponse } from "../schema/action"
 
 export type InboxState = {
   error: string | null
@@ -66,9 +66,6 @@ export const createInboxStore = (props: Partial<InboxState>) =>
           workspaceId,
           includes: ["integration"],
           perPage: maxPerPageString,
-          sort: {
-            createdAt: "desc",
-          },
         })
         //  ky
         //   .get<PaginatedResponse<InboxResource>>(

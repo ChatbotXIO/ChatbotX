@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,

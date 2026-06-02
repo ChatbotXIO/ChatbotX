@@ -1,11 +1,12 @@
 import {
   createSelectSchema,
-  integrationInstagramModel,
+  integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
+import type { z } from "zod"
 
-export const integrationInstagramResource = createSelectSchema(
-  integrationInstagramModel,
+export const integrationWebchatResource = createSelectSchema(
+  integrationWebchatModel,
   {
     id: zodBigintAsString(),
     inboxId: zodBigintAsString(),
@@ -13,6 +14,8 @@ export const integrationInstagramResource = createSelectSchema(
 ).pick({
   id: true,
   name: true,
-  inboxId: true,
-  username: true,
 })
+
+export type IntegrationWebchatResource = z.infer<
+  typeof integrationWebchatResource
+>

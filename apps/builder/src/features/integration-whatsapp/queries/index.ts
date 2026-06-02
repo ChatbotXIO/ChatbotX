@@ -1,13 +1,20 @@
+import type { IntegrationWhatsappResource } from "@chatbotx.io/business"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationWhatsappModel } from "@chatbotx.io/database/schema"
-import type { IntegrationWhatsappModel } from "@chatbotx.io/database/types"
+import type {
+  InboxModel,
+  IntegrationWhatsappModel,
+} from "@chatbotx.io/database/types"
 import type { WhatsappAuthValue } from "@chatbotx.io/integration-whatsapp"
 import type { PaginatedResponse } from "@/features/common/schemas/pagination"
-import type { IntegrationWhatsappResource } from "../schemas"
+
+type IntegrationWhatsappWithInbox = IntegrationWhatsappResource & {
+  inbox?: Pick<InboxModel, "id" | "name">
+}
 
 export const listIntegrationWhatsapps = async (
   props: Pick<IntegrationWhatsappModel, "workspaceId">,
-): Promise<PaginatedResponse<IntegrationWhatsappResource>> => {
+): Promise<PaginatedResponse<IntegrationWhatsappWithInbox>> => {
   const data = await db.query.integrationWhatsappModel.findMany({
     where: props,
     orderBy: {
@@ -28,7 +35,7 @@ export const listIntegrationWhatsapps = async (
 
 export const findIntegrationWhatsapp = async (
   props: Pick<IntegrationWhatsappModel, "workspaceId" | "id">,
-): Promise<IntegrationWhatsappResource> =>
+): Promise<IntegrationWhatsappModel> =>
   await findOrFail({
     table: integrationWhatsappModel,
     where: props,

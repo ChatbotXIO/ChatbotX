@@ -18,6 +18,7 @@ export async function listReflinks(
 
   const where = {
     workspaceId: input.workspaceId,
+    type: "refLink" as const,
     ...(input.keyword ? { name: { ilike: `%${input.keyword}%` } } : {}),
   }
 
@@ -47,6 +48,6 @@ export async function findReflink(where: {
   id: string
 }): Promise<ReflinkResource | undefined> {
   return await db.query.reflinkModel.findFirst({
-    where,
+    where: { ...where, type: "refLink" },
   })
 }

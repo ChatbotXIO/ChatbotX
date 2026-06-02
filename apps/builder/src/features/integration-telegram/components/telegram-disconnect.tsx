@@ -1,5 +1,6 @@
 "use client"
 
+import type { IntegrationTelegramResource } from "@chatbotx.io/business"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +20,6 @@ import { useAction } from "next-safe-action/hooks"
 import { useState } from "react"
 import { toast } from "sonner"
 import { disconnectTelegramAction } from "../actions/disconnect.action"
-import type { IntegrationTelegramResource } from "../schemas/resource"
 
 export function TelegramDisconnect({
   integrationTelegram,

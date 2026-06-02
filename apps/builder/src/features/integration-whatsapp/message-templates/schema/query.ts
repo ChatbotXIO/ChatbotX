@@ -1,7 +1,7 @@
+import { integrationWhatsappResource } from "@chatbotx.io/business"
 import { whatsappTemplateStatusSchema } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
-import { integrationWhatsappResource } from "../../schemas/resource"
 import { whatsappMessageTemplateResource } from "./resource"
 
 export const listWhatsappMessageTemplatesRequest = z.object({

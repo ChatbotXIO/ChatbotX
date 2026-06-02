@@ -476,6 +476,9 @@
     "reflink": {
       "label": "Entry Point Link"
     },
+    "qrCode": {
+      "label": "QR Code"
+    },
     "savePayloadToCustomField": {
       "label": "Save payload to custom field"
     },
@@ -1962,6 +1965,10 @@
   "reflinks": {
     "title": "Entry Point Links",
     "description": "Keyword links that start flows and capture ref payloads from channels."
+  },
+  "qrCodes": {
+    "title": "QR Codes",
+    "description": "Create QR codes that link to your chatbot flows."
   },
   "magicLinks": {
     "title": "Magic Links",

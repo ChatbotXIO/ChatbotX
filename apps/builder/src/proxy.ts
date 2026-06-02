@@ -12,6 +12,7 @@ import { httpLogger } from "./lib/log"
 const publicRoutes = [
   "/integrations",
   "/r",
+  "/l",
   "/auth",
   "/api",
   "/ws",

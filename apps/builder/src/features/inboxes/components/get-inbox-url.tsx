@@ -1,4 +1,4 @@
-import type { RefConfig } from "@chatbotx.io/business"
+import type { ListInboxesResponse, RefConfig } from "@chatbotx.io/business"
 import { buildInboxLink } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
@@ -15,9 +15,8 @@ import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
-import type { ListInboxesResponse } from "@/features/inboxes/schema/action"
 import { usePlatformSettings } from "@/features/platform"
-import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
+import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
 
 type GetInboxUrlDialogProps = {
   open: boolean

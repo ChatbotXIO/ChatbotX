@@ -13,6 +13,10 @@ const configs = z.discriminatedUnion("type", [
     flowId: z.string(),
   }),
   z.object({
+    type: z.literal("qr-code"),
+    name: z.string(),
+  }),
+  z.object({
     type: z.literal("reflink"),
     name: z.string(),
   }),
@@ -28,8 +32,11 @@ export function encodeRef(params: RefConfig): string {
       const { flowId } = params
       return `d_${encodeBase62(flowId)}`
     }
+    case "qr-code": {
+      return `qr_${params.name}`
+    }
     case "reflink": {
-      return params.name // keep the name as is
+      return params.name
     }
     default:
       return ""
@@ -49,6 +56,10 @@ export function decodeRef(ref: string): RefConfig | undefined {
 
     if (ref.startsWith("d_")) {
       return { type: "draft", flowId: decodeBase62(ref.slice(2)) }
+    }
+
+    if (ref.startsWith("qr_")) {
+      return { type: "qr-code", name: ref.slice(3) }
     }
 
     return { type: "reflink", name: ref }

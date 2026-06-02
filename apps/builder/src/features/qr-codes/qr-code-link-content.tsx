@@ -17,15 +17,21 @@ export const QrCodeLinkContent = ({ link }: QrCodeLinkContentProps) => {
   const [, copy] = useCopyToClipboard()
 
   const handleCopy = () => {
-    copy(link).then(() => {
-      toast.success(t("messages.copiedToClipboard"))
-    })
+    copy(link)
+      .then(() => {
+        toast.success(t("messages.copiedToClipboard"))
+      })
+      .catch(() => {
+        toast.error(t("messages.copyFailed"))
+      })
   }
 
   return (
     <div className="flex flex-col items-center justify-center gap-2">
       <p className="text-muted-foreground text-sm">{t("actions.scanQRCode")}</p>
-      <QRCode value={link} />
+      <div id="qr-code-preview">
+        <QRCode value={link} />
+      </div>
 
       <p className="text-muted-foreground text-sm">{t("texts.or")}</p>
       <div className="-mt-2 flex items-center justify-center gap-2">

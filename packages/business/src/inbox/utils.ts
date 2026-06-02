@@ -60,3 +60,22 @@ export function buildInboxLink(
   }
   return url.toString()
 }
+
+export function getInboxLinks(
+  appUrl: string,
+  inboxes: InboxWithIntegrations[],
+  refConfig?: RefConfig,
+): { inbox: InboxWithIntegrations; url: string }[] {
+  return inboxes
+    .map((inbox) => {
+      const url = buildInboxLink(appUrl, inbox, refConfig)
+      if (!url) {
+        return null
+      }
+      return { inbox, url }
+    })
+    .filter(
+      (item): item is { inbox: InboxWithIntegrations; url: string } =>
+        item !== null,
+    )
+}

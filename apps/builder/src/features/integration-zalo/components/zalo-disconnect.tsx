@@ -1,5 +1,6 @@
 "use client"
 
+import type { IntegrationZaloResource } from "@chatbotx.io/business"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,6 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { useWorkspaceId } from "@/hooks/routing"
 import { disconnectZaloAction } from "../actions/disconnect.action"
-import type { IntegrationZaloResource } from "../schemas/resource"
 
 export function ZaloDisconnect({
   integrationZalo,

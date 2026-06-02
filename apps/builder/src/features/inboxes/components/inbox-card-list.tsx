@@ -1,5 +1,6 @@
 "use client"
 
+import type { ListInboxesResponse } from "@chatbotx.io/business"
 import { buildInboxLink } from "@chatbotx.io/business/utils"
 import type { ChannelType } from "@chatbotx.io/database/partials"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
@@ -7,8 +8,7 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
 import { usePlatformSettings } from "@/features/platform"
-import { ScanQRCodeDialog } from "@/features/qrcode/scan-qrcode"
-import type { ListInboxesResponse } from "../schema/action"
+import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
 import { InboxIcon } from "./inbox-icon"
 import InboxNewCard from "./inbox-new-card"
 

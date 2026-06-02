@@ -1,6 +1,6 @@
+import type { ListIntegrationWhatsappResponse } from "@chatbotx.io/business"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
-import type { ListIntegrationWhatsappResponse } from "../schemas/query"
 
 export type IntegrationWhatsapp = {
   id: string
