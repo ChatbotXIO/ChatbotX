@@ -1,4 +1,4 @@
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, isNull } from "@chatbotx.io/database/client"
 import {
   contactCustomFieldModel,
   contactModel,
@@ -400,6 +400,7 @@ export async function subscribeBroadcast({
       and(
         eq(contactModel.id, conversation.contactId),
         eq(contactModel.workspaceId, conversation.workspaceId),
+        isNull(contactModel.broadcastSubscribedAt),
       ),
     )
 }

@@ -13,7 +13,7 @@ type ContactWhere = Record<string, unknown>
  * Handles:
  *  - Direct columns (fullName, email, gender, country, locale)
  *  - Column aliases (phone → phoneNumber, contactCreatedAt → createdAt)
- *  - Boolean-from-timestamp (subscribedToBroadcast → subscribedAt, blocked → blockedAt)
+ *  - Boolean-from-timestamp (subscribedToBroadcast → broadcastSubscribedAt, blocked → blockedAt)
  *  - Time-based booleans (interactedInLast24h → lastActivityAt)
  *  - Relations (tags, customFields, source / currentChannel → contactInboxes)
  *  - Conversation relations (archived, conversationTransferredToHuman)
@@ -66,7 +66,7 @@ function buildConditionWhere(condition: ContactFilterCondition): ContactWhere {
 
     // ── Boolean-from-timestamp ────────────────────────────────────────────────
     case "subscribedToBroadcast":
-      return buildBooleanFromTimestamp("subscribedAt", operator, value)
+      return buildBooleanFromTimestamp("broadcastSubscribedAt", operator, value)
 
     case "blocked":
       return buildBooleanFromTimestamp("blockedAt", operator, value)
