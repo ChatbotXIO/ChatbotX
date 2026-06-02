@@ -33,7 +33,6 @@ import {
   enrollContactInSequence,
 } from "@chatbotx.io/sequence-scheduler"
 import { createId } from "@chatbotx.io/utils"
-import { logger } from "../../lib/logger"
 import type { ExecuteStepProps } from "./flow"
 
 export async function setContactCustomField({
@@ -287,8 +286,6 @@ export async function deleteContact({
             triggerType: "contact_deleted",
           },
         },
-      }).catch((err) => {
-        logger.error({ err }, "[deleteContact] Failed to emit contact:deleted")
       })
     }
   }

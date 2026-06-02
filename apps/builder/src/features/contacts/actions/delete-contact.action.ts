@@ -22,7 +22,7 @@ export const deleteContact = async (ctx: {
       emit("analytics:dashboard", {
         eventType: "contact:deleted",
         workspaceId: ctx.workspaceId,
-        contactId: contactInbox.id,
+        contactId: contact.id,
         occurredAt,
         source: contactInbox.source,
         channel: contactInbox.channel,
@@ -34,11 +34,6 @@ export const deleteContact = async (ctx: {
             triggerType: "contact_deleted",
           },
         },
-      }).catch((error) => {
-        console.error(
-          "[deleteContactAction] Failed to emit contact:deleted event",
-          error,
-        )
       })
     }
   }

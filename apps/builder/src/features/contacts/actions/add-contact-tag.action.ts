@@ -174,11 +174,7 @@ export const attachContactTags = async ({
       })
 
     for (const tag of tags) {
-      try {
-        await emitTagApplied(workspaceId, contactId, tag.id)
-      } catch (error) {
-        console.error("Failed to emit tagApplied event:", error)
-      }
+      await emitTagApplied(workspaceId, contactId, tag.id)
     }
   }
 }
@@ -204,10 +200,6 @@ export const detachContactTags = async ({
     )
 
   for (const tagId of tagIds) {
-    try {
-      await emitTagRemoved(workspaceId, contactId, tagId)
-    } catch (error) {
-      console.error("Failed to emit tagRemoved event:", error)
-    }
+    await emitTagRemoved(workspaceId, contactId, tagId)
   }
 }

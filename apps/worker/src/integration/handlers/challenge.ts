@@ -6,7 +6,6 @@ import {
   detectConversationAndContactInbox,
   detectFlowVersion,
 } from "../../lib/db"
-import { logger } from "../../lib/logger"
 import { runStepsAndQuickReplies } from "./flow"
 
 export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
@@ -94,9 +93,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
             triggerType: "challenge_step",
           },
         },
-      }).catch((err) =>
-        logger.error(err, "[runChallenge] Failed to emit bot_received"),
-      )
+      })
     }
   } catch (error) {
     if (messageId) {
@@ -121,12 +118,7 @@ export async function runChallenge(data: IntegrationJobRunChallenge["data"]) {
             triggerType: "challenge_step_failed",
           },
         },
-      }).catch((err) =>
-        logger.error(
-          err,
-          "[runChallenge] Failed to emit bot_received fallback",
-        ),
-      )
+      })
     }
     throw error
   }

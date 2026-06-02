@@ -1514,6 +1514,9 @@ importers:
       '@chatbotx.io/flow-config':
         specifier: workspace:*
         version: link:../flow-config
+      '@chatbotx.io/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@chatbotx.io/redis':
         specifier: workspace:*
         version: link:../redis

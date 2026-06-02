@@ -39,11 +39,6 @@ export const blockContact = async (ctx: {
         origin: "manual",
       },
     },
-  }).catch((error) => {
-    console.error(
-      "[blockContactAction] Failed to emit contact:blocked event",
-      error,
-    )
   })
 
   await integrationQueue.add(IntegrationJobAction.blockContact, {

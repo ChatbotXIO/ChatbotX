@@ -255,8 +255,6 @@ export class ActionExecutor {
               triggerType: "trigger_action",
             },
           },
-        }).catch((error) => {
-          baseLogger.error(error, "[actionExecutor.disableBot] Failed to track")
         })
         break
 
@@ -278,8 +276,6 @@ export class ActionExecutor {
               triggerType: "trigger_action",
             },
           },
-        }).catch((error) => {
-          baseLogger.error(error, "[actionExecutor.enableBot] Failed to track")
         })
         break
 
@@ -306,11 +302,6 @@ export class ActionExecutor {
               triggerType: "trigger_action",
             },
           },
-        }).catch((error) => {
-          baseLogger.error(
-            error,
-            "[actionExecutor.transferConversationToHuman] Failed to track",
-          )
         })
         break
 

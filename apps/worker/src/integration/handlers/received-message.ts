@@ -392,8 +392,6 @@ const detectContactAndConversation = async (props: {
             triggerType: "contact_created",
           },
         },
-      }).catch((error) => {
-        logger.error(error, "[receiveMessage] Failed to emit contact:created")
       })
     }
   }

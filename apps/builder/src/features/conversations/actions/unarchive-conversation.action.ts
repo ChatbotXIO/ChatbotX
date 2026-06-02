@@ -9,7 +9,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const unarchiveConversationAction = workspaceActionClient
@@ -62,11 +61,6 @@ export const unarchiveConversationAction = workspaceActionClient
                 triggerType: "conversation_unarchived",
               },
             },
-          }).catch((error) => {
-            logger.error(
-              { err: error },
-              "[unarchiveConversation] Failed to emit",
-            )
           })
         }
       }

@@ -18,7 +18,6 @@ import {
   type AssignConversationSchema,
   assignConversationSchema,
 } from "@/features/conversations/schema/action"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const assignConversationAction = workspaceActionClient
@@ -134,11 +133,6 @@ export const assignConversationAction = workspaceActionClient
                   triggerType: "conversation_assigned",
                 },
               },
-            }).catch((error) => {
-              logger.error(
-                { err: error },
-                "[assignConversation] Failed to emit",
-              )
             })
           }
         }
@@ -158,11 +152,6 @@ export const assignConversationAction = workspaceActionClient
                   triggerType: "conversation_unassigned",
                 },
               },
-            }).catch((error) => {
-              logger.error(
-                { err: error },
-                "[assignConversation] Failed to emit",
-              )
             })
           }
         }

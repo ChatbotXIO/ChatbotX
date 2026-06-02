@@ -57,7 +57,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
           triggerType: "contact_ref",
         },
       },
-    }).catch((err) => logger.error(err, "[runRef] Failed to emit bot_received"))
+    })
   }
   const emitFallback = () => {
     if (!messageId) {
@@ -83,9 +83,7 @@ export async function runRef(data: IntegrationJobRunRef["data"]) {
           triggerType: "contact_ref_failed",
         },
       },
-    }).catch((err) =>
-      logger.error(err, "[runRef] Failed to emit bot_received fallback"),
-    )
+    })
   }
 
   try {

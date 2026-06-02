@@ -38,7 +38,7 @@ export const publicListContactsByCustomField = async (
   if (customFieldId === "email") {
     where.email = value
   } else if (customFieldId === "phone") {
-    where.phone = value
+    where.phoneNumber = value
   } else {
     where.contactCustomFields = {
       id: customFieldId,

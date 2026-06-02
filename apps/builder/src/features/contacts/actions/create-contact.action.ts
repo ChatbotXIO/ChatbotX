@@ -140,8 +140,6 @@ export const createContact = async ({
           triggerType: "contact_created",
         },
       },
-    }).catch((error) => {
-      console.error("[createContact] Failed to emit contact:created", error)
     })
   }
 

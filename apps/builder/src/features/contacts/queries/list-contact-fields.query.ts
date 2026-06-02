@@ -13,6 +13,9 @@ export async function listContactCustomFields(
   const data = await db.query.contactCustomFieldModel.findMany({
     where: {
       contactId: input.contactId,
+      customField: {
+        workspaceId: input.workspaceId,
+      },
     },
     with: {
       customField: true,

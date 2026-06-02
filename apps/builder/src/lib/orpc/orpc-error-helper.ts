@@ -43,5 +43,6 @@ export const possibleErrorsOnUpdatingResource = {
 
 export const possibleErrorsOnDeletingResource = {
   rateLimitExceeded,
+  notFound,
   businessError,
 }

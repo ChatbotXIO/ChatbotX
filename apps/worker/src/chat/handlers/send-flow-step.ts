@@ -371,8 +371,6 @@ export async function sendFlowStep({
           triggerType: "message_bot_sent_flow",
         },
       },
-    }).catch((error) => {
-      logger.error(error, "[sendFlowStep] Failed to track message:bot_sent")
     })
 
     if (trackingContext) {
@@ -564,8 +562,6 @@ export const sendChatMessage = async (
           triggerType: "message_bot_sent_chat",
         },
       },
-    }).catch((error) => {
-      logger.error(error, "[sendChatMessage] Failed to track message:bot_sent")
     })
 
     if (trackingContext) {

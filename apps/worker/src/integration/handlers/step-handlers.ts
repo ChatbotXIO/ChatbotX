@@ -32,7 +32,6 @@ import {
   type UnfollowConversationStepSchema,
 } from "@chatbotx.io/flow-config"
 import { subHours } from "date-fns"
-import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
@@ -83,11 +82,6 @@ export async function stepArchiveConversation({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepArchiveConversation] Failed to emit analytics event",
-    )
   })
 }
 
@@ -113,11 +107,6 @@ export async function stepUnarchiveConversation({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepUnarchiveConversation] Failed to emit analytics event",
-    )
   })
 }
 
@@ -184,11 +173,6 @@ export async function stepAssignConversation({
           triggerType: "flow_action",
         },
       },
-    }).catch((error) => {
-      logger.error(
-        { err: error, conversationId: conversation.id },
-        "[stepAssignConversation] Failed to emit analytics event",
-      )
     })
   }
 }
@@ -383,11 +367,6 @@ export async function stepAutoAssignConversation({
           triggerType: "flow_action",
         },
       },
-    }).catch((error) => {
-      logger.error(
-        { err: error, conversationId: conversation.id },
-        "[stepAutoAssignConversation] Failed to emit analytics event",
-      )
     })
   }
 
@@ -425,11 +404,6 @@ export async function stepUnassignConversation({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepUnassignConversation] Failed to emit analytics event",
-    )
   })
 }
 
@@ -455,11 +429,6 @@ export async function stepFollowConversation({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepFollowConversation] Failed to emit analytics event",
-    )
   })
 }
 
@@ -485,11 +454,6 @@ export async function stepUnfollowConversation({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepUnfollowConversation] Failed to emit analytics event",
-    )
   })
 }
 
@@ -519,11 +483,6 @@ export async function stepDisableBot({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepDisableBot] Failed to emit analytics event",
-    )
   })
 }
 
@@ -553,11 +512,6 @@ export async function stepEnableBot({
         triggerType: "flow_action",
       },
     },
-  }).catch((error) => {
-    logger.error(
-      { err: error, conversationId: conversation.id },
-      "[stepEnableBot] Failed to emit analytics event",
-    )
   })
 }
 

@@ -17,7 +17,7 @@ import {
   listContactCustomFields,
 } from "../queries/list-contact-fields.query"
 import { listContactTags } from "../queries/list-contact-tags.query"
-import { listContacts } from "../queries/list-contacts.queries"
+import { listContactsForAPI } from "../queries/list-contacts.queries"
 import {
   publicFindContact,
   publicListContactsByCustomField,
@@ -49,7 +49,7 @@ export const workspaceTokenAuthAPIs = {
     .output(listContactsResponse)
     .handler(
       async ({ context, input }) =>
-        await listContacts({
+        await listContactsForAPI({
           ...input,
           workspaceId: context.workspace.id,
         }),
@@ -89,7 +89,10 @@ export const workspaceTokenAuthAPIs = {
         workspaceId: context.workspace.id,
         parsedInput: input,
       })
-      const newContact = await publicFindContact({ id: contact.id })
+      const newContact = await publicFindContact({
+        id: contact.id,
+        workspaceId: context.workspace.id,
+      })
       if (!newContact) {
         throw notFoundException("Contact not found")
       }
@@ -143,7 +146,7 @@ export const workspaceTokenAuthAPIs = {
     .input(
       z.object({
         contactId: zodBigintAsString(),
-        tagIds: z.array(zodBigintAsString()).min(1),
+        tagIds: z.array(zodBigintAsString()).min(1).max(100),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -165,7 +168,7 @@ export const workspaceTokenAuthAPIs = {
     .input(
       z.object({
         contactId: zodBigintAsString(),
-        tagIds: z.array(zodBigintAsString()).min(1),
+        tagIds: z.array(zodBigintAsString()).min(1).max(100),
       }),
     )
     .handler(async ({ context, input }) => {
@@ -334,10 +337,11 @@ export const workspaceTokenAuthAPIs = {
         }),
       ),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ context, input }) => {
       const conversation = await db.query.conversationModel.findFirst({
         where: {
           contactId: input.contactId,
+          workspaceId: context.workspace.id,
           contactInboxes: {
             channel: input.inboxId,
           },

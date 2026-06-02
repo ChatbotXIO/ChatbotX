@@ -241,11 +241,6 @@ export async function handleCreateWebchatMessage({
           triggerType: "contact_created",
         },
       },
-    }).catch((error) => {
-      console.error(
-        "[createWebchatMessage] Failed to emit contact:created",
-        error,
-      )
     })
   }
 

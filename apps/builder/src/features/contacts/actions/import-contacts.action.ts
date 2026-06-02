@@ -21,8 +21,7 @@ export const importContactsAction = workspaceActionClient
       bindArgsParsedInputs: WorkspaceIdRequestParams
       parsedInput: ImportContactsRequest
     }) => {
-      // TODO
-      console.log(JSON.stringify(parsedInput, null, 2))
+      // TODO: implement import
       await Promise.resolve(parsedInput)
     },
   )

@@ -478,9 +478,7 @@ export async function runFlowPostback(
             triggerType: "contact_postback",
           },
         },
-      }).catch((err) =>
-        logger.error({ err }, "[runFlowPostback] Failed to emit bot_received"),
-      )
+      })
     }
   } catch (error) {
     if (data.messageId) {
@@ -505,12 +503,7 @@ export async function runFlowPostback(
             triggerType: "contact_postback_failed",
           },
         },
-      }).catch((err) =>
-        logger.error(
-          { err },
-          "[runFlowPostback] Failed to emit bot_received fallback",
-        ),
-      )
+      })
     }
     throw error
   }
@@ -616,12 +609,7 @@ export async function runFlowQuickReply(
             triggerType: "contact_quick_reply",
           },
         },
-      }).catch((err) =>
-        logger.error(
-          { err },
-          "[runFlowQuickReply] Failed to emit bot_received",
-        ),
-      )
+      })
     }
   } catch (error) {
     if (data.messageId) {
@@ -646,12 +634,7 @@ export async function runFlowQuickReply(
             triggerType: "contact_quick_reply_failed",
           },
         },
-      }).catch((err) =>
-        logger.error(
-          { err },
-          "[runFlowQuickReply] Failed to emit bot_received fallback",
-        ),
-      )
+      })
     }
     throw error
   }

@@ -5,6 +5,7 @@ import {
   possibleErrorsOnCreatingResource,
   possibleErrorsOnDeletingResource,
   possibleErrorsOnFindingResource,
+  possibleErrorsOnUpdatingResource,
 } from "@/lib/orpc/orpc-error-helper"
 import { maxPerPage } from "@/lib/shared-request"
 import { workspaceTokenAuthAPI } from "@/orpc"
@@ -87,7 +88,7 @@ const updateTagWorkspaceTokenAPI = workspaceTokenAuthAPI
       .and(z.object({ id: zodBigintAsString() })),
   )
   .output(publicTagResource)
-  .errors(possibleErrorsOnCreatingResource)
+  .errors(possibleErrorsOnUpdatingResource)
   .handler(async ({ context, input }) => {
     const { id, ...rest } = input
     return await updateTag({

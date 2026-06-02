@@ -8,6 +8,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import { dashboardEventBus } from "./dashboard"
 import { flowEventBus } from "./flow"
+import { logger } from "./logger"
 import { messageEventBus } from "./message"
 
 export type {
@@ -24,23 +25,27 @@ export type EventMap = MessageEventMap &
   AnalyticsDashboardEventMap
 
 export function emit<K extends keyof EventMap>(type: K, payload: EventMap[K]) {
-  if (type in messageEventSchemas) {
-    return messageEventBus.emit(
-      type as keyof MessageEventMap,
-      payload as MessageEventMap[keyof MessageEventMap],
-    )
+  try {
+    if (type in messageEventSchemas) {
+      return messageEventBus.emit(
+        type as keyof MessageEventMap,
+        payload as MessageEventMap[keyof MessageEventMap],
+      )
+    }
+    if (type in flowEventSchemas) {
+      return flowEventBus.emit(
+        type as keyof FlowEventMap,
+        payload as FlowEventMap[keyof FlowEventMap],
+      )
+    }
+    if (type in analyticsDashboardEventSchemas) {
+      return dashboardEventBus.emit(
+        type as keyof AnalyticsDashboardEventMap,
+        payload as AnalyticsDashboardEventMap[keyof AnalyticsDashboardEventMap],
+      )
+    }
+    return Promise.resolve("")
+  } catch (err) {
+    logger.error({ err, payload }, `Failed to emit event: ${type}`)
   }
-  if (type in flowEventSchemas) {
-    return flowEventBus.emit(
-      type as keyof FlowEventMap,
-      payload as FlowEventMap[keyof FlowEventMap],
-    )
-  }
-  if (type in analyticsDashboardEventSchemas) {
-    return dashboardEventBus.emit(
-      type as keyof AnalyticsDashboardEventMap,
-      payload as AnalyticsDashboardEventMap[keyof AnalyticsDashboardEventMap],
-    )
-  }
-  return Promise.resolve("")
 }

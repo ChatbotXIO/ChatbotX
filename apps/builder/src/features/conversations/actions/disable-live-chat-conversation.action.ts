@@ -8,7 +8,6 @@ import {
   type WorkspaceIdRequestParams,
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
-import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
 import { enableConversationState } from "../queries/bot-state"
 
@@ -63,11 +62,6 @@ export const disableLiveChatConversationAction = workspaceActionClient
               triggerType: "conversation_transferred_to_bot",
             },
           },
-        }).catch((error) => {
-          logger.error(
-            { err: error },
-            "[disableLiveChatConversationAction] Failed to emit",
-          )
         })
       }
     },

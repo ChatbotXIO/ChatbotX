@@ -167,8 +167,6 @@ export const createMessage = async (props: {
           triggerType: "message_human_sent",
         },
       },
-    }).catch((error) => {
-      console.error("[createMessage] Failed to emit message:human_sent", error)
     })
   }
 
