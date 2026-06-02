@@ -2,7 +2,6 @@
 
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { reflinkModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -30,7 +29,5 @@ export const deleteQrCodesAction = workspaceActionClient
             inArray(reflinkModel.id, parsedInput.ids),
           ),
         )
-
-      await invalidateCacheByTags([`workspaces:${workspaceId}#qr-codes`])
     },
   )

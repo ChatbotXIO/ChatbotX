@@ -8,7 +8,6 @@ import {
   isUniqueViolationError,
 } from "@chatbotx.io/database/client"
 import { reflinkModel } from "@chatbotx.io/database/schema"
-import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
@@ -62,8 +61,6 @@ export const updateQrCode = async (
           eq(reflinkModel.workspaceId, ctx.workspaceId),
         ),
       )
-
-    await invalidateCacheByTags([`workspaces:${ctx.workspaceId}#qr-codes`])
   } catch (error) {
     if (isUniqueViolationError(error)) {
       return returnValidationErrors(updateQrCodeRequest, {
