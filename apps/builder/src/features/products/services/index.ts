@@ -1,3 +1,4 @@
+import { notFoundException } from "@chatbotx.io/business/errors"
 import {
   and,
   type DatabaseClient,
@@ -25,7 +26,6 @@ import {
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "@/features/common/base.service"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
-import { notFoundException } from "@/lib/errors/exception"
 import type {
   AddonInsertData,
   ProductInsertData,
