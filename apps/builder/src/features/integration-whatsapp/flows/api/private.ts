@@ -1,9 +1,9 @@
+import { buildContext } from "@chatbotx.io/business"
 import { findOrFail } from "@chatbotx.io/database/client"
 import {
   integrationWhatsappModel,
   whatsappFlowModel,
 } from "@chatbotx.io/database/schema"
-import { getStoragePrefix, uploader } from "@chatbotx.io/filesystem"
 import {
   type WhatsappAuthValue,
   integration as whatsappIntegration,
@@ -59,14 +59,14 @@ export const whatsappFlowInternalAPIs = {
         message: "Whatsapp integration not found",
       })
 
-      const ctx = {
-        auth: integrationWhatsapp.auth as WhatsappAuthValue,
-        uploader,
-        storagePrefix: getStoragePrefix(
-          input.workspaceId,
-          integrationWhatsapp.inboxId,
-        ),
-      }
+      const ctx = await buildContext({
+        workspaceId: input.workspaceId,
+        integrationType: "whatsapp",
+        integration: {
+          ...integrationWhatsapp,
+          auth: integrationWhatsapp.auth as WhatsappAuthValue,
+        },
+      })
 
       const screens = await whatsappIntegration.runAction("getFlowAssets", {
         ctx,

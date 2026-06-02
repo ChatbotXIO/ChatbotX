@@ -19,11 +19,11 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.1.8",
     "jsdom": "^25.0.1",
     "msw": "^2.7.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.8"
   },
   "devDependencies": {
     "@chatbotx.io/typescript-config": "workspace:*",
