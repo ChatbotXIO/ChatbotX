@@ -70,11 +70,6 @@ export class HandoffExecutorService {
             triggerType: source,
           },
         },
-      }).catch((error) => {
-        baseLogger.error(
-          { error, conversationId },
-          "[handoffExecutor] Failed to emit analytics event",
-        )
       })
     } catch (error) {
       const normalizedError = normalizeError(error)
