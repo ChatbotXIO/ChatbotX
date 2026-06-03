@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.37",
-    "@better-auth/stripe": "^1.6.9",
     "@chatbotx.io/ai": "workspace:*",
     "@chatbotx.io/analytics": "workspace:*",
     "@chatbotx.io/analytics-nextjs": "workspace:*",

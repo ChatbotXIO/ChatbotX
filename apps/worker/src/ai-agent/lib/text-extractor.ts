@@ -18,6 +18,7 @@ import {
   XML_MIME_TYPES,
 } from "@chatbotx.io/sdk"
 import { htmlToText } from "html-to-text"
+import JSZip from "jszip"
 import { simpleParser } from "mailparser"
 import { extractRawText } from "mammoth"
 import { lookup } from "mime-types"
@@ -26,6 +27,8 @@ import removeMd from "remove-markdown"
 import { read, utils } from "xlsx"
 import { logger } from "../../lib/logger"
 
+const MAX_EXTRACTABLE_PAGES = 200
+const MAX_EXTRACTED_TEXT_CHARS = 5_000_000
 const PRINTABLE_CHAR_REGEX = /[\x20-\x7E\n\r\t]/
 const PPTX_SLIDE_FILE_REGEX = /^ppt\/slides\/slide\d+\.xml$/
 const PPTX_NOTES_FILE_REGEX = /^ppt\/notesSlides\/notesSlide\d+\.xml$/
@@ -38,6 +41,7 @@ const EPUB_IDREF_REGEX = /idref="([^"]+)"/
 const EPUB_CONTENT_FILE_REGEX = /\.(html|xhtml|htm)$/i
 const UTF8_DECODER = new TextDecoder("utf-8")
 const UTF8_NON_FATAL_DECODER = new TextDecoder("utf-8", { fatal: false })
+const UTF16LE_DECODER = new TextDecoder("utf-16le")
 
 const decodeUtf8 = (buffer: Buffer): string => UTF8_DECODER.decode(buffer)
 
@@ -225,8 +229,25 @@ async function extractTextFromEmail(buffer: Buffer): Promise<string> {
 
 async function extractTextFromPptx(buffer: Buffer): Promise<string> {
   try {
-    const { default: JSZip } = await import("jszip")
     const zip = await JSZip.loadAsync(buffer)
+
+    const extractTextsFromXml = async (fileNames: string[]) => {
+      const texts: string[] = []
+      for (const fileName of fileNames) {
+        const xml = await zip.files[fileName]?.async("string")
+        if (!xml) {
+          continue
+        }
+        const text = xml
+          .match(PPTX_TEXT_TAG_REGEX)
+          ?.map((t: string) => t.replace(PPTX_TAG_STRIP_REGEX, ""))
+          .join(" ")
+        if (text?.trim()) {
+          texts.push(text)
+        }
+      }
+      return texts
+    }
 
     const slideNames = Object.keys(zip.files)
       .filter((name) => PPTX_SLIDE_FILE_REGEX.test(name))
@@ -242,39 +263,38 @@ async function extractTextFromPptx(buffer: Buffer): Promise<string> {
         return numA - numB
       })
 
-    const texts: string[] = []
-    for (const slideName of slideNames) {
-      const xml = await zip.files[slideName]?.async("string")
-      if (!xml) {
-        continue
-      }
-      const slideText = xml
-        .match(PPTX_TEXT_TAG_REGEX)
-        ?.map((t) => t.replace(PPTX_TAG_STRIP_REGEX, ""))
-        .join(" ")
-      if (slideText?.trim()) {
-        texts.push(slideText)
-      }
+    const noteNames = Object.keys(zip.files)
+      .filter((name) => PPTX_NOTES_FILE_REGEX.test(name))
+      .sort((a, b) => {
+        const numA = Number.parseInt(
+          a.match(PPTX_SLIDE_NUM_REGEX)?.[1] ?? "0",
+          10,
+        )
+        const numB = Number.parseInt(
+          b.match(PPTX_SLIDE_NUM_REGEX)?.[1] ?? "0",
+          10,
+        )
+        return numA - numB
+      })
+
+    if (slideNames.length > MAX_EXTRACTABLE_PAGES) {
+      logger.warn(
+        { total: slideNames.length, limit: MAX_EXTRACTABLE_PAGES },
+        "PPTX slide count exceeds limit, truncating",
+      )
     }
 
-    const noteNames = Object.keys(zip.files).filter((name) =>
-      PPTX_NOTES_FILE_REGEX.test(name),
+    const slideTexts = await extractTextsFromXml(
+      slideNames.slice(0, MAX_EXTRACTABLE_PAGES),
     )
-    for (const noteName of noteNames) {
-      const xml = await zip.files[noteName]?.async("string")
-      if (!xml) {
-        continue
-      }
-      const noteText = xml
-        .match(PPTX_TEXT_TAG_REGEX)
-        ?.map((t) => t.replace(PPTX_TAG_STRIP_REGEX, ""))
-        .join(" ")
-      if (noteText?.trim()) {
-        texts.push(noteText)
-      }
-    }
+    const noteTexts = await extractTextsFromXml(
+      noteNames.slice(0, MAX_EXTRACTABLE_PAGES),
+    )
 
-    return normalizeWhitespace(texts.join("\n\n"))
+    const result = normalizeWhitespace(
+      [...slideTexts, ...noteTexts].join("\n\n"),
+    )
+    return result.slice(0, MAX_EXTRACTED_TEXT_CHARS)
   } catch (error) {
     logger.warn(error, "PPTX parsing failed")
     throw new Error("PPTX parsing failed")
@@ -282,29 +302,29 @@ async function extractTextFromPptx(buffer: Buffer): Promise<string> {
 }
 
 function extractTextFromPpt(buffer: Buffer): string {
-  // PPT is a Compound Binary Format (OLE) — extract UTF-16LE strings heuristically
+  // PPT is a Compound Binary Format (OLE) — extract UTF-16LE text runs heuristically
+  const MIN_RUN_CHARS = 4
   const texts: string[] = []
   let i = 0
   while (i < buffer.length - 1) {
-    const byte = buffer[i]
-    const next = buffer[i + 1]
-    if (next === 0 && byte !== undefined && byte >= 0x20 && byte < 0x7f) {
-      let j = i
-      let str = ""
-      while (
-        j < buffer.length - 1 &&
-        buffer[j + 1] === 0 &&
-        buffer[j] !== undefined &&
-        (buffer[j] as number) >= 0x20 &&
-        (buffer[j] as number) < 0x7f
-      ) {
-        str += String.fromCharCode(buffer[j] as number)
-        j += 2
+    // biome-ignore lint/suspicious/noBitwiseOperators: reading UTF-16LE code units from binary
+    const codeUnit = (buffer[i] as number) | ((buffer[i + 1] as number) << 8)
+    const isPrintableBmp =
+      (codeUnit >= 0x20 && codeUnit < 0xd8_00) ||
+      (codeUnit > 0xdf_ff && codeUnit < 0xff_fe)
+    if (isPrintableBmp) {
+      const start = i
+      while (i < buffer.length - 1) {
+        // biome-ignore lint/suspicious/noBitwiseOperators: reading UTF-16LE code units from binary
+        const cu = (buffer[i] as number) | ((buffer[i + 1] as number) << 8)
+        if (cu < 0x20 || (cu >= 0xd8_00 && cu <= 0xdf_ff) || cu >= 0xff_fe) {
+          break
+        }
+        i += 2
       }
-      if (str.length >= 4) {
-        texts.push(str)
+      if ((i - start) / 2 >= MIN_RUN_CHARS) {
+        texts.push(UTF16LE_DECODER.decode(buffer.subarray(start, i)))
       }
-      i = j
     } else {
       i++
     }
@@ -314,7 +334,6 @@ function extractTextFromPpt(buffer: Buffer): string {
 
 async function extractTextFromEpub(buffer: Buffer): Promise<string> {
   try {
-    const { default: JSZip } = await import("jszip")
     const zip = await JSZip.loadAsync(buffer)
 
     const containerXml =
@@ -328,16 +347,21 @@ async function extractTextFromEpub(buffer: Buffer): Promise<string> {
       const opfDir = opfPath.split("/").slice(0, -1).join("/")
 
       const idrefs = (opfContent.match(EPUB_ITEMREF_REGEX) ?? []).map(
-        (m) => m.match(EPUB_IDREF_REGEX)?.[1],
+        (m: string) => m.match(EPUB_IDREF_REGEX)?.[1],
       )
 
       for (const idref of idrefs) {
         if (!idref) {
           continue
         }
-        const href = opfContent.match(
-          new RegExp(`<item[^>]+id="${idref}"[^>]+href="([^"]+)"`),
-        )?.[1]
+        const hrefMatch =
+          opfContent.match(
+            new RegExp(`<item[^>]+id="${idref}"[^>]+href="([^"]+)"`),
+          ) ??
+          opfContent.match(
+            new RegExp(`<item[^>]+href="([^"]+)"[^>]+id="${idref}"`),
+          )
+        const href = hrefMatch?.[1]
         if (href) {
           contentPaths.push(opfDir ? `${opfDir}/${href}` : href)
         }
@@ -348,6 +372,14 @@ async function extractTextFromEpub(buffer: Buffer): Promise<string> {
       contentPaths = Object.keys(zip.files).filter((name) =>
         EPUB_CONTENT_FILE_REGEX.test(name),
       )
+    }
+
+    if (contentPaths.length > MAX_EXTRACTABLE_PAGES) {
+      logger.warn(
+        { total: contentPaths.length, limit: MAX_EXTRACTABLE_PAGES },
+        "EPUB chapter count exceeds limit, truncating",
+      )
+      contentPaths = contentPaths.slice(0, MAX_EXTRACTABLE_PAGES)
     }
 
     const texts: string[] = []
@@ -361,7 +393,8 @@ async function extractTextFromEpub(buffer: Buffer): Promise<string> {
       }
     }
 
-    return normalizeWhitespace(texts.join("\n\n"))
+    const result = normalizeWhitespace(texts.join("\n\n"))
+    return result.slice(0, MAX_EXTRACTED_TEXT_CHARS)
   } catch (error) {
     logger.warn(error, "EPUB parsing failed")
     throw new Error("EPUB parsing failed")
