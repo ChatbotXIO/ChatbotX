@@ -41,6 +41,8 @@ export const parseCsvLine = (line: string): string[] => {
   return fields.map((field) => field.trim())
 }
 
+// M-3: Read only the first 4 KB — enough for any realistic header row —
+// instead of loading the entire (potentially 20 MB) CSV into memory.
 export const extractCsvHeaders = (file: File): Promise<string[]> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -50,5 +52,5 @@ export const extractCsvHeaders = (file: File): Promise<string[]> =>
       resolve(parseCsvLine(headerRow))
     }
     reader.onerror = () => reject(new Error("Failed to read file"))
-    reader.readAsText(file)
+    reader.readAsText(file.slice(0, 4096))
   })

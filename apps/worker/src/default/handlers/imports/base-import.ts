@@ -7,7 +7,10 @@ import { createImportRowParser } from "@chatbotx.io/imports/parsers"
 import { logger } from "../../../lib/logger"
 
 const BYTES_PER_MB = 1024 * 1024
-const COUNTER_FLUSH_EVERY = 100
+// L-5: Flushing every 100 rows at concurrency=5 creates noticeable write
+// churn on the Import table. 500 gives real-time-ish progress with far
+// fewer round-trips.
+const COUNTER_FLUSH_EVERY = 500
 const IMPORT_BATCH_SIZE = 1000
 
 export type ImportRow = typeof importModel.$inferSelect & {
@@ -82,18 +85,20 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
   const counters: Counters = { processed: 0, success: 0, failed: 0 }
   let parser: AsyncIterable<Record<string, unknown>>
   try {
-    const { stream, contentLength } = await uploader.getObjectStream(
-      row.file.path,
-    )
-    if ((contentLength ?? 0) > maxBytes) {
-      stream.destroy()
+    // M-4: Use HeadObject for a reliable size check. GetObject ContentLength
+    // may be absent for multipart-uploaded objects on some S3-compatible stores.
+    const head = await uploader.headObject(row.file.path)
+    const objectSize = head.ContentLength ?? 0
+    if (objectSize > maxBytes) {
       await failImport(row.id, `File exceeds ${config.maxFileSizeMB}MB limit`)
       return
     }
+    const { stream } = await uploader.getObjectStream(row.file.path)
     parser = createImportRowParser(row.format, stream)
   } catch (error) {
     const message = error instanceof Error ? error.message : "Parser error"
-    logger.error(error, `Import ${row.id} parser init failed`)
+    // H-5: `err` key required for pino stack-trace serialization.
+    logger.error({ err: error }, `Import ${row.id} parser init failed`)
     await failImport(row.id, message)
     return
   }
@@ -141,7 +146,7 @@ export const runImportPipeline = async <TMeta, TDeps, TRow>(
     await flushBatch()
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error"
-    logger.error(error, `Import ${row.id} stream error`)
+    logger.error({ err: error }, `Import ${row.id} stream error`)
     await db
       .update(importModel)
       .set({

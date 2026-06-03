@@ -11,11 +11,16 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import { Input } from "@chatbotx.io/ui/components/ui/input"
 import type { MultiSelectGroup } from "@chatbotx.io/ui/components/ui/sersavan/multi-select"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { CheckCircle2, CopyIcon, DownloadIcon, Loader2 } from "lucide-react"
+import {
+  AlertCircle,
+  CheckCircle2,
+  CopyIcon,
+  DownloadIcon,
+  Loader2,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -53,6 +58,10 @@ export function ExportContactDialog({
 
   const [open, setOpen] = useState(false)
   const [exportState, setExportState] = useState<ExportState | null>(null)
+  // M-6: Track poll count to surface a timeout when the export worker stalls.
+  const [pollCount, setPollCount] = useState(0)
+  // 24 polls × 5 s = 2 minutes before we give up polling.
+  const POLL_TIMEOUT_COUNT = 24
 
   const customFieldOptions = useCustomFieldSelectOptions({
     prefix: contactFieldPrefix,
@@ -129,13 +138,22 @@ export function ExportContactDialog({
         fileId: id,
       }),
     {
-      refreshInterval: (latest) =>
-        latest?.status === "uploaded" || latest?.status === "failed" ? 0 : 5000,
+      refreshInterval: (latest) => {
+        if (latest?.status === "uploaded" || latest?.status === "failed") {
+          return 0
+        }
+        if (pollCount >= POLL_TIMEOUT_COUNT) {
+          return 0
+        }
+        setPollCount((n) => n + 1)
+        return 5000
+      },
     },
   )
 
   const resetDialog = () => {
     setExportState(null)
+    setPollCount(0)
     resetFormAndAction()
   }
 
@@ -230,27 +248,42 @@ export function ExportContactDialog({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Input readOnly value={exportFile.downloadUrl} />
-            <Button
-              onClick={handleCopyLink}
-              size="icon"
-              type="button"
-              variant="outline"
-            >
-              <CopyIcon />
-            </Button>
-          </div>
-
+          {/* L-1: Do not expose the raw presigned URL (it contains AWS signing
+              parameters). Copy and download actions are sufficient. */}
           <div className="flex justify-between gap-4">
-            <Button onClick={closeDialog} type="button" variant="outline">
-              {t("actions.cancel")}
+            <Button onClick={handleCopyLink} type="button" variant="outline">
+              <CopyIcon />
+              {t("contacts.copyLink")}
             </Button>
             <Button onClick={handleDownload} type="button">
               <DownloadIcon />
               {t("contacts.exportDownloadCount", {
                 count: exportFile.totalRecords ?? 0,
               })}
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    // M-6: Show a timeout message instead of spinning indefinitely.
+    if (pollCount >= POLL_TIMEOUT_COUNT) {
+      return (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 py-4">
+            <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-500" />
+            <div className="space-y-1">
+              <p className="font-medium text-sm">
+                {t("contacts.exportTakingLong")}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {t("contacts.exportTakingLongDescription")}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-start">
+            <Button onClick={closeDialog} type="button" variant="outline">
+              {t("actions.cancel")}
             </Button>
           </div>
         </div>

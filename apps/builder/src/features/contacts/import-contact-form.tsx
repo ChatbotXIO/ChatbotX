@@ -320,7 +320,10 @@ function MoreOptions({ csvHeaders }: { csvHeaders: string[] }) {
               ))}
             </div>
 
+            {/* M-7: Server schema limits fieldMapping to 10 entries; disable Add
+                button at the cap so the user gets immediate feedback. */}
             <Button
+              disabled={fields.length >= 10}
               onClick={() => append({ column: "", customFieldId: "" })}
               type="button"
               variant="outline"

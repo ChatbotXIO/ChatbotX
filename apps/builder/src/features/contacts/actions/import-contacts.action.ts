@@ -96,6 +96,24 @@ export const importContactsAction = workspaceActionClient
         tagId: parsedInput.tagId || undefined,
       }
 
+      // M-1: Prevent multiple concurrent imports for the same workspace. A user
+      // rapidly submitting several files could cause overlapping quota races.
+      const activeImport = await db.query.importModel.findFirst({
+        where: {
+          workspaceId,
+          type: importTypes.enum.contacts,
+          OR: [{ status: "pending" }, { status: "processing" }],
+        },
+        columns: { id: true },
+      })
+      if (activeImport) {
+        return returnValidationErrors(importContactsRequest, {
+          _errors: [
+            "An import is already in progress for this workspace. Please wait for it to complete.",
+          ],
+        })
+      }
+
       const importId = createId()
 
       // Mark the file uploaded and create the import row atomically so the

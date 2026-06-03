@@ -262,6 +262,11 @@ const updateExportFile = (
       ),
     )
 
+// H-3: Cap exports to avoid a single job monopolising a worker slot for hours
+// on large workspaces. Users who need more should use filtered exports or
+// contact the team for a bulk extraction.
+const MAX_EXPORT_ROWS = 500_000
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export const loopableExportContacts = async (data: ExportData) => {
@@ -287,6 +292,7 @@ export const loopableExportContacts = async (data: ExportData) => {
     await writeToStream(stream, headerLine)
     totalBytes += Buffer.byteLength(headerLine)
 
+    let hitRowCap = false
     await chunkById((lastId) => fetchContactPage(baseWhere, lastId), {
       chunkSize: loopableItemsCount,
       callback: async (page): Promise<boolean | undefined> => {
@@ -299,9 +305,26 @@ export const loopableExportContacts = async (data: ExportData) => {
         // records have been written so far.
         await updateExportFile(fileIds, { meta: { totalRecords } })
 
+        if (totalRecords >= MAX_EXPORT_ROWS) {
+          hitRowCap = true
+          return false
+        }
+
         return
       },
     })
+
+    if (hitRowCap) {
+      stream.end()
+      await done
+      await updateExportFile(fileIds, {
+        status: fileStatuses.enum.failed,
+        meta: { totalRecords },
+      })
+      throw new Error(
+        `Export exceeded the ${MAX_EXPORT_ROWS.toLocaleString()}-row limit. Use filters to narrow the export.`,
+      )
+    }
 
     stream.end()
     await done

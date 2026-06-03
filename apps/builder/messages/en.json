@@ -2046,7 +2046,9 @@
     "exportFailed": "Export failed. Please try again.",
     "copyLink": "Copy link",
     "linkCopied": "Link copied to clipboard",
-    "exportAllNotice": "All contacts matching the current filter will be exported."
+    "exportAllNotice": "All contacts matching the current filter will be exported.",
+    "exportTakingLong": "Export is taking longer than expected",
+    "exportTakingLongDescription": "The export is still processing. You can close this dialog and check back in a few minutes from the export history."
   },
   "auditLogs": {
     "title": "Audit Logs"

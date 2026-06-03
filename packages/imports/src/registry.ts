@@ -8,7 +8,9 @@ const configs: Record<ImportType, ImportConfig> = {
     maxFileSizeMB: 20,
     maxRows: 100_000,
     acceptedFormats: ["csv"],
-    acceptedMimeTypes: ["text/csv", "application/octet-stream"],
+    // H-6: "application/octet-stream" is the generic binary MIME type; any file
+    // could match it and would fail at job time with "format not supported".
+    acceptedMimeTypes: ["text/csv"],
     acceptedExtensions: {
       "text/csv": [".csv"],
     },

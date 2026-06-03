@@ -14,6 +14,7 @@ import {
   conversationModel,
   type inboxModel,
 } from "@chatbotx.io/database/schema"
+import { distributedLock } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { logger } from "../../../../../lib/logger"
 import type {
@@ -36,6 +37,7 @@ type AcceptedContact = {
   row: ContactRow
 }
 
+// H-4: Parallelize all independent DB lookups to cut ~3 round-trips.
 const prepareContacts = async ({
   row,
   meta,
@@ -43,44 +45,42 @@ const prepareContacts = async ({
   row: ImportRow
   meta: ContactImportMeta
 }): Promise<ImportPrepareResult<ContactDeps>> => {
-  const inbox = await db.query.inboxModel.findFirst({
-    where: { id: row.inboxId, workspaceId: row.workspaceId },
-  })
+  const customFieldIds = meta.fieldMapping?.length
+    ? meta.fieldMapping.map((m) => m.customFieldId)
+    : []
+
+  const [inbox, workspace, tag, fields] = await Promise.all([
+    db.query.inboxModel.findFirst({
+      where: { id: row.inboxId, workspaceId: row.workspaceId },
+    }),
+    workspaceService.find({ where: { id: row.workspaceId } }),
+    meta.tagId
+      ? db.query.tagModel.findFirst({
+          where: { id: meta.tagId, workspaceId: row.workspaceId },
+          columns: { id: true },
+        })
+      : null,
+    customFieldIds.length
+      ? db.query.customFieldModel.findMany({
+          where: { id: { in: customFieldIds }, workspaceId: row.workspaceId },
+          columns: { id: true, type: true },
+        })
+      : [],
+  ])
 
   if (!inbox) {
     return { ok: false, reason: "Inbox not found" }
   }
-
-  const workspace = await workspaceService.find({
-    where: { id: row.workspaceId },
-  })
   if (!workspace) {
     return { ok: false, reason: "Workspace not found" }
   }
-
-  if (meta.tagId) {
-    const tag = await db.query.tagModel.findFirst({
-      where: { id: meta.tagId, workspaceId: row.workspaceId },
-      columns: { id: true },
-    })
-
-    if (!tag) {
-      return { ok: false, reason: "Tag not found in workspace" }
-    }
+  if (meta.tagId && !tag) {
+    return { ok: false, reason: "Tag not found in workspace" }
   }
 
   const customFieldTypes = new Map<string, CustomFieldType>()
-  if (meta.fieldMapping?.length) {
-    const ids = meta.fieldMapping.map((m) => m.customFieldId)
-
-    const fields = await db.query.customFieldModel.findMany({
-      where: { id: { in: ids }, workspaceId: row.workspaceId },
-      columns: { id: true, type: true },
-    })
-
-    for (const field of fields) {
-      customFieldTypes.set(field.id, field.type)
-    }
+  for (const field of fields) {
+    customFieldTypes.set(field.id, field.type)
   }
 
   return {
@@ -119,84 +119,114 @@ const processContactRow = (
   return { ...mapped, customFields: safeCustomFields }
 }
 
-const insertContactBatch = async (
+// C-1: Serialize quota check + insert + increment per owner via a distributed
+// lock so concurrent import jobs cannot both pass the remaining-slots gate and
+// together exceed the plan limit.
+const insertContactBatch = (
   deps: ContactDeps,
   eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
 ): Promise<number> => {
-  const remaining = await userQuotaService.getRemainingSlots(
-    deps.ownerId,
-    "contacts",
-  )
-  if (remaining === 0) {
-    return 0
-  }
+  return distributedLock.runExclusive({
+    key: `contact-import-quota:${deps.ownerId}`,
+    timeoutInSeconds: 30,
+    fn: async () => {
+      const remaining = await userQuotaService.getRemainingSlots(
+        deps.ownerId,
+        "contacts",
+      )
+      if (remaining === 0) {
+        return 0
+      }
 
-  const toInsert = remaining === null ? eligible : eligible.slice(0, remaining)
-  const accepted: AcceptedContact[] = toInsert.map((row) => ({
-    contactId: createId(),
-    row,
-  }))
-  if (accepted.length === 0) {
-    return 0
-  }
+      const toInsert =
+        remaining === null ? eligible : eligible.slice(0, remaining)
+      const accepted: AcceptedContact[] = toInsert.map((row) => ({
+        contactId: createId(),
+        row,
+      }))
+      if (accepted.length === 0) {
+        return 0
+      }
 
-  await db.transaction(async (tx) => {
-    await tx.insert(contactModel).values(
-      accepted.map(({ contactId, row }) => ({
-        id: contactId,
-        workspaceId: ctx.row.workspaceId,
-        phoneNumber: row.phoneNumber,
-        email: row.email,
-        firstName: row.firstName,
-        lastName: row.lastName,
-      })),
-    )
+      await db.transaction(async (tx) => {
+        await tx.insert(contactModel).values(
+          accepted.map(({ contactId, row }) => ({
+            id: contactId,
+            workspaceId: ctx.row.workspaceId,
+            phoneNumber: row.phoneNumber,
+            email: row.email,
+            firstName: row.firstName,
+            lastName: row.lastName,
+          })),
+        )
 
-    await tx.insert(contactInboxModel).values(
-      accepted.map(({ contactId, row }) => ({
-        id: createId(),
-        originalContactId: contactId,
-        contactId,
-        inboxId: ctx.row.inboxId,
-        channel: deps.inbox.channel,
-        source: contactSources.enum.imported as string,
-        sourceId: row.externalId as string,
-      })),
-    )
+        // H-2: Use onConflictDoNothing so a contact appearing in two separate
+        // 1 000-row batches does not roll back the entire second batch.
+        await tx
+          .insert(contactInboxModel)
+          .values(
+            accepted.map(({ contactId, row }) => {
+              // C-2: externalId is guaranteed non-null here by processContactBatch,
+              // but assert explicitly rather than casting to catch future regressions.
+              if (!row.externalId) {
+                throw new Error(
+                  "Invariant: externalId must be set before insert",
+                )
+              }
+              return {
+                id: createId(),
+                originalContactId: contactId,
+                contactId,
+                inboxId: ctx.row.inboxId,
+                channel: deps.inbox.channel,
+                source: contactSources.enum.imported,
+                sourceId: row.externalId,
+              }
+            }),
+          )
+          .onConflictDoNothing()
 
-    await tx.insert(conversationModel).values(
-      accepted.map(({ contactId }) => ({
-        id: createId(),
-        workspaceId: ctx.row.workspaceId,
-        contactId,
-      })),
-    )
+        await tx.insert(conversationModel).values(
+          accepted.map(({ contactId }) => ({
+            id: createId(),
+            workspaceId: ctx.row.workspaceId,
+            contactId,
+          })),
+        )
 
-    const customFieldValues = accepted.flatMap(({ contactId, row }) =>
-      row.customFields.map((field) => ({
-        id: createId(),
-        contactId,
-        customFieldId: field.customFieldId,
-        value: field.value,
-      })),
-    )
-    if (customFieldValues.length) {
-      await tx.insert(contactCustomFieldModel).values(customFieldValues)
-    }
+        const customFieldValues = accepted.flatMap(({ contactId, row }) =>
+          row.customFields.map((field) => ({
+            id: createId(),
+            contactId,
+            customFieldId: field.customFieldId,
+            value: field.value,
+          })),
+        )
+        if (customFieldValues.length) {
+          await tx.insert(contactCustomFieldModel).values(customFieldValues)
+        }
 
-    if (ctx.meta.tagId) {
-      const tagId = ctx.meta.tagId
-      await tx
-        .insert(contactsToTagsModel)
-        .values(accepted.map(({ contactId }) => ({ contactId, tagId })))
-        .onConflictDoNothing()
-    }
+        if (ctx.meta.tagId) {
+          const tagId = ctx.meta.tagId
+          await tx
+            .insert(contactsToTagsModel)
+            .values(accepted.map(({ contactId }) => ({ contactId, tagId })))
+            .onConflictDoNothing()
+        }
+      })
+
+      // H-1: Increment inside the lock so the live Redis counter is updated
+      // before another concurrent import reads it.
+      await userQuotaService.incrementBy(
+        deps.ownerId,
+        "contacts",
+        accepted.length,
+      )
+
+      return accepted.length
+    },
   })
-
-  await userQuotaService.incrementBy(deps.ownerId, "contacts", accepted.length)
-
-  return accepted.length
 }
 
 const processContactBatch = async (
@@ -241,7 +271,8 @@ const processContactBatch = async (
 
     return { success: inserted, failed: total - inserted }
   } catch (error) {
-    logger.error(error, "Import batch failed")
+    // H-5: use `err` key so pino serializes the full stack trace.
+    logger.error({ err: error }, "Import batch failed")
     return { success: 0, failed: total }
   }
 }

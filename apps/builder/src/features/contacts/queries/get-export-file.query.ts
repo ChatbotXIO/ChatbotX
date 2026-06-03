@@ -32,9 +32,11 @@ export async function getExportFile(
 
   const status = file.status as GetExportFileResponse["status"]
 
+  // M-2: Short TTL limits the exposure window if the URL leaks via browser
+  // history, Referer headers, or analytics scripts.
   const downloadUrl =
     status === "uploaded"
-      ? await uploader.getPresignedDownload(file.path)
+      ? await uploader.getPresignedDownload(file.path, 5 * 60)
       : null
 
   return {
