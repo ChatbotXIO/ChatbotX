@@ -22,10 +22,10 @@ import type { useTranslations } from "next-intl"
 import type { Dispatch, SetStateAction } from "react"
 
 function toPercent(value: number, total: number): string {
-  if (total === 0) {
+  if (total <= 0) {
     return "0%"
   }
-  return `${Math.round((value / total) * 100)}%`
+  return `${Math.min(100, Math.round((value / total) * 100))}%`
 }
 
 type GetColumnsProps = {

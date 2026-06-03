@@ -1,4 +1,4 @@
-import { emailTopicService } from "@chatbotx.io/business"
+import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
 import { NextResponse } from "next/server"
 
 const GIF = Buffer.from(
@@ -8,15 +8,9 @@ const GIF = Buffer.from(
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const topicId = searchParams.get("t")
-  const workspaceId = searchParams.get("w")
-
-  if (topicId && workspaceId) {
-    await emailTopicService.incrementCounters({
-      id: topicId,
-      workspaceId,
-      seens: 1,
-    })
+  const token = searchParams.get("r")
+  if (token) {
+    await emailTopicAnalyticsService.recordOpen(token)
   }
 
   return new NextResponse(GIF, {

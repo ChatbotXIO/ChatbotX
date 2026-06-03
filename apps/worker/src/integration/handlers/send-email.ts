@@ -1,8 +1,8 @@
+import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
 import {
   buildContext,
   buildUnsubscribeUrl,
   contactService,
-  emailTopicService,
   inboxService,
   integrationSmtpService,
   resolvePlatformSettings,
@@ -35,8 +35,7 @@ async function resolveElements({
   inbox,
   flowId,
   unsubscribeUrl,
-  topicId,
-  workspaceId,
+  token,
 }: {
   appUrl: string
   rawElements: PageElementSchema[]
@@ -44,8 +43,7 @@ async function resolveElements({
   inbox: InboxWithIntegrations | undefined
   flowId: string | undefined
   unsubscribeUrl: string
-  topicId?: string
-  workspaceId: string
+  token?: string
 }): Promise<MailElementSchema[]> {
   const resolved: MailElementSchema[] = []
 
@@ -87,8 +85,8 @@ async function resolveElements({
             })
           : undefined
 
-        if (url && topicId) {
-          url = `${appUrl}/email-topic/click?t=${topicId}&w=${workspaceId}&url=${encodeURIComponent(url)}`
+        if (url && token) {
+          url = `${appUrl}/email-topic/click?r=${token}&url=${encodeURIComponent(url)}`
         }
 
         resolved.push({ type: "button", url, label: el.label })
@@ -99,10 +97,10 @@ async function resolveElements({
     }
   }
 
-  if (topicId) {
+  if (token) {
     resolved.push({
       type: "image",
-      url: `${appUrl}/email-topic/open?t=${topicId}&w=${workspaceId}`,
+      url: `${appUrl}/email-topic/open?r=${token}`,
     })
   }
 
@@ -173,6 +171,20 @@ export async function sendEmail({
     conversation.workspaceId,
   )
 
+  // Create per-recipient tracking row before building URLs so the token is available.
+  let token: string | undefined
+  if (step.topicId) {
+    const result = await emailTopicAnalyticsService.createRecipient({
+      topicId: step.topicId,
+      workspaceId: conversation.workspaceId,
+      contactId: conversation.contactId,
+      conversationId: conversation.id,
+      contactInboxId: contactInbox.id,
+      email: to,
+    })
+    token = result.token
+  }
+
   const elements = await resolveElements({
     appUrl,
     rawElements: step.elements,
@@ -180,8 +192,7 @@ export async function sendEmail({
     inbox,
     flowId: flowVersion.flowId,
     unsubscribeUrl,
-    topicId: step.topicId,
-    workspaceId: conversation.workspaceId,
+    token,
   })
 
   const props: DynamicEmailProps = {
@@ -197,14 +208,6 @@ export async function sendEmail({
     integration: { ...smtpIntegration, auth },
   })
 
-  if (step.topicId) {
-    await emailTopicService.incrementCounters({
-      id: step.topicId,
-      workspaceId: conversation.workspaceId,
-      sends: 1,
-    })
-  }
-
   try {
     await integrationSmtp.runAction("sendMail", {
       ctx: botContext,
@@ -214,12 +217,8 @@ export async function sendEmail({
       html: await renderDynamicEmailHtml(props),
     })
 
-    if (step.topicId) {
-      await emailTopicService.incrementCounters({
-        id: step.topicId,
-        workspaceId: conversation.workspaceId,
-        delivereds: 1,
-      })
+    if (token) {
+      await emailTopicAnalyticsService.markDelivered(token)
     }
   } catch {
     logger.error(
@@ -229,6 +228,9 @@ export async function sendEmail({
       },
       "handleSendEmail: SMTP send failed",
     )
+    if (token) {
+      await emailTopicAnalyticsService.markFailed(token)
+    }
     return
   }
 }

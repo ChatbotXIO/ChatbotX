@@ -5,7 +5,6 @@ import {
   eq,
   inArray,
   relationsFilterToSQL,
-  sql,
 } from "@chatbotx.io/database/client"
 import { rootFolderId } from "@chatbotx.io/database/partials"
 import { emailTopicModel } from "@chatbotx.io/database/schema"
@@ -146,39 +145,6 @@ class EmailTopicService {
         and(
           eq(emailTopicModel.workspaceId, workspaceId),
           inArray(emailTopicModel.id, ids),
-        ),
-      )
-  }
-
-  async incrementCounters(props: {
-    id: string
-    workspaceId: string
-    sends?: number
-    delivereds?: number
-    seens?: number
-    clicks?: number
-  }): Promise<void> {
-    const { id, workspaceId, sends, delivereds, seens, clicks } = props
-    await db
-      .update(emailTopicModel)
-      .set({
-        ...(sends && {
-          sendsTotal: sql`${emailTopicModel.sendsTotal} + ${sends}`,
-        }),
-        ...(delivereds && {
-          deliveredsTotal: sql`${emailTopicModel.deliveredsTotal} + ${delivereds}`,
-        }),
-        ...(seens && {
-          seensTotal: sql`${emailTopicModel.seensTotal} + ${seens}`,
-        }),
-        ...(clicks && {
-          clicksTotal: sql`${emailTopicModel.clicksTotal} + ${clicks}`,
-        }),
-      })
-      .where(
-        and(
-          eq(emailTopicModel.id, id),
-          eq(emailTopicModel.workspaceId, workspaceId),
         ),
       )
   }

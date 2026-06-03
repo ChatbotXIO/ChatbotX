@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react"
 import { mergeConfig, type ViteUserConfig } from "vitest/config"
-import nodeConfig from "./node"
+import nodeConfig from "./node.ts"
 
 /**
  * Vitest preset for React libraries.

@@ -1,19 +1,14 @@
-import { emailTopicService } from "@chatbotx.io/business"
+import { emailTopicAnalyticsService } from "@chatbotx.io/analytics"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const topicId = searchParams.get("t")
-  const workspaceId = searchParams.get("w")
+  const token = searchParams.get("r")
   const url = searchParams.get("url")
 
-  if (topicId && workspaceId) {
-    await emailTopicService.incrementCounters({
-      id: topicId,
-      workspaceId,
-      clicks: 1,
-    })
+  if (token) {
+    await emailTopicAnalyticsService.recordClick(token)
   }
 
-  return NextResponse.redirect(url ?? "/", { status: 302 })
+  return NextResponse.redirect(url ?? request.url, { status: 302 })
 }

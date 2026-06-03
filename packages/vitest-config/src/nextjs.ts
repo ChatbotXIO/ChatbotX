@@ -1,5 +1,5 @@
 import { mergeConfig, type ViteUserConfig } from "vitest/config"
-import reactConfig from "./react"
+import reactConfig from "./react.ts"
 
 /**
  * Vitest preset for the Next.js builder app.

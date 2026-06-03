@@ -20,6 +20,7 @@ export const emailTopicModel = pgTable(
     }),
     sendsTotal: integer().default(0).notNull(),
     deliveredsTotal: integer().default(0).notNull(),
+    // deduped unique counts: each EmailTopicRecipient row contributes at most 1
     seensTotal: integer().default(0).notNull(),
     clicksTotal: integer().default(0).notNull(),
   },
