@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// --- Mocks ---------------------------------------------------------------
-
-// Insert+returning chain — `workspaceModel` first call returns the workspace,
-// `workspaceUsageModel` second call returns the usage stub.
 const returningWorkspace = vi.fn(async () => [
   { id: "ws-1", organizationId: "org-1" },
 ])
@@ -14,7 +10,6 @@ const db = { insert }
 vi.mock("@chatbotx.io/database/client", () => ({ db }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
-  workspaceUsageModel: {},
 }))
 vi.mock("@chatbotx.io/database/partials", () => ({
   workspaceMemberRoles: { enum: { owner: "owner" } },
@@ -25,10 +20,11 @@ vi.mock("@chatbotx.io/redis", () => ({
 }))
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "usage-1" }))
 
-const billingService = {
-  find: vi.fn(async () => undefined as unknown),
+const userQuotaService = {
+  tryIncrement: vi.fn(async () => true),
+  getForUser: vi.fn(async () => null as unknown),
 }
-vi.mock("../src/billing/service", () => ({ billingService }))
+vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
 
 const workspaceMemberService = {
   create: vi.fn(async () => undefined),
@@ -36,7 +32,6 @@ const workspaceMemberService = {
 vi.mock("../src/workspace-member/service", () => ({ workspaceMemberService }))
 
 const macRepository = {
-  ensureBillingMac: vi.fn(async () => new Map<string, string>()),
   ensureWorkspaceMac: vi.fn(async () => new Map<string, string>()),
 }
 const anchoredPeriod = vi.fn(() => ({
@@ -50,17 +45,9 @@ vi.mock("../src/logger", () => ({ logger }))
 
 const { workspaceService } = await import("../src/workspace/service")
 
-// --- Fixtures ------------------------------------------------------------
-
-const organization = {
-  id: "org-1",
-  defaultMaxContacts: 100,
-} as never
-
 function createInput() {
   return {
     data: { name: "WS", organizationId: "org-1" } as never,
-    organization,
     createdBy: "user-1",
   }
 }
@@ -71,11 +58,9 @@ beforeEach(() => {
     .mockResolvedValue([{ id: "ws-1", organizationId: "org-1" }])
   valuesWorkspace.mockClear()
   insert.mockClear()
-  billingService.find.mockReset().mockResolvedValue(undefined)
+  userQuotaService.tryIncrement.mockReset().mockResolvedValue(true)
+  userQuotaService.getForUser.mockReset().mockResolvedValue(null)
   workspaceMemberService.create.mockClear()
-  macRepository.ensureBillingMac
-    .mockReset()
-    .mockResolvedValue(new Map<string, string>())
   macRepository.ensureWorkspaceMac
     .mockReset()
     .mockResolvedValue(new Map<string, string>())
@@ -83,66 +68,52 @@ beforeEach(() => {
   logger.error.mockClear()
 })
 
-// --- Tests ---------------------------------------------------------------
-
 describe("WorkspaceService.create — MAC pre-provisioning", () => {
-  test("creates BillingMac + WorkspaceMac when the creator has a Billing row", async () => {
-    billingService.find.mockResolvedValue({
-      id: "bill-1",
+  test("creates WorkspaceMac when the user has a quota with periodStart", async () => {
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
       userId: "user-1",
       periodStart: new Date("2026-05-01T00:00:00.000Z"),
     })
-    macRepository.ensureBillingMac.mockResolvedValue(new Map([["key", "bm-1"]]))
 
     await workspaceService.create(createInput())
 
-    expect(billingService.find).toHaveBeenCalledWith({
-      userId: "user-1",
-      tx: db,
-    })
     expect(anchoredPeriod).toHaveBeenCalledTimes(1)
-    expect(macRepository.ensureBillingMac).toHaveBeenCalledWith(
+    expect(macRepository.ensureWorkspaceMac).toHaveBeenCalledWith(
       [
         {
-          billingId: "bill-1",
+          workspaceId: "ws-1",
           periodStart: new Date("2026-05-01T00:00:00.000Z"),
           periodEnd: new Date("2026-06-01T00:00:00.000Z"),
         },
       ],
       db,
     )
-    expect(macRepository.ensureWorkspaceMac).toHaveBeenCalledWith(
-      [{ workspaceId: "ws-1", billingMacId: "bm-1" }],
-      db,
-    )
   })
 
-  test("skips MAC pre-provisioning when the user has no Billing row", async () => {
-    billingService.find.mockResolvedValue(undefined)
+  test("skips MAC pre-provisioning when the user has no quota", async () => {
+    userQuotaService.getForUser.mockResolvedValue(null)
 
     await workspaceService.create(createInput())
 
-    expect(macRepository.ensureBillingMac).not.toHaveBeenCalled()
     expect(macRepository.ensureWorkspaceMac).not.toHaveBeenCalled()
     expect(logger.error).not.toHaveBeenCalled()
   })
 
-  test("skips WorkspaceMac when ensureBillingMac returns an empty map", async () => {
-    billingService.find.mockResolvedValue({
-      id: "bill-1",
+  test("skips MAC pre-provisioning when quota has no periodStart", async () => {
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
       userId: "user-1",
-      periodStart: new Date("2026-05-01T00:00:00.000Z"),
+      periodStart: null,
     })
-    macRepository.ensureBillingMac.mockResolvedValue(new Map())
 
     await workspaceService.create(createInput())
 
-    expect(macRepository.ensureBillingMac).toHaveBeenCalled()
     expect(macRepository.ensureWorkspaceMac).not.toHaveBeenCalled()
   })
 
   test("never blocks workspace creation if MAC provisioning throws", async () => {
-    billingService.find.mockRejectedValue(new Error("db down"))
+    userQuotaService.getForUser.mockRejectedValue(new Error("db down"))
 
     const result = await workspaceService.create(createInput())
 
@@ -152,12 +123,11 @@ describe("WorkspaceService.create — MAC pre-provisioning", () => {
   })
 
   test("logs and continues if ensureWorkspaceMac throws", async () => {
-    billingService.find.mockResolvedValue({
-      id: "bill-1",
+    userQuotaService.getForUser.mockResolvedValue({
+      id: "q-1",
       userId: "user-1",
       periodStart: new Date("2026-05-01T00:00:00.000Z"),
     })
-    macRepository.ensureBillingMac.mockResolvedValue(new Map([["key", "bm-1"]]))
     macRepository.ensureWorkspaceMac.mockRejectedValue(new Error("boom"))
 
     const result = await workspaceService.create(createInput())

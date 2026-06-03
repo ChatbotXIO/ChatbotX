@@ -21,10 +21,6 @@ export function workspaceMacCacheKey(workspaceId: string): string {
   return `mac:count:ws:${workspaceId}`
 }
 
-export function billingMacCacheKey(billingId: string): string {
-  return `mac:count:bl:${billingId}`
-}
-
 function startOfMinuteUtc(date: Date): Date {
   const truncated = new Date(date)
   truncated.setUTCSeconds(0, 0)

@@ -5,22 +5,15 @@ import type {
   MacMessageOutPayload,
 } from "../src/schemas/mac"
 
-// --- Mocks ---------------------------------------------------------------
-
 const macRepository = {
-  ensureBillingMac: vi.fn(),
   ensureWorkspaceMac: vi.fn(),
   upsertMonthlyPresence: vi.fn(async () => [] as unknown[]),
   addWorkspaceMacCount: vi.fn(async () => [] as unknown[]),
-  addBillingMacCount: vi.fn(async () => [] as unknown[]),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
   macRepository,
-  // The service imports these key helpers from the repository module.
-  billingMacKey: (billingId: string, periodStart: Date, periodEnd: Date) =>
-    `${billingId}|${periodStart.toISOString()}|${periodEnd.toISOString()}`,
-  workspaceMacKey: (workspaceId: string, billingMacId: string) =>
-    `${workspaceId}|${billingMacId}`,
+  workspaceMacKey: (workspaceId: string, periodStart: Date, periodEnd: Date) =>
+    `${workspaceId}|${periodStart.toISOString()}|${periodEnd.toISOString()}`,
 }))
 
 const distributedStore = {
@@ -33,7 +26,6 @@ const bloomFilter = {
 }
 vi.mock("@chatbotx.io/redis", () => ({ distributedStore, bloomFilter }))
 
-// Billing-context owner lookup. `limit()` resolves the row list.
 const selectRows: { current: unknown[] } = { current: [] }
 const selectBuilder: Record<string, unknown> = {}
 selectBuilder.from = vi.fn(() => selectBuilder)
@@ -71,11 +63,9 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     userId: "userId",
     role: "role",
   },
-  billingModel: {
-    id: "id",
+  userQuotaModel: {
     userId: "userId",
     periodStart: "periodStart",
-    periodEnd: "periodEnd",
   },
 }))
 
@@ -86,24 +76,19 @@ const { MacTrackingService } = await import(
   "../src/services/mac-tracking.service"
 )
 
-// --- Fixtures ------------------------------------------------------------
-
 const WORKSPACE_ID = "ws-1"
-const BILLING_PERIOD_START = "2026-01-10T09:00:00.000Z"
+const PERIOD_START = "2026-01-10T09:00:00.000Z"
 const CTX_KEY = `mac:ctx:ws:${WORKSPACE_ID}`
 
-/** Seed the Redis billing-context cache so no DB lookup is needed. */
-function seedBillingContext(): void {
+function seedQuotaContext(): void {
   distributedStore.getAll.mockResolvedValue({
     [CTX_KEY]: {
-      billingId: "bill-1",
-      billingPeriodStart: BILLING_PERIOD_START,
+      userId: "user-1",
+      periodStart: PERIOD_START,
     },
   })
 }
 
-// `occurredAt` defaults to an ISO string: that is what the payload actually
-// holds once a `message:received` event round-trips through the bus as JSON.
 function makeInPayload(
   overrides: Partial<MacMessageInPayload> = {},
 ): MacMessageInPayload {
@@ -149,33 +134,21 @@ beforeEach(() => {
   )
   macRepository.upsertMonthlyPresence.mockResolvedValue([])
   macRepository.addWorkspaceMacCount.mockResolvedValue([])
-  macRepository.addBillingMacCount.mockResolvedValue([])
-  // The id-chain resolvers echo back deterministic ids so resolveMacIds yields
-  // a PreparedRow for every draft.
-  macRepository.ensureBillingMac.mockImplementation(
-    (entries: { billingId: string; periodStart: Date; periodEnd: Date }[]) => {
+  macRepository.ensureWorkspaceMac.mockImplementation(
+    (
+      entries: { workspaceId: string; periodStart: Date; periodEnd: Date }[],
+    ) => {
       const map = new Map<string, string>()
       for (const e of entries) {
         map.set(
-          `${e.billingId}|${e.periodStart.toISOString()}|${e.periodEnd.toISOString()}`,
-          "bm-1",
+          `${e.workspaceId}|${e.periodStart.toISOString()}|${e.periodEnd.toISOString()}`,
+          "wm-1",
         )
       }
       return map
     },
   )
-  macRepository.ensureWorkspaceMac.mockImplementation(
-    (entries: { workspaceId: string; billingMacId: string }[]) => {
-      const map = new Map<string, string>()
-      for (const e of entries) {
-        map.set(`${e.workspaceId}|${e.billingMacId}`, "wm-1")
-      }
-      return map
-    },
-  )
 })
-
-// --- Tests ---------------------------------------------------------------
 
 describe("MacTrackingService — empty inputs", () => {
   test("track no-ops on empty event array", async () => {
@@ -213,7 +186,7 @@ describe("MacTrackingService — payload filtering", () => {
 
 describe("MacTrackingService — bloom-filter dedup", () => {
   test("only keeps events the bloom filter reports as new", async () => {
-    seedBillingContext()
+    seedQuotaContext()
     bloomFilter.addMany.mockResolvedValueOnce([true, false])
 
     await newService().trackMessageIn([
@@ -230,7 +203,7 @@ describe("MacTrackingService — bloom-filter dedup", () => {
   })
 
   test("falls back to all events when the bloom filter throws", async () => {
-    seedBillingContext()
+    seedQuotaContext()
     bloomFilter.addMany.mockRejectedValueOnce(new Error("redis down"))
 
     await newService().trackMessageIn([
@@ -246,26 +219,25 @@ describe("MacTrackingService — bloom-filter dedup", () => {
   })
 })
 
-describe("MacTrackingService — billing context", () => {
-  test("skips events whose workspace has no billing record", async () => {
+describe("MacTrackingService — quota context", () => {
+  test("skips events whose workspace has no quota context", async () => {
     distributedStore.getAll.mockResolvedValue({})
-    selectRows.current = [] // DB lookup also returns nothing
+    selectRows.current = []
 
     await newService().trackMessageIn([makeInPayload()])
 
-    // No-billing rule: nothing is written and the skip is a debug log.
-    expect(macRepository.ensureBillingMac).not.toHaveBeenCalled()
+    expect(macRepository.ensureWorkspaceMac).not.toHaveBeenCalled()
     expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
     expect(logger.debug).toHaveBeenCalled()
   })
 
-  test("loads billing context from the database on cache miss", async () => {
+  test("loads quota context from the database on cache miss", async () => {
     distributedStore.getAll.mockResolvedValue({})
     selectRows.current = [
       {
         workspaceId: WORKSPACE_ID,
-        billingId: "bill-db",
-        billingPeriodStart: new Date(BILLING_PERIOD_START),
+        userId: "user-1",
+        periodStart: new Date(PERIOD_START),
       },
     ]
 
@@ -278,27 +250,23 @@ describe("MacTrackingService — billing context", () => {
 })
 
 describe("MacTrackingService — id chain resolution", () => {
-  test("attaches resolved billingMacId/workspaceMacId to prepared rows", async () => {
-    seedBillingContext()
+  test("attaches resolved workspaceMacId to prepared rows", async () => {
+    seedQuotaContext()
 
     await newService().trackMessageIn([makeInPayload()])
 
-    expect(macRepository.ensureBillingMac).toHaveBeenCalledTimes(1)
     expect(macRepository.ensureWorkspaceMac).toHaveBeenCalledTimes(1)
     const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [
       PreparedRow[],
     ]
-    expect(rows[0]?.billingMacId).toBe("bm-1")
     expect(rows[0]?.workspaceMacId).toBe("wm-1")
   })
 })
 
 describe("MacTrackingService — occurredAt coercion", () => {
   test("accepts a string occurredAt from a bus-deserialized event", async () => {
-    seedBillingContext()
+    seedQuotaContext()
 
-    // Regression: events round-tripped through the bus carry `occurredAt`
-    // as an ISO string. `anchoredPeriod` needs a real Date.
     await newService().trackMessageIn([
       makeInPayload({ occurredAt: "2026-05-01T10:05:00.000Z" }),
     ])
@@ -313,12 +281,9 @@ describe("MacTrackingService — occurredAt coercion", () => {
     expect(logger.warn).not.toHaveBeenCalled()
   })
 
-  test("falls back to now() for a malformed occurredAt instead of crashing", async () => {
-    seedBillingContext()
+  test("falls back to now() for a malformed occurredAt", async () => {
+    seedQuotaContext()
 
-    // Regression: a garbage `occurredAt` produced an Invalid Date that flowed
-    // into `anchoredPeriod`, yielding NaN period bounds and crashing
-    // `billingMacKey` with `RangeError: Invalid time value`.
     await expect(
       newService().trackMessageIn([
         makeInPayload({ occurredAt: "not-a-date" }),
@@ -329,57 +294,15 @@ describe("MacTrackingService — occurredAt coercion", () => {
     const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [
       PreparedRow[],
     ]
-    // Event is kept (billable activity is real) with a valid fallback Date.
     expect(rows).toHaveLength(1)
     expect(Number.isNaN(rows[0]?.occurredAt.getTime())).toBe(false)
     expect(logger.warn).toHaveBeenCalled()
-  })
-
-  test("falls back to now() when occurredAt is missing", async () => {
-    seedBillingContext()
-
-    await expect(
-      newService().trackMessageIn([
-        makeInPayload({ occurredAt: undefined as never }),
-      ]),
-    ).resolves.toBeUndefined()
-
-    const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [
-      PreparedRow[],
-    ]
-    expect(rows).toHaveLength(1)
-    expect(Number.isNaN(rows[0]?.occurredAt.getTime())).toBe(false)
-    expect(logger.warn).toHaveBeenCalled()
-  })
-})
-
-describe("MacTrackingService — in-hour dedup", () => {
-  test("collapses same workspace/contact/event within an hour, keeping the latest", async () => {
-    seedBillingContext()
-
-    await newService().trackMessageIn([
-      makeInPayload({
-        occurredAt: new Date("2026-05-01T10:05:00.000Z"),
-        sourceId: "early",
-      }),
-      makeInPayload({
-        occurredAt: new Date("2026-05-01T10:45:00.000Z"),
-        sourceId: "late",
-      }),
-    ])
-
-    const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [
-      PreparedRow[],
-    ]
-    expect(rows).toHaveLength(1)
-    expect(rows[0]?.occurredAt.toISOString()).toBe("2026-05-01T10:45:00.000Z")
-    expect(rows[0]?.hourBucket.toISOString()).toBe("2026-05-01T10:00:00.000Z")
   })
 })
 
 describe("MacTrackingService — happy path", () => {
-  test("writes monthly rows and bumps the count cache", async () => {
-    seedBillingContext()
+  test("writes monthly rows and bumps the workspace cache", async () => {
+    seedQuotaContext()
     macRepository.upsertMonthlyPresence.mockResolvedValueOnce([
       { workspaceMacId: "wm-1", count: 3 },
     ])
@@ -389,94 +312,22 @@ describe("MacTrackingService — happy path", () => {
     expect(db.transaction).toHaveBeenCalledTimes(1)
     expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledTimes(1)
     expect(macRepository.addWorkspaceMacCount).toHaveBeenCalledTimes(1)
-    expect(macRepository.addBillingMacCount).toHaveBeenCalledTimes(1)
-    // One INCRBY for the workspace key, one for the billing key.
-    expect(distributedStore.incrementCounter).toHaveBeenCalledTimes(2)
-  })
-
-  test("fans new-contact counts to WorkspaceMac and BillingMac by id", async () => {
-    seedBillingContext()
-    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([
-      { workspaceMacId: "wm-1", count: 3 },
-    ])
-
-    await newService().trackMessageOut([makeOutPayload()])
-
-    const [wsDeltas] = macRepository.addWorkspaceMacCount.mock.calls[0] as [
-      { id: string; count: number }[],
-    ]
-    expect(wsDeltas).toEqual([{ id: "wm-1", count: 3 }])
-    const [blDeltas] = macRepository.addBillingMacCount.mock.calls[0] as [
-      { id: string; count: number }[],
-    ]
-    expect(blDeltas).toEqual([{ id: "bm-1", count: 3 }])
-  })
-
-  test("two workspaces sharing one billingMac each emit a separate billing delta", async () => {
-    // Both workspaces belong to billing `bill-1` (same BillingMac `bm-1`) but
-    // have distinct WorkspaceMac ids. The billing counter must receive one
-    // additive delta per workspace — `addBillingMacCount` sums them.
-    distributedStore.getAll.mockResolvedValue({
-      "mac:ctx:ws:ws-1": {
-        billingId: "bill-1",
-        billingPeriodStart: BILLING_PERIOD_START,
-      },
-      "mac:ctx:ws:ws-2": {
-        billingId: "bill-1",
-        billingPeriodStart: BILLING_PERIOD_START,
-      },
-    })
-    macRepository.ensureWorkspaceMac.mockImplementation(
-      (entries: { workspaceId: string; billingMacId: string }[]) => {
-        const map = new Map<string, string>()
-        for (const e of entries) {
-          map.set(
-            `${e.workspaceId}|${e.billingMacId}`,
-            e.workspaceId === "ws-2" ? "wm-2" : "wm-1",
-          )
-        }
-        return map
-      },
-    )
-    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([
-      { workspaceMacId: "wm-1", count: 2 },
-      { workspaceMacId: "wm-2", count: 3 },
-    ])
-
-    await newService().trackMessageIn([
-      makeInPayload({ workspaceId: "ws-1", contactInboxId: "ci-1" }),
-      makeInPayload({ workspaceId: "ws-2", contactInboxId: "ci-2" }),
-    ])
-
-    const [blDeltas] = macRepository.addBillingMacCount.mock.calls[0] as [
-      { id: string; count: number }[],
-    ]
-    // One delta per workspace, both targeting the shared BillingMac id.
-    expect(blDeltas).toEqual([
-      { id: "bm-1", count: 2 },
-      { id: "bm-1", count: 3 },
-    ])
-    // The billing cache key is bumped by the summed total (2 + 3).
-    expect(distributedStore.incrementCounter).toHaveBeenCalledWith(
-      "mac:count:bl:bill-1",
-      5,
-      expect.any(Number),
-    )
+    expect(distributedStore.incrementCounter).toHaveBeenCalledTimes(1)
   })
 
   test("maps message_out payloads to the message_out event code", async () => {
-    seedBillingContext()
+    seedQuotaContext()
 
     await newService().trackMessageOut([makeOutPayload()])
 
     const [rows] = macRepository.upsertMonthlyPresence.mock.calls[0] as [
       PreparedRow[],
     ]
-    expect(rows[0]?.eventType).toBe(2) // MAC_EVENT_TYPE.MESSAGE_OUT
+    expect(rows[0]?.eventType).toBe(2)
   })
 
   test("skips the cache bump when no monthly presence rows are inserted", async () => {
-    seedBillingContext()
+    seedQuotaContext()
     macRepository.upsertMonthlyPresence.mockResolvedValueOnce([])
 
     await newService().trackMessageIn([makeInPayload()])

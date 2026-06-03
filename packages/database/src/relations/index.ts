@@ -19,7 +19,6 @@ import { accountRelations } from "./auth-account"
 import { invitationRelations } from "./auth-invitation"
 import { sessionRelations } from "./auth-session"
 import { automatedResponseRelations } from "./automated-response"
-import { billingRelations } from "./billing"
 import { botFieldRelations } from "./bot-field"
 import { broadcastRelations } from "./broadcast"
 import { contactRelations } from "./contact"
@@ -99,7 +98,6 @@ export const relations = {
   ...flowRelations,
   ...aiMCPServerRelations,
   ...attachmentRelations,
-  ...billingRelations,
   ...conversationRelations,
   ...messageRelations,
   ...automatedResponseRelations,

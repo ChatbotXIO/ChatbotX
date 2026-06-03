@@ -20,6 +20,8 @@ export const userQuotaModel = pgTable("UserQuota", {
   channelsUsed: integer().notNull().default(0),
   teamMembersLimit: integer(),
   teamMembersUsed: integer().notNull().default(0),
+  macLimit: integer(),
+  macUsed: integer().notNull().default(0),
   whiteLabel: boolean().notNull().default(false),
   ssoSaml: boolean().notNull().default(false),
   saasMode: boolean().notNull().default(false),

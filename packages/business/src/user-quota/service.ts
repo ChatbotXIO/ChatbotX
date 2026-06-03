@@ -5,7 +5,12 @@ import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { logger } from "../logger"
 
-export type QuotaMetric = "workspaces" | "channels" | "teamMembers" | "contacts"
+export type QuotaMetric =
+  | "workspaces"
+  | "channels"
+  | "teamMembers"
+  | "contacts"
+  | "mac"
 
 const CACHE_TTL = 60 // seconds
 
@@ -38,6 +43,8 @@ class UserQuotaService extends BaseService {
         return quota.channelsUsed
       case "teamMembers":
         return quota.teamMembersUsed
+      case "mac":
+        return quota.macUsed
       default:
         return 0
     }
@@ -212,6 +219,8 @@ class UserQuotaService extends BaseService {
         return { limit: quota.teamMembersLimit, used: quota.teamMembersUsed }
       case "contacts":
         return { limit: quota.contactsLimit, used: quota.contactsUsed }
+      case "mac":
+        return { limit: quota.macLimit, used: quota.macUsed }
       default:
         return { limit: null, used: 0 }
     }
@@ -251,6 +260,17 @@ class UserQuotaService extends BaseService {
           target: userQuotaModel.userId,
           set: {
             teamMembersUsed: sql`${userQuotaModel.teamMembersUsed} + 1`,
+            updatedAt: sql`CURRENT_TIMESTAMP`,
+          },
+        })
+    } else if (metric === "mac") {
+      await db
+        .insert(userQuotaModel)
+        .values({ userId, macUsed: 1, syncedAt: new Date() })
+        .onConflictDoUpdate({
+          target: userQuotaModel.userId,
+          set: {
+            macUsed: sql`${userQuotaModel.macUsed} + 1`,
             updatedAt: sql`CURRENT_TIMESTAMP`,
           },
         })

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest"
 import {
   anchoredPeriod,
-  billingMacCacheKey,
   calcEndOfDayTtl,
   truncateHourInTimezone,
   workspaceMacCacheKey,
@@ -124,9 +123,5 @@ describe("calcEndOfDayTtl", () => {
 describe("cache key builders", () => {
   test("workspaceMacCacheKey namespaces by workspace id", () => {
     expect(workspaceMacCacheKey("ws-1")).toBe("mac:count:ws:ws-1")
-  })
-
-  test("billingMacCacheKey namespaces by billing id", () => {
-    expect(billingMacCacheKey("bill-1")).toBe("mac:count:bl:bill-1")
   })
 })

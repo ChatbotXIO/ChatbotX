@@ -126,8 +126,6 @@ export const handleMessageStatus = async (
         inboxId: inbox.id,
         occurredAt: message?.createdAt ?? new Date(),
         sourceId: message?.sourceId ?? undefined,
-      }).catch((error) => {
-        logger.error(error, "[receiveMessage] Failed to emit message:received")
       })
     }
 

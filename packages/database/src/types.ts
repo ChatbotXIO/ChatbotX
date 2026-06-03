@@ -120,6 +120,4 @@ export type ProductVariantOptionModel =
   typeof schema.productVariantOptionModel.$inferSelect
 export type ProductVariantModel = typeof schema.productVariantModel.$inferSelect
 export type ProductAddonModel = typeof schema.productAddonModel.$inferSelect
-export type BillingModel = typeof schema.billingModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
-export type BillingMacModel = typeof schema.billingMacModel.$inferSelect

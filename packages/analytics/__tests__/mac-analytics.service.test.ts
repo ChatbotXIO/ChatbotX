@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-// --- Mocks ---------------------------------------------------------------
-
 const macRepository = {
   getActiveContactCountByWorkspaceId: vi.fn(async () => ({ macCount: 0 })),
-  getActiveContactCountByBillingId: vi.fn(async () => ({ macCount: 0 })),
   reconcilePeriod: vi.fn(async () => undefined),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
@@ -17,8 +14,6 @@ const distributedStore = {
 }
 vi.mock("@chatbotx.io/redis", () => ({ distributedStore }))
 
-// `reconcilePeriod` now runs inside `db.transaction`; the fake passes a stub
-// transaction client straight through to the callback.
 const txClient = { tx: true }
 const db = {
   transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(txClient)),
@@ -37,12 +32,7 @@ beforeEach(() => {
   macRepository.getActiveContactCountByWorkspaceId.mockResolvedValue({
     macCount: 0,
   })
-  macRepository.getActiveContactCountByBillingId.mockResolvedValue({
-    macCount: 0,
-  })
 })
-
-// --- Tests ---------------------------------------------------------------
 
 describe("MacAnalyticsService.getActiveContactCountByWorkspaceId", () => {
   test("returns the cached value without hitting the repository", async () => {
@@ -109,27 +99,6 @@ describe("MacAnalyticsService.getActiveContactCountByWorkspaceId", () => {
 
     expect(count).toBe(9)
     expect(logger.error).toHaveBeenCalled()
-  })
-})
-
-describe("MacAnalyticsService.getActiveContactCountByBillingId", () => {
-  test("uses the billing cache key namespace", async () => {
-    distributedStore.getNumber.mockResolvedValue(null)
-    macRepository.getActiveContactCountByBillingId.mockResolvedValue({
-      macCount: 3,
-    })
-
-    const count =
-      await new MacAnalyticsService().getActiveContactCountByBillingId({
-        billingId: "bill-1",
-      })
-
-    expect(count).toBe(3)
-    expect(distributedStore.setNumberIfNotExists).toHaveBeenCalledWith(
-      "mac:count:bl:bill-1",
-      3,
-      expect.any(Number),
-    )
   })
 })
 

@@ -1,33 +1,22 @@
+import { and, db, eq } from "@chatbotx.io/database/client"
 import {
-  and,
-  db,
-  desc,
-  eq,
-  gt,
-  isNull,
-  lte,
-  or,
-  sql,
-} from "@chatbotx.io/database/client"
-import {
-  billingModel,
+  userQuotaModel,
   workspaceMemberModel,
 } from "@chatbotx.io/database/schema"
 import {
   type BloomFilter,
   bloomFilter,
+  cacheConnections,
   distributedStore,
 } from "@chatbotx.io/redis"
 import { logger } from "../lib/logger"
 import {
   anchoredPeriod,
-  billingMacCacheKey,
   calcEndOfDayTtl,
   truncateHourInTimezone,
   workspaceMacCacheKey,
 } from "../lib/mac-period"
 import {
-  billingMacKey,
   type CountDelta,
   macRepository,
   type PreparedRow,
@@ -43,13 +32,6 @@ import {
 
 const DEFAULT_TIMEZONE = "UTC"
 
-/**
- * Normalize an event timestamp to a valid `Date`. A malformed or missing
- * `occurredAt` (`new Date(undefined)` etc.) yields an Invalid Date, which would
- * later produce NaN period bounds and crash `billingMacKey` with
- * `RangeError: Invalid time value`. The activity is real, so we keep the event
- * and fall back to `now()` rather than dropping a billable MAC count.
- */
 function coerceOccurredAt(value: unknown): Date {
   const date = value instanceof Date ? value : new Date(value as string)
   if (Number.isNaN(date.getTime())) {
@@ -66,48 +48,26 @@ const BLOOM_FILTER_MINUTE_BUFFER_SECONDS = 60
 const BLOOM_FILTER_CAPACITY = 1_000_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
 
-type BillingContext = {
-  billingId: string
-  billingPeriodStart: Date
+type QuotaContext = {
+  userId: string
+  periodStart: Date
 }
 
-type BillingContextCacheValue = {
-  billingId: string
-  billingPeriodStart: string
+type QuotaContextCacheValue = {
+  userId: string
+  periodStart: string
 }
 
-/**
- * A contact event with its anchored period resolved, but before the
- * `BillingMac`/`WorkspaceMac` id chain is attached. `resolveMacIds` turns these
- * into `PreparedRow`s.
- */
-type DraftRow = Omit<PreparedRow, "billingMacId" | "workspaceMacId">
+type DraftRow = Omit<PreparedRow, "workspaceMacId">
 
-/** Links a resolved `WorkspaceMac` id back to its workspace and billing ids. */
-type MacIdChain = {
-  workspaceId: string
-  billingId: string
-  billingMacId: string
-}
-
-function billingContextCacheKey(workspaceId: string): string {
+function quotaContextCacheKey(workspaceId: string): string {
   return `mac:ctx:ws:${workspaceId}`
 }
 
-/**
- * Minute bucket key (YYYYMMDDHHMM) for bloom-filter dedup. Matches the
- * minute-aligned `calcBloomFilterTtl` so the key and its TTL cover the same
- * window — an hour bucket would outlive its ~1-minute TTL and dedup
- * inconsistently within the hour.
- */
 function formatMinuteBucket(date: Date): string {
   return date.toISOString().slice(0, 16).replace(/[-T:]/g, "")
 }
 
-/**
- * Minute-aligned bloom filter TTL: time left in the current minute plus a
- * buffer, so late events in the same minute still dedup against the filter.
- */
 function calcBloomFilterTtl(now: Date): number {
   const secondsUntilNextMinute = 60 - now.getUTCSeconds()
   return secondsUntilNextMinute + BLOOM_FILTER_MINUTE_BUFFER_SECONDS
@@ -171,37 +131,33 @@ export class MacTrackingService {
 
     const deduped = await this.filterDuplicateSources(events)
     if (deduped.length === 0) {
-      // return
+      return
     }
 
     const workspaceIds = Array.from(new Set(deduped.map((e) => e.workspaceId)))
-    const contextByWorkspace = await this.getBillingByWorkspaceId(workspaceIds)
+    const contextByWorkspace =
+      await this.getQuotaContextByWorkspaceId(workspaceIds)
 
-    // No-billing rule: an event whose workspace has no active Billing record is
-    // dropped here. MAC tracking does nothing for such workspaces — no contact
-    // rows, no BillingMac/WorkspaceMac, no cache writes. Absence of Billing is
-    // expected for newly created workspaces, so this is a debug log, not a warn.
     const draftByKey = new Map<string, DraftRow>()
     for (const event of deduped) {
       const context = contextByWorkspace.get(event.workspaceId)
       if (!context) {
         logger.debug(
           { workspaceId: event.workspaceId },
-          "[MacTrackingService] no billing record, skipping event",
+          "[MacTrackingService] no quota context, skipping event",
         )
         continue
       }
 
       const { start, end } = anchoredPeriod(
         event.occurredAt,
-        context.billingPeriodStart,
+        context.periodStart,
       )
       const hourBucket = truncateHourInTimezone(
         event.occurredAt,
         DEFAULT_TIMEZONE,
       )
 
-      // Collapse events that share an hour bucket; keep the latest one.
       const dedupKey = `${event.workspaceId}|${event.contactInboxId}|${event.eventType}|${hourBucket.getTime()}`
       const existingDraft = draftByKey.get(dedupKey)
       if (
@@ -221,7 +177,6 @@ export class MacTrackingService {
         hourBucket,
         periodStart: start,
         periodEnd: end,
-        billingId: context.billingId,
       })
     }
 
@@ -235,92 +190,59 @@ export class MacTrackingService {
       return
     }
 
-    await this.persistMonthlyRollup(rows)
+    await this.persistMonthlyRollup(rows, contextByWorkspace)
   }
 
-  /**
-   * Resolves the `Billing -> BillingMac -> WorkspaceMac` id chain for each
-   * draft row. `BillingMac` rows are ensured for every distinct
-   * `(billingId, periodStart, periodEnd)`, then `WorkspaceMac` rows for every
-   * distinct `(workspaceId, billingMacId)`. Both contact tables carry
-   * `workspaceMacId`, so this must run before any contact row is written.
-   */
   private async resolveMacIds(drafts: DraftRow[]): Promise<PreparedRow[]> {
-    const billingMacIdByKey = await macRepository.ensureBillingMac(
+    const workspaceMacIdByKey = await macRepository.ensureWorkspaceMac(
       drafts.map((draft) => ({
-        billingId: draft.billingId,
+        workspaceId: draft.workspaceId,
         periodStart: draft.periodStart,
         periodEnd: draft.periodEnd,
       })),
     )
 
-    const workspaceMacEntries: { workspaceId: string; billingMacId: string }[] =
-      []
-    for (const draft of drafts) {
-      const billingMacId = billingMacIdByKey.get(
-        billingMacKey(draft.billingId, draft.periodStart, draft.periodEnd),
-      )
-      if (billingMacId) {
-        workspaceMacEntries.push({
-          workspaceId: draft.workspaceId,
-          billingMacId,
-        })
-      }
-    }
-
-    const workspaceMacIdByKey =
-      await macRepository.ensureWorkspaceMac(workspaceMacEntries)
-
     const rows: PreparedRow[] = []
     for (const draft of drafts) {
-      const billingMacId = billingMacIdByKey.get(
-        billingMacKey(draft.billingId, draft.periodStart, draft.periodEnd),
+      const key = workspaceMacKey(
+        draft.workspaceId,
+        draft.periodStart,
+        draft.periodEnd,
       )
-      if (!billingMacId) {
-        continue
-      }
-      const workspaceMacId = workspaceMacIdByKey.get(
-        workspaceMacKey(draft.workspaceId, billingMacId),
-      )
+      const workspaceMacId = workspaceMacIdByKey.get(key)
       if (!workspaceMacId) {
         continue
       }
-      rows.push({ ...draft, billingMacId, workspaceMacId })
+      rows.push({ ...draft, workspaceMacId })
     }
     return rows
   }
 
-  private async getBillingByWorkspaceId(
+  private async getQuotaContextByWorkspaceId(
     workspaceIds: string[],
-  ): Promise<Map<string, BillingContext>> {
-    const result = new Map<string, BillingContext>()
+  ): Promise<Map<string, QuotaContext>> {
+    const result = new Map<string, QuotaContext>()
     if (workspaceIds.length === 0) {
       return result
     }
 
-    const cacheKeys = workspaceIds.map(billingContextCacheKey)
-    let cached: Record<string, BillingContextCacheValue | null> = {}
+    const cacheKeys = workspaceIds.map(quotaContextCacheKey)
+    let cached: Record<string, QuotaContextCacheValue | null> = {}
     try {
-      // await distributedStore.delete(cacheKeys)
       cached =
-        (await distributedStore.getAll<BillingContextCacheValue>(cacheKeys)) ||
-        {}
+        (await distributedStore.getAll<QuotaContextCacheValue>(cacheKeys)) || {}
     } catch (error) {
-      logger.error(
-        error,
-        "[MacTrackingService] billing context cache get failed",
-      )
+      logger.error(error, "[MacTrackingService] quota context cache get failed")
       cached = {}
     }
 
     const missing: string[] = []
     for (const workspaceId of workspaceIds) {
-      const cachedContext = cached[billingContextCacheKey(workspaceId)]
+      const cachedContext = cached[quotaContextCacheKey(workspaceId)]
       if (cachedContext) {
         result.set(workspaceId, {
-          billingId: cachedContext.billingId,
-          // The cache stores `billingPeriodStart` as an ISO string.
-          billingPeriodStart: new Date(cachedContext.billingPeriodStart),
+          userId: cachedContext.userId,
+          periodStart: new Date(cachedContext.periodStart),
         })
       } else {
         missing.push(workspaceId)
@@ -333,33 +255,23 @@ export class MacTrackingService {
 
     const rows = await Promise.all(
       missing.map(async (workspaceId) => {
-        // Resolve the workspace owner, then the latest active Billing record
-        // whose [periodStart, periodEnd) window contains now().
         const row = await db
           .select({
             workspaceId: workspaceMemberModel.workspaceId,
-            billingId: billingModel.id,
-            billingPeriodStart: billingModel.periodStart,
+            userId: workspaceMemberModel.userId,
+            periodStart: userQuotaModel.periodStart,
           })
           .from(workspaceMemberModel)
           .innerJoin(
-            billingModel,
-            eq(billingModel.userId, workspaceMemberModel.userId),
+            userQuotaModel,
+            eq(userQuotaModel.userId, workspaceMemberModel.userId),
           )
           .where(
             and(
               eq(workspaceMemberModel.workspaceId, workspaceId),
               eq(workspaceMemberModel.role, "owner"),
-              and(
-                lte(billingModel.periodStart, sql`now()`),
-                or(
-                  isNull(billingModel.periodEnd),
-                  gt(billingModel.periodEnd, sql`now()`),
-                ),
-              ),
             ),
           )
-          .orderBy(desc(billingModel.id))
           .limit(1)
         return row ? row[0] : null
       }),
@@ -371,22 +283,20 @@ export class MacTrackingService {
       ttlInSeconds: number
     }> = []
     for (const row of rows) {
-      if (!row) {
+      if (!row?.periodStart) {
         continue
       }
-      // `billingModel.periodStart` is a `mode: "date"` column, so the query
-      // builder returns a real `Date` here.
-      const context: BillingContext = {
-        billingId: row.billingId,
-        billingPeriodStart: row.billingPeriodStart,
+      const context: QuotaContext = {
+        userId: row.userId,
+        periodStart: row.periodStart,
       }
       result.set(row.workspaceId, context)
       cacheEntries.push({
-        key: billingContextCacheKey(row.workspaceId),
+        key: quotaContextCacheKey(row.workspaceId),
         value: {
-          billingId: context.billingId,
-          billingPeriodStart: context.billingPeriodStart.toISOString(),
-        } satisfies BillingContextCacheValue,
+          userId: context.userId,
+          periodStart: context.periodStart.toISOString(),
+        } satisfies QuotaContextCacheValue,
         ttlInSeconds: calcBloomFilterTtl(new Date()),
       })
     }
@@ -397,7 +307,7 @@ export class MacTrackingService {
       } catch (error) {
         logger.error(
           error,
-          "[MacTrackingService] billing context cache set failed",
+          "[MacTrackingService] quota context cache set failed",
         )
       }
     }
@@ -435,16 +345,13 @@ export class MacTrackingService {
     }
   }
 
-  private async persistMonthlyRollup(rows: PreparedRow[]): Promise<void> {
-    // Map each WorkspaceMac id back to its workspace/billing identifiers so the
-    // new-contact counts can fan out to BillingMac and the count caches.
-    const chainByWorkspaceMacId = new Map<string, MacIdChain>()
+  private async persistMonthlyRollup(
+    rows: PreparedRow[],
+    contextByWorkspace: Map<string, QuotaContext>,
+  ): Promise<void> {
+    const workspaceIdByMacId = new Map<string, string>()
     for (const row of rows) {
-      chainByWorkspaceMacId.set(row.workspaceMacId, {
-        workspaceId: row.workspaceId,
-        billingId: row.billingId,
-        billingMacId: row.billingMacId,
-      })
+      workspaceIdByMacId.set(row.workspaceMacId, row.workspaceId)
     }
 
     try {
@@ -460,52 +367,44 @@ export class MacTrackingService {
         const workspaceCountDeltas: CountDelta[] = workspaceDeltas.map(
           (delta) => ({ id: delta.workspaceMacId, count: delta.count }),
         )
-        const billingCountDeltas: CountDelta[] = []
-        for (const delta of workspaceDeltas) {
-          const chain = chainByWorkspaceMacId.get(delta.workspaceMacId)
-          if (chain) {
-            billingCountDeltas.push({
-              id: chain.billingMacId,
-              count: delta.count,
-            })
-          }
-        }
 
-        await Promise.all([
-          macRepository.addWorkspaceMacCount(workspaceCountDeltas, tx),
-          macRepository.addBillingMacCount(billingCountDeltas, tx),
-        ])
+        await macRepository.addWorkspaceMacCount(workspaceCountDeltas, tx)
         return workspaceDeltas
       })
-      await this.incrementMonthlyCountCache(deltas, chainByWorkspaceMacId)
+
+      await this.incrementCaches(deltas, workspaceIdByMacId, contextByWorkspace)
     } catch (error) {
       logger.error(error, "[MacTrackingService] monthly path failed")
     }
   }
 
-  private async incrementMonthlyCountCache(
+  private async incrementCaches(
     deltas: WorkspaceMacDelta[],
-    chainByWorkspaceMacId: Map<string, MacIdChain>,
+    workspaceIdByMacId: Map<string, string>,
+    contextByWorkspace: Map<string, QuotaContext>,
   ): Promise<void> {
     if (deltas.length === 0) {
       return
     }
 
     const workspaceTotals = new Map<string, number>()
-    const billingTotals = new Map<string, number>()
+    const userTotals = new Map<string, number>()
     for (const delta of deltas) {
-      const chain = chainByWorkspaceMacId.get(delta.workspaceMacId)
-      if (!chain) {
+      const workspaceId = workspaceIdByMacId.get(delta.workspaceMacId)
+      if (!workspaceId) {
         continue
       }
       workspaceTotals.set(
-        chain.workspaceId,
-        (workspaceTotals.get(chain.workspaceId) ?? 0) + delta.count,
+        workspaceId,
+        (workspaceTotals.get(workspaceId) ?? 0) + delta.count,
       )
-      billingTotals.set(
-        chain.billingId,
-        (billingTotals.get(chain.billingId) ?? 0) + delta.count,
-      )
+      const context = contextByWorkspace.get(workspaceId)
+      if (context) {
+        userTotals.set(
+          context.userId,
+          (userTotals.get(context.userId) ?? 0) + delta.count,
+        )
+      }
     }
 
     const ttl = calcEndOfDayTtl()
@@ -522,23 +421,33 @@ export class MacTrackingService {
         ),
       )
     }
-    for (const [billingId, delta] of billingTotals) {
+
+    for (const [userId, delta] of userTotals) {
       if (delta === 0) {
         continue
       }
-      ops.push(
-        distributedStore.incrementCounter(
-          billingMacCacheKey(billingId),
-          delta,
-          ttl,
-        ),
-      )
+      ops.push(this.incrementUserQuotaMac(userId, delta))
     }
 
     try {
       await Promise.all(ops)
     } catch (error) {
       logger.error(error, "[MacTrackingService] INCRBY cache update failed")
+    }
+  }
+  private async incrementUserQuotaMac(
+    userId: string,
+    count: number,
+  ): Promise<void> {
+    try {
+      const client = await cacheConnections.useExisting()
+      const key = `user-quota-live:${userId}`
+      await client.hincrby(key, "mac", count)
+    } catch (err) {
+      logger.warn(
+        { err, userId, count },
+        "[MacTrackingService] user quota mac increment failed",
+      )
     }
   }
 }

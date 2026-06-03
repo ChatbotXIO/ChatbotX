@@ -41,7 +41,6 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { randomString } from "remeda"
-import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,
@@ -170,11 +169,6 @@ export async function handleCreateWebchatMessage({
       inboxId: contactInbox.inboxId,
       occurredAt: newMessage.createdAt ?? new Date(),
       sourceId: newMessage.sourceId ?? undefined,
-    }).catch((error) => {
-      logger.error(
-        error,
-        "[createWebchatMessage] Failed to emit message:received",
-      )
     })
 
     const promises: Promise<unknown>[] = []

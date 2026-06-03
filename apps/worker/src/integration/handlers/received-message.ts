@@ -186,8 +186,6 @@ export const receiveMessage = async (
         inboxId: inbox.id,
         occurredAt: newMessage.createdAt,
         sourceId: newMessage.sourceId ?? undefined,
-      }).catch((error) => {
-        logger.error(error, "[receiveMessage] Failed to emit message:received")
       })
 
       if (postbackAction) {

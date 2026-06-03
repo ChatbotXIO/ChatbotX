@@ -1,11 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "c9f0274c-f5e8-4ce3-baf0-974b78f33596",
-  "prevIds": [
-    "3b63dd72-cf02-461c-b324-216c13411079",
-    "56f296f5-91c3-4d51-91cb-587cc29d50ea"
-  ],
+  "id": "f6082132-84ad-4180-a454-d4593da9b0b1",
+  "prevIds": ["47788099-2802-4fbb-9bcc-c5581a42561d"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -86,12 +83,6 @@
     {
       "values": ["image", "video", "audio", "gif", "file"],
       "name": "fileType",
-      "entityType": "enums",
-      "schema": "public"
-    },
-    {
-      "values": ["active", "expired"],
-      "name": "BillingStatus",
       "entityType": "enums",
       "schema": "public"
     },
@@ -324,18 +315,6 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Billing",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "BillingMac",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "BotField",
       "entityType": "tables",
       "schema": "public"
@@ -349,12 +328,6 @@
     {
       "isRlsEnabled": false,
       "name": "Contact",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "ContactActiveMonthly",
       "entityType": "tables",
       "schema": "public"
     },
@@ -426,13 +399,19 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Plan",
+      "name": "CustomDomain",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "Subscription",
+      "name": "PlatformSetting",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "UserQuota",
       "entityType": "tables",
       "schema": "public"
     },
@@ -588,19 +567,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "Organization",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "OrganizationCredential",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "OrganizationMember",
+      "name": "PlatformCredential",
       "entityType": "tables",
       "schema": "public"
     },
@@ -708,19 +675,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "WorkspaceMac",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
       "name": "WorkspaceMember",
-      "entityType": "tables",
-      "schema": "public"
-    },
-    {
-      "isRlsEnabled": false,
-      "name": "WorkspaceUsage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -3041,19 +2996,6 @@
     {
       "type": "bigint",
       "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "organizationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
@@ -3557,201 +3499,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AutomatedResponse"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "periodStart",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "periodEnd",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "BillingStatus",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'active'",
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{}'",
-      "generated": null,
-      "identity": null,
-      "name": "meta",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "billingId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "periodStart",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "periodEnd",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "macCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "BillingMac"
     },
     {
       "type": "bigint",
@@ -4392,97 +4139,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Contact"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "contactInboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "periodStart",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "inboxId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "billingId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceMacId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
     },
     {
       "type": "bigint",
@@ -5902,7 +5558,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Plan"
+      "table": "CustomDomain"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5915,7 +5571,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Plan"
+      "table": "CustomDomain"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5928,137 +5584,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "description",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "price",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "priceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "annualDiscountPrice",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "annualDiscountPriceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "limits",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "freeTrial",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "currency",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 1,
-      "default": "'{}'",
-      "generated": null,
-      "identity": null,
-      "name": "marketingFeatures",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Plan"
+      "table": "CustomDomain"
     },
     {
       "type": "bigint",
@@ -6068,10 +5594,49 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "organizationId",
+      "name": "userId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Plan"
+      "table": "CustomDomain"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "domain",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomDomain"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomDomain"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "verifiedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CustomDomain"
     },
     {
       "type": "bigint",
@@ -6084,7 +5649,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6097,7 +5662,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6110,33 +5675,20 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
-      "type": "text",
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "plan",
+      "name": "userId",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "referenceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
       "type": "text",
@@ -6146,10 +5698,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "stripeCustomerId",
+      "name": "brandName",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
       "type": "text",
@@ -6159,23 +5711,374 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "stripeSubscriptionId",
+      "name": "logoLightPath",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "PlatformSetting"
     },
     {
       "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "logoDarkPath",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "faviconPath",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customCss",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customJs",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "theme",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "disabledReason",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "storageUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "policyUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "termsOfServiceUrl",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "signupEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "forgotPasswordEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "magicLinkEmailTemplate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "type": "bigint",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "status",
+      "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "UserQuota"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactsLimit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "contactsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspacesLimit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "workspacesUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channelsLimit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "channelsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "teamMembersLimit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "teamMembersUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "whiteLabel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "ssoSaml",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "saasMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6188,7 +6091,7 @@
       "name": "periodStart",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
+      "table": "UserQuota"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -6201,124 +6104,20 @@
       "name": "periodEnd",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "cancelAtPeriodEnd",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
+      "table": "UserQuota"
     },
     {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
-      "notNull": false,
+      "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "cancelAt",
+      "name": "syncedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "canceledAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "endedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "seats",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "trialStart",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "trialEnd",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "billingInterval",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "stripeScheduleId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Subscription"
+      "table": "UserQuota"
     },
     {
       "type": "bigint",
@@ -9282,7 +9081,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "Organization"
+      "table": "PlatformCredential"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -9295,7 +9094,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Organization"
+      "table": "PlatformCredential"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -9308,241 +9107,20 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "name",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "slug",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "logo",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "metadata",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "domain",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "appUrl",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "wsUrl",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "assetUrl",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "supportEmail",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{}'",
-      "generated": null,
-      "identity": null,
-      "name": "settings",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "999999999",
-      "generated": null,
-      "identity": null,
-      "name": "defaultMaxContacts",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "theme",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "customJS",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "customCSS",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Organization"
+      "table": "PlatformCredential"
     },
     {
       "type": "bigint",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
+      "name": "userId",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationCredential"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationCredential"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationCredential"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "organizationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
       "type": "text",
@@ -9555,7 +9133,7 @@
       "name": "type",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
       "type": "jsonb",
@@ -9568,7 +9146,7 @@
       "name": "publicConfig",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
       "type": "jsonb",
@@ -9581,85 +9159,72 @@
       "name": "value",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
-      "type": "bigint",
+      "type": "boolean",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "false",
       "generated": null,
       "identity": null,
-      "name": "id",
+      "name": "livemode",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationMember"
+      "table": "PlatformCredential"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "usePlatformCredential",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformCredential"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isVerified",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "PlatformCredential"
     },
     {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
-      "name": "createdAt",
+      "name": "verifiedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationMember"
+      "table": "PlatformCredential"
     },
     {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationMember"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "role",
+      "name": "lastUsedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "OrganizationMember"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "organizationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationMember"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "userId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "OrganizationMember"
+      "table": "PlatformCredential"
     },
     {
       "type": "bigint",
@@ -9826,6 +9391,19 @@
       "generated": null,
       "identity": null,
       "name": "customFieldId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "qrStyles",
       "entityType": "columns",
       "schema": "public",
       "table": "Reflink"
@@ -11765,20 +11343,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "organizationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Workspace"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'free'",
-      "generated": null,
-      "identity": null,
-      "name": "plan",
+      "name": "ownerId",
       "entityType": "columns",
       "schema": "public",
       "table": "Workspace"
@@ -11795,84 +11360,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Workspace"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "billingMacId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "macCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceMac"
     },
     {
       "type": "bigint",
@@ -11990,84 +11477,6 @@
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceMember"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "createdAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
-      "type": "timestamp(6) with time zone",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "now()",
-      "generated": null,
-      "identity": null,
-      "name": "updatedAt",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "contactsCount",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
-      "type": "integer",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "0",
-      "generated": null,
-      "identity": null,
-      "name": "maxContacts",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
-      "type": "bigint",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "workspaceId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "WorkspaceUsage"
     },
     {
       "nameExplicit": true,
@@ -13452,6 +12861,69 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "userId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CustomDomain_userId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CustomDomain"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "domain",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CustomDomain_domain_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CustomDomain"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CustomDomain_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CustomDomain"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "flowId",
           "isExpression": false,
           "asc": true,
@@ -14439,49 +13911,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "domain",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Organization_domain_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "slug",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Organization_slug_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Organization"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "organizationId",
+          "value": "userId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -14493,23 +13923,58 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "livemode",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": true,
-      "where": null,
+      "where": "\"userId\" IS NOT NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "OrganizationCredential_organizationId_type_key",
+      "name": "PlatformCredential_user_type_livemode_key",
       "entityType": "indexes",
       "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
       "nameExplicit": true,
       "columns": [
         {
-          "value": "organizationId",
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "livemode",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"userId\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "PlatformCredential_platform_type_livemode_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "PlatformCredential"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "userId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -14521,10 +13986,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "OrganizationCredential_organizationId_idx",
+      "name": "PlatformCredential_userId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "OrganizationCredential"
+      "table": "PlatformCredential"
     },
     {
       "nameExplicit": true,
@@ -15486,27 +14951,6 @@
       "table": "WhatsappMessageTemplate"
     },
     {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "workspaceId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "WorkspaceUsage_workspaceId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "WorkspaceUsage"
-    },
-    {
       "nameExplicit": false,
       "columns": ["workspaceId"],
       "schemaTo": "public",
@@ -15807,19 +15251,6 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
-      "schemaTo": "public",
-      "tableTo": "Organization",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Invitation_organizationId_Organization_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Invitation"
-    },
-    {
-      "nameExplicit": false,
       "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
@@ -15895,32 +15326,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AutomatedResponse"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["userId"],
-      "schemaTo": "public",
-      "tableTo": "User",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Billing_userId_User_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Billing"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["billingId"],
-      "schemaTo": "public",
-      "tableTo": "Billing",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "BillingMac_billingId_Billing_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "BillingMac"
     },
     {
       "nameExplicit": false,
@@ -16365,17 +15770,43 @@
       "table": "AuditLog"
     },
     {
-      "nameExplicit": true,
-      "columns": ["organizationId"],
+      "nameExplicit": false,
+      "columns": ["userId"],
       "schemaTo": "public",
-      "tableTo": "Organization",
+      "tableTo": "User",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "Plan_organizationId_fkey",
+      "name": "CustomDomain_userId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "Plan"
+      "table": "CustomDomain"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "PlatformSetting_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "PlatformSetting"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "UserQuota_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "UserQuota"
     },
     {
       "nameExplicit": false,
@@ -17029,42 +16460,16 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
-      "schemaTo": "public",
-      "tableTo": "Organization",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "OrganizationCredential_organizationId_Organization_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "OrganizationCredential"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["organizationId"],
-      "schemaTo": "public",
-      "tableTo": "Organization",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "OrganizationMember_organizationId_Organization_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "OrganizationMember"
-    },
-    {
-      "nameExplicit": false,
       "columns": ["userId"],
       "schemaTo": "public",
       "tableTo": "User",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "OrganizationMember_userId_User_id_fkey",
+      "name": "Credential_userId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "OrganizationMember"
+      "table": "PlatformCredential"
     },
     {
       "nameExplicit": false,
@@ -17523,42 +16928,16 @@
     },
     {
       "nameExplicit": false,
-      "columns": ["organizationId"],
+      "columns": ["ownerId"],
       "schemaTo": "public",
-      "tableTo": "Organization",
+      "tableTo": "User",
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
-      "name": "Workspace_organizationId_Organization_id_fkey",
+      "name": "Workspace_userId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "Workspace"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "WorkspaceMac"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["billingMacId"],
-      "schemaTo": "public",
-      "tableTo": "BillingMac",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "WorkspaceMac_billingMacId_BillingMac_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "WorkspaceMac"
     },
     {
       "nameExplicit": false,
@@ -17585,19 +16964,6 @@
       "entityType": "fks",
       "schema": "public",
       "table": "WorkspaceMember"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["workspaceId"],
-      "schemaTo": "public",
-      "tableTo": "Workspace",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "WorkspaceUsage_workspaceId_Workspace_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "WorkspaceUsage"
     },
     {
       "columns": ["aiTriggerId", "integrationOpenaiId"],
@@ -17682,14 +17048,6 @@
       "entityType": "pks",
       "schema": "public",
       "table": "AnalyticsSequenceEvent"
-    },
-    {
-      "columns": ["workspaceId", "periodStart", "contactInboxId"],
-      "nameExplicit": false,
-      "name": "ContactActiveMonthly_pkey",
-      "entityType": "pks",
-      "schema": "public",
-      "table": "ContactActiveMonthly"
     },
     {
       "columns": ["broadcastId", "contactId"],
@@ -17838,22 +17196,6 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Billing_pkey",
-      "schema": "public",
-      "table": "Billing",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "BillingMac_pkey",
-      "schema": "public",
-      "table": "BillingMac",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
       "name": "BotField_pkey",
       "schema": "public",
       "table": "BotField",
@@ -17950,17 +17292,25 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Plan_pkey",
+      "name": "CustomDomain_pkey",
       "schema": "public",
-      "table": "Plan",
+      "table": "CustomDomain",
       "entityType": "pks"
     },
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Subscription_pkey",
+      "name": "PlatformSetting_pkey",
       "schema": "public",
-      "table": "Subscription",
+      "table": "PlatformSetting",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "UserQuota_pkey",
+      "schema": "public",
+      "table": "UserQuota",
       "entityType": "pks"
     },
     {
@@ -18158,25 +17508,9 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Organization_pkey",
+      "name": "Credential_pkey",
       "schema": "public",
-      "table": "Organization",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "OrganizationCredential_pkey",
-      "schema": "public",
-      "table": "OrganizationCredential",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "OrganizationMember_pkey",
-      "schema": "public",
-      "table": "OrganizationMember",
+      "table": "PlatformCredential",
       "entityType": "pks"
     },
     {
@@ -18302,45 +17636,36 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "WorkspaceMac_pkey",
-      "schema": "public",
-      "table": "WorkspaceMac",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
       "name": "WorkspaceMember_pkey",
       "schema": "public",
       "table": "WorkspaceMember",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
       "nameExplicit": false,
-      "name": "WorkspaceUsage_pkey",
+      "columns": ["userId"],
+      "nullsNotDistinct": false,
+      "name": "PlatformSetting_userId_key",
       "schema": "public",
-      "table": "WorkspaceUsage",
-      "entityType": "pks"
+      "table": "PlatformSetting",
+      "entityType": "uniques"
     },
     {
-      "nameExplicit": true,
-      "columns": ["billingId", "periodStart", "periodEnd"],
+      "nameExplicit": false,
+      "columns": ["userId"],
       "nullsNotDistinct": false,
-      "name": "BillingMac_billingId_periodStart_periodEnd_unique",
-      "entityType": "uniques",
+      "name": "UserQuota_userId_key",
       "schema": "public",
-      "table": "BillingMac"
-    },
-    {
-      "nameExplicit": true,
-      "columns": ["workspaceId", "billingMacId"],
-      "nullsNotDistinct": false,
-      "name": "WorkspaceMac_workspaceId_billingMacId_unique",
-      "entityType": "uniques",
-      "schema": "public",
-      "table": "WorkspaceMac"
+      "table": "UserQuota",
+      "entityType": "uniques"
     }
   ],
-  "renames": []
+  "renames": [],
+  "enums": {
+    "public.ReflinkType": {
+      "name": "ReflinkType",
+      "schema": "public",
+      "values": ["refLink", "qrCode"]
+    }
+  }
 }
