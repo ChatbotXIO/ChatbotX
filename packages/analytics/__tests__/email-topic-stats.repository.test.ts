@@ -52,7 +52,7 @@ vi.mock("@chatbotx.io/database/client", () => {
   }
 })
 
-const emailTopicRecipientModelMock = {
+const analyticsEmailTopicModelMock = {
   token: "token_col",
   firstSeenAt: "firstSeenAt_col",
   firstClickedAt: "firstClickedAt_col",
@@ -75,7 +75,7 @@ const emailTopicModelMock = {
 }
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  emailTopicRecipientModel: emailTopicRecipientModelMock,
+  analyticsEmailTopicModel: analyticsEmailTopicModelMock,
   emailTopicModel: emailTopicModelMock,
 }))
 
@@ -98,7 +98,7 @@ beforeEach(() => {
 describe("recordOpen", () => {
   test("always runs countRaw update on recipient", async () => {
     await emailTopicStatsRepository.recordOpen("tok")
-    expect(db.update).toHaveBeenCalledWith(emailTopicRecipientModelMock)
+    expect(db.update).toHaveBeenCalledWith(analyticsEmailTopicModelMock)
   })
 
   test("first open: bumps seensTotal on EmailTopic", async () => {
@@ -115,7 +115,7 @@ describe("recordOpen", () => {
     // countRaw(recipient) + transitionOnce(recipient) — no incrementCounter
     expect(db.update).toHaveBeenCalledTimes(2)
     expect(
-      updateModelArgs.every((m) => m === emailTopicRecipientModelMock),
+      updateModelArgs.every((m) => m === analyticsEmailTopicModelMock),
     ).toBe(true)
   })
 })
@@ -123,7 +123,7 @@ describe("recordOpen", () => {
 describe("recordClick", () => {
   test("always runs countRaw update on recipient", async () => {
     await emailTopicStatsRepository.recordClick("tok")
-    expect(db.update).toHaveBeenCalledWith(emailTopicRecipientModelMock)
+    expect(db.update).toHaveBeenCalledWith(analyticsEmailTopicModelMock)
   })
 
   test("first click: bumps clicksTotal on EmailTopic", async () => {
@@ -138,7 +138,7 @@ describe("recordClick", () => {
     await emailTopicStatsRepository.recordClick("tok")
     expect(db.update).toHaveBeenCalledTimes(2)
     expect(
-      updateModelArgs.every((m) => m === emailTopicRecipientModelMock),
+      updateModelArgs.every((m) => m === analyticsEmailTopicModelMock),
     ).toBe(true)
   })
 })
@@ -156,7 +156,7 @@ describe("markDelivered", () => {
     transitionResult.current = []
     await emailTopicStatsRepository.markDelivered("tok")
     expect(db.update).toHaveBeenCalledTimes(1)
-    expect(updateModelArgs[0]).toBe(emailTopicRecipientModelMock)
+    expect(updateModelArgs[0]).toBe(analyticsEmailTopicModelMock)
   })
 })
 
@@ -164,7 +164,7 @@ describe("markFailed", () => {
   test("sets failedAt, no EmailTopic counter bump", async () => {
     await emailTopicStatsRepository.markFailed("tok")
     expect(db.update).toHaveBeenCalledTimes(1)
-    expect(updateModelArgs[0]).toBe(emailTopicRecipientModelMock)
+    expect(updateModelArgs[0]).toBe(analyticsEmailTopicModelMock)
   })
 })
 

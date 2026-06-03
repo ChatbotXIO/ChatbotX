@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto"
 import type { DatabaseClient } from "@chatbotx.io/database/client"
 import { and, db, eq, isNull, sql } from "@chatbotx.io/database/client"
 import {
+  analyticsEmailTopicModel,
   emailTopicModel,
-  emailTopicRecipientModel,
 } from "@chatbotx.io/database/schema"
 import { createId } from "@chatbotx.io/utils"
 
@@ -32,7 +32,7 @@ export class EmailTopicStatsRepository {
   ): Promise<{ token: string }> {
     const token = randomUUID()
     await db.transaction(async (tx) => {
-      await tx.insert(emailTopicRecipientModel).values({
+      await tx.insert(analyticsEmailTopicModel).values({
         id: createId(),
         token,
         topicId: input.topicId,
@@ -54,9 +54,9 @@ export class EmailTopicStatsRepository {
 
   markFailed(token: string): Promise<unknown> {
     return db
-      .update(emailTopicRecipientModel)
+      .update(analyticsEmailTopicModel)
       .set({ failedAt: sql`now()` })
-      .where(eq(emailTopicRecipientModel.token, token))
+      .where(eq(analyticsEmailTopicModel.token, token))
   }
 
   // Delivery is itself a first-time-only transition → bumps deliveredsTotal once.
@@ -81,12 +81,12 @@ export class EmailTopicStatsRepository {
     lastColumn: "lastSeenAt" | "lastClickedAt",
   ): Promise<unknown> {
     return db
-      .update(emailTopicRecipientModel)
+      .update(analyticsEmailTopicModel)
       .set({
-        [countColumn]: sql`${emailTopicRecipientModel[countColumn]} + 1`,
+        [countColumn]: sql`${analyticsEmailTopicModel[countColumn]} + 1`,
         [lastColumn]: sql`now()`,
       })
-      .where(eq(emailTopicRecipientModel.token, token))
+      .where(eq(analyticsEmailTopicModel.token, token))
   }
 
   /**
@@ -100,17 +100,17 @@ export class EmailTopicStatsRepository {
     counter: EmailTopicCounter,
   ): Promise<void> {
     const [row] = await db
-      .update(emailTopicRecipientModel)
+      .update(analyticsEmailTopicModel)
       .set({ [firstColumn]: sql`now()` })
       .where(
         and(
-          eq(emailTopicRecipientModel.token, token),
-          isNull(emailTopicRecipientModel[firstColumn]),
+          eq(analyticsEmailTopicModel.token, token),
+          isNull(analyticsEmailTopicModel[firstColumn]),
         ),
       )
       .returning({
-        topicId: emailTopicRecipientModel.topicId,
-        workspaceId: emailTopicRecipientModel.workspaceId,
+        topicId: analyticsEmailTopicModel.topicId,
+        workspaceId: analyticsEmailTopicModel.workspaceId,
       })
     if (row) {
       await this.incrementCounter(row.topicId, row.workspaceId, counter)

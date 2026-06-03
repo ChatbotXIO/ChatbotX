@@ -17,8 +17,8 @@ import { conversationModel } from "./conversation"
 import { emailTopicModel } from "./email-topic"
 import { workspaceModel } from "./workspace"
 
-export const emailTopicRecipientModel = pgTable(
-  "EmailTopicRecipient",
+export const analyticsEmailTopicModel = pgTable(
+  "AnalyticsEmailTopic",
   {
     ...sharedColumns,
     topicId: bigintAsString()
@@ -57,15 +57,15 @@ export const emailTopicRecipientModel = pgTable(
     clickCount: integer().default(0).notNull(),
   },
   (table) => [
-    uniqueIndex("EmailTopicRecipient_token_key").using(
+    uniqueIndex("AnalyticsEmailTopic_token_key").using(
       "btree",
       table.token.asc().nullsLast(),
     ),
-    index("EmailTopicRecipient_topicId_idx").using(
+    index("AnalyticsEmailTopic_topicId_idx").using(
       "btree",
       table.topicId.asc().nullsLast(),
     ),
-    index("EmailTopicRecipient_workspaceId_topicId_idx").using(
+    index("AnalyticsEmailTopic_workspaceId_topicId_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
       table.topicId.asc().nullsLast(),

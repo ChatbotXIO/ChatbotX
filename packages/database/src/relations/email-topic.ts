@@ -12,9 +12,9 @@ export const emailTopicRelations = defineRelationsPart(schema, (r) => ({
       from: r.emailTopicModel.folderId,
       to: r.folderModel.id,
     }),
-    recipients: r.many.emailTopicRecipientModel({
+    recipients: r.many.analyticsEmailTopicModel({
       from: r.emailTopicModel.id,
-      to: r.emailTopicRecipientModel.topicId,
+      to: r.analyticsEmailTopicModel.topicId,
     }),
   },
 }))

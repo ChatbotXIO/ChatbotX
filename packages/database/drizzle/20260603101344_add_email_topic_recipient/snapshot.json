@@ -400,7 +400,7 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "EmailTopicRecipient",
+      "name": "AnalyticsEmailTopic",
       "entityType": "tables",
       "schema": "public"
     },
@@ -5635,7 +5635,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5648,7 +5648,7 @@
       "name": "createdAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5661,7 +5661,7 @@
       "name": "updatedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -5674,7 +5674,7 @@
       "name": "topicId",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -5687,7 +5687,7 @@
       "name": "workspaceId",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -5700,7 +5700,7 @@
       "name": "contactId",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -5713,7 +5713,7 @@
       "name": "conversationId",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -5726,7 +5726,7 @@
       "name": "contactInboxId",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "text",
@@ -5739,7 +5739,7 @@
       "name": "email",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "text",
@@ -5752,7 +5752,7 @@
       "name": "token",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5765,7 +5765,7 @@
       "name": "deliveredAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5778,7 +5778,7 @@
       "name": "failedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5791,7 +5791,7 @@
       "name": "firstSeenAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5804,7 +5804,7 @@
       "name": "lastSeenAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "integer",
@@ -5817,7 +5817,7 @@
       "name": "seenCount",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5830,7 +5830,7 @@
       "name": "firstClickedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "timestamp(6) with time zone",
@@ -5843,7 +5843,7 @@
       "name": "lastClickedAt",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "integer",
@@ -5856,7 +5856,7 @@
       "name": "clickCount",
       "entityType": "columns",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "type": "bigint",
@@ -13454,10 +13454,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "EmailTopicRecipient_token_key",
+      "name": "AnalyticsEmailTopic_token_key",
       "entityType": "indexes",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": true,
@@ -13475,10 +13475,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "EmailTopicRecipient_topicId_idx",
+      "name": "AnalyticsEmailTopic_topicId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": true,
@@ -13503,10 +13503,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "EmailTopicRecipient_workspaceId_topicId_idx",
+      "name": "AnalyticsEmailTopic_workspaceId_topicId_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": true,
@@ -16406,10 +16406,10 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "EmailTopicRecipient_topicId_EmailTopic_id_fkey",
+      "name": "AnalyticsEmailTopic_topicId_EmailTopic_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": false,
@@ -16419,10 +16419,10 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "EmailTopicRecipient_workspaceId_Workspace_id_fkey",
+      "name": "AnalyticsEmailTopic_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": false,
@@ -16432,10 +16432,10 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "EmailTopicRecipient_contactId_Contact_id_fkey",
+      "name": "AnalyticsEmailTopic_contactId_Contact_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": false,
@@ -16445,10 +16445,10 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "EmailTopicRecipient_conversationId_Conversation_id_fkey",
+      "name": "AnalyticsEmailTopic_conversationId_Conversation_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": false,
@@ -16458,10 +16458,10 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
-      "name": "EmailTopicRecipient_contactInboxId_ContactInbox_id_fkey",
+      "name": "AnalyticsEmailTopic_contactInboxId_ContactInbox_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "EmailTopicRecipient"
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": true,
@@ -18025,9 +18025,9 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "EmailTopicRecipient_pkey",
+      "name": "AnalyticsEmailTopic_pkey",
       "schema": "public",
-      "table": "EmailTopicRecipient",
+      "table": "AnalyticsEmailTopic",
       "entityType": "pks"
     },
     {
