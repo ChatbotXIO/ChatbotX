@@ -7,7 +7,7 @@ import {
   fileModel,
 } from "@chatbotx.io/database/schema"
 import { chunkById } from "@chatbotx.io/database/utils"
-import { uploader } from "@chatbotx.io/filesystem"
+import { createUpload } from "@chatbotx.io/filesystem/node-upload"
 import {
   type JobExportContacts,
   loopableItemsCount,
@@ -280,7 +280,7 @@ export const loopableExportContacts = async (data: ExportData) => {
   const selectedFields = await buildSelectedFields(fields, workspaceId)
   const baseWhere = buildBaseWhere(data)
 
-  const { stream, done } = uploader.createUpload(outputPath, {
+  const { stream, done } = createUpload(outputPath, {
     contentType: "text/csv; charset=utf-8",
   })
 

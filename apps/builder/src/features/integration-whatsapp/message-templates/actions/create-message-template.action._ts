@@ -65,7 +65,5 @@ export const createMessageTemplateAction = workspaceActionClient
         status: res.status,
         sourceId: res.id,
       })
-
-      revalidateCacheTags(`workspaces:${workspaceId}#whatsapp#messageTemplates`)
     },
   )
