@@ -24,6 +24,11 @@ export const allowableKnowledgeExtensionsMap = () => ({
   "application/vnd.ms-outlook": [".msg"],
   "application/rtf": [".rtf"],
   "text/rtf": [".rtf"],
+  "application/epub+zip": [".epub"],
+  "application/vnd.ms-powerpoint": [".ppt"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+    ".pptx",
+  ],
 })
 
 export const getAllowableKnowledgeExtensions = () =>

@@ -1,3 +1,3 @@
 export * from "./ai-model"
-export * from "./extenstions"
+export * from "./extensions"
 export * from "./mcp"

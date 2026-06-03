@@ -18,6 +18,9 @@ export const AI_FILE_MIME_TYPES = [
   "application/vnd.ms-outlook",
   "application/rtf",
   "text/rtf",
+  "application/epub+zip",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ] as const
 
 export type AIFileMimeType = (typeof AI_FILE_MIME_TYPES)[number]
@@ -62,3 +65,11 @@ export const EMAIL_MIME_TYPES = [
 export const VTT_MIME_TYPES = ["text/vtt"] as const
 
 export const PROPERTIES_MIME_TYPES = ["text/x-java-properties"] as const
+
+export const EPUB_MIME_TYPES = ["application/epub+zip"] as const
+
+export const PPT_MIME_TYPES = ["application/vnd.ms-powerpoint"] as const
+
+export const PPTX_MIME_TYPES = [
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+] as const

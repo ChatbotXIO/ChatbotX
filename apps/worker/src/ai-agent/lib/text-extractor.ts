@@ -5,9 +5,12 @@ import {
   CSV_MIME_TYPES,
   DOCX_MIME_TYPES,
   EMAIL_MIME_TYPES,
+  EPUB_MIME_TYPES,
   HTML_MIME_TYPES,
   MARKDOWN_MIME_TYPES,
   PDF_MIME_TYPES,
+  PPT_MIME_TYPES,
+  PPTX_MIME_TYPES,
   PROPERTIES_MIME_TYPES,
   RTF_MIME_TYPES,
   SPREADSHEET_MIME_TYPES,
@@ -24,6 +27,15 @@ import { read, utils } from "xlsx"
 import { logger } from "../../lib/logger"
 
 const PRINTABLE_CHAR_REGEX = /[\x20-\x7E\n\r\t]/
+const PPTX_SLIDE_FILE_REGEX = /^ppt\/slides\/slide\d+\.xml$/
+const PPTX_NOTES_FILE_REGEX = /^ppt\/notesSlides\/notesSlide\d+\.xml$/
+const PPTX_SLIDE_NUM_REGEX = /slide(\d+)\.xml$/
+const PPTX_TEXT_TAG_REGEX = /<a:t[^>]*>([^<]*)<\/a:t>/g
+const PPTX_TAG_STRIP_REGEX = /<[^>]+>/g
+const EPUB_OPF_PATH_REGEX = /full-path="([^"]+\.opf)"/
+const EPUB_ITEMREF_REGEX = /<itemref\s[^>]*idref="([^"]+)"/g
+const EPUB_IDREF_REGEX = /idref="([^"]+)"/
+const EPUB_CONTENT_FILE_REGEX = /\.(html|xhtml|htm)$/i
 const UTF8_DECODER = new TextDecoder("utf-8")
 const UTF8_NON_FATAL_DECODER = new TextDecoder("utf-8", { fatal: false })
 
@@ -211,6 +223,151 @@ async function extractTextFromEmail(buffer: Buffer): Promise<string> {
   }
 }
 
+async function extractTextFromPptx(buffer: Buffer): Promise<string> {
+  try {
+    const { default: JSZip } = await import("jszip")
+    const zip = await JSZip.loadAsync(buffer)
+
+    const slideNames = Object.keys(zip.files)
+      .filter((name) => PPTX_SLIDE_FILE_REGEX.test(name))
+      .sort((a, b) => {
+        const numA = Number.parseInt(
+          a.match(PPTX_SLIDE_NUM_REGEX)?.[1] ?? "0",
+          10,
+        )
+        const numB = Number.parseInt(
+          b.match(PPTX_SLIDE_NUM_REGEX)?.[1] ?? "0",
+          10,
+        )
+        return numA - numB
+      })
+
+    const texts: string[] = []
+    for (const slideName of slideNames) {
+      const xml = await zip.files[slideName]?.async("string")
+      if (!xml) {
+        continue
+      }
+      const slideText = xml
+        .match(PPTX_TEXT_TAG_REGEX)
+        ?.map((t) => t.replace(PPTX_TAG_STRIP_REGEX, ""))
+        .join(" ")
+      if (slideText?.trim()) {
+        texts.push(slideText)
+      }
+    }
+
+    const noteNames = Object.keys(zip.files).filter((name) =>
+      PPTX_NOTES_FILE_REGEX.test(name),
+    )
+    for (const noteName of noteNames) {
+      const xml = await zip.files[noteName]?.async("string")
+      if (!xml) {
+        continue
+      }
+      const noteText = xml
+        .match(PPTX_TEXT_TAG_REGEX)
+        ?.map((t) => t.replace(PPTX_TAG_STRIP_REGEX, ""))
+        .join(" ")
+      if (noteText?.trim()) {
+        texts.push(noteText)
+      }
+    }
+
+    return normalizeWhitespace(texts.join("\n\n"))
+  } catch (error) {
+    logger.warn(error, "PPTX parsing failed")
+    throw new Error("PPTX parsing failed")
+  }
+}
+
+function extractTextFromPpt(buffer: Buffer): string {
+  // PPT is a Compound Binary Format (OLE) — extract UTF-16LE strings heuristically
+  const texts: string[] = []
+  let i = 0
+  while (i < buffer.length - 1) {
+    const byte = buffer[i]
+    const next = buffer[i + 1]
+    if (next === 0 && byte !== undefined && byte >= 0x20 && byte < 0x7f) {
+      let j = i
+      let str = ""
+      while (
+        j < buffer.length - 1 &&
+        buffer[j + 1] === 0 &&
+        buffer[j] !== undefined &&
+        (buffer[j] as number) >= 0x20 &&
+        (buffer[j] as number) < 0x7f
+      ) {
+        str += String.fromCharCode(buffer[j] as number)
+        j += 2
+      }
+      if (str.length >= 4) {
+        texts.push(str)
+      }
+      i = j
+    } else {
+      i++
+    }
+  }
+  return normalizeWhitespace(texts.join(" "))
+}
+
+async function extractTextFromEpub(buffer: Buffer): Promise<string> {
+  try {
+    const { default: JSZip } = await import("jszip")
+    const zip = await JSZip.loadAsync(buffer)
+
+    const containerXml =
+      await zip.files["META-INF/container.xml"]?.async("string")
+    const opfPath = containerXml?.match(EPUB_OPF_PATH_REGEX)?.[1]
+
+    let contentPaths: string[] = []
+
+    if (opfPath && zip.files[opfPath]) {
+      const opfContent = await zip.files[opfPath].async("string")
+      const opfDir = opfPath.split("/").slice(0, -1).join("/")
+
+      const idrefs = (opfContent.match(EPUB_ITEMREF_REGEX) ?? []).map(
+        (m) => m.match(EPUB_IDREF_REGEX)?.[1],
+      )
+
+      for (const idref of idrefs) {
+        if (!idref) {
+          continue
+        }
+        const href = opfContent.match(
+          new RegExp(`<item[^>]+id="${idref}"[^>]+href="([^"]+)"`),
+        )?.[1]
+        if (href) {
+          contentPaths.push(opfDir ? `${opfDir}/${href}` : href)
+        }
+      }
+    }
+
+    if (!contentPaths.length) {
+      contentPaths = Object.keys(zip.files).filter((name) =>
+        EPUB_CONTENT_FILE_REGEX.test(name),
+      )
+    }
+
+    const texts: string[] = []
+    for (const filePath of contentPaths) {
+      const html = await zip.files[filePath]?.async("string")
+      if (html) {
+        const text = htmlToText(html, { wordwrap: false })
+        if (text.trim()) {
+          texts.push(text)
+        }
+      }
+    }
+
+    return normalizeWhitespace(texts.join("\n\n"))
+  } catch (error) {
+    logger.warn(error, "EPUB parsing failed")
+    throw new Error("EPUB parsing failed")
+  }
+}
+
 function extractTextFromXml(buffer: Buffer): string {
   try {
     const xml = decodeUtf8(buffer)
@@ -291,6 +448,18 @@ export async function extractTextFromFile(
 
   if (isMimeType(finalMimeType, PROPERTIES_MIME_TYPES)) {
     return normalizeWhitespace(decodeUtf8(buffer))
+  }
+
+  if (isMimeType(finalMimeType, PPTX_MIME_TYPES)) {
+    return await extractTextFromPptx(buffer)
+  }
+
+  if (isMimeType(finalMimeType, PPT_MIME_TYPES)) {
+    return extractTextFromPpt(buffer)
+  }
+
+  if (isMimeType(finalMimeType, EPUB_MIME_TYPES)) {
+    return await extractTextFromEpub(buffer)
   }
 
   // default: treat as utf-8 text stream
