@@ -54,7 +54,6 @@ import { logger } from "../../lib/logger"
 import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
 import { processWhatsappTemplate } from "./send-whatsapp-template"
 
-
 export const convertButtonsToTemplate = (props: {
   flowId: string
   flowVersionId?: string
@@ -437,7 +436,6 @@ export const sendChatMessage = async (
     contactInbox: targetContactInbox,
     text,
     url,
-    storagePath,
     trackingContext,
     metadata,
   } = props

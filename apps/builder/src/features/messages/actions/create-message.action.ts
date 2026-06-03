@@ -1,14 +1,9 @@
 "use server"
 
-import {
-  broadcastToGuestParty,
-  broadcastToWorkspaceParty,
-  resolvePlatformSettings,
-} from "@chatbotx.io/business"
+import { resolvePlatformSettings } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
-import { channelTypes } from "@chatbotx.io/database/partials"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   contactInboxModel,
@@ -28,7 +23,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import { revalidateCacheTags } from "@/lib/cache-helper"
 import { workspaceActionClient } from "@/lib/safe-action"
 import {
   type CreateMessageRequest,
@@ -160,50 +154,33 @@ export const createMessage = async (props: {
   }
 
   const promises: Promise<unknown>[] = [
-    broadcastToWorkspaceParty(messageWithAttachments.workspaceId, {
-      eventType: RealtimeEventType.messageCreated,
+    chatQueue.add(ChatJobAction.broadcastEvent, {
+      type: ChatJobAction.broadcastEvent,
       data: {
-        ...messageWithAttachments,
-        clientId: parsedInput.clientId,
-      },
-    }),
-  ]
-
-  if (contactInbox.channel === channelTypes.enum.webchat) {
-    promises.push(
-      broadcastToGuestParty(
-        {
-          workspaceId: conversation.workspaceId,
-          guestConversationId: contactInbox.sourceId ?? "",
-        },
-        {
+        workspaceId: messageWithAttachments.workspaceId,
+        event: {
           eventType: RealtimeEventType.messageCreated,
           data: {
             ...messageWithAttachments,
             clientId: parsedInput.clientId,
           },
         },
-      ),
-    )
-  } else {
-    promises.push(
-      chatQueue.add(ChatJobAction.sendExternalMessage, {
-        type: ChatJobAction.sendExternalMessage,
-        data: {
-          conversation,
-          contactInbox,
-          message: {
-            ...messageWithAttachments,
-            clientId: parsedInput.clientId,
-          },
+      },
+    }),
+    chatQueue.add(ChatJobAction.sendChannelMessage, {
+      type: ChatJobAction.sendChannelMessage,
+      data: {
+        conversation,
+        contactInbox,
+        message: {
+          ...messageWithAttachments,
+          clientId: parsedInput.clientId,
         },
-      }),
-    )
-  }
+      },
+    }),
+  ]
 
   await Promise.all(promises)
-
-  revalidateCacheTags(`workspaces:${conversation.workspaceId}:conversations`)
 
   return messageWithAttachments
 }

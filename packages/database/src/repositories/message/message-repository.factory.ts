@@ -30,7 +30,7 @@ async function buildRepository(
 ): Promise<IMessageRepository> {
   const env = keys()
 
-  if (env.ENABLE_MESSAGE_SHARDING !== "true") {
+  if (!env.ENABLE_MESSAGE_SHARDING) {
     return new MessageRepository(client)
   }
 

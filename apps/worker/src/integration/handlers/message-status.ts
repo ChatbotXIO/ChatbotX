@@ -33,7 +33,7 @@ export const handleMessageStatus = async (
       integrationType as IntegrationType,
       integrationIdentifier,
     )
-  const { workspace, inbox, integrationRow } = dbIntegration
+  const { inbox, integrationRow } = dbIntegration
   const integration = allIntegrations[integrationType]
   if (!integration) {
     throw new SdkException(
@@ -84,7 +84,7 @@ export const handleMessageStatus = async (
     const message = await messageRepository.findBySourceId(
       payload.messageId,
       contactInbox.conversation.id,
-      ctx.workspace.id,
+      inbox.workspaceId,
       getSafeSinceTime(contactInbox.lastMessageAt, 365 * 24 * 60 * 60 * 1000),
     )
 

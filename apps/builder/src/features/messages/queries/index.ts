@@ -46,7 +46,11 @@ export const listMessages = async (
     pagination: {
       limit: input.perPage ?? 20,
       cursor: cursor
-        ? { createdAt: cursor.createdAt, id: cursor.id, shardId: cursor.shardId }
+        ? {
+            createdAt: cursor.createdAt,
+            id: cursor.id,
+            shardId: cursor.shardId,
+          }
         : {
             createdAt: endOfHour(contactInbox?.lastMessageAt ?? new Date()),
             id: "",
