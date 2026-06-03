@@ -2,6 +2,7 @@
 
 import { db, isUniqueViolationError } from "@chatbotx.io/database/client"
 import { reflinkModel } from "@chatbotx.io/database/schema"
+import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { getTranslations } from "next-intl/server"
 import { returnValidationErrors } from "next-safe-action"
@@ -10,6 +11,7 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
+import { getWorkspaceCacheTag } from "../queries"
 import {
   type CreateQrCodeRequest,
   createQrCodeRequest,
@@ -38,6 +40,8 @@ export const createQrCodeAction = workspaceActionClient
           name: `qr_${name}`,
           qrStyles: { size },
         })
+
+        await invalidateCacheByTags([getWorkspaceCacheTag(workspaceId)])
 
         return { id }
       } catch (error) {

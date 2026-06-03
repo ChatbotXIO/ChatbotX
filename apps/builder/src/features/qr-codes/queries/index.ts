@@ -11,7 +11,7 @@ import type { QrCodeResource } from "../schemas/resource"
 
 const QR_CODES_CACHE_TTL_SECONDS = 60 * 60
 
-function getWorkspaceCacheTag(workspaceId: string): string {
+export function getWorkspaceCacheTag(workspaceId: string): string {
   return `workspaces:${workspaceId}#qr-codes`
 }
 

@@ -29,6 +29,7 @@ import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import React, { use, useMemo } from "react"
+import { stripQrPrefix } from "./constants"
 import { DeleteQrCodesDialog } from "./delete-qr-codes"
 import { QrCodesTableToolbarActions } from "./qr-codes-table-toolbar-actions"
 import type { ListQrCodeItem, ListQrCodesResponse } from "./schemas/query"
@@ -85,9 +86,7 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
           />
         ),
         cell: ({ row }) => {
-          const displayName = row.original.name.startsWith("qr_")
-            ? row.original.name.slice(3)
-            : row.original.name
+          const displayName = stripQrPrefix(row.original.name)
           return (
             <Tooltip>
               <TooltipTrigger asChild>

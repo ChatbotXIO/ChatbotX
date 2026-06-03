@@ -21,7 +21,7 @@ import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
 import { usePlatformSettings } from "@/features/platform"
 import { QrCodeLinkContent } from "@/features/qr-codes/qr-code-link-content"
 import { updateQrCodeAction } from "./actions/update-qr-code.action"
-import { QR_CODE_SIZE } from "./constants"
+import { QR_CODE_SIZE, stripQrPrefix } from "./constants"
 import { updateQrCodeRequest } from "./schemas/action"
 import type { QrCodeResource } from "./schemas/resource"
 
@@ -61,7 +61,7 @@ export function UpdateQrCodeForm({
       formProps: {
         mode: "onChange",
         defaultValues: {
-          name: qrCode.name.slice(3),
+          name: stripQrPrefix(qrCode.name),
           flowId: qrCode.flowId,
           size: qrCode.qrStyles?.size ?? QR_CODE_SIZE.DEFAULT,
         },
