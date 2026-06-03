@@ -1,6 +1,5 @@
 import type {
   ContactInboxModel,
-  ContactModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
 import type { MetadataPayload } from "@chatbotx.io/flow-config"
@@ -154,27 +153,6 @@ export type IntegrationJobRunChallenge = {
   }
 }
 
-export type IntegrationJobBlockContact = {
-  type: typeof IntegrationJobAction.blockContact
-  data: {
-    contact: ContactModel
-  }
-}
-
-export type IntegrationJobUnblockContact = {
-  type: typeof IntegrationJobAction.unblockContact
-  data: {
-    contact: ContactModel
-  }
-}
-
-export type IntegrationJobAssignConversation = {
-  type: typeof IntegrationJobAction.assignConversation
-  data: {
-    conversations: ConversationModel[]
-  }
-}
-
 export type IntegrationJobCreateMessage = {
   type: typeof IntegrationJobAction.createMessage
   data: {
@@ -207,9 +185,6 @@ export type IntegrationJobData =
   | IntegrationJobContactMarkAsRead
   | IntegrationJobRunRef
   | IntegrationJobRunChallenge
-  | IntegrationJobBlockContact
-  | IntegrationJobUnblockContact
-  | IntegrationJobAssignConversation
   | IntegrationJobCreateMessage
   | IntegrationJobProcessAutomatedResponse
   | IntegrationJobSendSequenceFlow

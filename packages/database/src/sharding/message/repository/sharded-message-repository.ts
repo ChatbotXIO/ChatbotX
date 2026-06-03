@@ -36,13 +36,13 @@ import {
 export { getSafeSinceTime } from "../../../repositories"
 
 const SHARD_RANGE_CACHE_TAG = "message-shard-range"
-const SHARD_RANGE_CACHE_TTL_S = 5 * 60
+const SHARD_RANGE_CACHE_TTL_S = 30
 
 export class ShardedMessageRepository implements IMessageRepository {
   private readonly shardManager: MessageShardConnectionManager
   private readonly distributedLock: DistributedLock
 
-  private static readonly LOCK_TIMEOUT_SECONDS = 5
+  private static readonly LOCK_TIMEOUT_SECONDS = 30
 
   constructor(
     shardManager: MessageShardConnectionManager,
@@ -143,25 +143,31 @@ export class ShardedMessageRepository implements IMessageRepository {
       return []
     }
 
-    const whereConditions = [inArray(attachmentModel.messageId, messageIds)]
-
-    if (messageCreatedAts && messageCreatedAts.length > 0) {
-      whereConditions.push(
-        inArray(attachmentModel.messageCreatedAt, messageCreatedAts),
+    if (messageCreatedAts && messageCreatedAts.length === messageIds.length) {
+      const perMessageConditions = messageIds.map((id, i) =>
+        and(
+          eq(attachmentModel.messageId, id),
+          eq(attachmentModel.messageCreatedAt, messageCreatedAts[i]),
+        ),
       )
+      const attachments = await db
+        .select()
+        .from(attachmentModel)
+        .where(or(...perMessageConditions))
+      return attachments as AttachmentModel[]
     }
 
     const attachments = await db
       .select()
       .from(attachmentModel)
-      .where(and(...whereConditions))
+      .where(inArray(attachmentModel.messageId, messageIds))
 
     return attachments as AttachmentModel[]
   }
 
   create(message: CreateMessageInput): Promise<MessageModel> {
     return withShardRetry(async () => {
-      const db = await this.shardManager.getActiveShardForWrite()
+      const db = await this.shardManager.getShardForWrite(message.workspaceId)
       const [result] = await db
         .insert(messageModel)
         .values(message as typeof messageModel.$inferInsert)
@@ -218,9 +224,9 @@ export class ShardedMessageRepository implements IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments> {
-    const db = await this.shardManager.getActiveShardForWrite()
+    const db = await this.shardManager.getShardForWrite(message.workspaceId)
 
-    return await db.transaction(async (tx) => {
+    return db.transaction(async (tx) => {
       const [newMessage] = await tx
         .insert(messageModel)
         .values(message as typeof messageModel.$inferInsert)
@@ -305,26 +311,21 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
 
     const shards = await this.getShardsForRange(createdAt, createdAt)
-
     if (shards.length === 0) {
       return null
     }
 
     for (const shardInfo of shards) {
       try {
-        const shardClient = await this.shardManager.getShardClient(
+        const shardClient = await this.shardManager.getShardClientForRead(
           shardInfo.shard,
         )
-
-        const whereConditions = [
-          eq(messageModel.id, id),
-          eq(messageModel.createdAt, createdAt),
-        ]
-
         const [message] = await shardClient
           .select()
           .from(messageModel)
-          .where(and(...whereConditions))
+          .where(
+            and(eq(messageModel.id, id), eq(messageModel.createdAt, createdAt)),
+          )
           .limit(1)
 
         if (message) {
@@ -337,7 +338,7 @@ export class ShardedMessageRepository implements IMessageRepository {
         }
       } catch (error) {
         logger.warn(
-          { error, shardId: shardInfo.shard.id },
+          { err: error, shardId: shardInfo.shard.id },
           "Shard query failed in findById",
         )
       }
@@ -359,42 +360,46 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
 
     const shards = await this.getShardsForRange(sinceTime, new Date())
-
     if (shards.length === 0) {
       return null
     }
 
-    for (const shardInfo of shards) {
-      try {
-        const shardClient = await this.shardManager.getShardClient(
-          shardInfo.shard,
-        )
-
-        const [message] = await shardClient
-          .select()
-          .from(messageModel)
-          .where(
-            and(
-              eq(messageModel.sourceId, sourceId),
-              eq(messageModel.conversationId, conversationId),
-              eq(messageModel.workspaceId, workspaceId),
-              gte(messageModel.createdAt, sinceTime),
-            ),
+    const results = await Promise.all(
+      shards.map(async (shardInfo): Promise<MessageModel | null> => {
+        try {
+          const shardClient = await this.shardManager.getShardClientForRead(
+            shardInfo.shard,
           )
-          .limit(1)
-
-        if (message) {
-          return message as MessageModel
+          const [message] = await shardClient
+            .select()
+            .from(messageModel)
+            .where(
+              and(
+                eq(messageModel.sourceId, sourceId),
+                eq(messageModel.conversationId, conversationId),
+                eq(messageModel.workspaceId, workspaceId),
+                gte(messageModel.createdAt, sinceTime),
+              ),
+            )
+            .limit(1)
+          return (message as MessageModel) ?? null
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findBySourceId",
+          )
+          return null
         }
-      } catch (error) {
-        logger.warn(
-          { error, shardId: shardInfo.shard.id },
-          "Shard query failed in findBySourceId",
-        )
-      }
-    }
+      }),
+    )
 
-    return null
+    const matches = results.filter((r): r is MessageModel => r !== null)
+    if (matches.length <= 1) {
+      return matches[0] ?? null
+    }
+    return matches.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    )[0]
   }
 
   async findLastByConversation(
@@ -411,66 +416,65 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
 
     const shards = await this.getShardsForRange(sinceTime, new Date())
-
     if (shards.length === 0) {
       return []
     }
 
-    const allMessages: MessageWithAttachments[] = []
-
-    for (const shardInfo of shards) {
-      if (allMessages.length >= limit) {
-        break
-      }
-
-      try {
-        const shardClient = await this.shardManager.getShardClient(
-          shardInfo.shard,
-        )
-        const whereConditions = [
-          eq(messageModel.conversationId, conversationId),
-          gte(messageModel.createdAt, sinceTime),
-        ]
-
-        if (options?.messageTypes && options.messageTypes.length > 0) {
-          // whereConditions.push(
-          //   inArray(messageModel.messageType, options.messageTypes),
-          // )
-        }
-
-        const messages = await shardClient
-          .select()
-          .from(messageModel)
-          .where(and(...whereConditions))
-          .orderBy(desc(messageModel.createdAt))
-          .limit(limit - allMessages.length)
-
-        if (messages.length === 0) {
-          continue
-        }
-
-        let attachmentsByMessageId: Record<string, AttachmentModel[]> = {}
-        if (options?.withAttachments) {
-          attachmentsByMessageId = await this.fetchAndGroupAttachments(
-            shardClient,
-            messages,
+    // Query all relevant shards in parallel and merge by recency
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<MessageWithAttachments[]> => {
+        try {
+          const shardClient = await this.shardManager.getShardClientForRead(
+            shardInfo.shard,
           )
+          const whereConditions = [
+            eq(messageModel.conversationId, conversationId),
+            gte(messageModel.createdAt, sinceTime),
+          ]
+
+          if (options?.messageTypes && options.messageTypes.length > 0) {
+            whereConditions.push(
+              inArray(messageModel.messageType, options.messageTypes),
+            )
+          }
+
+          const messages = await shardClient
+            .select()
+            .from(messageModel)
+            .where(and(...whereConditions))
+            .orderBy(desc(messageModel.createdAt))
+            .limit(limit)
+
+          if (messages.length === 0) {
+            return []
+          }
+
+          let attachmentsByMessageId: Record<string, AttachmentModel[]> = {}
+          if (options?.withAttachments) {
+            attachmentsByMessageId = await this.fetchAndGroupAttachments(
+              shardClient,
+              messages,
+            )
+          }
+
+          return this.mapMessagesToWithAttachments(
+            messages as MessageModel[],
+            attachmentsByMessageId,
+          )
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findLastByConversation",
+          )
+          return []
         }
+      }),
+    )
 
-        const messagesWithAttachments = this.mapMessagesToWithAttachments(
-          messages as MessageModel[],
-          attachmentsByMessageId,
-        )
-        allMessages.push(...messagesWithAttachments)
-      } catch (error) {
-        logger.warn(
-          { error, shardId: shardInfo.shard.id },
-          "Shard query failed in findLastByConversation",
-        )
-      }
-    }
-
-    return allMessages.slice(0, limit)
+    return shardResults
+      .flat()
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit)
   }
 
   async findManyByConversation(
@@ -486,53 +490,54 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
 
     const shards = await this.getShardsForRange(sinceTime, new Date())
-
     if (shards.length === 0) {
       return []
     }
 
-    const allMessages: MessageModel[] = []
-
-    for (const shardInfo of shards) {
-      if (allMessages.length >= options.limit) {
-        break
-      }
-      try {
-        const shardClient = await this.shardManager.getShardClient(
-          shardInfo.shard,
-        )
-        const whereConditions = [
-          eq(messageModel.conversationId, conversationId),
-          gte(messageModel.createdAt, sinceTime),
-        ]
-
-        if (options.messageTypes && options.messageTypes.length > 0) {
-          whereConditions.push(
-            inArray(messageModel.messageType, options.messageTypes),
+    // Query all relevant shards in parallel and merge by recency
+    const shardResults = await Promise.all(
+      shards.map(async (shardInfo): Promise<MessageModel[]> => {
+        try {
+          const shardClient = await this.shardManager.getShardClientForRead(
+            shardInfo.shard,
           )
+          const whereConditions = [
+            eq(messageModel.conversationId, conversationId),
+            gte(messageModel.createdAt, sinceTime),
+          ]
+
+          if (options.messageTypes && options.messageTypes.length > 0) {
+            whereConditions.push(
+              inArray(messageModel.messageType, options.messageTypes),
+            )
+          }
+
+          if (options.textNotNull) {
+            whereConditions.push(isNotNull(messageModel.text))
+          }
+
+          const messages = await shardClient
+            .select()
+            .from(messageModel)
+            .where(and(...whereConditions))
+            .orderBy(desc(messageModel.createdAt))
+            .limit(options.limit)
+
+          return messages as MessageModel[]
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findManyByConversation",
+          )
+          return []
         }
+      }),
+    )
 
-        if (options.textNotNull) {
-          whereConditions.push(isNotNull(messageModel.text))
-        }
-
-        const messages = await shardClient
-          .select()
-          .from(messageModel)
-          .where(and(...whereConditions))
-          .orderBy(desc(messageModel.createdAt))
-          .limit(options.limit - allMessages.length)
-
-        allMessages.push(...(messages as MessageModel[]))
-      } catch (error) {
-        logger.warn(
-          { error, shardId: shardInfo.shard.id },
-          "Shard query failed in findManyByConversation",
-        )
-      }
-    }
-
-    return allMessages.slice(0, options.limit)
+    return shardResults
+      .flat()
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, options.limit)
   }
 
   async findManyByIds(
@@ -551,74 +556,71 @@ export class ShardedMessageRepository implements IMessageRepository {
     }
 
     const shards = await this.getShardsForRange(sinceTime, new Date())
-
     if (shards.length === 0) {
       return []
     }
 
-    const allMessages: Pick<MessageModel, "id" | "text">[] = []
-    const foundIds = new Set<string>()
-
-    for (const shardInfo of shards) {
-      if (foundIds.size === ids.length) {
-        break
-      }
-      try {
-        const shardClient = await this.shardManager.getShardClient(
-          shardInfo.shard,
-        )
-
-        const remainingIds = ids.filter((id) => !foundIds.has(id))
-
-        const messages = await shardClient
-          .select({
-            id: messageModel.id,
-            text: messageModel.text,
-          })
-          .from(messageModel)
-          .where(
-            and(
-              eq(messageModel.contactInboxId, contactInboxId),
-              inArray(messageModel.id, remainingIds),
-              gte(messageModel.createdAt, sinceTime),
-            ),
-          )
-
-        for (const message of messages) {
-          if (!foundIds.has(message.id)) {
-            foundIds.add(message.id)
-            allMessages.push(message)
+    // Query all shards in parallel and deduplicate
+    const shardResults = await Promise.all(
+      shards.map(
+        async (shardInfo): Promise<Pick<MessageModel, "id" | "text">[]> => {
+          try {
+            const shardClient = await this.shardManager.getShardClientForRead(
+              shardInfo.shard,
+            )
+            const messages = await shardClient
+              .select({ id: messageModel.id, text: messageModel.text })
+              .from(messageModel)
+              .where(
+                and(
+                  eq(messageModel.contactInboxId, contactInboxId),
+                  inArray(messageModel.id, ids),
+                  gte(messageModel.createdAt, sinceTime),
+                ),
+              )
+            return messages as Pick<MessageModel, "id" | "text">[]
+          } catch (error) {
+            logger.warn(
+              { err: error, shardId: shardInfo.shard.id },
+              "Shard query failed in findManyByIds",
+            )
+            return []
           }
-        }
-      } catch (error) {
-        logger.warn(
-          { error, shardId: shardInfo.shard.id },
-          "Shard query failed in findManyByIds",
-        )
-      }
-    }
+        },
+      ),
+    )
 
-    return allMessages
+    const seen = new Set<string>()
+    return shardResults.flat().filter((m) => {
+      if (seen.has(m.id)) {
+        return false
+      }
+      seen.add(m.id)
+      return true
+    })
   }
 
   async listByConversation(
     query: ListMessagesQuery,
   ): Promise<PaginatedMessages> {
-    const { pagination } = query
+    const { pagination, sinceTime } = query
     const { limit, cursor } = pagination
 
     const endTime = cursor?.createdAt ?? new Date()
-    const allShards = await this.getShardsForRange(new Date(0), endTime)
+    const startTime = sinceTime ?? new Date(0)
+    const allShards = await this.getShardsForRange(startTime, endTime)
 
     if (allShards.length === 0) {
       return { data: [], nextCursor: null }
     }
 
-    let shards = allShards
+    const descShards = [...allShards].reverse()
+
+    let shards = descShards
     if (cursor?.shardId) {
-      const idx = allShards.findIndex((s) => s.shard.id === cursor.shardId)
+      const idx = descShards.findIndex((s) => s.shard.id === cursor.shardId)
       if (idx >= 0) {
-        shards = allShards.slice(idx)
+        shards = descShards.slice(idx)
       }
     }
 
@@ -626,6 +628,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     let nextCursor: PaginationCursor | null = null
     let cursorForQuery = cursor
     let hasPartialResults = false
+    let lastProductiveShardId: string | undefined
 
     for (const shard of shards) {
       const remaining = limit - data.length
@@ -635,7 +638,7 @@ export class ShardedMessageRepository implements IMessageRepository {
           nextCursor = {
             createdAt: last.createdAt,
             id: last.id,
-            shardId: shard.shard.id,
+            shardId: lastProductiveShardId,
           }
         }
         break
@@ -648,7 +651,20 @@ export class ShardedMessageRepository implements IMessageRepository {
           remaining,
           cursorForQuery,
         )
-        cursorForQuery = undefined
+
+        if (result.data.length > 0) {
+          lastProductiveShardId = shard.shard.id
+          const lastMsg = result.data.at(-1)
+          if (lastMsg) {
+            cursorForQuery = {
+              createdAt: lastMsg.createdAt,
+              id: lastMsg.id,
+            }
+          }
+        } else {
+          cursorForQuery = undefined
+        }
+
         data.push(...result.data)
 
         if (result.nextCursor) {
@@ -657,8 +673,9 @@ export class ShardedMessageRepository implements IMessageRepository {
         }
       } catch (error) {
         hasPartialResults = true
+        cursorForQuery = undefined
         logger.warn(
-          { error, shardId: shard.shard.id },
+          { err: error, shardId: shard.shard.id },
           "Shard query failed in listByConversation",
         )
       }
@@ -689,7 +706,9 @@ export class ShardedMessageRepository implements IMessageRepository {
     cursor?: PaginationCursor,
   ): Promise<PaginatedMessages> {
     const { workspaceId, conversationId } = query
-    const shardClient = await this.shardManager.getShardClient(shardInfo.shard)
+    const shardClient = await this.shardManager.getShardClientForRead(
+      shardInfo.shard,
+    )
 
     const whereConditions = [eq(messageModel.workspaceId, workspaceId)]
 
@@ -707,11 +726,6 @@ export class ShardedMessageRepository implements IMessageRepository {
             ),
           )
         : lt(messageModel.createdAt, cursor.createdAt)
-      // console.log({
-      //   createdAt: cursor.createdAt,
-      //   id: cursor.id,
-      //   shard: shardInfo.shard,
-      // })
       if (cursorCondition) {
         whereConditions.push(cursorCondition)
       }
@@ -742,16 +756,13 @@ export class ShardedMessageRepository implements IMessageRepository {
     )
 
     let nextCursor: PaginationCursor | null = null
-    if (hasMore && resultMessages.length > 0) {
+    if (hasMore) {
       const lastMessage = resultMessages.at(-1)
       if (lastMessage) {
         nextCursor = this.buildNextCursor(lastMessage, shardInfo.shard.id)
       }
     }
 
-    return {
-      data: messagesWithAttachments,
-      nextCursor,
-    }
+    return { data: messagesWithAttachments, nextCursor }
   }
 }

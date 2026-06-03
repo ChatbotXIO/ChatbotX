@@ -1,4 +1,5 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
+import { conversationService } from "@chatbotx.io/business"
 import type { ConversationAttributes } from "@chatbotx.io/database/partials"
 import { emit } from "@chatbotx.io/event-bus"
 import {
@@ -12,14 +13,9 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
-import { assignConversation } from "./handlers/assign-conversation"
 import { processAutomatedResponse } from "./handlers/automated-response"
 import { runChallenge } from "./handlers/challenge"
-import {
-  agentMarkAsRead,
-  contactMarkAsRead,
-  ensureConversationActive,
-} from "./handlers/conversation"
+import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
   runFlowNode,
   runFlowPostback,
@@ -59,7 +55,7 @@ async function startIntegrationWorker() {
             isNotPostbackOrQuickReply &&
             message.text &&
             message.senderType === "contact" &&
-            (await ensureConversationActive(conversation))
+            (await conversationService.ensureActive(conversation))
           ) {
             const additionalAttributes =
               conversation.additionalAttributes as ConversationAttributes
@@ -139,18 +135,6 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.runChallenge: {
           await runChallenge(job.data.data)
-          return
-        }
-        case IntegrationJobAction.blockContact: {
-          // await broadcastBlockContactEvent(job.data.data)
-          return
-        }
-        case IntegrationJobAction.unblockContact: {
-          // await broadcastUnblockContactEvent(job.data.data)
-          return
-        }
-        case IntegrationJobAction.assignConversation: {
-          await assignConversation(job.data.data)
           return
         }
         case IntegrationJobAction.messageStatus: {

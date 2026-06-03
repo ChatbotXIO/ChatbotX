@@ -1,7 +1,6 @@
 "use server"
 
-import { and, db, eq } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { conversationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -12,22 +11,9 @@ export const readConversationAction = workspaceActionClient
       bindArgsParsedInputs: [workspaceId, id],
     } = props
 
-    await readConversation({ workspaceId, id })
-  })
-
-export const readConversation = async (ctx: {
-  workspaceId: string
-  id: string
-}) => {
-  await db
-    .update(conversationModel)
-    .set({
+    await conversationService.updateReadStatus({
+      workspaceId,
+      id,
       agentLastReadAt: new Date(),
     })
-    .where(
-      and(
-        eq(conversationModel.id, ctx.id),
-        eq(conversationModel.workspaceId, ctx.workspaceId),
-      ),
-    )
-}
+  })

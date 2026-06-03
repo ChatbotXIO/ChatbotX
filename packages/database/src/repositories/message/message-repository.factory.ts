@@ -1,5 +1,6 @@
 import { type DatabaseClient, db } from "../../client"
 import { keys } from "../../keys"
+import { logger } from "../../logger"
 import {
   type DistributedLock,
   type IMessageRepository,
@@ -26,7 +27,7 @@ let shardModuleExists: boolean | null = null
 
 async function buildRepository(
   client: DatabaseClient,
-  _distributedLock?: DistributedLock,
+  distributedLock?: DistributedLock,
 ): Promise<IMessageRepository> {
   const env = keys()
 
@@ -45,13 +46,22 @@ async function buildRepository(
       shardModuleExists = true
     }
 
-    const result = shardModuleCache.createShardRepository()
-    if (result === null) {
+    const result = await shardModuleCache.createShardRepository(
+      client,
+      distributedLock,
+    )
+
+    if (!result) {
       return new MessageRepository(client)
     }
 
-    return result
-  } catch {
+    shardManagerCache.set(client, result.manager)
+    return result.repository
+  } catch (error) {
+    logger.error(
+      { err: error },
+      "Shard module failed to load; falling back to main repository. Check shard configuration.",
+    )
     shardModuleExists = false
     return new MessageRepository(client)
   }

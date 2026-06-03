@@ -18,7 +18,7 @@ export const decodeCursor = (
   }
 
   const buff = Buffer.from(cursorStr, "base64")
-  const cursorJSON = JSON.parse(buff.toString("ascii"))
+  const cursorJSON = JSON.parse(buff.toString("utf8"))
 
   const { success, data } = cursorPagination.safeParse(cursorJSON)
 

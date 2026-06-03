@@ -27,3 +27,4 @@
 - Do not commit `.env` files or secrets.
 - Do not skip `pnpm lint` — the CI will fail.
 - Do not hardcode user-facing strings — use `useTranslations()`.
+- Do not import `db` directly in `apps/` or `integrations/` — all DB access must go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.

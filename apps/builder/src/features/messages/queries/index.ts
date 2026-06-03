@@ -43,6 +43,7 @@ export const listMessages = async (
   const result = await repository.listByConversation({
     workspaceId: input.workspaceId,
     conversationId: input.conversationId,
+    sinceTime: getSafeSinceTime(conversation?.createdAt),
     pagination: {
       limit: input.perPage ?? 20,
       cursor: cursor

@@ -7,7 +7,7 @@ import {
 import { messageShardModel } from "./shard"
 
 export const messageShardTimeRangeModel = pgTable(
-  "MessageShardTimeRange",
+  "ShardTimeRange",
   {
     ...sharedColumns,
     shardId: bigintAsString()
@@ -20,12 +20,12 @@ export const messageShardTimeRangeModel = pgTable(
     endTime: timestamp(timestampConfig),
   },
   (table) => [
-    index("MessageShardTimeRange_time_lookup_idx").using(
+    index("ShardTimeRange_time_lookup_idx").using(
       "btree",
       table.startTime.asc().nullsLast(),
       table.endTime.asc().nullsLast(),
     ),
-    index("MessageShardTimeRange_shardId_idx").using(
+    index("ShardTimeRange_shardId_idx").using(
       "btree",
       table.shardId.asc().nullsLast(),
     ),

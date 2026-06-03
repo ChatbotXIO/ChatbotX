@@ -123,6 +123,8 @@ These are the most common mistakes — read before writing any code:
 
 8. **`docs/tech-stack.md` is authoritative** — If you see references to Prisma anywhere in older docs, those are stale. This project uses Drizzle ORM exclusively.
 
+9. **No direct `db` in app layer** — Code in `apps/` and `integrations/` must NOT import `db` from `@chatbotx.io/database/client`. All database access goes through a service (`packages/business/`) or repository (`packages/database/src/repositories/`). Existing direct imports are legacy exceptions. See `.agents/rules/data-access.md`.
+
 ## Git conventions
 
 See **`.agents/rules/git.md`** for the full canonical rules (commit format, branch naming, staging, PRs, changelog).

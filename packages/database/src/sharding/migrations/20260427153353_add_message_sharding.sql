@@ -1,7 +1,4 @@
-DROP TABLE IF EXISTS "ShardTimeRange";
-DROP TABLE IF EXISTS "MessageShard";
-
-CREATE TABLE "MessageShard" (
+CREATE TABLE IF NOT EXISTS "MessageShard" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -11,10 +8,14 @@ CREATE TABLE "MessageShard" (
 	"database" text NOT NULL,
 	"user" text NOT NULL,
 	"credentialRef" text,
-	"isActive" boolean DEFAULT false
+	"sslMode" text DEFAULT 'disable',
+	"isActive" boolean DEFAULT false,
+	"shardKey" integer,
+	"readHost" text,
+	"readPort" integer
 );
 --> statement-breakpoint
-CREATE TABLE "ShardTimeRange" (
+CREATE TABLE IF NOT EXISTS "ShardTimeRange" (
 	"id" bigint PRIMARY KEY,
 	"createdAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
 	"updatedAt" timestamp(6) with time zone DEFAULT now() NOT NULL,
@@ -23,18 +24,35 @@ CREATE TABLE "ShardTimeRange" (
 	"endTime" timestamp(6) with time zone
 );
 --> statement-breakpoint
-CREATE INDEX "MessageShard_isActive_idx" ON "MessageShard" ("isActive");--> statement-breakpoint
-CREATE INDEX "ShardTimeRange_time_lookup_idx" ON "ShardTimeRange" ("startTime","endTime");--> statement-breakpoint
-CREATE INDEX "ShardTimeRange_shardId_idx" ON "ShardTimeRange" ("shardId");--> statement-breakpoint
-ALTER TABLE "ShardTimeRange" ADD CONSTRAINT "ShardTimeRange_shardId_MessageShard_id_fkey" FOREIGN KEY ("shardId") REFERENCES "MessageShard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+CREATE INDEX IF NOT EXISTS "MessageShard_isActive_idx" ON "MessageShard" ("isActive");
 --> statement-breakpoint
--- Partial unique index: enforce only ONE active shard at a time
-CREATE UNIQUE INDEX "MessageShard_single_active_idx" ON "MessageShard" ("isActive") WHERE "isActive" = true;
+CREATE INDEX IF NOT EXISTS "MessageShard_shardKey_idx" ON "MessageShard" ("shardKey");
 --> statement-breakpoint
--- Enable btree_gist extension for exclusion constraint
+CREATE INDEX IF NOT EXISTS "ShardTimeRange_time_lookup_idx" ON "ShardTimeRange" ("startTime","endTime");
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ShardTimeRange_shardId_idx" ON "ShardTimeRange" ("shardId");
+--> statement-breakpoint
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'ShardTimeRange_shardId_MessageShard_id_fkey'
+  ) THEN
+    ALTER TABLE "ShardTimeRange" ADD CONSTRAINT "ShardTimeRange_shardId_MessageShard_id_fkey"
+      FOREIGN KEY ("shardId") REFERENCES "MessageShard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
+--> statement-breakpoint
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 --> statement-breakpoint
--- Exclusion constraint: prevent overlapping time ranges
-ALTER TABLE "ShardTimeRange" ADD CONSTRAINT "ShardTimeRange_no_overlap" EXCLUDE USING gist (
-  tstzrange("startTime", COALESCE("endTime", 'infinity'::timestamptz)) WITH &&
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'ShardTimeRange_no_overlap'
+  ) THEN
+    ALTER TABLE "ShardTimeRange" ADD CONSTRAINT "ShardTimeRange_no_overlap" EXCLUDE USING gist (
+      "shardId" WITH =,
+      tstzrange("startTime", COALESCE("endTime", 'infinity'::timestamptz)) WITH &&
+    );
+  END IF;
+END $$;

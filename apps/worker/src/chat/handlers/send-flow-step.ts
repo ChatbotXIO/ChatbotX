@@ -481,7 +481,6 @@ export const sendChatMessage = async (
       createdAt: new Date(),
     }
 
-    // Upload file if exists
     let attachmentInput:
       | Parameters<typeof repository.createWithAttachments>[1][0]
       | undefined

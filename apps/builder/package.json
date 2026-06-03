@@ -79,7 +79,7 @@
     "@types/html-to-text": "^9.0.4",
     "@uiw/react-codemirror": "^4.25.9",
     "@xyflow/react": "^12.10.2",
-    "better-auth": "^1.6.9",
+    "better-auth": "^1.6.11",
     "class-variance-authority": "^0.7.1",
     "countries-and-timezones": "^3.9.0",
     "countries-list": "^3.3.0",

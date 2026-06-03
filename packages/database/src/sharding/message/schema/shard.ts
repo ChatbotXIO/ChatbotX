@@ -21,11 +21,18 @@ export const messageShardModel = pgTable(
     credentialRef: text(),
     sslMode: text().$type<SslMode>().default("disable"),
     isActive: boolean().default(false),
+    shardKey: integer(),
+    readHost: text(),
+    readPort: integer(),
   },
   (table) => [
     index("MessageShard_isActive_idx").using(
       "btree",
       table.isActive.asc().nullsLast(),
+    ),
+    index("MessageShard_shardKey_idx").using(
+      "btree",
+      table.shardKey.asc().nullsLast(),
     ),
   ],
 )

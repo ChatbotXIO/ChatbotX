@@ -1,7 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
+import { conversationService } from "@chatbotx.io/business"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { emit } from "@chatbotx.io/event-bus"
-import { emitConversationTransferredToHuman } from "@chatbotx.io/events"
 import {
   type BulkUpdateIdsRequest,
   bulkUpdateIdsRequest,
@@ -9,7 +7,6 @@ import {
   workspaceIdrequestParams,
 } from "@/features/common/schemas"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { disableConversationState } from "../queries/bot-state"
 
 export const enableLiveChatConversationAction = workspaceActionClient
   .bindArgsSchemas(workspaceIdrequestParams)
@@ -24,45 +21,20 @@ export const enableLiveChatConversationAction = workspaceActionClient
       parsedInput: BulkUpdateIdsRequest
       ctx: { user: UserModel }
     }) => {
-      // Get conversations before updating to emit events
-      const conversations = await db.query.conversationModel.findMany({
-        where: {
-          workspaceId,
-          id: {
-            in: parsedInput.ids,
-          },
+      const conversations = await conversationService.findManyByIds({
+        workspaceId,
+        ids: parsedInput.ids,
+      })
+
+      await conversationService.disableBotState({
+        workspaceId,
+        conversations,
+        userId: ctx.user.id,
+        triggerContext: {
+          triggerSource: "api",
+          triggerHandler: "enableLiveChatConversationAction",
+          triggerType: "conversation_transferred_to_human",
         },
       })
-
-      await disableConversationState({
-        workspaceId,
-        conversationIds: parsedInput.ids,
-      })
-
-      for (const conv of conversations) {
-        await emitConversationTransferredToHuman(
-          workspaceId,
-          conv.contactId,
-          conv.id,
-          ctx.user.id,
-        )
-      }
-
-      for (const conv of conversations) {
-        emit("analytics:dashboard", {
-          eventType: "conversation:transferred_to_human",
-          workspaceId,
-          conversationId: conv.id,
-          channel: "webchat", // TODO: replace correct channel from contact inbox
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "api",
-              triggerHandler: "enableLiveChatConversationAction",
-              triggerType: "conversation_transferred_to_human",
-            },
-          },
-        })
-      }
     },
   )

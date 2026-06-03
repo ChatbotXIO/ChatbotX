@@ -1,7 +1,10 @@
 "use server"
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import {
+  conversationService,
+  resolvePlatformSettings,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
@@ -34,7 +37,6 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { randomString } from "remeda"
-import { ensureConversationActive } from "@/features/conversations/queries/bot-state"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,
@@ -197,7 +199,7 @@ export async function handleCreateWebchatMessage({
     } else if (
       newMessage.text &&
       !("postback" in parsedInput && parsedInput.postback) &&
-      (await ensureConversationActive(conversation))
+      (await conversationService.ensureActive(conversation))
     ) {
       promises.push(
         automatedResponseService.enqueue({

@@ -1,9 +1,5 @@
 import { type DatabaseClient, db } from "../../client"
-import {
-  type DistributedLock,
-  MessageRepository,
-  type ShardManagerLike,
-} from "../../repositories"
+import type { DistributedLock, IMessageRepository } from "../../repositories"
 import { MessageShardConnectionManager } from "./connection-manager"
 import { MessageShardRegistry } from "./registry"
 import { ShardedMessageRepository } from "./repository"
@@ -12,26 +8,29 @@ export * from "./client"
 export * from "./connection-manager"
 export * from "./registry"
 export * from "./schema"
+export * from "./shard-migration-runner"
 export * from "./shard-schema"
 
-const shardManagerCache = new WeakMap<DatabaseClient, ShardManagerLike>()
+export type CreateShardRepositoryResult = {
+  manager: MessageShardConnectionManager
+  repository: IMessageRepository
+}
 
 export async function createShardRepository(
   client: DatabaseClient = db,
   distributedLock?: DistributedLock,
-) {
+): Promise<CreateShardRepositoryResult | null> {
   const registry = new MessageShardRegistry(client)
   const shardCount = await registry.countShards()
 
   if (shardCount === 0) {
-    return new MessageRepository(client)
+    return null
   }
 
   const manager = new MessageShardConnectionManager(client, registry)
-  shardManagerCache.set(client, manager)
 
-  return new ShardedMessageRepository(
+  return {
     manager,
-    distributedLock,
-  ) as unknown as MessageRepository
+    repository: new ShardedMessageRepository(manager, distributedLock),
+  }
 }

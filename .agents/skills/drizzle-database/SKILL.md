@@ -169,7 +169,9 @@ When adding a new channel or integration type:
 
 ## Query Patterns
 
-### Relational Queries
+**Important:** Direct `db` usage is only allowed inside `packages/database/src/repositories/` and `packages/business/src/`. App-layer code (`apps/`, `integrations/`) must call a service or repository instead. See `.agents/rules/data-access.md`.
+
+### Relational Queries (inside a service or repository)
 
 ```typescript
 import { db } from "@chatbotx.io/database/client"
@@ -185,7 +187,7 @@ const item = await db.query.myModel.findFirst({
 })
 ```
 
-### SQL Builder
+### SQL Builder (inside a service or repository)
 
 ```typescript
 import { db, eq, and, inArray } from "@chatbotx.io/database/client"
@@ -199,7 +201,7 @@ await db
 await db.insert(myModel).values({ name, workspaceId })
 ```
 
-### Helpers
+### Helpers (inside a service or repository)
 
 ```typescript
 import { findOrFail } from "@chatbotx.io/database/client"

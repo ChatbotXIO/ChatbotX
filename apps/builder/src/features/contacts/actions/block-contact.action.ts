@@ -3,10 +3,6 @@
 import { contactService } from "@chatbotx.io/business"
 import { emit } from "@chatbotx.io/event-bus"
 import { zodBigintAsString } from "@chatbotx.io/utils"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
 import { workspaceActionClient } from "@/lib/safe-action"
 
 export const blockContactAction = workspaceActionClient
@@ -38,13 +34,6 @@ export const blockContact = async (ctx: {
         triggerType: "contact_blocked",
         origin: "manual",
       },
-    },
-  })
-
-  await integrationQueue.add(IntegrationJobAction.blockContact, {
-    type: IntegrationJobAction.blockContact,
-    data: {
-      contact,
     },
   })
 }

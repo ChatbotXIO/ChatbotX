@@ -1,6 +1,7 @@
 "use server"
 
-import { db, eq, findOrFail } from "@chatbotx.io/database/client"
+import { conversationService } from "@chatbotx.io/business"
+import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
   createMessageRepository,
   getSafeSinceTime,
@@ -42,7 +43,7 @@ export const unreadConversation = async (ctx: {
       limit: 2,
       sinceTime: getSafeSinceTime(
         contactInbox?.lastMessageAt,
-        365 * 24 * 60 * 60 * 1000, // 1 year
+        365 * 24 * 60 * 60 * 1000,
       ),
     },
   )
@@ -50,12 +51,11 @@ export const unreadConversation = async (ctx: {
 
   const agentLastReadAt = lastMessage ? lastMessage.createdAt : null
 
-  await db
-    .update(conversationModel)
-    .set({
-      agentLastReadAt,
-    })
-    .where(eq(conversationModel.id, ctx.id))
+  await conversationService.updateReadStatus({
+    workspaceId: ctx.workspaceId,
+    id: ctx.id,
+    agentLastReadAt,
+  })
 
   return { agentLastReadAt }
 }

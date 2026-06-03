@@ -15,7 +15,7 @@
     "@chatbotx.io/sdk": "workspace:*",
     "@chatbotx.io/utils": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
-    "better-auth": "^1.6.4",
+    "better-auth": "^1.6.11",
     "zod": "^4.3.6"
   },
   "devDependencies": {

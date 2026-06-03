@@ -1,14 +1,8 @@
 "use server"
 
-import { db, inArray } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
+import { conversationService } from "@chatbotx.io/business"
+import { db } from "@chatbotx.io/database/client"
 import type { UserModel } from "@chatbotx.io/database/types"
-import { emit } from "@chatbotx.io/event-bus"
-import { emitConversationAssigned } from "@chatbotx.io/events"
-import {
-  IntegrationJobAction,
-  integrationQueue,
-} from "@chatbotx.io/worker-config"
 import { returnValidationErrors } from "next-safe-action"
 import {
   type WorkspaceIdRequestParams,
@@ -75,93 +69,30 @@ export const assignConversationAction = workspaceActionClient
         updatedData.assignedInboxTeamId = inboxTeam.id
       }
 
-      const conversations = await db.query.conversationModel.findMany({
-        where: {
-          workspaceId,
-          contactId: {
-            in: parsedInput.contactIds,
-          },
-        },
-        with: {
-          contactInboxes: true,
-        },
+      const conversations = await conversationService.findManyByContactIds({
+        workspaceId,
+        contactIds: parsedInput.contactIds,
       })
-      const conversationIds = conversations.map((c) => c.id)
-      if (conversationIds.length === 0) {
+      if (conversations.length === 0) {
         return
       }
 
-      const updatedConversations = await db
-        .update(conversationModel)
-        .set({
-          assignedUserId: updatedData.assignedUserId,
-          assignedInboxTeamId: updatedData.assignedInboxTeamId,
-        })
-        .where(inArray(conversationModel.id, conversationIds))
-        .returning()
-
-      const assignedTo =
-        updatedData.assignedUserId || updatedData.assignedInboxTeamId || ""
-      const assignedBy = ctx.user.id
-
-      for (const conversation of conversations) {
-        await emitConversationAssigned(
-          workspaceId,
-          conversation.contactId,
-          conversation.id,
-          assignedTo,
-          assignedBy,
-        )
+      const triggerContext = {
+        triggerSource: "api",
+        triggerHandler: "assignConversation",
+        triggerType:
+          updatedData.assignedUserId || updatedData.assignedInboxTeamId
+            ? "conversation_assigned"
+            : "conversation_unassigned",
       }
 
-      const toAssignee =
-        updatedData.assignedUserId || updatedData.assignedInboxTeamId
-      if (toAssignee) {
-        for (const conv of conversations) {
-          for (const contactInbox of conv.contactInboxes) {
-            emit("analytics:dashboard", {
-              eventType: "conversation:assigned",
-              workspaceId,
-              conversationId: conv.id,
-              toAssignee,
-              occurredAt: new Date(),
-              channel: contactInbox.channel,
-              metadata: {
-                triggerContext: {
-                  triggerSource: "api",
-                  triggerHandler: "assignConversation",
-                  triggerType: "conversation_assigned",
-                },
-              },
-            })
-          }
-        }
-      } else {
-        for (const conv of conversations) {
-          for (const contactInbox of conv.contactInboxes) {
-            emit("analytics:dashboard", {
-              eventType: "conversation:unassigned",
-              workspaceId,
-              conversationId: conv.id,
-              occurredAt: new Date(),
-              channel: contactInbox.channel,
-              metadata: {
-                triggerContext: {
-                  triggerSource: "api",
-                  triggerHandler: "assignConversation",
-                  triggerType: "conversation_unassigned",
-                },
-              },
-            })
-          }
-        }
-      }
-
-      await integrationQueue.add(IntegrationJobAction.assignConversation, {
-        type: IntegrationJobAction.assignConversation,
-        data: {
-          conversations: updatedConversations,
-        },
+      await conversationService.updateAssignment({
+        workspaceId,
+        conversations,
+        assignedUserId: updatedData.assignedUserId,
+        assignedInboxTeamId: updatedData.assignedInboxTeamId,
+        assignedBy: ctx.user.id,
+        triggerContext,
       })
     },
   )

@@ -1,9 +1,6 @@
 "use server"
 
-import { db, eq } from "@chatbotx.io/database/client"
-import { conversationModel } from "@chatbotx.io/database/schema"
-import { emit } from "@chatbotx.io/event-bus"
-import { emitConversationFollowUp } from "@chatbotx.io/events"
+import { conversationService } from "@chatbotx.io/business"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
 
@@ -23,44 +20,20 @@ export const followConversation = async (ctx: {
   id: string
   userId: string
 }) => {
-  // Get conversation before updating to emit event
-  const conversation = await db.query.conversationModel.findFirst({
-    where: {
-      id: ctx.id,
-      workspaceId: ctx.workspaceId,
-    },
+  const conversation = await conversationService.findByOrFail({
+    where: { id: ctx.id, workspaceId: ctx.workspaceId },
   })
 
-  if (!conversation) {
-    throw new Error("Conversation not found")
-  }
-
-  await db
-    .update(conversationModel)
-    .set({
-      followed: true,
-    })
-    .where(eq(conversationModel.id, ctx.id))
-
-  await emitConversationFollowUp(
-    ctx.workspaceId,
-    conversation.contactId,
-    conversation.id,
-    ctx.userId,
-  )
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:followed",
+  await conversationService.updateFollowed({
     workspaceId: ctx.workspaceId,
-    conversationId: conversation.id,
-    channel: "webchat", // TODO: replace correct channel from contact inbox
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "api",
-        triggerHandler: "followConversationAction",
-        triggerType: "conversation_followed",
-      },
+    id: ctx.id,
+    contactId: conversation.contactId,
+    followed: true,
+    userId: ctx.userId,
+    triggerContext: {
+      triggerSource: "api",
+      triggerHandler: "followConversationAction",
+      triggerType: "conversation_followed",
     },
   })
 }

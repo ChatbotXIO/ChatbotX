@@ -1,3 +1,4 @@
+import { conversationService } from "@chatbotx.io/business"
 import {
   and,
   db,
@@ -9,14 +10,6 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import { contactModel, conversationModel } from "@chatbotx.io/database/schema"
-import { emit } from "@chatbotx.io/event-bus"
-import {
-  emitConversationArchived,
-  emitConversationAssigned,
-  emitConversationTransferredToBot,
-  emitConversationTransferredToHuman,
-  emitConversationUnassigned,
-} from "@chatbotx.io/events"
 import {
   type ArchiveConversationStepSchema,
   type AssignConversationStepSchema,
@@ -36,10 +29,6 @@ import {
   allIntegrations,
   resolveIntegrationContextFromContactInbox,
 } from "../../services/integrations"
-import {
-  disableConversationState,
-  enableConversationState,
-} from "./conversation"
 import type { ExecuteStepProps } from "./flow"
 import type { ExecuteStepResult } from "./step"
 
@@ -57,30 +46,14 @@ export async function stepBlockContact({
 export async function stepArchiveConversation({
   conversation,
 }: ExecuteStepProps<ArchiveConversationStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      archivedAt: new Date(),
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  await emitConversationArchived(
-    conversation.workspaceId,
-    conversation.contactId,
-    conversation.id,
-  )
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:archived",
+  await conversationService.updateArchived({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepArchiveConversation",
-        triggerType: "flow_action",
-      },
+    conversations: [conversation],
+    archivedAt: new Date(),
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepArchiveConversation",
+      triggerType: "flow_action",
     },
   })
 }
@@ -88,24 +61,14 @@ export async function stepArchiveConversation({
 export async function stepUnarchiveConversation({
   conversation,
 }: ExecuteStepProps<UnarchiveConversationStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      archivedAt: null,
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:unarchived",
+  await conversationService.updateArchived({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepUnarchiveConversation",
-        triggerType: "flow_action",
-      },
+    conversations: [conversation],
+    archivedAt: null,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepUnarchiveConversation",
+      triggerType: "flow_action",
     },
   })
 }
@@ -114,7 +77,8 @@ export async function stepAssignConversation({
   conversation,
   step,
 }: ExecuteStepProps<AssignConversationStepSchema>) {
-  let assignedTo: string | null = null
+  let assignedUserId: string | null = null
+  let assignedInboxTeamId: string | null = null
 
   if (step.assignedId.startsWith("u_")) {
     const userId = step.assignedId.slice(2)
@@ -125,13 +89,7 @@ export async function stepAssignConversation({
       },
     })
     if (workspaceMember) {
-      await db
-        .update(conversationModel)
-        .set({
-          assignedUserId: userId,
-        })
-        .where(eq(conversationModel.id, conversation.id))
-      assignedTo = userId
+      assignedUserId = userId
     }
   } else if (step.assignedId.startsWith("t_")) {
     const inboxTeamId = step.assignedId.slice(2)
@@ -142,39 +100,25 @@ export async function stepAssignConversation({
       },
     })
     if (inboxTeam) {
-      await db
-        .update(conversationModel)
-        .set({
-          assignedInboxTeamId: inboxTeamId,
-        })
-        .where(eq(conversationModel.id, conversation.id))
-      assignedTo = inboxTeamId
+      assignedInboxTeamId = inboxTeamId
     }
   }
 
-  if (assignedTo) {
-    await emitConversationAssigned(
-      conversation.workspaceId,
-      conversation.contactId,
-      conversation.id,
-      assignedTo,
-    )
-
-    emit("analytics:dashboard", {
-      eventType: "conversation:assigned",
-      workspaceId: conversation.workspaceId,
-      conversationId: conversation.id,
-      occurredAt: new Date(),
-      toAssignee: assignedTo,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepAssignConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
+  if (!(assignedUserId || assignedInboxTeamId)) {
+    return
   }
+
+  await conversationService.updateAssignment({
+    workspaceId: conversation.workspaceId,
+    conversations: [conversation],
+    assignedUserId,
+    assignedInboxTeamId,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepAssignConversation",
+      triggerType: "flow_action",
+    },
+  })
 }
 
 export async function stepAutoAssignConversation({
@@ -223,7 +167,6 @@ export async function stepAutoAssignConversation({
       break
   }
 
-  // Init assignee map
   const allocation: Record<
     string,
     {
@@ -285,7 +228,6 @@ export async function stepAutoAssignConversation({
     }
   }
 
-  // Count conversations of assignee during time
   const conversationCount = await db
     .select({
       assignedUserId: conversationModel.assignedUserId,
@@ -324,7 +266,6 @@ export async function stepAutoAssignConversation({
     }
   }
 
-  // Choose object has smallest count
   let smallestCount = Number.POSITIVE_INFINITY
   let smallestKey = ""
   for (const aa in allocation) {
@@ -334,41 +275,17 @@ export async function stepAutoAssignConversation({
     }
   }
 
-  // update assignee
-  await db
-    .update(conversationModel)
-    .set({
-      assignedUserId: allocation[smallestKey].assignedUserId,
-      assignedInboxTeamId: allocation[smallestKey].assignedInboxTeamId,
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  const assignedTo =
-    allocation[smallestKey].assignedUserId ||
-    allocation[smallestKey].assignedInboxTeamId
-  if (assignedTo) {
-    await emitConversationAssigned(
-      conversation.workspaceId,
-      conversation.contactId,
-      conversation.id,
-      assignedTo,
-    )
-
-    emit("analytics:dashboard", {
-      eventType: "conversation:assigned",
-      workspaceId: conversation.workspaceId,
-      conversationId: conversation.id,
-      occurredAt: new Date(),
-      toAssignee: assignedTo,
-      metadata: {
-        triggerContext: {
-          triggerSource: "worker",
-          triggerHandler: "stepAutoAssignConversation",
-          triggerType: "flow_action",
-        },
-      },
-    })
-  }
+  await conversationService.updateAssignment({
+    workspaceId: conversation.workspaceId,
+    conversations: [conversation],
+    assignedUserId: allocation[smallestKey].assignedUserId,
+    assignedInboxTeamId: allocation[smallestKey].assignedInboxTeamId,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepAutoAssignConversation",
+      triggerType: "flow_action",
+    },
+  })
 
   return { status: "success", result: undefined }
 }
@@ -376,33 +293,15 @@ export async function stepAutoAssignConversation({
 export async function stepUnassignConversation({
   conversation,
 }: ExecuteStepProps<UnassignConversationStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      assignedUserId: null,
-      assignedInboxTeamId: null,
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  await emitConversationUnassigned(
-    conversation.workspaceId,
-    conversation.contactId,
-    conversation.id,
-  )
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:unassigned",
+  await conversationService.updateAssignment({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    fromAssignee:
-      conversation.assignedUserId || conversation.assignedInboxTeamId || "",
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepUnassignConversation",
-        triggerType: "flow_action",
-      },
+    conversations: [conversation],
+    assignedUserId: null,
+    assignedInboxTeamId: null,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepUnassignConversation",
+      triggerType: "flow_action",
     },
   })
 }
@@ -410,24 +309,15 @@ export async function stepUnassignConversation({
 export async function stepFollowConversation({
   conversation,
 }: ExecuteStepProps<FollowConversationStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      followed: true,
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:followed",
+  await conversationService.updateFollowed({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepFollowConversation",
-        triggerType: "flow_action",
-      },
+    id: conversation.id,
+    contactId: conversation.contactId,
+    followed: true,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepFollowConversation",
+      triggerType: "flow_action",
     },
   })
 }
@@ -435,24 +325,15 @@ export async function stepFollowConversation({
 export async function stepUnfollowConversation({
   conversation,
 }: ExecuteStepProps<UnfollowConversationStepSchema>) {
-  await db
-    .update(conversationModel)
-    .set({
-      followed: false,
-    })
-    .where(eq(conversationModel.id, conversation.id))
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:unfollowed",
+  await conversationService.updateFollowed({
     workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepUnfollowConversation",
-        triggerType: "flow_action",
-      },
+    id: conversation.id,
+    contactId: conversation.contactId,
+    followed: false,
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepUnfollowConversation",
+      triggerType: "flow_action",
     },
   })
 }
@@ -460,28 +341,13 @@ export async function stepUnfollowConversation({
 export async function stepDisableBot({
   conversation,
 }: ExecuteStepProps<DisableBotStepSchema>) {
-  await disableConversationState({
+  await conversationService.disableBotState({
     workspaceId: conversation.workspaceId,
-    conversationIds: [conversation.id],
-  })
-
-  await emitConversationTransferredToHuman(
-    conversation.workspaceId,
-    conversation.contactId,
-    conversation.id,
-  )
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:transferred_to_human",
-    workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepDisableBot",
-        triggerType: "flow_action",
-      },
+    conversations: [conversation],
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepDisableBot",
+      triggerType: "flow_action",
     },
   })
 }
@@ -489,28 +355,13 @@ export async function stepDisableBot({
 export async function stepEnableBot({
   conversation,
 }: ExecuteStepProps<EnableBotStepSchema>) {
-  await enableConversationState({
+  await conversationService.enableBotState({
     workspaceId: conversation.workspaceId,
-    conversationIds: [conversation.id],
-  })
-
-  await emitConversationTransferredToBot(
-    conversation.workspaceId,
-    conversation.contactId,
-    conversation.id,
-  )
-
-  emit("analytics:dashboard", {
-    eventType: "conversation:transferred_to_bot",
-    workspaceId: conversation.workspaceId,
-    conversationId: conversation.id,
-    occurredAt: new Date(),
-    metadata: {
-      triggerContext: {
-        triggerSource: "worker",
-        triggerHandler: "stepEnableBot",
-        triggerType: "flow_action",
-      },
+    conversations: [conversation],
+    triggerContext: {
+      triggerSource: "worker",
+      triggerHandler: "stepEnableBot",
+      triggerType: "flow_action",
     },
   })
 }

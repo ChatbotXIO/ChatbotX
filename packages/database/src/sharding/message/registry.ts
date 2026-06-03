@@ -1,7 +1,9 @@
-import { sql } from "drizzle-orm"
+import { and, asc, count, eq, gte, isNull, lte, or } from "drizzle-orm"
 import type { DatabaseClient } from "../../client"
-import type { ShardConfig } from "../shared"
-// Schema models are now referenced directly in raw SQL queries
+import { logger } from "../../logger"
+import { type ShardConfig, workspaceShardIndex } from "../shared"
+import { messageShardModel, type SslMode } from "./schema/shard"
+import { messageShardTimeRangeModel } from "./schema/time-range"
 
 export interface MessageShardRecord extends ShardConfig {
   credentialRef: string | null
@@ -28,6 +30,9 @@ export interface RegisterMessageShardInput {
   isActive?: boolean
   name: string
   port?: number | null
+  readHost?: string | null
+  readPort?: number | null
+  shardKey?: number | null
   sslMode?: string | null
   user: string
 }
@@ -40,116 +45,112 @@ export class MessageShardRegistry {
   }
 
   async countShards(): Promise<number> {
-    const result = await this.mainDb.execute(
-      sql`SELECT COUNT(*) as count FROM "MessageShard"`,
-    )
-    const rows = result.rows as Array<{ count: string }>
-    return Number(rows[0]?.count ?? 0)
+    const [row] = await this.mainDb
+      .select({ count: count() })
+      .from(messageShardModel)
+    return Number(row?.count ?? 0)
+  }
+
+  async countActiveShards(): Promise<number> {
+    const [row] = await this.mainDb
+      .select({ count: count() })
+      .from(messageShardModel)
+      .where(eq(messageShardModel.isActive, true))
+    return Number(row?.count ?? 0)
   }
 
   async listActive(): Promise<MessageShardRecord[]> {
-    const result = await this.mainDb.execute(
-      sql`SELECT * FROM "MessageShard" WHERE "isActive" = true`,
-    )
-    const rows = result.rows as Array<{
-      id: number
-      createdAt: Date
-      updatedAt: Date
-      name: string
-      host: string
-      port: number
-      database: string
-      user: string
-      credentialRef: string | null
-      isActive: boolean
-      sslMode: string | null
-    }>
+    const rows = await this.mainDb
+      .select()
+      .from(messageShardModel)
+      .where(eq(messageShardModel.isActive, true))
+      .orderBy(asc(messageShardModel.createdAt))
     return rows.map(toShardRecord)
   }
 
+  async listAll(): Promise<MessageShardRecord[]> {
+    const rows = await this.mainDb
+      .select()
+      .from(messageShardModel)
+      .orderBy(asc(messageShardModel.createdAt))
+    return rows.map(toShardRecord)
+  }
+
+  async findShardForWrite(
+    workspaceId: string,
+  ): Promise<MessageShardRecord | null> {
+    const active = await this.listActive()
+    if (active.length === 0) {
+      return null
+    }
+    return active[workspaceShardIndex(workspaceId, active.length)] ?? null
+  }
+
   async findActiveForWrite(): Promise<MessageShardRecord | null> {
-    const result = await this.mainDb.execute(
-      sql`SELECT * FROM "MessageShard" WHERE "isActive" = true LIMIT 1`,
-    )
-    const rows = result.rows as Array<{
-      id: number
-      createdAt: Date
-      updatedAt: Date
-      name: string
-      host: string
-      port: number
-      database: string
-      user: string
-      credentialRef: string | null
-      isActive: boolean
-      sslMode: string | null
-    }>
-    const row = rows[0]
-    return row ? toShardRecord(row) : null
+    const active = await this.listActive()
+    if (active.length === 0) {
+      return null
+    }
+    return active[0] ?? null
   }
 
   async findShardsForTimeRange(
     startTime: Date,
     endTime: Date,
   ): Promise<MessageShardTimeRangeInfo[]> {
-    const result = await this.mainDb.execute(
-      sql`
-        SELECT
-          str.id as "str_id",
-          str."shardId",
-          str."startTime",
-          str."endTime",
-          ms.id,
-          ms."createdAt",
-          ms."updatedAt",
-          ms.name,
-          ms.host,
-          ms.port,
-          ms.database,
-          ms."user",
-          ms."credentialRef",
-          ms."isActive"
-        FROM "ShardTimeRange" str
-        INNER JOIN "MessageShard" ms ON ms.id = str."shardId"
-        WHERE str."startTime" <= ${endTime}
-          AND (str."endTime" IS NULL OR str."endTime" > ${startTime})
-        ORDER BY str."startTime" DESC
-      `,
-    )
-
-    const rows = result.rows as Array<{
-      str_id: number
-      shardId: number
-      startTime: Date
-      endTime: Date | null
-      id: number
-      createdAt: Date
-      updatedAt: Date
-      name: string
-      host: string
-      port: number
-      database: string
-      user: string
-      credentialRef: string | null
-      isActive: boolean
-    }>
+    const rows = await this.mainDb
+      .select({
+        timeRangeId: messageShardTimeRangeModel.id,
+        shardId: messageShardTimeRangeModel.shardId,
+        startTime: messageShardTimeRangeModel.startTime,
+        endTime: messageShardTimeRangeModel.endTime,
+        shardDbId: messageShardModel.id,
+        shardName: messageShardModel.name,
+        shardHost: messageShardModel.host,
+        shardPort: messageShardModel.port,
+        shardDatabase: messageShardModel.database,
+        shardUser: messageShardModel.user,
+        shardCredentialRef: messageShardModel.credentialRef,
+        shardIsActive: messageShardModel.isActive,
+        shardSslMode: messageShardModel.sslMode,
+        shardKey: messageShardModel.shardKey,
+        readHost: messageShardModel.readHost,
+        readPort: messageShardModel.readPort,
+      })
+      .from(messageShardTimeRangeModel)
+      .innerJoin(
+        messageShardModel,
+        eq(messageShardModel.id, messageShardTimeRangeModel.shardId),
+      )
+      .where(
+        and(
+          lte(messageShardTimeRangeModel.startTime, endTime),
+          or(
+            isNull(messageShardTimeRangeModel.endTime),
+            gte(messageShardTimeRangeModel.endTime, startTime),
+          ),
+        ),
+      )
+      .orderBy(asc(messageShardTimeRangeModel.startTime))
 
     return rows.map((row) => ({
-      id: String(row.str_id),
-      shardId: String(row.shardId),
+      id: row.timeRangeId,
+      shardId: row.shardId,
       startTime: row.startTime,
       endTime: row.endTime,
       shard: {
-        id: String(row.id),
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        name: row.name,
-        host: row.host,
-        port: row.port,
-        database: row.database,
-        user: row.user,
-        credentialRef: row.credentialRef,
-        isActive: row.isActive,
+        id: row.shardDbId,
+        name: row.shardName,
+        host: row.shardHost,
+        port: row.shardPort,
+        database: row.shardDatabase,
+        user: row.shardUser,
+        credentialRef: row.shardCredentialRef,
+        isActive: row.shardIsActive,
+        sslMode: row.shardSslMode,
+        shardKey: row.shardKey,
+        readHost: row.readHost,
+        readPort: row.readPort,
       },
     }))
   }
@@ -157,28 +158,22 @@ export class MessageShardRegistry {
   async register(
     input: RegisterMessageShardInput,
   ): Promise<MessageShardRecord> {
-    const port = input.port ?? 5432
-    const credentialRef = input.credentialRef ?? null
-    const sslMode = input.sslMode ?? "disable"
-    const isActive = input.isActive ?? false
-
-    const result = await this.mainDb.execute(
-      sql`INSERT INTO "MessageShard" (name, host, port, database, "user", "credentialRef", "sslMode", "isActive", "createdAt", "updatedAt") VALUES (${input.name}, ${input.host}, ${port}, ${input.database}, ${input.user}, ${credentialRef}, ${sslMode}, ${isActive}, now(), now()) RETURNING *`,
-    )
-    const rows = result.rows as Array<{
-      id: number
-      createdAt: Date
-      updatedAt: Date
-      name: string
-      host: string
-      port: number
-      database: string
-      user: string
-      credentialRef: string | null
-      isActive: boolean
-      sslMode: string | null
-    }>
-    const row = rows[0]
+    const [row] = await this.mainDb
+      .insert(messageShardModel)
+      .values({
+        name: input.name,
+        host: input.host,
+        port: input.port ?? 5432,
+        database: input.database,
+        user: input.user,
+        credentialRef: input.credentialRef ?? null,
+        sslMode: (input.sslMode ?? "disable") as SslMode,
+        isActive: input.isActive ?? false,
+        shardKey: input.shardKey ?? null,
+        readHost: input.readHost ?? null,
+        readPort: input.readPort ?? null,
+      })
+      .returning()
     if (!row) {
       throw new Error("Failed to register message shard")
     }
@@ -186,30 +181,73 @@ export class MessageShardRegistry {
   }
 
   async archive(shardId: string): Promise<void> {
-    await this.mainDb.execute(
-      sql`UPDATE "MessageShard" SET "isActive" = false, "updatedAt" = now() WHERE id = ${shardId}`,
-    )
+    await this.mainDb
+      .update(messageShardModel)
+      .set({ isActive: false })
+      .where(eq(messageShardModel.id, shardId))
+    await this.closeOpenTimeRanges(shardId)
   }
 
   async setActive(shardId: string, isActive: boolean): Promise<void> {
-    await this.mainDb.execute(
-      sql`UPDATE "MessageShard" SET "isActive" = ${isActive}, "updatedAt" = now() WHERE id = ${shardId}`,
-    )
+    await this.mainDb
+      .update(messageShardModel)
+      .set({ isActive })
+      .where(eq(messageShardModel.id, shardId))
+
+    if (isActive) {
+      await this.ensureOpenTimeRange(shardId)
+    } else {
+      await this.closeOpenTimeRanges(shardId)
+    }
+  }
+
+  async ensureOpenTimeRange(shardId: string): Promise<void> {
+    const existing = await this.mainDb
+      .select({ id: messageShardTimeRangeModel.id })
+      .from(messageShardTimeRangeModel)
+      .where(
+        and(
+          eq(messageShardTimeRangeModel.shardId, shardId),
+          isNull(messageShardTimeRangeModel.endTime),
+        ),
+      )
+      .limit(1)
+
+    if (existing.length > 0) {
+      return
+    }
+
+    try {
+      await this.mainDb.insert(messageShardTimeRangeModel).values({
+        shardId,
+        startTime: new Date(),
+      })
+    } catch (error) {
+      logger.warn(
+        { err: error, shardId },
+        "Failed to create open time range for shard (may conflict with existing range)",
+      )
+    }
+  }
+
+  private async closeOpenTimeRanges(shardId: string): Promise<void> {
+    await this.mainDb
+      .update(messageShardTimeRangeModel)
+      .set({ endTime: new Date() })
+      .where(
+        and(
+          eq(messageShardTimeRangeModel.shardId, shardId),
+          isNull(messageShardTimeRangeModel.endTime),
+        ),
+      )
   }
 }
 
-function toShardConfig(row: {
-  id: number
-  name: string
-  host: string
-  port: number
-  database: string
-  user: string
-  credentialRef: string | null
-  sslMode: string | null
-}): ShardConfig {
+function toShardConfig(
+  row: typeof messageShardModel.$inferSelect,
+): ShardConfig {
   return {
-    id: String(row.id),
+    id: row.id,
     name: row.name,
     host: row.host,
     port: row.port,
@@ -217,22 +255,15 @@ function toShardConfig(row: {
     user: row.user,
     credentialRef: row.credentialRef,
     sslMode: row.sslMode,
+    shardKey: row.shardKey,
+    readHost: row.readHost,
+    readPort: row.readPort,
   }
 }
 
-function toShardRecord(row: {
-  id: number
-  createdAt: Date
-  updatedAt: Date
-  name: string
-  host: string
-  port: number
-  database: string
-  user: string
-  credentialRef: string | null
-  isActive: boolean
-  sslMode: string | null
-}): MessageShardRecord {
+function toShardRecord(
+  row: typeof messageShardModel.$inferSelect,
+): MessageShardRecord {
   return {
     ...toShardConfig(row),
     isActive: row.isActive,

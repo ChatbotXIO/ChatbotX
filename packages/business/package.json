@@ -10,6 +10,7 @@
   "dependencies": {
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/encryption": "workspace:*",
+    "@chatbotx.io/event-bus": "workspace:*",
     "@chatbotx.io/events": "workspace:*",
     "@chatbotx.io/filesystem": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",

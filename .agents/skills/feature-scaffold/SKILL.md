@@ -137,15 +137,14 @@ export const createItemAction = workspaceActionClient
 
 ## Queries (Server-Side)
 
+**Rule:** Queries must NOT import `db` directly. Call a service from `@chatbotx.io/business` or a repository. See `.agents/rules/data-access.md`.
+
 ```typescript
 // queries/index.ts
-import { db } from "@chatbotx.io/database/client"
+import { itemService } from "@chatbotx.io/business"
 
 export const listItems = async (params: ListItemsParams) => {
-  return db.query.myModel.findMany({
-    where: { workspaceId: params.workspaceId },
-    with: { tags: true },
-  })
+  return itemService.list({ workspaceId: params.workspaceId })
 }
 
 // RSC wrapper with auth check

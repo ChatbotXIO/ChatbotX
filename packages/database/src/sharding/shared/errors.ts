@@ -13,10 +13,3 @@ export class ShardUnreachableError extends Error {
     this.name = "ShardUnreachableError"
   }
 }
-
-export class ShardPoolExhaustedError extends Error {
-  constructor(maxPools: number) {
-    super(`Max shard pools (${maxPools}) reached`)
-    this.name = "ShardPoolExhaustedError"
-  }
-}

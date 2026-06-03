@@ -65,6 +65,7 @@ export interface PaginatedMessages {
 export interface ListMessagesQuery {
   conversationId?: string
   pagination: Pagination
+  sinceTime?: Date
   workspaceId: string
 }
 

@@ -1,11 +1,10 @@
+import { conversationService } from "@chatbotx.io/business"
 import { and, db, eq, inArray } from "@chatbotx.io/database/client"
 import { triggerActions } from "@chatbotx.io/database/partials"
 import {
   contactCustomFieldModel,
   contactsToTagsModel,
-  conversationModel,
 } from "@chatbotx.io/database/schema"
-import { emit } from "@chatbotx.io/event-bus"
 import {
   errorStateDefaultFn,
   FieldOperationType,
@@ -26,10 +25,6 @@ import {
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
-import {
-  disableConversationState,
-  enableConversationState,
-} from "../../integration/handlers/conversation"
 import type { ExecuteStepProps } from "../../integration/handlers/flow"
 import {
   clearSpreadsheetRow,
@@ -181,21 +176,36 @@ export class ActionExecutor {
       }
 
       case triggerActions.enum.archiveConversation:
-        await db
-          .update(conversationModel)
-          .set({ archivedAt: new Date() })
-          .where(eq(conversationModel.id, conversation.id))
+        await conversationService.updateArchived({
+          workspaceId,
+          conversations: [conversation],
+          archivedAt: new Date(),
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.archiveConversation",
+            triggerType: "trigger_action",
+          },
+        })
         break
 
       case triggerActions.enum.unarchiveConversation:
-        await db
-          .update(conversationModel)
-          .set({ archivedAt: null })
-          .where(eq(conversationModel.id, conversation.id))
+        await conversationService.updateArchived({
+          workspaceId,
+          conversations: [conversation],
+          archivedAt: null,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.unarchiveConversation",
+            triggerType: "trigger_action",
+          },
+        })
         break
 
       case triggerActions.enum.assignConversation: {
         const assignedId = action.assignedId as string
+        let assignedUserId: string | null = null
+        let assignedInboxTeamId: string | null = null
+
         if (assignedId.startsWith("u_")) {
           const userId = assignedId.slice(2)
           const workspaceMember = await db.query.workspaceMemberModel.findFirst(
@@ -207,10 +217,7 @@ export class ActionExecutor {
             },
           )
           if (workspaceMember) {
-            await db
-              .update(conversationModel)
-              .set({ assignedUserId: userId })
-              .where(eq(conversationModel.id, conversation.id))
+            assignedUserId = userId
           }
         } else if (assignedId.startsWith("t_")) {
           const inboxTeamId = assignedId.slice(2)
@@ -221,88 +228,79 @@ export class ActionExecutor {
             },
           })
           if (inboxTeam) {
-            await db
-              .update(conversationModel)
-              .set({ assignedInboxTeamId: inboxTeamId })
-              .where(eq(conversationModel.id, conversation.id))
+            assignedInboxTeamId = inboxTeamId
           }
+        }
+
+        if (assignedUserId || assignedInboxTeamId) {
+          await conversationService.updateAssignment({
+            workspaceId: conversation.workspaceId,
+            conversations: [conversation],
+            assignedUserId,
+            assignedInboxTeamId,
+            triggerContext: {
+              triggerSource: "worker",
+              triggerHandler: "actionExecutor.assignConversation",
+              triggerType: "trigger_action",
+            },
+          })
         }
         break
       }
 
       case triggerActions.enum.unassignConversation:
-        await db
-          .update(conversationModel)
-          .set({ assignedUserId: null, assignedInboxTeamId: null })
-          .where(eq(conversationModel.id, conversation.id))
+        await conversationService.updateAssignment({
+          workspaceId: conversation.workspaceId,
+          conversations: [conversation],
+          assignedUserId: null,
+          assignedInboxTeamId: null,
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.unassignConversation",
+            triggerType: "trigger_action",
+          },
+        })
         break
 
       case triggerActions.enum.disableBot:
-        await disableConversationState({
+        await conversationService.disableBotState({
           workspaceId,
-          conversationIds: [conversation.id],
-        })
-        emit("analytics:dashboard", {
-          eventType: "conversation:transferred_to_human",
-          workspaceId,
-          conversationId: conversation.id,
-          channel: "webchat", // TODO: temporary comment, use from contactInbox later
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "actionExecutor.disableBot",
-              triggerType: "trigger_action",
-            },
+          conversations: [conversation],
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.disableBot",
+            triggerType: "trigger_action",
           },
         })
         break
 
       case triggerActions.enum.enableBot:
-        await enableConversationState({
+        await conversationService.enableBotState({
           workspaceId,
-          conversationIds: [conversation.id],
-        })
-        emit("analytics:dashboard", {
-          eventType: "conversation:transferred_to_bot",
-          workspaceId,
-          conversationId: conversation.id,
-          channel: "webchat", // TODO: temporary comment, use from contactInbox later
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "actionExecutor.enableBot",
-              triggerType: "trigger_action",
-            },
+          conversations: [conversation],
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.enableBot",
+            triggerType: "trigger_action",
           },
         })
         break
 
       case triggerActions.enum.transferConversationToHuman:
-        await disableConversationState({
+        await conversationService.disableBotState({
           workspaceId,
-          conversationIds: [conversation.id],
+          conversations: [conversation],
+          triggerContext: {
+            triggerSource: "worker",
+            triggerHandler: "actionExecutor.transferConversationToHuman",
+            triggerType: "trigger_action",
+          },
         })
         if (action.notifyAdmins) {
           baseLogger.info(
             `Notifying admins for conversation ${conversation.id}`,
           )
         }
-        emit("analytics:dashboard", {
-          eventType: "conversation:transferred_to_human",
-          workspaceId,
-          conversationId: conversation.id,
-          channel: "webchat", // TODO: temporary comment, use from contactInbox later
-          occurredAt: new Date(),
-          metadata: {
-            triggerContext: {
-              triggerSource: "worker",
-              triggerHandler: "actionExecutor.transferConversationToHuman",
-              triggerType: "trigger_action",
-            },
-          },
-        })
         break
 
       case triggerActions.enum.runGoogleSheet: {
