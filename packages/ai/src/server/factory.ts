@@ -62,34 +62,28 @@ function resolveProviderFactory(provider: string) {
   return providerSdkFactories[parsed.data as AIProvider]
 }
 
-export function getAIModel(
-  model: AIIntegrationModel,
-  provider: string,
-  _options?: { abortSignal?: AbortSignal },
-) {
+export function getAIModel(model: AIIntegrationModel, provider: string) {
   const authParsed = secretTextAuthSchema.safeParse(model.auth)
   if (!authParsed.success) {
     throw new Error("Invalid AI integration auth configuration")
   }
 
+  // NOTE: retries and cancellation are call-level concerns. They must be passed
+  // to `generateText`/`streamText`/`generateImage` (`maxRetries`, `abortSignal`),
+  // not to the provider factory, which silently ignores them.
   const createProvider = resolveProviderFactory(provider)
-  const commonSettings = {
-    apiKey: authParsed.data.secretText,
-    maxRetries: 3,
-  }
 
-  return createProvider(commonSettings)
+  return createProvider({ apiKey: authParsed.data.secretText })
 }
 
 export function createAIModelInstance(props: {
   model: AIIntegrationModel
   provider: string
   modelId: string
-  abortSignal?: AbortSignal
   traceId?: string
 }) {
-  const { model, provider, modelId, abortSignal } = props
-  const providerInstance = getAIModel(model, provider, { abortSignal })
+  const { model, provider, modelId } = props
+  const providerInstance = getAIModel(model, provider)
 
   return providerInstance(modelId)
 }
@@ -98,12 +92,9 @@ export function createAIImageModelInstance(props: {
   model: AIIntegrationModel
   provider: string
   modelId: string
-  abortSignal?: AbortSignal
 }) {
-  const { model, provider, modelId, abortSignal } = props
-  const providerInstance = getAIModel(model, provider, {
-    abortSignal,
-  })
+  const { model, provider, modelId } = props
+  const providerInstance = getAIModel(model, provider)
 
   if ("image" in providerInstance) {
     return providerInstance.image(modelId) as ImageModel

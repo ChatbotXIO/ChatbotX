@@ -3,7 +3,8 @@ import { z } from "zod"
 
 export const connectClaudeSchema = z.object({
   apiKey: z.string().min(1),
-  model: claudeModels.default(claudeModels.enum["claude-3-5-sonnet-20241022"]),
+  // Keep in sync with the claude entry in `aiChatProviders` (models/registry.ts).
+  model: claudeModels.default(claudeModels.enum["claude-4.5-sonnet-20250929"]),
   temperature: z.number().min(0).max(1).default(0.4),
   maxOutputTokens: z.number().min(1).default(1024),
 })

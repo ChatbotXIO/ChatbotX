@@ -65,7 +65,6 @@ export async function handleAIGenerateImage({
       model: aiConfig,
       provider: step.provider,
       modelId: step.model,
-      abortSignal: controller.signal,
     })
 
     const size =

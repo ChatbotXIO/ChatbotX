@@ -214,7 +214,6 @@ async function runAIReply(
       model: integration,
       provider,
       modelId: selectedModelId,
-      abortSignal,
       traceId: conversation.id,
     })
 

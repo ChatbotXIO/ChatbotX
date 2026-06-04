@@ -158,7 +158,6 @@ export async function handleAIExtractData({
       model: aiConfig,
       provider: step.provider,
       modelId: step.model,
-      abortSignal: controller.signal,
       traceId: conversation.id,
     })
 

@@ -41,9 +41,7 @@ export async function handleAITextToSpeech({
       return
     }
 
-    const openaiProvider = getAIModel(aiConfig, "openai", {
-      abortSignal: controller.signal,
-    })
+    const openaiProvider = getAIModel(aiConfig, "openai")
 
     if (!("speech" in openaiProvider)) {
       throw new Error(

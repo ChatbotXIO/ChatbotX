@@ -133,7 +133,6 @@ async function runAIReplyInternal(
       model: integration,
       provider,
       modelId: selectedModelId,
-      abortSignal,
       traceId: conversation.id,
     })
 

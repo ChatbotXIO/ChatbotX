@@ -134,7 +134,6 @@ export async function handleAIEditImage({
         model: aiConfig,
         provider: step.provider,
         modelId: step.model,
-        abortSignal: controller.signal,
       })
     } catch (modelError) {
       logger.warn(
@@ -151,7 +150,6 @@ export async function handleAIEditImage({
           model: aiConfig,
           provider: step.provider,
           modelId: AI_EDIT_IMAGE_FALLBACK_OPENAI_MODEL,
-          abortSignal: controller.signal,
         })
       } else {
         throw new Error(

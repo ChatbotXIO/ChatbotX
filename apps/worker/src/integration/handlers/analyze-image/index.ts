@@ -35,7 +35,6 @@ export async function handleAIAnalyzeImage({
       model: aiConfig,
       provider: step.provider,
       modelId: step.model,
-      abortSignal: controller.signal,
     })
 
     // Resolve Image URL

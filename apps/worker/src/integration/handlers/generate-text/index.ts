@@ -46,7 +46,6 @@ export async function handleAIGenerateText({
       model: aiConfig,
       provider: step.provider,
       modelId: step.model,
-      abortSignal: controller.signal,
       traceId: conversation.id,
     })
 
@@ -80,6 +79,7 @@ export async function handleAIGenerateText({
       toolChoice: Object.keys(tools).length > 0 ? "auto" : undefined,
       maxOutputTokens: step.maxOutputTokens,
       temperature: step.temperature,
+      abortSignal: controller.signal,
       onError: (error) => {
         throw error.error
       },

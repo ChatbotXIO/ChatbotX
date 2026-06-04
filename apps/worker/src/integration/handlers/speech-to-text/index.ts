@@ -43,9 +43,7 @@ export async function handleAISpeechToText({
       return
     }
 
-    const openaiProvider = getAIModel(aiConfig, "openai", {
-      abortSignal: controller.signal,
-    })
+    const openaiProvider = getAIModel(aiConfig, "openai")
 
     // Resolve Audio URL
     const audioUrl = await getCustomFieldValue(
