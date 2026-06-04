@@ -1,9 +1,27 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "1b5ddf21-539e-4e2a-ba8e-76737402b12e",
-  "prevIds": ["f6082132-84ad-4180-a454-d4593da9b0b1"],
+  "id": "3f90fd05-b964-41d0-8744-da1ee18fece4",
+  "prevIds": ["32ec45db-7d0d-4323-8cd2-b0b071b66eea"],
   "ddl": [
+    {
+      "values": ["pending", "success", "error", "processing"],
+      "name": "aiConversationEmbeddingStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["pending", "processing", "success", "error"],
+      "name": "aiConversationSourceStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["document", "image", "url", "web_search"],
+      "name": "aiConversationSourceType",
+      "entityType": "enums",
+      "schema": "public"
+    },
     {
       "values": ["pending", "success", "error", "processing"],
       "name": "aiEmbeddingStatus",
@@ -99,6 +117,24 @@
       "schema": "public"
     },
     {
+      "values": ["whatsapp", "messenger"],
+      "name": "coexistChannel",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["contacts", "messages"],
+      "name": "coexistMessengerSyncPhase",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["init", "running", "succeeded", "failed", "partial"],
+      "name": "coexistRunStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["male", "female", "unknown"],
       "name": "gender",
       "entityType": "enums",
@@ -132,6 +168,18 @@
       "schema": "public"
     },
     {
+      "values": ["import", "generic", "export"],
+      "name": "fileContextType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["pending", "uploaded", "failed"],
+      "name": "fileStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": [
         "tag",
         "flow",
@@ -139,9 +187,28 @@
         "automatedResponse",
         "trigger",
         "webhook",
-        "sequence"
+        "sequence",
+        "emailTopic"
       ],
       "name": "folderType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["csv", "xlsx", "xls"],
+      "name": "importFormat",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["pending", "processing", "completed", "failed"],
+      "name": "importStatus",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["contacts"],
+      "name": "importType",
       "entityType": "enums",
       "schema": "public"
     },
@@ -164,6 +231,18 @@
       "schema": "public"
     },
     {
+      "values": ["dont_track", "track"],
+      "name": "inventoryPolicy",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": ["refLink", "qrCode"],
+      "name": "ReflinkType",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["owner", "agent"],
       "name": "workspaceMemberRole",
       "entityType": "enums",
@@ -178,6 +257,18 @@
     {
       "isRlsEnabled": false,
       "name": "AIAssistant",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AIConversationEmbedding",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "AIConversationSource",
       "entityType": "tables",
       "schema": "public"
     },
@@ -261,6 +352,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "AnalyticsEmailTopic",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "AnalyticsManifestStatus",
       "entityType": "tables",
       "schema": "public"
@@ -327,7 +424,19 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "CoexistSyncRun",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Contact",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ContactActiveMonthly",
       "entityType": "tables",
       "schema": "public"
     },
@@ -393,6 +502,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "EmailTopic",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "AuditLog",
       "entityType": "tables",
       "schema": "public"
@@ -418,6 +533,12 @@
     {
       "isRlsEnabled": false,
       "name": "ErrorLog",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "File",
       "entityType": "tables",
       "schema": "public"
     },
@@ -454,6 +575,12 @@
     {
       "isRlsEnabled": false,
       "name": "Folder",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Import",
       "entityType": "tables",
       "schema": "public"
     },
@@ -531,6 +658,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "IntegrationTiktok",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "IntegrationWebchat",
       "entityType": "tables",
       "schema": "public"
@@ -568,6 +701,30 @@
     {
       "isRlsEnabled": false,
       "name": "PlatformCredential",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "Product",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ProductAddon",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ProductVariant",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ProductVariantOption",
       "entityType": "tables",
       "schema": "public"
     },
@@ -657,6 +814,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "WhatsappCoexistStaging",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "WhatsappFlow",
       "entityType": "tables",
       "schema": "public"
@@ -670,6 +833,12 @@
     {
       "isRlsEnabled": false,
       "name": "Workspace",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "WorkspaceMac",
       "entityType": "tables",
       "schema": "public"
     },
@@ -964,6 +1133,357 @@
       "entityType": "columns",
       "schema": "public",
       "table": "AIAssistant"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "chunkIndex",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "vector(1536)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "embedding",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "aiConversationEmbeddingStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "messageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "attachmentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "aiConversationSourceType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "aiConversationSourceStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contentHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mimeType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "metadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "summary",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIConversationSource"
     },
     {
       "type": "bigint",
@@ -2487,6 +3007,240 @@
       "table": "AnalyticsSequenceEvent"
     },
     {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "topicId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "conversationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "email",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "token",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deliveredAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "failedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "firstSeenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastSeenAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "seenCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "firstClickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastClickedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "clickCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -3836,6 +4590,344 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "coexistChannel",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channel",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "coexistRunStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'init'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "triggerSource",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "finishedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastHeartbeatAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalScan",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "currentScan",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currentStep",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastSyncedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "currentPageNumber",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "importedContactCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "importedMessageCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "skippedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "failedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "currentError",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastPhase",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastChunkOrder",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "syncProgress",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "coexistMessengerSyncPhase",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'contacts'",
+      "generated": null,
+      "identity": null,
+      "name": "messengerSyncPhase",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "Contact"
     },
     {
@@ -3921,7 +5013,7 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "false",
+      "default": "true",
       "generated": null,
       "identity": null,
       "name": "emailOptIn",
@@ -3962,7 +5054,7 @@
       "dimensions": 0,
       "default": null,
       "generated": {
-        "as": "\"firstName\" || ' ' || \"lastName\"",
+        "as": "CASE\n        WHEN \"firstName\" IS NULL AND \"lastName\" IS NULL THEN NULL\n        WHEN \"firstName\" IS NULL THEN \"lastName\"\n        WHEN \"lastName\" IS NULL THEN \"firstName\"\n        ELSE \"firstName\" || ' ' || \"lastName\"\n      END",
         "type": "stored"
       },
       "identity": null,
@@ -4109,6 +5201,19 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "broadcastSubscribedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Contact"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "blockedAt",
       "entityType": "columns",
       "schema": "public",
@@ -4139,6 +5244,84 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Contact"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceMacId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
     },
     {
       "type": "bigint",
@@ -5467,6 +6650,136 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "folderId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "sendsTotal",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "deliveredsTotal",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "seensTotal",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "clicksTotal",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "AuditLog"
     },
     {
@@ -6042,6 +7355,32 @@
       "table": "UserQuota"
     },
     {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "macLimit",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "macUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
       "type": "boolean",
       "typeSchema": null,
       "notNull": true,
@@ -6222,6 +7561,188 @@
       "entityType": "columns",
       "schema": "public",
       "table": "ErrorLog"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "fileContextType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contextType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "subType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fileName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "mimeType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fileSize",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "fileStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "meta",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "uploadedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "File"
     },
     {
       "type": "bigint",
@@ -6976,6 +8497,227 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "userId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fileId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "importType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "importFormat",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "format",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "importStatus",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "meta",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "totalCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "processedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "successCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "failedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "errorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "completedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Import"
     },
     {
       "type": "bigint",
@@ -7836,6 +9578,19 @@
       "table": "IntegrationMessenger"
     },
     {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "coexistEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -8135,6 +9890,19 @@
       "table": "IntegrationSmtp"
     },
     {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fromAddress",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationSmtp"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -8263,6 +10031,110 @@
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationTelegram"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "auth",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "openId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "inboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationTiktok"
     },
     {
       "type": "bigint",
@@ -8598,6 +10470,58 @@
       "generated": null,
       "identity": null,
       "name": "displayPhoneNumber",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "coexistEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isCoexist",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "''",
+      "generated": null,
+      "identity": null,
+      "name": "platformType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationWhatsapp"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "historyDeclined",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationWhatsapp"
@@ -9234,6 +11158,591 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "shortDescription",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "longDescription",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "price",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "taxes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "discount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sku",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "inventoryPolicy",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'dont_track'",
+      "generated": null,
+      "identity": null,
+      "name": "inventoryPolicy",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "inventoryQuantity",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "allowOutOfStockPurchase",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "images",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "tags",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "vendor",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "10",
+      "generated": null,
+      "identity": null,
+      "name": "rank",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "category",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "subcategory",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isActive",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isSearchable",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "allowSpecialRequest",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isAddonOnly",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "productId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "''",
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "1",
+      "generated": null,
+      "identity": null,
+      "name": "maxSelections",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "addonProductIds",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "productId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "combination",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "double precision",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "price",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "productId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "values",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "10",
+      "generated": null,
+      "identity": null,
+      "name": "position",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ProductVariantOption"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "workspaceId",
       "entityType": "columns",
       "schema": "public",
@@ -9352,6 +11861,19 @@
       "generated": null,
       "identity": null,
       "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Reflink"
+    },
+    {
+      "type": "ReflinkType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'refLink'",
+      "generated": null,
+      "identity": null,
+      "name": "type",
       "entityType": "columns",
       "schema": "public",
       "table": "Reflink"
@@ -10969,6 +13491,97 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "phoneNumberId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "payload",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "payloadHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "processedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "WhatsappFlow"
     },
     {
@@ -11050,14 +13663,53 @@
       "table": "WhatsappFlow"
     },
     {
-      "type": "boolean",
+      "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": null,
+      "default": "'[]'",
       "generated": null,
       "identity": null,
-      "name": "isCompleted",
+      "name": "categories",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "validationErrors",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "completedCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "screens",
       "entityType": "columns",
       "schema": "public",
       "table": "WhatsappFlow"
@@ -11372,6 +14024,97 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodStart",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "periodEnd",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "macCount",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "WorkspaceMac"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "WorkspaceMember"
     },
     {
@@ -11477,6 +14220,184 @@
       "entityType": "columns",
       "schema": "public",
       "table": "WorkspaceMember"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationEmbedding_sourceId_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "chunkIndex",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationEmbedding_sourceId_chunkIndex_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "embedding",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": {
+            "name": "vector_cosine_ops",
+            "default": false
+          }
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "hnsw",
+      "concurrently": false,
+      "name": "AIConversationEmbedding_embedding_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationSource_lookup_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationSource_workspaceId_sourceType_sourceKey_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "messageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AIConversationSource_messageId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AIConversationSource"
     },
     {
       "nameExplicit": true,
@@ -12119,6 +15040,76 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "token",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_token_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "topicId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_topicId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "topicId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "AnalyticsEmailTopic_workspaceId_topicId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "objectKey",
           "isExpression": false,
           "asc": true,
@@ -12401,6 +15392,160 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Broadcast"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CoexistSyncRun_workspace_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CoexistSyncRun_integration_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "lastHeartbeatAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "status IN ('init', 'running')",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CoexistSyncRun_active_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "\"startedAt\" DESC",
+          "isExpression": true,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "status IN ('succeeded', 'partial')",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CoexistSyncRun_integration_resume_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channel",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "status = 'init'",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "CoexistSyncRun_integration_init_uq",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "CoexistSyncRun"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "broadcastSubscribedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "idx_contact_broadcast_subscribed_at",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Contact"
     },
     {
       "nameExplicit": true,
@@ -12861,6 +16006,55 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "name",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EmailTopic_workspaceId_name_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "folderId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "EmailTopic_folderId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "userId",
           "isExpression": false,
           "asc": true,
@@ -12919,6 +16113,83 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "CustomDomain"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "path",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "File_path_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "contextType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "File_workspaceId_contextType_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "subType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "File_workspaceId_subType_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "File"
     },
     {
       "nameExplicit": true,
@@ -13094,6 +16365,111 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "status",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Import_workspaceId_status_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Import_workspaceId_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Import_inboxId_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "fileId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Import_fileId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Import"
     },
     {
       "nameExplicit": true,
@@ -13552,6 +16928,69 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "IntegrationTiktok_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "inboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationTiktok_inboxId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "openId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "IntegrationTiktok_openId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "IntegrationWebchat_workspaceId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -13990,6 +17429,90 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "PlatformCredential"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Product_workspaceId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "productId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ProductAddon_productId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "productId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ProductVariant_productId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "productId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ProductVariantOption_productId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ProductVariantOption"
     },
     {
       "nameExplicit": true,
@@ -14926,6 +18449,104 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "phoneNumberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCoexistStaging_phoneNumberId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "phoneNumberId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "payloadHash",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCoexistStaging_phone_hash_uq",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "processedAt",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"processedAt\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappCoexistStaging_processedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "integrationWhatsappId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "WhatsappFlow_integrationWhatsappId_sourceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "WhatsappFlow"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "integrationWhatsappId",
           "isExpression": false,
           "asc": true,
@@ -14975,6 +18596,97 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AIAssistant"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["sourceId"],
+      "schemaTo": "public",
+      "tableTo": "AIConversationSource",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationEmbedding_sourceId_AIConversationSource_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationEmbedding_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationEmbedding_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationEmbedding"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationSource_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationSource_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["messageId"],
+      "schemaTo": "public",
+      "tableTo": "Message",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AIConversationSource_messageId_Message_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationSource"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["attachmentId"],
+      "schemaTo": "public",
+      "tableTo": "Attachment",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AIConversationSource_attachmentId_Attachment_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AIConversationSource"
     },
     {
       "nameExplicit": false,
@@ -15196,6 +18908,71 @@
       "entityType": "fks",
       "schema": "public",
       "table": "AnalyticsSequenceEvent"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["topicId"],
+      "schemaTo": "public",
+      "tableTo": "EmailTopic",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AnalyticsEmailTopic_topicId_EmailTopic_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "AnalyticsEmailTopic_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactId"],
+      "schemaTo": "public",
+      "tableTo": "Contact",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AnalyticsEmailTopic_contactId_Contact_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["conversationId"],
+      "schemaTo": "public",
+      "tableTo": "Conversation",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AnalyticsEmailTopic_conversationId_Conversation_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "AnalyticsEmailTopic_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic"
     },
     {
       "nameExplicit": false,
@@ -15744,6 +19521,32 @@
       "table": "CustomField"
     },
     {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "EmailTopic_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["folderId"],
+      "schemaTo": "public",
+      "tableTo": "Folder",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "EmailTopic_folderId_Folder_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "EmailTopic"
+    },
+    {
       "nameExplicit": true,
       "columns": ["workspaceId"],
       "schemaTo": "public",
@@ -15833,6 +19636,32 @@
       "entityType": "fks",
       "schema": "public",
       "table": "ErrorLog"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "File_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "File"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "File_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "File"
     },
     {
       "nameExplicit": false,
@@ -15963,6 +19792,58 @@
       "entityType": "fks",
       "schema": "public",
       "table": "Folder"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Import_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Import_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["userId"],
+      "schemaTo": "public",
+      "tableTo": "User",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "SET NULL",
+      "name": "Import_userId_User_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Import"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["fileId"],
+      "schemaTo": "public",
+      "tableTo": "File",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "RESTRICT",
+      "name": "Import_fileId_File_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Import"
     },
     {
       "nameExplicit": false,
@@ -16284,6 +20165,32 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
+      "name": "IntegrationTiktok_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["inboxId"],
+      "schemaTo": "public",
+      "tableTo": "Inbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "IntegrationTiktok_inboxId_Inbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "IntegrationTiktok"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
       "name": "IntegrationWebchat_workspaceId_Workspace_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -16466,10 +20373,62 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
-      "name": "Credential_userId_User_id_fkey",
+      "name": "PlatformCredential_userId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "PlatformCredential"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "Product_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "Product"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["productId"],
+      "schemaTo": "public",
+      "tableTo": "Product",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ProductAddon_productId_Product_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ProductAddon"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["productId"],
+      "schemaTo": "public",
+      "tableTo": "Product",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ProductVariant_productId_Product_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ProductVariant"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["productId"],
+      "schemaTo": "public",
+      "tableTo": "Product",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ProductVariantOption_productId_Product_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ProductVariantOption"
     },
     {
       "nameExplicit": false,
@@ -16934,10 +20893,23 @@
       "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "RESTRICT",
-      "name": "Workspace_userId_User_id_fkey",
+      "name": "Workspace_ownerId_User_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "Workspace"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "WorkspaceMac_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "WorkspaceMac"
     },
     {
       "nameExplicit": false,
@@ -17050,6 +21022,14 @@
       "table": "AnalyticsSequenceEvent"
     },
     {
+      "columns": ["workspaceId", "periodStart", "contactInboxId"],
+      "nameExplicit": false,
+      "name": "ContactActiveMonthly_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactActiveMonthly"
+    },
+    {
       "columns": ["broadcastId", "contactId"],
       "nameExplicit": true,
       "name": "ContactsOnBroadcast_pkey",
@@ -17092,6 +21072,22 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "AIConversationEmbedding_pkey",
+      "schema": "public",
+      "table": "AIConversationEmbedding",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AIConversationSource_pkey",
+      "schema": "public",
+      "table": "AIConversationSource",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "AIEmbedding_pkey",
       "schema": "public",
       "table": "AIEmbedding",
@@ -17127,6 +21123,14 @@
       "name": "AITrigger_pkey",
       "schema": "public",
       "table": "AITrigger",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "AnalyticsEmailTopic_pkey",
+      "schema": "public",
+      "table": "AnalyticsEmailTopic",
       "entityType": "pks"
     },
     {
@@ -17212,6 +21216,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "CoexistSyncRun_pkey",
+      "schema": "public",
+      "table": "CoexistSyncRun",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "Contact_pkey",
       "schema": "public",
       "table": "Contact",
@@ -17284,6 +21296,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "EmailTopic_pkey",
+      "schema": "public",
+      "table": "EmailTopic",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "AuditLog_pkey",
       "schema": "public",
       "table": "AuditLog",
@@ -17319,6 +21339,14 @@
       "name": "ErrorLog_pkey",
       "schema": "public",
       "table": "ErrorLog",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "File_pkey",
+      "schema": "public",
+      "table": "File",
       "entityType": "pks"
     },
     {
@@ -17367,6 +21395,14 @@
       "name": "Folder_pkey",
       "schema": "public",
       "table": "Folder",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Import_pkey",
+      "schema": "public",
+      "table": "Import",
       "entityType": "pks"
     },
     {
@@ -17468,6 +21504,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "IntegrationTiktok_pkey",
+      "schema": "public",
+      "table": "IntegrationTiktok",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "IntegrationWebchat_pkey",
       "schema": "public",
       "table": "IntegrationWebchat",
@@ -17508,9 +21552,41 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Credential_pkey",
+      "name": "PlatformCredential_pkey",
       "schema": "public",
       "table": "PlatformCredential",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "Product_pkey",
+      "schema": "public",
+      "table": "Product",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "ProductAddon_pkey",
+      "schema": "public",
+      "table": "ProductAddon",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "ProductVariant_pkey",
+      "schema": "public",
+      "table": "ProductVariant",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "ProductVariantOption_pkey",
+      "schema": "public",
+      "table": "ProductVariantOption",
       "entityType": "pks"
     },
     {
@@ -17612,6 +21688,14 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "WhatsappCoexistStaging_pkey",
+      "schema": "public",
+      "table": "WhatsappCoexistStaging",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "WhatsappFlow_pkey",
       "schema": "public",
       "table": "WhatsappFlow",
@@ -17636,10 +21720,27 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
+      "name": "WorkspaceMac_pkey",
+      "schema": "public",
+      "table": "WorkspaceMac",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
       "name": "WorkspaceMember_pkey",
       "schema": "public",
       "table": "WorkspaceMember",
       "entityType": "pks"
+    },
+    {
+      "nameExplicit": true,
+      "columns": ["workspaceId", "periodStart", "periodEnd"],
+      "nullsNotDistinct": false,
+      "name": "WorkspaceMac_workspaceId_periodStart_periodEnd_unique",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "WorkspaceMac"
     },
     {
       "nameExplicit": false,
@@ -17660,12 +21761,5 @@
       "entityType": "uniques"
     }
   ],
-  "renames": [],
-  "enums": {
-    "public.ReflinkType": {
-      "name": "ReflinkType",
-      "schema": "public",
-      "values": ["refLink", "qrCode"]
-    }
-  }
+  "renames": []
 }

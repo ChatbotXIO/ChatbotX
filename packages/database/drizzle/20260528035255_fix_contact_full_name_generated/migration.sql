@@ -5,4 +5,4 @@ ALTER TABLE "Contact" ADD COLUMN "fullName" text GENERATED ALWAYS AS (CASE
       WHEN "lastName" IS NULL THEN "firstName"
       ELSE "firstName" || ' ' || "lastName"
     END) STORED;--> statement-breakpoint
-ALTER TABLE "CustomDomain" ADD CONSTRAINT "CustomDomain_userId_User_id_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- ALTER TABLE "CustomDomain" ADD CONSTRAINT IF NOT EXISTS "CustomDomain_userId_User_id_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
