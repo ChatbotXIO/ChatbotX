@@ -1,6 +1,6 @@
 "use server"
 
-import { aiProviders, claudeModels } from "@chatbotx.io/ai"
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -78,9 +78,7 @@ export const connectClaudeAction = workspaceActionClient
             id: createId(),
             integrationId: integration.id,
             workspaceId,
-            model:
-              parsedInput.model ??
-              claudeModels.enum["claude-3-5-sonnet-20241022"],
+            model: parsedInput.model,
             auth: {
               authType: AuthType.secretText,
               secretText: parsedInput.apiKey,

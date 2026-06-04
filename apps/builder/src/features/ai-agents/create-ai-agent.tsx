@@ -1,11 +1,6 @@
 "use client"
 
-import {
-  aiProviders,
-  geminiModels,
-  openaiModelOptions,
-  openaiModels,
-} from "@chatbotx.io/ai"
+import { aiChatProviders } from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -40,9 +35,11 @@ import { useFieldArray } from "react-hook-form"
 import { toast } from "sonner"
 import { TiptapEditorField } from "@/components/tiptap/tiptap-editor-field"
 import { createAIAgentAction } from "@/features/ai-agents/actions/create.action"
-import { createAIAgentRequest } from "@/features/ai-agents/schemas/action"
+import {
+  type CreateAIAgentRequest,
+  createAIAgentRequest,
+} from "@/features/ai-agents/schemas/action"
 import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
-import { geminiModelOptions } from "../integration-gemini/schemas/models"
 
 type CreateAIAgentDialogProps = {
   workspaceId: string
@@ -91,16 +88,10 @@ export function CreateAIAgentDialog({
           prompt: "",
           isDefault: false,
           messages: [],
-          models: [
-            {
-              provider: aiProviders.enum.gemini,
-              model: geminiModels.enum["gemini-2.5-pro"],
-            },
-            {
-              provider: aiProviders.enum.openai,
-              model: openaiModels.enum["gpt-4o-mini"],
-            },
-          ],
+          models: aiChatProviders.map((provider) => ({
+            provider: provider.provider,
+            model: provider.defaultModel,
+          })) as CreateAIAgentRequest["models"],
           temperature: 0.4,
           maxOutputTokens: 2048,
           tools: [],
@@ -178,19 +169,15 @@ export function CreateAIAgentDialog({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="flex w-[340px] flex-col gap-6 p-4">
-                    <SelectField
-                      label={t("fields.geminiModel.label")}
-                      name="models.0.model"
-                      options={geminiModelOptions}
-                      required
-                    />
-
-                    <SelectField
-                      label={t("fields.model.label")}
-                      name="models.1.model"
-                      options={openaiModelOptions}
-                      required
-                    />
+                    {aiChatProviders.map((provider, index) => (
+                      <SelectField
+                        key={provider.provider}
+                        label={`${t(`aiProviders.${provider.provider}`)} ${t("fields.model.label")}`}
+                        name={`models.${index}.model`}
+                        options={provider.modelOptions}
+                        required
+                      />
+                    ))}
 
                     <SliderField
                       label={t("fields.temperature.label")}

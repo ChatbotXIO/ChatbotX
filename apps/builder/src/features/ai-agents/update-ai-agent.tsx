@@ -1,7 +1,10 @@
 "use client"
 
-import { openaiModelOptions } from "@chatbotx.io/ai"
-import { aiMessageRoles } from "@chatbotx.io/database/partials"
+import { aiChatProviders } from "@chatbotx.io/ai"
+import {
+  type AIAgentProviderModels,
+  aiMessageRoles,
+} from "@chatbotx.io/database/partials"
 import type { AIAgentModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
@@ -40,7 +43,6 @@ import {
   updateAIAgentRequest,
 } from "@/features/ai-agents/schemas/action"
 import { AIToolMultiSelect } from "@/features/ai-tools/components/ai-tool-multi-select"
-import { geminiModelOptions } from "../integration-gemini/schemas/models"
 
 export function UpdateAIAgentDialog({
   workspaceId,
@@ -116,9 +118,20 @@ export function UpdateAIAgentDialog({
 
   useEffect(() => {
     if (agent) {
+      // Normalize stored models to the full ordered provider list so agents
+      // created before a provider existed still render every selector with a
+      // sensible default (missing providers fall back to their default model).
+      const storedModels = (agent.models ?? []) as AIAgentProviderModels
+      const normalizedModels = aiChatProviders.map((provider) => ({
+        provider: provider.provider,
+        model:
+          storedModels.find((m) => m.provider === provider.provider)?.model ??
+          provider.defaultModel,
+      }))
+
       setValue("name", agent.name)
       setValue("prompt", agent.prompt ?? "")
-      setValue("models", agent.models as UpdateAIAgentRequest["models"])
+      setValue("models", normalizedModels as UpdateAIAgentRequest["models"])
       setValue("temperature", agent.temperature)
       setValue("maxOutputTokens", agent.maxOutputTokens)
       setValue("messages", agent.messages as UpdateAIAgentRequest["messages"])
@@ -161,19 +174,15 @@ export function UpdateAIAgentDialog({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="flex w-[340px] flex-col gap-6 p-4">
-                    <SelectField
-                      label={t("fields.geminiModel.label")}
-                      name="models.0.model"
-                      options={geminiModelOptions}
-                      required
-                    />
-
-                    <SelectField
-                      label={t("fields.model.label")}
-                      name="models.1.model"
-                      options={openaiModelOptions}
-                      required
-                    />
+                    {aiChatProviders.map((provider, index) => (
+                      <SelectField
+                        key={provider.provider}
+                        label={`${t(`aiProviders.${provider.provider}`)} ${t("fields.model.label")}`}
+                        name={`models.${index}.model`}
+                        options={provider.modelOptions}
+                        required
+                      />
+                    ))}
 
                     <SliderField
                       label={t("fields.temperature.label")}

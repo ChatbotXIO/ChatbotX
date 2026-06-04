@@ -1,15 +1,5 @@
-import ky from "ky"
+import { aiProviders } from "@chatbotx.io/ai"
+import { verifyAiProviderApiKey } from "@/features/integration-ai/lib/verify-api-key"
 
-export async function verifyClaudeApiKey(apiKey: string) {
-  try {
-    await ky.get("https://api.anthropic.com/v1/models", {
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-    })
-    return true
-  } catch {
-    return false
-  }
-}
+export const verifyClaudeApiKey = (apiKey: string) =>
+  verifyAiProviderApiKey(aiProviders.enum.claude, apiKey)

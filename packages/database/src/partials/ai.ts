@@ -37,7 +37,12 @@ export type AIConversationSourceStatus = z.infer<
   typeof aiConversationSourceStatuses
 >
 
-export const aiAgentProviders = z.enum(["openai", "gemini"])
+export const aiAgentProviders = z.enum([
+  "openai",
+  "gemini",
+  "claude",
+  "deepseek",
+])
 export type AIAgentProvider = z.infer<typeof aiAgentProviders>
 
 export const aiAgentProviderModel = z.object({

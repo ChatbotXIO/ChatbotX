@@ -1,5 +1,6 @@
 "use server"
 
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationDeepseekModel } from "@chatbotx.io/database/schema"
@@ -35,6 +36,9 @@ export const updateIntegrationDeepSeekAction = workspaceActionClient
         .set(parsedInput)
         .where(eq(integrationDeepseekModel.id, integrationDeepseek.id))
 
-      await aiIntegrationService.invalidateCache(workspaceId, "deepseek")
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.deepseek,
+      )
     },
   )

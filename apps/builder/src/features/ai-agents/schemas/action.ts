@@ -1,4 +1,10 @@
-import { aiProviders, geminiModels, openaiModels } from "@chatbotx.io/ai"
+import {
+  aiProviders,
+  claudeModels,
+  deepseekModels,
+  geminiModels,
+  openaiModels,
+} from "@chatbotx.io/ai"
 import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import { z } from "zod"
 
@@ -20,6 +26,14 @@ export const createAIAgentRequest = z.object({
       z.object({
         provider: z.literal(aiProviders.enum.openai),
         model: openaiModels,
+      }),
+      z.object({
+        provider: z.literal(aiProviders.enum.claude),
+        model: claudeModels,
+      }),
+      z.object({
+        provider: z.literal(aiProviders.enum.deepseek),
+        model: deepseekModels,
       }),
     ]),
   ),

@@ -1,15 +1,24 @@
-import { createAnthropic } from "@ai-sdk/anthropic"
-import { createDeepSeek } from "@ai-sdk/deepseek"
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import { createOpenAI } from "@ai-sdk/openai"
 import { db } from "@chatbotx.io/database/client"
 import type {
+  IntegrationClaudeModel,
+  IntegrationDeepseekModel,
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
 import type { ImageModel } from "ai"
-import { aiProviders } from "../schemas"
+import { providerSdkFactories } from "../core/factory"
+import { type AIProvider, aiProviders } from "../schemas"
+
+/**
+ * Any AI integration row that carries a `secretText` auth + model config.
+ * All provider integrations share this shape, so the factory accepts the union.
+ */
+export type AIIntegrationModel =
+  | IntegrationOpenAIModel
+  | IntegrationGeminiModel
+  | IntegrationClaudeModel
+  | IntegrationDeepseekModel
 
 export async function getAIIntegrationInDB(props: {
   workspaceId: string
@@ -45,8 +54,16 @@ export async function getAIIntegrationInDB(props: {
   }
 }
 
+function resolveProviderFactory(provider: string) {
+  const parsed = aiProviders.safeParse(provider)
+  if (!parsed.success) {
+    throw new Error(`Unsupported provider: ${provider}`)
+  }
+  return providerSdkFactories[parsed.data as AIProvider]
+}
+
 export function getAIModel(
-  model: IntegrationOpenAIModel | IntegrationGeminiModel,
+  model: AIIntegrationModel,
   provider: string,
   _options?: { abortSignal?: AbortSignal },
 ) {
@@ -55,31 +72,17 @@ export function getAIModel(
     throw new Error("Invalid AI integration auth configuration")
   }
 
+  const createProvider = resolveProviderFactory(provider)
   const commonSettings = {
     apiKey: authParsed.data.secretText,
     maxRetries: 3,
   }
 
-  switch (provider) {
-    case aiProviders.enum.openai: {
-      return createOpenAI(commonSettings)
-    }
-    case aiProviders.enum.gemini: {
-      return createGoogleGenerativeAI(commonSettings)
-    }
-    case aiProviders.enum.claude: {
-      return createAnthropic(commonSettings)
-    }
-    case aiProviders.enum.deepseek: {
-      return createDeepSeek(commonSettings)
-    }
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
-  }
+  return createProvider(commonSettings)
 }
 
 export function createAIModelInstance(props: {
-  model: IntegrationOpenAIModel | IntegrationGeminiModel
+  model: AIIntegrationModel
   provider: string
   modelId: string
   abortSignal?: AbortSignal
@@ -92,7 +95,7 @@ export function createAIModelInstance(props: {
 }
 
 export function createAIImageModelInstance(props: {
-  model: IntegrationOpenAIModel | IntegrationGeminiModel
+  model: AIIntegrationModel
   provider: string
   modelId: string
   abortSignal?: AbortSignal

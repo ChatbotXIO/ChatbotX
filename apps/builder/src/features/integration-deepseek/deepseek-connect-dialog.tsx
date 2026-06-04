@@ -1,25 +1,12 @@
 "use client"
 
-import { InputField } from "@chatbotx.io/ui/components/form/input-field"
-import { Button } from "@chatbotx.io/ui/components/ui/button"
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@chatbotx.io/ui/components/ui/dialog"
-import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { AiIntegrationApiKeyDialog } from "@/features/integration-ai/components/ai-integration-api-key-dialog"
 import { useWorkspaceId } from "@/hooks/routing"
 import { connectDeepSeekAction } from "./actions/connect.action"
 import { connectDeepSeekSchema } from "./schemas/request"
@@ -37,9 +24,7 @@ export const DeepSeekConnectDialog = () => {
       actionProps: {
         onSuccess: () => {
           toast.success(
-            t("messages.connectedSuccess", {
-              feature: t("deepseek.title"),
-            }),
+            t("messages.connectedSuccess", { feature: t("deepseek.title") }),
           )
           setOpen(false)
           router.refresh()
@@ -52,55 +37,18 @@ export const DeepSeekConnectDialog = () => {
       },
       formProps: {
         mode: "onChange",
-        defaultValues: {
-          apiKey: "",
-        },
+        defaultValues: { apiKey: "" },
       },
     },
   )
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          {t("actions.connect")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {t("actions.connectFeature", { feature: t("deepseek.title") })}
-          </DialogTitle>
-          <DialogDescription />
-        </DialogHeader>
-        <Form {...form}>
-          <form className="flex-1 space-y-4" onSubmit={handleSubmitWithAction}>
-            <InputField
-              label={t("fields.apiKey.label")}
-              name="apiKey"
-              required
-            />
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  {t("actions.cancel")}
-                </Button>
-              </DialogClose>
-              <Button
-                disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
-                }
-                type="submit"
-              >
-                {form.formState.isSubmitting && (
-                  <Loader2Icon className="animate-spin" />
-                )}
-                {t("actions.confirm")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <AiIntegrationApiKeyDialog
+      form={form}
+      onOpenChange={setOpen}
+      onSubmit={handleSubmitWithAction}
+      open={open}
+      title={t("deepseek.title")}
+    />
   )
 }

@@ -4,25 +4,25 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { createOpenAI } from "@ai-sdk/openai"
 import { type AIProvider, aiProviders } from "../schemas"
 
+/**
+ * SDK provider-factory per AI provider. Shared with the server factory so that
+ * adding a new provider only requires a single entry here.
+ */
+export const providerSdkFactories = {
+  [aiProviders.enum.openai]: createOpenAI,
+  [aiProviders.enum.gemini]: createGoogleGenerativeAI,
+  [aiProviders.enum.claude]: createAnthropic,
+  [aiProviders.enum.deepseek]: createDeepSeek,
+} as const satisfies Record<AIProvider, unknown>
+
+const providerApiKeyEnvVar: Record<AIProvider, string> = {
+  [aiProviders.enum.openai]: "OPENAI_API_KEY",
+  [aiProviders.enum.gemini]: "GOOGLE_GENERATIVE_AI_API_KEY",
+  [aiProviders.enum.claude]: "ANTHROPIC_API_KEY",
+  [aiProviders.enum.deepseek]: "DEEPSEEK_API_KEY",
+}
+
 export const getAIProviderInstance = (provider: AIProvider) => {
-  switch (provider) {
-    case aiProviders.enum.openai:
-      return createOpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      })
-    case aiProviders.enum.gemini:
-      return createGoogleGenerativeAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      })
-    case aiProviders.enum.claude:
-      return createAnthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-      })
-    case aiProviders.enum.deepseek:
-      return createDeepSeek({
-        apiKey: process.env.DEEPSEEK_API_KEY,
-      })
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
-  }
+  const createProvider = providerSdkFactories[provider]
+  return createProvider({ apiKey: process.env[providerApiKeyEnvVar[provider]] })
 }

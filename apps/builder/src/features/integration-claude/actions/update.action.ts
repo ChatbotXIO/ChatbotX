@@ -1,5 +1,6 @@
 "use server"
 
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import { integrationClaudeModel } from "@chatbotx.io/database/schema"
@@ -35,6 +36,9 @@ export const updateIntegrationClaudeAction = workspaceActionClient
         .set(parsedInput)
         .where(eq(integrationClaudeModel.id, integrationClaude.id))
 
-      await aiIntegrationService.invalidateCache(workspaceId, "claude")
+      await aiIntegrationService.invalidateCache(
+        workspaceId,
+        aiProviders.enum.claude,
+      )
     },
   )

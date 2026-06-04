@@ -41,23 +41,27 @@ export const claudeAnalyzeImageModelOptions: {
 
 export const claudeModelOptions: { label: string; value: ClaudeModel }[] = [
   {
+    label: "Claude Opus 4.6",
+    value: claudeModels.enum["claude-opus-4.6"],
+  },
+  {
+    label: "Claude Opus 4.5",
+    value: claudeModels.enum["claude-4.5-opus-20251101"],
+  },
+  {
+    label: "Claude Sonnet 4.5",
+    value: claudeModels.enum["claude-4.5-sonnet-20250929"],
+  },
+  {
+    label: "Claude Haiku 4.5",
+    value: claudeModels.enum["claude-4.5-haiku-20251001"],
+  },
+  {
     label: "Claude 3.5 Sonnet",
     value: claudeModels.enum["claude-3-5-sonnet-20241022"],
   },
   {
     label: "Claude 3.5 Haiku",
     value: claudeModels.enum["claude-3-5-haiku-20241022"],
-  },
-  {
-    label: "Claude 3 Opus",
-    value: claudeModels.enum["claude-3-opus-20240229"],
-  },
-  {
-    label: "Claude 3 Sonnet",
-    value: claudeModels.enum["claude-3-sonnet-20240229"],
-  },
-  {
-    label: "Claude 3 Haiku",
-    value: claudeModels.enum["claude-3-haiku-20240307"],
   },
 ]

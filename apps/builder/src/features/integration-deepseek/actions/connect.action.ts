@@ -1,6 +1,6 @@
 "use server"
 
-import { aiProviders, deepseekModels } from "@chatbotx.io/ai"
+import { aiProviders } from "@chatbotx.io/ai"
 import { aiIntegrationService } from "@chatbotx.io/ai/server"
 import { db, eq } from "@chatbotx.io/database/client"
 import {
@@ -77,7 +77,7 @@ export const connectDeepSeekAction = workspaceActionClient
             id: createId(),
             integrationId: integration.id,
             workspaceId,
-            model: parsedInput.model ?? deepseekModels.enum["deepseek-chat"],
+            model: parsedInput.model,
             auth: {
               authType: AuthType.secretText,
               secretText: parsedInput.apiKey,
