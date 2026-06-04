@@ -11,8 +11,7 @@
     "test:coverage": "turbo run test -- --coverage",
     "clean": "pnpm store prune && pnpm dlx rimraf --glob '**/{node_modules,.next,.turbo}'",
     "check:circular": "pnpm dlx madge --circular --extensions ts,tsx --exclude generated {apps/**/src,packages/**/src}",
-    "check:unused": "knip",
-    "prepare": "lefthook install"
+    "check:unused": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
