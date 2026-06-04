@@ -3,18 +3,18 @@ import { zodBigintAsString } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import { z } from "zod"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
-import { ReflinkAnalyticsClient } from "./reflink-analytics-client"
+import { MagicLinkAnalyticsClient } from "./magic-link-analytics-client"
 
 const paramsSchema = z.object({
   workspaceId: zodBigintAsString(),
-  reflinkId: zodBigintAsString(),
+  magicLinkId: zodBigintAsString(),
 })
 
 type Props = {
-  params: Promise<{ workspaceId: string; reflinkId: string }>
+  params: Promise<{ workspaceId: string; magicLinkId: string }>
 }
 
-export default async function ReflinkAnalyticsPage({ params }: Props) {
+export default async function MagicLinkAnalyticsPage({ params }: Props) {
   const { data } = await paramsSchema.safeParse(await params)
   if (!data) {
     return notFound()
@@ -25,21 +25,21 @@ export default async function ReflinkAnalyticsPage({ params }: Props) {
     return redirect("/")
   }
 
-  const reflink = await db.query.reflinkModel.findFirst({
+  const magicLink = await db.query.magicLinkModel.findFirst({
     where: {
-      id: data.reflinkId,
+      id: data.magicLinkId,
       workspaceId: data.workspaceId,
     },
   })
-  if (!reflink) {
+  if (!magicLink) {
     return notFound()
   }
 
   return (
     <div className="container mx-auto flex flex-col gap-6 py-6">
-      <ReflinkAnalyticsClient
-        linkId={data.reflinkId}
-        linkName={reflink.name}
+      <MagicLinkAnalyticsClient
+        linkId={data.magicLinkId}
+        linkName={magicLink.name}
         workspaceId={data.workspaceId}
       />
     </div>

@@ -17,7 +17,7 @@ export const AnalysisStoreContext = createContext<AnalysisStoreApi | undefined>(
 )
 
 export type AnalysisStoreProviderProps = {
-  type?: "dashboard" | "reflinks"
+  type?: "dashboard" | "reflinks" | "magic-links"
   defaultSearchParams: { [x: string]: string }
   children: ReactNode
   autoInitialize?: boolean

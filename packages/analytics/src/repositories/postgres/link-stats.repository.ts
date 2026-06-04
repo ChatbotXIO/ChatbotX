@@ -53,15 +53,26 @@ export class LinkStatsRepository extends BaseRepository {
   async getContactCount(input: {
     workspaceId: string
     linkId: string
+    startDate?: string
+    endDate?: string
   }): Promise<number> {
-    const { workspaceId, linkId } = input
-    const { workspaceId: wsCol, linkId: linkCol, contactInboxId } = this.columns
+    const { workspaceId, linkId, startDate, endDate } = input
+    const {
+      workspaceId: wsCol,
+      linkId: linkCol,
+      contactInboxId,
+      occurredAt,
+    } = this.columns
+    const dateFilter =
+      startDate && endDate
+        ? sql` AND ${occurredAt} >= ${startDate} AND ${occurredAt} <= ${endDate}`
+        : sql``
 
     const result = await db.execute(sql`
       SELECT COUNT(DISTINCT ${contactInboxId})::int AS total
       FROM ${this.table}
       WHERE ${wsCol} = ${workspaceId}
-        AND ${linkCol} = ${linkId}
+        AND ${linkCol} = ${linkId}${dateFilter}
     `)
 
     return (result.rows[0] as { total: number } | undefined)?.total ?? 0
@@ -72,21 +83,32 @@ export class LinkStatsRepository extends BaseRepository {
     linkId: string
     page: number
     perPage: number
+    startDate?: string
+    endDate?: string
   }): Promise<{
     contactInboxIds: string[]
     rows: { contactInboxId: string; occurredAt: Date }[]
   }> {
-    const { workspaceId, linkId, page, perPage } = input
+    const { workspaceId, linkId, page, perPage, startDate, endDate } = input
     const offset = (page - 1) * perPage
-    const { workspaceId: wsCol, linkId: linkCol, contactInboxId } = this.columns
+    const {
+      workspaceId: wsCol,
+      linkId: linkCol,
+      contactInboxId,
+      occurredAt,
+    } = this.columns
+    const dateFilter =
+      startDate && endDate
+        ? sql` AND ${occurredAt} >= ${startDate} AND ${occurredAt} <= ${endDate}`
+        : sql``
 
     const result = await db.execute(sql`
       SELECT
         ${contactInboxId},
-        MIN(${this.columns.occurredAt}) AS "occurredAt"
+        MIN(${occurredAt}) AS "occurredAt"
       FROM ${this.table}
       WHERE ${wsCol} = ${workspaceId}
-        AND ${linkCol} = ${linkId}
+        AND ${linkCol} = ${linkId}${dateFilter}
       GROUP BY ${contactInboxId}
       ORDER BY "occurredAt" DESC
       LIMIT ${perPage} OFFSET ${offset}

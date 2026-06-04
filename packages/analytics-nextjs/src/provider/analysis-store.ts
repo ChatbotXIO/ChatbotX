@@ -35,7 +35,7 @@ import { createStore } from "zustand/vanilla"
 
 const REFLINK_CONTACTS_PER_PAGE = 10
 
-export type AnalysisDashboardType = "dashboard" | "reflinks"
+export type AnalysisDashboardType = "dashboard" | "reflinks" | "magic-links"
 
 export type AnalysisState = {
   type: AnalysisDashboardType
@@ -76,6 +76,12 @@ export type AnalysisState = {
   reflinkContacts: ListFlowNodeContactsResponse["data"]
   reflinkContactsPage: number
   reflinkContactsPageCount: number
+
+  // magic-link stats
+  magicLinkStats: RefLinkTimeseriesRow[]
+  magicLinkContacts: ListFlowNodeContactsResponse["data"]
+  magicLinkContactsPage: number
+  magicLinkContactsPageCount: number
 }
 
 export type AnalysisActions = {
@@ -111,6 +117,10 @@ export type AnalysisActions = {
   getRefLinkStats: () => Promise<void>
   getReflinkContacts: () => Promise<void>
   setReflinkContactsPage: (page: number) => Promise<void>
+
+  getMagicLinkStats: () => Promise<void>
+  getMagicLinkContacts: () => Promise<void>
+  setMagicLinkContactsPage: (page: number) => Promise<void>
 }
 
 export type AnalysisStore = AnalysisState & AnalysisActions
@@ -158,6 +168,12 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     reflinkContactsPage: 1,
     reflinkContactsPageCount: 0,
 
+    // Default magic-link stats
+    magicLinkStats: [],
+    magicLinkContacts: [],
+    magicLinkContactsPage: 1,
+    magicLinkContactsPageCount: 0,
+
     initialize: async () => {
       const { loadAnalysisData } = get()
       await loadAnalysisData()
@@ -184,6 +200,14 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
         const { getRefLinkStats, getReflinkContacts } = get()
         set({ loading: true, errors: new Map<string, string>() })
         await Promise.all([getRefLinkStats(), getReflinkContacts()])
+        set({ loading: false })
+        return
+      }
+
+      if (type === "magic-links") {
+        const { getMagicLinkStats, getMagicLinkContacts } = get()
+        set({ loading: true, errors: new Map<string, string>() })
+        await Promise.all([getMagicLinkStats(), getMagicLinkContacts()])
         set({ loading: false })
         return
       }
@@ -740,7 +764,7 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
     },
 
     getReflinkContacts: async () => {
-      const { defaultSearchParams, reflinkContactsPage } = get()
+      const { defaultSearchParams, reflinkContactsPage, from, to } = get()
 
       try {
         const result = await ky
@@ -749,6 +773,8 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
               ...defaultSearchParams,
               page: reflinkContactsPage,
               perPage: REFLINK_CONTACTS_PER_PAGE,
+              startDate: from.toISOString(),
+              endDate: to.toISOString(),
             },
           })
           .json<ListFlowNodeContactsResponse>()
@@ -767,5 +793,57 @@ export const createAnalysisStore = (props: Partial<AnalysisState>) =>
 
       const { getReflinkContacts } = get()
       await getReflinkContacts()
+    },
+
+    getMagicLinkStats: async () => {
+      const { defaultSearchParams, from, to } = get()
+
+      try {
+        const { data: magicLinkStats } = await ky
+          .get("/api/analytics/magic-links-stats", {
+            searchParams: {
+              ...defaultSearchParams,
+              startDate: from.toISOString(),
+              endDate: to.toISOString(),
+            },
+          })
+          .json<{ data: RefLinkTimeseriesRow[] }>()
+
+        set({ magicLinkStats })
+      } catch (error: unknown) {
+        get().handleError("getMagicLinkStats", error)
+      }
+    },
+
+    getMagicLinkContacts: async () => {
+      const { defaultSearchParams, magicLinkContactsPage, from, to } = get()
+
+      try {
+        const result = await ky
+          .get("/api/analytics/magic-links-contacts", {
+            searchParams: {
+              ...defaultSearchParams,
+              page: magicLinkContactsPage,
+              perPage: REFLINK_CONTACTS_PER_PAGE,
+              startDate: from.toISOString(),
+              endDate: to.toISOString(),
+            },
+          })
+          .json<ListFlowNodeContactsResponse>()
+
+        set({
+          magicLinkContacts: result.data,
+          magicLinkContactsPageCount: result.pageCount,
+        })
+      } catch (error: unknown) {
+        get().handleError("getMagicLinkContacts", error)
+      }
+    },
+
+    setMagicLinkContactsPage: async (page: number) => {
+      set({ magicLinkContactsPage: page })
+
+      const { getMagicLinkContacts } = get()
+      await getMagicLinkContacts()
     },
   }))

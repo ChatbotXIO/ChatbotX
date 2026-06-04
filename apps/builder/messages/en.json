@@ -203,7 +203,8 @@
     "newContactsByCountry": "New contacts by country",
     "date": "Date",
     "total": "Total",
-    "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day"
+    "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
+    "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
   },
   "autoAssignConversation": {
     "rule": {

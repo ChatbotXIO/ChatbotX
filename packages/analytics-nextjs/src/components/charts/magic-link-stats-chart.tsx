@@ -5,21 +5,21 @@ import { format } from "date-fns"
 import { useTranslations } from "next-intl"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
 
-export function ReflinkStatsChart() {
+export function MagicLinkStatsChart() {
   const t = useTranslations()
 
-  const refLinkStats = useAnalysisStore((state) => state.refLinkStats)
+  const magicLinkStats = useAnalysisStore((state) => state.magicLinkStats)
   const linkName = useAnalysisStore(
     (state) => state.defaultSearchParams.linkName ?? "",
   )
 
   return (
     <AreaChart
-      data={refLinkStats.map((row) => ({
+      data={magicLinkStats.map((row) => ({
         label: format(new Date(row.dateReport), "MMM d"),
         value: row.count,
       }))}
-      title={t("analytics.sessionsThroughTheRef", { ref: linkName })}
+      title={t("analytics.sessionsThroughTheMagicLink", { ref: linkName })}
       valueLabel={t("analytics.total")}
     />
   )

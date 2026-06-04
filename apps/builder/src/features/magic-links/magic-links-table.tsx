@@ -25,6 +25,7 @@ import {
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { ColumnDef, Row } from "@tanstack/react-table"
 import {
+  ChartLineIcon,
   LinkIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -187,6 +188,17 @@ export const MagicLinksTable = ({
               </DropdownMenuItem>
 
               <DropdownMenuItem
+                onClick={() => {
+                  router.push(
+                    `/space/${workspaceId}/magic-links/${row.original.id}/analytics`,
+                  )
+                }}
+              >
+                <ChartLineIcon />
+                {t("actions.viewAnalytics")}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
                 onClick={() => setRowAction({ row, variant: "update" })}
               >
                 <PencilIcon />
@@ -207,7 +219,7 @@ export const MagicLinksTable = ({
         enableHiding: false,
       },
     ],
-    [copy, t],
+    [copy, t, router.push, workspaceId],
   )
 
   const { table } = useDataTable({

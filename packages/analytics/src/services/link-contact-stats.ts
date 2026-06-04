@@ -1,4 +1,5 @@
 import { db } from "@chatbotx.io/database/client"
+import { toDate } from "../lib/date"
 import type { LinkStatsRepository } from "../repositories/postgres/link-stats.repository"
 import type {
   FlowNodeContactData,
@@ -20,7 +21,7 @@ export async function listLinkContactStats(input: {
   }) => Promise<boolean>
 }): Promise<ListFlowNodeContactsResponse> {
   const { params, repository, verifyLink } = input
-  const { workspaceId, linkId, page, perPage } = params
+  const { workspaceId, linkId, page, perPage, startDate, endDate } = params
 
   if (!linkId) {
     return { data: [], total: 0, page: 1, pageCount: 0 }
@@ -32,8 +33,15 @@ export async function listLinkContactStats(input: {
   }
 
   const [{ contactInboxIds, rows }, total] = await Promise.all([
-    repository.getContactStats({ workspaceId, linkId, page, perPage }),
-    repository.getContactCount({ workspaceId, linkId }),
+    repository.getContactStats({
+      workspaceId,
+      linkId,
+      page,
+      perPage,
+      startDate,
+      endDate,
+    }),
+    repository.getContactCount({ workspaceId, linkId, startDate, endDate }),
   ])
 
   if (contactInboxIds.length === 0) {
@@ -67,7 +75,7 @@ export async function listLinkContactStats(input: {
       avatar: ci?.contact?.avatar ?? null,
       channel: ci?.channel ?? null,
       conversationId: ci?.conversation?.id ?? "",
-      occurredAt: row.occurredAt.toISOString(),
+      occurredAt: toDate(row.occurredAt).toISOString(),
     }
   })
 

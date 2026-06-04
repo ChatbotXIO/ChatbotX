@@ -203,7 +203,8 @@
     "newContactsByCountry": "Liên hệ mới theo quốc gia",
     "date": "Ngày",
     "total": "Tổng",
-    "sessionsThroughTheRef": "Phiên qua Ref '{ref}' mỗi ngày"
+    "sessionsThroughTheRef": "Phiên qua Ref '{ref}' mỗi ngày",
+    "sessionsThroughTheMagicLink": "Phiên qua Magic Link '{ref}' mỗi ngày"
   },
   "autoAssignConversation": {
     "rule": {

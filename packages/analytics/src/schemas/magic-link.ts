@@ -15,6 +15,9 @@ export const magicLinkContactStatsSchema = z.object({
   linkId: z.string(),
   page: z.number(),
   perPage: z.number(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  timezone: z.string().optional(),
 })
 
 export type MagicLinkContactStatsInput = z.infer<
