@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateInstagramSettingAction } from "./update-instagram-settings.action"
 
 export function InstagramSettings({
@@ -173,10 +174,11 @@ export function EditInstagramSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateInstagramSettingAction,
+      updateInstagramSettingAction.bind(null, scope),
       zodResolver(instagramCredentialUpdateSchema),
       {
         actionProps: {

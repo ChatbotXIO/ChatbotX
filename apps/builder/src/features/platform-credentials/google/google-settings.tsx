@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateGoogleSettingsAction } from "./update-google-settings.action"
 
 export function GoogleSettings({
@@ -140,10 +141,11 @@ export function GoogleEditSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateGoogleSettingsAction,
+      updateGoogleSettingsAction.bind(null, scope),
       zodResolver(googleCredentialUpdateSchema),
       {
         actionProps: {

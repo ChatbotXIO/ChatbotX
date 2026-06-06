@@ -2373,6 +2373,12 @@
     "title": "QR Code",
     "description": "Share this code so people open your tracking link."
   },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "Thông tin xác thực nền tảng",
+      "description": "Ứng dụng nhà phát triển mặc định dùng chung cho mọi workspace chưa có thông tin xác thực white-label riêng."
+    }
+  },
   "platformCredentials": {
     "title": "Thông tin nền tảng"
   },

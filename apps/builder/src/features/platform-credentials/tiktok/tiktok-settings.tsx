@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateTiktokSettingAction } from "./update-tiktok-settings.action"
 
 export function TiktokSettings({
@@ -141,11 +142,12 @@ export function EditTiktokSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
   const isConfigured = publicConfig !== null
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateTiktokSettingAction,
+      updateTiktokSettingAction.bind(null, scope),
       zodResolver(tiktokCredentialUpdateSchema),
       {
         actionProps: {

@@ -2362,6 +2362,12 @@
     "title": "QR Code Generator",
     "description": "Create and manage your QR codes."
   },
+  "platformAdmin": {
+    "platformCredentials": {
+      "title": "Platform Credentials",
+      "description": "Global default developer apps used by all workspaces that don't have their own white-label credentials."
+    }
+  },
   "platformCredentials": {
     "title": "Platform Credentials"
   },

@@ -4,18 +4,28 @@ import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { InstagramSettings } from "./instagram/instagram-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
+import { CredentialScopeProvider } from "./provider/credential-scope-context"
+import type { CredentialScope } from "./scope"
 import { TiktokSettings } from "./tiktok/tiktok-settings"
 import { WhatsappSettings } from "./whatsapp/whatsapp-settings"
 import { ZaloSettings } from "./zalo/zalo-settings"
 
 type ManagePlatformCredentialsProps = {
-  userId: string
+  /**
+   * `"user"` (default): white-label customer editing their own credentials in
+   * cloud, or the platform-global credentials when self-hosted.
+   * `"platform"`: the SaaS operator editing the global default credentials.
+   */
+  scope?: CredentialScope
+  userId?: string
 }
 
 export async function ManagePlatformCredentials({
+  scope = "user",
   userId,
 }: ManagePlatformCredentialsProps) {
-  const scopedUserId = isCloud() ? userId : undefined
+  const isUserScope = scope === "user"
+  const scopedUserId = isUserScope && isCloud() ? userId : undefined
 
   const [
     whatsappResult,
@@ -53,15 +63,17 @@ export async function ManagePlatformCredentials({
     tiktokResult.status === "fulfilled" ? tiktokResult.value : undefined
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <MessengerSettings publicConfig={messenger?.publicConfig ?? null} />
-      <InstagramSettings publicConfig={instagram?.publicConfig ?? null} />
-      <GoogleSettings publicConfig={google?.publicConfig ?? null} />
-      {/* <StripeSettings publicConfig={stripe?.publicConfig ?? null} /> */}
-      <WhatsappSettings publicConfig={whatsapp?.publicConfig ?? null} />
-      <ZaloSettings publicConfig={zalo?.publicConfig ?? null} />
-      <TiktokSettings publicConfig={tiktok?.publicConfig ?? null} />
-      <GiphySettings isConfigured={giphy !== undefined} />
-    </div>
+    <CredentialScopeProvider scope={scope}>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <MessengerSettings publicConfig={messenger?.publicConfig ?? null} />
+        <InstagramSettings publicConfig={instagram?.publicConfig ?? null} />
+        <GoogleSettings publicConfig={google?.publicConfig ?? null} />
+        {/* <StripeSettings publicConfig={stripe?.publicConfig ?? null} /> */}
+        <WhatsappSettings publicConfig={whatsapp?.publicConfig ?? null} />
+        <ZaloSettings publicConfig={zalo?.publicConfig ?? null} />
+        <TiktokSettings publicConfig={tiktok?.publicConfig ?? null} />
+        <GiphySettings isConfigured={giphy !== undefined} />
+      </div>
+    </CredentialScopeProvider>
   )
 }

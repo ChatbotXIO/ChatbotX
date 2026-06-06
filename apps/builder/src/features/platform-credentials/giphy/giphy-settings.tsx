@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateGiphySettingsAction } from "./update-giphy-settings.action"
 
 export function GiphySettings({ isConfigured }: { isConfigured: boolean }) {
@@ -103,10 +104,11 @@ export function EditGiphySettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateGiphySettingsAction,
+      updateGiphySettingsAction.bind(null, scope),
       zodResolver(giphyCredentialUpdateSchema),
       {
         actionProps: {

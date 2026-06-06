@@ -94,10 +94,7 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  allowedDevOrigins: [
-    new URL(env.NEXT_PUBLIC_BUILDER_URL).host,
-    "supposedly-driven-cheetah.ngrok-free.app",
-  ],
+  allowedDevOrigins: [new URL(env.NEXT_PUBLIC_BUILDER_URL).host],
 }
 
 export default withNextIntl(nextConfig)

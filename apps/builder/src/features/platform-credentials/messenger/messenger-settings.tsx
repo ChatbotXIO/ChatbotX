@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateMessengerSettingAction } from "./update-messenger-settings.action"
 
 export function MessengerSettings({
@@ -177,10 +178,11 @@ export function EditMessengerSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateMessengerSettingAction,
+      updateMessengerSettingAction.bind(null, scope),
       zodResolver(messengerCredentialUpdateSchema),
       {
         actionProps: {

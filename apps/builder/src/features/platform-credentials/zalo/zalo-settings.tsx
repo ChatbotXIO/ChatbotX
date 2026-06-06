@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateZaloSettingsAction } from "./update-zalo-settings.action"
 
 export function ZaloSettings({
@@ -171,10 +172,11 @@ export function EditZaloSettingsForm({
   onClose?: () => void
 }) {
   const t = useTranslations()
+  const scope = useCredentialScope()
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
     useHookFormAction(
-      updateZaloSettingsAction,
+      updateZaloSettingsAction.bind(null, scope),
       zodResolver(zaloCredentialUpdateSchema),
       {
         actionProps: {
