@@ -1,4 +1,4 @@
-import { and, db, eq, inArray } from "@chatbotx.io/database/client"
+import { and, db, eq, inArray, isNull } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   contactsToTagsModel,
@@ -194,6 +194,7 @@ async function ensureTagAndChannel(props: {
       .values({ id: createId(), workspaceId, name })
       .onConflictDoNothing({
         target: [tagModel.workspaceId, tagModel.name],
+        where: isNull(tagModel.deletedAt),
       })
       .returning({ id: tagModel.id })
     tag =

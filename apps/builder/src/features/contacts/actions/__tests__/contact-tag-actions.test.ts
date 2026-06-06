@@ -82,6 +82,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   }),
   and: (...args: unknown[]) => ({ and: args }),
   eq: (col: unknown, val: unknown) => ({ eq: [col, val] }),
+  isNull: (col: unknown) => ({ isNull: col }),
   inArray: (col: unknown, vals: unknown) => ({ inArray: [col, vals] }),
   notInArray: (col: unknown, vals: unknown) => ({ notInArray: [col, vals] }),
 }))

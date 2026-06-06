@@ -1,4 +1,4 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { and, db, eq, isNull } from "@chatbotx.io/database/client"
 import { channelTypes } from "@chatbotx.io/database/partials"
 import {
   contactsToTagsModel,
@@ -147,6 +147,7 @@ async function upsertTagAndChannel(props: {
       .values({ id: createId(), name, workspaceId })
       .onConflictDoNothing({
         target: [tagModel.workspaceId, tagModel.name],
+        where: isNull(tagModel.deletedAt),
       })
       .returning({ id: tagModel.id })
     tagId =

@@ -58,6 +58,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   },
   and: (...args: unknown[]) => args,
   eq: (...args: unknown[]) => args,
+  isNull: (...args: unknown[]) => args,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({

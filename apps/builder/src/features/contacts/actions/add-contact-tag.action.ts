@@ -1,7 +1,14 @@
 "use server"
 
 import { contactService, tagSyncService } from "@chatbotx.io/business"
-import { and, db, eq, findOrFail, inArray } from "@chatbotx.io/database/client"
+import {
+  and,
+  db,
+  eq,
+  findOrFail,
+  inArray,
+  isNull,
+} from "@chatbotx.io/database/client"
 import { contactsToTagsModel, tagModel } from "@chatbotx.io/database/schema"
 import { emitTagApplied, emitTagRemoved } from "@chatbotx.io/events"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
@@ -61,6 +68,7 @@ export const addContactTags = async ({
       )
       .onConflictDoNothing({
         target: [tagModel.workspaceId, tagModel.name],
+        where: isNull(tagModel.deletedAt),
       })
 
     return await tx.query.tagModel.findMany({

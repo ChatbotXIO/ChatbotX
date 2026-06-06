@@ -91,6 +91,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     }),
   },
   sql: vi.fn((strings: TemplateStringsArray) => strings.raw.join("")),
+  isNull: (...args: unknown[]) => args,
 }))
 
 // ---------------------------------------------------------------------------

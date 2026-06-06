@@ -1,5 +1,5 @@
 import { buildContext } from "@chatbotx.io/business"
-import { db, sql } from "@chatbotx.io/database/client"
+import { db, isNull, sql } from "@chatbotx.io/database/client"
 import { type ChannelType, channelTypes } from "@chatbotx.io/database/partials"
 import {
   contactsToTagsModel,
@@ -186,6 +186,7 @@ async function upsertLabelMapping(props: {
     .values({ id: createId(), name: label.name, workspaceId })
     .onConflictDoUpdate({
       target: [tagModel.workspaceId, tagModel.name],
+      targetWhere: isNull(tagModel.deletedAt),
       set: { name: sql`EXCLUDED.name` },
     })
     .returning({ id: tagModel.id })
