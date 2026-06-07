@@ -26,7 +26,7 @@ COPY --from=pre /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
-COPY --from=pre /app/.env .env
+# COPY --from=pre /app/.env .env
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 EXPOSE 1999

@@ -20,7 +20,7 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 COPY --from=pre /app/out/json/ .
-COPY --from=pre /app/.env .env
+# COPY --from=pre /app/.env .env
 RUN pnpm install --frozen-lockfile
 
 COPY --from=pre /app/out/full/ .
