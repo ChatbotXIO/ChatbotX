@@ -244,7 +244,7 @@ export async function handleCreateWebchatMessage({
     }
 
     if (promises.length > 0) {
-      await Promise.all(promises)
+      await Promise.allSettled(promises)
     }
 
     return newMessage

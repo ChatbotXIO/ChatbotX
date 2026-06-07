@@ -180,7 +180,7 @@ export const createMessage = async (props: {
     }),
   ]
 
-  await Promise.all(promises)
+  await Promise.allSettled(promises)
 
   return messageWithAttachments
 }
