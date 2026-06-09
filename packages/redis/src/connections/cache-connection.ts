@@ -20,13 +20,14 @@ export const cacheConnections = {
 
   async useExisting(): Promise<Redis> {
     if (cacheInstance) {
-      return await cacheInstance
+      return cacheInstance
     }
-    return mutexLock.runExclusive(async () => {
-      if (cacheInstance !== null && cacheInstance !== undefined) {
+    return await mutexLock.runExclusive(async () => {
+      if (cacheInstance) {
         return cacheInstance
       }
-      return await cacheConnections.create()
+      cacheInstance = await cacheConnections.create()
+      return cacheInstance
     })
   },
 

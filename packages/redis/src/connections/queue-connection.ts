@@ -14,13 +14,14 @@ export const queueConnections = {
 
   async useExisting(): Promise<Redis> {
     if (queueConnection) {
-      return await queueConnection
+      return queueConnection
     }
-    return mutexLock.runExclusive(async () => {
-      if (queueConnection !== null && queueConnection !== undefined) {
+    return await mutexLock.runExclusive(async () => {
+      if (queueConnection) {
         return queueConnection
       }
-      return await queueConnections.create()
+      queueConnection = await queueConnections.create()
+      return queueConnection
     })
   },
 

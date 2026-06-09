@@ -14,13 +14,14 @@ export const sequenceConnections = {
 
   async useExisting(): Promise<Redis> {
     if (sequenceConnection) {
-      return await sequenceConnection
+      return sequenceConnection
     }
-    return mutexLock.runExclusive(async () => {
-      if (sequenceConnection !== null && sequenceConnection !== undefined) {
+    return await mutexLock.runExclusive(async () => {
+      if (sequenceConnection) {
         return sequenceConnection
       }
-      return await sequenceConnections.create()
+      sequenceConnection = await sequenceConnections.create()
+      return sequenceConnection
     })
   },
 
