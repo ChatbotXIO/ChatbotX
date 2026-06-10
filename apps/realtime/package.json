@@ -12,6 +12,7 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
+    "@chatbotx.io/logger": "workspace:*",
     "@chatbotx.io/partysocket-config": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "jose": "^6.2.3",

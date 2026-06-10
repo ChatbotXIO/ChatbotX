@@ -181,7 +181,7 @@ export function PlatformBrandingSettings({
                 <DirectUploadOrInsertLink
                   fileType={fileTypes.enum.image}
                   parentName="logoLight"
-                  uploadPath="public/platform/branding/logo-light"
+                  uploadPath="branding/logo-light"
                 />
               </div>
             </div>
@@ -190,8 +190,8 @@ export function PlatformBrandingSettings({
               <div className="rounded-lg border p-3">
                 <DirectUploadOrInsertLink
                   fileType={fileTypes.enum.image}
-                  parentName="logoDarkPath"
-                  uploadPath="public/platform/branding/logo-dark"
+                  parentName="logoDark"
+                  uploadPath="branding/logo-dark"
                 />
               </div>
             </div>
@@ -200,8 +200,8 @@ export function PlatformBrandingSettings({
               <div className="rounded-lg border p-3">
                 <DirectUploadOrInsertLink
                   fileType={fileTypes.enum.image}
-                  parentName="faviconPath"
-                  uploadPath="public/platform/branding/favicon"
+                  parentName="favicon"
+                  uploadPath="branding/favicon"
                 />
               </div>
             </div>

@@ -34,12 +34,10 @@ export const fileModel = pgTable(
   "File",
   {
     ...sharedColumns,
-    workspaceId: bigintAsString()
-      .notNull()
-      .references(() => workspaceModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
+    workspaceId: bigintAsString().references(() => workspaceModel.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     userId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
       onUpdate: "cascade",

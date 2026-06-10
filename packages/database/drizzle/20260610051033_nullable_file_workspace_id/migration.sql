@@ -1,0 +1,1 @@
+ALTER TABLE "File" ALTER COLUMN "workspaceId" DROP NOT NULL;

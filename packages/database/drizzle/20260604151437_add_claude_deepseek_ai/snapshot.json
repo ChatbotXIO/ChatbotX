@@ -1,11 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "351fc50a-eea1-42ef-b92f-193cf6838d66",
-  "prevIds": [
-    "3f90fd05-b964-41d0-8744-da1ee18fece4",
-    "e816f408-d2af-4e69-a9fa-f0cec92dd2f3"
-  ],
+  "id": "c744036c-a1a7-46d5-9952-109e12fc83a3",
+  "prevIds": ["3f90fd05-b964-41d0-8744-da1ee18fece4"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -487,6 +484,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "ContactToTagChannel",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Conversation",
       "entityType": "tables",
       "schema": "public"
@@ -799,6 +802,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "TagChannel",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "Trigger",
       "entityType": "tables",
       "schema": "public"
@@ -982,6 +991,19 @@
       "generated": null,
       "identity": null,
       "name": "tools",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "AIAgent"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "",
+      "generated": null,
+      "identity": null,
+      "name": "webSearchAuthorizedDomains",
       "entityType": "columns",
       "schema": "public",
       "table": "AIAgent"
@@ -6252,6 +6274,58 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "name": "tagId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tagChannelId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "contactInboxId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
       "name": "id",
       "entityType": "columns",
       "schema": "public",
@@ -6357,6 +6431,19 @@
       "generated": null,
       "identity": null,
       "name": "agentLastReadAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "aiContextLastMessageId",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
@@ -9937,6 +10024,19 @@
       "table": "IntegrationMessenger"
     },
     {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "syncTagEnabledAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationMessenger"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -10972,6 +11072,19 @@
       "generated": null,
       "identity": null,
       "name": "fallbackFlowId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "IntegrationZalo"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "syncTagEnabledAt",
       "entityType": "columns",
       "schema": "public",
       "table": "IntegrationZalo"
@@ -13255,6 +13368,19 @@
       "table": "Tag"
     },
     {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Tag"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": false,
@@ -13263,19 +13389,6 @@
       "generated": null,
       "identity": null,
       "name": "folderId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tag"
-    },
-    {
-      "type": "boolean",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "false",
-      "generated": null,
-      "identity": null,
-      "name": "syncToMessenger",
       "entityType": "columns",
       "schema": "public",
       "table": "Tag"
@@ -13292,6 +13405,110 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Tag"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "workspaceId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tagId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "channelType",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "integrationId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "externalLabelId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TagChannel"
     },
     {
       "type": "bigint",
@@ -16330,6 +16547,48 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "contactInboxId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactToTagChannel_contactInboxId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tagId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ContactToTagChannel_tagId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "contactId",
           "isExpression": false,
           "asc": true,
@@ -16343,6 +16602,27 @@
       "method": "btree",
       "concurrently": false,
       "name": "Conversation_contactId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "aiContextLastMessageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Conversation_aiContextLastMessageId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Conversation"
@@ -18466,7 +18746,7 @@
         }
       ],
       "isUnique": true,
-      "where": null,
+      "where": "(\"deletedAt\" is null)",
       "with": "",
       "method": "btree",
       "concurrently": false,
@@ -18495,6 +18775,132 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "Tag"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "tagId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channelType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TagChannel_tag_integration_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "channelType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "externalLabelId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TagChannel_external_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "channelType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TagChannel_workspace_channel_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "channelType",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "integrationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "TagChannel_integration_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "TagChannel"
     },
     {
       "nameExplicit": true,
@@ -19967,6 +20373,45 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["tagId"],
+      "schemaTo": "public",
+      "tableTo": "Tag",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactToTagChannel_tagId_Tag_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["tagChannelId"],
+      "schemaTo": "public",
+      "tableTo": "TagChannel",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactToTagChannel_tagChannelId_TagChannel_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["contactInboxId"],
+      "schemaTo": "public",
+      "tableTo": "ContactInbox",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ContactToTagChannel_contactInboxId_ContactInbox_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ContactToTagChannel"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["assignedUserId"],
       "schemaTo": "public",
       "tableTo": "User",
@@ -21306,6 +21751,32 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["workspaceId"],
+      "schemaTo": "public",
+      "tableTo": "Workspace",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TagChannel_workspaceId_Workspace_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["tagId"],
+      "schemaTo": "public",
+      "tableTo": "Tag",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "TagChannel_tagId_Tag_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TagChannel"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["folderId"],
       "schemaTo": "public",
       "tableTo": "Folder",
@@ -21671,6 +22142,14 @@
       "entityType": "pks",
       "schema": "public",
       "table": "ContactToTag"
+    },
+    {
+      "columns": ["tagChannelId", "contactInboxId"],
+      "nameExplicit": false,
+      "name": "ContactToTagChannel_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "ContactToTagChannel"
     },
     {
       "columns": ["id", "contactId"],
@@ -22294,6 +22773,14 @@
       "name": "Tag_pkey",
       "schema": "public",
       "table": "Tag",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "TagChannel_pkey",
+      "schema": "public",
+      "table": "TagChannel",
       "entityType": "pks"
     },
     {

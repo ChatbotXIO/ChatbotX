@@ -15,8 +15,8 @@ import {
  * Props for the DirectUploadButton component
  */
 export type DirectUploadButtonProps = FileUploadProps & {
-  /** Workspace ID for the upload */
-  workspaceId: string
+  /** Workspace ID for the upload. Omit for platform-level (workspace-less) uploads. */
+  workspaceId?: string
   /** The base path where files will be uploaded to S3 */
   uploadPath?: string
   /** Custom upload handler URL, defaults to /api/presigned-upload */
@@ -78,7 +78,7 @@ export function DirectUploadButton({
               },
               body: JSON.stringify({
                 path: filePath,
-                workspaceId,
+                ...(workspaceId !== undefined && { workspaceId }),
                 fileName: file.name,
                 type: "generic",
                 subType: "generic",

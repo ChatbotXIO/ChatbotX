@@ -1,5 +1,6 @@
 import ky from "ky"
 import type * as Party from "partykit/server"
+import { logger } from "../logger"
 
 export type Session = {
   user: {
@@ -24,6 +25,7 @@ export const getAuthSession = async (
   proxiedRequest: Party.Request,
 ): Promise<Session> => {
   const url = new URL(proxiedRequest.url)
+  logger.info({ proxiedRequest }, "proxiedRequest")
   const token = url.searchParams.get("token")
   if (!token) {
     throw new Error("No token provided")
@@ -31,7 +33,7 @@ export const getAuthSession = async (
 
   const headers = proxiedRequest.headers
   const origin = headers.get("origin") ?? "https://example.com"
-
+  logger.info({ origin, token }, "origin")
   const verificationUrl = new URL(
     "/api/auth/one-time-token/verify",
     origin,

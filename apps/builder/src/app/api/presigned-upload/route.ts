@@ -1,4 +1,8 @@
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import {
+  isPlatformAdmin,
+  resolvePlatformSettings,
+  resolvePlatformSettingsByDomain,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { fileContextTypes, fileStatuses } from "@chatbotx.io/database/partials"
 import { fileModel } from "@chatbotx.io/database/schema"
@@ -8,8 +12,10 @@ import { type NextRequest, NextResponse } from "next/server"
 import { presignImportUploadRequest } from "@/features/import/schemas/presign"
 import {
   assertCurrentUserCanAccessChatbot,
+  getCurrentUser,
   getCurrentUserId,
 } from "@/lib/auth/utils"
+import { getDomainFromHeader } from "@/lib/domain"
 import { serverErrorHandler } from "@/lib/errors/server-handler"
 import { safeJsonParse } from "@/lib/serialize"
 import { getUploadHandler } from "@/lib/upload/handlers"
@@ -23,10 +29,33 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    await assertCurrentUserCanAccessChatbot(input.workspaceId)
+
+    let storageUrl: string
+
+    if (input.workspaceId) {
+      await assertCurrentUserCanAccessChatbot(input.workspaceId)
+      ;({ storageUrl } = await resolvePlatformSettings({
+        workspaceId: input.workspaceId,
+      }))
+    } else {
+      if (input.type === "import") {
+        return NextResponse.json(
+          { error: "workspaceId is required for import uploads" },
+          { status: 400 },
+        )
+      }
+      const user = await getCurrentUser()
+      if (!(user && (await isPlatformAdmin(user)))) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
+      const domain = await getDomainFromHeader()
+      ;({ storageUrl } = await resolvePlatformSettingsByDomain(domain))
+    }
+
+    const handlerInput = { ...input, userId }
 
     const handler = getUploadHandler(input.type)
-    const result = handler(input)
+    const result = handler(handlerInput)
 
     if (!result.ok) {
       return NextResponse.json(
@@ -38,18 +67,17 @@ export async function POST(req: NextRequest) {
     const { path } = result
 
     const presignedPostUrl = await uploader.getPresignedUpload(path)
-
-    const { storageUrl } = await resolvePlatformSettings({
-      workspaceId: input.workspaceId,
-    })
     const publicUrl = new URL(path, storageUrl).toString()
 
     const fileId = createId()
     await db.insert(fileModel).values({
       id: fileId,
-      workspaceId: input.workspaceId,
+      workspaceId: input.workspaceId ?? null,
       userId,
-      contextType: fileContextTypes.enum.import,
+      contextType:
+        input.type === "import"
+          ? fileContextTypes.enum.import
+          : fileContextTypes.enum.generic,
       subType: input.subType,
       path,
       fileName: input.fileName,

@@ -94,7 +94,10 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  allowedDevOrigins: [new URL(env.NEXT_PUBLIC_BUILDER_URL).host],
+  allowedDevOrigins: [
+    new URL(env.NEXT_PUBLIC_BUILDER_URL).host,
+    ...(process.env.NODE_ENV === "development" ? ["*.ngrok-free.app"] : []),
+  ],
 }
 
 export default withNextIntl(nextConfig)
