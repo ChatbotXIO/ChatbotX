@@ -25,6 +25,9 @@ export const customDomainModel = pgTable(
     domain: text().notNull(),
     status: text().notNull().default("pending"), // 'pending' | 'active' | 'failed'
     verifiedAt: timestamp(timestampConfig),
+    cfHostnameId: text(),
+    cfOwnershipValue: text(),
+    cfAcmeValue: text(),
   },
   (table) => [
     uniqueIndex("CustomDomain_userId_key").on(table.userId),
