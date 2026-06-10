@@ -34,10 +34,12 @@ import { authClient } from "@/lib/auth/auth-client"
 export function AppSidebar({
   workspaceId,
   allWorkspaces,
+  isPlatformAdmin,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
   allWorkspaces: WorkspaceResource[]
+  isPlatformAdmin?: boolean
 }) {
   const t = useTranslations()
   const { data: session } = authClient.useSession()
@@ -129,7 +131,7 @@ export function AppSidebar({
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser isPlatformAdmin={isPlatformAdmin} user={data.user} />
       </SidebarFooter>
     </Sidebar>
   )

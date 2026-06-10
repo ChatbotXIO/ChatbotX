@@ -1,4 +1,4 @@
-import { workspaceMemberService } from "@chatbotx.io/business"
+import { isPlatformAdmin, workspaceMemberService } from "@chatbotx.io/business"
 import {
   SidebarInset,
   SidebarProvider,
@@ -9,7 +9,7 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { getPlatformSettings } from "@/features/platform/utils"
-import { getCurrentUserId } from "@/lib/auth/utils"
+import { getCurrentUser } from "@/lib/auth/utils"
 
 export default async function WorkspaceLayout({
   children,
@@ -23,16 +23,18 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
-  const userId = await getCurrentUserId()
-  if (!userId) {
+  const user = await getCurrentUser()
+  if (!user) {
     return notFound()
   }
 
   // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }] = await Promise.all([
-    workspaceMemberService.listByUserId({ userId }),
-    getPlatformSettings(),
-  ])
+  const [allWorkspaceMembers, { storageUrl }, platformAdmin] =
+    await Promise.all([
+      workspaceMemberService.listByUserId({ userId: user.id }),
+      getPlatformSettings(),
+      isPlatformAdmin(user),
+    ])
   if (
     !allWorkspaceMembers.some(
       (workspaceMember) => workspaceMember.workspace.id === workspaceId,
@@ -53,7 +55,11 @@ export default async function WorkspaceLayout({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar allWorkspaces={allWorkspaces} workspaceId={workspaceId} />
+      <AppSidebar
+        allWorkspaces={allWorkspaces}
+        isPlatformAdmin={platformAdmin}
+        workspaceId={workspaceId}
+      />
       <SidebarInset>
         <main className="flex flex-1 flex-col gap-4 p-6">{children}</main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />

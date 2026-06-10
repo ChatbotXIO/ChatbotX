@@ -20,7 +20,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { ChevronsUpDown } from "lucide-react"
+import { ChevronsUpDown, Settings2 } from "lucide-react"
+import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { SignOut } from "@/features/auth/sign-out"
 import { LangSelector } from "./lang-selector"
@@ -28,12 +29,14 @@ import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
+  isPlatformAdmin,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
+  isPlatformAdmin?: boolean
 }) {
   const { isMobile } = useSidebar()
   const _t = useTranslations()
@@ -117,6 +120,19 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
+            {isPlatformAdmin && (
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="/manage">
+                      <Settings2 className="mr-2 h-4 w-4" />
+                      {_t("actions.manage")}
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem asChild>
               <SignOut />
             </DropdownMenuItem>
