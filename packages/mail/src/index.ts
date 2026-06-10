@@ -25,13 +25,15 @@ export {
   DEFAULT_SIGNUP_TEMPLATE,
 } from "./emails/default-templates"
 
+function substituteVars(text: string, vars: Record<string, string>): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => esc(vars[key] ?? ""))
+}
+
 async function renderCustomTemplate(
   body: string,
   vars: Record<string, string>,
 ): Promise<string> {
-  const substituted = body.replace(/\{\{(\w+)\}\}/g, (_, key) =>
-    esc(vars[key] ?? ""),
-  )
+  const substituted = substituteVars(body, vars)
   if (substituted.trimStart().startsWith("<mjml")) {
     return await compileMjml(substituted)
   }
@@ -70,11 +72,10 @@ async function sendEmailWithTemplate(
   templateVars: Record<string, string>,
 ): Promise<void> {
   const customBody = customTemplate?.body?.trim()
-  const subject =
-    (customBody && customTemplate?.subject?.trim()) || defaultSubject
-  const html = customBody
-    ? await renderCustomTemplate(customBody, templateVars)
-    : await buildDefaultHtml()
+  const customSubject = customBody && customTemplate?.subject?.trim()
+  const subject = substituteVars(customSubject ?? defaultSubject, templateVars)
+  const body = customBody ?? (await buildDefaultHtml())
+  const html = await renderCustomTemplate(body, templateVars)
   await sendMail(email, subject, html)
 }
 

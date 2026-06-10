@@ -94,6 +94,9 @@ export function createAuth(_config: AuthConfig) {
           getPlatformSettings(request),
         ])
 
+        const resetPasswordUrl = new URL(url)
+        resetPasswordUrl.hostname = new URL(originUrl).hostname
+
         const {
           name: brandName,
           logoLightUrl,
@@ -106,7 +109,7 @@ export function createAuth(_config: AuthConfig) {
           brandUrl: new URL("/", originUrl).toString(),
           subject: DEFAULT_FORGOT_PASSWORD_SUBJECT,
           userName: user.name ?? user.email,
-          resetPasswordUrl: url,
+          resetPasswordUrl: resetPasswordUrl.toString(),
           customTemplate: forgotPasswordEmailTemplate,
         })
       },
@@ -123,6 +126,10 @@ export function createAuth(_config: AuthConfig) {
           getPublicOriginFromRequest(request as unknown as Request),
           getPlatformSettings(request),
         ])
+
+        const verificationUrl = new URL(url)
+        verificationUrl.hostname = new URL(originUrl).hostname
+
         const {
           name: brandName,
           logoLightUrl,
@@ -135,7 +142,7 @@ export function createAuth(_config: AuthConfig) {
           brandUrl: new URL("/", originUrl).toString(),
           subject: DEFAULT_SIGNUP_SUBJECT,
           userName: user.name ?? user.email,
-          verificationUrl: url,
+          verificationUrl: verificationUrl.toString(),
           customTemplate: signupEmailTemplate,
         })
       },
@@ -153,6 +160,10 @@ export function createAuth(_config: AuthConfig) {
             getPublicOriginFromRequest(request as unknown as Request),
             getPlatformSettings(request as unknown as Request),
           ])
+
+          const magicUrl = new URL(url)
+          magicUrl.hostname = new URL(originUrl).hostname
+
           const {
             name: brandName,
             logoLightUrl,
@@ -172,7 +183,7 @@ export function createAuth(_config: AuthConfig) {
             brandUrl: new URL("/", originUrl).toString(),
             subject: DEFAULT_MAGIC_LINK_SUBJECT,
             userName: user.name ?? email,
-            magicUrl: url,
+            magicUrl: magicUrl.toString(),
             customTemplate: magicLinkEmailTemplate,
           })
         },
@@ -198,7 +209,7 @@ export function createAuth(_config: AuthConfig) {
     trustedOrigins: async () => {
       const domains = await db.query.customDomainModel.findMany({
         where: {
-          status: "verified",
+          status: "active",
         },
         columns: {
           domain: true,
