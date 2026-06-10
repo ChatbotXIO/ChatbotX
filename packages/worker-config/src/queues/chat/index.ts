@@ -46,6 +46,7 @@ export type ChatJobSendChannelMessage = {
     contactInbox: ContactInboxModel
     message: MessageModel & { clientId?: string | undefined }
     metadata?: MetadataPayload
+    sendFrom?: "inbox"
   }
 }
 
@@ -69,6 +70,7 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    sendFrom?: "inbox"
   }
 }
 

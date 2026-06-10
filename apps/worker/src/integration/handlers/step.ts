@@ -76,7 +76,14 @@ import {
 export async function sendFlowMessage(
   props: ExecuteStepProps<ChatJobSendFlowStep["data"]["step"]>,
 ) {
-  const { conversation, flowVersion, step, trackingContext, metadata } = props
+  const {
+    conversation,
+    flowVersion,
+    step,
+    trackingContext,
+    metadata,
+    sendFrom,
+  } = props
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
     type: ChatJobAction.sendFlowMessage,
     data: {
@@ -86,6 +93,7 @@ export async function sendFlowMessage(
       step,
       trackingContext,
       metadata,
+      sendFrom,
     },
   })
 }
@@ -97,6 +105,7 @@ async function splitTraffic({
   step,
   targetId,
   useLatestFlowVersion,
+  sendFrom,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -127,6 +136,7 @@ async function splitTraffic({
         flowId: flowVersion.flowId,
         flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: connectedEdge.target,
+        sendFrom,
       },
     })
   }
@@ -139,6 +149,7 @@ async function handleWait({
   targetId,
   step,
   useLatestFlowVersion,
+  sendFrom,
 }: ExecuteStepProps<WaitStepSchema>): Promise<ExecuteStepResult> {
   if (!(targetId && step)) {
     return { status: "skip", result: null }
@@ -216,6 +227,7 @@ async function handleWait({
             flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
             nodeId: connectedNodeId,
             contactInboxId,
+            sendFrom,
           },
         },
         { delay: Math.max(0, diffMs), jobId: buildJobId(rowId) },
@@ -247,6 +259,7 @@ async function startAnotherNode(
       flowVersionId: props.flowVersion.id,
       nodeId: props.step.nodeId,
       metadata: props.metadata,
+      sendFrom: props.sendFrom,
     },
   })
 }
@@ -256,6 +269,7 @@ async function startExternalFlow({
   contactInbox,
   step,
   metadata,
+  sendFrom,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -264,6 +278,7 @@ async function startExternalFlow({
       contactInboxId: contactInbox.id,
       flowId: step.flowId,
       metadata,
+      sendFrom,
     },
   })
 }
@@ -273,6 +288,7 @@ async function startExternalNode({
   contactInbox,
   step,
   metadata,
+  sendFrom,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -282,6 +298,7 @@ async function startExternalNode({
       flowId: step.flowId,
       nodeId: step.nodeId,
       metadata,
+      sendFrom,
     },
   })
 }

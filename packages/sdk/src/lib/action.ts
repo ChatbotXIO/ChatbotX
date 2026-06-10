@@ -5,4 +5,6 @@ import type { ChannelSendFlowStepProps } from "./integration"
 export type SendFlowStepProps<
   TAuth extends AuthValue,
   S extends SendFlowStepData = SendFlowStepData,
-> = ChannelSendFlowStepProps<TAuth> & { data: { step: S } }
+> = Omit<ChannelSendFlowStepProps<TAuth>, "data"> & {
+  data: Omit<ChannelSendFlowStepProps<TAuth>["data"], "step"> & { step: S }
+}

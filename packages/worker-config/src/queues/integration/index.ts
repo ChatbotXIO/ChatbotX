@@ -72,6 +72,7 @@ export type IntegrationJobRunFlowNode = {
     startFromStepId?: string
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    sendFrom?: "inbox"
   }
 }
 

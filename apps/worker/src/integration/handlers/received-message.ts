@@ -185,11 +185,18 @@ export const receiveMessage = async (
     const newMessage = messageWithAttachments
 
     if (isNewMessage) {
+      const lastMessageUpdate: Partial<typeof contactInboxModel.$inferInsert> =
+        {
+          lastMessageAt: newMessage.createdAt,
+        }
+
+      if (incomingMessage.messageType !== "outgoing") {
+        lastMessageUpdate.lastIncomingMessageAt = newMessage.createdAt
+      }
+
       await db
         .update(contactInboxModel)
-        .set({
-          lastMessageAt: newMessage.createdAt,
-        })
+        .set(lastMessageUpdate)
         .where(eq(contactInboxModel.id, contactInbox.id))
     }
 

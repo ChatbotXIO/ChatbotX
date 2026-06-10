@@ -66,115 +66,109 @@ export const selectPageAction = authActionClient
 
         let integrationId = ""
 
-        const { createdWorkspace, brandingCtx } = await db.transaction(
-          async (tx) => {
-            const longLivedToken = await exchangeLongLivedToken(
-              messengerSettings,
-              parsedInput.accessToken,
-            )
+        const { brandingCtx } = await db.transaction(async (tx) => {
+          const longLivedToken = await exchangeLongLivedToken(
+            messengerSettings,
+            parsedInput.accessToken,
+          )
 
-            let createdWorkspace = false
-            if (!workspaceId) {
-              const workspace = await workspaceService.create({
-                tx,
-                createdBy: ctx.user.id,
-                data: {
-                  name: parsedInput.pageName,
-                  timezone: "UTC",
-                  ownerId: ctx.user.id,
-                },
-              })
-              workspaceId = workspace.id
-              createdWorkspace = true
-            }
-
-            const { appUrl } = await resolvePlatformSettings({
-              workspaceId,
+          if (!workspaceId) {
+            const workspace = await workspaceService.create({
               tx,
-            })
-
-            await subscribePageToAppWebhook({
-              pageId: parsedInput.pageId,
-              accessToken: longLivedToken,
-              version: messengerSettings.version,
-            })
-
-            const auth: MessengerAuthValue = {
-              authType: AuthType.oauth2,
-              clientId: messengerSettings.clientId,
-              clientSecret: messengerSettings.clientSecret,
-              redirectUrl: "",
-              tokens: {
-                accessToken: longLivedToken,
+              createdBy: ctx.user.id,
+              data: {
+                name: parsedInput.pageName,
+                timezone: "UTC",
+                ownerId: ctx.user.id,
               },
-              metadata: {
-                pageId: parsedInput.pageId,
-                pageName: parsedInput.pageName,
-                version: messengerSettings.version,
-              },
-            }
-
-            const { integration: integrationRow } =
-              await connectChannelIntegration({
-                tx,
-                ownerId: platformOwnerId,
-                inboxData: {
-                  id: createId(),
-                  workspaceId: workspaceId as string,
-                  name: parsedInput.pageName,
-                  channel: "messenger",
-                  sourceId: parsedInput.pageId,
-                },
-                insertIntegration: async (inboxId) =>
-                  tx
-                    .insert(integrationMessengerModel)
-                    .values({
-                      id: createId(),
-                      workspaceId: workspaceId as string,
-                      inboxId,
-                      pageId: parsedInput.pageId,
-                      auth,
-                      name: parsedInput.pageName,
-                      persistentMenus: [
-                        {
-                          label: BRANDING_TITLE,
-                          type: "url" as const,
-                          url: getBrandingUrl("messenger", appUrl),
-                        },
-                      ],
-                      conversationStarters: [],
-                      personas: [],
-                    })
-                    .returning()
-                    .then((result) => result[0]),
-              })
-
-            integrationId = integrationRow.id
-            connectedIntegrationId = integrationRow?.id
-
-            const brandingCtx = await buildContext({
-              workspaceId,
-              integrationType: "messenger",
-              integration: { ...integrationRow, auth },
             })
+            workspaceId = workspace.id
+          }
 
-            await integrationMessenger.runChannelHandler("bot", "addBranding", {
-              ctx: brandingCtx,
-              title: BRANDING_TITLE,
-              url: getBrandingUrl("messenger", appUrl),
-            })
-
-            return { createdWorkspace, brandingCtx }
-          },
-        )
-
-        if (createdWorkspace) {
-          await updateWorkspaceLogo({
-            id: workspaceId as string,
-            integration: integrationMessenger,
-            ctx: brandingCtx,
+          const { appUrl } = await resolvePlatformSettings({
+            workspaceId,
+            tx,
           })
-        }
+
+          await subscribePageToAppWebhook({
+            pageId: parsedInput.pageId,
+            accessToken: longLivedToken,
+            version: messengerSettings.version,
+          })
+
+          const auth: MessengerAuthValue = {
+            authType: AuthType.oauth2,
+            clientId: messengerSettings.clientId,
+            clientSecret: messengerSettings.clientSecret,
+            redirectUrl: "",
+            tokens: {
+              accessToken: longLivedToken,
+            },
+            metadata: {
+              pageId: parsedInput.pageId,
+              pageName: parsedInput.pageName,
+              version: messengerSettings.version,
+            },
+          }
+
+          const { integration: integrationRow } =
+            await connectChannelIntegration({
+              tx,
+              ownerId: platformOwnerId,
+              inboxData: {
+                id: createId(),
+                workspaceId: workspaceId as string,
+                name: parsedInput.pageName,
+                channel: "messenger",
+                sourceId: parsedInput.pageId,
+              },
+              insertIntegration: async (inboxId) =>
+                tx
+                  .insert(integrationMessengerModel)
+                  .values({
+                    id: createId(),
+                    workspaceId: workspaceId as string,
+                    inboxId,
+                    pageId: parsedInput.pageId,
+                    auth,
+                    name: parsedInput.pageName,
+                    persistentMenus: [
+                      {
+                        label: BRANDING_TITLE,
+                        type: "url" as const,
+                        url: getBrandingUrl("messenger", appUrl),
+                      },
+                    ],
+                    conversationStarters: [],
+                    personas: [],
+                  })
+                  .returning()
+                  .then((result) => result[0]),
+            })
+
+          integrationId = integrationRow.id
+          connectedIntegrationId = integrationRow?.id
+
+          const brandingCtx = await buildContext({
+            workspaceId,
+            integrationType: "messenger",
+            integration: { ...integrationRow, auth },
+          })
+
+          await integrationMessenger.runChannelHandler("bot", "addBranding", {
+            ctx: brandingCtx,
+            title: BRANDING_TITLE,
+            url: getBrandingUrl("messenger", appUrl),
+          })
+
+          return { brandingCtx }
+        })
+
+        await updateWorkspaceLogo({
+          id: workspaceId as string,
+          integration: integrationMessenger,
+          ctx: brandingCtx,
+        })
 
         if (!integrationId) {
           throw new ChatbotXException("Failed to create integration")

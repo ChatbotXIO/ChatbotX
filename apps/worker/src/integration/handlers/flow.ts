@@ -79,6 +79,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   }
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
+  sendFrom?: "inbox"
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
@@ -87,7 +88,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
     return
   }
 
-  const { trackingContext, metadata } = props
+  const { trackingContext, metadata, sendFrom } = props
   const { conversation, contactInbox } =
     await detectConversationAndContactInbox({
       conversationId: props.conversationId,
@@ -130,6 +131,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       },
       trackingContext,
       metadata,
+      sendFrom,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -229,6 +231,7 @@ export async function runStepsAndQuickReplies(
           startFromStepId: nextStep.id,
           metadata: props.metadata,
           trackingContext: props.trackingContext,
+          sendFrom: props.sendFrom,
         },
       })
       return
@@ -286,6 +289,7 @@ export async function runStepsAndQuickReplies(
         nodeId: nextNode.id,
         metadata: props.metadata,
         trackingContext: props.trackingContext,
+        sendFrom: props.sendFrom,
       },
     })
   }
@@ -349,6 +353,7 @@ async function* executeMultipleStepsGenerator(
               nodeId: connectedNodeId,
               metadata: props.metadata,
               trackingContext: props.trackingContext,
+              sendFrom: props.sendFrom,
             },
           })
           branched = true

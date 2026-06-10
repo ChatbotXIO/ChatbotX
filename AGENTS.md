@@ -101,6 +101,7 @@ pnpm --filter @chatbotx.io/database make:migration <name>
 
 - **Windsurf rules:** `.windsurf/rules/` (Next.js conventions, Ultracite standards).
 - **Agent skills (detailed runbooks):** `.agents/skills/` — notably `turborepo-workflow`, `feature-scaffold`, `orpc-api`, `drizzle-database`, `integration-channel`, `worker-development`.
+- **Test placement:** use `<workspace>/__tests__/` for app/package/integration-level tests, especially tests covering actions, routes, API behavior, cache behavior, worker behavior, or multiple feature boundaries (e.g. `apps/builder/__tests__`, `apps/worker/__tests__`, `packages/sdk/__tests__`, `integrations/messenger/__tests__`). Use colocated `src/**/__tests__` only for narrow unit/component tests clearly owned by that module.
 - **Quality bar:** Run `pnpm lint` (and typecheck scripts for touched packages) before considering work done. Keep changes scoped to the requested behavior.
 
 ## Key invariants for AI agents

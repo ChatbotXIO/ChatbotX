@@ -275,6 +275,7 @@ export const facebookSendMessageRequestSchema = z.object({
       "TRANSPORTATION_UPDATE",
       "FEATURE_FUNCTIONALITY_UPDATE",
       "TICKET_UPDATE",
+      "HUMAN_AGENT",
     ])
     .optional(),
   notification_type: z.enum(["REGULAR", "SILENT_PUSH", "NO_PUSH"]).optional(),

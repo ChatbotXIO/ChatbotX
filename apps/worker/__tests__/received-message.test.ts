@@ -18,8 +18,10 @@ const {
   mockResolvePlatformSettings,
   mockUpdateContactFromMessage,
   mockIntegrationQueueAdd,
+  mockDbSet,
 } = vi.hoisted(() => {
-  const updateChain = { set: vi.fn(), where: vi.fn() }
+  const mockDbSet = vi.fn()
+  const updateChain = { set: mockDbSet, where: vi.fn() }
   updateChain.set.mockReturnValue(updateChain)
   updateChain.where.mockResolvedValue(undefined)
   const mockDbUpdate = vi.fn().mockReturnValue(updateChain)
@@ -50,6 +52,7 @@ const {
     mockResolvePlatformSettings: vi.fn().mockResolvedValue({}),
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockDbSet,
   }
 })
 
@@ -76,7 +79,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  contactInboxModel: { id: "id" },
+  contactInboxModel: {
+    id: "id",
+    lastMessageAt: "lastMessageAt",
+    lastIncomingMessageAt: "lastIncomingMessageAt",
+  },
   contactModel: { id: "id" },
   conversationModel: { id: "id" },
 }))
@@ -294,7 +301,7 @@ describe("receiveMessage — message repository branch", () => {
     expect(mockCreateOrUpdate).not.toHaveBeenCalled()
   })
 
-  test("updates contactInbox.lastMessageAt when isNew=true", async () => {
+  test("updates contactInbox message timestamps when incoming message is new", async () => {
     mockRunChannelHandler.mockResolvedValue({
       message: { ...baseIncomingMessage, attachments: [] },
       contact: { sourceId: "psid-123", firstName: "Test" },
@@ -310,6 +317,34 @@ describe("receiveMessage — message repository branch", () => {
     await receiveMessage(baseProps)
 
     expect(mockDbUpdate).toHaveBeenCalled()
+    expect(mockDbSet).toHaveBeenCalledWith({
+      lastMessageAt: fakeCreatedMessage.createdAt,
+      lastIncomingMessageAt: fakeCreatedMessage.createdAt,
+    })
+  })
+
+  test("does NOT update lastIncomingMessageAt for outgoing webhook echo", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: {
+        ...baseIncomingMessage,
+        messageType: "outgoing",
+        attachments: [],
+      },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: { ...fakeCreatedMessage, messageType: "outgoing" },
+      isNew: true,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockDbSet).toHaveBeenCalledWith({
+      lastMessageAt: fakeCreatedMessage.createdAt,
+    })
   })
 
   test("does NOT update lastMessageAt when isNew=false", async () => {

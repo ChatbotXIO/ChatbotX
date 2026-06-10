@@ -23,6 +23,8 @@ import { integration as integrationWhatsapp } from "@chatbotx.io/integration-wha
 import { integration as integrationZalo } from "@chatbotx.io/integration-zalo"
 import {
   type AuthValue,
+  ChannelError,
+  ChannelErrorCategory,
   type Integration,
   type IntegrationDefinition,
   SdkException,
@@ -159,8 +161,10 @@ export const integrationService = {
     )
 
     if (!result.rows[0]) {
-      throw new SdkException(
+      throw new ChannelError(
         `Unable to find integration auth for channel: ${contactInbox.channel}`,
+        ChannelErrorCategory.AUTH_FAILED,
+        { code: "integration_auth_missing" },
       )
     }
 

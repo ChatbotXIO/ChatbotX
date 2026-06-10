@@ -5,7 +5,10 @@ import {
   eq,
   isNull,
 } from "@chatbotx.io/database/client"
-import { workspaceModel } from "@chatbotx.io/database/schema"
+import {
+  workspaceMemberModel,
+  workspaceModel,
+} from "@chatbotx.io/database/schema"
 import { uploadFileFromUrl } from "@chatbotx.io/filesystem/node-upload"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import type { AuthValue, Context } from "@chatbotx.io/sdk"
@@ -27,25 +30,37 @@ export async function updateWorkspaceLogo<A extends AuthValue>(props: {
 }): Promise<void> {
   const { id, integration, ctx, tx = db } = props
 
-  const url = await integration.runChannelHandler(
-    "bot",
-    "getProfilePictureUrl",
-    {
-      ctx,
-    },
-  )
-  if (!url) {
+  const workspace = await tx.query.workspaceModel.findFirst({
+    where: { id },
+    columns: { logo: true },
+  })
+  if (!workspace || workspace.logo) {
     return
   }
 
-  let logo: string
+  let logo: string | undefined
   try {
+    const url = await integration.runChannelHandler(
+      "bot",
+      "getProfilePictureUrl",
+      {
+        ctx,
+      },
+    )
+    if (!url) {
+      return
+    }
+
     const uploaded = await uploadFileFromUrl(
       url,
       `public/space/${id}/logos/${createId()}.jpg`,
     )
     logo = uploaded.originPath
   } catch {
+    return
+  }
+
+  if (!logo) {
     return
   }
 
@@ -56,6 +71,17 @@ export async function updateWorkspaceLogo<A extends AuthValue>(props: {
     .returning({ id: workspaceModel.id })
 
   if (updated.length > 0) {
-    await invalidateCacheByTags([`workspaces:${id}`])
+    const workspaceMembers = await tx
+      .select({ userId: workspaceMemberModel.userId })
+      .from(workspaceMemberModel)
+      .where(eq(workspaceMemberModel.workspaceId, id))
+
+    await invalidateCacheByTags([
+      `workspaces:${id}`,
+      ...workspaceMembers.map(
+        (workspaceMember) =>
+          `users:${workspaceMember.userId}:workspace-members`,
+      ),
+    ])
   }
 }

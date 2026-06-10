@@ -130,6 +130,13 @@ export const createItemAction = workspaceActionClient
   )
 ```
 
+## Tests
+
+- Put builder app-level tests for actions, routes, API behavior, cache behavior,
+  or cross-feature behavior in `apps/builder/__tests__/`.
+- Use colocated `src/features/**/__tests__` only for narrow component/unit tests
+  that are clearly owned by that feature.
+
 ### Action Clients
 
 - `workspaceActionClient` — requires workspace membership

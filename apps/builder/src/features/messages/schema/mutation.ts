@@ -33,6 +33,7 @@ export const createMessageRequest = z
           "ID of the channel to send the message on. null to send message on the last interacted channel (if any).",
       }),
       clientId: zodBigintAsString().optional(),
+      sendFrom: z.literal("inbox").optional(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>

@@ -19,6 +19,10 @@ export const RETRYABLE_CATEGORIES = new Set<ChannelErrorCategory>([
 ])
 
 export const PERMANENT_CATEGORIES = new Set<ChannelErrorCategory>([
+  ChannelErrorCategory.AUTH_FAILED,
   ChannelErrorCategory.USER_BLOCKED,
   ChannelErrorCategory.INVALID_RECIPIENT,
+  ChannelErrorCategory.PERMISSION_DENIED,
+  ChannelErrorCategory.PAYLOAD_INVALID,
+  ChannelErrorCategory.QUOTA_EXCEEDED,
 ])

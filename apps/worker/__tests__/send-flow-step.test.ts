@@ -323,7 +323,11 @@ describe("sendFlowStep", () => {
   })
 
   test("calls repository.create() for step without url (sendText)", async () => {
-    await sendFlowStep({ ...baseParams, step: sendTextStep })
+    await sendFlowStep({
+      ...baseParams,
+      sendFrom: "inbox",
+      step: sendTextStep,
+    })
 
     expect(mockRepositoryCreate).toHaveBeenCalledTimes(1)
     expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
@@ -333,6 +337,11 @@ describe("sendFlowStep", () => {
         senderType: "bot",
         workspaceId: "ws-1",
         conversationId: "conv-1",
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sendFrom: "inbox",
       }),
     )
   })

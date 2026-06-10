@@ -85,6 +85,7 @@ export const createMessage = async (props: {
         contactInboxId: contactInbox,
         flowId: parsedInput.flowId,
         nodeId: parsedInput.nodeId,
+        sendFrom: parsedInput.sendFrom,
       },
     })
     return null
@@ -176,6 +177,7 @@ export const createMessage = async (props: {
           ...messageWithAttachments,
           clientId: parsedInput.clientId,
         },
+        sendFrom: parsedInput.sendFrom,
       },
     }),
   ]

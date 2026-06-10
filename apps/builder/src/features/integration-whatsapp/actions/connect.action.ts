@@ -475,35 +475,32 @@ export const connectWhatsappAction = authActionClient
           await registerPhoneNumber({ auth })
         }
 
-        const { workspaceId, createdWorkspace, integrationRow } =
-          await db.transaction((tx) =>
-            persistIntegration({
-              tx,
-              ownerId,
-              userId: ctx.user.id,
-              workspaceId: parsedInput.workspaceId,
-              integrationId,
-              phoneNumber,
-              wabaId: parsedInput.wabaId,
-              businessId,
-              auth,
-              isCoexist,
-              platformType,
-            }),
-          )
+        const { workspaceId, integrationRow } = await db.transaction((tx) =>
+          persistIntegration({
+            tx,
+            ownerId,
+            userId: ctx.user.id,
+            workspaceId: parsedInput.workspaceId,
+            integrationId,
+            phoneNumber,
+            wabaId: parsedInput.wabaId,
+            businessId,
+            auth,
+            isCoexist,
+            platformType,
+          }),
+        )
 
-        if (createdWorkspace) {
-          const whatsappCtx = await buildContext({
-            workspaceId,
-            integrationType: "whatsapp",
-            integration: { ...integrationRow, auth },
-          })
-          await updateWorkspaceLogo({
-            id: workspaceId,
-            integration: integrationWhatsapp,
-            ctx: whatsappCtx,
-          })
-        }
+        const whatsappCtx = await buildContext({
+          workspaceId,
+          integrationType: "whatsapp",
+          integration: { ...integrationRow, auth },
+        })
+        await updateWorkspaceLogo({
+          id: workspaceId,
+          integration: integrationWhatsapp,
+          ctx: whatsappCtx,
+        })
 
         await subscribeWebhook({ auth })
 

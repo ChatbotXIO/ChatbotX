@@ -21,10 +21,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import { useEffect, useMemo, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useChatStore } from "@/features/chat/store/chat-store-provider"
+import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
+import {
+  BOT_DISABLE_DURATION_MS,
+  isConversationActive,
+} from "@/features/conversations/utils/bot-state"
 import { createMessageAction } from "@/features/messages/actions/create-message.action"
 import { createMessageRequest } from "@/features/messages/schema/mutation"
 import {
@@ -60,11 +66,31 @@ export function SelectFlowDialog({
     return map
   }, [nodesSelectOptions])
 
-  const { activeConversationId, conversations } = useChatStore((state) => state)
+  const { activeConversationId, conversations, updateConversation } =
+    useChatStore((state) => state)
 
   const conversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
+  )
+
+  const { execute: disableBot } = useAction(
+    disableBotAction.bind(null, conversation?.workspaceId ?? ""),
+    {
+      onSuccess: () => {
+        if (conversation) {
+          updateConversation(conversation.id, {
+            botEnabled: false,
+            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
+          })
+        }
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
   )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -78,6 +104,9 @@ export function SelectFlowDialog({
       {
         actionProps: {
           onSuccess: () => {
+            if (conversation && isConversationActive(conversation)) {
+              disableBot({ ids: [conversation.id] })
+            }
             setOpen(false)
             resetFormAndAction()
           },
@@ -88,6 +117,11 @@ export function SelectFlowDialog({
           },
         },
         errorMapProps: {},
+        formProps: {
+          defaultValues: {
+            sendFrom: "inbox",
+          },
+        },
       },
     )
 
@@ -117,6 +151,7 @@ export function SelectFlowDialog({
               className="flex-1 space-y-4"
               onSubmit={handleSubmitWithAction}
             >
+              <input type="hidden" {...form.register("sendFrom")} />
               <Tabs defaultValue="flows">
                 <TabsList className="mb-2 w-full">
                   <TabsTrigger onClick={resetFormAndAction} value="flows">

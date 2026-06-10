@@ -9,8 +9,15 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useAction } from "next-safe-action/hooks"
 import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
 import { Controller, useWatch } from "react-hook-form"
+import { toast } from "sonner"
+import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
+import {
+  BOT_DISABLE_DURATION_MS,
+  isConversationActive,
+} from "@/features/conversations/utils/bot-state"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { QuickRepliesPopover } from "@/features/saved-replies/quick-replies-popover"
 import { authClient } from "@/lib/auth/auth-client"
@@ -27,14 +34,36 @@ export const MessageInput = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileUploadRef = useRef<HTMLInputElement>(null)
 
-  const { appendMessage, activeConversationId, conversations } = useChatStore(
-    (state) => state,
-  )
+  const {
+    appendMessage,
+    activeConversationId,
+    conversations,
+    updateConversation,
+  } = useChatStore((state) => state)
 
   // Memoize active conversation to prevent unnecessary re-renders
   const conversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
+  )
+
+  const { execute: disableBot } = useAction(
+    disableBotAction.bind(null, conversation?.workspaceId ?? ""),
+    {
+      onSuccess: () => {
+        if (conversation) {
+          updateConversation(conversation.id, {
+            botEnabled: false,
+            botResumeAt: new Date(Date.now() + BOT_DISABLE_DURATION_MS),
+          })
+        }
+      },
+      onError: ({ error }) => {
+        if (error.serverError) {
+          toast.error(error.serverError)
+        }
+      },
+    },
   )
 
   const { form, handleSubmitWithAction, resetFormAndAction } =
@@ -78,6 +107,9 @@ export const MessageInput = () => {
             textareaRef.current?.focus()
           },
           onSuccess: () => {
+            if (conversation && isConversationActive(conversation)) {
+              disableBot({ ids: [conversation.id] })
+            }
             textareaRef.current?.focus()
             resetFormAndAction()
             form.setValue("clientId", createId())
@@ -88,6 +120,7 @@ export const MessageInput = () => {
             text: "",
             files: [],
             clientId: createId(),
+            sendFrom: "inbox",
           },
         },
         errorMapProps: {},
@@ -180,6 +213,7 @@ export const MessageInput = () => {
           className="flex w-full flex-col"
           onSubmit={handleSubmitWithAction}
         >
+          <input type="hidden" {...form.register("sendFrom")} />
           <div className="mb-1 w-full px-2.5 py-1">
             <Controller
               control={form.control}

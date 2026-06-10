@@ -10,6 +10,8 @@ import {
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import {
+  ChannelError,
+  ChannelErrorCategory,
   contentTypes,
   type MessageHandlers,
   type OutgoingContact,
@@ -36,18 +38,28 @@ import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
 
+const RESPONSE_WINDOW_MS = 24 * 60 * 60 * 1000
+const HUMAN_AGENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
+type MessengerMessagingPolicy = {
+  messagingType: "MESSAGE_TAG" | "RESPONSE"
+  tag?: FacebookSendMessageRequest["tag"]
+}
+
 export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
   async (props) => {
     const {
       ctx,
-      data: { contact, message },
+      data: { contact, message, sendFrom },
     } = props
 
     try {
+      const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       for (const facebookMessage of convertMessageToFacebookMessage(message)) {
         const payload = buildMessagePayload({
           contact,
           message: facebookMessage,
+          ...policy,
           personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
             .personaId,
         })
@@ -68,7 +80,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
   async (props: SendFlowStepProps<MessengerAuthValue>) => {
     const {
       ctx,
-      data: { contact, step },
+      data: { contact, sendFrom, step },
     } = props
     try {
       // Messenger utility templates must be sent as a complete Send API request
@@ -86,6 +98,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
         return { messageIds: [] }
       }
 
+      const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       for await (const facebookMessage of convertFlowStepToFacebookMessage(
         props,
       )) {
@@ -94,7 +107,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
           buildMessagePayload({
             contact,
             message: facebookMessage,
-            messagingType: "RESPONSE",
+            ...policy,
             personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
               .personaId,
           }),
@@ -164,9 +177,10 @@ const buildMessagePayload = (props: {
   contact: OutgoingContact
   message: FacebookMessageAttachmentPayload | FacebookMessage
   messagingType?: "MESSAGE_TAG" | "RESPONSE"
+  tag?: FacebookSendMessageRequest["tag"]
   personaId?: string
 }): FacebookSendMessageRequest => {
-  const { contact, message, personaId } = props
+  const { contact, message, messagingType = "RESPONSE", personaId, tag } = props
 
   return {
     recipient: { id: contact.sourceId },
@@ -174,10 +188,63 @@ const buildMessagePayload = (props: {
       ...message,
       metadata: MESSENGER_MESSAGE_METADATA,
     },
-    messaging_type: "RESPONSE",
-    // tag: messagingType === "MESSAGE_TAG" ? "ACCOUNT_UPDATE" : undefined,
+    messaging_type: messagingType,
+    tag,
     persona_id: personaId,
   }
+}
+
+export function resolveMessengerMessagingPolicy(props: {
+  contact: OutgoingContact
+  now?: Date | number
+  sendFrom?: "inbox"
+}): MessengerMessagingPolicy {
+  const { contact, sendFrom } = props
+
+  if (sendFrom !== "inbox") {
+    return { messagingType: "RESPONSE" }
+  }
+
+  const lastIncomingMessageAt = normalizeLastIncomingMessageAt(
+    contact.lastIncomingMessageAt,
+  )
+
+  if (!lastIncomingMessageAt) {
+    return { messagingType: "RESPONSE" }
+  }
+
+  let nowMs = Date.now()
+  if (props.now instanceof Date) {
+    nowMs = props.now.getTime()
+  } else if (typeof props.now === "number") {
+    nowMs = props.now
+  }
+  const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
+
+  if (elapsedMs <= RESPONSE_WINDOW_MS) {
+    return { messagingType: "RESPONSE" }
+  }
+
+  if (elapsedMs <= HUMAN_AGENT_WINDOW_MS) {
+    return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
+  }
+
+  throw new ChannelError(
+    "Cannot send a Messenger inbox message more than 7 days after the last incoming message",
+    ChannelErrorCategory.PAYLOAD_INVALID,
+    { code: "messenger_human_agent_window_expired" },
+  )
+}
+
+function normalizeLastIncomingMessageAt(
+  value: Date | string | null | undefined,
+) {
+  if (!value) {
+    return null
+  }
+
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 async function* convertFlowStepToFacebookMessage(

@@ -128,6 +128,7 @@ export async function sendFlowStep({
   step,
   trackingContext,
   metadata,
+  sendFrom,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
     where: { id: conversationId },
@@ -351,6 +352,7 @@ export async function sendFlowStep({
         step: resolvedStep as SendFlowStepData,
         metadata,
         messageId: message?.id,
+        sendFrom,
       }),
     ]
 

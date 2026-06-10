@@ -10,7 +10,11 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
-import { parseSdkError, type SendFlowStepData } from "@chatbotx.io/sdk"
+import {
+  ChannelError,
+  parseSdkError,
+  type SendFlowStepData,
+} from "@chatbotx.io/sdk"
 import type {
   ChatJobSendChannelMessage,
   ChatJobSendTyping,
@@ -24,20 +28,22 @@ import {
 export async function sendMessageToChannel(
   data: ChatJobSendChannelMessage["data"],
 ) {
-  const { conversation, contactInbox, message, metadata } = data
-
-  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
-    workspaceId: conversation.workspaceId,
-    contactInbox,
-  })
+  const { conversation, contactInbox, message, metadata, sendFrom } = data
 
   try {
+    const { integration, ctx } =
+      await resolveIntegrationContextFromContactInbox({
+        workspaceId: conversation.workspaceId,
+        contactInbox,
+      })
+
     await integration.runChannelHandler("message", "sendMessage", {
       ctx,
       data: {
         contact: contactInbox,
         message,
         metadata,
+        sendFrom,
       },
     })
   } catch (error) {
@@ -57,6 +63,9 @@ export async function sendMessageToChannel(
       occurredAt: new Date(),
       metadata,
     })
+    if (error instanceof ChannelError && !error.isRetryable) {
+      return
+    }
     throw error
   }
 }
@@ -108,6 +117,7 @@ export async function sendFlowStepToChannel({
   step,
   metadata,
   messageId,
+  sendFrom,
 }: {
   conversation: ConversationModel
   contactInbox: ContactInboxModel
@@ -116,6 +126,7 @@ export async function sendFlowStepToChannel({
   step: SendFlowStepData
   metadata?: MetadataPayload
   messageId?: string
+  sendFrom?: "inbox"
 }): Promise<{ messageIds: string[] }> {
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
@@ -154,6 +165,7 @@ export async function sendFlowStepToChannel({
         flowVersionId,
         step: resolvedStep,
         metadata,
+        sendFrom,
       },
     },
   )

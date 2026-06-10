@@ -315,6 +315,11 @@ describe("buildMessengerTemplateSendRequest", () => {
     expect(req.tag).toBeUndefined()
   })
 
+  test("no message_type field", () => {
+    const req = buildMessengerTemplateSendRequest(makeProps())
+    expect((req as Record<string, unknown>).message_type).toBeUndefined()
+  })
+
   test("persona_id included when integrationDetail.personaId present", () => {
     const req = buildMessengerTemplateSendRequest(
       makeProps({ personaId: "persona-abc" }),

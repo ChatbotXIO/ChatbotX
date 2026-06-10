@@ -15,6 +15,7 @@ export type IncomingContact = {
 export type OutgoingContact = {
   sourceId: string
   id: string
+  lastIncomingMessageAt?: Date | string | null
 }
 
 export type OutgoingMessage = {

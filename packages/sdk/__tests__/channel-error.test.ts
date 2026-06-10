@@ -40,6 +40,30 @@ describe("ChannelError.getErrorData", () => {
     expect(data.isRetryable).toBe(false)
   })
 
+  test("AUTH_FAILED is permanent, not retryable", async () => {
+    const err = new ChannelError(
+      "missing auth",
+      ChannelErrorCategory.AUTH_FAILED,
+      { code: "integration_auth_missing", httpStatusCode: 400 },
+    )
+    const data = await err.getErrorData()
+    expect(data.category).toBe("auth_failed")
+    expect(data.isPermanent).toBe(true)
+    expect(data.isRetryable).toBe(false)
+  })
+
+  test("PAYLOAD_INVALID is permanent, not retryable", async () => {
+    const err = new ChannelError(
+      "invalid payload",
+      ChannelErrorCategory.PAYLOAD_INVALID,
+      { code: "bad_payload", httpStatusCode: 400 },
+    )
+    const data = await err.getErrorData()
+    expect(data.category).toBe("payload_invalid")
+    expect(data.isPermanent).toBe(true)
+    expect(data.isRetryable).toBe(false)
+  })
+
   test("subCode propagates to subcode field", async () => {
     const err = new ChannelError(
       "opted out",

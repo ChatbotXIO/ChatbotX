@@ -335,6 +335,7 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
       ...makeBaseProps(flowVersion),
       details: { steps: [] },
       triggerNextNode: true,
+      sendFrom: "inbox" as const,
     }
 
     await runStepsAndQuickReplies(props)
@@ -342,11 +343,12 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
     expect(integrationQueueAdd).toHaveBeenCalledOnce()
     const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { nodeId: string; flowId: string } },
+      { data: { flowId: string; nodeId: string; sendFrom?: string } },
     ]
     expect(action).toBe("sendFlow")
     expect(job.data.nodeId).toBe("node-2")
     expect(job.data.flowId).toBe("flow-1")
+    expect(job.data.sendFrom).toBe("inbox")
   })
 })
 
@@ -599,6 +601,7 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
       metadata,
       trackingContext,
       targetNodeId: "node-1",
+      sendFrom: "inbox" as const,
     }
 
     await runStepsAndQuickReplies(props)
@@ -606,11 +609,19 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
     expect(integrationQueueAdd).toHaveBeenCalledOnce()
     const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
       string,
-      { data: { metadata: unknown; trackingContext: unknown; nodeId: string } },
+      {
+        data: {
+          metadata: unknown
+          nodeId: string
+          sendFrom?: string
+          trackingContext: unknown
+        }
+      },
     ]
     expect(job.data.metadata).toBe(metadata)
     expect(job.data.trackingContext).toBe(trackingContext)
     expect(job.data.nodeId).toBe("node-1")
+    expect(job.data.sendFrom).toBe("inbox")
   })
 
   test("logs a warning and returns early when startFromStepId is set but no matching step exists", async () => {
