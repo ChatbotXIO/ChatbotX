@@ -4,6 +4,11 @@ import type { ChannelType } from "@chatbotx.io/database/partials"
 import { DataTable } from "@chatbotx.io/ui/components/data-table/data-table"
 import { DataTableColumnHeader } from "@chatbotx.io/ui/components/data-table/data-table-column-header"
 import { DataTableToolbar } from "@chatbotx.io/ui/components/data-table/data-table-toolbar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@chatbotx.io/ui/components/ui/avatar"
 import { Checkbox } from "@chatbotx.io/ui/components/ui/checkbox"
 import {
   Tooltip,
@@ -24,6 +29,41 @@ import type { listContacts } from "./queries/list-contacts.queries"
 import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
+import { useAvatarUrl } from "./utils"
+
+function NameCell({
+  contact,
+  workspaceId,
+}: {
+  contact: ListContactsResponse["data"][number]
+  workspaceId: string
+}) {
+  const avatarUrl = useAvatarUrl(contact)
+  return (
+    <div className="flex max-w-50 items-center gap-2">
+      <Avatar className="size-6 shrink-0">
+        <AvatarImage alt={contact.fullName ?? ""} src={avatarUrl} />
+        <AvatarFallback className="text-xs">
+          {contact.fullName?.charAt(0)?.toUpperCase() ?? "?"}
+        </AvatarFallback>
+      </Avatar>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            className="truncate"
+            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`}
+            target="_blank"
+          >
+            {contact.fullName}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{contact.fullName}</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
 
 type ContactsTableProps = {
   workspaceId: string
@@ -76,22 +116,7 @@ export function ContactsTable({
           />
         ),
         cell: ({ row }) => (
-          <div className="max-w-50 truncate">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  className="max-w-50 truncate"
-                  href={`/space/${workspaceId}/inbox?conversationId=${row.original.conversation?.id}`}
-                  target="_blank"
-                >
-                  {row.original.fullName}
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{row.original.fullName}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <NameCell contact={row.original} workspaceId={workspaceId} />
         ),
         meta: {
           label: t("fields.name.label"),
