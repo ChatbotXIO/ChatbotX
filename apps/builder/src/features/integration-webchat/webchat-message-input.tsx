@@ -13,6 +13,7 @@ import { createWebchatMessageAction } from "../messages/actions/create-webchat-m
 import EmojiPicker from "../messages/components/emoji-picker"
 import { FileUploadPreview } from "../messages/components/file-upload"
 import { createWebchatMessageRequest } from "../messages/schema/mutation"
+import { getWebchatProfileFields } from "./browser-profile-fields"
 import WebchatMessageMenu from "./components/webchat-message-menu"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
@@ -36,6 +37,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
       webchatId,
       guestConversationId: guestConversationId ?? "",
       ref: referral,
+      ...getWebchatProfileFields(),
     }),
     [workspaceId, webchatId, guestConversationId, referral],
   )

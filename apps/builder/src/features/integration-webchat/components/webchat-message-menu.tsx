@@ -18,6 +18,7 @@ import Link from "next/link"
 import { useAction } from "next-safe-action/hooks"
 import { Fragment, useEffect, useState } from "react"
 import { createWebchatMessageAction } from "@/features/messages/actions/create-webchat-message.action"
+import { getWebchatProfileFields } from "../browser-profile-fields"
 import { useGuestSessionStore } from "../providers/store/guest-session-provider"
 
 type WebchatMessageMenuProps = {
@@ -84,6 +85,7 @@ export default function WebchatMessageMenu({
                     workspaceId,
                     webchatId,
                     guestConversationId: guestConversationId ?? "",
+                    ...getWebchatProfileFields(),
                   })
                 }
               >

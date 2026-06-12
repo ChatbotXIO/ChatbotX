@@ -335,6 +335,8 @@ async function getConversationFromInput(
           gender: "unknown",
           firstName: "Guest",
           lastName: randomString(10),
+          locale: parsedInput.locale,
+          timezone: parsedInput.timezone,
         })
         .returning()
         .then((rows) => rows[0])

@@ -59,11 +59,10 @@ export const contactVariableService = {
             contact,
             variable as SystemFieldType,
           )
-          if (value) {
-            mapping[variable] = value
-          }
+          mapping[variable] = value ?? ""
         } else if (customFieldsMap.has(variable)) {
-          mapping[variable] = String(customFieldsMap.get(variable)?.value)
+          const fieldValue = customFieldsMap.get(variable)?.value
+          mapping[variable] = fieldValue == null ? "" : String(fieldValue)
         }
       }
 

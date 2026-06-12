@@ -24,7 +24,10 @@ import {
   getContactLastInputType,
 } from "./helpers/last-input"
 import { getChatHistory } from "./helpers/message"
+import { toPublicStorageUrl } from "./helpers/storage-url"
 import { getWorkspaceImageUrl, getWorkspaceName } from "./helpers/workspace"
+
+const LOCALE_SEPARATOR_RE = /[-_]/
 
 export const extractVariables = (text: string): string[] => {
   const regex = /\{\{(\w+)\}\}/g
@@ -39,6 +42,18 @@ export const interpolate = (
     /\{\{(\w+)\}\}/g,
     (match, variable) => mapping[variable] ?? match,
   )
+
+const safeFormatInTimeZone = (
+  date: Date | string,
+  timezone: string | null | undefined,
+  pattern: string,
+): string => {
+  try {
+    return formatInTimeZone(date, timezone ?? "UTC", pattern)
+  } catch {
+    return formatInTimeZone(date, "UTC", pattern)
+  }
+}
 
 export const getSystemFieldValue = async (
   contact: ContactModel,
@@ -56,7 +71,7 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.full_name:
       return [contact.firstName, contact.lastName].filter(Boolean).join(" ")
     case systemFieldTypes.enum.profile_pic:
-      return contact.avatar
+      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.gender:
       return contact.gender
     case systemFieldTypes.enum.user_country:
@@ -68,16 +83,16 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.locale:
       return contact.locale
     case systemFieldTypes.enum.locale2:
-      return contact.locale?.split("_")[0] ?? null
+      return contact.locale?.split(LOCALE_SEPARATOR_RE)[0] ?? null
     case systemFieldTypes.enum.timezone:
       return contact.timezone
     case systemFieldTypes.enum.user_id:
       return contact.id
     case systemFieldTypes.enum.subscribed_date:
       return contact.subscribedAt
-        ? formatInTimeZone(
+        ? safeFormatInTimeZone(
             contact.subscribedAt,
-            contact.timezone ?? "UTC",
+            contact.timezone,
             "yyyy-MM-dd",
           )
         : null
@@ -87,9 +102,9 @@ export const getSystemFieldValue = async (
           contactId: contact.id,
         })
       return lastSeenAt
-        ? formatInTimeZone(
+        ? safeFormatInTimeZone(
             lastSeenAt,
-            contact.timezone ?? "UTC",
+            contact.timezone,
             "yyyy-MM-dd HH:mm:ss",
           )
         : null
@@ -115,9 +130,9 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.assigned_admin_id:
       return await getAssignedAdminId(contact.workspaceId)
     case systemFieldTypes.enum.current_user_time:
-      return formatInTimeZone(
+      return safeFormatInTimeZone(
         new Date(),
-        contact.timezone ?? "UTC",
+        contact.timezone,
         "yyyy-MM-dd HH:mm:ss",
       )
     case systemFieldTypes.enum.chat_history:
@@ -131,11 +146,11 @@ export const getSystemFieldValue = async (
     case systemFieldTypes.enum.user_notes:
       return await listContactNotesString(contact.id)
     case systemFieldTypes.enum.avatar:
-      return contact.avatar
+      return await toPublicStorageUrl(contact.avatar, contact.workspaceId)
     case systemFieldTypes.enum.current_time:
-      return formatInTimeZone(
+      return safeFormatInTimeZone(
         new Date(),
-        contact.timezone ?? "UTC",
+        contact.timezone,
         "yyyy-MM-dd HH:mm:ss",
       )
     case systemFieldTypes.enum.workspace_name:
@@ -166,9 +181,9 @@ export const getSystemFieldValue = async (
           contactId: contact.id,
         })
       return lastInteractionAt
-        ? formatInTimeZone(
+        ? safeFormatInTimeZone(
             lastInteractionAt,
-            contact.timezone ?? "UTC",
+            contact.timezone,
             "yyyy-MM-dd HH:mm:ss",
           )
         : null

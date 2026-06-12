@@ -64,6 +64,7 @@ const getMessageResult = async (
     sourceId: contactId,
     firstName: message.from?.first_name,
     lastName: message.from?.last_name,
+    locale: message.from?.language_code,
   }
 
   // Calculate ref from /start command
@@ -105,6 +106,7 @@ const receiveCallbackQuery = (
     sourceId: String(chatId),
     firstName: callbackQuery.from.first_name,
     lastName: callbackQuery.from.last_name,
+    locale: callbackQuery.from.language_code,
   }
 
   return {
