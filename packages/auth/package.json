@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./tenant": "./src/tenant-context.ts"
   },
   "dependencies": {
     "@chatbotx.io/business": "workspace:*",

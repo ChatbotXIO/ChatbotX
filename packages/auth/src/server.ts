@@ -23,25 +23,103 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env } from "./keys"
+import { getTenantId } from "./tenant-context"
 
 const getPlatformSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
   return await resolvePlatformSettingsByDomain(domain)
 }
 
+type AdapterFactory = ReturnType<typeof drizzleAdapter>
+type AuthAdapter = ReturnType<AdapterFactory>
+type WhereClause = Parameters<AuthAdapter["findOne"]>[0]["where"][number]
+
+/**
+ * Wrap the drizzle adapter so white-label isolation holds at the data layer:
+ * every `User` lookup *by email* and every `User` insert is constrained to the
+ * current tenant (`getTenantId()` — `null` = platform). Lookups by id/token are
+ * untouched, so sessions stay tenant-neutral. This is what lets the same email
+ * exist as fully separate accounts across tenants.
+ */
+function createTenantScopedAdapter(base: AdapterFactory): AdapterFactory {
+  const scopeUserEmailWhere = (
+    model: string,
+    where: WhereClause[] | undefined,
+  ): WhereClause[] | undefined => {
+    if (model !== "user" || !where) {
+      return where
+    }
+    const filtersByEmail = where.some((clause) => clause.field === "email")
+    const alreadyScoped = where.some((clause) => clause.field === "resellerId")
+    if (!filtersByEmail || alreadyScoped) {
+      return where
+    }
+    return [...where, { field: "resellerId", value: getTenantId() }]
+  }
+
+  return (options) => {
+    const adapter = base(options)
+    return {
+      ...adapter,
+      findOne: <T>(data: Parameters<AuthAdapter["findOne"]>[0]) =>
+        adapter.findOne<T>({
+          ...data,
+          where: scopeUserEmailWhere(data.model, data.where) ?? data.where,
+        }),
+      findMany: <T>(data: Parameters<AuthAdapter["findMany"]>[0]) =>
+        adapter.findMany<T>({
+          ...data,
+          where: scopeUserEmailWhere(data.model, data.where),
+        }),
+      count: (data: Parameters<AuthAdapter["count"]>[0]) =>
+        adapter.count({
+          ...data,
+          where: scopeUserEmailWhere(data.model, data.where),
+        }),
+      create: <T extends Record<string, unknown>, R = T>(data: {
+        model: string
+        data: Omit<T, "id">
+        select?: string[]
+        forceAllowId?: boolean
+      }) =>
+        adapter.create<T, R>(
+          data.model === "user"
+            ? { ...data, data: { ...data.data, resellerId: getTenantId() } }
+            : data,
+        ),
+    }
+  }
+}
+
 export type AuthConfig = Record<string, unknown>
 
 export function createAuth(_config: AuthConfig) {
   return betterAuth({
-    database: drizzleAdapter(db, {
-      provider: "pg",
-      schema: {
-        user: userModel,
-        verification: verificationModel,
-        session: sessionModel,
-        account: accountModel,
+    database: createTenantScopedAdapter(
+      drizzleAdapter(db, {
+        provider: "pg",
+        schema: {
+          user: userModel,
+          verification: verificationModel,
+          session: sessionModel,
+          account: accountModel,
+        },
+      }),
+    ),
+    // `resellerId` is the white-label tenant key. Declared so better-auth maps it
+    // to the column and the adapter wrapper can stamp it on user inserts. Never
+    // accepted from client input and never returned — the wrapper sets it from
+    // the bound tenant. See tenant-context.ts.
+    user: {
+      additionalFields: {
+        resellerId: {
+          type: "string",
+          required: false,
+          input: false,
+          returned: false,
+        },
       },
-    }),
+    },
     socialProviders: {
       google: async () => {
         if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
@@ -170,7 +248,13 @@ export function createAuth(_config: AuthConfig) {
             magicLinkEmailTemplate,
           } = platformInfo
 
-          const user = await db.query.userModel.findFirst({ where: { email } })
+          const tenantId = getTenantId()
+          const user = await db.query.userModel.findFirst({
+            where: {
+              email,
+              resellerId: tenantId === null ? { isNull: true } : tenantId,
+            },
+          })
           if (!user) {
             throw new APIError(400, {
               message: `Your email is not registered with ${brandName}`,
