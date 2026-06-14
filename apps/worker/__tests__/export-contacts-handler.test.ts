@@ -38,9 +38,9 @@ vi.mock("@chatbotx.io/database/partials", async () =>
   vi.importActual("@chatbotx.io/database/partials"),
 )
 
-vi.mock("@chatbotx.io/database/queries", () => ({
-  applyContactFilter: (criteria: unknown) => ({ __filter: criteria }),
-}))
+vi.mock("@chatbotx.io/database/queries", async () =>
+  vi.importActual("@chatbotx.io/database/queries"),
+)
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   contactCustomFieldModel: {},
@@ -306,7 +306,16 @@ describe("loopableExportContacts", () => {
         contactIds: undefined,
         filter: {
           keyword: "Acme",
-          contactFilter: { operator: "and", conditions: [] },
+          contactFilter: {
+            operator: "and",
+            conditions: [
+              {
+                field: "inbox",
+                operator: "in",
+                value: ["123"],
+              },
+            ],
+          },
         },
       }),
     )
@@ -315,10 +324,26 @@ describe("loopableExportContacts", () => {
       where: Record<string, unknown>
     }
     expect(where.where.workspaceId).toBe("ws-1")
-    expect(where.where.OR).toBeDefined()
-    expect(where.where.__filter).toEqual({
-      operator: "and",
-      conditions: [],
+    expect(where.where).toMatchObject({
+      AND: [
+        {
+          OR: [
+            { firstName: { ilike: "%acme%" } },
+            { lastName: { ilike: "%acme%" } },
+            { email: { ilike: "%acme%" } },
+            { phoneNumber: { ilike: "%acme%" } },
+          ],
+        },
+        {
+          AND: [
+            {
+              contactInboxes: {
+                inboxId: { in: ["123"] },
+              },
+            },
+          ],
+        },
+      ],
     })
   })
 

@@ -19,12 +19,17 @@ import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { use, useMemo } from "react"
+import { use, useEffect, useMemo, useState } from "react"
+import {
+  ContactListFilterButton,
+  ContactListFilterPanel,
+  useContactFilterQueryState,
+} from "@/features/contact-filter"
 import { InboxIcon } from "../inboxes/components/inbox-icon"
 import { getUserName } from "../users/schemas/resource"
 import { ContactListAction } from "./contacts-list-action"
-import { CreateContactDialog } from "./create-contact-dialog"
 import type { listContacts } from "./queries/list-contacts.queries"
 import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
@@ -68,16 +73,40 @@ function NameCell({
 type ContactsTableProps = {
   workspaceId: string
   promises: Promise<[Awaited<ReturnType<typeof listContacts>>]>
-  filter?: ExportContactsFilter
 }
 
-export function ContactsTable({
-  workspaceId,
-  promises,
-  filter,
-}: ContactsTableProps) {
+export function ContactsTable({ workspaceId, promises }: ContactsTableProps) {
   const t = useTranslations()
+  const searchParams = useSearchParams()
+  const searchParamsKey = searchParams.toString()
   const [{ data, pageCount }] = use(promises)
+  const {
+    filter: contactFilter,
+    setFilter: setContactFilter,
+    isActive: isContactFilterActive,
+  } = useContactFilterQueryState()
+  const [showContactFilterPanel, setShowContactFilterPanel] = useState(
+    isContactFilterActive,
+  )
+
+  const keyword = useMemo(() => {
+    const params = new URLSearchParams(searchParamsKey)
+    return params.get("keyword") ?? undefined
+  }, [searchParamsKey])
+
+  useEffect(() => {
+    if (isContactFilterActive) {
+      setShowContactFilterPanel(true)
+    }
+  }, [isContactFilterActive])
+
+  const exportFilter = useMemo<ExportContactsFilter>(
+    () => ({
+      keyword,
+      contactFilter: isContactFilterActive ? contactFilter : undefined,
+    }),
+    [keyword, isContactFilterActive, contactFilter],
+  )
 
   const columns = useMemo<ColumnDef<ListContactsResponse["data"][number]>[]>(
     () => [
@@ -249,10 +278,20 @@ export function ContactsTable({
 
   return (
     <DataTable table={table}>
+      {showContactFilterPanel && (
+        <ContactListFilterPanel
+          filter={contactFilter}
+          onFilterChange={setContactFilter}
+        />
+      )}
       <DataTableToolbar table={table}>
-        <CreateContactDialog workspaceId={workspaceId} />
+        <ContactListFilterButton
+          active={isContactFilterActive}
+          onToggle={() => setShowContactFilterPanel((current) => !current)}
+          open={showContactFilterPanel}
+        />
         <ContactListAction
-          filter={filter}
+          filter={exportFilter}
           table={table}
           workspaceId={workspaceId}
         />

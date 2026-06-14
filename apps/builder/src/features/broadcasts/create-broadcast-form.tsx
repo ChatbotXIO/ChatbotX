@@ -43,7 +43,7 @@ import { createBroadcastAction } from "@/features/broadcasts/actions/create-broa
 import { BroadcastConfirmDialog } from "@/features/broadcasts/components/broadcast-confirm-dialog"
 import { createBroadcastRequest } from "@/features/broadcasts/schemas/action"
 import { useWorkspaceId } from "@/hooks/routing"
-import { ContactFilter } from "../contacts/components/contact-filter"
+import { ContactFilter } from "../contact-filter"
 import { useContactStore } from "../contacts/provider/contact-store-context"
 import { useFlowStore } from "../flows/provider/flow-store-context"
 import { useFlowTemplate } from "../flows/react-flow/stores/flow-template-store-provider"

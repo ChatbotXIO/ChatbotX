@@ -2,8 +2,9 @@
 
 import { useTranslations } from "next-intl"
 import { useMemo } from "react"
-import { useCustomFieldSelectOptions } from "@/features/custom-fields/provider/custom-field-hook"
+import { useCustomFieldStore } from "@/features/custom-fields/provider/custom-field-store-context"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
+import { useInboxOptionsByChannel } from "@/features/inboxes/provider/inbox-hook"
 import { useTagSelectOptions } from "@/features/tags/provider/tag-hook"
 import {
   type ConditionOption,
@@ -29,7 +30,8 @@ export const useContactFilterConfigs = (): UseContactFilterConfigsResult => {
   const t = useTranslations()
 
   const tagOptions = useTagSelectOptions()
-  const customFieldOptions = useCustomFieldSelectOptions({})
+  const inboxOptions = useInboxOptionsByChannel()
+  const customFields = useCustomFieldStore((state) => state.customFields)
   const flowVersionOptions = useFlowSelectOptions()
 
   const configs = useMemo(
@@ -37,10 +39,11 @@ export const useContactFilterConfigs = (): UseContactFilterConfigsResult => {
       getFieldConfigs({
         t,
         tagOptions,
-        customFieldOptions,
+        inboxOptions,
+        customFields,
         flowVersionOptions,
       }),
-    [t, tagOptions, customFieldOptions, flowVersionOptions],
+    [t, tagOptions, inboxOptions, customFields, flowVersionOptions],
   )
 
   const conditionOptions = useMemo(() => getConditionOptions(t), [t])

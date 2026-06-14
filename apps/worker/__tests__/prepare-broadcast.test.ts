@@ -17,6 +17,9 @@ const insertCalls: InsertCall[] = []
 
 const onConflictSpy = vi.fn()
 
+// ── audience where capture (for contactFilter wiring assertion) ────────────────
+const audienceWhereCalls: unknown[] = []
+
 // ── queue spy ─────────────────────────────────────────────────────────────────
 const scheduleAddSpy = vi.fn()
 
@@ -24,6 +27,25 @@ const scheduleAddSpy = vi.fn()
 const chunkByIdMock = vi.fn()
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
+vi.mock("@chatbotx.io/database/partials", async () =>
+  vi.importActual("@chatbotx.io/database/partials"),
+)
+
+vi.mock("@chatbotx.io/database/schema", () => ({
+  broadcastModel: { id: "Broadcast.id", __name: "broadcastModel" },
+  contactInboxModel: {
+    id: "ContactInbox.id",
+    inboxId: "ContactInbox.inboxId",
+    contactId: "ContactInbox.contactId",
+    __name: "contactInboxModel",
+  },
+  contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
+}))
+
+vi.mock("@chatbotx.io/database/queries", () => ({
+  buildContactInboxContactFilterSQL: vi.fn(() => ({ RAW: "contact-filter" })),
+}))
+
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
     query: {
@@ -56,14 +78,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
         }
       },
     }),
-    // select chain is only passed as a queryFn to the mocked chunkById; never called
     select: () => ({
       from: () => ({
-        where: () => ({
-          orderBy: () => ({
-            limit: () => Promise.resolve([]),
-          }),
-        }),
+        where: (where: unknown) => {
+          audienceWhereCalls.push(where)
+          return {
+            orderBy: () => ({
+              limit: () => Promise.resolve([]),
+            }),
+          }
+        },
       }),
     }),
   },
@@ -72,29 +96,6 @@ vi.mock("@chatbotx.io/database/client", () => ({
   gt: (a: unknown, b: unknown) => ({ __gt: [a, b] }),
   inArray: (a: unknown, b: unknown) => ({ __inArray: [a, b] }),
   asc: (a: unknown) => ({ __asc: a }),
-}))
-
-vi.mock("@chatbotx.io/database/schema", () => ({
-  broadcastModel: { id: "broadcast.id", __name: "broadcastModel" },
-  contactInboxModel: {
-    id: "contactInbox.id",
-    inboxId: "contactInbox.inboxId",
-    __name: "contactInboxModel",
-  },
-  contactsOnBroadcastsModel: { __name: "contactsOnBroadcastsModel" },
-}))
-
-vi.mock("@chatbotx.io/database/partials", () => ({
-  broadcastStatuses: {
-    enum: { scheduled: "scheduled", sending: "sending", sent: "sent" },
-  },
-  channelTypes: {
-    enum: {
-      omnichannel: "omnichannel",
-      whatsapp: "whatsapp",
-      messenger: "messenger",
-    },
-  },
 }))
 
 vi.mock("@chatbotx.io/database/utils", () => ({
@@ -129,12 +130,23 @@ const baseBroadcast = () => ({
   integrationWhatsapp: null as { inboxId: string } | null,
   channel: null as string | null,
   status: "scheduled",
+  contactFilter: null as unknown,
 })
+
+const hasKeyDeep = (value: unknown, keys: Set<string>): boolean => {
+  if (!value || typeof value !== "object") {
+    return false
+  }
+  return Object.entries(value).some(
+    ([key, child]) => keys.has(key) || hasKeyDeep(child, keys),
+  )
+}
 
 // ── setup ─────────────────────────────────────────────────────────────────────
 beforeEach(() => {
   updateCalls.length = 0
   insertCalls.length = 0
+  audienceWhereCalls.length = 0
   findFirstBroadcast.mockResolvedValue(undefined)
   findManyInbox.mockResolvedValue([])
   findManyConversation.mockResolvedValue([])
@@ -359,6 +371,44 @@ describe("prepareBroadcast", () => {
       await prepareBroadcast(BROADCAST_ID)
 
       expect(scheduleAddSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("contactFilter wiring", () => {
+    test("applies contactFilter to the inbox-rooted audience query", async () => {
+      findFirstBroadcast.mockResolvedValue({
+        ...baseBroadcast(),
+        channel: "messenger",
+        contactFilter: {
+          operator: "and",
+          conditions: [
+            {
+              field: "fullName",
+              operator: "contains",
+              value: "Ada",
+            },
+          ],
+        },
+      })
+      findManyInbox.mockResolvedValue([{ id: "inbox-1" }])
+      chunkByIdMock.mockResolvedValue(undefined)
+
+      await prepareBroadcast(BROADCAST_ID)
+
+      expect(audienceWhereCalls.length).toBeGreaterThan(0)
+      const where = audienceWhereCalls[0]
+
+      expect(where).toEqual(
+        expect.objectContaining({
+          __and: expect.arrayContaining([
+            { __inArray: ["ContactInbox.inboxId", ["inbox-1"]] },
+            { __gt: ["ContactInbox.id", expect.anything()] },
+          ]),
+        }),
+      )
+      expect(hasKeyDeep(where, new Set(["RAW", "contactId", "Contact"]))).toBe(
+        true,
+      )
     })
   })
 })

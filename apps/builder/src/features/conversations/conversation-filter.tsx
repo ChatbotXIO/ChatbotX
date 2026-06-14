@@ -24,7 +24,7 @@ import {
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { useChatStore } from "../chat/store/chat-store-provider"
-import { ContactFilterDialog } from "../contacts/components/contact-filter-dialog"
+import { ContactFilterDialog } from "../contact-filter"
 import { useConfiguredInboxTypeOptions } from "../inboxes/provider/inbox-hook"
 import { useContactAssigneeOptions } from "../users/provider/user-hook"
 
@@ -39,7 +39,9 @@ export function ConversationFilter() {
     (filters.channel && filters.channel !== "omnichannel") ||
       (filters.assignedId &&
         filters.assignedId !== assignerFilterTypes.enum.all) ||
-      filters.status,
+      filters.status ||
+      (filters.tags && filters.tags.length > 0) ||
+      (filters.contactFilter?.conditions.length ?? 0) > 0,
   )
   const contactAssigneeOptions = useContactAssigneeOptions({
     includeAll: true,
@@ -81,7 +83,7 @@ export function ConversationFilter() {
           <FilterIcon className={hasFilter ? "text-primary" : ""} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-[min(calc(100vw-2rem),36rem)]">
         <div className="flex flex-col gap-4">
           <SelectField
             label={t("fields.channel.label")}

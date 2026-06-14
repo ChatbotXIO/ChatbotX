@@ -1,4 +1,5 @@
 import { db, relationsFilterToSQL } from "@chatbotx.io/database/client"
+import { buildContactInboxContactFilterSQL } from "@chatbotx.io/database/queries"
 import { contactInboxModel } from "@chatbotx.io/database/schema"
 import { assertCurrentUserCanAccessChatbot } from "@/lib/auth/utils"
 import type { ListContactsRequest } from "../schemas/query"
@@ -41,8 +42,18 @@ async function parseContactFilters(
 }
 
 const generateWhere = (input: ListContactsRequest) => {
+  const { contactFilter } = input
+
   const where = {
     inboxId: { in: input.inboxIds },
+    ...(contactFilter && {
+      RAW: () =>
+        buildContactInboxContactFilterSQL({
+          contactIdColumn: contactInboxModel.contactId,
+          workspaceId: input.workspaceId,
+          contactFilter,
+        }),
+    }),
   }
 
   return where

@@ -5,6 +5,7 @@ import { ContactStoreProvider } from "@/features/contacts/provider/contact-store
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
 import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { FlowTemplateStoreProvider } from "@/features/flows/react-flow/stores/flow-template-store-provider"
+import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { IntegrationStoreProvider } from "@/features/integration-whatsapp/provider/integration-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 
@@ -24,12 +25,14 @@ export default async function CreateBroadcastPage({
         <IntegrationStoreProvider workspaceId={workspaceId}>
           <TagStoreProvider workspaceId={workspaceId}>
             <FlowTemplateStoreProvider workspaceId={workspaceId}>
-              <ContactStoreProvider
-                autoInitialize={false}
-                workspaceId={workspaceId}
-              >
-                <CreateBroadcastForm workspaceId={workspaceId} />
-              </ContactStoreProvider>
+              <InboxStoreProvider workspaceId={workspaceId}>
+                <ContactStoreProvider
+                  autoInitialize={false}
+                  workspaceId={workspaceId}
+                >
+                  <CreateBroadcastForm workspaceId={workspaceId} />
+                </ContactStoreProvider>
+              </InboxStoreProvider>
             </FlowTemplateStoreProvider>
           </TagStoreProvider>
         </IntegrationStoreProvider>

@@ -4,9 +4,11 @@ import { getTranslations } from "next-intl/server"
 import type { SearchParams } from "nuqs/server"
 import { Suspense } from "react"
 import { ContactsTable } from "@/features/contacts/contacts-table"
+import { CreateContactDialog } from "@/features/contacts/create-contact-dialog"
 import { listContactsRSC } from "@/features/contacts/queries/list-contacts.queries"
 import { listContactsRequest } from "@/features/contacts/schemas/query"
 import { CustomFieldStoreProvider } from "@/features/custom-fields/provider/custom-field-store-context"
+import { FlowStoreProvider } from "@/features/flows/provider/flow-store-context"
 import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { TagStoreProvider } from "@/features/tags/provider/tag-store-context"
 import { UserStoreProvider } from "@/features/users/provider/user-store-context"
@@ -37,22 +39,23 @@ export default async function ContactsPage(props: {
 
   return (
     <div className="space-y-4">
-      <h4 className="font-bold text-xl">{t("contacts.title")}</h4>
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="font-bold text-xl">{t("contacts.title")}</h4>
+        <CreateContactDialog workspaceId={workspaceId} />
+      </div>
 
       <Suspense>
         <UserStoreProvider workspaceId={workspaceId}>
           <TagStoreProvider workspaceId={workspaceId}>
             <CustomFieldStoreProvider workspaceId={workspaceId}>
-              <InboxStoreProvider workspaceId={workspaceId}>
-                <ContactsTable
-                  filter={{
-                    keyword: search?.keyword,
-                    contactFilter: search?.contactFilter,
-                  }}
-                  promises={promises}
-                  workspaceId={workspaceId}
-                />
-              </InboxStoreProvider>
+              <FlowStoreProvider workspaceId={workspaceId}>
+                <InboxStoreProvider workspaceId={workspaceId}>
+                  <ContactsTable
+                    promises={promises}
+                    workspaceId={workspaceId}
+                  />
+                </InboxStoreProvider>
+              </FlowStoreProvider>
             </CustomFieldStoreProvider>
           </TagStoreProvider>
         </UserStoreProvider>

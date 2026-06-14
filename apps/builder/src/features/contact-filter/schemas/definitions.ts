@@ -1,11 +1,6 @@
 import type { ContactFilterField } from "@chatbotx.io/database/partials"
 import { contactFilterFields } from "@chatbotx.io/database/partials"
-import { booleanFilter } from "./boolean-filter"
-import { datetimeFilter } from "./datetime-filter"
-import { multiSelectFilter } from "./multi-select-filter"
-import { numberFilter } from "./number"
-import { selectFilter } from "./select-filter"
-import { textFilter } from "./text-filter"
+import { staticFieldFilter } from "./static-field-filter"
 
 /**
  * Shape of value input + which Zod branch (`booleanFilter`, `textFilter`, …) applies.
@@ -25,13 +20,14 @@ export type ContactFilterSchemaKind =
  */
 export type ContactFilterOptionSource =
   | "none"
+  | "languages"
   | "countries"
   | "continents"
   | "gender"
+  | "contactSources"
   | "channels"
-  | "channelsNoTelegram"
+  | "inboxes"
   | "tags"
-  | "customFields"
   | "flows"
 
 export type ContactFilterFieldDefinition = {
@@ -40,27 +36,8 @@ export type ContactFilterFieldDefinition = {
   optionSource: ContactFilterOptionSource
 }
 
-const conditionSchemaForDef = (def: ContactFilterFieldDefinition) => {
-  const { field, schemaKind } = def
-  switch (schemaKind) {
-    case "boolean":
-      return booleanFilter(field)
-    case "text":
-      return textFilter(field)
-    case "multiSelect":
-      return multiSelectFilter(field)
-    case "select":
-      return selectFilter(field)
-    case "datetime":
-      return datetimeFilter(field)
-    case "number":
-      return numberFilter(field)
-    default: {
-      const _exhaustive: never = schemaKind
-      return _exhaustive
-    }
-  }
-}
+const conditionSchemaForDef = (def: ContactFilterFieldDefinition) =>
+  staticFieldFilter(def.field)
 
 /**
  * One row per supported filter field: drives Zod `contactFilter` conditions and UI `FieldConfig`.
@@ -70,7 +47,7 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   {
     field: contactFilterFields.enum.locale,
     schemaKind: "multiSelect",
-    optionSource: "countries",
+    optionSource: "languages",
   },
   {
     field: contactFilterFields.enum.fullName,
@@ -81,11 +58,6 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     field: contactFilterFields.enum.country,
     schemaKind: "multiSelect",
     optionSource: "countries",
-  },
-  {
-    field: contactFilterFields.enum.continent,
-    schemaKind: "multiSelect",
-    optionSource: "continents",
   },
   {
     field: contactFilterFields.enum.gender,
@@ -103,14 +75,9 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
-    field: contactFilterFields.enum.contactCreatedDateMinutesAgo,
-    schemaKind: "number",
-    optionSource: "none",
-  },
-  {
     field: contactFilterFields.enum.source,
     schemaKind: "multiSelect",
-    optionSource: "channels",
+    optionSource: "contactSources",
   },
   {
     field: contactFilterFields.enum.conversationTransferredToHuman,
@@ -119,6 +86,11 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
   },
   {
     field: contactFilterFields.enum.interactedInLast24h,
+    schemaKind: "boolean",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.followUp,
     schemaKind: "boolean",
     optionSource: "none",
   },
@@ -133,14 +105,29 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "none",
   },
   {
-    field: contactFilterFields.enum.existingContact,
-    schemaKind: "boolean",
+    field: contactFilterFields.enum.currentChannel,
+    schemaKind: "multiSelect",
+    optionSource: "channels",
+  },
+  {
+    field: contactFilterFields.enum.inbox,
+    schemaKind: "multiSelect",
+    optionSource: "inboxes",
+  },
+  {
+    field: contactFilterFields.enum.timezone,
+    schemaKind: "text",
     optionSource: "none",
   },
   {
-    field: contactFilterFields.enum.currentChannel,
-    schemaKind: "multiSelect",
-    optionSource: "channelsNoTelegram",
+    field: contactFilterFields.enum.lastSeen,
+    schemaKind: "datetime",
+    optionSource: "none",
+  },
+  {
+    field: contactFilterFields.enum.lastInteraction,
+    schemaKind: "datetime",
+    optionSource: "none",
   },
   {
     field: contactFilterFields.enum.email,
@@ -158,14 +145,14 @@ export const CONTACT_FILTER_FIELD_DEFINITIONS = [
     optionSource: "tags",
   },
   {
-    field: contactFilterFields.enum.customFields,
-    schemaKind: "multiSelect",
-    optionSource: "customFields",
+    field: contactFilterFields.enum.emailWasVerified,
+    schemaKind: "boolean",
+    optionSource: "none",
   },
   {
-    field: contactFilterFields.enum.executedFlow,
-    schemaKind: "select",
-    optionSource: "flows",
+    field: contactFilterFields.enum.optedInForEmail,
+    schemaKind: "boolean",
+    optionSource: "none",
   },
 ] as const satisfies readonly ContactFilterFieldDefinition[]
 

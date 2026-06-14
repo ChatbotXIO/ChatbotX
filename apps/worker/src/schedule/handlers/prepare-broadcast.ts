@@ -5,6 +5,10 @@ import {
   channelTypes,
 } from "@chatbotx.io/database/partials"
 import {
+  buildContactInboxContactFilterSQL,
+  type ContactFilterCriteriaInput,
+} from "@chatbotx.io/database/queries"
+import {
   broadcastModel,
   contactInboxModel,
   contactsOnBroadcastsModel,
@@ -71,6 +75,14 @@ export const prepareBroadcast = async (broadcastId: string) => {
           and(
             inArray(contactInboxModel.inboxId, inboxIds),
             lastId ? gt(contactInboxModel.id, lastId) : undefined,
+            broadcast.contactFilter
+              ? buildContactInboxContactFilterSQL({
+                  contactIdColumn: contactInboxModel.contactId,
+                  workspaceId: broadcast.workspaceId,
+                  contactFilter:
+                    broadcast.contactFilter as ContactFilterCriteriaInput,
+                })
+              : undefined,
           ),
         )
         .orderBy(asc(contactInboxModel.id))

@@ -4,7 +4,7 @@ import { RadioGroupField } from "@chatbotx.io/ui/components/form/radio-group-fie
 import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { useTranslations } from "next-intl"
 import { useFieldArray, useFormContext } from "react-hook-form"
-import type { ContactFilterCondition } from "../schemas/contact-filter"
+import type { ContactFilterCondition } from "../schemas"
 import { ContactFilterConditionForm } from "./contact-filter-condition-form"
 import { ContactFilterConditionRow } from "./contact-filter-condition-row"
 import { useContactFilterConfigs } from "./use-contact-filter-configs"
