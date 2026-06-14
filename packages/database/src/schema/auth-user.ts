@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
   boolean,
@@ -7,7 +6,12 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { bigintAsString, sharedColumns } from "../partials/shared"
+import {
+  bigintAsString,
+  ROOT_TENANT_ID,
+  sharedColumns,
+} from "../partials/shared"
+import { tenantModel } from "./enterprise/tenant"
 
 export const userModel = pgTable(
   "User",
@@ -18,24 +22,22 @@ export const userModel = pgTable(
     emailVerified: boolean().default(false).notNull(),
     image: text(),
     isAnonymous: boolean().default(false).notNull(),
-    // Tenant key for white-label isolation. NULL → the platform tenant (main
-    // site). When set, this row is an end-customer (sub-account) that belongs to
-    // the reseller User referenced here, and lives in that reseller's tenant
-    // namespace. Email is unique *within* a tenant, never across tenants.
-    resellerId: bigintAsString().references((): AnyPgColumn => userModel.id, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+    // Tenant key for white-label isolation. Defaults to the root tenant (the
+    // platform / main site). When it points at a reseller's `Tenant`, this row
+    // is an end-customer (sub-account) isolated inside that tenant. Email is
+    // unique *within* a tenant, never across tenants.
+    tenantId: bigintAsString()
+      .notNull()
+      .default(ROOT_TENANT_ID)
+      .references((): AnyPgColumn => tenantModel.id, {
+        onDelete: "restrict",
+        onUpdate: "cascade",
+      }),
   },
   (table) => [
-    // Per-tenant email uniqueness: the same email may exist once on the platform
-    // (resellerId IS NULL) and once per reseller tenant, all as isolated rows.
-    uniqueIndex("User_email_platform_key")
-      .on(table.email)
-      .where(sql`${table.resellerId} IS NULL`),
-    uniqueIndex("User_email_reseller_key")
-      .on(table.email, table.resellerId)
-      .where(sql`${table.resellerId} IS NOT NULL`),
-    index("User_resellerId_idx").on(table.resellerId),
+    // Per-tenant email uniqueness: the same email may exist once per tenant
+    // (platform or any reseller), all as fully isolated rows.
+    uniqueIndex("User_email_tenant_key").on(table.email, table.tenantId),
+    index("User_tenantId_idx").on(table.tenantId),
   ],
 )

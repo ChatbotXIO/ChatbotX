@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import type { PlatformSettingModel } from "@chatbotx.io/database/types"
+import type { TenantModel } from "@chatbotx.io/database/types"
 import { customDomainService } from "../enterprise/custom-domain/service"
-import { platformSettingService } from "../enterprise/platform-setting/service"
+import { tenantService } from "../enterprise/tenant/service"
 import { integrationContextEnv } from "../integration-context/keys"
 import { isCloud, isEnterprise } from "../keys"
 import { workspaceService } from "../workspace/service"
@@ -9,7 +9,7 @@ import { deriveUrls } from "./derive-urls"
 
 export type EmailTemplate = { subject?: string; body?: string }
 
-export type PlatformSettings = {
+export type TenantSettings = {
   appUrl: string
   wsUrl: string
   storageUrl: string
@@ -27,7 +27,10 @@ export type PlatformSettings = {
   magicLinkEmailTemplate: EmailTemplate | null
 }
 
-const getDefaultSettings = (): PlatformSettings => {
+/** @deprecated Renamed to `TenantSettings`. */
+export type PlatformSettings = TenantSettings
+
+const getDefaultSettings = (): TenantSettings => {
   const env = integrationContextEnv()
   const derived = deriveUrls(
     env.NEXT_PUBLIC_BUILDER_URL,
@@ -52,10 +55,10 @@ const getDefaultSettings = (): PlatformSettings => {
   }
 }
 
-const applyPlatformSetting = (
-  defaults: PlatformSettings,
-  setting: PlatformSettingModel | null | undefined,
-): PlatformSettings => {
+const applyTenantSetting = (
+  defaults: TenantSettings,
+  setting: TenantModel | null | undefined,
+): TenantSettings => {
   if (!setting) {
     return defaults
   }
@@ -86,30 +89,32 @@ const applyPlatformSetting = (
 }
 
 /**
- * Resolve the public-facing platform settings for a workspace.
- * On community edition, returns env-based defaults merged with any
- * PlatformSetting row found for the workspace owner.
- * On enterprise/cloud, also applies CustomDomain URL overrides via
- * the private enterprise source.
+ * Resolve the public-facing tenant settings for a workspace.
+ * Merges env-based defaults with the workspace's `Tenant` branding. The root
+ * tenant carries null branding, so platform workspaces fall back to defaults.
+ * A non-active tenant (suspended) also falls back to defaults.
  */
-export const resolvePlatformSettings = async (args: {
+export const resolveTenantSettings = async (args: {
   workspaceId: string
   tx?: DatabaseClient
-}): Promise<PlatformSettings> => {
+}): Promise<TenantSettings> => {
   const defaults = getDefaultSettings()
 
   const workspace = await workspaceService.findById({
     id: args.workspaceId,
     tx: args.tx,
   })
-  const setting = await platformSettingService.findForUser(workspace.ownerId)
+  const tenant = await tenantService.findById(workspace.tenantId)
 
-  if (!setting?.isEnabled) {
+  if (!tenant || tenant.status !== "active") {
     return defaults
   }
 
-  return applyPlatformSetting(defaults, setting)
+  return applyTenantSetting(defaults, tenant)
 }
+
+/** @deprecated Renamed to `resolveTenantSettings`. */
+export const resolvePlatformSettings = resolveTenantSettings
 
 /**
  * Resolve the `REALTIME_BROADCAST_SECRET` for a workspace.
@@ -120,13 +125,13 @@ export const resolveBroadcastSecret = (_args: {
 }): string => integrationContextEnv().REALTIME_BROADCAST_SECRET
 
 /**
- * Resolve platform settings by request hostname (from the `x-domain` header
- * set by the builder proxy). On enterprise/cloud, looks up the CustomDomain
- * record to find the user's PlatformSetting. On community, returns env defaults.
+ * Resolve tenant settings by request hostname (from the `x-domain` header set by
+ * the builder proxy). On enterprise/cloud, maps the active CustomDomain to its
+ * `Tenant` and applies that tenant's branding. On community, returns env defaults.
  */
-export const resolvePlatformSettingsByDomain = async (
+export const resolveTenantSettingsByDomain = async (
   domain: string | null | undefined,
-): Promise<PlatformSettings> => {
+): Promise<TenantSettings> => {
   const defaults = getDefaultSettings()
 
   if (!(domain && (isEnterprise() || isCloud()))) {
@@ -138,6 +143,12 @@ export const resolvePlatformSettingsByDomain = async (
     return defaults
   }
 
-  const setting = await platformSettingService.findForUser(customDomain.userId)
-  return applyPlatformSetting(defaults, setting)
+  const tenant = await tenantService.findById(customDomain.tenantId)
+  if (!tenant || tenant.status !== "active") {
+    return defaults
+  }
+  return applyTenantSetting(defaults, tenant)
 }
+
+/** @deprecated Renamed to `resolveTenantSettingsByDomain`. */
+export const resolvePlatformSettingsByDomain = resolveTenantSettingsByDomain

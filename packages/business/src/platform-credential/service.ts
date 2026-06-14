@@ -19,7 +19,7 @@ import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
-import { platformSettingService } from "../enterprise/platform-setting/service"
+import { platformSettingService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
 
 type CredentialRow<T extends CredentialType> = Omit<
@@ -308,7 +308,7 @@ class PlatformCredentialService extends BaseService {
   }): Promise<DecryptedCredential<T> | undefined> {
     const setting = await platformSettingService.findForUser(props.ownerId)
     const livemode = props.livemode ?? false
-    if (setting?.isEnabled) {
+    if (setting?.status === "active") {
       return this.findDecryptedForUser({
         userId: props.ownerId,
         type: props.type,

@@ -1,6 +1,6 @@
 import {
   platformCredentialService,
-  resolvePlatformSettingsByDomain,
+  resolveTenantSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
@@ -23,11 +23,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env } from "./keys"
-import { getTenantId } from "./tenant-context"
+import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
 
-const getPlatformSettings = async (request: Request) => {
+const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
-  return await resolvePlatformSettingsByDomain(domain)
+  return await resolveTenantSettingsByDomain(domain)
 }
 
 type AdapterFactory = ReturnType<typeof drizzleAdapter>
@@ -37,11 +37,13 @@ type WhereClause = Parameters<AuthAdapter["findOne"]>[0]["where"][number]
 /**
  * Wrap the drizzle adapter so white-label isolation holds at the data layer:
  * every `User` lookup *by email* and every `User` insert is constrained to the
- * current tenant (`getTenantId()` — `null` = platform). Lookups by id/token are
- * untouched, so sessions stay tenant-neutral. This is what lets the same email
- * exist as fully separate accounts across tenants.
+ * current tenant (`getTenantId()` — `ROOT_TENANT_ID` = platform). Lookups by
+ * id/token are untouched, so sessions stay tenant-neutral. This is what lets the
+ * same email exist as fully separate accounts across tenants.
  */
-function createTenantScopedAdapter(base: AdapterFactory): AdapterFactory {
+export function createTenantScopedAdapter(
+  base: AdapterFactory,
+): AdapterFactory {
   const scopeUserEmailWhere = (
     model: string,
     where: WhereClause[] | undefined,
@@ -50,22 +52,49 @@ function createTenantScopedAdapter(base: AdapterFactory): AdapterFactory {
       return where
     }
     const filtersByEmail = where.some((clause) => clause.field === "email")
-    const alreadyScoped = where.some((clause) => clause.field === "resellerId")
+    const alreadyScoped = where.some((clause) => clause.field === "tenantId")
     if (!filtersByEmail || alreadyScoped) {
       return where
     }
-    return [...where, { field: "resellerId", value: getTenantId() }]
+    return [...where, { field: "tenantId", value: getTenantId() }]
   }
 
   return (options) => {
     const adapter = base(options)
     return {
       ...adapter,
-      findOne: <T>(data: Parameters<AuthAdapter["findOne"]>[0]) =>
-        adapter.findOne<T>({
+      findOne: async <T>(data: Parameters<AuthAdapter["findOne"]>[0]) => {
+        const result = await adapter.findOne<T>({
           ...data,
           where: scopeUserEmailWhere(data.model, data.where) ?? data.where,
-        }),
+        })
+        if (result || data.model !== "user" || !data.where) {
+          return result
+        }
+        // Reseller-owner fallback: on the reseller's own custom domain the bound
+        // tenant is their reseller `Tenant`, but the reseller's account lives in
+        // the root tenant (they signed up on the main site) and so is missed by
+        // the scoped lookup above. Resolve the bound tenant's owner and retry by
+        // primary key. `Tenant.ownerId` resolves only this tenant's owner — never
+        // another tenant's user — and `id` is unique, so the match is exact.
+        // Sub-account lookups are tried first, so they keep priority.
+        const tenantId = getTenantId()
+        const filtersByEmail = data.where.some(
+          (clause) => clause.field === "email",
+        )
+        if (!filtersByEmail) {
+          return result
+        }
+        const ownerId = await resolveTenantOwnerId(tenantId)
+        if (ownerId) {
+          const ownerWhere: WhereClause[] = [
+            ...data.where.filter((clause) => clause.field !== "tenantId"),
+            { field: "id", value: ownerId },
+          ]
+          return adapter.findOne<T>({ ...data, where: ownerWhere })
+        }
+        return result
+      },
       findMany: <T>(data: Parameters<AuthAdapter["findMany"]>[0]) =>
         adapter.findMany<T>({
           ...data,
@@ -84,7 +113,7 @@ function createTenantScopedAdapter(base: AdapterFactory): AdapterFactory {
       }) =>
         adapter.create<T, R>(
           data.model === "user"
-            ? { ...data, data: { ...data.data, resellerId: getTenantId() } }
+            ? { ...data, data: { ...data.data, tenantId: getTenantId() } }
             : data,
         ),
     }
@@ -106,13 +135,13 @@ export function createAuth(_config: AuthConfig) {
         },
       }),
     ),
-    // `resellerId` is the white-label tenant key. Declared so better-auth maps it
+    // `tenantId` is the white-label tenant key. Declared so better-auth maps it
     // to the column and the adapter wrapper can stamp it on user inserts. Never
     // accepted from client input and never returned — the wrapper sets it from
     // the bound tenant. See tenant-context.ts.
     user: {
       additionalFields: {
-        resellerId: {
+        tenantId: {
           type: "string",
           required: false,
           input: false,
@@ -169,7 +198,7 @@ export function createAuth(_config: AuthConfig) {
 
         const [originUrl, platformInfo] = await Promise.all([
           getPublicOriginFromRequest(request as unknown as Request),
-          getPlatformSettings(request),
+          getTenantSettings(request),
         ])
 
         const resetPasswordUrl = new URL(url)
@@ -202,7 +231,7 @@ export function createAuth(_config: AuthConfig) {
 
         const [originUrl, platformInfo] = await Promise.all([
           getPublicOriginFromRequest(request as unknown as Request),
-          getPlatformSettings(request),
+          getTenantSettings(request),
         ])
 
         const verificationUrl = new URL(url)
@@ -236,7 +265,7 @@ export function createAuth(_config: AuthConfig) {
 
           const [originUrl, platformInfo] = await Promise.all([
             getPublicOriginFromRequest(request as unknown as Request),
-            getPlatformSettings(request as unknown as Request),
+            getTenantSettings(request as unknown as Request),
           ])
 
           const magicUrl = new URL(url)
@@ -249,10 +278,14 @@ export function createAuth(_config: AuthConfig) {
           } = platformInfo
 
           const tenantId = getTenantId()
+          // Match the tenant's users by email, plus the reseller-owner on their
+          // own custom domain (the owner's account lives in the root tenant).
+          // Mirrors the findOne reseller-owner fallback above.
+          const ownerId = await resolveTenantOwnerId(tenantId)
           const user = await db.query.userModel.findFirst({
             where: {
               email,
-              resellerId: tenantId === null ? { isNull: true } : tenantId,
+              OR: [{ tenantId }, ...(ownerId ? [{ id: ownerId }] : [])],
             },
           })
           if (!user) {

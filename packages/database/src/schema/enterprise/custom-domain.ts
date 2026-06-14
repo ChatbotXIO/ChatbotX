@@ -10,15 +10,16 @@ import {
   sharedColumns,
   timestampConfig,
 } from "../../partials/shared"
-import { userModel } from "../auth-user"
+import { tenantModel } from "./tenant"
 
 export const customDomainModel = pgTable(
   "CustomDomain",
   {
     ...sharedColumns,
-    userId: bigintAsString()
+    // The tenant this domain serves. Host → tenant is the white-label routing key.
+    tenantId: bigintAsString()
       .notNull()
-      .references(() => userModel.id, {
+      .references(() => tenantModel.id, {
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
@@ -30,7 +31,7 @@ export const customDomainModel = pgTable(
     cfAcmeValue: text(),
   },
   (table) => [
-    uniqueIndex("CustomDomain_userId_key").on(table.userId),
+    uniqueIndex("CustomDomain_tenantId_key").on(table.tenantId),
     uniqueIndex("CustomDomain_domain_key").on(table.domain),
     index("CustomDomain_status_idx").on(table.status),
   ],

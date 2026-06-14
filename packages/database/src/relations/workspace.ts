@@ -8,6 +8,10 @@ export const workspaceRelations = defineRelationsPart(schema, (r) => ({
       from: r.workspaceModel.ownerId,
       to: r.userModel.id,
     }),
+    tenant: r.one.tenantModel({
+      from: r.workspaceModel.tenantId,
+      to: r.tenantModel.id,
+    }),
     savedReplies: r.many.savedReplyModel({
       from: r.workspaceModel.id,
       to: r.savedReplyModel.workspaceId,

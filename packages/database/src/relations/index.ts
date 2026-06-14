@@ -39,7 +39,7 @@ import { customFieldRelations } from "./custom-field"
 import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
-import { platformSettingRelations } from "./enterprise/platform-setting"
+import { tenantRelations } from "./enterprise/tenant"
 import { userQuotaRelations } from "./enterprise/user-quota"
 import { errorLogRelations } from "./error-log"
 import { fileRelations } from "./file"
@@ -112,7 +112,7 @@ export const relations = {
   ...messageRelations,
   ...automatedResponseRelations,
   ...customDomainRelations,
-  ...platformSettingRelations,
+  ...tenantRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,
   ...contactCustomFieldRelations,

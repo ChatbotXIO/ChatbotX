@@ -24,6 +24,15 @@ export const timestampConfig: PgTimestampConfig<"date"> = {
   withTimezone: true,
 }
 
+/**
+ * Seeded root tenant id — the platform / single-tenant OSS install. Every
+ * `User`/`Workspace` defaults to this tenant; the root `Tenant` row has a NULL
+ * `ownerId`. Defined here (not in `tenant.ts`) so this eager default value is
+ * safe against schema module load order — `tenant.ts` and `auth-user.ts` form a
+ * circular FK reference that is resolved lazily for columns but not for a const.
+ */
+export const ROOT_TENANT_ID = "1"
+
 export const sharedColumns = {
   id: bigintAsString()
     .primaryKey()

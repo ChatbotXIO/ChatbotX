@@ -1,7 +1,7 @@
 import {
   customDomainService,
   platformCredentialService,
-  platformSettingService,
+  tenantService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { inboxStatuses } from "@chatbotx.io/database/partials"
@@ -70,13 +70,11 @@ export const handleWebhook = async (
         )
       }
 
-      const platformSetting = await platformSettingService.findForUser(
-        customDomain.userId,
-      )
-      if (!platformSetting?.isEnabled) {
+      const tenant = await tenantService.findById(customDomain.tenantId)
+      if (!tenant?.ownerId || tenant.status !== "active") {
         logger.debug(
           { integrationType, domain },
-          "Platform disabled for integration webhook",
+          "Tenant disabled for integration webhook",
         )
         return new Response(
           JSON.stringify({ message: "Integration is not configured" }),
@@ -86,7 +84,7 @@ export const handleWebhook = async (
 
       // Tenant's own credential — no fallback to global platform
       credential = await platformCredentialService.findDecryptedForUser({
-        userId: customDomain.userId,
+        userId: tenant.ownerId,
         type,
       })
     }

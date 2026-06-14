@@ -4,9 +4,9 @@ import * as schema from "../../schema"
 
 export const customDomainRelations = defineRelationsPart(schema, (r) => ({
   customDomainModel: {
-    user: r.one.userModel({
-      from: r.customDomainModel.userId,
-      to: r.userModel.id,
+    tenant: r.one.tenantModel({
+      from: r.customDomainModel.tenantId,
+      to: r.tenantModel.id,
     }),
   },
 }))

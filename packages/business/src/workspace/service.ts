@@ -1,10 +1,11 @@
 import { anchoredPeriod, macRepository } from "@chatbotx.io/analytics"
 import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import { workspaceMemberRoles } from "@chatbotx.io/database/partials"
-import { workspaceModel } from "@chatbotx.io/database/schema"
+import { ROOT_TENANT_ID, workspaceModel } from "@chatbotx.io/database/schema"
 import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { tenantService } from "../enterprise/tenant/service"
 import { notFoundException } from "../errors"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
@@ -68,6 +69,24 @@ class WorkspaceService extends BaseService {
     return updated
   }
 
+  /**
+   * Owner-derived tenant for a new workspace — never request/host-derived, so a
+   * reseller's workspaces land in their tenant regardless of which host created
+   * them. A sub-account inherits its own tenant; a reseller (a root user who owns
+   * a tenant) gets that tenant; a plain platform user gets the root tenant.
+   */
+  async resolveTenantForOwner(creatorId: string): Promise<string> {
+    const creator = await db.query.userModel.findFirst({
+      where: { id: creatorId },
+      columns: { tenantId: true },
+    })
+    if (creator && creator.tenantId !== ROOT_TENANT_ID) {
+      return creator.tenantId
+    }
+    const owned = await tenantService.findByOwner(creatorId)
+    return owned?.id ?? ROOT_TENANT_ID
+  }
+
   async create(props: {
     data: typeof workspaceModel.$inferInsert
     createdBy: string
@@ -83,9 +102,11 @@ class WorkspaceService extends BaseService {
       throw new Error("Workspace limit reached for this plan")
     }
 
+    const tenantId =
+      data.tenantId ?? (await this.resolveTenantForOwner(props.createdBy))
     const [newWorkspace] = await tx
       .insert(workspaceModel)
-      .values(data)
+      .values({ ...data, tenantId })
       .returning()
 
     await workspaceMemberService.create({

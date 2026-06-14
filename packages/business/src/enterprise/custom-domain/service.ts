@@ -15,15 +15,15 @@ export const customDomainService = {
     )
   },
 
-  findByUserId(userId: string) {
+  findByTenantId(tenantId: string) {
     return withCache(
-      `custom-domain:user:${userId}`,
+      `custom-domain:tenant:${tenantId}`,
       () =>
         db.query.customDomainModel.findMany({
-          where: { userId },
+          where: { tenantId },
         }),
       {
-        tags: [`cd:user:${userId}`],
+        tags: [`cd:tenant:${tenantId}`],
         dynamicTags: (results) => results.map((r) => `cd:domain:${r.domain}`),
       },
     )

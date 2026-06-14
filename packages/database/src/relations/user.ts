@@ -4,6 +4,16 @@ import * as schema from "../schema"
 
 export const userRelations = defineRelationsPart(schema, (r) => ({
   userModel: {
+    // The tenant this user lives in (root for platform users).
+    tenant: r.one.tenantModel({
+      from: r.userModel.tenantId,
+      to: r.tenantModel.id,
+    }),
+    // The tenant this user owns, if any (a reseller owns exactly one).
+    ownedTenant: r.one.tenantModel({
+      from: r.userModel.id,
+      to: r.tenantModel.ownerId,
+    }),
     accounts: r.many.accountModel({
       from: r.userModel.id,
       to: r.accountModel.userId,
