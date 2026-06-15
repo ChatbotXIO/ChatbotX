@@ -4,13 +4,13 @@ import {
   broadcastToWorkspaceParty as broadcastToWorkspacePartyLow,
   type RealtimeEventData,
 } from "@chatbotx.io/partysocket-config"
-import { resolveBroadcastSecret, resolvePlatformSettings } from "./settings"
+import { resolveBroadcastSecret, resolveTenantSettings } from "./settings"
 
 const resolveTargetByWorkspace = async (
   workspaceId: string,
 ): Promise<BroadcastTarget> => {
   const [{ wsUrl }, secret] = await Promise.all([
-    resolvePlatformSettings({ workspaceId }),
+    resolveTenantSettings({ workspaceId }),
     Promise.resolve(resolveBroadcastSecret({ workspaceId })),
   ])
   return { url: wsUrl, secret }

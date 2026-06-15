@@ -27,10 +27,17 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
+import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateGiphySettingsAction } from "./update-giphy-settings.action"
 
-export function GiphySettings({ isConfigured }: { isConfigured: boolean }) {
+export function GiphySettings({
+  isConfigured,
+  isInherited = false,
+}: {
+  isConfigured: boolean
+  isInherited?: boolean
+}) {
   const t = useTranslations()
 
   return (
@@ -54,9 +61,7 @@ export function GiphySettings({ isConfigured }: { isConfigured: boolean }) {
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("messages.needToAddSettings")}
-          </p>
+          <CredentialFallbackNote isInherited={isInherited} />
         )}
       </CardContent>
     </Card>

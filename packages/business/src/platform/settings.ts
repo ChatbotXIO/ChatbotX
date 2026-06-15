@@ -27,9 +27,6 @@ export type TenantSettings = {
   magicLinkEmailTemplate: EmailTemplate | null
 }
 
-/** @deprecated Renamed to `TenantSettings`. */
-export type PlatformSettings = TenantSettings
-
 const getDefaultSettings = (): TenantSettings => {
   const env = integrationContextEnv()
   const derived = deriveUrls(
@@ -106,15 +103,12 @@ export const resolveTenantSettings = async (args: {
   })
   const tenant = await tenantService.findById(workspace.tenantId)
 
-  if (!tenant || tenant.status !== "active") {
+  if (!tenant?.status || tenant.status !== "active") {
     return defaults
   }
 
   return applyTenantSetting(defaults, tenant)
 }
-
-/** @deprecated Renamed to `resolveTenantSettings`. */
-export const resolvePlatformSettings = resolveTenantSettings
 
 /**
  * Resolve the `REALTIME_BROADCAST_SECRET` for a workspace.
@@ -144,11 +138,8 @@ export const resolveTenantSettingsByDomain = async (
   }
 
   const tenant = await tenantService.findById(customDomain.tenantId)
-  if (!tenant || tenant.status !== "active") {
+  if (!tenant?.status || tenant.status !== "active") {
     return defaults
   }
   return applyTenantSetting(defaults, tenant)
 }
-
-/** @deprecated Renamed to `resolveTenantSettingsByDomain`. */
-export const resolvePlatformSettingsByDomain = resolveTenantSettingsByDomain

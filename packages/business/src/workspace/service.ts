@@ -6,7 +6,7 @@ import type { WorkspaceModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
-import { notFoundException } from "../errors"
+import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceMemberService } from "../workspace-member/service"
@@ -99,7 +99,7 @@ class WorkspaceService extends BaseService {
       "workspaces",
     )
     if (!allowed) {
-      throw new Error("Workspace limit reached for this plan")
+      throw new ChatbotXException("Workspace limit reached for this plan")
     }
 
     const tenantId =

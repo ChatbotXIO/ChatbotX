@@ -4,7 +4,7 @@ import { CardTitle } from "@chatbotx.io/ui/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { usePlatformSettings } from "@/features/platform"
+import { useTenantSettings } from "@/features/ternant"
 import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 export type AuthHeaderProps = {
@@ -13,7 +13,7 @@ export type AuthHeaderProps = {
 
 export const AuthHeader = ({ title }: AuthHeaderProps) => {
   const currentTheme = useCurrentTheme()
-  const { name, logoLightUrl, logoDarkUrl } = usePlatformSettings()
+  const { name, logoLightUrl, logoDarkUrl } = useTenantSettings()
   const logoUrl = currentTheme === "dark" ? logoLightUrl : logoDarkUrl
 
   return (

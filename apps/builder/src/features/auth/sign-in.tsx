@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { isCommunity } from "@/env"
 import SSOSignIn from "@/features/auth/sso-sign-in"
-import { usePlatformSettings } from "../platform"
+import { useTenantSettings } from "../ternant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 import {
@@ -20,11 +20,17 @@ import {
 
 export type SignInFormProps = {
   callbackUrl?: string
+  /** Whether Google login is configured for this tenant (own app or platform default). */
+  googleEnabled?: boolean
 }
 
-export const SignInForm = ({ callbackUrl, ...props }: SignInFormProps) => {
+export const SignInForm = ({
+  callbackUrl,
+  googleEnabled = false,
+  ...props
+}: SignInFormProps) => {
   const t = useTranslations()
-  const { name } = usePlatformSettings()
+  const { name } = useTenantSettings()
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -41,7 +47,7 @@ export const SignInForm = ({ callbackUrl, ...props }: SignInFormProps) => {
 
             <MagicLinkSignIn />
 
-            {!isCommunity() && (
+            {!isCommunity() && googleEnabled && (
               <>
                 <OrSeparator />
                 <SSOSignIn />

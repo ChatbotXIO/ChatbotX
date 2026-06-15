@@ -7,8 +7,7 @@ import { CopyIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import QRCode from "react-qr-code"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
+import { useClipboard } from "@/hooks/use-clipboard"
 import type { ManualOnboardingResult } from "../schemas"
 
 type WhatsappOnboardingResultProps = {
@@ -25,13 +24,7 @@ export function WhatsappOnboardingResult({
   result,
 }: WhatsappOnboardingResultProps) {
   const t = useTranslations()
-  const [, copy] = useCopyToClipboard()
-
-  const handleCopy = (value: string) => {
-    copy(value).then(() => {
-      toast.success(t("messages.copiedToClipboard"))
-    })
-  }
+  const { handleCopy } = useClipboard()
 
   return (
     <div className="space-y-6">

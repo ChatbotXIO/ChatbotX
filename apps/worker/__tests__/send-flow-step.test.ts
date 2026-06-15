@@ -14,7 +14,7 @@ const {
   mockFindContactInbox,
   mockBroadcast,
   mockEmit,
-  mockResolvePlatformSettings,
+  mockresolveTenantSettings,
   mockResolveContactVariables,
   mockUploadFileFromUrl,
   mockSendFlowStepToChannel,
@@ -84,7 +84,7 @@ const {
     mockFindContactInbox,
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
-    mockResolvePlatformSettings: vi
+    mockresolveTenantSettings: vi
       .fn()
       .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
     mockResolveContactVariables: vi
@@ -145,7 +145,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   broadcastToGuestParty: vi.fn().mockResolvedValue(undefined),
-  resolvePlatformSettings: mockResolvePlatformSettings,
+  resolveTenantSettings: mockresolveTenantSettings,
 }))
 
 vi.mock("@chatbotx.io/business/utils", () => ({
@@ -272,7 +272,7 @@ describe("sendFlowStep", () => {
       create: mockRepositoryCreate,
       createWithAttachments: mockRepositoryCreateWithAttachments,
     })
-    mockResolvePlatformSettings.mockResolvedValue({
+    mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://storage.example.com",
     })
     mockResolveContactVariables.mockImplementation(
@@ -447,7 +447,7 @@ describe("sendChatMessage", () => {
       create: mockRepositoryCreate,
       createWithAttachments: mockRepositoryCreateWithAttachments,
     })
-    mockResolvePlatformSettings.mockResolvedValue({
+    mockresolveTenantSettings.mockResolvedValue({
       storageUrl: "https://storage.example.com",
     })
     mockRepositoryCreate.mockResolvedValue({

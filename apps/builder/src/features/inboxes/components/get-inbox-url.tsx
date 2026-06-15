@@ -11,12 +11,11 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { useTranslations } from "next-intl"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
-import { usePlatformSettings } from "@/features/platform"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
+import { useTenantSettings } from "@/features/ternant"
+import { useClipboard } from "@/hooks/use-clipboard"
 
 type GetInboxUrlDialogProps = {
   open: boolean
@@ -29,7 +28,7 @@ export function GetInboxUrlDialog({
   refConfig,
 }: GetInboxUrlDialogProps) {
   const { inboxes } = useInboxStore((state) => state)
-  const { appUrl } = usePlatformSettings()
+  const { appUrl } = useTenantSettings()
   const skipChannels: ChannelType[] = ["smtp", "tiktok"]
 
   return (
@@ -69,17 +68,9 @@ function GetInboxUrlItem({
   refConfig?: RefConfig
 }) {
   const t = useTranslations()
-  const [_, copy] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
 
   const url = buildInboxLink(appUrl, inbox as InboxWithIntegrations, refConfig)
-  const handleCopy = async () => {
-    if (url) {
-      await copy(url)
-      toast.success(t("messages.copiedToClipboard"))
-    } else {
-      toast.error(t("messages.copyFailed"))
-    }
-  }
 
   if (!url) {
     return null
@@ -99,7 +90,7 @@ function GetInboxUrlItem({
         />
       </div>
 
-      <Button onClick={() => handleCopy()} size="sm" variant="outline">
+      <Button onClick={() => handleCopy(url)} size="sm" variant="outline">
         {t("actions.copy")}
       </Button>
 

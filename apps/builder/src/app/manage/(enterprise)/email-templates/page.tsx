@@ -1,4 +1,4 @@
-import { platformSettingService } from "@chatbotx.io/business"
+import { tenantService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 import { PlatformEmailTemplatesSettings } from "@/enterprise/features/platform-email-templates/platform-email-templates-settings"
@@ -13,7 +13,7 @@ export default async function ManageEmailTemplatesPage() {
     return notFound()
   }
 
-  const setting = await platformSettingService.findForUser(userId)
+  const setting = await tenantService.findByOwner(userId)
 
   return (
     <div className="space-y-4">

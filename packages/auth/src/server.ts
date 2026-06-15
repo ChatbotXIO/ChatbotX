@@ -1,7 +1,4 @@
-import {
-  platformCredentialService,
-  resolveTenantSettingsByDomain,
-} from "@chatbotx.io/business"
+import { resolveTenantSettingsByDomain } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
@@ -120,9 +117,29 @@ export function createTenantScopedAdapter(
   }
 }
 
-export type AuthConfig = Record<string, unknown>
+/**
+ * A fixed Google OAuth app for a single auth instance. Resolved per tenant
+ * ahead of building the instance — better-auth freezes social-provider config at
+ * init (the `socialProviders` thunk runs once, with no request/tenant context),
+ * so the only way to give each white-label tenant its own Google app is to build
+ * a separate auth instance per credential. See `apps/builder` `auth-instances.ts`.
+ */
+export type GoogleAuthCredential = {
+  clientId: string
+  clientSecret: string
+}
 
-export function createAuth(_config: AuthConfig) {
+export type AuthConfig = {
+  /** The Google app this instance signs in with, or `null`/omitted to disable Google. */
+  googleCredential?: GoogleAuthCredential | null
+}
+
+export function createAuth(config: AuthConfig) {
+  const { googleCredential } = config
+  const googleEnabled =
+    process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD &&
+    Boolean(googleCredential)
+
   return betterAuth({
     database: createTenantScopedAdapter(
       drizzleAdapter(db, {
@@ -149,43 +166,19 @@ export function createAuth(_config: AuthConfig) {
         },
       },
     },
-    socialProviders: {
-      google: async () => {
-        if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) {
-          return {
-            enabled: false,
-            clientId: "",
-            clientSecret: "",
-          }
-        }
-
-        try {
-          const googleCredential =
-            await platformCredentialService.findDecryptedPlatform({
-              type: "google",
-            })
-          if (!googleCredential) {
-            return await {
-              enabled: false,
-              clientId: "",
-              clientSecret: "",
-            }
-          }
-
-          return await {
-            enabled: true,
-            clientId: googleCredential.config.clientId,
-            clientSecret: googleCredential.config.clientSecret,
-          }
-        } catch {
-          return await {
-            enabled: false,
-            clientId: "",
-            clientSecret: "",
-          }
-        }
-      },
+    account: {
+      skipStateCookieCheck: true,
     },
+    socialProviders:
+      googleEnabled && googleCredential
+        ? {
+            google: {
+              enabled: true,
+              clientId: googleCredential.clientId,
+              clientSecret: googleCredential.clientSecret,
+            },
+          }
+        : undefined,
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,

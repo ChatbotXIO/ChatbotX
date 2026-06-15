@@ -1382,6 +1382,10 @@
     "authCallbackUrl": {
       "label": "Auth Callback URL"
     },
+    "signInCallbackUrl": {
+      "label": "Sign-in Callback URL",
+      "hint": "Add this to your Google app's authorized redirect URIs to enable Google sign-in."
+    },
     "webhookUrl": {
       "label": "Webhook URL"
     },
@@ -2443,7 +2447,11 @@
     }
   },
   "platformCredentials": {
-    "title": "Platform Credentials"
+    "title": "Platform Credentials",
+    "usingPlatformDefault": "Using platform default",
+    "usingPlatformDefaultHint": "This channel works out of the box with the platform's shared app. Add your own settings anytime to override it.",
+    "notConfigured": "Not set up yet",
+    "notConfiguredHint": "Add your settings to start using this integration."
   },
   "platformBranding": {
     "title": "Platform Branding",

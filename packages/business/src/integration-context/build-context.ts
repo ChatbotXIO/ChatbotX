@@ -6,7 +6,7 @@ import { signRealtimeToken } from "@chatbotx.io/partysocket-config/auth"
 import type { AuthStore, AuthValue, Context } from "@chatbotx.io/sdk"
 import {
   resolveBroadcastSecret,
-  resolvePlatformSettings,
+  resolveTenantSettings,
 } from "../platform/settings"
 import { type AuthStoreIntegrationRow, makeAuthStore } from "./auth-store"
 
@@ -30,13 +30,13 @@ export type PlatformData = {
 const resolvePlatformData = async (
   workspaceId: string,
 ): Promise<PlatformData> => {
-  const [platformSettings, realtimeSecret] = await Promise.all([
-    resolvePlatformSettings({ workspaceId }),
+  const [tenantSettings, realtimeSecret] = await Promise.all([
+    resolveTenantSettings({ workspaceId }),
     resolveBroadcastSecret({ workspaceId }),
   ])
 
   return {
-    ...platformSettings,
+    ...tenantSettings,
     getRealtimeAuthHeaders: buildGetRealtimeAuthHeaders(realtimeSecret),
   }
 }

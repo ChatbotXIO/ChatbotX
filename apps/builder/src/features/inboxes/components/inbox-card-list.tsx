@@ -7,8 +7,8 @@ import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
 import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
-import { usePlatformSettings } from "@/features/platform"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
+import { useTenantSettings } from "@/features/ternant"
 import { InboxIcon } from "./inbox-icon"
 import InboxNewCard from "./inbox-new-card"
 
@@ -40,7 +40,7 @@ const BaseInboxCard = memo(function BaseInboxCard({
   inbox: ListInboxesResponse["data"][number]
 }) {
   const t = useTranslations()
-  const { appUrl } = usePlatformSettings()
+  const { appUrl } = useTenantSettings()
   const link = buildInboxLink(appUrl, inbox as InboxWithIntegrations)
 
   if (!link) {

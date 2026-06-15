@@ -1,4 +1,4 @@
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { resolveTenantSettings } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { uploader } from "@chatbotx.io/filesystem"
 import {
@@ -63,7 +63,7 @@ export const textToSpeechStorageService = {
       ContentType: contentType,
     })
 
-    const { storageUrl } = await resolvePlatformSettings({ workspaceId })
+    const { storageUrl } = await resolveTenantSettings({ workspaceId })
     const publicUrl = getPublicFileUrl(storagePath, storageUrl)
 
     return {

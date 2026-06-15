@@ -1,10 +1,10 @@
-import { usePlatformSettings } from "@/features/platform"
+import { useTenantSettings } from "@/features/ternant"
 import type { WorkspaceResource } from "./schema/resource"
 
 export function useWorkspaceLogoUrl(
   workspace: Pick<WorkspaceResource, "logo"> | null | undefined,
 ): string | undefined {
-  const { storageUrl } = usePlatformSettings()
+  const { storageUrl } = useTenantSettings()
 
   return getWorkspaceLogoUrl(workspace, storageUrl)
 }

@@ -7,7 +7,7 @@ import {
 import {
   broadcastToGuestParty,
   broadcastToWorkspaceParty,
-  resolvePlatformSettings,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, eq } from "@chatbotx.io/database/client"
@@ -248,7 +248,7 @@ export async function sendFlowStep({
   try {
     const [repository, { storageUrl }] = await Promise.all([
       createMessageRepository(),
-      resolvePlatformSettings({ workspaceId: conversation.workspaceId }),
+      resolveTenantSettings({ workspaceId: conversation.workspaceId }),
     ])
 
     let contentAttributes: (typeof messageModel.$inferInsert)["contentAttributes"] =
@@ -509,7 +509,7 @@ export const sendChatMessage = async (
   try {
     const [repository, { storageUrl }] = await Promise.all([
       createMessageRepository(),
-      resolvePlatformSettings({ workspaceId: conversation.workspaceId }),
+      resolveTenantSettings({ workspaceId: conversation.workspaceId }),
     ])
 
     const messageInput = {

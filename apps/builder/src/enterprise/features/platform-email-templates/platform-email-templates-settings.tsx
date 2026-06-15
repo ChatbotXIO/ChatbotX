@@ -1,4 +1,4 @@
-import type { PlatformSettingModel } from "@chatbotx.io/database/types"
+import type { TenantModel } from "@chatbotx.io/database/types"
 import { Badge } from "@chatbotx.io/ui/components/ui/badge"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
@@ -15,7 +15,7 @@ import { storedEmailTemplateSchema } from "./email-template.schema"
 
 type TemplateConfig = {
   settingKey: keyof Pick<
-    PlatformSettingModel,
+    TenantModel,
     | "signupEmailTemplate"
     | "forgotPasswordEmailTemplate"
     | "magicLinkEmailTemplate"
@@ -56,7 +56,7 @@ const TEMPLATES: TemplateConfig[] = [
 ]
 
 type PlatformEmailTemplatesSettingsProps = {
-  setting: PlatformSettingModel | null | undefined
+  setting: TenantModel | null | undefined
 }
 
 export async function PlatformEmailTemplatesSettings({

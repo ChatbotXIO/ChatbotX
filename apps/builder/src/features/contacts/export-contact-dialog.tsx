@@ -25,6 +25,7 @@ import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { toast } from "sonner"
 import useSWR from "swr"
+import { useClipboard } from "@/hooks/use-clipboard"
 import { client } from "@/lib/orpc/orpc"
 import { useCustomFieldSelectOptions } from "../custom-fields/provider/custom-field-hook"
 import { useTagSelectOptions } from "../tags/provider/tag-hook"
@@ -67,6 +68,7 @@ export function ExportContactDialog({
     prefix: contactFieldPrefix,
   })
   const tagOptions = useTagSelectOptions({ prefix: contactTagPrefix })
+  const { handleCopy } = useClipboard()
 
   const options: MultiSelectGroup[] = [
     {
@@ -166,14 +168,6 @@ export function ExportContactDialog({
 
   const closeDialog = () => handleOpenChange(false)
 
-  const handleCopyLink = async () => {
-    if (!exportFile?.downloadUrl) {
-      return
-    }
-    await navigator.clipboard.writeText(exportFile.downloadUrl)
-    toast.success(t("contacts.linkCopied"))
-  }
-
   const handleDownload = () => {
     if (exportFile?.downloadUrl) {
       window.open(exportFile.downloadUrl, "_blank", "noopener,noreferrer")
@@ -251,7 +245,11 @@ export function ExportContactDialog({
           {/* L-1: Do not expose the raw presigned URL (it contains AWS signing
               parameters). Copy and download actions are sufficient. */}
           <div className="flex justify-between gap-4">
-            <Button onClick={handleCopyLink} type="button" variant="outline">
+            <Button
+              onClick={() => handleCopy(exportFile.downloadUrl ?? "")}
+              type="button"
+              variant="outline"
+            >
               <CopyIcon />
               {t("contacts.copyLink")}
             </Button>

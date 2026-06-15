@@ -8,7 +8,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { getPlatformSettings } from "@/features/platform/utils"
+import { getTenantSettings } from "@/features/ternant/utils"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 export default async function WorkspaceLayout({
@@ -32,7 +32,7 @@ export default async function WorkspaceLayout({
   const [allWorkspaceMembers, { storageUrl }, platformAdmin] =
     await Promise.all([
       workspaceMemberService.listByUserId({ userId: user.id }),
-      getPlatformSettings(),
+      getTenantSettings(),
       isPlatformAdmin(user),
     ])
   if (

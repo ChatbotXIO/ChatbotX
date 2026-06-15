@@ -1,19 +1,19 @@
 "use client"
 
-import type { PlatformSettings } from "@chatbotx.io/business"
+import type { TenantSettings } from "@chatbotx.io/business"
 import { createContext, type ReactNode, useContext, useEffect } from "react"
 
-const PlatformSettingsContext = createContext<PlatformSettings | null>(null)
+const TenantSettingsContext = createContext<TenantSettings | null>(null)
 
-type PlatformSettingsProviderProps = {
-  settings: PlatformSettings
+type TenantSettingsProviderProps = {
+  settings: TenantSettings
   children: ReactNode
 }
 
-export const PlatformSettingsProvider = ({
+export const TenantProvider = ({
   settings,
   children,
-}: PlatformSettingsProviderProps) => {
+}: TenantSettingsProviderProps) => {
   useEffect(() => {
     if (!settings.customCSS) {
       return
@@ -35,18 +35,16 @@ export const PlatformSettingsProvider = ({
   }, [settings.customJS])
 
   return (
-    <PlatformSettingsContext.Provider value={settings}>
+    <TenantSettingsContext.Provider value={settings}>
       {children}
-    </PlatformSettingsContext.Provider>
+    </TenantSettingsContext.Provider>
   )
 }
 
-export const usePlatformSettings = (): PlatformSettings => {
-  const ctx = useContext(PlatformSettingsContext)
+export const useTenantSettings = (): TenantSettings => {
+  const ctx = useContext(TenantSettingsContext)
   if (!ctx) {
-    throw new Error(
-      "usePlatformSettings must be used within a PlatformSettingsProvider",
-    )
+    throw new Error("useTenantSettings must be used within a TenantProvider")
   }
   return ctx
 }

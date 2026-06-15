@@ -19,7 +19,7 @@ import { encryptUtils } from "@chatbotx.io/encryption"
 import { withCache } from "@chatbotx.io/redis"
 import type { z } from "zod"
 import { BaseService } from "../base.service"
-import { platformSettingService } from "../enterprise/tenant/service"
+import { tenantService } from "../enterprise/tenant/service"
 import { logger } from "../logger"
 
 type CredentialRow<T extends CredentialType> = Omit<
@@ -306,21 +306,61 @@ class PlatformCredentialService extends BaseService {
     livemode?: boolean
     tx?: DatabaseClient
   }): Promise<DecryptedCredential<T> | undefined> {
-    const setting = await platformSettingService.findForUser(props.ownerId)
+    const setting = await tenantService.findByOwner(props.ownerId)
     const livemode = props.livemode ?? false
+
     if (setting?.status === "active") {
-      return this.findDecryptedForUser({
+      const own = await this.findDecryptedForUser({
         userId: props.ownerId,
         type: props.type,
         livemode,
         tx: props.tx,
       })
+      if (own) {
+        return own
+      }
     }
+
+    // Reseller has no own credential (or tenant is inactive): fall back to the
+    // platform-global default.
     return this.findDecryptedPlatform({
       type: props.type,
       livemode,
       tx: props.tx,
     })
+  }
+
+  /**
+   * Resolve the public (non-secret) credential config for a user, falling back
+   * to the platform-global default when the user has not configured their own.
+   * Used by the manage UI so a reseller sees the credential their workspaces
+   * actually inherit. `isInherited` is `true` when the returned config is the
+   * platform default rather than the user's own.
+   */
+  async resolvePublicForUser<T extends CredentialType>(props: {
+    userId: string
+    type: T
+    livemode?: boolean
+    tx?: DatabaseClient
+  }): Promise<
+    | { publicConfig: CredentialPublicByType[T]; isInherited: boolean }
+    | undefined
+  > {
+    const userRow = await this.findForUser(props)
+    if (userRow && !userRow.usePlatformCredential) {
+      return { publicConfig: userRow.publicConfig, isInherited: false }
+    }
+
+    const platformRow = await this.findPlatform({
+      type: props.type,
+      livemode: props.livemode,
+      tx: props.tx,
+    })
+    if (platformRow) {
+      return { publicConfig: platformRow.publicConfig, isInherited: true }
+    }
+
+    return
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────────

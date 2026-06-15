@@ -30,13 +30,16 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateWhatsappSettingsAction } from "./update-whatsapp-settings.action"
 
 export function WhatsappSettings({
   publicConfig,
+  isInherited = false,
 }: {
   publicConfig: WhatsappCredentialPublic | null
+  isInherited?: boolean
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
@@ -78,7 +81,7 @@ export function WhatsappSettings({
                 <Button className="flex-none" size="icon" variant="outline">
                   <CopyIcon
                     className="size-4"
-                    onClick={handleCopy(publicConfig.clientId)}
+                    onClick={() => handleCopy(publicConfig.clientId)}
                   />
                 </Button>
               </div>
@@ -94,7 +97,7 @@ export function WhatsappSettings({
                   <Button className="flex-none" size="icon" variant="outline">
                     <CopyIcon
                       className="size-4"
-                      onClick={handleCopy(publicConfig.businessName)}
+                      onClick={() => handleCopy(publicConfig.businessName)}
                     />
                   </Button>
                 </div>
@@ -110,7 +113,7 @@ export function WhatsappSettings({
                 <Button className="flex-none" size="icon" variant="outline">
                   <CopyIcon
                     className="size-4"
-                    onClick={handleCopy(authCallbackUrl)}
+                    onClick={() => handleCopy(authCallbackUrl)}
                   />
                 </Button>
               </div>
@@ -123,7 +126,7 @@ export function WhatsappSettings({
                 <Button className="flex-none" size="icon" variant="outline">
                   <CopyIcon
                     className="size-4"
-                    onClick={handleCopy(webhookUrl)}
+                    onClick={() => handleCopy(webhookUrl)}
                   />
                 </Button>
               </div>
@@ -138,16 +141,14 @@ export function WhatsappSettings({
                 <Button className="flex-none" size="icon" variant="outline">
                   <CopyIcon
                     className="size-4"
-                    onClick={handleCopy(publicConfig.verifyToken)}
+                    onClick={() => handleCopy(publicConfig.verifyToken)}
                   />
                 </Button>
               </div>
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("messages.needToAddSettings")}
-          </p>
+          <CredentialFallbackNote isInherited={isInherited} />
         )}
       </CardContent>
     </Card>

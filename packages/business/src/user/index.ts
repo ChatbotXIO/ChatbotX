@@ -2,7 +2,9 @@ import type { UserModel } from "@chatbotx.io/database/types"
 import { tenantService } from "../enterprise/tenant/service"
 import { isCloud, keys } from "../keys"
 
-export const isPlatformAdmin = async (user: UserModel): Promise<boolean> => {
+export const isPlatformAdmin = async (
+  user: Pick<UserModel, "id" | "email">,
+): Promise<boolean> => {
   if (isCloud()) {
     const setting = await tenantService.findByOwner(user.id)
     return Boolean(setting?.status === "active")
@@ -17,7 +19,7 @@ export const isPlatformAdmin = async (user: UserModel): Promise<boolean> => {
  * cloud means "white-label user". The super admin manages the platform-scoped
  * (NULL userId) default credentials that serve non-white-label customers.
  */
-export const isSuperAdmin = (user: UserModel): boolean => {
+export const isSuperAdmin = (user: Pick<UserModel, "email">): boolean => {
   const { PLATFORM_ADMIN_EMAIL } = keys()
   return Boolean(PLATFORM_ADMIN_EMAIL && user.email === PLATFORM_ADMIN_EMAIL)
 }

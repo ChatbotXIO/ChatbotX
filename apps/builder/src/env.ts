@@ -31,6 +31,15 @@ export const env = createEnv({
       .optional()
       .default("http://localhost:9000/chatbotx/"),
     NEXT_PUBLIC_STORAGE_URL: z.url().optional(),
+    NEXT_PUBLIC_ALLOWED_DEV_ORIGINS: z
+      .string()
+      .optional()
+      .transform((val) =>
+        val
+          ?.split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      ),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL:
@@ -42,6 +51,9 @@ export const env = createEnv({
       "http://localhost:9000/chatbotx/",
     NEXT_PUBLIC_EDITION: clientEnv("NEXT_PUBLIC_EDITION") || "community",
     NEXT_PUBLIC_STORAGE_URL: clientEnv("NEXT_PUBLIC_STORAGE_URL"),
+    NEXT_PUBLIC_ALLOWED_DEV_ORIGINS: clientEnv(
+      "NEXT_PUBLIC_ALLOWED_DEV_ORIGINS",
+    ),
   },
   emptyStringAsUndefined: true,
   skipValidation: process.env.SKIP_ENV_CHECK === "true",

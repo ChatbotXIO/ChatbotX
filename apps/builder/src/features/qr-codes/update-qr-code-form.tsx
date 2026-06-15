@@ -18,8 +18,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { usePlatformSettings } from "@/features/platform"
 import { QrCodeLinkContent } from "@/features/qr-codes/qr-code-link-content"
+import { useTenantSettings } from "@/features/ternant"
 import { updateQrCodeAction } from "./actions/update-qr-code.action"
 import { QR_CODE_SIZE, stripQrPrefix } from "./constants"
 import { updateQrCodeRequest } from "./schemas/action"
@@ -35,7 +35,7 @@ export function UpdateQrCodeForm({
   const t = useTranslations()
   const router = useRouter()
   const flowOptions = useFlowSelectOptions()
-  const { appUrl } = usePlatformSettings()
+  const { appUrl } = useTenantSettings()
 
   const landingPageUrl = `${appUrl}/l/${workspaceId}/${qrCode.id}`
 

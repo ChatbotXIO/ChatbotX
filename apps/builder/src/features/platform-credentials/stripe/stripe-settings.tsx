@@ -38,6 +38,7 @@ export function StripeSettings({
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
+
   const [webhookUrl, setWebhookUrl] = useState<string>("")
   useEffect(() => {
     setWebhookUrl(
@@ -67,11 +68,14 @@ export function StripeSettings({
               </div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.publishableKey}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(publicConfig.publishableKey)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(publicConfig.publishableKey)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
@@ -80,11 +84,14 @@ export function StripeSettings({
               <div className="font-bold">{t("fields.verifyToken.label")}:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.verifyToken}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(publicConfig.verifyToken)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(publicConfig.verifyToken)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
@@ -93,11 +100,14 @@ export function StripeSettings({
               <div className="font-bold">Webhook URL:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{webhookUrl}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(webhookUrl)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(webhookUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>

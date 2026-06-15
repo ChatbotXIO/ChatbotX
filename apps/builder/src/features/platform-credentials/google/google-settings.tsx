@@ -29,14 +29,18 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { env } from "@/env"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateGoogleSettingsAction } from "./update-google-settings.action"
 
 export function GoogleSettings({
   publicConfig,
+  isInherited = false,
 }: {
   publicConfig: GoogleCredentialPublic | null
+  isInherited?: boolean
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
@@ -49,6 +53,14 @@ export function GoogleSettings({
       ).toString(),
     )
   }, [])
+
+  // Google sign-in always redirects to the fixed platform callback (better-auth
+  // uses BETTER_AUTH_URL), regardless of the reseller's branded domain. Resellers
+  // using their own Google app must whitelist this exact URI.
+  const signInCallbackUrl = new URL(
+    "/api/auth/callback/google",
+    env.NEXT_PUBLIC_BUILDER_URL,
+  ).toString()
 
   return (
     <Card>
@@ -71,7 +83,7 @@ export function GoogleSettings({
                 <Button className="flex-none" size="icon" variant="outline">
                   <CopyIcon
                     className="size-4"
-                    onClick={handleCopy(publicConfig.clientId)}
+                    onClick={() => handleCopy(publicConfig.clientId)}
                   />
                 </Button>
               </div>
@@ -81,19 +93,41 @@ export function GoogleSettings({
               <div className="font-bold">Auth Callback URL:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{authCallbackUrl}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(authCallbackUrl)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(authCallbackUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">
+                {t("fields.signInCallbackUrl.label")}:
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{signInCallbackUrl}</span>
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(signInCallbackUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {t("fields.signInCallbackUrl.hint")}
+              </p>
+            </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("messages.needToAddSettings")}
-          </p>
+          <CredentialFallbackNote isInherited={isInherited} />
         )}
       </CardContent>
     </Card>

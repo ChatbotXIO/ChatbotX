@@ -3,7 +3,7 @@
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
   conversationService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
@@ -61,7 +61,7 @@ export async function handleCreateWebchatMessage({
       async (tx) => await getConversationFromInput(tx, parsedInput),
     )
 
-  const { storageUrl } = await resolvePlatformSettings({
+  const { storageUrl } = await resolveTenantSettings({
     workspaceId: parsedInput.workspaceId,
   })
 

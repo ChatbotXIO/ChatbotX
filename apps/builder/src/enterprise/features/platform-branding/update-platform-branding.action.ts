@@ -1,6 +1,6 @@
 "use server"
 
-import { platformSettingService } from "@chatbotx.io/business"
+import { tenantService } from "@chatbotx.io/business"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { platformAdminActionClient } from "@/lib/safe-action"
 import {
@@ -20,7 +20,7 @@ export const updatePlatformBrandingAction = platformAdminActionClient
     }) => {
       const { logoLight, logoDark, favicon, ...rest } = parsedInput
 
-      await platformSettingService.upsert(ctx.user.id, {
+      await tenantService.upsertByOwner(ctx.user.id, {
         ...rest,
         logoLightPath: logoLight.url || null,
         logoDarkPath: logoDark.url || null,

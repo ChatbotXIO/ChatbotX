@@ -1,4 +1,4 @@
-import { platformSettingService } from "@chatbotx.io/business"
+import { tenantService } from "@chatbotx.io/business"
 import {
   DEFAULT_FORGOT_PASSWORD_SUBJECT,
   DEFAULT_FORGOT_PASSWORD_TEMPLATE,
@@ -79,7 +79,7 @@ export default async function ManageEmailTemplateEditPage({
     return notFound()
   }
 
-  const setting = await platformSettingService.findForUser(userId)
+  const setting = await tenantService.findByOwner(userId)
   const storedTemplate = storedEmailTemplateSchema.parse(
     setting?.[config.settingKey] ?? null,
   )

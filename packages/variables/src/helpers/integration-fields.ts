@@ -1,7 +1,7 @@
 import {
   contactInboxService,
   inboxService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import type { SystemFieldType } from "@chatbotx.io/database/partials"
 import { channelTypes } from "@chatbotx.io/database/partials"
@@ -125,14 +125,14 @@ export const getIntegrationField = async (
       if (channel !== channelTypes.enum.webchat || !inbox.integrationWebchat) {
         return null
       }
-      const { appUrl } = await resolvePlatformSettings({
+      const { appUrl } = await resolveTenantSettings({
         workspaceId: contact.workspaceId,
       })
       return `${appUrl}/webchat?webchatId=${inbox.integrationWebchat.id}`
     }
 
     case "inbox_link": {
-      const { appUrl } = await resolvePlatformSettings({
+      const { appUrl } = await resolveTenantSettings({
         workspaceId: contact.workspaceId,
       })
       return `${appUrl}/space/${contact.workspaceId}/inbox`

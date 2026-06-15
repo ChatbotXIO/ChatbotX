@@ -3,7 +3,7 @@ import {
   aiIntegrationService,
   createAIImageModelInstance,
 } from "@chatbotx.io/ai/server"
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { resolveTenantSettings } from "@chatbotx.io/business"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import {
   type AIGenerateImageQualityType,
@@ -176,7 +176,7 @@ export async function handleAIGenerateImage({
       ContentType: contentType,
     })
 
-    const { storageUrl } = await resolvePlatformSettings({
+    const { storageUrl } = await resolveTenantSettings({
       workspaceId: conversation.workspaceId,
     })
     const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)

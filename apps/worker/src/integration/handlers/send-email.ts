@@ -5,7 +5,7 @@ import {
   contactService,
   inboxService,
   integrationSmtpService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
   signEmailClickUrl,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -160,7 +160,7 @@ export async function sendEmail({
   })
 
   const variables = await contactVariableService.getAll(conversation.contactId)
-  const { appUrl } = await resolvePlatformSettings({
+  const { appUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,
   })
 

@@ -15,6 +15,8 @@ export const createWebchatAction = authActionClient
     let workspaceId = parsedInput.workspaceId
     let ownerId = ctx.user.id
 
+    console.log("adsfsdfsdfdsf")
+
     await db.transaction(async (tx) => {
       if (workspaceId) {
         const workspace = await workspaceService.findOrFail({

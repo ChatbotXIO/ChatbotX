@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { isCommunity } from "@/env"
 import SSOSignUp from "@/features/auth/sso-sign-in"
-import { usePlatformSettings } from "../platform"
+import { useTenantSettings } from "../ternant"
 import { EmailPasswordSignUp } from "./components/email-password-sign-up"
 import {
   AcceptTermsAndPolicy,
@@ -19,11 +19,17 @@ import {
 
 export type SignUpFormProps = {
   callbackUrl?: string
+  /** Whether Google login is configured for this tenant (own app or platform default). */
+  googleEnabled?: boolean
 }
 
-export const SignUpForm = ({ callbackUrl, ...props }: SignUpFormProps) => {
+export const SignUpForm = ({
+  callbackUrl,
+  googleEnabled = false,
+  ...props
+}: SignUpFormProps) => {
   const t = useTranslations()
-  const { name } = usePlatformSettings()
+  const { name } = useTenantSettings()
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -36,7 +42,7 @@ export const SignUpForm = ({ callbackUrl, ...props }: SignUpFormProps) => {
           <div className="grid gap-6">
             <EmailPasswordSignUp />
 
-            {!isCommunity() && (
+            {!isCommunity() && googleEnabled && (
               <>
                 <OrSeparator />
                 <SSOSignUp />

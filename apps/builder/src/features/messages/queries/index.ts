@@ -1,6 +1,6 @@
 "use server"
 
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { resolveTenantSettings } from "@chatbotx.io/business"
 import { notFoundException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db } from "@chatbotx.io/database/client"
@@ -54,7 +54,7 @@ const presignAttachments = async <T extends { originPath: string }>(
 export const listMessages = async (
   input: ListMessagesRequest,
 ): Promise<ListMessagesResponse> => {
-  const { storageUrl } = await resolvePlatformSettings({
+  const { storageUrl } = await resolveTenantSettings({
     workspaceId: input.workspaceId,
   })
 
@@ -131,7 +131,7 @@ export const publicFindContactMessage = async ({
   conversationId: string
   workspaceId: string
 }): Promise<MessageResourceWithRelations> => {
-  const { storageUrl } = await resolvePlatformSettings({ workspaceId })
+  const { storageUrl } = await resolveTenantSettings({ workspaceId })
   const repository = await createMessageRepository()
   const message = await repository.findById(messageId)
 
@@ -150,7 +150,7 @@ export const findMessage = async (
 ): Promise<MessageResourceWithRelations> => {
   await assertCurrentUserCanAccessChatbot(input.workspaceId)
 
-  const { storageUrl } = await resolvePlatformSettings({
+  const { storageUrl } = await resolveTenantSettings({
     workspaceId: input.workspaceId,
   })
 

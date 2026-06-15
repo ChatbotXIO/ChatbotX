@@ -1,10 +1,7 @@
 "use server"
 
-import { platformSettingService } from "@chatbotx.io/business"
-import type {
-  PlatformSettingModel,
-  UserModel,
-} from "@chatbotx.io/database/types"
+import { tenantService } from "@chatbotx.io/business"
+import type { TenantModel, UserModel } from "@chatbotx.io/database/types"
 import { platformAdminActionClient } from "@/lib/safe-action"
 import {
   type EmailTemplateType,
@@ -15,7 +12,7 @@ import {
 const templateKeyMap: Record<
   EmailTemplateType,
   keyof Pick<
-    PlatformSettingModel,
+    TenantModel,
     | "signupEmailTemplate"
     | "forgotPasswordEmailTemplate"
     | "magicLinkEmailTemplate"
@@ -41,7 +38,7 @@ export const updateEmailTemplateAction = platformAdminActionClient
         ? { subject: parsedInput.subject ?? undefined, body: parsedInput.body }
         : null
 
-      await platformSettingService.upsert(ctx.user.id, {
+      await tenantService.upsertByOwner(ctx.user.id, {
         [key]: template,
       })
     },

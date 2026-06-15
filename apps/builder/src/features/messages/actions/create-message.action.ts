@@ -1,6 +1,6 @@
 "use server"
 
-import { resolvePlatformSettings } from "@chatbotx.io/business"
+import { resolveTenantSettings } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
@@ -91,7 +91,7 @@ export const createMessage = async (props: {
     return null
   }
 
-  const { storageUrl } = await resolvePlatformSettings({
+  const { storageUrl } = await resolveTenantSettings({
     workspaceId: conversation.workspaceId,
   })
 

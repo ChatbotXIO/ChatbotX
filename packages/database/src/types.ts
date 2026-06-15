@@ -67,8 +67,6 @@ export type ContactCustomFieldModel =
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type CustomDomainModel = typeof schema.customDomainModel.$inferSelect
 export type TenantModel = typeof schema.tenantModel.$inferSelect
-/** @deprecated PlatformSetting was promoted into `Tenant`. Use `TenantModel`. */
-export type PlatformSettingModel = TenantModel
 export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect

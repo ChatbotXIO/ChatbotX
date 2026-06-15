@@ -1,7 +1,7 @@
 import {
   broadcastToWorkspaceParty,
   buildContext,
-  resolvePlatformSettings,
+  resolveTenantSettings,
   updateContactFromMessage,
   userQuotaService,
   workspaceService,
@@ -76,7 +76,7 @@ export const receiveMessage = async (
       `No integration registered for channel: ${integrationType}`,
     )
   }
-  await resolvePlatformSettings({
+  await resolveTenantSettings({
     workspaceId: inbox.workspaceId,
   })
   const ctx = await buildContext({

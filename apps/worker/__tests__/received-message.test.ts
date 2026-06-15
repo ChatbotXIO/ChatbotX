@@ -15,7 +15,7 @@ const {
   mockBroadcast,
   mockEmit,
   mockBuildContext,
-  mockResolvePlatformSettings,
+  mockresolveTenantSettings,
   mockUpdateContactFromMessage,
   mockIntegrationQueueAdd,
   mockDbSet,
@@ -55,7 +55,7 @@ const {
     mockBroadcast: vi.fn(),
     mockEmit: vi.fn().mockResolvedValue(undefined),
     mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
-    mockResolvePlatformSettings: vi.fn().mockResolvedValue({}),
+    mockresolveTenantSettings: vi.fn().mockResolvedValue({}),
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
@@ -96,7 +96,7 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 vi.mock("@chatbotx.io/business", () => ({
   broadcastToWorkspaceParty: mockBroadcast,
   buildContext: mockBuildContext,
-  resolvePlatformSettings: mockResolvePlatformSettings,
+  resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
   workspaceService: { find: vi.fn().mockResolvedValue(null) },
   userQuotaService: {
@@ -247,7 +247,7 @@ describe("receiveMessage — message repository branch", () => {
     } as never)
 
     mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
-    mockResolvePlatformSettings.mockResolvedValue({})
+    mockresolveTenantSettings.mockResolvedValue({})
     mockCreateMessageRepository.mockResolvedValue({
       createOrUpdate: mockCreateOrUpdate,
       createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,

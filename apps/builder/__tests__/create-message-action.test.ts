@@ -43,7 +43,7 @@ vi.mock("@/lib/safe-action", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  resolvePlatformSettings: vi
+  resolveTenantSettings: vi
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
 }))

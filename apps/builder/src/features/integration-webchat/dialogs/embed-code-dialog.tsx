@@ -14,9 +14,8 @@ import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { toast } from "sonner"
-import { useCopyToClipboard } from "usehooks-ts"
-import { usePlatformSettings } from "@/features/platform"
+import { useTenantSettings } from "@/features/ternant"
+import { useClipboard } from "@/hooks/use-clipboard"
 
 type EmbedCodeDialogProps = {
   webchat: IntegrationWebchatModel
@@ -24,10 +23,10 @@ type EmbedCodeDialogProps = {
 }
 
 export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
-  const [_, copyToClipboard] = useCopyToClipboard()
+  const { handleCopy } = useClipboard()
   const t = useTranslations()
 
-  const { appUrl } = usePlatformSettings()
+  const { appUrl } = useTenantSettings()
   const baseUrl =
     appUrl || (typeof window === "undefined" ? "" : window.location.origin)
 
@@ -41,16 +40,6 @@ export function EmbedCodeDialog({ webchat, children }: EmbedCodeDialogProps) {
     showLogo: ${webchat.showLogo},
     hideMessageInput: true
   });"></script>`
-
-  const handleCopy = (text: string) => {
-    copyToClipboard(text)
-      .then(() => {
-        toast.success(t("messages.copiedToClipboard"))
-      })
-      .catch(() => {
-        toast.error(t("messages.failedToCopy"))
-      })
-  }
 
   return (
     <Dialog>

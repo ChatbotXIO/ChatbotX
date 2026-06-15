@@ -30,15 +30,17 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateInstagramSettingAction } from "./update-instagram-settings.action"
 
 export function InstagramSettings({
   publicConfig,
+  isInherited = false,
 }: {
   publicConfig: InstagramCredentialPublic | null
+  isInherited?: boolean
 }) {
-  const t = useTranslations()
   const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
@@ -75,11 +77,14 @@ export function InstagramSettings({
               <div className="font-bold">App ID:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.clientId}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(publicConfig.clientId)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(publicConfig.clientId)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
@@ -88,11 +93,14 @@ export function InstagramSettings({
               <div className="font-bold">Auth Callback URL:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{authCallbackUrl}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(authCallbackUrl)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(authCallbackUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
@@ -101,11 +109,14 @@ export function InstagramSettings({
               <div className="font-bold">Webhook URL:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{webhookUrl}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(webhookUrl)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(webhookUrl)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
@@ -114,19 +125,20 @@ export function InstagramSettings({
               <div className="font-bold">Webhook Verify Token:</div>
               <div className="flex items-center gap-2">
                 <span className="truncate">{publicConfig.verifyToken}</span>
-                <Button className="flex-none" size="icon" variant="outline">
-                  <CopyIcon
-                    className="size-4"
-                    onClick={handleCopy(publicConfig.verifyToken)}
-                  />
+                <Button
+                  className="flex-none"
+                  onClick={() => handleCopy(publicConfig.verifyToken)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <CopyIcon className="size-4" />
                 </Button>
               </div>
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
-            {t("messages.needToAddSettings")}
-          </p>
+          <CredentialFallbackNote isInherited={isInherited} />
         )}
       </CardContent>
     </Card>

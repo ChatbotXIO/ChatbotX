@@ -1,7 +1,7 @@
 import {
   isPlatformAdmin,
-  resolvePlatformSettings,
-  resolvePlatformSettingsByDomain,
+  resolveTenantSettings,
+  resolveTenantSettingsByDomain,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import { fileContextTypes, fileStatuses } from "@chatbotx.io/database/partials"
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     if (input.workspaceId) {
       await assertCurrentUserCanAccessChatbot(input.workspaceId)
-      ;({ storageUrl } = await resolvePlatformSettings({
+      ;({ storageUrl } = await resolveTenantSettings({
         workspaceId: input.workspaceId,
       }))
     } else {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
       const domain = await getDomainFromHeader()
-      ;({ storageUrl } = await resolvePlatformSettingsByDomain(domain))
+      ;({ storageUrl } = await resolveTenantSettingsByDomain(domain))
     }
 
     const handlerInput = { ...input, userId }

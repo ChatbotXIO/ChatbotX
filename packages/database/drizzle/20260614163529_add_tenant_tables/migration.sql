@@ -28,7 +28,7 @@ ALTER TABLE "Tenant" ADD CONSTRAINT "Tenant_ownerId_User_id_fkey" FOREIGN KEY ("
 INSERT INTO "Tenant" ("id", "status") VALUES (1, 'active') ON CONFLICT ("id") DO NOTHING;--> statement-breakpoint
 
 -- 3) User: per-tenant email uniqueness replaces the old global unique email.
-DROP INDEX "User_email_key";--> statement-breakpoint
+DROP INDEX IF EXISTS "User_email_key";--> statement-breakpoint
 ALTER TABLE "User" ADD COLUMN "tenantId" bigint DEFAULT 1 NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "User_email_tenant_key" ON "User" ("email","tenantId");--> statement-breakpoint
 CREATE INDEX "User_tenantId_idx" ON "User" ("tenantId");--> statement-breakpoint

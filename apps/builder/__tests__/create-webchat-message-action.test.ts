@@ -67,7 +67,7 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   conversationService: { ensureActive: mockConversationEnsureActive },
-  resolvePlatformSettings: vi
+  resolveTenantSettings: vi
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
 }))

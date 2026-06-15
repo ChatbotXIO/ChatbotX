@@ -6,11 +6,11 @@ import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import { PublicEnvScript } from "@/components/public-env-script"
-import { PlatformSettingsProvider } from "@/features/platform"
-import { getPlatformSettings } from "@/features/platform/utils"
+import { TenantProvider } from "@/features/ternant"
+import { getTenantSettings } from "@/features/ternant/utils"
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { name, faviconUrl } = await getPlatformSettings()
+  const { name, faviconUrl } = await getTenantSettings()
 
   return {
     title: name,
@@ -37,7 +37,7 @@ type Props = {
 
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
-  const platformSettings = await getPlatformSettings()
+  const tenantSettings = await getTenantSettings()
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -46,17 +46,17 @@ export default async function RootLayout({ children }: Props) {
       </head>
       <body
         className={
-          platformSettings.theme
-            ? `theme-${platformSettings.theme.toLowerCase()}`
+          tenantSettings.theme
+            ? `theme-${tenantSettings.theme.toLowerCase()}`
             : undefined
         }
         suppressHydrationWarning
       >
-        <PlatformSettingsProvider settings={platformSettings}>
+        <TenantProvider settings={tenantSettings}>
           <UiProvider>
             <NextIntlClientProvider>{children}</NextIntlClientProvider>
           </UiProvider>
-        </PlatformSettingsProvider>
+        </TenantProvider>
       </body>
     </html>
   )

@@ -4,7 +4,7 @@ import {
   buildContext,
   connectChannelIntegration,
   platformCredentialService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
   workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
@@ -81,7 +81,7 @@ export const selectAccountAction = authActionClient
             workspaceId = workspace.id
           }
 
-          const { appUrl } = await resolvePlatformSettings({
+          const { appUrl } = await resolveTenantSettings({
             workspaceId,
             tx,
           })

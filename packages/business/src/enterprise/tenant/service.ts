@@ -84,14 +84,3 @@ export const tenantService = {
     }
   },
 }
-
-/**
- * @deprecated `PlatformSetting` was promoted into the `Tenant` table. This shim
- * keeps existing callers compiling: settings are now keyed by the tenant a user
- * owns. Prefer `tenantService.findByOwner` / `tenantService.upsertByOwner`.
- */
-export const platformSettingService = {
-  findForUser: (userId: string) => tenantService.findByOwner(userId),
-  upsert: (userId: string, data: TenantBrandingData) =>
-    tenantService.upsertByOwner(userId, data),
-}

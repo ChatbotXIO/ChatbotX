@@ -32,23 +32,12 @@ import {
   FB_PENDING_AUTH_MAX_AGE,
 } from "@/lib/facebook-pending-auth"
 import { logger } from "@/lib/log"
-
-const FALLBACK_REDIRECT = "/manage"
+import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 
 const stateValidationSchema = z.object({
   workspaceId: zodBigintAsString().optional(),
   referer: z.url(),
 })
-
-function sanitizeReferer(referer: string): string {
-  try {
-    const refererOrigin = new URL(referer).origin
-    const builderOrigin = new URL(env.NEXT_PUBLIC_BUILDER_URL).origin
-    return refererOrigin === builderOrigin ? referer : FALLBACK_REDIRECT
-  } catch {
-    return FALLBACK_REDIRECT
-  }
-}
 
 export const handleCallback = async (
   integrationType: IntegrationType,
@@ -78,9 +67,19 @@ export const handleCallback = async (
     return notFound()
   }
 
+  // White-label relay: Facebook/TikTok OAuth always lands on the fixed platform
+  // callback (the only registered redirect_uri). When the flow started on a
+  // branded custom domain, bounce the callback back to that domain — where the
+  // user's session cookie lives — preserving the original code + state. The
+  // re-entry runs on the white-label host, so this guard does not match again.
+  const relayTarget = await resolveRelayTarget(url, stateParams.referer)
+  if (relayTarget) {
+    return redirect(relayTarget)
+  }
+
   // Facebook returns ?error=access_denied when the user cancels
   if (url.searchParams.get("error")) {
-    return redirect(sanitizeReferer(stateParams.referer))
+    return redirect(await sanitizeReferer(stateParams.referer))
   }
 
   const userId = await getCurrentUserId()
@@ -106,7 +105,7 @@ export const handleCallback = async (
     return notFound()
   }
 
-  const safeReferer = sanitizeReferer(stateParams.referer)
+  const safeReferer = await sanitizeReferer(stateParams.referer)
   const code = url.searchParams.get("code") ?? ""
 
   let authResult: AuthValue
@@ -122,9 +121,11 @@ export const handleCallback = async (
         return notFound()
       }
 
+      // Must match the redirect_uri used at authorize time (the fixed platform
+      // callback), even though this handler may run on a white-label host.
       const callbackUrl = new URL(
         "/integrations/messenger/callback",
-        safeReferer,
+        env.NEXT_PUBLIC_BUILDER_URL,
       ).toString()
 
       const userToken = await exchangeMessengerCode(
@@ -162,9 +163,11 @@ export const handleCallback = async (
         return notFound()
       }
 
+      // Must match the redirect_uri used at authorize time (the fixed platform
+      // callback), even though this handler may run on a white-label host.
       const callbackUrl = new URL(
         "/integrations/instagram/callback",
-        safeReferer,
+        env.NEXT_PUBLIC_BUILDER_URL,
       ).toString()
 
       const userToken = await exchangeInstagramCode(
@@ -201,9 +204,11 @@ export const handleCallback = async (
         return notFound()
       }
 
+      // Must match the redirect_uri used at authorize time (the fixed platform
+      // callback), even though this handler may run on a white-label host.
       const tiktokCallbackUrl = new URL(
         "/integrations/tiktok/callback",
-        url,
+        env.NEXT_PUBLIC_BUILDER_URL,
       ).toString()
 
       await connectTiktokHandler({

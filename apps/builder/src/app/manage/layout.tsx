@@ -1,4 +1,4 @@
-import { platformSettingService } from "@chatbotx.io/business"
+import { tenantService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { env, isCloud } from "@/env"
 import { ManageLayout } from "@/features/manage/manage-layout"
@@ -19,8 +19,8 @@ export default async function ManageLayoutPage({
    * Enterprise and Community edition allows access to the platform settings page if the user is the platform admin.
    */
   if (isCloud()) {
-    const setting = await platformSettingService.findForUser(user.id)
-    if (!setting?.isEnabled) {
+    const setting = await tenantService.findByOwner(user.id)
+    if (setting?.status !== "active") {
       return notFound()
     }
   } else if (

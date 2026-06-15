@@ -1,10 +1,10 @@
-import { usePlatformSettings } from "@/features/platform"
+import { useTenantSettings } from "@/features/ternant"
 import type { ContactResource } from "./schemas/resource"
 
 export function useAvatarUrl(
   contact?: ContactResource | null,
 ): string | undefined {
-  const { storageUrl } = usePlatformSettings()
+  const { storageUrl } = useTenantSettings()
   if (!contact) {
     return
   }

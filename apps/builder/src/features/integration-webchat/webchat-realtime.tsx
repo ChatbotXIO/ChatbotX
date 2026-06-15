@@ -6,7 +6,7 @@ import {
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import type { MessageResource } from "../messages/schema/resource"
-import { usePlatformSettings } from "../platform"
+import { useTenantSettings } from "../ternant"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatRealtimeProps = {
@@ -14,7 +14,7 @@ type WebchatRealtimeProps = {
 }
 
 export function WebchatRealtime({ guestConversationId }: WebchatRealtimeProps) {
-  const { wsUrl } = usePlatformSettings()
+  const { wsUrl } = useTenantSettings()
   const { handleNewMessage, setIsTyping } = useGuestSessionStore(
     (state) => state,
   )

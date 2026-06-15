@@ -1,6 +1,6 @@
 "use client"
 
-import type { PlatformSettingModel } from "@chatbotx.io/database/types"
+import type { TenantModel } from "@chatbotx.io/database/types"
 import { fileTypes } from "@chatbotx.io/sdk"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
@@ -53,7 +53,7 @@ const THEME_COLORS: Record<(typeof themeOptions)[number], string> = {
 }
 
 type PlatformBrandingSettingsProps = {
-  setting: PlatformSettingModel | null | undefined
+  setting: TenantModel | null | undefined
 }
 
 export function PlatformBrandingSettings({

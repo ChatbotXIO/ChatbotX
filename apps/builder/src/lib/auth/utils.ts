@@ -8,8 +8,13 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
-import { getPlatformSettings } from "@/features/platform/utils"
+import { getTenantSettings } from "@/features/ternant/utils"
 import { auth } from "./auth"
+
+// `tenantId` is the white-label tenant key. It is deliberately never returned by
+// the auth session (see `additionalFields.tenantId.returned = false` in
+// `@chatbotx.io/auth/server`), so the session-derived user never carries it.
+export type SessionUser = Omit<UserModel, "tenantId">
 
 export const getCurrentUserId = async (): Promise<string | null> => {
   const session = await auth.api.getSession({
@@ -19,7 +24,7 @@ export const getCurrentUserId = async (): Promise<string | null> => {
   return session?.user.id || null
 }
 
-export const getCurrentUser = async (): Promise<UserModel | null> => {
+export const getCurrentUser = async (): Promise<SessionUser | null> => {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
@@ -29,7 +34,6 @@ export const getCurrentUser = async (): Promise<UserModel | null> => {
         ...session.user,
         image: session.user.image || null,
         isAnonymous: session.user.isAnonymous ?? false,
-        // stripeCustomerId: session.user.stripeCustomerId || null,
       }
     : null
 }
@@ -45,7 +49,7 @@ export const assertCurrentUserCanAccessChatbot = async (
 }
 
 export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
-  user: UserModel
+  user: SessionUser
   allWorkspaces: WorkspaceModel[]
   allWorkspaceMembers: (WorkspaceMemberModel & { workspace: WorkspaceModel })[]
 } | null> => {
@@ -63,7 +67,7 @@ export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
         workspace: true,
       },
     }),
-    getPlatformSettings(),
+    getTenantSettings(),
   ])
 
   const resolveLogoUrl = (logo: string | null) =>
@@ -89,7 +93,7 @@ export const getCurrentUserAndAllLinkedWorkspaces = async (): Promise<{
 export const getCurrentUserAndTargetWorkspace = async (
   workspaceId: string,
 ): Promise<{
-  user: UserModel
+  user: SessionUser
   targetWorkspace: WorkspaceModel
   targetWorkspaceMember: WorkspaceMemberModel
   allWorkspaces: WorkspaceModel[]

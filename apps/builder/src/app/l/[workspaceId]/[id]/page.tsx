@@ -1,7 +1,7 @@
 import {
   inboxService,
   qrCodeService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
 } from "@chatbotx.io/business"
 import { getInboxLinks } from "@chatbotx.io/business/utils"
 import type { InboxWithIntegrations } from "@chatbotx.io/database/types"
@@ -23,7 +23,7 @@ export default async function LandingPage({
     return notFound()
   }
 
-  const { appUrl } = await resolvePlatformSettings({
+  const { appUrl } = await resolveTenantSettings({
     workspaceId,
   })
   const qrCode = await qrCodeService.find({ workspaceId, id })

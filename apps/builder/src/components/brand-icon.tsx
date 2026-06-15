@@ -3,7 +3,7 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { usePlatformSettings } from "@/features/platform"
+import { useTenantSettings } from "@/features/ternant"
 import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 type BrandIconProps = {
@@ -17,7 +17,7 @@ export const BrandIcon = ({
 }: BrandIconProps) => {
   const currentTheme = useCurrentTheme()
   const [mounted, setMounted] = useState(false)
-  const { logoLightUrl, logoDarkUrl, faviconUrl } = usePlatformSettings()
+  const { logoLightUrl, logoDarkUrl, faviconUrl } = useTenantSettings()
 
   useEffect(() => {
     setMounted(true)

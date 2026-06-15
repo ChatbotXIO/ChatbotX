@@ -3,10 +3,8 @@ import {
   resolveTenantFromOAuthState,
   withTenant,
 } from "@chatbotx.io/auth/tenant"
-import { toNextJsHandler } from "better-auth/next-js"
 import { auth } from "@/lib/auth/auth"
-
-const handlers = toNextJsHandler(auth)
+import { getGoogleAuthForTenant } from "@/lib/auth/auth-instances"
 
 /**
  * Run the better-auth pipeline inside the tenant bound to the request's branded
@@ -23,18 +21,33 @@ const handlers = toNextJsHandler(auth)
  * redirect URI (the platform host), so on the `/callback/*` leg `x-domain` is the
  * platform host. There we recover the tenant from the persisted OAuth `state`
  * instead — its `callbackURL` carries the originating reseller origin. Without
- * this, a social signup on a reseller domain would be created with `resellerId`
- * null. See `resolveTenantFromOAuthState`.
+ * this, a social signup on a reseller domain would be created in the root tenant.
+ * See `resolveTenantFromOAuthState`.
+ *
+ * Google login is white-label: each reseller may sign in with their own Google
+ * app. better-auth freezes social-provider config at init, so we dispatch the
+ * Google social/callback legs to a per-credential auth instance resolved for the
+ * bound tenant (own app, else platform default). Every other route uses the
+ * default `auth` instance. See `auth-instances.ts`.
  */
-const withTenantScope =
-  (handler: (request: Request) => Promise<Response>) =>
-  async (request: Request): Promise<Response> => {
-    const url = new URL(request.url)
-    const tenantId = url.pathname.includes("/callback/")
-      ? await resolveTenantFromOAuthState(url.searchParams.get("state"))
-      : await resolveTenantByDomain(request.headers.get("x-domain"))
-    return withTenant(tenantId, () => handler(request))
-  }
+const isGoogleSocialPath = (pathname: string): boolean =>
+  pathname.includes("/callback/google") ||
+  pathname.endsWith("/sign-in/social") ||
+  pathname.endsWith("/sign-up/social")
 
-export const GET = withTenantScope(handlers.GET)
-export const POST = withTenantScope(handlers.POST)
+const handle = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url)
+  const tenantId = url.pathname.includes("/callback/")
+    ? await resolveTenantFromOAuthState(url.searchParams.get("state"))
+    : await resolveTenantByDomain(request.headers.get("x-domain"))
+
+  return withTenant(tenantId, async () => {
+    const instance = isGoogleSocialPath(url.pathname)
+      ? await getGoogleAuthForTenant(tenantId)
+      : auth
+    return instance.handler(request)
+  })
+}
+
+export const GET = handle
+export const POST = handle

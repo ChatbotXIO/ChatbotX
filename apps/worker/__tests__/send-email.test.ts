@@ -34,7 +34,7 @@ vi.mock("@chatbotx.io/business", () => ({
       },
     }),
   },
-  resolvePlatformSettings: vi
+  resolveTenantSettings: vi
     .fn()
     .mockResolvedValue({ appUrl: "https://app.test" }),
   signEmailClickUrl: vi.fn().mockResolvedValue("signed-token"),

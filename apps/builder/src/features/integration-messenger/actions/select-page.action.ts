@@ -4,7 +4,7 @@ import {
   buildContext,
   connectChannelIntegration,
   platformCredentialService,
-  resolvePlatformSettings,
+  resolveTenantSettings,
   tagSyncService,
   workspaceService,
 } from "@chatbotx.io/business"
@@ -85,7 +85,7 @@ export const selectPageAction = authActionClient
             workspaceId = workspace.id
           }
 
-          const { appUrl } = await resolvePlatformSettings({
+          const { appUrl } = await resolveTenantSettings({
             workspaceId,
             tx,
           })
