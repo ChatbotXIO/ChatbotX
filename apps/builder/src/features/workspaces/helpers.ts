@@ -1,4 +1,4 @@
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import type { WorkspaceResource } from "./schema/resource"
 
 export function useWorkspaceLogoUrl(

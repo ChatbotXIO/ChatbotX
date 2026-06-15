@@ -6,11 +6,16 @@ const returningWorkspace = vi.fn(async () => [
 const valuesWorkspace = vi.fn(() => ({ returning: returningWorkspace }))
 const insert = vi.fn(() => ({ values: valuesWorkspace }))
 
-const db = { insert }
+const findFirstUser = vi.fn(async () => ({ tenantId: "1" }))
+const db = { insert, query: { userModel: { findFirst: findFirstUser } } }
 vi.mock("@chatbotx.io/database/client", () => ({ db }))
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceModel: {},
+  ROOT_TENANT_ID: "1",
 }))
+
+const tenantService = { findByOwner: vi.fn(async () => undefined as unknown) }
+vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
 vi.mock("@chatbotx.io/database/partials", () => ({
   workspaceMemberRoles: { enum: { owner: "owner" } },
 }))
@@ -58,6 +63,8 @@ beforeEach(() => {
     .mockResolvedValue([{ id: "ws-1", organizationId: "org-1" }])
   valuesWorkspace.mockClear()
   insert.mockClear()
+  findFirstUser.mockReset().mockResolvedValue({ tenantId: "1" })
+  tenantService.findByOwner.mockReset().mockResolvedValue(undefined)
   userQuotaService.tryIncrement.mockReset().mockResolvedValue(true)
   userQuotaService.getForUser.mockReset().mockResolvedValue(null)
   workspaceMemberService.create.mockClear()

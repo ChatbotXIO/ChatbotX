@@ -8,7 +8,7 @@ import type {
   WorkspaceModel,
 } from "@chatbotx.io/database/types"
 import { headers } from "next/headers"
-import { getTenantSettings } from "@/features/ternant/utils"
+import { getTenantSettings } from "@/features/tenant/utils"
 import { auth } from "./auth"
 
 // `tenantId` is the white-label tenant key. It is deliberately never returned by

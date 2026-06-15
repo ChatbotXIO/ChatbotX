@@ -9,7 +9,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { isCommunity } from "@/env"
 import SSOSignIn from "@/features/auth/sso-sign-in"
-import { useTenantSettings } from "../ternant"
+import { useTenantSettings } from "../tenant"
 import { EmailPasswordSignIn } from "./components/email-password-sign-in"
 import { MagicLinkSignIn } from "./components/magic-link-signin"
 import {

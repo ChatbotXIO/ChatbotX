@@ -4,7 +4,7 @@ import { CardTitle } from "@chatbotx.io/ui/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 export type AuthHeaderProps = {

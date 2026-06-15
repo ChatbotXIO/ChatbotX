@@ -14,7 +14,7 @@ import { Label } from "@chatbotx.io/ui/components/ui/label"
 import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 
 type EmbedCodeDialogProps = {

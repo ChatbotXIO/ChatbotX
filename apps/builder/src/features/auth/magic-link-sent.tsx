@@ -9,7 +9,7 @@ import {
 import { MailIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
-import { useTenantSettings } from "../ternant"
+import { useTenantSettings } from "../tenant"
 import { AuthHeader } from "./components/shared"
 
 export default function MagicLinkSent() {

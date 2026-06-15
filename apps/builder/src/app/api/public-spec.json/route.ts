@@ -2,7 +2,7 @@ import { getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { OpenAPIGenerator } from "@orpc/openapi"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
 import "@/polyfill"
-import { getTenantSettings } from "@/features/ternant/utils"
+import { getTenantSettings } from "@/features/tenant/utils"
 import { publicRouter } from "@/routers/public"
 
 const openAPIGenerator = new OpenAPIGenerator({

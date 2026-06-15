@@ -6,8 +6,8 @@ import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import { PublicEnvScript } from "@/components/public-env-script"
-import { TenantProvider } from "@/features/ternant"
-import { getTenantSettings } from "@/features/ternant/utils"
+import { TenantProvider } from "@/features/tenant"
+import { getTenantSettings } from "@/features/tenant/utils"
 
 export async function generateMetadata(): Promise<Metadata> {
   const { name, faviconUrl } = await getTenantSettings()

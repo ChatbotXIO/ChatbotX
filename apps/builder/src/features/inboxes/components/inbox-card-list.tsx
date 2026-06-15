@@ -8,7 +8,7 @@ import { Card, CardContent } from "@chatbotx.io/ui/components/ui/card"
 import { useTranslations } from "next-intl"
 import { memo } from "react"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { InboxIcon } from "./inbox-icon"
 import InboxNewCard from "./inbox-new-card"
 

@@ -3,7 +3,7 @@
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { useCurrentTheme } from "@/hooks/use-current-theme"
 
 type BrandIconProps = {

@@ -6,7 +6,7 @@ import {
 } from "@chatbotx.io/partysocket-config"
 import usePartySocket from "partysocket/react"
 import type { MessageResource } from "../messages/schema/resource"
-import { useTenantSettings } from "../ternant"
+import { useTenantSettings } from "../tenant"
 import { useGuestSessionStore } from "./providers/store/guest-session-provider"
 
 type WebchatRealtimeProps = {

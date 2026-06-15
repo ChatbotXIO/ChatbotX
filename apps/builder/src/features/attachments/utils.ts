@@ -1,4 +1,4 @@
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import type { AttachmentResource } from "./schema/resource"
 
 export function useAttachmentUrl(

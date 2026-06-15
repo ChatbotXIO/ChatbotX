@@ -2514,11 +2514,13 @@
   "manageSidebar": {
     "platformGroup": "Platform",
     "saasGroup": "SaaS",
-    "portalUsers": "Users",
+    "portalUsers": "Sub-accounts",
+    "portalWorkspaces": "Workspaces",
     "portalPlans": "Plans",
     "portalUsage": "Usage",
     "portalCustomDomain": "Custom Domain",
-    "portalPaymentProcessor": "Payment Processor"
+    "portalPaymentProcessor": "Payment Processor",
+    "portalPricingPage": "Pricing"
   },
   "unsubscribePage": {
     "title": "You have been unsubscribed.",

@@ -30,7 +30,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react"
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form"
 import { isCommunity } from "@/env"
 import { useFlowSelectOptions } from "@/features/flows/provider/flow-hook"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { BRANDING_TITLE, getBrandingUrl } from "../lib"
 
 type PersistentMenuTypeOption = {

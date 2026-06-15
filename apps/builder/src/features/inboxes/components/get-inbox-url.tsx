@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { useInboxStore } from "@/features/inboxes/provider/inbox-store-context"
 import { ScanQRCodeDialog } from "@/features/qr-codes/scan-qrcode"
-import { useTenantSettings } from "@/features/ternant"
+import { useTenantSettings } from "@/features/tenant"
 import { useClipboard } from "@/hooks/use-clipboard"
 
 type GetInboxUrlDialogProps = {

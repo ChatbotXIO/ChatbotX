@@ -61,12 +61,29 @@ export const tenantService = {
       return existing.id
     }
 
+    // Race-safe insert: rely on the `Tenant_ownerId_key` partial unique index,
+    // not the read above. Two concurrent callers both miss the `findFirst`; the
+    // loser's insert is a no-op (`onConflictDoNothing`) and returns nothing, so
+    // we re-read to hand back the row the winner created. Provisioning stays
+    // idempotent — exactly one tenant per reseller.
     const [created] = await db
       .insert(tenantModel)
       .values({ ownerId })
+      .onConflictDoNothing({ target: tenantModel.ownerId })
       .returning({ id: tenantModel.id })
     await invalidateCacheByTags([`tenant:owner:${ownerId}`])
-    return created.id
+    if (created) {
+      return created.id
+    }
+
+    const winner = await db.query.tenantModel.findFirst({
+      where: { ownerId },
+      columns: { id: true },
+    })
+    if (!winner) {
+      throw new Error(`Failed to provision tenant for owner ${ownerId}`)
+    }
+    return winner.id
   },
 
   /** Update the branding/config of the tenant owned by `ownerId`. */

@@ -2509,11 +2509,13 @@
   "manageSidebar": {
     "platformGroup": "Nền tảng",
     "saasGroup": "SaaS",
-    "portalUsers": "Người dùng",
+    "portalUsers": "Tài khoản con",
+    "portalWorkspaces": "Workspace",
     "portalPlans": "Gói dịch vụ",
     "portalUsage": "Mức sử dụng",
     "portalCustomDomain": "Tên miền tùy chỉnh",
-    "portalPaymentProcessor": "Cổng thanh toán"
+    "portalPaymentProcessor": "Cổng thanh toán",
+    "portalPricingPage": "Bảng giá"
   },
   "unsubscribePage": {
     "title": "Bạn đã hủy đăng ký.",

@@ -8,7 +8,7 @@ import usePartySocket from "partysocket/react"
 import { useWorkspaceId } from "@/hooks/routing"
 import { authClient } from "@/lib/auth/auth-client"
 import type { MessageResourceWithRelations } from "../messages/schema/resource"
-import { useTenantSettings } from "../ternant"
+import { useTenantSettings } from "../tenant"
 import { useChatStore } from "./store/chat-store-provider"
 
 export function ChatRealtime() {

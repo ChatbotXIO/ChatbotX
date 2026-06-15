@@ -8,7 +8,7 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import { getTenantSettings } from "@/features/ternant/utils"
+import { getTenantSettings } from "@/features/tenant/utils"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 export default async function WorkspaceLayout({

@@ -37,6 +37,25 @@ ALTER TABLE "User" ADD CONSTRAINT "User_tenantId_Tenant_id_fkey" FOREIGN KEY ("t
 -- 4) CustomDomain: host -> tenant (was host -> user). Backfill any existing rows
 --    from the tenant they belong to (Tenant.ownerId = the old CustomDomain.userId).
 ALTER TABLE "CustomDomain" ADD COLUMN "tenantId" bigint;--> statement-breakpoint
+-- Provision a Tenant for any custom-domain owner that lacks one (a domain whose
+-- user never had a PlatformSetting). Owning a domain implies being a reseller, so
+-- this preserves the domain and gives it an isolated tenant instead of failing the
+-- NOT NULL below or misrouting it to the root tenant. Old `CustomDomain_userId_key`
+-- guaranteed one domain per user, so each new tenant maps to exactly one domain.
+-- `Tenant.id` has no DB default (the app sets it via a uuniq Snowflake), so we mint
+-- ids of the same shape here: ((ms since the 2004-02-01 epoch) << 22) + row index —
+-- time-ordered, larger than every existing id, collision-safe.
+INSERT INTO "Tenant" ("id", "ownerId", "status")
+SELECT
+  ((EXTRACT(EPOCH FROM (clock_timestamp() - TIMESTAMPTZ '2004-02-01T00:00:00Z')) * 1000)::bigint << 22) + row_number() OVER (),
+  owner."userId",
+  'active'
+FROM (
+  SELECT DISTINCT cd."userId"
+  FROM "CustomDomain" cd
+  LEFT JOIN "Tenant" t ON t."ownerId" = cd."userId"
+  WHERE t."id" IS NULL
+) owner;--> statement-breakpoint
 UPDATE "CustomDomain" cd SET "tenantId" = t."id" FROM "Tenant" t WHERE t."ownerId" = cd."userId";--> statement-breakpoint
 ALTER TABLE "CustomDomain" ALTER COLUMN "tenantId" SET NOT NULL;--> statement-breakpoint
 DROP INDEX "CustomDomain_userId_key";--> statement-breakpoint
