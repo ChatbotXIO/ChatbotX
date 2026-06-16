@@ -47,7 +47,7 @@ ALTER TABLE "CustomDomain" ADD COLUMN "tenantId" bigint;--> statement-breakpoint
 -- time-ordered, larger than every existing id, collision-safe.
 INSERT INTO "Tenant" ("id", "ownerId", "status")
 SELECT
-  ((EXTRACT(EPOCH FROM (clock_timestamp() - TIMESTAMPTZ '2004-02-01T00:00:00Z')) * 1000)::bigint << 22) + row_number() OVER (),
+  ((EXTRACT(EPOCH FROM (clock_timestamp() - TIMESTAMPTZ '2004-02-01T00:00:00Z')) * 1000)::bigint << 22) + row_number() OVER (ORDER BY owner."userId"),
   owner."userId",
   'active'
 FROM (

@@ -20,7 +20,7 @@ const pool = new Pool({
   connectionString: env.DATABASE_URL,
   max: 10,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 10_000,
 })
 
 pool.on("error", (error) => {

@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateTiktokSettingAction } from "./update-tiktok-settings.action"
@@ -53,6 +54,11 @@ export function TiktokSettings({
       ).toString(),
     )
   }, [])
+  // OAuth always redirects to the fixed broker callback (not the reseller's
+  // branded domain). Resellers using their own TikTok app whitelist this URI.
+  const authCallbackUrl = buildBrokerCallbackUrl(
+    "/integrations/tiktok/callback",
+  )
 
   return (
     <Card>
@@ -76,6 +82,21 @@ export function TiktokSettings({
                   <CopyIcon
                     className="size-4"
                     onClick={() => handleCopy(publicConfig.clientId)}
+                  />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="font-bold">
+                {t("fields.authCallbackUrl.label")}:
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="truncate">{authCallbackUrl}</span>
+                <Button className="flex-none" size="icon" variant="outline">
+                  <CopyIcon
+                    className="size-4"
+                    onClick={() => handleCopy(authCallbackUrl)}
                   />
                 </Button>
               </div>

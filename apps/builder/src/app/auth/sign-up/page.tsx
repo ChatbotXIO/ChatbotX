@@ -1,12 +1,14 @@
+import { SOCIAL_PROVIDERS } from "@chatbotx.io/auth/server"
 import { SignUpForm } from "@/features/auth/sign-up"
-import { isGoogleLoginEnabledForDomain } from "@/lib/auth/auth-instances"
+import { resolveEnabledProvidersForDomain } from "@/lib/auth/auth-instances"
 import { getDomainFromHeader } from "@/lib/domain"
 
 export const dynamic = "force-dynamic"
 
 export default async function SignUpPage() {
-  const googleEnabled = await isGoogleLoginEnabledForDomain(
+  const enabledProviders = await resolveEnabledProvidersForDomain(
     await getDomainFromHeader(),
+    SOCIAL_PROVIDERS,
   )
-  return <SignUpForm googleEnabled={googleEnabled} />
+  return <SignUpForm enabledProviders={enabledProviders} />
 }

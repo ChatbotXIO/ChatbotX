@@ -2157,6 +2157,7 @@
   },
   "auth": {
     "orContinueWith": "Or continue with",
+    "continueWithFacebook": "Continue with Facebook",
     "dontHaveAnAccount": "Don't have an account?",
     "alreadyHaveAnAccount": "Already have an account?",
     "signUp": "Sign up",

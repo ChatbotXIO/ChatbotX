@@ -1,38 +1,50 @@
 import { customDomainService } from "@chatbotx.io/business"
 import { env } from "@/env"
+import { getBrokerOrigin } from "./oauth-broker"
 
 export const FALLBACK_REDIRECT = "/manage"
 
 /**
+ * A valid relay/redirect target is any origin we control: the broker host, the
+ * builder app URL, or an active white-label custom domain. Anything else is
+ * rejected so an attacker-controlled `state` cannot drive an open redirect.
+ */
+async function isAllowedOrigin(targetUrl: URL): Promise<boolean> {
+  if (
+    targetUrl.origin === getBrokerOrigin() ||
+    targetUrl.origin === new URL(env.NEXT_PUBLIC_BUILDER_URL).origin
+  ) {
+    return true
+  }
+  const customDomain = await customDomainService.findActiveByDomain(
+    targetUrl.hostname,
+  )
+  return Boolean(customDomain)
+}
+
+/**
  * Validate the `referer` carried in the OAuth `state` before redirecting to it.
- * Accepts the platform origin and any active white-label custom domain; anything
- * else falls back to a safe in-app path so an attacker-controlled `state` cannot
- * drive an open redirect.
+ * Accepts the broker origin, the builder origin, and any active custom domain;
+ * anything else falls back to a safe in-app path.
  */
 export async function sanitizeReferer(referer: string): Promise<string> {
   try {
     const refererUrl = new URL(referer)
-    const builderOrigin = new URL(env.NEXT_PUBLIC_BUILDER_URL).origin
-    if (refererUrl.origin === builderOrigin) {
-      return referer
-    }
-    const customDomain = await customDomainService.findActiveByDomain(
-      refererUrl.hostname,
-    )
-    return customDomain ? referer : FALLBACK_REDIRECT
+    return (await isAllowedOrigin(refererUrl)) ? referer : FALLBACK_REDIRECT
   } catch {
     return FALLBACK_REDIRECT
   }
 }
 
 /**
- * Facebook/TikTok OAuth always lands on the fixed platform callback (the only
- * registered redirect_uri). When the flow originated on a branded custom domain,
- * return the URL to relay the callback to — same path + query, on the originating
- * domain — so the rest of the handler runs where the user's session cookie lives.
+ * Social (Google/Facebook) and integration (TikTok/…) OAuth always land on the
+ * fixed broker host — the only registered redirect_uri. When the flow originated
+ * on a different domain (a reseller custom domain or the builder app URL), return
+ * the URL to relay the callback to — same path + query, on the originating domain
+ * — so the rest of the handler runs where the user's session cookie lives.
  *
  * Returns `null` when no relay is needed: the callback already ran on the
- * originating domain, or the `referer` is not an active custom domain.
+ * originating domain, or the `referer` is not an origin we control.
  */
 export async function resolveRelayTarget(
   url: URL,
@@ -45,15 +57,13 @@ export async function resolveRelayTarget(
     return null
   }
 
-  const platformHost = new URL(env.NEXT_PUBLIC_BUILDER_URL).host
-  if (url.host !== platformHost || refererUrl.host === platformHost) {
+  const brokerHost = new URL(getBrokerOrigin()).host
+  // Only relay from the broker host, and never to the broker itself.
+  if (url.host !== brokerHost || refererUrl.host === brokerHost) {
     return null
   }
 
-  const customDomain = await customDomainService.findActiveByDomain(
-    refererUrl.hostname,
-  )
-  if (!customDomain) {
+  if (!(await isAllowedOrigin(refererUrl))) {
     return null
   }
 

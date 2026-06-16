@@ -21,6 +21,10 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_BUILDER_URL: z.url(),
+    // Dedicated, brand-neutral OAuth broker host. The single redirect_uri
+    // registered with every provider; callbacks relay back to the originating
+    // domain. Optional — falls back to NEXT_PUBLIC_BUILDER_URL via getBrokerUrl().
+    NEXT_PUBLIC_OAUTH_BROKER_URL: z.url().optional(),
     NEXT_PUBLIC_EDITION: editionRule,
     NEXT_PUBLIC_INTERNAL_WS_URL: z
       .url()
@@ -44,6 +48,7 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     NEXT_PUBLIC_BUILDER_URL:
       clientEnv("NEXT_PUBLIC_BUILDER_URL") || "http://localhost:3123",
+    NEXT_PUBLIC_OAUTH_BROKER_URL: clientEnv("NEXT_PUBLIC_OAUTH_BROKER_URL"),
     NEXT_PUBLIC_INTERNAL_WS_URL:
       clientEnv("NEXT_PUBLIC_INTERNAL_WS_URL") || "http://localhost:1999",
     NEXT_PUBLIC_INTERNAL_STORAGE_URL:

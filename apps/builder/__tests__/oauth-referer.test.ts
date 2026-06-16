@@ -126,3 +126,85 @@ describe("resolveRelayTarget", () => {
     expect(await resolveRelayTarget(callbackUrl, "not-a-url")).toBeNull()
   })
 })
+
+describe("with a dedicated broker host", () => {
+  const BROKER_URL = "https://auth.broker.example"
+
+  async function loadWithBroker() {
+    vi.resetModules()
+    vi.doMock("@/env", () => ({
+      env: {
+        NEXT_PUBLIC_BUILDER_URL: PLATFORM_URL,
+        NEXT_PUBLIC_OAUTH_BROKER_URL: BROKER_URL,
+      },
+    }))
+    return await import("@/lib/oauth-referer")
+  }
+
+  test("sanitizeReferer accepts the broker origin without a lookup", async () => {
+    const { sanitizeReferer } = await loadWithBroker()
+
+    const referer = `${BROKER_URL}/welcome`
+    expect(await sanitizeReferer(referer)).toBe(referer)
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("sanitizeReferer accepts the builder origin without a lookup", async () => {
+    const { sanitizeReferer } = await loadWithBroker()
+
+    const referer = `${PLATFORM_URL}/space/42/dashboard`
+    expect(await sanitizeReferer(referer)).toBe(referer)
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("relays from the broker host to the builder URL (a valid target)", async () => {
+    const { resolveRelayTarget } = await loadWithBroker()
+
+    const callbackUrl = new URL(
+      `${BROKER_URL}/api/auth/callback/google?code=abc&state=xyz`,
+    )
+    const referer = `${PLATFORM_URL}/space/42/dashboard`
+
+    expect(await resolveRelayTarget(callbackUrl, referer)).toBe(
+      `${PLATFORM_URL}/api/auth/callback/google?code=abc&state=xyz`,
+    )
+    expect(mockFindActiveByDomain).not.toHaveBeenCalled()
+  })
+
+  test("relays from the broker host to an active custom domain", async () => {
+    mockFindActiveByDomain.mockResolvedValue(activeDomain)
+    const { resolveRelayTarget } = await loadWithBroker()
+
+    const callbackUrl = new URL(
+      `${BROKER_URL}/integrations/tiktok/callback?code=abc&state=xyz`,
+    )
+    const referer = "https://chat.acme.com/space/42/dashboard"
+
+    expect(await resolveRelayTarget(callbackUrl, referer)).toBe(
+      "https://chat.acme.com/integrations/tiktok/callback?code=abc&state=xyz",
+    )
+  })
+
+  test("does not relay from the builder host — only the broker host relays", async () => {
+    mockFindActiveByDomain.mockResolvedValue(activeDomain)
+    const { resolveRelayTarget } = await loadWithBroker()
+
+    const callbackUrl = new URL(
+      `${PLATFORM_URL}/integrations/tiktok/callback?code=abc`,
+    )
+    const referer = "https://chat.acme.com/space/42/dashboard"
+
+    expect(await resolveRelayTarget(callbackUrl, referer)).toBeNull()
+  })
+
+  test("does not relay back to the broker itself", async () => {
+    const { resolveRelayTarget } = await loadWithBroker()
+
+    const callbackUrl = new URL(
+      `${BROKER_URL}/integrations/tiktok/callback?code=abc`,
+    )
+    const referer = `${BROKER_URL}/welcome`
+
+    expect(await resolveRelayTarget(callbackUrl, referer)).toBeNull()
+  })
+})

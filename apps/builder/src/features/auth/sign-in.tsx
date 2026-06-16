@@ -1,5 +1,6 @@
 "use client"
 
+import type { SocialProvider } from "@chatbotx.io/auth/server"
 import {
   Card,
   CardContent,
@@ -20,13 +21,13 @@ import {
 
 export type SignInFormProps = {
   callbackUrl?: string
-  /** Whether Google login is configured for this tenant (own app or platform default). */
-  googleEnabled?: boolean
+  /** Social providers configured for this tenant (own app or platform default). */
+  enabledProviders?: SocialProvider[]
 }
 
 export const SignInForm = ({
   callbackUrl,
-  googleEnabled = false,
+  enabledProviders = [],
   ...props
 }: SignInFormProps) => {
   const t = useTranslations()
@@ -47,10 +48,10 @@ export const SignInForm = ({
 
             <MagicLinkSignIn />
 
-            {!isCommunity() && googleEnabled && (
+            {!isCommunity() && enabledProviders.length > 0 && (
               <>
                 <OrSeparator />
-                <SSOSignIn />
+                <SSOSignIn providers={enabledProviders} />
               </>
             )}
 

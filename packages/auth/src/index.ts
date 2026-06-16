@@ -1,7 +1,13 @@
-export type { Auth, AuthConfig } from "./server"
-export { createAuth } from "./server"
+export type {
+  Auth,
+  AuthConfig,
+  SocialAuthCredential,
+  SocialProvider,
+} from "./server"
+export { createAuth, SOCIAL_PROVIDERS } from "./server"
 export {
   getTenantId,
+  resolveOAuthStateCallbackURL,
   resolveTenantByDomain,
   resolveTenantFromOAuthState,
   withTenant,

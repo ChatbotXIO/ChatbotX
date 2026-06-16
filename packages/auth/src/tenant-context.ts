@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks"
-import { customDomainService } from "@chatbotx.io/business"
+import { customDomainService, tenantService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID, verificationModel } from "@chatbotx.io/database/schema"
 
@@ -17,13 +17,53 @@ import { ROOT_TENANT_ID, verificationModel } from "@chatbotx.io/database/schema"
  * accounts across tenants. See `server.ts` for the adapter wrapper that reads
  * `getTenantId()`.
  */
-type TenantStore = { tenantId: string }
+/**
+ * `strictScope` disables the reseller-owner fallback in the adapter (see
+ * `server.ts`). It is set on the OAuth social-callback path so that signing in
+ * with a social provider on a reseller's domain always resolves to a
+ * tenant-scoped user — even for the reseller owner, whose root-tenant account
+ * the fallback would otherwise match. Email/password and magic-link keep the
+ * fallback (they don't run with this flag), so the owner can still sign in to
+ * their platform account on their own domain by those methods.
+ */
+type TenantStore = { tenantId: string; strictScope?: boolean }
 
-const tenantStorage = new AsyncLocalStorage<TenantStore>()
+/**
+ * The tenant ALS instance MUST be a process-wide singleton. `withTenant` (called
+ * from the route handler via `@chatbotx.io/auth/tenant`) and `getTenantId` (called
+ * from the adapter in `server.ts` via `./tenant-context`) must read and write the
+ * same store. If this module is evaluated more than once — e.g. duplicated across
+ * Next.js bundles/layers because it is reached through two different import
+ * specifiers — each copy would otherwise own its own `AsyncLocalStorage`, the
+ * binding would land in one and the read in the other, and every tenant-scoped
+ * write would silently fall back to the root tenant. Pinning to `globalThis`
+ * collapses any duplicate evaluations onto one shared store.
+ */
+const globalForTenant = globalThis as typeof globalThis & {
+  __chatbotxTenantStorage?: AsyncLocalStorage<TenantStore>
+}
+
+if (!globalForTenant.__chatbotxTenantStorage) {
+  globalForTenant.__chatbotxTenantStorage = new AsyncLocalStorage<TenantStore>()
+}
+
+const tenantStorage = globalForTenant.__chatbotxTenantStorage
 
 /** Run `fn` with the given tenant bound for the duration of the async call. */
-export function withTenant<T>(tenantId: string, fn: () => T): T {
-  return tenantStorage.run({ tenantId }, fn)
+export function withTenant<T>(
+  tenantId: string,
+  fn: () => T,
+  options?: { strictScope?: boolean },
+): T {
+  return tenantStorage.run({ tenantId, strictScope: options?.strictScope }, fn)
+}
+
+/**
+ * Whether the current context forbids the reseller-owner fallback — true only on
+ * the OAuth social-callback path, where every sign-in must stay tenant-scoped.
+ */
+export function isStrictTenantScope(): boolean {
+  return tenantStorage.getStore()?.strictScope ?? false
 }
 
 /**
@@ -48,7 +88,20 @@ export async function resolveTenantByDomain(
   }
 
   const customDomain = await customDomainService.findActiveByDomain(domain)
-  return customDomain?.tenantId ?? ROOT_TENANT_ID
+  if (!customDomain) {
+    return ROOT_TENANT_ID
+  }
+
+  // A suspended tenant falls back to the platform: its sub-accounts can no longer
+  // sign in and the host serves default (platform) branding. `findActiveByDomain`
+  // only checks `CustomDomain.status`, so the tenant's own lifecycle is enforced
+  // here. Both reads are cache-backed. Mirrors the suspended-tenant fallback in
+  // `resolveTenantSettings`.
+  const tenant = await tenantService.findById(customDomain.tenantId)
+  if (tenant?.status !== "active") {
+    return ROOT_TENANT_ID
+  }
+  return customDomain.tenantId
 }
 
 /**
@@ -64,33 +117,32 @@ export async function resolveTenantOwnerId(
     return null
   }
 
-  const tenant = await db.query.tenantModel.findFirst({
-    where: { id: tenantId },
-    columns: { ownerId: true },
-  })
+  // Cache-backed (`tenantService.findById`): the reseller-owner fallback in
+  // `server.ts` calls this on every missed email lookup for a reseller tenant, so
+  // the lookup must not hit the DB each time.
+  const tenant = await tenantService.findById(tenantId)
   return tenant?.ownerId ?? null
 }
 
 /**
- * Recover the tenant on the OAuth callback leg.
+ * Recover the originating `callbackURL` carried in an OAuth `state`.
  *
  * OAuth providers redirect back to a fixed, pre-registered redirect URI (the
- * platform host), so on `/api/auth/callback/*` the request's `x-domain` is the
- * platform host — not the reseller's branded domain — and `resolveTenantByDomain`
- * would wrongly yield the root tenant. Instead we recover the tenant from the
- * OAuth `state`: better-auth persists it in the `Verification` table at sign-in
- * time (`identifier = state`) with a JSON value whose `callbackURL` carries the
- * originating (reseller) origin. We read that origin and map it back to a tenant.
+ * platform host), so on `/api/auth/callback/*` the request itself no longer
+ * carries the reseller's branded origin. better-auth persists the originating
+ * origin for us: at sign-in time it writes the `state` to the `Verification`
+ * table (`identifier = state`) with a JSON value whose `callbackURL` is the
+ * origin the client passed (the reseller's domain — see `sso-sign-in.tsx`).
  *
  * Read-only: the verification row is consumed later by better-auth's own
- * `parseGenericState` in the same request, so we must not delete it here. Fails
- * safe to the root tenant on any missing/unparseable state.
+ * `parseGenericState` in the same request, so we must not delete it here.
+ * Returns `null` on any missing/unparseable state or absent `callbackURL`.
  */
-export async function resolveTenantFromOAuthState(
+export async function resolveOAuthStateCallbackURL(
   state: string | null | undefined,
-): Promise<string> {
+): Promise<string | null> {
   if (!state) {
-    return ROOT_TENANT_ID
+    return null
   }
 
   const [record] = await db
@@ -100,14 +152,36 @@ export async function resolveTenantFromOAuthState(
     .limit(1)
 
   if (!record?.value) {
-    return ROOT_TENANT_ID
+    return null
   }
 
   try {
     const { callbackURL } = JSON.parse(record.value) as { callbackURL?: string }
-    if (!callbackURL) {
-      return ROOT_TENANT_ID
-    }
+    return callbackURL ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Recover the tenant on the OAuth callback leg.
+ *
+ * On `/api/auth/callback/*` the request's `x-domain` is the fixed platform host,
+ * not the reseller's branded domain, so `resolveTenantByDomain` would wrongly
+ * yield the root tenant. Instead we recover the tenant from the OAuth `state`'s
+ * `callbackURL` origin and map it back to a tenant.
+ *
+ * Fails safe to the root tenant on any missing/unparseable state.
+ */
+export async function resolveTenantFromOAuthState(
+  state: string | null | undefined,
+): Promise<string> {
+  const callbackURL = await resolveOAuthStateCallbackURL(state)
+  if (!callbackURL) {
+    return ROOT_TENANT_ID
+  }
+
+  try {
     return await resolveTenantByDomain(new URL(callbackURL).hostname)
   } catch {
     return ROOT_TENANT_ID

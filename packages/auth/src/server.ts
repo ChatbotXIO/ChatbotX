@@ -1,4 +1,7 @@
-import { resolveTenantSettingsByDomain } from "@chatbotx.io/business"
+import {
+  customDomainService,
+  resolveTenantSettingsByDomain,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   accountModel,
@@ -19,8 +22,12 @@ import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
-import { env } from "./keys"
-import { getTenantId, resolveTenantOwnerId } from "./tenant-context"
+import { env, getBrokerUrl } from "./keys"
+import {
+  getTenantId,
+  isStrictTenantScope,
+  resolveTenantOwnerId,
+} from "./tenant-context"
 
 const getTenantSettings = async (request: Request) => {
   const domain = request.headers.get("x-domain") ?? ""
@@ -41,29 +48,56 @@ type WhereClause = Parameters<AuthAdapter["findOne"]>[0]["where"][number]
 export function createTenantScopedAdapter(
   base: AdapterFactory,
 ): AdapterFactory {
-  const scopeUserEmailWhere = (
+  // Constrain a lookup to the current tenant so white-label accounts stay
+  // isolated:
+  //   • `user` lookups *by email* — the same email is a separate account per
+  //     tenant.
+  //   • `account` lookups *by social identity* (`accountId`) — the same provider
+  //     identity links to a separate account row per tenant, so social sign-in on
+  //     a reseller domain never resolves the owner's root-tenant account.
+  // Lookups by id/token/userId are left untouched, so sessions and a user's own
+  // account list stay tenant-neutral.
+  const scopeByTenant = (
     model: string,
     where: WhereClause[] | undefined,
   ): WhereClause[] | undefined => {
-    if (model !== "user" || !where) {
+    if (!where || where.some((clause) => clause.field === "tenantId")) {
       return where
     }
-    const filtersByEmail = where.some((clause) => clause.field === "email")
-    const alreadyScoped = where.some((clause) => clause.field === "tenantId")
-    if (!filtersByEmail || alreadyScoped) {
+    const scopesUserByEmail =
+      model === "user" && where.some((clause) => clause.field === "email")
+    const scopesAccountByIdentity =
+      model === "account" &&
+      where.some((clause) => clause.field === "accountId")
+    if (!(scopesUserByEmail || scopesAccountByIdentity)) {
       return where
     }
     return [...where, { field: "tenantId", value: getTenantId() }]
   }
 
-  return (options) => {
-    const adapter = base(options)
+  // Apply the tenant overrides to an adapter. Recursive via `transaction`: when
+  // better-auth runs a write inside `runWithTransaction`, it resolves the active
+  // adapter from the `trx` this callback receives (`getCurrentAdapter`), NOT the
+  // outer wrapped adapter. With transactions disabled the base adapter hands back
+  // *itself* as `trx`, so without re-wrapping it the user/account insert would run
+  // unwrapped and skip the `tenantId` stamp — leaving the column at its root-tenant
+  // default. Re-wrapping `trx` keeps scoping and stamping intact inside writes.
+  const wrapAdapter = (adapter: AuthAdapter): AuthAdapter => {
+    const baseTransaction = adapter.transaction
+    const wrappedTransaction =
+      typeof baseTransaction === "function"
+        ? ((<R>(callback: (trx: AuthAdapter) => Promise<R>) =>
+            baseTransaction((trx) =>
+              callback(wrapAdapter(trx as AuthAdapter)),
+            )) as AuthAdapter["transaction"])
+        : baseTransaction
     return {
       ...adapter,
+      transaction: wrappedTransaction,
       findOne: async <T>(data: Parameters<AuthAdapter["findOne"]>[0]) => {
         const result = await adapter.findOne<T>({
           ...data,
-          where: scopeUserEmailWhere(data.model, data.where) ?? data.where,
+          where: scopeByTenant(data.model, data.where) ?? data.where,
         })
         if (result || data.model !== "user" || !data.where) {
           return result
@@ -75,13 +109,18 @@ export function createTenantScopedAdapter(
         // primary key. `Tenant.ownerId` resolves only this tenant's owner — never
         // another tenant's user — and `id` is unique, so the match is exact.
         // Sub-account lookups are tried first, so they keep priority.
-        const tenantId = getTenantId()
+        //
+        // Suppressed under `strictScope` (the OAuth social-callback path): a social
+        // sign-in on a reseller domain must always stay tenant-scoped, so even the
+        // owner's email resolves to a tenant-scoped user (created when absent)
+        // rather than matching their root-tenant platform account.
         const filtersByEmail = data.where.some(
           (clause) => clause.field === "email",
         )
-        if (!filtersByEmail) {
+        if (!filtersByEmail || isStrictTenantScope()) {
           return result
         }
+        const tenantId = getTenantId()
         const ownerId = await resolveTenantOwnerId(tenantId)
         if (ownerId) {
           const ownerWhere: WhereClause[] = [
@@ -95,13 +134,16 @@ export function createTenantScopedAdapter(
       findMany: <T>(data: Parameters<AuthAdapter["findMany"]>[0]) =>
         adapter.findMany<T>({
           ...data,
-          where: scopeUserEmailWhere(data.model, data.where),
+          where: scopeByTenant(data.model, data.where),
         }),
       count: (data: Parameters<AuthAdapter["count"]>[0]) =>
         adapter.count({
           ...data,
-          where: scopeUserEmailWhere(data.model, data.where),
+          where: scopeByTenant(data.model, data.where),
         }),
+      // Stamp the bound tenant on every `user` and `account` insert so a row's
+      // ownership matches the tenant it was created under. `tenantId` is declared
+      // as a (non-input) field on both models so better-auth keeps the value.
       create: <T extends Record<string, unknown>, R = T>(data: {
         model: string
         data: Omit<T, "id">
@@ -109,36 +151,86 @@ export function createTenantScopedAdapter(
         forceAllowId?: boolean
       }) =>
         adapter.create<T, R>(
-          data.model === "user"
+          data.model === "user" || data.model === "account"
             ? { ...data, data: { ...data.data, tenantId: getTenantId() } }
             : data,
         ),
     }
   }
+
+  return (options) => wrapAdapter(base(options))
 }
 
+/** A social provider better-auth can sign users in with (white-label per tenant). */
+export const SOCIAL_PROVIDERS = ["google", "facebook"] as const
+export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
+
 /**
- * A fixed Google OAuth app for a single auth instance. Resolved per tenant
- * ahead of building the instance — better-auth freezes social-provider config at
- * init (the `socialProviders` thunk runs once, with no request/tenant context),
- * so the only way to give each white-label tenant its own Google app is to build
- * a separate auth instance per credential. See `apps/builder` `auth-instances.ts`.
+ * A fixed OAuth app (client id + secret) for one provider on a single auth
+ * instance. Resolved per tenant ahead of building the instance — better-auth
+ * freezes social-provider config at init (the `socialProviders` thunk runs once,
+ * with no request/tenant context), so the only way to give each white-label
+ * tenant its own provider app is to build a separate auth instance per
+ * credential. See `apps/builder` `auth-instances.ts`.
  */
-export type GoogleAuthCredential = {
+export type SocialAuthCredential = {
   clientId: string
   clientSecret: string
 }
 
 export type AuthConfig = {
-  /** The Google app this instance signs in with, or `null`/omitted to disable Google. */
-  googleCredential?: GoogleAuthCredential | null
+  /**
+   * The per-provider OAuth apps this instance signs in with. A provider is
+   * enabled only when its credential is present; omit/`null` to disable it.
+   */
+  socialCredentials?: Partial<
+    Record<SocialProvider, SocialAuthCredential | null>
+  >
+}
+
+/**
+ * Build the `socialProviders` config from the resolved per-provider credentials.
+ * Returns `undefined` (all social disabled) during the production build phase —
+ * the thunk runs without request context then — or when nothing resolved.
+ */
+function buildSocialProviders(
+  socialCredentials: AuthConfig["socialCredentials"],
+) {
+  if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD || !socialCredentials) {
+    return
+  }
+
+  const providers: Partial<
+    Record<
+      SocialProvider,
+      { enabled: true; redirectURI: string } & SocialAuthCredential
+    >
+  > = {}
+  const brokerOrigin = new URL(getBrokerUrl()).origin
+  for (const provider of SOCIAL_PROVIDERS) {
+    const credential = socialCredentials[provider]
+    if (credential?.clientId && credential.clientSecret) {
+      providers[provider] = {
+        enabled: true,
+        clientId: credential.clientId,
+        clientSecret: credential.clientSecret,
+        // Pin the redirect_uri to the broker host. Without this, better-auth
+        // infers it from the request origin (the reseller domain), which is NOT
+        // registered with the provider. The broker is the single registered URI;
+        // the callback relays back to the reseller domain afterwards.
+        redirectURI: new URL(
+          `/api/auth/callback/${provider}`,
+          brokerOrigin,
+        ).toString(),
+      }
+    }
+  }
+
+  return Object.keys(providers).length > 0 ? providers : undefined
 }
 
 export function createAuth(config: AuthConfig) {
-  const { googleCredential } = config
-  const googleEnabled =
-    process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD &&
-    Boolean(googleCredential)
+  const socialProviders = buildSocialProviders(config.socialCredentials)
 
   return betterAuth({
     database: createTenantScopedAdapter(
@@ -152,10 +244,12 @@ export function createAuth(config: AuthConfig) {
         },
       }),
     ),
-    // `tenantId` is the white-label tenant key. Declared so better-auth maps it
-    // to the column and the adapter wrapper can stamp it on user inserts. Never
-    // accepted from client input and never returned — the wrapper sets it from
-    // the bound tenant. See tenant-context.ts.
+    // `tenantId` is the white-label tenant key. Declared on both `user` and
+    // `account` so better-auth maps it to the column and keeps the value the
+    // adapter wrapper stamps on insert (an undeclared field is dropped by
+    // `transformInput`, leaving the column to fall back to its root-tenant
+    // default). Never accepted from client input and never returned — the wrapper
+    // sets it from the bound tenant. See tenant-context.ts.
     user: {
       additionalFields: {
         tenantId: {
@@ -167,18 +261,24 @@ export function createAuth(config: AuthConfig) {
       },
     },
     account: {
+      // The OAuth flow lands on the fixed broker host and is then relayed back to
+      // the originating branded host (see route.ts). Because the authorize-time
+      // `state` cookie is host-scoped, it isn't guaranteed to be present on the
+      // broker leg of that cross-host hand-off. CSRF integrity instead rests on
+      // the `state` value persisted in the `Verification` table (validated by
+      // better-auth's `parseGenericState`) plus the origin allowlist in
+      // `oauth-referer.ts`, so the cookie check is safe to skip here.
       skipStateCookieCheck: true,
+      additionalFields: {
+        tenantId: {
+          type: "string",
+          required: false,
+          input: false,
+          returned: false,
+        },
+      },
     },
-    socialProviders:
-      googleEnabled && googleCredential
-        ? {
-            google: {
-              enabled: true,
-              clientId: googleCredential.clientId,
-              clientSecret: googleCredential.clientSecret,
-            },
-          }
-        : undefined,
+    socialProviders,
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -274,6 +374,14 @@ export function createAuth(config: AuthConfig) {
           // Match the tenant's users by email, plus the reseller-owner on their
           // own custom domain (the owner's account lives in the root tenant).
           // Mirrors the findOne reseller-owner fallback above.
+          //
+          // NOTE: this only gates whether a link is *sent*. The token better-auth
+          // stores in `Verification` carries no tenant, so a token issued in one
+          // tenant and replayed (with the host rewritten) against another tenant's
+          // domain would verify under that other tenant. Closing this fully needs a
+          // tenant-scoped verification lookup, which better-auth doesn't expose as a
+          // hook today. Practical exploit requires intercepting the victim's email.
+          // See docs/tenancy.md → "Residual security considerations".
           const ownerId = await resolveTenantOwnerId(tenantId)
           const user = await db.query.userModel.findFirst({
             where: {
@@ -317,19 +425,20 @@ export function createAuth(config: AuthConfig) {
       },
     },
     trustedOrigins: async () => {
-      const domains = await db.query.customDomainModel.findMany({
-        where: {
-          status: "active",
-        },
-        columns: {
-          domain: true,
-        },
-      })
+      // better-auth calls this on every request, so read the active domains from
+      // the short-TTL cache instead of scanning `CustomDomain` each time.
+      const domains = await customDomainService.listActiveDomains()
 
-      return [
-        env.NEXT_PUBLIC_BUILDER_URL,
-        ...domains.map((d) => `https://${d.domain}`),
-      ]
+      // Broker + builder + every active custom domain. The broker is where
+      // callbacks land; the builder and custom domains are valid relay targets
+      // (where sign-in is initiated and the session cookie is written).
+      return Array.from(
+        new Set([
+          getBrokerUrl(),
+          env.NEXT_PUBLIC_BUILDER_URL,
+          ...domains.map((domain) => `https://${domain}`),
+        ]),
+      )
     },
   })
 }

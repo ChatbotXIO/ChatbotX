@@ -1,5 +1,6 @@
 "use client"
 
+import type { SocialProvider } from "@chatbotx.io/auth/server"
 import {
   Card,
   CardContent,
@@ -19,13 +20,13 @@ import {
 
 export type SignUpFormProps = {
   callbackUrl?: string
-  /** Whether Google login is configured for this tenant (own app or platform default). */
-  googleEnabled?: boolean
+  /** Social providers configured for this tenant (own app or platform default). */
+  enabledProviders?: SocialProvider[]
 }
 
 export const SignUpForm = ({
   callbackUrl,
-  googleEnabled = false,
+  enabledProviders = [],
   ...props
 }: SignUpFormProps) => {
   const t = useTranslations()
@@ -42,10 +43,10 @@ export const SignUpForm = ({
           <div className="grid gap-6">
             <EmailPasswordSignUp />
 
-            {!isCommunity() && googleEnabled && (
+            {!isCommunity() && enabledProviders.length > 0 && (
               <>
                 <OrSeparator />
-                <SSOSignUp />
+                <SSOSignUp providers={enabledProviders} />
               </>
             )}
 

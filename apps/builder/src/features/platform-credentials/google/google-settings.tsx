@@ -27,10 +27,10 @@ import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hoo
 import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
-import { env } from "@/env"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateGoogleSettingsAction } from "./update-google-settings.action"
@@ -44,23 +44,15 @@ export function GoogleSettings({
 }) {
   const t = useTranslations()
   const { handleCopy } = useClipboard()
-  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
-  useEffect(() => {
-    setAuthCallbackUrl(
-      new URL(
-        "/integrations/google/callback",
-        window.location.origin,
-      ).toString(),
-    )
-  }, [])
 
-  // Google sign-in always redirects to the fixed platform callback (better-auth
-  // uses BETTER_AUTH_URL), regardless of the reseller's branded domain. Resellers
-  // using their own Google app must whitelist this exact URI.
-  const signInCallbackUrl = new URL(
-    "/api/auth/callback/google",
-    env.NEXT_PUBLIC_BUILDER_URL,
-  ).toString()
+  // Both Google Sheets (integration) and Google sign-in (SSO) always redirect to
+  // the fixed broker callback, regardless of the reseller's branded domain.
+  // Resellers using their own Google app must whitelist these exact URIs in their
+  // own Google console. See `oauth-broker.ts` / `oauth-referer.ts`.
+  const authCallbackUrl = buildBrokerCallbackUrl(
+    "/integrations/google/callback",
+  )
+  const signInCallbackUrl = buildBrokerCallbackUrl("/api/auth/callback/google")
 
   return (
     <Card>

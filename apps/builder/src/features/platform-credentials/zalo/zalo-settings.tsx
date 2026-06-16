@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateZaloSettingsAction } from "./update-zalo-settings.action"
@@ -44,15 +45,14 @@ export function ZaloSettings({
   const t = useTranslations()
   const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
-  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
   useEffect(() => {
     setWebhookUrl(
       new URL("/integrations/zalo/webhook", window.location.origin).toString(),
     )
-    setAuthCallbackUrl(
-      new URL("/integrations/zalo/callback", window.location.origin).toString(),
-    )
   }, [])
+  // OAuth always redirects to the fixed broker callback (not the reseller's
+  // branded domain). Resellers using their own Zalo app whitelist this URI.
+  const authCallbackUrl = buildBrokerCallbackUrl("/integrations/zalo/callback")
 
   return (
     <Card>

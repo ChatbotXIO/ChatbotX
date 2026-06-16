@@ -20,7 +20,6 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { NextRequest } from "next/server"
 import { z } from "zod"
-import { env } from "@/env"
 import { connectTiktokHandler } from "@/features/integration-tiktok/actions/connect.action"
 import { connectZaloHandler } from "@/features/integration-zalo/actions/connect-zalo.action"
 import { integrations } from "@/integration"
@@ -32,6 +31,7 @@ import {
   FB_PENDING_AUTH_MAX_AGE,
 } from "@/lib/facebook-pending-auth"
 import { logger } from "@/lib/log"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { resolveRelayTarget, sanitizeReferer } from "@/lib/oauth-referer"
 
 const stateValidationSchema = z.object({
@@ -67,7 +67,7 @@ export const handleCallback = async (
     return notFound()
   }
 
-  // White-label relay: Facebook/TikTok OAuth always lands on the fixed platform
+  // White-label relay: Facebook/TikTok OAuth always lands on the fixed broker
   // callback (the only registered redirect_uri). When the flow started on a
   // branded custom domain, bounce the callback back to that domain — where the
   // user's session cookie lives — preserving the original code + state. The
@@ -121,12 +121,11 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed platform
+      // Must match the redirect_uri used at authorize time (the fixed broker
       // callback), even though this handler may run on a white-label host.
-      const callbackUrl = new URL(
+      const callbackUrl = buildBrokerCallbackUrl(
         "/integrations/messenger/callback",
-        env.NEXT_PUBLIC_BUILDER_URL,
-      ).toString()
+      )
 
       const userToken = await exchangeMessengerCode(
         messengerCredential.config,
@@ -140,6 +139,7 @@ export const handleCallback = async (
         version: messengerCredential.config.version,
         expiresAt: Date.now() + FB_PENDING_AUTH_MAX_AGE * 1000,
       })
+
       const cookieStore = await cookies()
       cookieStore.set(FB_MESSENGER_PENDING_AUTH_COOKIE, token, {
         httpOnly: true,
@@ -163,12 +163,11 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed platform
+      // Must match the redirect_uri used at authorize time (the fixed broker
       // callback), even though this handler may run on a white-label host.
-      const callbackUrl = new URL(
+      const callbackUrl = buildBrokerCallbackUrl(
         "/integrations/instagram/callback",
-        env.NEXT_PUBLIC_BUILDER_URL,
-      ).toString()
+      )
 
       const { accessToken: userToken } = await exchangeInstagramCode(
         instagramCredential.config,
@@ -204,12 +203,11 @@ export const handleCallback = async (
         return notFound()
       }
 
-      // Must match the redirect_uri used at authorize time (the fixed platform
+      // Must match the redirect_uri used at authorize time (the fixed broker
       // callback), even though this handler may run on a white-label host.
-      const tiktokCallbackUrl = new URL(
+      const tiktokCallbackUrl = buildBrokerCallbackUrl(
         "/integrations/tiktok/callback",
-        env.NEXT_PUBLIC_BUILDER_URL,
-      ).toString()
+      )
 
       await connectTiktokHandler({
         tiktokSettings: tiktokCredential.config,
@@ -248,11 +246,12 @@ export const handleCallback = async (
         return notFound()
       }
 
-      const callbackUrl = new URL(
+      // Must match the redirect_uri used at authorize time (the fixed broker
+      // callback), even though this handler may run on a white-label host after
+      // the relay above. See `connect.action.ts`.
+      const callbackUrl = buildBrokerCallbackUrl(
         "/integrations/google-sheets/callback",
-        url,
-      ).toString()
-      logger.debug({ callbackUrl }, "debug google sheets callback request")
+      )
 
       authResult = (await integrations.googleSheets.handleRequest?.({
         config: {
@@ -291,5 +290,5 @@ export const handleCallback = async (
     }
   })
 
-  return redirect(stateParams.referer)
+  return redirect(safeReferer)
 }

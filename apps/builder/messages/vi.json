@@ -1415,6 +1415,10 @@
     "authCallbackUrl": {
       "label": "URL xác thực"
     },
+    "signInCallbackUrl": {
+      "label": "URL callback đăng nhập",
+      "hint": "Thêm URL này vào danh sách URI chuyển hướng được phép trong ứng dụng Google của bạn để bật đăng nhập bằng Google."
+    },
     "webhookUrl": {
       "label": "URL webhook"
     },
@@ -2165,6 +2169,7 @@
   },
   "auth": {
     "orContinueWith": "Hoặc tiếp tục với",
+    "continueWithFacebook": "Tiếp tục với Facebook",
     "dontHaveAnAccount": "Chưa có tài khoản?",
     "alreadyHaveAnAccount": "Đã có tài khoản?",
     "signUp": "Đăng ký",
@@ -2714,7 +2719,11 @@
     }
   },
   "platformCredentials": {
-    "title": "Thông tin nền tảng"
+    "title": "Thông tin nền tảng",
+    "usingPlatformDefault": "Đang dùng mặc định của nền tảng",
+    "usingPlatformDefaultHint": "Kênh này hoạt động ngay với ứng dụng dùng chung của nền tảng. Bạn có thể thêm cấu hình riêng bất cứ lúc nào để ghi đè.",
+    "notConfigured": "Chưa thiết lập",
+    "notConfiguredHint": "Thêm cấu hình của bạn để bắt đầu sử dụng tích hợp này."
   },
   "platformBranding": {
     "title": "Thương hiệu nền tảng",

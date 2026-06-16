@@ -30,6 +30,7 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useClipboard } from "@/hooks/use-clipboard"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { CredentialFallbackNote } from "../credential-fallback-note"
 import { useCredentialScope } from "../provider/credential-scope-context"
 import { updateMessengerSettingAction } from "./update-messenger-settings.action"
@@ -44,7 +45,6 @@ export function MessengerSettings({
   const t = useTranslations()
   const { handleCopy } = useClipboard()
   const [webhookUrl, setWebhookUrl] = useState<string>("")
-  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>("")
   useEffect(() => {
     setWebhookUrl(
       new URL(
@@ -52,13 +52,12 @@ export function MessengerSettings({
         window.location.origin,
       ).toString(),
     )
-    setAuthCallbackUrl(
-      new URL(
-        "/integrations/messenger/callback",
-        window.location.origin,
-      ).toString(),
-    )
   }, [])
+  // OAuth always redirects to the fixed broker callback (not the reseller's
+  // branded domain). Resellers using their own Facebook app whitelist this URI.
+  const authCallbackUrl = buildBrokerCallbackUrl(
+    "/integrations/messenger/callback",
+  )
 
   return (
     <Card>

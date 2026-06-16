@@ -14,6 +14,7 @@ import type { ZaloAuthValue } from "@chatbotx.io/integration-zalo"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { redirect } from "next/navigation"
 import { integrations } from "@/integration"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 
 export async function connectZaloHandler({
   zaloSettings,
@@ -27,7 +28,10 @@ export async function connectZaloHandler({
   const authValue = (await integrations.zalo.handleRequest({
     config: {
       ...zaloSettings,
-      redirectUrl: new URL("/integrations/zalo/callback", req.url).toString(),
+      // Must match the redirect_uri used at authorize time (the fixed broker
+      // callback), even though this handler runs on the originating host after
+      // the relay. See `libs/zalo.ts` and `oauth-referer.ts`.
+      redirectUrl: buildBrokerCallbackUrl("/integrations/zalo/callback"),
       stateParams: { workspaceId },
     },
     req,
