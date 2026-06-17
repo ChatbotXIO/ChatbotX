@@ -23,11 +23,13 @@ export function AIFilesCreate({ onSuccess }: { onSuccess?: () => void }) {
         )
         onSuccess?.()
       },
-      onError: (_error) => {
+      onError: ({ error }) => {
         toast.error(
-          t("messages.createdFailed", {
-            feature: t("fields.aiFile.label"),
-          }),
+          error.serverError ??
+            t("messages.createdFailed", {
+              feature: t("fields.aiFile.label"),
+            }),
+          { duration: 5000 },
         )
       },
     },

@@ -139,7 +139,8 @@
   },
   "aiFiles": {
     "description": "Cho phép Agents của bạn truy cập PDF, Docs và nhiều hơn nữa",
-    "title": "Knowledge"
+    "title": "Knowledge",
+    "noEmbeddingProvider": "Chưa cấu hình nhà cung cấp embedding. Tính năng AI File yêu cầu tích hợp OpenAI hoặc Gemini. DeepSeek và Claude không hỗ trợ mô hình embedding."
   },
   "aiFunctions": {
     "description": "Cấu hình các chức năng LLM để làm cho AI agent thông minh hơn",

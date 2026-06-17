@@ -139,7 +139,8 @@
   },
   "aiFiles": {
     "description": "Give Your Agents Access to PDFs, Docs, and More",
-    "title": "Knowledge"
+    "title": "Knowledge",
+    "noEmbeddingProvider": "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models."
   },
   "aiFunctions": {
     "description": "Configure LLM functions to make your AI agent more intelligent",

@@ -1,12 +1,53 @@
 "use client"
 
-import { Handle, Position } from "@xyflow/react"
+import { cn } from "@chatbotx.io/ui/lib/utils"
+import { Handle, Position, useNodeConnections } from "@xyflow/react"
 import { useTranslations } from "next-intl"
 
 type StepState = { id: string; stateType: string }
 
 type StepStateHandlesProps = {
   states?: StepState[]
+}
+
+type StateHandleProps = {
+  stateId: string
+  label: string
+  borderClass: string
+  fillClass: string
+}
+
+export function StateHandle({
+  stateId,
+  label,
+  borderClass,
+  fillClass,
+}: StateHandleProps) {
+  const connections = useNodeConnections({
+    handleType: "source",
+    handleId: stateId,
+  })
+  const isConnected = connections.length > 0
+
+  return (
+    <div className="relative flex items-center gap-2 text-xs">
+      {label}
+      <div
+        className={cn(
+          "h-4 w-4 rounded-full border-2",
+          borderClass,
+          isConnected && fillClass,
+        )}
+      >
+        <Handle
+          className="right-[8px]! h-4! w-4! opacity-0!"
+          id={stateId}
+          position={Position.Right}
+          type="source"
+        />
+      </div>
+    </div>
+  )
 }
 
 export function StepStateHandles({ states }: StepStateHandlesProps) {
@@ -23,43 +64,28 @@ export function StepStateHandles({ states }: StepStateHandlesProps) {
   return (
     <div className="flex flex-col items-end gap-2">
       {successState && (
-        <div className="relative flex items-center gap-2 text-xs">
-          {t("states.success")}
-          <div className="h-4 w-4 rounded-full border-2 border-green-500">
-            <Handle
-              className="right-[8px]! h-4! w-4! opacity-0!"
-              id={successState.id}
-              position={Position.Right}
-              type="source"
-            />
-          </div>
-        </div>
+        <StateHandle
+          borderClass="border-green-500"
+          fillClass="bg-green-500"
+          label={t("states.success")}
+          stateId={successState.id}
+        />
       )}
       {errorState && (
-        <div className="relative flex items-center gap-2 text-xs">
-          {t("states.error")}
-          <div className="h-4 w-4 rounded-full border-2 border-red-500">
-            <Handle
-              className="right-[8px]! h-4! w-4! opacity-0!"
-              id={errorState.id}
-              position={Position.Right}
-              type="source"
-            />
-          </div>
-        </div>
+        <StateHandle
+          borderClass="border-red-500"
+          fillClass="bg-red-500"
+          label={t("states.error")}
+          stateId={errorState.id}
+        />
       )}
       {skipState && (
-        <div className="relative flex items-center gap-2 text-xs">
-          {t("states.skip")}
-          <div className="h-4 w-4 rounded-full border-2 border-yellow-500">
-            <Handle
-              className="right-[8px]! h-4! w-4! opacity-0!"
-              id={skipState.id}
-              position={Position.Right}
-              type="source"
-            />
-          </div>
-        </div>
+        <StateHandle
+          borderClass="border-yellow-500"
+          fillClass="bg-yellow-500"
+          label={t("states.skip")}
+          stateId={skipState.id}
+        />
       )}
     </div>
   )

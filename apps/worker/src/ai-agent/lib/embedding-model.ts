@@ -32,5 +32,7 @@ export async function resolveEmbeddingModel(
     return gemini.embedding(geminiEmbeddingModels.enum["text-embedding-004"])
   }
 
-  throw new Error("No embedding provider configured")
+  throw new Error(
+    "No embedding provider configured. AI file embeddings require OpenAI or Gemini integration. DeepSeek and Claude do not support embedding models.",
+  )
 }

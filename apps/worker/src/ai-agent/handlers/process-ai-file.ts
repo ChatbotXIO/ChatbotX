@@ -6,6 +6,7 @@ import {
   type AIJobProcessFile,
   aiAgentQueue,
 } from "@chatbotx.io/worker-config"
+import { resolveEmbeddingModel } from "../lib/embedding-model"
 import { extractTextFromFile } from "../lib/text-extractor"
 
 type TextChunk = { content: string }
@@ -52,6 +53,9 @@ export async function processAIFile(
     },
     message: "AI file not found",
   })
+
+  // Validate embedding provider early to avoid creating chunks that will all fail
+  await resolveEmbeddingModel(aiFile.workspaceId)
 
   const text = await extractTextFromFile(aiFile.path, aiFile.mimeType)
 

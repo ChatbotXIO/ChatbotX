@@ -30,7 +30,7 @@ const AIIconInner = (props: AIIconProps) => {
         <SiGooglegemini className={fullClassName} fill={SiGooglegeminiHex} />
       )
     default:
-      return <BotIcon />
+      return <BotIcon className={fullClassName} />
   }
 }
 
