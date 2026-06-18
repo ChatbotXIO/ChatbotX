@@ -81,7 +81,7 @@ DROP TABLE IF EXISTS "OrganizationMember";--> statement-breakpoint
 -- 10. Drop Organization table (drop indices first)
 DROP INDEX IF EXISTS "Organization_domain_idx";--> statement-breakpoint
 DROP INDEX IF EXISTS "Organization_slug_key";--> statement-breakpoint
-DROP TABLE IF EXISTS "Organization";--> statement-breakpoint
+DROP TABLE IF EXISTS "Organization" CASCADE;--> statement-breakpoint
 
 -- 11. Add FK for CustomDomain.userId → User.id
 ALTER TABLE "CustomDomain" ADD CONSTRAINT "CustomDomain_userId_User_id_fkey"
