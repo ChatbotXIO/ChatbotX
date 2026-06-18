@@ -16,6 +16,20 @@ import {
 
 const toolNamePattern = /^[a-zA-Z0-9_-]+$/
 
+// Resolves JSON Schema from availableTools stored in DB.
+// Old format (AI SDK jsonSchema() wrapper): { inputSchema: { jsonSchema: {...} } }
+// New format (raw MCP JSON Schema):         { inputSchema: { type, properties, ... } }
+function resolveInputSchema(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object") {
+    return null
+  }
+  const schema = raw as Record<string, unknown>
+  if (schema.jsonSchema && typeof schema.jsonSchema === "object") {
+    return schema.jsonSchema as Record<string, unknown>
+  }
+  return schema
+}
+
 export type JsonPrimitive = string | number | boolean | null
 
 export type McpCallToolResult = {
@@ -67,7 +81,7 @@ export async function getMCPServerTools(
     }
 
     const results = await Promise.allSettled(
-      mcpServers.map(async (mcpServer) => {
+      mcpServers.map((mcpServer) => {
         const auth = aiMcpServerAuth.parse(mcpServer.auth)
         const client = new McpClient({
           url: mcpServer.url,
@@ -75,34 +89,30 @@ export async function getMCPServerTools(
           name: mcpServer.name,
         })
 
-        const serverToolList = await client.listTools()
-        const selectedToolNames = new Set(mcpServer.selectedTools)
+        const cachedTools = (mcpServer.availableTools ?? {}) as Record<
+          string,
+          Record<string, unknown>
+        >
         const cleanServerName = mcpServer.name.replace(/[^a-zA-Z0-9_-]/g, "_")
         const filteredTools: ToolSet = {}
 
-        for (const toolDef of serverToolList) {
-          if (!selectedToolNames.has(toolDef.name)) {
-            continue
-          }
-
-          const cleanToolName = toolDef.name.replace(/[^a-zA-Z0-9_-]/g, "_")
+        for (const toolName of mcpServer.selectedTools) {
+          const cached = cachedTools[toolName]
+          const cleanToolName = toolName.replace(/[^a-zA-Z0-9_-]/g, "_")
           const uniqueToolName = `${cleanServerName}_${cleanToolName}`
           if (!toolNamePattern.test(uniqueToolName)) {
             continue
           }
 
-          const originalToolName = toolDef.name
+          const resolvedSchema = resolveInputSchema(cached?.inputSchema)
 
           filteredTools[uniqueToolName] = tool({
-            description: toolDef.description ?? "",
-            inputSchema: toolDef.inputSchema
-              ? jsonSchema(toolDef.inputSchema)
+            description: (cached?.description as string | undefined) ?? "",
+            inputSchema: resolvedSchema
+              ? jsonSchema(resolvedSchema)
               : z.looseObject({}),
             execute: async (args) => {
-              const result = await client.callTool(
-                originalToolName,
-                args as JsonObject,
-              )
+              const result = await client.callTool(toolName, args as JsonObject)
               if (result.isError) {
                 const errorContent = result.content
                 let errorMessage = "MCP tool returned an error"

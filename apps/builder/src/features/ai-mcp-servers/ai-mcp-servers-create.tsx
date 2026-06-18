@@ -28,6 +28,8 @@ import { updateAIMcpServerAction } from "./actions/update-ai-mcp-server.action"
 import { createAIMcpServerRequest } from "./schemas/action"
 import type { AIMcpServerResource } from "./schemas/resource"
 
+type ToolInfo = { name: string; description?: string }
+
 type AIMcpServersCreateProps = {
   workspaceId: string
   onSuccess?: () => void
@@ -51,7 +53,7 @@ export function AIMcpServersCreate({
     useState<boolean>(false)
   const [isMcpServerValidated, setIsMcpServerValidated] =
     useState<boolean>(false)
-  const [allTools, setAllTools] = useState<string[]>([])
+  const [allTools, setAllTools] = useState<ToolInfo[]>([])
   const [internalOpen, setInternalOpen] = useState(false)
   const isOpen = controlledOpen ?? internalOpen
   const setIsOpen = setControlledOpen ?? setInternalOpen
@@ -125,7 +127,10 @@ export function AIMcpServersCreate({
 
     if (initialData) {
       const availableTools =
-        (initialData.availableTools as Record<string, unknown>) ?? {}
+        (initialData.availableTools as Record<
+          string,
+          { description?: string }
+        >) ?? {}
       const selectedTools = initialData.selectedTools?.length
         ? initialData.selectedTools
         : Object.keys(availableTools)
@@ -138,7 +143,12 @@ export function AIMcpServersCreate({
         selectedTools,
       })
 
-      setAllTools(Object.keys(availableTools))
+      setAllTools(
+        Object.keys(availableTools).map((key) => ({
+          name: key,
+          description: availableTools[key]?.description,
+        })),
+      )
       setIsMcpServerValidated(true)
       return
     }
@@ -160,21 +170,27 @@ export function AIMcpServersCreate({
     try {
       setIsMcpServerValidating(true)
       const data = await ky
-        .post<Record<string, unknown>[]>(
+        .post<Record<string, { description?: string }>>(
           `/api/workspaces/${workspaceId}/ai-mcp-servers/validate`,
           {
             json: form.getValues(),
+            timeout: 15_000,
           },
         )
         .json()
 
-      const toolKeys = Object.keys(data)
-      setIsMcpServerValidated(toolKeys.length > 0)
-      setAllTools(toolKeys)
+      const toolInfos = Object.keys(data).map((key) => ({
+        name: key,
+        description: data[key]?.description,
+      }))
+      const toolNames = toolInfos.map((t) => t.name)
+      setIsMcpServerValidated(toolInfos.length > 0)
+      setAllTools(toolInfos)
       form.setValue("availableTools", data)
-      form.setValue("selectedTools", toolKeys)
+      form.setValue("selectedTools", toolNames)
     } catch (error) {
       setAllTools([])
+      setIsMcpServerValidated(false)
       form.setValue("availableTools", {})
       form.setValue("selectedTools", [])
       toast.error(
@@ -276,11 +292,11 @@ export function AIMcpServersCreate({
                   {t("aiMcpServers.tools.label")}
                 </div>
                 <CheckboxGroupField
-                  // label={tool}
                   name="selectedTools"
-                  options={allTools.map((tt) => ({
-                    label: tt,
-                    value: tt,
+                  options={allTools.map((tool) => ({
+                    description: tool.description,
+                    label: tool.name,
+                    value: tool.name,
                   }))}
                 />
               </div>

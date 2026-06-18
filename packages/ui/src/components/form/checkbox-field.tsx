@@ -12,6 +12,7 @@ type CheckboxGroupFieldProps<T extends FieldValues> = {
   options: {
     value: string
     label: string
+    description?: string
   }[]
 }
 
@@ -46,7 +47,6 @@ export function CheckboxGroupField<T extends FieldValues>({
                   >
                     <Checkbox
                       checked={valueArray.includes(option.value)}
-                      // className="h-[36px] w-[36px] bg-white"
                       id={option.value}
                       onCheckedChange={(checked) =>
                         checked
@@ -56,9 +56,16 @@ export function CheckboxGroupField<T extends FieldValues>({
                             )
                       }
                     />
-                    <Label className="font-normal" htmlFor={option.value}>
-                      {option.label}
-                    </Label>
+                    <div className="flex flex-col gap-0.5">
+                      <Label className="font-normal" htmlFor={option.value}>
+                        {option.label}
+                      </Label>
+                      {option.description && (
+                        <p className="text-muted-foreground text-xs">
+                          {option.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

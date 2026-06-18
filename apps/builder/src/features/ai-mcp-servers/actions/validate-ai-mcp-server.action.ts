@@ -5,15 +5,7 @@ import {
   type experimental_MCPClient,
 } from "@ai-sdk/mcp"
 import { aiMcpServerAuthTypes } from "@chatbotx.io/database/partials"
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { returnValidationErrors } from "next-safe-action"
-import { normalizeError } from "universal-error-normalizer"
-import { workspaceIdrequestParams } from "@/features/common/schemas"
-import { workspaceActionClient } from "@/lib/safe-action"
-import {
-  type ValidateAIMcpServerRequest,
-  validateAIMcpServerRequest,
-} from "../schemas/action"
+import type { ValidateAIMcpServerRequest } from "../schemas/action"
 
 export const validateAIMcpServer = async ({
   parsedInput,
@@ -32,12 +24,8 @@ export const validateAIMcpServer = async ({
   let httpClient: experimental_MCPClient | null = null
 
   try {
-    const httpTransport = new StreamableHTTPClientTransport(
-      new URL(parsedInput.url),
-      { requestInit: { headers } },
-    )
     httpClient = await experimental_createMCPClient({
-      transport: httpTransport,
+      transport: { type: "http", url: parsedInput.url, headers },
     })
 
     const tools = await httpClient.tools()
@@ -48,21 +36,9 @@ export const validateAIMcpServer = async ({
         Object.fromEntries(toolKeys.map((key) => [key, tools[key]])),
       ),
     )
-  } catch (error) {
-    const normalized = normalizeError(error)
-    return returnValidationErrors(validateAIMcpServerRequest, {
-      url: {
-        _errors: [normalized.message],
-      },
-    })
   } finally {
     if (httpClient) {
       await httpClient.close()
     }
   }
 }
-
-export const validateAIMcpServerAction = workspaceActionClient
-  .bindArgsSchemas(workspaceIdrequestParams)
-  .inputSchema(validateAIMcpServerRequest)
-  .action(validateAIMcpServer)
