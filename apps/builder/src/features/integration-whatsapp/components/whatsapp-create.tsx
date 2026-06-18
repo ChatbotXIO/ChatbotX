@@ -321,12 +321,10 @@ function SdkConnectSection({
       transferPhoneNumber: Boolean(watchTransferPhoneNumber),
       locale: document.documentElement.lang || undefined,
     })
-    const popup = window.open(
-      url,
-      "wa_oauth_signup",
-      "popup,width=600,height=720",
-    )
-    if (!popup) {
+    // Open a real tab (not a popup window) — popups get blocked, and a tab keeps
+    // `window.opener` set so the broker callback can relay the code back here.
+    const authTab = window.open(url, "_blank")
+    if (!authTab) {
       toast.error(t("whatsapp.embeddedSignupPopupBlocked"))
     }
   }, [settings, watchConnectExisting, watchTransferPhoneNumber, t])
