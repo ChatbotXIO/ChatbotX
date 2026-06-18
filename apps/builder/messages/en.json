@@ -71,6 +71,7 @@
     "toggleTheme": "Toggle theme",
     "transferConversationToBot": "Transfer Conversation to Bot",
     "update": "Update",
+    "upgradePlan": "Upgrade plan",
     "upgradeToPro": "Upgrade to Pro",
     "uploadFile": "Upload File",
     "view": "View",
@@ -227,7 +228,17 @@
     }
   },
   "billing": {
-    "title": "Billing"
+    "title": "Billing",
+    "plan": {
+      "label": "Plan: {plan}",
+      "free": "Free"
+    },
+    "usage": {
+      "contacts": "Monthly active contacts",
+      "workspaces": "Workspaces",
+      "channels": "Channels",
+      "teamMembers": "Team members"
+    }
   },
   "broadcasts": {
     "title": "Broadcasts",

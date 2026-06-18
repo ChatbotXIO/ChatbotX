@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, timestamp } from "drizzle-orm/pg-core"
+import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core"
 import {
   bigintAsString,
   sharedColumns,
@@ -25,6 +25,10 @@ export const userQuotaModel = pgTable("UserQuota", {
   whiteLabel: boolean().notNull().default(false),
   ssoSaml: boolean().notNull().default(false),
   saasMode: boolean().notNull().default(false),
+  // Plan identity, written by the enterprise billing layer (publishEntitlements).
+  // null = free tier / not yet synced.
+  planName: text(),
+  planStatus: text(),
   periodStart: timestamp(timestampConfig),
   periodEnd: timestamp(timestampConfig),
   syncedAt: timestamp(timestampConfig).notNull().defaultNow(),

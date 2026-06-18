@@ -13,6 +13,7 @@ import type { WorkspaceResource } from "../schema/resource"
 
 type WorkspacesListProps = {
   workspaces: WorkspaceResource[]
+  workspacesLimit?: number | null
 }
 
 const CARD_STYLES = "h-[250px] w-[200px] py-0 rounded-md overflow-hidden"
@@ -71,16 +72,38 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   )
 }
 
-const WorkspacesList = async ({ workspaces }: WorkspacesListProps) => {
+const WorkspacesList = async ({
+  workspaces,
+  workspacesLimit,
+}: WorkspacesListProps) => {
   const t = await getTranslations()
   const createLabel = t("actions.createFeature", {
     feature: t("fields.workspace.label"),
   })
   const showCreateCard = !isCommunity()
 
+  const usedCount = workspaces.length
+  const hasLimit = typeof workspacesLimit === "number"
+  const isAtLimit = hasLimit && usedCount >= workspacesLimit
+
   return (
-    <div className="flex min-h-dvh w-full max-w-full justify-start px-20">
-      <ul className="mt-20 flex list-none flex-wrap gap-6 p-0">
+    <div className="flex min-h-dvh w-full max-w-full flex-col justify-start px-20">
+      <div className="mt-20 flex items-baseline gap-3">
+        <h1 className="font-semibold text-lg">
+          {t("billing.usage.workspaces")}
+        </h1>
+        {hasLimit && (
+          <span
+            className={cn(
+              "font-medium text-muted-foreground text-sm tabular-nums",
+              isAtLimit && "text-destructive",
+            )}
+          >
+            {`${usedCount} / ${workspacesLimit}`}
+          </span>
+        )}
+      </div>
+      <ul className="mt-6 flex list-none flex-wrap gap-6 p-0">
         {showCreateCard && (
           <li className="list-none">
             <CreateWorkspaceCard label={createLabel} />

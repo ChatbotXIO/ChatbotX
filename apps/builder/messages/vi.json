@@ -71,6 +71,7 @@
     "toggleTheme": "Chuyển đổi giao diện",
     "transferConversationToBot": "Chuyển cuộc trò chuyện cho bot",
     "update": "Cập nhật",
+    "upgradePlan": "Nâng cấp gói",
     "upgradeToPro": "Nâng cấp lên Pro",
     "uploadFile": "Tải lên tệp",
     "view": "Xem",
@@ -227,7 +228,17 @@
     }
   },
   "billing": {
-    "title": "Thanh toán"
+    "title": "Thanh toán",
+    "plan": {
+      "label": "Gói: {plan}",
+      "free": "Miễn phí"
+    },
+    "usage": {
+      "contacts": "Liên hệ hoạt động hằng tháng",
+      "workspaces": "Không gian làm việc",
+      "channels": "Kênh",
+      "teamMembers": "Thành viên nhóm"
+    }
   },
   "broadcasts": {
     "title": "Phát sóng",
