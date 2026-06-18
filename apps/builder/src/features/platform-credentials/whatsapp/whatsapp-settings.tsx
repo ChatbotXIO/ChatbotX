@@ -230,7 +230,7 @@ export function EditWhatsappSettingsForm({
           mode: "onChange",
           defaultValues: {
             clientId: publicConfig?.clientId ?? "",
-            version: publicConfig?.version ?? "v20.0",
+            version: publicConfig?.version ?? "v25.0",
             configId: publicConfig?.configId ?? "",
             systemUserId: publicConfig?.systemUserId ?? "",
             businessId: publicConfig?.businessId ?? "",

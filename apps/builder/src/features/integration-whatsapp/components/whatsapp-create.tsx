@@ -17,9 +17,6 @@ import {
   CardTitle,
 } from "@chatbotx.io/ui/components/ui/card"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
-import FacebookLogin, {
-  type InitParams,
-} from "@greatsumini/react-facebook-login"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import ky from "ky"
@@ -32,7 +29,13 @@ import { toast } from "sonner"
 import { InboxIcon } from "@/features/inboxes/components/inbox-icon"
 import { CoexistPopup } from "@/features/shared/coexist-popup"
 import { clientErrorHandler } from "@/lib/errors/client-handler"
+import { getBrokerOrigin } from "@/lib/oauth-broker"
 import { connectWhatsappAction } from "../actions/connect.action"
+import {
+  buildFacebookOAuthDialogUrl,
+  WA_OAUTH_RESULT,
+  type WhatsappOAuthRelayResult,
+} from "../libs/embedded-signup"
 import { connectWhatsappSchema, type ManualOnboardingResult } from "../schemas"
 import { WhatsappOnboardingResult } from "./whatsapp-onboarding-result"
 
@@ -52,15 +55,6 @@ const FORM_FIELDS = {
   PHONE_NUMBER_ID: "phoneNumberId",
   BUSINESS_ID: "businessId",
   CODE: "code",
-} as const
-
-const EMBEDDED_SIGNUP_FEATURE_TYPES = {
-  WHATSAPP_BUSINESS_APP_ONBOARDING: "whatsapp_business_app_onboarding",
-  ONLY_WABA_SHARING: "only_waba_sharing",
-} as const
-
-const EMBEDDED_SIGNUP_FEATURES = {
-  MARKETING_MESSAGES_LITE: "marketing_messages_lite",
 } as const
 
 type FormVisibility = {
@@ -177,59 +171,6 @@ export default function WhatsappCreate({
   const watchTransferPhoneNumber = watch(FORM_FIELDS.TRANSFER_PHONE_NUMBER)
   const watchManualConnect = watch(FORM_FIELDS.MANUAL_CONNECT)
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (!event.origin.endsWith("facebook.com")) {
-        return
-      }
-
-      try {
-        const data = JSON.parse(event.data)
-        if (data.type === "WA_EMBEDDED_SIGNUP") {
-          /*
-           * {
-           *     "data": {
-           *         "phone_number_id": "111598575218611",
-           *         "waba_id": "119496914420376",
-           *         "business_id": "553355495727951"
-           *     },
-           *     "type": "WA_EMBEDDED_SIGNUP",
-           *     "event": "FINISH",
-           *     "version": "3"
-           * }
-           */
-          if (
-            data.event === "FINISH" ||
-            data.event === "FINISH_ONLY_WABA" ||
-            data.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING"
-          ) {
-            setValue(FORM_FIELDS.BUSINESS_ID, data.data.business_id ?? "")
-            setValue(FORM_FIELDS.WABA_ID, data.data.waba_id ?? "")
-            setValue(
-              FORM_FIELDS.PHONE_NUMBER_ID,
-              data.data.phone_number_id ?? "",
-            )
-          } else if (data.event === "CANCEL") {
-            setValue(FORM_FIELDS.BUSINESS_ID, "")
-            setValue(FORM_FIELDS.WABA_ID, "")
-            setValue(FORM_FIELDS.PHONE_NUMBER_ID, "")
-            toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-          }
-        }
-      } catch {
-        // Ignore malformed postMessage payloads from Facebook SDK
-      }
-    }
-
-    // Add the event listener
-    window.addEventListener("message", handleMessage)
-
-    // Cleanup function to remove the event listener
-    return () => {
-      window.removeEventListener("message", handleMessage)
-    }
-  }, [setValue, t]) // Empty dependency array ensures the effect runs only once on mount and unmount
-
   // Form visibility effects
   useEffect(() => {
     updateVisibility({
@@ -308,16 +249,19 @@ type SdkConnectSectionProps = {
   settings: WhatsappCredentialPublic
 }
 
+const LAUNCH_BUTTON_CLASS =
+  "inline-flex h-8 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
+
+const SWITCH_FIELD_CLASS =
+  "flex items-center gap-2 flex-row-reverse justify-end"
+
 function SdkConnectSection({
   visibility,
   watchManualConnect,
   settings,
 }: SdkConnectSectionProps) {
   const t = useTranslations()
-  const { setValue, watch, formState, trigger } = useFormContext()
-
-  const switchFieldClassName =
-    "flex items-center gap-2 flex-row-reverse justify-end"
+  const { setValue, formState, trigger } = useFormContext()
 
   const finalSubmitRef = useRef<HTMLButtonElement>(null)
   const watchCode = useWatch({ name: FORM_FIELDS.CODE })
@@ -326,19 +270,74 @@ function SdkConnectSection({
     name: FORM_FIELDS.TRANSFER_PHONE_NUMBER,
   })
 
-  let embeddedSignupFeatureType: string | undefined
-  if (watchTransferPhoneNumber) {
-    embeddedSignupFeatureType =
-      EMBEDDED_SIGNUP_FEATURE_TYPES.WHATSAPP_BUSINESS_APP_ONBOARDING
-  } else if (watchConnectExisting) {
-    embeddedSignupFeatureType = EMBEDDED_SIGNUP_FEATURE_TYPES.ONLY_WABA_SHARING
-  }
+  // Submit once we have the OAuth code. The WABA / phone / business ids are not
+  // in the OAuth redirect — they are derived server-side from the token in
+  // connectWhatsappAction.
+  const submitWithCode = useCallback(
+    async (code: string) => {
+      setValue(FORM_FIELDS.CODE, code)
+      try {
+        const valid = await trigger()
+        if (valid) {
+          finalSubmitRef.current?.click()
+        }
+      } catch {
+        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
+      }
+    },
+    [setValue, trigger, t],
+  )
+
+  // The Facebook OAuth dialog redirects the code to the broker callback, which
+  // relays it back to this tab via postMessage. Trust only the broker origin —
+  // a payload from any other origin is ignored.
+  useEffect(() => {
+    const brokerOrigin = getBrokerOrigin()
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== brokerOrigin) {
+        return
+      }
+      const data = event.data as WhatsappOAuthRelayResult | undefined
+      if (data?.type !== WA_OAUTH_RESULT) {
+        return
+      }
+      if (data.status === "success" && data.code) {
+        submitWithCode(data.code)
+      } else {
+        toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
+      }
+    }
+    window.addEventListener("message", handleMessage)
+    return () => window.removeEventListener("message", handleMessage)
+  }, [submitWithCode, t])
+
+  const openFacebookDialog = useCallback(() => {
+    const url = buildFacebookOAuthDialogUrl({
+      resellerOrigin: window.location.origin,
+      clientId: settings.clientId,
+      configId: settings.configId,
+      version: settings.version,
+      connectExisting: Boolean(watchConnectExisting),
+      transferPhoneNumber: Boolean(watchTransferPhoneNumber),
+      locale: document.documentElement.lang || undefined,
+    })
+    const popup = window.open(
+      url,
+      "wa_oauth_signup",
+      "popup,width=600,height=720",
+    )
+    if (!popup) {
+      toast.error(t("whatsapp.embeddedSignupPopupBlocked"))
+    }
+  }, [settings, watchConnectExisting, watchTransferPhoneNumber, t])
+
+  const showLaunch = !(watchManualConnect || watchCode)
 
   return (
     <>
       {visibility.connectExisting && (
         <SwitchField
-          formItemClassName={switchFieldClassName}
+          formItemClassName={SWITCH_FIELD_CLASS}
           label={t("whatsapp.connectExisting")}
           name={FORM_FIELDS.CONNECT_EXISTING}
           required
@@ -347,7 +346,7 @@ function SdkConnectSection({
 
       {visibility.transferPhoneNumber && (
         <SwitchField
-          formItemClassName={switchFieldClassName}
+          formItemClassName={SWITCH_FIELD_CLASS}
           label={t("whatsapp.transferPhoneNumber")}
           name={FORM_FIELDS.TRANSFER_PHONE_NUMBER}
           required
@@ -359,49 +358,14 @@ function SdkConnectSection({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {!(watchManualConnect || watch(FORM_FIELDS.CODE)) && (
-          <FacebookLogin
-            appId={settings.clientId}
-            className="inline-flex h-8 items-center justify-start gap-2 whitespace-nowrap rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground text-sm shadow-xs transition-all hover:bg-secondary/80 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40"
-            initParams={{
-              version: (settings.version as InitParams["version"]) ?? "v21.0",
-            }}
-            key={embeddedSignupFeatureType ?? "default"}
-            loginOptions={
-              {
-                config_id: settings.configId,
-                response_type: "code",
-                override_default_response_type: true,
-                return_scopes: true,
-                extras: {
-                  sessionInfoVersion: 3,
-                  setup: {},
-                  features: [EMBEDDED_SIGNUP_FEATURES.MARKETING_MESSAGES_LITE],
-                  ...(embeddedSignupFeatureType
-                    ? { featureType: embeddedSignupFeatureType }
-                    : {}),
-                },
-                // biome-ignore lint/suspicious/noExplicitAny: some types are not supported
-              } as any
-            }
-            onFail={() => {
-              toast.error(t("messages.connectFailed", { feature: "Whatsapp" }))
-            }}
-            // biome-ignore lint/suspicious/noExplicitAny: this library does not support code returned
-            onSuccess={async (res: any) => {
-              if (res.code) {
-                setValue(FORM_FIELDS.CODE, res.code)
-                const valid = await trigger()
-
-                if (valid) {
-                  finalSubmitRef.current?.click()
-                }
-              }
-            }}
-            scope=""
+        {showLaunch && (
+          <Button
+            className={LAUNCH_BUTTON_CLASS}
+            onClick={openFacebookDialog}
+            type="button"
           >
             {t("actions.continue")}
-          </FacebookLogin>
+          </Button>
         )}
 
         {watchCode && (
@@ -433,9 +397,6 @@ function ManualConnectSection({
   watchManualConnect,
 }: ManualConnectSectionProps) {
   const t = useTranslations()
-  const switchFieldClassName =
-    "flex items-center gap-2 flex-row-reverse justify-end"
-
   const { setValue, getValues, formState } = useFormContext()
 
   const {
@@ -489,7 +450,7 @@ function ManualConnectSection({
   return (
     <>
       <SwitchField
-        formItemClassName={switchFieldClassName}
+        formItemClassName={SWITCH_FIELD_CLASS}
         label={t("whatsapp.manualConnect")}
         name={FORM_FIELDS.MANUAL_CONNECT}
         required

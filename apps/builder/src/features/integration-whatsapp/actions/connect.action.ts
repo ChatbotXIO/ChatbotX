@@ -21,21 +21,26 @@ import {
   shareCreditLine,
   type WhatsappAuthValue,
 } from "@chatbotx.io/integration-whatsapp"
-import { exchangeAccessToken } from "@chatbotx.io/integration-whatsapp/api/auth"
+import {
+  exchangeAccessToken,
+  getSharedWabaId,
+} from "@chatbotx.io/integration-whatsapp/api/auth"
 import {
   getCoexistEligibility,
   normalizeWhatsappDisplayPhoneNumber,
   type WhatsappPhoneNumber,
   listPhoneNumbers as whatsappListPhoneNumbers,
 } from "@chatbotx.io/integration-whatsapp/api/phone-number"
+import { findWaba } from "@chatbotx.io/integration-whatsapp/api/waba"
 import { subscribeWebhook } from "@chatbotx.io/integration-whatsapp/api/webhook"
 import { invalidateCacheByTags } from "@chatbotx.io/redis"
 import { SdkException } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { updateWorkspaceLogo } from "@/features/workspaces/actions/upload-logo"
 import { logger } from "@/lib/log"
-import { getBrokerOrigin } from "@/lib/oauth-broker"
+import { buildBrokerCallbackUrl, getBrokerOrigin } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
+import { WHATSAPP_OAUTH_CALLBACK_PATH } from "../libs/embedded-signup"
 import {
   type ConnectWhatsappResult,
   type ConnectWhatsappSchema,
@@ -52,14 +57,64 @@ async function resolveAccessToken(
   }
 
   if (input.code) {
+    // The code came from the Facebook OAuth dialog opened with an explicit
+    // `redirect_uri` (the broker callback), so the exchange must echo the exact
+    // same redirect_uri. Mirrors `buildFacebookOAuthDialogUrl`.
     const exchangeResult = await exchangeAccessToken(
       whatsappSettings,
       input.code,
+      buildBrokerCallbackUrl(WHATSAPP_OAUTH_CALLBACK_PATH),
     )
     return exchangeResult.access_token
   }
 
   throw new ChatbotXException("Access token is required")
+}
+
+/**
+ * Reconstruct the connect inputs (WABA / phone number / business) server-side
+ * from the access token. The Facebook OAuth dialog returns only a `code`; the
+ * SDK-only `WA_EMBEDDED_SIGNUP` postMessage that normally carries these ids never
+ * fires for a directly-opened dialog. The token's `whatsapp_business_management`
+ * grant identifies the WABA, and the WABA exposes its phone numbers + owning
+ * business.
+ */
+async function deriveSignupTargets(
+  accessToken: string,
+  version: string,
+): Promise<{
+  wabaId: string
+  phoneNumber: WhatsappPhoneNumber
+  businessId: string
+}> {
+  const wabaId = await getSharedWabaId(accessToken)
+  if (!wabaId) {
+    throw new ChatbotXException(
+      "Could not resolve WhatsApp Business Account from authorization",
+    )
+  }
+
+  // findWaba returns the phone numbers inline, so the caller can use the result
+  // directly instead of round-tripping to /phone_numbers a second time.
+  const waba = await findWaba({
+    wabaId,
+    acessToken: accessToken,
+    version,
+    fields: "owner_business_info,phone_numbers",
+  })
+
+  const phoneNumber = waba.phone_numbers?.data?.[0]
+  if (!phoneNumber) {
+    throw new ChatbotXException(
+      "No phone number found on the WhatsApp Business Account",
+    )
+  }
+
+  return {
+    wabaId,
+    phoneNumber,
+    businessId: waba.owner_business_info?.id ?? "",
+  }
 }
 
 async function fetchAndValidatePhoneNumber(params: {
@@ -306,17 +361,38 @@ export const connectWhatsappAction = authActionClient
         }
         const whatsappSettings = whatsappCredential.config
 
+        const isManual = parsedInput.manualConnect
+
         const accessToken = await resolveAccessToken(
           parsedInput,
           whatsappSettings,
         )
 
-        const phoneNumber = await fetchAndValidatePhoneNumber({
-          wabaId: parsedInput.wabaId,
-          phoneNumberId: parsedInput.phoneNumberId,
-          accessToken,
-          version: whatsappSettings.version,
-        })
+        // Manual connect supplies the ids directly. The OAuth dialog returns only
+        // a `code`, so derive the WABA / phone / business server-side from the
+        // exchanged token when they are missing.
+        let wabaId = parsedInput.wabaId ?? ""
+        let businessId = parsedInput.businessId ?? ""
+        let phoneNumber: WhatsappPhoneNumber
+
+        if (isManual || (wabaId && parsedInput.phoneNumberId)) {
+          phoneNumber = await fetchAndValidatePhoneNumber({
+            wabaId,
+            phoneNumberId: parsedInput.phoneNumberId ?? "",
+            accessToken,
+            version: whatsappSettings.version,
+          })
+        } else {
+          const derived = await deriveSignupTargets(
+            accessToken,
+            whatsappSettings.version,
+          )
+          wabaId = derived.wabaId
+          phoneNumber = derived.phoneNumber
+          if (!businessId) {
+            businessId = derived.businessId
+          }
+        }
 
         await ensurePhoneNumberNotConnected(phoneNumber.id)
 
@@ -327,8 +403,6 @@ export const connectWhatsappAction = authActionClient
         // Mirrors the broker pattern used by messenger/instagram (lib/oauth-broker.ts).
         const originUrl = getBrokerOrigin()
         const integrationId = createId()
-        const isManual = parsedInput.manualConnect
-        const businessId = parsedInput.businessId ?? ""
 
         const { webhookUrl, verifyToken } = buildWebhookConfig({
           isManual,
@@ -343,7 +417,7 @@ export const connectWhatsappAction = authActionClient
           verifyToken,
           webhookUrl,
           originUrl,
-          wabaId: parsedInput.wabaId,
+          wabaId,
           phoneNumber,
           businessId,
           isManual,
@@ -403,7 +477,7 @@ export const connectWhatsappAction = authActionClient
             workspaceId: parsedInput.workspaceId,
             integrationId,
             phoneNumber,
-            wabaId: parsedInput.wabaId,
+            wabaId,
             businessId,
             auth,
             isCoexist,

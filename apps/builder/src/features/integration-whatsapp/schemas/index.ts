@@ -20,29 +20,51 @@ export type ConnectWhatsappResult =
 export const connectWhatsappSchema = z
   .object({
     businessId: z.string().nullish(),
-    wabaId: z.string().min(1),
+    // Optional for the OAuth dialog flow: only a `code` comes back and the
+    // server derives wabaId/phoneNumberId/businessId from the token. Manual
+    // connect supplies them directly (enforced below).
+    wabaId: z.string().nullish(),
     connectExisting: z.boolean(),
     transferPhoneNumber: z.boolean(),
     manualConnect: z.boolean(),
     marketingMessageLite: z.boolean(),
-    phoneNumberId: z.string().min(1),
+    phoneNumberId: z.string().nullish(),
     workspaceId: z.string().nullish(),
     accessToken: z.string().nullish(),
     code: z.string().nullish(),
   })
   .superRefine((data, ctx) => {
-    if (!(data.manualConnect || data.businessId)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Required business id",
-        path: ["businessId"],
-      })
+    if (data.manualConnect) {
+      if (!data.wabaId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required waba id",
+          path: ["wabaId"],
+        })
+      }
+      if (!data.phoneNumberId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required phone number id",
+          path: ["phoneNumberId"],
+        })
+      }
+      if (!data.accessToken) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required access token",
+          path: ["accessToken"],
+        })
+      }
+      return
     }
 
-    if (!(data.accessToken || data.code)) {
+    // OAuth dialog flow: the `code` is the only required input.
+    if (!data.code) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Required access token or code",
+        message: "Required code",
+        path: ["code"],
       })
     }
   })
