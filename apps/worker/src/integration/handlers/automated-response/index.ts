@@ -235,6 +235,7 @@ export async function processAutomatedResponse(
     const startTime = Date.now()
     const aiResult = await replyByAI({
       conversation,
+      contactInboxId: contactInbox.id,
       messages,
       aiAgent,
       triggerMessageId: messageId,

@@ -14,6 +14,7 @@
     "@ai-sdk/deepseek": "^2.0.30",
     "@ai-sdk/google": "^3.0.65",
     "@ai-sdk/openai": "^3.0.54",
+    "@chatbotx.io/business": "workspace:*",
     "@chatbotx.io/database": "workspace:*",
     "@chatbotx.io/flow-config": "workspace:*",
     "@chatbotx.io/logger": "workspace:*",

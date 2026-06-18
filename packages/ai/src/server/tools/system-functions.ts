@@ -8,6 +8,8 @@ export interface SystemFunctionContext {
   channel?: string
   contactId: string
   conversationId: string
+  sendMessage?: (text: string) => Promise<void>
+  triggerFlow?: (flowId: string) => Promise<void>
   workspaceId: string
 }
 

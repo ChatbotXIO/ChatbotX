@@ -60,7 +60,11 @@ export async function getAIToolset(
         fileSearch && fileIds.length > 0
           ? getAIFileTools(workspaceId, fileIds, fileSearch)
           : Promise.resolve({}),
-        getAIFunctionTools(workspaceId, functionIds),
+        getAIFunctionTools(
+          workspaceId,
+          functionIds,
+          options.systemFunctionContextGetter,
+        ),
         Promise.resolve(
           getAISystemTools({
             selectedSystemIds: systemIds,

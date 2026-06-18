@@ -1504,6 +1504,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^3.0.54
         version: 3.0.68(zod@4.4.3)
+      '@chatbotx.io/business':
+        specifier: workspace:*
+        version: link:../business
       '@chatbotx.io/database':
         specifier: workspace:*
         version: link:../database

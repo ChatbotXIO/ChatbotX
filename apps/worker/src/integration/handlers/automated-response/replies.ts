@@ -28,6 +28,10 @@ import type {
 } from "@chatbotx.io/database/types"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
+  IntegrationJobAction,
+  integrationQueue,
+} from "@chatbotx.io/worker-config"
+import {
   type LanguageModel,
   type ModelMessage,
   stepCountIs,
@@ -44,6 +48,7 @@ import { createUrlReaderExecutor } from "./system-tools/url-reader"
 
 type ReplyByAIProps = {
   conversation: ConversationModel
+  contactInboxId: string
   messages: ModelMessage[]
   aiAgent: AIAgentModel
   triggerMessageId?: string
@@ -96,6 +101,7 @@ export async function replyByAI(
 
 function createReplyToolset(options: {
   abortSignal: AbortSignal
+  directSendTracker: { sent: boolean; sentText: string }
   model: LanguageModel
   modelId: string
   props: ReplyByAIProps
@@ -135,6 +141,23 @@ function createReplyToolset(options: {
       workspaceId: conversation.workspaceId,
       conversationId: conversation.id,
       contactId: conversation.contactId,
+      sendMessage: async (text: string) => {
+        options.directSendTracker.sent = true
+        options.directSendTracker.sentText = text
+        if (text) {
+          await sendMessageWithRender(conversation.id, text)
+        }
+      },
+      triggerFlow: async (flowId: string) => {
+        await integrationQueue.add(IntegrationJobAction.sendFlow, {
+          type: IntegrationJobAction.sendFlow,
+          data: {
+            conversationId: conversation.id,
+            contactInboxId: options.props.contactInboxId,
+            flowId,
+          },
+        })
+      },
     }),
     systemToolExecutors: {
       [systemFunctionNames.connectUserToHuman]: async (args, context) => {
@@ -424,8 +447,10 @@ async function runAIReply(
     })
     const model = providerInstance(selectedModelId)
 
+    const directSendTracker = { sent: false, sentText: "" }
     const toolset = await createReplyToolset({
       abortSignal,
+      directSendTracker,
       model,
       modelId: selectedModelId,
       props,
@@ -538,6 +563,9 @@ async function runAIReply(
     const { messageCount, fullText } = await processStreamingText(
       result.textStream,
       async (_segment, parts) => {
+        if (directSendTracker.sent) {
+          return
+        }
         for (const part of parts) {
           await sendMessageWithRender(conversation.id, part)
         }
@@ -556,6 +584,37 @@ async function runAIReply(
       )
       return { messageCount: 0, fullText: "" }
     })
+
+    if (directSendTracker.sent) {
+      if (directSendTracker.sentText) {
+        await aiContextService.appendHistory({
+          conversationId: conversation.id,
+          newMessages: [
+            {
+              message: {
+                role: "assistant",
+                content: directSendTracker.sentText,
+              },
+              createdAt: Date.now(),
+            },
+          ],
+        })
+      }
+      return {
+        responded: true,
+        provider: provider as AIAgentProvider,
+        modelId: selectedModelId,
+        usedFallbackText: false,
+        toolStats: {
+          steps: stepCount,
+          toolCallsCount,
+          toolResultsCount,
+          toolErrorsCount,
+          toolNames: Array.from(toolNamesSet).slice(0, 10),
+          finishReasons: finishReasons.slice(0, 10),
+        },
+      }
+    }
 
     if (messageCount > 0 && fullText) {
       await aiContextService.appendHistory({
