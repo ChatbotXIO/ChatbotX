@@ -11,12 +11,14 @@ import {
   sql,
 } from "@chatbotx.io/database/client"
 import {
-  attachmentModel,
+  createMessageRepository,
+  getSafeSinceTime,
+} from "@chatbotx.io/database/repositories"
+import {
   coexistSyncRunModel,
   contactInboxModel,
   inboxModel,
   integrationWhatsappModel,
-  messageModel,
   whatsappCoexistStagingModel,
 } from "@chatbotx.io/database/schema"
 import {
@@ -505,8 +507,16 @@ const extractFromValue = (payload: unknown): ExtractResult => {
 const resolveContactInboxIds = async (
   inboxId: string,
   contactWaIds: string[],
-): Promise<Map<string, string>> => {
-  const ids = new Map<string, string>()
+): Promise<
+  Map<
+    string,
+    { id: string; lastIncomingMessageAt: Date | null; createdAt: Date }
+  >
+> => {
+  const ids = new Map<
+    string,
+    { id: string; lastIncomingMessageAt: Date | null; createdAt: Date }
+  >()
   if (contactWaIds.length === 0) {
     return ids
   }
@@ -515,6 +525,8 @@ const resolveContactInboxIds = async (
     .select({
       id: contactInboxModel.id,
       sourceId: contactInboxModel.sourceId,
+      lastIncomingMessageAt: contactInboxModel.lastIncomingMessageAt,
+      createdAt: contactInboxModel.createdAt,
     })
     .from(contactInboxModel)
     .where(
@@ -525,55 +537,14 @@ const resolveContactInboxIds = async (
     )
   for (const row of rows) {
     if (row.sourceId) {
-      ids.set(row.sourceId, row.id)
-    }
-  }
-  return ids
-}
-
-/**
- * Resolve a set of (contactWaId, sourceId) pairs back to the live Message row
- * — needed by media follow-up + edit-with-media paths to know which message
- * the new Attachment belongs to. Missing keys mean Meta delivered the patch
- * before the parent history insert; the next chunk picks it up.
- */
-const resolveMessageRows = async (
-  contactInboxIds: string[],
-  sourceIds: string[],
-): Promise<
-  Map<string, { id: string; conversationId: string; contactInboxId: string }>
-> => {
-  const out = new Map<
-    string,
-    { id: string; conversationId: string; contactInboxId: string }
-  >()
-  if (contactInboxIds.length === 0 || sourceIds.length === 0) {
-    return out
-  }
-  const rows = await db
-    .select({
-      id: messageModel.id,
-      conversationId: messageModel.conversationId,
-      contactInboxId: messageModel.contactInboxId,
-      sourceId: messageModel.sourceId,
-    })
-    .from(messageModel)
-    .where(
-      and(
-        inArray(messageModel.contactInboxId, contactInboxIds),
-        inArray(messageModel.sourceId, sourceIds),
-      ),
-    )
-  for (const row of rows) {
-    if (row.sourceId) {
-      out.set(`${row.contactInboxId}:${row.sourceId}`, {
+      ids.set(row.sourceId, {
         id: row.id,
-        conversationId: row.conversationId,
-        contactInboxId: row.contactInboxId,
+        lastIncomingMessageAt: row.lastIncomingMessageAt,
+        createdAt: row.createdAt,
       })
     }
   }
-  return out
+  return ids
 }
 
 /**
@@ -611,7 +582,22 @@ const applyPostBatchPatches = async (input: {
     ...edits.map((p) => p.contactWaId),
     ...revokes.map((p) => p.contactWaId),
   ]
-  const contactInboxIdByWaId = await resolveContactInboxIds(inboxId, allWaIds)
+  const contactInboxByWaId = await resolveContactInboxIds(inboxId, allWaIds)
+  const safeSinceTimes = Array.from(contactInboxByWaId.values())
+    .map((contactInbox) =>
+      getSafeSinceTime(
+        contactInbox.lastIncomingMessageAt ?? contactInbox.createdAt,
+        365 * 24 * 60 * 60 * 1000,
+      ),
+    )
+    .filter((value): value is Date => value !== undefined)
+  if (safeSinceTimes.length === 0) {
+    return { insertedAttachmentIds }
+  }
+  const sinceTime = new Date(
+    Math.min(...safeSinceTimes.map((value) => value.getTime())),
+  )
+  const repo = await createMessageRepository(db)
 
   // Pre-load message rows for both attachment-inserting paths (follow-ups +
   // edits-with-media). Single round-trip per batch.
@@ -628,27 +614,31 @@ const applyPostBatchPatches = async (input: {
   const lookupContactInboxIds: string[] = []
   const lookupSourceIds: string[] = []
   for (const patch of attachmentInsertPatches) {
-    const cid = contactInboxIdByWaId.get(patch.contactWaId)
-    if (cid) {
-      lookupContactInboxIds.push(cid)
+    const contactInbox = contactInboxByWaId.get(patch.contactWaId)
+    if (contactInbox) {
+      lookupContactInboxIds.push(contactInbox.id)
       lookupSourceIds.push(patch.sourceId)
     }
   }
-  const messageByKey = await resolveMessageRows(
-    lookupContactInboxIds,
-    lookupSourceIds,
+  const messageRows = await repo.findManyBySourceIds({
+    contactInboxIds: lookupContactInboxIds,
+    sourceIds: lookupSourceIds,
+    workspaceId,
+    sinceTime,
+  })
+  const messageByKey = new Map(
+    messageRows
+      .filter((row) => row.sourceId)
+      .map((row) => [`${row.contactInboxId}:${row.sourceId}`, row]),
   )
 
-  const mergeJsonb = (overlay: Record<string, unknown>) =>
-    sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify(overlay)}::jsonb`
-
-  const attachmentRows: (typeof attachmentModel.$inferInsert)[] = []
+  const attachmentRows: Parameters<typeof repo.bulkCreateAttachments>[0] = []
   for (const patch of attachmentInsertPatches) {
-    const contactInboxId = contactInboxIdByWaId.get(patch.contactWaId)
-    if (!contactInboxId) {
+    const contactInbox = contactInboxByWaId.get(patch.contactWaId)
+    if (!contactInbox) {
       continue
     }
-    const msg = messageByKey.get(`${contactInboxId}:${patch.sourceId}`)
+    const msg = messageByKey.get(`${contactInbox.id}:${patch.sourceId}`)
     if (!msg) {
       continue
     }
@@ -657,6 +647,7 @@ const applyPostBatchPatches = async (input: {
       workspaceId,
       conversationId: msg.conversationId,
       messageId: msg.id,
+      messageCreatedAt: msg.createdAt,
       sourceId: patch.attachment.sourceId,
       fileType: patch.attachment.fileType,
       mimeType: patch.attachment.mimeType,
@@ -668,64 +659,43 @@ const applyPostBatchPatches = async (input: {
     })
   }
   if (attachmentRows.length > 0) {
-    const inserted = await db
-      .insert(attachmentModel)
-      .values(attachmentRows)
-      .returning({ id: attachmentModel.id })
+    const inserted = await repo.bulkCreateAttachments(attachmentRows)
     for (const r of inserted) {
       insertedAttachmentIds.push(r.id)
     }
   }
 
-  // Batch edit + revoke UPDATEs into a single transaction to avoid N+M
-  // round-trip overhead. Each statement still targets its specific
-  // (contactInboxId, sourceId) row; the transaction shares one connection.
-  const hasPatchUpdates =
-    edits.some((e) => contactInboxIdByWaId.has(e.contactWaId)) ||
-    revokes.some((r) => contactInboxIdByWaId.has(r.contactWaId))
-
-  if (hasPatchUpdates) {
-    await db.transaction(async (tx) => {
-      for (const patch of edits) {
-        const contactInboxId = contactInboxIdByWaId.get(patch.contactWaId)
-        if (!contactInboxId) {
-          continue
-        }
-        await tx
-          .update(messageModel)
-          .set({
-            ...(patch.text === null ? {} : { text: patch.text }),
-            contentAttributes: mergeJsonb({ edited: true }),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(messageModel.contactInboxId, contactInboxId),
-              eq(messageModel.sourceId, patch.sourceId),
-            ),
-          )
+  const patches = [
+    ...edits.flatMap((patch) => {
+      const contactInbox = contactInboxByWaId.get(patch.contactWaId)
+      if (!contactInbox) {
+        return []
       }
-
-      for (const patch of revokes) {
-        const contactInboxId = contactInboxIdByWaId.get(patch.contactWaId)
-        if (!contactInboxId) {
-          continue
-        }
-        await tx
-          .update(messageModel)
-          .set({
-            contentAttributes: mergeJsonb({ revoked: true }),
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(messageModel.contactInboxId, contactInboxId),
-              eq(messageModel.sourceId, patch.sourceId),
-            ),
-          )
+      return [
+        {
+          contactInboxId: contactInbox.id,
+          sourceId: patch.sourceId,
+          overlay: { edited: true },
+          text: patch.text === null ? undefined : patch.text,
+        },
+      ]
+    }),
+    ...revokes.flatMap((patch) => {
+      const contactInbox = contactInboxByWaId.get(patch.contactWaId)
+      if (!contactInbox) {
+        return []
       }
-    })
-  }
+      return [
+        {
+          contactInboxId: contactInbox.id,
+          sourceId: patch.sourceId,
+          overlay: { revoked: true },
+        },
+      ]
+    }),
+  ]
+
+  await repo.bulkPatchContentAttributes({ workspaceId, patches, sinceTime })
 
   return { insertedAttachmentIds }
 }

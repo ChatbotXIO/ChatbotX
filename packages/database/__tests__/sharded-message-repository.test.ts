@@ -241,6 +241,241 @@ describe("ShardedMessageRepository.bulkCreate", () => {
   })
 })
 
+describe("ShardedMessageRepository direct message/attachment lookup helpers", () => {
+  const sinceTime = new Date("2026-01-01T00:00:00Z")
+  const rangeShard = makeShardInfo("tr:range", "range")
+  const writeShard = makeShardInfo("tr:write", "write")
+
+  function makeSelectClient(rows: unknown[]) {
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue(rows),
+    }
+    return {
+      select: vi.fn().mockReturnValue(chain),
+      chain,
+    }
+  }
+
+  function makeSelectWhereClient(rows: unknown[]) {
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(rows),
+    }
+    return {
+      select: vi.fn().mockReturnValue(chain),
+      chain,
+    }
+  }
+
+  function makeUpdateClient() {
+    const updateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+    const tx = {
+      update: vi.fn().mockReturnValue(updateChain),
+    }
+    return {
+      update: vi.fn().mockReturnValue(updateChain),
+      updateChain,
+      transaction: vi.fn(async (fn: (value: unknown) => Promise<void>) =>
+        fn(tx),
+      ),
+      tx,
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("findManyBySourceIds requires sinceTime", async () => {
+    const repo = new ShardedMessageRepository({} as never)
+
+    await expect(
+      repo.findManyBySourceIds({
+        contactInboxIds: ["ci-1"],
+        sourceIds: ["src-1"],
+        workspaceId: "ws-1",
+      }),
+    ).rejects.toThrow("sinceTime is required")
+  })
+
+  test("findManyBySourceIds unions the write shard with time-range shards", async () => {
+    const rangeClient = makeSelectWhereClient([
+      {
+        id: "msg-range",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: "src-1",
+        createdAt: new Date("2026-01-02T00:00:00Z"),
+      },
+    ])
+    const writeClient = makeSelectWhereClient([
+      {
+        id: "msg-write",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: "src-1",
+        createdAt: new Date("2025-12-01T00:00:00Z"),
+      },
+    ])
+    const clients = new Map([
+      ["range", rangeClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(clients.get(shard.id)),
+      ),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findManyBySourceIds({
+      contactInboxIds: ["ci-1"],
+      sourceIds: ["src-1"],
+      workspaceId: "ws-1",
+      sinceTime,
+    })
+
+    expect(shardManager.getWriteShardInfo).toHaveBeenCalledWith("ws-1")
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(2)
+    expect(result.map((row) => row.id)).toEqual(["msg-range", "msg-write"])
+  })
+
+  test("bulkPatchContentAttributes requires sinceTime and fans updates across read shards", async () => {
+    const rangeClient = makeUpdateClient()
+    const writeClient = makeUpdateClient()
+    const clients = new Map([
+      ["range", rangeClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(clients.get(shard.id)),
+      ),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.bulkPatchContentAttributes({
+      workspaceId: "ws-1",
+      sinceTime,
+      patches: [
+        {
+          contactInboxId: "ci-1",
+          sourceId: "src-1",
+          overlay: { edited: true },
+          text: "edited",
+        },
+      ],
+    })
+
+    expect(shardManager.getShardClient).toHaveBeenCalledTimes(2)
+    expect(shardManager.withShardClientForRead).not.toHaveBeenCalled()
+    expect(rangeClient.transaction).toHaveBeenCalledTimes(1)
+    expect(writeClient.transaction).toHaveBeenCalledTimes(1)
+    expect(rangeClient.tx.update).toHaveBeenCalledWith(messageModel)
+    expect(rangeClient.updateChain.set.mock.calls[0][0]).toMatchObject({
+      text: "edited",
+    })
+
+    await expect(
+      repo.bulkPatchContentAttributes({
+        workspaceId: "ws-1",
+        patches: [{ contactInboxId: "ci-1", sourceId: "src-1", overlay: {} }],
+      } as never),
+    ).rejects.toThrow("sinceTime is required")
+  })
+
+  test("findAttachmentById falls back from write shard to read shards and returns createdAt", async () => {
+    const attachment = {
+      id: "att-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: new Date("2026-01-03T00:00:00Z"),
+    }
+    const writeClient = makeSelectClient([])
+    const rangeClient = makeSelectClient([attachment])
+    const clients = new Map([["range", rangeClient]])
+    const shardManager = {
+      getShardForWrite: vi.fn().mockResolvedValue(writeClient),
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toEqual(attachment)
+    expect(shardManager.getShardForWrite).toHaveBeenCalledWith("ws-1")
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
+
+  test("updateAttachment fans across read shards and includes createdAt for pruning", async () => {
+    const createdAt = new Date("2026-01-03T00:00:00Z")
+    const rangeClient = makeUpdateClient()
+    const writeClient = makeUpdateClient()
+    const clients = new Map([
+      ["range", rangeClient],
+      ["write", writeClient],
+    ])
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(writeShard),
+      getShardClient: vi.fn((shard: { id: string }) =>
+        Promise.resolve(clients.get(shard.id)),
+      ),
+      withShardClientForRead: vi.fn(
+        (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) =>
+          fn(clients.get(shard.id)),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.updateAttachment({
+      id: "att-1",
+      workspaceId: "ws-1",
+      createdAt,
+      fields: {
+        originPath: "workspace/a/att-1.png",
+        mimeType: "image/png",
+        size: 0,
+      },
+    })
+
+    expect(shardManager.getShardClient).toHaveBeenCalledTimes(2)
+    expect(shardManager.withShardClientForRead).not.toHaveBeenCalled()
+    expect(rangeClient.update).toHaveBeenCalledWith(attachmentModel)
+    expect(rangeClient.updateChain.set.mock.calls[0][0]).toMatchObject({
+      originPath: "workspace/a/att-1.png",
+      mimeType: "image/png",
+      size: 0,
+    })
+    expect(rangeClient.updateChain.where).toHaveBeenCalled()
+  })
+})
+
 // ---------------------------------------------------------------------------
 // listByConversation — write-shard union (historical-import regression)
 //

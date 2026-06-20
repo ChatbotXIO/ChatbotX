@@ -1,20 +1,26 @@
 export {
+  type AttachmentLookupRow,
   type BulkCreateAttachmentInput,
+  type BulkPatchContentAttributesParams,
   type CreateAttachmentInput,
   type CreateMessageInput,
   type CreateMessageResult,
   type DistributedLock,
   type FindAIContextMessagesOptions,
+  type FindAttachmentByIdParams,
   type FindLastByConversationOptions,
   type FindManyByConversationOptions,
+  type FindManyBySourceIdsParams,
   type FindTriggerMessageOptions,
   type IMessageRepository,
   type ListMessagesQuery,
   MessageRepository,
+  type MessageSourceRow,
   type MessageWithAttachments,
   type PaginatedMessages,
   type Pagination,
   type PaginationCursor,
+  type UpdateAttachmentParams,
 } from "./message-repository"
 export * from "./message-repository.factory"
 

@@ -9,6 +9,9 @@ const {
   mockDbSelect,
   mockDbUpdate,
   mockDbExecute,
+  mockCreateMessageRepository,
+  mockFindAttachmentById,
+  mockUpdateAttachment,
   mockEqFn,
   mockAndFn,
   mockBuildContext,
@@ -22,6 +25,9 @@ const {
   mockDbSelect: vi.fn(),
   mockDbUpdate: vi.fn(),
   mockDbExecute: vi.fn(),
+  mockCreateMessageRepository: vi.fn(),
+  mockFindAttachmentById: vi.fn(),
+  mockUpdateAttachment: vi.fn(),
   mockEqFn: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
   mockAndFn: vi.fn((...args: unknown[]) => ({ __and: args })),
   mockBuildContext: vi.fn(),
@@ -57,6 +63,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   ),
 }))
 
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  createMessageRepository: mockCreateMessageRepository,
+}))
+
 vi.mock("@chatbotx.io/database/schema", () => ({
   attachmentModel: {
     id: "id",
@@ -83,9 +93,13 @@ vi.mock("@chatbotx.io/sdk", () => ({
   },
 }))
 
-vi.mock("@chatbotx.io/utils", () => ({
-  createId: mockCreateId,
-}))
+vi.mock("@chatbotx.io/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@chatbotx.io/utils")>()
+  return {
+    ...actual,
+    createId: mockCreateId,
+  }
+})
 
 vi.mock("image-size", () => ({
   default: vi.fn(() => ({ width: 100, height: 200 })),
@@ -138,7 +152,7 @@ const fakeCtx = {
 // ---------------------------------------------------------------------------
 
 /**
- * Wires the db.select().from().where().limit() chain.
+ * Wires the repository attachment lookup.
  * Call wireSelectChain(null) to simulate "no row found".
  */
 const wireSelectChain = (row: Record<string, unknown> | null) => {
@@ -151,10 +165,13 @@ const wireSelectChain = (row: Record<string, unknown> | null) => {
   chain.where.mockReturnValue(chain)
   chain.limit.mockResolvedValue(row ? [row] : [])
   mockDbSelect.mockReturnValue(chain)
+  mockFindAttachmentById.mockResolvedValue(
+    row ? { createdAt: new Date("2026-01-01T00:00:00Z"), ...row } : null,
+  )
   return chain
 }
 
-/** Wires the db.update().set().where() chain used to persist final state. */
+/** Wires the repository update used to persist final state. */
 const wireUpdateChain = () => {
   mockDbUpdate.mockImplementation(() => {
     const chain = { set: vi.fn() }
@@ -162,6 +179,7 @@ const wireUpdateChain = () => {
     chain.set.mockReturnValue(whereChain)
     return chain
   })
+  mockUpdateAttachment.mockResolvedValue(undefined)
 }
 
 /** Wires db.execute() to return the integration row. */
@@ -226,6 +244,10 @@ const makeFetchResponse = (opts: {
 describe("coexistAttachmentDownload", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateMessageRepository.mockResolvedValue({
+      findAttachmentById: mockFindAttachmentById,
+      updateAttachment: mockUpdateAttachment,
+    })
     wireUpdateChain()
     mockPutObject.mockResolvedValue(undefined)
     mockBuildContext.mockResolvedValue(fakeCtx)
@@ -255,19 +277,15 @@ describe("coexistAttachmentDownload", () => {
     expect(mockPutObject).not.toHaveBeenCalled()
   })
 
-  it("passes BOTH id AND workspaceId predicates to the WHERE clause", async () => {
-    wireSelectChain(null) // return empty so handler stops early — we just check the query
+  it("passes both id and workspaceId to the repository lookup", async () => {
+    wireSelectChain(null) // return empty so handler stops early — we just check lookup args
 
     await coexistAttachmentDownload(BASE_DATA)
 
-    // and() must have been called (combining two eq predicates)
-    expect(mockAndFn).toHaveBeenCalled()
-    // eq must have been called with workspaceId
-    const eqCalls = mockEqFn.mock.calls as [unknown, unknown][]
-    const hasWorkspaceIdPredicate = eqCalls.some(
-      ([, val]) => val === BASE_DATA.workspaceId,
-    )
-    expect(hasWorkspaceIdPredicate).toBe(true)
+    expect(mockFindAttachmentById).toHaveBeenCalledWith({
+      id: BASE_DATA.attachmentId,
+      workspaceId: BASE_DATA.workspaceId,
+    })
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -421,7 +439,7 @@ describe("coexistAttachmentDownload", () => {
     await coexistAttachmentDownload(BASE_DATA)
 
     expect(mockPutObject).toHaveBeenCalledOnce()
-    expect(mockDbUpdate).toHaveBeenCalled()
+    expect(mockUpdateAttachment).toHaveBeenCalled()
 
     vi.unstubAllGlobals()
   })
@@ -448,7 +466,7 @@ describe("coexistAttachmentDownload", () => {
     await coexistAttachmentDownload(WA_DATA)
 
     expect(mockPutObject).toHaveBeenCalledOnce()
-    expect(mockDbUpdate).toHaveBeenCalled()
+    expect(mockUpdateAttachment).toHaveBeenCalled()
 
     vi.unstubAllGlobals()
   })

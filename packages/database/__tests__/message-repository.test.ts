@@ -174,6 +174,186 @@ describe("MessageRepository.bulkCreate", () => {
   })
 })
 
+describe("MessageRepository direct message/attachment lookup helpers", () => {
+  test("findManyBySourceIds returns empty without querying when ids are missing", async () => {
+    const select = vi.fn()
+    const repo = new MessageRepository({ select } as never)
+
+    await expect(
+      repo.findManyBySourceIds({
+        contactInboxIds: [],
+        sourceIds: ["src-1"],
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual([])
+    await expect(
+      repo.findManyBySourceIds({
+        contactInboxIds: ["ci-1"],
+        sourceIds: [],
+        workspaceId: "ws-1",
+      }),
+    ).resolves.toEqual([])
+
+    expect(select).not.toHaveBeenCalled()
+  })
+
+  test("findManyBySourceIds projects createdAt and filters by workspace, contact inbox, source, and sinceTime", async () => {
+    const rows = [
+      {
+        id: "msg-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        sourceId: "src-1",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+      },
+    ]
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(rows),
+    }
+    const select = vi.fn().mockReturnValue(chain)
+    const repo = new MessageRepository({ select } as never)
+    const sinceTime = new Date("2025-12-01T00:00:00Z")
+
+    const result = await repo.findManyBySourceIds({
+      contactInboxIds: ["ci-1"],
+      sourceIds: ["src-1"],
+      workspaceId: "ws-1",
+      sinceTime,
+    })
+
+    expect(result).toEqual(rows)
+    expect(Object.keys(select.mock.calls[0][0])).toEqual([
+      "id",
+      "conversationId",
+      "contactInboxId",
+      "sourceId",
+      "createdAt",
+    ])
+    expect(chain.from).toHaveBeenCalledWith(messageModel)
+    const whereValues = collectSqlValues(chain.where.mock.calls[0])
+    expect(whereValues).toEqual(
+      expect.arrayContaining(["ws-1", "ci-1", "src-1"]),
+    )
+  })
+
+  test("bulkPatchContentAttributes updates every patch inside one transaction", async () => {
+    const updateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+    const tx = {
+      update: vi.fn().mockReturnValue(updateChain),
+    }
+    const transaction = vi.fn(async (fn: (value: unknown) => Promise<void>) =>
+      fn(tx),
+    )
+    const repo = new MessageRepository({ transaction } as never)
+
+    await repo.bulkPatchContentAttributes({
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-01-01T00:00:00Z"),
+      patches: [
+        {
+          contactInboxId: "ci-1",
+          sourceId: "src-1",
+          overlay: { edited: true },
+          text: "",
+        },
+        {
+          contactInboxId: "ci-2",
+          sourceId: "src-2",
+          overlay: { revoked: true },
+        },
+      ],
+    })
+
+    expect(transaction).toHaveBeenCalledTimes(1)
+    expect(tx.update).toHaveBeenCalledTimes(2)
+    expect(tx.update).toHaveBeenCalledWith(messageModel)
+    expect(updateChain.set.mock.calls[0][0]).toMatchObject({ text: "" })
+    expect(updateChain.set.mock.calls[1][0]).not.toHaveProperty("text")
+    expect(updateChain.where).toHaveBeenCalledTimes(2)
+  })
+
+  test("bulkPatchContentAttributes skips empty patch batches", async () => {
+    const transaction = vi.fn()
+    const repo = new MessageRepository({ transaction } as never)
+
+    await repo.bulkPatchContentAttributes({
+      workspaceId: "ws-1",
+      sinceTime: new Date("2026-01-01T00:00:00Z"),
+      patches: [],
+    })
+
+    expect(transaction).not.toHaveBeenCalled()
+  })
+
+  test("findAttachmentById returns the attachment with createdAt and tenant filter", async () => {
+    const row = {
+      id: "att-1",
+      originPath: "wa-media:123",
+      mimeType: "image/png",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+    }
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([row]),
+    }
+    const select = vi.fn().mockReturnValue(chain)
+    const repo = new MessageRepository({ select } as never)
+
+    const result = await repo.findAttachmentById({
+      id: "att-1",
+      workspaceId: "ws-1",
+    })
+
+    expect(result).toEqual(row)
+    expect(Object.keys(select.mock.calls[0][0])).toEqual([
+      "id",
+      "originPath",
+      "mimeType",
+      "createdAt",
+    ])
+    expect(chain.from).toHaveBeenCalledWith(attachmentModel)
+    expect(chain.limit).toHaveBeenCalledWith(1)
+  })
+
+  test("updateAttachment preserves zero dimensions and filters by id plus createdAt", async () => {
+    const updateChain = {
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue(undefined),
+    }
+    const update = vi.fn().mockReturnValue(updateChain)
+    const repo = new MessageRepository({ update } as never)
+    const createdAt = new Date("2026-01-01T00:00:00Z")
+
+    await repo.updateAttachment({
+      id: "att-1",
+      workspaceId: "ws-1",
+      createdAt,
+      fields: {
+        originPath: "workspace/a/att-1.png",
+        mimeType: "image/png",
+        size: 0,
+        width: 0,
+        height: 0,
+      },
+    })
+
+    expect(update).toHaveBeenCalledWith(attachmentModel)
+    expect(updateChain.set.mock.calls[0][0]).toMatchObject({
+      originPath: "workspace/a/att-1.png",
+      mimeType: "image/png",
+      size: 0,
+      width: 0,
+      height: 0,
+    })
+    expect(updateChain.where).toHaveBeenCalled()
+  })
+})
+
 describe("MessageRepository conversation ordering", () => {
   test.each([
     "findLastByConversation",

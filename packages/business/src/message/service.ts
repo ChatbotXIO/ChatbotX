@@ -1,5 +1,6 @@
 import { type DatabaseClient, db } from "@chatbotx.io/database/client"
 import { type MessageType, messageTypes } from "@chatbotx.io/database/partials"
+import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import type { MessageModel } from "@chatbotx.io/database/types"
 import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
@@ -15,16 +16,27 @@ class MessageService extends BaseService {
 
   async findByUncached(props: {
     tx?: DatabaseClient
+    sinceTime: Date
     where: Partial<FindByProps>
   }): Promise<MessageModel | undefined> {
-    const { tx = db, where } = props
-    return await tx.query.messageModel.findFirst({
-      where,
-    })
+    const { tx = db, where, sinceTime } = props
+    const repo = await createMessageRepository(tx)
+
+    if (where.conversationId) {
+      const messages = await repo.findLastByConversation(where.conversationId, {
+        messageTypes: where.messageType ? [where.messageType] : undefined,
+        limit: 1,
+        sinceTime,
+      })
+      return messages[0]
+    }
+
+    return
   }
 
   async findBy(props: {
     tx?: DatabaseClient
+    sinceTime: Date
     where: Partial<FindByProps>
     ttlInSeconds?: number
   }): Promise<MessageModel | undefined> {
@@ -46,9 +58,11 @@ class MessageService extends BaseService {
 
   findLatestIncomingMessage(
     conversationId: string,
+    sinceTime: Date,
   ): Promise<MessageModel | undefined> {
     return this.findBy({
       where: { conversationId, messageType: messageTypes.enum.incoming },
+      sinceTime,
       ttlInSeconds: 2 * 60,
     })
   }
@@ -57,22 +71,22 @@ class MessageService extends BaseService {
     tx?: DatabaseClient
     conversationId: string
     limit: number
+    sinceTime: Date
   }): Promise<MessageModel[]> {
-    const { tx = db, conversationId, limit } = props
+    const { tx = db, conversationId, limit, sinceTime } = props
     return withCache(
       `messages:${conversationId}:latest:${limit}`,
       async () => {
-        const messages = await tx.query.messageModel.findMany({
-          where: {
-            conversationId,
-            messageType: {
-              in: [messageTypes.enum.incoming, messageTypes.enum.outgoing],
-            },
-          },
+        const repo = await createMessageRepository(tx)
+        const messages = await repo.findLastByConversation(conversationId, {
+          messageTypes: [
+            messageTypes.enum.incoming,
+            messageTypes.enum.outgoing,
+          ],
           limit,
-          orderBy: { createdAt: "desc", id: "asc" },
+          sinceTime,
         })
-        return messages.reverse()
+        return [...messages].reverse()
       },
       {
         tags: [

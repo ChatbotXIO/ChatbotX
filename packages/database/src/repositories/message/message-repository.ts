@@ -11,7 +11,6 @@ import {
   or,
   sql,
 } from "drizzle-orm"
-
 import type { DatabaseClient } from "../../client"
 
 import { attachmentModel, messageModel } from "../../schema"
@@ -123,6 +122,52 @@ export interface FindTriggerMessageOptions {
   workspaceId: string
 }
 
+export interface FindManyBySourceIdsParams {
+  contactInboxIds: string[]
+  sinceTime?: Date
+  sourceIds: string[]
+  workspaceId: string
+}
+
+export type MessageSourceRow = Pick<
+  MessageModel,
+  "id" | "conversationId" | "contactInboxId" | "sourceId" | "createdAt"
+>
+
+export interface BulkPatchContentAttributesParams {
+  patches: {
+    contactInboxId: string
+    overlay: Record<string, unknown>
+    sourceId: string
+    text?: string | null
+  }[]
+  sinceTime?: Date
+  workspaceId: string
+}
+
+export interface FindAttachmentByIdParams {
+  id: string
+  workspaceId: string
+}
+
+export type AttachmentLookupRow = Pick<
+  AttachmentModel,
+  "id" | "originPath" | "mimeType" | "createdAt"
+>
+
+export interface UpdateAttachmentParams {
+  createdAt: Date
+  fields: {
+    height?: number
+    mimeType: string
+    originPath: string
+    size: number
+    width?: number
+  }
+  id: string
+  workspaceId: string
+}
+
 export interface DistributedLock {
   runExclusive<T>(params: {
     key: string
@@ -139,6 +184,10 @@ export interface IMessageRepository {
   bulkCreateAttachments(
     attachments: BulkCreateAttachmentInput[],
   ): Promise<{ id: string }[]>
+
+  bulkPatchContentAttributes(
+    params: BulkPatchContentAttributesParams,
+  ): Promise<void>
 
   create(message: CreateMessageInput): Promise<MessageModel>
 
@@ -189,6 +238,10 @@ export interface IMessageRepository {
     options: FindAIContextMessagesOptions,
   ): Promise<MessageModel[]>
 
+  findAttachmentById(
+    params: FindAttachmentByIdParams,
+  ): Promise<AttachmentLookupRow | null>
+
   findById(id: string, createdAt?: Date): Promise<MessageWithAttachments | null>
 
   findBySourceId(
@@ -215,11 +268,17 @@ export interface IMessageRepository {
     workspaceId?: string,
   ): Promise<Pick<MessageModel, "id" | "text">[]>
 
+  findManyBySourceIds(
+    params: FindManyBySourceIdsParams,
+  ): Promise<MessageSourceRow[]>
+
   findTriggerMessage(
     options: FindTriggerMessageOptions,
   ): Promise<MessageWithAttachments | null>
 
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
+
+  updateAttachment(params: UpdateAttachmentParams): Promise<void>
 
   updateMessageAttributes(
     messageId: string,
@@ -563,6 +622,74 @@ export class MessageRepository implements IMessageRepository {
     return (message as MessageModel) ?? null
   }
 
+  async findManyBySourceIds({
+    contactInboxIds,
+    sourceIds,
+    workspaceId,
+    sinceTime,
+  }: FindManyBySourceIdsParams): Promise<MessageSourceRow[]> {
+    if (contactInboxIds.length === 0 || sourceIds.length === 0) {
+      return []
+    }
+
+    const whereConditions = [
+      eq(messageModel.workspaceId, workspaceId),
+      inArray(messageModel.contactInboxId, contactInboxIds),
+      inArray(messageModel.sourceId, sourceIds),
+    ]
+
+    if (sinceTime) {
+      whereConditions.push(gte(messageModel.createdAt, sinceTime))
+    }
+
+    return (await this.db
+      .select({
+        id: messageModel.id,
+        conversationId: messageModel.conversationId,
+        contactInboxId: messageModel.contactInboxId,
+        sourceId: messageModel.sourceId,
+        createdAt: messageModel.createdAt,
+      })
+      .from(messageModel)
+      .where(and(...whereConditions))) as MessageSourceRow[]
+  }
+
+  async bulkPatchContentAttributes({
+    patches,
+    sinceTime,
+    workspaceId,
+  }: BulkPatchContentAttributesParams): Promise<void> {
+    if (patches.length === 0) {
+      return
+    }
+
+    const mergeJsonb = (overlay: Record<string, unknown>) =>
+      sql`COALESCE(${messageModel.contentAttributes}, '{}'::jsonb) || ${JSON.stringify(overlay)}::jsonb`
+
+    await this.db.transaction(async (tx) => {
+      for (const patch of patches) {
+        const whereConditions = [
+          eq(messageModel.workspaceId, workspaceId),
+          eq(messageModel.contactInboxId, patch.contactInboxId),
+          eq(messageModel.sourceId, patch.sourceId),
+        ]
+
+        if (sinceTime) {
+          whereConditions.push(gte(messageModel.createdAt, sinceTime))
+        }
+
+        await tx
+          .update(messageModel)
+          .set({
+            ...(patch.text === undefined ? {} : { text: patch.text }),
+            contentAttributes: mergeJsonb(patch.overlay),
+            updatedAt: new Date(),
+          })
+          .where(and(...whereConditions))
+      }
+    })
+  }
+
   async findLastByConversation(
     conversationId: string,
     options?: FindLastByConversationOptions,
@@ -796,6 +923,50 @@ export class MessageRepository implements IMessageRepository {
         })),
       )
       .returning({ id: attachmentModel.id })
+  }
+
+  async findAttachmentById({
+    id,
+    workspaceId,
+  }: FindAttachmentByIdParams): Promise<AttachmentLookupRow | null> {
+    const [row] = await this.db
+      .select({
+        id: attachmentModel.id,
+        originPath: attachmentModel.originPath,
+        mimeType: attachmentModel.mimeType,
+        createdAt: attachmentModel.createdAt,
+      })
+      .from(attachmentModel)
+      .where(
+        and(
+          eq(attachmentModel.id, id),
+          eq(attachmentModel.workspaceId, workspaceId),
+        ),
+      )
+      .limit(1)
+
+    return (row as AttachmentLookupRow | undefined) ?? null
+  }
+
+  async updateAttachment({
+    id,
+    workspaceId,
+    createdAt,
+    fields,
+  }: UpdateAttachmentParams): Promise<void> {
+    await this.db
+      .update(attachmentModel)
+      .set({
+        ...fields,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(attachmentModel.id, id),
+          eq(attachmentModel.workspaceId, workspaceId),
+          eq(attachmentModel.createdAt, createdAt),
+        ),
+      )
   }
 
   private async queryAttachmentsForMessages(
