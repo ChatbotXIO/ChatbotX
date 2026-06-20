@@ -2,7 +2,7 @@
 
 import {
   contactService,
-  userQuotaService,
+  quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, findOrFail } from "@chatbotx.io/database/client"
@@ -79,7 +79,12 @@ export const createContact = async ({
     })
   }
 
-  if (await userQuotaService.isLimitReached(workspace.ownerId, "contacts")) {
+  if (
+    await quotaEnforcementService.isAtLimit({
+      userId: workspace.ownerId,
+      metric: "contacts",
+    })
+  ) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
       phoneNumber: { _errors: ["Contact limit reached"] },
@@ -114,7 +119,10 @@ export const createContact = async ({
     return [newContact, newContactInbox]
   })
 
-  await userQuotaService.increment(workspace.ownerId, "contacts")
+  await quotaEnforcementService.increment({
+    userId: workspace.ownerId,
+    metric: "contacts",
+  })
 
   await emitContactCreated(
     workspaceId,

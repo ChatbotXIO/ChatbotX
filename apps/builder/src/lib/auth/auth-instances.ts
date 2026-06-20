@@ -12,6 +12,7 @@ import {
 import { platformCredentialService } from "@chatbotx.io/business"
 import type { CredentialType } from "@chatbotx.io/database/partials"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
+import { onUserCreated } from "./on-user-created"
 
 /**
  * White-label social login (Google, Facebook, …).
@@ -81,7 +82,10 @@ function getAuthForCredential(
     return cached
   }
 
-  const instance = createAuth({ socialCredentials: { [provider]: credential } })
+  const instance = createAuth({
+    socialCredentials: { [provider]: credential },
+    onUserCreated,
+  })
   cache.set(key, instance)
   return instance
 }

@@ -238,6 +238,18 @@
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
       "teamMembers": "Thành viên nhóm"
+    },
+    "limitReached": {
+      "workspaces": "Bạn đã đạt giới hạn không gian làm việc. Nâng cấp gói để tạo thêm.",
+      "channels": "Bạn đã đạt giới hạn kênh. Nâng cấp gói để kết nối thêm.",
+      "teamMembers": "Bạn đã đạt giới hạn thành viên nhóm. Nâng cấp gói để mời thêm.",
+      "contacts": "Bạn đã đạt giới hạn liên hệ. Nâng cấp gói để thêm liên hệ."
+    },
+    "trial": {
+      "daysLeft": "Dùng thử: còn {days} ngày",
+      "endsTomorrow": "Dùng thử kết thúc vào ngày mai",
+      "expired": "Bản dùng thử đã kết thúc — nâng cấp để tiếp tục sử dụng workspace",
+      "dismiss": "Đóng"
     }
   },
   "broadcasts": {
@@ -1940,6 +1952,12 @@
       "whatsappSystemUserTokenRequired": "System User Token là bắt buộc để cấu hình WhatsApp.",
       "tiktokAppSecretRequired": "App Secret là bắt buộc để cấu hình TikTok."
     }
+  },
+  "home": {
+    "welcomeBack": "Chào mừng trở lại, {name}",
+    "subtitle": "Chọn một không gian làm việc để tiếp tục, hoặc tạo mới.",
+    "noWorkspaces": "Bạn chưa có không gian làm việc nào.",
+    "owner": "Chủ sở hữu"
   },
   "messages": {
     "moveFeature": "Di chuyển {feature}",

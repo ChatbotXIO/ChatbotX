@@ -24,7 +24,7 @@ import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
 import { ChatbotXException, notFoundException } from "../errors"
-import { userQuotaService } from "../user-quota/service"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import { workspaceService } from "../workspace/service"
 
 const NUMERIC_RE = /^\d+$/
@@ -287,7 +287,12 @@ class ContactService extends BaseService {
       throw notFoundException("Workspace not found")
     }
 
-    if (await userQuotaService.isLimitReached(workspace.ownerId, "contacts")) {
+    if (
+      await quotaEnforcementService.isAtLimit({
+        userId: workspace.ownerId,
+        metric: "contacts",
+      })
+    ) {
       throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
     }
 
@@ -337,7 +342,10 @@ class ContactService extends BaseService {
       await this.update({ workspaceId, id: contact.id }, { avatar: avatarPath })
     }
 
-    await userQuotaService.increment(workspace.ownerId, "contacts")
+    await quotaEnforcementService.increment({
+      userId: workspace.ownerId,
+      metric: "contacts",
+    })
 
     await emitContactCreated(
       workspaceId,

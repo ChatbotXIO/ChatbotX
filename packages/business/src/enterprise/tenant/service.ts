@@ -2,6 +2,9 @@ import { db, eq } from "@chatbotx.io/database/client"
 import { tenantModel } from "@chatbotx.io/database/schema"
 import { invalidateCacheByTags, withCache } from "@chatbotx.io/redis"
 import type { EmailTemplate } from "../../platform/settings"
+import { userQuotaService } from "../../user-quota/service"
+
+type TenantStatus = "active" | "suspended"
 
 type TenantBrandingData = {
   brandName?: string | null
@@ -99,5 +102,47 @@ export const tenantService = {
         `tenant:owner:${ownerId}`,
       ])
     }
+  },
+
+  /** Flip the lifecycle status of the tenant owned by `ownerId`, busting caches. */
+  async setStatusByOwner(ownerId: string, status: TenantStatus): Promise<void> {
+    const [updated] = await db
+      .update(tenantModel)
+      .set({ status })
+      .where(eq(tenantModel.ownerId, ownerId))
+      .returning({ id: tenantModel.id })
+    if (updated) {
+      await invalidateCacheByTags([
+        `tenant:${updated.id}`,
+        `tenant:owner:${ownerId}`,
+      ])
+    }
+  },
+
+  /**
+   * Suspend the tenant owned by `ownerId`. Sub-accounts can no longer sign in
+   * (auth falls back to the root tenant) and quota enforcement stops treating
+   * the owner as a reseller (the pool is gated on an active tenant). Reversible
+   * via `reactivate` — no data is deleted.
+   */
+  suspend(ownerId: string): Promise<void> {
+    return this.setStatusByOwner(ownerId, "suspended")
+  },
+
+  /** Restore a suspended tenant to active, re-enabling its sub-accounts. */
+  reactivate(ownerId: string): Promise<void> {
+    return this.setStatusByOwner(ownerId, "active")
+  },
+
+  /**
+   * Full downgrade from a white-label plan: suspend the reseller's tenant
+   * (disabling all sub-accounts, reversibly) and clear the white-label /
+   * enterprise entitlement flags on the owner's quota row. The new plan's
+   * numeric limits are written separately by the billing layer
+   * (`publishEntitlements`).
+   */
+  async downgrade(ownerId: string): Promise<void> {
+    await this.suspend(ownerId)
+    await userQuotaService.clearWhiteLabelEntitlements(ownerId)
   },
 }

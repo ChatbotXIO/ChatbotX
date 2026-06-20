@@ -238,6 +238,18 @@
       "workspaces": "Workspaces",
       "channels": "Channels",
       "teamMembers": "Team members"
+    },
+    "limitReached": {
+      "workspaces": "You've reached your workspace limit. Upgrade your plan to create more.",
+      "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
+      "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
+      "contacts": "You've reached your contact limit. Upgrade your plan to add more."
+    },
+    "trial": {
+      "daysLeft": "Trial: {days} days left",
+      "endsTomorrow": "Trial ends tomorrow",
+      "expired": "Your trial has ended — upgrade to keep your workspace active",
+      "dismiss": "Dismiss"
     }
   },
   "broadcasts": {
@@ -1929,6 +1941,12 @@
       "whatsappSystemUserTokenRequired": "System User Token is required to configure WhatsApp.",
       "tiktokAppSecretRequired": "App Secret is required to configure TikTok."
     }
+  },
+  "home": {
+    "welcomeBack": "Welcome back, {name}",
+    "subtitle": "Pick a workspace to jump back in, or create a new one.",
+    "noWorkspaces": "You don't have any workspaces yet.",
+    "owner": "Owner"
   },
   "messages": {
     "moveFeature": "Move {feature}",

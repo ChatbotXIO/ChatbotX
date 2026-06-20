@@ -1,4 +1,4 @@
-import { db, sql } from "@chatbotx.io/database/client"
+import { db, eq, sql } from "@chatbotx.io/database/client"
 import { userQuotaModel } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
@@ -131,6 +131,27 @@ class UserQuotaService extends BaseService {
     return quota ?? null
   }
 
+  /**
+   * Tear down the white-label / enterprise entitlement flags on a reseller's
+   * quota row when they downgrade to a non-white-label plan. Flips the flags
+   * only — the new plan's numeric limit columns are (re)written separately by
+   * the billing layer (`publishEntitlements`); nulling them here would mean
+   * unlimited, the opposite of a downgrade. Busts the cache so enforcement
+   * reads the new flags immediately. No-op if the row does not exist.
+   */
+  async clearWhiteLabelEntitlements(userId: string): Promise<void> {
+    await db
+      .update(userQuotaModel)
+      .set({
+        whiteLabel: false,
+        ssoSaml: false,
+        saasMode: false,
+        updatedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where(eq(userQuotaModel.userId, userId))
+    await this.cacheDelete(userId)
+  }
+
   async isLimitReached(userId: string, metric: QuotaMetric): Promise<boolean> {
     const [quota, liveCount] = await Promise.all([
       this.getForUser(userId),
@@ -190,20 +211,57 @@ class UserQuotaService extends BaseService {
     }
   }
 
-  async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
+  /** Configured limit for a metric (`null` = unlimited / no quota row). */
+  async getLimit(userId: string, metric: QuotaMetric): Promise<number | null> {
     const quota = await this.getForUser(userId)
-
-    if (quota) {
-      const { limit, used } = this.readMetricValues(quota, metric)
-      if (limit !== null && used >= limit) {
-        return false
-      }
+    if (!quota) {
+      return null
     }
+    return this.readMetricValues(quota, metric).limit
+  }
 
+  /**
+   * Whether there is room to create one more of `metric`, based on the
+   * DB-synced `used` value (not the live Redis counter). This mirrors the
+   * historical `tryIncrement` gate and is used for the synchronous create
+   * paths (workspaces, channels, team members).
+   */
+  async hasCapacity(userId: string, metric: QuotaMetric): Promise<boolean> {
+    const quota = await this.getForUser(userId)
+    if (!quota) {
+      return true
+    }
+    const { limit, used } = this.readMetricValues(quota, metric)
+    return limit === null || used < limit
+  }
+
+  /** Persist a +1 usage increment to the DB row and invalidate the row cache. */
+  async consume(userId: string, metric: QuotaMetric): Promise<void> {
     await this.upsertMetric(userId, metric)
     await this.cacheDelete(userId)
+  }
 
+  async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
+    if (!(await this.hasCapacity(userId, metric))) {
+      return false
+    }
+    await this.consume(userId, metric)
     return true
+  }
+
+  /**
+   * Pure read of a metric's configured limit + DB-synced used value from a
+   * quota row (`null` row → unlimited/unused). Exposed for the level-aware
+   * usage-summary display in `QuotaEnforcementService`.
+   */
+  metricValues(
+    quota: UserQuotaModel | null,
+    metric: QuotaMetric,
+  ): { limit: number | null; used: number } {
+    if (!quota) {
+      return { limit: null, used: 0 }
+    }
+    return this.readMetricValues(quota, metric)
   }
 
   private readMetricValues(

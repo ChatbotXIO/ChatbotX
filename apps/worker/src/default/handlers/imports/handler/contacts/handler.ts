@@ -1,4 +1,7 @@
-import { userQuotaService, workspaceService } from "@chatbotx.io/business"
+import {
+  quotaEnforcementService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
@@ -119,22 +122,28 @@ const processContactRow = (
   return { ...mapped, customFields: safeCustomFields }
 }
 
-// C-1: Serialize quota check + insert + increment per owner via a distributed
-// lock so concurrent import jobs cannot both pass the remaining-slots gate and
-// together exceed the plan limit.
-const insertContactBatch = (
+// C-1: Serialize quota check + insert + increment via a distributed lock so
+// concurrent import jobs cannot both pass the remaining-slots gate and together
+// exceed the plan limit. The lock key is resolved at the enforcement
+// granularity (tenant pool for reseller sub-accounts, else the user) so two
+// sub-accounts sharing one reseller pool cannot both overrun it.
+const insertContactBatch = async (
   deps: ContactDeps,
   eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
 ): Promise<number> => {
+  const lockKey = await quotaEnforcementService.resolveQuotaLockKey({
+    userId: deps.ownerId,
+    metric: "contacts",
+  })
   return distributedLock.runExclusive({
-    key: `contact-import-quota:${deps.ownerId}`,
+    key: lockKey,
     timeoutInSeconds: 30,
     fn: async () => {
-      const remaining = await userQuotaService.getRemainingSlots(
-        deps.ownerId,
-        "contacts",
-      )
+      const remaining = await quotaEnforcementService.getDualRemainingSlots({
+        userId: deps.ownerId,
+        metric: "contacts",
+      })
       if (remaining === 0) {
         return 0
       }
@@ -218,11 +227,11 @@ const insertContactBatch = (
 
       // H-1: Increment inside the lock so the live Redis counter is updated
       // before another concurrent import reads it.
-      await userQuotaService.incrementBy(
-        deps.ownerId,
-        "contacts",
-        accepted.length,
-      )
+      await quotaEnforcementService.incrementBy({
+        userId: deps.ownerId,
+        metric: "contacts",
+        count: accepted.length,
+      })
 
       return accepted.length
     },

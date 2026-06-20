@@ -1,5 +1,6 @@
 import {
   isPlatformAdmin,
+  quotaEnforcementService,
   userQuotaService,
   workspaceMemberService,
 } from "@chatbotx.io/business"
@@ -12,10 +13,12 @@ import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
-import type { QuotaMetric, QuotaSummary } from "@/components/nav-usage"
+import type { QuotaSummary } from "@/components/nav-usage"
+import { TrialBanner } from "@/components/trial-banner"
 import { isCloud } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getCurrentUser } from "@/lib/auth/utils"
+import { buildQuotaMetrics } from "@/lib/quota-metrics"
 
 export default async function WorkspaceLayout({
   children,
@@ -39,12 +42,13 @@ export default async function WorkspaceLayout({
   const cloud = isCloud()
 
   // Check if user is a member of the workspace
-  const [allWorkspaceMembers, { storageUrl }, platformAdmin, quota] =
+  const [allWorkspaceMembers, { storageUrl }, platformAdmin, quota, usage] =
     await Promise.all([
       workspaceMemberService.listByUserId({ userId: user.id }),
       getTenantSettings(),
       isPlatformAdmin(user),
       cloud ? userQuotaService.getForUser(user.id) : Promise.resolve(null),
+      cloud ? quotaEnforcementService.getUsageSummary(user.id) : null,
     ])
   if (
     !allWorkspaceMembers.some(
@@ -61,41 +65,16 @@ export default async function WorkspaceLayout({
       : null,
   }))
 
-  const metrics: QuotaMetric[] = quota
-    ? (
-        [
-          {
-            key: "contacts",
-            used: quota.contactsUsed,
-            limit: quota.contactsLimit,
-          },
-          {
-            key: "workspaces",
-            used: quota.workspacesUsed,
-            limit: quota.workspacesLimit,
-          },
-          {
-            key: "channels",
-            used: quota.channelsUsed,
-            limit: quota.channelsLimit,
-          },
-          {
-            key: "teamMembers",
-            used: quota.teamMembersUsed,
-            limit: quota.teamMembersLimit,
-          },
-        ] as const
-      ).flatMap((metric) =>
-        typeof metric.limit === "number"
-          ? [{ key: metric.key, used: metric.used, limit: metric.limit }]
-          : [],
-      )
-    : []
+  const trialEndsAt =
+    quota?.planStatus === "trialing" && quota.periodEnd
+      ? quota.periodEnd.toISOString()
+      : null
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
     planStatus: quota?.planStatus ?? null,
-    metrics,
+    trialEndsAt,
+    metrics: buildQuotaMetrics(usage),
   }
 
   const cookieStore = await cookies()
@@ -110,6 +89,12 @@ export default async function WorkspaceLayout({
         workspaceId={workspaceId}
       />
       <SidebarInset>
+        {cloud && (
+          <TrialBanner
+            planStatus={quotaSummary.planStatus}
+            trialEndsAt={quotaSummary.trialEndsAt}
+          />
+        )}
         <main className="flex flex-1 flex-col gap-4 p-6">{children}</main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
       </SidebarInset>

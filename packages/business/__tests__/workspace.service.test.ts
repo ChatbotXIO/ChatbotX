@@ -26,10 +26,14 @@ vi.mock("@chatbotx.io/redis", () => ({
 vi.mock("@chatbotx.io/utils", () => ({ createId: () => "usage-1" }))
 
 const userQuotaService = {
-  tryIncrement: vi.fn(async () => true),
   getForUser: vi.fn(async () => null as unknown),
 }
 vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
+
+const quotaEnforcementService = {
+  tryConsume: vi.fn(async () => ({ ok: true })),
+}
+vi.mock("../src/quota-enforcement/service", () => ({ quotaEnforcementService }))
 
 const workspaceMemberService = {
   create: vi.fn(async () => undefined),
@@ -65,7 +69,7 @@ beforeEach(() => {
   insert.mockClear()
   findFirstUser.mockReset().mockResolvedValue({ tenantId: "1" })
   tenantService.findByOwner.mockReset().mockResolvedValue(undefined)
-  userQuotaService.tryIncrement.mockReset().mockResolvedValue(true)
+  quotaEnforcementService.tryConsume.mockReset().mockResolvedValue({ ok: true })
   userQuotaService.getForUser.mockReset().mockResolvedValue(null)
   workspaceMemberService.create.mockClear()
   macRepository.ensureWorkspaceMac

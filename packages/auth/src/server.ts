@@ -178,6 +178,19 @@ export type SocialAuthCredential = {
   clientSecret: string
 }
 
+/**
+ * The newly persisted `User` row handed to `onUserCreated`, narrowed to the
+ * fields the builder needs to provision a default plan. `tenantId` is the
+ * white-label tenant the account was created under (stamped by the adapter);
+ * `isAnonymous` marks throwaway accounts from the `anonymous` plugin.
+ */
+export type AuthCreatedUser = {
+  id: string
+  email: string
+  tenantId?: string
+  isAnonymous?: boolean
+}
+
 export type AuthConfig = {
   /**
    * The per-provider OAuth apps this instance signs in with. A provider is
@@ -186,6 +199,14 @@ export type AuthConfig = {
   socialCredentials?: Partial<
     Record<SocialProvider, SocialAuthCredential | null>
   >
+  /**
+   * Called once after a new `User` row is created, on every sign-up path
+   * (email/password, social, magic link). The builder wires this to provision
+   * the user's default plan via the billing portal (cloud only). Best-effort:
+   * the hook catches any error so provisioning never aborts sign-up. Omit
+   * (self-hosted, tests) to disable.
+   */
+  onUserCreated?: (user: AuthCreatedUser) => Promise<void> | void
 }
 
 /**
@@ -229,10 +250,48 @@ function buildSocialProviders(
   return Object.keys(providers).length > 0 ? providers : undefined
 }
 
+/**
+ * Build the `databaseHooks` that fire `config.onUserCreated` after a new user
+ * row is written. Returns `undefined` when no callback is configured so
+ * better-auth keeps its default behavior. The callback is awaited inside a
+ * try/catch — a throwing after-hook would otherwise abort sign-up, and default
+ * plan provisioning is strictly best-effort.
+ */
+function buildDatabaseHooks(onUserCreated: AuthConfig["onUserCreated"]) {
+  if (!onUserCreated) {
+    return
+  }
+
+  return {
+    user: {
+      create: {
+        after: async (user: Record<string, unknown>) => {
+          try {
+            await onUserCreated({
+              id: String(user.id),
+              email: String(user.email),
+              tenantId:
+                typeof user.tenantId === "string" ? user.tenantId : undefined,
+              isAnonymous:
+                typeof user.isAnonymous === "boolean"
+                  ? user.isAnonymous
+                  : undefined,
+            })
+          } catch {
+            // Best-effort: provisioning must never block sign-up. The callback
+            // is responsible for logging its own failures.
+          }
+        },
+      },
+    },
+  }
+}
+
 export function createAuth(config: AuthConfig) {
   const socialProviders = buildSocialProviders(config.socialCredentials)
 
   return betterAuth({
+    databaseHooks: buildDatabaseHooks(config.onUserCreated),
     database: createTenantScopedAdapter(
       drizzleAdapter(db, {
         provider: "pg",

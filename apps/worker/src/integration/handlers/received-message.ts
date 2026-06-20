@@ -2,9 +2,9 @@ import {
   broadcastToWorkspaceParty,
   buildContext,
   conversationService,
+  quotaEnforcementService,
   resolveTenantSettings,
   updateContactFromMessage,
-  userQuotaService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
@@ -516,7 +516,12 @@ const detectContactAndConversation = async (props: {
     }
     workspaceOwnerId = ws.ownerId
 
-    if (await userQuotaService.isLimitReached(ws.ownerId, "contacts")) {
+    if (
+      await quotaEnforcementService.isAtLimit({
+        userId: ws.ownerId,
+        metric: "contacts",
+      })
+    ) {
       throw new Error("Contact limit reached")
     }
   }
@@ -580,7 +585,10 @@ const detectContactAndConversation = async (props: {
   )
 
   if (newContact && workspaceOwnerId) {
-    await userQuotaService.increment(workspaceOwnerId, "contacts")
+    await quotaEnforcementService.increment({
+      userId: workspaceOwnerId,
+      metric: "contacts",
+    })
   }
 
   if (newContact) {

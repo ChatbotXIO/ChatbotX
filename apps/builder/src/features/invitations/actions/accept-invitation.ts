@@ -1,6 +1,9 @@
 "use server"
 
-import { userQuotaService, workspaceService } from "@chatbotx.io/business"
+import {
+  quotaEnforcementService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -50,11 +53,11 @@ export const acceptInvitationAction = authActionClient
       where: { id: invitation.workspaceId },
     })
     if (workspace) {
-      const allowed = await userQuotaService.tryIncrement(
-        workspace.ownerId,
-        "teamMembers",
-      )
-      if (!allowed) {
+      const consumed = await quotaEnforcementService.tryConsume({
+        userId: workspace.ownerId,
+        metric: "teamMembers",
+      })
+      if (!consumed.ok) {
         throw new ChatbotXException(
           "Team member limit reached for this workspace plan",
         )

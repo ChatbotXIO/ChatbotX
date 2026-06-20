@@ -23,6 +23,8 @@ import {
 import { ChevronsUpDown, Crown, Settings2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
+import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
 import { LangSelector } from "./lang-selector"
@@ -43,10 +45,14 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const t = useTranslations()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
+        {isCloud() && (
+          <UpgradePlanDialog onOpenChange={setUpgradeOpen} open={upgradeOpen} />
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -100,11 +106,14 @@ export function NavUser({
                   })}
                 </DropdownMenuLabel>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem asChild>
-                    <Link href="/pricing">
-                      <Crown className="mr-2 h-4 w-4" />
-                      {t("actions.upgradePlan")}
-                    </Link>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setUpgradeOpen(true)
+                    }}
+                  >
+                    <Crown className="mr-2 h-4 w-4" />
+                    {t("actions.upgradePlan")}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

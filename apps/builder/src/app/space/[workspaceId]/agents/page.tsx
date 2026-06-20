@@ -1,3 +1,7 @@
+import {
+  quotaEnforcementService,
+  workspaceService,
+} from "@chatbotx.io/business"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound } from "next/navigation"
 import type { SearchParams } from "nuqs/server"
@@ -25,9 +29,18 @@ export default async function AgentsPage(props: {
     }),
   ])
 
+  const workspace = await workspaceService.findById({ id: workspaceId })
+  const teamMembersAtLimit = await quotaEnforcementService.hasReachedLimit({
+    userId: workspace.ownerId,
+    metric: "teamMembers",
+  })
+
   return (
     <Suspense>
-      <WorkspaceMembersTable promises={promises} />
+      <WorkspaceMembersTable
+        promises={promises}
+        teamMembersAtLimit={teamMembersAtLimit}
+      />
     </Suspense>
   )
 }

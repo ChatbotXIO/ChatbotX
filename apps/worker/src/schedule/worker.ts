@@ -23,6 +23,7 @@ import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
 import { scanSmartDelay } from "./handlers/scan-smart-delay"
+import { syncTenantQuota } from "./handlers/sync-tenant-quota"
 import { syncUserQuota } from "./handlers/sync-user-quota"
 
 async function startScheduleWorker() {
@@ -82,6 +83,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.syncUserQuota:
           await syncUserQuota()
+          return
+
+        case ScheduleJobData.syncTenantQuota:
+          await syncTenantQuota()
           return
 
         case ScheduleJobData.maintainMacPartitions:
