@@ -14,6 +14,39 @@ export type QuotaMetric =
 
 const CACHE_TTL = 60 // seconds
 
+/**
+ * Cross-repo contract key (read-only here). The enterprise billing layer writes
+ * the platform default plan's entitlements to this key; we read it as the
+ * free-tier fallback for users with no per-user UserQuota row. Absent in pure
+ * OSS installs → no fallback (unlimited), preserving prior behavior.
+ */
+const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
+
+interface DefaultPlanSnapshot {
+  channelsLimit: number | null
+  contactsLimit: number | null
+  planName: string
+  saasMode: boolean
+  ssoSaml: boolean
+  teamMembersLimit: number | null
+  trialDays: number
+  whiteLabel: boolean
+  workspacesLimit: number | null
+}
+
+/**
+ * Result of evaluating whether a user may access the app. `blocked` is the only
+ * field the gate needs; the rest drive the "trial ended / X days left" UI.
+ *  - status mirrors UserQuota.planStatus (active|past_due|trial|free|expired).
+ *  - a user with no quota row at all (pure OSS install) is never blocked.
+ */
+export interface AccessState {
+  blocked: boolean
+  planName: string | null
+  status: string | null
+  trialEndsAt: Date | null
+}
+
 class UserQuotaService extends BaseService {
   private cacheKey(userId: string) {
     return `user-quota:${userId}`
@@ -125,10 +158,125 @@ class UserQuotaService extends BaseService {
     }
 
     const quota = await db.query.userQuotaModel.findFirst({ where: { userId } })
+
+    // Free tier = no row, or a usage-only row the billing layer never synced
+    // (planStatus null). Overlay the platform default-plan limits published by
+    // the enterprise layer so free limits are enforced. Without a published
+    // default (pure OSS install) this is a no-op → prior unlimited behavior.
+    if (!quota || quota.planStatus === null) {
+      const effective = await this.applyDefaultPlan(userId, quota ?? null)
+      if (effective) {
+        await this.cachePut(effective)
+        return effective
+      }
+    }
+
     if (quota) {
       await this.cachePut(quota)
+      return quota
     }
-    return quota ?? null
+    return null
+  }
+
+  /**
+   * Overlay the shared default-plan entitlement snapshot onto a free-tier user.
+   * Fills only unset (null) limit fields and the plan identity, preserving any
+   * existing usage counters. Returns null when no default plan is published.
+   */
+  private async applyDefaultPlan(
+    userId: string,
+    quota: UserQuotaModel | null,
+  ): Promise<UserQuotaModel | null> {
+    let snapshot: DefaultPlanSnapshot | null = null
+    try {
+      snapshot = await distributedStore.get<DefaultPlanSnapshot>(
+        DEFAULT_PLAN_ENTITLEMENT_KEY,
+      )
+    } catch (err) {
+      logger.warn({ err }, "user-quota: default-plan snapshot read failed")
+      return null
+    }
+    if (!snapshot) {
+      return null
+    }
+
+    const now = new Date()
+    const base: UserQuotaModel = quota ?? {
+      id: "",
+      createdAt: now,
+      updatedAt: now,
+      userId,
+      contactsLimit: null,
+      contactsUsed: 0,
+      workspacesLimit: null,
+      workspacesUsed: 0,
+      channelsLimit: null,
+      channelsUsed: 0,
+      teamMembersLimit: null,
+      teamMembersUsed: 0,
+      macLimit: null,
+      macUsed: 0,
+      whiteLabel: false,
+      ssoSaml: false,
+      saasMode: false,
+      planName: null,
+      planStatus: null,
+      periodStart: null,
+      periodEnd: null,
+      syncedAt: now,
+    }
+
+    return {
+      ...base,
+      contactsLimit: base.contactsLimit ?? snapshot.contactsLimit,
+      workspacesLimit: base.workspacesLimit ?? snapshot.workspacesLimit,
+      channelsLimit: base.channelsLimit ?? snapshot.channelsLimit,
+      teamMembersLimit: base.teamMembersLimit ?? snapshot.teamMembersLimit,
+      whiteLabel: base.whiteLabel || snapshot.whiteLabel,
+      ssoSaml: base.ssoSaml || snapshot.ssoSaml,
+      saasMode: base.saasMode || snapshot.saasMode,
+      planName: base.planName ?? snapshot.planName,
+      // Fail-open: a user with no per-user row yet (gap between sign-up and the
+      // quota-worker) is never blocked. The worker later writes the real status
+      // ("trial" + periodEnd, etc.), which getAccessState then enforces.
+      planStatus: base.planStatus ?? "free",
+    }
+  }
+
+  /**
+   * Whether the user may access the app, based on the entitlement snapshot.
+   * Blocked only when a self-managed trial has expired or was consumed:
+   *   - planStatus === "expired"  (trial consumed / churned)
+   *   - planStatus === "trial" and periodEnd has passed
+   * Everything else (active, past_due, free, no row) is allowed.
+   */
+  async getAccessState(userId: string): Promise<AccessState> {
+    const quota = await this.getForUser(userId)
+    return this.getAccessStateFromQuota(quota)
+  }
+
+  /**
+   * Pure derivation of {@link AccessState} from an already-fetched quota row.
+   * Use this when the caller has already loaded the quota (e.g. an RSC that also
+   * renders usage bars) to avoid a redundant `getForUser` round-trip.
+   */
+  getAccessStateFromQuota(quota: UserQuotaModel | null): AccessState {
+    if (!quota) {
+      return { blocked: false, status: null, planName: null, trialEndsAt: null }
+    }
+
+    const trialExpired =
+      quota.planStatus === "trial" &&
+      quota.periodEnd !== null &&
+      quota.periodEnd.getTime() <= Date.now()
+    const blocked = quota.planStatus === "expired" || trialExpired
+
+    return {
+      blocked,
+      status: quota.planStatus,
+      planName: quota.planName,
+      trialEndsAt: quota.planStatus === "trial" ? quota.periodEnd : null,
+    }
   }
 
   /**

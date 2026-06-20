@@ -10,17 +10,34 @@ export interface QuotaSummary {
   metrics: QuotaMetric[]
   planName: string | null
   planStatus: string | null
-  /** ISO trial end date when `planStatus === "trialing"`, else `null`. */
+  /** ISO date of the self-managed trial end, or null when not on a trial. */
   trialEndsAt: string | null
 }
 
-export function NavUsage({ metrics }: { metrics: QuotaMetric[] }) {
+const DAY_MS = 86_400_000
+
+export function NavUsage({
+  metrics,
+  trialEndsAt,
+}: {
+  metrics: QuotaMetric[]
+  trialEndsAt: string | null
+}) {
   const t = useTranslations()
   const { state, isMobile } = useSidebar()
 
-  // Nothing to show on the free tier (no limits), and the rail is too narrow
-  // to render bars when collapsed to icons.
-  if (metrics.length === 0 || (state === "collapsed" && !isMobile)) {
+  // The rail is too narrow to render bars/banners when collapsed to icons.
+  if (state === "collapsed" && !isMobile) {
+    return null
+  }
+
+  const daysLeft = trialEndsAt
+    ? Math.max(0, Math.ceil((Date.parse(trialEndsAt) - Date.now()) / DAY_MS))
+    : null
+  const showTrial = daysLeft !== null && daysLeft > 0
+
+  // Nothing to show on the free tier (no limits) and not on a trial.
+  if (metrics.length === 0 && !showTrial) {
     return null
   }
 
@@ -31,5 +48,14 @@ export function NavUsage({ metrics }: { metrics: QuotaMetric[] }) {
     teamMembers: t("billing.usage.teamMembers"),
   }
 
-  return <UsageBars className="px-2 pb-2" labels={labels} metrics={metrics} />
+  return (
+    <div className="flex flex-col gap-3 px-2 pb-2">
+      {showTrial && (
+        <div className="rounded-md bg-muted px-2 py-1.5 text-center text-muted-foreground text-xs">
+          {t("billing.trial.daysLeft", { days: daysLeft })}
+        </div>
+      )}
+      {metrics.length > 0 && <UsageBars labels={labels} metrics={metrics} />}
+    </div>
+  )
 }

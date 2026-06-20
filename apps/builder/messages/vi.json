@@ -250,6 +250,11 @@
       "endsTomorrow": "Dùng thử kết thúc vào ngày mai",
       "expired": "Bản dùng thử đã kết thúc — nâng cấp để tiếp tục sử dụng workspace",
       "dismiss": "Đóng"
+    },
+    "trialExpired": {
+      "title": "Bản dùng thử của bạn đã kết thúc",
+      "description": "Đăng ký một gói để tiếp tục sử dụng workspace của bạn.",
+      "cta": "Xem các gói"
     }
   },
   "broadcasts": {

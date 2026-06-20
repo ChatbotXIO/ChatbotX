@@ -11,7 +11,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { TrialBanner } from "@/components/trial-banner"
@@ -58,6 +58,13 @@ export default async function WorkspaceLayout({
     return notFound()
   }
 
+  // Self-managed trial gate: block the workspace shell once the trial is
+  // consumed. /trial-expired sits outside this layout so it stays reachable.
+  // Derived from the quota already fetched above — no extra query.
+  if (cloud && userQuotaService.getAccessStateFromQuota(quota).blocked) {
+    redirect("/trial-expired")
+  }
+
   const allWorkspaces = allWorkspaceMembers.map((workspaceMember) => ({
     ...workspaceMember.workspace,
     logo: workspaceMember.workspace.logo
@@ -66,7 +73,7 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt =
-    quota?.planStatus === "trialing" && quota.periodEnd
+    quota?.planStatus === "trial" && quota.periodEnd
       ? quota.periodEnd.toISOString()
       : null
 

@@ -250,6 +250,11 @@
       "endsTomorrow": "Trial ends tomorrow",
       "expired": "Your trial has ended — upgrade to keep your workspace active",
       "dismiss": "Dismiss"
+    },
+    "trialExpired": {
+      "title": "Your free trial has ended",
+      "description": "Subscribe to a plan to keep using your workspaces.",
+      "cta": "View plans"
     }
   },
   "broadcasts": {

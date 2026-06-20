@@ -2,7 +2,7 @@ import {
   quotaEnforcementService,
   userQuotaService,
 } from "@chatbotx.io/business"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { isCloud } from "@/env"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
@@ -28,6 +28,12 @@ export default async function MainPage() {
   const ownerWorkspaceIds = allWorkspaceMembers
     .filter((member) => member.role === "owner")
     .map((member) => member.workspace.id)
+
+  // Self-managed trial gate (cloud only): a consumed trial can't reach
+  // workspaces. Derived from the quota already fetched above — no extra query.
+  if (cloud && userQuotaService.getAccessStateFromQuota(quota).blocked) {
+    redirect("/trial-expired")
+  }
 
   return (
     <WorkspacesList

@@ -134,7 +134,7 @@ export function AppSidebar({
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUsage metrics={quota.metrics} />
+        <NavUsage metrics={quota.metrics} trialEndsAt={quota.trialEndsAt} />
         <NavUser
           isPlatformAdmin={isPlatformAdmin}
           planName={quota.planName}
