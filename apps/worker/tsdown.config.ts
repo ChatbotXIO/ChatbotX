@@ -3,6 +3,8 @@ import { defineConfig } from "tsdown"
 export default defineConfig({
   format: ["esm"],
   entry: [
+    // Loaded first via node --import; initializes Sentry before any worker runs.
+    "src/instrument.ts",
     "src/chat/worker.ts",
     "src/integration/worker.ts",
     "src/ai-agent/worker.ts",
@@ -29,6 +31,8 @@ export default defineConfig({
   minify: false,
   unbundle: false,
   // splitting: false,
-  sourcemap: false,
+  // Emit source maps so node --enable-source-maps and Sentry map stack traces
+  // in the bundled .mjs output back to the original TypeScript sources.
+  sourcemap: true,
   treeshake: true,
 })

@@ -4,6 +4,14 @@ set -eu
 
 WORKER_DIST_DIR="/app/apps/worker/dist"
 NODE_BIN="/usr/local/bin/node"
+INSTRUMENT_SCRIPT="${WORKER_DIST_DIR}/instrument.mjs"
+# Debug + observability flags applied to every worker process:
+#   --enable-source-maps : remap stack traces from bundled .mjs back to .ts
+#   --import instrument   : initialize Sentry before any worker module loads
+# Passed directly (not via NODE_OPTIONS) so a runtime NODE_OPTIONS
+# (e.g. --max_old_space_size) cannot clobber them. Unquoted on use so it
+# word-splits into separate flags.
+NODE_FLAGS="--enable-source-maps --import ${INSTRUMENT_SCRIPT}"
 # ALL_WORKERS="chat integration ai-agent default webhook trigger analytics schedule sequence-scheduler sequence-producer sequence-consumer"
 ALL_WORKERS="chat integration ai-agent default webhook trigger analytics schedule sequence-scheduler"
 
@@ -76,7 +84,9 @@ run_all_workers() {
 
   trap 'handle_shutdown' INT TERM
 
-  # Validate all worker entrypoints first so we never start partially.
+  # Validate the Sentry instrument and all worker entrypoints first so we
+  # never start partially.
+  require_script "$INSTRUMENT_SCRIPT"
   for worker in $ALL_WORKERS; do
     script="$(resolve_worker_script "$worker")"
     require_script "$script"
@@ -85,7 +95,8 @@ run_all_workers() {
   for worker in $ALL_WORKERS; do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
-    "$NODE_BIN" "$script" &
+    # shellcheck disable=SC2086 # NODE_FLAGS must word-split into separate flags
+    "$NODE_BIN" $NODE_FLAGS "$script" &
     pids="$pids $!"
   done
 
@@ -128,8 +139,10 @@ case "${1:-}" in
           print_usage
           exit 3
         }
+        require_script "$INSTRUMENT_SCRIPT"
         require_script "$script"
-        exec "$NODE_BIN" "$script"
+        # shellcheck disable=SC2086 # NODE_FLAGS must word-split into separate flags
+        exec "$NODE_BIN" $NODE_FLAGS "$script"
         ;;
     "/bin/sh" | "sh" | "/bin/bash" | "bash")
         exec "$@"

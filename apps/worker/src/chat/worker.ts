@@ -11,6 +11,7 @@ import {
 import { type Job, Worker } from "bullmq"
 import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
+import { captureException, flushSentry, reportJobFailure } from "../lib/sentry"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
   sendMessageToChannel,
@@ -25,6 +26,8 @@ async function startChatWorker() {
     logger.info("Chat worker bootstrapped successfully")
   } catch (err) {
     logger.error(err, "Failed to bootstrap chat worker")
+    captureException(err, { worker: "chat", phase: "bootstrap" })
+    await flushSentry()
     process.exit(1)
   }
 
@@ -75,6 +78,7 @@ async function startChatWorker() {
   worker.on("failed", (job, err) => {
     if (job) {
       logger.error(err, `Job ${job.id} has failed`)
+      reportJobFailure(job, err, { worker: "chat" })
     }
   })
 
