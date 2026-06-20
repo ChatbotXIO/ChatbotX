@@ -23,7 +23,6 @@ import {
   readCustomFieldValue,
   saveResultToCustomField,
 } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 import { editImageInputSchema } from "./schema"
@@ -226,11 +225,6 @@ export async function handleAIEditImage({
       workspaceId: conversation.workspaceId,
     })
     const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
-
-    await sendMessageWithRender(conversation.id, finalImageUrl, undefined, {
-      forceUrl: true,
-      storagePath,
-    })
 
     if (step.outputFieldId) {
       await saveResultToCustomField({

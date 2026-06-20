@@ -12,7 +12,6 @@ import { streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow-utils"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
@@ -88,12 +87,10 @@ export async function handleAIGenerateText({
 
     const { fullText } = await processStreamingText(
       result.textStream,
-      async (_segment, parts) => {
-        for (const part of parts) {
-          await sendMessageWithRender(conversation.id, part)
-        }
+      async () => {
+        // noop: fullText is accumulated internally, no message to send
       },
-      { sendParts: true },
+      { sendParts: false },
     )
 
     await saveResultToCustomField({

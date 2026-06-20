@@ -21,7 +21,6 @@ import {
   getIntegrationContext,
   saveResultToCustomField,
 } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 
@@ -180,11 +179,6 @@ export async function handleAIGenerateImage({
       workspaceId: conversation.workspaceId,
     })
     const finalImageUrl = getPublicFileUrl(storagePath, storageUrl)
-
-    await sendMessageWithRender(conversation.id, finalImageUrl, undefined, {
-      forceUrl: true,
-      storagePath,
-    })
 
     if (step.outputFieldId) {
       await saveResultToCustomField({
