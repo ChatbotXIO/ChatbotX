@@ -1,5 +1,9 @@
 import { stepTypes } from "@chatbotx.io/flow-config"
-import { SiClaude, SiGooglegemini } from "@icons-pack/react-simple-icons"
+import {
+  SiClaude,
+  SiGooglegemini,
+  SiMessenger,
+} from "@icons-pack/react-simple-icons"
 import {
   ArchiveIcon,
   BellOffIcon,
@@ -472,6 +476,18 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         label: t("flows.actions.countCharacters"),
         icon: CalculatorIcon,
         stepType: stepTypes.enum.countCharacters,
+      },
+    ],
+  },
+  {
+    label: t("flows.actions.messenger"),
+    icon: SiMessenger,
+    stepType: null,
+    children: [
+      {
+        label: t("flows.actions.setMessengerUserPersistentMenu"),
+        icon: SiMessenger,
+        stepType: stepTypes.enum.setMessengerUserPersistentMenu,
       },
     ],
   },

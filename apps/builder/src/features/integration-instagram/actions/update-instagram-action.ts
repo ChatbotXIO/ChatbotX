@@ -1,6 +1,7 @@
 "use server"
 
 import { buildContext } from "@chatbotx.io/business"
+import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
@@ -169,13 +170,7 @@ const buildPersistentMenuParams = async (
   appUrl: string,
 ): Promise<InstagramProfileRequest["persistent_menu"]> => {
   const brandingUrl = getBrandingUrl("instagram", appUrl)
-  const menus = [...persistentMenus]
-  const brandingIndex = menus.findIndex(
-    (menu) => menu.type === "url" && "url" in menu && menu.url === brandingUrl,
-  )
-  if (brandingIndex !== -1) {
-    menus.push(...menus.splice(brandingIndex, 1))
-  }
+  const menus = moveBrandingMenuLast(persistentMenus, brandingUrl)
   const callToActions = await parseInstagramButtons(menus)
   return [
     {

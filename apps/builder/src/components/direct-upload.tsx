@@ -42,7 +42,10 @@ export function DirectUploadOrInsertLink({
   const triggerRef = useRef<HTMLButtonElement | null>(null)
 
   const chooseInsertLink = () => {
-    setValue(`${parentName}.mode`, "url")
+    setValue(`${parentName}.mode`, "url", {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
   }
 
   const chooseUploadFile = () => {
@@ -80,8 +83,14 @@ export function DirectUploadOrInsertLink({
   }, [fileType])
 
   const clearInputFile = () => {
-    setValue(`${parentName}.url`, "")
-    setValue(`${parentName}.mode`, "file")
+    setValue(`${parentName}.url`, "", {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+    setValue(`${parentName}.mode`, "file", {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
   }
 
   return (
@@ -102,8 +111,14 @@ export function DirectUploadOrInsertLink({
           })
         }}
         onUploadSuccess={(_filePath, _file, finalUrl) => {
-          setValue(`${parentName}.url`, finalUrl)
-          setValue(`${parentName}.mode`, "file")
+          setValue(`${parentName}.url`, finalUrl, {
+            shouldValidate: true,
+            shouldDirty: true,
+          })
+          setValue(`${parentName}.mode`, "file", {
+            shouldValidate: true,
+            shouldDirty: true,
+          })
         }}
         triggerRef={triggerRef}
         uploadPath={uploadPath}
@@ -131,7 +146,10 @@ export function DirectUploadOrInsertLink({
               if (onSuccess) {
                 onSuccess(finalUrl)
               } else {
-                setValue(`${parentName}.url`, finalUrl)
+                setValue(`${parentName}.url`, finalUrl, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
               }
             }}
             triggerRef={triggerRef}
@@ -203,8 +221,14 @@ export function DirectUploadOrInsertLink({
               onClick={() => {
                 if (publicUrl) {
                   onSuccess(publicUrl)
-                  setValue(`${parentName}.url`, "")
-                  setValue(`${parentName}.mode`, "file")
+                  setValue(`${parentName}.url`, "", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                  setValue(`${parentName}.mode`, "file", {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
                 }
               }}
               size="sm"

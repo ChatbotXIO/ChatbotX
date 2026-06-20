@@ -180,6 +180,9 @@ export type ResolvedIntegration = Integration<
 export type ResolvedIntegrationContext = {
   integration: ResolvedIntegration
   ctx: IntegrationContext
+  integrationRow: Awaited<
+    ReturnType<typeof integrationService.getIntegrationFromContactInbox>
+  >
 }
 
 /**
@@ -204,6 +207,7 @@ export async function resolveIntegrationContextFromContactInbox(args: {
 
   return {
     integration,
+    integrationRow,
     ctx: await buildContext({
       workspaceId: args.workspaceId,
       integrationType: args.contactInbox.channel,

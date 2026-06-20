@@ -1,6 +1,10 @@
 import type { ContactHandlers } from "@chatbotx.io/sdk"
 import { assignLabelToUser, removeLabelFromUser } from "../apis/label"
-import { getUserProfile } from "../apis/user"
+import {
+  deleteUserPersistentMenu,
+  getUserProfile,
+  setUserPersistentMenu,
+} from "../apis/user"
 import type { MessengerAuthValue } from "../schema"
 
 export const contactHandlers: Partial<ContactHandlers<MessengerAuthValue>> = {
@@ -15,4 +19,12 @@ export const contactHandlers: Partial<ContactHandlers<MessengerAuthValue>> = {
       psid: data.sourceId,
     })
   },
+  setUserPersistentMenu: async ({ ctx, data }) =>
+    await setUserPersistentMenu({
+      ctx,
+      psid: data.psid,
+      persistentMenu: data.persistentMenu,
+    }),
+  deleteUserPersistentMenu: async ({ ctx, data }) =>
+    await deleteUserPersistentMenu({ ctx, psid: data.psid }),
 }

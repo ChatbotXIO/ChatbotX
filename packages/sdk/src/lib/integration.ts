@@ -235,6 +235,16 @@ export type ContactHandlers<IAuth extends AuthValue> = {
     { ctx: Context<IAuth>; data: { labelId: string; sourceId: string } },
     void
   >
+  // Per-user persistent menu operations (optional; channels that support it).
+  setUserPersistentMenu?: Handler<
+    // biome-ignore lint/suspicious/noExplicitAny: channel-specific menu payload
+    { ctx: Context<IAuth>; data: { psid: string; persistentMenu: any } },
+    void
+  >
+  deleteUserPersistentMenu?: Handler<
+    { ctx: Context<IAuth>; data: { psid: string } },
+    void
+  >
 }
 
 export type BotHandlers<IAuth extends AuthValue> = {

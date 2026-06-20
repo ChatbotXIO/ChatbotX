@@ -94,6 +94,7 @@ import { triggerContactHistoryRelations } from "./trigger-contact-history"
 import { triggerExecutionRelations } from "./trigger-execution"
 import { triggerStatsRelations } from "./trigger-stats"
 import { userRelations } from "./user"
+import { userPersistentMenuRelations } from "./user-persistent-menu"
 import { webhookRelations } from "./webhook"
 import { whatsappFlowRelations } from "./whatsapp-flow"
 import { whatsappMessageTemplateRelations } from "./whatsapp-message-template"
@@ -200,4 +201,5 @@ export const relations = {
   ...analyticsFlowNodeEventRelations,
   ...productRelations,
   ...coexistSyncRunRelations,
+  ...userPersistentMenuRelations,
 }

@@ -56,6 +56,7 @@ import { getUserData } from "./get-user-data"
 import { syncKlaviyoProfile } from "./klaviyo-handler"
 import { addMailchimpMember } from "./mailchimp-handler"
 import { addMailerLiteSubscriber } from "./mailer-lite-handler"
+import { setMessengerUserPersistentMenu } from "./messenger-user-menu"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
 import { sendEmail } from "./send-email"
 import { addSendGridContact } from "./sendgrid-handler"
@@ -419,4 +420,6 @@ export const flowStepHandlers: Record<
   [stepTypes.enum.sendMessengerTemplateMessage]: sendFlowMessage,
   [stepTypes.enum.whatsappOptionList]: sendFlowMessage,
   [stepTypes.enum.whatsappFlow]: sendFlowMessage,
+  [stepTypes.enum.setMessengerUserPersistentMenu]:
+    setMessengerUserPersistentMenu,
 }

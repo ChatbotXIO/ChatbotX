@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./branding": "./src/platform/branding.ts",
     "./contact-sequence": "./src/contact-sequence/index.ts",
     "./errors": "./src/errors.ts",
     "./utils": "./src/utils.ts"

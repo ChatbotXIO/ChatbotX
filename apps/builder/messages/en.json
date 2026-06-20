@@ -37,6 +37,7 @@
     "disconnect": "Disconnect",
     "download": "Download",
     "edit": "Edit",
+    "editFeature": "Edit {feature}",
     "enableBot": "Enable Bot",
     "export": "Export",
     "getEmbedCode": "Get Embed Code",
@@ -895,6 +896,10 @@
         "sendFlow": "Send Flow"
       }
     },
+    "userPersistentMenu": {
+      "pageDefault": "Default",
+      "label": "User Persistent Menu"
+    },
     "phoneNumber": {
       "label": "Phone number"
     },
@@ -1490,11 +1495,13 @@
       "dripSubscribeSubscriber": "Add Contact to Drip",
       "getResponseAddContact": "Add Contact to GetResponse",
       "sendGridAddContact": "Add Contact to SendGrid",
+      "messenger": "Messenger",
       "openWebsite": "Open Website",
       "optInEmail": "Opt In Email",
       "optOutEmail": "Opt Out Email",
       "performAction": "Perform Action",
       "removeContactTag": "Remove Contact Tag",
+      "setMessengerUserPersistentMenu": "Set User Persistent Menu",
       "sendAudio": "Send Audio",
       "sendCard": "Send Card",
       "sendExternalFlow": "Start External Flow",
@@ -1959,6 +1966,7 @@
     "leaveEmptyToKeepSecret": "Leave empty to keep the current secret",
     "needToAddSettings": "You need to add settings to use this integration",
     "noDataAvailable": "No data available",
+    "noResults": "No results.",
     "savedSuccessfully": "Saved successfully",
     "syncedSuccessfully": "Synced successfully",
     "nameAlreadyExists": "{feature} name already exists",
@@ -2481,6 +2489,9 @@
   },
   "inboxTeams": {
     "title": "Inbox Teams"
+  },
+  "userPersistentMenus": {
+    "title": "User Persistent Menus"
   },
   "webhooks": {
     "title": "Webhooks"

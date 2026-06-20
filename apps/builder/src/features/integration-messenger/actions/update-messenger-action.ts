@@ -1,13 +1,10 @@
 "use server"
 
 import { buildContext } from "@chatbotx.io/business"
+import { moveBrandingMenuLast } from "@chatbotx.io/business/branding"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { db, eq } from "@chatbotx.io/database/client"
-import {
-  type MessengerPersistentMenu,
-  type MessengerPersona,
-  messengerPersistentMenuTypes,
-} from "@chatbotx.io/database/partials"
+import type { MessengerPersona } from "@chatbotx.io/database/partials"
 import { integrationMessengerModel } from "@chatbotx.io/database/schema"
 import type {
   IntegrationMessengerModel,
@@ -17,11 +14,9 @@ import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
   type MessengerProfileRequest,
+  messengerMenusToCallToActions,
 } from "@chatbotx.io/integration-messenger"
-import type {
-  FacebookButton,
-  MessengerAuthValue,
-} from "@chatbotx.io/integration-messenger/schema"
+import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
@@ -135,30 +130,6 @@ const getFieldsToDelete = (
   return fields
 }
 
-const parseFacebookButtons = (
-  persistentMenus: MessengerPersistentMenu[],
-): FacebookButton[] => {
-  const buttons: FacebookButton[] = []
-  for (const menu of persistentMenus) {
-    if (menu.type === messengerPersistentMenuTypes.enum.flow) {
-      buttons.push({
-        type: "postback",
-        title: menu.label,
-        payload: encodeButtonPayload({
-          flowId: menu.flowId,
-        }),
-      })
-    } else if (menu.type === messengerPersistentMenuTypes.enum.url) {
-      buttons.push({
-        type: "web_url",
-        title: menu.label,
-        url: menu.url,
-      })
-    }
-  }
-  return buttons
-}
-
 const getMessengerProfileParams = (
   model: IntegrationMessengerModel,
   appUrl: string,
@@ -173,15 +144,8 @@ const getMessengerProfileParams = (
 
   if (model.persistentMenus.length) {
     const brandingUrl = getBrandingUrl("messenger", appUrl)
-    const menus = [...model.persistentMenus]
-    const brandingIndex = menus.findIndex(
-      (menu) =>
-        menu.type === "url" && "url" in menu && menu.url === brandingUrl,
-    )
-    if (brandingIndex !== -1) {
-      menus.push(...menus.splice(brandingIndex, 1))
-    }
-    const callToActions = parseFacebookButtons(menus)
+    const menus = moveBrandingMenuLast(model.persistentMenus, brandingUrl)
+    const callToActions = messengerMenusToCallToActions(menus)
     params.persistent_menu = [
       {
         locale: "default",

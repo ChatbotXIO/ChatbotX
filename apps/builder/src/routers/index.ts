@@ -38,6 +38,7 @@ import { sequencesAPI } from "@/features/sequences/api"
 import { spreadsheetsAPI } from "@/features/spreadsheets/api"
 import { tagsAPI } from "@/features/tags/api"
 import { triggersAPI } from "@/features/triggers/api"
+import { userPersistentMenusAPI } from "@/features/user-persistent-menus/api"
 import { webhooksAPI } from "@/features/webhooks/api"
 import { workspaceMembersAPI } from "@/features/workspace-members/api"
 import { workspacesAPI } from "@/features/workspaces/api"
@@ -90,5 +91,6 @@ export const router = {
   keywordsAPI,
   integrationsAPI,
   triggersAPI,
+  userPersistentMenusAPI,
   webhooksAPI,
 }

@@ -92,8 +92,10 @@ PersistentMenuItem.displayName = "PersistentMenuItem"
 
 export default function PersistentMenuField({
   channel,
+  max,
 }: {
   channel: ChannelType
+  max?: number
 }) {
   const t = useTranslations()
   const { control } = useFormContext()
@@ -245,6 +247,7 @@ export default function PersistentMenuField({
       </CardContent>
       <CardFooter>
         <Button
+          disabled={max !== undefined && persistentMenus.length >= max}
           onClick={handlePrepend}
           size="sm"
           type="button"

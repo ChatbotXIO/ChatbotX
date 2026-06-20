@@ -52,6 +52,7 @@ import { sendVideoStep } from "./send-video"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
 import { sendGridAddContactStep } from "./sendgrid-add-contact"
 import { setCustomFieldStep } from "./set-custom-field"
+import { setMessengerUserPersistentMenuStep } from "./set-messenger-user-persistent-menu"
 import { splitTrafficStep } from "./split-traffic"
 import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
 import { spreadsheetGetRandomRowStep } from "./spreadsheet-get-random-row"
@@ -158,6 +159,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.typing]: typingStep,
   [stepTypes.enum.whatsappOptionList]: whatsappOptionListStep,
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
+  [stepTypes.enum.setMessengerUserPersistentMenu]:
+    setMessengerUserPersistentMenuStep,
 }
 
 export const DynamicStepEditor = memo(

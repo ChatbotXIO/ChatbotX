@@ -44,7 +44,7 @@ export const sharedColumns = {
     .$onUpdate(() => sql`CURRENT_TIMESTAMP`),
 }
 
-export const uploadModes = z.enum(["link", "file"])
+export const uploadModes = z.enum(["url", "file"])
 export type UploadMode = z.infer<typeof uploadModes>
 
 export const cardLayouts = z.enum(["horizontal", "vertical"])

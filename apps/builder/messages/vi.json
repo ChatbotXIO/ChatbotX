@@ -37,6 +37,7 @@
     "disconnect": "Ngắt kết nối",
     "download": "Tải xuống",
     "edit": "Chỉnh sửa",
+    "editFeature": "Chỉnh sửa {feature}",
     "enableBot": "Bật bot",
     "export": "Xuất",
     "getEmbedCode": "Lấy mã nhúng",
@@ -884,6 +885,10 @@
         "sendFlow": "Gửi luồng"
       }
     },
+    "userPersistentMenu": {
+      "pageDefault": "Mặc định",
+      "label": "Menu cố định người dùng"
+    },
     "phoneNumber": {
       "label": "Số điện thoại"
     },
@@ -1501,11 +1506,13 @@
       "dripSubscribeSubscriber": "Thêm liên hệ vào Drip",
       "getResponseAddContact": "Thêm liên hệ vào GetResponse",
       "sendGridAddContact": "Thêm liên hệ vào SendGrid",
+      "messenger": "Messenger",
       "openWebsite": "Mở trang web",
       "optInEmail": "Đăng ký nhận email",
       "optOutEmail": "Hủy đăng ký email",
       "performAction": "Thực hiện hành động",
       "removeContactTag": "Xóa thẻ liên hệ",
+      "setMessengerUserPersistentMenu": "Thiết lập menu cố định người dùng",
       "sendAudio": "Gửi âm thanh",
       "sendCard": "Gửi thẻ",
       "sendExternalFlow": "Gửi luồng bên ngoài",
@@ -1970,6 +1977,7 @@
     "leaveEmptyToKeepSecret": "Để trống để giữ nguyên secret hiện tại",
     "needToAddSettings": "Bạn cần thêm cài đặt để sử dụng tích hợp này",
     "noDataAvailable": "Không có dữ liệu",
+    "noResults": "Không có kết quả.",
     "savedSuccessfully": "Đã lưu thành công",
     "nameAlreadyExists": "Tên {feature} đã tồn tại",
     "unknownError": "Lỗi không xác định",
@@ -2567,6 +2575,9 @@
   },
   "triggers": {
     "title": "Kích hoạt"
+  },
+  "userPersistentMenus": {
+    "title": "Menu cố định người dùng"
   },
   "webhooks": {
     "title": "Webhooks"
