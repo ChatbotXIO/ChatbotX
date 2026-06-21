@@ -3,6 +3,7 @@ import { claudeModelOptions, claudeModels } from "./claude"
 import { deepseekModelOptions, deepseekModels } from "./deepseek"
 import { geminiModelOptions, geminiModels } from "./gemini"
 import { openaiModelOptions, openaiModels } from "./openai"
+import { openrouterModelOptions, openrouterModels } from "./openrouter"
 
 export type AiChatModelOption = { label: string; value: string }
 
@@ -43,5 +44,10 @@ export const aiChatProviders: readonly AiChatProviderConfig[] = [
     provider: aiProviders.enum.deepseek,
     modelOptions: deepseekModelOptions,
     defaultModel: deepseekModels.enum["deepseek-chat"],
+  },
+  {
+    provider: aiProviders.enum.openrouter,
+    modelOptions: openrouterModelOptions,
+    defaultModel: openrouterModels.enum["openai/gpt-4o-mini"],
   },
 ]

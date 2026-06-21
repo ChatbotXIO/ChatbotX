@@ -13,12 +13,13 @@ export const defaultAIModels = {
   gemini: "gemini-2.5-pro",
   claude: "claude-3-5-sonnet-20241022",
   deepseek: "deepseek-chat",
+  openrouter: "openai/gpt-4o-mini",
 } as const
 
 export const aiGenerateTextSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiGenerateText),
-  provider: z.enum(["openai", "gemini", "claude", "deepseek"]),
+  provider: z.enum(["openai", "gemini", "claude", "deepseek", "openrouter"]),
   model: z.string().trim().min(1),
   system: z.string().trim().optional(),
   text: z.string().trim().min(1),

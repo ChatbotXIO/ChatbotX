@@ -2132,6 +2132,17 @@
     },
     "title": "DeepSeek"
   },
+  "openrouter": {
+    "autoReply": {
+      "description": "Enable AI auto reply powered by OpenRouter.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Access 300+ AI models through a single API key.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
   "settings": {
     "title": "Settings",
     "agents": {
@@ -2663,7 +2674,8 @@
     "openai": "OpenAI",
     "gemini": "Gemini",
     "claude": "Claude",
-    "deepseek": "DeepSeek"
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter"
   },
   "smtp": {
     "setting": {

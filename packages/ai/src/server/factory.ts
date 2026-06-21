@@ -4,6 +4,7 @@ import type {
   IntegrationDeepseekModel,
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
+  IntegrationOpenrouterModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
 import type { ImageModel } from "ai"
@@ -19,6 +20,7 @@ export type AIIntegrationModel =
   | IntegrationGeminiModel
   | IntegrationClaudeModel
   | IntegrationDeepseekModel
+  | IntegrationOpenrouterModel
 
 export type AIProviderInstance = ReturnType<
   (typeof providerSdkFactories)[keyof typeof providerSdkFactories]
@@ -51,6 +53,10 @@ export async function getAIIntegrationInDB(props: {
       })
     case aiProviders.enum.deepseek:
       return await db.query.integrationDeepseekModel.findFirst({
+        where,
+      })
+    case aiProviders.enum.openrouter:
+      return await db.query.integrationOpenrouterModel.findFirst({
         where,
       })
     default:

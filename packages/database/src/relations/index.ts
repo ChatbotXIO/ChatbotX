@@ -69,6 +69,7 @@ import { integrationMailerLiteRelations } from "./integration-mailer-lite"
 import { integrationMessengerRelations } from "./integration-messenger"
 import { integrationMoosendRelations } from "./integration-moosend"
 import { integrationOpenaiRelations } from "./integration-openai"
+import { integrationOpenrouterRelations } from "./integration-openrouter"
 import { integrationSendGridRelations } from "./integration-sendgrid"
 import { integrationSmtpRelations } from "./integration-smtp"
 import { integrationTelegramRelations } from "./integration-telegram"
@@ -157,6 +158,7 @@ export const relations = {
   ...integrationClaudeRelations,
   ...integrationDeepseekRelations,
   ...integrationGeminiRelations,
+  ...integrationOpenrouterRelations,
   ...contactsOnBroadcastsRelations,
   ...contactsToTagsRelations,
   ...tagChannelRelations,

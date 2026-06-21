@@ -42,6 +42,7 @@ export const aiAgentProviders = z.enum([
   "gemini",
   "claude",
   "deepseek",
+  "openrouter",
 ])
 export type AIAgentProvider = z.infer<typeof aiAgentProviders>
 
