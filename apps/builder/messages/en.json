@@ -1196,6 +1196,9 @@
     "outputFieldId": {
       "label": "Save result to a custom field"
     },
+    "audio": {
+      "label": "Audio Field"
+    },
     "voiceType": {
       "label": "Voice Type",
       "placeholder": "Select a voice type"

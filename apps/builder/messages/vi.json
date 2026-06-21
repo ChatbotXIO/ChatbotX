@@ -1176,6 +1176,9 @@
     "outputFieldId": {
       "label": "Lưu kết quả vào trường tùy chỉnh"
     },
+    "audio": {
+      "label": "Trường âm thanh"
+    },
     "voiceType": {
       "label": "Kiểu giọng nói",
       "placeholder": "Chọn kiểu giọng nói"

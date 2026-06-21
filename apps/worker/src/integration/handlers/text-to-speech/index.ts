@@ -8,7 +8,6 @@ import {
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 import { textToSpeechStorageService } from "./storage"
@@ -78,16 +77,6 @@ export async function handleAITextToSpeech({
       audioData,
       mediaType: result.audio.mediaType,
     })
-
-    await sendMessageWithRender(
-      conversation.id,
-      audioOutput.publicUrl,
-      undefined,
-      {
-        forceUrl: true,
-        storagePath: audioOutput.storagePath,
-      },
-    )
 
     if (step.outputFieldId) {
       await saveResultToCustomField({

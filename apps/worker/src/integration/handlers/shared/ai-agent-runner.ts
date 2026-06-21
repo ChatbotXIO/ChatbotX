@@ -24,7 +24,6 @@ import type {
 import { contactVariableService } from "@chatbotx.io/variables"
 import { type ModelMessage, stepCountIs, streamText, type ToolSet } from "ai"
 import { logger } from "../../../lib/logger"
-import { sendMessageWithRender } from "../../utils/message"
 
 export type ReplyByAIProps = {
   conversation: ConversationModel
@@ -233,14 +232,12 @@ async function runAIReplyInternal(
       abortSignal,
     })
 
-    const { messageCount, fullText } = await processStreamingText(
+    const { fullText } = await processStreamingText(
       result.textStream,
-      async (_segment, parts) => {
-        for (const part of parts) {
-          await sendMessageWithRender(conversation.id, part)
-        }
+      async () => {
+        // noop: fullText is accumulated internally, no message to send
       },
-      { sendParts: true },
+      { sendParts: false },
     ).catch((streamError) => {
       logger.error(
         {
@@ -251,10 +248,10 @@ async function runAIReplyInternal(
         },
         "[ai-agent-runner] processStreamingText threw error",
       )
-      return { messageCount: 0, fullText: "" }
+      return { fullText: "" }
     })
 
-    if (messageCount > 0 && fullText) {
+    if (fullText) {
       await aiContextService.appendHistory({
         conversationId: conversation.id,
         newMessages: [
@@ -286,7 +283,6 @@ async function runAIReplyInternal(
     }
 
     if (toolCallsCount > 0 || toolResultsCount > 0) {
-      await sendMessageWithRender(conversation.id, helpTexts.fallbackLookup)
       return {
         responded: true,
         provider: provider as AIAgentProvider,

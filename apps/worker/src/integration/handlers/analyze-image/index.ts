@@ -11,7 +11,6 @@ import {
   readCustomFieldValue,
   saveResultToCustomField,
 } from "../../utils/contact"
-import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
 
@@ -73,12 +72,10 @@ export async function handleAIAnalyzeImage({
 
     const { fullText } = await processStreamingText(
       result.textStream,
-      async (_segment, parts) => {
-        for (const part of parts) {
-          await sendMessageWithRender(conversation.id, part)
-        }
+      async () => {
+        // noop: fullText is accumulated internally, no message to send
       },
-      { sendParts: true },
+      { sendParts: false },
     )
 
     if (step.outputFieldId) {
