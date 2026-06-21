@@ -25,6 +25,9 @@ export const openaiModels = z.enum([
   "gpt-5.2-pro",
   "gpt-5.2",
   "gpt-5",
+  "gpt-5.5-pro",
+  "gpt-5.5",
+  "gpt-5.4-pro",
   "gpt-5.4",
   "gpt-5.4-mini",
   "gpt-5.4-nano",
@@ -36,6 +39,18 @@ export const openaiAnalyzeImageModelOptions: {
   label: string
   value: OpenAIModel
 }[] = [
+  {
+    label: "GPT-5.5 Pro",
+    value: openaiModels.enum["gpt-5.5-pro"],
+  },
+  {
+    label: "GPT-5.5",
+    value: openaiModels.enum["gpt-5.5"],
+  },
+  {
+    label: "GPT-5.4 Pro",
+    value: openaiModels.enum["gpt-5.4-pro"],
+  },
   {
     label: "GPT-5.4",
     value: openaiModels.enum["gpt-5.4"],
@@ -83,6 +98,30 @@ export const openaiAnalyzeImageModelOptions: {
 ]
 
 export const openaiModelOptions: { label: string; value: OpenAIModel }[] = [
+  {
+    label: "GPT-5.5 Pro",
+    value: openaiModels.enum["gpt-5.5-pro"],
+  },
+  {
+    label: "GPT-5.5",
+    value: openaiModels.enum["gpt-5.5"],
+  },
+  {
+    label: "GPT-5.4 Pro",
+    value: openaiModels.enum["gpt-5.4-pro"],
+  },
+  {
+    label: "GPT-5.4",
+    value: openaiModels.enum["gpt-5.4"],
+  },
+  {
+    label: "GPT-5.4 Mini",
+    value: openaiModels.enum["gpt-5.4-mini"],
+  },
+  {
+    label: "GPT-5.4 Nano",
+    value: openaiModels.enum["gpt-5.4-nano"],
+  },
   {
     label: "GPT-5.2 Pro",
     value: openaiModels.enum["gpt-5.2-pro"],

@@ -2147,6 +2147,17 @@
     },
     "title": "DeepSeek"
   },
+  "openrouter": {
+    "autoReply": {
+      "description": "Bật AI tự động trả lời được hỗ trợ bởi OpenRouter.",
+      "label": "AI tự động trả lời"
+    },
+    "connect": {
+      "description": "Truy cập hơn 300 mô hình AI bằng một API key.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
   "settings": {
     "title": "Cài đặt",
     "agents": {
@@ -2665,7 +2676,8 @@
     "openai": "OpenAI",
     "gemini": "Gemini",
     "claude": "Claude",
-    "deepseek": "DeepSeek"
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter"
   },
   "smtp": {
     "setting": {

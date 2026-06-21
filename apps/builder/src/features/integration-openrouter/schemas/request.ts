@@ -3,7 +3,7 @@ import { z } from "zod"
 
 export const connectOpenRouterSchema = z.object({
   apiKey: z.string().min(1),
-  model: openrouterModels.default(openrouterModels.enum["openai/gpt-4o-mini"]),
+  model: openrouterModels.default(openrouterModels.enum["openai/gpt-5.4-mini"]),
   temperature: z.number().min(0).max(2).default(0.7),
   maxOutputTokens: z.number().min(1).default(1024),
 })

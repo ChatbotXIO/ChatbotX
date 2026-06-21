@@ -16,6 +16,9 @@ import type { ExecuteStepProps } from "../flow-utils"
 import type { ExecuteStepResult } from "../step"
 import { buildAIMessages } from "./messages"
 
+const ERROR_INSUFFICIENT_CREDITS =
+  "AI provider has insufficient credits. Please check your billing settings."
+
 export async function handleAIGenerateText({
   conversation,
   contactInbox,
@@ -109,8 +112,7 @@ export async function handleAIGenerateText({
       logger.error({ err }, "AI provider insufficient credits")
       return {
         status: "error",
-        errorMessage:
-          "AI provider has insufficient credits. Please check your billing settings.",
+        errorMessage: ERROR_INSUFFICIENT_CREDITS,
         result: null,
       }
     }
