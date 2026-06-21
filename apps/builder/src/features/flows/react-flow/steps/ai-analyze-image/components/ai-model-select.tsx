@@ -2,6 +2,7 @@ import {
   claudeAnalyzeImageModelOptions,
   geminiAnalyzeImageModelOptions,
   openaiAnalyzeImageModelOptions,
+  openrouterAnalyzeImageModelOptions,
 } from "@chatbotx.io/ai"
 import type { AIAnalyzeImageProvider } from "@chatbotx.io/flow-config"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
@@ -17,6 +18,7 @@ const analyzeModelOptions: Record<AIAnalyzeImageProvider, SelectOption[]> = {
   openai: openaiAnalyzeImageModelOptions,
   gemini: geminiAnalyzeImageModelOptions,
   claude: claudeAnalyzeImageModelOptions,
+  openrouter: openrouterAnalyzeImageModelOptions,
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {

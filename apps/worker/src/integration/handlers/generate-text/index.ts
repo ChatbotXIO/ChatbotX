@@ -8,7 +8,7 @@ import {
 } from "@chatbotx.io/ai/server"
 import { isMessageStorageError } from "@chatbotx.io/database/errors"
 import type { AIGenerateTextSchema } from "@chatbotx.io/flow-config"
-import { streamText } from "ai"
+import { APICallError, streamText } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { saveResultToCustomField } from "../../utils/contact"
@@ -105,11 +105,20 @@ export async function handleAIGenerateText({
 
     return { status: "success", result: null }
   } catch (err) {
-    const error = normalizeError(err)
-    logger.error({ err: error }, "An error occurred while generating text")
     if (isMessageStorageError(err)) {
       throw err
     }
+    if (APICallError.isInstance(err) && err.statusCode === 402) {
+      logger.error({ err }, "AI provider insufficient credits")
+      return {
+        status: "error",
+        errorMessage:
+          "AI provider has insufficient credits. Please check your billing settings.",
+        result: null,
+      }
+    }
+    const error = normalizeError(err)
+    logger.error({ err: error }, "An error occurred while generating text")
     return { status: "error", errorMessage: error.message, result: null }
   } finally {
     clearTimeout(timeoutId)

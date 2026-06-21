@@ -213,6 +213,33 @@ const PROVIDER_CONFIGS: ProviderConfig[] = [
       },
     ],
   },
+  {
+    label: "OpenRouter",
+    icon: BotIcon,
+    providerKey: "openrouter",
+    steps: [
+      {
+        stepType: stepTypes.enum.aiGenerateText,
+        getLabel: stepWithName("flows.aiGenerateText.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiAnalyzeImage,
+        getLabel: stepWithName("flows.aiAnalyzeImage.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiGenerateTextAgent,
+        getLabel: stepWithAiName("fields.flows.aiGenerateTextAgent"),
+      },
+      {
+        stepType: stepTypes.enum.aiExtractData,
+        getLabel: stepWithName("flows.aiExtractData.label"),
+      },
+      {
+        stepType: stepTypes.enum.aiDeleteMessageHistory,
+        getLabel: stepWithAiName("fields.flows.aiDeleteMessageHistory"),
+      },
+    ],
+  },
 ]
 
 function buildProviderMenus(t: TranslationFn): MenuItem[] {

@@ -9,13 +9,19 @@ import {
 } from "../states"
 import { stepTypes } from "./step-action"
 
-export const aiAnalyzeImageProvider = z.enum(["openai", "gemini", "claude"])
+export const aiAnalyzeImageProvider = z.enum([
+  "openai",
+  "gemini",
+  "claude",
+  "openrouter",
+])
 export type AIAnalyzeImageProvider = z.infer<typeof aiAnalyzeImageProvider>
 
 export const defaultAnalyzeModels = {
   openai: "gpt-5.4-mini",
   gemini: "gemini-2.5-flash",
   claude: "claude-4.5-haiku-20251001",
+  openrouter: "openai/gpt-4o-mini",
 } as const
 
 export const aiAnalyzeImageSchema = z.object({

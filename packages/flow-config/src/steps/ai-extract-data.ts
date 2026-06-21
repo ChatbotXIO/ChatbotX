@@ -48,6 +48,20 @@ export const aiExtractDataModels = {
     ],
     default: "claude-4.5-haiku-20251001",
   },
+  openrouter: {
+    models: [
+      "openai/gpt-4o",
+      "openai/gpt-4o-mini",
+      "anthropic/claude-opus-4.8",
+      "anthropic/claude-opus-4.8-fast",
+      "anthropic/claude-fable-5",
+      "google/gemini-3.5-flash",
+      "google/gemini-2.5-pro",
+      "meta-llama/llama-3.3-70b-instruct",
+      "deepseek/deepseek-chat",
+    ],
+    default: "openai/gpt-4o-mini",
+  },
 } as const
 
 const extractFieldSchema = z.object({
@@ -59,7 +73,7 @@ const extractFieldSchema = z.object({
 const extractDataBase = {
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiExtractData),
-  provider: z.enum(["openai", "gemini", "claude"]),
+  provider: z.enum(["openai", "gemini", "claude", "openrouter"]),
   model: z.string().trim().min(1),
   extractFields: z.array(extractFieldSchema),
   states: z.tuple([successStateSchema, errorStateSchema]).optional(),
