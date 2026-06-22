@@ -37,6 +37,9 @@ export const ChatJobAction = {
   sendTyping: "sendTyping",
   notifyExportResult: "notifyExportResult",
   broadcastEvent: "broadcastEvent",
+  deleteChannelMessage: "deleteChannelMessage",
+  editChannelMessage: "editChannelMessage",
+  changeChannelMessageState: "changeChannelMessageState",
 } as const
 
 export type ChatJobSendChannelMessage = {
@@ -44,7 +47,10 @@ export type ChatJobSendChannelMessage = {
   data: {
     conversation: ConversationModel
     contactInbox: ContactInboxModel
-    message: MessageModel & { clientId?: string | undefined }
+    message: MessageModel & {
+      clientId?: string | undefined
+      parentCreatedAt?: Date | null
+    }
     metadata?: MetadataPayload
     sendFrom?: "inbox"
   }
@@ -138,6 +144,46 @@ export type ChatJobNotifyExportResult = {
   data: Record<string, unknown>
 }
 
+export type ChatJobDeleteChannelMessage = {
+  type: typeof ChatJobAction.deleteChannelMessage
+  data: {
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    message: {
+      id: string
+      createdAt: Date
+    }
+  }
+}
+
+export type ChatJobEditChannelMessage = {
+  type: typeof ChatJobAction.editChannelMessage
+  data: {
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    message: {
+      id: string
+      createdAt: Date
+    }
+    newText: string
+    newAttachmentUrl?: string
+  }
+}
+
+export type ChatJobChangeChannelMessageState = {
+  type: typeof ChatJobAction.changeChannelMessageState
+  data: {
+    conversation: ConversationModel
+    contactInbox: ContactInboxModel
+    message: {
+      id: string
+      createdAt: Date
+    }
+    liked?: boolean
+    hidden?: boolean
+  }
+}
+
 export type ChatJobData =
   | ChatJobSendChannelMessage
   | ChatJobSendFlowStep
@@ -147,6 +193,9 @@ export type ChatJobData =
   | ChatJobSendTyping
   | ChatJobBroadcastEvent
   | ChatJobNotifyExportResult
+  | ChatJobDeleteChannelMessage
+  | ChatJobEditChannelMessage
+  | ChatJobChangeChannelMessageState
 
 export const chatQueue =
   process.env.NEXT_PHASE === "phase-production-build"

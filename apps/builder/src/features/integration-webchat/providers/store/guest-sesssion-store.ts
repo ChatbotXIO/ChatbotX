@@ -193,6 +193,10 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
         senderId: "",
         clientId: createId(),
         contactInboxId: "",
+        deletedAt: null,
+        type: "message",
+        parentId: null,
+        attributes: null,
         ...message,
       }
 

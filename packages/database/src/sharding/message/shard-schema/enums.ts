@@ -25,3 +25,5 @@ export const fileType = pgEnum(
   "fileType",
   fileTypes.options as [string, ...string[]],
 )
+
+export const messageKind = pgEnum("messageKind", ["message", "comment"])

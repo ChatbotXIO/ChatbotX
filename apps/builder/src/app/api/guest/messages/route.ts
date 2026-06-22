@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    if (!contactInbox) {
+    if (!contactInbox?.conversation) {
       return NextResponse.json({
         data: [],
         nextCursor: null,

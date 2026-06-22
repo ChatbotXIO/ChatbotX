@@ -84,3 +84,38 @@ export function getInboxLinks(
         item !== null,
     )
 }
+
+export function buildPostLink(channel: ChannelType, postId: string): string {
+  const allLinkConfigs: Record<ChannelType, string> = {
+    messenger: `https://fb.com/${postId}`,
+    instagram: `https://instagram.com/p/${postId}`,
+    whatsapp: "",
+    telegram: "",
+    zalo: "",
+    tiktok: "",
+    webchat: "",
+    smtp: "",
+    omnichannel: "",
+  }
+
+  return allLinkConfigs[channel]
+}
+
+export function buildMessageLink(
+  channel: ChannelType,
+  messageId: string,
+): string {
+  const allLinkConfigs: Record<ChannelType, string> = {
+    messenger: `https://fb.com/${messageId}`,
+    instagram: `https://instagram.com/p/${messageId}`,
+    whatsapp: "",
+    telegram: "",
+    zalo: "",
+    tiktok: "",
+    webchat: "",
+    smtp: "",
+    omnichannel: "",
+  }
+
+  return allLinkConfigs[channel]
+}

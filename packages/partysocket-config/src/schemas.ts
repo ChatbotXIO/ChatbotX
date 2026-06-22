@@ -1,5 +1,8 @@
 export const RealtimeEventType = {
   messageCreated: "messageCreated",
+  messageDeleted: "messageDeleted",
+  messageUpdated: "messageUpdated",
+  messageIdAssigned: "messageIdAssigned",
   typing: "typing",
   contactBlocked: "contactBlocked",
   contactUnblocked: "contactUnblocked",
@@ -10,6 +13,35 @@ export const RealtimeEventType = {
 export type RealtimeEventCreateMessage = {
   eventType: typeof RealtimeEventType.messageCreated
   data: unknown
+}
+
+export type RealtimeEventMessageDeleted = {
+  eventType: typeof RealtimeEventType.messageDeleted
+  data: {
+    messageIds: string[]
+  }
+}
+
+export type RealtimeEventMessageIdAssigned = {
+  eventType: typeof RealtimeEventType.messageIdAssigned
+  data: {
+    messageId: string
+    commentId: string
+  }
+}
+
+export type RealtimeEventMessageUpdated = {
+  eventType: typeof RealtimeEventType.messageUpdated
+  data: {
+    messageId: string
+    newText: string
+    newAttachmentPath?: string | null
+    newAttachmentPublicUrl?: string | null
+    newAttachmentMimeType?: string | null
+    newAttachmentWidth?: number
+    newAttachmentHeight?: number
+    removedAttachment?: boolean
+  }
 }
 
 export type RealtimeEventTyping = {
@@ -50,6 +82,9 @@ export type RealtimeEventNotifyExportResult = {
 
 export type RealtimeEventData =
   | RealtimeEventCreateMessage
+  | RealtimeEventMessageDeleted
+  | RealtimeEventMessageIdAssigned
+  | RealtimeEventMessageUpdated
   | RealtimeEventContactCommon
   | RealtimeEventConversationAssigned
   | RealtimeEventTyping

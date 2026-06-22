@@ -33,7 +33,6 @@ export const contactInboxModel = pgTable(
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),
-    sourceConversationId: text(),
     contactLastReadAt: timestamp(timestampConfig),
     lastMessageAt: timestamp(timestampConfig),
     lastIncomingMessageAt: timestamp(timestampConfig),

@@ -1,5 +1,19 @@
-import { and, desc, eq, gt, gte, inArray, isNotNull, lt, or } from "drizzle-orm"
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+  sql,
+} from "drizzle-orm"
+
 import type { DatabaseClient } from "../../client"
+
 import { attachmentModel, messageModel } from "../../schema"
 import type { AttachmentModel, MessageModel } from "../../types"
 
@@ -11,10 +25,12 @@ export interface CreateMessageInput {
   createdAt?: Date
   id?: string
   messageType: "incoming" | "outgoing" | "activity"
+  parentId?: string | null
   senderId?: string | null
   senderType: "bot" | "contact" | "system" | "user" | "api"
   sourceId?: string | null
   text?: string | null
+  type?: "message" | "comment"
   updatedAt?: Date
   workspaceId: string
 }
@@ -143,6 +159,31 @@ export interface IMessageRepository {
       "messageId" | "messageCreatedAt"
     >[],
   ): Promise<MessageWithAttachments>
+  deleteAttachmentsByMessageId(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<void>
+
+  /** Soft-deletes a single message by its primary key. */
+  deleteById(
+    id: string,
+    workspaceId: string,
+    createdAt?: Date,
+  ): Promise<{ id: string }[]>
+
+  /**
+   * Soft-deletes a comment (`sourceId = commentId`) and all its child comments
+   * (`contentAttributes.parentId = commentId`) by setting `deletedAt = NOW()`.
+   * The rows stay in the DB; the inbox renders them dimmed/disabled. Returns
+   * the affected message ids. Scoped by `workspaceId` since child comments may
+   * live in other conversations.
+   */
+  deleteBySourceId(
+    commentId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]>
 
   findAIContextMessages(
     options: FindAIContextMessagesOptions,
@@ -171,6 +212,7 @@ export interface IMessageRepository {
     ids: string[],
     contactInboxId: string,
     sinceTime?: Date,
+    workspaceId?: string,
   ): Promise<Pick<MessageModel, "id" | "text">[]>
 
   findTriggerMessage(
@@ -179,11 +221,34 @@ export interface IMessageRepository {
 
   listByConversation(query: ListMessagesQuery): Promise<PaginatedMessages>
 
+  updateMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    attributes: { liked: boolean; hidden: boolean },
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
+  updateMessageText(
+    messageId: string,
+    workspaceId: string,
+    newText: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null>
+
   updateSourceId(
     id: string,
     sourceId: string,
     workspaceId: string,
   ): Promise<void>
+
+  /** Updates the text of the message identified by sourceId (e.g. a Facebook
+   *  comment ID). Used when an external edit arrives via webhook and the DB
+   *  message ID is not known. */
+  updateTextBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    newText: string,
+  ): Promise<{ id: string } | null>
 }
 
 export class MessageRepository implements IMessageRepository {
@@ -200,6 +265,46 @@ export class MessageRepository implements IMessageRepository {
       .returning()
 
     return result as MessageModel
+  }
+
+  async deleteBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    _createdAt: Date,
+  ): Promise<{ id: string }[]> {
+    // Single atomic CTE: find the parent by sourceId, then soft-delete
+    // the parent and all its child comments in one statement.
+    const result = await this.db.execute<{ id: string }>(sql`
+      WITH parent AS (
+        SELECT id FROM "Message"
+        WHERE "workspaceId" = ${workspaceId} AND "sourceId" = ${sourceId}
+        LIMIT 1
+      )
+      UPDATE "Message" SET "deletedAt" = NOW()
+      WHERE "workspaceId" = ${workspaceId}
+        AND (
+          "sourceId" = ${sourceId}
+          OR "parentId" = (SELECT id::text FROM parent)
+        )
+      RETURNING id
+    `)
+    return result.rows as { id: string }[]
+  }
+
+  async deleteById(
+    id: string,
+    workspaceId: string,
+    _createdAt?: Date,
+  ): Promise<{ id: string }[]> {
+    const rows = await this.db
+      .update(messageModel)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(eq(messageModel.workspaceId, workspaceId), eq(messageModel.id, id)),
+      )
+      .returning({ id: messageModel.id })
+
+    return rows as { id: string }[]
   }
 
   async createOrUpdate(
@@ -310,7 +415,7 @@ export class MessageRepository implements IMessageRepository {
 
   async findById(
     id: string,
-    createdAt?: Date,
+    createdAt: Date,
   ): Promise<MessageWithAttachments | null> {
     const whereConditions = [eq(messageModel.id, id)]
     if (createdAt) {
@@ -539,6 +644,7 @@ export class MessageRepository implements IMessageRepository {
     ids: string[],
     contactInboxId: string,
     sinceTime?: Date,
+    _workspaceId?: string,
   ): Promise<Pick<MessageModel, "id" | "text">[]> {
     if (ids.length === 0) {
       return []
@@ -570,7 +676,10 @@ export class MessageRepository implements IMessageRepository {
     const { workspaceId, conversationId, pagination } = query
     const { limit, cursor } = pagination
 
-    const whereConditions = [eq(messageModel.workspaceId, workspaceId)]
+    const whereConditions = [
+      eq(messageModel.workspaceId, workspaceId),
+      isNull(messageModel.deletedAt),
+    ]
 
     if (conversationId) {
       whereConditions.push(eq(messageModel.conversationId, conversationId))
@@ -718,6 +827,75 @@ export class MessageRepository implements IMessageRepository {
       },
       {} as Record<string, AttachmentModel[]>,
     )
+  }
+
+  async deleteAttachmentsByMessageId(
+    messageId: string,
+    workspaceId: string,
+    _createdAt: Date,
+  ): Promise<void> {
+    await this.db
+      .delete(attachmentModel)
+      .where(
+        and(
+          eq(attachmentModel.messageId, messageId),
+          eq(attachmentModel.workspaceId, workspaceId),
+        ),
+      )
+  }
+
+  private async updateMessageFields(
+    messageId: string,
+    workspaceId: string,
+    patch: Partial<typeof messageModel.$inferInsert>,
+  ): Promise<{ id: string } | null> {
+    const [row] = await this.db
+      .update(messageModel)
+      .set(patch)
+      .where(
+        and(
+          eq(messageModel.id, messageId),
+          eq(messageModel.workspaceId, workspaceId),
+        ),
+      )
+      .returning({ id: messageModel.id })
+    return (row as { id: string } | undefined) ?? null
+  }
+
+  updateMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    attributes: { liked: boolean; hidden: boolean },
+    _createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateMessageFields(messageId, workspaceId, { attributes })
+  }
+
+  updateMessageText(
+    messageId: string,
+    workspaceId: string,
+    newText: string,
+    _createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateMessageFields(messageId, workspaceId, { text: newText })
+  }
+
+  async updateTextBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    newText: string,
+  ): Promise<{ id: string } | null> {
+    const [row] = await this.db
+      .update(messageModel)
+      .set({ text: newText })
+      .where(
+        and(
+          eq(messageModel.sourceId, sourceId),
+          eq(messageModel.workspaceId, workspaceId),
+        ),
+      )
+      .returning({ id: messageModel.id })
+    return (row as { id: string } | undefined) ?? null
   }
 
   async updateSourceId(

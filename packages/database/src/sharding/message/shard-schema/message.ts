@@ -1,4 +1,5 @@
 import { createId } from "@chatbotx.io/utils"
+import { sql } from "drizzle-orm"
 import {
   index,
   jsonb,
@@ -10,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type { ContentType, MessageType, SenderType } from "../../../partials"
 import { bigintAsString, timestampConfig } from "../../../partials/shared"
-import { contentType, messageType, senderType } from "./enums"
+import { contentType, messageKind, messageType, senderType } from "./enums"
 
 export const messageModel = pgTable(
   "Message",
@@ -32,6 +33,10 @@ export const messageModel = pgTable(
     senderType: senderType().$type<SenderType>().notNull(),
     senderId: bigintAsString(),
     sourceId: text(),
+    deletedAt: timestamp(timestampConfig),
+    type: messageKind().notNull().default("message"),
+    parentId: text(),
+    attributes: jsonb().$type<{ liked: boolean; hidden: boolean }>(),
   },
   (table) => [
     primaryKey({ columns: [table.id, table.createdAt] }),
@@ -60,5 +65,21 @@ export const messageModel = pgTable(
       table.sourceId.asc().nullsLast(),
       table.createdAt.desc().nullsLast(),
     ),
+    index("Message_conversationId_type_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+      table.conversationId.asc().nullsLast(),
+      table.type.asc().nullsLast(),
+      table.createdAt.desc().nullsLast(),
+    ),
+    index("Message_parentId_idx")
+      .using(
+        "btree",
+        table.workspaceId.asc().nullsLast(),
+        table.parentId.asc().nullsLast(),
+        table.type.asc().nullsLast(),
+        table.createdAt.desc().nullsLast(),
+      )
+      .where(sql`"parentId" IS NOT NULL`),
   ],
 )

@@ -55,7 +55,7 @@ export function WebchatMessageList() {
   }
 
   return (
-    <div className="relative flex flex-1 flex-col py-4">
+    <div className="relative flex flex-1 flex-col px-3 py-3">
       <Virtuoso
         alignToBottom={true}
         components={{

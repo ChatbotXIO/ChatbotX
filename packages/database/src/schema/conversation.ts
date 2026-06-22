@@ -1,8 +1,10 @@
+import { sql } from "drizzle-orm"
 import {
   boolean,
   index,
   jsonb,
   pgTable,
+  text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
@@ -51,14 +53,17 @@ export const conversationModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
+    sourceId: text(),
     adminRepliedAt: timestamp(timestampConfig),
     contactRepliedAt: timestamp(timestampConfig),
   },
   (table) => [
-    uniqueIndex("Conversation_contactId_key").using(
-      "btree",
-      table.contactId.asc().nullsLast(),
-    ),
+    uniqueIndex("Conversation_contactId_sourceId_key")
+      .on(table.contactId, table.sourceId)
+      .where(sql`${table.sourceId} IS NOT NULL`),
+    uniqueIndex("Conversation_contactId_dm_key")
+      .on(table.contactId)
+      .where(sql`${table.sourceId} IS NULL`),
     index("Conversation_aiContextLastMessageId_idx").on(
       table.aiContextLastMessageId,
     ),

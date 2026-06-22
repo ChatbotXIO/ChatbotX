@@ -14,7 +14,7 @@ export function useAttachmentUrl(
     return attachment.url
   }
 
-  if (attachment.url === null) {
+  if (attachment.originPath === null) {
     return
   }
 

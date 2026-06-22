@@ -18,6 +18,9 @@ export const IntegrationJobAction = {
   sendSequenceFlow: "sendSequenceFlow",
   runRef: "runRef",
   incomingMessage: "incomingMessage",
+  incomingComment: "incomingComment",
+  updateIncomingComment: "updateIncomingComment",
+  deleteIncomingComment: "deleteIncomingComment",
   messageStatus: "messageStatus",
   runFlowPostback: "runFlowPostback",
   runFlowQuickReply: "runFlowQuickReply",
@@ -44,6 +47,42 @@ export type IntegrationJobReceiveMessage = {
     integrationType: string
     integrationIdentifier: string
     payload: unknown
+  }
+}
+
+export type IntegrationJobReceiveComment = {
+  type: typeof IntegrationJobAction.incomingComment
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    commentData: {
+      commentId: string
+      postId: string
+      parentId?: string
+      fromId: string
+      fromName?: string
+      message?: string
+      createdTime: number
+    }
+  }
+}
+
+export type IntegrationJobUpdateIncomingComment = {
+  type: typeof IntegrationJobAction.updateIncomingComment
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    commentId: string
+    newText: string
+  }
+}
+
+export type IntegrationJobDeleteIncomingComment = {
+  type: typeof IntegrationJobAction.deleteIncomingComment
+  data: {
+    integrationType: string
+    integrationIdentifier: string
+    commentId: string
   }
 }
 
@@ -268,6 +307,9 @@ export type IntegrationJobUpdateContactAvatar = {
 
 export type IntegrationJobData =
   | IntegrationJobReceiveMessage
+  | IntegrationJobReceiveComment
+  | IntegrationJobUpdateIncomingComment
+  | IntegrationJobDeleteIncomingComment
   | IntegrationJobMessageStatus
   | IntegrationJobRunFlowNode
   | IntegrationJobSendFlowPostback

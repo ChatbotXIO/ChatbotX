@@ -294,6 +294,150 @@ export class ShardedMessageRepository implements IMessageRepository {
     })
   }
 
+  updateMessageAttributes(
+    messageId: string,
+    workspaceId: string,
+    attributes: { liked: boolean; hidden: boolean },
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      messageId,
+      workspaceId,
+      { attributes },
+      "updateMessageAttributes",
+      createdAt,
+    )
+  }
+
+  updateMessageText(
+    messageId: string,
+    workspaceId: string,
+    newText: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    return this.updateAcrossShards(
+      messageId,
+      workspaceId,
+      { text: newText },
+      "updateMessageText",
+      createdAt,
+    )
+  }
+
+  async updateTextBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    newText: string,
+  ): Promise<{ id: string } | null> {
+    // sourceId-based update: scan shards from the last 90 days (same window
+    // used by findBySourceId for parent-comment lookups).
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const timeShards = await this.getShardsForRange(since, new Date())
+    const shards = this.mergeWriteShard(timeShards, writeShard)
+
+    for (const shardInfo of shards) {
+      try {
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        const [row] = await client
+          .update(messageModel)
+          .set({ text: newText })
+          .where(
+            and(
+              eq(messageModel.sourceId, sourceId),
+              eq(messageModel.workspaceId, workspaceId),
+            ),
+          )
+          .returning({ id: messageModel.id })
+        if (row) {
+          return row as { id: string }
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, shardId: shardInfo.shard.id },
+          "Shard update failed in updateTextBySourceId",
+        )
+      }
+    }
+    return null
+  }
+
+  // Targets the 1-2 shards covering the message's createdAt plus the write
+  // shard (for back-dated imports). When createdAt is unknown it is resolved
+  // first via a lightweight SELECT, avoiding a full shard scan.
+  private async updateAcrossShards(
+    messageId: string,
+    workspaceId: string,
+    patch: Partial<typeof messageModel.$inferInsert>,
+    caller: string,
+    createdAt: Date,
+  ): Promise<{ id: string } | null> {
+    const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
+    if (shards.length === 0) {
+      return null
+    }
+
+    const perShard = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          return await client
+            .update(messageModel)
+            .set(patch)
+            .where(
+              and(
+                eq(messageModel.id, messageId),
+                eq(messageModel.workspaceId, workspaceId),
+                eq(messageModel.createdAt, createdAt),
+              ),
+            )
+            .returning({ id: messageModel.id })
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            `Shard update failed in ${caller}`,
+          )
+          return []
+        }
+      }),
+    )
+
+    return perShard.flat()[0] ?? null
+  }
+
+  async deleteAttachmentsByMessageId(
+    messageId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<void> {
+    const timeRangeShards = await this.getShardsForRange(createdAt, createdAt)
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
+
+    await Promise.allSettled(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          await client
+            .delete(attachmentModel)
+            .where(
+              and(
+                eq(attachmentModel.messageId, messageId),
+                eq(attachmentModel.workspaceId, workspaceId),
+              ),
+            )
+        } catch (err) {
+          logger.warn(
+            { err, messageId },
+            "deleteAttachmentsByMessageId: shard failed",
+          )
+        }
+      }),
+    )
+  }
+
   async updateSourceId(
     id: string,
     sourceId: string,
@@ -306,6 +450,131 @@ export class ShardedMessageRepository implements IMessageRepository {
         .set({ sourceId })
         .where(eq(messageModel.id, id))
     })
+  }
+
+  async deleteBySourceId(
+    sourceId: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]> {
+    const writeShard = await this.shardManager.getWriteShardInfo(workspaceId)
+
+    // Step 1: find parent DB id — search in createdAt shard + write shard only.
+    const parentTimeShards = await this.getShardsForRange(
+      createdAt,
+      endOfHour(createdAt),
+    )
+    const parentShards = this.mergeWriteShard(parentTimeShards, writeShard)
+
+    let parentDbId: string | null = null
+    for (const shardInfo of parentShards) {
+      try {
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        const [parent] = await client
+          .select({ id: messageModel.id })
+          .from(messageModel)
+          .where(
+            and(
+              eq(messageModel.workspaceId, workspaceId),
+              eq(messageModel.sourceId, sourceId),
+            ),
+          )
+          .limit(1)
+        if (parent) {
+          parentDbId = parent.id
+          break
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, shardId: shardInfo.shard.id },
+          "Shard query failed while looking up parent in deleteBySourceId",
+        )
+      }
+    }
+
+    // Step 2: soft-delete parent + children.
+    // Parent lives in its createdAt shard; children (replies) can be in any
+    // shard from createdAt onwards.
+    const childTimeShards = await this.getShardsForRange(createdAt, new Date())
+    const shards = this.mergeWriteShard(childTimeShards, writeShard)
+
+    if (shards.length === 0) {
+      return []
+    }
+
+    const perShard = await Promise.all(
+      shards.map(async (shardInfo) => {
+        try {
+          const client = await this.shardManager.getShardClient(shardInfo.shard)
+          return await client
+            .update(messageModel)
+            .set({ deletedAt: new Date() })
+            .where(
+              and(
+                eq(messageModel.workspaceId, workspaceId),
+                or(
+                  eq(messageModel.sourceId, sourceId),
+                  parentDbId
+                    ? eq(messageModel.parentId, parentDbId)
+                    : undefined,
+                ),
+              ),
+            )
+            .returning({ id: messageModel.id })
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard update failed in deleteBySourceId",
+          )
+          return []
+        }
+      }),
+    )
+
+    const ids = new Set<string>()
+    for (const rows of perShard) {
+      for (const row of rows) {
+        ids.add(row.id)
+      }
+    }
+    return [...ids].map((id) => ({ id }))
+  }
+
+  async deleteById(
+    id: string,
+    workspaceId: string,
+    createdAt: Date,
+  ): Promise<{ id: string }[]> {
+    const shards = await this.getShardsForRange(createdAt, createdAt)
+    if (shards.length === 0) {
+      return []
+    }
+
+    for (const shardInfo of shards) {
+      try {
+        const client = await this.shardManager.getShardClient(shardInfo.shard)
+        const rows = await client
+          .update(messageModel)
+          .set({ deletedAt: new Date() })
+          .where(
+            and(
+              eq(messageModel.workspaceId, workspaceId),
+              eq(messageModel.id, id),
+              eq(messageModel.createdAt, createdAt),
+            ),
+          )
+          .returning({ id: messageModel.id })
+        if (rows.length > 0) {
+          return rows as { id: string }[]
+        }
+      } catch (error) {
+        logger.warn(
+          { err: error, shardId: shardInfo.shard.id },
+          "Shard update failed in deleteById",
+        )
+      }
+    }
+    return []
   }
 
   async bulkCreateAttachments(
@@ -991,6 +1260,7 @@ export class ShardedMessageRepository implements IMessageRepository {
     ids: string[],
     contactInboxId: string,
     sinceTime?: Date,
+    workspaceId?: string,
   ): Promise<Pick<MessageModel, "id" | "text">[]> {
     if (ids.length === 0) {
       return []
@@ -1002,7 +1272,11 @@ export class ShardedMessageRepository implements IMessageRepository {
       )
     }
 
-    const shards = await this.getShardsForRange(sinceTime, new Date())
+    const timeRangeShards = await this.getShardsForRange(sinceTime, new Date())
+    const writeShard = workspaceId
+      ? await this.shardManager.getWriteShardInfo(workspaceId)
+      : null
+    const shards = this.mergeWriteShard(timeRangeShards, writeShard)
     if (shards.length === 0) {
       return []
     }

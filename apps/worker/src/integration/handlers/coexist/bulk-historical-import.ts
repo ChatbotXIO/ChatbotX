@@ -308,7 +308,7 @@ export const bulkImportContacts = async (props: {
               contactId: cid,
             })),
           )
-          .onConflictDoNothing({ target: [conversationModel.contactId] })
+          .onConflictDoNothing()
         const healed = await tx
           .select({
             id: conversationModel.id,
@@ -457,7 +457,7 @@ export const bulkImportContacts = async (props: {
         await tx
           .insert(conversationModel)
           .values(conversationsToInsert)
-          .onConflictDoNothing({ target: [conversationModel.contactId] })
+          .onConflictDoNothing()
       }
 
       if (trulyNew > 0) {

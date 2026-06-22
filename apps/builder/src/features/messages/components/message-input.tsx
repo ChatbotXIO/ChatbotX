@@ -7,10 +7,21 @@ import { Textarea } from "@chatbotx.io/ui/components/ui/textarea"
 import { createId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { PaperclipIcon, SendHorizonalIcon } from "lucide-react"
+import {
+  PaperclipIcon,
+  ReplyIcon,
+  SendHorizonalIcon,
+  XIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useAction } from "next-safe-action/hooks"
-import { type KeyboardEvent, useCallback, useMemo, useRef } from "react"
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react"
 import { Controller, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { disableBotAction } from "@/features/conversations/actions/disable-bot.action"
@@ -39,7 +50,25 @@ export const MessageInput = () => {
     activeConversationId,
     conversations,
     updateConversation,
+    replyToMessage,
+    setReplyToMessage,
+    messages,
   } = useChatStore((state) => state)
+
+  const lastContactComment = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      if (
+        m.messageType === "incoming" &&
+        m.type === "comment" &&
+        m.deletedAt == null &&
+        m.id
+      ) {
+        return m
+      }
+    }
+    return null
+  }, [messages])
 
   // Memoize active conversation to prevent unnecessary re-renders
   const conversation = useMemo(
@@ -100,6 +129,10 @@ export const MessageInput = () => {
                 senderType: "user",
                 senderId: session?.data?.user.id ?? null,
                 clientId: typedInput.clientId,
+                deletedAt: null,
+                type: "message",
+                parentId: null,
+                attributes: null,
               })
             }
 
@@ -110,6 +143,7 @@ export const MessageInput = () => {
             if (conversation && isConversationActive(conversation)) {
               disableBot({ ids: [conversation.id] })
             }
+            setReplyToMessage(null)
             textareaRef.current?.focus()
             resetFormAndAction()
             form.setValue("clientId", createId())
@@ -120,11 +154,25 @@ export const MessageInput = () => {
             text: "",
             files: [],
             clientId: createId(),
+            replyToMessageId: undefined,
+            replyToMessageCreatedAt: undefined,
           },
         },
         errorMapProps: {},
       },
     )
+
+  // Sync replyToMessage store state → form field and focus input
+  useEffect(() => {
+    form.setValue("replyToMessageId", replyToMessage?.id ?? undefined)
+    form.setValue(
+      "replyToMessageCreatedAt",
+      replyToMessage?.createdAt ?? undefined,
+    )
+    if (replyToMessage) {
+      textareaRef.current?.focus()
+    }
+  }, [form, replyToMessage])
 
   // Memoize emoji selection handler
   const setContent = useCallback(
@@ -160,6 +208,17 @@ export const MessageInput = () => {
     }
   }, [])
 
+  const sendMessage = useCallback(() => {
+    if (lastContactComment) {
+      form.setValue("replyToMessageId", lastContactComment.id)
+      form.setValue(
+        "replyToMessageCreatedAt",
+        lastContactComment.createdAt ?? undefined,
+      )
+    }
+    handleSubmitWithAction()
+  }, [lastContactComment, form, handleSubmitWithAction])
+
   // Memoize keyboard handler
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -168,10 +227,10 @@ export const MessageInput = () => {
       }
       if (e.key === "Enter" && e.shiftKey === false) {
         e.preventDefault()
-        handleSubmitWithAction()
+        sendMessage()
       }
     },
-    [handleSubmitWithAction],
+    [sendMessage],
   )
 
   // Check if conversation is over 7 days since last contact reply
@@ -210,8 +269,29 @@ export const MessageInput = () => {
         <form
           aria-label="Message input form"
           className="flex w-full flex-col"
-          onSubmit={handleSubmitWithAction}
+          onSubmit={(e) => {
+            e.preventDefault()
+            sendMessage()
+          }}
         >
+          {replyToMessage && (
+            <div className="mx-2.5 mb-1 flex items-start gap-2 rounded-lg border-primary bg-muted px-3 py-2 text-sm">
+              <ReplyIcon className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              <span className="flex-1 truncate text-muted-foreground">
+                {replyToMessage.text || t("messages.facebookComment")}
+              </span>
+              <Button
+                aria-label="Clear reply"
+                className="size-4 shrink-0 p-0"
+                onClick={() => setReplyToMessage(null)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+          )}
           <div className="mb-1 w-full px-2.5 py-1">
             <Controller
               control={form.control}

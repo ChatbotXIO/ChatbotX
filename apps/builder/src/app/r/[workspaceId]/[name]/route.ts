@@ -67,7 +67,7 @@ export const GET = async (
     },
   })
 
-  if (!contactInbox) {
+  if (!contactInbox?.conversation) {
     return NextResponse.json(
       { message: "Contact inbox not found" },
       { status: 404 },

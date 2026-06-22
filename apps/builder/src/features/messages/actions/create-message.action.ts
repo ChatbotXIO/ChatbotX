@@ -105,6 +105,8 @@ export const createMessage = async (props: {
 
   const repository = await createMessageRepository()
 
+  const parentId = parsedInput.replyToMessageId ?? null
+
   const now = new Date()
   const messageInput = {
     text: "text" in parsedInput ? parsedInput.text : null,
@@ -116,6 +118,11 @@ export const createMessage = async (props: {
     contactInboxId: contactInbox.id,
     contentType: "text" as const,
     createdAt: now,
+    type: parsedInput.replyToMessageId
+      ? ("comment" as const)
+      : ("message" as const),
+    parentId,
+    contentAttributes: null,
   }
 
   const attachmentInputs = uploadedFiles.map((file) => ({
@@ -177,6 +184,7 @@ export const createMessage = async (props: {
         message: {
           ...messageWithAttachments,
           clientId: parsedInput.clientId,
+          parentCreatedAt: parsedInput.replyToMessageCreatedAt ?? null,
         },
         sendFrom: "inbox",
       },

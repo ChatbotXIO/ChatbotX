@@ -1,9 +1,11 @@
+import { sql } from "drizzle-orm"
 import {
   index,
   jsonb,
   pgEnum,
   pgTable,
   text,
+  timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
 import {
@@ -31,6 +33,7 @@ export const contentType = pgEnum(
   "contentType",
   contentTypes.options as [string, ...string[]],
 )
+export const messageKind = pgEnum("messageKind", ["message", "comment"])
 
 export const messageModel = pgTable(
   "Message",
@@ -63,6 +66,10 @@ export const messageModel = pgTable(
     senderType: senderType().$type<SenderType>().notNull(),
     senderId: bigintAsString(),
     sourceId: text(),
+    deletedAt: timestamp({ withTimezone: true }),
+    type: messageKind().notNull().default("message"),
+    parentId: text(),
+    attributes: jsonb().$type<{ liked: boolean; hidden: boolean }>(),
   },
   (table) => [
     index("Message_workspaceId_idx").using(
@@ -87,5 +94,21 @@ export const messageModel = pgTable(
       table.senderType.asc().nullsLast(),
       table.senderId.asc().nullsLast(),
     ),
+    index("Message_conversationId_type_idx").using(
+      "btree",
+      table.workspaceId.asc().nullsLast(),
+      table.conversationId.asc().nullsLast(),
+      table.type.asc().nullsLast(),
+      table.createdAt.desc().nullsLast(),
+    ),
+    index("Message_parentId_idx")
+      .using(
+        "btree",
+        table.workspaceId.asc().nullsLast(),
+        table.parentId.asc().nullsLast(),
+        table.type.asc().nullsLast(),
+        table.createdAt.desc().nullsLast(),
+      )
+      .where(sql`"parentId" IS NOT NULL`),
   ],
 )

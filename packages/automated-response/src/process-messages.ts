@@ -63,6 +63,7 @@ const getMessagesFromStoreAndProcess = async (props: {
         props.contactInbox.lastMessageAt,
         365 * 24 * 60 * 60 * 1000, // 1 year
       ),
+      props.conversation.workspaceId,
     )
     .then((data) => data.filter((v) => Boolean(v.text)))
   if (messages.length === 0) {

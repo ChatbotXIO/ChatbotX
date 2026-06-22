@@ -1,3 +1,4 @@
+import { conversationService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import type { IntegrationType } from "@chatbotx.io/database/partials"
 import {
@@ -31,12 +32,17 @@ export const contactMarkAsRead = async (
       channel: integrationType,
       inboxId: inbox.id,
     },
-    with: {
-      conversation: true,
-    },
   })
   if (!contactInbox) {
     throw new Error("Contact inbox not found")
+  }
+
+  const conversation = await conversationService.findDMByContact({
+    workspaceId: inbox.workspaceId,
+    contactId: contactInbox.contactId,
+  })
+  if (!conversation) {
+    throw new Error("Conversation not found")
   }
 
   const seenAt = parseReadTimestamp(props.payload) ?? new Date()
@@ -47,7 +53,7 @@ export const contactMarkAsRead = async (
       .set({
         contactLastReadAt: seenAt,
       })
-      .where(eq(conversationModel.id, contactInbox.conversation.id))
+      .where(eq(conversationModel.id, conversation.id))
 
     await tx
       .update(contactInboxModel)
@@ -59,9 +65,9 @@ export const contactMarkAsRead = async (
 
   await emit(messageEventTypeSchema.enum["message:seen"], {
     context: {
-      workspaceId: contactInbox.conversation.workspaceId,
+      workspaceId: conversation.workspaceId,
       contactId: contactInbox.contactId,
-      conversationId: contactInbox.conversation.id,
+      conversationId: conversation.id,
       contactInboxId: contactInbox.id,
       channel: integrationType,
     },

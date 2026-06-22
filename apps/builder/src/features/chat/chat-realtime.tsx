@@ -15,9 +15,14 @@ export function ChatRealtime() {
   const workspaceId = useWorkspaceId()
   const { wsUrl } = useTenantSettings()
 
-  const { handleNewMessage, updateContact, updateConversations } = useChatStore(
-    (state) => state,
-  )
+  const {
+    handleNewMessage,
+    markMessagesDeleted,
+    assignMessageCommentId,
+    updateMessageText,
+    updateContact,
+    updateConversations,
+  } = useChatStore((state) => state)
 
   usePartySocket({
     host: wsUrl,
@@ -40,6 +45,22 @@ export function ChatRealtime() {
         switch (eventType) {
           case RealtimeEventType.messageCreated:
             handleNewMessage(data as MessageResourceWithRelations)
+            break
+          case RealtimeEventType.messageDeleted:
+            markMessagesDeleted(data.messageIds)
+            break
+          case RealtimeEventType.messageIdAssigned:
+            assignMessageCommentId(data.messageId, data.commentId)
+            break
+          case RealtimeEventType.messageUpdated:
+            updateMessageText(data.messageId, data.newText, {
+              newAttachmentPath: data.newAttachmentPath ?? null,
+              newAttachmentPublicUrl: data.newAttachmentPublicUrl ?? null,
+              newAttachmentMimeType: data.newAttachmentMimeType ?? null,
+              newAttachmentWidth: data.newAttachmentWidth,
+              newAttachmentHeight: data.newAttachmentHeight,
+              removedAttachment: data.removedAttachment ?? false,
+            })
             break
           case RealtimeEventType.contactBlocked:
             updateContact(data.contactId, {

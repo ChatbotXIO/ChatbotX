@@ -11,15 +11,20 @@ import {
   messageEventTypeSchema,
   stepTypes,
 } from "@chatbotx.io/flow-config"
+import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import {
   ChannelError,
   parseSdkError,
   type SendFlowStepData,
 } from "@chatbotx.io/sdk"
 import type {
+  ChatJobChangeChannelMessageState,
+  ChatJobDeleteChannelMessage,
+  ChatJobEditChannelMessage,
   ChatJobSendChannelMessage,
   ChatJobSendTyping,
 } from "@chatbotx.io/worker-config"
+import { ChatJobAction, chatQueue } from "@chatbotx.io/worker-config"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -38,15 +43,70 @@ export async function sendMessageToChannel(
         contactInbox,
       })
 
-    await integration.runChannelHandler("message", "sendMessage", {
+    const isComment = message.type === "comment"
+
+    let handlerMessage = message
+    if (isComment && message.parentId && message.parentCreatedAt) {
+      const repo = await createMessageRepository()
+      const parentMsg = await repo.findById(
+        message.parentId,
+        new Date(message.parentCreatedAt),
+      )
+      handlerMessage = {
+        ...message,
+        contentAttributes: {
+          ...message.contentAttributes,
+          replyToCommentId: parentMsg?.sourceId ?? null,
+        },
+      }
+    }
+
+    const handlerData = {
       ctx,
       data: {
-        contact: contactInbox,
-        message,
+        contact: {
+          ...contactInbox,
+          sourceConversationId: conversation.sourceId,
+        },
+        message: handlerMessage,
         metadata,
         sendFrom,
       },
-    })
+    }
+
+    const result = isComment
+      ? await integration.runChannelHandler(
+          "comment",
+          "sendComment",
+          handlerData,
+        )
+      : await integration.runChannelHandler(
+          "message",
+          "sendMessage",
+          handlerData,
+        )
+
+    if (isComment) {
+      // When the outgoing message is a comment reply, store the Facebook comment
+      // ID of the new reply so the page manager can edit/delete it later.
+      const replyId = result.messageIds[0]
+      if (message.parentId && replyId && message.id) {
+        const repo = await createMessageRepository()
+        await repo.updateSourceId(message.id, replyId, conversation.workspaceId)
+
+        // Notify the client so edit/delete buttons appear immediately without a refresh.
+        await chatQueue.add(ChatJobAction.broadcastEvent, {
+          type: ChatJobAction.broadcastEvent,
+          data: {
+            workspaceId: conversation.workspaceId,
+            event: {
+              eventType: RealtimeEventType.messageIdAssigned,
+              data: { messageId: message.id, commentId: replyId },
+            },
+          },
+        })
+      }
+    }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
     await emit(messageEventTypeSchema.enum["message:failed"], {
@@ -69,6 +129,136 @@ export async function sendMessageToChannel(
     }
     throw error
   }
+}
+
+export async function deleteMessageFromChannel(
+  data: ChatJobDeleteChannelMessage["data"],
+) {
+  const { conversation, contactInbox, message } = data
+
+  const repository = await createMessageRepository()
+  const found = await repository.findById(
+    message.id,
+    new Date(message.createdAt),
+  )
+
+  if (!found) {
+    logger.warn(
+      { messageId: message.id },
+      "deleteMessageFromChannel: message not found in shard",
+    )
+    return
+  }
+
+  if (found.type !== "comment" || !found.sourceId) {
+    logger.warn(
+      { messageId: message.id, type: found.type },
+      "deleteMessageFromChannel: message is not a comment or has no sourceId, skipping",
+    )
+    return
+  }
+
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  await integration.runChannelHandler("comment", "deleteComment", {
+    ctx,
+    data: { commentId: found.sourceId },
+  })
+}
+
+export async function editMessageFromChannel(
+  data: ChatJobEditChannelMessage["data"],
+) {
+  const { conversation, contactInbox, message, newText, newAttachmentUrl } =
+    data
+
+  const repository = await createMessageRepository()
+  const found = await repository.findById(
+    message.id,
+    new Date(message.createdAt),
+  )
+
+  if (!found) {
+    logger.warn(
+      { messageId: message.id },
+      "editMessageFromChannel: message not found in shard",
+    )
+    return
+  }
+
+  if (found.type !== "comment" || !found.sourceId) {
+    logger.warn(
+      { messageId: message.id, type: found.type },
+      "editMessageFromChannel: message is not a comment or has no sourceId, skipping",
+    )
+    return
+  }
+
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  await integration.runChannelHandler("comment", "editComment", {
+    ctx,
+    data: { commentId: found.sourceId, newText, newAttachmentUrl },
+  })
+}
+
+export async function changeMessageStateOnChannel(
+  data: ChatJobChangeChannelMessageState["data"],
+) {
+  const { conversation, contactInbox, message, liked, hidden } = data
+
+  const repository = await createMessageRepository()
+  const found = await repository.findById(
+    message.id,
+    new Date(message.createdAt),
+  )
+
+  if (!found) {
+    logger.warn(
+      { messageId: message.id },
+      "changeMessageStateOnChannel: message not found in shard",
+    )
+    return
+  }
+
+  if (found.type !== "comment" || !found.sourceId) {
+    logger.warn(
+      { messageId: message.id, type: found.type },
+      "changeMessageStateOnChannel: message is not a comment or has no sourceId, skipping",
+    )
+    return
+  }
+
+  const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
+    workspaceId: conversation.workspaceId,
+    contactInbox,
+  })
+
+  const calls: Promise<void>[] = []
+  if (liked !== undefined) {
+    calls.push(
+      integration.runChannelHandler("comment", "likeComment", {
+        ctx,
+        data: { commentId: found.sourceId, liked },
+      }),
+    )
+  }
+  if (hidden !== undefined) {
+    calls.push(
+      integration.runChannelHandler("comment", "hideComment", {
+        ctx,
+        data: { commentId: found.sourceId, hidden },
+      }),
+    )
+  }
+
+  await Promise.all(calls)
 }
 
 export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
@@ -95,8 +285,8 @@ export async function sendTypingToChannel(data: ChatJobSendTyping["data"]) {
 
 async function updateMessageSourceId(
   messageId: string | undefined,
-  result: { messageIds: string[] },
   workspaceId: string,
+  result: { messageIds: string[] },
 ) {
   try {
     const firstMessageId = result?.messageIds?.[0]
@@ -160,7 +350,10 @@ export async function sendFlowStepToChannel({
     {
       ctx,
       data: {
-        contact: contactInbox,
+        contact: {
+          ...contactInbox,
+          sourceConversationId: conversation.sourceId,
+        },
         flowId,
         flowVersionId,
         step: resolvedStep,
@@ -170,7 +363,7 @@ export async function sendFlowStepToChannel({
     },
   )
 
-  await updateMessageSourceId(messageId, result, conversation.workspaceId)
+  await updateMessageSourceId(messageId, conversation.workspaceId, result)
 
   return result
 }

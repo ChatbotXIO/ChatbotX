@@ -8,6 +8,16 @@ export const createMessageRequest = z
   .union([
     z.object({
       text: z.string().trim().min(1).max(1000),
+      files: z
+        .array(
+          z.instanceof(File).refine((file) => file.size <= MAX_FILE_SIZE, {
+            message: "Max image size is 5MB.",
+          }),
+        )
+        .min(1),
+    }),
+    z.object({
+      text: z.string().trim().min(1).max(1000),
     }),
     z.object({
       files: z
@@ -33,6 +43,8 @@ export const createMessageRequest = z
           "ID of the channel to send the message on. null to send message on the last interacted channel (if any).",
       }),
       clientId: zodBigintAsString().optional(),
+      replyToMessageId: z.string().optional(),
+      replyToMessageCreatedAt: z.coerce.date().optional(),
     }),
   )
 export type CreateMessageRequest = z.infer<typeof createMessageRequest>
@@ -72,6 +84,25 @@ export type CreateWebchatMessageRequest = z.infer<
   typeof createWebchatMessageRequest
 >
 
+export const deleteMessageRequest = z.object({
+  id: z.string().min(1),
+  createdAt: z.coerce.date(),
+})
+export type DeleteMessageRequest = z.infer<typeof deleteMessageRequest>
+
+export const editMessageRequest = z.object({
+  messageId: zodBigintAsString(),
+  createdAt: z.coerce.date(),
+  newText: z.string().trim().min(1).max(2000),
+  newAttachmentPath: z.string().optional(),
+  newAttachmentPublicUrl: z.string().optional(),
+  newAttachmentMimeType: z.string().optional(),
+  newAttachmentName: z.string().optional(),
+  newAttachmentSize: z.number().int().optional(),
+  removeAttachment: z.boolean().optional(),
+})
+export type EditMessageRequest = z.infer<typeof editMessageRequest>
+
 export const sendFileMessageRequest = z.object({
   contactId: zodBigintAsString(),
   channel: channelTypes,
@@ -85,6 +116,16 @@ export const sendFlowMessageRequest = z.object({
   channel: channelTypes,
   flowId: zodBigintAsString(),
 })
+
+export const changeMessageAttributesRequest = z.object({
+  messageId: zodBigintAsString(),
+  createdAt: z.coerce.date(),
+  liked: z.boolean().optional(),
+  hidden: z.boolean().optional(),
+})
+export type ChangeMessageAttributesRequest = z.infer<
+  typeof changeMessageAttributesRequest
+>
 
 export const developerAccessTokenCreateMessageRequest =
   createMessageRequest.and(

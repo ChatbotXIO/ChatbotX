@@ -28,7 +28,12 @@ import {
 } from "./handlers/flow"
 import { handleChannelLabelWebhook } from "./handlers/inbox_labels"
 import { handleMessageStatus } from "./handlers/message-status"
-import { receiveMessage } from "./handlers/received-message"
+import {
+  deleteIncomingComment,
+  receiveComment,
+  receiveMessage,
+  updateIncomingComment,
+} from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
 
@@ -105,6 +110,18 @@ async function startIntegrationWorker() {
               },
             })
           }
+          return
+        }
+        case IntegrationJobAction.incomingComment: {
+          await receiveComment(job.data.data)
+          return
+        }
+        case IntegrationJobAction.updateIncomingComment: {
+          await updateIncomingComment(job.data.data)
+          return
+        }
+        case IntegrationJobAction.deleteIncomingComment: {
+          await deleteIncomingComment(job.data.data)
           return
         }
         case IntegrationJobAction.sendFlow: {

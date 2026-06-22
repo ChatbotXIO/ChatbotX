@@ -15,22 +15,55 @@ import {
 } from "@chatbotx.io/ui/components/ui/carousel"
 import { cn } from "@chatbotx.io/ui/lib/utils"
 import { format } from "date-fns"
-import { ExternalLinkIcon, PaperclipIcon } from "lucide-react"
+import {
+  ExternalLinkIcon,
+  PaperclipIcon,
+  ReplyIcon,
+  ThumbsUp,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
+import { useState } from "react"
 import type { AttachmentResource } from "@/features/attachments/schema/resource"
 import { useAttachmentUrl } from "@/features/attachments/utils"
 import type { MessageResourceWithRelations } from "../schema/resource"
+import { MessageActions, MessageActionsEditor } from "./message-actions"
 import { MessageBubble } from "./message-bubble"
 
 type MessageItemProps = {
   message: MessageResourceWithRelations
   guestDisplay?: boolean
+  onChangeHide?: () => void
+  onChangeLike?: () => void
+  onDelete?: () => void
+  onEdit?: (message: {
+    id: string
+    createdAt: Date
+    text: string
+    newAttachmentPath?: string
+    newAttachmentPublicUrl?: string
+    newAttachmentMimeType?: string
+    newAttachmentName?: string
+    newAttachmentSize?: number
+    removeAttachment?: boolean
+  }) => void
   onPostback?: (button: MessageButtonTemplate) => void
+  onReply?: (comment: { commentId: string; text: string }) => void
 }
 
 export const MessageItem = (props: MessageItemProps) => {
-  const { message, guestDisplay = false } = props
+  const {
+    message,
+    guestDisplay = false,
+    onChangeLike,
+    onChangeHide,
+    onReply,
+    onDelete,
+    onEdit,
+  } = props
+  const t = useTranslations("messages")
+  const [isEditing, setIsEditing] = useState(false)
 
   const variants: Record<"left" | "right" | "full", string> = {
     left: "px-4 py-3 rounded-xl bg-secondary",
@@ -51,26 +84,155 @@ export const MessageItem = (props: MessageItemProps) => {
       break
   }
 
+  const isComment = message.type === "comment"
+  const isDeleted = message.deletedAt != null
+  const attributes = message.attributes as {
+    liked?: boolean
+    hidden?: boolean
+  } | null
+  const isLiked = attributes?.liked === true
+  const isHidden = attributes?.hidden === true
+  const hasAttachments = !!message.attachments?.length
+
   return (
     <MessageBubble
+      className="group"
       title={format(new Date(message.createdAt), "yyyy/MM/dd HH:mm:ss")}
       variant={variant}
     >
-      <div className="mx-3 flex min-h-11 max-w-[70%] flex-col gap-1">
-        {message.text && message.text.length > 0 && (
-          <div className={cn("text-sm", variants[variant])}>
-            <pre className="whitespace-pre-line break-words font-sans">
-              {message.text}
-            </pre>
-          </div>
-        )}
-        {message.attachments && message.attachments.length > 0 && (
-          <RenderAttachments message={message} />
+      <div className="flex min-h-11 max-w-[70%] flex-col gap-1">
+        {isComment ? (
+          (message.text ||
+            (message.attachments && message.attachments.length > 0)) && (
+            <div
+              className={cn(
+                "relative text-sm",
+                variants[variant],
+                isDeleted && "opacity-50",
+                isHidden && "opacity-50",
+              )}
+            >
+              {!isEditing &&
+                (isDeleted || (message.text && message.text.length > 0)) && (
+                  <pre className="wrap-break-word whitespace-pre-line font-sans">
+                    <CommentText
+                      deletedLabel={t("messageDeleted")}
+                      hiddenLabel={t("commentHidden")}
+                      isDeleted={isDeleted}
+                      isHidden={isHidden}
+                      text={message.text}
+                    />
+                  </pre>
+                )}
+              {!(isEditing || isDeleted) && hasAttachments && (
+                <RenderAttachments message={message} />
+              )}
+              {isEditing && onEdit && (
+                <MessageActionsEditor
+                  message={message}
+                  onEdit={onEdit}
+                  onEditingChange={setIsEditing}
+                />
+              )}
+              {isLiked && (
+                <span className="absolute -right-2 -bottom-2 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                  <ThumbsUp className="size-3" />
+                </span>
+              )}
+            </div>
+          )
+        ) : (
+          <>
+            {(isDeleted || (message.text && message.text.length > 0)) && (
+              <div
+                className={cn(
+                  "text-sm",
+                  variants[variant],
+                  isDeleted && "opacity-50",
+                )}
+              >
+                <pre className="wrap-break-word whitespace-pre-line font-sans">
+                  {isDeleted ? (
+                    <span className="text-xs italic">
+                      {t("messageDeleted")}
+                    </span>
+                  ) : (
+                    message.text
+                  )}
+                </pre>
+              </div>
+            )}
+            {!isDeleted && hasAttachments && (
+              <RenderAttachments message={message} />
+            )}
+          </>
         )}
         {RenderContentAttributes(props)}
       </div>
+
+      <div className="flex">
+        {isComment && !isEditing && message.messageType === "incoming" && (
+          <Button
+            className="self-center opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={onChangeLike}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ThumbsUp className={cn("size-4", isLiked && "fill-current")} />
+          </Button>
+        )}
+
+        {isComment &&
+          !isEditing &&
+          onReply &&
+          message.messageType === "incoming" &&
+          message.sourceId && (
+            <Button
+              className="self-center opacity-0 transition-opacity group-hover:opacity-100"
+              onClick={() =>
+                onReply({
+                  commentId: message.sourceId as string,
+                  text: message.text ?? "",
+                })
+              }
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <ReplyIcon className="size-4" />
+            </Button>
+          )}
+
+        {isComment && !isEditing && (
+          <MessageActions
+            message={message}
+            onChangeHide={onChangeHide}
+            onDelete={onDelete}
+            onEdit={message.messageType === "outgoing" ? onEdit : undefined}
+            onEditingChange={setIsEditing}
+          />
+        )}
+      </div>
     </MessageBubble>
   )
+}
+
+const CommentText = (props: {
+  deletedLabel: string
+  hiddenLabel: string
+  isDeleted: boolean
+  isHidden: boolean
+  text: string | null
+}) => {
+  const { deletedLabel, hiddenLabel, isDeleted, isHidden, text } = props
+  if (isDeleted) {
+    return <span className="text-xs italic">{deletedLabel}</span>
+  }
+  if (isHidden) {
+    return <span className="text-xs italic">{hiddenLabel}</span>
+  }
+  return text
 }
 
 const RenderAttachments = (props: {
@@ -103,16 +265,32 @@ const RenderAttachmentItem = (props: { attachment: AttachmentResource }) => {
   }
 
   switch (attachment.fileType) {
-    case "image":
+    case "image": {
+      if (!(attachment.width && attachment.height)) {
+        return (
+          <div
+            className="relative max-w-80 overflow-hidden rounded-xl"
+            style={{ aspectRatio: "4/3" }}
+          >
+            <Image
+              alt={attachmentLabel}
+              className="object-contain"
+              fill
+              src={attachmentUrl}
+            />
+          </div>
+        )
+      }
       return (
         <Image
           alt={attachmentLabel}
           className="max-w-80 rounded-xl"
-          height={attachment.height || 0}
+          height={attachment.height}
           src={attachmentUrl}
-          width={attachment.width || 0}
+          width={attachment.width}
         />
       )
+    }
     case "video":
       return (
         <video controls height="240" preload="none" width="320">

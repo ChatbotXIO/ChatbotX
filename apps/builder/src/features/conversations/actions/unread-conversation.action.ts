@@ -45,6 +45,7 @@ export const unreadConversation = async (ctx: {
         contactInbox?.lastMessageAt,
         365 * 24 * 60 * 60 * 1000,
       ),
+      workspaceId: ctx.workspaceId,
     },
   )
   const lastMessage = last2Messages.at(-1)

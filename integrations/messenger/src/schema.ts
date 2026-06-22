@@ -11,6 +11,7 @@ import type {
   ListMessengerMessageTemplatesResponse,
   MessengerMessageTemplateEntity,
 } from "./apis/message-templates"
+import type { FacebookPostDetails } from "./apis/post"
 
 export const MESSENGER_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
 
@@ -41,6 +42,10 @@ export type MessengerActions<
     ctx: Context<IAuth>
     persona: PersonaRequest
   }) => Promise<{ personaId?: string }>
+  getPostDetails: (props: {
+    ctx: Context<IAuth>
+    input: { postId: string }
+  }) => Promise<FacebookPostDetails>
   listMessageTemplates: Handler<
     { ctx: Context<IAuth>; input?: ListMessengerMessageTemplatesProps },
     ListMessengerMessageTemplatesResponse
@@ -143,19 +148,54 @@ export type MessengerInboxLabelsChange = z.infer<
   typeof messengerInboxLabelsChangeSchema
 >
 
+export const messengerFeedCommentValueSchema = z.object({
+  item: z.literal("comment"),
+  verb: z.enum(["add", "remove", "edited"]),
+  comment_id: z.string(),
+  post_id: z.string(),
+  parent_id: z.string().optional(),
+  from: z.object({ id: z.string(), name: z.string().optional() }),
+  message: z.string().optional(),
+  created_time: z.number(),
+})
+export type MessengerFeedCommentValue = z.infer<
+  typeof messengerFeedCommentValueSchema
+>
+
+// Accept any feed event value — the webhook handler filters for comment items.
+// Using z.unknown() here prevents parse errors from non-comment feed events
+// (photos, posts, likes, etc.) that would otherwise break the entire webhook.
+export const messengerFeedChangeSchema = z.object({
+  field: z.literal("feed"),
+  value: z.unknown(),
+})
+export type MessengerFeedChange = z.infer<typeof messengerFeedChangeSchema>
+
 export const messengerPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
   messaging: z.array(messengerMessagingEventSchema).optional(),
   changes: z.array(messengerInboxLabelsChangeSchema).optional(),
 })
-export type MessengerPageEntry = z.infer<typeof messengerPageEntrySchema>
 
 export const messengerWebhookEventSchema = z.object({
   object: z.literal("page"),
   entry: z.array(messengerPageEntrySchema),
 })
 export type MessengerWebhookEvent = z.infer<typeof messengerWebhookEventSchema>
+
+export const incomingWebhookEntrySchema = messengerPageEntrySchema.extend({
+  changes: z
+    .array(z.object({ field: z.string(), value: z.unknown() }))
+    .optional(),
+})
+export type IncomingWebhookEntry = z.infer<typeof incomingWebhookEntrySchema>
+
+export const incomingWebhookEventSchema = z.object({
+  object: z.literal("page"),
+  entry: z.array(incomingWebhookEntrySchema),
+})
+export type IncomingWebhookEvent = z.infer<typeof incomingWebhookEventSchema>
 
 export const facebookQuickReplySchema = z.object({
   content_type: z.enum(["text", "location", "user_phone_number"]),

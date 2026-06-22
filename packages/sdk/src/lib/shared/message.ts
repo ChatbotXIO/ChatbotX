@@ -24,6 +24,7 @@ export type OutgoingMessage = {
   id: string
   workspaceId: string
   additionalAttributes?: { [x: string]: unknown }
+  contentAttributes?: { [x: string]: unknown } | null
   conversationId: string
   contentType: ContentType
   text: string | null
@@ -40,6 +41,8 @@ export type IncomingMessage = {
   messageType: MessageType
   contentType: ContentType
   text?: string
+  type?: "message" | "comment"
+  parentId?: string | null
   contentAttributes?:
     | MessageLocationEntity
     | MessageTemplateEntity

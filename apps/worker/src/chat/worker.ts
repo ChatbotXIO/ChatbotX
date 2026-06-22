@@ -13,6 +13,9 @@ import { ensureBootstrapped } from "../lib/bootstrap"
 import { logger } from "../lib/logger"
 import { sendChatMessage, sendFlowStep } from "./handlers/send-flow-step"
 import {
+  changeMessageStateOnChannel,
+  deleteMessageFromChannel,
+  editMessageFromChannel,
   sendMessageToChannel,
   sendTypingToChannel,
 } from "./handlers/send-message"
@@ -49,6 +52,15 @@ async function startChatWorker() {
           return
         case ChatJobAction.sendTyping:
           await sendTypingToChannel(job.data.data)
+          return
+        case ChatJobAction.deleteChannelMessage:
+          await deleteMessageFromChannel(job.data.data)
+          return
+        case ChatJobAction.editChannelMessage:
+          await editMessageFromChannel(job.data.data)
+          return
+        case ChatJobAction.changeChannelMessageState:
+          await changeMessageStateOnChannel(job.data.data)
           return
         case ChatJobAction.notifyExportResult:
           logger.warn(

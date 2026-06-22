@@ -111,6 +111,63 @@ export type MessageHandlers<
   >
 }
 
+export type CommentHandlers<IAuth extends AuthValue> = {
+  sendComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        contact: OutgoingContact
+        message: OutgoingMessage
+        metadata?: MetadataPayload
+        sendFrom?: "inbox"
+      }
+    },
+    {
+      messageIds: string[]
+    }
+  >
+  deleteComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        commentId: string
+      }
+    },
+    void
+  >
+  editComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        commentId: string
+        newText: string
+        newAttachmentUrl?: string
+      }
+    },
+    void
+  >
+  likeComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        commentId: string
+        liked: boolean
+      }
+    },
+    void
+  >
+  hideComment: Handler<
+    {
+      ctx: Context<IAuth>
+      data: {
+        commentId: string
+        hidden: boolean
+      }
+    },
+    void
+  >
+}
+
 export type ConversationHandlers<IAuth extends AuthValue> = {
   sendTyping: Handler<
     {
@@ -210,6 +267,7 @@ export type IChannel<
   TStep extends SendFlowStepData = SendFlowStepData,
 > = {
   message?: Partial<MessageHandlers<IAuth, TStep>>
+  comment?: Partial<CommentHandlers<IAuth>>
   conversation?: Partial<ConversationHandlers<IAuth>>
   contact?: Partial<ContactHandlers<IAuth>>
   bot?: Partial<BotHandlers<IAuth>>
@@ -263,6 +321,7 @@ export type IntegrationHandlerMap<T> =
   >
     ? {
         message: MessageHandlers<IAuth>
+        comment: CommentHandlers<IAuth>
         conversation: ConversationHandlers<IAuth>
         contact: ContactHandlers<IAuth>
         bot: BotHandlers<IAuth>

@@ -9,8 +9,10 @@ import {
   listPageMessageTemplates,
 } from "./apis/message-templates"
 import { unsubscribePageFromAppWebhook, updatePersona } from "./apis/page"
+import { getPostDetails } from "./apis/post"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
+import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -30,6 +32,7 @@ const config: IntegrationDefinition<
   channels: {
     channel: {
       message: messageHandlers,
+      comment: commentHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
       bot: botHandlers,
@@ -37,6 +40,7 @@ const config: IntegrationDefinition<
   },
   actions: {
     updatePersona,
+    getPostDetails,
     listMessageTemplates: async ({ ctx, input }) =>
       listPageMessageTemplates(ctx.auth, input),
     cloneMessageTemplate: async ({
