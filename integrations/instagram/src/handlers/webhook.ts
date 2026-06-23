@@ -2,9 +2,11 @@ import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
 import crypto from "crypto"
 import z from "zod"
 import { InstagramWebhookException } from "../exception"
+import { logger } from "../lib/logger"
 import {
   INSTAGRAM_MESSAGE_METADATA,
   type InstagramConfig,
+  instagramCommentEventValueSchema,
   instagramWebhookEventSchema,
 } from "../schemas"
 
@@ -69,13 +71,64 @@ const handleWebhookEvent = async (
       )
     }
 
-    if (webhookData.entry[0].messaging[0]?.read) {
+    const entry = webhookData.entry[0]
+
+    // Handle Instagram post comment events (changes.comments).
+    // Instagram only sends webhooks for new comments — no edit/delete events.
+    const commentChange = entry.changes?.find(
+      (c: { field: string }) => c.field === "comments",
+    )
+    if (commentChange) {
+      const parsed = instagramCommentEventValueSchema.safeParse(
+        commentChange.value,
+      )
+      if (!parsed.success) {
+        logger.warn(
+          { error: parsed.error, value: commentChange.value },
+          "comment event parse failed — skipping",
+        )
+        return
+      }
+      const value = parsed.data
+      if (!value.media?.id) {
+        logger.warn(
+          { commentId: value.id },
+          "comment webhook missing media.id — skipping",
+        )
+        return
+      }
+      await queue?.add("incomingComment", {
+        type: "incomingComment",
+        data: {
+          integrationType: "instagram",
+          integrationIdentifier: entry.id,
+          commentData: {
+            commentId: value.id,
+            postId: value.media.id,
+            parentId: value.parent_id,
+            fromId: value.from.id,
+            fromName: value.from.username ?? value.from.id,
+            message: value.text,
+            createdTime: entry.time,
+          },
+        },
+      })
+      return
+    }
+
+    // Handle DM messaging events
+    const messaging = entry.messaging
+    if (!messaging || messaging.length === 0) {
+      return
+    }
+
+    if (messaging[0]?.read) {
       await queue?.add("contactMarkAsRead", {
         type: "contactMarkAsRead",
         data: {
           integrationType: "instagram",
-          integrationIdentifier: webhookData.entry[0].id,
-          sourceConversationId: webhookData.entry[0].messaging[0].sender.id,
+          integrationIdentifier: entry.id,
+          sourceConversationId: messaging[0].sender.id,
           payload: webhookData,
         },
       })
@@ -83,29 +136,22 @@ const handleWebhookEvent = async (
     }
 
     // Skip if this message is not a message or postback
-    if (
-      !(
-        webhookData.entry[0].messaging[0].message ||
-        webhookData.entry[0].messaging[0].postback
-      )
-    ) {
+    if (!(messaging[0].message || messaging[0].postback)) {
       return
     }
 
     if (
-      webhookData.entry[0].messaging[0].message?.is_echo === true &&
-      webhookData.entry[0].messaging[0].message?.metadata ===
-        INSTAGRAM_MESSAGE_METADATA
+      messaging[0].message?.is_echo === true &&
+      messaging[0].message?.metadata === INSTAGRAM_MESSAGE_METADATA
     ) {
       // Skip if this message is from our own bot
       return
     }
 
     // Calculate integration identifier
-    const integrationIdentifier = webhookData.entry[0].messaging[0].message
-      ?.is_echo
-      ? webhookData.entry[0].messaging[0].sender.id
-      : webhookData.entry[0].messaging[0].recipient.id
+    const integrationIdentifier = messaging[0].message?.is_echo
+      ? messaging[0].sender.id
+      : messaging[0].recipient.id
 
     await queue?.add("incomingMessage", {
       type: "incomingMessage",

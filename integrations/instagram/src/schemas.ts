@@ -1,4 +1,4 @@
-import type { Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
+import type { Context, Oauth2AuthValue, Oauth2Config } from "@chatbotx.io/sdk"
 import { z } from "zod"
 
 export const INSTAGRAM_MESSAGE_METADATA = "SENT_FROM_CHATBOTX"
@@ -20,7 +20,12 @@ export type InstagramAuthValue = Oauth2AuthValue & {
   }
 }
 
-export type InstagramActions = Record<string, never>
+export type InstagramActions = {
+  getPostDetails: (props: {
+    ctx: Context<InstagramAuthValue>
+    input: { postId: string }
+  }) => Promise<import("./apis/post").InstagramMediaDetails>
+}
 
 // Common attachment types
 const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])
@@ -88,9 +93,29 @@ export type InstagramMessagingEvent = z.infer<
 export const instagramPageEntrySchema = z.object({
   id: z.string(),
   time: z.number(),
-  messaging: z.array(instagramMessagingEventSchema),
+  messaging: z.array(instagramMessagingEventSchema).optional(),
+  changes: z
+    .array(z.object({ field: z.string(), value: z.unknown() }))
+    .optional(),
 })
 export type InstagramPageEntry = z.infer<typeof instagramPageEntrySchema>
+
+// Instagram only fires comment webhooks for new comments (no edit/delete events).
+// The "text" field holds the comment body; "from" is always present.
+export const instagramCommentEventValueSchema = z.object({
+  id: z.string(),
+  text: z.string().optional(),
+  from: z.object({ id: z.string(), username: z.string().optional() }),
+  media: z
+    .object({ id: z.string(), media_product_type: z.string().optional() })
+    .optional(),
+  parent_id: z.string().optional(),
+  sender_id: z.string().optional(),
+  recipient_id: z.string().optional(),
+})
+export type InstagramCommentEventValue = z.infer<
+  typeof instagramCommentEventValueSchema
+>
 
 export const instagramWebhookEventSchema = z.object({
   object: z.literal("instagram"),

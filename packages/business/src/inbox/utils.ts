@@ -88,7 +88,7 @@ export function getInboxLinks(
 export function buildPostLink(channel: ChannelType, postId: string): string {
   const allLinkConfigs: Record<ChannelType, string> = {
     messenger: `https://fb.com/${postId}`,
-    instagram: `https://instagram.com/p/${postId}`,
+    instagram: "",
     whatsapp: "",
     telegram: "",
     zalo: "",

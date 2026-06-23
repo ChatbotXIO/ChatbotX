@@ -35,7 +35,7 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
               </Avatar>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="max-w-[200px] truncate">
+                  <div className="inline-block max-w-[200px] truncate">
                     {row.original.user.name}
                   </div>
                 </TooltipTrigger>
@@ -69,7 +69,9 @@ export function getAuditColumns(): ColumnDef<AuditLogResource>[] {
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="max-w-[300px] truncate">{row.original.detail}</div>
+            <div className="inline-block max-w-[300px] truncate">
+              {row.original.detail}
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{row.original.detail}</p>

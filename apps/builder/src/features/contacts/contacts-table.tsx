@@ -162,7 +162,7 @@ export function ContactsTable({
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">
+              <div className="inline-block max-w-[200px] truncate">
                 {getUserName(
                   row.original.conversation?.assignedUser,
                   t("assignAdmin.unAssigned"),

@@ -71,7 +71,7 @@ export function WorkspaceMembersTable({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
+                <div className="inline-block max-w-[200px] truncate">
                   {row.original.user.name}
                 </div>
               </TooltipTrigger>

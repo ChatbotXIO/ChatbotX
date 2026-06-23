@@ -3,11 +3,11 @@ import type {
   ConversationBotCategory,
   ConversationStatus,
 } from "@chatbotx.io/database/partials"
-import type { FacebookPostDetails } from "@chatbotx.io/integration-messenger/apis/post"
 import ky from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ContactFilterRequest } from "@/features/contacts/schemas/contact-filter"
 import type { ContactResource } from "@/features/contacts/schemas/resource"
+import type { PostDetails } from "@/features/conversations/schema/query"
 import type {
   ConversationResource,
   ListConversationItemResource,
@@ -50,7 +50,7 @@ export type ChatState = {
   replyToMessage: MessageResourceWithRelations | null
 
   // active facebook post (for comment conversations)
-  activePost: FacebookPostDetails | null
+  activePost: PostDetails | null
 }
 
 export type ChatActions = {
@@ -601,7 +601,8 @@ export const createChatStore = () => {
 
       if (
         !conversation?.sourceId ||
-        contactInbox?.channel !== "messenger" ||
+        (contactInbox?.channel !== "messenger" &&
+          contactInbox?.channel !== "instagram") ||
         !contactInbox?.inboxId
       ) {
         set({ activePost: null })
@@ -609,17 +610,13 @@ export const createChatStore = () => {
       }
 
       try {
-        const post = await ky
-          .get<FacebookPostDetails>(
-            `/api/workspaces/${workspaceId}/conversations/post-details`,
-            {
-              searchParams: {
-                inboxId: contactInbox.inboxId,
-                postId: conversation.sourceId,
-              },
-            },
-          )
-          .json()
+        const post =
+          await client.conversationsAPI.getPostDetailsAuthenticatedAPI({
+            workspaceId,
+            inboxId: contactInbox.inboxId,
+            postId: conversation.sourceId,
+            channel: contactInbox.channel,
+          })
         set({ activePost: post })
       } catch {
         set({ activePost: null })

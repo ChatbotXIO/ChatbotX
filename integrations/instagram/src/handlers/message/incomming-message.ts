@@ -64,7 +64,7 @@ export const receiveMessage = async ({
 
   const entry = validatedData.entry[0]
 
-  if (!entry.messaging[0]) {
+  if (!entry.messaging?.[0]) {
     throw new InstagramException("No messaging found")
   }
 

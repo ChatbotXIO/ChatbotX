@@ -81,7 +81,7 @@ export function getColumns({
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="max-w-[300px] truncate">
+            <div className="inline-block max-w-[300px] truncate">
               <Link
                 className="truncate"
                 href={`/space/${workspaceId}/triggers/${row.original.id}/edit`}

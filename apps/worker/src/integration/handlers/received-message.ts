@@ -328,16 +328,16 @@ export const receiveComment = async (
 ): Promise<void> => {
   setWebhookExecutionContext({ source: "webhook" })
 
-  const { integrationIdentifier, commentData } = props
+  const { integrationType, integrationIdentifier, commentData } = props
 
   const { inbox, integrationRow } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      "messenger",
+      integrationType as IntegrationType,
       integrationIdentifier,
     )
 
-  // `from.id` is the commenter's PSID, so `detectContactAndConversation` can
-  // enrich the profile via `getProfile`; `fromName` is the fallback firstName.
+  // `from.id` is the commenter's ID (PSID for Messenger, Instagram User ID for Instagram);
+  // `fromName` is the fallback firstName.
   const incomingContact: IncomingContact = {
     sourceId: commentData.fromId,
     sourceConversationId: commentData.postId,
@@ -383,16 +383,16 @@ export const receiveComment = async (
   })
 }
 
-// When a commenter edits their comment on Facebook, sync the new text to the DB
+// When a commenter edits their comment, sync the new text to the DB
 // and broadcast the change to the inbox in real-time.
 export const updateIncomingComment = async (
   props: IntegrationJobUpdateIncomingComment["data"],
 ): Promise<void> => {
-  const { integrationIdentifier, commentId, newText } = props
+  const { integrationType, integrationIdentifier, commentId, newText } = props
 
   const { inbox } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      "messenger",
+      integrationType as IntegrationType,
       integrationIdentifier,
     )
 
@@ -422,16 +422,16 @@ export const updateIncomingComment = async (
   }
 }
 
-// When a commenter deletes their comment on Facebook, soft-delete it (and any
+// When a commenter deletes their comment, soft-delete it (and any
 // child comments) in the DB and broadcast the deletion to the inbox.
 export const deleteIncomingComment = async (
   props: IntegrationJobDeleteIncomingComment["data"],
 ): Promise<void> => {
-  const { integrationIdentifier, commentId } = props
+  const { integrationType, integrationIdentifier, commentId } = props
 
   const { inbox } =
     await integrationService.identifyInboxAndIntegrationAuthFromIdentifier(
-      "messenger",
+      integrationType as IntegrationType,
       integrationIdentifier,
     )
 

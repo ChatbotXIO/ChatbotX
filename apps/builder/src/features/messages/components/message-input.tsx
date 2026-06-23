@@ -209,7 +209,7 @@ export const MessageInput = () => {
   }, [])
 
   const sendMessage = useCallback(() => {
-    if (lastContactComment) {
+    if (!replyToMessage && lastContactComment) {
       form.setValue("replyToMessageId", lastContactComment.id)
       form.setValue(
         "replyToMessageCreatedAt",
@@ -217,7 +217,7 @@ export const MessageInput = () => {
       )
     }
     handleSubmitWithAction()
-  }, [lastContactComment, form, handleSubmitWithAction])
+  }, [replyToMessage, lastContactComment, form, handleSubmitWithAction])
 
   // Memoize keyboard handler
   const onKeyDown = useCallback(
@@ -250,6 +250,10 @@ export const MessageInput = () => {
   //   return isOver7Days && currentInboxType === "messenger"
   // }, [isOver7Days])
   const placeholder = isDisabled ? t("messages.userInactive") : "Message..."
+
+  const isInstagramPostComment =
+    conversation?.contactInboxes[0]?.channel === "instagram" &&
+    conversation?.sourceId != null
 
   // Check if files are attached
   const files = useWatch({
@@ -315,9 +319,11 @@ export const MessageInput = () => {
               )}
             />
           </div>
-          <div className="px-2">
-            <FileUploadPreview ref={fileUploadRef} />
-          </div>
+          {!isInstagramPostComment && (
+            <div className="px-2">
+              <FileUploadPreview ref={fileUploadRef} />
+            </div>
+          )}
           <div className="flex w-full items-center pl-2.5">
             <div className="flex-1">
               <InboxIcon
@@ -331,15 +337,17 @@ export const MessageInput = () => {
             {!isDisabled && (
               <div className="message-toolbar flex items-center gap-2">
                 {!hasFiles && <InputMenu setContent={setContent} />}
-                <Button
-                  aria-label="Attach file"
-                  className="px-2 py-1.5 [&_svg]:size-5"
-                  onClick={onClickAttachment}
-                  type="button"
-                  variant="ghost"
-                >
-                  <PaperclipIcon aria-hidden="true" />
-                </Button>
+                {!isInstagramPostComment && (
+                  <Button
+                    aria-label="Attach file"
+                    className="px-2 py-1.5 [&_svg]:size-5"
+                    onClick={onClickAttachment}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <PaperclipIcon aria-hidden="true" />
+                  </Button>
+                )}
                 <Button
                   aria-label="Send message"
                   className="px-2 py-1.5 [&_svg]:size-5"

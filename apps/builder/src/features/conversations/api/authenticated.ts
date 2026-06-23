@@ -1,3 +1,4 @@
+import { channelTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import z from "zod"
 import { workspaceAuthorizedMidddleware } from "@/middlewares/auth"
@@ -14,11 +15,12 @@ import {
   listConversationsResponse,
 } from "../schema/resource"
 
-const facebookPostDetailsSchema = z.object({
-  message: z.string().optional(),
-  full_picture: z.string().optional(),
+const postDetailsSchema = z.object({
+  text: z.string().optional(),
+  picture: z.string().optional(),
   from: z.object({ id: z.string(), name: z.string() }).optional(),
-  created_time: z.string(),
+  createdAt: z.string(),
+  link: z.string().optional(),
 })
 
 export const conversationsAuthenticatedAPI = {
@@ -70,11 +72,12 @@ export const conversationsAuthenticatedAPI = {
         workspaceId: zodBigintAsString(),
         inboxId: z.string(),
         postId: z.string(),
+        channel: channelTypes,
       }),
     )
     .use(workspaceAuthorizedMidddleware, (input) => input.workspaceId)
-    .output(facebookPostDetailsSchema)
+    .output(postDetailsSchema)
     .handler(async ({ input }) =>
-      getPostDetailsQuery(input.inboxId, input.postId),
+      getPostDetailsQuery(input.inboxId, input.postId, input.channel),
     ),
 }

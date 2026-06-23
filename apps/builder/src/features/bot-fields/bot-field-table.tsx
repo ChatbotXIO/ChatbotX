@@ -99,7 +99,9 @@ export function BotFieldsTable({
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">{row.original.name}</div>
+              <div className="inline-block max-w-[200px] truncate">
+                {row.original.name}
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p>{row.original.name}</p>
@@ -124,7 +126,7 @@ export function BotFieldsTable({
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">
+              <div className="inline-block max-w-[200px] truncate">
                 {row.original.description}
               </div>
             </TooltipTrigger>
@@ -154,7 +156,9 @@ export function BotFieldsTable({
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">{row.original.value}</div>
+              <div className="inline-block max-w-[200px] truncate">
+                {row.original.value}
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p>{row.original.value}</p>
