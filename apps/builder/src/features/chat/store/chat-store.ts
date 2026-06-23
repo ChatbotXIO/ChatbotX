@@ -110,6 +110,17 @@ export type ChatActions = {
 
 export type ChatStore = ChatState & ChatActions
 
+const appendUniqueConversations = (
+  current: ListConversationsResponse["data"],
+  incoming: ListConversationsResponse["data"],
+): ListConversationsResponse["data"] => {
+  const existingIds = new Set(current.map((conversation) => conversation.id))
+  return [
+    ...current,
+    ...incoming.filter((conversation) => !existingIds.has(conversation.id)),
+  ]
+}
+
 export const createChatStore = () => {
   return createStore<ChatStore>((set, get) => ({
     // default conversation state
@@ -131,7 +142,10 @@ export const createChatStore = () => {
 
     prependConversation: (newConversation: ListConversationItemResource) =>
       set((state) => ({
-        conversations: [newConversation, ...state.conversations],
+        conversations: [
+          newConversation,
+          ...state.conversations.filter((c) => c.id !== newConversation.id),
+        ],
       })),
 
     loadMoreConversations: async (workspaceId: string) => {
@@ -185,7 +199,10 @@ export const createChatStore = () => {
       }
 
       set({
-        conversations: [...conversations, ...newConversations],
+        conversations: appendUniqueConversations(
+          conversations,
+          newConversations,
+        ),
         nextCursorConversation: nextCursor,
         isLoadingConversation: false,
         isFirstLoadConversation: false,

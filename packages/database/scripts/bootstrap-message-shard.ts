@@ -739,19 +739,16 @@ async function setActiveShard(port: number | null): Promise<void> {
       }
     }
 
-    // Close open ShardTimeRange on the currently active shard (if different)
-    const currentActive = await pool.query<{ id: string }>(
-      `SELECT id FROM "MessageShard" WHERE "isActive" = true AND ("isMain" IS NOT TRUE) LIMIT 1`,
+    // Close ANY currently open ShardTimeRange owned by another shard —
+    // including the main-DB archive range created by --init. The exclusion
+    // constraint ShardTimeRange_no_overlap allows only one open-ended range
+    // table-wide, so the target's new open range would otherwise overlap.
+    const closed = await pool.query<{ shardId: string }>(
+      `UPDATE "ShardTimeRange" SET "endTime" = NOW() WHERE "endTime" IS NULL AND "shardId" <> $1 RETURNING "shardId"`,
+      [target.id],
     )
-    const currentActiveId = currentActive.rows[0]?.id
-    if (currentActiveId && currentActiveId !== target.id) {
-      await pool.query(
-        `UPDATE "ShardTimeRange" SET "endTime" = NOW() WHERE "shardId" = $1 AND "endTime" IS NULL`,
-        [currentActiveId],
-      )
-      console.log(
-        `Closed ShardTimeRange for previously active shard id=${currentActiveId}`,
-      )
+    for (const row of closed.rows) {
+      console.log(`Closed open ShardTimeRange for shard id=${row.shardId}`)
     }
 
     // Demote all shards (including isMain)

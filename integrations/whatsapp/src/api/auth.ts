@@ -59,13 +59,14 @@ export const exchangeAccessToken = (
 
 export async function debugToken(
   accessToken: string,
+  debugAccessToken = accessToken,
 ): Promise<DebugTokenData | null> {
   try {
     const result = await ky
       .get<DebugTokenResponse>(`${API_URL}/debug_token`, {
         searchParams: {
           input_token: accessToken,
-          access_token: accessToken,
+          access_token: debugAccessToken,
         },
       })
       .json()
@@ -90,8 +91,9 @@ export async function debugToken(
  */
 export async function getSharedWabaId(
   accessToken: string,
+  appAccessToken: string,
 ): Promise<string | null> {
-  const data = await debugToken(accessToken)
+  const data = await debugToken(accessToken, appAccessToken)
   const scope = data?.granular_scopes?.find(
     (s) => s.scope === WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
   )

@@ -162,6 +162,8 @@ const waValueSchema = z
   .object({
     contacts: z.array(waContactSchema).optional(),
     history: z.array(waHistoryEntrySchema).optional(),
+    state_sync: z.array(smbStateSyncEntrySchema).optional(),
+    message_echoes: z.array(waEchoSchema).optional(),
     smb_app_state_sync: z.array(smbStateSyncEntrySchema).optional(),
     smb_message_echoes: z.array(waEchoSchema).optional(),
     messages: z.array(waMessageSchema).optional(),
@@ -289,12 +291,14 @@ type ContactWithMessage = {
   message: (IncomingMessage & { createdAt?: Date }) | null
 }
 
-const toDate = (timestamp: string | number | undefined): Date => {
+const toDate = (timestamp: string | number | undefined): Date | undefined => {
   if (timestamp === undefined) {
-    return new Date()
+    return
   }
   const seconds = Number(timestamp)
-  return Number.isFinite(seconds) ? new Date(seconds * 1000) : new Date()
+  if (Number.isFinite(seconds)) {
+    return new Date(seconds * 1000)
+  }
 }
 
 const EMPTY_EXTRACT: ExtractResult = {
@@ -405,7 +409,10 @@ const extractFromValue = (payload: unknown): ExtractResult => {
     }
   }
 
-  for (const entry of value.smb_app_state_sync ?? []) {
+  for (const entry of [
+    ...(value.smb_app_state_sync ?? []),
+    ...(value.state_sync ?? []),
+  ]) {
     if (entry.action === "remove" || !entry.contact?.phone_number) {
       continue
     }
@@ -420,7 +427,10 @@ const extractFromValue = (payload: unknown): ExtractResult => {
     })
   }
 
-  for (const echo of value.smb_message_echoes ?? []) {
+  for (const echo of [
+    ...(value.smb_message_echoes ?? []),
+    ...(value.message_echoes ?? []),
+  ]) {
     const customerWaId = echo.to
     const contact: IncomingContact = {
       sourceId: customerWaId,

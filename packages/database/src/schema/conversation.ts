@@ -31,7 +31,7 @@ export const conversationModel = pgTable(
     contactLastReadAt: timestamp(timestampConfig),
     agentLastReadAt: timestamp(timestampConfig),
     aiContextLastMessageId: bigintAsString(),
-    lastActivityAt: timestamp(timestampConfig).defaultNow().notNull(),
+    lastActivityAt: timestamp(timestampConfig),
     followed: boolean().default(false).notNull(),
     assignedUserId: bigintAsString().references(() => userModel.id, {
       onDelete: "set null",
@@ -70,7 +70,7 @@ export const conversationModel = pgTable(
     index("Conversation_workspaceId_lastActivityAt_id_idx").using(
       "btree",
       table.workspaceId.asc().nullsLast(),
-      table.lastActivityAt.desc(),
+      table.lastActivityAt.desc().nullsLast(),
       table.id.desc(),
     ),
   ],

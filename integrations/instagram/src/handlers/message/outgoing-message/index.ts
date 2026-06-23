@@ -40,12 +40,16 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
 
+    const messageIds: string[] = []
     try {
       for (const instagramMessage of convertMessageToInstagramMessage(
         message,
       )) {
         const payload = buildMessagePayload(contact, instagramMessage)
-        await sendInstagramMessage(ctx.auth, payload)
+        const response = await sendInstagramMessage(ctx.auth, payload)
+        if (response.message_id) {
+          messageIds.push(response.message_id)
+        }
         logger.info(`Message sent for IGSID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -53,8 +57,11 @@ export const sendMessage: MessageHandlers<InstagramAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
+    // Return the Send API message id(s). The worker persists messageIds[0] as
+    // the Message row's sourceId so the Instagram message_echo (coexist) dedups
+    // against this row instead of inserting a duplicate.
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 
@@ -185,14 +192,18 @@ export const sendFlowStep = async (
     ctx,
     data: { contact },
   } = props
+  const messageIds: string[] = []
   try {
     for await (const instagramMessage of convertFlowStepToInstagramMessage(
       props,
     )) {
-      await sendInstagramMessage(
+      const response = await sendInstagramMessage(
         ctx.auth,
         buildMessagePayload(contact, instagramMessage),
       )
+      if (response.message_id) {
+        messageIds.push(response.message_id)
+      }
       logger.info(`Message sent for IGSID: ${contact.sourceId}`)
     }
   } catch (error) {
@@ -200,7 +211,9 @@ export const sendFlowStep = async (
     throw mapToChannelError(error)
   }
 
+  // Return the Send API message id(s) so the worker can persist messageIds[0]
+  // as the Message row's sourceId (coexist echo dedup — see sendMessage).
   return {
-    messageIds: [],
+    messageIds,
   }
 }

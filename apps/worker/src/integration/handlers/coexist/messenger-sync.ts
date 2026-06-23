@@ -33,8 +33,10 @@ import pLimit from "p-limit"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
 import {
+  applyCoexistActivityUpdates,
   bulkImportContacts,
   bulkImportMessages,
+  type CoexistActivityUpdate,
   type ContactImportLink,
   createHistoricalIdFactory,
 } from "./bulk-historical-import"
@@ -451,6 +453,9 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
       let pageFailed = 0
       let pageOldest: Date | null = currentOldest
       const pageAttachmentIds: string[] = []
+      // Collected across all convs in this chunk, then flushed once per table
+      // after the barrier — keeps the activity bumps out of the per-page loop.
+      const activityUpdates: CoexistActivityUpdate[] = []
 
       const limit = ctx.getLimit()
       await Promise.all(
@@ -468,6 +473,11 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
             const cutoff = convTime
               ? new Date(convTime.getTime() - STORE_WINDOW_MS)
               : fallbackCutoff
+
+            // Newest message time across this conv's pages — one activity bump
+            // per conv (not per page).
+            let convNewest: Date | null = null
+            let convNewestIncoming: Date | null = null
 
             try {
               await fetchConvMessages({
@@ -498,8 +508,30 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
                   for (const id of result.insertedAttachmentIds) {
                     pageAttachmentIds.push(id)
                   }
+                  if (
+                    result.newestMessageAt &&
+                    (!convNewest || convNewest < result.newestMessageAt)
+                  ) {
+                    convNewest = result.newestMessageAt
+                  }
+                  if (
+                    result.newestIncomingMessageAt &&
+                    (!convNewestIncoming ||
+                      convNewestIncoming < result.newestIncomingMessageAt)
+                  ) {
+                    convNewestIncoming = result.newestIncomingMessageAt
+                  }
                 },
               })
+
+              if (convNewest) {
+                activityUpdates.push({
+                  contactInboxId: link.contactInboxId,
+                  conversationId: link.conversationId,
+                  newestMessageAt: convNewest,
+                  newestIncomingMessageAt: convNewestIncoming,
+                })
+              }
 
               if (convTime && (pageOldest === null || convTime < pageOldest)) {
                 pageOldest = convTime
@@ -519,6 +551,9 @@ async function runMessagesPhase(ctx: SyncContext): Promise<PhaseResult> {
           }),
         ),
       )
+
+      // One UPDATE per table for the whole chunk (not per conv/page in the loop).
+      await applyCoexistActivityUpdates(activityUpdates)
 
       // Bulk-enqueue per-attachment download jobs. The handler is idempotent
       // (prefix-checked + jobId-dedup'd), so a retry of this whole chunk

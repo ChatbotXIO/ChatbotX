@@ -22,7 +22,7 @@ import { resolveLastMessageSinceTime } from "./last-message-window"
 const DEFAULT_PER_PAGE = 20
 
 const conversationCursorSchema = z.object({
-  lastActivityAt: z.coerce.date(),
+  lastActivityAt: z.coerce.date().nullable(),
   id: zodBigintAsString(),
 })
 type ConversationCursor = z.infer<typeof conversationCursorSchema>
@@ -42,10 +42,11 @@ export const listConversations = async (
 
   const conversations = await conversationService.findManyQuery({
     where,
-    orderBy: {
-      lastActivityAt: "desc",
-      id: "desc",
-    },
+    orderBy: (table, { sql: orderSql, desc }) => [
+      orderSql`${table.lastActivityAt} IS NULL`,
+      desc(table.lastActivityAt),
+      desc(table.id),
+    ],
     limit: limit + 1,
     with: {
       contact: true,
@@ -141,13 +142,21 @@ function buildConversationWhere(
 
   // ── Cursor condition ──────────────────────────────────────────────────────
   if (cursor) {
-    where.OR = [
-      { lastActivityAt: { lt: cursor.lastActivityAt } },
-      {
-        lastActivityAt: cursor.lastActivityAt,
-        id: { lt: cursor.id },
-      },
-    ]
+    where.OR = cursor.lastActivityAt
+      ? [
+          { lastActivityAt: { lt: cursor.lastActivityAt } },
+          { lastActivityAt: { isNull: true } },
+          {
+            lastActivityAt: cursor.lastActivityAt,
+            id: { lt: cursor.id },
+          },
+        ]
+      : [
+          {
+            lastActivityAt: { isNull: true },
+            id: { lt: cursor.id },
+          },
+        ]
   }
 
   // ── botCategory ──────────────────────────────────────────────────────────

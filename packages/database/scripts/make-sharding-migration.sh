@@ -13,6 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MIGRATIONS_DIR="${SCRIPT_DIR}/../src/sharding/migrations"
 FILE="${MIGRATIONS_DIR}/${TIMESTAMP}_${1}.sql"
 
-printf "-- Shard migration: %s\n-- Version: %s\n\n" "$1" "$TIMESTAMP" > "${FILE}"
+mkdir -p "${MIGRATIONS_DIR}"
+
+printf -- "-- Shard migration: %s\n-- Version: %s\n\n" "$1" "$TIMESTAMP" > "${FILE}"
 
 echo "Created: ${FILE}"

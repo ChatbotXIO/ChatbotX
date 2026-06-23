@@ -81,13 +81,14 @@ async function resolveAccessToken(
  */
 async function deriveSignupTargets(
   accessToken: string,
+  appAccessToken: string,
   version: string,
 ): Promise<{
   wabaId: string
   phoneNumber: WhatsappPhoneNumber
   businessId: string
 }> {
-  const wabaId = await getSharedWabaId(accessToken)
+  const wabaId = await getSharedWabaId(accessToken, appAccessToken)
   if (!wabaId) {
     throw new ChatbotXException(
       "Could not resolve WhatsApp Business Account from authorization",
@@ -385,6 +386,7 @@ export const connectWhatsappAction = authActionClient
         } else {
           const derived = await deriveSignupTargets(
             accessToken,
+            `${whatsappSettings.clientId}|${whatsappSettings.clientSecret}`,
             whatsappSettings.version,
           )
           wabaId = derived.wabaId

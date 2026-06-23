@@ -107,6 +107,13 @@ export async function sendMessageToChannel(
           },
         })
       }
+    } else {
+      // Persist the provider message id as this row's sourceId. The channel
+      // echoes every page-sent message back via webhook (coexist); the echo
+      // handler dedups through createOrUpdate → findBySourceId. Without a
+      // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
+      // lookup misses, and a duplicate row is inserted as senderType=user.
+      await updateMessageSourceId(message.id, conversation.workspaceId, result)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")

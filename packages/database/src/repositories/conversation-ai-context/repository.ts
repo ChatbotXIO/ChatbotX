@@ -2,7 +2,7 @@ import { type DatabaseClient, db } from "../../client"
 
 export type ConversationAIContextState = {
   aiContextLastMessageId: string | null
-  lastActivityAt: Date
+  lastActivityAt: Date | null
 }
 
 export async function findConversationAIContextState(
