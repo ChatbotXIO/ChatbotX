@@ -14,6 +14,11 @@ import { queueNames } from "../../lib/types"
  */
 export const QuotaJobAction = {
   publishEntitlements: "publishEntitlements",
+  // Reconcile every user's entitlement snapshot — produced by the enterprise
+  // admin after a default-plan change (existing users hold a UserQuota row, so
+  // the default-plan snapshot alone never reaches them). Consumed by the
+  // enterprise quota-worker, which runs the backfill loop.
+  backfillDefaultPlan: "backfillDefaultPlan",
 } as const
 
 export type QuotaJobPublishEntitlements = {
@@ -21,7 +26,14 @@ export type QuotaJobPublishEntitlements = {
   data: { userId: string }
 }
 
-export type QuotaJobData = QuotaJobPublishEntitlements
+export type QuotaJobBackfillDefaultPlan = {
+  type: typeof QuotaJobAction.backfillDefaultPlan
+  data: Record<string, never>
+}
+
+export type QuotaJobData =
+  | QuotaJobPublishEntitlements
+  | QuotaJobBackfillDefaultPlan
 
 export const quotaQueue =
   process.env.NEXT_PHASE === "phase-production-build"
