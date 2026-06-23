@@ -51,6 +51,7 @@ import type {
   ChatJobSendChatMessage,
   ChatJobSendFlowStep,
 } from "@chatbotx.io/worker-config"
+import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../lib/logger"
 import { sendFlowStepToChannel, sendMessageToChannel } from "./send-message"
 import { processMessengerTemplate } from "./send-messenger-template"
@@ -512,6 +513,36 @@ export const sendChatMessage = async (
       resolveTenantSettings({ workspaceId: conversation.workspaceId }),
     ])
 
+    let attachmentInput:
+      | Parameters<typeof repository.createWithAttachments>[1][0]
+      | undefined
+    let messageText = text
+
+    if (url) {
+      try {
+        const uploadedFile = await uploadFileFromUrl(
+          url,
+          `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
+        )
+        attachmentInput = {
+          ...uploadedFile,
+          workspaceId: conversation.workspaceId,
+          conversationId: conversation.id,
+        }
+      } catch (uploadError) {
+        logger.warn(
+          {
+            conversationId: conversation.id,
+            workspaceId: conversation.workspaceId,
+            url,
+            error: normalizeError(uploadError),
+          },
+          "sendChatMessage: failed to download media url, falling back to text",
+        )
+        messageText = [text, url].filter(Boolean).join("\n")
+      }
+    }
+
     const messageInput = {
       contactInboxId: contactInbox.id,
       workspaceId: conversation.workspaceId,
@@ -520,26 +551,11 @@ export const sendChatMessage = async (
       contentType: "text" as const,
       senderType: "bot" as const,
       sourceId: null,
-      text,
+      text: messageText,
       contentAttributes: {
         metadata,
       },
       createdAt: new Date(),
-    }
-
-    let attachmentInput:
-      | Parameters<typeof repository.createWithAttachments>[1][0]
-      | undefined
-    if (url) {
-      const uploadedFile = await uploadFileFromUrl(
-        url,
-        `public/space/${conversation.workspaceId}/conversations/${conversation.id}/${createId()}`,
-      )
-      attachmentInput = {
-        ...uploadedFile,
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-      }
     }
 
     const message = attachmentInput

@@ -7,7 +7,7 @@ export const helpTexts = {
   jsonRpcVersion: "2.0",
   // File search tool descriptions
   fileSearchDescription:
-    "Search uploaded files for information about products, policies, and company details. Do NOT use for greetings or casual salutations.",
+    "Search the workspace's uploaded knowledge files for factual, private, or domain-specific information needed to answer the user. Use this when the answer may depend on uploaded files. Do NOT use for greetings, small talk, or casual salutations.",
   fileSearchQueryDescription: "Search keywords to find relevant information",
   fallbackLookup:
     "I've found some data, but I couldn't generate a complete answer yet. Could you please specify what you're looking for (price, size, color)?",
@@ -16,6 +16,18 @@ export const helpTexts = {
     "- Never send raw JSON or tool outputs directly to the user.",
     "- If you use a tool, summarize the result concisely in natural language.",
     "- Only provide the most relevant information the customer is asking for.",
+  ].join("\n"),
+  fabricationGuard: [
+    "TOOL DATA RULES (REQUIRED):",
+    "- Never fabricate, guess, or invent data — especially product names, prices, specifications, availability, or image URLs.",
+    "- Only include image URLs that appear exactly in tool results. Never generate, guess, or modify image URLs.",
+    "- Only include information that appears explicitly in tool results. If a tool returns no results, tell the user you could not find the information.",
+  ].join("\n"),
+  knowledgeBaseGuard: [
+    "KNOWLEDGE BASE RULES (REQUIRED):",
+    "- You MUST call search_knowledge_base BEFORE answering any question about products, services, prices, images, or company-specific details.",
+    "- Do NOT use search_knowledge_base for greetings, small talk, or simple clarification.",
+    "- If search_knowledge_base returns no results or insufficient information, tell the user you could not find matching information.",
   ].join("\n"),
   summarizer: {
     previousSummary: (summary: string) =>

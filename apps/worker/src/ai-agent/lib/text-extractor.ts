@@ -107,21 +107,39 @@ async function extractTextFromDocx(buffer: Buffer): Promise<string> {
   }
 }
 
-async function extractTextFromXlsx(buffer: Buffer): Promise<string> {
+function extractTextFromXlsx(buffer: Buffer): string {
   try {
     const workbook = read(buffer, { type: "buffer" })
-    const texts: string[] = []
+    const rowBlocks: string[] = []
+
     for (const sheetName of workbook.SheetNames) {
       const sheet = workbook.Sheets[sheetName]
       if (!sheet) {
         continue
       }
-      const csv = utils.sheet_to_csv(sheet)
-      if (csv) {
-        texts.push(csv)
+
+      // sheet_to_json preserves full cell values (no truncation unlike sheet_to_csv)
+      const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, {
+        defval: "",
+      })
+
+      if (rows.length === 0) {
+        continue
+      }
+
+      // Emit each row as "Header: value\nHeader: value\n..." block
+      // so URLs stay intact within a single paragraph separator (\n\n)
+      for (const row of rows) {
+        const parts = Object.entries(row)
+          .filter(([, v]) => v !== "" && v !== null && v !== undefined)
+          .map(([k, v]) => `${k}: ${v}`)
+        if (parts.length > 0) {
+          rowBlocks.push(parts.join("\n"))
+        }
       }
     }
-    return await normalizeWhitespace(texts.join("\n"))
+
+    return rowBlocks.join("\n\n").slice(0, MAX_EXTRACTED_TEXT_CHARS)
   } catch (error) {
     logger.warn(error, "XLSX/XLS parsing failed, falling back to plain text")
     throw new Error("XLSX/XLS parsing failed")
@@ -447,7 +465,7 @@ export async function extractTextFromFile(
   }
 
   if (isMimeType(finalMimeType, SPREADSHEET_MIME_TYPES)) {
-    return await extractTextFromXlsx(buffer)
+    return extractTextFromXlsx(buffer)
   }
 
   if (isMimeType(finalMimeType, CSV_MIME_TYPES)) {

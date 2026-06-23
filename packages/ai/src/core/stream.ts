@@ -11,6 +11,8 @@ const REGEX_ONLY_WHITESPACE = /^\s*$/
 const REGEX_ONLY_EMOJI = /^[\u{1F300}-\u{1F9FF}]+$/u
 const REGEX_STARS_OR_DASHES = /^[-*]\s*/u
 const REGEX_NOISY_CHARS = /^[-*.\s]+$/
+const REGEX_BOLD_MARKDOWN = /(\*\*|__)([^*_]+?)\1/g
+const REGEX_ITALIC_MARKDOWN = /(\*|_)([^*_]+?)\1/g
 const PARAGRAPH_SEPARATOR = "\n\n"
 
 type StreamProcessingOptions = {
@@ -46,9 +48,15 @@ function getMeaningfulParts(parts: string[]): string[] {
   return normalized
 }
 
+const REGEX_TRAILING_LIST_MARKER = /\n\s*[-*]\s*$/
+
 function cleanText(value: string): string {
   return String(value ?? "")
+    .replace(REGEX_BOLD_MARKDOWN, "$2")
+    .replace(REGEX_ITALIC_MARKDOWN, "$2")
     .replace(REGEX_STARS_OR_DASHES, "")
+    .trim()
+    .replace(REGEX_TRAILING_LIST_MARKER, "")
     .trim()
 }
 

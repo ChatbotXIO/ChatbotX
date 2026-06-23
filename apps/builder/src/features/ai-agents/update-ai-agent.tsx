@@ -268,7 +268,9 @@ export function UpdateAIAgentDialog({
               </Button>
               <Button
                 disabled={
-                  !form.formState.isValid || form.formState.isSubmitting
+                  (!form.formState.isValid &&
+                    (form.formState.isDirty || form.formState.isSubmitted)) ||
+                  form.formState.isSubmitting
                 }
                 type="submit"
               >

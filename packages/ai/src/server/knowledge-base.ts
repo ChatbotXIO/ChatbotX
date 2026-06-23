@@ -1,10 +1,13 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { db, sql } from "@chatbotx.io/database/client"
+import { aiEmbeddingStatuses } from "@chatbotx.io/database/partials"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
 import { embed } from "ai"
 import { z } from "zod"
 import { logger } from "../logger"
 import { openaiEmbeddingModels } from "../models"
+
+const REGEX_NUMERIC_ID = /^\d+$/
 
 const distanceSchema = z
   .union([z.number(), z.string()])
@@ -90,18 +93,27 @@ async function searchSimilarEmbeddings(
   queryEmbedding: number[],
   config: FileSearchConfig,
 ): Promise<SimilaritySearchResult[]> {
-  const embeddingString = `[${queryEmbedding.join(",")}]`
+  const embeddingLiteral = sql.raw(`'[${queryEmbedding.join(",")}]'::vector`)
+  const numericIds = config.selectedFileIds.filter((id) =>
+    REGEX_NUMERIC_ID.test(id),
+  )
+  if (numericIds.length === 0) {
+    return []
+  }
+  const fileIdList = sql.raw(numericIds.join(","))
 
   const results = await db.execute(sql`
     SELECT
       "id",
       "content",
       "aiFileId",
-      1 - ("embedding" <=> ${embeddingString}::vector) as distance
+      1 - ("embedding" <=> ${embeddingLiteral}) as distance
     FROM "AIEmbedding"
     WHERE "workspaceId" = ${config.workspaceId}
-      AND "aiFileId" = ANY(${config.selectedFileIds})
-    ORDER BY "embedding" <=> ${embeddingString}::vector
+      AND "aiFileId" = ANY(ARRAY[${fileIdList}]::bigint[])
+      AND "status" = ${aiEmbeddingStatuses.enum.success}::"aiEmbeddingStatus"
+      AND "embedding" IS NOT NULL
+    ORDER BY "embedding" <=> ${embeddingLiteral}
     LIMIT ${config.maxResults}
   `)
 

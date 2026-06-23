@@ -1,5 +1,4 @@
 import {
-  aiPolicies,
   aiProviders,
   aiTimeouts,
   helpTexts,
@@ -10,6 +9,10 @@ import {
 import {
   type AIProviderInstance,
   aiContextService,
+  appendFabricationGuard,
+  appendHandoffPolicy,
+  appendKnowledgeBaseGuard,
+  appendToolOutputGuard,
   createAIProviderInstance,
   getAIIntegrationInDB,
   getAIToolset,
@@ -41,7 +44,7 @@ import {
 import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
-import { sendMessageWithRender } from "../../utils/message"
+import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
 import { createImageReaderExecutor } from "./system-tools/image-reader"
 import { createUrlReaderExecutor } from "./system-tools/url-reader"
@@ -145,7 +148,7 @@ function createReplyToolset(options: {
         options.directSendTracker.sent = true
         options.directSendTracker.sentText = text
         if (text) {
-          await sendMessageWithRender(conversation.id, text)
+          await sendMessageAndWait(conversation.id, text)
         }
       },
       triggerFlow: async (flowId: string) => {
@@ -474,7 +477,13 @@ async function runAIReply(
       : promptBase
 
     const systemPrompt = appendUnavailableWebSearchPolicy(
-      appendHandoffPolicy(appendToolOutputGuard(completePrompt), tools),
+      appendHandoffPolicy(
+        appendKnowledgeBaseGuard(
+          appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
+          tools,
+        ),
+        tools,
+      ),
       toolset.webSearchOmitReason,
     )
 
@@ -489,6 +498,7 @@ async function runAIReply(
     let toolResultsCount = 0
     let toolErrorsCount = 0
 
+    const hasTools = Object.keys(tools).length > 0
     const result = await streamText({
       model,
       system: systemPrompt,
@@ -496,7 +506,7 @@ async function runAIReply(
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
-      toolChoice: Object.keys(tools).length > 0 ? "auto" : "none",
+      toolChoice: hasTools ? "auto" : "none",
       stopWhen: stepCountIs(5),
       timeout: {
         totalMs: aiTimeouts.aiTotal,
@@ -567,7 +577,7 @@ async function runAIReply(
           return
         }
         for (const part of parts) {
-          await sendMessageWithRender(conversation.id, part)
+          await sendMessageAndWait(conversation.id, part)
         }
       },
       { sendParts: true },
@@ -695,18 +705,6 @@ async function runAIReply(
       )
     }
   }
-}
-
-function appendToolOutputGuard(systemPrompt: string): string {
-  return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
-}
-
-function appendHandoffPolicy(systemPrompt: string, tools: ToolSet): string {
-  if (!tools[systemFunctionNames.connectUserToHuman]) {
-    return systemPrompt
-  }
-
-  return `${systemPrompt}\n\n${aiPolicies.handoff}`.trim()
 }
 
 function appendUnavailableWebSearchPolicy(

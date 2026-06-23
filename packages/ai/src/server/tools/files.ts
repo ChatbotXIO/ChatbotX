@@ -55,6 +55,10 @@ export async function getAIFileTools(
           const results = await performFileSearch({ query }, config)
 
           if (results.length === 0) {
+            logger.info(
+              { workspaceId, query },
+              "[knowledge-base] tool: no results found",
+            )
             return fileSearchNoResult
           }
 
@@ -62,7 +66,20 @@ export async function getAIFileTools(
             .map((item, index) => `${index + 1}. ${item.content}`)
             .join("\n\n")
 
-          return `${fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+          const toolOutput = `${fileSearchFoundPrefix(results.length)}\n\n${formattedResults}`
+
+          logger.info(
+            {
+              workspaceId,
+              query,
+              resultCount: results.length,
+              outputLength: toolOutput.length,
+              output: toolOutput,
+            },
+            "[knowledge-base] tool: formatted output sent to AI",
+          )
+
+          return toolOutput
         },
       })
     }

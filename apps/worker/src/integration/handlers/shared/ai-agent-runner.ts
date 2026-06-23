@@ -7,6 +7,9 @@ import {
 import {
   aiContextService,
   aiIntegrationService,
+  appendFabricationGuard,
+  appendKnowledgeBaseGuard,
+  appendToolOutputGuard,
   createAIModelInstance,
   getAIToolset,
   McpClient,
@@ -148,7 +151,10 @@ async function runAIReplyInternal(
       ? `Conversation Context: ${props.summary}\n\n${promptBase}`
       : promptBase
 
-    const systemPrompt = appendToolOutputGuard(completePrompt)
+    const systemPrompt = appendKnowledgeBaseGuard(
+      appendFabricationGuard(appendToolOutputGuard(completePrompt), tools),
+      tools,
+    )
 
     const toolNamesSet = new Set<string>()
     const finishReasons: Array<{
@@ -161,6 +167,7 @@ async function runAIReplyInternal(
     let toolResultsCount = 0
     let toolErrorsCount = 0
 
+    const hasTools = Object.keys(tools).length > 0
     const result = await streamText({
       model,
       system: systemPrompt,
@@ -168,7 +175,7 @@ async function runAIReplyInternal(
       maxOutputTokens: aiAgent.maxOutputTokens,
       temperature: aiAgent.temperature,
       tools,
-      toolChoice: Object.keys(tools).length > 0 ? "auto" : "none",
+      toolChoice: hasTools ? "auto" : "none",
       stopWhen: stepCountIs(5),
       timeout: {
         totalMs: aiTimeouts.aiTotal,
@@ -313,10 +320,6 @@ async function runAIReplyInternal(
     )
     return null
   }
-}
-
-function appendToolOutputGuard(systemPrompt: string): string {
-  return `${systemPrompt}\n\n${helpTexts.toolOutputGuard}`.trim()
 }
 
 function hasToolResultError(value: unknown): boolean {

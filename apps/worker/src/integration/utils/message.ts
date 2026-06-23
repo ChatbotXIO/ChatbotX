@@ -5,17 +5,42 @@ import {
   type BotResponseTrackingContext,
   ChatJobAction,
   chatQueue,
+  getRedisConnection,
+  queueNames,
 } from "@chatbotx.io/worker-config"
+import { QueueEvents } from "bullmq"
 
-export async function sendMessageWithRender(
+let chatQueueEvents: QueueEvents | null = null
+
+function getChatQueueEvents(): QueueEvents {
+  if (chatQueueEvents) {
+    return chatQueueEvents
+  }
+
+  chatQueueEvents = new QueueEvents(queueNames.enum.chat, {
+    connection: getRedisConnection().duplicate(),
+  })
+  return chatQueueEvents
+}
+
+export async function closeChatQueueEvents(): Promise<void> {
+  if (chatQueueEvents) {
+    await chatQueueEvents.close()
+    chatQueueEvents = null
+  }
+}
+
+type SendMessageOptions = {
+  forceUrl?: boolean
+  storagePath?: string
+}
+
+async function enqueueChatMessage(
   conversationId: string,
   text: string,
   trackingContext?: BotResponseTrackingContext,
-  options?: {
-    forceUrl?: boolean
-    storagePath?: string
-  },
-): Promise<void> {
+  options?: SendMessageOptions,
+) {
   const shouldSendAsUrl = options?.forceUrl || isImageUrl(text)
   const data = shouldSendAsUrl
     ? {
@@ -34,13 +59,40 @@ export async function sendMessageWithRender(
     message: "Conversation not found",
   })
 
-  await chatQueue.add(ChatJobAction.sendChatMessage, {
+  return chatQueue.add(ChatJobAction.sendChatMessage, {
     type: ChatJobAction.sendChatMessage,
     data: {
       ...data,
       conversation,
     },
   })
+}
+
+export async function sendMessageWithRender(
+  conversationId: string,
+  text: string,
+  trackingContext?: BotResponseTrackingContext,
+  options?: SendMessageOptions,
+): Promise<void> {
+  await enqueueChatMessage(conversationId, text, trackingContext, options)
+}
+
+export async function sendMessageAndWait(
+  conversationId: string,
+  text: string,
+  trackingContext?: BotResponseTrackingContext,
+  options?: SendMessageOptions,
+): Promise<void> {
+  const job = await enqueueChatMessage(
+    conversationId,
+    text,
+    trackingContext,
+    options,
+  )
+
+  if (typeof job === "object" && "waitUntilFinished" in job) {
+    await job.waitUntilFinished(getChatQueueEvents())
+  }
 }
 
 export const normalizeEpochTimestamp = (value: unknown): Date | null => {

@@ -36,6 +36,7 @@ import {
 } from "./handlers/received-message"
 import { runRef } from "./handlers/ref"
 import { handleSendSequenceFlow } from "./handlers/sequence-flow"
+import { closeChatQueueEvents } from "./utils/message"
 
 async function startIntegrationWorker() {
   try {
@@ -226,7 +227,7 @@ async function startIntegrationWorker() {
     }
     isShuttingDown = true
     try {
-      await worker.close()
+      await Promise.all([worker.close(), closeChatQueueEvents()])
       process.exit(0)
     } catch (err) {
       logger.error(err, "[IntegrationWorker] Error during shutdown")

@@ -22,6 +22,7 @@ import {
 import type { IntegrationJobProcessAutomatedResponse } from "@chatbotx.io/worker-config"
 import type { ModelMessage } from "ai"
 import { normalizeError } from "universal-error-normalizer"
+import { sendTypingToChannel } from "../../../chat/handlers/send-message"
 import { detectConversationAndContactInbox } from "../../../lib/db"
 import { logger } from "../../../lib/logger"
 import { replyByAI } from "./replies"
@@ -232,22 +233,43 @@ export async function processAutomatedResponse(
       })
     }
 
+    const sendTyping = () =>
+      sendTypingToChannel({
+        conversation,
+        contactInbox,
+        typing: true,
+        seconds: 5,
+      }).catch((err) => {
+        logger.debug(
+          { err, conversationId: conversation.id },
+          "[automated-response] typing indicator failed",
+        )
+      })
+
+    sendTyping()
+    const typingIntervalId = setInterval(sendTyping, 4000)
+
     const startTime = Date.now()
-    const aiResult = await replyByAI({
-      conversation,
-      contactInboxId: contactInbox.id,
-      messages,
-      aiAgent,
-      triggerMessageId: messageId,
-      fileOnlyTrigger: isFileOnlyTrigger,
-      allowedSystemFunctionIds: isFileOnlyTrigger
-        ? getFileOnlySystemFunctionIds({
-            hasDocument: hasTriggerDocument,
-            hasImage: hasTriggerImage,
-          })
-        : undefined,
-      summary,
-    })
+    let aiResult: Awaited<ReturnType<typeof replyByAI>>
+    try {
+      aiResult = await replyByAI({
+        conversation,
+        contactInboxId: contactInbox.id,
+        messages,
+        aiAgent,
+        triggerMessageId: messageId,
+        fileOnlyTrigger: isFileOnlyTrigger,
+        allowedSystemFunctionIds: isFileOnlyTrigger
+          ? getFileOnlySystemFunctionIds({
+              hasDocument: hasTriggerDocument,
+              hasImage: hasTriggerImage,
+            })
+          : undefined,
+        summary,
+      })
+    } finally {
+      clearInterval(typingIntervalId)
+    }
 
     if (aiResult && !aiResult.usedFallbackText) {
       // AI produced its own response; bot_received emit happens inside

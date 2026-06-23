@@ -504,4 +504,23 @@ describe("sendChatMessage", () => {
       lastActivityAt: createdMessage.createdAt,
     })
   })
+
+  test("falls back to text url when chat message media download fails", async () => {
+    mockUploadFileFromUrl.mockRejectedValueOnce(
+      new Error("Failed to download file: 403"),
+    )
+
+    await sendChatMessage({
+      conversation: fakeConversation as never,
+      contactInbox: fakeContactInbox as never,
+      url: "https://storage.googleapis.com/private/image.png",
+    })
+
+    expect(mockRepositoryCreateWithAttachments).not.toHaveBeenCalled()
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: "https://storage.googleapis.com/private/image.png",
+      }),
+    )
+  })
 })
