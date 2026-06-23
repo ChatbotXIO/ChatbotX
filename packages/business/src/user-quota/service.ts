@@ -309,6 +309,17 @@ class UserQuotaService extends BaseService {
     return Math.max(0, limit - liveCount)
   }
 
+  /**
+   * Near-real-time `used` per metric, read from the Redis live counters
+   * (cold-seeded from the DB, so always at least as fresh as the synced
+   * columns). Drives the usage display so the shown number tracks live activity
+   * instead of lagging the scheduled `sync-user-quota` job by up to a full sync
+   * interval. Limits still come from the (rarely-changing) cached quota row.
+   */
+  getLiveUsage(userId: string): Promise<Record<QuotaMetric, number>> {
+    return this.store.getLiveCounts(userId)
+  }
+
   async increment(userId: string, metric: QuotaMetric): Promise<void> {
     await this.incrementBy(userId, metric, 1)
   }

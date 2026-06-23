@@ -373,25 +373,25 @@ class QuotaEnforcementService {
 
     if (pooled && userId === ctx.ownerId) {
       // Reseller acting directly: only the pool governs.
-      return !(await tenantQuotaService.hasCapacity(
+      return tenantQuotaService.isLimitReached(
         ctx.tenantId,
         ctx.ownerId,
         metric,
-      ))
+      )
     }
 
-    const userFull = !(await userQuotaService.hasCapacity(userId, metric))
+    const userFull = await userQuotaService.isLimitReached(userId, metric)
     if (!pooled) {
       return userFull
     }
     if (userFull) {
       return true
     }
-    return !(await tenantQuotaService.hasCapacity(
+    return tenantQuotaService.isLimitReached(
       ctx.tenantId,
       ctx.ownerId as string,
       metric,
-    ))
+    )
   }
 
   /** Tighter of the user and pool remaining slots (`null` = unlimited). */
@@ -436,34 +436,46 @@ class QuotaEnforcementService {
     const ctx = await this.resolveContext(userId)
 
     if (this.isPooled(ctx) && userId === ctx.ownerId) {
-      const [usage, ownerQuota] = await Promise.all([
-        tenantQuotaService.getUsage(ctx.tenantId),
+      // `used` from the live pool counters (near-real-time), `limit` from the
+      // reseller's plan row — so the display tracks live activity instead of
+      // the scheduled DB sync.
+      const [liveUsed, ownerQuota] = await Promise.all([
+        tenantQuotaService.getLiveUsage(ctx.tenantId),
         userQuotaService.getForUser(ctx.ownerId),
       ])
       return Object.fromEntries(
         ALL_METRICS.map((metric) => [
           metric,
           {
-            used: tenantQuotaService.metricUsed(usage, metric),
+            used: liveUsed[metric],
             limit: userQuotaService.metricValues(ownerQuota, metric).limit,
           },
         ]),
       ) as QuotaUsageSummary
     }
 
-    const quota = await userQuotaService.getForUser(userId)
+    // `used` from the live per-user counters (near-real-time), `limit` from the
+    // cached quota row — the value the user sees now matches what enforcement
+    // counts, with no wait for the next `sync-user-quota` pass.
+    const [liveUsed, quota] = await Promise.all([
+      userQuotaService.getLiveUsage(userId),
+      userQuotaService.getForUser(userId),
+    ])
     return Object.fromEntries(
       ALL_METRICS.map((metric) => [
         metric,
-        userQuotaService.metricValues(quota, metric),
+        {
+          used: liveUsed[metric],
+          limit: userQuotaService.metricValues(quota, metric).limit,
+        },
       ]),
     ) as QuotaUsageSummary
   }
 
   /**
-   * Per-metric at-limit booleans for the UI (DB-used based, matching the
-   * sidebar usage display). Combines both levels for a customer; pool-only for
-   * a reseller; user-only for a root-tenant user.
+   * Per-metric at-limit booleans for the UI (live-counter based, matching both
+   * the enforcement gates and the sidebar usage display). Combines both levels
+   * for a customer; pool-only for a reseller; user-only for a root-tenant user.
    */
   async getAtLimitMap(userId: string): Promise<Record<QuotaMetric, boolean>> {
     const ctx = await this.resolveContext(userId)

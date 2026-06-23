@@ -58,14 +58,6 @@ class TenantQuotaService extends BaseService {
         .then((row) => row ?? null),
   })
 
-  /**
-   * Pure read of a metric's pooled used value from a usage row. Exposed for the
-   * level-aware usage-summary display in `QuotaEnforcementService`.
-   */
-  metricUsed(usage: TenantQuotaUsageModel | null, metric: QuotaMetric): number {
-    return this.getUsedValue(usage, metric)
-  }
-
   private getUsedValue(
     usage: TenantQuotaUsageModel | null,
     metric: QuotaMetric,
@@ -156,6 +148,17 @@ class TenantQuotaService extends BaseService {
       return null
     }
     return Math.max(0, limit - liveCount)
+  }
+
+  /**
+   * Near-real-time pooled `used` per metric from the Redis live counters
+   * (cold-seeded from the DB). Drives the reseller usage display. Note `mac` is
+   * not fed live at the pool level (mac-tracking writes the per-user and
+   * workspace caches, never the pool), so pooled `mac` stays only as fresh as
+   * the reconcile job — every other metric tracks live pool activity.
+   */
+  getLiveUsage(tenantId: string): Promise<Record<QuotaMetric, number>> {
+    return this.store.getLiveCounts(tenantId)
   }
 
   async increment(tenantId: string, metric: QuotaMetric): Promise<void> {

@@ -33,6 +33,14 @@ const tenantService = {
 }
 vi.mock("../src/enterprise/tenant/service", () => ({ tenantService }))
 
+const zeroLiveUsage = () => ({
+  workspaces: 0,
+  channels: 0,
+  teamMembers: 0,
+  contacts: 0,
+  mac: 0,
+})
+
 const tenantQuotaService = {
   hasCapacity: vi.fn(async () => true),
   consume: vi.fn(async () => undefined),
@@ -41,7 +49,7 @@ const tenantQuotaService = {
   increment: vi.fn(async () => undefined),
   incrementBy: vi.fn(async () => undefined),
   getUsage: vi.fn(async () => null as unknown),
-  metricUsed: vi.fn(() => 0),
+  getLiveUsage: vi.fn(async () => zeroLiveUsage()),
 }
 vi.mock("../src/tenant-quota/service", () => ({ tenantQuotaService }))
 
@@ -54,6 +62,7 @@ const userQuotaService = {
   increment: vi.fn(async () => undefined),
   incrementBy: vi.fn(async () => undefined),
   getForUser: vi.fn(async () => null as unknown),
+  getLiveUsage: vi.fn(async () => zeroLiveUsage()),
   metricValues: vi.fn(() => ({ limit: null as number | null, used: 0 })),
 }
 vi.mock("../src/user-quota/service", () => ({ userQuotaService }))
@@ -399,36 +408,50 @@ describe("quotaEnforcementService.createNewContactWithMac", () => {
 })
 
 describe("quotaEnforcementService.getUsageSummary", () => {
-  test("root-tenant user reports their own UserQuota values", async () => {
+  test("root-tenant user reports live used against their UserQuota limit", async () => {
     asRootUser()
-    userQuotaService.metricValues.mockReturnValue({ limit: 10, used: 3 })
+    // limit from the (slow) quota row, used from the live counter — the live
+    // value (3) is shown, not the stale row's used (which is ignored).
+    userQuotaService.metricValues.mockReturnValue({ limit: 10, used: 99 })
+    userQuotaService.getLiveUsage.mockResolvedValue({
+      ...zeroLiveUsage(),
+      workspaces: 3,
+    })
 
     const summary = await quotaEnforcementService.getUsageSummary(ROOT_USER)
 
     expect(summary.workspaces).toEqual({ used: 3, limit: 10 })
-    expect(tenantQuotaService.metricUsed).not.toHaveBeenCalled()
+    expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(ROOT_USER)
+    expect(tenantQuotaService.getLiveUsage).not.toHaveBeenCalled()
   })
 
-  test("reseller reports the pooled usage against their plan limit", async () => {
+  test("reseller reports the live pooled usage against their plan limit", async () => {
     asReseller()
-    tenantQuotaService.metricUsed.mockReturnValue(8)
+    tenantQuotaService.getLiveUsage.mockResolvedValue({
+      ...zeroLiveUsage(),
+      workspaces: 8,
+    })
     userQuotaService.metricValues.mockReturnValue({ limit: 10, used: 1 })
 
     const summary = await quotaEnforcementService.getUsageSummary(RESELLER)
 
-    // Pool aggregate used (8), reseller plan limit (10) — not their personal 1.
+    // Live pool used (8), reseller plan limit (10) — not their personal 1.
     expect(summary.workspaces).toEqual({ used: 8, limit: 10 })
-    expect(tenantQuotaService.getUsage).toHaveBeenCalledWith(TENANT)
+    expect(tenantQuotaService.getLiveUsage).toHaveBeenCalledWith(TENANT)
     expect(userQuotaService.getForUser).toHaveBeenCalledWith(RESELLER)
   })
 
-  test("sub-account reports its own allocation, not the pool", async () => {
+  test("sub-account reports its own live allocation, not the pool", async () => {
     asCustomer()
-    userQuotaService.metricValues.mockReturnValue({ limit: 5, used: 2 })
+    userQuotaService.metricValues.mockReturnValue({ limit: 5, used: 99 })
+    userQuotaService.getLiveUsage.mockResolvedValue({
+      ...zeroLiveUsage(),
+      workspaces: 2,
+    })
 
     const summary = await quotaEnforcementService.getUsageSummary(CUSTOMER)
 
     expect(summary.workspaces).toEqual({ used: 2, limit: 5 })
-    expect(tenantQuotaService.metricUsed).not.toHaveBeenCalled()
+    expect(tenantQuotaService.getLiveUsage).not.toHaveBeenCalled()
   })
 })

@@ -127,6 +127,72 @@ export class LiveCounterStore<TRow> {
     }
   }
 
+  /**
+   * Near-real-time live counts for every metric in one round-trip. A single
+   * HMGET reads all `${QuotaMetric}` fields; any field that is missing or
+   * corrupt (cold start) is cold-seeded from a SINGLE DB row fetch and resolved
+   * to that row's DB value, so the result is always at least as fresh as the DB
+   * column. Returns the DB values for all metrics on any Redis error (fail
+   * closed via {@link parseLiveCount}). Unlike {@link getLiveCount} this never
+   * fetches the row more than once, making it cheap on the usage-display path.
+   *
+   * Cold-seeding uses `hsetnx`, so a concurrent in-flight increment is never
+   * clobbered; in the rare race the display value can trail the live counter by
+   * the racing event for one read and self-corrects on the next.
+   */
+  async getLiveCounts(id: string): Promise<Record<QuotaMetric, number>> {
+    const metrics = Object.keys(this.config.usedColumns) as QuotaMetric[]
+    try {
+      const client = await cacheConnections.useExisting()
+      const key = this.liveKey(id)
+
+      const raw = await client.hmget(key, ...metrics)
+      const live = metrics.map((_, i) => parseLiveCount(raw[i] ?? null))
+
+      if (live.every((value) => value !== null)) {
+        return this.toUsedRecord(metrics, live as number[])
+      }
+
+      // Cold start (or a corrupt field): seed the missing fields from one DB
+      // row fetch so each counter resumes from the authoritative value.
+      const row = await this.config.fetchRow(id)
+      const result = {} as Record<QuotaMetric, number>
+      for (let i = 0; i < metrics.length; i++) {
+        const metric = metrics[i] as QuotaMetric
+        const value = live[i]
+        if (value !== null) {
+          result[metric] = value
+          continue
+        }
+        const dbValue = this.config.getUsed(row, metric)
+        await client.hsetnx(key, metric, String(dbValue))
+        result[metric] = dbValue
+      }
+      return result
+    } catch (err) {
+      logger.warn(
+        { err },
+        `${this.config.label}: getLiveCounts failed, falling back to DB`,
+      )
+      const row = await this.config.fetchRow(id)
+      return this.toUsedRecord(
+        metrics,
+        metrics.map((metric) => this.config.getUsed(row, metric)),
+      )
+    }
+  }
+
+  private toUsedRecord(
+    metrics: QuotaMetric[],
+    values: number[],
+  ): Record<QuotaMetric, number> {
+    const result = {} as Record<QuotaMetric, number>
+    for (let i = 0; i < metrics.length; i++) {
+      result[metrics[i] as QuotaMetric] = values[i] as number
+    }
+    return result
+  }
+
   async getCachedRow(id: string): Promise<TRow | null> {
     try {
       return await distributedStore.get<TRow>(this.cacheKey(id))
