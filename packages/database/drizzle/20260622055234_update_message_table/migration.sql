@@ -4,7 +4,8 @@ SET "sourceId" = ci."sourceConversationId"
 FROM "ContactInbox" ci
 WHERE ci."contactId" = c."contactId"
   AND ci."sourceConversationId" IS NOT NULL;--> statement-breakpoint
-ALTER TABLE "Conversation" DROP CONSTRAINT IF EXISTS "Conversation_contactId_key";--> statement-breakpoint
+DROP INDEX IF EXISTS "Conversation_contactId_key";--> statement-breakpoint
+
 CREATE UNIQUE INDEX "Conversation_contactId_sourceId_key" ON "Conversation" ("contactId","sourceId") WHERE "sourceId" IS NOT NULL;--> statement-breakpoint
 ALTER TABLE "ContactInbox" DROP COLUMN "sourceConversationId";
 
