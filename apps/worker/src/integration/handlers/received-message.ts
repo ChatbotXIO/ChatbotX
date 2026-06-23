@@ -17,7 +17,6 @@ import {
 } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
-  ContactModel,
   ConversationModel,
   InboxModel,
   MessageModel,
@@ -48,6 +47,7 @@ import {
   type IntegrationJobUpdateIncomingComment,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
+import { UnrecoverableError } from "bullmq"
 import { logger } from "../../lib/logger"
 import {
   allIntegrations,
@@ -472,10 +472,6 @@ const detectContactAndConversation = async (props: {
   conversation: ConversationModel
 }> => {
   const { incomingContact, inbox, integrationRow } = props
-  let contactData: typeof contactModel.$inferInsert = {
-    ...incomingContact,
-    workspaceId: inbox.workspaceId,
-  }
 
   const existingContactInbox = await db.query.contactInboxModel.findFirst({
     where: {
@@ -485,139 +481,149 @@ const detectContactAndConversation = async (props: {
     },
   })
 
-  let workspaceOwnerId: string | null = null
-  if (!existingContactInbox) {
-    if (canGetUserProfileIfNeeded(inbox.channel)) {
-      const profileIntegration = allIntegrations[inbox.channel]
-      if (profileIntegration) {
-        const profileCtx = await buildContext({
-          workspaceId: inbox.workspaceId,
-          integrationType: inbox.channel,
-          integration: integrationRow,
-        })
-        const userProfile = await profileIntegration.runChannelHandler(
-          "contact",
-          "getProfile",
-          {
-            ctx: profileCtx,
-            data: { sourceId: incomingContact.sourceId },
-          },
-        )
-        contactData = {
-          ...contactData,
-          ...userProfile,
-        }
-      }
-    }
+  // The conversation source id (e.g. a Facebook post id for comments) keys the
+  // conversation; it is null for ordinary DMs. Carried on the conversation row,
+  // not the contactInbox (see f0cc49d).
+  const conversationSourceId = incomingContact.sourceConversationId ?? null
 
-    const ws = await workspaceService.find({ where: { id: inbox.workspaceId } })
-    if (!ws) {
-      throw new Error("Workspace not found")
-    }
-    workspaceOwnerId = ws.ownerId
+  // Returning contact: no quota gate (MAC only counts brand-new contacts).
+  // `findOrCreate` resolves the existing conversation or opens a fresh one when
+  // the source id is new (e.g. a comment on a different post).
+  if (existingContactInbox) {
+    const conversation = await conversationService.findOrCreate({
+      workspaceId: inbox.workspaceId,
+      contactId: existingContactInbox.contactId,
+      sourceId: conversationSourceId,
+    })
+    return { contactInbox: existingContactInbox, conversation }
+  }
 
-    if (
-      await quotaEnforcementService.isAtLimit({
-        userId: ws.ownerId,
-        metric: "contacts",
+  let contactData: typeof contactModel.$inferInsert = {
+    ...incomingContact,
+    workspaceId: inbox.workspaceId,
+  }
+  if (canGetUserProfileIfNeeded(inbox.channel)) {
+    const profileIntegration = allIntegrations[inbox.channel]
+    if (profileIntegration) {
+      const profileCtx = await buildContext({
+        workspaceId: inbox.workspaceId,
+        integrationType: inbox.channel,
+        integration: integrationRow,
       })
-    ) {
-      throw new Error("Contact limit reached")
+      const userProfile = await profileIntegration.runChannelHandler(
+        "contact",
+        "getProfile",
+        {
+          ctx: profileCtx,
+          data: { sourceId: incomingContact.sourceId },
+        },
+      )
+      contactData = {
+        ...contactData,
+        ...userProfile,
+      }
     }
   }
 
-  const conversationSourceId = incomingContact.sourceConversationId ?? null
+  const ws = await workspaceService.find({ where: { id: inbox.workspaceId } })
+  if (!ws) {
+    throw new Error("Workspace not found")
+  }
 
-  const { contactInbox, conversation, newContact } = await db.transaction(
-    async (tx) => {
-      let contactInbox: ContactInboxModel | null | undefined = null
-      let conversation: ConversationModel | null | undefined = null
-      let newContact: ContactModel | null | undefined = null
-
-      if (existingContactInbox) {
-        contactInbox = existingContactInbox
-      } else {
-        newContact = await tx
-          .insert(contactModel)
-          .values({
-            id: createId(),
-            ...contactData,
-          })
-          .returning()
-          .then((result) => result[0])
-        if (!newContact) {
-          throw new Error("Contact not found")
-        }
-
-        contactInbox = await tx
-          .insert(contactInboxModel)
-          .values({
-            id: createId(),
-            inboxId: inbox.id,
-            contactId: newContact.id,
-            originalContactId: newContact.id,
-            source: inbox.channel,
-            sourceId: incomingContact.sourceId,
-            channel: inbox.channel,
-          })
-          .returning()
-          .then((result) => result[0])
-      }
-
-      if (contactInbox) {
-        conversation = await conversationService.findOrCreate({
-          workspaceId: inbox.workspaceId,
-          contactId: contactInbox.contactId,
-          sourceId: conversationSourceId,
-          tx,
+  // MAC (monthly active contacts) is the billing hard gate. Gate + insert +
+  // consume run atomically so concurrent inbound messages for new contacts
+  // cannot overrun the limit; the `ContactActiveMonthly` presence row written
+  // inside the transaction makes the `message:received` event emitted later a
+  // dedup no-op (no double count). `contacts` stays the info-only metric.
+  const result = await quotaEnforcementService.createNewContactWithMac({
+    ownerId: ws.ownerId,
+    workspaceId: inbox.workspaceId,
+    create: async (tx) => {
+      const newContact = await tx
+        .insert(contactModel)
+        .values({
+          id: createId(),
+          ...contactData,
         })
+        .returning()
+        .then((rows) => rows[0])
+      if (!newContact) {
+        throw new Error("Contact not found")
       }
 
+      const contactInbox = await tx
+        .insert(contactInboxModel)
+        .values({
+          id: createId(),
+          inboxId: inbox.id,
+          contactId: newContact.id,
+          originalContactId: newContact.id,
+          source: inbox.channel,
+          sourceId: incomingContact.sourceId,
+          channel: inbox.channel,
+        })
+        .returning()
+        .then((rows) => rows[0])
       if (!contactInbox) {
         throw new Error("Contact inbox not found")
       }
-      if (!conversation) {
-        throw new Error("Conversation not found")
+
+      const conversation = await conversationService.findOrCreate({
+        workspaceId: inbox.workspaceId,
+        contactId: newContact.id,
+        sourceId: conversationSourceId,
+        tx,
+      })
+
+      return {
+        value: { newContact, contactInbox, conversation },
+        contactId: newContact.id,
+        contactInboxId: contactInbox.id,
+        inboxId: inbox.id,
       }
-
-      return { contactInbox, conversation, newContact }
     },
-  )
+  })
 
-  if (newContact && workspaceOwnerId) {
-    await quotaEnforcementService.increment({
-      userId: workspaceOwnerId,
-      metric: "contacts",
-    })
+  if (!result.ok) {
+    // The MAC (billing) cap is a deterministic business outcome, not a
+    // transient failure: retrying never succeeds. Throw UnrecoverableError so
+    // BullMQ fails the job once without retry/backoff instead of dead-lettering
+    // the inbound message after exhausting attempts. Logged at `warn` so the
+    // cap is observable without paging on expected behavior.
+    logger.warn(
+      { workspaceId: inbox.workspaceId, ownerId: ws.ownerId },
+      "Inbound new-contact rejected: MAC limit reached",
+    )
+    throw new UnrecoverableError("contact_mac_limit_reached")
   }
 
-  if (newContact) {
-    await emitContactCreated(
-      newContact.workspaceId,
-      newContact.id,
-      newContact.firstName || undefined,
-      newContact.phoneNumber || undefined,
-      newContact.email || undefined,
-    )
+  const { newContact, contactInbox, conversation } = result.value
 
-    if (contactInbox.sourceId) {
-      emit("analytics:dashboard", {
-        eventType: "contact:created",
-        workspaceId: newContact.workspaceId,
-        contactId: contactInbox.id,
-        occurredAt: newContact.createdAt,
-        source: contactInbox.source,
-        sourceId: contactInbox.sourceId,
-        channel: contactInbox.channel,
-        metadata: {
-          triggerContext: {
-            triggerSource: "worker",
-            triggerHandler: "receiveMessage",
-            triggerType: "contact_created",
-          },
+  await emitContactCreated(
+    newContact.workspaceId,
+    newContact.id,
+    newContact.firstName || undefined,
+    newContact.phoneNumber || undefined,
+    newContact.email || undefined,
+  )
+
+  if (contactInbox.sourceId) {
+    emit("analytics:dashboard", {
+      eventType: "contact:created",
+      workspaceId: newContact.workspaceId,
+      contactId: contactInbox.id,
+      occurredAt: newContact.createdAt,
+      source: contactInbox.source,
+      sourceId: contactInbox.sourceId,
+      channel: contactInbox.channel,
+      metadata: {
+        triggerContext: {
+          triggerSource: "worker",
+          triggerHandler: "receiveMessage",
+          triggerType: "contact_created",
         },
-      })
-    }
+      },
+    })
   }
 
   return { contactInbox, conversation }

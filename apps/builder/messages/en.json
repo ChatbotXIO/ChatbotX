@@ -71,6 +71,7 @@
     "toggleTheme": "Toggle theme",
     "transferConversationToBot": "Transfer Conversation to Bot",
     "update": "Update",
+    "updatePayment": "Update payment",
     "upgradePlan": "Upgrade plan",
     "upgradeToPro": "Upgrade to Pro",
     "uploadFile": "Upload File",
@@ -234,7 +235,8 @@
       "free": "Free"
     },
     "usage": {
-      "contacts": "Monthly active contacts",
+      "contacts": "Contacts",
+      "mac": "Monthly active contacts",
       "workspaces": "Workspaces",
       "channels": "Channels",
       "teamMembers": "Team members"
@@ -243,7 +245,11 @@
       "workspaces": "You've reached your workspace limit. Upgrade your plan to create more.",
       "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
       "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
-      "contacts": "You've reached your contact limit. Upgrade your plan to add more."
+      "contacts": "You've reached your contact limit. Upgrade your plan to add more.",
+      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
+    },
+    "pastDue": {
+      "message": "Your last payment failed. Update your payment method to keep your workspace active."
     },
     "trial": {
       "daysLeft": "Trial: {days} days left",

@@ -38,6 +38,14 @@ export * from "./platform"
 export * from "./platform-credential"
 export * from "./qr-code"
 export * from "./quota-enforcement"
+// Shared quota key builders + the fail-closed live-counter parser, so the
+// reconcile workers read/write the same Redis keys the services use (single
+// source of truth) instead of re-declaring the literal prefixes.
+export {
+  liveKeyFor,
+  parseLiveCount,
+  USER_QUOTA_LABEL,
+} from "./quota-shared/live-counter-store"
 export * from "./referral"
 export * from "./tag"
 export * from "./tenant-quota"

@@ -1,3 +1,4 @@
+import { UnrecoverableError } from "bullmq"
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 // ---------------------------------------------------------------------------
@@ -20,6 +21,9 @@ const {
   mockIntegrationQueueAdd,
   mockDbSet,
   mockDbTransaction,
+  mockCreateNewContactWithMac,
+  mockWorkspaceFind,
+  mockQuotaIncrement,
 } = vi.hoisted(() => {
   const mockDbSet = vi.fn()
   const updateChain = { set: mockDbSet, where: vi.fn() }
@@ -60,6 +64,9 @@ const {
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
     mockDbTransaction,
+    mockCreateNewContactWithMac: vi.fn(),
+    mockWorkspaceFind: vi.fn().mockResolvedValue(null),
+    mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -98,7 +105,11 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
-  workspaceService: { find: vi.fn().mockResolvedValue(null) },
+  workspaceService: { find: mockWorkspaceFind },
+  quotaEnforcementService: {
+    increment: mockQuotaIncrement,
+    createNewContactWithMac: mockCreateNewContactWithMac,
+  },
   userQuotaService: {
     isLimitReached: vi.fn().mockResolvedValue(false),
     increment: vi.fn().mockResolvedValue(undefined),
@@ -402,5 +413,79 @@ describe("receiveMessage — message repository branch", () => {
         integrationType: "unknown_channel" as never,
       }),
     ).rejects.toThrow("Unsupported integration")
+  })
+})
+
+describe("receiveMessage — new contact MAC gate", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // No existing contact inbox → new-contact creation path.
+    mockFindContactInbox.mockResolvedValue(undefined)
+    mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+    vi.mocked(
+      integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
+    ).mockResolvedValue({
+      inbox: fakeInbox,
+      integrationRow: fakeIntegrationRow,
+    } as never)
+    mockBuildContext.mockResolvedValue({ workspaceId: "ws-1" })
+    mockresolveTenantSettings.mockResolvedValue({})
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+    mockCreateMessageRepository.mockResolvedValue({
+      createOrUpdate: mockCreateOrUpdate,
+      createOrUpdateWithAttachments: mockCreateOrUpdateWithAttachments,
+    })
+    mockCreateOrUpdate.mockResolvedValue({
+      message: fakeCreatedMessage,
+      isNew: true,
+    })
+  })
+
+  test("rejects with a non-retryable error and creates no message when the MAC limit is reached", async () => {
+    mockCreateNewContactWithMac.mockResolvedValue({ ok: false, level: "user" })
+
+    // Must be UnrecoverableError so BullMQ fails the job once without retrying —
+    // a deterministic billing cap must never dead-letter (drop) the inbound message.
+    await expect(receiveMessage(baseProps)).rejects.toBeInstanceOf(
+      UnrecoverableError,
+    )
+    expect(mockCreateMessageRepository).not.toHaveBeenCalled()
+    expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("creates the contact via the atomic helper (which records contacts itself)", async () => {
+    const newContact = {
+      id: "contact-new",
+      workspaceId: "ws-1",
+      firstName: "Test",
+      phoneNumber: null,
+      email: null,
+      createdAt: new Date("2026-06-21T00:00:00Z"),
+    }
+    const contactInbox = {
+      ...fakeContactInbox,
+      id: "ci-new",
+      contactId: "contact-new",
+    }
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: true,
+      value: { newContact, contactInbox, conversation: fakeConversation },
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    // `contacts` is recorded inside createNewContactWithMac now, so the handler
+    // must not increment it separately (avoids double-counting).
+    expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 })

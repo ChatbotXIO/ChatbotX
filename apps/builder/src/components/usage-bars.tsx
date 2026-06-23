@@ -1,17 +1,12 @@
 import { Progress } from "@chatbotx.io/ui/components/ui/progress"
 import { cn } from "@chatbotx.io/ui/lib/utils"
+import {
+  type QuotaMetric,
+  type QuotaMetricKey,
+  quotaUsageState,
+} from "@/lib/quota-metrics"
 
-export type QuotaMetricKey =
-  | "contacts"
-  | "workspaces"
-  | "channels"
-  | "teamMembers"
-
-export interface QuotaMetric {
-  key: QuotaMetricKey
-  limit: number
-  used: number
-}
+export type { QuotaMetric, QuotaMetricKey } from "@/lib/quota-metrics"
 
 /**
  * Presentational quota usage bars. Pure (no hooks/context) so it can render in
@@ -30,11 +25,7 @@ export function UsageBars({
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       {metrics.map((metric) => {
-        const pct =
-          metric.limit > 0
-            ? Math.min(100, Math.round((metric.used / metric.limit) * 100))
-            : 0
-        const isOverLimit = metric.used >= metric.limit
+        const { pct, isOverLimit } = quotaUsageState(metric.used, metric.limit)
         return (
           <div className="flex flex-col gap-1" key={metric.key}>
             <div className="flex items-center justify-between text-xs">

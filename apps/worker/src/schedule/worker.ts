@@ -19,6 +19,7 @@ import { prepareBroadcast } from "./handlers/prepare-broadcast"
 import { processBroadcastContacts } from "./handlers/process-broadcast-contacts"
 import { purgeCoexistStaging } from "./handlers/purge-coexist-staging"
 import { reconcileBroadcasts } from "./handlers/reconcile-broadcasts"
+import { reconcileTenants } from "./handlers/reconcile-tenants"
 import { refreshZaloTokens } from "./handlers/refresh-zalo-tokens"
 import { registerSchedules } from "./handlers/register-schedules"
 import { scanCoexistRuns } from "./handlers/scan-coexist-runs"
@@ -87,6 +88,10 @@ async function startScheduleWorker() {
 
         case ScheduleJobData.syncTenantQuota:
           await syncTenantQuota()
+          return
+
+        case ScheduleJobData.reconcileTenants:
+          await reconcileTenants()
           return
 
         case ScheduleJobData.maintainMacPartitions:

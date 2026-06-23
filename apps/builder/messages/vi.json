@@ -71,6 +71,7 @@
     "toggleTheme": "Chuyển đổi giao diện",
     "transferConversationToBot": "Chuyển cuộc trò chuyện cho bot",
     "update": "Cập nhật",
+    "updatePayment": "Cập nhật thanh toán",
     "upgradePlan": "Nâng cấp gói",
     "upgradeToPro": "Nâng cấp lên Pro",
     "uploadFile": "Tải lên tệp",
@@ -234,7 +235,8 @@
       "free": "Miễn phí"
     },
     "usage": {
-      "contacts": "Liên hệ hoạt động hằng tháng",
+      "contacts": "Liên hệ",
+      "mac": "Liên hệ hoạt động hằng tháng",
       "workspaces": "Không gian làm việc",
       "channels": "Kênh",
       "teamMembers": "Thành viên nhóm"
@@ -243,7 +245,11 @@
       "workspaces": "Bạn đã đạt giới hạn không gian làm việc. Nâng cấp gói để tạo thêm.",
       "channels": "Bạn đã đạt giới hạn kênh. Nâng cấp gói để kết nối thêm.",
       "teamMembers": "Bạn đã đạt giới hạn thành viên nhóm. Nâng cấp gói để mời thêm.",
-      "contacts": "Bạn đã đạt giới hạn liên hệ. Nâng cấp gói để thêm liên hệ."
+      "contacts": "Bạn đã đạt giới hạn liên hệ. Nâng cấp gói để thêm liên hệ.",
+      "mac": "Bạn đã đạt giới hạn liên hệ hoạt động hằng tháng. Nâng cấp gói để tiếp cận thêm."
+    },
+    "pastDue": {
+      "message": "Thanh toán gần nhất của bạn không thành công. Cập nhật phương thức thanh toán để tiếp tục sử dụng workspace."
     },
     "trial": {
       "daysLeft": "Dùng thử: còn {days} ngày",

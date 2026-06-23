@@ -4,9 +4,10 @@ import {
 } from "@chatbotx.io/business"
 import { notFound, redirect } from "next/navigation"
 import { isCloud } from "@/env"
+import { AccountRail } from "@/features/workspaces/components/account-rail"
 import WorkspacesList from "@/features/workspaces/components/workspaces-list"
 import { getCurrentUserAndAllLinkedWorkspaces } from "@/lib/auth/utils"
-import { buildQuotaMetrics } from "@/lib/quota-metrics"
+import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
 
 export default async function MainPage() {
   const userAndWorkspaces = await getCurrentUserAndAllLinkedWorkspaces()
@@ -35,15 +36,27 @@ export default async function MainPage() {
     redirect("/trial-expired")
   }
 
+  const trialEndsAt = resolveTrialEndsAt(quota)
+
+  const userInfo = { name: user.name, email: user.email, image: user.image }
+
   return (
-    <WorkspacesList
-      isAtLimit={atLimit?.workspaces ?? false}
-      metrics={buildQuotaMetrics(usageSummary)}
-      ownerWorkspaceIds={ownerWorkspaceIds}
-      planName={quota?.planName ?? null}
-      user={{ name: user.name, email: user.email, image: user.image }}
-      workspaces={allWorkspaces}
-      workspacesLimit={usageSummary?.workspaces.limit ?? null}
-    />
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:flex-row md:py-16">
+      <AccountRail
+        metrics={buildQuotaMetrics(usageSummary)}
+        planName={quota?.planName ?? null}
+        planStatus={quota?.planStatus ?? null}
+        trialEndsAt={trialEndsAt}
+        user={userInfo}
+      />
+
+      <WorkspacesList
+        isAtLimit={atLimit?.workspaces ?? false}
+        ownerWorkspaceIds={ownerWorkspaceIds}
+        user={userInfo}
+        workspaces={allWorkspaces}
+        workspacesLimit={usageSummary?.workspaces.limit ?? null}
+      />
+    </div>
   )
 }

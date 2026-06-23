@@ -14,11 +14,10 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import type { QuotaSummary } from "@/components/nav-usage"
-import { TrialBanner } from "@/components/trial-banner"
 import { isCloud } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
 import { getCurrentUser } from "@/lib/auth/utils"
-import { buildQuotaMetrics } from "@/lib/quota-metrics"
+import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
 
 export default async function WorkspaceLayout({
   children,
@@ -72,10 +71,7 @@ export default async function WorkspaceLayout({
       : null,
   }))
 
-  const trialEndsAt =
-    quota?.planStatus === "trial" && quota.periodEnd
-      ? quota.periodEnd.toISOString()
-      : null
+  const trialEndsAt = resolveTrialEndsAt(quota)
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -96,12 +92,6 @@ export default async function WorkspaceLayout({
         workspaceId={workspaceId}
       />
       <SidebarInset>
-        {cloud && (
-          <TrialBanner
-            planStatus={quotaSummary.planStatus}
-            trialEndsAt={quotaSummary.trialEndsAt}
-          />
-        )}
         <main className="flex flex-1 flex-col gap-4 p-6">{children}</main>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
       </SidebarInset>

@@ -1,4 +1,5 @@
-import { db } from "@chatbotx.io/database/client"
+import { macTrackingService } from "@chatbotx.io/analytics"
+import { db, type Transaction } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
@@ -203,11 +204,20 @@ class QuotaEnforcementService {
     metric: QuotaMetric
     count: number
   }): Promise<void> {
-    const { userId, metric, count } = args
+    const ctx = await this.resolveContext(args.userId)
+    await this.incrementByForCtx(ctx, args.userId, args.metric, args.count)
+  }
+
+  /** {@link incrementBy} body for an already-resolved context (no extra DB read). */
+  private async incrementByForCtx(
+    ctx: QuotaContext,
+    userId: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
     if (count <= 0) {
       return
     }
-    const ctx = await this.resolveContext(userId)
 
     if (!this.isPooled(ctx)) {
       await userQuotaService.incrementBy(userId, metric, count)
@@ -219,6 +229,126 @@ class QuotaEnforcementService {
     if (userId !== ownerId) {
       await userQuotaService.incrementBy(userId, metric, count)
     }
+  }
+
+  /**
+   * Atomically gate, create, and consume a MAC slot for a BRAND-NEW contact.
+   *
+   * MAC (monthly-active-contacts) is the billing hard gate. Unlike the
+   * info-only `contacts` metric (incremented out-of-band), a new contact must
+   * not be created at all once the MAC limit is reached. This serializes the
+   * remaining-slots check + insert + increment under the same distributed lock
+   * the contact-import path uses, so concurrent new-contact requests cannot
+   * both pass the gate and overrun the limit.
+   *
+   * The `create` callback performs the actual contact/contactInbox/conversation
+   * inserts inside the provided transaction and returns the new ids. On success
+   * a `ContactActiveMonthly` presence row is written in the SAME transaction so
+   * the later message analytics event for this contact dedups (does not
+   * double-count), and the user+pool live MAC counters are incremented after
+   * commit.
+   *
+   * Returns `{ ok: false, level }` (and creates nothing) when the limit is
+   * reached; otherwise `{ ok: true, value }` with the callback's value.
+   */
+  async createNewContactWithMac<T>(args: {
+    /** Workspace owner whose plan governs the MAC limit. */
+    ownerId: string
+    workspaceId: string
+    occurredAt?: Date
+    create: (tx: Transaction) => Promise<{
+      value: T
+      contactId: string
+      contactInboxId: string
+      inboxId: string
+    }>
+  }): Promise<{ ok: true; value: T } | { ok: false; level: ConsumeLevel }> {
+    const { ownerId, workspaceId, create } = args
+    const occurredAt = args.occurredAt ?? new Date()
+    // Resolve the owner's quota context ONCE for the whole operation and thread
+    // it through the lock key, remaining check, exhaustion level, and both
+    // counter increments — the new-contact path is hot (every inbound message
+    // from a new contact), and re-resolving would issue 3-4 identical owner-row
+    // reads, two of them inside the lock.
+    const ctx = await this.resolveContext(ownerId)
+    const lockKey = this.lockKeyFor(ctx, ownerId, "mac")
+
+    return distributedLock.runExclusive({
+      key: lockKey,
+      timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
+      fn: async (): Promise<
+        { ok: true; value: T } | { ok: false; level: ConsumeLevel }
+      > => {
+        const remaining = await this.dualRemainingSlotsForCtx(
+          ctx,
+          ownerId,
+          "mac",
+        )
+        if (remaining === 0) {
+          return { ok: false, level: await this.macExhaustedLevelForCtx(ctx) }
+        }
+
+        // The owner billing-period anchor. Without it there is no MAC period to
+        // record presence against (mirrors the async tracker, which skips
+        // period-less owners), but a finite `remaining` still means a configured
+        // MAC limit exists and must be consumed via the live quota counter.
+        const quota = await userQuotaService.getForUser(ownerId)
+        const periodStart = quota?.periodStart ?? null
+
+        const { value, counted } = await db.transaction(async (tx) => {
+          const created = await create(tx)
+          let didCount = false
+          if (periodStart) {
+            const claim = await macTrackingService.claimNewActiveContact(
+              {
+                workspaceId,
+                contactId: created.contactId,
+                contactInboxId: created.contactInboxId,
+                inboxId: created.inboxId,
+                periodStart,
+                occurredAt,
+              },
+              tx,
+            )
+            didCount = claim.counted
+          }
+          return { value: created.value, counted: didCount }
+        })
+
+        const shouldConsumeMac = counted || (!periodStart && remaining !== null)
+        if (shouldConsumeMac) {
+          await this.incrementByForCtx(ctx, ownerId, "mac", 1)
+        }
+        if (counted) {
+          await macTrackingService.incrementWorkspaceMacCache(workspaceId, 1)
+        }
+        // Info-only total-contacts counter: every brand-new contact counts,
+        // independent of the MAC period/limit. Recorded HERE so the single
+        // new-contact chokepoint owns all per-new-contact metrics and no caller
+        // can forget to bump `contacts` (callers previously did this by hand,
+        // and the bulk-import path forgot it entirely).
+        await this.incrementByForCtx(ctx, ownerId, "contacts", 1)
+
+        return { ok: true, value }
+      },
+    })
+  }
+
+  /** {@link macExhaustedLevel} for an already-resolved context. */
+  private async macExhaustedLevelForCtx(
+    ctx: QuotaContext,
+  ): Promise<ConsumeLevel> {
+    if (
+      this.isPooled(ctx) &&
+      (await tenantQuotaService.isLimitReached(
+        ctx.tenantId,
+        ctx.ownerId,
+        "mac",
+      ))
+    ) {
+      return "pool"
+    }
+    return "user"
   }
 
   /**
@@ -269,9 +399,16 @@ class QuotaEnforcementService {
     userId: string
     metric: QuotaMetric
   }): Promise<number | null> {
-    const { userId, metric } = args
-    const ctx = await this.resolveContext(userId)
+    const ctx = await this.resolveContext(args.userId)
+    return this.dualRemainingSlotsForCtx(ctx, args.userId, args.metric)
+  }
 
+  /** {@link getDualRemainingSlots} body for an already-resolved context. */
+  private async dualRemainingSlotsForCtx(
+    ctx: QuotaContext,
+    userId: string,
+    metric: QuotaMetric,
+  ): Promise<number | null> {
     if (!this.isPooled(ctx)) {
       return userQuotaService.getRemainingSlots(userId, metric)
     }

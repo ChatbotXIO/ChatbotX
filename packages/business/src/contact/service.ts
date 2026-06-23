@@ -287,15 +287,6 @@ class ContactService extends BaseService {
       throw notFoundException("Workspace not found")
     }
 
-    if (
-      await quotaEnforcementService.isAtLimit({
-        userId: workspace.ownerId,
-        metric: "contacts",
-      })
-    ) {
-      throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
-    }
-
     const inbox = await findOrFail({
       table: inboxModel,
       where: { workspaceId, channel: channelTypes.enum.webchat },
@@ -305,33 +296,55 @@ class ContactService extends BaseService {
     const identifierData =
       prefix === "phone" ? { phoneNumber: value } : { email: value }
 
-    const [contact, contactInbox] = await db.transaction(async (tx) => {
-      const newContact = await this.insert({
-        workspaceId,
-        data: { ...identifierData, ...data },
-        tx,
-      })
-
-      const [newContactInbox] = await tx
-        .insert(contactInboxModel)
-        .values({
-          originalContactId: newContact.id,
-          contactId: newContact.id,
-          inboxId: inbox.id,
-          channel: channelTypes.enum.webchat,
-          source: contactSources.enum.imported,
-          sourceId: createId(),
+    // MAC is the billing hard gate: gate + insert + consume run atomically so a
+    // new contact is rejected (and nothing inserted) once the limit is reached.
+    // The `ContactActiveMonthly` presence row written in the transaction keeps a
+    // later message event from double-counting; `contacts` stays info-only.
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: workspace.ownerId,
+      workspaceId,
+      create: async (tx) => {
+        const newContact = await this.insert({
+          workspaceId,
+          data: { ...identifierData, ...data },
+          tx,
         })
-        .returning()
 
-      await tx.insert(conversationModel).values({
-        workspaceId,
-        contactId: newContact.id,
-        id: createId(),
-      })
+        const [newContactInbox] = await tx
+          .insert(contactInboxModel)
+          .values({
+            originalContactId: newContact.id,
+            contactId: newContact.id,
+            inboxId: inbox.id,
+            channel: channelTypes.enum.webchat,
+            source: contactSources.enum.imported,
+            sourceId: createId(),
+          })
+          .returning()
+        if (!newContactInbox) {
+          throw new ChatbotXException("Contact inbox not found")
+        }
 
-      return [newContact, newContactInbox] as const
+        await tx.insert(conversationModel).values({
+          workspaceId,
+          contactId: newContact.id,
+          id: createId(),
+        })
+
+        return {
+          value: { contact: newContact, contactInbox: newContactInbox },
+          contactId: newContact.id,
+          contactInboxId: newContactInbox.id,
+          inboxId: inbox.id,
+        }
+      },
     })
+
+    if (!result.ok) {
+      throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
+    }
+
+    const { contact, contactInbox } = result.value
 
     if (avatar) {
       const avatarPath = await this.resolveAvatarPath(
@@ -341,11 +354,6 @@ class ContactService extends BaseService {
       )
       await this.update({ workspaceId, id: contact.id }, { avatar: avatarPath })
     }
-
-    await quotaEnforcementService.increment({
-      userId: workspace.ownerId,
-      metric: "contacts",
-    })
 
     await emitContactCreated(
       workspaceId,

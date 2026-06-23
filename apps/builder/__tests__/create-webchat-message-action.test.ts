@@ -3,16 +3,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const {
+  insertBuilder,
   mockAutomatedResponseEnqueue,
   mockChatQueueAdd,
+  mockContactFindById,
+  mockContactInboxFindLatest,
   mockConversationEnsureActive,
+  mockConversationFindBy,
   mockCreateMessageRepository,
-  mockDbTransaction,
+  mockCreateNewContactWithMac,
   mockDbUpdate,
   mockEmit,
   mockFindOrFail,
   mockIntegrationQueueAdd,
+  mockQuotaIncrement,
   mockRepositoryCreate,
+  mockWorkspaceFind,
   tx,
   updateBuilder,
 } = vi.hoisted(() => {
@@ -23,31 +29,50 @@ const {
   updateBuilder.set.mockReturnValue(updateBuilder)
   updateBuilder.where.mockResolvedValue(undefined)
 
-  const tx = {
-    query: {
-      contactInboxModel: { findFirst: vi.fn() },
-      conversationModel: { findFirst: vi.fn() },
-      contactModel: { findFirst: vi.fn() },
-    },
-    insert: vi.fn(),
+  const insertBuilder = {
+    values: vi.fn(),
+    returning: vi.fn(),
   }
-  const mockDbTransaction = vi.fn((fn: (tx: unknown) => unknown) => fn(tx))
+  insertBuilder.values.mockReturnValue(insertBuilder)
+
+  // The transaction handed to the `createNewContactWithMac` create callback.
+  const tx = {
+    insert: vi.fn().mockReturnValue(insertBuilder),
+  }
+
   const mockRepositoryCreate = vi.fn()
 
   return {
+    insertBuilder,
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
+    mockContactFindById: vi.fn(),
+    mockContactInboxFindLatest: vi.fn(),
+    mockConversationFindBy: vi.fn(),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockConversationEnsureActive: vi.fn().mockResolvedValue(false),
     mockCreateMessageRepository: vi.fn().mockResolvedValue({
       create: mockRepositoryCreate,
       createWithAttachments: vi.fn(),
     }),
-    mockDbTransaction,
+    // Default: behave like an under-limit owner — run the create callback in
+    // the fake transaction and report success.
+    mockCreateNewContactWithMac: vi.fn(
+      async (args: {
+        create: (tx: unknown) => Promise<{ value: unknown }>
+      }): Promise<
+        { ok: true; value: unknown } | { ok: false; level: string }
+      > => {
+        const created = await args.create(tx)
+        return { ok: true, value: created.value }
+      },
+    ),
     mockDbUpdate: vi.fn().mockReturnValue(updateBuilder),
     mockEmit: vi.fn(),
     mockFindOrFail: vi.fn(),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
+    mockQuotaIncrement: vi.fn().mockResolvedValue(undefined),
     mockRepositoryCreate,
+    mockWorkspaceFind: vi.fn().mockResolvedValue({ ownerId: "owner-1" }),
     tx,
     updateBuilder,
   }
@@ -66,14 +91,32 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 }))
 
 vi.mock("@chatbotx.io/business", () => ({
-  conversationService: { ensureActive: mockConversationEnsureActive },
+  contactInboxService: { findLatestBySource: mockContactInboxFindLatest },
+  contactService: { findById: mockContactFindById },
+  conversationService: {
+    ensureActive: mockConversationEnsureActive,
+    findBy: mockConversationFindBy,
+  },
+  quotaEnforcementService: {
+    increment: mockQuotaIncrement,
+    createNewContactWithMac: mockCreateNewContactWithMac,
+  },
   resolveTenantSettings: vi
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
+  workspaceService: { find: mockWorkspaceFind },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
-  ChatbotXException: class ChatbotXException extends Error {},
+  ChatbotXException: class ChatbotXException extends Error {
+    code: string
+    httpStatusCode: number
+    constructor(message: string, code = "systemError", httpStatusCode = 400) {
+      super(message)
+      this.code = code
+      this.httpStatusCode = httpStatusCode
+    }
+  },
 }))
 
 vi.mock("@chatbotx.io/business/utils", () => ({
@@ -82,7 +125,6 @@ vi.mock("@chatbotx.io/business/utils", () => ({
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
-    transaction: mockDbTransaction,
     update: mockDbUpdate,
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
@@ -163,32 +205,44 @@ const contact = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
 }
 
+const resetCommonMocks = () => {
+  vi.clearAllMocks()
+  updateBuilder.set.mockReturnValue(updateBuilder)
+  updateBuilder.where.mockResolvedValue(undefined)
+  mockDbUpdate.mockReturnValue(updateBuilder)
+  mockFindOrFail.mockResolvedValue({ inboxId: "inbox-1" })
+  mockConversationFindBy.mockResolvedValue(conversation)
+  mockContactFindById.mockResolvedValue(contact)
+  mockRepositoryCreate.mockImplementation((input) =>
+    Promise.resolve({
+      id: "msg-1",
+      ...input,
+      sourceId: null,
+      updatedAt: input.createdAt,
+    }),
+  )
+  mockCreateMessageRepository.mockResolvedValue({
+    create: mockRepositoryCreate,
+    createWithAttachments: vi.fn(),
+  })
+  mockChatQueueAdd.mockResolvedValue(undefined)
+  tx.insert.mockReturnValue(insertBuilder)
+  insertBuilder.values.mockReturnValue(insertBuilder)
+  insertBuilder.returning.mockReset()
+  mockQuotaIncrement.mockResolvedValue(undefined)
+  mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
+  mockCreateNewContactWithMac.mockImplementation(
+    async (args: { create: (tx: unknown) => Promise<{ value: unknown }> }) => {
+      const created = await args.create(tx)
+      return { ok: true, value: created.value }
+    },
+  )
+}
+
 describe("handleCreateWebchatMessage", () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    updateBuilder.set.mockReturnValue(updateBuilder)
-    updateBuilder.where.mockResolvedValue(undefined)
-    mockDbUpdate.mockReturnValue(updateBuilder)
-    mockDbTransaction.mockImplementation((fn: (tx: unknown) => unknown) =>
-      fn(tx),
-    )
-    mockFindOrFail.mockResolvedValue({ inboxId: "inbox-1" })
-    tx.query.contactInboxModel.findFirst.mockResolvedValue(contactInbox)
-    tx.query.conversationModel.findFirst.mockResolvedValue(conversation)
-    tx.query.contactModel.findFirst.mockResolvedValue(contact)
-    mockRepositoryCreate.mockImplementation((input) =>
-      Promise.resolve({
-        id: "msg-1",
-        ...input,
-        sourceId: null,
-        updatedAt: input.createdAt,
-      }),
-    )
-    mockCreateMessageRepository.mockResolvedValue({
-      create: mockRepositoryCreate,
-      createWithAttachments: vi.fn(),
-    })
-    mockChatQueueAdd.mockResolvedValue(undefined)
+    resetCommonMocks()
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
   })
 
   test("updates conversation read and activity timestamps from the created webchat message", async () => {
@@ -229,5 +283,91 @@ describe("handleCreateWebchatMessage", () => {
       lastMessageAt: messageInput.createdAt,
       lastIncomingMessageAt: messageInput.createdAt,
     })
+  })
+})
+
+describe("handleCreateWebchatMessage — MAC quota", () => {
+  beforeEach(() => {
+    resetCommonMocks()
+  })
+
+  const input = {
+    text: "hello",
+    workspaceId: "ws-1",
+    webchatId: "webchat-1",
+    guestConversationId: "guest-1",
+  }
+
+  const seedNewContactInserts = () => {
+    insertBuilder.returning
+      .mockResolvedValueOnce([
+        {
+          id: "contact-new",
+          workspaceId: "ws-1",
+          createdAt: new Date("2026-06-21T00:00:00Z"),
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "ci-new",
+          inboxId: "inbox-1",
+          contactId: "contact-new",
+          sourceId: "guest-1",
+          source: "webchat",
+          channel: "webchat",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "conv-new",
+          workspaceId: "ws-1",
+          contactId: "contact-new",
+          additionalAttributes: null,
+        },
+      ])
+  }
+
+  test("does not touch quota for an existing contact", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(contactInbox)
+
+    await handleCreateWebchatMessage({ parsedInput: input })
+
+    expect(mockCreateNewContactWithMac).not.toHaveBeenCalled()
+    expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("gates a new contact through the atomic MAC chokepoint", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    seedNewContactInserts()
+
+    await handleCreateWebchatMessage({ parsedInput: input })
+
+    expect(mockWorkspaceFind).toHaveBeenCalledWith({ where: { id: "ws-1" } })
+    // MAC is gated + consumed atomically with the insert (owner-derived). The
+    // info-only `contacts` counter is recorded inside this chokepoint too, so
+    // the action no longer increments it separately (that would double-count).
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledTimes(1)
+    expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
+    )
+    expect(mockQuotaIncrement).not.toHaveBeenCalled()
+  })
+
+  test("rejects and creates nothing when the MAC limit is reached", async () => {
+    mockContactInboxFindLatest.mockResolvedValue(undefined)
+    mockCreateNewContactWithMac.mockResolvedValue({
+      ok: false,
+      level: "user",
+    })
+
+    await expect(
+      handleCreateWebchatMessage({ parsedInput: input }),
+    ).rejects.toMatchObject({
+      message: "Contact limit reached",
+      code: "quotaExceeded",
+    })
+
+    expect(tx.insert).not.toHaveBeenCalled()
+    expect(mockQuotaIncrement).not.toHaveBeenCalled()
   })
 })

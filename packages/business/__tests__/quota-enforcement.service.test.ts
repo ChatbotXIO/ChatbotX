@@ -1,10 +1,23 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const findFirstUser = vi.fn(async () => ({ tenantId: "1" }) as unknown)
+const fakeTx = { __tx: true }
+const dbTransaction = vi.fn(
+  async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
+)
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { query: { userModel: { findFirst: findFirstUser } } },
+  db: {
+    query: { userModel: { findFirst: findFirstUser } },
+    transaction: dbTransaction,
+  },
 }))
 vi.mock("@chatbotx.io/database/schema", () => ({ ROOT_TENANT_ID: "1" }))
+
+const macTrackingService = {
+  claimNewActiveContact: vi.fn(async () => ({ counted: true })),
+  incrementWorkspaceMacCache: vi.fn(async () => undefined),
+}
+vi.mock("@chatbotx.io/analytics", () => ({ macTrackingService }))
 
 // distributedLock just runs the critical section inline for the test.
 const distributedLock = {
@@ -82,6 +95,11 @@ beforeEach(() => {
   tenantQuotaService.hasCapacity.mockResolvedValue(true)
   userQuotaService.hasCapacity.mockResolvedValue(true)
   userQuotaService.tryIncrement.mockResolvedValue(true)
+  dbTransaction.mockImplementation(
+    async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
+  )
+  macTrackingService.claimNewActiveContact.mockResolvedValue({ counted: true })
+  macTrackingService.incrementWorkspaceMacCache.mockResolvedValue(undefined)
 })
 
 describe("quotaEnforcementService.tryConsume", () => {
@@ -228,6 +246,155 @@ describe("quotaEnforcementService.increment", () => {
       1,
     )
     expect(userQuotaService.incrementBy).not.toHaveBeenCalled()
+  })
+})
+
+describe("quotaEnforcementService.createNewContactWithMac", () => {
+  const created = {
+    value: { contactId: "c-1" },
+    contactId: "c-1",
+    contactInboxId: "ci-1",
+    inboxId: "inbox-1",
+  }
+  const makeCreate = () => vi.fn(async () => created)
+
+  test("root user: gates, creates, consumes MAC, and bumps caches", async () => {
+    asRootUser()
+    userQuotaService.getRemainingSlots.mockResolvedValue(5)
+    userQuotaService.getForUser.mockResolvedValue({
+      periodStart: new Date("2026-06-01T00:00:00Z"),
+    })
+    const create = makeCreate()
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create,
+    })
+
+    expect(result).toEqual({ ok: true, value: { contactId: "c-1" } })
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(macTrackingService.claimNewActiveContact).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "ws-1",
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        inboxId: "inbox-1",
+      }),
+      fakeTx,
+    )
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      ROOT_USER,
+      "mac",
+      1,
+    )
+    expect(macTrackingService.incrementWorkspaceMacCache).toHaveBeenCalledWith(
+      "ws-1",
+      1,
+    )
+    // The info-only `contacts` counter is recorded by the chokepoint itself.
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      ROOT_USER,
+      "contacts",
+      1,
+    )
+  })
+
+  test("rejects and creates nothing when MAC is exhausted", async () => {
+    asRootUser()
+    userQuotaService.getRemainingSlots.mockResolvedValue(0)
+    const create = makeCreate()
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create,
+    })
+
+    expect(result).toEqual({ ok: false, level: "user" })
+    expect(create).not.toHaveBeenCalled()
+    expect(macTrackingService.claimNewActiveContact).not.toHaveBeenCalled()
+    expect(userQuotaService.incrementBy).not.toHaveBeenCalled()
+  })
+
+  test("period-less owner with a finite MAC limit still consumes live quota", async () => {
+    asRootUser()
+    userQuotaService.getRemainingSlots.mockResolvedValue(5)
+    userQuotaService.getForUser.mockResolvedValue({ periodStart: null })
+    const create = makeCreate()
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create,
+    })
+
+    expect(result).toEqual({ ok: true, value: { contactId: "c-1" } })
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(macTrackingService.claimNewActiveContact).not.toHaveBeenCalled()
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      ROOT_USER,
+      "mac",
+      1,
+    )
+    expect(macTrackingService.incrementWorkspaceMacCache).not.toHaveBeenCalled()
+  })
+
+  test("period-less owner without a MAC limit records contacts but no MAC noise", async () => {
+    asRootUser()
+    userQuotaService.getRemainingSlots.mockResolvedValue(null)
+    userQuotaService.getForUser.mockResolvedValue({ periodStart: null })
+    const create = makeCreate()
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: ROOT_USER,
+      workspaceId: "ws-1",
+      create,
+    })
+
+    expect(result).toEqual({ ok: true, value: { contactId: "c-1" } })
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(macTrackingService.claimNewActiveContact).not.toHaveBeenCalled()
+    expect(macTrackingService.incrementWorkspaceMacCache).not.toHaveBeenCalled()
+    // No MAC consumption (no limit, no period)...
+    expect(userQuotaService.incrementBy).not.toHaveBeenCalledWith(
+      ROOT_USER,
+      "mac",
+      1,
+    )
+    // ...but the info-only `contacts` total is still recorded for the new contact.
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      ROOT_USER,
+      "contacts",
+      1,
+    )
+  })
+
+  test("customer: consumes MAC at both pool and user levels", async () => {
+    asCustomer()
+    userQuotaService.getRemainingSlots.mockResolvedValue(5)
+    tenantQuotaService.getRemainingSlots.mockResolvedValue(5)
+    userQuotaService.getForUser.mockResolvedValue({
+      periodStart: new Date("2026-06-01T00:00:00Z"),
+    })
+
+    const result = await quotaEnforcementService.createNewContactWithMac({
+      ownerId: CUSTOMER,
+      workspaceId: "ws-1",
+      create: makeCreate(),
+    })
+
+    expect(result).toEqual({ ok: true, value: { contactId: "c-1" } })
+    expect(tenantQuotaService.incrementBy).toHaveBeenCalledWith(
+      TENANT,
+      "mac",
+      1,
+    )
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      CUSTOMER,
+      "mac",
+      1,
+    )
   })
 })
 

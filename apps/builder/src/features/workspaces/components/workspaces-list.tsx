@@ -13,11 +13,9 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 import { CrownIcon, PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
-import type { QuotaMetric } from "@/components/usage-bars"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud, isCommunity } from "@/env"
 import type { WorkspaceResource } from "../schema/resource"
-import { AccountRail } from "./account-rail"
 
 type WorkspacesListProps = {
   user: {
@@ -28,8 +26,6 @@ type WorkspacesListProps = {
   workspaces: WorkspaceResource[]
   workspacesLimit?: number | null
   isAtLimit?: boolean
-  planName?: string | null
-  metrics?: QuotaMetric[]
   ownerWorkspaceIds?: string[]
 }
 
@@ -148,8 +144,6 @@ const WorkspacesList = async ({
   workspaces,
   workspacesLimit,
   isAtLimit = false,
-  planName,
-  metrics = [],
   ownerWorkspaceIds = [],
 }: WorkspacesListProps) => {
   const t = await getTranslations()
@@ -166,68 +160,62 @@ const WorkspacesList = async ({
   const hasWorkspaces = workspaces.length > 0
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-8 px-6 py-12 md:flex-row md:py-16">
-      <AccountRail metrics={metrics} planName={planName} user={user} />
+    <main className="flex min-w-0 flex-1 flex-col">
+      <header className="flex flex-col gap-1">
+        <h1 className="font-semibold text-2xl tracking-tight">
+          {t("home.welcomeBack", { name: greetingName })}
+        </h1>
+        <p className="text-muted-foreground text-sm">{t("home.subtitle")}</p>
+      </header>
 
-      <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-col gap-1">
-          <h1 className="font-semibold text-2xl tracking-tight">
-            {t("home.welcomeBack", { name: greetingName })}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t("home.subtitle")}</p>
-        </header>
-
-        <div className="mt-8 flex items-baseline gap-3">
-          <h2 className="font-semibold text-base">
-            {t("billing.usage.workspaces")}
-          </h2>
-          {hasLimit && (
-            <span
-              className={cn(
-                "font-medium text-muted-foreground text-sm tabular-nums",
-                isAtLimit && "text-destructive",
-              )}
-            >
-              {`${usedCount} / ${workspacesLimit}`}
-            </span>
-          )}
-          {isAtLimit && isCloud() && (
-            <UpgradePlanButton className="ml-auto" size="sm" variant="outline">
-              <CrownIcon aria-hidden className="size-3.5" />
-              {t("actions.upgradePlan")}
-            </UpgradePlanButton>
-          )}
-        </div>
-
-        {hasWorkspaces || showCreateCard ? (
-          <ul className="mt-5 flex list-none flex-wrap gap-5 p-0">
-            {showCreateCard && (
-              <li className="list-none">
-                <CreateWorkspaceCard
-                  disabled={isAtLimit}
-                  disabledReason={t("billing.limitReached.workspaces")}
-                  label={createLabel}
-                />
-              </li>
+      <div className="mt-8 flex items-baseline gap-3">
+        <h2 className="font-semibold text-base">
+          {t("billing.usage.workspaces")}
+        </h2>
+        {hasLimit && (
+          <span
+            className={cn(
+              "font-medium text-muted-foreground text-sm tabular-nums",
+              isAtLimit && "text-destructive",
             )}
-            {workspaces.map((workspace) => (
-              <li className="list-none" key={workspace.id}>
-                <WorkspaceCard
-                  ownerLabel={
-                    ownerIds.has(workspace.id) ? ownerLabel : undefined
-                  }
-                  workspace={workspace}
-                />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-5 text-muted-foreground text-sm">
-            {t("home.noWorkspaces")}
-          </p>
+          >
+            {`${usedCount} / ${workspacesLimit}`}
+          </span>
         )}
-      </main>
-    </div>
+        {isAtLimit && isCloud() && (
+          <UpgradePlanButton className="ml-auto" size="sm" variant="outline">
+            <CrownIcon aria-hidden className="size-3.5" />
+            {t("actions.upgradePlan")}
+          </UpgradePlanButton>
+        )}
+      </div>
+
+      {hasWorkspaces || showCreateCard ? (
+        <ul className="mt-5 flex list-none flex-wrap gap-5 p-0">
+          {showCreateCard && (
+            <li className="list-none">
+              <CreateWorkspaceCard
+                disabled={isAtLimit}
+                disabledReason={t("billing.limitReached.workspaces")}
+                label={createLabel}
+              />
+            </li>
+          )}
+          {workspaces.map((workspace) => (
+            <li className="list-none" key={workspace.id}>
+              <WorkspaceCard
+                ownerLabel={ownerIds.has(workspace.id) ? ownerLabel : undefined}
+                workspace={workspace}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-5 text-muted-foreground text-sm">
+          {t("home.noWorkspaces")}
+        </p>
+      )}
+    </main>
   )
 }
 

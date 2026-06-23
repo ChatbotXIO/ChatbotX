@@ -89,6 +89,53 @@ export const tenantService = {
     return winner.id
   },
 
+  /**
+   * Owner ids of every active, owned tenant (the seeded root tenant has a null
+   * owner and is excluded). Used by the provisioning reconcile to find tenants
+   * whose owner may have lost their white-label entitlement and should be
+   * suspended.
+   */
+  async listActiveOwnerIds(): Promise<string[]> {
+    const rows = await db.query.tenantModel.findMany({
+      where: { status: "active" },
+      columns: { ownerId: true },
+    })
+    return rows
+      .map((row) => row.ownerId)
+      .filter((ownerId): ownerId is string => ownerId !== null)
+  },
+
+  /**
+   * Bring the reseller's tenant into line with their stored white-label
+   * entitlement. The single idempotent unit both the upgrade server action and
+   * the worker reconcile call, so a tenant is created exactly when (and only
+   * when) the owner holds a purchased white-label plan:
+   *   - has entitlement, no tenant      → provision one;
+   *   - has entitlement, tenant suspended → reactivate it;
+   *   - no entitlement, tenant active    → downgrade (suspend + clear flags).
+   * Every branch is a no-op when already in the target state, so repeated or
+   * concurrent calls are safe.
+   */
+  async reconcileOwnerEntitlement(ownerId: string): Promise<void> {
+    const [hasWhiteLabel, tenant] = await Promise.all([
+      userQuotaService.hasWhiteLabelEntitlement(ownerId),
+      this.findByOwner(ownerId),
+    ])
+
+    if (hasWhiteLabel) {
+      if (!tenant) {
+        await this.provisionForOwner(ownerId)
+      } else if (tenant.status !== "active") {
+        await this.reactivate(ownerId)
+      }
+      return
+    }
+
+    if (tenant?.status === "active") {
+      await this.downgrade(ownerId)
+    }
+  },
+
   /** Update the branding/config of the tenant owned by `ownerId`. */
   async upsertByOwner(ownerId: string, data: TenantBrandingData) {
     const [updated] = await db

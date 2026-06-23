@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
   jsonb,
@@ -31,8 +30,6 @@ export const tenantModel = pgTable(
       onDelete: "restrict",
       onUpdate: "cascade",
     }),
-    // Optional stable routing/debug handle (and a future `slug.host` fallback).
-    slug: text(),
     // Lifecycle flag — replaces the old `isEnabled` boolean. 'active' | 'suspended'.
     status: text().notNull().default("active"),
     disabledReason: text(),
@@ -57,13 +54,5 @@ export const tenantModel = pgTable(
       body?: string
     }>(),
   },
-  (table) => [
-    // One tenant per reseller (v1); the root tenant (ownerId NULL) is exempt.
-    uniqueIndex("Tenant_ownerId_key")
-      .on(table.ownerId)
-      .where(sql`${table.ownerId} IS NOT NULL`),
-    uniqueIndex("Tenant_slug_key")
-      .on(table.slug)
-      .where(sql`${table.slug} IS NOT NULL`),
-  ],
+  (table) => [uniqueIndex("Tenant_ownerId_key").on(table.ownerId)],
 )

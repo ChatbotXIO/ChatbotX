@@ -1,5 +1,6 @@
 import {
   and,
+  count,
   type DatabaseClient,
   db,
   desc,
@@ -12,8 +13,10 @@ import type { MacEventType } from "@chatbotx.io/database/partials"
 import {
   contactActiveMonthlyModel,
   workspaceMacModel,
+  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import { logger } from "../../lib/logger"
+import { anchoredPeriod } from "../../lib/mac-period"
 
 export type WorkspaceCounterRow = {
   workspaceMacId: string
@@ -204,6 +207,51 @@ export class MacRepository {
       periodEnd: toIso(row?.periodEnd) ?? null,
       macCount: row ? Number(row.macCount) : 0,
     }
+  }
+
+  /**
+   * The owner's monthly-active-contacts count, read from the durable
+   * `ContactActiveMonthly` ledger across every workspace they own. This is the
+   * authoritative source for `UserQuota.macUsed`: every MAC increment (webchat,
+   * worker, import, message tracking) writes a presence row in the same
+   * transaction as the live-counter bump, so the ledger never under-counts.
+   *
+   *  - `cumulative: false` (resetting plans) counts only the period containing
+   *    now, anchored to `billingPeriodStart` — the standard "this month" MAC.
+   *  - `cumulative: true` (lifetime plans, which never reset) counts every
+   *    period, matching the live counter that lifetime plans accumulate.
+   *
+   * Returns 0 when there is no billing anchor (period-less owners are not
+   * MAC-tracked).
+   */
+  async countActiveContactsForOwner(
+    input: {
+      ownerId: string
+      billingPeriodStart: Date | null
+      cumulative: boolean
+    },
+    client: DatabaseClient = db,
+  ): Promise<number> {
+    const conditions = [eq(workspaceModel.ownerId, input.ownerId)]
+
+    if (!input.cumulative) {
+      if (!input.billingPeriodStart) {
+        return 0
+      }
+      const { start } = anchoredPeriod(new Date(), input.billingPeriodStart)
+      conditions.push(eq(contactActiveMonthlyModel.periodStart, start))
+    }
+
+    const [row] = await client
+      .select({ value: count() })
+      .from(contactActiveMonthlyModel)
+      .innerJoin(
+        workspaceModel,
+        eq(contactActiveMonthlyModel.workspaceId, workspaceModel.id),
+      )
+      .where(and(...conditions))
+
+    return row ? Number(row.value) : 0
   }
 
   async reconcilePeriod(

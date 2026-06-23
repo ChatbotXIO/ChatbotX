@@ -11,6 +11,7 @@ import { CrownIcon, Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ComponentProps, useEffect, useState } from "react"
+import { reconcileTenantEntitlementAction } from "./actions/reconcile-tenant-entitlement.action"
 
 /**
  * Same-origin path proxied to the private billing portal (see
@@ -54,7 +55,12 @@ export function UpgradePlanDialog({
         event.data.type === UPGRADE_SUCCESS_TYPE
       ) {
         onOpenChange(false)
-        router.refresh()
+        // Provision the reseller's tenant immediately on a white-label upgrade.
+        // Best-effort: refresh regardless so a reconcile failure never blocks
+        // the UI — the worker reconcile is the authority and catches any miss.
+        reconcileTenantEntitlementAction()
+          .catch(() => undefined)
+          .finally(() => router.refresh())
       }
     }
 

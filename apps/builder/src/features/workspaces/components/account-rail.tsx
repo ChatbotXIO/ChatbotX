@@ -3,13 +3,16 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@chatbotx.io/ui/components/ui/avatar"
+import { cn } from "@chatbotx.io/ui/lib/utils"
 import { CrownIcon } from "lucide-react"
 import { getTranslations } from "next-intl/server"
-import type { QuotaMetric, QuotaMetricKey } from "@/components/usage-bars"
+import type { QuotaMetric } from "@/components/usage-bars"
 import { UsageBars } from "@/components/usage-bars"
 import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
 import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
+import { buildPlanNotice, buildUsageLabels } from "@/lib/quota-metrics"
+import { resolveTrialMessage, trialMessageClassName } from "@/lib/trial-message"
 
 type AccountRailProps = {
   user: {
@@ -19,24 +22,25 @@ type AccountRailProps = {
   }
   planName?: string | null
   metrics?: QuotaMetric[]
+  planStatus?: string | null
+  /** ISO date of the self-managed trial end, or null when not on a trial. */
+  trialEndsAt?: string | null
 }
 
 export const AccountRail = async ({
   user,
   planName,
   metrics = [],
+  planStatus = null,
+  trialEndsAt = null,
 }: AccountRailProps) => {
   const t = await getTranslations()
   const cloud = isCloud()
+  const notice = buildPlanNotice(planStatus, trialEndsAt)
   const displayName = user.name?.trim() || user.email
   const initials = displayName.slice(0, 2).toUpperCase()
 
-  const usageLabels: Record<QuotaMetricKey, string> = {
-    contacts: t("billing.usage.contacts"),
-    workspaces: t("billing.usage.workspaces"),
-    channels: t("billing.usage.channels"),
-    teamMembers: t("billing.usage.teamMembers"),
-  }
+  const usageLabels = buildUsageLabels(t)
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 md:w-72">
@@ -70,6 +74,21 @@ export const AccountRail = async ({
           </div>
           {metrics.length > 0 && (
             <UsageBars labels={usageLabels} metrics={metrics} />
+          )}
+          {notice?.kind === "trial" && (
+            <p
+              className={cn(
+                "text-xs",
+                trialMessageClassName(notice.info.level),
+              )}
+            >
+              {resolveTrialMessage(notice.info, t)}
+            </p>
+          )}
+          {notice?.kind === "pastDue" && (
+            <p className="text-destructive text-xs">
+              {t("billing.pastDue.message")}
+            </p>
           )}
         </div>
       )}
