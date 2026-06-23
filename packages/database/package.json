@@ -32,6 +32,8 @@
     "db:studio": "dotenv -e ../../.env -- drizzle-kit studio",
     "introspect": "dotenv -e ../../.env -- drizzle-kit introspect",
     "make:migration": "dotenv -e ../../.env -- ./scripts/make-migration.sh",
+    "make:sharding_migration": "./scripts/make-sharding-migration.sh",
+    "db:migrate-shards": "dotenv -e ../../.env -- tsx scripts/migrate-shards.ts",
     "rotate:encryption-key": "dotenv -e ../../.env -- tsx scripts/rotate-encryption-key.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

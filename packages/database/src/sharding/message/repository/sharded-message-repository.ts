@@ -33,6 +33,7 @@ import type {
   FindLastByConversationOptions,
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
+  FindMessageByIdParams,
   FindTriggerMessageOptions,
   IMessageRepository,
   ListMessagesQuery,
@@ -730,10 +731,11 @@ export class ShardedMessageRepository implements IMessageRepository {
           message.createdAt,
         )
         if (existing) {
-          const existingWithAttachments = await this.findById(
-            existing.id,
-            existing.createdAt,
-          )
+          const existingWithAttachments = await this.findById({
+            id: existing.id,
+            createdAt: existing.createdAt,
+            workspaceId: message.workspaceId,
+          })
           return {
             result: existingWithAttachments ?? { ...existing, attachments: [] },
             isNew: false,
@@ -753,17 +755,12 @@ export class ShardedMessageRepository implements IMessageRepository {
     return { result: created, isNew: true }
   }
 
-  async findById(
-    id: string,
-    createdAt?: Date,
-  ): Promise<MessageWithAttachments | null> {
-    if (!createdAt) {
-      throw new Error(
-        "createdAt is required for findById in sharded repository",
-      )
-    }
-
-    const shards = await this.getShardsForRange(createdAt, createdAt)
+  async findById({
+    id,
+    createdAt,
+    workspaceId,
+  }: FindMessageByIdParams): Promise<MessageWithAttachments | null> {
+    const shards = await this.getConversationReadShards(createdAt, workspaceId)
     if (shards.length === 0) {
       return null
     }
@@ -780,6 +777,7 @@ export class ShardedMessageRepository implements IMessageRepository {
                 and(
                   eq(messageModel.id, id),
                   eq(messageModel.createdAt, createdAt),
+                  eq(messageModel.workspaceId, workspaceId),
                 ),
               )
               .limit(1)

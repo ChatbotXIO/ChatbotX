@@ -385,6 +385,7 @@ export const createChatStore = () => {
                   workspaceId: message.workspaceId,
                   conversationId: message.conversationId,
                   messageId: message.id,
+                  messageCreatedAt: message.createdAt,
                   originPath: attachmentUpdate.newAttachmentPath,
                   fileType,
                   mimeType,

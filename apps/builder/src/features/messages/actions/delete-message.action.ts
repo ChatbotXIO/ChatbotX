@@ -32,7 +32,11 @@ export const deleteMessageAction = workspaceActionClient
     // Resolve the comment's own contactInbox so the worker dispatches to the
     // exact channel the comment belongs to (the commenter's messenger inbox).
     const repository = await createMessageRepository()
-    const message = await repository.findById(id, new Date(createdAt))
+    const message = await repository.findById({
+      id,
+      createdAt: new Date(createdAt),
+      workspaceId,
+    })
     if (!message) {
       throw new ChatbotXException("Comment not found")
     }

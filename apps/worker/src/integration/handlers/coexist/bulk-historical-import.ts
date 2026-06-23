@@ -662,7 +662,7 @@ export const bulkImportMessages = async (props: {
     }
   })
 
-  // Insert messages via repository — shard-aware when ENABLE_MESSAGE_SHARDING=true.
+  // Insert messages via repository — always shard-aware (ShardedMessageRepository).
   // PK collision (snowflake id clash across runs) triggers a one-time retry with
   // fresh IDs; the onConflictDoNothing inside bulkCreate handles sourceId dupes.
   //
@@ -734,9 +734,8 @@ export const bulkImportMessages = async (props: {
   }
 
   // Insert Attachment rows for newly-inserted messages only via repository so
-  // they land in the same DB as the messages (shard or main). Previously these
-  // were inserted via a main-DB tx.insert(), causing a FK violation when
-  // ENABLE_MESSAGE_SHARDING=true because the Message rows live in the shard.
+  // they land in the same DB as the messages. Previously these were inserted
+  // via a direct tx.insert(), which broke when Message rows lived in a shard.
   if (attachmentsBySourceId.size > 0 && repository) {
     const attachmentRows: BulkCreateAttachmentInput[] = []
     for (const [sourceId, atts] of attachmentsBySourceId) {

@@ -1,4 +1,6 @@
 export * from "drizzle-orm/zod"
+export * from "../sharding/message/schema/shard"
+export * from "../sharding/message/schema/time-range"
 export * from "./ai-agent"
 export * from "./ai-assistant"
 export * from "./ai-conversation-embedding"

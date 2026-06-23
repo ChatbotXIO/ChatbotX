@@ -538,6 +538,27 @@ function makeShardInfo(timeRangeId: string, shardId: string) {
   }
 }
 
+function objectContainsValue(value: unknown, expected: string): boolean {
+  const seen = new WeakSet<object>()
+  const visit = (current: unknown): boolean => {
+    if (current === expected) {
+      return true
+    }
+    if (typeof current !== "object" || current === null) {
+      return false
+    }
+    if (seen.has(current)) {
+      return false
+    }
+    seen.add(current)
+    if (Array.isArray(current)) {
+      return current.some(visit)
+    }
+    return Object.values(current as Record<string, unknown>).some(visit)
+  }
+  return visit(value)
+}
+
 describe("ShardedMessageRepository.listByConversation — write-shard union", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -643,6 +664,41 @@ describe("ShardedMessageRepository.listByConversation — write-shard union", ()
   })
 })
 
+describe("ShardedMessageRepository.findById", () => {
+  test("scopes message lookup by workspaceId", async () => {
+    const createdAt = new Date("2026-06-01T00:00:00Z")
+    const message = {
+      id: "msg-1",
+      conversationId: "conv-1",
+      workspaceId: "ws-1",
+      createdAt,
+      text: "scoped message",
+    }
+    const shardClient = makeReadShardClient([message])
+    const shard = makeShardInfo("tr:s1", "s1")
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([shard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (_shard: unknown, fn: (client: unknown) => Promise<unknown>) =>
+          fn(shardClient),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    await repo.findById({
+      id: "msg-1",
+      createdAt,
+      workspaceId: "ws-1",
+    } as never)
+
+    const messageSelect = shardClient.select.mock.results[0].value
+    expect(messageSelect.where).toHaveBeenCalled()
+    const whereArg = messageSelect.where.mock.calls[0][0]
+    expect(objectContainsValue(whereArg, "workspaceId")).toBe(true)
+  })
+})
+
 function makeConversationReadClient(messages: ReadMessage[]) {
   const chain = {
     from: vi.fn().mockReturnThis(),
@@ -672,6 +728,7 @@ describe("ShardedMessageRepository complete conversation reads", () => {
     ])
     const shardManager = {
       getShardsForTimeRange: vi.fn().mockResolvedValue([shardA, shardB]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
       withShardClientForRead: vi.fn(
         (shard: { id: string }, fn: (client: unknown) => Promise<unknown>) =>
           fn(clients.get(shard.id)),
@@ -682,6 +739,7 @@ describe("ShardedMessageRepository complete conversation reads", () => {
     const result = await repo.findManyByConversation("conv-1", {
       limit: 10,
       sinceTime,
+      workspaceId: "ws-1",
     })
 
     expect(result.map((message) => message.id)).toEqual(["10", "9"])
@@ -699,6 +757,7 @@ describe("ShardedMessageRepository complete conversation reads", () => {
     ])
     const shardManager = {
       getShardsForTimeRange: vi.fn().mockResolvedValue([shardA, shardB]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
       withShardClientForRead: vi.fn(
         (shard: { id: string }, fn: (value: unknown) => Promise<unknown>) => {
           if (shard.id === "b") {
@@ -715,11 +774,13 @@ describe("ShardedMessageRepository complete conversation reads", () => {
             limit: 10,
             requireCompleteResults,
             sinceTime,
+            workspaceId: "ws-1",
           })
         : repo.findManyByConversation("conv-1", {
             limit: 10,
             requireCompleteResults,
             sinceTime,
+            workspaceId: "ws-1",
           })
 
     await expect(call()).resolves.toHaveLength(1)

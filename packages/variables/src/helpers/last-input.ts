@@ -25,10 +25,11 @@ export const getContactLastInput = async (
     return null
   }
 
-  const message = await messageService.findLatestIncomingMessage(
-    conversation.id,
+  const message = await messageService.findLatestIncomingMessage({
+    conversationId: conversation.id,
     sinceTime,
-  )
+    workspaceId: conversation.workspaceId,
+  })
   if (!message) {
     return null
   }
@@ -59,10 +60,11 @@ export const getContactLastInputType = async (
     return null
   }
 
-  const message = await messageService.findLatestIncomingMessage(
-    conversation.id,
+  const message = await messageService.findLatestIncomingMessage({
+    conversationId: conversation.id,
     sinceTime,
-  )
+    workspaceId: conversation.workspaceId,
+  })
 
   return message?.contentType ?? null
 }

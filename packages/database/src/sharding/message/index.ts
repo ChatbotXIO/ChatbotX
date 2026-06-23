@@ -16,21 +16,14 @@ export type CreateShardRepositoryResult = {
   repository: IMessageRepository
 }
 
-export async function createShardRepository(
+export function createShardRepository(
   client: DatabaseClient = db,
   distributedLock?: DistributedLock,
-): Promise<CreateShardRepositoryResult | null> {
+): Promise<CreateShardRepositoryResult> {
   const registry = new MessageShardRegistry(client)
-  const shardCount = await registry.countShards()
-
-  if (shardCount === 0) {
-    return null
-  }
-
   const manager = new MessageShardConnectionManager(client, registry)
-
-  return {
+  return Promise.resolve({
     manager,
     repository: new ShardedMessageRepository(manager, distributedLock),
-  }
+  })
 }

@@ -46,6 +46,7 @@ describe("messageService", () => {
       conversationId: "conv-1",
       limit: 2,
       sinceTime,
+      workspaceId: "ws-1",
     })
 
     expect(mocks.createMessageRepository).toHaveBeenCalledTimes(1)
@@ -53,10 +54,11 @@ describe("messageService", () => {
       messageTypes: ["incoming", "outgoing"],
       limit: 2,
       sinceTime,
+      workspaceId: "ws-1",
     })
     expect(result).toEqual([older, newer])
     expect(mocks.withCache).toHaveBeenCalledWith(
-      "messages:conv-1:latest:2",
+      "messages:ws-1:conv-1:latest:2",
       expect.any(Function),
       {
         tags: ["conversations:conv-1", "conversations:conv-1:messages"],
@@ -70,15 +72,17 @@ describe("messageService", () => {
     const sinceTime = new Date("2025-01-01")
     mocks.repo.findLastByConversation.mockResolvedValue([message])
 
-    const result = await messageService.findLatestIncomingMessage(
-      "conv-1",
+    const result = await messageService.findLatestIncomingMessage({
+      conversationId: "conv-1",
       sinceTime,
-    )
+      workspaceId: "ws-1",
+    })
 
     expect(mocks.repo.findLastByConversation).toHaveBeenCalledWith("conv-1", {
       messageTypes: ["incoming"],
       limit: 1,
       sinceTime,
+      workspaceId: "ws-1",
     })
     expect(result).toBe(message)
   })

@@ -6,9 +6,9 @@ import { withCache } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 
 type FindByProps = {
-  id: string
   conversationId: string
-  messageType: MessageType
+  messageType?: MessageType
+  workspaceId: string
 }
 
 class MessageService extends BaseService {
@@ -17,27 +17,24 @@ class MessageService extends BaseService {
   async findByUncached(props: {
     tx?: DatabaseClient
     sinceTime: Date
-    where: Partial<FindByProps>
+    where: FindByProps
   }): Promise<MessageModel | undefined> {
     const { tx = db, where, sinceTime } = props
     const repo = await createMessageRepository(tx)
 
-    if (where.conversationId) {
-      const messages = await repo.findLastByConversation(where.conversationId, {
-        messageTypes: where.messageType ? [where.messageType] : undefined,
-        limit: 1,
-        sinceTime,
-      })
-      return messages[0]
-    }
-
-    return
+    const messages = await repo.findLastByConversation(where.conversationId, {
+      messageTypes: where.messageType ? [where.messageType] : undefined,
+      limit: 1,
+      sinceTime,
+      workspaceId: where.workspaceId,
+    })
+    return messages[0]
   }
 
   async findBy(props: {
     tx?: DatabaseClient
     sinceTime: Date
-    where: Partial<FindByProps>
+    where: FindByProps
     ttlInSeconds?: number
   }): Promise<MessageModel | undefined> {
     const cacheKey = `${this.cachePrefix}:${JSON.stringify(props.where)}`
@@ -56,13 +53,18 @@ class MessageService extends BaseService {
     )
   }
 
-  findLatestIncomingMessage(
-    conversationId: string,
-    sinceTime: Date,
-  ): Promise<MessageModel | undefined> {
+  findLatestIncomingMessage(props: {
+    conversationId: string
+    sinceTime: Date
+    workspaceId: string
+  }): Promise<MessageModel | undefined> {
     return this.findBy({
-      where: { conversationId, messageType: messageTypes.enum.incoming },
-      sinceTime,
+      where: {
+        conversationId: props.conversationId,
+        messageType: messageTypes.enum.incoming,
+        workspaceId: props.workspaceId,
+      },
+      sinceTime: props.sinceTime,
       ttlInSeconds: 2 * 60,
     })
   }
@@ -72,10 +74,11 @@ class MessageService extends BaseService {
     conversationId: string
     limit: number
     sinceTime: Date
+    workspaceId: string
   }): Promise<MessageModel[]> {
-    const { tx = db, conversationId, limit, sinceTime } = props
+    const { tx = db, conversationId, limit, sinceTime, workspaceId } = props
     return withCache(
-      `messages:${conversationId}:latest:${limit}`,
+      `messages:${workspaceId}:${conversationId}:latest:${limit}`,
       async () => {
         const repo = await createMessageRepository(tx)
         const messages = await repo.findLastByConversation(conversationId, {
@@ -85,6 +88,7 @@ class MessageService extends BaseService {
           ],
           limit,
           sinceTime,
+          workspaceId,
         })
         return [...messages].reverse()
       },

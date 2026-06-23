@@ -8,6 +8,7 @@ import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 
 export const listLastMessages = async (
   conversationId: string,
+  workspaceId: string,
   limit: number,
   includeDetail: boolean,
   sinceTime: Date,
@@ -16,6 +17,7 @@ export const listLastMessages = async (
     conversationId,
     limit,
     sinceTime,
+    workspaceId,
   })
 
   return messages
@@ -54,5 +56,11 @@ export const getChatHistory = async (
     return null
   }
 
-  return listLastMessages(conversation.id, limit, includeDetail, sinceTime)
+  return listLastMessages(
+    conversation.id,
+    conversation.workspaceId,
+    limit,
+    includeDetail,
+    sinceTime,
+  )
 }

@@ -145,15 +145,15 @@ CREATE INDEX IF NOT EXISTS "Attachment_conversationId_idx"
 -- ─────────────────────────────────────────────
 ALTER TABLE "Message" SET (
   timescaledb.compress,
-  timescaledb.compress_segmentby = 'workspaceId,conversationId',
-  timescaledb.compress_orderby = 'createdAt DESC'
+  timescaledb.compress_segmentby = '"workspaceId","conversationId"',
+  timescaledb.compress_orderby = '"createdAt" DESC'
 );
 SELECT add_compression_policy('"Message"', INTERVAL '30 days', if_not_exists => TRUE);
 
 ALTER TABLE "Attachment" SET (
   timescaledb.compress,
-  timescaledb.compress_segmentby = 'workspaceId,conversationId',
-  timescaledb.compress_orderby = 'createdAt DESC'
+  timescaledb.compress_segmentby = '"workspaceId","conversationId"',
+  timescaledb.compress_orderby = '"createdAt" DESC'
 );
 SELECT add_compression_policy('"Attachment"', INTERVAL '30 days', if_not_exists => TRUE);
 

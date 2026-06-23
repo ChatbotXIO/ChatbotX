@@ -48,10 +48,11 @@ export async function sendMessageToChannel(
     let handlerMessage = message
     if (isComment && message.parentId && message.parentCreatedAt) {
       const repo = await createMessageRepository()
-      const parentMsg = await repo.findById(
-        message.parentId,
-        new Date(message.parentCreatedAt),
-      )
+      const parentMsg = await repo.findById({
+        id: message.parentId,
+        createdAt: new Date(message.parentCreatedAt),
+        workspaceId: conversation.workspaceId,
+      })
       handlerMessage = {
         ...message,
         contentAttributes: {
@@ -137,10 +138,11 @@ export async function deleteMessageFromChannel(
   const { conversation, contactInbox, message } = data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(
@@ -176,10 +178,11 @@ export async function editMessageFromChannel(
     data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(
@@ -214,10 +217,11 @@ export async function changeMessageStateOnChannel(
   const { conversation, contactInbox, message, liked, hidden } = data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(
