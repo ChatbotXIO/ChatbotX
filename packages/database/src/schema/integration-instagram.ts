@@ -47,6 +47,10 @@ export const integrationInstagramModel = pgTable(
       onUpdate: "cascade",
       name: "IntegrationInstagram_welcomeFlowId_fkey",
     }),
+    type: text()
+      .$type<"instagram" | "facebook">()
+      .default("instagram")
+      .notNull(),
   },
   (table) => [
     index("IntegrationInstagram_workspaceId_idx").using(

@@ -43,12 +43,12 @@ export const tenantService = {
 
   findByOwner(ownerId: string) {
     return withCache(
-      `tenant:owner:${ownerId}`,
+      `tenant2:owner:${ownerId}`,
       () =>
         db.query.tenantModel.findFirst({
           where: { ownerId },
         }),
-      { tags: [`tenant:owner:${ownerId}`] },
+      { tags: [`tenant2:owner:${ownerId}`] },
     )
   },
 

@@ -144,9 +144,7 @@ export const createGuestSessionStore = (props: IntegrationWebchatModel) => {
     sendMessage: (text: string) => {
       const { appendMessage } = get()
 
-      appendMessage({
-        text,
-      })
+      appendMessage({ text })
     },
 
     sendPostback: async (button: MessageButtonTemplate) => {

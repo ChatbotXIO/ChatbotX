@@ -7,6 +7,7 @@ import { isCloud } from "@/env"
 import { GiphySettings } from "./giphy/giphy-settings"
 import { GoogleSettings } from "./google/google-settings"
 import { InstagramSettings } from "./instagram/instagram-settings"
+import { InstagramFacebookSettings } from "./instagram-facebook/instagram-facebook-settings"
 import { MessengerSettings } from "./messenger/messenger-settings"
 import { CredentialScopeProvider } from "./provider/credential-scope-context"
 import type { CredentialScope } from "./scope"
@@ -71,6 +72,7 @@ export async function ManagePlatformCredentials({
     whatsappResult,
     messengerResult,
     instagramResult,
+    instagramFacebookResult,
     googleResult,
     zaloResult,
     giphyResult,
@@ -79,6 +81,7 @@ export async function ManagePlatformCredentials({
     resolveCard(scopedUserId, "whatsapp"),
     resolveCard(scopedUserId, "messenger"),
     resolveCard(scopedUserId, "instagram"),
+    resolveCard(scopedUserId, "instagramFacebook"),
     resolveCard(scopedUserId, "google"),
     resolveCard(scopedUserId, "zalo"),
     resolveCard(scopedUserId, "giphy"),
@@ -92,6 +95,10 @@ export async function ManagePlatformCredentials({
     messengerResult.status === "fulfilled" ? messengerResult.value : emptyCard
   const instagram =
     instagramResult.status === "fulfilled" ? instagramResult.value : emptyCard
+  const instagramFacebook =
+    instagramFacebookResult.status === "fulfilled"
+      ? instagramFacebookResult.value
+      : emptyCard
   const google =
     googleResult.status === "fulfilled" ? googleResult.value : emptyCard
   const zalo = zaloResult.status === "fulfilled" ? zaloResult.value : emptyCard
@@ -110,6 +117,10 @@ export async function ManagePlatformCredentials({
         <InstagramSettings
           isInherited={instagram.isInherited}
           publicConfig={instagram.publicConfig}
+        />
+        <InstagramFacebookSettings
+          isInherited={instagramFacebook.isInherited}
+          publicConfig={instagramFacebook.publicConfig}
         />
         <GoogleSettings
           isInherited={google.isInherited}

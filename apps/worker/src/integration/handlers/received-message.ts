@@ -59,6 +59,7 @@ import { logger } from "../../lib/logger"
 import {
   allIntegrations,
   integrationService,
+  isInstagramViaFacebook,
 } from "../../services/integrations"
 
 export const metaReferralToContactSource = (
@@ -99,14 +100,22 @@ export const receiveMessage = async (
       integrationIdentifier,
     )
   const { inbox, integrationRow } = dbIntegration
-  const integration = allIntegrations[integrationType]
+  let integration = allIntegrations[integrationType]
   if (!integration) {
     throw new SdkException(
       `No integration registered for channel: ${integrationType}`,
     )
   }
+  if (
+    integrationType === "instagram" &&
+    isInstagramViaFacebook(integrationRow)
+  ) {
+    integration = allIntegrations.instagramFacebook ?? integration
+  }
+
   const workspace = await workspaceService.findById({ id: inbox.workspaceId })
   const isWorkspaceActive = workspaceService.isActiveNow(workspace)
+
   await resolveTenantSettings({
     workspaceId: inbox.workspaceId,
   })
@@ -612,11 +621,15 @@ const detectContactAndConversation = async (props: {
     workspaceId: inbox.workspaceId,
   }
   if (canGetUserProfileIfNeeded(inbox.channel)) {
-    const profileIntegration = allIntegrations[inbox.channel]
+    const integrationType =
+      inbox.channel === "instagram" && isInstagramViaFacebook(integrationRow)
+        ? "instagramFacebook"
+        : inbox.channel
+    const profileIntegration = allIntegrations[integrationType]
     if (profileIntegration) {
       const profileCtx = await buildContext({
         workspaceId: inbox.workspaceId,
-        integrationType: inbox.channel,
+        integrationType,
         integration: integrationRow,
       })
       const userProfile = await profileIntegration.runChannelHandler(

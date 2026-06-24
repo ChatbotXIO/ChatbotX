@@ -10,12 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
-import { PlusCircleIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use } from "react"
 import { useChannelDuplicatedError } from "@/hooks/use-channel-duplicated-error"
 import type { listIntegrationInstagrams } from "../queries"
+import { AddInstagramDialog } from "./add-instagram-dialog"
 import { InstagramDisconnect } from "./instagram-disconnect"
 import { InstagramRefreshPermissions } from "./instagram-refresh-permissions"
 
@@ -48,16 +48,7 @@ export function InstagramManage({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-end gap-2">
-        <Button asChild variant="secondary">
-          <Link
-            href={`/channels/create?workspaceId=${workspaceId}&channel=instagram`}
-          >
-            <PlusCircleIcon className="h-4 w-4" />
-            {t("actions.addFeature", {
-              feature: t("fields.instagram.label"),
-            })}
-          </Link>
-        </Button>
+        <AddInstagramDialog workspaceId={workspaceId} />
       </div>
 
       <div className="overflow-hidden rounded-md border">
