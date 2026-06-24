@@ -14,7 +14,7 @@ export default async function TrialExpiredPage() {
       </div>
       <div className="flex flex-col items-center gap-3">
         <Button asChild size="lg">
-          <Link href="/pricing">{t("cta")}</Link>
+          <Link href="/portal/pricing">{t("cta")}</Link>
         </Button>
         <SignOut />
       </div>

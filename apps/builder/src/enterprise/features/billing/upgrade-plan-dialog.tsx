@@ -18,10 +18,13 @@ import { reconcileTenantEntitlementAction } from "./actions/reconcile-tenant-ent
  * apps/builder/next.config.ts). We embed it in an iframe so all pricing and
  * plan-detail logic stays in the portal and never lands in this repo.
  *
- * Must stay relative (same-origin) so the user's session cookies flow into the
- * iframe and framing is not blocked by X-Frame-Options.
+ * Uses the canonical `/portal/*` prefix (the same one portal-nav.ts links to)
+ * so it resolves in both dev (the `/portal/:path*` rewrite) and prod (Caddy
+ * routes `/portal/*` to the portal). Must stay relative (same-origin) so the
+ * user's session cookies flow into the iframe and framing is not blocked by
+ * X-Frame-Options.
  */
-const PRICING_PATH = "/pricing"
+const PRICING_PATH = "/portal/pricing"
 
 /** Message the portal posts on a successful upgrade so we can refresh in-app. */
 const UPGRADE_SUCCESS_TYPE = "billing:upgrade-success"
