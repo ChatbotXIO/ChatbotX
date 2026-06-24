@@ -8,6 +8,7 @@ export const credentialTypes = z.enum([
   "zalo",
   "giphy",
   "stripe",
+  "smtp",
   "paddle",
   "tiktok",
 ])
@@ -131,6 +132,21 @@ export type StripeCredentialPublic = z.infer<
   typeof stripeCredentialPublicSchema
 >
 
+export const smtpCredentialSchema = z.object({
+  host: z.string(),
+  port: z.number().int().positive(),
+  username: z.string(),
+  password: z.string(),
+  fromEmail: z.string().email(),
+  fromName: z.string().optional(),
+})
+export type SmtpCredential = z.infer<typeof smtpCredentialSchema>
+
+export const smtpCredentialPublicSchema = smtpCredentialSchema.omit({
+  password: true,
+})
+export type SmtpCredentialPublic = z.infer<typeof smtpCredentialPublicSchema>
+
 export const paddleCredentialSchema = z.object({
   vendorId: z.string(),
   vendorAuthCode: z.string(),
@@ -167,6 +183,7 @@ export const credentialSchemas = {
   zalo: zaloCredentialSchema,
   giphy: giphyCredentialSchema,
   stripe: stripeCredentialSchema,
+  smtp: smtpCredentialSchema,
   paddle: paddleCredentialSchema,
   tiktok: tiktokCredentialSchema,
 } as const
@@ -179,6 +196,7 @@ export const credentialPublicSchemas = {
   zalo: zaloCredentialPublicSchema,
   giphy: giphyCredentialPublicSchema,
   stripe: stripeCredentialPublicSchema,
+  smtp: smtpCredentialPublicSchema,
   paddle: paddleCredentialPublicSchema,
   tiktok: tiktokCredentialPublicSchema,
 } as const
@@ -191,6 +209,7 @@ export type CredentialByType = {
   zalo: ZaloCredential
   giphy: GiphyCredential
   stripe: StripeCredential
+  smtp: SmtpCredential
   paddle: PaddleCredential
   tiktok: TiktokCredential
 }
@@ -203,6 +222,7 @@ export type CredentialPublicByType = {
   zalo: ZaloCredentialPublic
   giphy: GiphyCredentialPublic
   stripe: StripeCredentialPublic
+  smtp: SmtpCredentialPublic
   paddle: PaddleCredentialPublic
   tiktok: TiktokCredentialPublic
 }
@@ -274,6 +294,16 @@ export const stripeCredentialUpdateSchema = z.object({
 export type StripeCredentialUpdate = z.infer<
   typeof stripeCredentialUpdateSchema
 >
+
+export const smtpCredentialUpdateSchema = z.object({
+  host: z.string().trim().min(1),
+  port: z.coerce.number().int().positive(),
+  username: z.string().trim().min(1),
+  password: z.string().trim().optional(),
+  fromEmail: z.string().trim().email(),
+  fromName: z.string().trim().optional(),
+})
+export type SmtpCredentialUpdate = z.infer<typeof smtpCredentialUpdateSchema>
 
 export const tiktokCredentialUpdateSchema = z.object({
   clientId: z.string().trim(),

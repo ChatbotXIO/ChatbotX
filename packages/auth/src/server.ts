@@ -317,6 +317,12 @@ export function createAuth(config: AuthConfig) {
           input: false,
           returned: false,
         },
+        mustChangePassword: {
+          type: "boolean",
+          required: false,
+          input: false,
+          returned: true,
+        },
       },
     },
     account: {

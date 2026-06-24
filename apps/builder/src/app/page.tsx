@@ -36,6 +36,10 @@ export default async function MainPage() {
     redirect("/trial-expired")
   }
 
+  if (user.mustChangePassword) {
+    redirect("/auth/change-password")
+  }
+
   const trialEndsAt = resolveTrialEndsAt(quota)
 
   const userInfo = { name: user.name, email: user.email, image: user.image }
