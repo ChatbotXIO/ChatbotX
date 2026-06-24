@@ -1,6 +1,7 @@
 import { getIdFromParams } from "@chatbotx.io/utils"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUserAndTargetWorkspace } from "@/lib/auth/utils"
 import { logger } from "@/lib/log"
 
@@ -26,6 +27,8 @@ export default async function WorkspaceNoSidebarLayout({
 
     return redirect("/")
   }
+
+  enforcePasswordCurrent(result.user)
 
   return children
 }

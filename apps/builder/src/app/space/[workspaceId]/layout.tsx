@@ -16,6 +16,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import type { QuotaSummary } from "@/components/nav-usage"
 import { isCloud } from "@/env"
 import { getTenantSettings } from "@/features/tenant/utils"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 import { buildQuotaMetrics, resolveTrialEndsAt } from "@/lib/quota-metrics"
 
@@ -35,6 +36,8 @@ export default async function WorkspaceLayout({
   if (!user) {
     return notFound()
   }
+
+  enforcePasswordCurrent(user)
 
   // Plan + usage limits only apply to the hosted cloud edition. Self-hosted
   // community/enterprise installs use every feature freely — no quota gating.

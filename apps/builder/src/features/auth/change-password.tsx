@@ -11,10 +11,10 @@ import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { authClient } from "@/lib/auth/auth-client"
-import { clearMustChangePasswordAction } from "./actions/clear-must-change-password"
+import { forceChangePasswordAction } from "./actions/force-change-password"
 import { AuthHeader } from "./components/shared"
 import {
   type ChangePasswordRequest,
@@ -22,6 +22,7 @@ import {
 } from "./schemas/action"
 
 export const ChangePassword = () => {
+  const t = useTranslations()
   const router = useRouter()
   const form = useForm<ChangePasswordRequest>({
     resolver: zodResolver(changePasswordRequest),
@@ -34,24 +35,14 @@ export const ChangePassword = () => {
   })
 
   const onSubmitChangePasswordForm = async (input: ChangePasswordRequest) => {
-    const { error } = await authClient.changePassword({
-      currentPassword: input.currentPassword,
-      newPassword: input.newPassword,
-      revokeOtherSessions: true,
-    })
+    const result = await forceChangePasswordAction(input)
 
-    if (error) {
-      toast.error(error.message)
-      return
-    }
-
-    const result = await clearMustChangePasswordAction()
     if (result?.serverError) {
       toast.error(result.serverError)
       return
     }
 
-    toast.success("Password changed")
+    toast.success(t("auth.passwordChangeSuccess"))
     router.push("/")
     router.refresh()
   }
@@ -60,7 +51,7 @@ export const ChangePassword = () => {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <AuthHeader title="Change your password" />
+          <AuthHeader title={t("auth.changePasswordTitle")} />
         </CardHeader>
 
         <CardContent>
@@ -70,25 +61,25 @@ export const ChangePassword = () => {
               onSubmit={form.handleSubmit(onSubmitChangePasswordForm)}
             >
               <p className="text-muted-foreground text-sm">
-                Set a new password before continuing.
+                {t("auth.changePasswordDescription")}
               </p>
 
               <InputField
-                label="Current password"
+                label={t("fields.currentPassword.label")}
                 name="currentPassword"
                 required
                 type="password"
               />
 
               <InputField
-                label="New password"
+                label={t("fields.newPassword.label")}
                 name="newPassword"
                 required
                 type="password"
               />
 
               <InputField
-                label="Confirm new password"
+                label={t("fields.passwordConfirmation.label")}
                 name="passwordConfirmation"
                 required
                 type="password"
@@ -104,7 +95,7 @@ export const ChangePassword = () => {
                 {form.formState.isSubmitting && (
                   <Loader2Icon className="animate-spin" />
                 )}
-                Continue
+                {t("actions.continue")}
               </Button>
             </form>
           </Form>

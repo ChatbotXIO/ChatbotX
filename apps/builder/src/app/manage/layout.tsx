@@ -2,6 +2,7 @@ import { tenantService } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { env, isCloud } from "@/env"
 import { ManageLayout } from "@/features/manage/manage-layout"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 export default async function ManageLayoutPage({
@@ -13,6 +14,8 @@ export default async function ManageLayoutPage({
   if (!user) {
     return notFound()
   }
+
+  enforcePasswordCurrent(user)
 
   /**
    * Cloud edition only allows access to the platform settings page if the user is the platform admin.

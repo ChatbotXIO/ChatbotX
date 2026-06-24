@@ -29,6 +29,7 @@ export {
   DEFAULT_SIGNUP_SUBJECT,
   DEFAULT_SIGNUP_TEMPLATE,
 } from "./emails/default-templates"
+export { DEFAULT_ACCOUNT_CREDENTIALS_SUBJECT } from "./emails/sign-up-credentials"
 
 function substituteVars(text: string, vars: Record<string, string>): string {
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => esc(vars[key] ?? ""))
@@ -72,9 +73,17 @@ function formatFrom(options?: {
   if (!options?.fromEmail) {
     return
   }
-  return options.fromName
-    ? `"${options.fromName.replace(/"/g, '\\"')}" <${options.fromEmail}>`
-    : options.fromEmail
+  if (!options.fromName) {
+    return options.fromEmail
+  }
+  // Strip control chars (incl. CR/LF) before interpolating into the From header
+  // to prevent SMTP header injection via a reseller-controlled display name,
+  // then escape quotes for the quoted-string form.
+  const safeName = options.fromName
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping CR/LF/controls is the intent
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .replace(/"/g, '\\"')
+  return `"${safeName}" <${options.fromEmail}>`
 }
 
 async function sendMail(

@@ -20,6 +20,7 @@ import {
 import { createId, getPublicOriginFromRequest } from "@chatbotx.io/utils"
 import { APIError, betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { nextCookies } from "better-auth/next-js"
 import { anonymous, magicLink, oneTimeToken } from "better-auth/plugins"
 import { PHASE_PRODUCTION_BUILD } from "next/constants"
 import { env, getBrokerUrl } from "./keys"
@@ -476,6 +477,11 @@ export function createAuth(config: AuthConfig) {
         emailDomainName: "anonymous.example.com",
         generateName: () => `Anonymous ${createId()}`,
       }),
+      // Relays better-auth's Set-Cookie into the Next.js response. Required so a
+      // server-side `auth.api.changePassword` (with `revokeOtherSessions`) rotates
+      // the caller's session cookie instead of silently logging them out. Must be
+      // the LAST plugin so it runs after every other plugin's cookie writes.
+      nextCookies(),
     ],
     session: {
       cookieCache: {

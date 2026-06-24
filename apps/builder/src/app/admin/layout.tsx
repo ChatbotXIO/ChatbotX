@@ -1,6 +1,7 @@
 import { isSuperAdmin } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { isCloud } from "@/env"
+import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 
 /**
@@ -17,6 +18,8 @@ export default async function AdminLayout({
   if (!(user && isCloud() && isSuperAdmin(user))) {
     return notFound()
   }
+
+  enforcePasswordCurrent(user)
 
   return (
     <main className="mx-auto w-full max-w-5xl p-4 pb-24 sm:px-6 sm:pt-6">

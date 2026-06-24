@@ -39,6 +39,21 @@ export const authActionClient = actionClient.use(async ({ next }) => {
     },
   })
 
+  // Forced-password-change gate — the single chokepoint for EVERY authenticated
+  // server action (workspace and platform-admin clients both build on this one).
+  // The RSC layouts redirect a flagged user to /auth/change-password, but a
+  // stale session could still POST an action directly. `findOrFail` reads the
+  // row fresh from the DB, so this never trusts a cookie-cached flag. The
+  // force-change action itself deliberately runs on the lower-level
+  // `actionClient` so it stays callable while the flag is set.
+  if (user.mustChangePassword) {
+    throw new ChatbotXException(
+      "Password change required",
+      "mustChangePassword",
+      403,
+    )
+  }
+
   return next({ ctx: { user } })
 })
 

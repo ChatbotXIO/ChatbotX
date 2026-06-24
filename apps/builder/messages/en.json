@@ -1278,6 +1278,9 @@
     "newPassword": {
       "label": "New Password"
     },
+    "currentPassword": {
+      "label": "Current Password"
+    },
     "developerAccessToken": {
       "label": "API Access Token"
     },
@@ -2255,7 +2258,10 @@
     "passwordResetSuccess": "Password reset successfully",
     "resetPasswordTitle": "Reset your password",
     "resetPasswordDescription": "Enter your new password below.",
-    "signUpTitle": "Sign up to {name}"
+    "signUpTitle": "Sign up to {name}",
+    "changePasswordTitle": "Change your password",
+    "changePasswordDescription": "Set a new password before continuing.",
+    "passwordChangeSuccess": "Password changed"
   },
   "emailTopics": {
     "title": "Email Topics"
