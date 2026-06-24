@@ -582,6 +582,11 @@ export const createChatStore = () => {
           const newMessage = await ky
             .get<MessageResourceWithRelations>(
               `/api/workspaces/${message.workspaceId}/messages/${message.id}`,
+              {
+                searchParams: {
+                  createdAt: new Date(message.createdAt).toISOString(),
+                },
+              },
             )
             .json()
           appendMessage(newMessage)
