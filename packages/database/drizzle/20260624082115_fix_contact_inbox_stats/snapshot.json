@@ -1,8 +1,8 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "fae765e5-363e-4100-8f13-c25da06cf6b7",
-  "prevIds": ["7d6beb75-5765-49bb-814d-8f2e30c80c05"],
+  "id": "11221d78-1849-48c7-9c9d-97aa2f028a50",
+  "prevIds": ["7cf60676-e435-4d97-a470-1d09d3253d9a"],
   "ddl": [
     {
       "values": ["pending", "success", "error", "processing"],
@@ -219,6 +219,12 @@
       "schema": "public"
     },
     {
+      "values": ["message", "comment"],
+      "name": "messageKind",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "values": ["incoming", "outgoing", "activity"],
       "name": "messageType",
       "entityType": "enums",
@@ -246,6 +252,18 @@
       "values": ["owner", "agent"],
       "name": "workspaceMemberRole",
       "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "MessageShard",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "ShardTimeRange",
+      "entityType": "tables",
       "schema": "public"
     },
     {
@@ -527,6 +545,12 @@
     {
       "isRlsEnabled": false,
       "name": "Tenant",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "TenantQuotaUsage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -931,6 +955,279 @@
       "name": "WorkspaceMember",
       "entityType": "tables",
       "schema": "public"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "host",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "5432",
+      "generated": null,
+      "identity": null,
+      "name": "port",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "database",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "user",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "credentialRef",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "'disable'",
+      "generated": null,
+      "identity": null,
+      "name": "sslMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isActive",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isMain",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "shardKey",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "readHost",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "readPort",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "shardId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "startTime",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "endTime",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "ShardTimeRange"
     },
     {
       "type": "bigint",
@@ -3468,19 +3765,6 @@
       "table": "Attachment"
     },
     {
-      "type": "fileType",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "fileType",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -3489,6 +3773,32 @@
       "generated": null,
       "identity": null,
       "name": "messageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "messageCreatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "type": "fileType",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fileType",
       "entityType": "columns",
       "schema": "public",
       "table": "Attachment"
@@ -5629,19 +5939,6 @@
       "table": "ContactInbox"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "sourceConversationId",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "ContactInbox"
-    },
-    {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -6479,9 +6776,9 @@
     {
       "type": "timestamp(6) with time zone",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
       "name": "lastActivityAt",
@@ -6550,6 +6847,19 @@
       "generated": null,
       "identity": null,
       "name": "contactId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "sourceId",
       "entityType": "columns",
       "schema": "public",
       "table": "Conversation"
@@ -7181,19 +7491,6 @@
     {
       "type": "text",
       "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "slug",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "Tenant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": "'active'",
@@ -7385,6 +7682,136 @@
       "entityType": "columns",
       "schema": "public",
       "table": "Tenant"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "bigint",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "tenantId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "contactsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "workspacesUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "channelsUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "teamMembersUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "macUsed",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
+    },
+    {
+      "type": "timestamp(6) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "syncedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
     },
     {
       "type": "bigint",
@@ -7603,6 +8030,32 @@
       "generated": null,
       "identity": null,
       "name": "saasMode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "planName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "UserQuota"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "planStatus",
       "entityType": "columns",
       "schema": "public",
       "table": "UserQuota"
@@ -12262,6 +12715,58 @@
       "table": "Message"
     },
     {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "deletedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "messageKind",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'message'",
+      "generated": null,
+      "identity": null,
+      "name": "type",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "parentId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "attributes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -15726,6 +16231,97 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "isActive",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessageShard_isActive_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "shardKey",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "MessageShard_shardKey_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "MessageShard"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "startTime",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "endTime",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ShardTimeRange_time_lookup_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "shardId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "ShardTimeRange_shardId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "sourceId",
           "isExpression": false,
           "asc": true,
@@ -16632,9 +17228,16 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "workspaceId",
+          "value": "messageId",
           "isExpression": false,
           "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "messageCreatedAt",
+          "isExpression": false,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -16644,7 +17247,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Attachment_workspaceId_idx",
+      "name": "Attachment_message_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Attachment"
@@ -16653,9 +17256,16 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "messageId",
+          "value": "workspaceId",
           "isExpression": false,
           "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -16665,7 +17275,35 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Attachment_messageId_idx",
+      "name": "Attachment_workspaceId_createdAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "conversationId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Attachment_conversationId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Attachment"
@@ -17519,14 +18157,42 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "sourceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": true,
-      "where": null,
+      "where": "\"sourceId\" IS NOT NULL",
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Conversation_contactId_key",
+      "name": "Conversation_contactId_sourceId_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Conversation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "contactId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"sourceId\" IS NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Conversation_contactId_dm_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "Conversation"
@@ -17816,32 +18482,11 @@
         }
       ],
       "isUnique": true,
-      "where": "\"ownerId\" IS NOT NULL",
+      "where": null,
       "with": "",
       "method": "btree",
       "concurrently": false,
       "name": "Tenant_ownerId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Tenant"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "slug",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": "\"slug\" IS NOT NULL",
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Tenant_slug_key",
       "entityType": "indexes",
       "schema": "public",
       "table": "Tenant"
@@ -19432,9 +20077,23 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "workspaceId",
+          "value": "conversationId",
           "isExpression": false,
           "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "id",
+          "isExpression": false,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -19444,7 +20103,35 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Message_workspaceId_idx",
+      "name": "Message_conversation_history_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_workspace_created_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Message"
@@ -19465,25 +20152,11 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
-        }
-      ],
-      "isUnique": true,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_contactInboxId_sourceId_key",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
+        },
         {
-          "value": "conversationId",
+          "value": "createdAt",
           "isExpression": false,
-          "asc": true,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -19493,7 +20166,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Message_conversationId_idx",
+      "name": "Message_contactInboxId_sourceId_createdAt_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Message"
@@ -19502,37 +20175,30 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "contactInboxId",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "Message_inboxId_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "Message"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "senderType",
+          "value": "workspaceId",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
           "opclass": null
         },
         {
-          "value": "senderId",
+          "value": "conversationId",
           "isExpression": false,
           "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
           "nullsFirst": false,
           "opclass": null
         }
@@ -19542,7 +20208,49 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "Message_senderType_senderId_idx",
+      "name": "Message_conversationId_type_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "workspaceId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "parentId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "type",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "createdAt",
+          "isExpression": false,
+          "asc": false,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": "\"parentId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "Message_parentId_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "Message"
@@ -21054,6 +21762,19 @@
     },
     {
       "nameExplicit": false,
+      "columns": ["shardId"],
+      "schemaTo": "public",
+      "tableTo": "MessageShard",
+      "columnsTo": ["id"],
+      "onUpdate": "CASCADE",
+      "onDelete": "CASCADE",
+      "name": "ShardTimeRange_shardId_MessageShard_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "ShardTimeRange"
+    },
+    {
+      "nameExplicit": false,
       "columns": ["workspaceId"],
       "schemaTo": "public",
       "tableTo": "Workspace",
@@ -21139,32 +21860,6 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "AIConversationSource_conversationId_Conversation_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AIConversationSource"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["messageId"],
-      "schemaTo": "public",
-      "tableTo": "Message",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "AIConversationSource_messageId_Message_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "AIConversationSource"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["attachmentId"],
-      "schemaTo": "public",
-      "tableTo": "Attachment",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "SET NULL",
-      "name": "AIConversationSource_attachmentId_Attachment_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "AIConversationSource"
@@ -21477,19 +22172,6 @@
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "name": "Attachment_conversationId_Conversation_id_fkey",
-      "entityType": "fks",
-      "schema": "public",
-      "table": "Attachment"
-    },
-    {
-      "nameExplicit": false,
-      "columns": ["messageId"],
-      "schemaTo": "public",
-      "tableTo": "Message",
-      "columnsTo": ["id"],
-      "onUpdate": "CASCADE",
-      "onDelete": "CASCADE",
-      "name": "Attachment_messageId_Message_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "Attachment"
@@ -22143,6 +22825,19 @@
       "entityType": "fks",
       "schema": "public",
       "table": "Tenant"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["tenantId"],
+      "schemaTo": "public",
+      "tableTo": "Tenant",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "TenantQuotaUsage_tenantId_Tenant_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "TenantQuotaUsage"
     },
     {
       "nameExplicit": false,
@@ -23906,6 +24601,14 @@
       "table": "AnalyticsSequenceEvent"
     },
     {
+      "columns": ["id", "createdAt"],
+      "nameExplicit": false,
+      "name": "Attachment_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "Attachment"
+    },
+    {
       "columns": ["workspaceId", "periodStart", "contactInboxId"],
       "nameExplicit": false,
       "name": "ContactActiveMonthly_pkey",
@@ -23946,6 +24649,14 @@
       "table": "ContactToTagChannel"
     },
     {
+      "columns": ["id", "createdAt"],
+      "nameExplicit": false,
+      "name": "Message_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
       "columns": ["id", "workspaceId"],
       "nameExplicit": true,
       "name": "SequenceDispatch_pkey",
@@ -23960,6 +24671,22 @@
       "entityType": "pks",
       "schema": "public",
       "table": "TriggerContactHistory"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "MessageShard_pkey",
+      "schema": "public",
+      "table": "MessageShard",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "ShardTimeRange_pkey",
+      "schema": "public",
+      "table": "ShardTimeRange",
+      "entityType": "pks"
     },
     {
       "columns": ["id"],
@@ -24039,14 +24766,6 @@
       "name": "AnalyticsEmailTopic_pkey",
       "schema": "public",
       "table": "AnalyticsEmailTopic",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
-      "name": "Attachment_pkey",
-      "schema": "public",
-      "table": "Attachment",
       "entityType": "pks"
     },
     {
@@ -24223,6 +24942,14 @@
       "name": "Tenant_pkey",
       "schema": "public",
       "table": "Tenant",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "nameExplicit": false,
+      "name": "TenantQuotaUsage_pkey",
+      "schema": "public",
+      "table": "TenantQuotaUsage",
       "entityType": "pks"
     },
     {
@@ -24532,14 +25259,6 @@
     {
       "columns": ["id"],
       "nameExplicit": false,
-      "name": "Message_pkey",
-      "schema": "public",
-      "table": "Message",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["id"],
-      "nameExplicit": false,
       "name": "MessengerMessageTemplate_pkey",
       "schema": "public",
       "table": "MessengerMessageTemplate",
@@ -24731,12 +25450,30 @@
     },
     {
       "nameExplicit": true,
+      "columns": ["contactInboxId", "sourceId", "createdAt"],
+      "nullsNotDistinct": false,
+      "name": "Message_source_dedup_idx",
+      "entityType": "uniques",
+      "schema": "public",
+      "table": "Message"
+    },
+    {
+      "nameExplicit": true,
       "columns": ["workspaceId", "periodStart", "periodEnd"],
       "nullsNotDistinct": false,
       "name": "WorkspaceMac_workspaceId_periodStart_periodEnd_unique",
       "entityType": "uniques",
       "schema": "public",
       "table": "WorkspaceMac"
+    },
+    {
+      "nameExplicit": false,
+      "columns": ["tenantId"],
+      "nullsNotDistinct": false,
+      "name": "TenantQuotaUsage_tenantId_key",
+      "schema": "public",
+      "table": "TenantQuotaUsage",
+      "entityType": "uniques"
     },
     {
       "nameExplicit": false,
