@@ -1,8 +1,8 @@
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
-import crypto from "crypto"
 import z from "zod"
 import { InstagramWebhookException } from "../exception"
 import { logger } from "../lib/logger"
+import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
   INSTAGRAM_MESSAGE_METADATA,
   type InstagramConfig,
@@ -10,11 +10,11 @@ import {
   instagramWebhookEventSchema,
 } from "../schemas"
 
-const verifyWebhookSignature = (
+const verifyWebhookSignature = async (
   payload: string,
   signature: string,
   clientSecret: string,
-): boolean => {
+): Promise<boolean> => {
   try {
     const elements = signature.split("=")
     if (elements.length !== 2) {
@@ -22,16 +22,9 @@ const verifyWebhookSignature = (
     }
 
     const signatureHash = elements[1]
+    const expectedHash = await hmacSha256Hex(clientSecret, payload)
 
-    const expectedHash = crypto
-      .createHmac("sha256", clientSecret)
-      .update(payload)
-      .digest("hex")
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signatureHash, "utf8"),
-      Buffer.from(expectedHash, "utf8"),
-    )
+    return timingSafeStringEqual(signatureHash, expectedHash)
   } catch {
     return false
   }
@@ -53,7 +46,7 @@ const handleWebhookEvent = async (
       throw new InstagramWebhookException("Missing webhook signature")
     }
 
-    const isValidSignature = verifyWebhookSignature(
+    const isValidSignature = await verifyWebhookSignature(
       body,
       signature,
       config.clientSecret,

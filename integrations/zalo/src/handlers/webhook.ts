@@ -3,7 +3,7 @@ import {
   type HandleRequestProps,
   SdkException,
 } from "@chatbotx.io/sdk"
-import crypto from "crypto"
+import { sha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { ZaloConfig } from "../schema/definition"
 import {
   TAG_EVENT_NAMES,
@@ -13,11 +13,11 @@ import {
 
 const TAG_EVENT_NAME_SET = new Set<string>(TAG_EVENT_NAMES)
 
-const _verifyWebhookSignature = (
+const _verifyWebhookSignature = async (
   payload: ZaloWebhookEvent,
   signature: string,
   config: ZaloConfig,
-): boolean => {
+): Promise<boolean> => {
   try {
     const elements = signature.split("=")
     if (elements.length !== 2) {
@@ -30,12 +30,9 @@ const _verifyWebhookSignature = (
     const timeStamp = payload.timestamp
     const dataString = JSON.stringify(payload)
     const content = appId + dataString + timeStamp + config.verifyToken
-    const expectedHash = crypto
-      .createHash("sha256")
-      .update(content, "utf8")
-      .digest("hex")
+    const expectedHash = await sha256Hex(content)
 
-    return signatureHash === expectedHash
+    return timingSafeStringEqual(signatureHash, expectedHash)
   } catch {
     return false
   }
@@ -72,7 +69,7 @@ const handleWebhookEvent = async (
     // if (!signature) {
     //   throw new SdkException("Missing webhook signature")
     // }
-    // const isValidSignature = verifyWebhookSignature(
+    // const isValidSignature = await _verifyWebhookSignature(
     //   webhookData,
     //   signature,
     //   config,

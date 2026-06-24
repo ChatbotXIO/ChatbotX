@@ -1,7 +1,7 @@
-import { createHmac, timingSafeEqual } from "node:crypto"
 import type { HandleRequestProps } from "@chatbotx.io/sdk"
 import { TiktokWebhookException } from "../exception"
 import { logger } from "../lib/logger"
+import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import type { TiktokConfig } from "../schema"
 import { tiktokWebhookEventSchema } from "../schema"
 
@@ -10,11 +10,11 @@ const WEBHOOK_TIMESTAMP_WINDOW_SECONDS = 5
 // Allow 2s of clock skew between TikTok servers and ours
 const WEBHOOK_CLOCK_SKEW_SECONDS = 2
 
-function verifySignature(
+async function verifySignature(
   clientSecret: string,
   signature: string,
   body: string,
-): boolean {
+): Promise<boolean> {
   const parts = signature.split(",")
   const tPart = parts.find((p) => p.startsWith("t="))
   const sPart = parts.find((p) => p.startsWith("s="))
@@ -38,11 +38,9 @@ function verifySignature(
 
   const receivedSig = sPart.slice(2)
   const payload = `${timestamp}.${body}`
-  const expected = createHmac("sha256", clientSecret)
-    .update(payload)
-    .digest("hex")
+  const expected = await hmacSha256Hex(clientSecret, payload)
 
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(receivedSig))
+  return timingSafeStringEqual(expected, receivedSig)
 }
 
 export const webhookHandler = async (
@@ -62,7 +60,11 @@ export const webhookHandler = async (
   }
 
   const signature = req.headers.get("TikTok-Signature") ?? ""
-  if (!(signature && verifySignature(config.clientSecret, signature, body))) {
+  if (
+    !(
+      signature && (await verifySignature(config.clientSecret, signature, body))
+    )
+  ) {
     throw new TiktokWebhookException("Invalid or missing webhook signature")
   }
 
