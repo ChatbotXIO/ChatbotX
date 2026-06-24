@@ -34,10 +34,12 @@ import type { ListWorkspaceMembersResponse } from "./schema/query"
 
 type WorkspaceMembersTableProps = {
   promises: Promise<[Awaited<ReturnType<typeof listWorkspaceMembers>>]>
+  teamMembersAtLimit?: boolean
 }
 
 export function WorkspaceMembersTable({
   promises,
+  teamMembersAtLimit = false,
 }: WorkspaceMembersTableProps) {
   const [{ data, pageCount }] = use(promises)
   const t = useTranslations()
@@ -69,7 +71,7 @@ export function WorkspaceMembersTable({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
+                <div className="inline-block max-w-[200px] truncate">
                   {row.original.user.name}
                 </div>
               </TooltipTrigger>
@@ -195,7 +197,7 @@ export function WorkspaceMembersTable({
     <>
       <DataTable table={table}>
         <DataTableToolbar table={table}>
-          <InviteWorkspaceMemberDialog />
+          <InviteWorkspaceMemberDialog atLimit={teamMembersAtLimit} />
         </DataTableToolbar>
       </DataTable>
 

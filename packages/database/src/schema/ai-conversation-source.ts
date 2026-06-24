@@ -11,9 +11,7 @@ import {
   aiConversationSourceTypes,
 } from "../partials"
 import { bigintAsString, sharedColumns } from "../partials/shared"
-import { attachmentModel } from "./attachment"
 import { conversationModel } from "./conversation"
-import { messageModel } from "./message"
 import { workspaceModel } from "./workspace"
 
 export const aiConversationSourceType = pgEnum(
@@ -42,16 +40,9 @@ export const aiConversationSourceModel = pgTable(
         onDelete: "cascade",
         onUpdate: "cascade",
       }),
-    messageId: bigintAsString()
-      .notNull()
-      .references(() => messageModel.id, {
-        onDelete: "cascade",
-        onUpdate: "cascade",
-      }),
-    attachmentId: bigintAsString().references(() => attachmentModel.id, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
+    // No FK to Message/Attachment — FK references to TimescaleDB hypertables are unsupported.
+    messageId: bigintAsString().notNull(),
+    attachmentId: bigintAsString(),
     sourceType: aiConversationSourceType().notNull(),
     status: aiConversationSourceStatus().default("pending").notNull(),
     sourceKey: text().notNull(),

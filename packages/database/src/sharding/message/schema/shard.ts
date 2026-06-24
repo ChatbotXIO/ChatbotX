@@ -21,6 +21,7 @@ export const messageShardModel = pgTable(
     credentialRef: text(),
     sslMode: text().$type<SslMode>().default("disable"),
     isActive: boolean().default(false),
+    isMain: boolean().default(false),
     shardKey: integer(),
     readHost: text(),
     readPort: integer(),

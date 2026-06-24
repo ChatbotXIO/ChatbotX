@@ -94,24 +94,79 @@ describe("MessageShardConnectionManager.getWriteShardInfo", () => {
     expect(info?.shard.id).toBe("s1")
   })
 
-  test("returns null when sharding is disabled (no active shards)", async () => {
-    const manager = makeManager({
-      countActiveShards: vi.fn().mockResolvedValue(0),
-    })
-
-    const info = await manager.getWriteShardInfo("ws-1")
-
-    expect(info).toBeNull()
-  })
-
-  test("returns null when no shard is assigned to the workspace", async () => {
+  test("returns mainDbShardInfo when no shard is assigned to the workspace", async () => {
     const manager = makeManager({
       findShardForWrite: vi.fn().mockResolvedValue(null),
     })
 
     const info = await manager.getWriteShardInfo("ws-1")
 
-    expect(info).toBeNull()
+    expect(info).not.toBeNull()
+    expect(info?.shardId).toBe(MessageShardConnectionManager.MAIN_DB_SHARD_ID)
+    expect(info?.id).toBe(MessageShardConnectionManager.MAIN_DB_SHARD_ID)
+    expect(info?.startTime).toEqual(new Date(0))
+    expect(info?.endTime).toBeNull()
+  })
+})
+
+describe("MessageShardConnectionManager.getShardsForTimeRange", () => {
+  const start = new Date(0)
+  const end = new Date()
+
+  test("returns mainDbShardInfo only when MessageShard table is completely empty", async () => {
+    const manager = makeManager({
+      findShardsForTimeRange: vi.fn().mockResolvedValue([]),
+      countShards: vi.fn().mockResolvedValue(0),
+    })
+
+    const shards = await manager.getShardsForTimeRange(start, end)
+
+    expect(shards).toHaveLength(1)
+    expect(shards[0].shardId).toBe(
+      MessageShardConnectionManager.MAIN_DB_SHARD_ID,
+    )
+  })
+
+  test("returns empty when any MessageShard record exists but no time range covers the window", async () => {
+    // Covers both: isMain=true inactive shard (after --init) and active external shards.
+    // ANY record in MessageShard means sharding setup has started — no fallback to main DB.
+    const manager = makeManager({
+      findShardsForTimeRange: vi.fn().mockResolvedValue([]),
+      countShards: vi.fn().mockResolvedValue(1),
+    })
+
+    const shards = await manager.getShardsForTimeRange(start, end)
+
+    expect(shards).toHaveLength(0)
+  })
+})
+
+describe("MessageShardConnectionManager.getShardClient", () => {
+  beforeEach(() => {
+    shardMocks.createMessageShardClient.mockReset()
+    shardMocks.createShardPool.mockReset()
+    shardMocks.createMessageShardClient.mockImplementation(
+      (pool: { id: string }) => ({ clientId: pool.id }),
+    )
+  })
+
+  test("returns mainDbShardClient without pool creation when shard has isMain=true", async () => {
+    const manager = makeManager()
+    const mainShard = { ...shardRecord, isMain: true }
+
+    await manager.getShardClient(mainShard)
+
+    expect(shardMocks.createShardPool).not.toHaveBeenCalled()
+    expect(shardMocks.createMessageShardClient).not.toHaveBeenCalled()
+  })
+
+  test("creates a pool for regular shards", async () => {
+    const manager = makeManager()
+    shardMocks.createShardPool.mockReturnValue(makePool("primary"))
+
+    await manager.getShardClient(shardRecord)
+
+    expect(shardMocks.createShardPool).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -282,6 +337,41 @@ describe("MessageShardConnectionManager.withShardClientForRead", () => {
     expect(result).toBe("primary-result")
     expect(seenClients).toEqual(["read-ok", "primary-replacement"])
     expect(evictedPrimaryPool.end).toHaveBeenCalled()
+  })
+
+  test("does not leave a poisoned entry after a failed primary health check", async () => {
+    const manager = makeManager()
+    const failingPool = makePool(
+      "primary-fail",
+      vi.fn().mockRejectedValue(new Error("connection refused")),
+    )
+    const workingPool = makePool("primary-ok")
+    shardMocks.createShardPool
+      .mockReturnValueOnce(failingPool)
+      .mockReturnValueOnce(workingPool)
+
+    await expect(
+      manager.withShardClientForRead(shardRecord, (c) => Promise.resolve(c)),
+    ).rejects.toThrow()
+
+    const client = await manager.withShardClientForRead(shardRecord, (c) =>
+      Promise.resolve(c),
+    )
+    expect(client).toEqual({ clientId: "primary-ok" })
+    expect(shardMocks.createShardPool).toHaveBeenCalledTimes(2)
+  })
+
+  test("returns mainDbShardClient without creating a pool when shard has isMain=true", async () => {
+    const manager = makeManager({}, { readReplicasEnabled: true })
+    const mainShard = { ...shardRecord, isMain: true }
+
+    const result = await manager.withShardClientForRead(mainShard, () =>
+      Promise.resolve("main-result"),
+    )
+
+    expect(result).toBe("main-result")
+    expect(shardMocks.createShardPool).not.toHaveBeenCalled()
+    expect(shardMocks.createMessageShardClient).not.toHaveBeenCalled()
   })
 
   test("rethrows non-connection errors and keeps the enabled replica healthy", async () => {

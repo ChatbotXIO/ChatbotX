@@ -1,5 +1,11 @@
-import { userQuotaService, workspaceService } from "@chatbotx.io/business"
-import { db } from "@chatbotx.io/database/client"
+import { macTrackingService } from "@chatbotx.io/analytics"
+import {
+  contactInboxService,
+  quotaEnforcementService,
+  userQuotaService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import { db, inArray } from "@chatbotx.io/database/client"
 import {
   type ContactImportMeta,
   type CustomFieldType,
@@ -34,6 +40,7 @@ type ContactDeps = {
 
 type AcceptedContact = {
   contactId: string
+  contactInboxId: string
   row: ContactRow
 }
 
@@ -119,37 +126,70 @@ const processContactRow = (
   return { ...mapped, customFields: safeCustomFields }
 }
 
-// C-1: Serialize quota check + insert + increment per owner via a distributed
-// lock so concurrent import jobs cannot both pass the remaining-slots gate and
-// together exceed the plan limit.
-const insertContactBatch = (
+// C-1: Serialize quota check + insert + increment via a distributed lock so
+// concurrent import jobs cannot both pass the remaining-slots gate and together
+// exceed the plan limit. The lock key is resolved at the enforcement
+// granularity (tenant pool for reseller sub-accounts, else the user) so two
+// sub-accounts sharing one reseller pool cannot both overrun it.
+const insertContactBatch = async (
   deps: ContactDeps,
   eligible: ContactRow[],
   ctx: { row: ImportRow; meta: ContactImportMeta },
 ): Promise<number> => {
+  // MAC is the billing hard gate. Imports have no inbound message to drive the
+  // async tracker, so the whole atomic triad — lock + remaining check +
+  // increment — operates on `mac` so a bulk import both respects and consumes
+  // the MAC quota. We also write the `ContactActiveMonthly` presence rows in
+  // the same transaction so imported contacts live in the same ledger the quota
+  // reconcile derives `macUsed` from (and a later message dedups, not double
+  // counts).
+  const lockKey = await quotaEnforcementService.resolveQuotaLockKey({
+    userId: deps.ownerId,
+    metric: "mac",
+  })
   return distributedLock.runExclusive({
-    key: `contact-import-quota:${deps.ownerId}`,
+    key: lockKey,
     timeoutInSeconds: 30,
     fn: async () => {
-      const remaining = await userQuotaService.getRemainingSlots(
-        deps.ownerId,
-        "contacts",
-      )
+      const externalIds = eligible.map((row) => row.externalId as string)
+      const [remaining, latestExisting] = await Promise.all([
+        quotaEnforcementService.getDualRemainingSlots({
+          userId: deps.ownerId,
+          metric: "mac",
+        }),
+        contactInboxService.findExistingSourceIds({
+          inboxId: ctx.row.inboxId,
+          sourceIds: externalIds,
+        }),
+      ])
       if (remaining === 0) {
         return 0
       }
 
+      const freshEligible = eligible.filter(
+        (row) => !latestExisting.has(row.externalId as string),
+      )
+      if (freshEligible.length === 0) {
+        return 0
+      }
+
       const toInsert =
-        remaining === null ? eligible : eligible.slice(0, remaining)
+        remaining === null ? freshEligible : freshEligible.slice(0, remaining)
       const accepted: AcceptedContact[] = toInsert.map((row) => ({
         contactId: createId(),
+        contactInboxId: createId(),
         row,
       }))
       if (accepted.length === 0) {
         return 0
       }
 
-      await db.transaction(async (tx) => {
+      // Owner billing anchor for the MAC presence rows. Absent → period-less
+      // owner (not MAC-tracked); skip the ledger write but still consume below.
+      const ownerQuota = await userQuotaService.getForUser(deps.ownerId)
+      const periodStart = ownerQuota?.periodStart ?? null
+
+      const insertedCount = await db.transaction(async (tx) => {
         await tx.insert(contactModel).values(
           accepted.map(({ contactId, row }) => ({
             id: contactId,
@@ -161,12 +201,18 @@ const insertContactBatch = (
           })),
         )
 
-        // H-2: Use onConflictDoNothing so a contact appearing in two separate
-        // 1 000-row batches does not roll back the entire second batch.
-        await tx
+        // A duplicate should already have been removed by the locked re-check,
+        // but a non-import path (e.g. a concurrent inbound message creating the
+        // same (inboxId, sourceId)) can still win the race in the window between
+        // that re-check and this insert. `onConflictDoNothing` skips those rows;
+        // we then continue with only the contacts whose link actually inserted,
+        // so a single late conflict can no longer fail the entire batch while
+        // still guaranteeing no contact is created without its inbox row or
+        // counted against MAC.
+        const insertedContactInboxes = await tx
           .insert(contactInboxModel)
           .values(
-            accepted.map(({ contactId, row }) => {
+            accepted.map(({ contactId, contactInboxId, row }) => {
               // C-2: externalId is guaranteed non-null here by processContactBatch,
               // but assert explicitly rather than casting to catch future regressions.
               if (!row.externalId) {
@@ -175,7 +221,7 @@ const insertContactBatch = (
                 )
               }
               return {
-                id: createId(),
+                id: contactInboxId,
                 originalContactId: contactId,
                 contactId,
                 inboxId: ctx.row.inboxId,
@@ -186,16 +232,44 @@ const insertContactBatch = (
             }),
           )
           .onConflictDoNothing()
+          .returning({ contactId: contactInboxModel.contactId })
+
+        const insertedContactIds = new Set(
+          insertedContactInboxes.map((inboxRow) => inboxRow.contactId),
+        )
+        const survivors = accepted.filter(({ contactId }) =>
+          insertedContactIds.has(contactId),
+        )
+
+        // Prune the orphan Contact rows whose link lost the conflict so we never
+        // leave a contact without a channel row (cascades clean up any partial
+        // children) or count it against MAC.
+        if (survivors.length !== accepted.length) {
+          const orphanIds = accepted
+            .filter(({ contactId }) => !insertedContactIds.has(contactId))
+            .map(({ contactId }) => contactId)
+          await tx
+            .delete(contactModel)
+            .where(inArray(contactModel.id, orphanIds))
+          logger.warn(
+            { inboxId: ctx.row.inboxId, conflicts: orphanIds.length },
+            "Import contact source conflict: skipped already-linked contacts",
+          )
+        }
+
+        if (survivors.length === 0) {
+          return 0
+        }
 
         await tx.insert(conversationModel).values(
-          accepted.map(({ contactId }) => ({
+          survivors.map(({ contactId }) => ({
             id: createId(),
             workspaceId: ctx.row.workspaceId,
             contactId,
           })),
         )
 
-        const customFieldValues = accepted.flatMap(({ contactId, row }) =>
+        const customFieldValues = survivors.flatMap(({ contactId, row }) =>
           row.customFields.map((field) => ({
             id: createId(),
             contactId,
@@ -211,20 +285,52 @@ const insertContactBatch = (
           const tagId = ctx.meta.tagId
           await tx
             .insert(contactsToTagsModel)
-            .values(accepted.map(({ contactId }) => ({ contactId, tagId })))
+            .values(survivors.map(({ contactId }) => ({ contactId, tagId })))
             .onConflictDoNothing()
         }
+
+        // Record MAC presence for the imported contacts in the same ledger the
+        // quota reconcile reads, so they count toward `macUsed` and a later
+        // message from them dedups instead of double counting.
+        if (periodStart) {
+          await macTrackingService.claimNewActiveContacts(
+            {
+              workspaceId: ctx.row.workspaceId,
+              inboxId: ctx.row.inboxId,
+              periodStart,
+              occurredAt: new Date(),
+              contacts: survivors.map(({ contactId, contactInboxId }) => ({
+                contactId,
+                contactInboxId,
+              })),
+            },
+            tx,
+          )
+        }
+
+        return survivors.length
       })
 
       // H-1: Increment inside the lock so the live Redis counter is updated
-      // before another concurrent import reads it.
-      await userQuotaService.incrementBy(
-        deps.ownerId,
-        "contacts",
-        accepted.length,
-      )
+      // before another concurrent import reads it. Count only the contacts that
+      // actually inserted, never the conflict-skipped ones. Bump both the MAC
+      // hard gate and the info-only `contacts` total — every other new-contact
+      // path records `contacts` (folded into `createNewContactWithMac`), so the
+      // bulk path must too or the displayed contacts count drifts low.
+      if (insertedCount > 0) {
+        await quotaEnforcementService.incrementBy({
+          userId: deps.ownerId,
+          metric: "mac",
+          count: insertedCount,
+        })
+        await quotaEnforcementService.incrementBy({
+          userId: deps.ownerId,
+          metric: "contacts",
+          count: insertedCount,
+        })
+      }
 
-      return accepted.length
+      return insertedCount
     },
   })
 }
@@ -253,12 +359,10 @@ const processContactBatch = async (
     }
 
     const externalIds = contacts.map((c) => c.externalId as string)
-    const existingRows = await db.query.contactInboxModel.findMany({
-      where: { inboxId: ctx.row.inboxId, sourceId: { in: externalIds } },
-      columns: { sourceId: true },
+    const existing = await contactInboxService.findExistingSourceIds({
+      inboxId: ctx.row.inboxId,
+      sourceIds: externalIds,
     })
-
-    const existing = new Set(existingRows.map((e) => e.sourceId))
 
     const eligible = contacts.filter(
       (row) => !existing.has(row.externalId as string),

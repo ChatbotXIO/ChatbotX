@@ -4,6 +4,7 @@ import type {
   IntegrationDeepseekModel,
   IntegrationGeminiModel,
   IntegrationOpenAIModel,
+  IntegrationOpenrouterModel,
 } from "@chatbotx.io/database/types"
 import { secretTextAuthSchema } from "@chatbotx.io/sdk"
 import type { ImageModel } from "ai"
@@ -19,6 +20,7 @@ export type AIIntegrationModel =
   | IntegrationGeminiModel
   | IntegrationClaudeModel
   | IntegrationDeepseekModel
+  | IntegrationOpenrouterModel
 
 export type AIProviderInstance = ReturnType<
   (typeof providerSdkFactories)[keyof typeof providerSdkFactories]
@@ -53,6 +55,10 @@ export async function getAIIntegrationInDB(props: {
       return await db.query.integrationDeepseekModel.findFirst({
         where,
       })
+    case aiProviders.enum.openrouter:
+      return await db.query.integrationOpenrouterModel.findFirst({
+        where,
+      })
     default:
       return null
   }
@@ -85,6 +91,38 @@ export function getAIModel(model: AIIntegrationModel, provider: string) {
   return createAIProviderInstance({ model, provider })
 }
 
+const legacyModelIdMap: Partial<Record<AIProvider, Record<string, string>>> = {
+  [aiProviders.enum.claude]: {
+    "claude-opus-4.6": "claude-opus-4-6",
+    "claude-4.5-haiku-20251001": "claude-haiku-4-5-20251001",
+    "claude-4.5-sonnet-20250929": "claude-sonnet-4-5-20250929",
+    "claude-sonnet-4.5-20250929": "claude-sonnet-4-5-20250929",
+    "claude-4.5-opus-20251101": "claude-opus-4-5-20251101",
+  },
+  [aiProviders.enum.deepseek]: {
+    "deepseek-chat": "deepseek-v4-flash",
+    "deepseek-reasoner": "deepseek-v4-pro",
+  },
+  [aiProviders.enum.openrouter]: {
+    "anthropic/claude-3-5-sonnet": "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-3-5-haiku": "anthropic/claude-haiku-4.5",
+    "google/gemini-2.0-flash": "google/gemini-2.5-flash",
+    "meta-llama/llama-3.2-90b-vision-instruct":
+      "meta-llama/llama-3.2-11b-vision-instruct",
+    "deepseek/deepseek-chat": "deepseek/deepseek-v4-flash",
+    "qwen/qwen-2.5-72b-instruct": "qwen/qwen3-max",
+  },
+}
+
+export function normalizeAIModelId(provider: string, modelId: string) {
+  const parsed = aiProviders.safeParse(provider)
+  if (!parsed.success) {
+    return modelId
+  }
+
+  return legacyModelIdMap[parsed.data]?.[modelId] ?? modelId
+}
+
 export function createAIModelInstance(props: {
   model: AIIntegrationModel
   provider: string
@@ -93,8 +131,9 @@ export function createAIModelInstance(props: {
 }) {
   const { model, provider, modelId } = props
   const providerInstance = createAIProviderInstance({ model, provider })
+  const normalizedModelId = normalizeAIModelId(provider, modelId)
 
-  return providerInstance(modelId)
+  return providerInstance(normalizedModelId)
 }
 
 export function createAIImageModelInstance(props: {

@@ -23,6 +23,7 @@ export const INSTAGRAM_SUBSCRIBE_FIELDS = [
   "messaging_optins",
   "messaging_seen",
   "messaging_referral",
+  "comments",
 ]
 
 export const refreshLongLivedToken = (accessToken: string): Promise<string> => {

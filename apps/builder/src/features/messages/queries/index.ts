@@ -60,7 +60,7 @@ export const listMessages = async (
 
   const conversation = input.conversationId
     ? await db.query.conversationModel.findFirst({
-        where: { id: input.conversationId },
+        where: { id: input.conversationId, workspaceId: input.workspaceId },
       })
     : null
 
@@ -133,7 +133,20 @@ export const publicFindContactMessage = async ({
 }): Promise<MessageResourceWithRelations> => {
   const { storageUrl } = await resolveTenantSettings({ workspaceId })
   const repository = await createMessageRepository()
-  const message = await repository.findById(messageId)
+  const conversation = await db.query.conversationModel.findFirst({
+    where: { id: conversationId, workspaceId },
+  })
+  if (!conversation) {
+    throw notFoundException("Message not found")
+  }
+  const message = await repository.findTriggerMessage({
+    id: messageId,
+    conversationId,
+    workspaceId,
+    sinceTime:
+      getSafeSinceTime(conversation.createdAt) ?? conversation.createdAt,
+    requireCompleteResults: true,
+  })
 
   if (!message || message.conversationId !== conversationId) {
     throw notFoundException("Message not found")
@@ -155,10 +168,11 @@ export const findMessage = async (
   })
 
   const repository = await createMessageRepository()
-  const message = await repository.findById(
-    input.id,
-    getSafeSinceTime(input.createdAt),
-  )
+  const message = await repository.findById({
+    id: input.id,
+    createdAt: input.createdAt,
+    workspaceId: input.workspaceId,
+  })
 
   if (!message) {
     throw new Error("Message not found")

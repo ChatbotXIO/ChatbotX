@@ -1,6 +1,12 @@
 import { z } from "zod"
 
-export const aiProviders = z.enum(["openai", "gemini", "claude", "deepseek"])
+export const aiProviders = z.enum([
+  "openai",
+  "gemini",
+  "claude",
+  "deepseek",
+  "openrouter",
+])
 export type AIProvider = z.infer<typeof aiProviders>
 
 export const aiModelConfigSchema = z.object({

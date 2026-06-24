@@ -54,6 +54,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
   db: { insert: dbInsert, update: dbUpdate, select: dbSelect },
   sql,
   and: (...args: unknown[]) => args,
+  count: () => ({ __count: true }),
   desc: (...args: unknown[]) => args,
   eq: (...args: unknown[]) => args,
   gt: (...args: unknown[]) => args,
@@ -64,7 +65,11 @@ vi.mock("@chatbotx.io/database/client", () => ({
 
 vi.mock("@chatbotx.io/database/schema", () => ({
   workspaceMacModel: {},
-  contactActiveMonthlyModel: {},
+  contactActiveMonthlyModel: {
+    periodStart: "cam.periodStart",
+    workspaceId: "cam.workspaceId",
+  },
+  workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
 
 const { MacRepository } = await import(
@@ -334,5 +339,45 @@ describe("MacRepository — getActiveContactCountByWorkspaceId", () => {
     expect(result.macCount).toBe(0)
     expect(result.periodStart).toBeUndefined()
     expect(result.periodEnd).toBeNull()
+  })
+})
+
+describe("countActiveContactsForOwner", () => {
+  test("counts only the current anchored period for a resetting plan", async () => {
+    queueResult([{ value: 7 }])
+    const repo = new MacRepository()
+
+    const result = await repo.countActiveContactsForOwner({
+      ownerId: "owner-1",
+      billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
+      cumulative: false,
+    })
+
+    expect(result).toBe(7)
+  })
+
+  test("returns 0 for a period-less owner without querying", async () => {
+    const repo = new MacRepository()
+
+    const result = await repo.countActiveContactsForOwner({
+      ownerId: "owner-1",
+      billingPeriodStart: null,
+      cumulative: false,
+    })
+
+    expect(result).toBe(0)
+  })
+
+  test("counts every period for a lifetime (cumulative) plan", async () => {
+    queueResult([{ value: 25 }])
+    const repo = new MacRepository()
+
+    const result = await repo.countActiveContactsForOwner({
+      ownerId: "owner-1",
+      billingPeriodStart: new Date("2026-06-01T00:00:00.000Z"),
+      cumulative: true,
+    })
+
+    expect(result).toBe(25)
   })
 })

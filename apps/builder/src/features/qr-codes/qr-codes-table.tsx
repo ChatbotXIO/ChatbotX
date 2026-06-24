@@ -117,7 +117,7 @@ export function QrCodesTable({ workspaceId, promises }: QrCodesTableProps) {
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">
+              <div className="inline-block max-w-[200px] truncate">
                 {row.original.flow.name}
               </div>
             </TooltipTrigger>

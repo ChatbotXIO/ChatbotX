@@ -1,4 +1,4 @@
-import { and, db, eq } from "@chatbotx.io/database/client"
+import { and, type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
 import {
   userQuotaModel,
   workspaceMemberModel,
@@ -122,6 +122,142 @@ export class MacTrackingService {
       })
     }
     await this.track(events)
+  }
+
+  /**
+   * Synchronously claim one monthly-active-contact slot for a *brand-new*
+   * contact at creation time, inside the caller's transaction. This is the
+   * write-time half of MAC enforcement: it records the same
+   * `ContactActiveMonthly` presence row and `WorkspaceMac` rollup that the
+   * async `trackMessageIn`/`trackMessageOut` path would, so a later
+   * `message:received`/`message:sent` event for this same contact dedups via
+   * `onConflictDoNothing` and does NOT double-count.
+   *
+   * Returns `{ counted: true }` only when a presence row was newly inserted.
+   * Because the contact (and its `contactInbox`) is brand-new, a conflict
+   * should not occur; the guard is purely defensive. Does NOT touch the
+   * user/pool live quota counters — that is the caller's responsibility
+   * (`quotaEnforcementService.incrementBy`), which also handles tenancy.
+   */
+  async claimNewActiveContact(
+    input: {
+      workspaceId: string
+      contactId: string
+      contactInboxId: string
+      inboxId: string
+      /** Owner billing-period anchor (`UserQuota.periodStart`). */
+      periodStart: Date
+      occurredAt: Date
+    },
+    tx: DatabaseClient = db,
+  ): Promise<{ counted: boolean }> {
+    const { counted } = await this.claimNewActiveContacts(
+      {
+        workspaceId: input.workspaceId,
+        inboxId: input.inboxId,
+        periodStart: input.periodStart,
+        occurredAt: input.occurredAt,
+        contacts: [
+          { contactId: input.contactId, contactInboxId: input.contactInboxId },
+        ],
+      },
+      tx,
+    )
+    return { counted: counted > 0 }
+  }
+
+  /**
+   * Batch variant of {@link claimNewActiveContact} for bulk creation (e.g.
+   * contact import): records the `ContactActiveMonthly` presence rows + the
+   * `WorkspaceMac` rollup for many brand-new contacts of one workspace in a
+   * single round-trip, inside the caller's transaction. Returns the number of
+   * presence rows newly inserted (`onConflictDoNothing` dedups any already
+   * active this period). Keeps the import-created contacts in the same ledger
+   * the quota reconcile derives `macUsed` from.
+   */
+  async claimNewActiveContacts(
+    input: {
+      workspaceId: string
+      inboxId: string
+      /** Owner billing-period anchor (`UserQuota.periodStart`). */
+      periodStart: Date
+      occurredAt: Date
+      contacts: { contactId: string; contactInboxId: string }[]
+    },
+    tx: DatabaseClient = db,
+  ): Promise<{ counted: number }> {
+    if (input.contacts.length === 0) {
+      return { counted: 0 }
+    }
+
+    const { start, end } = anchoredPeriod(input.occurredAt, input.periodStart)
+
+    const macIdByKey = await macRepository.ensureWorkspaceMac(
+      [{ workspaceId: input.workspaceId, periodStart: start, periodEnd: end }],
+      tx,
+    )
+    const workspaceMacId = macIdByKey.get(
+      workspaceMacKey(input.workspaceId, start, end),
+    )
+    if (!workspaceMacId) {
+      return { counted: 0 }
+    }
+
+    const hourBucket = truncateHourInTimezone(
+      input.occurredAt,
+      DEFAULT_TIMEZONE,
+    )
+    const deltas = await macRepository.upsertMonthlyPresence(
+      input.contacts.map((contact) => ({
+        workspaceId: input.workspaceId,
+        contactId: contact.contactId,
+        contactInboxId: contact.contactInboxId,
+        inboxId: input.inboxId,
+        eventType: MAC_EVENT_TYPE_CODE.message_in,
+        occurredAt: input.occurredAt,
+        hourBucket,
+        periodStart: start,
+        periodEnd: end,
+        workspaceMacId,
+      })),
+      tx,
+    )
+    if (deltas.length === 0) {
+      return { counted: 0 }
+    }
+
+    await macRepository.addWorkspaceMacCount(
+      deltas.map((delta) => ({ id: delta.workspaceMacId, count: delta.count })),
+      tx,
+    )
+    return { counted: deltas.reduce((sum, delta) => sum + delta.count, 0) }
+  }
+
+  /**
+   * Bump the workspace-level MAC display cache by `delta`, mirroring the
+   * async path's `incrementCaches`. Best-effort: a failure only makes the
+   * analytics display briefly stale until its end-of-day TTL or the next
+   * event, since the durable `WorkspaceMac.macCount` was already updated.
+   */
+  async incrementWorkspaceMacCache(
+    workspaceId: string,
+    delta: number,
+  ): Promise<void> {
+    if (delta <= 0) {
+      return
+    }
+    try {
+      await distributedStore.incrementCounter(
+        workspaceMacCacheKey(workspaceId),
+        delta,
+        calcEndOfDayTtl(),
+      )
+    } catch (error) {
+      logger.warn(
+        { err: error, workspaceId, delta },
+        "[MacTrackingService] workspace MAC cache increment failed",
+      )
+    }
   }
 
   async track(events: MacInputEvent[]): Promise<void> {

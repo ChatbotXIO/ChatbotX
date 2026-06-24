@@ -53,6 +53,7 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
       data: { contact, message, sendFrom },
     } = props
 
+    const messageIds: string[] = []
     try {
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       for (const facebookMessage of convertMessageToFacebookMessage(message)) {
@@ -63,7 +64,10 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
           personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
             .personaId,
         })
-        await sendPageMessage(ctx.auth, payload)
+        const response = await sendPageMessage(ctx.auth, payload)
+        if (response.message_id) {
+          messageIds.push(response.message_id)
+        }
         logger.info(`Message sent for PSID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -71,8 +75,11 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
+    // Return the Send API message id(s). The worker persists messageIds[0] as
+    // the Message row's sourceId; without it the channel's message_echo webhook
+    // (coexist) cannot dedup the echo against this row and inserts a duplicate.
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 
@@ -82,6 +89,7 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       ctx,
       data: { contact, sendFrom, step },
     } = props
+    const messageIds: string[] = []
     try {
       // Messenger utility templates must be sent as a complete Send API request
       // using message.template (name/language/components) — they cannot go through
@@ -93,16 +101,18 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
             SendMessengerTemplateMessageStepSchema
           >,
         )
-        await sendPageMessage(ctx.auth, payload)
+        const response = await sendPageMessage(ctx.auth, payload)
         logger.info(`Messenger template sent for PSID: ${contact.sourceId}`)
-        return { messageIds: [] }
+        return {
+          messageIds: response.message_id ? [response.message_id] : [],
+        }
       }
 
       const policy = resolveMessengerMessagingPolicy({ contact, sendFrom })
       for await (const facebookMessage of convertFlowStepToFacebookMessage(
         props,
       )) {
-        await sendPageMessage(
+        const response = await sendPageMessage(
           ctx.auth,
           buildMessagePayload({
             contact,
@@ -112,6 +122,9 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
               .personaId,
           }),
         )
+        if (response.message_id) {
+          messageIds.push(response.message_id)
+        }
         logger.info(`Message sent for PSID: ${contact.sourceId}`)
       }
     } catch (error) {
@@ -119,8 +132,10 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
       throw mapToChannelError(error)
     }
 
+    // Return the Send API message id(s) so the worker can persist messageIds[0]
+    // as the Message row's sourceId (coexist echo dedup — see sendMessage).
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 

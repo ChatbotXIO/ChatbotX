@@ -3,6 +3,7 @@ export interface ShardConfig {
   database: string
   host: string
   id: string
+  isMain?: boolean | null
   name: string
   port: number | null
   readHost?: string | null

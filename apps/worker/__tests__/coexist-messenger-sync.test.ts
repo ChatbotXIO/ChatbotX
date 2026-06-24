@@ -126,6 +126,7 @@ vi.mock("../src/integration/handlers/coexist/bulk-historical-import", () => ({
   bulkImportMessages: mockBulkImportMessages,
   bulkImportContacts: mockBulkImportContacts,
   createHistoricalIdFactory: mockCreateIdFactory,
+  applyCoexistActivityUpdates: vi.fn().mockResolvedValue(undefined),
 }))
 
 // Break the pino import chain that comes through @chatbotx.io/business →
@@ -541,6 +542,38 @@ describe("coexistMessengerSync", () => {
       { messages: unknown[] },
     ]
     expect(bulkArgs.messages).toHaveLength(0)
+  })
+
+  it("does not synthesize system time when a Messenger message has no API created_time", async () => {
+    mockFindFirstMessenger.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+
+    mockListConversations.mockResolvedValueOnce({
+      data: [makeConversation("conv-3b", "user-3b")],
+      after: undefined,
+    })
+    wireSelectChain(defaultRunRow(), [
+      { ...defaultContactLink, sourceId: "user-3b" },
+    ])
+    mockListMessages.mockResolvedValueOnce({
+      data: [
+        {
+          id: "msg-no-created-time",
+          from: { id: "user-3b" },
+          message: "missing created_time",
+        },
+      ],
+      after: undefined,
+    })
+
+    await coexistMessengerSync({ runId, integrationId, workspaceId })
+
+    expect(mockBulkImportMessages).toHaveBeenCalledOnce()
+    const [bulkArgs] = mockBulkImportMessages.mock.calls[0] as [
+      { messages: Array<{ sourceId: string; createdAt?: Date }> },
+    ]
+    expect(bulkArgs.messages[0]?.sourceId).toBe("msg-no-created-time")
+    expect(bulkArgs.messages[0]?.createdAt).toBeUndefined()
   })
 
   it("persists lastSyncedAt watermark (oldest CONVERSATION.updated_time processed) after the page", async () => {

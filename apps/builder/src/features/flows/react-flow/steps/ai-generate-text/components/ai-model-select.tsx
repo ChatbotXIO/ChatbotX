@@ -6,6 +6,7 @@ import {
   deepseekModelOptions,
   geminiModelOptions,
   openaiModelOptions,
+  openrouterModelOptions,
 } from "@chatbotx.io/ai"
 import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
 import type {
@@ -21,6 +22,7 @@ const modelOptions: Record<AIProvider, SelectOption[]> = {
   claude: claudeModelOptions,
   gemini: geminiModelOptions,
   deepseek: deepseekModelOptions,
+  openrouter: openrouterModelOptions,
 }
 
 type AIModelSelectProps = SelectFieldProps<FieldValues> & {

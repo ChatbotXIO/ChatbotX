@@ -1,7 +1,7 @@
-import crypto from "node:crypto"
 import type { ContextQueue, HandleRequestProps } from "@chatbotx.io/sdk"
 import z from "zod"
 import { MessengerWebhookException } from "../exception"
+import { hmacSha256Hex, timingSafeStringEqual } from "../lib/webhook"
 import {
   incomingWebhookEventSchema,
   MESSENGER_MESSAGE_METADATA,
@@ -9,11 +9,11 @@ import {
   messengerFeedCommentValueSchema,
 } from "../schema"
 
-const verifyWebhookSignature = (
+const verifyWebhookSignature = async (
   payload: string,
   signature: string,
   clientSecret: string,
-): boolean => {
+): Promise<boolean> => {
   try {
     const elements = signature.split("=")
     if (elements.length !== 2) {
@@ -21,13 +21,9 @@ const verifyWebhookSignature = (
     }
 
     const signatureHash = elements[1]
+    const expectedHash = await hmacSha256Hex(clientSecret, payload)
 
-    const expectedHash = crypto
-      .createHmac("sha256", clientSecret)
-      .update(payload)
-      .digest("hex")
-
-    return signatureHash === expectedHash
+    return timingSafeStringEqual(signatureHash, expectedHash)
   } catch {
     return false
   }
@@ -49,7 +45,7 @@ const handleWebhookEvent = async (
       throw new MessengerWebhookException("Missing webhook signature")
     }
 
-    const isValidSignature = verifyWebhookSignature(
+    const isValidSignature = await verifyWebhookSignature(
       body,
       signature,
       config.clientSecret,

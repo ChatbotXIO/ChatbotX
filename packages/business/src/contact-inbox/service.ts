@@ -39,6 +39,25 @@ class ContactInboxService extends BaseService {
     })
   }
 
+  /**
+   * The most recently active contact inbox for an inbox + source (e.g. a
+   * webchat guest). Ordered by `lastMessageAt` desc so that when a guest has
+   * reconnected and produced duplicate rows for the same `sourceId`, the live
+   * one wins. Uncached: callers (e.g. the webchat message action) gate
+   * new-contact creation on this read and must not see a stale miss.
+   */
+  async findLatestBySource(props: {
+    tx?: DatabaseClient
+    inboxId: string
+    sourceId: string
+  }): Promise<ContactInboxModel | undefined> {
+    const { tx = db, inboxId, sourceId } = props
+    return await tx.query.contactInboxModel.findFirst({
+      where: { inboxId, sourceId },
+      orderBy: { lastMessageAt: "desc" },
+    })
+  }
+
   async findBy(props: {
     tx?: DatabaseClient
     where: Partial<FindByProps>
@@ -79,6 +98,28 @@ class ContactInboxService extends BaseService {
         tags: [`contacts:${contactId}:contact-inboxes`],
       },
     )
+  }
+
+  /**
+   * Of the given candidate source ids, the subset already linked to this inbox.
+   * Used by the contact import to dedup rows that already exist. Uncached: the
+   * import gates inserts on this and must not see a stale miss. Accepts a `tx`
+   * so the locked re-check can read within the same connection if needed.
+   */
+  async findExistingSourceIds(props: {
+    tx?: DatabaseClient
+    inboxId: string
+    sourceIds: string[]
+  }): Promise<Set<string>> {
+    const { tx = db, inboxId, sourceIds } = props
+    if (sourceIds.length === 0) {
+      return new Set()
+    }
+    const rows = await tx.query.contactInboxModel.findMany({
+      where: { inboxId, sourceId: { in: sourceIds } },
+      columns: { sourceId: true },
+    })
+    return new Set(rows.map((row) => row.sourceId))
   }
 
   async findManyByIds(ids: string[]): Promise<ContactInboxWithAnalytics[]> {

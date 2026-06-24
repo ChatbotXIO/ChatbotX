@@ -2,10 +2,11 @@
 
 import {
   contactService,
-  userQuotaService,
+  quotaEnforcementService,
   workspaceService,
 } from "@chatbotx.io/business"
-import { db, findOrFail } from "@chatbotx.io/database/client"
+import { ChatbotXException } from "@chatbotx.io/business/errors"
+import { findOrFail } from "@chatbotx.io/database/client"
 import { channelTypes, contactSources } from "@chatbotx.io/database/partials"
 import {
   contactInboxModel,
@@ -79,42 +80,54 @@ export const createContact = async ({
     })
   }
 
-  if (await userQuotaService.isLimitReached(workspace.ownerId, "contacts")) {
+  const result = await quotaEnforcementService.createNewContactWithMac({
+    ownerId: workspace.ownerId,
+    workspaceId,
+    create: async (tx) => {
+      const contact = await contactService.insert({
+        workspaceId,
+        data: parsedInput,
+        tx,
+      })
+
+      const [contactInbox] = await tx
+        .insert(contactInboxModel)
+        .values({
+          originalContactId: contact.id,
+          contactId: contact.id,
+          inboxId: inbox.id,
+          channel: channelTypes.enum.webchat,
+          source: contactSources.enum.imported,
+          sourceId: `${randomString()}${createId()}`,
+        })
+        .returning()
+      if (!contactInbox) {
+        throw new ChatbotXException("Contact inbox not found")
+      }
+
+      await tx.insert(conversationModel).values({
+        workspaceId,
+        contactId: contact.id,
+        id: createId(),
+      })
+
+      return {
+        value: { contact, contactInbox },
+        contactId: contact.id,
+        contactInboxId: contactInbox.id,
+        inboxId: inbox.id,
+      }
+    },
+  })
+
+  if (!result.ok) {
     return returnValidationErrors(createContactRequest, {
       _errors: ["Validation Exception"],
       phoneNumber: { _errors: ["Contact limit reached"] },
     })
   }
 
-  const [contact, contactInbox] = await db.transaction(async (tx) => {
-    const newContact = await contactService.insert({
-      workspaceId,
-      data: parsedInput,
-      tx,
-    })
-
-    const [newContactInbox] = await tx
-      .insert(contactInboxModel)
-      .values({
-        originalContactId: newContact.id,
-        contactId: newContact.id,
-        inboxId: inbox.id,
-        channel: channelTypes.enum.webchat,
-        source: contactSources.enum.imported,
-        sourceId: `${randomString()}${createId()}`,
-      })
-      .returning()
-
-    await tx.insert(conversationModel).values({
-      workspaceId,
-      contactId: newContact.id,
-      id: createId(),
-    })
-
-    return [newContact, newContactInbox]
-  })
-
-  await userQuotaService.increment(workspace.ownerId, "contacts")
+  const { contact, contactInbox } = result.value
 
   await emitContactCreated(
     workspaceId,

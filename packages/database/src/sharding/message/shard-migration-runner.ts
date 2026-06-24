@@ -2,6 +2,7 @@ import type { Pool } from "pg"
 import type { DatabaseClient } from "../../client"
 import { logger } from "../../logger"
 import { createShardPool } from "../shared"
+import { isConnectionError } from "../shared/errors"
 import { MessageShardRegistry } from "./registry"
 
 export interface ShardMigration {
@@ -23,22 +24,35 @@ export class ShardMigrationRunner {
     )
 
     const allShards = await this.registry.listAll()
+    const externalShards = allShards.filter((s) => !s.isMain)
 
-    if (allShards.length === 0) {
-      logger.info("No shards registered — skipping shard migrations")
+    if (externalShards.length === 0) {
+      logger.info("No external shards registered — skipping shard migrations")
       return
     }
 
-    for (const shard of allShards) {
+    logger.info({ count: externalShards.length }, "Running shard migrations")
+
+    const failed: string[] = []
+
+    for (const shard of externalShards) {
       const pool = createShardPool(shard)
       try {
         await this.migrateOneShard(pool, shard.id, shard.name, sorted)
       } catch (error) {
-        logger.error(
-          { err: error, shardId: shard.id, shardName: shard.name },
-          "Shard migration failed",
-        )
-        throw error
+        if (isConnectionError(error)) {
+          logger.warn(
+            { err: error, shardId: shard.id, shardName: shard.name },
+            "Shard unreachable — skipping (is the container running?)",
+          )
+          failed.push(shard.name)
+        } else {
+          logger.error(
+            { err: error, shardId: shard.id, shardName: shard.name },
+            "Shard migration failed",
+          )
+          throw error
+        }
       } finally {
         await pool.end().catch((err) => {
           logger.warn(
@@ -47,6 +61,13 @@ export class ShardMigrationRunner {
           )
         })
       }
+    }
+
+    if (failed.length > 0) {
+      logger.warn(
+        { skipped: failed },
+        "Some shards were unreachable and skipped — run again once they are up",
+      )
     }
   }
 

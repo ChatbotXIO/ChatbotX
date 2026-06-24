@@ -9,16 +9,17 @@ import {
 import { stepTypes } from "./step-action"
 
 export const defaultAIModels = {
-  openai: "gpt-4o-mini",
-  gemini: "gemini-2.5-pro",
-  claude: "claude-3-5-sonnet-20241022",
-  deepseek: "deepseek-chat",
+  openai: "gpt-5.4-mini",
+  gemini: "gemini-3.5-flash",
+  claude: "claude-sonnet-4-6",
+  deepseek: "deepseek-v4-flash",
+  openrouter: "openai/gpt-5.4-mini",
 } as const
 
 export const aiGenerateTextSchema = z.object({
   id: zodBigintAsString(),
   stepType: z.literal(stepTypes.enum.aiGenerateText),
-  provider: z.enum(["openai", "gemini", "claude", "deepseek"]),
+  provider: z.enum(["openai", "gemini", "claude", "deepseek", "openrouter"]),
   model: z.string().trim().min(1),
   system: z.string().trim().optional(),
   text: z.string().trim().min(1),

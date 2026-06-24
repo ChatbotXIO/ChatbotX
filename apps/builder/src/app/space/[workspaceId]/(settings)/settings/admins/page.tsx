@@ -1,4 +1,8 @@
 import {
+  quotaEnforcementService,
+  workspaceService,
+} from "@chatbotx.io/business"
+import {
   Card,
   CardContent,
   CardHeader,
@@ -30,13 +34,22 @@ export default async function SettingsAdminPage({
     }),
   ])
 
+  const workspace = await workspaceService.findById({ id: workspaceId })
+  const teamMembersAtLimit = await quotaEnforcementService.hasReachedLimit({
+    userId: workspace.ownerId,
+    metric: "teamMembers",
+  })
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-bold text-xl">{t("admins.title")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <WorkspaceMembersTable promises={promises} />
+        <WorkspaceMembersTable
+          promises={promises}
+          teamMembersAtLimit={teamMembersAtLimit}
+        />
       </CardContent>
     </Card>
   )

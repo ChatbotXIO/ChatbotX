@@ -43,7 +43,11 @@ export const editMessageAction = workspaceActionClient
 
     const repository = await createMessageRepository()
 
-    const message = await repository.findById(messageId, createdAt)
+    const message = await repository.findById({
+      id: messageId,
+      createdAt,
+      workspaceId,
+    })
 
     if (!message) {
       throw new ChatbotXException("Comment not found")

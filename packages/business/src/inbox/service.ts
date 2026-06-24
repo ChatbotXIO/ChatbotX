@@ -15,7 +15,7 @@ import type {
 import { getPaginationWithDefaults } from "@chatbotx.io/database/utils"
 import { createId } from "@chatbotx.io/utils"
 import { BaseService } from "../base.service"
-import { userQuotaService } from "../user-quota/service"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import type { ListInboxesRequest, ListInboxesResponse } from "./schema"
 
 type InboxWhere = Partial<{ id: string; workspaceId: string }>
@@ -109,8 +109,11 @@ class InboxService extends BaseService {
       return { inbox: existing, wasCreated: false }
     }
 
-    const allowed = await userQuotaService.tryIncrement(ownerId, "channels")
-    if (!allowed) {
+    const consumed = await quotaEnforcementService.tryConsume({
+      userId: ownerId,
+      metric: "channels",
+    })
+    if (!consumed.ok) {
       throw new Error("Channel limit reached for this plan")
     }
 

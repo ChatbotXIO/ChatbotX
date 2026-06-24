@@ -377,6 +377,102 @@ describe("coexistWhatsappFlush", () => {
     expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("msg-row-1")
   })
 
+  it("does not synthesize system time when a WhatsApp history message has no API timestamp", async () => {
+    mockFindFirst.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [
+      {
+        id: "row-no-timestamp",
+        phoneNumberId,
+        processedAt: null,
+        payload: {
+          contacts: [{ wa_id: "601234567890", profile: { name: "Alice" } }],
+          history: [
+            {
+              threads: [
+                {
+                  id: "601234567890",
+                  messages: [
+                    {
+                      id: "msg-no-timestamp",
+                      from: "601234567890",
+                      type: "text",
+                      text: { body: "Hello without timestamp" },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ])
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const [bulkArgs] = mockBulkImport.mock.calls[0] as [
+      {
+        batch: Array<{
+          messages: Array<{ sourceId: string; createdAt?: Date }>
+        }>
+      },
+    ]
+    expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("msg-no-timestamp")
+    expect(bulkArgs.batch[0]?.messages[0]?.createdAt).toBeUndefined()
+  })
+
+  it("imports state_sync contacts without creating message activity", async () => {
+    mockFindFirst.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [
+      {
+        id: "row-state-sync",
+        phoneNumberId,
+        processedAt: null,
+        payload: {
+          metadata: {
+            phone_number_id: phoneNumberId,
+            display_phone_number: "84964484839",
+          },
+          messaging_product: "whatsapp",
+          state_sync: [
+            {
+              type: "contact",
+              action: "add",
+              contact: {
+                user_id: "VN.1535008561702153",
+                full_name: "Thắng Rửa Xe",
+                first_name: "Thắng Rửa Xe",
+                phone_number: "84921378409",
+              },
+              metadata: { version: 1, timestamp: "1782225192581" },
+            },
+          ],
+        },
+      },
+    ])
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const [bulkArgs] = mockBulkImport.mock.calls[0] as [
+      {
+        batch: Array<{
+          contact: {
+            sourceId: string
+            phoneNumber?: string
+            firstName?: string
+          }
+          messages: Array<{ sourceId: string; createdAt?: Date }>
+        }>
+      },
+    ]
+    expect(bulkArgs.batch).toHaveLength(1)
+    expect(bulkArgs.batch[0]?.contact.sourceId).toBe("84921378409")
+    expect(bulkArgs.batch[0]?.contact.phoneNumber).toBe("84921378409")
+    expect(bulkArgs.batch[0]?.contact.firstName).toBe("Thắng Rửa Xe")
+    expect(bulkArgs.batch[0]?.messages).toEqual([])
+  })
+
   it("coalesces multiple staging rows that reference the same wa_id into ONE batch entry", async () => {
     mockFindFirst.mockResolvedValue(fakeIntegration)
     mockFindOrFail.mockResolvedValue(fakeInbox)
@@ -533,6 +629,52 @@ describe("coexistWhatsappFlush", () => {
     expect(bulkArgs.batch[0]?.contact.sourceId).toBe("601234567890")
     expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("echo-row-echo")
     expect(bulkArgs.batch[0]?.messages[0]?.messageType).toBe("outgoing")
+  })
+
+  it("current Meta message_echoes produces an outgoing message with the API timestamp", async () => {
+    mockFindFirst.mockResolvedValue(fakeIntegration)
+    mockFindOrFail.mockResolvedValue(fakeInbox)
+    wireSelect(defaultRunRow(), [
+      {
+        id: "row-current-echo",
+        phoneNumberId,
+        processedAt: null,
+        payload: {
+          metadata: { phone_number_id: phoneNumberId },
+          message_echoes: [
+            {
+              id: "echo-current",
+              from: "business-self",
+              to: "601234567890",
+              timestamp: "1700000123",
+              type: "text",
+              text: { body: "Hi from current Meta shape" },
+            },
+          ],
+        },
+      },
+    ])
+
+    await coexistWhatsappFlush({ runId, phoneNumberId })
+
+    const [bulkArgs] = mockBulkImport.mock.calls[0] as [
+      {
+        batch: Array<{
+          contact: { sourceId: string }
+          messages: Array<{
+            sourceId: string
+            messageType: string
+            createdAt?: Date
+          }>
+        }>
+      },
+    ]
+    expect(bulkArgs.batch[0]?.contact.sourceId).toBe("601234567890")
+    expect(bulkArgs.batch[0]?.messages[0]?.sourceId).toBe("echo-current")
+    expect(bulkArgs.batch[0]?.messages[0]?.messageType).toBe("outgoing")
+    expect(bulkArgs.batch[0]?.messages[0]?.createdAt?.toISOString()).toBe(
+      "2023-11-14T22:15:23.000Z",
+    )
   })
 
   it("history-decline (error 2593109) closes run as succeeded with sentinel error and flips historyDeclined", async () => {

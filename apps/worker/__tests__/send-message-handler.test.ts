@@ -5,17 +5,26 @@ const {
   mockResolveIntegrationContextFromContactInbox,
   mockRunChannelHandler,
   mockDbUpdate,
+  mockUpdateSourceId,
+  mockCreateMessageRepository,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue(undefined),
   }
 
+  const updateSourceId = vi.fn().mockResolvedValue(undefined)
+
   return {
     mockEmit: vi.fn().mockResolvedValue(undefined),
     mockResolveIntegrationContextFromContactInbox: vi.fn(),
     mockRunChannelHandler: vi.fn().mockResolvedValue({ messageIds: ["mid-1"] }),
     mockDbUpdate: vi.fn().mockReturnValue(updateChain),
+    mockUpdateSourceId: updateSourceId,
+    mockCreateMessageRepository: vi.fn().mockResolvedValue({
+      updateSourceId,
+      findById: vi.fn().mockResolvedValue(null),
+    }),
   }
 })
 
@@ -33,6 +42,10 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 
 vi.mock("@chatbotx.io/event-bus", () => ({
   emit: mockEmit,
+}))
+
+vi.mock("@chatbotx.io/database/repositories", () => ({
+  createMessageRepository: mockCreateMessageRepository,
 }))
 
 vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
@@ -111,6 +124,59 @@ describe("chat send-message handlers", () => {
         }),
       }),
     )
+  })
+
+  test("persists provider message id as sourceId for a bot outgoing message", async () => {
+    // Regression: bot/agent outgoing messages were saved with sourceId=null, so
+    // the channel's echo webhook (createOrUpdate → findBySourceId) could not
+    // dedup against them and re-inserted a duplicate row during coexist sync.
+    mockRunChannelHandler.mockResolvedValueOnce({
+      messageIds: ["wamid.echo-1"],
+    })
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-bot-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        sourceId: null,
+        text: "automated reply",
+      } as never,
+    })
+
+    expect(mockUpdateSourceId).toHaveBeenCalledWith(
+      "msg-bot-1",
+      "wamid.echo-1",
+      "ws-1",
+    )
+  })
+
+  test("does not update sourceId when the channel returns no provider id", async () => {
+    mockRunChannelHandler.mockResolvedValueOnce({ messageIds: [] })
+
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-bot-2",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "bot",
+        sourceId: null,
+        text: "automated reply",
+      } as never,
+    })
+
+    expect(mockUpdateSourceId).not.toHaveBeenCalled()
   })
 
   test("passes sendFrom to sendFlowStep channel handler", async () => {

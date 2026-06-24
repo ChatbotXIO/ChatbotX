@@ -168,7 +168,9 @@ export default function ConversationItem({
           </div>
           <p className="text-right text-neutral-400 text-xs">
             <span>
-              {formatDistanceToNowStrict(conversation.lastActivityAt)}
+              {conversation.lastActivityAt
+                ? formatDistanceToNowStrict(conversation.lastActivityAt)
+                : " "}
             </span>
           </p>
         </div>

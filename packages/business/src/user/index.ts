@@ -1,6 +1,23 @@
+import { db, eq } from "@chatbotx.io/database/client"
+import { userModel } from "@chatbotx.io/database/schema"
 import type { UserModel } from "@chatbotx.io/database/types"
 import { tenantService } from "../enterprise/tenant/service"
 import { isCloud, keys } from "../keys"
+
+/**
+ * Clear the forced-password-change gate for a user. Called server-side ONLY
+ * after better-auth has verified the current password and applied the change —
+ * never expose a standalone "clear the flag" path to clients, or a provisioned
+ * account could keep its temporary password.
+ */
+export const clearMustChangePassword = async (
+  userId: string,
+): Promise<void> => {
+  await db
+    .update(userModel)
+    .set({ mustChangePassword: false })
+    .where(eq(userModel.id, userId))
+}
 
 export const isPlatformAdmin = async (
   user: Pick<UserModel, "id" | "email">,

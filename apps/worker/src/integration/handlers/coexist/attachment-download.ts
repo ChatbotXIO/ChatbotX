@@ -1,8 +1,8 @@
 import { extname } from "node:path"
 
 import { buildContext, type IntegrationContext } from "@chatbotx.io/business"
-import { and, db, eq, sql } from "@chatbotx.io/database/client"
-import { attachmentModel } from "@chatbotx.io/database/schema"
+import { db, sql } from "@chatbotx.io/database/client"
+import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import {
   getWhatsappClient,
   type WhatsappAuthValue,
@@ -218,20 +218,11 @@ export const coexistAttachmentDownload = async (
 ): Promise<void> => {
   const { attachmentId, workspaceId, channel, integrationId } = data
 
-  const [row] = await db
-    .select({
-      id: attachmentModel.id,
-      originPath: attachmentModel.originPath,
-      mimeType: attachmentModel.mimeType,
-    })
-    .from(attachmentModel)
-    .where(
-      and(
-        eq(attachmentModel.id, attachmentId),
-        eq(attachmentModel.workspaceId, workspaceId),
-      ),
-    )
-    .limit(1)
+  const repo = await createMessageRepository(db)
+  const row = await repo.findAttachmentById({
+    id: attachmentId,
+    workspaceId,
+  })
 
   if (!row) {
     logger.warn({ attachmentId }, "[coexist-attachment] row missing — skip")
@@ -307,15 +298,16 @@ export const coexistAttachmentDownload = async (
     }
   }
 
-  await db
-    .update(attachmentModel)
-    .set({
+  await repo.updateAttachment({
+    id: attachmentId,
+    workspaceId,
+    createdAt: row.createdAt,
+    fields: {
       originPath: newOriginPath,
       mimeType: media.mimeType,
       size: media.size,
       ...(width === undefined ? {} : { width }),
       ...(height === undefined ? {} : { height }),
-      updatedAt: new Date(),
-    })
-    .where(eq(attachmentModel.id, attachmentId))
+    },
+  })
 }

@@ -90,6 +90,24 @@ export const registerSchedules = async () => {
   )
 
   await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.syncTenantQuota,
+    { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
+    {
+      name: ScheduleJobData.syncTenantQuota,
+      data: { type: ScheduleJobData.syncTenantQuota, data: {} },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
+    ScheduleJobData.reconcileTenants,
+    { every: env.QUOTA_SYNC_INTERVAL_SECONDS * 1000 },
+    {
+      name: ScheduleJobData.reconcileTenants,
+      data: { type: ScheduleJobData.reconcileTenants, data: {} },
+    },
+  )
+
+  await scheduleQueue.upsertJobScheduler(
     ScheduleJobData.maintainMacPartitions,
     {
       pattern: "0 1 * * *",

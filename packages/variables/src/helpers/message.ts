@@ -1,14 +1,23 @@
-import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  conversationService,
+  messageService,
+} from "@chatbotx.io/business"
 import { senderTypes } from "@chatbotx.io/database/partials"
+import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 
 export const listLastMessages = async (
   conversationId: string,
+  workspaceId: string,
   limit: number,
-  includeDetail = false,
+  includeDetail: boolean,
+  sinceTime: Date,
 ): Promise<string> => {
   const messages = await messageService.listLastMessages({
     conversationId,
     limit,
+    sinceTime,
+    workspaceId,
   })
 
   return messages
@@ -37,5 +46,21 @@ export const getChatHistory = async (
   if (!conversation) {
     return null
   }
-  return listLastMessages(conversation.id, limit, includeDetail)
+
+  const lastAt =
+    await contactInboxService.findLatestLastIncomingMessageAtByContactId({
+      contactId,
+    })
+  const sinceTime = getSafeSinceTime(lastAt, 365 * 24 * 60 * 60 * 1000)
+  if (!sinceTime) {
+    return null
+  }
+
+  return listLastMessages(
+    conversation.id,
+    conversation.workspaceId,
+    limit,
+    includeDetail,
+    sinceTime,
+  )
 }

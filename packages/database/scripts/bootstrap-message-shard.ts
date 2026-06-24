@@ -6,6 +6,11 @@
  *   pnpm --filter @chatbotx.io/database db:bootstrap-message-shard -- --port 5434
  *
  * Optional flags:
+ *   --init                  Register the main DB itself as an inactive archive shard
+ *                           (run once before adding external shards so historical
+ *                           messages remain queryable after sharding is enabled)
+ *   --since <date>          Archive range start date used with --init (default 2026-01-01).
+ *                           ISO 8601 date string, e.g. 2026-01-01 or 2026-01-01T00:00:00Z
  *   --port <number>         Host port to expose on the machine (default 5434)
  *   --host <hostname>       Host stored in MessageShard (default host.docker.internal)
  *   --database <name>       Shard database name (default chatbotx_shard_<port>)
@@ -14,6 +19,7 @@
  *   --service-name <name>   Compose service name (default message-shard-<port>)
  *   --delete                Remove the shard service and matching MessageShard row
  *   --inactive              Register the shard as inactive
+ *   --set-active            Activate the latest shard (or --port to specify); closes previous active range
  */
 import { execFileSync } from "node:child_process"
 import { mkdir, writeFile } from "node:fs/promises"
@@ -76,6 +82,7 @@ function usage(): never {
       "  --service-name <name>   Compose service name (default message-shard-<port>)",
       "  --delete                Remove the shard service and matching MessageShard row",
       "  --inactive              Register the shard as inactive",
+      "  --set-active            Activate the latest shard (or use with --port to target a specific one)",
     ].join("\n"),
   )
   process.exit(1)
@@ -355,9 +362,11 @@ async function deleteShard(spec: ShardSpec): Promise<void> {
 
     const row = existing.rows[0]
     if (!row?.id) {
-      throw new Error(
-        `No MessageShard row matched name=${spec.name} host=${spec.host} port=${spec.port} database=${spec.database} user=${spec.user}`,
+      console.log(
+        `No MessageShard row matched name=${spec.name} host=${spec.host} port=${spec.port} — nothing to delete.`,
       )
+      await pool.query("ROLLBACK")
+      return
     }
 
     await pool.query(`DELETE FROM "MessageShard" WHERE id = $1`, [row.id])
@@ -409,34 +418,6 @@ async function waitForShardTables(spec: ShardSpec): Promise<void> {
   throw new Error(
     `Timed out waiting for shard tables Message and Attachment on ${spec.host}:${spec.port}`,
   )
-}
-
-async function ensureMessageShardCompatibility(): Promise<void> {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL is required.")
-  }
-
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    max: 1,
-  })
-
-  try {
-    await pool.query(
-      `
-        ALTER TABLE "MessageShard"
-          ADD COLUMN IF NOT EXISTS "credentialRef" text,
-          ADD COLUMN IF NOT EXISTS "sslMode" text DEFAULT 'disable',
-          ADD COLUMN IF NOT EXISTS "isActive" boolean DEFAULT false,
-          ADD COLUMN IF NOT EXISTS "shardKey" integer,
-          ADD COLUMN IF NOT EXISTS "readHost" text,
-          ADD COLUMN IF NOT EXISTS "readPort" integer
-      `,
-    )
-  } finally {
-    await pool.end()
-  }
 }
 
 async function getActiveMessageShardId(pool: Pool): Promise<string | null> {
@@ -596,8 +577,241 @@ async function upsertMessageShard(spec: ShardSpec): Promise<string> {
   }
 }
 
+async function initMainDbShard(archiveStartTime: Date): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required.")
+  }
+
+  const url = new URL(databaseUrl)
+  const host = url.hostname
+  const port = url.port ? Number(url.port) : 5432
+  const database = decodeURIComponent(
+    url.pathname.replace(LEADING_SLASH_REGEX, ""),
+  )
+  const user = decodeURIComponent(url.username)
+
+  const pool = new Pool({ connectionString: databaseUrl, max: 1 })
+
+  try {
+    await pool.query("BEGIN")
+
+    const existing = await pool.query<{ id: string }>(
+      `SELECT id FROM "MessageShard" WHERE host = $1 AND port = $2 ORDER BY "createdAt" DESC LIMIT 1`,
+      [host, port],
+    )
+
+    // Active when no external shards exist yet; archive once external shards are registered.
+    const externalCount = await pool.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM "MessageShard" WHERE "isMain" IS NOT TRUE`,
+    )
+    const isActive = Number(externalCount.rows[0]?.count ?? 0) === 0
+
+    let shardId: string
+    if (existing.rows[0]?.id) {
+      shardId = existing.rows[0].id
+      await pool.query(
+        `UPDATE "MessageShard" SET name = 'main', database = $2, "user" = $3, "isMain" = true, "isActive" = $4, "updatedAt" = NOW() WHERE id = $1`,
+        [shardId, database, user, isActive],
+      )
+      console.log(
+        `Updated existing MessageShard id=${shardId} (main DB, isActive=${isActive})`,
+      )
+    } else {
+      shardId = createId()
+      await pool.query(
+        `
+          INSERT INTO "MessageShard" (
+            id, name, host, port, database, "user",
+            "credentialRef", "sslMode", "isActive", "isMain", "shardKey", "readHost", "readPort"
+          ) VALUES ($1, 'main', $2, $3, $4, $5, NULL, 'disable', $6, true, NULL, NULL, NULL)
+        `,
+        [shardId, host, port, database, user, isActive],
+      )
+      console.log(
+        `Created MessageShard id=${shardId} name=main host=${host} port=${port} isActive=${isActive}`,
+      )
+    }
+
+    // Skip if this shard already has a range covering archiveStartTime.
+    const coveringRange = await pool.query<{ id: string }>(
+      `SELECT id FROM "ShardTimeRange" WHERE "shardId" = $1 AND "startTime" <= $2 LIMIT 1`,
+      [shardId, archiveStartTime],
+    )
+
+    if (coveringRange.rows[0]) {
+      console.log(
+        `ShardTimeRange already covers archive start for shard id=${shardId}, skipping`,
+      )
+    } else {
+      // ShardTimeRange_no_overlap is a GLOBAL exclusion constraint across all shards.
+      // [archiveStart, ∞) would conflict with any existing open range.
+      // Find the earliest range start (across all shards) after archiveStartTime
+      // and use it as endTime so our range is [archiveStart, nextStart) — no overlap.
+      const nextRange = await pool.query<{ startTime: Date }>(
+        `SELECT MIN("startTime") AS "startTime" FROM "ShardTimeRange" WHERE "startTime" > $1`,
+        [archiveStartTime],
+      )
+      const endTime = nextRange.rows[0]?.startTime ?? null
+
+      if (endTime) {
+        await pool.query(
+          `INSERT INTO "ShardTimeRange" (id, "shardId", "startTime", "endTime") VALUES ($1, $2, $3, $4)`,
+          [createId(), shardId, archiveStartTime, endTime],
+        )
+        console.log(
+          `Created ShardTimeRange ${archiveStartTime.toISOString()} → ${endTime.toISOString()}`,
+        )
+      } else {
+        await pool.query(
+          `INSERT INTO "ShardTimeRange" (id, "shardId", "startTime") VALUES ($1, $2, $3)`,
+          [createId(), shardId, archiveStartTime],
+        )
+        console.log(
+          `Created ShardTimeRange from ${archiveStartTime.toISOString()} (open) for shard id=${shardId}`,
+        )
+      }
+    }
+
+    await pool.query("COMMIT")
+    if (isActive) {
+      console.log(
+        "\nMain DB registered as active shard (no external shards yet).",
+        "\nIt will be demoted to archive (isActive=false) when external shards are added.",
+      )
+    } else {
+      console.log(
+        "\nMain DB registered as archive shard (isActive=false).",
+        "\nHistorical messages will be included in reads via ShardTimeRange.",
+      )
+    }
+  } catch (error) {
+    await pool.query("ROLLBACK")
+    throw error
+  } finally {
+    await pool.end()
+  }
+}
+
+async function setActiveShard(port: number | null): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required.")
+  }
+
+  const pool = new Pool({ connectionString: databaseUrl, max: 1 })
+
+  try {
+    await pool.query("BEGIN")
+
+    // Resolve target shard
+    let target:
+      | { host: string; id: string; name: string; port: number }
+      | undefined
+    if (port === null) {
+      const result = await pool.query<{
+        host: string
+        id: string
+        name: string
+        port: number
+      }>(
+        `SELECT id, name, host, port FROM "MessageShard" WHERE "isMain" IS NOT TRUE ORDER BY "createdAt" DESC LIMIT 1`,
+      )
+      target = result.rows[0]
+      if (!target) {
+        throw new Error(
+          "No external MessageShard registered — run bootstrap first.",
+        )
+      }
+    } else {
+      const result = await pool.query<{
+        host: string
+        id: string
+        name: string
+        port: number
+      }>(
+        `SELECT id, name, host, port FROM "MessageShard" WHERE port = $1 AND ("isMain" IS NOT TRUE) ORDER BY "createdAt" DESC LIMIT 1`,
+        [port],
+      )
+      target = result.rows[0]
+      if (!target) {
+        throw new Error(`No external MessageShard found for port ${port}`)
+      }
+    }
+
+    // Close ANY currently open ShardTimeRange owned by another shard —
+    // including the main-DB archive range created by --init. The exclusion
+    // constraint ShardTimeRange_no_overlap allows only one open-ended range
+    // table-wide, so the target's new open range would otherwise overlap.
+    const closed = await pool.query<{ shardId: string }>(
+      `UPDATE "ShardTimeRange" SET "endTime" = NOW() WHERE "endTime" IS NULL AND "shardId" <> $1 RETURNING "shardId"`,
+      [target.id],
+    )
+    for (const row of closed.rows) {
+      console.log(`Closed open ShardTimeRange for shard id=${row.shardId}`)
+    }
+
+    // Demote all shards (including isMain)
+    await pool.query(
+      `UPDATE "MessageShard" SET "isActive" = false, "updatedAt" = NOW() WHERE "isActive" = true`,
+    )
+
+    // Activate target
+    await pool.query(
+      `UPDATE "MessageShard" SET "isActive" = true, "updatedAt" = NOW() WHERE id = $1`,
+      [target.id],
+    )
+
+    // Ensure target has an open ShardTimeRange
+    const openRange = await pool.query<{ id: string }>(
+      `SELECT id FROM "ShardTimeRange" WHERE "shardId" = $1 AND "endTime" IS NULL LIMIT 1`,
+      [target.id],
+    )
+    if (!openRange.rows[0]) {
+      await pool.query(
+        `INSERT INTO "ShardTimeRange" (id, "shardId", "startTime") VALUES ($1, $2, NOW())`,
+        [createId(), target.id],
+      )
+      console.log(`Created open ShardTimeRange for shard id=${target.id}`)
+    }
+
+    await pool.query("COMMIT")
+    console.log(
+      `\nActivated: id=${target.id} name=${target.name} host=${target.host} port=${target.port}`,
+    )
+  } catch (error) {
+    await pool.query("ROLLBACK")
+    throw error
+  } finally {
+    await pool.end()
+  }
+}
+
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2))
+  const rawArgs = process.argv.slice(2)
+
+  if (rawArgs.includes("--init")) {
+    const sinceIndex = rawArgs.indexOf("--since")
+    const sinceValue =
+      sinceIndex === -1 ? "2026-01-01T00:00:00.000Z" : rawArgs[sinceIndex + 1]
+    const archiveStartTime = new Date(sinceValue ?? "2026-01-01T00:00:00.000Z")
+    if (Number.isNaN(archiveStartTime.getTime())) {
+      console.error(`Invalid --since value: ${sinceValue}`)
+      process.exit(1)
+    }
+    await initMainDbShard(archiveStartTime)
+    return
+  }
+
+  if (rawArgs.includes("--set-active")) {
+    const portIndex = rawArgs.indexOf("--port")
+    const portStr = portIndex === -1 ? null : rawArgs[portIndex + 1]
+    const port = portStr ? parsePort(portStr) : null
+    await setActiveShard(port)
+    return
+  }
+
+  const args = parseArgs(rawArgs)
   const serviceName = args.serviceName || getExpectedServiceName(args.port)
   const spec: ShardSpec = {
     database: args.database,
@@ -612,7 +826,8 @@ async function main(): Promise<void> {
     user: args.user,
   }
 
-  console.log({ spec })
+  const { password: _pw, ...safeSpec } = spec
+  console.log({ spec: safeSpec })
 
   if (args.delete) {
     await deleteShard(spec)
@@ -634,8 +849,6 @@ async function main(): Promise<void> {
   console.log(
     `Shard tables Message and Attachment are ready on ${spec.host}:${spec.port}`,
   )
-
-  await ensureMessageShardCompatibility()
 
   const shardId = await upsertMessageShard(spec)
   console.log(

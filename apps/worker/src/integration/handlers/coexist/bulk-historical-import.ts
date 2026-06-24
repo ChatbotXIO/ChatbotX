@@ -154,7 +154,134 @@ export type BulkImportMessagesResult = {
    *  message in this call carried an `attachments[]` payload. Callers enqueue
    *  one `coexistAttachmentDownload` job per ID to mirror bytes to S3. */
   insertedAttachmentIds: string[]
+  /** Newest API-provided message createdAt in this call (null when none).
+   *  Returned so a batching caller can defer the per-row ContactInbox/
+   *  Conversation activity bumps and apply them in a single statement per table
+   *  for the whole bulk. */
+  newestMessageAt: Date | null
+  /** Newest API-provided incoming message createdAt in this call (null when
+   *  none). Used only for ContactInbox.lastIncomingMessageAt. */
+  newestIncomingMessageAt: Date | null
 }
+
+/** One contact's activity-timestamp bump, collected by a batching caller. */
+export type CoexistActivityUpdate = {
+  contactInboxId: string
+  conversationId: string
+  newestMessageAt: Date
+  newestIncomingMessageAt: Date | null
+}
+
+/**
+ * Bump activity timestamps for a whole bulk in ONE statement per table (not two
+ * queries per contact in the import loop). In coexist these columns must mirror
+ * the newest API-provided message time, not the sync worker's wall clock:
+ *
+ *   - ContactInbox.lastMessageAt: set from the newest message.
+ *   - ContactInbox.lastIncomingMessageAt: advance from the newest incoming
+ *     message only; outgoing history must not move this field.
+ *   - Conversation.lastActivityAt: set from the newest message.
+ *
+ * Each UPDATE joins a VALUES table of the deduped rows. This keeps the write
+ * batched while avoiding pg array-parameter casting differences. Failures must
+ * propagate: otherwise a coexist run can be marked succeeded while these
+ * denormalized activity columns remain null or stuck at row-creation time.
+ */
+export const applyCoexistActivityUpdates = async (
+  updates: CoexistActivityUpdate[],
+): Promise<void> => {
+  if (updates.length === 0) {
+    return
+  }
+
+  // Dedup by id, keeping the newest ts. ids are unique per contact within a
+  // batch, but a resumed/overlapping batch could repeat one — and a duplicate
+  // join key in VALUES would update the row twice with no defined winner.
+  const newestByContactInbox = new Map<
+    string,
+    {
+      newestMessageAt: Date
+      newestIncomingMessageAt: Date | null
+    }
+  >()
+  const newestByConversation = new Map<string, Date>()
+  for (const u of updates) {
+    const ci = newestByContactInbox.get(u.contactInboxId)
+    if (ci) {
+      if (ci.newestMessageAt < u.newestMessageAt) {
+        ci.newestMessageAt = u.newestMessageAt
+      }
+      if (
+        u.newestIncomingMessageAt &&
+        (!ci.newestIncomingMessageAt ||
+          ci.newestIncomingMessageAt < u.newestIncomingMessageAt)
+      ) {
+        ci.newestIncomingMessageAt = u.newestIncomingMessageAt
+      }
+    } else {
+      newestByContactInbox.set(u.contactInboxId, {
+        newestMessageAt: u.newestMessageAt,
+        newestIncomingMessageAt: u.newestIncomingMessageAt,
+      })
+    }
+    const cv = newestByConversation.get(u.conversationId)
+    if (!cv || cv < u.newestMessageAt) {
+      newestByConversation.set(u.conversationId, u.newestMessageAt)
+    }
+  }
+
+  if (newestByContactInbox.size > 0) {
+    const contactInboxRows = [...newestByContactInbox.entries()].map(
+      ([id, u]) => sql`(
+        ${id}::int8,
+        ${u.newestMessageAt}::timestamptz,
+        ${u.newestIncomingMessageAt}::timestamptz
+      )`,
+    )
+
+    await db.execute(sql`
+      UPDATE "ContactInbox" AS t
+      SET
+        "lastMessageAt" = CASE
+          WHEN t."lastMessageAt" IS NULL OR t."lastMessageAt" < u.message_ts
+            THEN u.message_ts
+          ELSE t."lastMessageAt"
+        END,
+        "lastIncomingMessageAt" = CASE
+          WHEN
+            u.incoming_ts IS NOT NULL
+            AND (
+              t."lastIncomingMessageAt" IS NULL
+              OR t."lastIncomingMessageAt" < u.incoming_ts
+            )
+            THEN u.incoming_ts
+          ELSE t."lastIncomingMessageAt"
+        END
+      FROM (VALUES ${sql.join(contactInboxRows, sql`, `)})
+        AS u(id, message_ts, incoming_ts)
+      WHERE t."id" = u.id
+    `)
+  }
+
+  if (newestByConversation.size > 0) {
+    const conversationRows = [...newestByConversation.entries()].map(
+      ([id, ts]) => sql`(${id}::int8, ${ts}::timestamptz)`,
+    )
+
+    await db.execute(sql`
+      UPDATE "Conversation" AS t
+      SET "lastActivityAt" = CASE
+        WHEN t."lastActivityAt" IS NULL OR t."lastActivityAt" < u.ts THEN u.ts
+        ELSE t."lastActivityAt"
+      END
+      FROM (VALUES ${sql.join(conversationRows, sql`, `)}) AS u(id, ts)
+      WHERE t."id" = u.id
+    `)
+  }
+}
+
+const isValidDate = (date: Date | undefined): date is Date =>
+  date instanceof Date && Number.isFinite(date.getTime())
 
 /**
  * Legacy combined contact+messages entry used by WhatsApp coexist flush. New
@@ -617,6 +744,8 @@ export const bulkImportMessages = async (props: {
     importedMessages: 0,
     skippedMessages: 0,
     insertedAttachmentIds: [],
+    newestMessageAt: null,
+    newestIncomingMessageAt: null,
   }
 
   const hasEnrichment =
@@ -629,6 +758,11 @@ export const bulkImportMessages = async (props: {
 
   const makeMessageId = idFactory ?? createHistoricalIdFactory()
   const insertedAttachmentIds: string[] = []
+
+  const messagesWithApiTime = messages.filter(
+    (msg): msg is HistoricalMessage & { createdAt: Date } =>
+      isValidDate(msg.createdAt),
+  )
 
   // Map message.sourceId → its attachments[] so post-insert we can resolve
   // each inserted Message row to the right Attachment payload.
@@ -643,9 +777,12 @@ export const bulkImportMessages = async (props: {
   }
 
   // Build message inputs with deterministic snowflake IDs.
+  const fallbackCreatedAt = new Date()
   const messageInputs: CreateMessageInput[] = messages.map((msg) => {
     const isOutgoing = msg.messageType === "outgoing"
-    const createdAt = msg.createdAt ?? new Date()
+    const createdAt = isValidDate(msg.createdAt)
+      ? msg.createdAt
+      : fallbackCreatedAt
     return {
       id: makeMessageId(createdAt, msg.sourceId),
       conversationId,
@@ -662,7 +799,7 @@ export const bulkImportMessages = async (props: {
     }
   })
 
-  // Insert messages via repository — shard-aware when ENABLE_MESSAGE_SHARDING=true.
+  // Insert messages via repository — always shard-aware (ShardedMessageRepository).
   // PK collision (snowflake id clash across runs) triggers a one-time retry with
   // fresh IDs; the onConflictDoNothing inside bulkCreate handles sourceId dupes.
   //
@@ -710,10 +847,7 @@ export const bulkImportMessages = async (props: {
   const messageCreatedAtBySourceId = new Map<string, Date>()
   for (const input of messageInputs) {
     if (input.sourceId) {
-      messageCreatedAtBySourceId.set(
-        input.sourceId,
-        input.createdAt ?? new Date(),
-      )
+      messageCreatedAtBySourceId.set(input.sourceId, input.createdAt as Date)
     }
   }
 
@@ -734,9 +868,8 @@ export const bulkImportMessages = async (props: {
   }
 
   // Insert Attachment rows for newly-inserted messages only via repository so
-  // they land in the same DB as the messages (shard or main). Previously these
-  // were inserted via a main-DB tx.insert(), causing a FK violation when
-  // ENABLE_MESSAGE_SHARDING=true because the Message rows live in the shard.
+  // they land in the same DB as the messages. Previously these were inserted
+  // via a direct tx.insert(), which broke when Message rows lived in a shard.
   if (attachmentsBySourceId.size > 0 && repository) {
     const attachmentRows: BulkCreateAttachmentInput[] = []
     for (const [sourceId, atts] of attachmentsBySourceId) {
@@ -744,8 +877,10 @@ export const bulkImportMessages = async (props: {
       if (!messageId) {
         continue
       }
-      const messageCreatedAt =
-        messageCreatedAtBySourceId.get(sourceId) ?? new Date()
+      const messageCreatedAt = messageCreatedAtBySourceId.get(sourceId)
+      if (!messageCreatedAt) {
+        continue
+      }
       for (const att of atts) {
         attachmentRows.push({
           id: createId(),
@@ -772,37 +907,28 @@ export const bulkImportMessages = async (props: {
     }
   }
 
-  // Set contactInbox.lastMessageAt to the newest imported message time. This is
-  // the anchor the conversation list uses to derive the sharded last-message
-  // read window — without it imported conversations show no last-message
-  // preview. Only advance it (never regress past a newer live message).
-  const newestMessageAt = messageInputs.reduce<Date | null>((max, m) => {
-    const created = m.createdAt ?? null
-    if (!created) {
-      return max
-    }
-    return !max || created > max ? created : max
-  }, null)
-  if (newestMessageAt) {
-    try {
-      await db
-        .update(contactInboxModel)
-        .set({ lastMessageAt: newestMessageAt })
-        .where(
-          sql`${contactInboxModel.id} = ${contactInboxId} AND (${contactInboxModel.lastMessageAt} IS NULL OR ${contactInboxModel.lastMessageAt} < ${newestMessageAt})`,
-        )
-    } catch (error) {
-      logger.warn(
-        { error, contactInboxId },
-        "[coexist] failed to set lastMessageAt",
-      )
-    }
-  }
+  // Newest API-provided message times. Activity-timestamp bumps are NOT done
+  // here — the caller batches them once per table via
+  // applyCoexistActivityUpdates. Messages with no valid API timestamp are still
+  // inserted with a persistence fallback, but never drive activity timestamps.
+  const newestMessageAt = messagesWithApiTime.reduce<Date | null>(
+    (max, m) => (!max || m.createdAt > max ? m.createdAt : max),
+    null,
+  )
+  const newestIncomingMessageAt = messagesWithApiTime.reduce<Date | null>(
+    (max, m) =>
+      m.messageType === "incoming" && (!max || m.createdAt > max)
+        ? m.createdAt
+        : max,
+    null,
+  )
 
   return {
     importedMessages,
     skippedMessages,
     insertedAttachmentIds,
+    newestMessageAt,
+    newestIncomingMessageAt,
   }
 }
 
@@ -835,6 +961,9 @@ export const bulkImportHistorical = async (props: {
   let skippedMessages = 0
   let failedMessages = 0
   const insertedAttachmentIds: string[] = []
+  // Collected across the per-contact loop, then flushed in ONE statement per
+  // table — keeps the ContactInbox/Conversation activity bumps out of the loop.
+  const activityUpdates: CoexistActivityUpdate[] = []
 
   const limit = pLimit(3)
   await Promise.all(
@@ -867,6 +996,14 @@ export const bulkImportHistorical = async (props: {
           for (const id of res.insertedAttachmentIds) {
             insertedAttachmentIds.push(id)
           }
+          if (res.newestMessageAt) {
+            activityUpdates.push({
+              contactInboxId: link.contactInboxId,
+              conversationId: link.conversationId,
+              newestMessageAt: res.newestMessageAt,
+              newestIncomingMessageAt: res.newestIncomingMessageAt,
+            })
+          }
         } catch (error) {
           logger.error(
             { error, runId, sourceId: entry.contact.sourceId },
@@ -877,6 +1014,9 @@ export const bulkImportHistorical = async (props: {
       }),
     ),
   )
+
+  // One UPDATE per table for the whole bulk (not two per contact in the loop).
+  await applyCoexistActivityUpdates(activityUpdates)
 
   return {
     importedContacts: contactsResult.importedContacts,

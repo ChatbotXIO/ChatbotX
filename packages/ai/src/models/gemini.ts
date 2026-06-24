@@ -5,6 +5,8 @@ export type GeminiEmbeddingModel = z.infer<typeof geminiEmbeddingModels>
 
 export const geminiModels = z.enum([
   "gemini-3-pro-image-preview",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.5-pro",
@@ -18,6 +20,14 @@ export const geminiAnalyzeImageModelOptions: {
   label: string
   value: GeminiModel
 }[] = [
+  {
+    label: "Gemini 3.5 Flash",
+    value: geminiModels.enum["gemini-3.5-flash"],
+  },
+  {
+    label: "Gemini 3.1 Flash Lite",
+    value: geminiModels.enum["gemini-3.1-flash-lite"],
+  },
   {
     label: "Gemini 3 Flash",
     value: geminiModels.enum["gemini-3-flash"],
@@ -42,8 +52,20 @@ export const geminiAnalyzeImageModelOptions: {
 
 export const geminiModelOptions: { label: string; value: GeminiModel }[] = [
   {
-    label: "Gemini 3 Pro",
-    value: geminiModels.enum["gemini-3-pro-image-preview"],
+    label: "Gemini 3.5 Flash",
+    value: geminiModels.enum["gemini-3.5-flash"],
+  },
+  {
+    label: "Gemini 3.1 Pro Preview",
+    value: geminiModels.enum["gemini-3.1-pro-preview"],
+  },
+  {
+    label: "Gemini 3.1 Flash Lite",
+    value: geminiModels.enum["gemini-3.1-flash-lite"],
+  },
+  {
+    label: "Gemini 3 Flash",
+    value: geminiModels.enum["gemini-3-flash"],
   },
   {
     label: "Gemini 2.5 Flash Lite",

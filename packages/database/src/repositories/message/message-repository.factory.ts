@@ -1,68 +1,27 @@
 import { type DatabaseClient, db } from "../../client"
-import { keys } from "../../keys"
-import { logger } from "../../logger"
-import {
-  type DistributedLock,
-  type IMessageRepository,
-  MessageRepository,
-} from "./message-repository"
-
-interface RepositoryCacheEntry {
-  distributedLock?: DistributedLock
-  promise: Promise<IMessageRepository>
-}
+import { createShardRepository } from "../../sharding/message"
+import type { DistributedLock, IMessageRepository } from "./message-repository"
 
 export interface ShardManagerLike {
   invalidateShardingCache(): void
   shutdown(): Promise<void>
 }
 
+interface RepositoryCacheEntry {
+  distributedLock?: DistributedLock
+  promise: Promise<IMessageRepository>
+}
+
 const repositoryCache = new WeakMap<DatabaseClient, RepositoryCacheEntry>()
 const shardManagerCache = new WeakMap<DatabaseClient, ShardManagerLike>()
-let shardModuleCache: {
-  createShardRepository: typeof import("../../sharding/message").createShardRepository
-} | null = null
-let shardModuleExists: boolean | null = null
 
 async function buildRepository(
   client: DatabaseClient,
   distributedLock?: DistributedLock,
 ): Promise<IMessageRepository> {
-  const env = keys()
-
-  if (!env.ENABLE_MESSAGE_SHARDING) {
-    return new MessageRepository(client)
-  }
-
-  try {
-    if (shardModuleExists === false) {
-      return new MessageRepository(client)
-    }
-
-    if (!shardModuleCache) {
-      const module = await import("../../sharding/message")
-      shardModuleCache = module
-      shardModuleExists = true
-    }
-
-    const result = await shardModuleCache.createShardRepository(
-      client,
-      distributedLock,
-    )
-
-    if (!result) {
-      return new MessageRepository(client)
-    }
-    shardManagerCache.set(client, result.manager)
-    return result.repository
-  } catch (error) {
-    logger.error(
-      { err: error },
-      "Shard module failed to load; falling back to main repository. Check shard configuration.",
-    )
-    shardModuleExists = false
-    return new MessageRepository(client)
-  }
+  const result = await createShardRepository(client, distributedLock)
+  shardManagerCache.set(client, result.manager)
+  return result.repository
 }
 
 export function createMessageRepository(
@@ -75,6 +34,7 @@ export function createMessageRepository(
   }
 
   const promise = buildRepository(client, distributedLock)
+  promise.catch(() => repositoryCache.delete(client))
   repositoryCache.set(client, { promise, distributedLock })
   return promise
 }

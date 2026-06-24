@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl"
 import type { ComponentProps } from "react"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
+import { NavUsage, type QuotaSummary } from "@/components/nav-usage"
 import { NavUser } from "@/components/nav-user"
 import { WorkspaceSwitcher } from "@/components/workspace-switcher"
 import type { WorkspaceResource } from "@/features/workspaces/schema/resource"
@@ -35,11 +36,13 @@ export function AppSidebar({
   workspaceId,
   allWorkspaces,
   isPlatformAdmin,
+  quota,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
   allWorkspaces: WorkspaceResource[]
   isPlatformAdmin?: boolean
+  quota: QuotaSummary
 }) {
   const t = useTranslations()
   const { data: session } = authClient.useSession()
@@ -131,7 +134,16 @@ export function AppSidebar({
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser isPlatformAdmin={isPlatformAdmin} user={data.user} />
+        <NavUsage
+          metrics={quota.metrics}
+          planStatus={quota.planStatus}
+          trialEndsAt={quota.trialEndsAt}
+        />
+        <NavUser
+          isPlatformAdmin={isPlatformAdmin}
+          planName={quota.planName}
+          user={data.user}
+        />
       </SidebarFooter>
     </Sidebar>
   )

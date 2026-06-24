@@ -48,10 +48,11 @@ export async function sendMessageToChannel(
     let handlerMessage = message
     if (isComment && message.parentId && message.parentCreatedAt) {
       const repo = await createMessageRepository()
-      const parentMsg = await repo.findById(
-        message.parentId,
-        new Date(message.parentCreatedAt),
-      )
+      const parentMsg = await repo.findById({
+        id: message.parentId,
+        createdAt: new Date(message.parentCreatedAt),
+        workspaceId: conversation.workspaceId,
+      })
       handlerMessage = {
         ...message,
         contentAttributes: {
@@ -106,6 +107,13 @@ export async function sendMessageToChannel(
           },
         })
       }
+    } else {
+      // Persist the provider message id as this row's sourceId. The channel
+      // echoes every page-sent message back via webhook (coexist); the echo
+      // handler dedups through createOrUpdate → findBySourceId. Without a
+      // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
+      // lookup misses, and a duplicate row is inserted as senderType=user.
+      await updateMessageSourceId(message.id, conversation.workspaceId, result)
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
@@ -137,10 +145,11 @@ export async function deleteMessageFromChannel(
   const { conversation, contactInbox, message } = data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(
@@ -176,10 +185,11 @@ export async function editMessageFromChannel(
     data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(
@@ -214,10 +224,11 @@ export async function changeMessageStateOnChannel(
   const { conversation, contactInbox, message, liked, hidden } = data
 
   const repository = await createMessageRepository()
-  const found = await repository.findById(
-    message.id,
-    new Date(message.createdAt),
-  )
+  const found = await repository.findById({
+    id: message.id,
+    createdAt: new Date(message.createdAt),
+    workspaceId: conversation.workspaceId,
+  })
 
   if (!found) {
     logger.warn(

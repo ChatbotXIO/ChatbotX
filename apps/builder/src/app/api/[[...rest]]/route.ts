@@ -1,12 +1,23 @@
 import { SmartCoercionPlugin } from "@orpc/json-schema"
 import { OpenAPIHandler } from "@orpc/openapi/fetch"
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins"
+import { onError } from "@orpc/server"
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4"
+import { logger } from "@/lib/log"
 import { router } from "@/routers"
 import "@/polyfill"
 
 // Singleton handler — instantiating per request is expensive (rebuilds plugins every call).
 const openAPIHandler = new OpenAPIHandler(router, {
+  interceptors: [
+    // Log the real error before oRPC masks undefined errors as a generic 500.
+    onError((error) => {
+      logger.error(
+        { err: error, cause: JSON.stringify((error as Error)?.cause) },
+        "Error in OpenAPI handler",
+      )
+    }),
+  ],
   plugins: [
     new SmartCoercionPlugin({
       schemaConverters: [new ZodToJsonSchemaConverter()],

@@ -4,8 +4,10 @@ import {
   type IntegrationDefinition,
 } from "@chatbotx.io/sdk"
 import { unsubscribePageFromInstagramWebhook } from "./apis/page"
+import { getPostDetails } from "./apis/post"
 import { InstagramAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
+import { commentHandlers } from "./handlers/comment"
 import { contactHandlers } from "./handlers/contact"
 import { conversationHandlers } from "./handlers/conversation"
 import { messageHandlers } from "./handlers/message"
@@ -25,12 +27,15 @@ const config: IntegrationDefinition<
   channels: {
     channel: {
       message: messageHandlers,
+      comment: commentHandlers,
       conversation: conversationHandlers,
       contact: contactHandlers,
       bot: botHandlers,
     },
   },
-  actions: {},
+  actions: {
+    getPostDetails,
+  },
   handleRequest: async (props) => {
     const segments = new URL(props.req.url).pathname.split("/")
     const action = segments.pop()

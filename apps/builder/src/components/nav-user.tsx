@@ -20,9 +20,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import { ChevronsUpDown, Settings2 } from "lucide-react"
+import { ChevronsUpDown, Crown, Settings2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { useState } from "react"
+import { UpgradePlanDialog } from "@/enterprise/features/billing/upgrade-plan-dialog"
+import { isCloud } from "@/env"
 import { SignOut } from "@/features/auth/sign-out"
 import { LangSelector } from "./lang-selector"
 import { ThemeSwitcher } from "./theme-switcher"
@@ -30,6 +33,7 @@ import { ThemeSwitcher } from "./theme-switcher"
 export function NavUser({
   user,
   isPlatformAdmin,
+  planName,
 }: {
   user: {
     name: string
@@ -37,13 +41,18 @@ export function NavUser({
     avatar: string
   }
   isPlatformAdmin?: boolean
+  planName?: string | null
 }) {
   const { isMobile } = useSidebar()
-  const _t = useTranslations()
+  const t = useTranslations()
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
+        {isCloud() && (
+          <UpgradePlanDialog onOpenChange={setUpgradeOpen} open={upgradeOpen} />
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -88,13 +97,28 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Crown className="mr-2 h-4 w-4" />
-                {t("actions.upgradeToPro")}
-              </DropdownMenuItem>
-            </DropdownMenuGroup> */}
-            {/* <DropdownMenuSeparator /> */}
+            {/* Plan + upgrade is cloud-only; self-hosted editions get everything free. */}
+            {isCloud() && (
+              <>
+                <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">
+                  {t("billing.plan.label", {
+                    plan: planName ?? t("billing.plan.free"),
+                  })}
+                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setUpgradeOpen(true)
+                    }}
+                  >
+                    <Crown className="mr-2 h-4 w-4" />
+                    {t("actions.upgradePlan")}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 Language
@@ -126,7 +150,7 @@ export function NavUser({
                   <DropdownMenuItem asChild>
                     <Link href="/manage">
                       <Settings2 className="mr-2 h-4 w-4" />
-                      {_t("actions.manage")}
+                      {t("actions.manage")}
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>

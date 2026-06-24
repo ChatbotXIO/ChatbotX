@@ -1,5 +1,10 @@
-import { conversationService, messageService } from "@chatbotx.io/business"
+import {
+  contactInboxService,
+  conversationService,
+  messageService,
+} from "@chatbotx.io/business"
 import { contentTypes } from "@chatbotx.io/database/partials"
+import { getSafeSinceTime } from "@chatbotx.io/database/repositories"
 
 export const getContactLastInput = async (
   contactId: string,
@@ -11,9 +16,20 @@ export const getContactLastInput = async (
     return null
   }
 
-  const message = await messageService.findLatestIncomingMessage(
-    conversation.id,
-  )
+  const lastAt =
+    await contactInboxService.findLatestLastIncomingMessageAtByContactId({
+      contactId,
+    })
+  const sinceTime = getSafeSinceTime(lastAt, 365 * 24 * 60 * 60 * 1000)
+  if (!sinceTime) {
+    return null
+  }
+
+  const message = await messageService.findLatestIncomingMessage({
+    conversationId: conversation.id,
+    sinceTime,
+    workspaceId: conversation.workspaceId,
+  })
   if (!message) {
     return null
   }
@@ -35,9 +51,20 @@ export const getContactLastInputType = async (
     return null
   }
 
-  const message = await messageService.findLatestIncomingMessage(
-    conversation.id,
-  )
+  const lastAt =
+    await contactInboxService.findLatestLastIncomingMessageAtByContactId({
+      contactId,
+    })
+  const sinceTime = getSafeSinceTime(lastAt, 365 * 24 * 60 * 60 * 1000)
+  if (!sinceTime) {
+    return null
+  }
+
+  const message = await messageService.findLatestIncomingMessage({
+    conversationId: conversation.id,
+    sinceTime,
+    workspaceId: conversation.workspaceId,
+  })
 
   return message?.contentType ?? null
 }

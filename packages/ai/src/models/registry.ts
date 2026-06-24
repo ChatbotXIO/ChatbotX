@@ -3,6 +3,7 @@ import { claudeModelOptions, claudeModels } from "./claude"
 import { deepseekModelOptions, deepseekModels } from "./deepseek"
 import { geminiModelOptions, geminiModels } from "./gemini"
 import { openaiModelOptions, openaiModels } from "./openai"
+import { openrouterModelOptions, openrouterModels } from "./openrouter"
 
 export type AiChatModelOption = { label: string; value: string }
 
@@ -27,21 +28,26 @@ export const aiChatProviders: readonly AiChatProviderConfig[] = [
   {
     provider: aiProviders.enum.gemini,
     modelOptions: geminiModelOptions,
-    defaultModel: geminiModels.enum["gemini-2.5-pro"],
+    defaultModel: geminiModels.enum["gemini-3.5-flash"],
   },
   {
     provider: aiProviders.enum.openai,
     modelOptions: openaiModelOptions,
-    defaultModel: openaiModels.enum["gpt-4o-mini"],
+    defaultModel: openaiModels.enum["gpt-5.4-mini"],
   },
   {
     provider: aiProviders.enum.claude,
     modelOptions: claudeModelOptions,
-    defaultModel: claudeModels.enum["claude-4.5-sonnet-20250929"],
+    defaultModel: claudeModels.enum["claude-sonnet-4-6"],
   },
   {
     provider: aiProviders.enum.deepseek,
     modelOptions: deepseekModelOptions,
-    defaultModel: deepseekModels.enum["deepseek-chat"],
+    defaultModel: deepseekModels.enum["deepseek-v4-flash"],
+  },
+  {
+    provider: aiProviders.enum.openrouter,
+    modelOptions: openrouterModelOptions,
+    defaultModel: openrouterModels.enum["openai/gpt-5.4-mini"],
   },
 ]

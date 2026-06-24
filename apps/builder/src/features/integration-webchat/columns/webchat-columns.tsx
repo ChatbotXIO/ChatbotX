@@ -44,7 +44,9 @@ export function getWebchatColumns({
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[300px] truncate">{webchat.name}</div>
+              <div className="inline-block max-w-[300px] truncate">
+                {webchat.name}
+              </div>
             </TooltipTrigger>
             <TooltipContent>
               <p>{webchat.name}</p>

@@ -55,7 +55,15 @@ export class MessageShardRegistry {
     const [row] = await this.mainDb
       .select({ count: count() })
       .from(messageShardModel)
-      .where(eq(messageShardModel.isActive, true))
+      .where(
+        and(
+          eq(messageShardModel.isActive, true),
+          or(
+            isNull(messageShardModel.isMain),
+            eq(messageShardModel.isMain, false),
+          ),
+        ),
+      )
     return Number(row?.count ?? 0)
   }
 
@@ -63,7 +71,15 @@ export class MessageShardRegistry {
     const rows = await this.mainDb
       .select()
       .from(messageShardModel)
-      .where(eq(messageShardModel.isActive, true))
+      .where(
+        and(
+          eq(messageShardModel.isActive, true),
+          or(
+            isNull(messageShardModel.isMain),
+            eq(messageShardModel.isMain, false),
+          ),
+        ),
+      )
       .orderBy(asc(messageShardModel.createdAt))
     return rows.map(toShardRecord)
   }
@@ -112,6 +128,7 @@ export class MessageShardRegistry {
         shardUser: messageShardModel.user,
         shardCredentialRef: messageShardModel.credentialRef,
         shardIsActive: messageShardModel.isActive,
+        shardIsMain: messageShardModel.isMain,
         shardSslMode: messageShardModel.sslMode,
         shardKey: messageShardModel.shardKey,
         readHost: messageShardModel.readHost,
@@ -147,6 +164,7 @@ export class MessageShardRegistry {
         user: row.shardUser,
         credentialRef: row.shardCredentialRef,
         isActive: row.shardIsActive,
+        isMain: row.shardIsMain,
         sslMode: row.shardSslMode,
         shardKey: row.shardKey,
         readHost: row.readHost,
@@ -217,6 +235,9 @@ export class MessageShardRegistry {
       return
     }
 
+    // ShardTimeRange_no_overlap is a PER-SHARD exclusion constraint (shardId WITH =).
+    // Open ranges from different shards can coexist — only overlap within the same shard is blocked.
+    // If this insert fails it means there is already a conflicting range for this shard.
     try {
       await this.mainDb.insert(messageShardTimeRangeModel).values({
         shardId,
@@ -253,6 +274,7 @@ function toShardConfig(
     port: row.port,
     database: row.database,
     user: row.user,
+    isMain: row.isMain,
     credentialRef: row.credentialRef,
     sslMode: row.sslMode,
     shardKey: row.shardKey,

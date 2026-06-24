@@ -12,20 +12,30 @@ import {
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@chatbotx.io/ui/components/ui/tooltip"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
-import { CopyIcon, Loader2Icon, PlusIcon } from "lucide-react"
+import { CopyIcon, CrownIcon, Loader2Icon, PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
-import { isCommunity } from "@/env"
+import { UpgradePlanButton } from "@/enterprise/features/billing/upgrade-plan-dialog"
+import { isCloud, isCommunity } from "@/env"
 import { useWorkspaceId } from "@/hooks/routing"
 import { inviteWorkspaceMemberAction } from "../actions/invite-workspace-member.action"
 import { inviteWorkspaceMemberRequest } from "../schema/mutation"
-export function InviteWorkspaceMemberDialog() {
+export function InviteWorkspaceMemberDialog({
+  atLimit = false,
+}: {
+  atLimit?: boolean
+}) {
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
@@ -47,14 +57,40 @@ export function InviteWorkspaceMemberDialog() {
 
   return (
     <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusIcon className="size-4" />
-          {t("actions.inviteFeature", {
-            feature: t("fields.member.label"),
-          })}
-        </Button>
-      </DialogTrigger>
+      {atLimit ? (
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Button disabled>
+                  <PlusIcon className="size-4" />
+                  {t("actions.inviteFeature", {
+                    feature: t("fields.member.label"),
+                  })}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {t("billing.limitReached.teamMembers")}
+            </TooltipContent>
+          </Tooltip>
+          {isCloud() && (
+            <UpgradePlanButton size="sm" variant="outline">
+              <CrownIcon aria-hidden className="size-4" />
+              {t("actions.upgradePlan")}
+            </UpgradePlanButton>
+          )}
+        </div>
+      ) : (
+        <DialogTrigger asChild>
+          <Button>
+            <PlusIcon className="size-4" />
+            {t("actions.inviteFeature", {
+              feature: t("fields.member.label"),
+            })}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className={"max-h-screen max-w-xl overflow-y-scroll"}>
         <DialogHeader>
           <DialogTitle>

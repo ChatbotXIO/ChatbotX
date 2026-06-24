@@ -40,6 +40,7 @@ import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
 import { tenantRelations } from "./enterprise/tenant"
+import { tenantQuotaUsageRelations } from "./enterprise/tenant-quota-usage"
 import { userQuotaRelations } from "./enterprise/user-quota"
 import { errorLogRelations } from "./error-log"
 import { fileRelations } from "./file"
@@ -69,6 +70,7 @@ import { integrationMailerLiteRelations } from "./integration-mailer-lite"
 import { integrationMessengerRelations } from "./integration-messenger"
 import { integrationMoosendRelations } from "./integration-moosend"
 import { integrationOpenaiRelations } from "./integration-openai"
+import { integrationOpenrouterRelations } from "./integration-openrouter"
 import { integrationSendGridRelations } from "./integration-sendgrid"
 import { integrationSmtpRelations } from "./integration-smtp"
 import { integrationTelegramRelations } from "./integration-telegram"
@@ -121,6 +123,7 @@ export const relations = {
   ...automatedResponseRelations,
   ...customDomainRelations,
   ...tenantRelations,
+  ...tenantQuotaUsageRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,
   ...contactCustomFieldRelations,
@@ -158,6 +161,7 @@ export const relations = {
   ...integrationClaudeRelations,
   ...integrationDeepseekRelations,
   ...integrationGeminiRelations,
+  ...integrationOpenrouterRelations,
   ...contactsOnBroadcastsRelations,
   ...contactsToTagsRelations,
   ...tagChannelRelations,

@@ -30,6 +30,12 @@ const verifyConfigByProvider: Partial<Record<AIProvider, VerifyConfig>> = {
       Authorization: `Bearer ${apiKey}`,
     }),
   },
+  [aiProviders.enum.openrouter]: {
+    url: "https://openrouter.ai/api/v1/key",
+    headers: (apiKey) => ({
+      Authorization: `Bearer ${apiKey}`,
+    }),
+  },
 }
 
 /**

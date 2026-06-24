@@ -23,9 +23,10 @@ export function ConversationInfo() {
     | ChannelType
     | undefined
   const postLink =
-    channel && activeConversation?.sourceId
+    activePost?.link ??
+    (channel && activeConversation?.sourceId
       ? buildPostLink(channel, activeConversation.sourceId)
-      : null
+      : null)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reload on conversation change only
   useEffect(() => {
@@ -44,23 +45,23 @@ export function ConversationInfo() {
             {activePost.from.name}
           </span>
         )}
-        {activePost.message && (
+        {activePost.text && (
           <p className="whitespace-pre-line text-muted-foreground text-xs">
-            {activePost.message}
+            {activePost.text}
           </p>
         )}
-        {activePost.full_picture && (
+        {activePost.picture && (
           <Image
             alt=""
             className="shrink-0 rounded object-cover"
             height={56}
-            src={activePost.full_picture}
+            src={activePost.picture}
             unoptimized
             width={56}
           />
         )}
         <span className="text-[11px] text-muted-foreground">
-          {formatDate(activePost.created_time, {
+          {formatDate(activePost.createdAt, {
             hour: "2-digit",
             minute: "2-digit",
             day: "2-digit",

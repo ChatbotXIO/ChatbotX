@@ -51,3 +51,19 @@ export const resetPasswordRequest = z
     },
   )
 export type ResetPasswordRequest = z.infer<typeof resetPasswordRequest>
+
+export const changePasswordRequest = z
+  .object({
+    currentPassword: z.string().min(8).max(100),
+    newPassword: z.string().min(8).max(100),
+    passwordConfirmation: z.string().min(8).max(100),
+  })
+  .refine((data) => data.newPassword === data.passwordConfirmation, {
+    message: "Passwords do not match",
+    path: ["passwordConfirmation"],
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    message: "New password must be different from your current password",
+    path: ["newPassword"],
+  })
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequest>

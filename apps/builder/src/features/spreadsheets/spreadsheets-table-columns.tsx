@@ -41,7 +41,9 @@ export function getSpreadsheetColumns({
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="max-w-[300px] truncate">{row.original.name}</div>
+            <div className="inline-block max-w-[300px] truncate">
+              {row.original.name}
+            </div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{row.original.name}</p>
@@ -60,7 +62,7 @@ export function getSpreadsheetColumns({
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="max-w-[300px] truncate">
+            <div className="inline-block max-w-[300px] truncate">
               <Link
                 className="truncate"
                 href={row.original.url}

@@ -1,0 +1,1 @@
+export { tenantQuotaService } from "./service"

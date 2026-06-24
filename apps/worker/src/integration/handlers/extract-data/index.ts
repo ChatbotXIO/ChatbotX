@@ -6,7 +6,7 @@ import {
 import { db } from "@chatbotx.io/database/client"
 import type { AIExtractDataSchema } from "@chatbotx.io/flow-config"
 import { contactVariableService } from "@chatbotx.io/variables"
-import { generateText, Output } from "ai"
+import { APICallError, generateObject } from "ai"
 import { normalizeError } from "universal-error-normalizer"
 import { z } from "zod"
 import { logger } from "../../../lib/logger"
@@ -14,6 +14,9 @@ import { saveResultToCustomField } from "../../utils/contact"
 import { sendMessageWithRender } from "../../utils/message"
 import type { ExecuteStepProps } from "../flow"
 import type { ExecuteStepResult } from "../step"
+
+const ERROR_INSUFFICIENT_CREDITS =
+  "AI provider has insufficient credits. Please check your billing settings."
 
 type AIExtractUserContent =
   | { type: "text"; text: string }
@@ -190,14 +193,12 @@ ${schemaDescription}`
       content: userContent,
     } as const
 
-    const { output: extractedData } = await generateText({
+    const { object: extractedData } = await generateObject({
       model,
       system: systemPrompt,
       messages: [userMessage],
       abortSignal: controller.signal,
-      output: Output.object({
-        schema: dynamicSchema,
-      }),
+      schema: dynamicSchema,
     })
 
     await Promise.all(
@@ -221,6 +222,14 @@ ${schemaDescription}`
       result: extractedData,
     }
   } catch (error) {
+    if (APICallError.isInstance(error) && error.statusCode === 402) {
+      logger.error({ err: error }, "AI provider insufficient credits")
+      return {
+        status: "error",
+        errorMessage: ERROR_INSUFFICIENT_CREDITS,
+        result: null,
+      }
+    }
     const parsedError = normalizeError(error)
     logger.error(
       {

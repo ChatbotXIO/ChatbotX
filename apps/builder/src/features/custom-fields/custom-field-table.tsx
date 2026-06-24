@@ -111,7 +111,7 @@ export function CustomFieldsTable({
           <div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
+                <div className="inline-block max-w-[200px] truncate">
                   {row.original.name}
                 </div>
               </TooltipTrigger>
@@ -143,7 +143,7 @@ export function CustomFieldsTable({
           <div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="max-w-[200px] truncate">
+                <div className="inline-block max-w-[200px] truncate">
                   {row.original.description}
                 </div>
               </TooltipTrigger>

@@ -8,6 +8,7 @@ import { BaseService } from "../base.service"
 import { tenantService } from "../enterprise/tenant/service"
 import { ChatbotXException, notFoundException } from "../errors"
 import { logger } from "../logger"
+import { quotaEnforcementService } from "../quota-enforcement/service"
 import { userQuotaService } from "../user-quota/service"
 import { workspaceMemberService } from "../workspace-member/service"
 
@@ -94,11 +95,11 @@ class WorkspaceService extends BaseService {
   }): Promise<WorkspaceModel> {
     const { data, tx = db } = props
 
-    const allowed = await userQuotaService.tryIncrement(
-      props.createdBy,
-      "workspaces",
-    )
-    if (!allowed) {
+    const consumed = await quotaEnforcementService.tryConsume({
+      userId: props.createdBy,
+      metric: "workspaces",
+    })
+    if (!consumed.ok) {
       throw new ChatbotXException("Workspace limit reached for this plan")
     }
 

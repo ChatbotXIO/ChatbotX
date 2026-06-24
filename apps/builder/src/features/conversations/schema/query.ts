@@ -25,3 +25,11 @@ export const listConversationsRequest = z.object({
   ...cursorPaginationRequest.shape,
 })
 export type ListConversationsRequest = z.infer<typeof listConversationsRequest>
+
+export type PostDetails = {
+  text?: string
+  picture?: string
+  from?: { id: string; name: string }
+  createdAt: string
+  link?: string
+}

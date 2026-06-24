@@ -7,7 +7,6 @@ import {
   envInt,
   isConnectionError,
   type ShardConfig,
-  ShardNotActiveError,
   ShardUnreachableError,
   workspaceShardIndex,
 } from "../shared"
@@ -35,6 +34,11 @@ interface ActiveShardsCache {
   shards: ShardConfig[]
 }
 
+interface ShardCountCache {
+  cachedAt: Date
+  count: number
+}
+
 const READ_REPLICAS_ENABLED: boolean = false
 
 interface MessageShardConnectionManagerOptions {
@@ -42,14 +46,23 @@ interface MessageShardConnectionManagerOptions {
 }
 
 export class MessageShardConnectionManager {
+  // Sentinel id for the main DB when no external shards are configured.
+  // getShardClient / withShardClientForRead bypass pool management for this id
+  // and return the main DB client directly.
+  static readonly MAIN_DB_SHARD_ID = "__main_db__"
+
   private readonly pools: Map<string, PoolEntry> = new Map()
-  private shardingEnabled: boolean | null = null
   private activeShardsCache: ActiveShardsCache | null = null
+  private shardCountCache: ShardCountCache | null = null
   private lastEvictedAt: Date | null = null
   private readonly registry: MessageShardRegistry
   private readonly readReplicaRetryTtlMs: number
   private readonly readReplicasEnabled: boolean
-
+  // Main DB cast to MessageShardDatabaseClient. Safe: ShardedMessageRepository
+  // only queries messageModel + attachmentModel, which main DB now shares.
+  private readonly mainDbShardClient: MessageShardDatabaseClient
+  // Parsed from DATABASE_URL so registered archive shards pointing to the
+  // same host/port/database bypass pool creation and reuse mainDbShardClient.
   private static readonly MAX_POOLS = 10
   private static readonly ACTIVE_SHARD_TTL_MS = 30_000
 
@@ -59,6 +72,7 @@ export class MessageShardConnectionManager {
     options: MessageShardConnectionManagerOptions = {},
   ) {
     this.registry = registry ?? new MessageShardRegistry(mainDb)
+    this.mainDbShardClient = mainDb as unknown as MessageShardDatabaseClient
     this.readReplicaRetryTtlMs = envInt(
       "SHARD_READ_REPLICA_RETRY_TTL_MS",
       60_000,
@@ -67,16 +81,53 @@ export class MessageShardConnectionManager {
       options.readReplicasEnabled ?? READ_REPLICAS_ENABLED
   }
 
-  async isShardingEnabled(): Promise<boolean> {
-    if (this.shardingEnabled === null) {
-      this.shardingEnabled = (await this.registry.countActiveShards()) > 0
+  private isMainDbShard(shard: ShardConfig): boolean {
+    return shard.isMain === true
+  }
+
+  private getMainDbShardInfo(): MessageShardTimeRangeInfo {
+    const shard = {
+      id: MessageShardConnectionManager.MAIN_DB_SHARD_ID,
+      name: "main",
+      host: "",
+      port: 5432,
+      database: "",
+      user: "",
+      credentialRef: null,
+      isActive: true,
+      sslMode: null,
+      shardKey: null,
+      readHost: null,
+      readPort: null,
     }
-    return this.shardingEnabled
+    return {
+      id: MessageShardConnectionManager.MAIN_DB_SHARD_ID,
+      shardId: MessageShardConnectionManager.MAIN_DB_SHARD_ID,
+      startTime: new Date(0),
+      endTime: null,
+      shard,
+    }
+  }
+
+  async isShardingEnabled(): Promise<boolean> {
+    return (await this.registry.countActiveShards()) > 0
   }
 
   invalidateShardingCache(): void {
-    this.shardingEnabled = null
     this.activeShardsCache = null
+    this.shardCountCache = null
+  }
+
+  private async getCachedShardCount(): Promise<number> {
+    if (this.shardCountCache) {
+      const age = Date.now() - this.shardCountCache.cachedAt.getTime()
+      if (age < MessageShardConnectionManager.ACTIVE_SHARD_TTL_MS) {
+        return this.shardCountCache.count
+      }
+    }
+    const count = await this.registry.countShards()
+    this.shardCountCache = { count, cachedAt: new Date() }
+    return count
   }
 
   private async getActiveShardsForWrite(): Promise<ShardConfig[]> {
@@ -96,51 +147,45 @@ export class MessageShardConnectionManager {
   async getShardForWrite(
     workspaceId: string,
   ): Promise<MessageShardDatabaseClient> {
-    if (!(await this.isShardingEnabled())) {
-      throw new ShardNotActiveError(
-        "Message sharding is not enabled. No active shards configured.",
-      )
-    }
-
     const shards = await this.getActiveShardsForWrite()
-
     if (shards.length === 0) {
-      throw new ShardNotActiveError()
+      return this.mainDbShardClient
     }
-
     const idx = workspaceShardIndex(workspaceId, shards.length)
-    const shard = shards[idx]
-    if (!shard) {
-      throw new ShardNotActiveError()
-    }
-
-    return this.getShardClient(shard)
+    return this.getShardClient(shards[idx] ?? shards[0])
   }
 
   async getActiveShardForWrite(): Promise<MessageShardDatabaseClient> {
-    if (!(await this.isShardingEnabled())) {
-      throw new ShardNotActiveError(
-        "Message sharding is not enabled. No active shards configured.",
-      )
-    }
-
     const shards = await this.getActiveShardsForWrite()
     if (shards.length === 0) {
-      throw new ShardNotActiveError()
+      return this.mainDbShardClient
     }
-
     return this.getShardClient(shards[0])
   }
 
   invalidateActiveShardCache(): void {
     this.activeShardsCache = null
+    this.shardCountCache = null
   }
 
-  getShardsForTimeRange(
+  async getShardsForTimeRange(
     startTime: Date,
     endTime: Date,
   ): Promise<MessageShardTimeRangeInfo[]> {
-    return this.registry.findShardsForTimeRange(startTime, endTime)
+    const shards = await this.registry.findShardsForTimeRange(
+      startTime,
+      endTime,
+    )
+    if (shards.length > 0) {
+      return shards
+    }
+    // Fall back to main DB only when the MessageShard table has no records at all
+    // (virgin state — sharding has never been configured).
+    // Any record in MessageShard (even isMain=true, isActive=false after --init)
+    // means sharding setup has started; falling back to main DB at that point
+    // would silently read from the wrong location.
+    const totalShards = await this.getCachedShardCount()
+    return totalShards === 0 ? [this.getMainDbShardInfo()] : []
   }
 
   /**
@@ -154,12 +199,9 @@ export class MessageShardConnectionManager {
   async getWriteShardInfo(
     workspaceId: string,
   ): Promise<MessageShardTimeRangeInfo | null> {
-    if (!(await this.isShardingEnabled())) {
-      return null
-    }
     const record = await this.registry.findShardForWrite(workspaceId)
     if (!record) {
-      return null
+      return this.getMainDbShardInfo()
     }
     return {
       id: `write:${record.id}`,
@@ -173,6 +215,12 @@ export class MessageShardConnectionManager {
   async getShardClient(
     shard: ShardConfig,
   ): Promise<MessageShardDatabaseClient> {
+    if (
+      shard.id === MessageShardConnectionManager.MAIN_DB_SHARD_ID ||
+      this.isMainDbShard(shard)
+    ) {
+      return this.mainDbShardClient
+    }
     return (await this.ensureEntry(shard)).client
   }
 
@@ -226,6 +274,13 @@ export class MessageShardConnectionManager {
     shard: ShardConfig,
     fn: (client: MessageShardDatabaseClient) => Promise<T>,
   ): Promise<T> {
+    if (
+      shard.id === MessageShardConnectionManager.MAIN_DB_SHARD_ID ||
+      this.isMainDbShard(shard)
+    ) {
+      return fn(this.mainDbShardClient)
+    }
+
     const entry = await this.ensureEntry(shard)
 
     if (!this.readReplicasEnabled) {
@@ -374,7 +429,6 @@ export class MessageShardConnectionManager {
 
     await Promise.all(closePromises)
     this.pools.clear()
-    this.shardingEnabled = null
     this.activeShardsCache = null
   }
 

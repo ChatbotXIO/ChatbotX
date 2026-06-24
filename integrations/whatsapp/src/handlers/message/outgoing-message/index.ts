@@ -123,6 +123,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       data: { contact, message },
     } = props
     const whatsappClient = getWhatsappClient(ctx.auth)
+    const messageIds: string[] = []
 
     try {
       for (const whatsappMessage of convertMessageToWhatsappMessage(message)) {
@@ -150,6 +151,7 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
         const messageId = (sendResponse as ServerSentMessageResponse)
           ?.messages?.[0]?.id
         if (messageId) {
+          messageIds.push(messageId)
           logger.info(
             {
               messageId,
@@ -170,8 +172,10 @@ export const sendMessage: MessageHandlers<WhatsappAuthValue>["sendMessage"] =
       throw mapToChannelError(error)
     }
 
+    // Return the provider message id(s) so the worker can persist messageIds[0]
+    // as the Message row's sourceId (coexist echo dedup — see sendFlowStep).
     return {
-      messageIds: [],
+      messageIds,
     }
   }
 

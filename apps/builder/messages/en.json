@@ -72,6 +72,8 @@
     "toggleTheme": "Toggle theme",
     "transferConversationToBot": "Transfer Conversation to Bot",
     "update": "Update",
+    "updatePayment": "Update payment",
+    "upgradePlan": "Upgrade plan",
     "upgradeToPro": "Upgrade to Pro",
     "uploadFile": "Upload File",
     "view": "View",
@@ -228,7 +230,39 @@
     }
   },
   "billing": {
-    "title": "Billing"
+    "title": "Billing",
+    "plan": {
+      "label": "Plan: {plan}",
+      "free": "Free"
+    },
+    "usage": {
+      "contacts": "Contacts",
+      "mac": "Monthly active contacts",
+      "workspaces": "Workspaces",
+      "channels": "Channels",
+      "teamMembers": "Team members"
+    },
+    "limitReached": {
+      "workspaces": "You've reached your workspace limit. Upgrade your plan to create more.",
+      "channels": "You've reached your channel limit. Upgrade your plan to connect more.",
+      "teamMembers": "You've reached your team member limit. Upgrade your plan to invite more.",
+      "contacts": "You've reached your contact limit. Upgrade your plan to add more.",
+      "mac": "You've reached your monthly active contact limit. Upgrade your plan to reach more."
+    },
+    "pastDue": {
+      "message": "Your last payment failed. Update your payment method to keep your workspace active."
+    },
+    "trial": {
+      "daysLeft": "Trial: {days} days left",
+      "endsTomorrow": "Trial ends tomorrow",
+      "expired": "Your trial has ended — upgrade to keep your workspace active",
+      "dismiss": "Dismiss"
+    },
+    "trialExpired": {
+      "title": "Your free trial has ended",
+      "description": "Subscribe to a plan to keep using your workspaces.",
+      "cta": "View plans"
+    }
   },
   "broadcasts": {
     "title": "Broadcasts",
@@ -1249,6 +1283,9 @@
     "newPassword": {
       "label": "New Password"
     },
+    "currentPassword": {
+      "label": "Current Password"
+    },
     "developerAccessToken": {
       "label": "API Access Token"
     },
@@ -1926,6 +1963,12 @@
       "tiktokAppSecretRequired": "App Secret is required to configure TikTok."
     }
   },
+  "home": {
+    "welcomeBack": "Welcome back, {name}",
+    "subtitle": "Pick a workspace to jump back in, or create a new one.",
+    "noWorkspaces": "You don't have any workspaces yet.",
+    "owner": "Owner"
+  },
   "messages": {
     "moveFeature": "Move {feature}",
     "poweredBy": "Powered by {name}",
@@ -2159,6 +2202,17 @@
     },
     "title": "DeepSeek"
   },
+  "openrouter": {
+    "autoReply": {
+      "description": "Enable AI auto reply powered by OpenRouter.",
+      "label": "AI Auto Reply"
+    },
+    "connect": {
+      "description": "Access 300+ AI models through a single API key.",
+      "label": "OpenRouter"
+    },
+    "title": "OpenRouter"
+  },
   "settings": {
     "title": "Settings",
     "agents": {
@@ -2212,7 +2266,10 @@
     "passwordResetSuccess": "Password reset successfully",
     "resetPasswordTitle": "Reset your password",
     "resetPasswordDescription": "Enter your new password below.",
-    "signUpTitle": "Sign up to {name}"
+    "signUpTitle": "Sign up to {name}",
+    "changePasswordTitle": "Change your password",
+    "changePasswordDescription": "Set a new password before continuing.",
+    "passwordChangeSuccess": "Password changed"
   },
   "emailTopics": {
     "title": "Email Topics"
@@ -2693,7 +2750,8 @@
     "openai": "OpenAI",
     "gemini": "Gemini",
     "claude": "Claude",
-    "deepseek": "DeepSeek"
+    "deepseek": "DeepSeek",
+    "openrouter": "OpenRouter"
   },
   "smtp": {
     "setting": {

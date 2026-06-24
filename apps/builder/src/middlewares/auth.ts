@@ -12,6 +12,16 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
     throw new ORPCError("UNAUTHORIZED")
   }
 
+  // Forced-password-change gate for the whole oRPC surface. A reseller-
+  // provisioned user holding a temporary password is redirected to
+  // /auth/change-password by the RSC layouts, but a stale session could still
+  // call an RPC/OpenAPI handler directly. Mirrors the server-action gate in
+  // `safe-action.ts`. The change-password flow uses better-auth + a server
+  // action (not oRPC), so nothing here needs to stay callable while flagged.
+  if (sessionData.user.mustChangePassword) {
+    throw new ORPCError("FORBIDDEN", { message: "Password change required" })
+  }
+
   // Adds session and user to the context
   return next({
     context: {
@@ -20,6 +30,7 @@ export const authMiddleware = base.middleware(async ({ context, next }) => {
         ...sessionData.user,
         image: sessionData.user.image || null,
         isAnonymous: sessionData.user.isAnonymous ?? false,
+        mustChangePassword: sessionData.user.mustChangePassword ?? false,
         // stripeCustomerId: sessionData.user.stripeCustomerId || null,
       },
     },

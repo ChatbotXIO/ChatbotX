@@ -335,3 +335,59 @@ describe("MacTrackingService — happy path", () => {
     expect(distributedStore.incrementCounter).not.toHaveBeenCalled()
   })
 })
+
+describe("MacTrackingService.claimNewActiveContact", () => {
+  const input = {
+    workspaceId: WORKSPACE_ID,
+    contactId: "c-1",
+    contactInboxId: "ci-1",
+    inboxId: "ib-1",
+    periodStart: new Date(PERIOD_START),
+    occurredAt: new Date("2026-05-01T10:05:00.000Z"),
+  }
+
+  test("records presence and reports counted for a brand-new contact", async () => {
+    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([
+      { workspaceMacId: "wm-1", count: 1 },
+    ])
+
+    const result = await newService().claimNewActiveContact(input, {} as never)
+
+    expect(result).toEqual({ counted: true })
+    expect(macRepository.upsertMonthlyPresence).toHaveBeenCalledTimes(1)
+    expect(macRepository.addWorkspaceMacCount).toHaveBeenCalledWith(
+      [{ id: "wm-1", count: 1 }],
+      expect.anything(),
+    )
+  })
+
+  test("reports not counted when the presence row already exists (dedup)", async () => {
+    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([])
+
+    const result = await newService().claimNewActiveContact(input, {} as never)
+
+    expect(result).toEqual({ counted: false })
+    expect(macRepository.addWorkspaceMacCount).not.toHaveBeenCalled()
+  })
+
+  test("reports not counted when the workspace MAC row cannot be ensured", async () => {
+    macRepository.ensureWorkspaceMac.mockResolvedValueOnce(new Map())
+
+    const result = await newService().claimNewActiveContact(input, {} as never)
+
+    expect(result).toEqual({ counted: false })
+    expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
+  })
+})
+
+describe("MacTrackingService.incrementWorkspaceMacCache", () => {
+  test("bumps the workspace cache counter", async () => {
+    await newService().incrementWorkspaceMacCache(WORKSPACE_ID, 1)
+    expect(distributedStore.incrementCounter).toHaveBeenCalledTimes(1)
+  })
+
+  test("is a no-op for non-positive deltas", async () => {
+    await newService().incrementWorkspaceMacCache(WORKSPACE_ID, 0)
+    expect(distributedStore.incrementCounter).not.toHaveBeenCalled()
+  })
+})

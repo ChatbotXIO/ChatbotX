@@ -262,14 +262,14 @@ describe("i18n key presence (H12)", () => {
   test("coexist.toggleHelperMessenger is defined in en.json and vi.json", () => {
     expect(
       (
-        enMessages as Record<string, unknown> & {
+        enMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperMessenger,
     ).toBeDefined()
     expect(
       (
-        viMessages as Record<string, unknown> & {
+        viMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperMessenger,
@@ -279,14 +279,14 @@ describe("i18n key presence (H12)", () => {
   test("coexist.toggleHelperWhatsapp is defined in en.json and vi.json", () => {
     expect(
       (
-        enMessages as Record<string, unknown> & {
+        enMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperWhatsapp,
     ).toBeDefined()
     expect(
       (
-        viMessages as Record<string, unknown> & {
+        viMessages as unknown as Record<string, unknown> & {
           coexist: Record<string, unknown>
         }
       ).coexist.toggleHelperWhatsapp,

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest"
 
-const { mockFindConversationAuthenticatedAPI } = vi.hoisted(() => ({
+const { mockFindConversationAuthenticatedAPI, mockKyPost } = vi.hoisted(() => ({
   mockFindConversationAuthenticatedAPI: vi.fn(),
+  mockKyPost: vi.fn(),
 }))
 
 vi.mock("@/lib/orpc/orpc", () => ({
@@ -9,6 +10,12 @@ vi.mock("@/lib/orpc/orpc", () => ({
     conversationsAPI: {
       findConversationAuthenticatedAPI: mockFindConversationAuthenticatedAPI,
     },
+  },
+}))
+
+vi.mock("ky", () => ({
+  default: {
+    post: mockKyPost,
   },
 }))
 
@@ -21,7 +28,7 @@ type TestConversation = {
   workspaceId: string
   contactId: string
   messages: unknown[]
-  lastActivityAt: Date
+  lastActivityAt: Date | null
   agentLastReadAt?: Date
 }
 
@@ -54,6 +61,37 @@ const makeMessage = (conversationId: string, createdAt: Date) =>
 describe("chat store conversation updates", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  test("loadMoreConversations appends only conversations not already present", async () => {
+    const store = createChatStore()
+    const existing = makeConversation(
+      "conv-1",
+      new Date("2026-01-01T00:00:00Z"),
+    )
+    const duplicate = {
+      ...existing,
+      messages: [{ id: "fresh-message" }],
+    }
+    const next = makeConversation("conv-2", new Date("2026-01-01T01:00:00Z"))
+    store.setState({
+      conversations: [existing] as never,
+      nextCursorConversation: "cursor-1",
+    })
+    mockKyPost.mockReturnValue({
+      json: vi.fn().mockResolvedValue({
+        data: [duplicate, next],
+        nextCursor: null,
+      }),
+    })
+
+    await store.getState().loadMoreConversations("ws-1")
+
+    expect(store.getState().conversations.map((c) => c.id)).toEqual([
+      "conv-1",
+      "conv-2",
+    ])
+    expect(store.getState().conversations[0]).toBe(existing)
   })
 
   test("updateConversationViaMessage moves an existing conversation to the top and refreshes lastActivityAt", async () => {

@@ -69,7 +69,7 @@ export function BroadcastsTable({ promises }: BroadcastsTableProps) {
         cell: ({ row }) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="max-w-[200px] truncate">
+              <div className="inline-block max-w-[200px] truncate">
                 {row.original.name ?? ""}
               </div>
             </TooltipTrigger>

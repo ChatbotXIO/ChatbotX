@@ -32,6 +32,16 @@ vi.mock("@chatbotx.io/database/client", () => ({
         messengerMessageTemplateModel: { findFirst: vi.fn() },
         flowModel: { findFirst: vi.fn() },
       },
+      // ShardedMessageRepository calls registry.listActive() → db.select().
+      // Return [] so manager falls back to mainDbShardClient (= this mock db).
+      select: vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([]),
+          }),
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     }
   })(),
   and: vi.fn(),

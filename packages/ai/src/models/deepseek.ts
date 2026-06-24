@@ -1,20 +1,31 @@
 import { z } from "zod"
 
-// DeepSeek's public API currently exposes two chat models:
-//   - deepseek-chat     → DeepSeek-V3 (general chat)
-//   - deepseek-reasoner → DeepSeek-R1 (reasoning)
-// The previous `*-v2` / `*-coder*` ids are no longer valid model ids and
-// would 400 at request time, so they are intentionally not listed here.
-export const deepseekModels = z.enum(["deepseek-chat", "deepseek-reasoner"])
+// DeepSeek keeps `deepseek-chat` and `deepseek-reasoner` as legacy aliases.
+// Prefer the explicit V4 ids for new configs, but keep aliases for compatibility
+// with existing integrations and agents.
+export const deepseekModels = z.enum([
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
+  "deepseek-chat",
+  "deepseek-reasoner",
+])
 export type DeepSeekModel = z.infer<typeof deepseekModels>
 
 export const deepseekModelOptions: { label: string; value: DeepSeekModel }[] = [
   {
-    label: "DeepSeek-V3 (Chat)",
+    label: "DeepSeek V4 Flash",
+    value: deepseekModels.enum["deepseek-v4-flash"],
+  },
+  {
+    label: "DeepSeek V4 Pro",
+    value: deepseekModels.enum["deepseek-v4-pro"],
+  },
+  {
+    label: "DeepSeek Chat (Legacy)",
     value: deepseekModels.enum["deepseek-chat"],
   },
   {
-    label: "DeepSeek-R1 (Reasoner)",
+    label: "DeepSeek Reasoner (Legacy)",
     value: deepseekModels.enum["deepseek-reasoner"],
   },
 ]

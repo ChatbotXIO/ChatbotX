@@ -96,6 +96,16 @@ const extractButtonTemplate = (
   return null
 }
 
+const parseApiDate = (value: string | undefined): Date | undefined => {
+  if (!value) {
+    return
+  }
+  const date = new Date(value)
+  if (Number.isFinite(date.getTime())) {
+    return date
+  }
+}
+
 /** Maximum inline retry attempts on 429 / 5xx before propagating. */
 export const MAX_INLINE_RETRIES = 4
 
@@ -278,9 +288,9 @@ export const fetchConvMessages = async (props: {
         continue
       }
       totalMsg++
-      const createdAt = m.created_time ? new Date(m.created_time) : new Date()
+      const createdAt = parseApiDate(m.created_time)
 
-      if (ceiling && createdAt <= ceiling) {
+      if (createdAt && ceiling && createdAt <= ceiling) {
         hitOlderBoundary = true
         continue
       }
@@ -302,7 +312,7 @@ export const fetchConvMessages = async (props: {
         }
       }
 
-      if (createdAt >= cutoff || totalMsg <= 100) {
+      if (!createdAt || createdAt >= cutoff || totalMsg <= 100) {
         pageMessages.push({
           sourceId: m.id,
           messageType: m.from?.id === pageId ? "outgoing" : "incoming",

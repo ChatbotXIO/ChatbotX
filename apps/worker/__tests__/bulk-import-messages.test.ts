@@ -12,6 +12,7 @@ const {
   mockTxInsert,
   mockTxExecute,
   mockDbUpdate,
+  mockDbExecute,
   mockDbTransaction,
 } = vi.hoisted(() => {
   const txChain = {
@@ -59,6 +60,7 @@ const {
     mockTxInsert,
     mockTxExecute,
     mockDbUpdate,
+    mockDbExecute: vi.fn().mockResolvedValue(undefined),
     mockDbTransaction,
   }
 })
@@ -76,7 +78,7 @@ vi.mock("@chatbotx.io/database/client", () => ({
     insert: mockDbInsert,
     update: mockDbUpdate,
     transaction: mockDbTransaction,
-    execute: vi.fn().mockResolvedValue(undefined),
+    execute: mockDbExecute,
     query: {},
   },
   eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
@@ -86,7 +88,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
       strings,
       values,
     }),
-    { raw: (s: string) => s },
+    {
+      raw: (s: string) => s,
+      join: (chunks: unknown[], _sep?: unknown) => ({ __join: chunks }),
+    },
   ),
 }))
 
@@ -119,7 +124,7 @@ vi.mock("../src/lib/logger", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-const { bulkImportMessages } = await import(
+const { bulkImportMessages, applyCoexistActivityUpdates } = await import(
   "../src/integration/handlers/coexist/bulk-historical-import"
 )
 
@@ -141,6 +146,7 @@ function makeMessage(sourceId: string) {
     text: "hello",
     messageType: "incoming" as const,
     contentType: "text" as const,
+    createdAt: new Date("2026-06-18T08:00:00.000Z"),
     attachments: [],
   }
 }
@@ -239,6 +245,7 @@ describe("bulkImportMessages", () => {
           text: "with attachment",
           messageType: "incoming",
           contentType: "text",
+          createdAt: new Date("2026-06-18T08:00:00.000Z"),
           attachments: [
             {
               sourceId: "att-1",
@@ -290,6 +297,84 @@ describe("bulkImportMessages", () => {
     expect(result.importedMessages).toBe(1)
   })
 
+  test("does not bump activity itself — returns newestMessageAt for the caller to batch", async () => {
+    // Activity bumps (lastMessageAt / lastActivityAt) are the caller's job now;
+    // bulkImportMessages only inserts and reports the newest message time.
+    const newest = new Date("2026-06-20T10:00:00.000Z")
+    const older = new Date("2026-06-19T08:00:00.000Z")
+    mockBulkCreate.mockResolvedValue([
+      { id: "msg-1", sourceId: "src-1" },
+      { id: "msg-2", sourceId: "src-2" },
+    ])
+
+    const result = await bulkImportMessages({
+      ...BASE_PROPS,
+      messages: [
+        { ...makeMessage("src-1"), createdAt: older },
+        { ...makeMessage("src-2"), createdAt: newest },
+      ],
+    })
+
+    expect(result.newestMessageAt).toEqual(newest)
+    // No per-contact activity UPDATE — leaves that to applyCoexistActivityUpdates.
+    expect(mockDbUpdate).not.toHaveBeenCalled()
+  })
+
+  test("reports newestMessageAt only from API message timestamps", async () => {
+    const apiTimestamp = new Date("2026-06-19T08:00:00.000Z")
+    mockBulkCreate.mockResolvedValue([
+      { id: "msg-1", sourceId: "src-with-api-time" },
+      { id: "msg-2", sourceId: "src-without-api-time" },
+    ])
+
+    const result = await bulkImportMessages({
+      ...BASE_PROPS,
+      messages: [
+        { ...makeMessage("src-with-api-time"), createdAt: apiTimestamp },
+        { ...makeMessage("src-without-api-time"), createdAt: undefined },
+      ],
+    })
+
+    expect(result.newestMessageAt).toEqual(apiTimestamp)
+    expect(result.skippedMessages).toBe(0)
+    const rows = mockBulkCreate.mock.calls[0][0] as Array<{
+      sourceId: string
+      createdAt: Date
+    }>
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.sourceId).toBe("src-with-api-time")
+    expect(rows[1]?.sourceId).toBe("src-without-api-time")
+    expect(rows[1]?.createdAt).toBeInstanceOf(Date)
+  })
+
+  test("reports newestIncomingMessageAt only from incoming API message timestamps", async () => {
+    const incomingTimestamp = new Date("2026-06-19T08:00:00.000Z")
+    const newerOutgoingTimestamp = new Date("2026-06-20T10:00:00.000Z")
+    mockBulkCreate.mockResolvedValue([
+      { id: "msg-1", sourceId: "src-incoming" },
+      { id: "msg-2", sourceId: "src-outgoing" },
+    ])
+
+    const result = await bulkImportMessages({
+      ...BASE_PROPS,
+      messages: [
+        {
+          ...makeMessage("src-incoming"),
+          messageType: "incoming",
+          createdAt: incomingTimestamp,
+        },
+        {
+          ...makeMessage("src-outgoing"),
+          messageType: "outgoing",
+          createdAt: newerOutgoingTimestamp,
+        },
+      ],
+    })
+
+    expect(result.newestMessageAt).toEqual(newerOutgoingTimestamp)
+    expect(result.newestIncomingMessageAt).toEqual(incomingTimestamp)
+  })
+
   test("does NOT retry on non-PK errors — they propagate", async () => {
     const fkError = Object.assign(new Error("fk violation"), {
       cause: { code: "23503", constraint: "Message_conversationId_fkey" },
@@ -300,5 +385,167 @@ describe("bulkImportMessages", () => {
       bulkImportMessages({ ...BASE_PROPS, messages: [makeMessage("src-1")] }),
     ).rejects.toThrow("fk violation")
     expect(mockBulkCreate).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("applyCoexistActivityUpdates", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("issues exactly ONE UPDATE per table for the whole bulk (not per contact)", async () => {
+    await applyCoexistActivityUpdates([
+      {
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        newestMessageAt: new Date("2026-06-20T10:00:00.000Z"),
+        newestIncomingMessageAt: null,
+      },
+      {
+        contactInboxId: "ci-2",
+        conversationId: "conv-2",
+        newestMessageAt: new Date("2026-06-21T10:00:00.000Z"),
+        newestIncomingMessageAt: null,
+      },
+      {
+        contactInboxId: "ci-3",
+        conversationId: "conv-3",
+        newestMessageAt: new Date("2026-06-22T10:00:00.000Z"),
+        newestIncomingMessageAt: null,
+      },
+    ])
+
+    // 3 contacts → still 2 statements total (ContactInbox + Conversation),
+    // not 6. This is the "limit queries in the loop" guarantee.
+    expect(mockDbExecute).toHaveBeenCalledTimes(2)
+  })
+
+  test("updates both ContactInbox last-message timestamps from the API message time", async () => {
+    const incomingAt = new Date("2026-06-19T08:00:00.000Z")
+    const latestAt = new Date("2026-06-20T10:00:00.000Z")
+    await applyCoexistActivityUpdates([
+      {
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        newestMessageAt: latestAt,
+        newestIncomingMessageAt: incomingAt,
+      },
+    ])
+
+    const contactInboxSql = mockDbExecute.mock.calls[0]?.[0] as
+      | { strings?: TemplateStringsArray; values?: unknown[] }
+      | undefined
+
+    expect(contactInboxSql?.strings?.join("")).toContain('"lastMessageAt"')
+    expect(contactInboxSql?.strings?.join("")).toContain(
+      '"lastIncomingMessageAt"',
+    )
+    expect(contactInboxSql?.strings?.join("")).not.toContain('"createdAt"')
+    expect(contactInboxSql?.strings?.join("")).toContain("VALUES")
+    expect(contactInboxSql?.strings?.join("")).not.toContain("unnest")
+
+    const contactRows = contactInboxSql?.values?.[0] as
+      | { __join?: Array<{ values?: unknown[] }> }
+      | undefined
+    expect(contactRows?.__join?.[0]?.values).toEqual([
+      "ci-1",
+      latestAt,
+      incomingAt,
+    ])
+
+    const conversationSql = mockDbExecute.mock.calls[1]?.[0] as
+      | { strings?: TemplateStringsArray }
+      | undefined
+    expect(conversationSql?.strings?.join("")).not.toContain('"createdAt"')
+    expect(conversationSql?.strings?.join("")).toContain("VALUES")
+    expect(conversationSql?.strings?.join("")).not.toContain("unnest")
+  })
+
+  test("does not derive ContactInbox.lastIncomingMessageAt from an outgoing-only latest message", async () => {
+    const outgoingAt = new Date("2026-06-20T10:00:00.000Z")
+    await applyCoexistActivityUpdates([
+      {
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        newestMessageAt: outgoingAt,
+        newestIncomingMessageAt: null,
+      },
+    ])
+
+    const contactInboxSql = mockDbExecute.mock.calls[0]?.[0] as
+      | { values?: unknown[] }
+      | undefined
+
+    const contactRows = contactInboxSql?.values?.[0] as
+      | { __join?: Array<{ values?: unknown[] }> }
+      | undefined
+    expect(contactRows?.__join?.[0]?.values).toEqual(["ci-1", outgoingAt, null])
+  })
+
+  test("deduplicates repeated activity updates to the newest API message times", async () => {
+    const olderMessage = new Date("2026-06-19T08:00:00.000Z")
+    const newerMessage = new Date("2026-06-20T10:00:00.000Z")
+    const olderIncoming = new Date("2026-06-19T07:00:00.000Z")
+    const newerIncoming = new Date("2026-06-20T09:00:00.000Z")
+
+    await applyCoexistActivityUpdates([
+      {
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        newestMessageAt: newerMessage,
+        newestIncomingMessageAt: olderIncoming,
+      },
+      {
+        contactInboxId: "ci-1",
+        conversationId: "conv-1",
+        newestMessageAt: olderMessage,
+        newestIncomingMessageAt: newerIncoming,
+      },
+    ])
+
+    const contactInboxSql = mockDbExecute.mock.calls[0]?.[0] as
+      | { values?: unknown[] }
+      | undefined
+    const contactRows = contactInboxSql?.values?.[0] as
+      | { __join?: Array<{ values?: unknown[] }> }
+      | undefined
+    expect(contactRows?.__join).toHaveLength(1)
+    expect(contactRows?.__join?.[0]?.values).toEqual([
+      "ci-1",
+      newerMessage,
+      newerIncoming,
+    ])
+
+    const conversationSql = mockDbExecute.mock.calls[1]?.[0] as
+      | { values?: unknown[] }
+      | undefined
+    const conversationRows = conversationSql?.values?.[0] as
+      | { __join?: Array<{ values?: unknown[] }> }
+      | undefined
+    expect(conversationRows?.__join).toHaveLength(1)
+    expect(conversationRows?.__join?.[0]?.values).toEqual([
+      "conv-1",
+      newerMessage,
+    ])
+  })
+
+  test("is a no-op (no query) when there are no updates", async () => {
+    await applyCoexistActivityUpdates([])
+    expect(mockDbExecute).not.toHaveBeenCalled()
+  })
+
+  test("propagates activity update failures instead of marking coexist success with stale timestamps", async () => {
+    mockDbExecute.mockRejectedValueOnce(new Error("bad activity update"))
+
+    await expect(
+      applyCoexistActivityUpdates([
+        {
+          contactInboxId: "ci-1",
+          conversationId: "conv-1",
+          newestMessageAt: new Date("2026-06-20T10:00:00.000Z"),
+          newestIncomingMessageAt: null,
+        },
+      ]),
+    ).rejects.toThrow("bad activity update")
   })
 })

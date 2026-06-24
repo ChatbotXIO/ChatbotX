@@ -170,7 +170,9 @@ class ConversationService extends BaseService {
 
   async findManyQuery<W extends ConversationWithConfig>(props: {
     where: Record<string, unknown>
-    orderBy?: Record<string, unknown>
+    orderBy?: NonNullable<
+      Parameters<typeof db.query.conversationModel.findMany>[0]
+    >["orderBy"]
     limit?: number
     with?: W
     tx?: DatabaseClient

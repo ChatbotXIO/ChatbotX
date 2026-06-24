@@ -2,17 +2,16 @@
 
 import { automatedResponseService } from "@chatbotx.io/automated-response"
 import {
+  contactInboxService,
+  contactService,
   conversationService,
+  quotaEnforcementService,
   resolveTenantSettings,
+  workspaceService,
 } from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { getPublicFileUrl } from "@chatbotx.io/business/utils"
-import {
-  db,
-  eq,
-  findOrFail,
-  type Transaction,
-} from "@chatbotx.io/database/client"
+import { db, eq, findOrFail } from "@chatbotx.io/database/client"
 import {
   type ConversationAttributes,
   channelTypes,
@@ -25,10 +24,6 @@ import {
   conversationModel,
   integrationWebchatModel,
 } from "@chatbotx.io/database/schema"
-import type {
-  ContactModel,
-  ConversationModel,
-} from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { type UploadedFile, uploadMultipleFiles } from "@chatbotx.io/filesystem"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
@@ -57,9 +52,7 @@ export async function handleCreateWebchatMessage({
   parsedInput: CreateWebchatMessageRequest
 }) {
   const { conversation, isNewContact, contact, contactInbox } =
-    await db.transaction(
-      async (tx) => await getConversationFromInput(tx, parsedInput),
-    )
+    await getConversationFromInput(parsedInput)
 
   const { storageUrl } = await resolveTenantSettings({
     workspaceId: parsedInput.workspaceId,
@@ -257,7 +250,6 @@ export async function handleCreateWebchatMessage({
 }
 
 async function getConversationFromInput(
-  tx: Transaction,
   parsedInput: CreateWebchatMessageRequest,
 ) {
   const integrationWebchat = await findOrFail({
@@ -269,95 +261,121 @@ async function getConversationFromInput(
     message: "Channel not found",
   })
 
-  let isNewContact = false
   const sourceId = parsedInput.guestConversationId
 
-  let conversation: ConversationModel | null | undefined = null
-  let contact: ContactModel | null | undefined = null
-
-  let contactInbox = await tx.query.contactInboxModel.findFirst({
-    where: {
-      inboxId: integrationWebchat.inboxId,
-      sourceId,
-    },
-    orderBy: {
-      lastMessageAt: "desc",
-    },
+  const existingContactInbox = await contactInboxService.findLatestBySource({
+    inboxId: integrationWebchat.inboxId,
+    sourceId,
   })
-  if (contactInbox) {
-    conversation = await tx.query.conversationModel.findFirst({
+
+  if (existingContactInbox) {
+    const conversation = await conversationService.findBy({
       where: {
         workspaceId: parsedInput.workspaceId,
-        contactId: contactInbox.contactId,
+        contactId: existingContactInbox.contactId,
       },
     })
-    contact = await tx.query.contactModel.findFirst({
-      where: {
-        id: contactInbox.contactId,
-      },
+    const contact = await contactService.findById({
+      workspaceId: parsedInput.workspaceId,
+      id: existingContactInbox.contactId,
     })
-  } else {
-    // Create new contact
-    contact = await tx
-      .insert(contactModel)
-      .values({
-        id: createId(),
-        workspaceId: parsedInput.workspaceId,
-        email: parsedInput.guestConversationId,
-        gender: "unknown",
-        firstName: "Guest",
-        lastName: randomString(10),
-      })
-      .returning()
-      .then((result) => result[0])
+    if (!conversation) {
+      throw new ChatbotXException("Conversation not found")
+    }
     if (!contact) {
       throw new ChatbotXException("Contact not found")
     }
-
-    isNewContact = true
-
-    contactInbox = await tx
-      .insert(contactInboxModel)
-      .values({
-        id: createId(),
-        inboxId: integrationWebchat.inboxId,
-        contactId: contact.id,
-        originalContactId: contact.id,
-        source: "webchat",
-        sourceId,
-        channel: "webchat",
-      })
-      .returning()
-      .then((result) => result[0])
-    if (!contactInbox) {
-      throw new ChatbotXException("Contact inbox not found")
+    return {
+      conversation,
+      contact,
+      contactInbox: existingContactInbox,
+      isNewContact: false,
+      workspaceOwnerId: null as string | null,
     }
+  }
 
-    conversation = await tx
-      .insert(conversationModel)
-      .values({
-        id: createId(),
-        workspaceId: parsedInput.workspaceId,
+  // New contact. Resolve the owner (owner-derived, never request-derived) and
+  // gate on MAC — the billing hard limit — atomically with the insert so
+  // concurrent first-message requests cannot both pass the gate and overrun the
+  // limit. MAC is consumed here (not via the async message event) and the
+  // `ContactActiveMonthly` presence row written inside the same transaction so
+  // the later `message:received` event dedups instead of double-counting. The
+  // info-only `contacts` metric is recorded inside `createNewContactWithMac`.
+  const ws = await workspaceService.find({
+    where: { id: parsedInput.workspaceId },
+  })
+  if (!ws) {
+    throw new ChatbotXException("Workspace not found", "notFound", 404)
+  }
+
+  const result = await quotaEnforcementService.createNewContactWithMac({
+    ownerId: ws.ownerId,
+    workspaceId: parsedInput.workspaceId,
+    create: async (tx) => {
+      const contact = await tx
+        .insert(contactModel)
+        .values({
+          id: createId(),
+          workspaceId: parsedInput.workspaceId,
+          email: parsedInput.guestConversationId,
+          gender: "unknown",
+          firstName: "Guest",
+          lastName: randomString(10),
+        })
+        .returning()
+        .then((rows) => rows[0])
+      if (!contact) {
+        throw new ChatbotXException("Contact not found")
+      }
+
+      const contactInbox = await tx
+        .insert(contactInboxModel)
+        .values({
+          id: createId(),
+          inboxId: integrationWebchat.inboxId,
+          contactId: contact.id,
+          originalContactId: contact.id,
+          source: "webchat",
+          sourceId,
+          channel: "webchat",
+        })
+        .returning()
+        .then((rows) => rows[0])
+      if (!contactInbox) {
+        throw new ChatbotXException("Contact inbox not found")
+      }
+
+      const conversation = await tx
+        .insert(conversationModel)
+        .values({
+          id: createId(),
+          workspaceId: parsedInput.workspaceId,
+          contactId: contact.id,
+        })
+        .returning()
+        .then((rows) => rows[0])
+      if (!conversation) {
+        throw new ChatbotXException("Conversation not found")
+      }
+
+      return {
+        value: { contact, contactInbox, conversation },
         contactId: contact.id,
-      })
-      .returning()
-      .then((result) => result[0])
-  }
+        contactInboxId: contactInbox.id,
+        inboxId: integrationWebchat.inboxId,
+      }
+    },
+  })
 
-  if (!conversation) {
-    throw new ChatbotXException("Conversation not found")
-  }
-  if (!contactInbox) {
-    throw new ChatbotXException("Contact inbox not found")
-  }
-  if (!contact) {
-    throw new ChatbotXException("Contact not found")
+  if (!result.ok) {
+    throw new ChatbotXException("Contact limit reached", "quotaExceeded", 422)
   }
 
   return {
-    conversation,
-    contact,
-    contactInbox,
-    isNewContact,
+    conversation: result.value.conversation,
+    contact: result.value.contact,
+    contactInbox: result.value.contactInbox,
+    isNewContact: true,
+    workspaceOwnerId: ws.ownerId as string | null,
   }
 }

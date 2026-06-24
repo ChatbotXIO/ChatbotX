@@ -10,6 +10,7 @@ ALTER TABLE "Invitation" DROP CONSTRAINT IF EXISTS "Invitation_organizationId_Or
 ALTER TABLE "OrganizationMember" DROP CONSTRAINT IF EXISTS "OrganizationMember_organizationId_Organization_id_fkey";--> statement-breakpoint
 ALTER TABLE "OrganizationMember" DROP CONSTRAINT IF EXISTS "OrganizationMember_userId_User_id_fkey";--> statement-breakpoint
 ALTER TABLE "Workspace" DROP CONSTRAINT IF EXISTS "Workspace_organizationId_Organization_id_fkey";--> statement-breakpoint
+ALTER TABLE "Plan" DROP CONSTRAINT IF EXISTS "Plan_organizationId_fkey";--> statement-breakpoint
 
 -- 2. Create CustomDomain table (enterprise)
 CREATE TABLE IF NOT EXISTS "CustomDomain" (
