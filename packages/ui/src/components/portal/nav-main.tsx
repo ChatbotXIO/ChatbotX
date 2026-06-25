@@ -45,6 +45,12 @@ export function NavMain({ items, label, crossZone = false }: Props) {
             pathname === item.url ||
             pathname.startsWith(`${item.url}/`)
           const linkClass = `flex w-full items-center gap-2 p-2 ${isActive ? "dark:text-gray-50" : "dark:text-gray-400"}`
+          const content = (
+            <>
+              {item.icon && <item.icon className="size-5 shrink-0" />}
+              <span>{item.title}</span>
+            </>
+          )
           return (
             <SidebarMenuItem key={item.url}>
               <SidebarMenuButton
@@ -59,13 +65,11 @@ export function NavMain({ items, label, crossZone = false }: Props) {
                     rel={item.external ? "noopener noreferrer" : undefined}
                     target={item.external ? "_blank" : undefined}
                   >
-                    {item.icon && <item.icon className="size-5 shrink-0" />}
-                    <span>{item.title}</span>
+                    {content}
                   </a>
                 ) : (
                   <Link className={linkClass} href={item.url}>
-                    {item.icon && <item.icon className="size-5 shrink-0" />}
-                    <span>{item.title}</span>
+                    {content}
                   </Link>
                 )}
               </SidebarMenuButton>

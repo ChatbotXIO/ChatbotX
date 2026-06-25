@@ -61,17 +61,29 @@ export function PortalPricingNavItem({
   )
 }
 
+/** Shared row styling so the active and missing-domain states stay identical. */
+const PRICING_ROW_CLASS =
+  "flex w-full items-center gap-2 p-2 dark:text-gray-400"
+
+function PricingRow({ title }: { title: string }) {
+  return (
+    <>
+      <Tag className="size-5 shrink-0" />
+      <span>{title}</span>
+    </>
+  )
+}
+
 function ActivePricingButton({ title, url }: { title: string; url: string }) {
   return (
     <SidebarMenuButton className="h-9 cursor-pointer p-0" tooltip={title}>
       <a
-        className="flex w-full items-center gap-2 p-2 dark:text-gray-400"
+        className={PRICING_ROW_CLASS}
         href={url}
         rel="noopener noreferrer"
         target="_blank"
       >
-        <Tag className="size-5 shrink-0" />
-        <span>{title}</span>
+        <PricingRow title={title} />
       </a>
     </SidebarMenuButton>
   )
@@ -88,9 +100,8 @@ function MissingDomainPricingButton({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <SidebarMenuButton className="h-9 cursor-pointer p-0" tooltip={title}>
-          <span className="flex w-full items-center gap-2 p-2 dark:text-gray-400">
-            <Tag className="size-5 shrink-0" />
-            <span>{title}</span>
+          <span className={PRICING_ROW_CLASS}>
+            <PricingRow title={title} />
           </span>
         </SidebarMenuButton>
       </AlertDialogTrigger>
