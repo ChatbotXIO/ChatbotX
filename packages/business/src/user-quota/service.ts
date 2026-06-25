@@ -4,6 +4,7 @@ import { userQuotaModel } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { distributedStore } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
+import { isCloud } from "../keys"
 import { logger } from "../logger"
 import {
   LiveCounterStore,
@@ -15,11 +16,22 @@ export type { QuotaMetric } from "../quota-shared/live-counter-store"
 
 /**
  * Cross-repo contract key (read-only here). The enterprise billing layer writes
- * the platform default plan's entitlements to this key; we read it as the
- * free-tier fallback for users with no per-user UserQuota row. Absent in pure
- * OSS installs → no fallback (unlimited), preserving prior behavior.
+ * the platform default plan's entitlements to this key; cloud sign-up uses it
+ * to stamp the initial bootstrap row. The legacy free-tier overlay still reads
+ * it as a secondary fallback for failed stamps and usage-only rows. Absent in
+ * pure OSS installs → no overlay fallback (unlimited), preserving prior behavior.
  */
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
+
+const BOOTSTRAP_TRIAL_FALLBACK = {
+  planName: "Trial",
+  trialDays: 1,
+  workspacesLimit: 1,
+  macLimit: 1,
+  channelsLimit: 1,
+  teamMembersLimit: 1,
+  contactsLimit: 100,
+} as const
 
 interface DefaultPlanSnapshot {
   channelsLimit: number | null
@@ -33,6 +45,17 @@ interface DefaultPlanSnapshot {
   whiteLabel: boolean
   workspacesLimit: number | null
 }
+
+type BootstrapPlanSnapshot = Pick<
+  DefaultPlanSnapshot,
+  | "channelsLimit"
+  | "contactsLimit"
+  | "macLimit"
+  | "planName"
+  | "teamMembersLimit"
+  | "trialDays"
+  | "workspacesLimit"
+>
 
 /**
  * Result of evaluating whether a user may access the app. `blocked` is the only
@@ -123,6 +146,78 @@ class UserQuotaService extends BaseService {
     return null
   }
 
+  private async readDefaultPlanSnapshot(): Promise<DefaultPlanSnapshot | null> {
+    try {
+      return await distributedStore.get<DefaultPlanSnapshot>(
+        DEFAULT_PLAN_ENTITLEMENT_KEY,
+      )
+    } catch (err) {
+      logger.warn({ err }, "user-quota: default-plan snapshot read failed")
+      return null
+    }
+  }
+
+  /**
+   * Stamp a real cloud sign-up quota row before the private quota-worker runs.
+   * Idempotent by `UserQuota.userId`; the worker remains authoritative and may
+   * overwrite this bootstrap row on its next `publishEntitlements` sync.
+   */
+  async ensureBootstrapPlan(userId: string): Promise<void> {
+    if (!isCloud()) {
+      return
+    }
+
+    try {
+      const snapshot: BootstrapPlanSnapshot =
+        (await this.readDefaultPlanSnapshot()) ?? BOOTSTRAP_TRIAL_FALLBACK
+      const now = new Date()
+      // Distinguish a malformed snapshot (NaN → 1-day lockdown) from an
+      // explicit `0`/negative trial length (a free-forever default plan →
+      // `active`, never expires). Only the malformed case falls back.
+      const rawTrialDays = Number(snapshot.trialDays)
+      const trialDays = Number.isFinite(rawTrialDays)
+        ? Math.max(0, rawTrialDays)
+        : BOOTSTRAP_TRIAL_FALLBACK.trialDays
+      const isTrial = trialDays > 0
+      const periodEnd = isTrial
+        ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+        : null
+
+      const inserted = await db
+        .insert(userQuotaModel)
+        .values({
+          userId,
+          contactsLimit: snapshot.contactsLimit,
+          workspacesLimit: snapshot.workspacesLimit,
+          channelsLimit: snapshot.channelsLimit,
+          teamMembersLimit: snapshot.teamMembersLimit,
+          macLimit: snapshot.macLimit,
+          whiteLabel: false,
+          ssoSaml: false,
+          saasMode: false,
+          planName: snapshot.planName,
+          planStatus: isTrial
+            ? planStatuses.enum.trial
+            : planStatuses.enum.active,
+          periodStart: now,
+          periodEnd,
+          syncedAt: now,
+        })
+        .onConflictDoNothing({ target: userQuotaModel.userId })
+        .returning({ userId: userQuotaModel.userId })
+
+      // Only bust the cache when we actually wrote a row. On a no-op conflict
+      // (hook retry, re-signup, or the worker winning the race) there is
+      // nothing new to invalidate — and skipping it preserves any freshly
+      // cached authoritative row the worker just wrote.
+      if (inserted.length > 0) {
+        await this.store.invalidate(userId)
+      }
+    } catch (err) {
+      logger.warn({ err, userId }, "user-quota: bootstrap plan stamp failed")
+    }
+  }
+
   /**
    * Overlay the shared default-plan entitlement snapshot onto a free-tier user.
    * Fills only unset (null) limit fields and the plan identity, preserving any
@@ -132,15 +227,7 @@ class UserQuotaService extends BaseService {
     userId: string,
     quota: UserQuotaModel | null,
   ): Promise<UserQuotaModel | null> {
-    let snapshot: DefaultPlanSnapshot | null = null
-    try {
-      snapshot = await distributedStore.get<DefaultPlanSnapshot>(
-        DEFAULT_PLAN_ENTITLEMENT_KEY,
-      )
-    } catch (err) {
-      logger.warn({ err }, "user-quota: default-plan snapshot read failed")
-      return null
-    }
+    const snapshot = await this.readDefaultPlanSnapshot()
     if (!snapshot) {
       return null
     }
@@ -185,9 +272,9 @@ class UserQuotaService extends BaseService {
       ssoSaml: base.ssoSaml || snapshot.ssoSaml,
       saasMode: base.saasMode || snapshot.saasMode,
       planName: base.planName ?? snapshot.planName,
-      // Fail-open: a user with no per-user row yet (gap between sign-up and the
-      // quota-worker) is never blocked. The worker later writes the real status
-      // ("trial" + periodEnd, etc.), which getAccessState then enforces.
+      // Secondary fail-open fallback: normally cloud sign-up stamps a real
+      // bootstrap row first. If that stamp failed, or for legacy usage-only rows,
+      // the overlay still avoids blocking while the worker writes real status.
       planStatus: base.planStatus ?? planStatuses.enum.active,
     }
   }

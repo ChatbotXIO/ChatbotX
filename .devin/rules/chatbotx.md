@@ -20,6 +20,7 @@ pnpm workspaces + Turborepo · TypeScript 5 · React 19 · Next.js 16 (builder) 
 7. **No direct `db` in `apps/` or `integrations/`** — go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.
 8. **No dynamic `import()`** — it breaks the tsdown build. See `.agents/rules/no-dynamic-import.md`.
 9. **New workspace package** — run `CI=true pnpm install --no-frozen-lockfile` to link it.
+10. **Cloud signup stamps a bootstrap quota row.** On the cloud edition, `onUserCreated` synchronously writes a conservative `UserQuota` trial row (`ensureBootstrapPlan`) before enqueuing `publishEntitlements`. Don't assume a new cloud user has *no* quota row during the worker-sync gap, and don't treat the OSS layer as read-only for plan identity at signup. The private `quota-worker` remains the authority and re-anchors the row on its run.
 
 ## Workflow
 - After any change: `pnpm lint` + `pnpm --filter <app> check-types`. Use `pnpm fix`, never hand-format.

@@ -2,12 +2,14 @@ import { z } from "zod"
 
 /**
  * Canonical `UserQuota.planStatus` — a small **app-facing state machine**, not a
- * mirror of Stripe's billing vocabulary. Written by the private billing portal
- * (`publishEntitlements`) and read here by the access gate
+ * mirror of Stripe's billing vocabulary. Cloud sign-up stamps the initial
+ * `trial` row in OSS, then the private billing portal (`publishEntitlements`)
+ * remains authoritative and reconciles/overwrites it. The access gate
  * (`userQuotaService.getAccessStateFromQuota`) and the builder's plan-status
- * banner. The column is plain `text()` (the portal owns it cross-repo), but every
- * reader MUST key off these constants, never an inline literal, so the two sides
- * can never drift (a mismatch silently disables the banner or the access gate).
+ * banner read it here. The column is plain `text()` (the portal owns it
+ * cross-repo), but every reader MUST key off these constants, never an inline
+ * literal, so the two sides can never drift (a mismatch silently disables the
+ * banner or the access gate).
  *
  * Four values; Stripe's ~8 subscription statuses collapse into them:
  *  - `active`   : entitled & good standing — paid `active`/`trialing`, the free

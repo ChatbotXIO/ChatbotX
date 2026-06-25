@@ -476,3 +476,4 @@ See **`.agents/rules/git.md`** for the full canonical rules (commit format, bran
 - **No direct `db` in `apps/` or `integrations/`** — go through a service (`@chatbotx.io/business`) or repository (`@chatbotx.io/database/repositories`). See `.agents/rules/data-access.md`.
 - **No dynamic `import()`** — it breaks the tsdown build. See `.agents/rules/no-dynamic-import.md`.
 - **New workspace package** — run `CI=true pnpm install --no-frozen-lockfile` to link it.
+- **Cloud signup stamps a bootstrap quota row.** On the cloud edition, `onUserCreated` synchronously writes a conservative `UserQuota` trial row (`ensureBootstrapPlan`) before enqueuing `publishEntitlements`. Don't assume a new cloud user has *no* quota row during the worker-sync gap, and don't treat the OSS layer as read-only for plan identity at signup. The private `quota-worker` remains the authority and re-anchors the row on its run.

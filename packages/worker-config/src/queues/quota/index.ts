@@ -8,9 +8,11 @@ import { queueNames } from "../../lib/types"
 
 /**
  * Cross-repo contract queue. The OSS app produces `publishEntitlements` jobs
- * (e.g. on sign-up); the enterprise `quota-worker` consumes them and writes the
- * user's entitlement snapshot. The contract is the queue NAME + job shape only —
- * no enterprise package is imported into OSS.
+ * (e.g. on sign-up); the enterprise `quota-worker` consumes them and reconciles
+ * the user's entitlement snapshot. Cloud sign-up may already have an
+ * OSS-stamped bootstrap trial row, which the worker overwrites and re-anchors.
+ * The contract is the queue NAME + job shape only — no enterprise package is
+ * imported into OSS.
  */
 export const QuotaJobAction = {
   publishEntitlements: "publishEntitlements",
