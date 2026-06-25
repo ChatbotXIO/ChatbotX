@@ -9,7 +9,7 @@ fi
 
 if [ "${RUN_DB_SEED:-}" = "true" ]; then
   echo "Running database seed..."
-  SKIP_ENV_CHECK="${SKIP_ENV_CHECK:-true}" NODE_OPTIONS=--no-node-snapshot node /app/seed-runner/seed.mjs
+  SKIP_ENV_CHECK="${SKIP_ENV_CHECK:-true}" NODE_OPTIONS=--no-node-snapshot node /app/seed-runner/seed.cjs
 fi
 
 NODE_OPTIONS=--no-node-snapshot HOSTNAME="${HOSTNAME:-0.0.0.0}" PORT="${PORT:-3000}" exec node apps/builder/server.js

@@ -42,8 +42,8 @@ RUN bash /app/migrate-runner/scripts/create-runner-package.sh migrate ./database
 WORKDIR /app
 RUN mkdir -p /app/seed-runner \
   && pnpm --filter "@chatbotx.io/database" exec esbuild src/seed/index.ts \
-    --bundle --platform=node --format=esm \
-    --outfile=/app/seed-runner/seed.mjs \
+    --bundle --platform=node --format=cjs \
+    --outfile=/app/seed-runner/seed.cjs \
     --external:pg
 
 WORKDIR /app/seed-runner
