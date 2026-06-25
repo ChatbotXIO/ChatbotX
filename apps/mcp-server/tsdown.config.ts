@@ -20,7 +20,7 @@ export default defineConfig({
   // esbuildOptions(options) {
   //   options.jsx = "automatic"
   // },
-  sourcemap: false,
+  sourcemap: true,
   treeshake: true,
   banner: {
     js: "#!/usr/bin/env node",

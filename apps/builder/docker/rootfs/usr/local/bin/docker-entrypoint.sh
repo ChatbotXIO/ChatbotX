@@ -2,22 +2,23 @@
 set -eu
 
 # Standalone output has no pnpm workspace; use /migrate-runner and /seed-runner (see Dockerfile).
+# --enable-source-maps resolves production stack traces back to original TypeScript source.
 
 run_migrate() {
   echo "Running database migrations..."
-  NODE_OPTIONS=--no-node-snapshot node /app/migrate-runner/scripts/run-migrations.mjs
+  NODE_OPTIONS="--no-node-snapshot --enable-source-maps" node /app/migrate-runner/scripts/run-migrations.mjs
 }
 
 run_seed() {
   echo "Running database seed..."
-  SKIP_ENV_CHECK="${SKIP_ENV_CHECK:-true}" NODE_OPTIONS=--no-node-snapshot node /app/seed-runner/seed.cjs
+  SKIP_ENV_CHECK="${SKIP_ENV_CHECK:-true}" NODE_OPTIONS="--no-node-snapshot --enable-source-maps" node /app/seed-runner/seed.cjs
 }
 
 start_server() {
   # Backward-compatible env gating (no command passed): migrate/seed, then serve.
   if [ "${RUN_DB_MIGRATE:-}" = "true" ]; then run_migrate; fi
   if [ "${RUN_DB_SEED:-}" = "true" ]; then run_seed; fi
-  NODE_OPTIONS=--no-node-snapshot HOSTNAME="${HOSTNAME:-0.0.0.0}" PORT="${PORT:-3000}" \
+  NODE_OPTIONS="--no-node-snapshot --enable-source-maps" HOSTNAME="${HOSTNAME:-0.0.0.0}" PORT="${PORT:-3000}" \
     exec node apps/builder/server.js
 }
 

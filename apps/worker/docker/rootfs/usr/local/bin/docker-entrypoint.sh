@@ -5,6 +5,10 @@ set -eu
 WORKER_DIST_DIR="${WORKER_DIST_DIR:-/app/apps/worker/dist}"
 NODE_BIN="${NODE_BIN:-/usr/local/bin/node}"
 
+# --enable-source-maps resolves production stack traces back to original TypeScript
+# source. Exported so every worker launched below (loop and single-worker exec) inherits it.
+export NODE_OPTIONS="${NODE_OPTIONS:-} --enable-source-maps"
+
 # Map a built bundle (dir + file basename without .mjs) to its roster name.
 # Standard:  <dir>/worker.mjs            -> <dir>
 # Variants:  <dir>/worker-<suffix>.mjs   -> <dir>-<suffix>, with aliases below
