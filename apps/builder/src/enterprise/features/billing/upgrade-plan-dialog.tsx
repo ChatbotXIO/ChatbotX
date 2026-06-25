@@ -73,7 +73,7 @@ export function UpgradePlanDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex h-[85vh] w-[min(95vw,1100px)] max-w-none flex-col overflow-hidden p-0">
+      <DialogContent className="flex h-[92vh] w-[95vw] max-w-none flex-col overflow-hidden p-0 sm:max-w-none md:h-[88vh] md:w-[92vw] lg:h-[85vh] lg:w-[min(92vw,1100px)] xl:w-[min(90vw,1320px)] 2xl:w-[min(88vw,1480px)]">
         <DialogHeader className="border-b px-6 py-4 text-left">
           <DialogTitle className="flex items-center gap-2">
             <CrownIcon aria-hidden className="size-4 text-primary" />
