@@ -25,6 +25,15 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pre /app/out/full/ .
 # COPY --from=pre /app/.env .env
 
+# Build-time placeholders. `next build` evaluates module-level code (better-auth
+# is instantiated when route/instrumentation modules load), so without these the
+# build logs a "Base URL could not be determined" warning and falls back to
+# better-auth's insecure default secret. Build-only: the `release` stage is a
+# fresh `FROM base`, so these never reach the runtime image — real values come
+# from the container environment at runtime.
+ENV BETTER_AUTH_SECRET="docker-build-time-placeholder-not-used-at-runtime-0"
+ENV BETTER_AUTH_URL="http://localhost:3000"
+
 RUN SKIP_ENV_CHECK=true pnpm turbo run build --filter=builder
 
 # Standalone image has no pnpm workspace; bundle a tiny migration runner (drizzle-orm + pg only).
@@ -40,6 +49,10 @@ RUN bash /app/migrate-runner/scripts/create-runner-package.sh migrate ./database
 
 # Bundled seed (workspace TS → single ESM file; `pg` stays external — installed below).
 WORKDIR /app
+# `turbo prune` omits the repo-root tsconfig.base.json that packages/database's
+# tsconfig extends; copy it back so esbuild resolves the `extends` instead of
+# warning "Cannot find base config file ../../tsconfig.base.json".
+COPY tsconfig.base.json ./tsconfig.base.json
 RUN mkdir -p /app/seed-runner \
   && pnpm --filter "@chatbotx.io/database" exec esbuild src/seed/index.ts \
     --bundle --platform=node --format=cjs \
@@ -67,4 +80,8 @@ COPY --from=deps --chown=nextjs:nodejs /app/migrate-runner ./migrate-runner
 COPY --from=deps --chown=nextjs:nodejs /app/seed-runner ./seed-runner
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# Default command passed to the entrypoint. `serve` runs env-gated migrate/seed
+# then starts the server; override at run time with `migrate`, `seed`,
+# `migrate-seed`, or any other command (e.g. `sh`) — see docker-entrypoint.sh.
+CMD ["serve"]
 EXPOSE 3000
