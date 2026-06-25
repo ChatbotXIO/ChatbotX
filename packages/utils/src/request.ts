@@ -1,3 +1,5 @@
+import { keys } from "./keys"
+
 export function getPublicOriginFromRequest(request: Request): string {
   const protocol = getPublicProtocolFromRequest(request)
   const host = getPublicHostFromRequest(request)
@@ -7,6 +9,7 @@ export function getPublicOriginFromRequest(request: Request): string {
 export function getPublicUrlFromRequest(request: Request): URL {
   const url = new URL(request.url)
   url.host = getPublicHostFromRequest(request)
+  url.protocol = getPublicProtocolFromRequest(request)
   url.port = ""
   return url
 }
@@ -14,6 +17,10 @@ export function getPublicUrlFromRequest(request: Request): URL {
 export function getPublicProtocolFromRequest(
   request: Request,
 ): "http" | "https" {
+  if (keys().FORCE_PUBLIC_HTTPS) {
+    return "https"
+  }
+
   const forwarded = request.headers.get("forwarded")
   const forwardedProtocol = extractForwardedValue(forwarded, "proto")
   if (forwardedProtocol === "http" || forwardedProtocol === "https") {
