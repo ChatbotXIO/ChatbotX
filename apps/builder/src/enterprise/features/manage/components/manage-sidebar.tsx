@@ -12,14 +12,14 @@ import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { portalNavConfigs } from "@/enterprise/features/manage/portal-nav"
 import { authClient } from "@/lib/auth/auth-client"
 
-type Props = {
-  showEnterpriseItems: boolean
-}
-
-export function ManageSidebar({ showEnterpriseItems }: Props) {
+/**
+ * Platform-only manage sidebar for the community and enterprise (self-hosted)
+ * editions. The cloud edition renders the richer reseller `PortalManageSidebar`
+ * instead — the edition switch lives in `app/manage/layout.tsx`.
+ */
+export function ManageSidebar() {
   const t = useTranslations()
   const tManage = useTranslations("manageSidebar")
   const { data: session } = authClient.useSession()
@@ -48,12 +48,6 @@ export function ManageSidebar({ showEnterpriseItems }: Props) {
     },
   ]
 
-  const portalItems = portalNavConfigs.map(({ key, url, icon }) => ({
-    title: tManage(key),
-    url,
-    icon,
-  }))
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="gap-0 px-0 py-0">
@@ -66,10 +60,6 @@ export function ManageSidebar({ showEnterpriseItems }: Props) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={platformItems} label={tManage("platformGroup")} />
-
-        {showEnterpriseItems && (
-          <NavMain crossZone items={portalItems} label={tManage("saasGroup")} />
-        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

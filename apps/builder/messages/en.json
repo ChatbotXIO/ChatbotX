@@ -2882,6 +2882,7 @@
     "portalUsage": "Usage",
     "portalCustomDomain": "Custom Domain",
     "portalPaymentProcessor": "Payment Processor",
+    "portalSmtp": "SMTP Settings",
     "portalPricingPage": "Pricing"
   },
   "unsubscribePage": {

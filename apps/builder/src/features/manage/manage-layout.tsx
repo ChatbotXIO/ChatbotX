@@ -7,19 +7,16 @@ import {
 } from "@chatbotx.io/ui/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useEffect, useState } from "react"
-import { ManageSidebar } from "@/enterprise/features/manage/components/manage-sidebar"
 
 const SIDEBAR_COLLAPSED_ROUTES = [/^\/manage\/email-templates\/.+/]
 
 type ManageLayoutProps = {
   children: ReactNode
-  showEnterpriseItems: boolean
+  /** Edition-specific sidebar, chosen by the server layout. */
+  sidebar: ReactNode
 }
 
-export function ManageLayout({
-  children,
-  showEnterpriseItems,
-}: ManageLayoutProps) {
+export function ManageLayout({ children, sidebar }: ManageLayoutProps) {
   const [open, setOpen] = useState(true)
   const pathname = usePathname()
   const shouldCollapse = SIDEBAR_COLLAPSED_ROUTES.some((pattern) =>
@@ -47,7 +44,7 @@ export function ManageLayout({
       }}
       open={effectiveOpen}
     >
-      <ManageSidebar showEnterpriseItems={showEnterpriseItems} />
+      {sidebar}
       <SidebarInset>
         <SidebarTrigger className="absolute top-3 -left-2 z-10 border" />
         <main className="p-4 pb-24 sm:px-6 sm:pt-6">{children}</main>

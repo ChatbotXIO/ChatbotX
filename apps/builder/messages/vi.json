@@ -2879,6 +2879,7 @@
     "portalUsage": "Mức sử dụng",
     "portalCustomDomain": "Tên miền tùy chỉnh",
     "portalPaymentProcessor": "Cổng thanh toán",
+    "portalSmtp": "Cài đặt SMTP",
     "portalPricingPage": "Bảng giá"
   },
   "unsubscribePage": {
