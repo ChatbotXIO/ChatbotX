@@ -15,6 +15,9 @@ import {
  */
 export type PortalSaasFlag = "saasMode" | "whiteLabel"
 
+/** The reseller's resolved capability flags, keyed by {@link PortalSaasFlag}. */
+export type PortalSaasFlags = Record<PortalSaasFlag, boolean>
+
 /** i18n keys (see `manageSidebar` in the OSS builder messages). */
 export type PortalSaasNavKey =
   | "portalUsers"

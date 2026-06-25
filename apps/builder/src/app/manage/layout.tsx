@@ -1,5 +1,10 @@
-import { customDomainService, tenantService } from "@chatbotx.io/business"
+import {
+  customDomainService,
+  tenantService,
+  userQuotaService,
+} from "@chatbotx.io/business"
 import type { PortalPricingState } from "@chatbotx.io/ui/components/portal/pricing-nav-item"
+import type { PortalSaasFlags } from "@chatbotx.io/ui/config/portal-nav"
 import { buildResellerPricingUrl } from "@chatbotx.io/ui/lib/portal-pricing-url"
 import { notFound } from "next/navigation"
 import { ManageSidebar } from "@/enterprise/features/manage/components/manage-sidebar"
@@ -43,9 +48,21 @@ export default async function ManageLayoutPage({
       return notFound()
     }
 
-    const pricing = await resolvePricingState(tenant.id)
+    const quota = await userQuotaService.getForUser(user.id)
+    const flags: PortalSaasFlags = {
+      saasMode: quota?.saasMode ?? false,
+      whiteLabel: quota?.whiteLabel ?? false,
+    }
+    // Pricing lives on the reseller's custom domain — only white-label resellers
+    // have one, so resolve it only then (mirrors the enterprise portal sidebar).
+    const pricing = flags.whiteLabel
+      ? await resolvePricingState(tenant.id)
+      : undefined
+
     return (
-      <ManageLayout sidebar={<PortalManageSidebar pricing={pricing} />}>
+      <ManageLayout
+        sidebar={<PortalManageSidebar flags={flags} pricing={pricing} />}
+      >
         {children}
       </ManageLayout>
     )

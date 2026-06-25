@@ -3,7 +3,10 @@
 import type { PortalNavItem } from "@chatbotx.io/ui/components/portal/nav-main"
 import { PortalSideNav } from "@chatbotx.io/ui/components/portal/portal-side-nav"
 import type { PortalPricingState } from "@chatbotx.io/ui/components/portal/pricing-nav-item"
-import { portalSaasNavConfigs } from "@chatbotx.io/ui/config/portal-nav"
+import {
+  type PortalSaasFlags,
+  portalSaasNavConfigs,
+} from "@chatbotx.io/ui/config/portal-nav"
 import { Grid2x2PlusIcon, MailIcon, PaletteIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
@@ -14,17 +17,23 @@ import { authClient } from "@/lib/auth/auth-client"
 const PORTAL_PREFIX = "/portal"
 
 type Props = {
-  /** Resolved server-side from the reseller's verified custom domain. */
-  pricing: PortalPricingState
+  /** The reseller's capability flags — SaaS items are filtered by them. */
+  flags: PortalSaasFlags
+  /**
+   * Resolved server-side from the reseller's verified custom domain. Omitted
+   * (no pricing item) when the reseller lacks the `whiteLabel` entitlement.
+   */
+  pricing?: PortalPricingState
 }
 
 /**
  * Cloud-edition reseller sidebar rendered in the OSS builder `/manage` zone.
  * Shares the presentational `PortalSideNav` with the enterprise `apps/portal`
- * so both editions render the same navbar. Platform items stay in-zone
- * (builder's own `/manage/*` pages); SaaS items cross-zone into `/portal/*`.
+ * so both editions render the same navbar — same item set (flag-filtered),
+ * same labels, same smart pricing. Platform items stay in-zone (builder's own
+ * `/manage/*` pages); SaaS items cross-zone into `/portal/*`.
  */
-export function PortalManageSidebar({ pricing }: Props) {
+export function PortalManageSidebar({ flags, pricing }: Props) {
   const t = useTranslations()
   const tManage = useTranslations("manageSidebar")
   const { data: session } = authClient.useSession()
@@ -53,11 +62,13 @@ export function PortalManageSidebar({ pricing }: Props) {
     },
   ]
 
-  const saasItems: PortalNavItem[] = portalSaasNavConfigs.map((item) => ({
-    title: tManage(item.key),
-    url: `${PORTAL_PREFIX}${item.pathSuffix}`,
-    icon: item.icon,
-  }))
+  const saasItems: PortalNavItem[] = portalSaasNavConfigs
+    .filter((item) => flags[item.requires])
+    .map((item) => ({
+      title: tManage(item.key),
+      url: `${PORTAL_PREFIX}${item.pathSuffix}`,
+      icon: item.icon,
+    }))
 
   return (
     <PortalSideNav
