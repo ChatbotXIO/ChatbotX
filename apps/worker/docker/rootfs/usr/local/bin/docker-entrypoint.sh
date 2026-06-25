@@ -2,58 +2,57 @@
 
 set -eu
 
-WORKER_DIST_DIR="/app/apps/worker/dist"
-NODE_BIN="/usr/local/bin/node"
-# ALL_WORKERS="chat integration ai-agent default webhook trigger analytics schedule sequence-scheduler sequence-producer sequence-consumer"
-ALL_WORKERS="chat integration ai-agent default webhook trigger analytics schedule sequence-scheduler"
+WORKER_DIST_DIR="${WORKER_DIST_DIR:-/app/apps/worker/dist}"
+NODE_BIN="${NODE_BIN:-/usr/local/bin/node}"
+
+# Map a built bundle (dir + file basename without .mjs) to its roster name.
+# Standard:  <dir>/worker.mjs            -> <dir>
+# Variants:  <dir>/worker-<suffix>.mjs   -> <dir>-<suffix>, with aliases below
+#            to preserve the historical sequence-* CLI names.
+map_worker_name() {
+  dir="$1"
+  file="$2"
+  if [ "$file" = "worker" ]; then
+    echo "$dir"
+    return 0
+  fi
+  case "${dir}/${file}" in
+    "sequence-scheduler/worker-producer") echo "sequence-producer" ;;
+    "sequence-scheduler/worker-consumer") echo "sequence-consumer" ;;
+    *) echo "${dir}-${file#worker-}" ;;
+  esac
+}
+
+# Scan dist/ and emit a "name|path" line per built worker bundle, sorted.
+# The roster is derived from what was actually built, so it can never drift
+# from the tsdown entrypoints or reference a worker that does not exist.
+discover_workers() {
+  for path in "$WORKER_DIST_DIR"/*/worker*.mjs; do
+    [ -f "$path" ] || continue   # skip the literal pattern when nothing matches
+    rel="${path#"$WORKER_DIST_DIR"/}"
+    dir="${rel%%/*}"
+    file="${rel##*/}"
+    file="${file%.mjs}"
+    printf '%s|%s\n' "$(map_worker_name "$dir" "$file")" "$path"
+  done | sort
+}
+
+WORKER_TABLE="$(discover_workers)"
+
+all_worker_names() {
+  printf '%s\n' "$WORKER_TABLE" | cut -d'|' -f1
+}
 
 print_usage() {
-    echo "Usage: ${0} worker [all|ai-agent|analytics|chat|default|integration|schedule|sequence-consumer|sequence-producer|sequence-scheduler|trigger|webhook]" >&2
+    names="$(all_worker_names | tr '\n' '|' | sed 's/|$//')"
+    echo "Usage: ${0} worker [all${names:+|}${names}]" >&2
     echo "       ${0} {bash|sh}" >&2
 }
 
 resolve_worker_script() {
-  case "$1" in
-    "ai-agent")
-      echo "${WORKER_DIST_DIR}/ai-agent/worker.mjs"
-      ;;
-    "analytics")
-      echo "${WORKER_DIST_DIR}/analytics/worker.mjs"
-      ;;
-    "chat")
-      echo "${WORKER_DIST_DIR}/chat/worker.mjs"
-      ;;
-    "default")
-      echo "${WORKER_DIST_DIR}/default/worker.mjs"
-      ;;
-    "integration")
-      echo "${WORKER_DIST_DIR}/integration/worker.mjs"
-      ;;
-    "schedule")
-      echo "${WORKER_DIST_DIR}/schedule/worker.mjs"
-      ;;
-    "sequence-consumer")
-      echo "${WORKER_DIST_DIR}/sequence-scheduler/worker-consumer.mjs"
-      ;;
-    "sequence-producer")
-      echo "${WORKER_DIST_DIR}/sequence-scheduler/worker-producer.mjs"
-      ;;
-    "sequence-scheduler")
-      echo "${WORKER_DIST_DIR}/sequence-scheduler/worker.mjs"
-      ;;
-    "trigger")
-      echo "${WORKER_DIST_DIR}/trigger/worker.mjs"
-      ;;
-    "webhook")
-      echo "${WORKER_DIST_DIR}/webhook/worker.mjs"
-      ;;
-    "events")
-      echo "${WORKER_DIST_DIR}/events/worker.mjs"
-      ;;
-    *)
-      return 1
-      ;;
-  esac
+  line="$(printf '%s\n' "$WORKER_TABLE" | grep "^$1|" | head -n1)"
+  [ -n "$line" ] || return 1
+  printf '%s\n' "${line#*|}"
 }
 
 require_script() {
@@ -64,6 +63,11 @@ require_script() {
 }
 
 run_all_workers() {
+  if [ -z "$WORKER_TABLE" ]; then
+    echo "No worker bundles found under $WORKER_DIST_DIR" >&2
+    exit 4
+  fi
+
   pids=""
 
   handle_shutdown() {
@@ -77,12 +81,12 @@ run_all_workers() {
   trap 'handle_shutdown' INT TERM
 
   # Validate all worker entrypoints first so we never start partially.
-  for worker in $ALL_WORKERS; do
+  for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     require_script "$script"
   done
 
-  for worker in $ALL_WORKERS; do
+  for worker in $(all_worker_names); do
     script="$(resolve_worker_script "$worker")"
     echo "Starting worker: $worker ($script)"
     "$NODE_BIN" "$script" &
