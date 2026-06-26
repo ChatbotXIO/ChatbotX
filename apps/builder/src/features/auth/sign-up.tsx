@@ -30,7 +30,7 @@ export const SignUpForm = ({
   ...props
 }: SignUpFormProps) => {
   const t = useTranslations()
-  const { name } = useTenantSettings()
+  const { name, policyUrl, termsOfServiceUrl } = useTenantSettings()
 
   return (
     <div className="flex flex-col gap-6" {...props}>
@@ -61,8 +61,8 @@ export const SignUpForm = ({
       </Card>
 
       <AcceptTermsAndPolicy
-        privacyPolicy="/privacy-policy"
-        termsOfService="/terms-of-service"
+        privacyPolicy={policyUrl ?? "https://chatbotx.io/privacy/"}
+        termsOfService={termsOfServiceUrl ?? "https://chatbotx.io/terms/"}
       />
     </div>
   )

@@ -45,9 +45,13 @@ export const AcceptTermsAndPolicy = ({
   return (
     <div className="text-balance text-center text-muted-foreground text-xs [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
       <span>{t("auth.acceptTermsAndPolicy")}</span>{" "}
-      <Link href={termsOfService}>{t("auth.termsOfService")}</Link>{" "}
+      <Link href={termsOfService} target="_blank">
+        {t("auth.termsOfService")}
+      </Link>{" "}
       <span>{t("auth.and")}</span>{" "}
-      <Link href={privacyPolicy}>{t("auth.privacyPolicy")}</Link>
+      <Link href={privacyPolicy} target="_blank">
+        {t("auth.privacyPolicy")}
+      </Link>
     </div>
   )
 }
