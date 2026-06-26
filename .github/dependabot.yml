@@ -13,3 +13,26 @@ updates:
       interval: "daily"
     registries:
       - dockerhub
+
+  # pnpm workspace: a single root entry covers every apps/* packages/* integrations/*
+  # member because they share one root pnpm-lock.yaml. Dependabot reads
+  # pnpm-workspace.yaml + packageManager (pnpm@10.x) automatically.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      production-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
