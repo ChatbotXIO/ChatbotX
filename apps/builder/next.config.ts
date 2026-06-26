@@ -57,11 +57,11 @@ const nextConfig: NextConfig = {
           destination: `${s3Endpoint}/${s3Bucket}/:path*`,
         },
         { source: "/portal/:path*", destination: `${portalUrl}/portal/:path*` },
-        { source: "/pricing", destination: `${portalUrl}/portal/pricing` },
-        {
-          source: "/checkout/:path*",
-          destination: `${portalUrl}/portal/checkout/:path*`,
-        },
+        // { source: "/pricing", destination: `${portalUrl}/portal/pricing` },
+        // {
+        //   source: "/checkout/:path*",
+        //   destination: `${portalUrl}/portal/checkout/:path*`,
+        // },
         {
           source: "/api/checkout/:path*",
           destination: `${portalUrl}/portal/api/checkout/:path*`,
