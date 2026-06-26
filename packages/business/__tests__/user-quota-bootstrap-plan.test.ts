@@ -50,7 +50,10 @@ vi.mock("@chatbotx.io/database/client", () => ({
   sql: vi.fn(),
 }))
 
-vi.mock("@chatbotx.io/database/schema", () => ({ userQuotaModel }))
+vi.mock("@chatbotx.io/database/schema", () => ({
+  ROOT_TENANT_ID: "1",
+  userQuotaModel,
+}))
 
 vi.mock("@chatbotx.io/redis", () => ({
   cacheConnections: {
@@ -97,7 +100,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
       key === DEFAULT_PLAN_ENTITLEMENT_KEY ? snapshot : null,
     )
 
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(dbInsert).toHaveBeenCalledWith(userQuotaModel)
     expect(insertBuilder.values).toHaveBeenCalledWith(
@@ -134,7 +137,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
 
     const before = Date.now()
 
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     const [values] = insertBuilder.values.mock.calls[0]
     const fallbackMs = 24 * 60 * 60 * 1000
@@ -155,7 +158,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
         : null,
     )
 
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     const [values] = insertBuilder.values.mock.calls[0]
     expect(values.planStatus).toBe("active")
@@ -179,7 +182,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
   test("skips the cache bust when the insert was a no-op conflict", async () => {
     insertBuilder.returning.mockResolvedValue([])
 
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(insertBuilder.onConflictDoNothing).toHaveBeenCalledWith({
       target: userQuotaModel.userId,
@@ -188,7 +191,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
   })
 
   test("stamps the lockdown fallback when the snapshot is absent", async () => {
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -208,7 +211,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
   })
 
   test("does not clobber an existing quota row", async () => {
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(insertBuilder.onConflictDoNothing).toHaveBeenCalledWith({
       target: userQuotaModel.userId,
@@ -219,7 +222,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
   test("no-ops outside cloud edition", async () => {
     isCloud.mockReturnValue(false)
 
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     expect(distributedStore.get).not.toHaveBeenCalled()
     expect(dbInsert).not.toHaveBeenCalled()
@@ -227,7 +230,7 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
   })
 
   test("creates an unblocked active trial access state", async () => {
-    await userQuotaService.ensureBootstrapPlan(USER)
+    await userQuotaService.ensureBootstrapPlan({ userId: USER })
 
     const [values] = insertBuilder.values.mock.calls[0]
     const accessState = userQuotaService.getAccessStateFromQuota({
@@ -248,5 +251,58 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
       status: "trial",
     })
     expect(accessState.trialEndsAt).toBeInstanceOf(Date)
+  })
+
+  test("uses a tenant snapshot for a non-root tenant", async () => {
+    const tenantId = "tenant-42"
+    distributedStore.get.mockImplementation(async (key: string) =>
+      key === `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${tenantId}`
+        ? { ...snapshot, planName: "Tenant Free", macLimit: 250 }
+        : null,
+    )
+
+    await userQuotaService.ensureBootstrapPlan({ userId: USER, tenantId })
+
+    expect(distributedStore.get).toHaveBeenCalledWith(
+      `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${tenantId}`,
+    )
+    expect(distributedStore.get).not.toHaveBeenCalledWith(
+      DEFAULT_PLAN_ENTITLEMENT_KEY,
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: USER,
+        macLimit: 250,
+        planName: "Tenant Free",
+      }),
+    )
+  })
+
+  test("uses the lockdown fallback when a tenant snapshot is missing", async () => {
+    const tenantId = "tenant-42"
+    distributedStore.get.mockImplementation(async (key: string) =>
+      key === DEFAULT_PLAN_ENTITLEMENT_KEY ? snapshot : null,
+    )
+
+    await userQuotaService.ensureBootstrapPlan({ userId: USER, tenantId })
+
+    expect(distributedStore.get).toHaveBeenCalledWith(
+      `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${tenantId}`,
+    )
+    expect(distributedStore.get).not.toHaveBeenCalledWith(
+      DEFAULT_PLAN_ENTITLEMENT_KEY,
+    )
+    expect(insertBuilder.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: USER,
+        contactsLimit: 0,
+        workspacesLimit: 0,
+        channelsLimit: 0,
+        teamMembersLimit: 0,
+        macLimit: 0,
+        planName: "Trial",
+        planStatus: "trial",
+      }),
+    )
   })
 })

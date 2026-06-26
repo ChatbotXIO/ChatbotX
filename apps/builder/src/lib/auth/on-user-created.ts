@@ -26,7 +26,10 @@ export async function onUserCreated(user: AuthCreatedUser): Promise<void> {
   }
 
   try {
-    await userQuotaService.ensureBootstrapPlan(user.id)
+    await userQuotaService.ensureBootstrapPlan({
+      userId: user.id,
+      tenantId: user.tenantId,
+    })
   } catch (err) {
     logger.warn(
       { err, userId: user.id },

@@ -21,6 +21,10 @@ export const QuotaJobAction = {
   // the default-plan snapshot alone never reaches them). Consumed by the
   // enterprise quota-worker, which runs the backfill loop.
   backfillDefaultPlan: "backfillDefaultPlan",
+  // Reconcile only one tenant's users — produced by the enterprise portal when a
+  // reseller changes their tenant's default plan. Scopes the backfill to that
+  // reseller's sub-accounts instead of every user.
+  backfillTenantDefaultPlan: "backfillTenantDefaultPlan",
 } as const
 
 export type QuotaJobPublishEntitlements = {
@@ -33,9 +37,15 @@ export type QuotaJobBackfillDefaultPlan = {
   data: Record<string, never>
 }
 
+export type QuotaJobBackfillTenantDefaultPlan = {
+  type: typeof QuotaJobAction.backfillTenantDefaultPlan
+  data: { tenantId: string }
+}
+
 export type QuotaJobData =
   | QuotaJobPublishEntitlements
   | QuotaJobBackfillDefaultPlan
+  | QuotaJobBackfillTenantDefaultPlan
 
 export const quotaQueue =
   process.env.NEXT_PHASE === "phase-production-build"

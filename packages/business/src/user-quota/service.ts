@@ -1,6 +1,6 @@
 import { db, eq, sql } from "@chatbotx.io/database/client"
 import { planStatuses } from "@chatbotx.io/database/partials"
-import { userQuotaModel } from "@chatbotx.io/database/schema"
+import { ROOT_TENANT_ID, userQuotaModel } from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
 import { distributedStore } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
@@ -17,9 +17,10 @@ export type { QuotaMetric } from "../quota-shared/live-counter-store"
 /**
  * Cross-repo contract key (read-only here). The enterprise billing layer writes
  * the platform default plan's entitlements to this key; cloud sign-up uses it
- * to stamp the initial bootstrap row. The legacy free-tier overlay still reads
- * it as a secondary fallback for failed stamps and usage-only rows. Absent in
- * pure OSS installs → no overlay fallback (unlimited), preserving prior behavior.
+ * to stamp the initial bootstrap row. Reseller tenants read only their
+ * per-tenant variant `entitlements:default-plan:{tenantId}`. Absent snapshots
+ * in pure OSS installs still mean no overlay fallback (unlimited), preserving
+ * prior behavior.
  */
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
 
@@ -151,8 +152,15 @@ class UserQuotaService extends BaseService {
     return null
   }
 
-  private async readDefaultPlanSnapshot(): Promise<DefaultPlanSnapshot | null> {
+  private async readDefaultPlanSnapshot(
+    tenantId?: string | null,
+  ): Promise<DefaultPlanSnapshot | null> {
     try {
+      if (tenantId && tenantId !== ROOT_TENANT_ID) {
+        return await distributedStore.get<DefaultPlanSnapshot>(
+          `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${tenantId}`,
+        )
+      }
       return await distributedStore.get<DefaultPlanSnapshot>(
         DEFAULT_PLAN_ENTITLEMENT_KEY,
       )
@@ -167,14 +175,20 @@ class UserQuotaService extends BaseService {
    * Idempotent by `UserQuota.userId`; the worker remains authoritative and may
    * overwrite this bootstrap row on its next `publishEntitlements` sync.
    */
-  async ensureBootstrapPlan(userId: string): Promise<void> {
+  async ensureBootstrapPlan(input: {
+    tenantId?: string | null
+    userId: string
+  }): Promise<void> {
     if (!isCloud()) {
       return
     }
 
+    const { tenantId, userId } = input
+
     try {
       const snapshot: BootstrapPlanSnapshot =
-        (await this.readDefaultPlanSnapshot()) ?? BOOTSTRAP_TRIAL_FALLBACK
+        (await this.readDefaultPlanSnapshot(tenantId)) ??
+        BOOTSTRAP_TRIAL_FALLBACK
       const now = new Date()
       // Distinguish a malformed snapshot (NaN → 1-day lockdown) from an
       // explicit `0`/negative trial length (a free-forever default plan →
@@ -224,6 +238,30 @@ class UserQuotaService extends BaseService {
   }
 
   /**
+   * Read the default-plan snapshot that governs this user, resolved by tenant. A
+   * sub-account (non-root `tenantId`) reads only its reseller's per-tenant
+   * snapshot `entitlements:default-plan:{tenantId}`; root-tenant users read the
+   * global key directly. Returns null on Redis failure or when nothing is published
+   * (pure OSS install) — the caller then leaves the user unconstrained.
+   */
+  private async resolveDefaultPlanSnapshot(
+    userId: string,
+  ): Promise<DefaultPlanSnapshot | null> {
+    try {
+      const user = await db.query.userModel.findFirst({
+        where: { id: userId },
+        columns: { tenantId: true },
+      })
+      const tenantId = user?.tenantId ?? null
+
+      return await this.readDefaultPlanSnapshot(tenantId)
+    } catch (err) {
+      logger.warn({ err }, "user-quota: default-plan snapshot read failed")
+      return null
+    }
+  }
+
+  /**
    * Overlay the shared default-plan entitlement snapshot onto a free-tier user.
    * Fills only unset (null) limit fields and the plan identity, preserving any
    * existing usage counters. Returns null when no default plan is published.
@@ -232,7 +270,7 @@ class UserQuotaService extends BaseService {
     userId: string,
     quota: UserQuotaModel | null,
   ): Promise<UserQuotaModel | null> {
-    const snapshot = await this.readDefaultPlanSnapshot()
+    const snapshot = await this.resolveDefaultPlanSnapshot(userId)
     if (!snapshot) {
       return null
     }

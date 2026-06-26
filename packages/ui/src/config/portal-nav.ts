@@ -64,7 +64,7 @@ export const portalSaasNavConfigs: PortalSaasNavConfig[] = [
     key: "portalPlans",
     pathSuffix: "/plans",
     icon: LayoutList,
-    requires: "saasMode",
+    requires: "whiteLabel",
   },
   {
     key: "portalUsage",

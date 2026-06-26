@@ -54,7 +54,10 @@ describe("onUserCreated quota bootstrap", () => {
 
     await onUserCreated(user())
 
-    expect(ensureBootstrapPlan).toHaveBeenCalledWith("user-1")
+    expect(ensureBootstrapPlan).toHaveBeenCalledWith({
+      userId: "user-1",
+      tenantId: undefined,
+    })
     expect(quotaQueueAdd).toHaveBeenCalledWith("publishEntitlements", {
       type: "publishEntitlements",
       data: { userId: "user-1" },
@@ -92,5 +95,14 @@ describe("onUserCreated quota bootstrap", () => {
       { err, userId: "user-1" },
       "Failed to stamp bootstrap quota on sign-up",
     )
+  })
+
+  test("passes tenant id to the bootstrap stamp", async () => {
+    await onUserCreated(user({ tenantId: "tenant-42" }))
+
+    expect(ensureBootstrapPlan).toHaveBeenCalledWith({
+      userId: "user-1",
+      tenantId: "tenant-42",
+    })
   })
 })

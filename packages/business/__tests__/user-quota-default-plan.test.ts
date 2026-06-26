@@ -3,12 +3,21 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 const DEFAULT_PLAN_ENTITLEMENT_KEY = "entitlements:default-plan"
 
 const findFirstQuota = vi.fn(async () => null as unknown)
+const findFirstUser = vi.fn(async () => null as unknown)
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { query: { userQuotaModel: { findFirst: findFirstQuota } } },
+  db: {
+    query: {
+      userQuotaModel: { findFirst: findFirstQuota },
+      userModel: { findFirst: findFirstUser },
+    },
+  },
   eq: vi.fn(),
   sql: vi.fn(),
 }))
-vi.mock("@chatbotx.io/database/schema", () => ({ userQuotaModel: {} }))
+vi.mock("@chatbotx.io/database/schema", () => ({
+  userQuotaModel: {},
+  ROOT_TENANT_ID: "1",
+}))
 
 const storeGet = vi.fn(async (_key: string) => null as unknown)
 const distributedStore = {
@@ -61,6 +70,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   storeGet.mockResolvedValue(null)
   findFirstQuota.mockResolvedValue(null)
+  // Default: user not found → tenantId null → resolves the global platform key.
+  findFirstUser.mockResolvedValue(null)
 })
 
 describe("userQuotaService default-plan overlay (macLimit)", () => {
@@ -146,5 +157,58 @@ describe("userQuotaService default-plan overlay (macLimit)", () => {
     const quota = await userQuotaService.getForUser(USER)
 
     expect(quota).toBeNull()
+  })
+})
+
+describe("userQuotaService per-tenant default-plan resolution", () => {
+  const TENANT = "42"
+  const TENANT_KEY = `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${TENANT}`
+  /** Reseller's own default — distinct macLimit so we can tell which key won. */
+  const resellerSnapshot = { ...snapshot, planName: "Reseller Free", macLimit: 999 }
+
+  /** Route the row cache, the global default key, and the per-tenant key. */
+  const routeStore = (opts: { global: unknown; tenant?: unknown }) => {
+    storeGet.mockImplementation(async (key: string) => {
+      if (key === TENANT_KEY) {
+        return opts.tenant ?? null
+      }
+      if (key === DEFAULT_PLAN_ENTITLEMENT_KEY) {
+        return opts.global
+      }
+      return null // row cache miss
+    })
+  }
+
+  test("sub-account prefers its reseller per-tenant snapshot over the global default", async () => {
+    findFirstQuota.mockResolvedValue(null)
+    findFirstUser.mockResolvedValue({ tenantId: TENANT })
+    routeStore({ global: snapshot, tenant: resellerSnapshot })
+
+    const quota = await userQuotaService.getForUser(USER)
+
+    expect(quota?.macLimit).toBe(999)
+    expect(quota?.planName).toBe("Reseller Free")
+  })
+
+  test("sub-account with no reseller default does not read the global default", async () => {
+    findFirstQuota.mockResolvedValue(null)
+    findFirstUser.mockResolvedValue({ tenantId: TENANT })
+    routeStore({ global: snapshot, tenant: null })
+
+    const quota = await userQuotaService.getForUser(USER)
+
+    expect(quota).toBeNull()
+    expect(storeGet).not.toHaveBeenCalledWith(DEFAULT_PLAN_ENTITLEMENT_KEY)
+  })
+
+  test("root-tenant user reads the global default and ignores any tenant key", async () => {
+    findFirstQuota.mockResolvedValue(null)
+    findFirstUser.mockResolvedValue({ tenantId: "1" })
+    routeStore({ global: snapshot, tenant: resellerSnapshot })
+
+    const quota = await userQuotaService.getForUser(USER)
+
+    expect(quota?.macLimit).toBe(100)
+    expect(quota?.planName).toBe("Free")
   })
 })
