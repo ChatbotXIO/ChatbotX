@@ -23,9 +23,11 @@ import { countCharactersStep } from "./count-characters"
 import type { StepDefinition } from "./definition"
 import { deleteContactStep } from "./delete-contact"
 import { disableBotStep } from "./disable-bot"
+import { disableMessengerComposerStep } from "./disable-messenger-composer"
 import { dripSubscribeSubscriberStep } from "./drip-subscribe-subscriber"
 import emailStep from "./email"
 import { enableBotStep } from "./enable-bot"
+import { enableMessengerComposerStep } from "./enable-messenger-composer"
 import { followConversationStep } from "./follow-conversation"
 import { formatDateStep } from "./format-date"
 import { generateCodeStep } from "./generate-code"
@@ -161,6 +163,8 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
   [stepTypes.enum.whatsappFlow]: whatsappFlowStep,
   [stepTypes.enum.setMessengerUserPersistentMenu]:
     setMessengerUserPersistentMenuStep,
+  [stepTypes.enum.enableMessengerComposer]: enableMessengerComposerStep,
+  [stepTypes.enum.disableMessengerComposer]: disableMessengerComposerStep,
 }
 
 export const DynamicStepEditor = memo(

@@ -1547,6 +1547,8 @@
       "performAction": "Thực hiện hành động",
       "removeContactTag": "Xóa thẻ liên hệ",
       "setMessengerUserPersistentMenu": "Thiết lập menu cố định người dùng",
+      "enableMessengerComposer": "Bật ô nhập tin nhắn Messenger",
+      "disableMessengerComposer": "Tắt ô nhập tin nhắn Messenger",
       "sendAudio": "Gửi âm thanh",
       "sendCard": "Gửi thẻ",
       "sendExternalFlow": "Gửi luồng bên ngoài",

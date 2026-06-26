@@ -18,8 +18,10 @@ import { clearCustomFieldStepSchema } from "./steps/clear-custom-field"
 import { countCharactersStepSchema } from "./steps/count-characters"
 import { deleteContactStepSchema } from "./steps/delete-contact"
 import { disableBotStepSchema } from "./steps/disable-bot"
+import { disableMessengerComposerStepSchema } from "./steps/disable-messenger-composer"
 import { dripSubscribeSubscriberSchema } from "./steps/drip-subscribe-subscriber"
 import { enableBotStepSchema } from "./steps/enable-bot"
+import { enableMessengerComposerStepSchema } from "./steps/enable-messenger-composer"
 import { followConversationStepSchema } from "./steps/follow-conversation"
 import { formatDateStepSchema } from "./steps/format-date"
 import { generateCodeStepSchema } from "./steps/generate-code"
@@ -123,7 +125,11 @@ const aiSteps = [
   aiTextToSpeechSchema,
 ]
 
-const messengerSteps = [setMessengerUserPersistentMenuStepSchema]
+const messengerSteps = [
+  setMessengerUserPersistentMenuStepSchema,
+  enableMessengerComposerStepSchema,
+  disableMessengerComposerStepSchema,
+]
 
 const googleSheetStep = [
   spreadsheetGetRowSchema,

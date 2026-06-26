@@ -208,6 +208,37 @@ export type ChannelLabel = {
   name: string
 }
 
+/** A single persistent-menu call-to-action (web_url or postback). */
+export type PersistentMenuCallToAction =
+  | {
+      type: "web_url"
+      title: string
+      url: string
+      webview_height_ratio?: "compact" | "tall" | "full"
+    }
+  | {
+      type: "postback"
+      title: string
+      payload: string
+    }
+
+/** One locale-scoped persistent menu definition. */
+export type PersistentMenu = {
+  locale: string
+  composer_input_disabled?: boolean
+  call_to_actions?: PersistentMenuCallToAction[]
+}
+
+/**
+ * Current user- and page-level custom settings returned by the channel's
+ * `getUserCustomSettings` handler (e.g. Facebook Messenger persistent menu +
+ * composer state).
+ */
+export type UserCustomSettings = {
+  userLevel?: PersistentMenu
+  pageLevel?: PersistentMenu
+}
+
 export type ContactHandlers<IAuth extends AuthValue> = {
   getProfile: Handler<
     { ctx: Context<IAuth>; data: { sourceId: string } },
@@ -244,6 +275,11 @@ export type ContactHandlers<IAuth extends AuthValue> = {
   deleteUserPersistentMenu?: Handler<
     { ctx: Context<IAuth>; data: { psid: string } },
     void
+  >
+  // Read the current user + page level custom settings (channels that support it).
+  getUserCustomSettings?: Handler<
+    { ctx: Context<IAuth>; data: { psid: string } },
+    UserCustomSettings
   >
 }
 

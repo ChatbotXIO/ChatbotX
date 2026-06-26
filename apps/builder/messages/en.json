@@ -1539,6 +1539,8 @@
       "performAction": "Perform Action",
       "removeContactTag": "Remove Contact Tag",
       "setMessengerUserPersistentMenu": "Set User Persistent Menu",
+      "enableMessengerComposer": "Enable Messenger Composer",
+      "disableMessengerComposer": "Disable Messenger Composer",
       "sendAudio": "Send Audio",
       "sendCard": "Send Card",
       "sendExternalFlow": "Start External Flow",
