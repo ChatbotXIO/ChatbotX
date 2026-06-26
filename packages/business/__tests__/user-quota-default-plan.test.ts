@@ -164,18 +164,22 @@ describe("userQuotaService per-tenant default-plan resolution", () => {
   const TENANT = "42"
   const TENANT_KEY = `${DEFAULT_PLAN_ENTITLEMENT_KEY}:${TENANT}`
   /** Reseller's own default — distinct macLimit so we can tell which key won. */
-  const resellerSnapshot = { ...snapshot, planName: "Reseller Free", macLimit: 999 }
+  const resellerSnapshot = {
+    ...snapshot,
+    planName: "Reseller Free",
+    macLimit: 999,
+  }
 
   /** Route the row cache, the global default key, and the per-tenant key. */
   const routeStore = (opts: { global: unknown; tenant?: unknown }) => {
-    storeGet.mockImplementation(async (key: string) => {
+    storeGet.mockImplementation((key: string) => {
       if (key === TENANT_KEY) {
-        return opts.tenant ?? null
+        return Promise.resolve(opts.tenant ?? null)
       }
       if (key === DEFAULT_PLAN_ENTITLEMENT_KEY) {
-        return opts.global
+        return Promise.resolve(opts.global)
       }
-      return null // row cache miss
+      return Promise.resolve(null) // row cache miss
     })
   }
 

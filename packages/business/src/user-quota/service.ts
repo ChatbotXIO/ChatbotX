@@ -174,6 +174,8 @@ class UserQuotaService extends BaseService {
    * Stamp a real cloud sign-up quota row before the private quota-worker runs.
    * Idempotent by `UserQuota.userId`; the worker remains authoritative and may
    * overwrite this bootstrap row on its next `publishEntitlements` sync.
+   * Surfaces failures to the caller — the sign-up hook swallows them so a stamp
+   * failure never blocks sign-up; the worker re-anchors the row regardless.
    */
   async ensureBootstrapPlan(input: {
     tenantId?: string | null
@@ -185,55 +187,50 @@ class UserQuotaService extends BaseService {
 
     const { tenantId, userId } = input
 
-    try {
-      const snapshot: BootstrapPlanSnapshot =
-        (await this.readDefaultPlanSnapshot(tenantId)) ??
-        BOOTSTRAP_TRIAL_FALLBACK
-      const now = new Date()
-      // Distinguish a malformed snapshot (NaN → 1-day lockdown) from an
-      // explicit `0`/negative trial length (a free-forever default plan →
-      // `active`, never expires). Only the malformed case falls back.
-      const rawTrialDays = Number(snapshot.trialDays)
-      const trialDays = Number.isFinite(rawTrialDays)
-        ? Math.max(0, rawTrialDays)
-        : BOOTSTRAP_TRIAL_FALLBACK.trialDays
-      const isTrial = trialDays > 0
-      const periodEnd = isTrial
-        ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
-        : null
+    const snapshot: BootstrapPlanSnapshot =
+      (await this.readDefaultPlanSnapshot(tenantId)) ?? BOOTSTRAP_TRIAL_FALLBACK
+    const now = new Date()
+    // Distinguish a malformed snapshot (NaN → 1-day lockdown) from an
+    // explicit `0`/negative trial length (a free-forever default plan →
+    // `active`, never expires). Only the malformed case falls back.
+    const rawTrialDays = Number(snapshot.trialDays)
+    const trialDays = Number.isFinite(rawTrialDays)
+      ? Math.max(0, rawTrialDays)
+      : BOOTSTRAP_TRIAL_FALLBACK.trialDays
+    const isTrial = trialDays > 0
+    const periodEnd = isTrial
+      ? new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+      : null
 
-      const inserted = await db
-        .insert(userQuotaModel)
-        .values({
-          userId,
-          contactsLimit: snapshot.contactsLimit,
-          workspacesLimit: snapshot.workspacesLimit,
-          channelsLimit: snapshot.channelsLimit,
-          teamMembersLimit: snapshot.teamMembersLimit,
-          macLimit: snapshot.macLimit,
-          whiteLabel: false,
-          ssoSaml: false,
-          saasMode: false,
-          planName: snapshot.planName,
-          planStatus: isTrial
-            ? planStatuses.enum.trial
-            : planStatuses.enum.active,
-          periodStart: now,
-          periodEnd,
-          syncedAt: now,
-        })
-        .onConflictDoNothing({ target: userQuotaModel.userId })
-        .returning({ userId: userQuotaModel.userId })
+    const inserted = await db
+      .insert(userQuotaModel)
+      .values({
+        userId,
+        contactsLimit: snapshot.contactsLimit,
+        workspacesLimit: snapshot.workspacesLimit,
+        channelsLimit: snapshot.channelsLimit,
+        teamMembersLimit: snapshot.teamMembersLimit,
+        macLimit: snapshot.macLimit,
+        whiteLabel: false,
+        ssoSaml: false,
+        saasMode: false,
+        planName: snapshot.planName,
+        planStatus: isTrial
+          ? planStatuses.enum.trial
+          : planStatuses.enum.active,
+        periodStart: now,
+        periodEnd,
+        syncedAt: now,
+      })
+      .onConflictDoNothing({ target: userQuotaModel.userId })
+      .returning({ userId: userQuotaModel.userId })
 
-      // Only bust the cache when we actually wrote a row. On a no-op conflict
-      // (hook retry, re-signup, or the worker winning the race) there is
-      // nothing new to invalidate — and skipping it preserves any freshly
-      // cached authoritative row the worker just wrote.
-      if (inserted.length > 0) {
-        await this.store.invalidate(userId)
-      }
-    } catch (err) {
-      logger.warn({ err, userId }, "user-quota: bootstrap plan stamp failed")
+    // Only bust the cache when we actually wrote a row. On a no-op conflict
+    // (hook retry, re-signup, or the worker winning the race) there is
+    // nothing new to invalidate — and skipping it preserves any freshly
+    // cached authoritative row the worker just wrote.
+    if (inserted.length > 0) {
+      await this.store.invalidate(userId)
     }
   }
 
@@ -247,18 +244,23 @@ class UserQuotaService extends BaseService {
   private async resolveDefaultPlanSnapshot(
     userId: string,
   ): Promise<DefaultPlanSnapshot | null> {
+    let tenantId: string | null = null
     try {
       const user = await db.query.userModel.findFirst({
         where: { id: userId },
         columns: { tenantId: true },
       })
-      const tenantId = user?.tenantId ?? null
-
-      return await this.readDefaultPlanSnapshot(tenantId)
+      tenantId = user?.tenantId ?? null
     } catch (err) {
-      logger.warn({ err }, "user-quota: default-plan snapshot read failed")
+      logger.warn(
+        { err, userId },
+        "user-quota: tenant lookup for default-plan failed",
+      )
       return null
     }
+
+    // Self-guarded (logs + returns null on its own Redis failure).
+    return this.readDefaultPlanSnapshot(tenantId)
   }
 
   /**
