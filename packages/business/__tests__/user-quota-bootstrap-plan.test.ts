@@ -193,11 +193,11 @@ describe("userQuotaService.ensureBootstrapPlan", () => {
     expect(insertBuilder.values).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: USER,
-        contactsLimit: 100,
-        workspacesLimit: 1,
-        channelsLimit: 1,
-        teamMembersLimit: 1,
-        macLimit: 1,
+        contactsLimit: 0,
+        workspacesLimit: 0,
+        channelsLimit: 0,
+        teamMembersLimit: 0,
+        macLimit: 0,
         whiteLabel: false,
         ssoSaml: false,
         saasMode: false,
