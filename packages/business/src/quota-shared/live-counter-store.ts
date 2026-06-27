@@ -23,7 +23,7 @@ const CACHE_TTL = 60 // seconds
  * (`macUsed`, `contactsUsed`, …), so the metric is also the insert-values key
  * stem. Centralized so the store and any reconcile share one convention.
  */
-export const usedColumnKey = (metric: QuotaMetric): `${QuotaMetric}Used` =>
+const usedColumnKey = (metric: QuotaMetric): `${QuotaMetric}Used` =>
   `${metric}Used`
 
 /**
@@ -49,7 +49,6 @@ export const cacheKeyFor = (label: string, id: string): string =>
   `${label}:${id}`
 
 export const USER_QUOTA_LABEL = "user-quota"
-export const TENANT_QUOTA_LABEL = "tenant-quota"
 
 export interface LiveCounterConfig<TRow> {
   /** Fetch the row for an id from the DB (cold-start seed + reconcile source). */
@@ -248,12 +247,25 @@ export class LiveCounterStore<TRow> {
     }
   }
 
-  /**
-   * Persist a +1 usage increment for `metric` to the DB row (insert-or-update),
-   * targeting the single `${metric}Used` column. Throws on an unmapped metric
-   * rather than silently incrementing the wrong column.
-   */
+  /** Persist a +1 usage increment to the DB row. {@link upsertMetricBy} by 1. */
   async upsertMetric(id: string, metric: QuotaMetric): Promise<void> {
+    await this.upsertMetricBy(id, metric, 1)
+  }
+
+  /**
+   * Persist a `+count` usage increment for `metric` to the DB row
+   * (insert-or-update), targeting the single `${metric}Used` column. Throws on
+   * an unmapped metric rather than silently incrementing the wrong column, and
+   * on a non-positive `count` rather than writing a no-op / negative seed.
+   */
+  async upsertMetricBy(
+    id: string,
+    metric: QuotaMetric,
+    count: number,
+  ): Promise<void> {
+    if (count <= 0) {
+      return
+    }
     const column = this.config.usedColumns[metric]
     if (!column) {
       throw new Error(`Unhandled quota metric: ${String(metric)}`)
@@ -266,7 +278,7 @@ export class LiveCounterStore<TRow> {
     // above, so the runtime shape is always a valid row fragment.
     const values = {
       [this.config.idKey]: id,
-      [usedKey]: 1,
+      [usedKey]: count,
       syncedAt: new Date(),
     } as Record<string, unknown>
 
@@ -276,9 +288,33 @@ export class LiveCounterStore<TRow> {
       .onConflictDoUpdate({
         target: this.config.idColumn,
         set: {
-          [usedKey]: sql`${column} + 1`,
+          [usedKey]: sql`${column} + ${count}`,
           updatedAt: sql`CURRENT_TIMESTAMP`,
         } as never,
       })
+  }
+
+  /**
+   * Write-through a `+count` consumption to BOTH stores so every reader agrees:
+   * the authoritative DB `${metric}Used` column AND the Redis live counter, then
+   * busts the row cache. This is the single place that keeps the two stores in
+   * lockstep — the historical split (DB-only `consume` vs. Redis-only
+   * `incrementBy`) let the display and the gate read different numbers until the
+   * scheduled reconcile.
+   *
+   * The live increment runs first: it cold-seeds the counter from the CURRENT DB
+   * row before applying `+count`, so seeding then bumping the DB would otherwise
+   * double-count a cold counter. The live step is best-effort (swallowed on a
+   * Redis error, re-grounded on the next reconcile); the DB upsert is
+   * authoritative and a real failure throws and surfaces to the caller — so a
+   * Redis outage can never lose a durable count.
+   */
+  async consume(id: string, metric: QuotaMetric, count = 1): Promise<void> {
+    if (count <= 0) {
+      return
+    }
+    await this.incrementBy(id, metric, count)
+    await this.upsertMetricBy(id, metric, count)
+    await this.invalidate(id)
   }
 }

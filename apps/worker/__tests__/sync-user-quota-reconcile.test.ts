@@ -73,7 +73,16 @@ vi.mock("@chatbotx.io/business", () => ({
     const parsed = Number(value)
     return Number.isFinite(parsed) ? parsed : null
   },
-  userQuotaService: { invalidate: vi.fn(async () => undefined) },
+  userQuotaService: {
+    invalidate: vi.fn(async () => undefined),
+    reconcileOwnerPoolUsage: vi.fn(async () => undefined),
+  },
+  // Non-reseller users: `findByOwner` returns nothing, so reconcileUser keeps
+  // the per-user self-count path these tests exercise.
+  tenantService: {
+    findByOwner: vi.fn(async () => undefined),
+    listActiveOwnerIds: vi.fn(async () => [] as string[]),
+  },
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
@@ -97,6 +106,8 @@ const redisClient = {
     return Promise.resolve()
   }),
   hmget: vi.fn(async () => state.hmgetResult),
+  // Default: no live keys in Redis (simulates cold start for syncUserQuota tests)
+  scan: vi.fn(async () => ["0", [] as string[]]),
 }
 
 vi.mock("@chatbotx.io/redis", () => ({
@@ -113,9 +124,20 @@ vi.mock("../src/lib/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-const { reconcileUser } = await import(
+const { reconcileUser, syncUserQuota } = await import(
   "../src/schedule/handlers/sync-user-quota"
 )
+
+// The mocked business members (factory-created vi.fns), for the owner-pool branch.
+const { tenantService, userQuotaService } = (await import(
+  "@chatbotx.io/business"
+)) as unknown as {
+  tenantService: {
+    findByOwner: ReturnType<typeof vi.fn>
+    listActiveOwnerIds: ReturnType<typeof vi.fn>
+  }
+  userQuotaService: { reconcileOwnerPoolUsage: ReturnType<typeof vi.fn> }
+}
 
 describe("reconcileUser — contacts/teamMembers reflect the current count", () => {
   beforeEach(() => {
@@ -248,5 +270,118 @@ describe("reconcileUser — macUsed is derived from the ContactActiveMonthly led
     expect(countActiveContactsForOwner).not.toHaveBeenCalled()
     // No mac drift to persist (live === DB within the stable lifetime period).
     expect(state.capturedSets.some((set) => "macUsed" in set)).toBe(false)
+  })
+})
+
+describe("reconcileUser — reseller owner reconciles the tenant pool", () => {
+  beforeEach(() => {
+    state.countResults = []
+    state.capturedSets = []
+    state.hsetCalls = []
+    tenantService.findByOwner.mockReset()
+    tenantService.findByOwner.mockResolvedValue(undefined)
+    userQuotaService.reconcileOwnerPoolUsage.mockClear()
+  })
+
+  test("an active tenant owner delegates to the pool reconcile and skips the self-count", async () => {
+    tenantService.findByOwner.mockResolvedValueOnce({
+      id: "tenant-1",
+      ownerId: "owner-1",
+      status: "active",
+    })
+
+    await reconcileUser("owner-1")
+
+    // Pool reconcile (own + tenant aggregate) handles the owner row...
+    expect(userQuotaService.reconcileOwnerPoolUsage).toHaveBeenCalledWith(
+      "owner-1",
+      "tenant-1",
+    )
+    // ...so the per-user self-count upsert never runs for the owner.
+    expect(state.capturedSets).toHaveLength(0)
+  })
+
+  test("a suspended tenant falls through to the per-user self-count", async () => {
+    tenantService.findByOwner.mockResolvedValueOnce({
+      id: "tenant-1",
+      ownerId: "owner-1",
+      status: "suspended",
+    })
+    state.countResults = [1, 2, 3, 4]
+    state.stored = {
+      contactsUsed: 0,
+      teamMembersUsed: 0,
+      workspacesUsed: 0,
+      channelsUsed: 0,
+      macUsed: 0,
+      periodStart: null,
+    }
+
+    await reconcileUser("owner-1")
+
+    expect(userQuotaService.reconcileOwnerPoolUsage).not.toHaveBeenCalled()
+    expect(state.capturedSets.length).toBeGreaterThan(0)
+  })
+})
+
+describe("syncUserQuota — cold reseller owners are included via DB fallback", () => {
+  beforeEach(() => {
+    state.countResults = []
+    state.capturedSets = []
+    state.hsetCalls = []
+    redisClient.scan.mockReset()
+    // Simulate empty Redis: no live keys for any user
+    redisClient.scan.mockResolvedValue(["0", []])
+    tenantService.findByOwner.mockReset()
+    tenantService.findByOwner.mockResolvedValue(undefined)
+    tenantService.listActiveOwnerIds.mockReset()
+    tenantService.listActiveOwnerIds.mockResolvedValue([])
+    userQuotaService.reconcileOwnerPoolUsage.mockClear()
+  })
+
+  test("a cold reseller owner (no Redis live key) is reconciled via listActiveOwnerIds", async () => {
+    // Redis SCAN returns nothing — the owner has never written a live key.
+    // listActiveOwnerIds finds the owner from DB instead.
+    tenantService.listActiveOwnerIds.mockResolvedValue(["owner-cold"])
+    tenantService.findByOwner.mockResolvedValueOnce({
+      id: "tenant-cold",
+      ownerId: "owner-cold",
+      status: "active",
+    })
+
+    await syncUserQuota()
+
+    expect(userQuotaService.reconcileOwnerPoolUsage).toHaveBeenCalledWith(
+      "owner-cold",
+      "tenant-cold",
+    )
+  })
+
+  test("an owner already in Redis is not reconciled twice when also returned by listActiveOwnerIds", async () => {
+    // Redis SCAN finds the owner's live key AND listActiveOwnerIds also returns them.
+    redisClient.scan.mockResolvedValue(["0", ["user-quota-live:owner-warm"]])
+    tenantService.listActiveOwnerIds.mockResolvedValue(["owner-warm"])
+    tenantService.findByOwner.mockResolvedValueOnce({
+      id: "tenant-warm",
+      ownerId: "owner-warm",
+      status: "active",
+    })
+
+    await syncUserQuota()
+
+    expect(userQuotaService.reconcileOwnerPoolUsage).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.reconcileOwnerPoolUsage).toHaveBeenCalledWith(
+      "owner-warm",
+      "tenant-warm",
+    )
+  })
+
+  test("returns early without DB queries when Redis and listActiveOwnerIds are both empty", async () => {
+    tenantService.listActiveOwnerIds.mockResolvedValue([])
+
+    await syncUserQuota()
+
+    expect(userQuotaService.reconcileOwnerPoolUsage).not.toHaveBeenCalled()
+    expect(state.capturedSets).toHaveLength(0)
   })
 })

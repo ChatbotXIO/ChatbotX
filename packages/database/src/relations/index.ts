@@ -40,7 +40,6 @@ import { emailTopicRelations } from "./email-topic"
 import { auditLogRelations } from "./enterprise/audit-log"
 import { customDomainRelations } from "./enterprise/custom-domain"
 import { tenantRelations } from "./enterprise/tenant"
-import { tenantQuotaUsageRelations } from "./enterprise/tenant-quota-usage"
 import { userQuotaRelations } from "./enterprise/user-quota"
 import { errorLogRelations } from "./error-log"
 import { fileRelations } from "./file"
@@ -123,7 +122,6 @@ export const relations = {
   ...automatedResponseRelations,
   ...customDomainRelations,
   ...tenantRelations,
-  ...tenantQuotaUsageRelations,
   ...platformCredentialRelations,
   ...userQuotaRelations,
   ...contactCustomFieldRelations,

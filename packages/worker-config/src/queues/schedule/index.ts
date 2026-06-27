@@ -16,7 +16,6 @@ export const ScheduleJobData = {
   cleanupTriggers: "cleanupTriggers",
   scanSmartDelay: "scanSmartDelay",
   syncUserQuota: "syncUserQuota",
-  syncTenantQuota: "syncTenantQuota",
   reconcileTenants: "reconcileTenants",
   reconcileMac: "reconcileMac",
   maintainMacPartitions: "maintainMacPartitions",
@@ -79,11 +78,6 @@ export type ScheduleJobSyncUserQuota = {
   data: Record<string, never>
 }
 
-export type ScheduleJobSyncTenantQuota = {
-  type: typeof ScheduleJobData.syncTenantQuota
-  data: Record<string, never>
-}
-
 export type ScheduleJobReconcileTenants = {
   type: typeof ScheduleJobData.reconcileTenants
   data: Record<string, never>
@@ -124,7 +118,6 @@ export type ScheduleJobData =
   | ScheduleJobCleanupTriggers
   | ScheduleJobScanSmartDelay
   | ScheduleJobSyncUserQuota
-  | ScheduleJobSyncTenantQuota
   | ScheduleJobReconcileTenants
   | ScheduleJobReconcileMac
   | ScheduleJobMaintainMacPartitions

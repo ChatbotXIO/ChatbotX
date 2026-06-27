@@ -1,8 +1,26 @@
-import { db, eq, sql } from "@chatbotx.io/database/client"
+import {
+  and,
+  count,
+  db,
+  eq,
+  gt,
+  lte,
+  ne,
+  sql,
+  sum,
+} from "@chatbotx.io/database/client"
 import { planStatuses } from "@chatbotx.io/database/partials"
-import { ROOT_TENANT_ID, userQuotaModel } from "@chatbotx.io/database/schema"
+import {
+  contactModel,
+  inboxModel,
+  ROOT_TENANT_ID,
+  userQuotaModel,
+  workspaceMacModel,
+  workspaceMemberModel,
+  workspaceModel,
+} from "@chatbotx.io/database/schema"
 import type { UserQuotaModel } from "@chatbotx.io/database/types"
-import { distributedStore } from "@chatbotx.io/redis"
+import { cacheConnections, distributedStore } from "@chatbotx.io/redis"
 import { BaseService } from "../base.service"
 import { isCloud } from "../keys"
 import { logger } from "../logger"
@@ -456,12 +474,19 @@ class UserQuotaService extends BaseService {
     await this.incrementBy(userId, metric, 1)
   }
 
+  /**
+   * Write-through a `+count` increment to BOTH the Redis live counter AND the DB
+   * `${metric}Used` column, then bust the row cache — identical semantics to
+   * `consume` but with a configurable count. This keeps the display (Redis-read)
+   * and the gate (`hasCapacity`, DB-read) in lockstep even on bulk-import paths
+   * that batch multiple resource creations before the reconcile job runs.
+   */
   async incrementBy(
     userId: string,
     metric: QuotaMetric,
     count: number,
   ): Promise<void> {
-    await this.store.incrementBy(userId, metric, count)
+    await this.store.consume(userId, metric, count)
   }
 
   /** Configured limit for a metric (`null` = unlimited / no quota row). */
@@ -488,10 +513,14 @@ class UserQuotaService extends BaseService {
     return limit === null || used < limit
   }
 
-  /** Persist a +1 usage increment to the DB row and invalidate the row cache. */
+  /**
+   * Write-through a +1 usage increment to BOTH the DB column and the Redis live
+   * counter, then bust the row cache — so the gate (`hasCapacity`, DB-read) and
+   * the display (`getLiveUsage`, Redis-read) never disagree. The shared store
+   * keeps the two stores in lockstep; the scheduled reconcile is only a backstop.
+   */
   async consume(userId: string, metric: QuotaMetric): Promise<void> {
-    await this.store.upsertMetric(userId, metric)
-    await this.store.invalidate(userId)
+    await this.store.consume(userId, metric, 1)
   }
 
   async tryIncrement(userId: string, metric: QuotaMetric): Promise<boolean> {
@@ -500,6 +529,142 @@ class UserQuotaService extends BaseService {
     }
     await this.consume(userId, metric)
     return true
+  }
+
+  /**
+   * Reconcile a reseller owner's `UserQuota.*Used` from the source-of-truth DB
+   * counts aggregated across EVERY workspace under their tenant — the owner's row
+   * is the pool (owner's own resources carry the reseller tenantId too, so the
+   * tenant aggregate already includes them; no separate own-count is added). The
+   * recomputed `COUNT(*)` is authoritative (already reflects deletions) and is
+   * assigned directly so freeing pooled resources frees pooled quota.
+   *
+   * `mac` is summed from the `WorkspaceMac` rollup for the CURRENT period only,
+   * so it resets naturally at period rollover (mirroring the contacts recount).
+   * Only the `*Used` columns are written — limits / plan identity are owned by
+   * the billing layer. Replaces the dropped `tenantQuotaService.reconcileFromDb`.
+   */
+  async reconcileOwnerPoolUsage(
+    ownerId: string,
+    tenantId: string,
+  ): Promise<void> {
+    const client = await cacheConnections.useExisting()
+
+    const [
+      [contactsResult],
+      [teamMembersResult],
+      [workspacesResult],
+      [channelsResult],
+      [macResult],
+    ] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(contactModel)
+        .innerJoin(
+          workspaceModel,
+          eq(contactModel.workspaceId, workspaceModel.id),
+        )
+        .where(eq(workspaceModel.tenantId, tenantId)),
+
+      db
+        .select({ count: count() })
+        .from(workspaceMemberModel)
+        .innerJoin(
+          workspaceModel,
+          eq(workspaceMemberModel.workspaceId, workspaceModel.id),
+        )
+        .where(
+          and(
+            eq(workspaceModel.tenantId, tenantId),
+            ne(workspaceMemberModel.role, "owner"),
+          ),
+        ),
+
+      db
+        .select({ count: count() })
+        .from(workspaceModel)
+        .where(eq(workspaceModel.tenantId, tenantId)),
+
+      db
+        .select({ count: count() })
+        .from(inboxModel)
+        .innerJoin(
+          workspaceModel,
+          eq(inboxModel.workspaceId, workspaceModel.id),
+        )
+        .where(eq(workspaceModel.tenantId, tenantId)),
+
+      db
+        .select({ total: sum(workspaceMacModel.macCount) })
+        .from(workspaceMacModel)
+        .innerJoin(
+          workspaceModel,
+          eq(workspaceMacModel.workspaceId, workspaceModel.id),
+        )
+        .where(
+          and(
+            eq(workspaceModel.tenantId, tenantId),
+            lte(workspaceMacModel.periodStart, sql`now()`),
+            gt(workspaceMacModel.periodEnd, sql`now()`),
+          ),
+        ),
+    ])
+
+    const contactsUsed = contactsResult?.count ?? 0
+    const teamMembersUsed = teamMembersResult?.count ?? 0
+    const workspacesUsed = workspacesResult?.count ?? 0
+    const channelsUsed = channelsResult?.count ?? 0
+    // `sum()` returns a numeric string (or null when no rows match).
+    const macUsed = Number(macResult?.total ?? 0)
+
+    await db
+      .insert(userQuotaModel)
+      .values({
+        userId: ownerId,
+        contactsUsed,
+        teamMembersUsed,
+        workspacesUsed,
+        channelsUsed,
+        macUsed,
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: userQuotaModel.userId,
+        set: {
+          // Authoritative current counts — assigned directly, NOT GREATEST — so
+          // deletions across the pool free quota. Only `*Used` is touched; the
+          // owner's limits / plan identity are written by the billing layer.
+          contactsUsed,
+          teamMembersUsed,
+          workspacesUsed,
+          channelsUsed,
+          macUsed,
+          syncedAt: new Date(),
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+
+    // Mirror the live counters to the same authoritative current counts.
+    // `macPeriodStart` is intentionally not written here: the DB query already
+    // filters for the current billing period (`periodStart ≤ now() < periodEnd`),
+    // so `macUsed` is period-correct without the stamp. Period resets are owned
+    // by the private quota-worker, which advances `periodStart` and zeroes
+    // `macUsed`; the next reconcile will pick up the new value from DB.
+    await client.hset(
+      this.store.liveKey(ownerId),
+      "contacts",
+      String(contactsUsed),
+      "teamMembers",
+      String(teamMembersUsed),
+      "workspaces",
+      String(workspacesUsed),
+      "channels",
+      String(channelsUsed),
+      "mac",
+      String(macUsed),
+    )
+
+    await this.store.invalidate(ownerId)
   }
 
   /**
