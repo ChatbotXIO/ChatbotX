@@ -46,6 +46,25 @@ type ContactWriteData = Partial<
   >
 >
 
+const richSystemContactFields = [
+  "phone",
+  "phone_number",
+  "email",
+  "full_name",
+  "first_name",
+  "last_name",
+] as const
+
+const NAME_PARTS_RE = /\s+/
+
+export type RichSystemContactField = (typeof richSystemContactFields)[number]
+
+export function isRichSystemContactField(
+  fieldName: string,
+): fieldName is RichSystemContactField {
+  return richSystemContactFields.includes(fieldName as RichSystemContactField)
+}
+
 type ContactWithInboxes = ContactModel & { contactInboxes: ContactInboxModel[] }
 
 class ContactService extends BaseService {
@@ -163,6 +182,35 @@ class ContactService extends BaseService {
     id: string
   }): Promise<ContactModel> {
     return await this.update(ctx, { blockedAt: null })
+  }
+
+  async setRichSystemFieldByKey(input: {
+    workspaceId: string
+    contactId: string
+    fieldName: RichSystemContactField
+    value: string
+    tx?: DatabaseClient
+  }): Promise<ContactModel> {
+    const { workspaceId, contactId, fieldName, value, tx = db } = input
+    return await this.update(
+      { workspaceId, id: contactId },
+      richSystemFieldToContactData(fieldName, value),
+      tx,
+    )
+  }
+
+  async unsetRichSystemFieldByKey(input: {
+    workspaceId: string
+    contactId: string
+    fieldName: RichSystemContactField
+    tx?: DatabaseClient
+  }): Promise<ContactModel> {
+    const { workspaceId, contactId, fieldName, tx = db } = input
+    return await this.update(
+      { workspaceId, id: contactId },
+      richSystemFieldToContactData(fieldName, null),
+      tx,
+    )
   }
 
   async delete(props: {
@@ -404,6 +452,35 @@ class ContactService extends BaseService {
       .set({ emailOptIn: false })
       .where(eq(contactModel.id, cid))
     await invalidateCacheByTags([`contacts:${cid}`])
+  }
+}
+
+function richSystemFieldToContactData(
+  fieldName: RichSystemContactField,
+  value: string | null,
+): ContactWriteData {
+  switch (fieldName) {
+    case "phone":
+    case "phone_number":
+      return { phoneNumber: value }
+    case "email":
+      return { email: value }
+    case "first_name":
+      return { firstName: value }
+    case "last_name":
+      return { lastName: value }
+    case "full_name": {
+      if (value === null) {
+        return { firstName: null, lastName: null }
+      }
+      const [firstName, ...rest] = value.trim().split(NAME_PARTS_RE)
+      return {
+        firstName: firstName || null,
+        lastName: rest.length > 0 ? rest.join(" ") : null,
+      }
+    }
+    default:
+      return {}
   }
 }
 

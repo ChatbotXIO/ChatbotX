@@ -1,3 +1,4 @@
+import type { RichButtonPayloadEntry as DatabaseRichButtonPayloadEntry } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ConversationModel,
@@ -27,6 +28,8 @@ import {
 } from "../../lib/connection"
 import { queueNames } from "../../lib/types"
 import type { BotResponseTrackingContext } from "../types"
+
+export type { RichButtonPayloadEntry } from "@chatbotx.io/database/schema"
 
 export const ChatJobAction = {
   sendChannelMessage: "sendChannelMessage",
@@ -76,6 +79,10 @@ export type ChatJobSendFlowStep = {
       | SendMessengerTemplateMessageStepSchema
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
+    richResponse?: {
+      executionId: string
+      buttonPayloads: Record<string, DatabaseRichButtonPayloadEntry>
+    }
     sendFrom?: "inbox"
   }
 }

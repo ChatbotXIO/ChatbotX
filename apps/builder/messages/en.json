@@ -804,6 +804,10 @@
     "isDefault": {
       "label": "Mark as default"
     },
+    "isRichResponse": {
+      "description": "Return structured JSON with messages and actions instead of plain text streaming.",
+      "label": "Rich Response"
+    },
     "language": {
       "description": "Contacts are assigned the default language when the contact language is unknown.",
       "english": "English",

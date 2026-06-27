@@ -9,6 +9,7 @@ import type { AIAgentModel } from "@chatbotx.io/database/types"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
   DialogTitle,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   Popover,
   PopoverContent,
@@ -137,6 +139,7 @@ export function UpdateAIAgentDialog({
       setValue("maxOutputTokens", agent.maxOutputTokens)
       setValue("messages", agent.messages as UpdateAIAgentRequest["messages"])
       setValue("tools", agent.tools)
+      setValue("isRichResponse", agent.isRichResponse)
       setValue(
         "webSearchAuthorizedDomains",
         agent.webSearchAuthorizedDomains.map((domain) => ({ value: domain })),
@@ -257,6 +260,15 @@ export function UpdateAIAgentDialog({
 
             <AIToolMultiSelect name="tools" />
             <WebSearchAuthorizedDomainsField />
+            <div>
+              <div className="flex items-center gap-3">
+                <Label>{t("fields.isRichResponse.label")}</Label>
+                <SwitchField formItemClassName="w-auto" name="isRichResponse" />
+              </div>
+              <p className="wrap-break-words mt-1.5 text-muted-foreground text-sm">
+                {t("fields.isRichResponse.description")}
+              </p>
+            </div>
 
             <DialogFooter className="justify-end gap-2 sm:gap-2">
               <Button

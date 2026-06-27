@@ -5,6 +5,7 @@ import { aiMessageRoles } from "@chatbotx.io/database/partials"
 import { InputField } from "@chatbotx.io/ui/components/form/input-field"
 import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
 import { SliderField } from "@chatbotx.io/ui/components/form/slider-field"
+import { SwitchField } from "@chatbotx.io/ui/components/form/switch-field"
 import { Button } from "@chatbotx.io/ui/components/ui/button"
 import {
   Dialog,
@@ -16,6 +17,7 @@ import {
   DialogTrigger,
 } from "@chatbotx.io/ui/components/ui/dialog"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { Label } from "@chatbotx.io/ui/components/ui/label"
 import {
   Popover,
   PopoverContent,
@@ -88,6 +90,7 @@ export function CreateAIAgentDialog({
           name: "",
           prompt: "",
           isDefault: false,
+          isRichResponse: false,
           messages: [],
           models: aiChatProviders.map((provider) => ({
             provider: provider.provider,
@@ -249,6 +252,15 @@ export function CreateAIAgentDialog({
 
             <AIToolMultiSelect name="tools" />
             <WebSearchAuthorizedDomainsField />
+            <div>
+              <div className="flex items-center gap-3">
+                <Label>{t("fields.isRichResponse.label")}</Label>
+                <SwitchField formItemClassName="w-auto" name="isRichResponse" />
+              </div>
+              <p className="wrap-break-words mt-1.5 text-muted-foreground text-sm">
+                {t("fields.isRichResponse.description")}
+              </p>
+            </div>
 
             <DialogFooter className="justify-end gap-2 sm:gap-2">
               <Button

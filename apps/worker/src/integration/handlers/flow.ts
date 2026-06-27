@@ -1,4 +1,6 @@
+import { automatedResponseService } from "@chatbotx.io/automated-response"
 import { and, db, eq } from "@chatbotx.io/database/client"
+import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { contactsOnBroadcastsModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
@@ -36,6 +38,8 @@ import {
 } from "../../lib/db"
 import { logger } from "../../lib/logger"
 import { type ExecuteMultipleStepsProps, seekConnectedNode } from "./flow-utils"
+import { executeRichActions } from "./rich-response/action-executor"
+import { richButtonPayloadSchema } from "./rich-response/button-payload"
 import {
   type ExecuteStepResult,
   flowStepHandlers,
@@ -365,6 +369,100 @@ async function* executeMultipleStepsGenerator(
   }
 }
 
+async function tryRunRichButtonFallback(props: {
+  buttonId: string
+  contactInbox: ContactInboxModel
+  conversation: ConversationModel
+  flowContextId: string
+  messageId?: string
+}): Promise<
+  | { handled: false }
+  | { handled: true; shouldEnqueueAutomatedResponse: boolean }
+> {
+  const { buttonId, contactInbox, conversation, flowContextId, messageId } =
+    props
+  if (!messageId) {
+    logger.warn(
+      {
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactId: conversation.contactId,
+        buttonId,
+        reason: "missing_message_id",
+      },
+      "[rich-response] cannot resolve rich button payload",
+    )
+  }
+
+  const messageRepository = await createMessageRepository()
+  const richResponse = await messageRepository.findRichResponseByButton({
+    buttonId,
+    contactInboxId: contactInbox.id,
+    conversationId: conversation.id,
+    messageId,
+    workspaceId: conversation.workspaceId,
+  })
+
+  if (!richResponse) {
+    return { handled: false }
+  }
+
+  const entry = richResponse.buttonPayloads[buttonId]
+  if (!entry || entry.executionId !== richResponse.executionId) {
+    logger.warn(
+      {
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactId: conversation.contactId,
+        buttonId,
+        executionId: richResponse.executionId,
+        reason: "rich_button_payload_not_found",
+      },
+      "[rich-response] rich button payload not found",
+    )
+    return { handled: false }
+  }
+
+  const parsedPayload = richButtonPayloadSchema.safeParse(entry.payload)
+  if (!parsedPayload.success || parsedPayload.data.type === "unsupported") {
+    logger.warn(
+      {
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        contactId: conversation.contactId,
+        buttonId,
+        executionId: richResponse.executionId,
+        reason:
+          parsedPayload.success && parsedPayload.data.type === "unsupported"
+            ? parsedPayload.data.reason
+            : "invalid_rich_button_payload",
+      },
+      "[rich-response] unsupported rich button payload",
+    )
+    return { handled: true, shouldEnqueueAutomatedResponse: false }
+  }
+
+  if (parsedPayload.data.type === "text") {
+    return { handled: true, shouldEnqueueAutomatedResponse: true }
+  }
+
+  await executeRichActions(
+    parsedPayload.data.type === "send_flow"
+      ? [{ action: "send_flow", flow_id: parsedPayload.data.flowId }]
+      : parsedPayload.data.actions,
+    {
+      workspaceId: conversation.workspaceId,
+      conversationId: conversation.id,
+      contactId: conversation.contactId,
+      contactInboxId: contactInbox.id,
+      channel: contactInbox.channel,
+      executionId: richResponse.executionId,
+      flowContextId,
+    },
+  )
+  return { handled: true, shouldEnqueueAutomatedResponse: false }
+}
+
 export async function runFlowPostback(
   data: IntegrationJobSendFlowPostback["data"],
 ) {
@@ -388,6 +486,27 @@ export async function runFlowPostback(
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
     })
+
+  if (parsedAction.buttonId) {
+    const richButtonResult = await tryRunRichButtonFallback({
+      buttonId: parsedAction.buttonId,
+      contactInbox,
+      conversation,
+      flowContextId: parsedAction.flowId,
+      messageId: data.messageId,
+    })
+    if (richButtonResult.handled) {
+      if (richButtonResult.shouldEnqueueAutomatedResponse && data.messageId) {
+        await automatedResponseService.enqueue({
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          messageId: data.messageId,
+        })
+      }
+      return
+    }
+  }
+
   const { flowVersion } = await detectFlowVersion({
     flowId: parsedAction.flowId,
     flowVersionId: parsedAction.flowVersionId,
@@ -527,6 +646,27 @@ export async function runFlowQuickReply(
       conversationId: data.conversationId,
       contactInboxId: data.contactInboxId,
     })
+
+  if (parsedAction.buttonId) {
+    const richButtonResult = await tryRunRichButtonFallback({
+      buttonId: parsedAction.buttonId,
+      contactInbox,
+      conversation,
+      flowContextId: parsedAction.flowId,
+      messageId: data.messageId,
+    })
+    if (richButtonResult.handled) {
+      if (richButtonResult.shouldEnqueueAutomatedResponse && data.messageId) {
+        await automatedResponseService.enqueue({
+          conversationId: conversation.id,
+          contactInboxId: contactInbox.id,
+          messageId: data.messageId,
+        })
+      }
+      return
+    }
+  }
+
   const { flowVersion } = await detectFlowVersion({
     flowId: parsedAction.flowId,
     flowVersionId: parsedAction.flowVersionId,

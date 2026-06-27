@@ -54,6 +54,7 @@ export type CreateAIAgentRequest = {
   maxOutputTokens: number
   tools: string[]
   isDefault: boolean
+  isRichResponse: boolean
   webSearchAuthorizedDomains?: WebSearchAuthorizedDomain[] | null
 }
 

@@ -130,6 +130,7 @@ export async function sendFlowStep({
   step,
   trackingContext,
   metadata,
+  richResponse,
   sendFrom,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
@@ -255,6 +256,7 @@ export async function sendFlowStep({
     let contentAttributes: (typeof messageModel.$inferInsert)["contentAttributes"] =
       {
         metadata,
+        richResponse,
         stepId: resolvedStep.id,
         nodeId: resolvedStep.nodeId,
         flowId,
@@ -360,6 +362,7 @@ export async function sendFlowStep({
         flowVersionId,
         step: resolvedStep as SendFlowStepData,
         metadata,
+        richResponse,
         messageId: message?.id,
         sendFrom,
       }),

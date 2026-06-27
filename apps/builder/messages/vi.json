@@ -811,6 +811,10 @@
     "isDefault": {
       "label": "Đánh dấu làm mặc định"
     },
+    "isRichResponse": {
+      "description": "Trả về JSON có cấu trúc gồm tin nhắn và hành động thay vì stream văn bản thuần.",
+      "label": "Rich Response"
+    },
     "language": {
       "description": "Liên hệ được gán ngôn ngữ mặc định khi ngôn ngữ liên hệ không xác định.",
       "english": "Tiếng Anh",

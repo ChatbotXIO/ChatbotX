@@ -34,6 +34,7 @@ import type {
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
+  FindRichResponseByButtonParams,
   FindTriggerMessageOptions,
   IMessageRepository,
   ListMessagesQuery,
@@ -43,6 +44,7 @@ import type {
   PaginationCursor,
   UpdateAttachmentParams,
 } from "../../../repositories/message/message-repository"
+import type { RichResponseContentAttributes } from "../../../schema"
 import type { AttachmentModel, MessageModel } from "../../../types"
 import {
   endOfHour,
@@ -60,6 +62,7 @@ export { getSafeSinceTime } from "../../../repositories"
 const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 30
 const ATTACHMENT_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
+const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000
 
 function compareMessageDesc(
   a: { id: string; createdAt: Date },
@@ -930,6 +933,133 @@ export class ShardedMessageRepository implements IMessageRepository {
       options.sinceTime,
       options.requireCompleteResults,
       options.workspaceId,
+    )
+  }
+
+  async findRichResponseByButton({
+    buttonId,
+    contactInboxId,
+    conversationId,
+    messageId,
+    sinceTime,
+    workspaceId,
+  }: FindRichResponseByButtonParams): Promise<RichResponseContentAttributes | null> {
+    const lookupSinceTime =
+      sinceTime ?? new Date(Date.now() - RICH_RESPONSE_FALLBACK_LOOKBACK_MS)
+    const shards = await this.getConversationReadShards(
+      lookupSinceTime,
+      workspaceId,
+    )
+    if (shards.length === 0) {
+      return null
+    }
+
+    if (messageId) {
+      for (const shardInfo of shards) {
+        try {
+          const richResponse = await this.shardManager.withShardClientForRead(
+            shardInfo.shard,
+            async (shardClient) => {
+              const [message] = await shardClient
+                .select({ contentAttributes: messageModel.contentAttributes })
+                .from(messageModel)
+                .where(
+                  and(
+                    eq(messageModel.id, messageId),
+                    eq(messageModel.workspaceId, workspaceId),
+                    eq(messageModel.conversationId, conversationId),
+                    eq(messageModel.contactInboxId, contactInboxId),
+                    gte(messageModel.createdAt, lookupSinceTime),
+                  ),
+                )
+                .limit(1)
+
+              const richResponse =
+                message?.contentAttributes?.richResponse ?? null
+              if (!richResponse) {
+                return null
+              }
+              return richResponse.buttonPayloads[buttonId]
+                ? richResponse
+                : { missingButtonPayload: true as const }
+            },
+          )
+          if (richResponse === null) {
+            continue
+          }
+          if ("missingButtonPayload" in richResponse) {
+            return null
+          }
+          if (richResponse) {
+            return richResponse
+          }
+        } catch (error) {
+          logger.warn(
+            { err: error, shardId: shardInfo.shard.id },
+            "Shard query failed in findRichResponseByButton by message id",
+          )
+        }
+      }
+    }
+
+    const results = await Promise.all(
+      shards.map(
+        async (
+          shardInfo,
+        ): Promise<{
+          createdAt: Date
+          id: string
+          richResponse: RichResponseContentAttributes
+        } | null> => {
+          try {
+            return await this.shardManager.withShardClientForRead(
+              shardInfo.shard,
+              async (shardClient) => {
+                const [message] = await shardClient
+                  .select({
+                    contentAttributes: messageModel.contentAttributes,
+                    createdAt: messageModel.createdAt,
+                    id: messageModel.id,
+                  })
+                  .from(messageModel)
+                  .where(
+                    and(
+                      eq(messageModel.workspaceId, workspaceId),
+                      eq(messageModel.conversationId, conversationId),
+                      eq(messageModel.contactInboxId, contactInboxId),
+                      gte(messageModel.createdAt, lookupSinceTime),
+                      sql`${messageModel.contentAttributes}->'richResponse'->'buttonPayloads' ? ${buttonId}`,
+                    ),
+                  )
+                  .orderBy(desc(messageModel.createdAt), desc(messageModel.id))
+                  .limit(1)
+
+                const richResponse =
+                  message?.contentAttributes?.richResponse ?? null
+                return richResponse
+                  ? {
+                      createdAt: message.createdAt,
+                      id: message.id,
+                      richResponse,
+                    }
+                  : null
+              },
+            )
+          } catch (error) {
+            logger.warn(
+              { err: error, shardId: shardInfo.shard.id },
+              "Shard query failed in findRichResponseByButton by button id",
+            )
+            return null
+          }
+        },
+      ),
+    )
+
+    return (
+      results
+        .filter((result): result is NonNullable<typeof result> => !!result)
+        .sort(compareMessageDesc)[0]?.richResponse ?? null
     )
   }
 

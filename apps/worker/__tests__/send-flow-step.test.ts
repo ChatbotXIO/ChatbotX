@@ -380,6 +380,37 @@ describe("sendFlowStep", () => {
     )
   })
 
+  test("persists and forwards rich response metadata to channel sender", async () => {
+    const richResponse = {
+      executionId: "exec-1",
+      buttonPayloads: {
+        "button-1": {
+          executionId: "exec-1",
+          buttonId: "button-1",
+          payload: {
+            type: "actions" as const,
+            actions: [{ action: "add_tag", tag_name: "lead" }],
+          },
+        },
+      },
+    }
+
+    await sendFlowStep({
+      ...baseParams,
+      richResponse,
+      step: sendTextStep,
+    })
+
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({ richResponse }),
+      }),
+    )
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({ richResponse }),
+    )
+  })
+
   test("calls repository.createWithAttachments() for step with url (sendImage)", async () => {
     await sendFlowStep({ ...baseParams, step: sendImageStep })
 

@@ -474,6 +474,111 @@ describe("ShardedMessageRepository direct message/attachment lookup helpers", ()
     })
     expect(rangeClient.updateChain.where).toHaveBeenCalled()
   })
+
+  test("findRichResponseByButton falls back to button lookup when inbound message id has no rich response", async () => {
+    const richResponse = {
+      executionId: "exec-1",
+      buttonPayloads: {
+        "button-1": {
+          executionId: "exec-1",
+          buttonId: "button-1",
+          payload: { type: "text", text: "size_s" },
+        },
+      },
+    }
+    let selectCall = 0
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn(() => {
+        selectCall += 1
+        if (selectCall === 1) {
+          return Promise.resolve([{ contentAttributes: {} }])
+        }
+        return Promise.resolve([
+          {
+            id: "outbound-msg-1",
+            createdAt: new Date("2026-06-28T14:59:00Z"),
+            contentAttributes: { richResponse },
+          },
+        ])
+      }),
+    }
+    const client = {
+      select: vi.fn().mockReturnValue(chain),
+    }
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (_shard: unknown, fn: (value: unknown) => Promise<unknown>) =>
+          fn(client),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findRichResponseByButton({
+      buttonId: "button-1",
+      contactInboxId: "ci-1",
+      conversationId: "conv-1",
+      messageId: "inbound-msg-1",
+      workspaceId: "ws-1",
+      sinceTime,
+    })
+
+    expect(result).toEqual(richResponse)
+    expect(client.select).toHaveBeenCalledTimes(2)
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(2)
+  })
+
+  test("findRichResponseByButton returns null when message rich response lacks the requested button", async () => {
+    const richResponse = {
+      executionId: "exec-1",
+      buttonPayloads: {
+        "other-button": {
+          executionId: "exec-1",
+          buttonId: "other-button",
+          payload: { type: "text", text: "other" },
+        },
+      },
+    }
+    const chain = {
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([
+        {
+          contentAttributes: { richResponse },
+        },
+      ]),
+    }
+    const client = {
+      select: vi.fn().mockReturnValue(chain),
+    }
+    const shardManager = {
+      getShardsForTimeRange: vi.fn().mockResolvedValue([rangeShard]),
+      getWriteShardInfo: vi.fn().mockResolvedValue(null),
+      withShardClientForRead: vi.fn(
+        (_shard: unknown, fn: (value: unknown) => Promise<unknown>) =>
+          fn(client),
+      ),
+    }
+    const repo = new ShardedMessageRepository(shardManager as never)
+
+    const result = await repo.findRichResponseByButton({
+      buttonId: "button-1",
+      contactInboxId: "ci-1",
+      conversationId: "conv-1",
+      messageId: "inbound-msg-1",
+      workspaceId: "ws-1",
+      sinceTime,
+    })
+
+    expect(result).toBeNull()
+    expect(client.select).toHaveBeenCalledTimes(1)
+    expect(shardManager.withShardClientForRead).toHaveBeenCalledTimes(1)
+  })
 })
 
 // ---------------------------------------------------------------------------

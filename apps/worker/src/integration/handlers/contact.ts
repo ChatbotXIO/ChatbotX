@@ -164,15 +164,31 @@ export async function addContactTag({
   conversation,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
+  await attachTagsByNames(
+    conversation.workspaceId,
+    conversation.contactId,
+    step.tags,
+  )
+}
+
+export async function attachTagsByNames(
+  workspaceId: string,
+  contactId: string,
+  tagNames: string[],
+): Promise<void> {
+  if (tagNames.length === 0) {
+    return
+  }
+
   const newlyLinkedTagIds: string[] = []
 
   await db.transaction(async (tx) => {
     await tx
       .insert(tagModel)
       .values(
-        step.tags.map((t) => ({
+        tagNames.map((t) => ({
           name: t,
-          workspaceId: conversation.workspaceId,
+          workspaceId,
           id: createId(),
         })),
       )
@@ -184,8 +200,8 @@ export async function addContactTag({
       .from(tagModel)
       .where(
         and(
-          eq(tagModel.workspaceId, conversation.workspaceId),
-          inArray(tagModel.name, step.tags),
+          eq(tagModel.workspaceId, workspaceId),
+          inArray(tagModel.name, tagNames),
         ),
       )
 
@@ -196,7 +212,7 @@ export async function addContactTag({
         .insert(contactsToTagsModel)
         .values(
           existingTags.map((t) => ({
-            contactId: conversation.contactId,
+            contactId,
             tagId: t.id,
           })),
         )
@@ -210,15 +226,15 @@ export async function addContactTag({
   // Enqueue tag-sync + emit events outside the transaction (pure Redis push).
   for (const tagId of newlyLinkedTagIds) {
     await tagSyncService.enqueueAttach({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
+      workspaceId,
+      contactId,
       tagId,
     })
   }
 
   await Promise.all(
     newlyLinkedTagIds.map((tagId) =>
-      emitTagApplied(conversation.workspaceId, conversation.contactId, tagId),
+      emitTagApplied(workspaceId, contactId, tagId),
     ),
   )
 }
@@ -227,11 +243,27 @@ export async function removeContactTag({
   conversation,
   step,
 }: ExecuteStepProps<AddContactTagStepSchema>) {
+  await detachTagsByNames(
+    conversation.workspaceId,
+    conversation.contactId,
+    step.tags,
+  )
+}
+
+export async function detachTagsByNames(
+  workspaceId: string,
+  contactId: string,
+  tagNames: string[],
+): Promise<void> {
+  if (tagNames.length === 0) {
+    return
+  }
+
   const tags = await db.query.tagModel.findMany({
     where: {
-      workspaceId: conversation.workspaceId,
+      workspaceId,
       name: {
-        in: step.tags,
+        in: tagNames,
       },
     },
     columns: {
@@ -244,7 +276,7 @@ export async function removeContactTag({
 
   await db.delete(contactsToTagsModel).where(
     and(
-      eq(contactsToTagsModel.contactId, conversation.contactId),
+      eq(contactsToTagsModel.contactId, contactId),
       inArray(
         contactsToTagsModel.tagId,
         tags.map((t) => t.id),
@@ -256,16 +288,14 @@ export async function removeContactTag({
   // queue). Detach is idempotent, so it is safe to enqueue per resolved tag.
   for (const tag of tags) {
     await tagSyncService.enqueueDetach({
-      workspaceId: conversation.workspaceId,
-      contactId: conversation.contactId,
+      workspaceId,
+      contactId,
       tagId: tag.id,
     })
   }
 
   await Promise.all(
-    tags.map((tag) =>
-      emitTagRemoved(conversation.workspaceId, conversation.contactId, tag.id),
-    ),
+    tags.map((tag) => emitTagRemoved(workspaceId, contactId, tag.id)),
   )
 }
 

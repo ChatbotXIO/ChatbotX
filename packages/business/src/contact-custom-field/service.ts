@@ -17,6 +17,10 @@ type DeleteByKeyInput = {
   keyword: string
 }
 
+type SetValueByKeyInput = DeleteByKeyInput & {
+  value: string
+}
+
 class ContactCustomFieldService extends BaseService {
   async listValues(input: { contactId: string }) {
     return await db.query.contactCustomFieldModel.findMany({
@@ -99,6 +103,36 @@ class ContactCustomFieldService extends BaseService {
       .delete(contactCustomFieldModel)
       .where(eq(contactCustomFieldModel.contactId, input.contactId))
     await this.invalidate(input)
+  }
+
+  async setValueByKey(input: SetValueByKeyInput): Promise<void> {
+    const { workspaceId, contactId, keyword, value } = input
+
+    let customField: { id: string } | undefined
+
+    if (isNumericId(keyword)) {
+      customField = await db.query.customFieldModel.findFirst({
+        where: { id: keyword, workspaceId },
+        columns: { id: true },
+      })
+    }
+
+    if (!customField) {
+      customField = await db.query.customFieldModel.findFirst({
+        where: { name: keyword, workspaceId },
+        columns: { id: true },
+      })
+    }
+
+    if (!customField) {
+      throw notFoundException("Custom field not found")
+    }
+
+    await this.setValues({
+      workspaceId,
+      contactId,
+      fields: [{ customFieldId: customField.id, value }],
+    })
   }
 
   async deleteByKey(input: DeleteByKeyInput): Promise<void> {

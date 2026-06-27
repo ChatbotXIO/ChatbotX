@@ -255,6 +255,7 @@ export async function processAutomatedResponse(
       aiResult = await replyByAI({
         conversation,
         contactInboxId: contactInbox.id,
+        channel: contactInbox.channel,
         messages,
         aiAgent,
         triggerMessageId: messageId,

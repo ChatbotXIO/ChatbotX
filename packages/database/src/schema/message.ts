@@ -23,6 +23,21 @@ import { contactInboxModel } from "./contact-inbox"
 import { conversationModel } from "./conversation"
 import { workspaceModel } from "./workspace"
 
+export type RichButtonPayloadEntry = {
+  executionId: string
+  buttonId: string
+  payload:
+    | { type: "send_flow"; flowId: string }
+    | { type: "actions"; actions: Record<string, unknown>[] }
+    | { type: "text"; text: string }
+    | { type: "unsupported"; reason: string }
+}
+
+export type RichResponseContentAttributes = {
+  executionId: string
+  buttonPayloads: Record<string, RichButtonPayloadEntry>
+}
+
 export const senderType = pgEnum(
   "senderType",
   senderTypes.options as [string, ...string[]],
@@ -65,6 +80,7 @@ export const messageModel = pgTable(
       }),
     text: text(),
     contentAttributes: jsonb().$type<{
+      richResponse?: RichResponseContentAttributes
       [x: string]: unknown
     }>(),
     messageType: messageType().$type<MessageType>().notNull(),

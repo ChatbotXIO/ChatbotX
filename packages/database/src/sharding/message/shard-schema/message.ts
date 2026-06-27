@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core"
 import type { ContentType, MessageType, SenderType } from "../../../partials"
 import { bigintAsString, timestampConfig } from "../../../partials/shared"
+import type { RichResponseContentAttributes } from "../../../schema/message"
 import { contentType, messageKind, messageType, senderType } from "./enums"
 
 export const messageModel = pgTable(
@@ -26,6 +27,7 @@ export const messageModel = pgTable(
     workspaceId: bigintAsString().notNull(),
     text: text(),
     contentAttributes: jsonb().$type<{
+      richResponse?: RichResponseContentAttributes
       [x: string]: unknown
     }>(),
     messageType: messageType().$type<MessageType>().notNull(),

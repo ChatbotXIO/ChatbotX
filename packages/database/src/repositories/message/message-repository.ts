@@ -1,3 +1,4 @@
+import type { RichResponseContentAttributes } from "../../schema"
 import type { AttachmentModel, MessageModel } from "../../types"
 
 export interface CreateMessageInput {
@@ -101,6 +102,15 @@ export interface FindTriggerMessageOptions {
   id: string
   requireCompleteResults?: boolean
   sinceTime: Date
+  workspaceId: string
+}
+
+export interface FindRichResponseByButtonParams {
+  buttonId: string
+  contactInboxId: string
+  conversationId: string
+  messageId?: string
+  sinceTime?: Date
   workspaceId: string
 }
 
@@ -254,6 +264,10 @@ export interface IMessageRepository {
   findManyBySourceIds(
     params: FindManyBySourceIdsParams,
   ): Promise<MessageSourceRow[]>
+
+  findRichResponseByButton(
+    params: FindRichResponseByButtonParams,
+  ): Promise<RichResponseContentAttributes | null>
 
   findTriggerMessage(
     options: FindTriggerMessageOptions,

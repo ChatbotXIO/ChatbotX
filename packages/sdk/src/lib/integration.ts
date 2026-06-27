@@ -40,6 +40,22 @@ const sleep = (ms: number): Promise<void> =>
 
 export type ChannelHandlerGroup = "message" | "conversation" | "contact" | "bot"
 
+export type RichResponseContentAttributes = {
+  executionId: string
+  buttonPayloads: Record<
+    string,
+    {
+      executionId: string
+      buttonId: string
+      payload:
+        | { type: "send_flow"; flowId: string }
+        | { type: "actions"; actions: Record<string, unknown>[] }
+        | { type: "text"; text: string }
+        | { type: "unsupported"; reason: string }
+    }
+  >
+}
+
 /** Base props for channel `sendFlowStep`; use {@link SendFlowStepProps} to narrow `data.step`. */
 export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
   ctx: Context<IAuth>
@@ -49,6 +65,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowVersionId?: string
     step: SendFlowStepData
     metadata?: MetadataPayload
+    richResponse?: RichResponseContentAttributes
     sendFrom?: "inbox"
   }
 }
@@ -91,6 +108,7 @@ export type MessageHandlers<
         flowVersionId?: string
         step: TStep
         metadata?: MetadataPayload
+        richResponse?: RichResponseContentAttributes
         sendFrom?: "inbox"
       }
     },

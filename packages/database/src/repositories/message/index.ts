@@ -12,6 +12,7 @@ export type {
   FindManyByConversationOptions,
   FindManyBySourceIdsParams,
   FindMessageByIdParams,
+  FindRichResponseByButtonParams,
   FindTriggerMessageOptions,
   IMessageRepository,
   ListMessagesQuery,
