@@ -13,11 +13,13 @@ import { logger } from "../lib/logger"
 import {
   anchoredPeriod,
   calcEndOfDayTtl,
+  secondsUntilEndOfHour,
   truncateHourInTimezone,
   workspaceMacCacheKey,
 } from "../lib/mac-period"
 import {
   type CountDelta,
+  type HourlyPresenceRow,
   macRepository,
   type PreparedRow,
   type WorkspaceMacDelta,
@@ -45,7 +47,9 @@ function coerceOccurredAt(value: unknown): Date {
 }
 
 const BLOOM_FILTER_MINUTE_BUFFER_SECONDS = 60
+const BLOOM_FILTER_HOUR_BUFFER_SECONDS = 120
 const BLOOM_FILTER_CAPACITY = 1_000_000
+const HOURLY_BLOOM_FILTER_CAPACITY = 100_000
 const BLOOM_FILTER_ERROR_RATE = 0.001
 
 type QuotaContext = {
@@ -122,6 +126,52 @@ export class MacTrackingService {
       })
     }
     await this.track(events)
+  }
+
+  async trackMessageOutHourly(payloads: MacMessageOutPayload[]): Promise<void> {
+    try {
+      const rows = payloads
+        .filter((payload) => payload.context.contactInboxId)
+        .map((payload) => {
+          const occurredAt = coerceOccurredAt(payload.occurredAt)
+          return {
+            workspaceId: payload.context.workspaceId,
+            contactId: payload.context.contactId,
+            contactInboxId: payload.context.contactInboxId as string,
+            inboxId: payload.context.inboxId as string,
+            hourBucket: truncateHourInTimezone(occurredAt, DEFAULT_TIMEZONE),
+          }
+        })
+
+      await this.recordHourlyPresence(rows)
+    } catch (error) {
+      logger.warn(
+        { err: error },
+        "[MacTrackingService] hourly outgoing activity tracking failed",
+      )
+    }
+  }
+
+  async trackMessageInHourly(payloads: MacMessageInPayload[]): Promise<void> {
+    try {
+      const rows = payloads.map((payload) => {
+        const occurredAt = coerceOccurredAt(payload.occurredAt)
+        return {
+          workspaceId: payload.workspaceId,
+          contactId: payload.contactId,
+          contactInboxId: payload.contactInboxId as string,
+          inboxId: payload.inboxId as string,
+          hourBucket: truncateHourInTimezone(occurredAt, DEFAULT_TIMEZONE),
+        }
+      })
+
+      await this.recordHourlyPresence(rows)
+    } catch (error) {
+      logger.warn(
+        { err: error },
+        "[MacTrackingService] hourly incoming activity tracking failed",
+      )
+    }
   }
 
   /**
@@ -479,6 +529,48 @@ export class MacTrackingService {
       logger.error(error, "[MacTrackingService] bloom filter dedup failed")
       return events
     }
+  }
+
+  private async recordHourlyPresence(rows: HourlyPresenceRow[]): Promise<void> {
+    if (rows.length === 0) {
+      return
+    }
+
+    const draftByKey = new Map<string, HourlyPresenceRow>()
+    for (const row of rows) {
+      const key = `${row.workspaceId}|${row.hourBucket.toISOString()}|${row.contactInboxId}`
+      draftByKey.set(key, row)
+    }
+
+    const dedupedRows = Array.from(draftByKey.values())
+    const rowsByBloomKey = Map.groupBy(
+      dedupedRows,
+      (row) =>
+        `mac:hourly-dedup:${row.workspaceId}:${row.hourBucket.toISOString()}`,
+    )
+    const now = new Date()
+    const ttlSeconds =
+      secondsUntilEndOfHour(now) + BLOOM_FILTER_HOUR_BUFFER_SECONDS
+    const rowsToInsert: HourlyPresenceRow[] = []
+
+    for (const [key, keyRows] of rowsByBloomKey) {
+      const items = keyRows.map((row) => row.contactInboxId)
+      const results = await this.bloomFilterInstance.addMany(key, items, {
+        errorRate: BLOOM_FILTER_ERROR_RATE,
+        capacity: HOURLY_BLOOM_FILTER_CAPACITY,
+        ttlSeconds,
+      })
+
+      rowsToInsert.push(
+        ...keyRows.filter((_, index) => results[index] === true),
+      )
+    }
+
+    if (rowsToInsert.length === 0) {
+      return
+    }
+
+    await macRepository.upsertHourlyPresence(rowsToInsert)
   }
 
   private async persistMonthlyRollup(

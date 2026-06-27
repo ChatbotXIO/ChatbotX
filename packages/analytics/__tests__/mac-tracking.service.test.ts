@@ -8,6 +8,7 @@ import type {
 const macRepository = {
   ensureWorkspaceMac: vi.fn(),
   upsertMonthlyPresence: vi.fn(async () => [] as unknown[]),
+  upsertHourlyPresence: vi.fn(async () => undefined),
   addWorkspaceMacCount: vi.fn(async () => [] as unknown[]),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
@@ -127,12 +128,15 @@ function newService(): InstanceType<typeof MacTrackingService> {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  vi.useRealTimers()
   selectRows.current = []
   distributedStore.getAll.mockResolvedValue({})
   bloomFilter.addMany.mockImplementation(async (_k, items) =>
     items.map(() => true),
   )
   macRepository.upsertMonthlyPresence.mockResolvedValue([])
+  macRepository.upsertHourlyPresence.mockResolvedValue(undefined)
   macRepository.addWorkspaceMacCount.mockResolvedValue([])
   macRepository.ensureWorkspaceMac.mockImplementation(
     (
@@ -165,6 +169,12 @@ describe("MacTrackingService — empty inputs", () => {
     await newService().trackMessageOut([])
     expect(bloomFilter.addMany).not.toHaveBeenCalled()
   })
+
+  test("trackMessageInHourly no-ops on empty payloads", async () => {
+    await newService().trackMessageInHourly([])
+    expect(bloomFilter.addMany).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+  })
 })
 
 describe("MacTrackingService — payload filtering", () => {
@@ -181,6 +191,161 @@ describe("MacTrackingService — payload filtering", () => {
     ])
     expect(bloomFilter.addMany).not.toHaveBeenCalled()
     expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
+  })
+
+  test("trackMessageOutHourly skips payloads missing contactInboxId", async () => {
+    await newService().trackMessageOutHourly([
+      makeOutPayload({
+        context: {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          inboxId: "ib-1",
+          channel: "messenger",
+        },
+      }),
+    ])
+
+    expect(bloomFilter.addMany).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+  })
+})
+
+describe("MacTrackingService — hourly activity tracking", () => {
+  test("normalizes inbound payloads, truncates the hour, and writes outside the monthly transaction", async () => {
+    await newService().trackMessageInHourly([
+      makeInPayload({
+        occurredAt: "2026-05-01T10:05:30.000Z",
+      }),
+    ])
+
+    expect(db.transaction).not.toHaveBeenCalled()
+    expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith([
+      {
+        workspaceId: WORKSPACE_ID,
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        inboxId: "ib-1",
+        hourBucket: new Date("2026-05-01T10:00:00.000Z"),
+      },
+    ])
+  })
+
+  test("uses a workspace-hour bloom key and skips rows already seen that hour", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-05-01T10:05:30.000Z"))
+    bloomFilter.addMany.mockResolvedValueOnce([true, false])
+
+    await newService().trackMessageInHourly([
+      makeInPayload({
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        occurredAt: "2026-05-01T10:07:00.000Z",
+      }),
+      makeInPayload({
+        contactId: "c-2",
+        contactInboxId: "ci-2",
+        occurredAt: "2026-05-01T10:12:00.000Z",
+      }),
+    ])
+
+    expect(bloomFilter.addMany).toHaveBeenCalledWith(
+      "mac:hourly-dedup:ws-1:2026-05-01T10:00:00.000Z",
+      ["ci-1", "ci-2"],
+      {
+        errorRate: 0.001,
+        capacity: 100_000,
+        ttlSeconds: 3390,
+      },
+    )
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith([
+      expect.objectContaining({ contactInboxId: "ci-1" }),
+    ])
+  })
+
+  test("does not call the repository when the hour bloom rejects every row", async () => {
+    bloomFilter.addMany.mockResolvedValueOnce([false])
+
+    await newService().trackMessageOutHourly([makeOutPayload()])
+
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+  })
+
+  test("deduplicates same contact-inbox rows before touching the hour bloom", async () => {
+    await newService().trackMessageInHourly([
+      makeInPayload({
+        contactInboxId: "ci-1",
+        occurredAt: "2026-05-01T10:05:00.000Z",
+      }),
+      makeInPayload({
+        contactInboxId: "ci-1",
+        occurredAt: "2026-05-01T10:40:00.000Z",
+      }),
+    ])
+
+    expect(bloomFilter.addMany).toHaveBeenCalledWith(
+      "mac:hourly-dedup:ws-1:2026-05-01T10:00:00.000Z",
+      ["ci-1"],
+      expect.anything(),
+    )
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith([
+      expect.objectContaining({
+        contactInboxId: "ci-1",
+        hourBucket: new Date("2026-05-01T10:00:00.000Z"),
+      }),
+    ])
+  })
+
+  test("collapses inbound and outbound activity in the same hour through the bloom gate", async () => {
+    const seen = new Set<string>()
+    bloomFilter.addMany.mockImplementation(async (key, items) =>
+      items.map((item) => {
+        const seenKey = `${key}:${item}`
+        if (seen.has(seenKey)) {
+          return false
+        }
+        seen.add(seenKey)
+        return true
+      }),
+    )
+
+    const service = newService()
+    await service.trackMessageInHourly([makeInPayload()])
+    await service.trackMessageOutHourly([makeOutPayload()])
+
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledTimes(1)
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith([
+      expect.objectContaining({ contactInboxId: "ci-1" }),
+    ])
+  })
+
+  test("resolves and logs when the hour bloom fails", async () => {
+    bloomFilter.addMany.mockRejectedValueOnce(new Error("redis down"))
+
+    await expect(
+      newService().trackMessageInHourly([makeInPayload()]),
+    ).resolves.toBeUndefined()
+
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "[MacTrackingService] hourly incoming activity tracking failed",
+    )
+  })
+
+  test("resolves and logs when the hourly insert fails", async () => {
+    macRepository.upsertHourlyPresence.mockRejectedValueOnce(
+      new Error("partition unavailable"),
+    )
+
+    await expect(
+      newService().trackMessageOutHourly([makeOutPayload()]),
+    ).resolves.toBeUndefined()
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "[MacTrackingService] hourly outgoing activity tracking failed",
+    )
   })
 })
 

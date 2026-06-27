@@ -1,16 +1,19 @@
 import {
   and,
   count,
+  countDistinct,
   type DatabaseClient,
   db,
   desc,
   eq,
   gt,
+  gte,
   lte,
   sql,
 } from "@chatbotx.io/database/client"
 import type { MacEventType } from "@chatbotx.io/database/partials"
 import {
+  contactActiveHourlyModel,
   contactActiveMonthlyModel,
   workspaceMacModel,
   workspaceModel,
@@ -44,6 +47,14 @@ export type WorkspaceMacDelta = {
 export type CountDelta = {
   id: string
   count: number
+}
+
+export type HourlyPresenceRow = {
+  workspaceId: string
+  contactId: string
+  contactInboxId: string
+  inboxId: string
+  hourBucket: Date
 }
 
 type ActiveContactCount = {
@@ -145,6 +156,20 @@ export class MacRepository {
       workspaceMacId,
       count,
     }))
+  }
+
+  async upsertHourlyPresence(
+    rows: HourlyPresenceRow[],
+    client: DatabaseClient = db,
+  ): Promise<void> {
+    if (rows.length === 0) {
+      return
+    }
+
+    await client
+      .insert(contactActiveHourlyModel)
+      .values(rows)
+      .onConflictDoNothing()
   }
 
   async addWorkspaceMacCount(
@@ -250,6 +275,24 @@ export class MacRepository {
         eq(contactActiveMonthlyModel.workspaceId, workspaceModel.id),
       )
       .where(and(...conditions))
+
+    return row ? Number(row.value) : 0
+  }
+
+  async countActiveContactsByWorkspace(
+    input: { workspaceId: string; from: Date; to: Date },
+    client: DatabaseClient = db,
+  ): Promise<number> {
+    const [row] = await client
+      .select({ value: countDistinct(contactActiveHourlyModel.contactId) })
+      .from(contactActiveHourlyModel)
+      .where(
+        and(
+          eq(contactActiveHourlyModel.workspaceId, input.workspaceId),
+          gte(contactActiveHourlyModel.hourBucket, input.from),
+          lte(contactActiveHourlyModel.hourBucket, input.to),
+        ),
+      )
 
     return row ? Number(row.value) : 0
   }

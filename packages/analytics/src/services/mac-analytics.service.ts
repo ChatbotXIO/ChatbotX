@@ -47,6 +47,14 @@ export class MacAnalyticsService {
     )
   }
 
+  getActiveContactsByWorkspaceForRange(input: {
+    workspaceId: string
+    from: Date
+    to: Date
+  }): Promise<number> {
+    return macRepository.countActiveContactsByWorkspace(input)
+  }
+
   reconcilePeriod(input: ReconcilePeriodInput): Promise<void> {
     return db.transaction((tx) => macRepository.reconcilePeriod(input, tx))
   }

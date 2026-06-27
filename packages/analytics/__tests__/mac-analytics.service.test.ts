@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest"
 
 const macRepository = {
   getActiveContactCountByWorkspaceId: vi.fn(async () => ({ macCount: 0 })),
+  countActiveContactsByWorkspace: vi.fn(async () => 0),
   reconcilePeriod: vi.fn(async () => undefined),
 }
 vi.mock("../src/repositories/postgres/mac.repository", () => ({
@@ -28,10 +29,20 @@ const { MacAnalyticsService } = await import(
 )
 
 beforeEach(() => {
+  distributedStore.getNumber.mockClear()
+  distributedStore.setNumberIfNotExists.mockClear()
+  db.transaction.mockClear()
+  logger.error.mockClear()
+  macRepository.getActiveContactCountByWorkspaceId.mockClear()
+  macRepository.countActiveContactsByWorkspace.mockClear()
+  macRepository.reconcilePeriod.mockClear()
   distributedStore.getNumber.mockResolvedValue(null)
+  distributedStore.setNumberIfNotExists.mockResolvedValue(undefined)
   macRepository.getActiveContactCountByWorkspaceId.mockResolvedValue({
     macCount: 0,
   })
+  macRepository.countActiveContactsByWorkspace.mockResolvedValue(0)
+  macRepository.reconcilePeriod.mockResolvedValue(undefined)
 })
 
 describe("MacAnalyticsService.getActiveContactCountByWorkspaceId", () => {
@@ -103,6 +114,26 @@ describe("MacAnalyticsService.getActiveContactCountByWorkspaceId", () => {
 })
 
 describe("MacAnalyticsService — repository delegation", () => {
+  test("getActiveContactsByWorkspaceForRange delegates without using the MAC cache", async () => {
+    const input = {
+      workspaceId: "ws-1",
+      from: new Date("2026-05-10T00:00:00.000Z"),
+      to: new Date("2026-05-20T00:00:00.000Z"),
+    }
+    macRepository.countActiveContactsByWorkspace.mockResolvedValue(4)
+
+    const count =
+      await new MacAnalyticsService().getActiveContactsByWorkspaceForRange(
+        input,
+      )
+
+    expect(count).toBe(4)
+    expect(macRepository.countActiveContactsByWorkspace).toHaveBeenCalledWith(
+      input,
+    )
+    expect(distributedStore.getNumber).not.toHaveBeenCalled()
+  })
+
   test("reconcilePeriod runs the repository call inside a transaction", async () => {
     const input = {
       workspaceId: "ws-1",

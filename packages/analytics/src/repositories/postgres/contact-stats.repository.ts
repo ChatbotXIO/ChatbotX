@@ -626,21 +626,6 @@ export class ContactStatsRepository extends BaseRepository {
     }))
   }
 
-  async getActiveContactsCount(props: TimeRangeQuery): Promise<number> {
-    const { workspaceId, from, to } = props
-
-    const result = await db.execute(sql`
-      SELECT COUNT(DISTINCT "contactId")::int AS count
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" >= ${from}
-        AND "occurredAt" <= ${to}
-        AND "eventType" = 'contact_created'
-    `)
-
-    return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)
-  }
-
   async getContactsBySource(
     props: TimeRangeQuery,
   ): Promise<ContactsByDimension[]> {

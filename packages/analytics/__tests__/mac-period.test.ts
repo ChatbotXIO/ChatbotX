@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 import {
   anchoredPeriod,
   calcEndOfDayTtl,
+  secondsUntilEndOfHour,
   truncateHourInTimezone,
   workspaceMacCacheKey,
 } from "../src/lib/mac-period"
@@ -117,6 +118,15 @@ describe("calcEndOfDayTtl", () => {
     const ttl = calcEndOfDayTtl("UTC")
     expect(ttl).toBeGreaterThanOrEqual(60)
     expect(ttl).toBeLessThanOrEqual(24 * 60 * 60)
+  })
+})
+
+describe("secondsUntilEndOfHour", () => {
+  test("returns the remaining seconds in the current UTC hour", () => {
+    expect(secondsUntilEndOfHour(new Date("2026-05-01T10:00:00.000Z"))).toBe(
+      3600,
+    )
+    expect(secondsUntilEndOfHour(new Date("2026-05-01T10:59:59.000Z"))).toBe(1)
   })
 })
 

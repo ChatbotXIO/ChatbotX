@@ -152,3 +152,5 @@ export type ProductVariantOptionModel =
 export type ProductVariantModel = typeof schema.productVariantModel.$inferSelect
 export type ProductAddonModel = typeof schema.productAddonModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
+export type ContactActiveHourlyModel =
+  typeof schema.contactActiveHourlyModel.$inferSelect
