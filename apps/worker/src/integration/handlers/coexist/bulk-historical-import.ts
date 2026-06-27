@@ -1,11 +1,6 @@
 // biome-ignore-all lint/suspicious/noBitwiseOperators: bit-packing 63-bit snowflake IDs
 
-import { macTrackingService } from "@chatbotx.io/analytics"
-import {
-  quotaEnforcementService,
-  userQuotaService,
-} from "@chatbotx.io/business"
-import { db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import { db, inArray, sql } from "@chatbotx.io/database/client"
 import type {
   BulkCreateAttachmentInput,
   CreateMessageInput,
@@ -16,12 +11,10 @@ import {
   contactInboxModel,
   contactModel,
   conversationModel,
-  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type { InboxModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import { emitContactCreated } from "@chatbotx.io/events"
-import { distributedLock } from "@chatbotx.io/redis"
 import type { IncomingContact, IncomingMessage } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import pLimit from "p-limit"
@@ -313,8 +306,9 @@ export type BulkImportHistoricalResult = {
 
 /**
  * Phase 1 of Coexist historical sync: dedup contacts by sourceId, resolve
- * existing ContactInbox rows, lock WorkspaceUsage to enforce the per-workspace
- * contact cap, and bulk-insert new Contact/ContactInbox/Conversation rows.
+ * existing ContactInbox rows, and bulk-insert new Contact/ContactInbox/
+ * Conversation rows. Bulk imports create contact records only; MAC is counted
+ * later when a real interaction occurs.
  *
  * Race-safe via `onConflictDoNothing` + post-insert re-select for losers, with
  * orphan Contact cleanup. Idempotent — re-running with the same batch returns
@@ -383,320 +377,234 @@ export const bulkImportContacts = async (props: {
   }> = []
 
   let importedContacts = 0
-  let skippedContacts = 0
-  let failureReason: string | undefined
+  const skippedContacts = 0
+  const failureReason: string | undefined = undefined
   const contactInboxIds = new Map<string, ContactImportLink>()
 
-  const runImportTransaction = async (args: {
-    macRemaining: number | null
-    periodStart: Date | null
-  }) => {
-    const { macRemaining, periodStart } = args
+  await db.transaction(async (tx) => {
+    // 1. Find existing ContactInbox rows.
+    const existingRows = await tx
+      .select({
+        id: contactInboxModel.id,
+        sourceId: contactInboxModel.sourceId,
+        contactId: contactInboxModel.contactId,
+      })
+      .from(contactInboxModel)
+      .where(
+        sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${sourceIds}`,
+      )
 
-    await db.transaction(async (tx) => {
-      // 1. Find existing ContactInbox rows.
-      const existingRows = await tx
+    const resolved = new Map<string, ContactImportLink>()
+    const existingContactIds = new Set<string>()
+
+    for (const row of existingRows) {
+      existingContactIds.add(row.contactId)
+      resolved.set(row.sourceId, {
+        contactInboxId: row.id,
+        contactId: row.contactId,
+        conversationId: "",
+      })
+    }
+
+    // Resolve conversation ids for existing contacts. Heal orphans (existing
+    // ContactInbox + Contact but missing Conversation) by inserting one now,
+    // so downstream callers never receive an empty conversationId.
+    if (existingContactIds.size > 0) {
+      const conversations = await tx
         .select({
+          id: conversationModel.id,
+          contactId: conversationModel.contactId,
+        })
+        .from(conversationModel)
+        .where(inArray(conversationModel.contactId, [...existingContactIds]))
+      const convByContact = new Map(
+        conversations.map((c) => [c.contactId, c.id]),
+      )
+
+      const orphanContactIds = [...existingContactIds].filter(
+        (cid) => !convByContact.has(cid),
+      )
+      if (orphanContactIds.length > 0) {
+        await tx
+          .insert(conversationModel)
+          .values(
+            orphanContactIds.map((cid) => ({
+              id: createId(),
+              workspaceId,
+              contactId: cid,
+            })),
+          )
+          .onConflictDoNothing()
+        const healed = await tx
+          .select({
+            id: conversationModel.id,
+            contactId: conversationModel.contactId,
+          })
+          .from(conversationModel)
+          .where(inArray(conversationModel.contactId, orphanContactIds))
+        for (const c of healed) {
+          convByContact.set(c.contactId, c.id)
+        }
+      }
+
+      for (const link of resolved.values()) {
+        const cid = convByContact.get(link.contactId)
+        if (cid) {
+          link.conversationId = cid
+        }
+      }
+    }
+
+    const newEntries = [...dedup.entries()].filter(
+      ([sourceId]) => !resolved.has(sourceId),
+    )
+
+    const acceptedNew = newEntries
+
+    // 2. Insert Contact + ContactInbox + Conversation for acceptedNew.
+    if (acceptedNew.length > 0) {
+      const contactRows = acceptedNew.map(([, entry]) => ({
+        id: createId(),
+        workspaceId,
+        firstName: entry.firstName,
+        lastName: entry.lastName,
+        email: entry.email,
+        phoneNumber: entry.phoneNumber,
+        avatar: entry.avatar,
+      }))
+
+      await tx.insert(contactModel).values(contactRows)
+
+      const contactInboxRows = acceptedNew.map(([sourceId], i) => ({
+        id: createId(),
+        inboxId: inbox.id,
+        contactId: contactRows[i]?.id,
+        originalContactId: contactRows[i]?.id,
+        source: inbox.channel,
+        sourceId,
+        channel: inbox.channel,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }))
+
+      const conversationRows = acceptedNew.map((_entry, i) => ({
+        id: createId(),
+        workspaceId,
+        contactId: contactRows[i]?.id,
+      }))
+
+      const insertedInboxes = await tx
+        .insert(contactInboxModel)
+        .values(contactInboxRows)
+        .onConflictDoNothing({
+          target: [contactInboxModel.inboxId, contactInboxModel.sourceId],
+        })
+        .returning({
           id: contactInboxModel.id,
           sourceId: contactInboxModel.sourceId,
           contactId: contactInboxModel.contactId,
         })
-        .from(contactInboxModel)
-        .where(
-          sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${sourceIds}`,
-        )
 
-      const resolved = new Map<string, ContactImportLink>()
-      const existingContactIds = new Set<string>()
+      const insertedSourceIds = new Set(insertedInboxes.map((r) => r.sourceId))
 
-      for (const row of existingRows) {
-        existingContactIds.add(row.contactId)
-        resolved.set(row.sourceId, {
-          contactInboxId: row.id,
-          contactId: row.contactId,
-          conversationId: "",
-        })
-      }
+      // Race recovery — any acceptedNew sourceId not inserted lost to a
+      // concurrent insert; re-SELECT winners + delete pre-allocated orphans.
+      const racedSourceIds = acceptedNew
+        .map(([sourceId]) => sourceId)
+        .filter((s) => !insertedSourceIds.has(s))
 
-      // Resolve conversation ids for existing contacts. Heal orphans (existing
-      // ContactInbox + Contact but missing Conversation) by inserting one now,
-      // so downstream callers never receive an empty conversationId.
-      if (existingContactIds.size > 0) {
-        const conversations = await tx
+      if (racedSourceIds.length > 0) {
+        const winners = await tx
           .select({
-            id: conversationModel.id,
-            contactId: conversationModel.contactId,
-          })
-          .from(conversationModel)
-          .where(inArray(conversationModel.contactId, [...existingContactIds]))
-        const convByContact = new Map(
-          conversations.map((c) => [c.contactId, c.id]),
-        )
-
-        const orphanContactIds = [...existingContactIds].filter(
-          (cid) => !convByContact.has(cid),
-        )
-        if (orphanContactIds.length > 0) {
-          await tx
-            .insert(conversationModel)
-            .values(
-              orphanContactIds.map((cid) => ({
-                id: createId(),
-                workspaceId,
-                contactId: cid,
-              })),
-            )
-            .onConflictDoNothing()
-          const healed = await tx
-            .select({
-              id: conversationModel.id,
-              contactId: conversationModel.contactId,
-            })
-            .from(conversationModel)
-            .where(inArray(conversationModel.contactId, orphanContactIds))
-          for (const c of healed) {
-            convByContact.set(c.contactId, c.id)
-          }
-        }
-
-        for (const link of resolved.values()) {
-          const cid = convByContact.get(link.contactId)
-          if (cid) {
-            link.conversationId = cid
-          }
-        }
-      }
-
-      const newEntries = [...dedup.entries()].filter(
-        ([sourceId]) => !resolved.has(sourceId),
-      )
-
-      // 2. Cap check under row lock.
-      let acceptedNew: typeof newEntries = newEntries
-      if (newEntries.length > 0 && macRemaining !== null) {
-        acceptedNew =
-          macRemaining === 0 ? [] : newEntries.slice(0, macRemaining)
-        skippedContacts = newEntries.length - acceptedNew.length
-        if (skippedContacts > 0) {
-          failureReason = `contact MAC cap reached — ${skippedContacts} contact(s) rejected`
-        }
-      }
-
-      // 3. Insert Contact + ContactInbox + Conversation for acceptedNew.
-      if (acceptedNew.length > 0) {
-        const contactRows = acceptedNew.map(([, entry]) => ({
-          id: createId(),
-          workspaceId,
-          firstName: entry.firstName,
-          lastName: entry.lastName,
-          email: entry.email,
-          phoneNumber: entry.phoneNumber,
-          avatar: entry.avatar,
-        }))
-
-        await tx.insert(contactModel).values(contactRows)
-
-        const contactInboxRows = acceptedNew.map(([sourceId], i) => ({
-          id: createId(),
-          inboxId: inbox.id,
-          contactId: contactRows[i]?.id,
-          originalContactId: contactRows[i]?.id,
-          source: inbox.channel,
-          sourceId,
-          channel: inbox.channel,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }))
-
-        const conversationRows = acceptedNew.map((_entry, i) => ({
-          id: createId(),
-          workspaceId,
-          contactId: contactRows[i]?.id,
-        }))
-
-        const insertedInboxes = await tx
-          .insert(contactInboxModel)
-          .values(contactInboxRows)
-          .onConflictDoNothing({
-            target: [contactInboxModel.inboxId, contactInboxModel.sourceId],
-          })
-          .returning({
             id: contactInboxModel.id,
             sourceId: contactInboxModel.sourceId,
             contactId: contactInboxModel.contactId,
           })
-
-        const survivors = insertedInboxes.map((r) => ({
-          contactId: r.contactId,
-          contactInboxId: r.id,
-        }))
-        const insertedSourceIds = new Set(
-          insertedInboxes.map((r) => r.sourceId),
-        )
-
-        // Race recovery — any acceptedNew sourceId not inserted lost to a
-        // concurrent insert; re-SELECT winners + delete pre-allocated orphans.
-        const racedSourceIds = acceptedNew
-          .map(([sourceId]) => sourceId)
-          .filter((s) => !insertedSourceIds.has(s))
-
-        if (racedSourceIds.length > 0) {
-          const winners = await tx
-            .select({
-              id: contactInboxModel.id,
-              sourceId: contactInboxModel.sourceId,
-              contactId: contactInboxModel.contactId,
-            })
-            .from(contactInboxModel)
-            .where(
-              sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${racedSourceIds}`,
-            )
-          for (const w of winners) {
-            insertedInboxes.push(w)
-            insertedSourceIds.add(w.sourceId)
-          }
-
-          const racedSet = new Set(racedSourceIds)
-          const orphanIds: string[] = []
-          for (let i = 0; i < acceptedNew.length; i++) {
-            const sourceId = acceptedNew[i]?.[0]
-            const contactId = contactRows[i]?.id
-            if (sourceId && contactId && racedSet.has(sourceId)) {
-              orphanIds.push(contactId)
-            }
-          }
-          if (orphanIds.length > 0) {
-            await tx
-              .delete(contactModel)
-              .where(inArray(contactModel.id, orphanIds))
-          }
-        }
-
-        const trulyNew = acceptedNew.length - racedSourceIds.length
-        importedContacts = trulyNew
-
-        const racedSet2 = new Set(racedSourceIds)
-        const conversationsToInsert = conversationRows.filter(
-          (_row, i) => !racedSet2.has(acceptedNew[i]?.[0]),
-        )
-        if (conversationsToInsert.length > 0) {
-          await tx
-            .insert(conversationModel)
-            .values(conversationsToInsert)
-            .onConflictDoNothing()
-        }
-
-        if (periodStart && survivors.length > 0) {
-          await macTrackingService.claimNewActiveContacts(
-            {
-              workspaceId,
-              inboxId: inbox.id,
-              periodStart,
-              occurredAt: new Date(),
-              contacts: survivors,
-            },
-            tx,
+          .from(contactInboxModel)
+          .where(
+            sql`${contactInboxModel.inboxId} = ${inbox.id} AND ${contactInboxModel.sourceId} IN ${racedSourceIds}`,
           )
+        for (const w of winners) {
+          insertedInboxes.push(w)
+          insertedSourceIds.add(w.sourceId)
         }
 
-        // Resolve conversation ids for everything just inserted (or raced).
-        const acceptedContactIds = insertedInboxes.map((r) => r.contactId)
-        const newConversations = await tx
-          .select({
-            id: conversationModel.id,
-            contactId: conversationModel.contactId,
-          })
-          .from(conversationModel)
-          .where(inArray(conversationModel.contactId, acceptedContactIds))
-        const convByContactNew = new Map(
-          newConversations.map((c) => [c.contactId, c.id]),
-        )
-
-        for (const inboxRow of insertedInboxes) {
-          const convId = convByContactNew.get(inboxRow.contactId)
-          if (!convId) {
-            continue
+        const racedSet = new Set(racedSourceIds)
+        const orphanIds: string[] = []
+        for (let i = 0; i < acceptedNew.length; i++) {
+          const sourceId = acceptedNew[i]?.[0]
+          const contactId = contactRows[i]?.id
+          if (sourceId && contactId && racedSet.has(sourceId)) {
+            orphanIds.push(contactId)
           }
-          resolved.set(inboxRow.sourceId, {
-            contactInboxId: inboxRow.id,
-            contactId: inboxRow.contactId,
-            conversationId: convId,
-          })
-
-          const entry = dedup.get(inboxRow.sourceId)
-          if (entry) {
-            newContactCreatedEvents.push({
-              workspaceId,
-              contactId: inboxRow.contactId,
-              contactInboxId: inboxRow.id,
-              sourceId: inboxRow.sourceId,
-              firstName: entry.firstName,
-              phoneNumber: entry.phoneNumber,
-              email: entry.email,
-              channel: inbox.channel,
-              source: inbox.channel,
-              createdAt: new Date(),
-            })
-          }
+        }
+        if (orphanIds.length > 0) {
+          await tx
+            .delete(contactModel)
+            .where(inArray(contactModel.id, orphanIds))
         }
       }
 
-      for (const [sourceId, link] of resolved) {
-        contactInboxIds.set(sourceId, link)
+      const trulyNew = acceptedNew.length - racedSourceIds.length
+      importedContacts = trulyNew
+
+      const racedSet2 = new Set(racedSourceIds)
+      const conversationsToInsert = conversationRows.filter(
+        (_row, i) => !racedSet2.has(acceptedNew[i]?.[0]),
+      )
+      if (conversationsToInsert.length > 0) {
+        await tx
+          .insert(conversationModel)
+          .values(conversationsToInsert)
+          .onConflictDoNothing()
       }
-    })
-  }
 
-  const ownerRow = await db
-    .select({ ownerId: workspaceModel.ownerId })
-    .from(workspaceModel)
-    .where(eq(workspaceModel.id, workspaceId))
-    .limit(1)
-  const ownerId = ownerRow[0]?.ownerId
+      // Resolve conversation ids for everything just inserted (or raced).
+      const acceptedContactIds = insertedInboxes.map((r) => r.contactId)
+      const newConversations = await tx
+        .select({
+          id: conversationModel.id,
+          contactId: conversationModel.contactId,
+        })
+        .from(conversationModel)
+        .where(inArray(conversationModel.contactId, acceptedContactIds))
+      const convByContactNew = new Map(
+        newConversations.map((c) => [c.contactId, c.id]),
+      )
 
-  if (ownerId) {
-    const lockKey = await quotaEnforcementService.resolveQuotaLockKey({
-      userId: ownerId,
-      metric: "mac",
-    })
-    await distributedLock.runExclusive({
-      key: lockKey,
-      timeoutInSeconds: 30,
-      fn: async () => {
-        const [macRemaining, ownerQuota] = await Promise.all([
-          quotaEnforcementService.getDualRemainingSlots({
-            userId: ownerId,
-            metric: "mac",
-          }),
-          userQuotaService.getForUser(ownerId),
-        ])
-
-        await runImportTransaction({
-          macRemaining,
-          periodStart: ownerQuota?.periodStart ?? null,
+      for (const inboxRow of insertedInboxes) {
+        const convId = convByContactNew.get(inboxRow.contactId)
+        if (!convId) {
+          continue
+        }
+        resolved.set(inboxRow.sourceId, {
+          contactInboxId: inboxRow.id,
+          contactId: inboxRow.contactId,
+          conversationId: convId,
         })
 
-        if (importedContacts > 0) {
-          await quotaEnforcementService.incrementBy({
-            userId: ownerId,
-            metric: "mac",
-            count: importedContacts,
-          })
-          await quotaEnforcementService.incrementBy({
-            userId: ownerId,
-            metric: "contacts",
-            count: importedContacts,
+        const entry = dedup.get(inboxRow.sourceId)
+        if (entry) {
+          newContactCreatedEvents.push({
+            workspaceId,
+            contactId: inboxRow.contactId,
+            contactInboxId: inboxRow.id,
+            sourceId: inboxRow.sourceId,
+            firstName: entry.firstName,
+            phoneNumber: entry.phoneNumber,
+            email: entry.email,
+            channel: inbox.channel,
+            source: inbox.channel,
+            createdAt: new Date(),
           })
         }
-      },
-    })
-  } else {
-    logger.warn(
-      { workspaceId },
-      "[coexist] Workspace owner missing — importing contacts without quota enforcement",
-    )
-    await runImportTransaction({ macRemaining: null, periodStart: null })
-  }
+      }
+    }
+
+    for (const [sourceId, link] of resolved) {
+      contactInboxIds.set(sourceId, link)
+    }
+  })
 
   // Post-commit side effects.
   for (const ev of newContactCreatedEvents) {

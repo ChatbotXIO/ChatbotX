@@ -8,7 +8,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const {
   mockTransaction,
-  mockDbSelect,
   mockTxSelect,
   mockTxInsert,
   mockTxUpdate,
@@ -20,12 +19,6 @@ const {
   mockCreateId,
   mockBulkCreate,
   mockCreateMessageRepository,
-  mockResolveQuotaLockKey,
-  mockGetDualRemainingSlots,
-  mockIncrementBy,
-  mockGetUserQuota,
-  mockClaimNewActiveContacts,
-  mockRunExclusive,
 } = vi.hoisted(() => {
   const mockBulkCreate = vi.fn().mockResolvedValue([])
   const mockBulkCreateAttachments = vi.fn().mockResolvedValue([])
@@ -35,7 +28,6 @@ const {
   })
   return {
     mockTransaction: vi.fn(),
-    mockDbSelect: vi.fn(),
     mockTxSelect: vi.fn(),
     mockTxInsert: vi.fn(),
     mockTxUpdate: vi.fn(),
@@ -47,12 +39,6 @@ const {
     mockCreateId: vi.fn(),
     mockBulkCreate,
     mockCreateMessageRepository,
-    mockResolveQuotaLockKey: vi.fn(),
-    mockGetDualRemainingSlots: vi.fn(),
-    mockIncrementBy: vi.fn(),
-    mockGetUserQuota: vi.fn(),
-    mockClaimNewActiveContacts: vi.fn(),
-    mockRunExclusive: vi.fn(),
   }
 })
 
@@ -77,7 +63,6 @@ vi.mock("@chatbotx.io/database/client", () => {
     db: {
       transaction: mockTransaction,
       update: mockDbUpdate,
-      select: mockDbSelect,
     },
     eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
     inArray: vi.fn((col: unknown, vals: unknown) => ({
@@ -110,38 +95,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     contactInboxId: "m_ci",
     sourceId: "m_sid",
     $inferInsert: {},
-  },
-  userQuotaModel: {
-    userId: "uq_userId",
-    contactsUsed: "uq_contactsUsed",
-    updatedAt: "uq_updatedAt",
-  },
-  workspaceModel: {
-    id: "w_id",
-    ownerId: "w_ownerId",
-  },
-}))
-
-vi.mock("@chatbotx.io/business", () => ({
-  quotaEnforcementService: {
-    resolveQuotaLockKey: mockResolveQuotaLockKey,
-    getDualRemainingSlots: mockGetDualRemainingSlots,
-    incrementBy: mockIncrementBy,
-  },
-  userQuotaService: {
-    getForUser: mockGetUserQuota,
-  },
-}))
-
-vi.mock("@chatbotx.io/analytics", () => ({
-  macTrackingService: {
-    claimNewActiveContacts: mockClaimNewActiveContacts,
-  },
-}))
-
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: {
-    runExclusive: mockRunExclusive,
   },
 }))
 
@@ -188,19 +141,6 @@ const enqueueSelect = (config: SelectStubConfig = {}) => {
     chain.where.mockResolvedValue(config.rows ?? [])
   }
   mockTxSelect.mockReturnValueOnce(chain)
-  return chain
-}
-
-const stubWorkspaceOwnerLookup = (ownerId: string | undefined = "owner-1") => {
-  const chain = {
-    from: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn(),
-  }
-  chain.from.mockReturnValue(chain)
-  chain.where.mockReturnValue(chain)
-  chain.limit.mockResolvedValue(ownerId ? [{ ownerId }] : [])
-  mockDbSelect.mockReturnValue(chain)
   return chain
 }
 
@@ -337,7 +277,6 @@ describe("bulkImportHistorical", () => {
     vi.clearAllMocks()
     let idCounter = 0
     mockCreateId.mockImplementation(() => `id-${++idCounter}`)
-    stubWorkspaceOwnerLookup()
     // Re-wire transaction default after clearAllMocks resets it.
     const tx = {
       select: mockTxSelect,
@@ -360,16 +299,6 @@ describe("bulkImportHistorical", () => {
       bulkCreate: mockBulkCreate,
       bulkCreateAttachments: vi.fn().mockResolvedValue([]),
     })
-    mockResolveQuotaLockKey.mockResolvedValue("quota:user:owner-1:mac")
-    mockGetDualRemainingSlots.mockResolvedValue(null)
-    mockIncrementBy.mockResolvedValue(undefined)
-    mockGetUserQuota.mockResolvedValue({
-      periodStart: new Date("2026-06-01T00:00:00.000Z"),
-    })
-    mockClaimNewActiveContacts.mockResolvedValue({ counted: 0 })
-    mockRunExclusive.mockImplementation(
-      async ({ fn }: { fn: () => Promise<unknown> }) => await fn(),
-    )
   })
 
   it("empty batch returns zero counts without opening a transaction", async () => {
@@ -394,8 +323,6 @@ describe("bulkImportHistorical", () => {
   })
 
   it("inserts new contact + messages when no existing ContactInbox matches", async () => {
-    const periodStart = new Date("2026-06-01T00:00:00.000Z")
-    mockGetUserQuota.mockResolvedValueOnce({ periodStart })
     stubNewContactsTransaction([
       {
         sourceId: "src-1",
@@ -419,73 +346,6 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedContacts).toBe(0)
     expect(result.failedMessages).toBe(0)
     expect(result.contactInboxIds.get("src-1")).toBe("ci-1")
-    expect(mockRunExclusive).toHaveBeenCalledWith({
-      key: "quota:user:owner-1:mac",
-      timeoutInSeconds: 30,
-      fn: expect.any(Function),
-    })
-    expect(mockClaimNewActiveContacts).toHaveBeenCalledWith(
-      {
-        workspaceId,
-        inboxId: "inbox-1",
-        periodStart,
-        occurredAt: expect.any(Date),
-        contacts: [{ contactId: "id-1", contactInboxId: "ci-1" }],
-      },
-      expect.any(Object),
-    )
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 1,
-    })
-  })
-
-  it("accepts all new contacts when MAC quota is unlimited", async () => {
-    mockGetDualRemainingSlots.mockResolvedValueOnce(null)
-    stubNewContactsTransaction([
-      {
-        sourceId: "src-1",
-        contactId: "id-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-      },
-      {
-        sourceId: "src-2",
-        contactId: "id-2",
-        contactInboxId: "ci-2",
-        conversationId: "conv-2",
-      },
-    ])
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [
-        { contact: contact("src-1"), messages: [] },
-        { contact: contact("src-2"), messages: [] },
-      ],
-    })
-
-    expect(result.importedContacts).toBe(2)
-    expect(result.skippedContacts).toBe(0)
-    expect(result.failedMessages).toBe(0)
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 2,
-    })
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 2,
-    })
   })
 
   it("counts duplicates as skippedMessages when message INSERT returns fewer rows than input", async () => {
@@ -514,110 +374,6 @@ describe("bulkImportHistorical", () => {
 
     expect(result.importedMessages).toBe(1)
     expect(result.skippedMessages).toBe(2)
-  })
-
-  it("partially accepts new contacts when MAC remaining slots are limited", async () => {
-    mockGetDualRemainingSlots.mockResolvedValueOnce(1)
-    // MAC remaining = 1 → only the first new contact is accepted.
-    // First contact: src-1 → accepted
-    stubNewContactsTransaction([
-      {
-        sourceId: "src-1",
-        contactId: "id-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-      },
-    ])
-    // bulkImportMessages for accepted contact
-    mockBulkCreate.mockResolvedValueOnce([
-      { id: "m-acc-1", sourceId: "m-acc-1" },
-    ])
-    // src-2 is rejected (no stub needed for its messages — failedMessages path)
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [
-        { contact: contact("src-1"), messages: [msg("m-acc-1")] },
-        {
-          contact: contact("src-2"),
-          messages: [msg("m-rej-1"), msg("m-rej-2"), msg("m-rej-3")],
-        },
-      ],
-    })
-
-    expect(result.importedContacts).toBe(1)
-    expect(result.skippedContacts).toBe(1)
-    expect(result.failedMessages).toBe(3)
-    expect(result.importedMessages).toBe(1)
-    expect(result.failureReason).toContain("contact MAC cap reached")
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 1,
-    })
-  })
-
-  it("rejects all new contacts when MAC remaining slots is zero", async () => {
-    mockGetDualRemainingSlots.mockResolvedValueOnce(0)
-    enqueueSelect({ rows: [] })
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [
-        { contact: contact("src-1"), messages: [msg("m-1")] },
-        { contact: contact("src-2"), messages: [msg("m-2"), msg("m-3")] },
-      ],
-    })
-
-    expect(result.importedContacts).toBe(0)
-    expect(result.skippedContacts).toBe(2)
-    expect(result.failedMessages).toBe(3)
-    expect(result.importedMessages).toBe(0)
-    expect(result.failureReason).toContain("contact MAC cap reached")
-    expect(mockTxInsert).not.toHaveBeenCalled()
-    expect(mockIncrementBy).not.toHaveBeenCalled()
-    expect(mockClaimNewActiveContacts).not.toHaveBeenCalled()
-  })
-
-  it("skips MAC presence rows when the owner has no quota period", async () => {
-    mockGetUserQuota.mockResolvedValueOnce(null)
-    stubNewContactsTransaction([
-      {
-        sourceId: "src-1",
-        contactId: "id-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-      },
-    ])
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [{ contact: contact("src-1"), messages: [] }],
-    })
-
-    expect(result.importedContacts).toBe(1)
-    expect(mockClaimNewActiveContacts).not.toHaveBeenCalled()
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
-    expect(mockIncrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 1,
-    })
   })
 
   it("uses existing ContactInbox row for already-known sourceId (idempotent re-run)", async () => {
