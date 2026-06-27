@@ -316,6 +316,7 @@ class UserQuotaService extends BaseService {
       saasMode: false,
       planName: null,
       planStatus: null,
+      selectedTrialPlanId: null,
       periodStart: null,
       periodEnd: null,
       syncedAt: now,

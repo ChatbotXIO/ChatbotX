@@ -61,7 +61,7 @@ export const AccountRail = async ({
 
       {cloud && (
         <div className="flex flex-col gap-4 border-t pt-5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="mb-3 flex flex-col items-start justify-between gap-2">
             <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
               {t("billing.plan.label", {
                 plan: planName ?? t("billing.plan.free"),

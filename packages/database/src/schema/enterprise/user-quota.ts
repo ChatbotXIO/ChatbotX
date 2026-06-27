@@ -30,6 +30,9 @@ export const userQuotaModel = pgTable("UserQuota", {
   // null = free tier / not yet synced.
   planName: text(),
   planStatus: text(),
+  // Enterprise-owned trial selection. null means fall back to the scoped
+  // effective default plan; OSS quota enforcement ignores this column.
+  selectedTrialPlanId: bigintAsString(),
   periodStart: timestamp(timestampConfig),
   periodEnd: timestamp(timestampConfig),
   syncedAt: timestamp(timestampConfig).notNull().defaultNow(),
