@@ -60,7 +60,7 @@ export const WebchatMessageInput = (props: WebchatMessageInputProps) => {
           textareaRef.current?.focus()
         },
         onSuccess: ({ data }) => {
-          if (data?.attachments) {
+          if (data?.attachments?.length) {
             appendMessage(data)
           }
 
