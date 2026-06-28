@@ -6,6 +6,8 @@ import ky, { HTTPError } from "ky"
 import { createStore } from "zustand/vanilla"
 import type { ListMessengerMessageTemplatesResponse } from "@/features/integration-messenger/message-templates/schema/query"
 import type { ListWhatsappMessageTemplatesResponse } from "@/features/integration-whatsapp/message-templates/schema/query"
+import type { ListMessengerPersonasResponse } from "@/features/personas/schemas/query"
+import { client } from "@/lib/orpc/orpc"
 
 export type FlowTemplateState = {
   error: string | null
@@ -19,12 +21,16 @@ export type FlowTemplateState = {
 
   loadingMessengerTemplates: boolean
   messengerTemplates: ListMessengerMessageTemplatesResponse
+
+  loadingMessengerPersonas: boolean
+  messengerPersonas: ListMessengerPersonasResponse["data"]
 }
 
 export type FlowTemplateActions = {
   initialize: () => Promise<void>
   fetchWhatsappTemplates: () => Promise<void>
   fetchMessengerTemplates: () => Promise<void>
+  fetchMessengerPersonas: () => Promise<void>
   setIntegrationWhatsappId: (id?: string) => void
 }
 
@@ -34,8 +40,9 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
   // Per-instance AbortController so rapid setIntegrationWhatsappId calls
   // cancel the previous in-flight WA fetch instead of queuing retries.
   let waFetchController: AbortController | null = null
-  // Closure-level flag to deduplicate concurrent Messenger fetches.
+  // Closure-level flags to deduplicate concurrent Messenger fetches.
   let messengerFetching = false
+  let messengerPersonasFetching = false
 
   return createStore<FlowTemplateStore>((set, get) => ({
     error: null,
@@ -50,6 +57,9 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
     loadingMessengerTemplates: false,
     messengerTemplates: [],
 
+    loadingMessengerPersonas: false,
+    messengerPersonas: [],
+
     ...props,
 
     initialize: async () => {
@@ -58,6 +68,7 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
         workspaceId,
         fetchWhatsappTemplates,
         fetchMessengerTemplates,
+        fetchMessengerPersonas,
       } = get()
 
       if (initialized || !workspaceId) {
@@ -66,7 +77,11 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
 
       // Individual fetch methods manage their own error state via set({ error }).
       // No outer catch needed — always mark initialized so the provider does not retry.
-      await Promise.all([fetchWhatsappTemplates(), fetchMessengerTemplates()])
+      await Promise.all([
+        fetchWhatsappTemplates(),
+        fetchMessengerTemplates(),
+        fetchMessengerPersonas(),
+      ])
       set({ initialized: true })
     },
 
@@ -154,6 +169,35 @@ export const createFlowTemplateStore = (props: Partial<FlowTemplateState>) => {
       } finally {
         messengerFetching = false
         set({ loadingMessengerTemplates: false })
+      }
+    },
+
+    fetchMessengerPersonas: async () => {
+      const { workspaceId } = get()
+
+      if (!workspaceId || messengerPersonasFetching) {
+        return
+      }
+
+      messengerPersonasFetching = true
+      set({ loadingMessengerPersonas: true, error: null })
+      try {
+        const { data } =
+          await client.personasAPIs.listMessengerPersonasAuthenticatedAPI({
+            workspaceId,
+          })
+
+        set({ messengerPersonas: data })
+      } catch (error: unknown) {
+        set({
+          error:
+            error instanceof HTTPError
+              ? error.message
+              : "Failed to fetch Messenger personas",
+        })
+      } finally {
+        messengerPersonasFetching = false
+        set({ loadingMessengerPersonas: false })
       }
     },
 

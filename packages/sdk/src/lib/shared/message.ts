@@ -18,6 +18,13 @@ export type OutgoingContact = {
   id: string
   sourceConversationId?: string | null
   lastIncomingMessageAt?: Date | string | null
+  /**
+   * Channel persona selected for this contact connection (e.g. Messenger
+   * persona). Carries the platform's local persona id; the channel resolves it
+   * to the provider-specific persona id at send time. Sourced from
+   * `ContactInbox.personaId`.
+   */
+  personaId?: string | null
 }
 
 export type OutgoingMessage = {

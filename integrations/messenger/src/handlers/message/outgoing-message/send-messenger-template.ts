@@ -13,8 +13,10 @@ import type { MessageHandlers } from "@chatbotx.io/sdk"
 import type {
   FacebookSendMessageRequest,
   MessengerAuthValue,
+  MessengerIntegrationDetail,
 } from "../../../schema"
 import { MESSENGER_MESSAGE_METADATA } from "../../../schema"
+import { resolveMessengerPersonaId } from "./persona"
 
 type MessengerTemplateComponentParameter =
   | { type: "text"; text: string; parameter_name?: string }
@@ -66,9 +68,10 @@ export function buildMessengerTemplateSendRequest(
     },
   )
 
-  const personaId = (
-    ctx.integrationDetail as { personaId?: string } | undefined
-  )?.personaId
+  const personaId = resolveMessengerPersonaId(
+    ctx.integrationDetail as MessengerIntegrationDetail | undefined,
+    contact,
+  )
 
   return {
     recipient: { id: contact.sourceId },

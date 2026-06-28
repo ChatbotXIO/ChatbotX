@@ -8,7 +8,7 @@ import {
   clonePageMessageTemplate,
   listPageMessageTemplates,
 } from "./apis/message-templates"
-import { unsubscribePageFromAppWebhook, updatePersona } from "./apis/page"
+import { syncPersonas, unsubscribePageFromAppWebhook } from "./apis/page"
 import { getPostDetails } from "./apis/post"
 import { MessengerAPIException } from "./exception"
 import { botHandlers } from "./handlers/bot"
@@ -39,7 +39,7 @@ const config: IntegrationDefinition<
     },
   },
   actions: {
-    updatePersona,
+    syncPersonas,
     getPostDetails,
     listMessageTemplates: async ({ ctx, input }) =>
       listPageMessageTemplates(ctx.auth, input),

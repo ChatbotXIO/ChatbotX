@@ -528,6 +528,11 @@ export const performActionMenus = (t: TranslationFn): MenuItem[] => [
         icon: KeyboardOffIcon,
         stepType: stepTypes.enum.disableMessengerComposer,
       },
+      {
+        label: t("flows.actions.setMessengerPersona"),
+        icon: UserIcon,
+        stepType: stepTypes.enum.setMessengerPersona,
+      },
     ],
   },
   ...buildProviderMenus(t),

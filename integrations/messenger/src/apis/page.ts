@@ -7,6 +7,7 @@ import type {
   MessengerAuthValue,
   MessengerProfileRequest,
   PersonaRequest,
+  SyncPersonaInput,
 } from "../schema"
 
 export const PAGE_SUBSCRIBE_SCOPES = [
@@ -133,7 +134,7 @@ export const updateMessengerProfile = (props: {
 
 export const createPersona = (props: {
   ctx: Context<MessengerAuthValue>
-  persona: PersonaRequest
+  persona: NonNullable<PersonaRequest>
 }): Promise<{ personaId?: string }> => {
   const { ctx, persona } = props
   const endpoint = "me/personas"
@@ -152,48 +153,98 @@ export const createPersona = (props: {
   })
 }
 
-export const deleteAllPersonas = (props: {
+export const listPersonas = (props: {
   ctx: Context<MessengerAuthValue>
-}): Promise<void> => {
+}): Promise<Array<{ id: string; name?: string }>> => {
   const { ctx } = props
 
   return rescue("me/personas", async () => {
-    const response: { data: Array<{ id: string }> } =
+    const response: { data?: Array<{ id: string; name?: string }> } =
       await facebookGraphClient.get("me/personas", {
         headers: {
           Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
         },
       })
-
-    await Promise.all(
-      response.data.map((persona) =>
-        facebookGraphClient.delete(persona.id, {
-          headers: {
-            Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
-          },
-        }),
-      ),
-    )
+    return response.data ?? []
   })
 }
 
-export const updatePersona = async (props: {
+const deletePersonaById = (
+  ctx: Context<MessengerAuthValue>,
+  personaId: string,
+): Promise<void> =>
+  rescue(`delete persona ${personaId}`, () =>
+    facebookGraphClient.delete(personaId, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+    }),
+  )
+
+/**
+ * Reconcile the page's persona list against Facebook so every persona has a
+ * Facebook persona id:
+ * - personas without a `facebookPersonaId` are created on Facebook (capturing
+ *   the returned id);
+ * - Facebook personas no longer referenced by the page are deleted.
+ *
+ * Facebook personas are immutable, so a renamed/re-pictured persona must arrive
+ * here with its `facebookPersonaId` cleared by the caller to be recreated.
+ *
+ * Resilient by design: a single create/delete failure is logged and skipped
+ * rather than failing the whole settings save (the persona simply keeps no
+ * `facebookPersonaId` and is treated as the page default at send time).
+ */
+export const syncPersonas = async (props: {
   ctx: Context<MessengerAuthValue>
-  persona: PersonaRequest
-}): Promise<{ personaId?: string }> => {
-  const { ctx, persona } = props
+  personas: SyncPersonaInput[]
+}): Promise<{
+  personas: Array<{ id: string; facebookPersonaId?: string }>
+}> => {
+  const { ctx, personas } = props
 
+  const synced = await Promise.all(
+    personas.map(async (persona) => {
+      if (persona.facebookPersonaId) {
+        return { id: persona.id, facebookPersonaId: persona.facebookPersonaId }
+      }
+      try {
+        const { personaId } = await createPersona({
+          ctx,
+          persona: {
+            name: persona.name,
+            profile_picture_url: persona.profilePictureUrl,
+          },
+        })
+        return { id: persona.id, facebookPersonaId: personaId }
+      } catch (error) {
+        logger.error(
+          error,
+          `Failed to register Messenger persona ${persona.id}`,
+        )
+        return { id: persona.id, facebookPersonaId: undefined }
+      }
+    }),
+  )
+
+  // Delete Facebook personas no longer referenced by the page.
   try {
-    await deleteAllPersonas({ ctx })
-
-    if (!persona) {
-      return {}
-    }
-    return await createPersona({ ctx, persona })
+    const keep = new Set(
+      synced
+        .map((persona) => persona.facebookPersonaId)
+        .filter((id): id is string => Boolean(id)),
+    )
+    const existing = await listPersonas({ ctx })
+    await Promise.all(
+      existing
+        .filter((persona) => !keep.has(persona.id))
+        .map((persona) => deletePersonaById(ctx, persona.id)),
+    )
   } catch (error) {
-    logger.error(error, "Update persona failed")
-    return {}
+    logger.error(error, "Failed to reconcile deleted Messenger personas")
   }
+
+  return { personas: synced }
 }
 
 export const getPersistentMenu = (props: {

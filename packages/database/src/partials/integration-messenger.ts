@@ -21,6 +21,13 @@ export type MessengerPersistentMenu = z.infer<
 >
 
 export const messengerPersonaSchema = z.object({
+  // Stable local id (createId). Referenced by the "Set Persona" flow step and
+  // stored on ContactInbox.personaId. Stays constant across edits, unlike the
+  // Facebook persona id which is recreated whenever the persona changes.
+  id: z.string(),
+  // Facebook persona id, populated after the persona is registered with Facebook
+  // on save. Empty until then; a renamed/re-pictured persona gets a new one.
+  facebookPersonaId: z.string().optional(),
   isDefault: z.boolean(),
   name: z.string(),
   profilePicture: z.object({

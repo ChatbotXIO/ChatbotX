@@ -13,11 +13,12 @@ import type {
 import { encodeButtonPayload } from "@chatbotx.io/flow-config"
 import {
   integration as integrationMessenger,
+  isRegisteredPersona,
   type MessengerProfileRequest,
   messengerMenusToCallToActions,
 } from "@chatbotx.io/integration-messenger"
 import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger/schema"
-import { zodBigintAsString } from "@chatbotx.io/utils"
+import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { getBrandingUrl } from "@/features/integration-webchat/lib"
 import { logger } from "@/lib/log"
 import { workspaceActionClient } from "@/lib/safe-action"
@@ -59,17 +60,29 @@ export const updateMessenger = async (
         workspaceId: ctx.workspace.id,
         id: ctx.id,
       })
-      const newPersonaId = await getPersonaId(
+      const syncedPersonas = await syncMessengerPersonas(
         ctx.workspace,
         integrationMessengerData,
         parsedInput.personas,
       )
+      const defaultPersona = syncedPersonas.find((persona) => persona.isDefault)
+
+      // A default persona that failed to register with Facebook has no
+      // facebookPersonaId. Persisting personaId: null here would silently drop
+      // the page's persona identity from every outbound message, so surface the
+      // failure (rolls back the tx) instead of degrading to the generic page.
+      if (defaultPersona && !isRegisteredPersona(defaultPersona)) {
+        throw new ChatbotXException(
+          "Couldn't register the default persona with Facebook. Please try saving again.",
+        )
+      }
 
       await tx
         .update(integrationMessengerModel)
         .set({
           ...parsedInput,
-          personaId: newPersonaId ?? null,
+          personas: syncedPersonas,
+          personaId: defaultPersona?.facebookPersonaId ?? null,
         })
         .where(eq(integrationMessengerModel.id, ctx.id))
 
@@ -109,6 +122,11 @@ export const updateMessenger = async (
       }
     })
   } catch (error) {
+    // Preserve explicit, actionable messages (e.g. persona registration); only
+    // unknown failures collapse to the generic message.
+    if (error instanceof ChatbotXException) {
+      throw error
+    }
     logger.debug(error, "Failed to update Facebook page")
     throw new ChatbotXException("Failed to update Facebook page")
   }
@@ -167,12 +185,40 @@ const getMessengerProfileParams = (
   return params
 }
 
-const getPersonaId = async (
+/**
+ * Register the page's personas with Facebook and return the persona list with
+ * each `facebookPersonaId` filled in.
+ *
+ * - Personas keep their stable local `id` (assigned here if missing for legacy
+ *   rows). A persona whose name or profile picture changed has its
+ *   `facebookPersonaId` cleared so Facebook recreates it (FB personas are
+ *   immutable), since the recreated persona gets a new Facebook id.
+ * - Personas removed from the list are deleted from Facebook by `syncPersonas`.
+ */
+const syncMessengerPersonas = async (
   workspace: WorkspaceModel,
   model: IntegrationMessengerModel,
   personas: MessengerPersona[],
-): Promise<string | undefined> => {
-  const defaultPersona = personas.find((persona) => persona.isDefault)
+): Promise<MessengerPersona[]> => {
+  const oldById = new Map(
+    model.personas.map((persona) => [persona.id, persona]),
+  )
+
+  // Authoritative local ids + carry-over Facebook ids derived from the stored
+  // personas (never trust client-sent Facebook ids).
+  const normalized: MessengerPersona[] = personas.map((persona) => {
+    const id = persona.id || createId()
+    const old = oldById.get(id)
+    const unchanged =
+      old &&
+      old.name === persona.name &&
+      old.profilePicture.url === persona.profilePicture.url
+    return {
+      ...persona,
+      id,
+      facebookPersonaId: unchanged ? old?.facebookPersonaId : undefined,
+    }
+  })
 
   const ctx = await buildContext({
     workspaceId: workspace.id,
@@ -182,15 +228,26 @@ const getPersonaId = async (
       auth: model.auth as MessengerAuthValue,
     },
   })
-  const newPersona = await integrationMessenger.runAction("updatePersona", {
-    ctx,
-    persona: defaultPersona
-      ? {
-          name: defaultPersona.name,
-          profile_picture_url: defaultPersona.profilePicture.url,
-        }
-      : undefined,
-  })
 
-  return newPersona.personaId
+  const { personas: synced } = await integrationMessenger.runAction(
+    "syncPersonas",
+    {
+      ctx,
+      personas: normalized.map((persona) => ({
+        id: persona.id,
+        name: persona.name,
+        profilePictureUrl: persona.profilePicture.url,
+        facebookPersonaId: persona.facebookPersonaId,
+      })),
+    },
+  )
+
+  const facebookIdById = new Map(
+    synced.map((persona) => [persona.id, persona.facebookPersonaId]),
+  )
+
+  return normalized.map((persona) => ({
+    ...persona,
+    facebookPersonaId: facebookIdById.get(persona.id),
+  }))
 }

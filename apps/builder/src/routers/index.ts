@@ -31,6 +31,7 @@ import { whatsappFlowAPIs } from "@/features/integration-whatsapp/flows/api"
 import { whatsappMessageTemplateAPIs } from "@/features/integration-whatsapp/message-templates/api"
 import { integrationsAPI } from "@/features/integrations/api"
 import { messagesAPI } from "@/features/messages/api"
+import { personasAPIs } from "@/features/personas/api"
 import { platformCredentialsAPI } from "@/features/platform-credentials/api"
 import { productsAPI } from "@/features/products/api"
 import { savedRepliesAPI } from "@/features/saved-replies/api"
@@ -83,6 +84,7 @@ export const router = {
   inboxTeamsAPI,
   foldersAPI,
   messagesAPI,
+  personasAPIs,
   errorLogsAPI,
   workspacesAPI,
   aiFunctionsAPI,

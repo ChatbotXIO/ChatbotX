@@ -1,4 +1,5 @@
-import { type DatabaseClient, db } from "@chatbotx.io/database/client"
+import { type DatabaseClient, db, eq } from "@chatbotx.io/database/client"
+import { contactInboxModel } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
   ContactModel,
@@ -169,6 +170,31 @@ class ContactInboxService extends BaseService {
         .filter((date): date is Date => Boolean(date))
         .sort((a, b) => b.getTime() - a.getTime())[0] ?? null
     )
+  }
+
+  /**
+   * Set (or clear) the channel persona for a contact-inbox connection. Used by
+   * the "Set Persona" Messenger flow action; stores the local persona id (or
+   * null to fall back to the page default). Invalidates the contact's
+   * contact-inbox caches so the next send reads the new value.
+   */
+  async setPersona(props: {
+    tx?: DatabaseClient
+    contactInboxId: string
+    contactId: string
+    personaId: string | null
+  }): Promise<void> {
+    const { tx = db, contactInboxId, contactId, personaId } = props
+
+    await tx
+      .update(contactInboxModel)
+      .set({ personaId })
+      .where(eq(contactInboxModel.id, contactInboxId))
+
+    await this.invalidateCacheTags([
+      `contacts:${contactId}:contact-inboxes`,
+      `tags:contacts:${contactId}`,
+    ])
   }
 
   async findLatestLastIncomingMessageAtByContactId(props: {

@@ -30,7 +30,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/dropdown-menu"
 import { Form } from "@chatbotx.io/ui/components/ui/form"
 import { Label } from "@chatbotx.io/ui/components/ui/label"
-import { createId } from "@chatbotx.io/utils"
+import { createId, isNumericId } from "@chatbotx.io/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks"
 import {
@@ -119,7 +119,12 @@ export function UpdateMessengerForm({
     name: "personas",
   })
   const setPersonaDefault = (index: number) => {
-    personas.forEach((persona, i) => {
+    // Read raw form values, NOT the useFieldArray `fields` (`personas`): each
+    // `fields` item carries react-hook-form's auto-generated key (keyName
+    // default "id"), which shadows our real persona id. Spreading a `fields`
+    // item back would persist that generated UUID over the stable createId().
+    const current = form.getValues("personas") ?? []
+    current.forEach((persona, i) => {
       updatePersona(i, {
         ...persona,
         isDefault: i === index ? !persona.isDefault : false,
@@ -140,7 +145,12 @@ export function UpdateMessengerForm({
         welcomeFlowId: welcomeFlowId?.toString() ?? null,
         persistentMenus: persistentMenusArray,
         conversationStarters: conversationStartersArray,
-        personas: personasArray,
+        // Normalize persona ids to numeric Snowflakes. Legacy rows may carry no
+        // id (backfill) or a UUID from an older ID scheme (migrate to Snowflake).
+        personas: personasArray.map((persona) => ({
+          ...persona,
+          id: persona.id && isNumericId(persona.id) ? persona.id : createId(),
+        })),
       })
     }
   }, [integrationMessenger, form])
@@ -317,6 +327,7 @@ export function UpdateMessengerForm({
               <Button
                 onClick={() =>
                   appendPersona({
+                    id: createId(),
                     name: "",
                     profilePicture: {
                       id: createId(),

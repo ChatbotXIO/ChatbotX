@@ -37,6 +37,7 @@ import { optOutEmailStepSchema } from "./steps/opt-out-email"
 import { removeContactTagStepSchema } from "./steps/remove-contact-tag"
 import { sendGridAddContactSchema } from "./steps/sendgrid-add-contact"
 import { setCustomFieldStepSchema } from "./steps/set-custom-field"
+import { setMessengerPersonaStepSchema } from "./steps/set-messenger-persona"
 import { setMessengerUserPersistentMenuStepSchema } from "./steps/set-messenger-user-persistent-menu"
 import { spreadsheetClearRowSchema } from "./steps/spreadsheet-clear-row"
 import { spreadsheetGetRowSchema } from "./steps/spreadsheet-get-row"
@@ -129,6 +130,7 @@ const messengerSteps = [
   setMessengerUserPersistentMenuStepSchema,
   enableMessengerComposerStepSchema,
   disableMessengerComposerStepSchema,
+  setMessengerPersonaStepSchema,
 ]
 
 const googleSheetStep = [

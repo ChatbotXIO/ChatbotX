@@ -5,6 +5,11 @@ export {
   messengerMenusToCallToActions,
   type PersistentMenuItem,
 } from "./lib/persistent-menu"
+export {
+  findRegisteredPersona,
+  isRegisteredPersona,
+  selectRegisteredPersonas,
+} from "./lib/persona"
 export type {
   MessengerAuthValue,
   MessengerConfig,

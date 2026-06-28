@@ -32,6 +32,7 @@ import {
   type MessengerAuthValue,
   type MessengerIntegrationDetail,
 } from "../../../schema"
+import { resolveMessengerPersonaId } from "./persona"
 import { getAttachmentTemplate } from "./send-attachment"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepFile } from "./send-file"
@@ -61,8 +62,10 @@ export const sendMessage: MessageHandlers<MessengerAuthValue>["sendMessage"] =
           contact,
           message: facebookMessage,
           ...policy,
-          personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
-            .personaId,
+          personaId: resolveMessengerPersonaId(
+            ctx.integrationDetail as MessengerIntegrationDetail,
+            contact,
+          ),
         })
         const response = await sendPageMessage(ctx.auth, payload)
         if (response.message_id) {
@@ -118,8 +121,10 @@ export const sendFlowStep: MessageHandlers<MessengerAuthValue>["sendFlowStep"] =
             contact,
             message: facebookMessage,
             ...policy,
-            personaId: (ctx.integrationDetail as MessengerIntegrationDetail)
-              .personaId,
+            personaId: resolveMessengerPersonaId(
+              ctx.integrationDetail as MessengerIntegrationDetail,
+              contact,
+            ),
           }),
         )
         if (response.message_id) {

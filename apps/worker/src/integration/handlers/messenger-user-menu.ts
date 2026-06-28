@@ -3,14 +3,22 @@ import {
   buildBrandingUrl,
   moveBrandingMenuLast,
 } from "@chatbotx.io/business/branding"
-import type { MessengerPersistentMenu } from "@chatbotx.io/database/partials"
+import type {
+  MessengerPersistentMenu,
+  MessengerPersona,
+} from "@chatbotx.io/database/partials"
 import { findUserPersistentMenuById } from "@chatbotx.io/database/repositories"
+import type { ContactInboxModel } from "@chatbotx.io/database/types"
 import type {
   DisableMessengerComposerStepSchema,
   EnableMessengerComposerStepSchema,
+  SetMessengerPersonaStepSchema,
   SetMessengerUserPersistentMenuStepSchema,
 } from "@chatbotx.io/flow-config"
-import { messengerMenusToCallToActions } from "@chatbotx.io/integration-messenger"
+import {
+  findRegisteredPersona,
+  messengerMenusToCallToActions,
+} from "@chatbotx.io/integration-messenger"
 import type { FacebookButton } from "@chatbotx.io/integration-messenger/schema"
 import type { UserCustomSettings } from "@chatbotx.io/sdk"
 import { env } from "../../env"
@@ -24,6 +32,7 @@ type ResolvedIntegrationContext = Awaited<
 
 type ResolvedMessengerUserContext = ResolvedIntegrationContext & {
   psid: string
+  contactInbox: ContactInboxModel
 }
 
 /**
@@ -66,7 +75,7 @@ async function resolveMessengerUserContext(
     contactInbox,
   })
 
-  return { ...resolved, psid }
+  return { ...resolved, psid, contactInbox }
 }
 
 /**
@@ -242,4 +251,52 @@ export async function disableMessengerComposer(
   }
 
   await applyUserComposerAndMenu({ context, composerInputDisabled: true })
+}
+
+/**
+ * Set (or clear) the Messenger persona for a single contact connection.
+ *
+ * - Empty `step.personaId` clears the contact's persona (falls back to the
+ *   page default persona at send time).
+ * - Otherwise the persona is stored only when it belongs to this contact's page
+ *   and is registered with Facebook (has a `facebookPersonaId`). A persona from
+ *   a different page is skipped (no-op) and the flow continues.
+ *
+ * The stored value is the persona's stable local id; the Messenger send path
+ * resolves it to the page's current Facebook persona id.
+ */
+export async function setMessengerPersona(
+  props: ExecuteStepProps<SetMessengerPersonaStepSchema>,
+) {
+  const { conversation, step } = props
+
+  const context = await resolveMessengerUserContext(props)
+  if (!context) {
+    return
+  }
+
+  const { contactInbox, integrationRow } = context
+
+  const persona = step.personaId
+    ? findRegisteredPersona(
+        integrationRow.personas as MessengerPersona[] | undefined,
+        step.personaId,
+      )
+    : undefined
+
+  // A configured persona that can't be resolved on this contact's page (e.g. a
+  // cross-page selection or a since-deleted persona) must not silently leave a
+  // stale persona in place. Reset to the page default and surface why, so the
+  // step's effect is observable instead of a confusing no-op.
+  if (step.personaId && !persona) {
+    logger.warn(
+      `Set Persona: persona ${step.personaId} is not available on this page; resetting contact ${conversation.contactId} to the page default`,
+    )
+  }
+
+  await contactInboxService.setPersona({
+    contactInboxId: contactInbox.id,
+    contactId: conversation.contactId,
+    personaId: persona?.id ?? null,
+  })
 }

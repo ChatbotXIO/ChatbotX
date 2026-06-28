@@ -33,6 +33,10 @@ export const contactInboxModel = pgTable(
     channel: text().notNull(),
     source: text().notNull(),
     sourceId: text().notNull(),
+    // Local persona id (MessengerPersona.id) chosen for this contact connection
+    // via the "Set Persona" flow action. Resolved to the page's current Facebook
+    // persona id at send time; null means the page default persona is used.
+    personaId: text(),
     contactLastReadAt: timestamp(timestampConfig),
     lastMessageAt: timestamp(timestampConfig),
     lastIncomingMessageAt: timestamp(timestampConfig),

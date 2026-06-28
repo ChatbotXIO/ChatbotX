@@ -54,6 +54,7 @@ import { sendVideoStep } from "./send-video"
 import sendWaTemplateMessageStep from "./send-wa-template-message"
 import { sendGridAddContactStep } from "./sendgrid-add-contact"
 import { setCustomFieldStep } from "./set-custom-field"
+import { setMessengerPersonaStep } from "./set-messenger-persona"
 import { setMessengerUserPersistentMenuStep } from "./set-messenger-user-persistent-menu"
 import { splitTrafficStep } from "./split-traffic"
 import { spreadsheetClearRowStep } from "./spreadsheet-clear-row"
@@ -165,6 +166,7 @@ export const allSteps: Record<StepType, StepDefinition<any> | undefined> = {
     setMessengerUserPersistentMenuStep,
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposerStep,
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposerStep,
+  [stepTypes.enum.setMessengerPersona]: setMessengerPersonaStep,
 }
 
 export const DynamicStepEditor = memo(

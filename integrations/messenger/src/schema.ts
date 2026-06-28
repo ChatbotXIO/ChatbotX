@@ -32,16 +32,31 @@ export type MessengerAuthValue = Oauth2AuthValue & {
 }
 
 export type MessengerIntegrationDetail = {
+  /** Page default Facebook persona id (registered from the default persona). */
   personaId: string
+  /**
+   * The page's configured personas (jsonb on `IntegrationMessenger.personas`).
+   * Used to resolve a contact's chosen persona (local id) to its current
+   * Facebook persona id at send time.
+   */
+  personas?: Array<{ id: string; facebookPersonaId?: string }>
+}
+
+/** A page persona to reconcile against Facebook in the `syncPersonas` action. */
+export type SyncPersonaInput = {
+  id: string
+  name: string
+  profilePictureUrl: string
+  facebookPersonaId?: string
 }
 
 export type MessengerActions<
   IAuth extends MessengerAuthValue = MessengerAuthValue,
 > = {
-  updatePersona: (props: {
+  syncPersonas: (props: {
     ctx: Context<IAuth>
-    persona: PersonaRequest
-  }) => Promise<{ personaId?: string }>
+    personas: SyncPersonaInput[]
+  }) => Promise<{ personas: Array<{ id: string; facebookPersonaId?: string }> }>
   getPostDetails: (props: {
     ctx: Context<IAuth>
     input: { postId: string }

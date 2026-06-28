@@ -59,6 +59,7 @@ import { addMailerLiteSubscriber } from "./mailer-lite-handler"
 import {
   disableMessengerComposer,
   enableMessengerComposer,
+  setMessengerPersona,
   setMessengerUserPersistentMenu,
 } from "./messenger-user-menu"
 import { addOrUpdateMoosendContact } from "./moosend-handler"
@@ -435,4 +436,5 @@ export const flowStepHandlers: Record<
     setMessengerUserPersistentMenu,
   [stepTypes.enum.enableMessengerComposer]: enableMessengerComposer,
   [stepTypes.enum.disableMessengerComposer]: disableMessengerComposer,
+  [stepTypes.enum.setMessengerPersona]: setMessengerPersona,
 }
