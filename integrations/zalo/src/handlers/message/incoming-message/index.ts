@@ -128,13 +128,13 @@ const getMessageEntity = async (
       break
   }
 
-  if (!message.text) {
+  if (!message.text && (message.attachments?.length ?? 0) === 0) {
     throw new ZaloException(`No content found in message ${event.event_name}`)
   }
 
   // Detect postback action
   let postbackAction: string | null = null
-  if (message.text.startsWith("postback_")) {
+  if (message.text?.startsWith("postback_")) {
     postbackAction = message.text.replace("postback_", "")
   }
 
