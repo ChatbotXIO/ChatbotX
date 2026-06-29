@@ -2,12 +2,14 @@
 
 import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { eachDayOfInterval, format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { formatDateWithYear } from "../../utils/date-format"
 
 export function ArchivedConversationChart() {
   const t = useTranslations()
+  const locale = useLocale()
   const conversationArchived = useAnalysisStore(
     (state) => state.conversationArchived,
   )
@@ -18,7 +20,7 @@ export function ArchivedConversationChart() {
     const groupedByDate = new Map<string, number>()
 
     for (const stat of conversationArchived) {
-      const dateKey = format(new Date(stat.timestamp), "MMM d, yyyy")
+      const dateKey = format(new Date(stat.timestamp), "yyyy-MM-dd")
       const existing = groupedByDate.get(dateKey) || 0
       groupedByDate.set(dateKey, existing + stat.count)
     }
@@ -26,10 +28,10 @@ export function ArchivedConversationChart() {
     const allDates = eachDayOfInterval({ start: from, end: to })
 
     return allDates.map((date) => {
-      const dateKey = format(date, "MMM d, yyyy")
+      const dateKey = format(date, "yyyy-MM-dd")
       const count = groupedByDate.get(dateKey) || 0
       return {
-        name: dateKey,
+        name: formatDateWithYear(date, locale),
         value: [
           {
             label: t("analytics.conversations"),
@@ -38,7 +40,7 @@ export function ArchivedConversationChart() {
         ],
       }
     })
-  }, [conversationArchived, from, to, t])
+  }, [conversationArchived, from, to, locale, t])
 
   return <BarChart data={data} title={t("analytics.archivedConversations")} />
 }

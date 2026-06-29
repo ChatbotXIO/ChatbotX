@@ -40,6 +40,7 @@ export function MessagesBySenderChart() {
   return (
     <DonutChart
       data={data}
+      noDataLabel={t("analytics.noData")}
       title={t("analytics.messagesSentByHumanOrBot")}
       valueLabel={t("analytics.messages")}
     />

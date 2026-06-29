@@ -14,6 +14,7 @@ import { COLORS } from "./constants"
 export interface DonutChartProps {
   data: Array<{ name: string; value: number; color?: string }>
   helpText?: string
+  noDataLabel?: string
   title: string
   valueLabel: string
 }
@@ -23,9 +24,12 @@ export function DonutChart({
   valueLabel,
   data,
   helpText,
+  noDataLabel = "No data",
 }: DonutChartProps) {
   const chartData =
-    data.length === 0 ? [{ name: "No data", value: 0, color: "#e5e7eb" }] : data
+    data.length === 0
+      ? [{ name: noDataLabel, value: 0, color: "#e5e7eb" }]
+      : data
 
   return (
     <Card className="flex-1">

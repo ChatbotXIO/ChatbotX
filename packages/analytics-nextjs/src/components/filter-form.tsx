@@ -28,7 +28,7 @@ import {
   subMonths,
 } from "date-fns"
 import { Calendar1Icon, RotateCwIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useAnalysisStore } from "../provider/analysis-store-context"
@@ -115,6 +115,7 @@ export default function AnalysisFilterForm({
   onChange,
 }: AnalysisFilterFormProps) {
   const t = useTranslations()
+  const locale = useLocale()
 
   const { setRange: setAnalysisRange } = useAnalysisStore((state) => state)
 
@@ -160,7 +161,7 @@ export default function AnalysisFilterForm({
 
   const rangeText = useMemo(() => {
     if (!range) {
-      return "Select range"
+      return t("analytics.selectRange")
     }
     const fromDate = new Date(range.from)
     const toDate = new Date(range.to)
@@ -170,13 +171,13 @@ export default function AnalysisFilterForm({
       year: "numeric",
     }
     if (fromDate.toDateString() === toDate.toDateString()) {
-      return fromDate.toLocaleDateString(undefined, options)
+      return fromDate.toLocaleDateString(locale, options)
     }
     return `${fromDate.toLocaleDateString(
-      undefined,
+      locale,
       options,
-    )} - ${toDate.toLocaleDateString(undefined, options)}`
-  }, [range])
+    )} - ${toDate.toLocaleDateString(locale, options)}`
+  }, [locale, range, t])
 
   const applyRange = (r: DateRangeResult) => {
     setRange(r)
@@ -240,7 +241,7 @@ export default function AnalysisFilterForm({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              aria-label="Date filter preset"
+              aria-label={t("analytics.dateFilterPreset")}
               id="date-range-preset"
               onClick={(e) => {
                 if (preset === "custom") {

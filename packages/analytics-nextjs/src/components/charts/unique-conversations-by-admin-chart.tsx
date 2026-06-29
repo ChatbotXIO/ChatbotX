@@ -24,6 +24,7 @@ export function UniqueConversationsByAdminChart() {
     <DonutChart
       data={data}
       helpText={t("analytics.uniqueConversationsByAdminsHelp")}
+      noDataLabel={t("analytics.noData")}
       title={t("analytics.uniqueConversationsByAdmins")}
       valueLabel={t("analytics.conversations")}
     />

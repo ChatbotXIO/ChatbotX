@@ -9,11 +9,13 @@ export const contactInboxResource = createSelectSchema(contactInboxModel, {
   contactId: z.string(),
   inboxId: z.string(),
   channel: z.string(),
+  contactLastReadAt: z.date().nullable().optional(),
 }).pick({
   id: true,
   contactId: true,
   inboxId: true,
   channel: true,
   lastIncomingMessageAt: true,
+  contactLastReadAt: true,
 })
 export type ContactInboxResource = z.infer<typeof contactInboxResource>

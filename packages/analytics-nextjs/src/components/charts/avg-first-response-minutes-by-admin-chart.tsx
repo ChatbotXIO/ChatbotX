@@ -18,7 +18,7 @@ export function AvgFirstResponseMinutesByAdminChart() {
       ]}
       helpText={t("analytics.averageFirstResponseTimeByAdminHelp")}
       title={t("analytics.averageFirstResponseTimeByAdmin")}
-      valueLabel="Value"
+      valueLabel={t("fields.value.label")}
     />
   )
 }

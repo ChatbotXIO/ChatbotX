@@ -8,12 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
-import { format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { formatDateWithYear } from "../../utils/date-format"
 
 export function MagicLinkStatsTable() {
   const t = useTranslations("analytics")
+  const locale = useLocale()
   const magicLinkStats = useAnalysisStore((state) => state.magicLinkStats)
 
   return (
@@ -30,7 +31,7 @@ export function MagicLinkStatsTable() {
             magicLinkStats.map((row) => (
               <TableRow key={row.dateReport}>
                 <TableCell>
-                  {format(new Date(row.dateReport), "MMM d, yyyy")}
+                  {formatDateWithYear(new Date(row.dateReport), locale)}
                 </TableCell>
                 <TableCell>{row.count}</TableCell>
               </TableRow>
@@ -38,7 +39,7 @@ export function MagicLinkStatsTable() {
           ) : (
             <TableRow>
               <TableCell className="h-24 text-center" colSpan={2}>
-                No results.
+                {t("noResults")}
               </TableCell>
             </TableRow>
           )}

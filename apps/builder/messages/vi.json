@@ -208,8 +208,24 @@
     "newContactsByCountry": "Liên hệ mới theo quốc gia",
     "date": "Ngày",
     "total": "Tổng",
-    "sessionsThroughTheRef": "Phiên qua Ref '{ref}' mỗi ngày",
-    "sessionsThroughTheMagicLink": "Phiên qua Magic Link '{ref}' mỗi ngày"
+    "messagesSent": "Tin nhắn đã gửi",
+    "selectRange": "Chọn khoảng thời gian",
+    "dateFilterPreset": "Bộ lọc ngày đặt sẵn",
+    "noResults": "Không có kết quả.",
+    "noData": "Không có dữ liệu",
+    "comingSoon": "Sắp ra mắt",
+    "unknown": "Không xác định",
+    "pagination": {
+      "selectedRows": "{selected} / {total} hàng đã chọn.",
+      "rowsPerPage": "Số hàng mỗi trang",
+      "pageOf": "Trang {page} / {pageCount}",
+      "firstPage": "Đi tới trang đầu",
+      "previousPage": "Đi tới trang trước",
+      "nextPage": "Đi tới trang sau",
+      "lastPage": "Đi tới trang cuối"
+    },
+    "sessionsThroughTheRef": "Phiên qua Ref \"{ref}\" mỗi ngày",
+    "sessionsThroughTheMagicLink": "Phiên qua Magic Link \"{ref}\" mỗi ngày"
   },
   "autoAssignConversation": {
     "rule": {
@@ -788,7 +804,8 @@
       "label": "Hiển thị ô nhập tin nhắn"
     },
     "inbox": {
-      "label": "Hộp thư"
+      "label": "Hộp thư",
+      "placeholder": "Chọn hộp thư"
     },
     "inboxTeam": {
       "label": "Nhóm hộp thư"
@@ -1112,7 +1129,14 @@
       "placeholder": "Nhập URL"
     },
     "userId": {
-      "label": "ID Người dùng"
+      "label": "ID Người dùng",
+      "placeholders": {
+        "instagram": "ID người dùng Instagram",
+        "messenger": "PSID Messenger",
+        "telegram": "Chat ID Telegram",
+        "tiktok": "ID người dùng TikTok",
+        "zalo": "ID người dùng Zalo"
+      }
     },
     "userTags": {
       "label": "Nhãn người dùng"
@@ -1251,7 +1275,8 @@
       "label": "Bảng tính"
     },
     "source": {
-      "label": "Nguồn"
+      "label": "Nguồn",
+      "placeholder": "Chọn nguồn"
     },
     "password": {
       "label": "Mật khẩu",
@@ -2065,7 +2090,7 @@
     "deleteSuccess": "{feature} deleted successfully",
     "error": "Error",
     "moveFolderDescription": "Move {feature} to folder",
-    "noData": "No data",
+    "noData": "Không có dữ liệu",
     "featureNotFound": "Không tìm thấy {feature}",
     "enableSuccess": "Đã bật {feature} thành công",
     "userInactive": "Người dùng không hoạt động hơn 7 ngày",

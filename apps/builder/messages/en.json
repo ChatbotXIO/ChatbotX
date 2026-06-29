@@ -208,6 +208,22 @@
     "newContactsByCountry": "New contacts by country",
     "date": "Date",
     "total": "Total",
+    "messagesSent": "Messages Sent",
+    "selectRange": "Select range",
+    "dateFilterPreset": "Date filter preset",
+    "noResults": "No results.",
+    "noData": "No data",
+    "comingSoon": "Coming soon",
+    "unknown": "Unknown",
+    "pagination": {
+      "selectedRows": "{selected} of {total} row(s) selected.",
+      "rowsPerPage": "Rows per page",
+      "pageOf": "Page {page} of {pageCount}",
+      "firstPage": "Go to first page",
+      "previousPage": "Go to previous page",
+      "nextPage": "Go to next page",
+      "lastPage": "Go to last page"
+    },
     "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
     "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
   },
@@ -781,7 +797,8 @@
       "label": "Show Message Input"
     },
     "inbox": {
-      "label": "Inbox"
+      "label": "Inbox",
+      "placeholder": "Select an inbox"
     },
     "inboxTeam": {
       "label": "Inbox Team"
@@ -1129,7 +1146,14 @@
       "placeholder": "Enter URL"
     },
     "userId": {
-      "label": "User ID"
+      "label": "User ID",
+      "placeholders": {
+        "instagram": "Instagram user ID",
+        "messenger": "Messenger PSID",
+        "telegram": "Telegram chat ID",
+        "tiktok": "TikTok user ID",
+        "zalo": "Zalo user ID"
+      }
     },
     "userTags": {
       "label": "User Tags"
@@ -1271,7 +1295,8 @@
       "label": "Spreadsheet"
     },
     "source": {
-      "label": "Source"
+      "label": "Source",
+      "placeholder": "Select a source"
     },
     "password": {
       "label": "Password",

@@ -20,7 +20,7 @@ import {
   memo,
 } from "react";
 import { type FieldValues, type Path, useFormContext } from "react-hook-form";
-import { X, Plus, Tag } from "lucide-react";
+import { ChevronDown, X, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TagsInputFieldProps<TFieldValues extends FieldValues> {
@@ -65,6 +65,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
   const { control } = useFormContext();
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +82,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
         !containerRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
+        setShowAllSuggestions(false);
       }
     };
 
@@ -103,6 +105,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
     onChange([...currentTags, trimmedTag]);
     setInputValue("");
     setShowSuggestions(false);
+    setShowAllSuggestions(false);
     onSelect && onSelect([...currentTags, trimmedTag])
   };
 
@@ -130,6 +133,7 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
       removeTag(currentTags.length - 1, currentTags, onChange);
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
+      setShowAllSuggestions(false);
     }
   };
 
@@ -168,7 +172,10 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
       control={control}
       name={name}
       render={({ field }) => {
-        const tags = field.value || [];
+        const tags = (field.value || []) as string[];
+        const visibleSuggestions = showAllSuggestions
+          ? suggestions
+          : filteredSuggestions;
 
         return (
           <FormItem className={cn("space-y-2", className)}>
@@ -238,16 +245,18 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                       value={inputValue}
                       onChange={(e) => {
                         setInputValue(e.target.value);
+                        setShowAllSuggestions(false);
                         setShowSuggestions(
                           e.target.value.length > 0 && suggestions.length > 0
                         );
                       }}
                       onKeyDown={(e) => handleKeyDown(e, tags, field.onChange)}
-                      onFocus={() =>
+                      onFocus={() => {
+                        setShowAllSuggestions(false);
                         setShowSuggestions(
                           inputValue.length > 0 && suggestions.length > 0
-                        )
-                      }
+                        );
+                      }}
                       placeholder={
                         tags.length === 0
                           ? placeholder ??
@@ -273,54 +282,73 @@ const TagsInputFieldBase = <TFieldValues extends FieldValues>({
                     <button
                       type="button"
                       onClick={() => {
-                        if (inputValue.trim()) {
-                          addTag(inputValue, tags, field.onChange);
-                        }
                         inputRef.current?.focus();
+                        setShowAllSuggestions(true);
+                        setShowSuggestions(
+                          suggestions.length > 0 &&
+                            !(showSuggestions && showAllSuggestions)
+                        );
                       }}
                       className="p-1 hover:bg-muted rounded transition-colors"
                       disabled={
-                        !inputValue.trim() ||
+                        suggestions.length === 0 ||
                         (maxTags ? tags.length >= maxTags : false)
                       }
                     >
-                      <Plus className="w-4 h-4 text-muted-foreground" />
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     </button>
                   )}
                 </div>
 
                 {/* Suggestions Dropdown */}
                 <AnimatePresence>
-                  {showSuggestions && filteredSuggestions.length > 0 && (
+                  {showSuggestions && visibleSuggestions.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                       className={cn(
-                        "absolute z-50 w-full mt-1 rounded-md overflow-auto",
+                        "absolute z-50 w-full mt-1 rounded-md max-h-60 overflow-auto",
                         styles.suggestions
                       )}
                     >
-                      {filteredSuggestions.map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          type="button"
-                          onClick={() =>
-                            addTag(suggestion, tags, field.onChange)
-                          }
-                          className="w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            {startIcon ? (
-                              startIcon
-                            ) : (
-                              <Tag className="w-3 h-3 text-muted-foreground" />
+                      {visibleSuggestions.map((suggestion) => {
+                        const isSelected =
+                          !allowDuplicates && tags.includes(suggestion);
+
+                        return (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() =>
+                              addTag(suggestion, tags, field.onChange)
+                            }
+                            className={cn(
+                              "w-full px-3 py-2 text-left hover:bg-muted transition-colors text-sm disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-50 disabled:hover:bg-transparent",
+                              isSelected &&
+                                "cursor-not-allowed text-muted-foreground hover:bg-transparent"
                             )}
-                            {suggestion}
-                          </div>
-                        </button>
-                      ))}
+                            disabled={isSelected}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isSelected && "text-muted-foreground"
+                                )}
+                              >
+                                {startIcon ? (
+                                  startIcon
+                                ) : (
+                                  <Tag className="w-3 h-3" />
+                                )}
+                              </span>
+                              <span>{suggestion}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </motion.div>
                   )}
                 </AnimatePresence>

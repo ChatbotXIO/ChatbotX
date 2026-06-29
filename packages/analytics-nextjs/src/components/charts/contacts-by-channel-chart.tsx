@@ -12,15 +12,16 @@ export function ContactsByChannelChart() {
   const data = useMemo(
     () =>
       contactsByChannel.map((item) => ({
-        name: item.dimension || "Unknown",
+        name: item.dimension || t("analytics.unknown"),
         value: item.uniqueContacts,
       })),
-    [contactsByChannel],
+    [contactsByChannel, t],
   )
 
   return (
     <DonutChart
       data={data}
+      noDataLabel={t("analytics.noData")}
       title={t("analytics.newContactsByChannel")}
       valueLabel={t("analytics.contacts")}
     />

@@ -19,14 +19,31 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 interface DataTablePaginationProps<TData> extends React.ComponentProps<"div"> {
   table: Table<TData>
   pageSizeOptions?: number[]
+  labels?: DataTablePaginationLabels
+}
+
+export type DataTablePaginationLabels = {
+  selectedRows?: (selected: number, total: number) => string
+  rowsPerPage?: string
+  pageOf?: (page: number, pageCount: number) => string
+  firstPage?: string
+  previousPage?: string
+  nextPage?: string
+  lastPage?: string
 }
 
 export function DataTablePagination<TData>({
   table,
   pageSizeOptions = [10, 20, 30, 40, 50],
+  labels,
   className,
   ...props
 }: DataTablePaginationProps<TData>) {
+  const selectedRows = table.getFilteredSelectedRowModel().rows.length
+  const totalRows = table.getFilteredRowModel().rows.length
+  const page = table.getState().pagination.pageIndex + 1
+  const pageCount = table.getPageCount()
+
   return (
     <div
       className={cn(
@@ -36,12 +53,14 @@ export function DataTablePagination<TData>({
       {...props}
     >
       <div className="flex-1 whitespace-nowrap text-muted-foreground text-sm">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
+        {labels?.selectedRows?.(selectedRows, totalRows) ??
+          `${selectedRows} of ${totalRows} row(s) selected.`}
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
-          <p className="whitespace-nowrap font-medium text-sm">Rows per page</p>
+          <p className="whitespace-nowrap font-medium text-sm">
+            {labels?.rowsPerPage ?? "Rows per page"}
+          </p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -61,12 +80,11 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center font-medium text-sm">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          {labels?.pageOf?.(page, pageCount) ?? `Page ${page} of ${pageCount}`}
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            aria-label="Go to first page"
+            aria-label={labels?.firstPage ?? "Go to first page"}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"
@@ -76,7 +94,7 @@ export function DataTablePagination<TData>({
             <ChevronsLeft />
           </Button>
           <Button
-            aria-label="Go to previous page"
+            aria-label={labels?.previousPage ?? "Go to previous page"}
             variant="outline"
             size="icon"
             className="size-8"
@@ -86,7 +104,7 @@ export function DataTablePagination<TData>({
             <ChevronLeft />
           </Button>
           <Button
-            aria-label="Go to next page"
+            aria-label={labels?.nextPage ?? "Go to next page"}
             variant="outline"
             size="icon"
             className="size-8"
@@ -96,7 +114,7 @@ export function DataTablePagination<TData>({
             <ChevronRight />
           </Button>
           <Button
-            aria-label="Go to last page"
+            aria-label={labels?.lastPage ?? "Go to last page"}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"

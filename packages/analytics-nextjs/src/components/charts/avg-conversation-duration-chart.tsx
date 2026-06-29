@@ -13,7 +13,7 @@ export function AvgConversationDurationChart() {
           name: "Jan 7",
           value: [
             {
-              label: "Value",
+              label: t("fields.value.label"),
               value: 4000,
             },
           ],
@@ -22,7 +22,7 @@ export function AvgConversationDurationChart() {
           name: "Jan 8",
           value: [
             {
-              label: "Value",
+              label: t("fields.value.label"),
               value: 3000,
             },
           ],
@@ -31,7 +31,7 @@ export function AvgConversationDurationChart() {
           name: "Jan 9",
           value: [
             {
-              label: "Value",
+              label: t("fields.value.label"),
               value: 2000,
             },
           ],
@@ -40,7 +40,7 @@ export function AvgConversationDurationChart() {
           name: "Jan 10",
           value: [
             {
-              label: "Value",
+              label: t("fields.value.label"),
               value: 2780,
             },
           ],
@@ -49,7 +49,7 @@ export function AvgConversationDurationChart() {
           name: "Jan 11",
           value: [
             {
-              label: "Value",
+              label: t("fields.value.label"),
               value: 1890,
             },
           ],

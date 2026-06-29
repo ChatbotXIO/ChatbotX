@@ -2,6 +2,7 @@ import { flexRender, type Table as TanstackTable } from "@tanstack/react-table"
 import type * as React from "react"
 
 import { DataTablePagination } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
+import type { DataTablePaginationLabels } from "@chatbotx.io/ui/components/data-table/data-table-pagination"
 import {
   Table,
   TableBody,
@@ -16,11 +17,15 @@ import { cn } from "@chatbotx.io/ui/lib/utils"
 interface DataTableProps<TData> extends React.ComponentProps<"div"> {
   table: TanstackTable<TData>
   actionBar?: React.ReactNode
+  labels?: DataTablePaginationLabels & {
+    noResults?: string
+  }
 }
 
 export function DataTable<TData>({
   table,
   actionBar,
+  labels,
   children,
   className,
   ...props
@@ -91,7 +96,7 @@ export function DataTable<TData>({
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {labels?.noResults ?? "No results."}
                 </TableCell>
               </TableRow>
             )}
@@ -99,7 +104,7 @@ export function DataTable<TData>({
         </Table>
       </div>
       <div className="flex flex-col gap-2.5">
-        <DataTablePagination table={table} />
+        <DataTablePagination labels={labels} table={table} />
         {actionBar &&
           table.getFilteredSelectedRowModel().rows.length > 0 &&
           actionBar}
