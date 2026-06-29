@@ -358,6 +358,11 @@ async function* executeMultipleStepsGenerator(
   const { steps, ...rest } = props
 
   for (const step of steps) {
+    // `nodeId` is overloaded: startAnotherNode/startExternalNode store their own jump
+    // target in it, while every other step uses it only to tag the message with the node
+    // that produced it (flow analytics). Keep the step's own target when present; otherwise
+    // stamp the containing node id. Falling straight to `props.targetNodeId` here would make
+    // a jump step target its own node and loop forever.
     const stepWithNodeId = {
       ...step,
       nodeId: step.nodeId ?? props.targetNodeId ?? "",
