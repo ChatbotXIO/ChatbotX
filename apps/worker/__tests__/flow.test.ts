@@ -892,4 +892,133 @@ describe("runStepsAndQuickReplies — node execution loop guard", () => {
 
     expect(chatQueueAdd).toHaveBeenCalled()
   })
+
+  test("forwards the incremented count to the next node via a default edge", async () => {
+    const nextNode: FlowNode = {
+      id: "node-2",
+      position: { x: 0, y: 0 },
+      measured: { width: 100, height: 100 },
+      data: { name: "Next", isStartNode: false, details: { steps: [] } },
+    }
+    const edges: EdgeSchema[] = [
+      {
+        id: "e1",
+        source: "node-1",
+        sourceHandle: "node-1",
+        target: "node-2",
+        targetHandle: "input",
+      },
+    ]
+    const props = {
+      ...makeBaseProps(makeFlowVersion([nextNode], edges)),
+      details: { steps: [], quickReplies: [] },
+      triggerNextNode: true,
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("forwards the incremented count when routing via a success state", async () => {
+    const stateId = "state-ok"
+    const step1 = {
+      ...makeStep("autoAssignConversation", [
+        { id: stateId, stateType: "success" },
+      ]),
+      id: "step-1",
+    }
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "e1",
+          source: "n1",
+          sourceHandle: stateId,
+          target: "success-node",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const { flowStepHandlers } = await import(
+      "../src/integration/handlers/step"
+    )
+    mockSpy(flowStepHandlers, "autoAssignConversation").mockResolvedValue({
+      status: "success",
+      result: null,
+    })
+    const props = {
+      ...makeBaseProps(flowVersion),
+      details: { steps: [step1] },
+      triggerNextNode: false,
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeId).toBe("success-node")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("propagates the count across a startExternalNode jump", async () => {
+    const step = {
+      id: "s1",
+      stepType: "startExternalNode",
+      flowId: "external-flow",
+      nodeId: "external-node",
+    } as unknown as BaseStepSchema
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step] },
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      {
+        data: {
+          flowId: string
+          nodeId: string
+          nodeVisits: Record<string, number>
+        }
+      },
+    ]
+    expect(job.data.flowId).toBe("external-flow")
+    expect(job.data.nodeId).toBe("external-node")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("propagates the count across a startExternalFlow jump", async () => {
+    const step = {
+      id: "s1",
+      stepType: "startExternalFlow",
+      flowId: "external-flow",
+    } as unknown as BaseStepSchema
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step] },
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { flowId: string; nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.flowId).toBe("external-flow")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
 })
