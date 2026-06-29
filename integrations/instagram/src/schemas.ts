@@ -192,7 +192,8 @@ export const instagramSendMessageRequestSchema = z.object({
   recipient: instagramRecipientSchema,
   message: instagramSendMessageSchema.optional(),
   sender_action: z.enum(["typing_on", "typing_off", "mark_seen"]).optional(),
-  messaging_type: z.literal("RESPONSE").optional(),
+  messaging_type: z.enum(["RESPONSE", "MESSAGE_TAG"]).optional(),
+  tag: z.literal("HUMAN_AGENT").optional(),
 })
 export type InstagramSendMessageRequest = z.infer<
   typeof instagramSendMessageRequestSchema

@@ -14,5 +14,6 @@ export const contactInboxResource = createSelectSchema(contactInboxModel, {
   contactId: true,
   inboxId: true,
   channel: true,
+  lastIncomingMessageAt: true,
 })
 export type ContactInboxResource = z.infer<typeof contactInboxResource>

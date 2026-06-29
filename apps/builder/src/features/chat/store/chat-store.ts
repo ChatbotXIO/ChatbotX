@@ -537,9 +537,19 @@ export const createChatStore = () => {
 
       // Update last seen timestamps
       if (message.messageType === "incoming") {
+        const currentConversation = get().conversations.find(
+          (c) => c.id === message.conversationId,
+        )
+        const updatedContactInboxes = currentConversation?.contactInboxes?.map(
+          (ci, i) =>
+            i === 0 ? { ...ci, lastIncomingMessageAt: message.createdAt } : ci,
+        )
         updateConversation(message.conversationId, {
           contactRepliedAt: message.createdAt,
           contactLastReadAt: message.createdAt,
+          ...(updatedContactInboxes
+            ? { contactInboxes: updatedContactInboxes }
+            : {}),
         })
       }
       if (
