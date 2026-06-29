@@ -5,12 +5,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { createId } from "@chatbotx.io/utils"
 import { useReactFlow } from "@xyflow/react"
 import { CopyIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type MouseEvent, useCallback } from "react"
-import { clone } from "remeda"
+import { duplicateFlowNode } from "./duplicate-node-data"
 
 export function DuplicateNode() {
   const t = useTranslations()
@@ -18,40 +17,7 @@ export function DuplicateNode() {
 
   const duplicateNode = useCallback(
     (node: FlowNode) => {
-      const newNodeData = {
-        name: `${node.data.name} Copy`,
-        details: clone(node.data.details),
-      }
-      if ("beforeStep" in newNodeData.details) {
-        newNodeData.details.beforeStep.id = createId()
-      }
-
-      if ("steps" in newNodeData.details) {
-        newNodeData.details.steps = newNodeData.details.steps.map((step) => {
-          if ("buttons" in step) {
-            step.buttons = step.buttons.map((button) => ({
-              ...button,
-              id: createId(),
-              beforeStep: null,
-              buttonType: null,
-            }))
-          }
-          return { ...step, id: createId() }
-          // biome-ignore lint/suspicious/noExplicitAny: skip typescript type error
-        }) as any
-      }
-
-      addNodes([
-        {
-          id: createId(),
-          type: node.type,
-          position: {
-            x: node.position.x + 100,
-            y: node.position.y + 100,
-          },
-          data: newNodeData,
-        },
-      ])
+      addNodes([duplicateFlowNode(node)])
     },
     [addNodes],
   )
