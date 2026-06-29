@@ -315,7 +315,10 @@ async function* executeMultipleStepsGenerator(
   const { steps, ...rest } = props
 
   for (const step of steps) {
-    const stepWithNodeId = { ...step, nodeId: props.targetNodeId || "" }
+    const stepWithNodeId = {
+      ...step,
+      nodeId: step.nodeId ?? props.targetNodeId ?? "",
+    }
 
     const rawResult = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,

@@ -9,12 +9,13 @@ import { beforeEach, describe, expect, type Mock, test, vi } from "vitest"
 // --- mocks ---
 
 const integrationQueueAdd = vi.fn(async () => undefined)
+const chatQueueAdd = vi.fn(async () => undefined)
 
 vi.mock("@chatbotx.io/worker-config", () => ({
   IntegrationJobAction: { sendFlow: "sendFlow" },
   integrationQueue: { add: integrationQueueAdd },
   ChatJobAction: { sendFlowMessage: "sendFlowMessage" },
-  chatQueue: { add: vi.fn(async () => undefined) },
+  chatQueue: { add: chatQueueAdd },
 }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
@@ -304,6 +305,64 @@ describe("executeMultipleSteps — loop control statuses", () => {
 
     expect(result?.status).toBe("retry")
     expect(sendSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe("executeMultipleSteps — nodeId preservation", () => {
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    integrationQueueAdd.mockClear()
+  })
+
+  test("startAnotherNode jumps to its configured target, not the current node", async () => {
+    const step = {
+      id: "s1",
+      stepType: "startAnotherNode",
+      nodeId: "node-2",
+    } as unknown as BaseStepSchema
+
+    await executeMultipleSteps({ ...makeBaseProps(), steps: [step] })
+
+    const [action, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string } },
+    ]
+    expect(action).toBe("sendFlow")
+    expect(job.data.nodeId).toBe("node-2")
+  })
+
+  test("startExternalNode preserves its own target node and flow", async () => {
+    const step = {
+      id: "s1",
+      stepType: "startExternalNode",
+      flowId: "external-flow",
+      nodeId: "external-node",
+    } as unknown as BaseStepSchema
+
+    await executeMultipleSteps({ ...makeBaseProps(), steps: [step] })
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { flowId: string; nodeId: string } },
+    ]
+    expect(job.data.flowId).toBe("external-flow")
+    expect(job.data.nodeId).toBe("external-node")
+  })
+
+  test("message steps still carry their source node id for analytics", async () => {
+    const step = {
+      id: "s1",
+      stepType: "sendText",
+      text: "hi",
+    } as unknown as BaseStepSchema
+
+    await executeMultipleSteps({ ...makeBaseProps(), steps: [step] })
+
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { nodeId: string } } },
+    ]
+    expect(job.data.step.nodeId).toBe("node-1")
   })
 })
 
