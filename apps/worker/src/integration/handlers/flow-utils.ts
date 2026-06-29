@@ -13,6 +13,7 @@ import {
   type BotResponseTrackingContext,
   IntegrationJobAction,
   integrationQueue,
+  type NodeVisits,
 } from "@chatbotx.io/worker-config"
 
 export type ExecuteMultipleStepsProps = {
@@ -30,7 +31,7 @@ export type ExecuteMultipleStepsProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   sendFrom?: "inbox"
-  nodeVisits?: Record<string, number>
+  nodeVisits?: NodeVisits
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {

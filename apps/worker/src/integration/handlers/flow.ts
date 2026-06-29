@@ -29,6 +29,7 @@ import {
   type IntegrationJobSendFlowPostback,
   type IntegrationJobSendFlowQuickReply,
   integrationQueue,
+  type NodeVisits,
 } from "@chatbotx.io/worker-config"
 import {
   detectConversationAndContactInbox,
@@ -86,7 +87,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   sendFrom?: "inbox"
-  nodeVisits?: Record<string, number>
+  nodeVisits?: NodeVisits
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
@@ -178,9 +179,16 @@ export async function runStepsAndQuickReplies(
     triggerNextNode = true,
   } = props
 
+  // Loop guard: cap how many times a single node runs within one uninterrupted pass.
+  // Only a real node entry is counted (no startFromStepId — mid-node re-dispatches reuse
+  // the same count). The counter rides the job payload and resets when the flow pauses for
+  // the user (wait / getUserData resume from a fresh payload), so only instant cycles add up.
   let nodeVisits = props.nodeVisits
   if (!props.startFromStepId && props.targetNodeId) {
     const count = (props.nodeVisits?.[props.targetNodeId] ?? 0) + 1
+    // This node has already run MAX_NODE_EXECUTIONS times in this pass — the flow is cyclic
+    // (e.g. node A → node B → node A). Stop here instead of sending forever, and log the
+    // cycle (the nodeVisits map) so the misconfigured flow can be found.
     if (count > MAX_NODE_EXECUTIONS) {
       logger.warn(
         {
