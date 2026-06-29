@@ -48,8 +48,12 @@ vi.mock("@chatbotx.io/sdk", async (importOriginal) => {
 
 // --- imports after mocks ---
 
-const { executeMultipleSteps, seekConnectedNode, runStepsAndQuickReplies } =
-  await import("../src/integration/handlers/flow")
+const {
+  executeMultipleSteps,
+  MAX_NODE_EXECUTIONS,
+  seekConnectedNode,
+  runStepsAndQuickReplies,
+} = await import("../src/integration/handlers/flow")
 
 // --- helpers ---
 
@@ -743,5 +747,149 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
       { data: { nodeId: string } },
     ]
     expect(job.data.nodeId).toBe("node-2")
+  })
+})
+
+describe("runStepsAndQuickReplies — node execution loop guard", () => {
+  beforeEach(() => {
+    integrationQueueAdd.mockClear()
+    chatQueueAdd.mockClear()
+  })
+
+  test("stops a node that already reached the execution limit", async () => {
+    const { logger } = await import("../src/lib/logger")
+    const step = { ...makeStep("sendText"), id: "step-1" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step] },
+      nodeVisits: { "node-1": MAX_NODE_EXECUTIONS },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(integrationQueueAdd).not.toHaveBeenCalled()
+    expect(chatQueueAdd).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nodeId: "node-1",
+        count: MAX_NODE_EXECUTIONS + 1,
+        maxNodeExecutions: MAX_NODE_EXECUTIONS,
+        flowId: "flow-1",
+        flowVersionId: "fv-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        nodeVisits: { "node-1": MAX_NODE_EXECUTIONS },
+      }),
+      "Flow node exceeded max executions in one run; stopping to prevent an infinite loop",
+    )
+  })
+
+  test("increments and forwards nodeVisits on the next-step re-dispatch", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("propagates the incremented count across a startAnotherNode jump", async () => {
+    const step = {
+      id: "s1",
+      stepType: "startAnotherNode",
+      nodeId: "node-2",
+    } as unknown as BaseStepSchema
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step] },
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("propagates the incremented count across a splitTraffic jump", async () => {
+    const step = {
+      id: "split-1",
+      stepType: "splitTraffic",
+      cases: [{ value: 100 }],
+    } as unknown as BaseStepSchema
+    const flowVersion = makeFlowVersion(
+      [],
+      [
+        {
+          id: "edge-1",
+          source: "node-1",
+          sourceHandle: "node-1-case-0",
+          target: "node-2",
+          targetHandle: "input",
+        },
+      ],
+    )
+    const props = {
+      ...makeBaseProps(flowVersion),
+      details: { steps: [step] },
+      triggerNextNode: false,
+      nodeVisits: { "node-1": 1 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeId: string; nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeId).toBe("node-2")
+    expect(job.data.nodeVisits).toEqual({ "node-1": 2 })
+  })
+
+  test("seeds the count on the first entry", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    const [, job] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { nodeVisits: Record<string, number> } },
+    ]
+    expect(job.data.nodeVisits).toEqual({ "node-1": 1 })
+  })
+
+  test("does not cap a mid-node resume even above the limit", async () => {
+    const step1 = { ...makeStep("sendText"), id: "step-1" }
+    const step2 = { ...makeStep("sendText"), id: "step-2" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1, step2] },
+      startFromStepId: "step-2",
+      nodeVisits: { "node-1": 5 },
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalled()
   })
 })

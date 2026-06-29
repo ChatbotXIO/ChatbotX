@@ -30,6 +30,7 @@ export type ExecuteMultipleStepsProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   sendFrom?: "inbox"
+  nodeVisits?: Record<string, number>
 }
 
 export type ExecuteStepProps<T> = Omit<ExecuteMultipleStepsProps, "steps"> & {
@@ -80,6 +81,7 @@ export async function sendFlow(
         nodeId: connectedNodeId,
         metadata: props.metadata,
         sendFrom: props.sendFrom,
+        nodeVisits: props.nodeVisits,
       },
     })
   }

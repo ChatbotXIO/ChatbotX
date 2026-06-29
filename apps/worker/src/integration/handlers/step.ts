@@ -119,6 +119,7 @@ async function splitTraffic({
   targetId,
   useLatestFlowVersion,
   sendFrom,
+  nodeVisits,
 }: ExecuteStepProps<SplitTrafficStepSchema>) {
   if (!(targetId && step.cases.length)) {
     return
@@ -150,6 +151,7 @@ async function splitTraffic({
         flowVersionId: useLatestFlowVersion ? undefined : flowVersion.id,
         nodeId: connectedEdge.target,
         sendFrom,
+        nodeVisits,
       },
     })
   }
@@ -273,6 +275,7 @@ async function startAnotherNode(
       nodeId: props.step.nodeId,
       metadata: props.metadata,
       sendFrom: props.sendFrom,
+      nodeVisits: props.nodeVisits,
     },
   })
 }
@@ -283,6 +286,7 @@ async function startExternalFlow({
   step,
   metadata,
   sendFrom,
+  nodeVisits,
 }: ExecuteStepProps<StartExternalFlowStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -292,6 +296,7 @@ async function startExternalFlow({
       flowId: step.flowId,
       metadata,
       sendFrom,
+      nodeVisits,
     },
   })
 }
@@ -302,6 +307,7 @@ async function startExternalNode({
   step,
   metadata,
   sendFrom,
+  nodeVisits,
 }: ExecuteStepProps<StartExternalNodeStepSchema>) {
   await integrationQueue.add(IntegrationJobAction.sendFlow, {
     type: IntegrationJobAction.sendFlow,
@@ -312,6 +318,7 @@ async function startExternalNode({
       nodeId: step.nodeId,
       metadata,
       sendFrom,
+      nodeVisits,
     },
   })
 }

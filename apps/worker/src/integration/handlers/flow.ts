@@ -52,6 +52,12 @@ const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "skip",
 ])
 
+/**
+ * Max times a single node may execute within one uninterrupted run.
+ * The counter rides sendFlow jobs and resets on user pauses.
+ */
+export const MAX_NODE_EXECUTIONS = 3
+
 export type {
   ExecuteMultipleStepsProps,
   ExecuteStepProps,
@@ -80,6 +86,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   sendFrom?: "inbox"
+  nodeVisits?: Record<string, number>
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
@@ -132,6 +139,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       trackingContext,
       metadata,
       sendFrom,
+      nodeVisits: props.nodeVisits,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -170,6 +178,28 @@ export async function runStepsAndQuickReplies(
     triggerNextNode = true,
   } = props
 
+  let nodeVisits = props.nodeVisits
+  if (!props.startFromStepId && props.targetNodeId) {
+    const count = (props.nodeVisits?.[props.targetNodeId] ?? 0) + 1
+    if (count > MAX_NODE_EXECUTIONS) {
+      logger.warn(
+        {
+          nodeId: props.targetNodeId,
+          count,
+          maxNodeExecutions: MAX_NODE_EXECUTIONS,
+          flowId: flowVersion.flowId,
+          flowVersionId: flowVersion.id,
+          conversationId: props.conversation.id,
+          contactInboxId: props.contactInbox.id,
+          nodeVisits: props.nodeVisits,
+        },
+        "Flow node exceeded max executions in one run; stopping to prevent an infinite loop",
+      )
+      return
+    }
+    nodeVisits = { ...props.nodeVisits, [props.targetNodeId]: count }
+  }
+
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
   // already navigates to the same target node, so running beforeStep would execute it twice.
@@ -180,6 +210,7 @@ export async function runStepsAndQuickReplies(
   if (details.beforeStep && !props.startFromStepId && !skipBeforeStep) {
     await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [details.beforeStep],
     })
   }
@@ -204,6 +235,7 @@ export async function runStepsAndQuickReplies(
     const currentStep = details.steps[startIdx]
     const result = await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [currentStep],
     })
 
@@ -232,6 +264,7 @@ export async function runStepsAndQuickReplies(
           metadata: props.metadata,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
+          nodeVisits,
         },
       })
       return
@@ -246,6 +279,7 @@ export async function runStepsAndQuickReplies(
   ) {
     await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [
         {
           stepType: stepTypes.enum.sendQuickReply,
@@ -290,6 +324,7 @@ export async function runStepsAndQuickReplies(
         metadata: props.metadata,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
+        nodeVisits,
       },
     })
   }
@@ -357,6 +392,7 @@ async function* executeMultipleStepsGenerator(
               metadata: props.metadata,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
+              nodeVisits: props.nodeVisits,
             },
           })
           branched = true
