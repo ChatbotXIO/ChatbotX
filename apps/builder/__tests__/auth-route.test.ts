@@ -53,6 +53,13 @@ vi.mock("@/lib/oauth-referer", () => ({
   resolveRelayTarget: mockResolveRelayTarget,
 }))
 
+// Redirect re-homing is exercised in auth-redirect.test.ts; here it is a
+// pass-through so routing/relay assertions stay isolated.
+vi.mock("@/lib/auth-redirect", () => ({
+  rewriteAuthRedirectToPublicHost: (_request: Request, response: Response) =>
+    response,
+}))
+
 async function loadRoute() {
   vi.resetModules()
   return await import("@/app/api/auth/[...all]/route")

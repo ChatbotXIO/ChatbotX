@@ -8,6 +8,7 @@ import {
 import { getPublicUrlFromRequest } from "@chatbotx.io/utils"
 import { auth } from "@/lib/auth/auth"
 import { getSocialAuthForTenant } from "@/lib/auth/auth-instances"
+import { rewriteAuthRedirectToPublicHost } from "@/lib/auth-redirect"
 import { resolveRelayTarget } from "@/lib/oauth-referer"
 
 /**
@@ -41,6 +42,13 @@ import { resolveRelayTarget } from "@/lib/oauth-referer"
  *    so we dispatch the social/callback legs to a per-credential auth instance
  *    resolved for the bound tenant and provider (own app, else platform default).
  *    Every other route uses the default `auth` instance. See `auth-instances.ts`.
+ *
+ * 3. Verification redirect re-homing — better-auth resolves the post-verification
+ *    redirect (magic-link/verify, verify-email, reset-password) against its fixed
+ *    `baseURL` (the builder URL), so a user who clicked the link on a branded
+ *    domain would be bounced to the builder host — losing the brand and the
+ *    host-scoped session cookie just minted. We rewrite that redirect back onto
+ *    the originating host. See `rewriteAuthRedirectToPublicHost`.
  */
 
 /** The provider on a `/callback/<provider>` leg, or `null` if not a social callback. */
@@ -117,7 +125,10 @@ const handle = async (request: Request): Promise<Response> => {
         ? await getSocialAuthForTenant(tenantId, provider)
         : auth
 
-      return instance.handler(request)
+      // Re-home a baseURL-resolved verification redirect onto the branded host
+      // the user is on (magic-link/verify, verify-email, reset-password).
+      const response = await instance.handler(request)
+      return rewriteAuthRedirectToPublicHost(request, response)
     },
     { strictScope: isSocialPath },
   )
