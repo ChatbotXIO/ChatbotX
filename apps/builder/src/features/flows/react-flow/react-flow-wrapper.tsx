@@ -29,10 +29,8 @@ import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
-  useRef,
 } from "react"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
-import { getFlowStructureSignature } from "./flow-structure-signature"
 import { NodeViewer } from "./nodes/viewer"
 import AddNodeButton from "./panel-buttons/add-node-button"
 import FocusButton from "./panel-buttons/focus-button"
@@ -120,32 +118,9 @@ export function ReactFlowWrapper({
     1000,
   )
 
-  const saveImmediately = useCallback(
-    // biome-ignore lint/suspicious/noExplicitAny: mirrors handleChanges laundering
-    (changedNodes: any[], changedEdges: any[]) => {
-      savingDraft({ nodes: changedNodes, edges: changedEdges })
-    },
-    [savingDraft],
-  )
-
-  const structureSignatureRef = useRef(getFlowStructureSignature(nodes, edges))
-
   useEffect(() => {
-    const signature = getFlowStructureSignature(nodes, edges)
-
-    if (signature !== structureSignatureRef.current) {
-      structureSignatureRef.current = signature
-      // Structural edits (duplicate/add/delete a node or edge) are deliberate,
-      // low-frequency actions. Persist them right away so a refresh within the
-      // 1s debounce window cannot lose them.
-      saveImmediately(nodes, edges)
-    }
-
-    // Always run the debounced save: it handles drag/typing AND keeps the
-    // pending timer aimed at the latest state, so a stale trailing save can
-    // never clobber the immediate save above.
     handleChanges(nodes, edges)
-  }, [nodes, edges, handleChanges, saveImmediately])
+  }, [nodes, edges, handleChanges])
 
   const handleNodeClick = useCallback(() => {
     setOpenNodeDetailSheet(true)
