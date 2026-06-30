@@ -6,30 +6,27 @@ import {
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useReactFlow } from "@xyflow/react"
-import { CopyIcon } from "lucide-react"
+import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { type MouseEvent, useCallback } from "react"
-import { duplicateFlowNode } from "./duplicate-node-data"
+import type { MouseEvent } from "react"
+import { useFlowMutation } from "../flow-mutation-context"
 
 export function DuplicateNode() {
   const t = useTranslations()
-  const { addNodes, getNodes } = useReactFlow()
-
-  const duplicateNode = useCallback(
-    (node: FlowNode) => {
-      addNodes([duplicateFlowNode(node)])
-    },
-    [addNodes],
-  )
+  const { getNodes } = useReactFlow()
+  const { isFlowMutating, duplicateNode } = useFlowMutation()
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const allNodes = getNodes()
-    const activeNode = allNodes.find((n) => n.data.forceToolbarVisible)
+    if (isFlowMutating) {
+      return
+    }
+
+    const activeNode = getNodes().find((n) => n.data.forceToolbarVisible)
     if (activeNode) {
-      duplicateNode(activeNode as FlowNode)
+      duplicateNode(activeNode as unknown as FlowNode).catch(() => undefined)
     }
   }
 
@@ -38,11 +35,16 @@ export function DuplicateNode() {
       <TooltipTrigger asChild>
         <Button
           className="size-8"
+          disabled={isFlowMutating}
           onClick={onClick}
           size="icon"
           variant="ghost"
         >
-          <CopyIcon />
+          {isFlowMutating ? (
+            <Loader2Icon className="animate-spin" />
+          ) : (
+            <CopyIcon />
+          )}
         </Button>
       </TooltipTrigger>
       <TooltipContent>
