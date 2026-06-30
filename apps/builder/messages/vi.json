@@ -2077,7 +2077,8 @@
     "restoreVersionSuccess": "Đã khôi phục luồng về phiên bản đã chọn",
     "noVersionsFound": "Không tìm thấy phiên bản đã xuất bản",
     "publishVersionSuccess": "Đã xuất bản phiên bản mới",
-    "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh"
+    "flowConfigIncomplete": "Một số cấu hình chưa hoàn chỉnh",
+    "duplicateNodeError": "Không thể nhân bản khối. Vui lòng thử lại."
   },
   "instagram": {
     "description": "Tích hợp này cho phép bạn tạo bot Instagram.",
