@@ -9,38 +9,34 @@ import { PlayIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { type MouseEvent, useCallback } from "react"
 
-export function SetStartNode() {
+export function SetStartNode({ nodeId }: { nodeId: string }) {
   const t = useTranslations()
   const { setNodes, getNodes } = useReactFlow()
 
-  const nodes = getNodes()
-  const activeNode = nodes.find((n) => n.data.forceToolbarVisible)
+  // Act on THIS node by its id (from NodeViewer), not a `forceToolbarVisible`
+  // scan: overlapping nodes (e.g. after a duplicate) can flag more than one.
+  const node = getNodes().find((n) => n.id === nodeId)
 
-  const setStartNode = useCallback(
-    (nodeId: string) => {
-      setNodes((nds) =>
-        nds.map((node) => ({
-          ...node,
-          data: {
-            ...node.data,
-            isStartNode: node.id === nodeId,
-          },
-        })),
-      )
-    },
-    [setNodes],
-  )
+  const setStartNode = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          isStartNode: n.id === nodeId,
+        },
+      })),
+    )
+  }, [setNodes, nodeId])
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (activeNode) {
-      setStartNode(activeNode.id)
-    }
+    setStartNode()
   }
 
-  return activeNode?.data.isStartNode ? null : (
+  return node?.data.isStartNode ? null : (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button

@@ -8,24 +8,21 @@ import { useReactFlow } from "@xyflow/react"
 import { TrashIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { MouseEvent } from "react"
-export function DeleteNode() {
+export function DeleteNode({ nodeId }: { nodeId: string }) {
   const t = useTranslations()
-  const { deleteElements, getNodes } = useReactFlow()
+  const { deleteElements } = useReactFlow()
 
   const onDelete = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const allNodes = getNodes()
-    const targetNode = allNodes.find(
-      (n) => n.data.forceToolbarVisible && !n.data.isStartNode,
-    )
-
-    if (targetNode) {
-      deleteElements({
-        nodes: [{ id: targetNode.id }],
-      })
-    }
+    // Delete THIS node by its id (passed from NodeViewer). Do NOT resolve the
+    // target by scanning getNodes() for the first `forceToolbarVisible` node:
+    // after a duplicate the clone overlaps the original and hover can flag both,
+    // so a first-match scan deletes the wrong one (the original).
+    deleteElements({
+      nodes: [{ id: nodeId }],
+    })
   }
 
   return (

@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl"
 import type { MouseEvent } from "react"
 import { useFlowMutation } from "../flow-mutation-context"
 
-export function DuplicateNode() {
+export function DuplicateNode({ nodeId }: { nodeId: string }) {
   const t = useTranslations()
   const { getNodes } = useReactFlow()
   const { isFlowMutating, duplicateNode } = useFlowMutation()
@@ -24,9 +24,12 @@ export function DuplicateNode() {
       return
     }
 
-    const activeNode = getNodes().find((n) => n.data.forceToolbarVisible)
-    if (activeNode) {
-      duplicateNode(activeNode as unknown as FlowNode).catch(() => undefined)
+    // Resolve the source by THIS node's id (passed from NodeViewer), never a
+    // `forceToolbarVisible` scan: overlapping nodes can flag more than one and the
+    // first match would be the wrong node.
+    const sourceNode = getNodes().find((n) => n.id === nodeId)
+    if (sourceNode) {
+      duplicateNode(sourceNode as unknown as FlowNode).catch(() => undefined)
     }
   }
 
