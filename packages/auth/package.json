@@ -27,7 +27,7 @@
     "vitest": "^4.1.0"
   },
   "peerDependencies": {
-    "next": ">=15"
+    "next": ">=16"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",

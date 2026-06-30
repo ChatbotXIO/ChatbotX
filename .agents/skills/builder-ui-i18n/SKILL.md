@@ -54,7 +54,69 @@ export const ExampleButton = () => {
   `createThingAction.bind(null, workspaceId)`.
 - No-input delete actions call `execute()` with no arguments, not `execute({})`.
 - Validation schemas live near the feature, usually `schema/action.ts`.
-- Prefer shared form components from `@chatbotx.io/ui`.
+
+### Form field component priority
+
+When building a form field, always choose the highest-priority option that fits:
+
+1. **Defined form field from `@chatbotx.io/ui/components/form/*`** — first choice.
+   These components wrap `FormFieldWrapper` internally, handling label, optional
+   marker, description, and `FormMessage` automatically. No manual
+   `FormField`/`FormItem`/`FormControl` boilerplate needed.
+2. **Shadcn UI primitive from `@chatbotx.io/ui/components/ui/*`** wrapped in a
+   manual `FormField` + `FormItem` block — only when no defined field fits (e.g.
+   custom composite inputs not covered by the list below).
+3. **Raw React/HTML element** — last resort only.
+
+Available defined fields (import from `@chatbotx.io/ui/components/form/<name>`):
+
+| Component | Use for |
+|---|---|
+| `InputField` | Text inputs |
+| `InputNumberField` | Numeric inputs (renders stepper) |
+| `TextareaField` | Multi-line text |
+| `SelectField` | Single-select dropdowns; supports `allowClear`, `options`, `fetchOptionsUrl` |
+| `ComboboxField` | Searchable single-select |
+| `MultiSelectField` | Multi-select |
+| `CheckboxField` | Boolean checkbox |
+| `SwitchField` | Toggle switch |
+| `RadioGroupField` | Radio group |
+| `SliderField` | Range slider |
+| `CalendarField` | Inline calendar |
+| `DatePickerField` | Date picker popover |
+| `ColorPickerField` | Color picker |
+| `SelectTagsInputField` | Tag input with select |
+
+All defined fields read `control` from `useFormContext`, so they only require a
+`<Form {...form}>` provider ancestor.
+
+```typescript
+import { InputField } from "@chatbotx.io/ui/components/form/input-field"
+import { SelectField } from "@chatbotx.io/ui/components/form/select-field"
+import { InputNumberField } from "@chatbotx.io/ui/components/form/input-number-field"
+
+// CORRECT — uses defined form field
+<Form {...form}>
+  <form onSubmit={handleSubmit}>
+    <InputField name="name" label={t("fields.name.label")} required />
+    <SelectField name="type" label={t("fields.type.label")} options={options} required />
+    <InputNumberField name="position" label={t("fields.position.label")} min={0} />
+  </form>
+</Form>
+
+// WRONG — manual boilerplate when a defined field exists
+<FormField
+  control={form.control}
+  name="name"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>{t("fields.name.label")}</FormLabel>
+      <FormControl><Input {...field} /></FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
 
 ## Layout and Components
 

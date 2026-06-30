@@ -39,7 +39,6 @@ type Props = {
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
   const tenantSettings = await getTenantSettings()
-
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>

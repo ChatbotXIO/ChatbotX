@@ -6,12 +6,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@chatbotx.io/ui/components/ui/sidebar"
-import {
-  CircleHelpIcon,
-  Grid2x2PlusIcon,
-  MailIcon,
-  PaletteIcon,
-} from "lucide-react"
+import { CircleHelpIcon, Grid2x2PlusIcon } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
@@ -20,11 +15,10 @@ import { NavUser } from "@/components/nav-user"
 import { authClient } from "@/lib/auth/auth-client"
 
 /**
- * Platform-only manage sidebar for the community and enterprise (self-hosted)
- * editions. The cloud edition renders the richer reseller `PortalManageSidebar`
- * instead — the edition switch lives in `app/manage/layout.tsx`.
+ * Cloud super-admin sidebar for the `/admin` console.
+ * Gated by `isSuperAdmin` in the parent layout; no auth check needed here.
  */
-export function ManageSidebar() {
+export function AdminSidebar() {
   const t = useTranslations()
   const tManage = useTranslations("manageSidebar")
   const { data: session } = authClient.useSession()
@@ -37,23 +31,13 @@ export function ManageSidebar() {
 
   const platformItems = [
     {
-      title: t("platformCredentials.title"),
-      url: "/manage/platform-credentials",
+      title: t("platformAdmin.platformCredentials.title"),
+      url: "/admin/platform-credentials",
       icon: Grid2x2PlusIcon,
     },
     {
-      title: t("platformBranding.title"),
-      url: "/manage/branding",
-      icon: PaletteIcon,
-    },
-    {
-      title: t("platformEmailTemplates.title"),
-      url: "/manage/email-templates",
-      icon: MailIcon,
-    },
-    {
-      title: t("helpItems.title"),
-      url: "/manage/help-items",
+      title: t("platformAdmin.helpItems.title"),
+      url: "/admin/help-items",
       icon: CircleHelpIcon,
     },
   ]

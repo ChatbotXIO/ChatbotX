@@ -25,6 +25,7 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import type { ComponentProps } from "react"
 import { BrandIcon } from "@/components/brand-icon"
+import { NavHelp } from "@/components/nav-help"
 import { NavMain } from "@/components/nav-main"
 import { NavUsage, type QuotaSummary } from "@/components/nav-usage"
 import { NavUser } from "@/components/nav-user"
@@ -144,6 +145,7 @@ export function AppSidebar({
           planName={quota.planName}
           user={data.user}
         />
+        <NavHelp />
       </SidebarFooter>
     </Sidebar>
   )

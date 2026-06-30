@@ -1,6 +1,8 @@
 import { isSuperAdmin } from "@chatbotx.io/business"
 import { notFound } from "next/navigation"
 import { isCloud } from "@/env"
+import { AdminSidebar } from "@/features/admin/components/admin-sidebar"
+import { ManageLayout } from "@/features/manage/manage-layout"
 import { enforcePasswordCurrent } from "@/lib/auth/require-password-current"
 import { getCurrentUser } from "@/lib/auth/utils"
 
@@ -21,9 +23,5 @@ export default async function AdminLayout({
 
   enforcePasswordCurrent(user)
 
-  return (
-    <main className="mx-auto w-full max-w-5xl p-4 pb-24 sm:px-6 sm:pt-6">
-      {children}
-    </main>
-  )
+  return <ManageLayout sidebar={<AdminSidebar />}>{children}</ManageLayout>
 }

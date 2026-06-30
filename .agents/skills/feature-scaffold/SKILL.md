@@ -187,6 +187,37 @@ export const CreateItemForm = ({ workspaceId }: { workspaceId: string }) => {
   )
 }
 ```
+
+### Form field component priority
+
+Always pick the highest-priority option that fits the field type:
+
+1. **Defined form field** from `@chatbotx.io/ui/components/form/*` — **first choice**.
+   Handles label, optional marker, description, and `FormMessage` automatically.
+2. **Shadcn UI primitive** from `@chatbotx.io/ui/components/ui/*` inside a manual
+   `FormField`/`FormItem` block — only when no defined field covers the use case.
+3. **Raw React/HTML element** — last resort.
+
+Available defined fields:
+
+| Component | Import path | Use for |
+|---|---|---|
+| `InputField` | `form/input-field` | Text inputs |
+| `InputNumberField` | `form/input-number-field` | Numeric inputs (stepper UI) |
+| `TextareaField` | `form/textarea-field` | Multi-line text |
+| `SelectField` | `form/select-field` | Dropdowns; supports `allowClear`, `options`, `fetchOptionsUrl` |
+| `ComboboxField` | `form/combobox-field` | Searchable single-select |
+| `MultiSelectField` | `form/multi-select-field` | Multi-select |
+| `CheckboxField` | `form/checkbox-field` | Boolean checkbox |
+| `SwitchField` | `form/switch-field` | Toggle switch |
+| `RadioGroupField` | `form/radio-group-field` | Radio group |
+| `SliderField` | `form/slider-field` | Range slider |
+| `DatePickerField` | `form/date-picker-field` | Date picker popover |
+| `ColorPickerField` | `form/color-picker-field` | Color picker |
+
+All defined fields read `control` from `useFormContext` — no `control` prop
+needed as long as a `<Form {...form}>` provider wraps the form.
+
 ### Form Section Layout — Use `<Card>`
 
 Multi-section forms (create/edit pages) use `<Card>` to group related fields. **Never use a plain `<div className="rounded-lg border p-6">` wrapper** — always use the Card component.
@@ -241,6 +272,41 @@ Full-page create/edit forms follow this layout:
     </form>
   </Form>
 </div>
+```
+
+### CRITICAL — Default Values for Nullable Text Fields
+
+React Hook Form requires non-null values for controlled text inputs. Passing `null` as a `defaultValues` entry causes React to treat the input as **uncontrolled**, triggering warnings and unpredictable behavior.
+
+**Rule:** Always use `""` (empty string) for optional/nullable text field defaults. Never use `null` or `undefined`.
+
+When the DB field is nullable, add a `z.preprocess` step to the Zod schema so the form sends `""` while the server action still receives `null`:
+
+```typescript
+// schema/action.ts — convert "" → null before validation
+export const createItemSchema = z.object({
+  name: z.string().trim().min(1),
+  // CORRECT: preprocess empty string to null for nullable DB fields
+  icon: z.preprocess(
+    (val) => (val === "" ? null : val),
+    z.string().trim().nullable().default(null),
+  ),
+})
+```
+
+```typescript
+// In defaultValues — use "" not null
+const form = useForm<z.input<typeof createItemSchema>>({
+  resolver: zodResolver(createItemSchema),
+  defaultValues: { name: "", icon: "" }, // CORRECT
+  // defaultValues: { name: "", icon: null }, // WRONG — uncontrolled input
+})
+
+// When seeding from existing DB data (edit forms), coerce null → ""
+defaultValues={{
+  name: item.name,
+  icon: item.icon ?? "", // CORRECT — null from DB → "" for the form
+}}
 ```
 
 ### Watching Form Values — Use `useWatch`

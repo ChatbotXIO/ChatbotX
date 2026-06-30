@@ -21,6 +21,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "20mb",
     },
+    // turbopackServerFastRefresh: false,
   },
   poweredByHeader: false,
   async rewrites() {

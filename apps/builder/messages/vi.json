@@ -2810,6 +2810,10 @@
     "platformCredentials": {
       "title": "Thông tin xác thực nền tảng",
       "description": "Ứng dụng nhà phát triển mặc định dùng chung cho mọi workspace chưa có thông tin xác thực white-label riêng."
+    },
+    "helpItems": {
+      "title": "Liên kết hỗ trợ nền tảng",
+      "description": "Liên kết hỗ trợ hiển thị trong thanh bên cho tất cả workspace không thuộc về tenant white-label."
     }
   },
   "platformCredentials": {
@@ -3003,5 +3007,26 @@
     "title": "TikTok",
     "description": "Kết nối tài khoản TikTok để trả lời tin nhắn trực tiếp.",
     "refreshToken": "Làm mới Token"
+  },
+  "helpMenu": {
+    "title": "Trợ giúp",
+    "ariaLabel": "Mở menu trợ giúp"
+  },
+  "helpItems": {
+    "title": "Liên kết trợ giúp",
+    "addTitle": "Thêm liên kết trợ giúp",
+    "editTitle": "Chỉnh sửa liên kết trợ giúp",
+    "addButton": "Thêm liên kết",
+    "empty": "Chưa có liên kết trợ giúp nào được cấu hình.",
+    "fields": {
+      "name": "Tên",
+      "namePlaceholder": "vd. Tài liệu",
+      "url": "Đường dẫn",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "Biểu tượng",
+      "iconPlaceholder": "vd. book-open, star, circle-question-mark",
+      "position": "Thứ tự",
+      "iconSearchLink": "Tìm kiếm biểu tượng Lucide →"
+    }
   }
 }

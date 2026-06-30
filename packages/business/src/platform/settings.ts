@@ -1,7 +1,12 @@
 import type { DatabaseClient } from "@chatbotx.io/database/client"
-import type { TenantModel } from "@chatbotx.io/database/types"
+import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
+import type {
+  TenantHelpItemModel,
+  TenantModel,
+} from "@chatbotx.io/database/types"
 import { customDomainService } from "../enterprise/custom-domain/service"
 import { tenantService } from "../enterprise/tenant/service"
+import { tenantHelpItemService } from "../enterprise/tenant-help-item/service"
 import { integrationContextEnv } from "../integration-context/keys"
 import { isCloud, isEnterprise } from "../keys"
 import { workspaceService } from "../workspace/service"
@@ -25,9 +30,10 @@ export type TenantSettings = {
   signupEmailTemplate: EmailTemplate | null
   forgotPasswordEmailTemplate: EmailTemplate | null
   magicLinkEmailTemplate: EmailTemplate | null
+  helpItems: TenantHelpItemModel[]
 }
 
-const getDefaultSettings = (): TenantSettings => {
+const buildDefaults = (helpItems: TenantHelpItemModel[]): TenantSettings => {
   const env = integrationContextEnv()
   const derived = deriveUrls(
     env.NEXT_PUBLIC_BUILDER_URL,
@@ -49,16 +55,20 @@ const getDefaultSettings = (): TenantSettings => {
     signupEmailTemplate: null,
     forgotPasswordEmailTemplate: null,
     magicLinkEmailTemplate: null,
+    helpItems,
   }
+}
+
+const getDefaultSettings = async (): Promise<TenantSettings> => {
+  const helpItems = await tenantHelpItemService.listByTenant(ROOT_TENANT_ID)
+  return buildDefaults(helpItems)
 }
 
 const applyTenantSetting = (
   defaults: TenantSettings,
-  setting: TenantModel | null | undefined,
+  setting: TenantModel,
+  helpItems: TenantHelpItemModel[],
 ): TenantSettings => {
-  if (!setting) {
-    return defaults
-  }
   const storageUrl = setting.storageUrl ?? defaults.storageUrl
   return {
     ...defaults,
@@ -82,6 +92,7 @@ const applyTenantSetting = (
     signupEmailTemplate: setting.signupEmailTemplate,
     forgotPasswordEmailTemplate: setting.forgotPasswordEmailTemplate,
     magicLinkEmailTemplate: setting.magicLinkEmailTemplate,
+    helpItems,
   }
 }
 
@@ -95,8 +106,6 @@ export const resolveTenantSettings = async (args: {
   workspaceId: string
   tx?: DatabaseClient
 }): Promise<TenantSettings> => {
-  const defaults = getDefaultSettings()
-
   const workspace = await workspaceService.findById({
     id: args.workspaceId,
     tx: args.tx,
@@ -104,10 +113,14 @@ export const resolveTenantSettings = async (args: {
   const tenant = await tenantService.findById(workspace.tenantId)
 
   if (!tenant?.status || tenant.status !== "active") {
-    return defaults
+    return getDefaultSettings()
   }
 
-  return applyTenantSetting(defaults, tenant)
+  const [defaults, helpItems] = await Promise.all([
+    getDefaultSettings(),
+    tenantHelpItemService.listByTenant(tenant.id),
+  ])
+  return applyTenantSetting(defaults, tenant, helpItems)
 }
 
 /**
@@ -127,12 +140,15 @@ export const resolveBroadcastSecret = (_args: {
 export const resolveTenantSettingsByOwner = async (
   ownerId: string,
 ): Promise<TenantSettings> => {
-  const defaults = getDefaultSettings()
   const tenant = await tenantService.findByOwner(ownerId)
   if (!tenant?.status || tenant.status !== "active") {
-    return defaults
+    return getDefaultSettings()
   }
-  return applyTenantSetting(defaults, tenant)
+  const [defaults, helpItems] = await Promise.all([
+    getDefaultSettings(),
+    tenantHelpItemService.listByTenant(tenant.id),
+  ])
+  return applyTenantSetting(defaults, tenant, helpItems)
 }
 
 /**
@@ -143,20 +159,23 @@ export const resolveTenantSettingsByOwner = async (
 export const resolveTenantSettingsByDomain = async (
   domain: string | null | undefined,
 ): Promise<TenantSettings> => {
-  const defaults = getDefaultSettings()
-
   if (!(domain && (isEnterprise() || isCloud()))) {
-    return defaults
+    return getDefaultSettings()
   }
 
   const customDomain = await customDomainService.findActiveByDomain(domain)
   if (!customDomain) {
-    return defaults
+    return getDefaultSettings()
   }
 
   const tenant = await tenantService.findById(customDomain.tenantId)
   if (!tenant?.status || tenant.status !== "active") {
-    return defaults
+    return getDefaultSettings()
   }
-  return applyTenantSetting(defaults, tenant)
+
+  const [defaults, helpItems] = await Promise.all([
+    getDefaultSettings(),
+    tenantHelpItemService.listByTenant(tenant.id),
+  ])
+  return applyTenantSetting(defaults, tenant, helpItems)
 }

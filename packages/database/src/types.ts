@@ -81,6 +81,7 @@ export type ContactCustomFieldModel =
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type CustomDomainModel = typeof schema.customDomainModel.$inferSelect
 export type TenantModel = typeof schema.tenantModel.$inferSelect
+export type TenantHelpItemModel = typeof schema.tenantHelpItemModel.$inferSelect
 export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect

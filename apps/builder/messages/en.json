@@ -2813,6 +2813,10 @@
     "platformCredentials": {
       "title": "Platform Credentials",
       "description": "Global default developer apps used by all workspaces that don't have their own white-label credentials."
+    },
+    "helpItems": {
+      "title": "Platform Help Links",
+      "description": "Help links shown in the sidebar for all workspaces that don't belong to a white-label tenant."
     }
   },
   "platformCredentials": {
@@ -3006,5 +3010,26 @@
     "title": "TikTok",
     "description": "Connect your TikTok account to reply to direct messages.",
     "refreshToken": "Refresh Token"
+  },
+  "helpMenu": {
+    "title": "Help",
+    "ariaLabel": "Open help menu"
+  },
+  "helpItems": {
+    "title": "Help Links",
+    "addTitle": "Add Help Link",
+    "editTitle": "Edit Help Link",
+    "addButton": "Add Link",
+    "empty": "No help links configured yet.",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Documentation",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "Icon",
+      "iconPlaceholder": "e.g. book-open, star, circle-question-mark",
+      "position": "Order",
+      "iconSearchLink": "Browse Lucide icons →"
+    }
   }
 }
