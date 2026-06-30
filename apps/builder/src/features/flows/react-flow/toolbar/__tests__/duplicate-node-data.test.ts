@@ -9,6 +9,7 @@ import {
   sendMailNodeDefaultFn,
   sendMessageNodeDefaultFn,
   sendTextStepDefaultFn,
+  splitTrafficNodeDefaultFn,
   startAnotherNodeStepDefaultFn,
   whatsappOptionListStepDefaultFn,
 } from "@chatbotx.io/flow-config"
@@ -258,6 +259,39 @@ describe("duplicateFlowNodeData", () => {
       beforeStep: null,
       steps: [],
     })
+
+    const result = updateFlowVersionSchema.safeParse({
+      nodes: [duplicatedNode],
+      edges: [],
+    })
+
+    expect(result.success, result.error?.message).toBe(true)
+  })
+
+  test("resets split traffic case targets because duplicated edges are not copied", () => {
+    const original = splitTrafficNodeDefaultFn({
+      nodeProps: { id: "1", position: { x: 0, y: 0 } },
+    })
+    original.data.details.steps[0].cases = [
+      { value: 50, nodeId: "2" },
+      { value: 50, nodeId: "3" },
+    ]
+
+    const duplicatedNode = duplicateFlowNode(original as FlowNode)
+
+    if (!("steps" in duplicatedNode.data.details)) {
+      throw new Error("Expected duplicated split traffic steps")
+    }
+
+    const duplicatedSplitTraffic = duplicatedNode.data.details.steps[0]
+    if (!("cases" in duplicatedSplitTraffic)) {
+      throw new Error("Expected duplicated split traffic cases")
+    }
+
+    expect(duplicatedSplitTraffic.cases).toEqual([
+      { value: 50, nodeId: null },
+      { value: 50, nodeId: null },
+    ])
 
     const result = updateFlowVersionSchema.safeParse({
       nodes: [duplicatedNode],

@@ -6,19 +6,24 @@ import { and, db, eq } from "@chatbotx.io/database/client"
 import { flowModel, flowVersionModel } from "@chatbotx.io/database/schema"
 import { createId, zodBigintAsString } from "@chatbotx.io/utils"
 import { workspaceActionClient } from "@/lib/safe-action"
-import { publishFlowSchema } from "../schemas/action"
+import { type PublishFlowSchema, publishFlowSchema } from "../schemas/action"
 
 export const publishFlowAction = workspaceActionClient
   .bindArgsSchemas([zodBigintAsString(), zodBigintAsString()])
+  .inputSchema(publishFlowSchema)
   .action(async (props) => {
     const {
       bindArgsParsedInputs: [workspaceId, id],
+      parsedInput,
     } = props
 
-    await publishFlow({ workspaceId, id })
+    await publishFlow({ workspaceId, id }, parsedInput)
   })
 
-export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
+export const publishFlow = async (
+  ctx: { workspaceId: string; id: string },
+  input: PublishFlowSchema,
+) => {
   const flow = await db.query.flowModel.findFirst({
     where: {
       id: ctx.id,
@@ -38,10 +43,7 @@ export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
   }
 
   const draftVersion = flow.flowVersions[0]
-  const validated = publishFlowSchema.parse({
-    nodes: draftVersion?.nodes,
-    edges: draftVersion?.edges,
-  })
+  const validated = publishFlowSchema.parse(input)
 
   await db.transaction(async (tx) => {
     // Remove all other latest versions
@@ -56,6 +58,14 @@ export const publishFlow = async (ctx: { workspaceId: string; id: string }) => {
           eq(flowVersionModel.isLatest, true),
         ),
       )
+
+    await tx
+      .update(flowVersionModel)
+      .set({
+        nodes: validated.nodes,
+        edges: validated.edges,
+      })
+      .where(eq(flowVersionModel.id, draftVersion.id))
 
     const newVersionId = createId()
     await tx.insert(flowVersionModel).values({

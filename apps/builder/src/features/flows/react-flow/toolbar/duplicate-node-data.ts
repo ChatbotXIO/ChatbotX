@@ -65,6 +65,12 @@ const duplicateStep = <T extends MutableRecord>(step: T): T => {
     )
   }
 
+  if (Array.isArray(nextStep.cases)) {
+    nextStep.cases = nextStep.cases.map((caseItem) =>
+      isRecord(caseItem) ? { ...clone(caseItem), nodeId: null } : caseItem,
+    )
+  }
+
   if (typeof nextStep.buttonId === "string") {
     nextStep.buttonId = createId()
   }
