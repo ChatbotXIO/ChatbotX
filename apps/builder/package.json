@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "SKIP_ENV_CHECK=true dotenv  -e ../../.env -- next build",
+    "build": "SKIP_ENV_CHECK=true dotenv  -e ../../.env -- next build --webpack",
     "check-types": "tsc --noEmit",
     "dev": "dotenv -e .env -e ../../.env -- next dev -p 3123 | pino-pretty",
     "https": "dotenv -e .env -e ../../.env -- next dev -p 3123 --experimental-https",
