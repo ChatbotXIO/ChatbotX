@@ -4,6 +4,7 @@ import { createContext, useContext } from "react"
 export type FlowMutationContextValue = {
   isFlowMutating: boolean
   duplicateNode: (sourceNode: FlowNode) => Promise<void>
+  deleteNode: (nodeId: string) => Promise<void>
 }
 
 const FlowMutationContext = createContext<FlowMutationContextValue | null>(null)

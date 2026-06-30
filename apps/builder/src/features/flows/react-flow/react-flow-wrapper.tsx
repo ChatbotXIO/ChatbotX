@@ -38,6 +38,10 @@ import { toast } from "sonner"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
 import type { UpdateDraftFlowVersionSchema } from "../schemas/action"
 import {
+  createDeleteNode,
+  type DeleteSaveResult,
+} from "./delete-node-orchestrator"
+import {
   createDuplicateNode,
   type DuplicateSaveResult,
 } from "./duplicate-node-orchestrator"
@@ -159,9 +163,29 @@ export function ReactFlowWrapper({
     [getNodes, getEdges, addNodes, handleChanges, savingDraftAsync, t],
   )
 
+  const deleteNode = useMemo(
+    () =>
+      createDeleteNode({
+        isMutatingRef,
+        setIsFlowMutating,
+        cancelAutosave: () => handleChanges.cancel(),
+        deleteElements,
+        getNodes: () => getNodes() as unknown as FlowNode[],
+        getEdges,
+        saveDraft: async (input) =>
+          (await savingDraftAsync({
+            nodes: input.nodes,
+            edges:
+              input.edges as unknown as UpdateDraftFlowVersionSchema["edges"],
+          })) as DeleteSaveResult,
+        onError: () => toast.error(t("messages.deleteNodeError")),
+      }),
+    [getNodes, getEdges, deleteElements, handleChanges, savingDraftAsync, t],
+  )
+
   const flowMutationValue = useMemo(
-    () => ({ isFlowMutating, duplicateNode }),
-    [isFlowMutating, duplicateNode],
+    () => ({ isFlowMutating, duplicateNode, deleteNode }),
+    [isFlowMutating, duplicateNode, deleteNode],
   )
 
   useEffect(() => {
