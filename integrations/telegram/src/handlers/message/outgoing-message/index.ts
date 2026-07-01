@@ -20,6 +20,7 @@ import {
   sendTelegramPhoto,
   sendTelegramVideo,
 } from "../../../apis/bot"
+import { MAX_INLINE_BUTTONS_PER_ROW } from "../../../constants"
 import { mapToChannelError } from "../../../lib/error-mapper"
 import { logger } from "../../../lib/logger"
 import type { TelegramAuthValue } from "../../../schema"
@@ -29,6 +30,7 @@ import {
   convertFlowStepImage,
   convertFlowStepVideo,
 } from "./send-attachment"
+import { buildInlineKeyboard } from "./send-button"
 import { convertFlowStepCarousel } from "./send-carousel"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
@@ -191,6 +193,14 @@ export const sendFlowStep: MessageHandlers<TelegramAuthValue>["sendFlowStep"] =
             const messageId = await sendTelegramDocument(ctx.auth, {
               chat_id: props.data.contact.sourceId,
               document: step.url as string,
+              reply_markup:
+                props.data.quickReplies && props.data.quickReplies.length > 0
+                  ? buildInlineKeyboard({
+                      flowId: props.data.flowId,
+                      buttons: props.data.quickReplies,
+                      buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
+                    })
+                  : undefined,
             })
             messageIds.push(String(messageId))
           }

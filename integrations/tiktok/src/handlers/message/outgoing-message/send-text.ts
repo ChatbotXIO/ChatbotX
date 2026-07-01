@@ -10,8 +10,9 @@ export function* convertFlowStepText(
   const {
     data: { step, contact, flowId, flowVersionId, metadata },
   } = props
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
 
-  if (step.buttons.length === 0) {
+  if (buttons.length === 0) {
     yield {
       business_id: businessId,
       recipient_type: "CONVERSATION",
@@ -26,7 +27,7 @@ export function* convertFlowStepText(
     title: step.text,
     flowId,
     flowVersionId,
-    buttons: step.buttons,
+    buttons,
     metadata,
     contactInboxId: contact.id,
   })) {

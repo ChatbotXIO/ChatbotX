@@ -1,4 +1,4 @@
-import type { MetadataPayload } from "@chatbotx.io/flow-config"
+import type { ButtonStepProps, MetadataPayload } from "@chatbotx.io/flow-config"
 import type { AuthValue, Oauth2AuthValue } from "./auth"
 import {
   AuthException,
@@ -64,6 +64,7 @@ export type ChannelSendFlowStepProps<IAuth extends AuthValue> = {
     flowId: string
     flowVersionId?: string
     step: SendFlowStepData
+    quickReplies?: ButtonStepProps[]
     metadata?: MetadataPayload
     richResponse?: RichResponseContentAttributes
     sendFrom?: "inbox"
@@ -107,6 +108,7 @@ export type MessageHandlers<
         flowId: string
         flowVersionId?: string
         step: TStep
+        quickReplies?: ButtonStepProps[]
         metadata?: MetadataPayload
         richResponse?: RichResponseContentAttributes
         sendFrom?: "inbox"

@@ -8,6 +8,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
 import {
+  type ButtonStepProps,
   type MetadataPayload,
   messageEventTypeSchema,
   stepTypes,
@@ -326,6 +327,7 @@ export async function sendFlowStepToChannel({
   flowId,
   flowVersionId,
   step,
+  quickReplies,
   metadata,
   richResponse,
   messageId,
@@ -336,6 +338,7 @@ export async function sendFlowStepToChannel({
   flowId: string
   flowVersionId?: string
   step: SendFlowStepData
+  quickReplies?: ButtonStepProps[]
   metadata?: MetadataPayload
   richResponse?: ChatJobSendFlowStep["data"]["richResponse"]
   messageId?: string
@@ -380,6 +383,7 @@ export async function sendFlowStepToChannel({
         flowId,
         flowVersionId,
         step: resolvedStep,
+        quickReplies,
         metadata,
         richResponse,
         sendFrom,

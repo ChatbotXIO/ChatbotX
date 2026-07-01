@@ -28,15 +28,16 @@ export function* convertFlowStepImage(
   if (!chatId) {
     return
   }
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
 
-  if (step.buttons.length === 0) {
+  if (buttons.length === 0) {
     yield { chat_id: chatId, photo: step.url }
     return
   }
 
   const keyboard = buildInlineKeyboard({
     flowId,
-    buttons: step.buttons,
+    buttons,
     buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
   })
 
@@ -53,17 +54,28 @@ export function* convertFlowStepVideo(
   >[0],
 ): Generator<TelegramSendVideoRequest> {
   const {
-    data: { step, contact },
+    data: { step, contact, flowId },
   } = props
 
   const chatId = contact.sourceId
   if (!chatId) {
     return
   }
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+
+  const keyboard =
+    buttons.length > 0
+      ? buildInlineKeyboard({
+          flowId,
+          buttons,
+          buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
+        })
+      : undefined
 
   yield {
     chat_id: chatId,
     video: step.url,
+    reply_markup: keyboard,
   }
 }
 
@@ -80,15 +92,16 @@ export function* convertFlowStepAudio(
   if (!chatId) {
     return
   }
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
 
-  if (step.buttons.length === 0) {
+  if (buttons.length === 0) {
     yield { chat_id: chatId, audio: step.url }
     return
   }
 
   const keyboard = buildInlineKeyboard({
     flowId,
-    buttons: step.buttons,
+    buttons,
     buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
   })
 
@@ -112,15 +125,16 @@ export function* convertFlowStepFile(
   if (!chatId) {
     return
   }
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
 
-  if (step.buttons.length === 0) {
+  if (buttons.length === 0) {
     yield { chat_id: chatId, document: step.url }
     return
   }
 
   const keyboard = buildInlineKeyboard({
     flowId,
-    buttons: step.buttons,
+    buttons,
     buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
   })
 

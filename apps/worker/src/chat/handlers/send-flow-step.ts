@@ -131,6 +131,7 @@ export async function sendFlowStep({
   trackingContext,
   metadata,
   richResponse,
+  quickReplies,
   sendFrom,
 }: ChatJobSendFlowStep["data"]) {
   const conversation = await db.query.conversationModel.findFirst({
@@ -263,7 +264,12 @@ export async function sendFlowStep({
         flowVersionId,
       }
 
-    if ("buttons" in resolvedStep && resolvedStep.buttons.length > 0) {
+    const displayButtons =
+      "buttons" in resolvedStep
+        ? [...resolvedStep.buttons, ...(quickReplies ?? [])]
+        : (quickReplies ?? [])
+
+    if (displayButtons.length > 0) {
       contentAttributes = {
         type: "template",
         payload: {
@@ -271,7 +277,7 @@ export async function sendFlowStep({
           buttons: convertButtonsToTemplate({
             flowId,
             flowVersionId,
-            buttons: resolvedStep.buttons,
+            buttons: displayButtons,
             metadata,
             contactInboxId: targetContactInbox.id,
           }),
@@ -363,6 +369,7 @@ export async function sendFlowStep({
         step: resolvedStep as SendFlowStepData,
         metadata,
         richResponse,
+        quickReplies,
         messageId: message?.id,
         sendFrom,
       }),

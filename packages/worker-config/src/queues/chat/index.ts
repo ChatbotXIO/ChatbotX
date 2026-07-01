@@ -5,6 +5,7 @@ import type {
   MessageModel,
 } from "@chatbotx.io/database/types"
 import type {
+  ButtonStepProps,
   MessengerTemplateParams,
   MetadataPayload,
   SendAudioStepSchema,
@@ -83,6 +84,7 @@ export type ChatJobSendFlowStep = {
       executionId: string
       buttonPayloads: Record<string, DatabaseRichButtonPayloadEntry>
     }
+    quickReplies?: ButtonStepProps[]
     sendFrom?: "inbox"
   }
 }

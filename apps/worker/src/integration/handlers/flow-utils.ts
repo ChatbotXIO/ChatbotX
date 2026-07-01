@@ -5,6 +5,7 @@ import type {
 } from "@chatbotx.io/database/types"
 import type {
   BaseStepSchema,
+  ButtonStepProps,
   EdgeSchema,
   MetadataPayload,
 } from "@chatbotx.io/flow-config"
@@ -30,6 +31,7 @@ export type ExecuteMultipleStepsProps = {
   steps: BaseStepSchema[]
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
+  quickReplies?: ButtonStepProps[]
   sendFrom?: "inbox"
   nodeVisits?: NodeVisits
 }

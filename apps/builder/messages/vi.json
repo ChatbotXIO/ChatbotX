@@ -1521,6 +1521,9 @@
   },
   "flows": {
     "title": "Luồng",
+    "quickReplies": {
+      "requiresTextCarrier": "Trả lời nhanh cần có một tin nhắn văn bản trong node này."
+    },
     "aiGenerateText": {
       "label": "{name}: Tạo văn bản"
     },

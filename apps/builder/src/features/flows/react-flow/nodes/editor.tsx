@@ -4,6 +4,7 @@ import {
   disabledCopyActionTypes,
   hiddenActionsStepTypes,
   MAX_QUICK_REPLIES,
+  QUICK_REPLIES_REQUIRE_TEXT_CARRIER_MESSAGE,
   stepTypes,
 } from "@chatbotx.io/flow-config"
 import { TriggerFormInitially } from "@chatbotx.io/ui/components/form/form-trigger-initially"
@@ -66,6 +67,16 @@ const collectErrorMessages = (node: unknown): string[] => {
   }
 
   return messages
+}
+
+const translateErrorMessage = (
+  t: ReturnType<typeof useTranslations>,
+  message: string,
+) => {
+  if (message === QUICK_REPLIES_REQUIRE_TEXT_CARRIER_MESSAGE) {
+    return t(QUICK_REPLIES_REQUIRE_TEXT_CARRIER_MESSAGE)
+  }
+  return message
 }
 
 type NodeEditorProps = {
@@ -364,7 +375,7 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
                       const messages = collectErrorMessages(
                         // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
                         (form.formState.errors as any).steps?.[index],
-                      )
+                      ).map((message) => translateErrorMessage(t, message))
                       return messages.length > 0 ? (
                         <ErrorAlert message={messages.join(", ")} />
                       ) : (
@@ -428,7 +439,18 @@ export const NodeEditor = memo((props: NodeEditorProps) => {
       </div>
 
       {"quickReplies" in nodeDetails && nodeDetails.quickReplies && (
-        <NodeEditorQuickReplies />
+        <>
+          {(() => {
+            const messages = collectErrorMessages(
+              // biome-ignore lint/suspicious/noExplicitAny: wip - dynamic form errors
+              (form.formState.errors as any).quickReplies,
+            ).map((message) => translateErrorMessage(t, message))
+            return messages.length > 0 ? (
+              <ErrorAlert message={messages.join(", ")} />
+            ) : null
+          })()}
+          <NodeEditorQuickReplies />
+        </>
       )}
 
       <NodeEditorMenu nodeType={nodeType} onClick={onAddStep} />

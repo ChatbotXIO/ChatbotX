@@ -15,15 +15,16 @@ export function* convertFlowStepText(
   const {
     data: { step, contact },
   } = props
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
 
-  if (step.buttons.length === 0) {
+  if (buttons.length === 0) {
     yield { chat_id: contact.sourceId, text: step.text }
     return
   }
 
   const keyboard = buildInlineKeyboard({
     flowId: props.data.flowId,
-    buttons: step.buttons,
+    buttons,
     buttonsPerRow: MAX_INLINE_BUTTONS_PER_ROW,
   })
 
