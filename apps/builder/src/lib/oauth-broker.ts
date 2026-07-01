@@ -24,7 +24,7 @@ export function buildBrokerCallbackUrl(path: string): string {
   return new URL(path, getBrokerOrigin()).toString()
 }
 
-/** Whether the given request host is the broker host. */
+/** Whether the given request hostname is the broker host. */
 export function isBrokerHost(host: string): boolean {
-  return host === new URL(getBrokerOrigin()).host
+  return host === new URL(getBrokerOrigin()).hostname
 }

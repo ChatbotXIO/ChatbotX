@@ -12,11 +12,12 @@ import type {
 } from "@chatbotx.io/integration-tiktok"
 import { integrationQueue } from "@chatbotx.io/worker-config"
 import type { NextRequest } from "next/server"
-import { env, isCloud } from "@/env"
+import { isCloud } from "@/env"
 import { findIntegrationTelegramByBotId } from "@/features/integration-telegram/queries"
 import { findIntegrationTiktokByOpenId } from "@/features/integration-tiktok/queries"
 import { type IntegrationKey, integrations } from "@/integration"
 import { logger } from "@/lib/log"
+import { isBrokerHost } from "@/lib/oauth-broker"
 
 type CredentialType = Parameters<
   typeof platformCredentialService.resolveForOwner
@@ -46,10 +47,9 @@ export const handleWebhook = async (
 
   if (isCloud()) {
     const domain = req.headers.get("x-domain") ?? ""
-    const defaultDomain = new URL(env.NEXT_PUBLIC_BUILDER_URL).hostname
 
-    if (domain === defaultDomain) {
-      // Default platform domain: use global platform credential
+    if (isBrokerHost(domain)) {
+      // Broker (platform) domain: use global platform credential
       credential = await platformCredentialService.findDecryptedPlatform({
         type,
       })
