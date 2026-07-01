@@ -1,4 +1,4 @@
-import { db } from "@chatbotx.io/database/client"
+import { workspaceMemberService } from "@chatbotx.io/business"
 import { ORPCError } from "@orpc/server"
 import { auth } from "@/lib/auth/auth"
 import { base } from "./context"
@@ -43,14 +43,9 @@ export const workspaceAuthorizedMidddleware = base.middleware(
       throw new ORPCError("UNAUTHORIZED")
     }
 
-    const workspaceMember = await db.query.workspaceMemberModel.findFirst({
-      where: {
-        workspaceId,
-        userId: context.user.id,
-      },
-      with: {
-        workspace: true,
-      },
+    const workspaceMember = await workspaceMemberService.findMembership({
+      workspaceId,
+      userId: context.user.id,
     })
 
     if (!workspaceMember) {
