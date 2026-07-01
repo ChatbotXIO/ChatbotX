@@ -21,9 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from "@chatbotx.io/ui/components/ui/table"
-import { format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { formatDateWithYear } from "../../utils/date-format"
 
 function getFullName(contact: FlowNodeContactData): string {
   if (contact.firstName || contact.lastName) {
@@ -38,6 +38,7 @@ function getInitial(contact: FlowNodeContactData): string {
 
 export function MagicLinkContactsTable() {
   const t = useTranslations()
+  const locale = useLocale()
   const {
     magicLinkContacts: contacts,
     magicLinkContactsPage: page,
@@ -72,7 +73,7 @@ export function MagicLinkContactsTable() {
                     {getFullName(contact)}
                   </TableCell>
                   <TableCell>
-                    {format(new Date(contact.occurredAt), "MMM d, yyyy")}
+                    {formatDateWithYear(new Date(contact.occurredAt), locale)}
                   </TableCell>
                   <TableCell>{contact.sourceId ?? "-"}</TableCell>
                 </TableRow>
@@ -80,7 +81,7 @@ export function MagicLinkContactsTable() {
             ) : (
               <TableRow>
                 <TableCell className="h-24 text-center" colSpan={4}>
-                  No results.
+                  {t("fields.noResults.label")}
                 </TableCell>
               </TableRow>
             )}

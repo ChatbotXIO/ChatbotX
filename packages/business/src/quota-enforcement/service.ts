@@ -3,7 +3,6 @@ import { db, type Transaction } from "@chatbotx.io/database/client"
 import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import { distributedLock } from "@chatbotx.io/redis"
 import { tenantService } from "../enterprise/tenant/service"
-import { tenantQuotaService } from "../tenant-quota/service"
 import { type QuotaMetric, userQuotaService } from "../user-quota/service"
 
 const ALL_METRICS: readonly QuotaMetric[] = [
@@ -43,15 +42,19 @@ const minRemaining = (a: number | null, b: number | null): number | null => {
 }
 
 /**
- * Two-level quota enforcement: a customer's resource creation is gated by BOTH
- * their own `UserQuota` limit AND the pooled tenant limit (the reseller's plan,
- * read from the tenant owner's `UserQuota`). A reseller acting directly is gated
- * by the pool only; a root-tenant user keeps the legacy per-user behavior.
+ * Two-level quota enforcement, both levels stored on `UserQuota`:
+ *  - a sub-account's create is gated by BOTH its own `UserQuota` limit AND the
+ *    pool limit, where the pool is the tenant owner's `UserQuota` row (the
+ *    owner's `*Used` aggregates the whole tenant — owner's own + sub-accounts);
+ *  - a reseller acting directly is gated by (and consumes) only the owner row,
+ *    which IS the pool;
+ *  - a root-tenant user keeps the per-user behavior on their own row.
  *
  * `tryConsume` is the DB-used atomic gate for the synchronous create paths
  * (workspaces, channels, team members). The live-counter helpers
  * (`isAtLimit`/`increment`/`getDualRemainingSlots`) serve the high-frequency
- * contact paths, mirroring the historical single-level schemes per metric.
+ * contact/MAC paths. Both stores stay in lockstep because every consume is
+ * write-through (see `LiveCounterStore.consume`).
  */
 class QuotaEnforcementService {
   /**
@@ -142,16 +145,15 @@ class QuotaEnforcementService {
       })
     }
 
-    const { tenantId, ownerId } = ctx
+    const { ownerId } = ctx
     const isReseller = userId === ownerId
 
     return distributedLock.runExclusive({
       key: this.lockKeyFor(ctx, userId, metric),
       timeoutInSeconds: LOCK_TIMEOUT_SECONDS,
       fn: async (): Promise<ConsumeResult> => {
-        if (
-          !(await tenantQuotaService.hasCapacity(tenantId, ownerId, metric))
-        ) {
+        // Pool = the tenant owner's `UserQuota` row.
+        if (!(await userQuotaService.hasCapacity(ownerId, metric))) {
           return { ok: false, level: "pool" }
         }
         if (
@@ -160,7 +162,7 @@ class QuotaEnforcementService {
           return { ok: false, level: "user" }
         }
 
-        await tenantQuotaService.consume(tenantId, metric)
+        await userQuotaService.consume(ownerId, metric)
         if (!isReseller) {
           await userQuotaService.consume(userId, metric)
         }
@@ -181,8 +183,8 @@ class QuotaEnforcementService {
       return userQuotaService.isLimitReached(userId, metric)
     }
 
-    const { tenantId, ownerId } = ctx
-    if (await tenantQuotaService.isLimitReached(tenantId, ownerId, metric)) {
+    const { ownerId } = ctx
+    if (await userQuotaService.isLimitReached(ownerId, metric)) {
       return true
     }
     if (userId === ownerId) {
@@ -224,8 +226,9 @@ class QuotaEnforcementService {
       return
     }
 
-    const { tenantId, ownerId } = ctx
-    await tenantQuotaService.incrementBy(tenantId, metric, count)
+    const { ownerId } = ctx
+    // Pool = owner's `UserQuota`; a sub-account also bumps its own row.
+    await userQuotaService.incrementBy(ownerId, metric, count)
     if (userId !== ownerId) {
       await userQuotaService.incrementBy(userId, metric, count)
     }
@@ -340,11 +343,7 @@ class QuotaEnforcementService {
   ): Promise<ConsumeLevel> {
     if (
       this.isPooled(ctx) &&
-      (await tenantQuotaService.isLimitReached(
-        ctx.tenantId,
-        ctx.ownerId,
-        "mac",
-      ))
+      (await userQuotaService.isLimitReached(ctx.ownerId, "mac"))
     ) {
       return "pool"
     }
@@ -372,12 +371,8 @@ class QuotaEnforcementService {
     const pooled = this.isPooled(ctx)
 
     if (pooled && userId === ctx.ownerId) {
-      // Reseller acting directly: only the pool governs.
-      return tenantQuotaService.isLimitReached(
-        ctx.tenantId,
-        ctx.ownerId,
-        metric,
-      )
+      // Reseller acting directly: only the pool (owner row) governs.
+      return userQuotaService.isLimitReached(ctx.ownerId, metric)
     }
 
     const userFull = await userQuotaService.isLimitReached(userId, metric)
@@ -387,11 +382,7 @@ class QuotaEnforcementService {
     if (userFull) {
       return true
     }
-    return tenantQuotaService.isLimitReached(
-      ctx.tenantId,
-      ctx.ownerId as string,
-      metric,
-    )
+    return userQuotaService.isLimitReached(ctx.ownerId as string, metric)
   }
 
   /** Tighter of the user and pool remaining slots (`null` = unlimited). */
@@ -413,10 +404,10 @@ class QuotaEnforcementService {
       return userQuotaService.getRemainingSlots(userId, metric)
     }
 
-    const { tenantId, ownerId } = ctx
+    const { ownerId } = ctx
     const isReseller = userId === ownerId
     const [poolRemaining, userRemaining] = await Promise.all([
-      tenantQuotaService.getRemainingSlots(tenantId, ownerId, metric),
+      userQuotaService.getRemainingSlots(ownerId, metric),
       isReseller
         ? Promise.resolve<number | null>(null)
         : userQuotaService.getRemainingSlots(userId, metric),
@@ -436,11 +427,11 @@ class QuotaEnforcementService {
     const ctx = await this.resolveContext(userId)
 
     if (this.isPooled(ctx) && userId === ctx.ownerId) {
-      // `used` from the live pool counters (near-real-time), `limit` from the
-      // reseller's plan row — so the display tracks live activity instead of
-      // the scheduled DB sync.
+      // Reseller acting directly: the owner's `UserQuota` row IS the pool. `used`
+      // from its live counters (near-real-time), `limit` from the same row —
+      // both from one write-through source, so they cannot disagree.
       const [liveUsed, ownerQuota] = await Promise.all([
-        tenantQuotaService.getLiveUsage(ctx.tenantId),
+        userQuotaService.getLiveUsage(ctx.ownerId),
         userQuotaService.getForUser(ctx.ownerId),
       ])
       return Object.fromEntries(

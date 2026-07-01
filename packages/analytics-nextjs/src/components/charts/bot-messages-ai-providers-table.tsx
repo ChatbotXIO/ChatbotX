@@ -31,7 +31,7 @@ export function BotMessagesAIProvidersTable() {
                 className="px-4 py-8 text-center text-muted-foreground text-sm"
                 colSpan={3}
               >
-                No data
+                {t("analytics.noData")}
               </td>
             </tr>
           ) : (

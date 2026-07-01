@@ -30,6 +30,11 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
       name: "mac-tracking",
       handler: macTrackingService.trackMessageOut.bind(macTrackingService),
     },
+    {
+      name: "active-hourly",
+      handler:
+        macTrackingService.trackMessageOutHourly.bind(macTrackingService),
+    },
   ],
   [messageEventTypeSchema.enum["message:failed"]]: [
     {
@@ -86,6 +91,10 @@ export const messageListeners: Partial<MessageEvenTypeMap> = {
     {
       name: "mac-tracking",
       handler: macTrackingService.trackMessageIn.bind(macTrackingService),
+    },
+    {
+      name: "active-hourly",
+      handler: macTrackingService.trackMessageInHourly.bind(macTrackingService),
     },
   ],
 }

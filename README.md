@@ -25,7 +25,7 @@
   |
   <a href="https://chatbotx.canny.io/">Roadmap</a>
   |
-  <a href="https://chatbotx.io/docs">Docs</a>
+  <a href="https://chatbotx.io/docs" rel="dofollow">Docs</a>
   |
   <a href="https://discord.chatbotx.io/">Discord</a>
 </p>
@@ -57,19 +57,36 @@
 </p>
 
 <p align="center">
-  <img alt="ChatbotX omnichannel AI chatbot hero" src=".github/assets/readme/chatbotx-hero.png">
+  <a href="https://youtube.com/@chatbotxofficial" rel="dofollow"><strong>Watch the YouTube Tutorials»</strong></a>
+  <br />
+</p>
+
+<p align="center">
+  <a href="https://app.chatbotx.io">Register</a>
+  ·
+  <a href="https://chatbotx.io/docs/cli/introduction">CLI</a>
+  ·
+  <a href="https://chatbotx.io/docs/mcp/introduction">MCP</a>
+  ·
+  <a href="https://chatbotx.io/docs/api-reference/api-overview">Public API</a><br />
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=b1NUlA-fIzw" target="_blank">
+    <img alt="ChatbotX Omnichannel" src=".github/assets/readme/chatbotx-hero.png">
+  </a>
 </p>
 
 ## ✨ Features
 
 - **Visual Flow Builder:** Drag-and-drop chatbot builder with 15+ node types
-- **AI Agent:** AI-powered responses and actions using OpenAI, DeepSeek, or Gemini
+- **AI Agent:** AI-powered responses and actions using OpenAI, Claude, Gemini, DeepSeek, or OpenRouter
 - **Live Chat Inbox:** Real-time inbox with human takeover and conversation assignment
 - **Contact CRM:** Manage contacts with tags, custom fields, and segmentation
 - **Broadcasting:** Send targeted messages to specific contact segments
 - **Sequences:** Automate drip campaigns with scheduled messages and auto-enrollment
 - **Team Management:** Invite team members, assign roles, and manage permissions
-- **Multi-Platform:** Connect across WhatsApp, Facebook, Instagram, Telegram, Zalo, Email, and Webchat
+- **Multi-Platform:** Connect across WhatsApp, Facebook, Instagram, Tiktok, Telegram, Zalo, Email, and Webchat
 - **Rich Messaging:** Support for buttons, quick replies, catalogs, and carousel cards
 - **Comment-to-DM:** Automatically message users who comment with specific keywords
 - **A/B Testing:** Test and optimize different message flows
@@ -107,7 +124,7 @@ To have the project up and running, please follow the [Quick Start Guide](https:
 |-- apps/
 |   |-- builder/       # Next.js web app and product builder
 |   |-- worker/        # background workers for chat, AI, triggers, webhooks, analytics, sequences
-|   |-- partysocket/   # realtime server
+|   |-- realtime/      # realtime server
 |   |-- cli/           # ChatbotX command line client
 |   `-- mcp-server/    # MCP server backed by public APIs
 |-- integrations/
@@ -120,12 +137,21 @@ To have the project up and running, please follow the [Quick Start Guide](https:
 |   |-- webchat/
 |   |-- smtp/
 |   |-- openai/
-|   `-- google-sheets/
+|   |-- google-sheets/
+|   `-- ...           # email/CRM: mailchimp, klaviyo, active-campaign, drip, get-response, mailer-lite, moosend, sendgrid
 |-- packages/
 |   |-- database/
 |   |-- ai/
+|   |-- auth/
+|   |-- business/
+|   |-- automated-response/
 |   |-- analytics/
-|   |-- public-apis/
+|   |-- event-bus/
+|   |-- kafka/
+|   |-- mail/
+|   |-- imports/
+|   |-- flow-config/
+|   |-- variables/
 |   |-- sdk/
 |   |-- scheduler/
 |   |-- sequence-scheduler/
@@ -152,7 +178,7 @@ Useful package-level commands:
 ```bash
 pnpm --filter builder dev
 pnpm --filter worker dev
-pnpm --filter partysocket dev
+pnpm --filter realtime dev
 pnpm --filter chatbotx-cli dev:cli
 pnpm --filter chatbotx-mcp-server dev:mcp
 pnpm --filter @chatbotx.io/database db:studio

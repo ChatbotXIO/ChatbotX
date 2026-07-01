@@ -227,8 +227,8 @@ const getLargestPhoto = (
     if (!largest) {
       return photo
     }
-    return photo.file_size &&
-      largest.file_size &&
+    return typeof photo.file_size === "number" &&
+      typeof largest.file_size === "number" &&
       photo.file_size > largest.file_size
       ? photo
       : largest

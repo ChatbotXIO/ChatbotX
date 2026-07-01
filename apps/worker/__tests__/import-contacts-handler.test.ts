@@ -90,47 +90,17 @@ vi.mock("@chatbotx.io/database/schema", () => ({
 }))
 
 const workspaceFind = vi.fn()
-const getDualRemainingSlots = vi.fn()
-const resolveQuotaLockKey = vi.fn()
-const incrementBy = vi.fn()
-const getForUser = vi.fn()
 // Returns the set of source ids already linked to the inbox. Per call so the
-// processBatch pre-check and the locked re-check can return different sets.
+// processBatch pre-check and the insert-time re-check can return different sets.
 const findExistingSourceIds = vi.fn(async () => new Set<string>())
 
 vi.mock("@chatbotx.io/business", () => ({
   workspaceService: {
     find: (...args: unknown[]) => workspaceFind(...args),
   },
-  userQuotaService: {
-    getForUser: (...args: unknown[]) => getForUser(...args),
-  },
   contactInboxService: {
     findExistingSourceIds: (...args: unknown[]) =>
       findExistingSourceIds(...args),
-  },
-  quotaEnforcementService: {
-    resolveQuotaLockKey: (...args: unknown[]) => resolveQuotaLockKey(...args),
-    getDualRemainingSlots: (...args: unknown[]) =>
-      getDualRemainingSlots(...args),
-    incrementBy: (...args: unknown[]) => incrementBy(...args),
-  },
-}))
-
-const claimNewActiveContacts = vi.fn(async () => ({ counted: 0 }))
-vi.mock("@chatbotx.io/analytics", () => ({
-  macTrackingService: {
-    claimNewActiveContacts: (...args: unknown[]) =>
-      claimNewActiveContacts(...args),
-  },
-}))
-
-// The contacts handler wraps quota reservation in distributedLock.runExclusive;
-// without a mock it opens a real Redis connection (ECONNREFUSED). Run the body
-// inline.
-vi.mock("@chatbotx.io/redis", () => ({
-  distributedLock: {
-    runExclusive: ({ fn }: { fn: () => Promise<unknown> }) => fn(),
   },
 }))
 
@@ -233,19 +203,6 @@ beforeEach(() => {
   headObject.mockResolvedValue({ ContentLength: 1024 })
   workspaceFind.mockReset()
   workspaceFind.mockResolvedValue({ id: "ws-1", ownerId: "owner-1" })
-  getDualRemainingSlots.mockReset()
-  getDualRemainingSlots.mockResolvedValue(100)
-  resolveQuotaLockKey.mockReset()
-  resolveQuotaLockKey.mockResolvedValue("quota:user:owner-1:mac")
-  incrementBy.mockReset()
-  incrementBy.mockResolvedValue(undefined)
-  getForUser.mockReset()
-  // Owner with a billing period → import writes MAC presence rows.
-  getForUser.mockResolvedValue({
-    periodStart: new Date("2026-06-01T00:00:00.000Z"),
-  })
-  claimNewActiveContacts.mockReset()
-  claimNewActiveContacts.mockResolvedValue({ counted: 0 })
 })
 
 const runContactsImport = (row: unknown) =>
@@ -286,53 +243,6 @@ describe("contacts import pipeline", () => {
     })
     // One bulk transaction for the whole chunk, not one per row.
     expect(transactionFn).toHaveBeenCalledTimes(1)
-    expect(incrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 2,
-    })
-    // The bulk path also records the info-only `contacts` total (parity with the
-    // single-contact chokepoint), so the displayed contacts count doesn't drift.
-    expect(incrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "contacts",
-      count: 2,
-    })
-    // (b) imported contacts are recorded in the MAC ledger so the reconcile
-    // counts them and a later message dedups instead of double counting.
-    expect(claimNewActiveContacts).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: "ws-1",
-        inboxId: "inbox-1",
-        contacts: expect.arrayContaining([
-          expect.objectContaining({
-            contactId: expect.any(String),
-            contactInboxId: expect.any(String),
-          }),
-        ]),
-      }),
-      expect.anything(),
-    )
-  })
-
-  test("skips the MAC ledger write for a period-less owner but still consumes quota", async () => {
-    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    getForUser.mockResolvedValue({ periodStart: null })
-    getObjectStream.mockResolvedValue(
-      streamOf([
-        "external_id,phone,email",
-        "ext-1,+15551234567,first@example.com",
-      ]),
-    )
-
-    await runContactsImport(buildRow())
-
-    expect(claimNewActiveContacts).not.toHaveBeenCalled()
-    expect(incrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
   })
 
   test("counts blank row as failed but continues", async () => {
@@ -374,7 +284,7 @@ describe("contacts import pipeline", () => {
     expect(transactionFn).not.toHaveBeenCalled()
   })
 
-  test("rechecks duplicates inside the quota lock before reserving MAC", async () => {
+  test("rechecks duplicates before insert", async () => {
     findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
     findExistingSourceIds
       .mockResolvedValueOnce(new Set<string>())
@@ -394,57 +304,6 @@ describe("contacts import pipeline", () => {
       failedCount: 1,
     })
     expect(transactionFn).not.toHaveBeenCalled()
-    expect(incrementBy).not.toHaveBeenCalled()
-  })
-
-  test("rejects rows that exceed the contact quota", async () => {
-    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    getDualRemainingSlots.mockResolvedValue(0)
-    getObjectStream.mockResolvedValue(
-      streamOf([
-        "external_id,phone,email",
-        "ext-1,+15551234567,ok@example.com",
-      ]),
-    )
-
-    await runContactsImport(buildRow())
-
-    expect(lastUpdate()).toMatchObject({
-      status: "completed",
-      successCount: 0,
-      failedCount: 1,
-    })
-    // Quota check runs before the transaction, so no transaction is opened.
-    expect(transactionFn).not.toHaveBeenCalled()
-    expect(incrementBy).not.toHaveBeenCalled()
-  })
-
-  test("inserts only up to the remaining quota and fails the overflow", async () => {
-    findFirstInbox.mockResolvedValue({ id: "inbox-1", channel: "messenger" })
-    // Room for one more contact only.
-    getDualRemainingSlots.mockResolvedValue(1)
-    getObjectStream.mockResolvedValue(
-      streamOf([
-        "external_id,phone,email",
-        "ext-1,+15551234567,first@example.com",
-        "ext-2,+15557654321,second@example.com",
-      ]),
-    )
-
-    await runContactsImport(buildRow())
-
-    expect(lastUpdate()).toMatchObject({
-      status: "completed",
-      totalCount: 2,
-      successCount: 1,
-      failedCount: 1,
-    })
-    expect(transactionFn).toHaveBeenCalledTimes(1)
-    expect(incrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
   })
 
   test("a late ContactInbox conflict skips only the conflicting row, not the whole batch", async () => {
@@ -471,21 +330,6 @@ describe("contacts import pipeline", () => {
     })
     expect(transactionFn).toHaveBeenCalledTimes(1)
     expect(deleteWhere).toHaveBeenCalledTimes(1)
-    // MAC is consumed only for the contact that actually inserted.
-    expect(incrementBy).toHaveBeenCalledWith({
-      userId: "owner-1",
-      metric: "mac",
-      count: 1,
-    })
-    // The MAC ledger records only the survivor.
-    expect(claimNewActiveContacts).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contacts: expect.arrayContaining([
-          expect.objectContaining({ contactId: expect.any(String) }),
-        ]),
-      }),
-      expect.anything(),
-    )
   })
 
   test("marks row failed when CSV is malformed", async () => {

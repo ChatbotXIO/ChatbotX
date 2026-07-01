@@ -1,1 +1,0 @@
-export { tenantQuotaService } from "./service"

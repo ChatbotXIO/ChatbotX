@@ -49,7 +49,6 @@ export {
 } from "./quota-shared/live-counter-store"
 export * from "./referral"
 export * from "./tag"
-export * from "./tenant-quota"
 export * from "./trigger"
 export * from "./types"
 export * from "./user"

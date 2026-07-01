@@ -1,5 +1,6 @@
 import {
   platformCredentialService,
+  workspaceMemberService,
   workspaceService,
 } from "@chatbotx.io/business"
 import { db } from "@chatbotx.io/database/client"
@@ -97,10 +98,16 @@ export const handleCallback = async (
         createdBy: userId,
       })
 
-  if (stateParams.workspaceId && workspace.ownerId !== userId) {
+  if (
+    stateParams.workspaceId &&
+    !(await workspaceMemberService.isMember({
+      workspaceId: stateParams.workspaceId,
+      userId,
+    }))
+  ) {
     logger.warn(
       { userId, workspaceId: stateParams.workspaceId },
-      "workspace ownership mismatch in OAuth callback",
+      "user is not a member of workspace in OAuth callback",
     )
     return notFound()
   }

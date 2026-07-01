@@ -265,7 +265,7 @@ describe("sendRichMessages", () => {
   })
 
   test("enqueues converted messages with cumulative delay and rich button metadata", async () => {
-    await sendRichMessages(
+    const result = await sendRichMessages(
       [
         {
           message: {
@@ -316,6 +316,7 @@ describe("sendRichMessages", () => {
       },
     )
 
+    expect(result).toEqual({ enqueued: 2, skipped: 0 })
     expect(chatQueueAddBulk).toHaveBeenCalledOnce()
 
     const jobs = chatQueueAddBulk.mock.calls[0]?.[0]
@@ -348,7 +349,7 @@ describe("sendRichMessages", () => {
   })
 
   test("stagger messages without explicit delays so quick replies stay last on channel", async () => {
-    await sendRichMessages(
+    const result = await sendRichMessages(
       [
         {
           message: {
@@ -380,13 +381,14 @@ describe("sendRichMessages", () => {
       ctx,
     )
 
+    expect(result).toEqual({ enqueued: 2, skipped: 0 })
     const jobs = chatQueueAddBulk.mock.calls[0]?.[0]
     expect(jobs?.map((job) => job.opts?.delay)).toEqual([0, 250])
     expect(jobs?.[1]?.data.data.step.buttons).toHaveLength(1)
   })
 
   test("keeps quick replies with plain payloads instead of omitting them", async () => {
-    await sendRichMessages(
+    const result = await sendRichMessages(
       [
         {
           message: {
@@ -419,6 +421,7 @@ describe("sendRichMessages", () => {
       ctx,
     )
 
+    expect(result).toEqual({ enqueued: 1, skipped: 0 })
     expect(chatQueueAddBulk).toHaveBeenCalledOnce()
     const call = chatQueueAddBulk.mock.calls[0]?.[0]?.[0]
     expect(call?.data.data.step.buttons).toHaveLength(4)
@@ -440,6 +443,31 @@ describe("sendRichMessages", () => {
     expect(loggerWarnMock).not.toHaveBeenCalledWith(
       expect.any(Object),
       "[rich-response] omitted unsupported button payload",
+    )
+  })
+
+  test("skips native WhatsApp rich item without enqueueing jobs", async () => {
+    const result = await sendRichMessages(
+      [
+        {
+          messaging_product: "whatsapp",
+          type: "interactive",
+          interactive: {
+            type: "button",
+          },
+        },
+      ],
+      ctx,
+    )
+
+    expect(result).toEqual({ enqueued: 0, skipped: 1 })
+    expect(chatQueueAddBulk).not.toHaveBeenCalled()
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messageType: "whatsapp_native",
+        reason: "unsupported_phase_1",
+      }),
+      "[rich-response] skipped native WhatsApp message",
     )
   })
 })

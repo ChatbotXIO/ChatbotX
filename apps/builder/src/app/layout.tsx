@@ -6,6 +6,7 @@ import { UiProvider } from "@chatbotx.io/ui"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale } from "next-intl/server"
 import { PublicEnvScript } from "@/components/public-env-script"
+import { env } from "@/env"
 import { TenantProvider } from "@/features/tenant"
 import { getTenantSettings } from "@/features/tenant/utils"
 
@@ -38,11 +39,13 @@ type Props = {
 export default async function RootLayout({ children }: Props) {
   const locale = await getLocale()
   const tenantSettings = await getTenantSettings()
-
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <PublicEnvScript />
+        {env.NEXT_PUBLIC_ENABLE_PANCAKE_CHAT && (
+          <script src="https://chat-plugin.pancake.vn/main/auto?page_id=web_chatbotx&hide_supplier=true" />
+        )}
       </head>
       <body
         className={

@@ -1,5 +1,6 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { analyticsConversationEventModel } from "@chatbotx.io/database/schema"
+import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import { shouldUseCagg } from "../../lib/time-series"
 import type {
@@ -13,8 +14,9 @@ import type {
 } from "../../schemas"
 import type { ConversationEventType } from "../../schemas/conversation-event"
 import { BaseRepository } from "./base.repository"
+import { getEventBusEventId } from "./event-bus-idempotency"
 
-export type InsertConversationEventRow = {
+export type InsertConversationEventRow = EventBusMessageMetadata & {
   workspaceId: string
   conversationId: string
   occurredAt: Date | string | number
@@ -33,7 +35,7 @@ export class ConversationStatsRepository extends BaseRepository {
       return
     }
     const rows = payloads.map((p) => ({
-      eventId: createId(),
+      eventId: getEventBusEventId(p) ?? createId(),
       workspaceId: p.workspaceId,
       conversationId: p.conversationId,
       eventType,

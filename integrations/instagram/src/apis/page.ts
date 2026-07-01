@@ -10,8 +10,8 @@ import { DEFAULT_API_VERSION } from "../constants"
 import { rescue } from "../exception"
 import { instagramBusinessClient } from "../lib/http-client"
 import type {
+  InstagramAttachment,
   InstagramAuthValue,
-  InstagramMessageAttachment,
   InstagramProfileRequest,
   InstagramSendMessageRequest,
   InstagramSendMessageResponse,
@@ -126,7 +126,7 @@ export const getMessageAttachmentEntity = async ({
   attachment,
 }: {
   ctx: Context<InstagramAuthValue>
-  attachment: InstagramMessageAttachment
+  attachment: InstagramAttachment
 }): Promise<IncomingAttachment | undefined> => {
   if (!attachment.payload.url) {
     throw new Error("No attachment URL found")
@@ -141,7 +141,7 @@ export const getMessageAttachmentEntity = async ({
     const originPath = `${ctx.storagePrefix}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
-    const fileType = guessFileTypeFromMimeType(attachment.type)
+    const fileType = guessFileTypeFromMimeType(mimeType)
 
     await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
       ACL: "public-read",

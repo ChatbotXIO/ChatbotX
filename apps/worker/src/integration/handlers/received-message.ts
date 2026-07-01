@@ -1,6 +1,7 @@
 import {
   broadcastToWorkspaceParty,
   buildContext,
+  contactService,
   conversationService,
   quotaEnforcementService,
   resolveTenantSettings,
@@ -17,6 +18,7 @@ import {
 } from "@chatbotx.io/database/schema"
 import type {
   ContactInboxModel,
+  ContactModel,
   ConversationModel,
   InboxModel,
   MessageModel,
@@ -117,7 +119,7 @@ export const receiveMessage = async (
   if (!detected) {
     throw new SdkException("Unable to resolve contact and conversation")
   }
-  const { contactInbox, conversation } = detected
+  const { contactInbox, conversation, contact } = detected
 
   // Overwrite Contact.phoneNumber/email from message text — every inbound
   // channel. Unconditional: the customer just typed the value, so it's
@@ -137,6 +139,20 @@ export const receiveMessage = async (
       logger.warn(
         { error, contactId: contactInbox.contactId, channel: inbox.channel },
         "Contact update from message text failed",
+      )
+    }
+  }
+
+  if (incomingMessage && incomingMessage.messageType !== "outgoing") {
+    try {
+      await contactService.unblockIfBlocked(
+        { workspaceId: inbox.workspaceId, id: contactInbox.contactId },
+        contact,
+      )
+    } catch (error) {
+      logger.warn(
+        { error, contactId: contactInbox.contactId, channel: inbox.channel },
+        "Auto-unblock on inbound message failed",
       )
     }
   }
@@ -277,7 +293,10 @@ const saveAndBroadcastMessage = async (props: {
       lastMessageAt: newMessage.createdAt,
     }
 
-    if (incomingMessage.messageType !== "outgoing") {
+    if (
+      incomingMessage.messageType !== "outgoing" &&
+      messageInput.type === "message"
+    ) {
       lastMessageUpdate.lastIncomingMessageAt = newMessage.createdAt
     }
 
@@ -469,6 +488,7 @@ const detectContactAndConversation = async (props: {
   }
 }): Promise<{
   contactInbox: ContactInboxModel
+  contact: ContactModel
   conversation: ConversationModel
 }> => {
   const { incomingContact, inbox, integrationRow } = props
@@ -479,6 +499,7 @@ const detectContactAndConversation = async (props: {
       channel: inbox.channel,
       sourceId: incomingContact.sourceId,
     },
+    with: { contact: true },
   })
 
   // The conversation source id (e.g. a Facebook post id for comments) keys the
@@ -495,7 +516,11 @@ const detectContactAndConversation = async (props: {
       contactId: existingContactInbox.contactId,
       sourceId: conversationSourceId,
     })
-    return { contactInbox: existingContactInbox, conversation }
+    return {
+      contactInbox: existingContactInbox,
+      contact: existingContactInbox.contact,
+      conversation,
+    }
   }
 
   let contactData: typeof contactModel.$inferInsert = {
@@ -626,7 +651,7 @@ const detectContactAndConversation = async (props: {
     })
   }
 
-  return { contactInbox, conversation }
+  return { contactInbox, contact: newContact, conversation }
 }
 
 const canGetUserProfileIfNeeded = (integrationType: string) =>

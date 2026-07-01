@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { type ReactNode, useState } from "react"
+import { InboxStoreProvider } from "@/features/inboxes/provider/inbox-store-context"
 import { CreateContactForm } from "./create-contact-form"
 
 export function CreateContactDialog({
@@ -51,11 +52,13 @@ export function CreateContactDialog({
           <DialogDescription />
         </DialogHeader>
         <div className="flex items-center space-x-2">
-          <CreateContactForm
-            onCancelled={() => setOpen(false)}
-            onSubmmited={onSubmmited}
-            workspaceId={workspaceId}
-          />
+          <InboxStoreProvider workspaceId={workspaceId}>
+            <CreateContactForm
+              onCancelled={() => setOpen(false)}
+              onSubmmited={onSubmmited}
+              workspaceId={workspaceId}
+            />
+          </InboxStoreProvider>
         </div>
       </DialogContent>
     </Dialog>

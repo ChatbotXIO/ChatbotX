@@ -62,7 +62,7 @@ export { getSafeSinceTime } from "../../../repositories"
 const SHARD_RANGE_CACHE_TAG = "message-shard-range"
 const SHARD_RANGE_CACHE_TTL_S = 30
 const ATTACHMENT_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
-const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000
+const RICH_RESPONSE_FALLBACK_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 
 function compareMessageDesc(
   a: { id: string; createdAt: Date },

@@ -13,7 +13,10 @@ import {
   ChannelError,
   ChannelErrorCategory,
   contentTypes,
+  META_HUMAN_AGENT_WINDOW_MS,
+  META_RESPONSE_WINDOW_MS,
   type MessageHandlers,
+  normalizeLastIncomingMessageAt,
   type OutgoingContact,
   type OutgoingMessage,
   type SendFlowStepProps,
@@ -37,9 +40,6 @@ import { convertFlowStepMedia } from "./send-media"
 import { buildMessengerTemplateSendRequest } from "./send-messenger-template"
 import { convertFlowStepQuickReply } from "./send-quick-reply"
 import { convertFlowStepText } from "./send-text"
-
-const RESPONSE_WINDOW_MS = 24 * 60 * 60 * 1000
-const HUMAN_AGENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 type MessengerMessagingPolicy = {
   messagingType: "MESSAGE_TAG" | "RESPONSE"
@@ -236,11 +236,11 @@ export function resolveMessengerMessagingPolicy(props: {
   }
   const elapsedMs = nowMs - lastIncomingMessageAt.getTime()
 
-  if (elapsedMs <= RESPONSE_WINDOW_MS) {
+  if (elapsedMs <= META_RESPONSE_WINDOW_MS) {
     return { messagingType: "RESPONSE" }
   }
 
-  if (elapsedMs <= HUMAN_AGENT_WINDOW_MS) {
+  if (elapsedMs <= META_HUMAN_AGENT_WINDOW_MS) {
     return { messagingType: "MESSAGE_TAG", tag: "HUMAN_AGENT" }
   }
 
@@ -249,17 +249,6 @@ export function resolveMessengerMessagingPolicy(props: {
     ChannelErrorCategory.PAYLOAD_INVALID,
     { code: "messenger_human_agent_window_expired" },
   )
-}
-
-function normalizeLastIncomingMessageAt(
-  value: Date | string | null | undefined,
-) {
-  if (!value) {
-    return null
-  }
-
-  const date = value instanceof Date ? value : new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
 }
 
 async function* convertFlowStepToFacebookMessage(

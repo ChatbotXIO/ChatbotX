@@ -151,6 +151,56 @@ reseller's own domain.
 branding. The root tenant carries null branding and a suspended tenant falls back to
 defaults, so platform workspaces always render defaults.
 
+## Quota enforcement
+
+Quota is tracked in `UserQuota` rows only — there is no separate tenant-level counter table.
+
+### Single-source design
+
+| User type | `UserQuota` rows | Enforcement |
+|-----------|-----------------|-------------|
+| Root-tenant user | One row (their own) | Gated by their own row only |
+| Reseller owner | One row (their own, acts as the pool) | Gated by their own pool row only |
+| Sub-account | One row (their own) + owner's pool row | Gated by **both** their own row **and** the owner's pool row |
+
+The owner's `*Used` columns aggregate the whole tenant: owner's own resources carry the reseller `tenantId` so they are already included in tenant-scoped DB counts. No separate summation step is needed.
+
+### Two-level enforcement (`QuotaEnforcementService`)
+
+`packages/business/src/quota-enforcement/service.ts` gates every resource creation:
+
+1. **Pool check** (`ownerId`) — `userQuotaService.hasCapacity(ownerId, metric)`. Blocks if the owner's pool is full.
+2. **User check** (`userId`) — `userQuotaService.hasCapacity(userId, metric)`. Blocks if the sub-account's own limit is reached.
+3. **Consume** — `userQuotaService.consume(ownerId, ...)` (always) + `userQuotaService.consume(userId, ...)` (sub-accounts only).
+
+A reseller acting on their own behalf only passes check 1 (their row IS the pool).
+A root-tenant user only passes check 2 (no pool).
+
+### Write-through counters
+
+Every `consume` and `incrementBy` call on `UserQuotaService` is write-through: it updates the Redis live counter **and** the DB `*Used` column in the same call (via `LiveCounterStore.consume`). This keeps the usage display (Redis-read) and the capacity gate (DB-read) in lockstep without waiting for the scheduled reconcile.
+
+### Scheduled reconcile (`syncUserQuota`)
+
+`apps/worker/src/schedule/handlers/sync-user-quota.ts` runs on every `QUOTA_SYNC_INTERVAL_SECONDS` tick. It:
+
+1. Scans Redis for `user-quota-live:*` keys (active users with live counters).
+2. Unions in all active reseller owner IDs from `tenantService.listActiveOwnerIds()` so cold owners (no Redis key yet) are always included.
+3. For each user ID:
+   - **Reseller owner with active tenant** → calls `userQuotaService.reconcileOwnerPoolUsage(ownerId, tenantId)`: runs five parallel `COUNT(*)`/`SUM` queries scoped to `workspaceModel.tenantId` and writes the authoritative current counts to both the `UserQuota` row and the Redis live hash.
+   - **Everyone else** → runs per-owner self-count queries scoped to `workspaceModel.ownerId` and writes the same columns.
+
+Counts are written directly (not `GREATEST`), so deletions immediately free quota slots. The private `quota-worker` is the authority for plan limits, period resets, and trial/paid transitions — the OSS reconcile only updates `*Used`.
+
+### Key files
+
+| Path | Role |
+|------|------|
+| `packages/business/src/user-quota/service.ts` | `UserQuotaService` — all quota reads/writes/reconcile |
+| `packages/business/src/quota-enforcement/service.ts` | Two-level gate (pool + user), live-counter helpers |
+| `packages/business/src/quota-shared/live-counter-store.ts` | `LiveCounterStore` — Redis HINCRBY + DB upsert + cache bust |
+| `apps/worker/src/schedule/handlers/sync-user-quota.ts` | Scheduled reconcile walker |
+
 ## Residual security considerations
 
 - **Magic-link / verification tokens are not tenant-scoped.** The `Verification`

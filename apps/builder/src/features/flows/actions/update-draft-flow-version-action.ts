@@ -19,6 +19,7 @@ export const updateDraftFlowVersionAction = workspaceActionClient
     } = props
 
     await updateDraftFlowVersion({ workspaceId, id }, parsedInput)
+    return { ok: true as const }
   })
 
 export const updateDraftFlowVersion = async (

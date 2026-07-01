@@ -100,6 +100,13 @@ export type IntegrationJobMessageStatus = {
   }
 }
 
+/**
+ * Per-node execution counter carried through `sendFlow` jobs to guard against
+ * infinite flow loops. Maps a node id to the number of times that node has
+ * executed within one uninterrupted run; resets when the flow pauses for the user.
+ */
+export type NodeVisits = Record<string, number>
+
 export type IntegrationJobRunFlowNode = {
   type: typeof IntegrationJobAction.sendFlow
   data: {
@@ -109,6 +116,7 @@ export type IntegrationJobRunFlowNode = {
     flowVersionId?: string
     nodeId?: string
     startFromStepId?: string
+    nodeVisits?: NodeVisits
     trackingContext?: BotResponseTrackingContext
     metadata?: MetadataPayload
     sendFrom?: "inbox"

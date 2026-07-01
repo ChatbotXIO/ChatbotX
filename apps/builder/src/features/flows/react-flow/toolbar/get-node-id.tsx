@@ -4,29 +4,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { useReactFlow } from "@xyflow/react"
 import { FingerprintIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import type { MouseEvent } from "react"
 import { toast } from "sonner"
 import { useCopyToClipboard } from "usehooks-ts"
 
-export function GetNodeId() {
+export function GetNodeId({ nodeId }: { nodeId: string }) {
   const t = useTranslations()
   const [_, copy] = useCopyToClipboard()
-  const { getNodes } = useReactFlow()
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const allNodes = getNodes()
-    const activeNode = allNodes.find((n) => n.data.forceToolbarVisible)
-    if (activeNode) {
-      copy(activeNode.id).then(() => {
-        toast.success("Copied Node ID")
-      })
-    }
+    // Copy THIS node's id (from NodeViewer), not a `forceToolbarVisible` scan:
+    // overlapping nodes can flag more than one and the scan would pick the wrong id.
+    copy(nodeId).then(() => {
+      toast.success("Copied Node ID")
+    })
   }
 
   return (

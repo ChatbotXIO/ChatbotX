@@ -24,18 +24,34 @@ import {
   useNodesState,
   useReactFlow,
 } from "@xyflow/react"
+import { useTranslations } from "next-intl"
 import { useOptimisticAction } from "next-safe-action/hooks"
 import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react"
+import { toast } from "sonner"
 import { updateDraftFlowVersionAction } from "../actions/update-draft-flow-version-action"
+import type { UpdateDraftFlowVersionSchema } from "../schemas/action"
+import {
+  createDeleteNode,
+  type DeleteSaveResult,
+} from "./delete-node-orchestrator"
+import {
+  createDuplicateNode,
+  type DuplicateSaveResult,
+} from "./duplicate-node-orchestrator"
+import { FlowMutationProvider } from "./flow-mutation-context"
 import { NodeViewer } from "./nodes/viewer"
 import AddNodeButton from "./panel-buttons/add-node-button"
 import FocusButton from "./panel-buttons/focus-button"
 import ZoomInButton from "./panel-buttons/zoom-in-button"
 import ZoomOutButton from "./panel-buttons/zoom-out-button"
+import { duplicateFlowNode } from "./toolbar/duplicate-node-data"
 import "./react-flow-wrapper.css"
 import { createId } from "@chatbotx.io/utils"
 import type { ButtonProps } from "react-day-picker"
@@ -92,23 +108,24 @@ export function ReactFlowWrapper({
     })),
   )
 
-  const { execute: savingDraft } = useOptimisticAction(
-    updateDraftFlowVersionAction.bind(
-      null,
-      flowVersion.workspaceId,
-      flowVersion.id,
-    ),
-    {
-      currentState: { flowVersion },
-      updateFn: (state, updatedData) => ({
-        flowVersion: {
-          ...state.flowVersion,
-          nodes: JSON.parse(JSON.stringify(updatedData.nodes)),
-          edges: JSON.parse(JSON.stringify(updatedData.edges)),
-        },
-      }),
-    },
-  )
+  const { execute: savingDraft, executeAsync: savingDraftAsync } =
+    useOptimisticAction(
+      updateDraftFlowVersionAction.bind(
+        null,
+        flowVersion.workspaceId,
+        flowVersion.id,
+      ),
+      {
+        currentState: { flowVersion },
+        updateFn: (state, updatedData) => ({
+          flowVersion: {
+            ...state.flowVersion,
+            nodes: JSON.parse(JSON.stringify(updatedData.nodes)),
+            edges: JSON.parse(JSON.stringify(updatedData.edges)),
+          },
+        }),
+      },
+    )
 
   const handleChanges = useDebouncedCallback(
     // biome-ignore lint/suspicious/noExplicitAny: wip
@@ -116,6 +133,59 @@ export function ReactFlowWrapper({
       savingDraft({ nodes: changedNodes, edges: changedEdges })
     },
     1000,
+  )
+
+  const t = useTranslations()
+  const [isFlowMutating, setIsFlowMutating] = useState(false)
+  const isMutatingRef = useRef(false)
+
+  const duplicateNode = useMemo(
+    () =>
+      createDuplicateNode({
+        isMutatingRef,
+        setIsFlowMutating,
+        cancelAutosave: () => handleChanges.cancel(),
+        getNodes: () => getNodes() as unknown as FlowNode[],
+        getEdges,
+        cloneNode: duplicateFlowNode,
+        addNodes,
+        // The action input schema types `nodes` as `any[]` (FlowNode[] flows in
+        // freely) and `edges` as the zod edge schema, so only `edges` needs a cast.
+        // The resolved result is cast to the orchestrator's narrow `DuplicateSaveResult`.
+        saveDraft: async (input) =>
+          (await savingDraftAsync({
+            nodes: input.nodes,
+            edges:
+              input.edges as unknown as UpdateDraftFlowVersionSchema["edges"],
+          })) as DuplicateSaveResult,
+        onError: () => toast.error(t("messages.duplicateNodeError")),
+      }),
+    [getNodes, getEdges, addNodes, handleChanges, savingDraftAsync, t],
+  )
+
+  const deleteNode = useMemo(
+    () =>
+      createDeleteNode({
+        isMutatingRef,
+        setIsFlowMutating,
+        cancelAutosave: () => handleChanges.cancel(),
+        deleteElements,
+        getNodes: () => getNodes() as unknown as FlowNode[],
+        getEdges,
+        saveDraft: async (input) =>
+          (await savingDraftAsync({
+            nodes: input.nodes,
+            edges:
+              input.edges as unknown as UpdateDraftFlowVersionSchema["edges"],
+          })) as DeleteSaveResult,
+        onError: () => toast.error(t("messages.deleteNodeError")),
+      }),
+    [getNodes, getEdges, deleteElements, handleChanges, savingDraftAsync, t],
+  )
+
+  const flowMutationValue = useMemo(
+    () => ({ isFlowMutating, duplicateNode, deleteNode }),
+    [isFlowMutating, duplicateNode, deleteNode],
   )
 
   useEffect(() => {
@@ -427,50 +497,62 @@ export function ReactFlowWrapper({
   )
 
   return (
-    <ReactFlow
-      defaultEdgeOptions={{
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-        style: {
-          strokeWidth: 2,
-        },
-      }}
-      edges={edges}
-      edgeTypes={edgeTypes}
-      maxZoom={10}
-      minZoom={0.1}
-      nodes={nodes}
-      nodeTypes={viewerNodeTypes}
-      onConnect={onConnect}
-      onConnectEnd={onConnectEnd}
-      onEdgeMouseEnter={onEdgeMouseEnter}
-      onEdgeMouseLeave={onEdgeMouseLeave}
-      onEdgesChange={onEdgesChange}
-      onEdgesDelete={onEdgesDelete}
-      onNodeClick={handleNodeClick}
-      onNodeMouseEnter={onNodeMouseEnter}
-      onNodeMouseLeave={onNodeMouseLeave}
-      onNodesChange={onNodesChange}
-      onPaneClick={handlePaneClick}
-      proOptions={{ hideAttribution: true }}
-    >
-      {/* <MiniMap /> */}
-      <Background />
-      <Panel className="w-[254px]" position="bottom-center">
-        <Controls
-          className="overflow-hidden rounded-md shadow-none!"
-          orientation="horizontal"
-          showFitView={false}
-          showInteractive={false}
-          showZoom={false}
-        >
-          <FocusButton />
-          <ZoomInButton />
-          <ZoomOutButton />
-          <AddNodeButton />
-        </Controls>
-      </Panel>
-    </ReactFlow>
+    <FlowMutationProvider value={flowMutationValue}>
+      <ReactFlow
+        defaultEdgeOptions={{
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+          },
+          style: {
+            strokeWidth: 2,
+          },
+        }}
+        deleteKeyCode={isFlowMutating ? null : undefined}
+        edges={edges}
+        edgeTypes={edgeTypes}
+        elementsSelectable={!isFlowMutating}
+        maxZoom={10}
+        minZoom={0.1}
+        nodes={nodes}
+        nodesConnectable={!isFlowMutating}
+        nodesDraggable={!isFlowMutating}
+        nodeTypes={viewerNodeTypes}
+        onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
+        onEdgeMouseEnter={onEdgeMouseEnter}
+        onEdgeMouseLeave={onEdgeMouseLeave}
+        onEdgesChange={onEdgesChange}
+        onEdgesDelete={onEdgesDelete}
+        onNodeClick={handleNodeClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
+        onNodesChange={onNodesChange}
+        onPaneClick={handlePaneClick}
+        proOptions={{ hideAttribution: true }}
+      >
+        {/* <MiniMap /> */}
+        {isFlowMutating && (
+          <div
+            className="absolute inset-0 z-50 cursor-wait bg-white/40 dark:bg-black/40"
+            data-testid="flow-mutation-overlay"
+          />
+        )}
+        <Background />
+        <Panel className="w-[254px]" position="bottom-center">
+          <Controls
+            className="overflow-hidden rounded-md shadow-none!"
+            orientation="horizontal"
+            showFitView={false}
+            showInteractive={false}
+            showZoom={false}
+          >
+            <FocusButton />
+            <ZoomInButton />
+            <ZoomOutButton />
+            <AddNodeButton />
+          </Controls>
+        </Panel>
+      </ReactFlow>
+    </FlowMutationProvider>
   )
 }

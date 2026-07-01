@@ -25,8 +25,6 @@ export type BroadcastModel = typeof schema.broadcastModel.$inferSelect
 export type WorkspaceMemberModel =
   typeof schema.workspaceMemberModel.$inferSelect
 export type UserQuotaModel = typeof schema.userQuotaModel.$inferSelect
-export type TenantQuotaUsageModel =
-  typeof schema.tenantQuotaUsageModel.$inferSelect
 export type ContactModel = typeof schema.contactModel.$inferSelect
 export type ConversationModel = typeof schema.conversationModel.$inferSelect
 export type InboxModel = typeof schema.inboxModel.$inferSelect
@@ -83,6 +81,7 @@ export type ContactCustomFieldModel =
 export type WorkspaceModel = typeof schema.workspaceModel.$inferSelect
 export type CustomDomainModel = typeof schema.customDomainModel.$inferSelect
 export type TenantModel = typeof schema.tenantModel.$inferSelect
+export type TenantHelpItemModel = typeof schema.tenantHelpItemModel.$inferSelect
 export type PlatformCredentialModel =
   typeof schema.platformCredentialModel.$inferSelect
 export type ContactNoteModel = typeof schema.contactNoteModel.$inferSelect
@@ -154,3 +153,5 @@ export type ProductVariantOptionModel =
 export type ProductVariantModel = typeof schema.productVariantModel.$inferSelect
 export type ProductAddonModel = typeof schema.productAddonModel.$inferSelect
 export type WorkspaceMacModel = typeof schema.workspaceMacModel.$inferSelect
+export type ContactActiveHourlyModel =
+  typeof schema.contactActiveHourlyModel.$inferSelect

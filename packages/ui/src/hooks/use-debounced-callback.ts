@@ -1,25 +1,23 @@
 import * as React from "react"
 
 import { useCallbackRef } from "@chatbotx.io/ui/hooks/use-callback-ref"
+import { createDebouncedFn, type DebouncedFn } from "./create-debounced-fn"
 
 export function useDebouncedCallback<T extends (...args: never[]) => unknown>(
   callback: T,
   delay: number,
-) {
+): DebouncedFn<T> {
   const handleCallback = useCallbackRef(callback)
-  const debounceTimerRef = React.useRef(0)
-  React.useEffect(() => () => window.clearTimeout(debounceTimerRef.current), [])
 
-  const setValue = React.useCallback(
-    (...args: Parameters<T>) => {
-      window.clearTimeout(debounceTimerRef.current)
-      debounceTimerRef.current = window.setTimeout(
-        () => handleCallback(...args),
-        delay,
-      )
-    },
+  // `handleCallback` is identity-stable (useCallbackRef memoizes once), so the
+  // debounced fn is stable across renders. Stability matters: the autosave effect
+  // in react-flow-wrapper depends on this returned function.
+  const debounced = React.useMemo(
+    () => createDebouncedFn(handleCallback as T, delay),
     [handleCallback, delay],
   )
 
-  return setValue
+  React.useEffect(() => () => debounced.cancel(), [debounced])
+
+  return debounced
 }

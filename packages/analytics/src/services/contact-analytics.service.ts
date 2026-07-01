@@ -85,10 +85,6 @@ export class ContactAnalyticsService {
     return contactStatsRepository.getContactsByChannel(props)
   }
 
-  getActiveContactsCount(props: TimeRangeQuery): Promise<number> {
-    return contactStatsRepository.getActiveContactsCount(props)
-  }
-
   getContactsBySource(props: TimeRangeQuery): Promise<ContactsByDimension[]> {
     return contactStatsRepository.getContactsBySource(props)
   }

@@ -2,13 +2,14 @@
 
 import { botMessageResults } from "@chatbotx.io/analytics/schemas"
 import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
-import { format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { formatShortDate } from "../../utils/date-format"
 
 export function BotMessagesByResultChart() {
   const t = useTranslations()
+  const locale = useLocale()
   const { botMessagesByResult } = useAnalysisStore((state) => state)
 
   const data = useMemo(() => {
@@ -28,7 +29,7 @@ export function BotMessagesByResultChart() {
     for (const item of botMessagesByResult) {
       const date = new Date(item.timestamp)
       const timestampMs = date.getTime()
-      const name = format(date, "MMM d")
+      const name = formatShortDate(date, locale)
 
       const existing = groupedByDate.get(name)
       if (!existing) {
@@ -70,7 +71,7 @@ export function BotMessagesByResultChart() {
           },
         ],
       }))
-  }, [botMessagesByResult, t])
+  }, [botMessagesByResult, locale, t])
 
   return <BarChart data={data} title={t("analytics.botMessagesByResult")} />
 }

@@ -7,6 +7,7 @@ const {
   mockAutomatedResponseEnqueue,
   mockChatQueueAdd,
   mockContactFindById,
+  mockContactUnblockIfBlocked,
   mockContactInboxFindLatest,
   mockConversationEnsureActive,
   mockConversationFindBy,
@@ -46,6 +47,7 @@ const {
     insertBuilder,
     mockAutomatedResponseEnqueue: vi.fn().mockResolvedValue(undefined),
     mockContactFindById: vi.fn(),
+    mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
     mockContactInboxFindLatest: vi.fn(),
     mockConversationFindBy: vi.fn(),
     mockChatQueueAdd: vi.fn().mockResolvedValue(undefined),
@@ -92,7 +94,10 @@ vi.mock("@chatbotx.io/automated-response", () => ({
 
 vi.mock("@chatbotx.io/business", () => ({
   contactInboxService: { findLatestBySource: mockContactInboxFindLatest },
-  contactService: { findById: mockContactFindById },
+  contactService: {
+    findById: mockContactFindById,
+    unblockIfBlocked: mockContactUnblockIfBlocked,
+  },
   conversationService: {
     ensureActive: mockConversationEnsureActive,
     findBy: mockConversationFindBy,
@@ -105,6 +110,10 @@ vi.mock("@chatbotx.io/business", () => ({
     .fn()
     .mockResolvedValue({ storageUrl: "https://storage.example.com" }),
   workspaceService: { find: mockWorkspaceFind },
+}))
+
+vi.mock("@/lib/log", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock("@chatbotx.io/business/errors", () => ({
@@ -213,6 +222,7 @@ const resetCommonMocks = () => {
   mockFindOrFail.mockResolvedValue({ inboxId: "inbox-1" })
   mockConversationFindBy.mockResolvedValue(conversation)
   mockContactFindById.mockResolvedValue(contact)
+  mockContactUnblockIfBlocked.mockResolvedValue(null)
   mockRepositoryCreate.mockImplementation((input) =>
     Promise.resolve({
       id: "msg-1",
@@ -283,6 +293,22 @@ describe("handleCreateWebchatMessage", () => {
       lastMessageAt: messageInput.createdAt,
       lastIncomingMessageAt: messageInput.createdAt,
     })
+  })
+
+  test("auto-unblocks using the resolved contact row after creating an inbound message", async () => {
+    await handleCreateWebchatMessage({
+      parsedInput: {
+        text: "hello",
+        workspaceId: "ws-1",
+        webchatId: "webchat-1",
+        guestConversationId: "guest-1",
+      },
+    })
+
+    expect(mockContactUnblockIfBlocked).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", id: "contact-1" },
+      contact,
+    )
   })
 })
 

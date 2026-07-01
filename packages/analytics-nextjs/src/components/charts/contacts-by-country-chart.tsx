@@ -12,15 +12,16 @@ export function ContactsByCountryChart() {
   const data = useMemo(
     () =>
       contactsByCountry.map((item) => ({
-        name: item.dimension || "Unknown",
+        name: item.dimension || t("analytics.unknown"),
         value: item.uniqueContacts,
       })),
-    [contactsByCountry],
+    [contactsByCountry, t],
   )
 
   return (
     <DonutChart
       data={data}
+      noDataLabel={t("analytics.noData")}
       title={t("analytics.newContactsByCountry")}
       valueLabel={t("analytics.contacts")}
     />

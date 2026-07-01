@@ -17,7 +17,7 @@ import {
 } from "@chatbotx.io/ui/components/ui/tooltip"
 import { useDataTable } from "@chatbotx.io/ui/hooks/use-data-table"
 import type { Column, ColumnDef } from "@tanstack/react-table"
-import { format, formatDistance } from "date-fns"
+import { format, formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { use, useMemo } from "react"
@@ -29,7 +29,7 @@ import type { listContacts } from "./queries/list-contacts.queries"
 import type { ExportContactsFilter } from "./schemas/action"
 import type { ListContactsResponse } from "./schemas/query"
 import type { ContactResource } from "./schemas/resource"
-import { useAvatarUrl } from "./utils"
+import { getLatestContactLastReadAt, useAvatarUrl } from "./utils"
 
 function NameCell({
   contact,
@@ -39,21 +39,21 @@ function NameCell({
   workspaceId: string
 }) {
   const avatarUrl = useAvatarUrl(contact)
+  const inboxHref = `/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`
+
   return (
     <div className="flex max-w-50 items-center gap-2">
-      <Avatar className="size-6 shrink-0">
-        <AvatarImage alt={contact.fullName ?? ""} src={avatarUrl} />
-        <AvatarFallback className="text-xs">
-          {contact.fullName?.charAt(0)?.toUpperCase() ?? "?"}
-        </AvatarFallback>
-      </Avatar>
+      <Link href={inboxHref} target="_blank">
+        <Avatar className="size-6 shrink-0">
+          <AvatarImage alt={contact.fullName ?? ""} src={avatarUrl} />
+          <AvatarFallback className="text-xs">
+            {contact.fullName?.charAt(0)?.toUpperCase() ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Link
-            className="truncate"
-            href={`/space/${workspaceId}/inbox?conversationId=${contact.conversation?.id}`}
-            target="_blank"
-          >
+          <Link className="truncate" href={inboxHref} target="_blank">
             {contact.fullName}
           </Link>
         </TooltipTrigger>
@@ -185,30 +185,29 @@ export function ContactsTable({
       },
       {
         id: "lastReadAt",
-        accessorKey: "lastReadAt",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
             title={t("fields.lastRead.label")}
           />
         ),
-        cell: ({ row }) => (
-          <div>
-            {row.original.conversation?.contactLastReadAt
-              ? formatDistance(
-                  new Date(),
-                  row.original.conversation.contactLastReadAt,
-                  {
-                    addSuffix: true,
-                  },
-                )
-              : null}
-          </div>
-        ),
+        cell: ({ row }) => {
+          const lastReadAt = getLatestContactLastReadAt(
+            row.original.contactInboxes,
+          )
+
+          return (
+            <div>
+              {lastReadAt
+                ? formatDistanceToNow(lastReadAt, { addSuffix: true })
+                : null}
+            </div>
+          )
+        },
         meta: {
           label: t("fields.lastRead.label"),
         },
-        enableSorting: true,
+        enableSorting: false,
         enableHiding: false,
       },
       {

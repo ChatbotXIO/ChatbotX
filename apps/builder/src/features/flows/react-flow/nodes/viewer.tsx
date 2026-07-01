@@ -43,7 +43,7 @@ export const NodeViewer = memo((props: NodeViewerProps) => {
       </div>
 
       <NodeToolbar isVisible={data.forceToolbarVisible} offset={5}>
-        <FlowNodeToolbar isStartNode={data.isStartNode} />
+        <FlowNodeToolbar isStartNode={data.isStartNode} nodeId={id} />
       </NodeToolbar>
 
       <Card className="w-72 gap-0 p-0">

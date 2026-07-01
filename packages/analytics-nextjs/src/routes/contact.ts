@@ -6,6 +6,7 @@ import {
   getContactsCountResponseSchema,
   getHumanAgentStatsResponseSchema,
   getMessagesByAdminStatsResponseSchema,
+  macAnalyticsService,
   messageAnalyticsService,
   timeRangeQuerySchema,
 } from "@chatbotx.io/analytics"
@@ -198,7 +199,9 @@ export const analyticsContactRoutes = os.router({
         async () => {
           try {
             const count =
-              await contactAnalyticsService.getActiveContactsCount(input)
+              await macAnalyticsService.getActiveContactsByWorkspaceForRange(
+                input,
+              )
             return { data: { count } }
           } catch (error) {
             logger.error(

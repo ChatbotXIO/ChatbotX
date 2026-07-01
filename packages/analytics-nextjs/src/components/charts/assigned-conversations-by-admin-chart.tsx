@@ -24,6 +24,7 @@ export function AssignedConversationsByAdminChart() {
     <DonutChart
       data={data}
       helpText={t("analytics.assignedConversationsByAdminsHelp")}
+      noDataLabel={t("analytics.noData")}
       title={t("analytics.assignedConversationsByAdmins")}
       valueLabel={t("analytics.conversations")}
     />

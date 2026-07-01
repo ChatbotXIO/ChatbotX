@@ -36,6 +36,7 @@ import {
   integrationQueue,
 } from "@chatbotx.io/worker-config"
 import { randomString } from "remeda"
+import { logger } from "@/lib/log"
 import { actionClient } from "@/lib/safe-action"
 import {
   type CreateWebchatMessageRequest,
@@ -156,6 +157,18 @@ export async function handleCreateWebchatMessage({
         lastIncomingMessageAt: message.createdAt,
       })
       .where(eq(contactInboxModel.id, contactInbox.id))
+
+    try {
+      await contactService.unblockIfBlocked(
+        { workspaceId: conversation.workspaceId, id: contactInbox.contactId },
+        contact,
+      )
+    } catch (error) {
+      logger.warn(
+        { error, contactId: contactInbox.contactId, channel: "webchat" },
+        "Auto-unblock on webchat inbound message failed",
+      )
+    }
 
     emit(messageEventTypeSchema.enum["message:received"], {
       workspaceId: conversation.workspaceId,

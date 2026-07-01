@@ -56,6 +56,9 @@ export const sendMessage: MessageHandlers<TiktokAuthValue>["sendMessage"] =
 
       for (const attachment of message.attachments ?? []) {
         if (attachment.fileType === "image") {
+          if (!attachment.url) {
+            continue
+          }
           const payload = await uploadAndBuildImagePayload(
             ctx.auth.tokens.accessToken,
             businessId,

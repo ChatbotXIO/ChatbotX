@@ -63,10 +63,11 @@ export async function sendRichMessages(
   items: RichResponseItem[],
   context: RichResponseContext,
   trackingContext?: BotResponseTrackingContext,
-): Promise<void> {
+): Promise<{ enqueued: number; skipped: number }> {
   let cumulativeDelayMs = 0
   let lastMessageDelayMs = -MESSAGE_ORDER_DELAY_MS
   let messageIndex = 0
+  let candidateMessages = 0
 
   const jobs: Parameters<typeof chatQueue.addBulk>[0] = []
 
@@ -76,6 +77,7 @@ export async function sendRichMessages(
       continue
     }
 
+    candidateMessages += 1
     const converted = convertToStep(item, context)
     if (!converted) {
       continue
@@ -118,6 +120,11 @@ export async function sendRichMessages(
 
   if (jobs.length > 0) {
     await chatQueue.addBulk(jobs)
+  }
+
+  return {
+    enqueued: jobs.length,
+    skipped: candidateMessages - jobs.length,
   }
 }
 

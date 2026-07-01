@@ -3,6 +3,7 @@ import type { IncomingContact, IncomingMessage } from "./message"
 
 export * from "./context"
 export * from "./message"
+export * from "./meta-messaging"
 export * from "./mime-types"
 
 export type Handler<I, O> = (props: I) => Promise<O>

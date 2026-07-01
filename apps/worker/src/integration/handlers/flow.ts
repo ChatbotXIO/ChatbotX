@@ -31,6 +31,7 @@ import {
   type IntegrationJobSendFlowPostback,
   type IntegrationJobSendFlowQuickReply,
   integrationQueue,
+  type NodeVisits,
 } from "@chatbotx.io/worker-config"
 import {
   detectConversationAndContactInbox,
@@ -55,6 +56,12 @@ const ROUTING_STATUSES = new Set<StepRoutingStatus>([
   "error",
   "skip",
 ])
+
+/**
+ * Max times a single node may execute within one uninterrupted run.
+ * The counter rides sendFlow jobs and resets on user pauses.
+ */
+export const MAX_NODE_EXECUTIONS = 3
 
 export type {
   ExecuteMultipleStepsProps,
@@ -84,6 +91,7 @@ type ExecuteStepsAndQuickRepliesProps = {
   trackingContext?: BotResponseTrackingContext
   metadata?: MetadataPayload
   sendFrom?: "inbox"
+  nodeVisits?: NodeVisits
 }
 
 export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
@@ -136,6 +144,7 @@ export const runFlowNode = async (props: IntegrationJobRunFlowNode["data"]) => {
       trackingContext,
       metadata,
       sendFrom,
+      nodeVisits: props.nodeVisits,
     })
   } catch (error) {
     if (props.metadata?.type === BROADCAST_PAYLOAD_TYPE) {
@@ -174,6 +183,35 @@ export async function runStepsAndQuickReplies(
     triggerNextNode = true,
   } = props
 
+  // Loop guard: cap how many times a single node runs within one uninterrupted pass.
+  // Only a real node entry is counted (no startFromStepId — mid-node re-dispatches reuse
+  // the same count). The counter rides the job payload and resets when the flow pauses for
+  // the user (wait / getUserData resume from a fresh payload), so only instant cycles add up.
+  let nodeVisits = props.nodeVisits
+  if (!props.startFromStepId && props.targetNodeId) {
+    const count = (props.nodeVisits?.[props.targetNodeId] ?? 0) + 1
+    // This node has already run MAX_NODE_EXECUTIONS times in this pass — the flow is cyclic
+    // (e.g. node A → node B → node A). Stop here instead of sending forever, and log the
+    // cycle (the nodeVisits map) so the misconfigured flow can be found.
+    if (count > MAX_NODE_EXECUTIONS) {
+      logger.warn(
+        {
+          nodeId: props.targetNodeId,
+          count,
+          maxNodeExecutions: MAX_NODE_EXECUTIONS,
+          flowId: flowVersion.flowId,
+          flowVersionId: flowVersion.id,
+          conversationId: props.conversation.id,
+          contactInboxId: props.contactInbox.id,
+          nodeVisits: props.nodeVisits,
+        },
+        "Flow node exceeded max executions in one run; stopping to prevent an infinite loop",
+      )
+      return
+    }
+    nodeVisits = { ...props.nodeVisits, [props.targetNodeId]: count }
+  }
+
   // run before step
   // Skip startAnotherNode beforeStep for buttons/quickReplies: the edge-following below
   // already navigates to the same target node, so running beforeStep would execute it twice.
@@ -184,6 +222,7 @@ export async function runStepsAndQuickReplies(
   if (details.beforeStep && !props.startFromStepId && !skipBeforeStep) {
     await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [details.beforeStep],
     })
   }
@@ -208,6 +247,7 @@ export async function runStepsAndQuickReplies(
     const currentStep = details.steps[startIdx]
     const result = await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [currentStep],
     })
 
@@ -236,6 +276,7 @@ export async function runStepsAndQuickReplies(
           metadata: props.metadata,
           trackingContext: props.trackingContext,
           sendFrom: props.sendFrom,
+          nodeVisits,
         },
       })
       return
@@ -250,6 +291,7 @@ export async function runStepsAndQuickReplies(
   ) {
     await executeMultipleSteps({
       ...props,
+      nodeVisits,
       steps: [
         {
           stepType: stepTypes.enum.sendQuickReply,
@@ -294,6 +336,7 @@ export async function runStepsAndQuickReplies(
         metadata: props.metadata,
         trackingContext: props.trackingContext,
         sendFrom: props.sendFrom,
+        nodeVisits,
       },
     })
   }
@@ -319,7 +362,15 @@ async function* executeMultipleStepsGenerator(
   const { steps, ...rest } = props
 
   for (const step of steps) {
-    const stepWithNodeId = { ...step, nodeId: props.targetNodeId || "" }
+    // `nodeId` is overloaded: startAnotherNode/startExternalNode store their own jump
+    // target in it, while every other step uses it only to tag the message with the node
+    // that produced it (flow analytics). Keep the step's own target when present; otherwise
+    // stamp the containing node id. Falling straight to `props.targetNodeId` here would make
+    // a jump step target its own node and loop forever.
+    const stepWithNodeId = {
+      ...step,
+      nodeId: step.nodeId ?? props.targetNodeId ?? "",
+    }
 
     const rawResult = await flowStepHandlers[step.stepType as StepType]?.({
       ...rest,
@@ -358,6 +409,7 @@ async function* executeMultipleStepsGenerator(
               metadata: props.metadata,
               trackingContext: props.trackingContext,
               sendFrom: props.sendFrom,
+              nodeVisits: props.nodeVisits,
             },
           })
           branched = true

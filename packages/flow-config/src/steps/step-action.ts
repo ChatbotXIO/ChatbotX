@@ -119,6 +119,8 @@ export const stepTypes = z.enum([
 
   // Messenger Operations (N_)
   "setMessengerUserPersistentMenu",
+  "enableMessengerComposer",
+  "disableMessengerComposer",
 ])
 
 export type StepType = z.infer<typeof stepTypes>

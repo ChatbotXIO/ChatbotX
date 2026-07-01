@@ -2,7 +2,9 @@ import type {
   AnalyticsDashboardEvent,
   AnalyticsDashboardEventMap,
   BaseEventListener,
+  EventBusMessageMetadata,
 } from "@chatbotx.io/event-bus"
+import { EVENT_BUS_MESSAGE_ID } from "@chatbotx.io/event-bus"
 import { logger } from "../../lib/logger"
 import { handleMessageBotReceived } from "./bot-message"
 import {
@@ -23,30 +25,60 @@ import {
 } from "./conversation"
 import { handleBotMessageSent, handleHumanMessageSent } from "./message"
 
-function runHandler<T extends AnalyticsDashboardEvent>(
+type DashboardPayload = AnalyticsDashboardEvent & EventBusMessageMetadata
+
+function getEventBusMessageIds(events: DashboardPayload[]): string[] {
+  return events.flatMap((event) => {
+    const messageId = event[EVENT_BUS_MESSAGE_ID]
+    return typeof messageId === "string" ? [messageId] : []
+  })
+}
+
+async function runHandler<T extends DashboardPayload>(
   eventType: AnalyticsDashboardEvent["eventType"],
   handler: (events: T[]) => Promise<unknown>,
   events: T[] | undefined,
-): Promise<unknown> {
+  signal?: AbortSignal,
+): Promise<string[]> {
   if (!events || events.length === 0) {
-    return Promise.resolve()
+    return []
   }
-  return handler(events).catch((error) => {
+  const startedAt = Date.now()
+  let success = false
+  try {
+    if (signal?.aborted) {
+      return getEventBusMessageIds(events)
+    }
+    await handler(events)
+    success = true
+    return []
+  } catch (error) {
     logger.error(
       { err: error, eventType, count: events.length },
       "[analytics] dashboard handler failed",
     )
-  })
+    return getEventBusMessageIds(events)
+  } finally {
+    logger.debug(
+      {
+        count: events.length,
+        durationMs: Date.now() - startedAt,
+        eventType,
+        success,
+      },
+      "[analytics] dashboard sub-handler processed",
+    )
+  }
 }
 
-type DashboardListener = BaseEventListener<AnalyticsDashboardEvent>
+type DashboardListener = BaseEventListener<DashboardPayload>
 
 function groupByEventType(
-  payloads: AnalyticsDashboardEvent[],
-): Map<AnalyticsDashboardEvent["eventType"], AnalyticsDashboardEvent[]> {
+  payloads: DashboardPayload[],
+): Map<AnalyticsDashboardEvent["eventType"], DashboardPayload[]> {
   const map = new Map<
     AnalyticsDashboardEvent["eventType"],
-    AnalyticsDashboardEvent[]
+    DashboardPayload[]
   >()
   for (const p of payloads) {
     const existing = map.get(p.eventType) ?? []
@@ -62,20 +94,21 @@ export const analyticsDashboardListeners: Partial<
   "analytics:dashboard": [
     {
       name: "analytics-dashboard",
-      handler: async (payloads: AnalyticsDashboardEvent[]) => {
+      handler: async (payloads: DashboardPayload[], signal?: AbortSignal) => {
         if (payloads.length === 0) {
           return
         }
 
         const grouped = groupByEventType(payloads)
 
-        await Promise.all([
+        const results = await Promise.all([
           runHandler(
             "contact:created",
             handleContactCreated,
             grouped.get("contact:created") as Parameters<
               typeof handleContactCreated
             >[0],
+            signal,
           ),
           runHandler(
             "contact:deleted",
@@ -83,6 +116,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("contact:deleted") as Parameters<
               typeof handleContactDeleted
             >[0],
+            signal,
           ),
           runHandler(
             "contact:blocked",
@@ -90,6 +124,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("contact:blocked") as Parameters<
               typeof handleContactBlocked
             >[0],
+            signal,
           ),
           runHandler(
             "message:human_sent",
@@ -97,6 +132,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("message:human_sent") as Parameters<
               typeof handleHumanMessageSent
             >[0],
+            signal,
           ),
           runHandler(
             "message:bot_sent",
@@ -104,6 +140,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("message:bot_sent") as Parameters<
               typeof handleBotMessageSent
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:created",
@@ -111,6 +148,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:created") as Parameters<
               typeof handleConversationCreated
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:assigned",
@@ -118,6 +156,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:assigned") as Parameters<
               typeof handleConversationAssigned
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:unassigned",
@@ -125,6 +164,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:unassigned") as Parameters<
               typeof handleConversationUnassigned
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:transferred_to_human",
@@ -132,6 +172,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:transferred_to_human") as Parameters<
               typeof handleConversationTransferredToHuman
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:transferred_to_bot",
@@ -139,6 +180,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:transferred_to_bot") as Parameters<
               typeof handleConversationTransferredToBot
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:followed",
@@ -146,6 +188,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:followed") as Parameters<
               typeof handleConversationFollowed
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:unfollowed",
@@ -153,6 +196,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:unfollowed") as Parameters<
               typeof handleConversationUnfollowed
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:archived",
@@ -160,6 +204,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:archived") as Parameters<
               typeof handleConversationArchived
             >[0],
+            signal,
           ),
           runHandler(
             "conversation:unarchived",
@@ -167,6 +212,7 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("conversation:unarchived") as Parameters<
               typeof handleConversationUnarchived
             >[0],
+            signal,
           ),
           runHandler(
             "message:bot_received",
@@ -174,8 +220,12 @@ export const analyticsDashboardListeners: Partial<
             grouped.get("message:bot_received") as Parameters<
               typeof handleMessageBotReceived
             >[0],
+            signal,
           ),
         ])
+
+        const failedMessageIds = results.flat()
+        return failedMessageIds.length > 0 ? { failedMessageIds } : undefined
       },
     },
   ],

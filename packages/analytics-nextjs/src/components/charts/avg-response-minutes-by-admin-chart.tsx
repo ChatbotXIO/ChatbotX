@@ -27,7 +27,7 @@ export function AvgResponseMinutesByAdminChart() {
       ]}
       helpText={t("analytics.averageResponseTimeHelp")}
       title={t("analytics.averageResponseTimeByAdmin")}
-      valueLabel="Minutes"
+      valueLabel={t("fields.delayUnit.minutes")}
     />
   )
 }

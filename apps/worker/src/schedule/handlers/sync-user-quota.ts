@@ -2,6 +2,7 @@ import { macRepository } from "@chatbotx.io/analytics"
 import {
   liveKeyFor,
   parseLiveCount,
+  tenantService,
   USER_QUOTA_LABEL,
   userQuotaService,
 } from "@chatbotx.io/business"
@@ -51,22 +52,46 @@ export const syncUserQuota = async (): Promise<void> => {
     }
   } while (cursor !== "0")
 
-  if (userIds.length === 0) {
+  // Union in active reseller owner IDs from DB so cold owners (no Redis live
+  // key yet, or key expired) are always walked — their pool counters must be
+  // reconciled even before any sub-account activity warms the live-counter key.
+  const activeOwnerIds = await tenantService.listActiveOwnerIds()
+  const userIdSet = new Set(userIds)
+  for (const ownerId of activeOwnerIds) {
+    userIdSet.add(ownerId)
+  }
+  const allUserIds = [...userIdSet]
+
+  if (allUserIds.length === 0) {
     return
   }
 
-  logger.info({ count: userIds.length }, "user-quota: syncing quota for users")
+  logger.info(
+    { count: allUserIds.length },
+    "user-quota: syncing quota for users",
+  )
 
   // Process in batches to avoid overwhelming the DB
   const BATCH_SIZE = 50
-  for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-    const batch = userIds.slice(i, i + BATCH_SIZE)
+  for (let i = 0; i < allUserIds.length; i += BATCH_SIZE) {
+    const batch = allUserIds.slice(i, i + BATCH_SIZE)
     await Promise.all(batch.map(reconcileUser))
   }
 }
 
 export const reconcileUser = async (userId: string): Promise<void> => {
   try {
+    // A reseller owner's `UserQuota` row IS the tenant pool: reconcile it from
+    // the whole-tenant aggregate (own resources carry the reseller tenantId too,
+    // so they're already included) instead of the per-owner self-count below. A
+    // suspended tenant falls through to the per-user path (ex-reseller governed
+    // as a normal root-tenant user), mirroring the enforcement fallback.
+    const ownedTenant = await tenantService.findByOwner(userId)
+    if (ownedTenant?.status === "active") {
+      await userQuotaService.reconcileOwnerPoolUsage(userId, ownedTenant.id)
+      return
+    }
+
     const client = await cacheConnections.useExisting()
 
     const [

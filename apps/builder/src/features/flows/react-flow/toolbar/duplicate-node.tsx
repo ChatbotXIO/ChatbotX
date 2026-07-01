@@ -5,65 +5,31 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@chatbotx.io/ui/components/ui/tooltip"
-import { createId } from "@chatbotx.io/utils"
 import { useReactFlow } from "@xyflow/react"
-import { CopyIcon } from "lucide-react"
+import { CopyIcon, Loader2Icon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { type MouseEvent, useCallback } from "react"
-import { clone } from "remeda"
+import type { MouseEvent } from "react"
+import { useFlowMutation } from "../flow-mutation-context"
 
-export function DuplicateNode() {
+export function DuplicateNode({ nodeId }: { nodeId: string }) {
   const t = useTranslations()
-  const { addNodes, getNodes } = useReactFlow()
-
-  const duplicateNode = useCallback(
-    (node: FlowNode) => {
-      const newNodeData = {
-        name: `${node.data.name} Copy`,
-        details: clone(node.data.details),
-      }
-      if ("beforeStep" in newNodeData.details) {
-        newNodeData.details.beforeStep.id = createId()
-      }
-
-      if ("steps" in newNodeData.details) {
-        newNodeData.details.steps = newNodeData.details.steps.map((step) => {
-          if ("buttons" in step) {
-            step.buttons = step.buttons.map((button) => ({
-              ...button,
-              id: createId(),
-              beforeStep: null,
-              buttonType: null,
-            }))
-          }
-          return { ...step, id: createId() }
-          // biome-ignore lint/suspicious/noExplicitAny: skip typescript type error
-        }) as any
-      }
-
-      addNodes([
-        {
-          id: createId(),
-          type: node.type,
-          position: {
-            x: node.position.x + 100,
-            y: node.position.y + 100,
-          },
-          data: newNodeData,
-        },
-      ])
-    },
-    [addNodes],
-  )
+  const { getNodes } = useReactFlow()
+  const { isFlowMutating, duplicateNode } = useFlowMutation()
 
   const onClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const allNodes = getNodes()
-    const activeNode = allNodes.find((n) => n.data.forceToolbarVisible)
-    if (activeNode) {
-      duplicateNode(activeNode as FlowNode)
+    if (isFlowMutating) {
+      return
+    }
+
+    // Resolve the source by THIS node's id (passed from NodeViewer), never a
+    // `forceToolbarVisible` scan: overlapping nodes can flag more than one and the
+    // first match would be the wrong node.
+    const sourceNode = getNodes().find((n) => n.id === nodeId)
+    if (sourceNode) {
+      duplicateNode(sourceNode as unknown as FlowNode).catch(() => undefined)
     }
   }
 
@@ -72,11 +38,16 @@ export function DuplicateNode() {
       <TooltipTrigger asChild>
         <Button
           className="size-8"
+          disabled={isFlowMutating}
           onClick={onClick}
           size="icon"
           variant="ghost"
         >
-          <CopyIcon />
+          {isFlowMutating ? (
+            <Loader2Icon className="animate-spin" />
+          ) : (
+            <CopyIcon />
+          )}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

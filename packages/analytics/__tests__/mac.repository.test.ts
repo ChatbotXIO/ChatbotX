@@ -49,25 +49,54 @@ function makeChain(): QueryChain {
 const dbInsert = vi.fn(makeChain)
 const dbUpdate = vi.fn(makeChain)
 const dbSelect = vi.fn(makeChain)
+const dbExecute = vi.fn(async () => ({ rows: [] }))
+const countDistinct = vi.fn((column: unknown) => ({
+  __countDistinct: true,
+  column,
+}))
+const and = vi.fn((...args: unknown[]) => args)
+const eq = vi.fn((...args: unknown[]) => ({ op: "eq", args }))
+const gte = vi.fn((...args: unknown[]) => ({ op: "gte", args }))
+const gt = vi.fn((...args: unknown[]) => ({ op: "gt", args }))
+const lte = vi.fn((...args: unknown[]) => ({ op: "lte", args }))
 
 vi.mock("@chatbotx.io/database/client", () => ({
-  db: { insert: dbInsert, update: dbUpdate, select: dbSelect },
+  db: {
+    execute: dbExecute,
+    insert: dbInsert,
+    update: dbUpdate,
+    select: dbSelect,
+  },
   sql,
-  and: (...args: unknown[]) => args,
+  and,
   count: () => ({ __count: true }),
+  countDistinct,
   desc: (...args: unknown[]) => args,
-  eq: (...args: unknown[]) => args,
-  gt: (...args: unknown[]) => args,
-  gte: (...args: unknown[]) => args,
+  eq,
+  gt,
+  gte,
   lt: (...args: unknown[]) => args,
-  lte: (...args: unknown[]) => args,
+  lte,
 }))
 
 vi.mock("@chatbotx.io/database/schema", () => ({
-  workspaceMacModel: {},
+  workspaceMacModel: {
+    id: "wm.id",
+    periodEnd: "wm.periodEnd",
+    periodStart: "wm.periodStart",
+  },
   contactActiveMonthlyModel: {
+    contactId: "cam.contactId",
     periodStart: "cam.periodStart",
+    workspaceMacId: "cam.workspaceMacId",
     workspaceId: "cam.workspaceId",
+  },
+  contactActiveHourlyModel: {
+    contactId: "cah.contactId",
+    contactInboxId: "cah.contactInboxId",
+    hourBucket: "cah.hourBucket",
+    inboxId: "cah.inboxId",
+    workspaceId: "cah.workspaceId",
   },
   workspaceModel: { id: "ws.id", ownerId: "ws.ownerId" },
 }))
@@ -121,6 +150,13 @@ beforeEach(() => {
   dbInsert.mockClear()
   dbUpdate.mockClear()
   dbSelect.mockClear()
+  dbExecute.mockClear()
+  countDistinct.mockClear()
+  and.mockClear()
+  eq.mockClear()
+  gte.mockClear()
+  gt.mockClear()
+  lte.mockClear()
 })
 
 describe("MacRepository — empty-input guards", () => {
@@ -245,6 +281,42 @@ describe("MacRepository — upsertMonthlyPresence", () => {
     const deltas = await repo.upsertMonthlyPresence([makeRow()], client)
 
     expect(deltas).toEqual([])
+  })
+})
+
+describe("MacRepository — upsertHourlyPresence", () => {
+  test("returns without inserting for an empty batch", async () => {
+    const client = makeClient()
+
+    await repo.upsertHourlyPresence([], client)
+
+    expect(client.insert).not.toHaveBeenCalled()
+  })
+
+  test("inserts hourly presence rows and ignores conflicts", async () => {
+    const client = makeClient()
+    const rows = [
+      {
+        workspaceId: "ws-1",
+        contactId: "c-1",
+        contactInboxId: "ci-1",
+        inboxId: "ib-1",
+        hourBucket: new Date("2026-05-01T10:00:00.000Z"),
+      },
+    ]
+
+    await repo.upsertHourlyPresence(rows, client)
+
+    expect(client.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: "cah.contactId",
+        hourBucket: "cah.hourBucket",
+      }),
+    )
+    const chain = (client.insert as ReturnType<typeof vi.fn>).mock.results[0]
+      ?.value as QueryChain
+    expect(chain.values).toHaveBeenCalledWith(rows)
+    expect(chain.onConflictDoNothing).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -379,5 +451,50 @@ describe("countActiveContactsForOwner", () => {
     })
 
     expect(result).toBe(25)
+  })
+})
+
+describe("MacRepository — countActiveContactsByWorkspace", () => {
+  test("counts distinct hourly contacts in the requested range", async () => {
+    const from = new Date("2026-05-10T00:00:00.000Z")
+    const to = new Date("2026-05-20T00:00:00.000Z")
+    queueResult([{ value: "2" }])
+
+    const result = await repo.countActiveContactsByWorkspace({
+      workspaceId: "ws-1",
+      from,
+      to,
+    })
+
+    expect(result).toBe(2)
+    expect(countDistinct).toHaveBeenCalledWith("cah.contactId")
+    expect(dbSelect).toHaveBeenCalledWith({
+      value: { __countDistinct: true, column: "cah.contactId" },
+    })
+
+    const chain = dbSelect.mock.results.at(-1)?.value as QueryChain
+    expect(chain.from).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactId: "cah.contactId",
+        hourBucket: "cah.hourBucket",
+      }),
+    )
+    expect(chain.innerJoin).not.toHaveBeenCalled()
+    expect(eq).toHaveBeenCalledWith("cah.workspaceId", "ws-1")
+    expect(gte).toHaveBeenCalledWith("cah.hourBucket", from)
+    expect(lte).toHaveBeenCalledWith("cah.hourBucket", to)
+    expect(dbExecute).not.toHaveBeenCalled()
+  })
+
+  test("returns 0 when no hourly rows match the range", async () => {
+    queueResult([])
+
+    const result = await repo.countActiveContactsByWorkspace({
+      workspaceId: "ws-1",
+      from: new Date("2026-05-10T00:00:00.000Z"),
+      to: new Date("2026-05-20T00:00:00.000Z"),
+    })
+
+    expect(result).toBe(0)
   })
 })

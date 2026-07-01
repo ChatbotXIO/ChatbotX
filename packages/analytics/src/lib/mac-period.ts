@@ -17,6 +17,10 @@ export function calcEndOfDayTtl(timezone = "UTC"): number {
   return Math.max(Math.floor(diffMs / 1000), 60)
 }
 
+export function secondsUntilEndOfHour(now: Date): number {
+  return 3600 - (now.getUTCMinutes() * 60 + now.getUTCSeconds())
+}
+
 export function workspaceMacCacheKey(workspaceId: string): string {
   return `mac:count:ws:${workspaceId}`
 }

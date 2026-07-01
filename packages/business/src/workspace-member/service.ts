@@ -89,6 +89,39 @@ export class WorkspaceMemberService extends BaseService {
     )
   }
 
+  async findMembership(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    userId: string
+  }): Promise<WorkspaceMemberWithWorkspace | undefined> {
+    const { tx = db, workspaceId, userId } = props
+    return await tx.query.workspaceMemberModel.findFirst({
+      where: { workspaceId, userId },
+      with: { workspace: true },
+    })
+  }
+
+  // Auth gate — membership must take effect immediately on revoke, so this
+  // intentionally skips withCache (unlike the list methods above).
+  async isMember(props: {
+    tx?: DatabaseClient
+    workspaceId: string
+    userId: string
+  }): Promise<boolean> {
+    const { tx = db, workspaceId, userId } = props
+    const [row] = await tx
+      .select({ userId: workspaceMemberModel.userId })
+      .from(workspaceMemberModel)
+      .where(
+        and(
+          eq(workspaceMemberModel.workspaceId, workspaceId),
+          eq(workspaceMemberModel.userId, userId),
+        ),
+      )
+      .limit(1)
+    return !!row
+  }
+
   async listByWorkspaceId(props: {
     tx?: DatabaseClient
     workspaceId: string

@@ -2,6 +2,8 @@ import type {
   ContactHandlers,
   Context,
   IncomingContact,
+  PersistentMenu,
+  UserCustomSettings,
 } from "@chatbotx.io/sdk"
 import { createId } from "@chatbotx.io/utils"
 import { API_URL, DEFAULT_API_VERSION } from "../constants"
@@ -35,6 +37,44 @@ export const setUserPersistentMenu = (props: {
       },
     }),
   )
+}
+
+/**
+ * Retrieve the current user- and page-level custom settings (persistent menu +
+ * composer state) for a single PSID via `me/custom_user_settings`. The
+ * locale-scoped Graph response is normalized to the default-locale (`[0]`)
+ * entry for each level.
+ */
+export const getCustomUserSettings = (props: {
+  ctx: Context<MessengerAuthValue>
+  psid: string
+}): Promise<UserCustomSettings> => {
+  const { ctx, psid } = props
+  const { version = DEFAULT_API_VERSION } = ctx.auth
+  const endpoint = `${version}/me/custom_user_settings`
+
+  return rescue(endpoint, async () => {
+    const res = await facebookGraphClient.get<{
+      data?: Array<{
+        user_level_persistent_menu?: PersistentMenu[]
+        page_level_persistent_menu?: PersistentMenu[]
+      }>
+    }>(endpoint, {
+      headers: {
+        Authorization: `Bearer ${ctx.auth.tokens.accessToken}`,
+      },
+      searchParams: {
+        psid,
+        fields: "user_level_persistent_menu,page_level_persistent_menu",
+      },
+    })
+
+    const settings = res.data?.[0]
+    return {
+      userLevel: settings?.user_level_persistent_menu?.[0],
+      pageLevel: settings?.page_level_persistent_menu?.[0],
+    }
+  })
 }
 
 export const deleteUserPersistentMenu = (props: {

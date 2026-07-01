@@ -25,7 +25,7 @@ export class SchedulerWorker {
   private _scheduler: SchedulerClient | null = null
   private _producer: MessagingProducer | null = null
   private running = false
-  private timers: NodeJS.Timeout[] = []
+  private readonly timers = new Map<number, NodeJS.Timeout>()
 
   private get scheduler(): SchedulerClient {
     if (!this._scheduler) {
@@ -103,7 +103,7 @@ export class SchedulerWorker {
 
       if (this.running) {
         const timer = setTimeout(tick, this.config.tickIntervalMs)
-        this.timers.push(timer)
+        this.timers.set(bucket, timer)
       }
     }
 
@@ -225,10 +225,10 @@ export class SchedulerWorker {
 
     this.running = false
 
-    for (const timer of this.timers) {
+    for (const timer of this.timers.values()) {
       clearTimeout(timer)
     }
-    this.timers = []
+    this.timers.clear()
 
     await this.producer.close()
   }

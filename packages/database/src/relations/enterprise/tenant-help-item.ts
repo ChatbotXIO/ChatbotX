@@ -2,10 +2,10 @@ import { defineRelationsPart } from "drizzle-orm"
 // biome-ignore lint/performance/noNamespaceImport: drizzle schema
 import * as schema from "../../schema"
 
-export const tenantQuotaUsageRelations = defineRelationsPart(schema, (r) => ({
-  tenantQuotaUsageModel: {
+export const tenantHelpItemRelations = defineRelationsPart(schema, (r) => ({
+  tenantHelpItemModel: {
     tenant: r.one.tenantModel({
-      from: r.tenantQuotaUsageModel.tenantId,
+      from: r.tenantHelpItemModel.tenantId,
       to: r.tenantModel.id,
     }),
   },

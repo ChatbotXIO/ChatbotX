@@ -16,8 +16,26 @@ export type InferEventMap<T extends Record<string, z.ZodType>> = {
   [K in keyof T]: z.infer<T[K]>
 }
 
+export const EVENT_BUS_MESSAGE_ID = "__eventBusMessageId" as const
+
+export type EventBusMessageMetadata = {
+  [EVENT_BUS_MESSAGE_ID]?: string
+}
+
+export type EventHandlerResult = {
+  failedMessageIds?: string[]
+}
+
 export interface BaseEventListener<TPayload = never> {
-  handler?(payloads: TPayload[]): Promise<void> | void
+  handler?(
+    payloads: TPayload[],
+    signal?: AbortSignal,
+  ):
+    | EventHandlerResult
+    | Promise<EventHandlerResult | undefined>
+    | Promise<void>
+    | undefined
+    | void
   name: string
   priority?: number
 }

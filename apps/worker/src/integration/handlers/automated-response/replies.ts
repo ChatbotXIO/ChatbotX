@@ -29,11 +29,8 @@ import type {
   AIAgentModel,
   ConversationModel,
 } from "@chatbotx.io/database/types"
-import { emit } from "@chatbotx.io/event-bus"
-import { createId } from "@chatbotx.io/utils"
 import { contactVariableService } from "@chatbotx.io/variables"
 import {
-  type BotResponseTrackingContext,
   IntegrationJobAction,
   integrationQueue,
 } from "@chatbotx.io/worker-config"
@@ -48,14 +45,12 @@ import { normalizeError } from "universal-error-normalizer"
 import { logger } from "../../../lib/logger"
 import { handoffExecutorService } from "../../../trigger/services/handoff-executor.service"
 import { sendMessageAndWait, sendMessageWithRender } from "../../utils/message"
-import { parseRichResponse } from "../rich-response"
-import { executeRichActions } from "../rich-response/action-executor"
-import { sendRichMessages } from "../rich-response/message-sender"
+import { handleRichAIReply } from "./rich-reply"
 import { createDocumentReaderExecutor } from "./system-tools/document-reader"
 import { createImageReaderExecutor } from "./system-tools/image-reader"
 import { createUrlReaderExecutor } from "./system-tools/url-reader"
 
-type ReplyByAIProps = {
+export type ReplyByAIProps = {
   conversation: ConversationModel
   contactInboxId: string
   channel?: string
@@ -604,156 +599,15 @@ async function runAIReply(
     })
 
     if (richModeEnabled) {
-      const { fullText } = await processStreamingText(
-        result.textStream,
-        async () => {
-          // Rich mode buffers the whole response, so partial text is ignored.
-        },
-        { sendParts: false },
-      ).catch(async (streamError) => {
-        const normalizedError = normalizeError(streamError)
-        logger.error(
-          {
-            provider,
-            modelId: selectedModelId,
-            conversationId: conversation.id,
-            error: normalizedError,
-          },
-          "[automated-response] processStreamingText threw error",
-        )
-        if (props.triggerMessageId) {
-          await emit("analytics:dashboard", {
-            eventType: "message:bot_received",
-            workspaceId: conversation.workspaceId,
-            conversationId: conversation.id,
-            messageId: props.triggerMessageId,
-            occurredAt: new Date(),
-            hasResponse: false,
-            responseType: "ai_agent",
-            routeType: "agent",
-            result: "fallback",
-            aiProvider: provider,
-            metadata: {
-              latency: Date.now() - startTime,
-              fallbackReason: "ai_stream_error",
-              modelId: selectedModelId,
-              richMode: true,
-              triggerContext: {
-                triggerSource: "worker",
-                triggerHandler: "replyByAI",
-                triggerType: "rich_response_stream_failed",
-              },
-            },
-          })
-        }
-        return { messageCount: 0, fullText: "" }
-      })
-
-      if (directSendTracker.sent) {
-        if (directSendTracker.sentText) {
-          await aiContextService.appendHistory({
-            conversationId: conversation.id,
-            newMessages: [
-              {
-                message: {
-                  role: "assistant",
-                  content: directSendTracker.sentText,
-                },
-                createdAt: Date.now(),
-              },
-            ],
-          })
-        }
-        return {
-          responded: true,
-          provider: provider as AIAgentProvider,
-          modelId: selectedModelId,
-          usedFallbackText: false,
-          toolStats: buildToolStats(),
-        }
-      }
-
-      const parseResult = parseRichResponse(fullText)
-      if (!parseResult.ok) {
-        logger.warn(
-          {
-            workspaceId: conversation.workspaceId,
-            conversationId: conversation.id,
-            reason: parseResult.reason,
-          },
-          "[rich-response] invalid AI rich response",
-        )
-
-        if (parseResult.reason === "plain_text" && parseResult.text.trim()) {
-          const trimmedText = parseResult.text.trim()
-          await sendMessageAndWait(conversation.id, trimmedText)
-          await aiContextService.appendHistory({
-            conversationId: conversation.id,
-            newMessages: [
-              {
-                message: { role: "assistant", content: trimmedText },
-                createdAt: Date.now(),
-              },
-            ],
-          })
-          return {
-            responded: true,
-            provider: provider as AIAgentProvider,
-            modelId: selectedModelId,
-            usedFallbackText: false,
-            toolStats: buildToolStats(),
-          }
-        }
-
-        return null
-      }
-
-      const executionId = props.triggerMessageId as string
-
-      const richResponse = parseResult.data
-      const flowContextId = createId()
-      const context = {
-        workspaceId: conversation.workspaceId,
-        conversationId: conversation.id,
-        contactId: conversation.contactId,
-        contactInboxId: props.contactInboxId,
-        channel: props.channel,
-        executionId,
-        flowContextId,
-      }
-
-      const trackingContext: BotResponseTrackingContext = {
-        aiProvider: provider,
-        conversationId: conversation.id,
-        messageId: executionId,
-        responseType: "ai_agent",
-        startTime,
-        triggerType: "rich_response",
-        workspaceId: conversation.workspaceId,
-      }
-
-      if (richResponse.messages.length > 0) {
-        await sendRichMessages(richResponse.messages, context, trackingContext)
-      }
-      await executeRichActions(richResponse.actions, context)
-
-      await aiContextService.appendHistory({
-        conversationId: conversation.id,
-        newMessages: [
-          {
-            message: { role: "assistant", content: fullText },
-            createdAt: Date.now(),
-          },
-        ],
-      })
-
-      return {
-        responded: true,
+      return handleRichAIReply({
+        props,
+        textStream: result.textStream,
+        directSendTracker,
         provider: provider as AIAgentProvider,
         modelId: selectedModelId,
-        usedFallbackText: false,
-        toolStats: buildToolStats(),
-      }
+        startTime,
+        buildToolStats,
+      })
     }
 
     const { messageCount, fullText } = await processStreamingText(

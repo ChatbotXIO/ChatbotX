@@ -32,14 +32,14 @@
     "@types/node": "^24.10.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "next": "16.2.4",
+    "next": "16.2.9",
     "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },
   "peerDependencies": {
-    "next": ">=15"
+    "next": ">=16"
   },
   "dependencies": {
     "@chatbotx.io/logger": "workspace:*",

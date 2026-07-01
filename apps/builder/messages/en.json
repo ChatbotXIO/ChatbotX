@@ -208,6 +208,22 @@
     "newContactsByCountry": "New contacts by country",
     "date": "Date",
     "total": "Total",
+    "messagesSent": "Messages Sent",
+    "selectRange": "Select range",
+    "dateFilterPreset": "Date filter preset",
+    "noResults": "No results.",
+    "noData": "No data",
+    "comingSoon": "Coming soon",
+    "unknown": "Unknown",
+    "pagination": {
+      "selectedRows": "{selected} of {total} row(s) selected.",
+      "rowsPerPage": "Rows per page",
+      "pageOf": "Page {page} of {pageCount}",
+      "firstPage": "Go to first page",
+      "previousPage": "Go to previous page",
+      "nextPage": "Go to next page",
+      "lastPage": "Go to last page"
+    },
     "sessionsThroughTheRef": "Sessions through the Ref \"{ref}\" per day",
     "sessionsThroughTheMagicLink": "Sessions through the Magic Link \"{ref}\" per day"
   },
@@ -781,7 +797,8 @@
       "label": "Show Message Input"
     },
     "inbox": {
-      "label": "Inbox"
+      "label": "Inbox",
+      "placeholder": "Select an inbox"
     },
     "inboxTeam": {
       "label": "Inbox Team"
@@ -1133,7 +1150,14 @@
       "placeholder": "Enter URL"
     },
     "userId": {
-      "label": "User ID"
+      "label": "User ID",
+      "placeholders": {
+        "instagram": "Instagram user ID",
+        "messenger": "Messenger PSID",
+        "telegram": "Telegram chat ID",
+        "tiktok": "TikTok user ID",
+        "zalo": "Zalo user ID"
+      }
     },
     "userTags": {
       "label": "User Tags"
@@ -1275,7 +1299,8 @@
       "label": "Spreadsheet"
     },
     "source": {
-      "label": "Source"
+      "label": "Source",
+      "placeholder": "Select a source"
     },
     "password": {
       "label": "Password",
@@ -1543,6 +1568,8 @@
       "performAction": "Perform Action",
       "removeContactTag": "Remove Contact Tag",
       "setMessengerUserPersistentMenu": "Set User Persistent Menu",
+      "enableMessengerComposer": "Enable Messenger Composer",
+      "disableMessengerComposer": "Disable Messenger Composer",
       "sendAudio": "Send Audio",
       "sendCard": "Send Card",
       "sendExternalFlow": "Start External Flow",
@@ -2063,10 +2090,17 @@
     "featureNotFound": "{feature} not found",
     "enableSuccess": "{feature} enabled successfully",
     "userInactive": "User has been inactive more than 7 days",
+    "messagingWindowClosed": "The message can not be send outside the allowed window",
+    "sendHumanAgentTag": "Send one message with HUMAN_AGENT tag",
+    "warning": "Warning!",
+    "humanAgentWarningDescription": "You may respond to a user's message within 7 days only when the issue cannot reasonably be resolved within 24 hours. Examples include weekends, holidays, or cases that require more than one day to complete. Do not use this option for any other reason, as it could put your Facebook Page or Instagram account at risk. If you're not sure, do not continue.",
+    "humanAgentWindowExpired": "Messaging window expired. The contact must message first to reopen the conversation.",
     "restoreVersionSuccess": "Flow restored to selected version",
     "noVersionsFound": "No published versions found",
     "publishVersionSuccess": "A new version has been published",
-    "flowConfigIncomplete": "Some configurations are incomplete"
+    "flowConfigIncomplete": "Some configurations are incomplete",
+    "duplicateNodeError": "Could not duplicate the block. Please try again.",
+    "deleteNodeError": "Could not delete the block. Please try again."
   },
   "instagram": {
     "description": "This integration lets you create Instagram bots.",
@@ -2810,6 +2844,10 @@
     "platformCredentials": {
       "title": "Platform Credentials",
       "description": "Global default developer apps used by all workspaces that don't have their own white-label credentials."
+    },
+    "helpItems": {
+      "title": "Platform Help Links",
+      "description": "Help links shown in the sidebar for all workspaces that don't belong to a white-label tenant."
     }
   },
   "platformCredentials": {
@@ -3003,5 +3041,26 @@
     "title": "TikTok",
     "description": "Connect your TikTok account to reply to direct messages.",
     "refreshToken": "Refresh Token"
+  },
+  "helpMenu": {
+    "title": "Help",
+    "ariaLabel": "Open help menu"
+  },
+  "helpItems": {
+    "title": "Help Links",
+    "addTitle": "Add Help Link",
+    "editTitle": "Edit Help Link",
+    "addButton": "Add Link",
+    "empty": "No help links configured yet.",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Documentation",
+      "url": "URL",
+      "urlPlaceholder": "https://docs.example.com",
+      "icon": "Icon",
+      "iconPlaceholder": "e.g. book-open, star, circle-question-mark",
+      "position": "Order",
+      "iconSearchLink": "Browse Lucide icons →"
+    }
   }
 }

@@ -12,6 +12,7 @@ import { facebookAttachmentClient } from "../lib/http-client"
 import type {
   FacebookMessageAttachment,
   FacebookSendMessageResponse,
+  MessengerAttachment,
   MessengerAuthValue,
 } from "../schema"
 
@@ -47,7 +48,7 @@ export const getMessageAttachmentEntity = async ({
   attachment,
 }: {
   ctx: Context<MessengerAuthValue>
-  attachment: FacebookMessageAttachment
+  attachment: MessengerAttachment
 }): Promise<IncomingAttachment | undefined> => {
   if (!attachment.payload.url) {
     throw new Error("No attachment URL found")
@@ -62,7 +63,7 @@ export const getMessageAttachmentEntity = async ({
     const originPath = `${ctx.storagePrefix}/${createId()}`
     const bytes = await response.arrayBuffer()
     const mimeType = response.headers.get("content-type") ?? "image/png"
-    const fileType = guessFileTypeFromMimeType(attachment.type)
+    const fileType = guessFileTypeFromMimeType(mimeType)
 
     await ctx.uploader?.putObject(originPath, Buffer.from(bytes), {
       ACL: "public-read",

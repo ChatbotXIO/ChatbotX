@@ -41,18 +41,9 @@ const zeroLiveUsage = () => ({
   mac: 0,
 })
 
-const tenantQuotaService = {
-  hasCapacity: vi.fn(async () => true),
-  consume: vi.fn(async () => undefined),
-  isLimitReached: vi.fn(async () => false),
-  getRemainingSlots: vi.fn(async () => null as number | null),
-  increment: vi.fn(async () => undefined),
-  incrementBy: vi.fn(async () => undefined),
-  getUsage: vi.fn(async () => null as unknown),
-  getLiveUsage: vi.fn(async () => zeroLiveUsage()),
-}
-vi.mock("../src/tenant-quota/service", () => ({ tenantQuotaService }))
-
+// Both quota levels now live on `UserQuota`: the pool is the tenant owner's row,
+// so every level routes through `userQuotaService` keyed by the relevant userId
+// (owner id for the pool, sub-account id for the per-user level).
 const userQuotaService = {
   tryIncrement: vi.fn(async () => true),
   hasCapacity: vi.fn(async () => true),
@@ -82,7 +73,8 @@ const asRootUser = () => {
 }
 
 const asReseller = () => {
-  // A reseller lives in the root tenant but owns a tenant.
+  // A reseller lives in the root tenant but owns a tenant; the owner's row IS
+  // the pool, so `ownerId` resolves to the reseller themselves.
   findFirstUser.mockResolvedValue({ tenantId: "1" })
   tenantService.findByOwner.mockResolvedValue({ id: TENANT })
   tenantService.findById.mockResolvedValue({
@@ -101,9 +93,9 @@ const asCustomer = () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  tenantQuotaService.hasCapacity.mockResolvedValue(true)
   userQuotaService.hasCapacity.mockResolvedValue(true)
   userQuotaService.tryIncrement.mockResolvedValue(true)
+  userQuotaService.getRemainingSlots.mockResolvedValue(null)
   dbTransaction.mockImplementation(
     async (fn: (tx: unknown) => Promise<unknown>) => await fn(fakeTx),
   )
@@ -112,7 +104,7 @@ beforeEach(() => {
 })
 
 describe("quotaEnforcementService.tryConsume", () => {
-  test("root-tenant user keeps the legacy per-user behavior", async () => {
+  test("root-tenant user keeps the per-user behavior", async () => {
     asRootUser()
 
     const result = await quotaEnforcementService.tryConsume({
@@ -125,10 +117,10 @@ describe("quotaEnforcementService.tryConsume", () => {
       ROOT_USER,
       "workspaces",
     )
-    expect(tenantQuotaService.consume).not.toHaveBeenCalled()
+    expect(userQuotaService.consume).not.toHaveBeenCalled()
   })
 
-  test("reseller acting directly consumes the pool only", async () => {
+  test("reseller acting directly consumes the owner pool row only", async () => {
     asReseller()
 
     const result = await quotaEnforcementService.tryConsume({
@@ -137,14 +129,14 @@ describe("quotaEnforcementService.tryConsume", () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(tenantQuotaService.consume).toHaveBeenCalledWith(
-      TENANT,
+    expect(userQuotaService.consume).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.consume).toHaveBeenCalledWith(
+      RESELLER,
       "workspaces",
     )
-    expect(userQuotaService.consume).not.toHaveBeenCalled()
   })
 
-  test("customer consumes both their own quota and the pool", async () => {
+  test("customer consumes both their own row and the owner pool row", async () => {
     asCustomer()
 
     const result = await quotaEnforcementService.tryConsume({
@@ -153,8 +145,8 @@ describe("quotaEnforcementService.tryConsume", () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(tenantQuotaService.consume).toHaveBeenCalledWith(
-      TENANT,
+    expect(userQuotaService.consume).toHaveBeenCalledWith(
+      RESELLER,
       "workspaces",
     )
     expect(userQuotaService.consume).toHaveBeenCalledWith(
@@ -163,9 +155,12 @@ describe("quotaEnforcementService.tryConsume", () => {
     )
   })
 
-  test("customer is blocked by the reseller pool", async () => {
+  test("customer is blocked by the owner pool", async () => {
     asCustomer()
-    tenantQuotaService.hasCapacity.mockResolvedValue(false)
+    // Pool = owner row (RESELLER) is full; the sub's own row has room.
+    userQuotaService.hasCapacity.mockImplementation(
+      async (id: string) => id !== RESELLER,
+    )
 
     const result = await quotaEnforcementService.tryConsume({
       userId: CUSTOMER,
@@ -173,13 +168,14 @@ describe("quotaEnforcementService.tryConsume", () => {
     })
 
     expect(result).toEqual({ ok: false, level: "pool" })
-    expect(tenantQuotaService.consume).not.toHaveBeenCalled()
     expect(userQuotaService.consume).not.toHaveBeenCalled()
   })
 
   test("customer is blocked by their own quota even when the pool has room", async () => {
     asCustomer()
-    userQuotaService.hasCapacity.mockResolvedValue(false)
+    userQuotaService.hasCapacity.mockImplementation(
+      async (id: string) => id !== CUSTOMER,
+    )
 
     const result = await quotaEnforcementService.tryConsume({
       userId: CUSTOMER,
@@ -187,7 +183,6 @@ describe("quotaEnforcementService.tryConsume", () => {
     })
 
     expect(result).toEqual({ ok: false, level: "user" })
-    expect(tenantQuotaService.consume).not.toHaveBeenCalled()
     expect(userQuotaService.consume).not.toHaveBeenCalled()
   })
 })
@@ -195,8 +190,9 @@ describe("quotaEnforcementService.tryConsume", () => {
 describe("quotaEnforcementService.getDualRemainingSlots", () => {
   test("returns the tighter of user and pool remaining for a customer", async () => {
     asCustomer()
-    userQuotaService.getRemainingSlots.mockResolvedValue(5)
-    tenantQuotaService.getRemainingSlots.mockResolvedValue(2)
+    userQuotaService.getRemainingSlots.mockImplementation(async (id: string) =>
+      id === RESELLER ? 2 : 5,
+    )
 
     const remaining = await quotaEnforcementService.getDualRemainingSlots({
       userId: CUSTOMER,
@@ -208,8 +204,9 @@ describe("quotaEnforcementService.getDualRemainingSlots", () => {
 
   test("treats null (unlimited) as no constraint", async () => {
     asCustomer()
-    userQuotaService.getRemainingSlots.mockResolvedValue(null)
-    tenantQuotaService.getRemainingSlots.mockResolvedValue(7)
+    userQuotaService.getRemainingSlots.mockImplementation(async (id: string) =>
+      id === RESELLER ? 7 : null,
+    )
 
     const remaining = await quotaEnforcementService.getDualRemainingSlots({
       userId: CUSTOMER,
@@ -221,7 +218,7 @@ describe("quotaEnforcementService.getDualRemainingSlots", () => {
 })
 
 describe("quotaEnforcementService.increment", () => {
-  test("increments both levels for a customer", async () => {
+  test("increments both the sub's row and the owner pool row for a customer", async () => {
     asCustomer()
 
     await quotaEnforcementService.increment({
@@ -229,8 +226,8 @@ describe("quotaEnforcementService.increment", () => {
       metric: "contacts",
     })
 
-    expect(tenantQuotaService.incrementBy).toHaveBeenCalledWith(
-      TENANT,
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      RESELLER,
       "contacts",
       1,
     )
@@ -241,7 +238,7 @@ describe("quotaEnforcementService.increment", () => {
     )
   })
 
-  test("increments only the pool for a reseller", async () => {
+  test("increments only the owner pool row for a reseller", async () => {
     asReseller()
 
     await quotaEnforcementService.increment({
@@ -249,12 +246,12 @@ describe("quotaEnforcementService.increment", () => {
       metric: "contacts",
     })
 
-    expect(tenantQuotaService.incrementBy).toHaveBeenCalledWith(
-      TENANT,
+    expect(userQuotaService.incrementBy).toHaveBeenCalledTimes(1)
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      RESELLER,
       "contacts",
       1,
     )
-    expect(userQuotaService.incrementBy).not.toHaveBeenCalled()
   })
 })
 
@@ -379,10 +376,9 @@ describe("quotaEnforcementService.createNewContactWithMac", () => {
     )
   })
 
-  test("customer: consumes MAC at both pool and user levels", async () => {
+  test("customer: consumes MAC at both the owner pool and their own row", async () => {
     asCustomer()
     userQuotaService.getRemainingSlots.mockResolvedValue(5)
-    tenantQuotaService.getRemainingSlots.mockResolvedValue(5)
     userQuotaService.getForUser.mockResolvedValue({
       periodStart: new Date("2026-06-01T00:00:00Z"),
     })
@@ -394,8 +390,8 @@ describe("quotaEnforcementService.createNewContactWithMac", () => {
     })
 
     expect(result).toEqual({ ok: true, value: { contactId: "c-1" } })
-    expect(tenantQuotaService.incrementBy).toHaveBeenCalledWith(
-      TENANT,
+    expect(userQuotaService.incrementBy).toHaveBeenCalledWith(
+      RESELLER,
       "mac",
       1,
     )
@@ -422,22 +418,22 @@ describe("quotaEnforcementService.getUsageSummary", () => {
 
     expect(summary.workspaces).toEqual({ used: 3, limit: 10 })
     expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(ROOT_USER)
-    expect(tenantQuotaService.getLiveUsage).not.toHaveBeenCalled()
   })
 
   test("reseller reports the live pooled usage against their plan limit", async () => {
     asReseller()
-    tenantQuotaService.getLiveUsage.mockResolvedValue({
+    // Pool used + limit BOTH come from the owner's `UserQuota` row, so they
+    // cannot disagree (the fix for the DB/cache split-brain).
+    userQuotaService.getLiveUsage.mockResolvedValue({
       ...zeroLiveUsage(),
       workspaces: 8,
     })
-    userQuotaService.metricValues.mockReturnValue({ limit: 10, used: 1 })
+    userQuotaService.metricValues.mockReturnValue({ limit: 10, used: 8 })
 
     const summary = await quotaEnforcementService.getUsageSummary(RESELLER)
 
-    // Live pool used (8), reseller plan limit (10) — not their personal 1.
     expect(summary.workspaces).toEqual({ used: 8, limit: 10 })
-    expect(tenantQuotaService.getLiveUsage).toHaveBeenCalledWith(TENANT)
+    expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(RESELLER)
     expect(userQuotaService.getForUser).toHaveBeenCalledWith(RESELLER)
   })
 
@@ -452,6 +448,6 @@ describe("quotaEnforcementService.getUsageSummary", () => {
     const summary = await quotaEnforcementService.getUsageSummary(CUSTOMER)
 
     expect(summary.workspaces).toEqual({ used: 2, limit: 5 })
-    expect(tenantQuotaService.getLiveUsage).not.toHaveBeenCalled()
+    expect(userQuotaService.getLiveUsage).toHaveBeenCalledWith(CUSTOMER)
   })
 })

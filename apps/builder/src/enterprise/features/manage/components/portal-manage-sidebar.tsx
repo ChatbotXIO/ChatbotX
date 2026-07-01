@@ -7,7 +7,12 @@ import {
   type PortalSaasFlags,
   portalSaasNavConfigs,
 } from "@chatbotx.io/ui/config/portal-nav"
-import { Grid2x2PlusIcon, MailIcon, PaletteIcon } from "lucide-react"
+import {
+  CircleHelpIcon,
+  Grid2x2PlusIcon,
+  MailIcon,
+  PaletteIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavUser } from "@/components/nav-user"
@@ -59,6 +64,11 @@ export function PortalManageSidebar({ flags, pricing }: Props) {
       title: t("platformEmailTemplates.title"),
       url: "/manage/email-templates",
       icon: MailIcon,
+    },
+    {
+      title: t("helpItems.title"),
+      url: "/manage/help-items",
+      icon: CircleHelpIcon,
     },
   ]
 

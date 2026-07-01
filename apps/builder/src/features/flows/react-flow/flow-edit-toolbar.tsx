@@ -32,7 +32,10 @@ import { toast } from "sonner"
 import { GetInboxUrlDialog } from "@/features/inboxes/components/get-inbox-url"
 import { publishFlowAction } from "../actions/publish-flow-action"
 import { DeleteFlowsDialog } from "../delete-flow-dialog"
-import { updateFlowVersionSchema } from "../schemas/action"
+import {
+  type PublishFlowSchema,
+  updateFlowVersionSchema,
+} from "../schemas/action"
 import AnalyticsFlow from "./components/analytics-flow"
 import { DuplicateFlowDialog } from "./components/duplicate-flow"
 import { FlowVersionsDialog } from "./components/flow-versions-dialog"
@@ -86,7 +89,10 @@ export function FlowEditToolbar({
     })
 
     if (success) {
-      executePublish()
+      executePublish({
+        nodes: nodes as unknown as PublishFlowSchema["nodes"],
+        edges: edges as unknown as PublishFlowSchema["edges"],
+      })
     } else {
       toast.error(t("messages.flowConfigIncomplete"))
     }

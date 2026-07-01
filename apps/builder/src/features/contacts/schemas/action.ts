@@ -1,4 +1,4 @@
-import { genderTypes } from "@chatbotx.io/database/partials"
+import { channelTypes, genderTypes } from "@chatbotx.io/database/partials"
 import { zodBigintAsString } from "@chatbotx.io/utils"
 import { z } from "zod"
 import { contactFilterCriteriaSchema } from "./contact-filter"
@@ -7,17 +7,56 @@ export const contactPrefix = "sys"
 export const contactFieldPrefix = "cus"
 export const contactTagPrefix = "tag"
 
-export const createContactRequest = z.object({
-  phoneNumber: z
-    .string()
-    .min(10)
-    .max(20)
-    .regex(/\+?\d{10,20}/),
-  email: z.union([z.literal(""), z.email().max(100)]),
-  firstName: z.optional(z.string().trim().max(100)),
-  lastName: z.optional(z.string().trim().max(100)),
-  gender: genderTypes,
-})
+export const createContactRequest = z
+  .object({
+    phoneNumber: z
+      .union([
+        z.literal(""),
+        z
+          .string()
+          .min(10)
+          .max(20)
+          .regex(/\+?\d{10,20}/),
+      ])
+      .optional(),
+    email: z.union([z.literal(""), z.email().max(100)]),
+    contactId: z.string().max(255).optional(),
+    firstName: z.optional(z.string().trim().max(100)),
+    lastName: z.optional(z.string().trim().max(100)),
+    gender: genderTypes,
+    channel: channelTypes,
+    inboxId: zodBigintAsString("Please select an inbox"),
+  })
+  .superRefine((data, ctx) => {
+    const ch = data.channel
+    if (ch === channelTypes.enum.whatsapp) {
+      if (!data.phoneNumber) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["phoneNumber"],
+          message: "Phone number is required for WhatsApp",
+        })
+      }
+    } else if (ch === channelTypes.enum.smtp) {
+      if (!data.email) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["email"],
+          message: "Email is required for the Email channel",
+        })
+      }
+    } else if (
+      ch !== channelTypes.enum.webchat &&
+      ch !== channelTypes.enum.omnichannel &&
+      !data.contactId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["contactId"],
+        message: "User ID is required for this channel",
+      })
+    }
+  })
 export type CreateContactRequest = z.infer<typeof createContactRequest>
 
 export const createContactResponse = z.object({

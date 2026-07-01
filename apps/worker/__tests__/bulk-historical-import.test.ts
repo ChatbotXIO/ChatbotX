@@ -60,7 +60,10 @@ vi.mock("@chatbotx.io/database/client", () => {
     return chain
   })
   return {
-    db: { transaction: mockTransaction, update: mockDbUpdate },
+    db: {
+      transaction: mockTransaction,
+      update: mockDbUpdate,
+    },
     eq: vi.fn((col: unknown, val: unknown) => ({ __eq: [col, val] })),
     inArray: vi.fn((col: unknown, vals: unknown) => ({
       __inArray: [col, vals],
@@ -92,15 +95,6 @@ vi.mock("@chatbotx.io/database/schema", () => ({
     contactInboxId: "m_ci",
     sourceId: "m_sid",
     $inferInsert: {},
-  },
-  userQuotaModel: {
-    userId: "uq_userId",
-    contactsUsed: "uq_contactsUsed",
-    updatedAt: "uq_updatedAt",
-  },
-  workspaceModel: {
-    id: "w_id",
-    ownerId: "w_ownerId",
   },
 }))
 
@@ -237,13 +231,10 @@ const msg = (sourceId: string, overrides: Record<string, unknown> = {}) => ({
 // Helpers — stub a "new contacts" happy path inside bulkImportContacts tx.
 // Sequence (when trulyNew > 0, no race):
 //   1. SELECT existing ContactInbox rows          → enqueueSelect({ rows: [] })
-//   2. tx.execute WorkspaceUsage FOR UPDATE       → mockTxExecute
-//   3. INSERT Contact (terminal, no .returning()) → enqueueInsert()
-//   4. INSERT ContactInbox .returning()           → enqueueInsert({ returningRows })
-//   5. INSERT Conversation .onConflictDoNothing() → enqueueInsertNoReturning()
-//   6. SELECT workspace owner .where(eq).limit(1) → enqueueSelect({ hasLimit:true })
-//   7. INSERT userQuota .onConflictDoUpdate()     → enqueueInsert()
-//   8. SELECT conversations for new contacts      → enqueueSelect({ rows })
+//   2. INSERT Contact (terminal, no .returning()) → enqueueInsert()
+//   3. INSERT ContactInbox .returning()           → enqueueInsert({ returningRows })
+//   4. INSERT Conversation .onConflictDoNothing() → enqueueInsertNoReturning()
+//   5. SELECT conversations for new contacts      → enqueueSelect({ rows })
 // ---------------------------------------------------------------------------
 
 type NewContactStub = {
@@ -251,27 +242,14 @@ type NewContactStub = {
   contactId: string
   contactInboxId: string
   conversationId: string
-  ownerId?: string
-  contactsCount?: number
-  maxContacts?: number
 }
 
 const stubNewContactsTransaction = (contacts: NewContactStub[]) => {
   // 1. SELECT existing ContactInbox → none
   enqueueSelect({ rows: [] })
-  // 2. WorkspaceUsage FOR UPDATE
-  const first = contacts[0]
-  mockTxExecute.mockResolvedValueOnce({
-    rows: [
-      {
-        contactsCount: first?.contactsCount ?? 0,
-        maxContacts: first?.maxContacts ?? 100,
-      },
-    ],
-  })
-  // 3. INSERT Contact (terminal)
+  // 2. INSERT Contact (terminal)
   enqueueInsert({ returningRows: contacts.map((c) => ({ id: c.contactId })) })
-  // 4. INSERT ContactInbox .returning()
+  // 3. INSERT ContactInbox .returning()
   enqueueInsert({
     returningRows: contacts.map((c) => ({
       id: c.contactInboxId,
@@ -279,16 +257,9 @@ const stubNewContactsTransaction = (contacts: NewContactStub[]) => {
       contactId: c.contactId,
     })),
   })
-  // 5. INSERT Conversation .onConflictDoNothing()
+  // 4. INSERT Conversation .onConflictDoNothing()
   enqueueInsertNoReturning()
-  // 6. SELECT workspace owner .where(eq).limit(1)
-  enqueueSelect({
-    hasLimit: true,
-    rows: [{ ownerId: first?.ownerId ?? "owner-1" }],
-  })
-  // 7. INSERT userQuota .onConflictDoUpdate()
-  enqueueInsert()
-  // 8. SELECT conversations for new contacts
+  // 5. SELECT conversations for new contacts
   enqueueSelect({
     rows: contacts.map((c) => ({
       id: c.conversationId,
@@ -405,66 +376,6 @@ describe("bulkImportHistorical", () => {
     expect(result.skippedMessages).toBe(2)
   })
 
-  it("rejects contacts past workspace cap (skippedContacts + failedMessages, no Contact INSERT)", async () => {
-    // cap = 2, used = 1 → only 1 slot
-    // First contact: src-1 → accepted
-    stubNewContactsTransaction([
-      {
-        sourceId: "src-1",
-        contactId: "id-1",
-        contactInboxId: "ci-1",
-        conversationId: "conv-1",
-        contactsCount: 1,
-        maxContacts: 2,
-      },
-    ])
-    // bulkImportMessages for accepted contact
-    mockBulkCreate.mockResolvedValueOnce([
-      { id: "m-acc-1", sourceId: "m-acc-1" },
-    ])
-    // src-2 is rejected (no stub needed for its messages — failedMessages path)
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [
-        { contact: contact("src-1"), messages: [msg("m-acc-1")] },
-        {
-          contact: contact("src-2"),
-          messages: [msg("m-rej-1"), msg("m-rej-2"), msg("m-rej-3")],
-        },
-      ],
-    })
-
-    expect(result.importedContacts).toBe(1)
-    expect(result.skippedContacts).toBe(1)
-    expect(result.failedMessages).toBe(3)
-    expect(result.importedMessages).toBe(1)
-    expect(result.failureReason).toContain("workspace contact cap reached")
-  })
-
-  it("rejects ALL new contacts when WorkspaceUsage row is missing", async () => {
-    enqueueSelect({ rows: [] })
-    mockTxExecute.mockResolvedValueOnce({ rows: [] })
-
-    const result = await bulkImportHistorical({
-      inbox,
-      workspaceId,
-      runId: "12345",
-      batch: [
-        { contact: contact("src-1"), messages: [msg("m-1")] },
-        { contact: contact("src-2"), messages: [msg("m-2"), msg("m-3")] },
-      ],
-    })
-
-    expect(result.importedContacts).toBe(0)
-    expect(result.skippedContacts).toBe(2)
-    expect(result.failedMessages).toBe(3)
-    expect(result.importedMessages).toBe(0)
-    expect(result.failureReason).toContain("WorkspaceUsage row missing")
-  })
-
   it("uses existing ContactInbox row for already-known sourceId (idempotent re-run)", async () => {
     // existing row present
     enqueueSelect({
@@ -545,15 +456,11 @@ describe("bulkImportHistorical", () => {
 
     // 1. SELECT existing ContactInbox → none (all are new)
     enqueueSelect({ rows: [] })
-    // 2. WorkspaceUsage FOR UPDATE
-    mockTxExecute.mockResolvedValueOnce({
-      rows: [{ contactsCount: 0, maxContacts: 1000 }],
-    })
-    // 3. INSERT Contact (terminal)
+    // 2. INSERT Contact (terminal)
     enqueueInsert({ returningRows: contacts.map((c) => ({ id: c.contactId })) })
-    // 4. INSERT ContactInbox — returns EMPTY → ALL sourceIds go to racedSourceIds
+    // 3. INSERT ContactInbox — returns EMPTY → ALL sourceIds go to racedSourceIds
     enqueueInsert({ returningRows: [] })
-    // 5. Race-winner re-SELECT returns all contacts as winners
+    // 4. Race-winner re-SELECT returns all contacts as winners
     enqueueSelect({
       rows: contacts.map((c) => ({
         id: c.contactInboxId,
@@ -561,11 +468,10 @@ describe("bulkImportHistorical", () => {
         contactId: c.contactId,
       })),
     })
-    // 6. DELETE orphan contacts (racedSourceIds.length > 0)
+    // 5. DELETE orphan contacts (racedSourceIds.length > 0)
     _enqueueDelete()
-    // 7. INSERT Conversation — skipped because all raced (conversationsToInsert = [])
-    //    (trulyNew = 0, so no workspace owner SELECT or userQuota INSERT)
-    // 8. SELECT conversations for accepted contacts (via inArray on acceptedContactIds)
+    // 6. INSERT Conversation — skipped because all raced (conversationsToInsert = [])
+    // 7. SELECT conversations for accepted contacts (via inArray on acceptedContactIds)
     enqueueSelect({
       rows: contacts.map((c) => ({
         id: c.conversationId,

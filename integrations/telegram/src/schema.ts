@@ -36,7 +36,7 @@ export type TelegramUser = z.infer<typeof telegramUserSchema>
 
 export const telegramChatSchema = z.object({
   id: z.number(),
-  type: z.enum(["private", "group", "supergroup", "channel"]),
+  type: z.enum(["private", "group", "supergroup", "channel"]).or(z.string()),
   title: z.string().optional(),
   username: z.string().optional(),
   first_name: z.string().optional(),

@@ -1,5 +1,6 @@
 import { db, sql } from "@chatbotx.io/database/client"
 import { analyticsContactEventModel } from "@chatbotx.io/database/schema"
+import type { EventBusMessageMetadata } from "@chatbotx.io/flow-config"
 import { createId } from "@chatbotx.io/utils"
 import {
   fillContactStatsMonthlySeries,
@@ -19,8 +20,9 @@ import type {
   TimeRangeQuery,
 } from "../../schemas"
 import { BaseRepository } from "./base.repository"
+import { getEventBusEventId } from "./event-bus-idempotency"
 
-export type InsertContactEventRow = {
+export type InsertContactEventRow = EventBusMessageMetadata & {
   workspaceId: string
   contactId: string
   occurredAt: Date | string | number
@@ -40,7 +42,7 @@ export class ContactStatsRepository extends BaseRepository {
       return
     }
     const rows = payloads.map((p) => ({
-      eventId: createId(),
+      eventId: getEventBusEventId(p) ?? createId(),
       workspaceId: p.workspaceId,
       contactId: p.contactId,
       eventType,
@@ -624,21 +626,6 @@ export class ContactStatsRepository extends BaseRepository {
       count: Number(row.count),
       uniqueContacts: Number(row.uniqueContacts),
     }))
-  }
-
-  async getActiveContactsCount(props: TimeRangeQuery): Promise<number> {
-    const { workspaceId, from, to } = props
-
-    const result = await db.execute(sql`
-      SELECT COUNT(DISTINCT "contactId")::int AS count
-      FROM "AnalyticsContactEvent"
-      WHERE "workspaceId" = ${workspaceId}
-        AND "occurredAt" >= ${from}
-        AND "occurredAt" <= ${to}
-        AND "eventType" = 'contact_created'
-    `)
-
-    return Number((result.rows[0] as { count: number } | undefined)?.count ?? 0)
   }
 
   async getContactsBySource(

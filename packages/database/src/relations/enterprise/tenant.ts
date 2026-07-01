@@ -8,5 +8,9 @@ export const tenantRelations = defineRelationsPart(schema, (r) => ({
       from: r.tenantModel.ownerId,
       to: r.userModel.id,
     }),
+    helpItems: r.many.tenantHelpItemModel({
+      from: r.tenantModel.id,
+      to: r.tenantHelpItemModel.tenantId,
+    }),
   },
 }))

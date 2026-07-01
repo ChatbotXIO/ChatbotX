@@ -29,7 +29,10 @@ export function AdminsAnalysis() {
         id: "name",
         accessorKey: "userName",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("fields.name.label")}
+          />
         ),
         cell: ({ row }) => (
           <div>
@@ -45,7 +48,10 @@ export function AdminsAnalysis() {
         id: "messagesSent",
         accessorKey: "messagesSent",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Messages Sent" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("analytics.messagesSent")}
+          />
         ),
         enableSorting: true,
         enableHiding: false,
@@ -54,7 +60,10 @@ export function AdminsAnalysis() {
         id: "uniqueContacts",
         accessorKey: "uniqueContacts",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Contacts" />
+          <DataTableColumnHeader
+            column={column}
+            title={t("analytics.contacts")}
+          />
         ),
         enableSorting: true,
         enableHiding: false,
@@ -89,14 +98,14 @@ export function AdminsAnalysis() {
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
-            title="Assigned Conversations"
+            title={t("analytics.assignedConversations.title")}
           />
         ),
         enableSorting: true,
         enableHiding: false,
       },
     ],
-    [],
+    [t],
   )
 
   const { table } = useDataTable({
@@ -118,7 +127,21 @@ export function AdminsAnalysis() {
         <CardTitle>{t("analytics.admins")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <DataTable table={table} />
+        <DataTable
+          labels={{
+            firstPage: t("analytics.pagination.firstPage"),
+            lastPage: t("analytics.pagination.lastPage"),
+            nextPage: t("analytics.pagination.nextPage"),
+            noResults: t("fields.noResults.label"),
+            pageOf: (page, pageCount) =>
+              t("analytics.pagination.pageOf", { page, pageCount }),
+            previousPage: t("analytics.pagination.previousPage"),
+            rowsPerPage: t("analytics.pagination.rowsPerPage"),
+            selectedRows: (selected, total) =>
+              t("analytics.pagination.selectedRows", { selected, total }),
+          }}
+          table={table}
+        />
       </CardContent>
     </Card>
   )

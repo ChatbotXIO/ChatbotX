@@ -2,12 +2,14 @@
 
 import BarChart from "@chatbotx.io/ui/components/charts/bar-chart"
 import { eachDayOfInterval, format } from "date-fns"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 import { useAnalysisStore } from "../../provider/analysis-store-context"
+import { formatDateWithYear } from "../../utils/date-format"
 
 export function ConversationsMovedChart() {
   const t = useTranslations()
+  const locale = useLocale()
   const conversationHandoffs = useAnalysisStore(
     (state) => state.conversationHandoffs,
   )
@@ -24,7 +26,7 @@ export function ConversationsMovedChart() {
     >()
 
     for (const item of conversationHandoffs) {
-      const dateKey = format(new Date(item.timestamp), "MMM d, yyyy")
+      const dateKey = format(new Date(item.timestamp), "yyyy-MM-dd")
       const existing = groupedByDate.get(dateKey) || {
         to_human: 0,
         to_bot: 0,
@@ -42,20 +44,20 @@ export function ConversationsMovedChart() {
     const allDates = eachDayOfInterval({ start: from, end: to })
 
     return allDates.map((date) => {
-      const dateKey = format(date, "MMM d, yyyy")
+      const dateKey = format(date, "yyyy-MM-dd")
       const counts = groupedByDate.get(dateKey) || {
         to_human: 0,
         to_bot: 0,
       }
       return {
-        name: dateKey,
+        name: formatDateWithYear(date, locale),
         value: [
           { label: t("analytics.human"), value: counts.to_human },
           { label: t("analytics.bot"), value: counts.to_bot },
         ],
       }
     })
-  }, [conversationHandoffs, from, to, t])
+  }, [conversationHandoffs, from, to, locale, t])
 
   return (
     <BarChart

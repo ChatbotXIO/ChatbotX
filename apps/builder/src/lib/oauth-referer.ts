@@ -7,9 +7,10 @@ export const FALLBACK_REDIRECT = "/manage"
 /**
  * A valid relay/redirect target is any origin we control: the broker host, the
  * builder app URL, or an active white-label custom domain. Anything else is
- * rejected so an attacker-controlled `state` cannot drive an open redirect.
+ * rejected so an attacker-controlled `state` (or a spoofed `Host` /
+ * `x-forwarded-host`) cannot drive an open redirect.
  */
-async function isAllowedOrigin(targetUrl: URL): Promise<boolean> {
+export async function isAllowedOrigin(targetUrl: URL): Promise<boolean> {
   if (
     targetUrl.origin === getBrokerOrigin() ||
     targetUrl.origin === new URL(env.NEXT_PUBLIC_BUILDER_URL).origin

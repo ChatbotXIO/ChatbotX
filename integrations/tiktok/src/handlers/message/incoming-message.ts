@@ -98,7 +98,7 @@ export const receiveMessage = async ({
     message: incomingMessage,
     contact,
     postbackAction:
-      content.reply_source_payload &&
+      content.reply_source_payload?.reply_source_unique_id &&
       !content.reply_source_payload.reply_source_unique_id.startsWith("http")
         ? content.reply_source_payload.reply_source_unique_id
         : null,

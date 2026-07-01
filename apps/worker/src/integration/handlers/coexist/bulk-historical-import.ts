@@ -1,6 +1,6 @@
 // biome-ignore-all lint/suspicious/noBitwiseOperators: bit-packing 63-bit snowflake IDs
 
-import { db, eq, inArray, sql } from "@chatbotx.io/database/client"
+import { db, inArray, sql } from "@chatbotx.io/database/client"
 import type {
   BulkCreateAttachmentInput,
   CreateMessageInput,
@@ -11,8 +11,6 @@ import {
   contactInboxModel,
   contactModel,
   conversationModel,
-  userQuotaModel,
-  workspaceModel,
 } from "@chatbotx.io/database/schema"
 import type { InboxModel } from "@chatbotx.io/database/types"
 import { emit } from "@chatbotx.io/event-bus"
@@ -308,8 +306,9 @@ export type BulkImportHistoricalResult = {
 
 /**
  * Phase 1 of Coexist historical sync: dedup contacts by sourceId, resolve
- * existing ContactInbox rows, lock WorkspaceUsage to enforce the per-workspace
- * contact cap, and bulk-insert new Contact/ContactInbox/Conversation rows.
+ * existing ContactInbox rows, and bulk-insert new Contact/ContactInbox/
+ * Conversation rows. Bulk imports create contact records only; MAC is counted
+ * later when a real interaction occurs.
  *
  * Race-safe via `onConflictDoNothing` + post-insert re-select for losers, with
  * orphan Contact cleanup. Idempotent — re-running with the same batch returns
@@ -378,8 +377,8 @@ export const bulkImportContacts = async (props: {
   }> = []
 
   let importedContacts = 0
-  let skippedContacts = 0
-  let failureReason: string | undefined
+  const skippedContacts = 0
+  const failureReason: string | undefined = undefined
   const contactInboxIds = new Map<string, ContactImportLink>()
 
   await db.transaction(async (tx) => {
@@ -460,36 +459,9 @@ export const bulkImportContacts = async (props: {
       ([sourceId]) => !resolved.has(sourceId),
     )
 
-    // 2. Cap check under row lock.
-    let acceptedNew: typeof newEntries = newEntries
-    if (newEntries.length > 0) {
-      const usageRows = await tx.execute<{
-        contactsCount: number
-        maxContacts: number
-      }>(
-        sql`SELECT "contactsCount", "maxContacts" FROM "WorkspaceUsage" WHERE "workspaceId" = ${workspaceId} FOR UPDATE`,
-      )
-      const usage = usageRows.rows[0]
-      if (usage) {
-        const slots = Math.max(0, usage.maxContacts - usage.contactsCount)
-        acceptedNew = newEntries.slice(0, slots)
-        const rejected = newEntries.slice(slots)
-        skippedContacts = rejected.length
-        if (rejected.length > 0) {
-          failureReason = `workspace contact cap reached (${usage.contactsCount}/${usage.maxContacts}) — ${rejected.length} contact(s) rejected`
-        }
-      } else {
-        logger.warn(
-          { workspaceId },
-          "[coexist] WorkspaceUsage row missing — rejecting all new contacts",
-        )
-        skippedContacts = newEntries.length
-        acceptedNew = []
-        failureReason = `WorkspaceUsage row missing for workspace ${workspaceId} — all ${newEntries.length} new contact(s) rejected`
-      }
-    }
+    const acceptedNew = newEntries
 
-    // 3. Insert Contact + ContactInbox + Conversation for acceptedNew.
+    // 2. Insert Contact + ContactInbox + Conversation for acceptedNew.
     if (acceptedNew.length > 0) {
       const contactRows = acceptedNew.map(([, entry]) => ({
         id: createId(),
@@ -585,31 +557,6 @@ export const bulkImportContacts = async (props: {
           .insert(conversationModel)
           .values(conversationsToInsert)
           .onConflictDoNothing()
-      }
-
-      if (trulyNew > 0) {
-        const workspaceRow = await tx
-          .select({ ownerId: workspaceModel.ownerId })
-          .from(workspaceModel)
-          .where(eq(workspaceModel.id, workspaceId))
-          .limit(1)
-        const ownerId = workspaceRow[0]?.ownerId
-        if (ownerId) {
-          await tx
-            .insert(userQuotaModel)
-            .values({
-              userId: ownerId,
-              contactsUsed: trulyNew,
-              syncedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: userQuotaModel.userId,
-              set: {
-                contactsUsed: sql`${userQuotaModel.contactsUsed} + ${trulyNew}`,
-                updatedAt: sql`CURRENT_TIMESTAMP`,
-              },
-            })
-        }
       }
 
       // Resolve conversation ids for everything just inserted (or raced).

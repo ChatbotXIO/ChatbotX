@@ -11,9 +11,12 @@ import { flowEventBus } from "./flow"
 import { logger } from "./logger"
 import { messageEventBus } from "./message"
 
-export type {
-  BaseEventListener,
-  InferEventMap,
+export {
+  type BaseEventListener,
+  EVENT_BUS_MESSAGE_ID,
+  type EventBusMessageMetadata,
+  type EventHandlerResult,
+  type InferEventMap,
 } from "@chatbotx.io/flow-config"
 export * from "./dashboard"
 export * from "./event-bus"

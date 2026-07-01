@@ -19,11 +19,14 @@ const state = {
 // ---------------------------------------------------------------------------
 
 const sendMessageAndWaitMock = vi.hoisted(() => vi.fn(async () => undefined))
-const sendRichMessagesMock = vi.hoisted(() => vi.fn(async () => undefined))
+const sendRichMessagesMock = vi.hoisted(() =>
+  vi.fn(async () => ({ enqueued: 1, skipped: 0 })),
+)
 const executeRichActionsMock = vi.hoisted(() =>
   vi.fn(async () => ({ executed: 0, failed: [] })),
 )
 const appendHistoryMock = vi.hoisted(() => vi.fn(async () => undefined))
+const emitMock = vi.hoisted(() => vi.fn(async () => undefined))
 const warnMock = vi.hoisted(() => vi.fn())
 const errorMock = vi.hoisted(() => vi.fn())
 const richResponseFormatMock = vi.hoisted(() =>
@@ -166,6 +169,10 @@ vi.mock("../src/lib/logger", () => ({
   logger: { warn: warnMock, error: errorMock, info: vi.fn() },
 }))
 
+vi.mock("@chatbotx.io/event-bus", () => ({
+  emit: emitMock,
+}))
+
 vi.mock("../src/integration/handlers/contact", () => ({
   attachTagsByNames: vi.fn(async () => undefined),
   detachTagsByNames: vi.fn(async () => undefined),
@@ -248,9 +255,13 @@ describe("replyByAI — rich mode routing", () => {
   beforeEach(() => {
     state.aiResponseText = ""
     sendMessageAndWaitMock.mockClear()
-    sendRichMessagesMock.mockClear()
+    sendRichMessagesMock.mockClear().mockResolvedValue({
+      enqueued: 1,
+      skipped: 0,
+    })
     executeRichActionsMock.mockClear()
     appendHistoryMock.mockClear()
+    emitMock.mockClear()
     warnMock.mockClear()
     vi.mocked(streamText).mockClear()
   })
@@ -332,6 +343,11 @@ describe("replyByAI — rich mode routing", () => {
     expect(sendMessageAndWaitMock).toHaveBeenCalledWith(
       "conv-1",
       "I can help you with that!",
+      expect.objectContaining({
+        messageId: baseProps.triggerMessageId,
+        responseType: "ai_agent",
+        workspaceId: baseProps.conversation.workspaceId,
+      }),
     )
     expect(sendRichMessagesMock).not.toHaveBeenCalled()
     expect(executeRichActionsMock).not.toHaveBeenCalled()
@@ -383,6 +399,7 @@ describe("replyByAI — rich mode routing", () => {
     state.aiResponseText = JSON.stringify({
       actions: [{ action: "add_tag", tag_name: "hot-lead" }],
     })
+    executeRichActionsMock.mockResolvedValueOnce({ executed: 1, failed: [] })
 
     const result = await replyByAI({
       ...baseProps,
@@ -392,6 +409,66 @@ describe("replyByAI — rich mode routing", () => {
     expect(result?.responded).toBe(true)
     expect(executeRichActionsMock).toHaveBeenCalledOnce()
     expect(sendRichMessagesMock).not.toHaveBeenCalled()
+    expect(emitMock).toHaveBeenCalledWith(
+      "analytics:dashboard",
+      expect.objectContaining({
+        eventType: "message:bot_received",
+        hasResponse: true,
+        messageId: baseProps.triggerMessageId,
+        result: "success",
+        routeType: "agent",
+      }),
+    )
+  })
+
+  test("valid JSON messages skipped with no actions → null returned for fallback", async () => {
+    state.aiResponseText = JSON.stringify({
+      messages: [
+        {
+          message: {
+            text: "This message cannot be converted for the channel.",
+          },
+        },
+      ],
+      actions: [],
+    })
+    sendRichMessagesMock.mockResolvedValueOnce({ enqueued: 0, skipped: 1 })
+    executeRichActionsMock.mockResolvedValueOnce({ executed: 0, failed: [] })
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({ isRichResponse: true }),
+    })
+
+    expect(result).toBeNull()
+    expect(sendRichMessagesMock).toHaveBeenCalledOnce()
+    expect(executeRichActionsMock).toHaveBeenCalledOnce()
+    expect(appendHistoryMock).not.toHaveBeenCalled()
+  })
+
+  test("actions-only response with no executed actions → null returned for fallback", async () => {
+    state.aiResponseText = JSON.stringify({
+      actions: [{ action: "send_flow", flow_id: "missing-flow" }],
+    })
+    executeRichActionsMock.mockResolvedValueOnce({
+      executed: 0,
+      failed: [{ action: "send_flow", reason: "Flow not found" }],
+    })
+
+    const result = await replyByAI({
+      ...baseProps,
+      aiAgent: makeAIAgent({ isRichResponse: true }),
+    })
+
+    expect(result).toBeNull()
+    expect(sendRichMessagesMock).not.toHaveBeenCalled()
+    expect(appendHistoryMock).not.toHaveBeenCalled()
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executionId: baseProps.triggerMessageId,
+      }),
+      "[rich-response] action-only response failed without sending messages",
+    )
   })
 
   test("empty plain_text response → no message sent, null returned", async () => {
