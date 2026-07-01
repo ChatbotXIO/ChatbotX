@@ -32,7 +32,7 @@ import { ThemeSwitcher } from "./theme-switcher"
 
 export function NavUser({
   user,
-  isPlatformAdmin,
+  managementHref,
   planName,
 }: {
   user: {
@@ -40,7 +40,7 @@ export function NavUser({
     email: string
     avatar: string
   }
-  isPlatformAdmin?: boolean
+  managementHref?: string | null
   planName?: string | null
 }) {
   const { isMobile } = useSidebar()
@@ -144,11 +144,11 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator /> */}
-            {isPlatformAdmin && (
+            {managementHref && (
               <>
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link href="/manage">
+                    <Link href={managementHref}>
                       <Settings2 className="mr-2 h-4 w-4" />
                       {t("actions.manage")}
                     </Link>

@@ -1815,6 +1815,9 @@ importers:
       drizzle-orm:
         specifier: 1.0.0-beta.22
         version: 1.0.0-beta.22(@cloudflare/workers-types@4.20240718.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.21.0)(zod@4.4.3)
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       libphonenumber-js:
         specifier: ^1.12.42
         version: 1.13.6

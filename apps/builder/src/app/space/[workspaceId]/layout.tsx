@@ -1,5 +1,6 @@
 import {
   isPlatformAdmin,
+  isSuperAdmin,
   quotaEnforcementService,
   userQuotaService,
   workspaceMemberService,
@@ -75,6 +76,12 @@ export default async function WorkspaceLayout({
   }))
 
   const trialEndsAt = resolveTrialEndsAt(quota)
+  let managementHref: string | null = null
+  if (isSuperAdmin(user)) {
+    managementHref = "/admin"
+  } else if (platformAdmin) {
+    managementHref = "/manage"
+  }
 
   const quotaSummary: QuotaSummary = {
     planName: quota?.planName ?? null,
@@ -90,7 +97,7 @@ export default async function WorkspaceLayout({
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar
         allWorkspaces={allWorkspaces}
-        isPlatformAdmin={platformAdmin}
+        managementHref={managementHref}
         quota={quotaSummary}
         workspaceId={workspaceId}
       />

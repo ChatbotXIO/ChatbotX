@@ -9,6 +9,7 @@ export const keys = () =>
         .default("community"),
       NEXT_PUBLIC_BUILDER_URL: z.url().default("http://localhost:3123"),
       PLATFORM_ADMIN_EMAIL: z.email().optional(),
+      LICENSE_KEY: z.string().optional(),
     },
     runtimeEnv: process.env,
   })

@@ -1,5 +1,6 @@
 export * from "./billing"
 export * from "./custom-domain"
 export * from "./inbox-team"
+export * from "./license"
 export * from "./tenant"
 export * from "./tenant-help-item"

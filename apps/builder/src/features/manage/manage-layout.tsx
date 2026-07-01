@@ -8,7 +8,10 @@ import {
 import { usePathname } from "next/navigation"
 import { type ReactNode, useEffect, useState } from "react"
 
-const SIDEBAR_COLLAPSED_ROUTES = [/^\/manage\/email-templates\/.+/]
+const SIDEBAR_COLLAPSED_ROUTES = [
+  /^\/manage\/email-templates\/.+/,
+  /^\/admin\/email-templates\/.+/,
+]
 
 type ManageLayoutProps = {
   children: ReactNode

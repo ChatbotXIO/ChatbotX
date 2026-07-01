@@ -6,7 +6,6 @@ import { ManageHelpItems } from "@/features/help-items/manage-help-items"
 
 export default async function AdminHelpItemsPage() {
   const t = await getTranslations()
-
   const items = await tenantHelpItemService.listByTenant(ROOT_TENANT_ID)
 
   return (

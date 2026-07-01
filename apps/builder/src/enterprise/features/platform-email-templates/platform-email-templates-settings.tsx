@@ -57,10 +57,12 @@ const TEMPLATES: TemplateConfig[] = [
 
 type PlatformEmailTemplatesSettingsProps = {
   setting: TenantModel | null | undefined
+  basePath?: "/admin/email-templates" | "/manage/email-templates"
 }
 
 export async function PlatformEmailTemplatesSettings({
   setting,
+  basePath = "/manage/email-templates",
 }: PlatformEmailTemplatesSettingsProps) {
   const t = await getTranslations()
 
@@ -94,7 +96,7 @@ export async function PlatformEmailTemplatesSettings({
               </CardHeader>
               <CardFooter>
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/manage/email-templates/${config.type}`}>
+                  <Link href={`${basePath}/${config.type}`}>
                     <PencilIcon className="size-3.5" />
                     {t("actions.edit")}
                   </Link>

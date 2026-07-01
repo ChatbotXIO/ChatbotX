@@ -1,4 +1,8 @@
-import { isPlatformAdmin, userQuotaService } from "@chatbotx.io/business"
+import {
+  isPlatformAdmin,
+  isSuperAdmin,
+  userQuotaService,
+} from "@chatbotx.io/business"
 import { ChatbotXException } from "@chatbotx.io/business/errors"
 import { findOrFail, isDatabaseError } from "@chatbotx.io/database/client"
 import { userModel } from "@chatbotx.io/database/schema"
@@ -65,6 +69,13 @@ export const platformAdminActionClient = authActionClient.use(
     return next({ ctx })
   },
 )
+
+export const superAdminActionClient = authActionClient.use(({ ctx, next }) => {
+  if (!isSuperAdmin(ctx.user)) {
+    throw new Error("Unauthorized")
+  }
+  return next({ ctx })
+})
 
 export const workspaceActionClient = authActionClient.use(
   async ({ bindArgsClientInputs, ctx, next }) => {

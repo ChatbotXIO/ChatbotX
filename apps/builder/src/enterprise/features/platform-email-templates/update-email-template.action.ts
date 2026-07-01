@@ -1,8 +1,12 @@
 "use server"
 
 import { tenantService } from "@chatbotx.io/business"
+import { ROOT_TENANT_ID } from "@chatbotx.io/database/schema"
 import type { TenantModel, UserModel } from "@chatbotx.io/database/types"
-import { platformAdminActionClient } from "@/lib/safe-action"
+import {
+  platformAdminActionClient,
+  superAdminActionClient,
+} from "@/lib/safe-action"
 import {
   type EmailTemplateType,
   type UpdateEmailTemplateSchema,
@@ -23,6 +27,14 @@ const templateKeyMap: Record<
   magicLink: "magicLinkEmailTemplate",
 }
 
+const toTemplateUpdate = (input: UpdateEmailTemplateSchema) => {
+  const key = templateKeyMap[input.type]
+  const template = input.body?.trim()
+    ? { subject: input.subject ?? undefined, body: input.body }
+    : null
+  return { [key]: template }
+}
+
 export const updateEmailTemplateAction = platformAdminActionClient
   .inputSchema(updateEmailTemplateSchema)
   .action(
@@ -33,13 +45,20 @@ export const updateEmailTemplateAction = platformAdminActionClient
       ctx: { user: UserModel }
       parsedInput: UpdateEmailTemplateSchema
     }) => {
-      const key = templateKeyMap[parsedInput.type]
-      const template = parsedInput.body?.trim()
-        ? { subject: parsedInput.subject ?? undefined, body: parsedInput.body }
-        : null
+      await tenantService.upsertByOwner(
+        ctx.user.id,
+        toTemplateUpdate(parsedInput),
+      )
+    },
+  )
 
-      await tenantService.upsertByOwner(ctx.user.id, {
-        [key]: template,
-      })
+export const updateRootEmailTemplateAction = superAdminActionClient
+  .inputSchema(updateEmailTemplateSchema)
+  .action(
+    async ({ parsedInput }: { parsedInput: UpdateEmailTemplateSchema }) => {
+      await tenantService.upsertById(
+        ROOT_TENANT_ID,
+        toTemplateUpdate(parsedInput),
+      )
     },
   )

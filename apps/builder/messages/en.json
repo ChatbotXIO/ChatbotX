@@ -2842,7 +2842,7 @@
       "description": "Global default developer apps used by all workspaces that don't have their own white-label credentials."
     },
     "helpItems": {
-      "title": "Platform Help Links",
+      "title": "Help Links",
       "description": "Help links shown in the sidebar for all workspaces that don't belong to a white-label tenant."
     }
   },

@@ -43,6 +43,8 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+*.key
+.secrets/
 .idea/
 .windsurf/skills
 

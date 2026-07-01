@@ -24,7 +24,10 @@ import {
   updateEmailTemplateSchema,
 } from "./email-template.schema"
 import { previewEmailTemplateAction } from "./preview-email-template.action"
-import { updateEmailTemplateAction } from "./update-email-template.action"
+import {
+  updateEmailTemplateAction,
+  updateRootEmailTemplateAction,
+} from "./update-email-template.action"
 
 type PlatformEmailTemplateEditorProps = {
   type: EmailTemplateType
@@ -32,6 +35,7 @@ type PlatformEmailTemplateEditorProps = {
   description: string
   variables: string[]
   template: { subject: string; body: string }
+  scope?: "tenant" | "platform"
 }
 
 export function PlatformEmailTemplateEditor({
@@ -40,14 +44,19 @@ export function PlatformEmailTemplateEditor({
   description,
   variables,
   template,
+  scope = "tenant",
 }: PlatformEmailTemplateEditorProps) {
   const t = useTranslations()
   const router = useRouter()
   const [previewHtml, setPreviewHtml] = useState("")
   const [isPreviewing, setIsPreviewing] = useState(false)
+  const action =
+    scope === "platform"
+      ? updateRootEmailTemplateAction
+      : updateEmailTemplateAction
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updateEmailTemplateAction,
+    action,
     zodResolver(updateEmailTemplateSchema),
     {
       actionProps: {

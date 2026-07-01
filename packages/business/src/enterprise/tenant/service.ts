@@ -26,7 +26,8 @@ type TenantBrandingData = {
 /**
  * Read/write access to the `Tenant` row (identity + lifecycle + branding). A
  * tenant is keyed by its own id; the reseller that owns it is `Tenant.ownerId`.
- * Branding writes target the tenant owned by a given reseller (`upsertByOwner`).
+ * Branding writes can target the tenant owned by a reseller (`upsertByOwner`)
+ * or an explicit platform tenant row (`upsertById`).
  */
 export const tenantService = {
   findById(tenantId: string) {
@@ -148,6 +149,18 @@ export const tenantService = {
         `tenant:${updated.id}`,
         `tenant:owner:${ownerId}`,
       ])
+    }
+  },
+
+  /** Update the branding/config of a tenant by id, busting tenant cache. */
+  async upsertById(tenantId: string, data: TenantBrandingData) {
+    const [updated] = await db
+      .update(tenantModel)
+      .set(data)
+      .where(eq(tenantModel.id, tenantId))
+      .returning({ id: tenantModel.id })
+    if (updated) {
+      await invalidateCacheByTags([`tenant:${updated.id}`])
     }
   },
 

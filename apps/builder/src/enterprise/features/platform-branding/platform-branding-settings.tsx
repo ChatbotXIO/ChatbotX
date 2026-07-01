@@ -29,7 +29,10 @@ import { toast } from "sonner"
 import { CodeEditorField } from "@/components/code-editor-field"
 import { DirectUploadOrInsertLink } from "@/components/direct-upload"
 import { themeOptions, updatePlatformBrandingSchema } from "./schema"
-import { updatePlatformBrandingAction } from "./update-platform-branding.action"
+import {
+  updatePlatformBrandingAction,
+  updateRootPlatformBrandingAction,
+} from "./update-platform-branding.action"
 
 const THEME_COLORS: Record<(typeof themeOptions)[number], string> = {
   Amber: "#f59e0b",
@@ -54,16 +57,22 @@ const THEME_COLORS: Record<(typeof themeOptions)[number], string> = {
 
 type PlatformBrandingSettingsProps = {
   setting: TenantModel | null | undefined
+  scope?: "tenant" | "platform"
 }
 
 export function PlatformBrandingSettings({
   setting,
+  scope = "tenant",
 }: PlatformBrandingSettingsProps) {
   const t = useTranslations()
   const router = useRouter()
+  const action =
+    scope === "platform"
+      ? updateRootPlatformBrandingAction
+      : updatePlatformBrandingAction
 
   const { form, handleSubmitWithAction } = useHookFormAction(
-    updatePlatformBrandingAction,
+    action,
     zodResolver(updatePlatformBrandingSchema),
     {
       actionProps: {

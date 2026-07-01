@@ -2839,7 +2839,7 @@
       "description": "Ứng dụng nhà phát triển mặc định dùng chung cho mọi workspace chưa có thông tin xác thực white-label riêng."
     },
     "helpItems": {
-      "title": "Liên kết hỗ trợ nền tảng",
+      "title": "Liên kết hỗ trợ",
       "description": "Liên kết hỗ trợ hiển thị trong thanh bên cho tất cả workspace không thuộc về tenant white-label."
     }
   },

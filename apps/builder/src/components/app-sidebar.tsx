@@ -36,13 +36,13 @@ import { authClient } from "@/lib/auth/auth-client"
 export function AppSidebar({
   workspaceId,
   allWorkspaces,
-  isPlatformAdmin,
+  managementHref,
   quota,
   ...props
 }: ComponentProps<typeof Sidebar> & {
   workspaceId: string
   allWorkspaces: WorkspaceResource[]
-  isPlatformAdmin?: boolean
+  managementHref?: string | null
   quota: QuotaSummary
 }) {
   const t = useTranslations()
@@ -141,7 +141,7 @@ export function AppSidebar({
           trialEndsAt={quota.trialEndsAt}
         />
         <NavUser
-          isPlatformAdmin={isPlatformAdmin}
+          managementHref={managementHref}
           planName={quota.planName}
           user={data.user}
         />

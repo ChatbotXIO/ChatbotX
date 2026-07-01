@@ -8,7 +8,7 @@ import { customDomainService } from "../enterprise/custom-domain/service"
 import { tenantService } from "../enterprise/tenant/service"
 import { tenantHelpItemService } from "../enterprise/tenant-help-item/service"
 import { integrationContextEnv } from "../integration-context/keys"
-import { isCloud, isEnterprise } from "../keys"
+import { hasEnterpriseFeatures } from "../user/entitlements"
 import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
@@ -68,6 +68,7 @@ const applyTenantSetting = (
   defaults: TenantSettings,
   setting: TenantModel,
   helpItems: TenantHelpItemModel[],
+  enterpriseFeaturesEnabled: boolean,
 ): TenantSettings => {
   const storageUrl = setting.storageUrl ?? defaults.storageUrl
   return {
@@ -84,9 +85,9 @@ const applyTenantSetting = (
       ? new URL(setting.faviconPath, storageUrl).toString()
       : defaults.faviconUrl,
     theme: setting.theme ?? null,
-    // customJs and customCSS are gated to Enterprise/Cloud only
-    customJS: isEnterprise() || isCloud() ? (setting.customJs ?? null) : null,
-    customCSS: isEnterprise() || isCloud() ? (setting.customCss ?? null) : null,
+    // customJs and customCSS are gated to Enterprise/Cloud only.
+    customJS: enterpriseFeaturesEnabled ? (setting.customJs ?? null) : null,
+    customCSS: enterpriseFeaturesEnabled ? (setting.customCss ?? null) : null,
     policyUrl: setting.policyUrl ?? defaults.policyUrl,
     termsOfServiceUrl: setting.termsOfServiceUrl ?? defaults.termsOfServiceUrl,
     signupEmailTemplate: setting.signupEmailTemplate,
@@ -120,7 +121,12 @@ export const resolveTenantSettings = async (args: {
     getDefaultSettings(),
     tenantHelpItemService.listByTenant(tenant.id),
   ])
-  return applyTenantSetting(defaults, tenant, helpItems)
+  return applyTenantSetting(
+    defaults,
+    tenant,
+    helpItems,
+    await hasEnterpriseFeatures(),
+  )
 }
 
 /**
@@ -148,7 +154,12 @@ export const resolveTenantSettingsByOwner = async (
     getDefaultSettings(),
     tenantHelpItemService.listByTenant(tenant.id),
   ])
-  return applyTenantSetting(defaults, tenant, helpItems)
+  return applyTenantSetting(
+    defaults,
+    tenant,
+    helpItems,
+    await hasEnterpriseFeatures(),
+  )
 }
 
 /**
@@ -159,7 +170,7 @@ export const resolveTenantSettingsByOwner = async (
 export const resolveTenantSettingsByDomain = async (
   domain: string | null | undefined,
 ): Promise<TenantSettings> => {
-  if (!(domain && (isEnterprise() || isCloud()))) {
+  if (!(domain && (await hasEnterpriseFeatures()))) {
     return getDefaultSettings()
   }
 
@@ -177,5 +188,5 @@ export const resolveTenantSettingsByDomain = async (
     getDefaultSettings(),
     tenantHelpItemService.listByTenant(tenant.id),
   ])
-  return applyTenantSetting(defaults, tenant, helpItems)
+  return applyTenantSetting(defaults, tenant, helpItems, true)
 }
