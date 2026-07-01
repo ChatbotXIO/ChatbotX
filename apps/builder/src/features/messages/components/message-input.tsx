@@ -272,6 +272,12 @@ export const MessageInput = () => {
 
   const channel = conversation?.contactInboxes[0]?.channel
 
+  // Meta DM = messenger or instagram that is NOT a post comment.
+  // sourceId != null on the conversation means it's a post comment for both channels.
+  const isMetaDm =
+    (channel === "messenger" || channel === "instagram") &&
+    conversation?.sourceId == null
+
   // Parse lastIncomingMessageAt into a numeric timestamp once. Using a scalar
   // as a memo dependency is more stable than the whole contactInboxes array.
   // Returns null if the field is absent or not a valid date (NaN guard).
@@ -302,10 +308,7 @@ export const MessageInput = () => {
     if (windowSeconds) {
       deadlines.push(lastIncomingTs + windowSeconds * 1000)
     }
-    if (
-      channel === "messenger" ||
-      (channel === "instagram" && !isInstagramPostComment)
-    ) {
+    if (isMetaDm) {
       deadlines.push(
         lastIncomingTs + MESSENGER_HUMAN_AGENT_WINDOW_SECONDS * 1000,
       )
@@ -321,7 +324,7 @@ export const MessageInput = () => {
       next - Date.now(),
     )
     return () => clearTimeout(timeout)
-  }, [lastIncomingTs, channel, isInstagramPostComment, clockTick])
+  }, [lastIncomingTs, channel, isMetaDm, clockTick])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
   const isWindowExpired = useMemo(() => {
@@ -336,25 +339,19 @@ export const MessageInput = () => {
   }, [channel, lastIncomingTs, clockTick])
 
   const isMessengerWindowClosed = useMemo(
-    () =>
-      (channel === "messenger" ||
-        (channel === "instagram" && !isInstagramPostComment)) &&
-      isWindowExpired,
-    [channel, isInstagramPostComment, isWindowExpired],
+    () => isMetaDm && isWindowExpired,
+    [isMetaDm, isWindowExpired],
   )
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: clockTick forces recompute at window boundary
   const isMessengerHumanAgentWindowExpired = useMemo(() => {
-    const isMetaDm =
-      channel === "messenger" ||
-      (channel === "instagram" && !isInstagramPostComment)
     if (!(isMetaDm && lastIncomingTs)) {
       return false
     }
     return (
       Date.now() - lastIncomingTs > MESSENGER_HUMAN_AGENT_WINDOW_SECONDS * 1000
     )
-  }, [channel, lastIncomingTs, isInstagramPostComment, clockTick])
+  }, [isMetaDm, lastIncomingTs, clockTick])
 
   const isWhatsappWindowClosed = useMemo(
     () => channel === "whatsapp" && isWindowExpired,

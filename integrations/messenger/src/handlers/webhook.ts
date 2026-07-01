@@ -64,6 +64,9 @@ const handleWebhookEvent = async (
     }
 
     const entry = webhookData.entry[0]
+    if (!entry) {
+      return
+    }
 
     const labelChange = entry.changes?.find(
       (c: { field: string }) => c.field === "inbox_labels",

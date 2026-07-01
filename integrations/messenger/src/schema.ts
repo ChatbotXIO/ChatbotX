@@ -56,13 +56,17 @@ export type MessengerActions<
   >
 }
 
-// Common attachment types
+// Common attachment types — includes all types Facebook may send in a webhook
 const attachmentTypeSchema = z.enum([
   "image",
   "video",
   "audio",
   "file",
   "template",
+  "sticker",
+  "location",
+  "share",
+  "fallback",
 ])
 
 // Base attachment payload — url optional because template attachments have no url

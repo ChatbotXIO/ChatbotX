@@ -65,6 +65,9 @@ const handleWebhookEvent = async (
     }
 
     const entry = webhookData.entry[0]
+    if (!entry) {
+      return
+    }
 
     // Handle Instagram post comment events (changes.comments).
     // Instagram only sends webhooks for new comments — no edit/delete events.

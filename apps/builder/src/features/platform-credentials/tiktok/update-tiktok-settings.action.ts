@@ -5,7 +5,9 @@ import {
   type TiktokCredential,
   tiktokCredentialUpdateSchema,
 } from "@chatbotx.io/database/partials"
+import { subscribeWebhook } from "@chatbotx.io/integration-tiktok"
 import { getTranslations } from "next-intl/server"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
 import { credentialScopeSchema, resolveCredentialScopedUserId } from "../scope"
 
@@ -31,6 +33,11 @@ export const updateTiktokSettingAction = authActionClient
       clientId: parsedInput.clientId,
       clientSecret,
     }
+
+    await subscribeWebhook(
+      { clientId: config.clientId, clientSecret },
+      buildBrokerCallbackUrl("/integrations/tiktok/webhook"),
+    )
 
     await platformCredentialService.upsert({
       userId: scopedUserId,

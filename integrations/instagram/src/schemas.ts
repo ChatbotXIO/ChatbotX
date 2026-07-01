@@ -27,12 +27,21 @@ export type InstagramActions = {
   }) => Promise<import("./apis/post").InstagramMediaDetails>
 }
 
-// Common attachment types
-const attachmentTypeSchema = z.enum(["image", "video", "audio", "file"])
+// Common attachment types — includes all types Instagram may send in a webhook
+const attachmentTypeSchema = z.enum([
+  "image",
+  "video",
+  "audio",
+  "file",
+  "sticker",
+  "location",
+  "share",
+  "fallback",
+])
 
-// Base attachment payload
+// Base attachment payload — url optional because location/share have no url
 const baseAttachmentPayloadSchema = z.object({
-  url: z.url(),
+  url: z.url().optional(),
 })
 
 // Common ID schemas

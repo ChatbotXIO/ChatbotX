@@ -64,7 +64,9 @@ export const messageTemplate = z.object({
 export type MessageTemplate = z.infer<typeof messageTemplate>
 
 export const messageAttachmentSchema = z.object({
-  type: z.enum(["image", "video", "audio", "file", "sticker", "location"]),
+  type: z
+    .enum(["image", "video", "audio", "file", "sticker", "location"])
+    .or(z.string()),
   payload: z.object({
     url: z.url().optional(),
     thumbnail: z.url().optional(),
@@ -113,27 +115,28 @@ export const zaloWebhookEventSchema = z.object({
   app_id: z.string(),
   // OA id — present on tag events; absent on message events.
   oa_id: z.string().optional(),
-  event_name: z.enum([
-    "user_send_text",
-    "user_send_image",
-    "user_send_sticker",
-    "user_send_location",
-    "user_send_sticker",
-    "user_send_file",
-    "user_send_audio",
-    "user_seen_message",
-    "oa_send_msg",
-    "oa_send_text",
-    "oa_send_image",
-    "oa_send_sticker",
-    "oa_send_file",
-    "oa_send_link",
-    "oa_send_video",
-    "oa_send_carousel",
-    "oa_send_list",
-    "oa_send_action",
-    ...TAG_EVENT_NAMES,
-  ]),
+  event_name: z
+    .enum([
+      "user_send_text",
+      "user_send_image",
+      "user_send_sticker",
+      "user_send_location",
+      "user_send_file",
+      "user_send_audio",
+      "user_seen_message",
+      "oa_send_msg",
+      "oa_send_text",
+      "oa_send_image",
+      "oa_send_sticker",
+      "oa_send_file",
+      "oa_send_link",
+      "oa_send_video",
+      "oa_send_carousel",
+      "oa_send_list",
+      "oa_send_action",
+      ...TAG_EVENT_NAMES,
+    ])
+    .or(z.string()),
   timestamp: z.string().optional(),
   // Present on message events; absent on tag events.
   sender: z
