@@ -34,7 +34,8 @@
   "overrides": {
     "@types/node": "24.x",
     "typescript": "^5",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@codemirror/state": "6.7.0"
   },
   "workspaces": [
     "apps/*",
@@ -47,7 +48,8 @@
       "kysely": "0.28.17",
       "zod": "^4.3.6",
       "miniflare>zod": "^3.22.3",
-      "google-auth-library": "^10.7.0"
+      "google-auth-library": "^10.7.0",
+      "@codemirror/state": "6.7.0"
     },
     "updateConfig": {
       "ignoreDependencies": [
