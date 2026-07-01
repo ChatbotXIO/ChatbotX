@@ -277,7 +277,10 @@ const saveAndBroadcastMessage = async (props: {
       lastMessageAt: newMessage.createdAt,
     }
 
-    if (incomingMessage.messageType !== "outgoing") {
+    if (
+      incomingMessage.messageType !== "outgoing" &&
+      messageInput.type === "message"
+    ) {
       lastMessageUpdate.lastIncomingMessageAt = newMessage.createdAt
     }
 
