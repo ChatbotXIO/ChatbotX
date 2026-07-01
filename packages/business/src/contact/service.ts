@@ -74,19 +74,19 @@ class ContactService extends BaseService {
     tx?: DatabaseClient
   }): Promise<ContactModel | undefined> {
     const { workspaceId, id, tx = db } = props
-    return await withCache(
-      `contacts:${workspaceId}:${id}`,
-      async () =>
-        await tx.query.contactModel.findFirst({
-          where: { id, workspaceId },
-        }),
-      {
-        dynamicTags: (result) =>
-          result
-            ? ["contacts", `contacts:${workspaceId}`, `contacts:${result.id}`]
-            : undefined,
-      },
-    )
+    // return await withCache(
+    //   `contacts:${workspaceId}:${id}`,
+    //   async () =>
+    return await tx.query.contactModel.findFirst({
+      where: { id, workspaceId },
+    })
+    // {
+    //   dynamicTags: (result) =>
+    //     result
+    //       ? ["contacts", `contacts:${workspaceId}`, `contacts:${result.id}`]
+    //       : undefined,
+    // },
+    // )
   }
 
   async findByIdOrFail(props: {
@@ -163,6 +163,17 @@ class ContactService extends BaseService {
     id: string
   }): Promise<ContactModel> {
     return await this.update(ctx, { blockedAt: null })
+  }
+
+  async unblockIfBlocked(
+    ctx: { workspaceId: string; id: string },
+    contact?: ContactModel | null,
+  ): Promise<ContactModel | null> {
+    const current = contact ?? (await this.findById(ctx))
+    if (!current?.blockedAt) {
+      return null
+    }
+    return await this.unblock(ctx)
   }
 
   async delete(props: {

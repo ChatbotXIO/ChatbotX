@@ -7,6 +7,7 @@ const {
   mockDbUpdate,
   mockUpdateSourceId,
   mockCreateMessageRepository,
+  mockContactUnblockIfBlocked,
 } = vi.hoisted(() => {
   const updateChain = {
     set: vi.fn().mockReturnThis(),
@@ -25,8 +26,13 @@ const {
       updateSourceId,
       findById: vi.fn().mockResolvedValue(null),
     }),
+    mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
   }
 })
+
+vi.mock("@chatbotx.io/business", () => ({
+  contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
+}))
 
 vi.mock("@chatbotx.io/database/client", () => ({
   db: {
@@ -90,6 +96,7 @@ describe("chat send-message handlers", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRunChannelHandler.mockResolvedValue({ messageIds: ["mid-1"] })
+    mockContactUnblockIfBlocked.mockResolvedValue(null)
     mockResolveIntegrationContextFromContactInbox.mockResolvedValue({
       ctx: { workspaceId: "ws-1" },
       integration: {
@@ -155,6 +162,48 @@ describe("chat send-message handlers", () => {
       "wamid.echo-1",
       "ws-1",
     )
+  })
+
+  test("auto-unblocks after a successful non-comment send", async () => {
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "hello",
+      } as never,
+    })
+
+    expect(mockContactUnblockIfBlocked).toHaveBeenCalledWith({
+      workspaceId: "ws-1",
+      id: "contact-1",
+    })
+  })
+
+  test("does not auto-unblock after a comment reply send", async () => {
+    await sendMessageToChannel({
+      conversation: conversation as never,
+      contactInbox: contactInbox as never,
+      message: {
+        id: "msg-comment-1",
+        workspaceId: "ws-1",
+        conversationId: "conv-1",
+        contactInboxId: "ci-1",
+        contentType: "text",
+        messageType: "outgoing",
+        senderType: "user",
+        text: "comment reply",
+        type: "comment",
+      } as never,
+    })
+
+    expect(mockContactUnblockIfBlocked).not.toHaveBeenCalled()
   })
 
   test("does not update sourceId when the channel returns no provider id", async () => {

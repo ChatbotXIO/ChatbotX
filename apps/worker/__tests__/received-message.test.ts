@@ -18,6 +18,8 @@ const {
   mockBuildContext,
   mockresolveTenantSettings,
   mockUpdateContactFromMessage,
+  mockContactUnblockIfBlocked,
+  mockConversationFindOrCreate,
   mockIntegrationQueueAdd,
   mockDbSet,
   mockDbTransaction,
@@ -61,6 +63,8 @@ const {
     mockBuildContext: vi.fn().mockResolvedValue({ workspaceId: "ws-1" }),
     mockresolveTenantSettings: vi.fn().mockResolvedValue({}),
     mockUpdateContactFromMessage: vi.fn().mockResolvedValue(undefined),
+    mockContactUnblockIfBlocked: vi.fn().mockResolvedValue(null),
+    mockConversationFindOrCreate: vi.fn(),
     mockIntegrationQueueAdd: vi.fn().mockResolvedValue(undefined),
     mockDbSet,
     mockDbTransaction,
@@ -105,6 +109,8 @@ vi.mock("@chatbotx.io/business", () => ({
   buildContext: mockBuildContext,
   resolveTenantSettings: mockresolveTenantSettings,
   updateContactFromMessage: mockUpdateContactFromMessage,
+  contactService: { unblockIfBlocked: mockContactUnblockIfBlocked },
+  conversationService: { findOrCreate: mockConversationFindOrCreate },
   workspaceService: { find: mockWorkspaceFind },
   quotaEnforcementService: {
     increment: mockQuotaIncrement,
@@ -202,6 +208,12 @@ const fakeContactInbox = {
   source: "messenger",
 } as unknown as import("@chatbotx.io/database/types").ContactInboxModel
 
+const fakeContact = {
+  id: "contact-1",
+  workspaceId: "ws-1",
+  blockedAt: new Date("2026-01-01T00:00:00Z"),
+} as unknown as import("@chatbotx.io/database/types").ContactModel
+
 const fakeConversation = {
   id: "conv-1",
   workspaceId: "ws-1",
@@ -247,8 +259,12 @@ describe("receiveMessage — message repository branch", () => {
     vi.clearAllMocks()
 
     // Setup: existing contact inbox → skip transaction contact creation
-    mockFindContactInbox.mockResolvedValue(fakeContactInbox)
+    mockFindContactInbox.mockResolvedValue({
+      ...fakeContactInbox,
+      contact: fakeContact,
+    })
     mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
 
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -289,6 +305,23 @@ describe("receiveMessage — message repository branch", () => {
 
     expect(mockCreateOrUpdate).toHaveBeenCalledTimes(1)
     expect(mockCreateOrUpdateWithAttachments).not.toHaveBeenCalled()
+  })
+
+  test("auto-unblocks on inbound messages using the loaded contact", async () => {
+    mockRunChannelHandler.mockResolvedValue({
+      message: { ...baseIncomingMessage, attachments: [] },
+      contact: { sourceId: "psid-123", firstName: "Test" },
+      postbackAction: null,
+      quickReplyAction: null,
+      ref: null,
+    })
+
+    await receiveMessage(baseProps)
+
+    expect(mockContactUnblockIfBlocked).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", id: "contact-1" },
+      fakeContact,
+    )
   })
 
   test("calls repository.createOrUpdateWithAttachments() when message has attachments", async () => {
@@ -360,6 +393,7 @@ describe("receiveMessage — message repository branch", () => {
 
     await receiveMessage(baseProps)
 
+    expect(mockContactUnblockIfBlocked).not.toHaveBeenCalled()
     expect(mockDbSet).toHaveBeenCalledWith({
       lastMessageAt: fakeCreatedMessage.createdAt,
     })
@@ -422,6 +456,7 @@ describe("receiveMessage — new contact MAC gate", () => {
     // No existing contact inbox → new-contact creation path.
     mockFindContactInbox.mockResolvedValue(undefined)
     mockFindOrFail.mockResolvedValue(fakeConversation)
+    mockConversationFindOrCreate.mockResolvedValue(fakeConversation)
     mockWorkspaceFind.mockResolvedValue({ ownerId: "owner-1" })
     vi.mocked(
       integrationService.identifyInboxAndIntegrationAuthFromIdentifier,
@@ -467,6 +502,7 @@ describe("receiveMessage — new contact MAC gate", () => {
       firstName: "Test",
       phoneNumber: null,
       email: null,
+      blockedAt: null,
       createdAt: new Date("2026-06-21T00:00:00Z"),
     }
     const contactInbox = {
@@ -481,6 +517,10 @@ describe("receiveMessage — new contact MAC gate", () => {
 
     await receiveMessage(baseProps)
 
+    expect(mockContactUnblockIfBlocked).toHaveBeenCalledWith(
+      { workspaceId: "ws-1", id: "contact-new" },
+      newContact,
+    )
     expect(mockCreateNewContactWithMac).toHaveBeenCalledWith(
       expect.objectContaining({ ownerId: "owner-1", workspaceId: "ws-1" }),
     )

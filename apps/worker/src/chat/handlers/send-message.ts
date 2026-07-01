@@ -1,3 +1,4 @@
+import { contactService } from "@chatbotx.io/business"
 import { db, eq } from "@chatbotx.io/database/client"
 import { createMessageRepository } from "@chatbotx.io/database/repositories"
 import { whatsappFlowModel } from "@chatbotx.io/database/schema"
@@ -114,6 +115,14 @@ export async function sendMessageToChannel(
       // sourceId here, bot/agent outgoing rows stay sourceId=null, the echo
       // lookup misses, and a duplicate row is inserted as senderType=user.
       await updateMessageSourceId(message.id, conversation.workspaceId, result)
+      try {
+        await contactService.unblockIfBlocked({
+          workspaceId: conversation.workspaceId,
+          id: conversation.contactId,
+        })
+      } catch (error) {
+        logger.warn(error, "Auto-unblock on successful send failed")
+      }
     }
   } catch (error) {
     logger.error(error, "An error occurred while sending the message")
