@@ -11,5 +11,6 @@ export const folderTypes = z.enum([
   "webhook",
   "sequence",
   "emailTopic",
+  "fbComment",
 ])
 export type FolderType = z.infer<typeof folderTypes>

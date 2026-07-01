@@ -8,6 +8,7 @@ type InputNumberFieldProps<T extends FieldValues> = NumberInputProps & {
   label?: string
   required?: boolean
   description?: string
+  descriptionType?: "inline" | "tooltip"
   className?: string
 }
 
@@ -16,6 +17,7 @@ export function InputNumberField<T extends FieldValues>({
   label,
   required,
   description,
+  descriptionType = "inline",
   formItemClassName,
   prefix,
   suffix,
@@ -25,6 +27,7 @@ export function InputNumberField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}
       name={name}

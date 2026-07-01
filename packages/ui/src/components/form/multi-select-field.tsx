@@ -9,6 +9,7 @@ type MultiSelectFieldProps<T extends FieldValues> = Omit<
   name: FieldPath<T>
   label?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   required?: boolean
 }
 
@@ -18,12 +19,14 @@ export function MultiSelectField<T extends FieldValues>({
   required,
   placeholder,
   description,
+  descriptionType = "inline",
   options,
   ...props
 }: MultiSelectFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

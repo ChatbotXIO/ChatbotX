@@ -7,6 +7,7 @@ type InputFieldProps<T extends FieldValues> = ComponentProps<"input"> & {
   name: FieldPath<T>
   label?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   formItemClassName?: string
 }
 
@@ -15,12 +16,14 @@ export function InputField<T extends FieldValues>({
   label,
   required,
   description,
+  descriptionType = "inline",
   formItemClassName,
   ...props
 }: InputFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}
       name={name}

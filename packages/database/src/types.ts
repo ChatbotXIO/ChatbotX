@@ -89,6 +89,10 @@ export type InboxTeamModel = typeof schema.inboxTeamModel.$inferSelect
 export type InboxTeamMemberModel =
   typeof schema.inboxTeamMemberModel.$inferSelect
 export type ErrorLogModel = typeof schema.errorLogModel.$inferSelect
+export type FBCommentAutomationModel =
+  typeof schema.fbCommentAutomationModel.$inferSelect
+export type FBCommentAutomationReplyModel =
+  typeof schema.fbCommentAutomationReplyModel.$inferSelect
 export type AuditLogModel = typeof schema.auditLogModel.$inferSelect
 export type SequenceModel = typeof schema.sequenceModel.$inferSelect
 export type SequenceStepModel = typeof schema.sequenceStepModel.$inferSelect

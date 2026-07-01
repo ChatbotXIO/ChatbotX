@@ -8,14 +8,22 @@ type ColorPickerFieldProps = {
   label?: string
   required?: boolean
   description?: string
+  descriptionType?: "inline" | "tooltip"
 }
 
 export const ColorPickerField = (props: ColorPickerFieldProps) => {
-  const { name, label, required, description } = props
+  const {
+    name,
+    label,
+    required,
+    description,
+    descriptionType = "inline",
+  } = props
 
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

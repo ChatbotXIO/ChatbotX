@@ -19,6 +19,7 @@ import { coexistAttachmentDownload } from "./handlers/coexist/attachment-downloa
 import { coexistMessengerSync } from "./handlers/coexist/messenger-sync"
 import { coexistWhatsappBuffer } from "./handlers/coexist/whatsapp-buffer"
 import { coexistWhatsappFlush } from "./handlers/coexist/whatsapp-flush"
+import { processCommentAutomation } from "./handlers/comment-automation"
 import { updateContactAvatar } from "./handlers/contact/update-avatar"
 import { agentMarkAsRead, contactMarkAsRead } from "./handlers/conversation"
 import {
@@ -187,6 +188,10 @@ async function startIntegrationWorker() {
         }
         case IntegrationJobAction.updateContactAvatar: {
           await updateContactAvatar(job.data.data)
+          return
+        }
+        case IntegrationJobAction.processCommentAutomation: {
+          await processCommentAutomation(job.data.data)
           return
         }
         case IntegrationJobAction.createMessage: {

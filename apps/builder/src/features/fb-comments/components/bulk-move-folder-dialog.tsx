@@ -1,0 +1,148 @@
+"use client"
+
+import { folderTypes } from "@chatbotx.io/database/partials"
+import { ComboboxField } from "@chatbotx.io/ui/components/form/combobox-field"
+import { Button } from "@chatbotx.io/ui/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@chatbotx.io/ui/components/ui/dialog"
+import { Form } from "@chatbotx.io/ui/components/ui/form"
+import { zodBigintAsString } from "@chatbotx.io/utils"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { FolderUpIcon, Loader2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
+import type { ComponentPropsWithoutRef } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
+import { changeFolderAction } from "../../folders/actions/change-folder.action"
+import { useFolderSelectOptions } from "../../folders/provider/folder-hook"
+import type { FBCommentResource } from "../schema/resource"
+
+type BulkMoveFolderDialogProps = ComponentPropsWithoutRef<typeof Dialog> & {
+  workspaceId: string
+  fbComments: FBCommentResource[]
+  showTrigger?: boolean
+  onSuccess?: () => void
+  onOpenChange: (val: boolean) => void
+}
+
+const bulkMoveFolderSchema = z.object({
+  newFolderId: zodBigintAsString(),
+})
+
+export function BulkMoveFolderDialog({
+  workspaceId,
+  fbComments,
+  showTrigger = true,
+  onSuccess,
+  onOpenChange,
+  ...props
+}: BulkMoveFolderDialogProps) {
+  const t = useTranslations()
+  const router = useRouter()
+  const folderOptions = useFolderSelectOptions()
+
+  const form = useForm<z.infer<typeof bulkMoveFolderSchema>>({
+    resolver: zodResolver(bulkMoveFolderSchema),
+    defaultValues: { newFolderId: "" },
+  })
+
+  const handleBulkMove = async (
+    values: z.infer<typeof bulkMoveFolderSchema>,
+  ) => {
+    try {
+      await Promise.all(
+        fbComments.map((item) =>
+          changeFolderAction(workspaceId, {
+            modelIds: [item.id],
+            newFolderId: values.newFolderId,
+            folderType: folderTypes.enum.fbComment,
+          }),
+        ),
+      )
+      toast.success(
+        t("messages.updatedSuccess", {
+          feature: t("fields.folder.label"),
+        }),
+      )
+      form.reset()
+      onOpenChange(false)
+      onSuccess?.()
+      router.refresh()
+    } catch (error) {
+      console.error("Error moving FB Comment Automations:", error)
+      toast.error(t("messages.unknownError"))
+    }
+  }
+
+  return (
+    <Dialog onOpenChange={onOpenChange} {...props}>
+      {showTrigger ? (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            <FolderUpIcon aria-hidden="true" className="size-4" />
+            {t("actions.move")}
+          </Button>
+        </DialogTrigger>
+      ) : null}
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {t("messages.moveFeature", {
+              feature: t("facebookCommentAutomation.title"),
+            })}
+          </DialogTitle>
+          <DialogDescription className="whitespace-pre-wrap text-sm/6">
+            {t("messages.moveFolderDescription", {
+              count: fbComments.length,
+            })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            className="space-y-6"
+            onSubmit={form.handleSubmit(handleBulkMove)}
+          >
+            <ComboboxField
+              label={t("fields.folder.label")}
+              name="newFolderId"
+              options={folderOptions}
+              required
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={() => onOpenChange(false)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                {t("actions.cancel")}
+              </Button>
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                size="sm"
+                type="submit"
+              >
+                {form.formState.isSubmitting && (
+                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                )}
+                {t("actions.confirm")}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  )
+}

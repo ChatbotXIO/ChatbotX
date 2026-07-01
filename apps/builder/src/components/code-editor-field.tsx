@@ -12,6 +12,7 @@ type CodeEditorFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   language: "javascript" | "css" | "html"
   placeholder?: string
   required?: boolean
@@ -27,6 +28,7 @@ export function CodeEditorField<T extends FieldValues>({
   name,
   label,
   description,
+  descriptionType = "inline",
   language,
   required,
 }: CodeEditorFieldProps<T>) {
@@ -35,6 +37,7 @@ export function CodeEditorField<T extends FieldValues>({
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

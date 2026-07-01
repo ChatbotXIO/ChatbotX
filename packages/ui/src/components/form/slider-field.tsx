@@ -6,14 +6,25 @@ type SliderFieldProps<T extends FieldValues> = {
   name: FieldPath<T>
   label?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   required?: boolean
 } & React.ComponentProps<typeof Slider>
 
 export function SliderField<T extends FieldValues>(props: SliderFieldProps<T>) {
-  const { name, label, description, min, max, step, required } = props
+  const {
+    name,
+    label,
+    description,
+    descriptionType = "inline",
+    min,
+    max,
+    step,
+    required,
+  } = props
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

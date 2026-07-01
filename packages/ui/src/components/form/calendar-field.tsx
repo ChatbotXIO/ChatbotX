@@ -14,6 +14,7 @@ type CalendarFieldProps<T extends FieldValues> = {
   required?: boolean
   placeholder?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   defaultValue?: string
   disabled?: boolean
   className?: string
@@ -28,11 +29,13 @@ export function CalendarField<T extends FieldValues>({
   required,
   placeholder,
   description,
+  descriptionType = "inline",
   formItemClassName,
 }: CalendarFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}
       name={name}

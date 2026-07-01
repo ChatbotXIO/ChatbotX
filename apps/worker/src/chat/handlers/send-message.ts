@@ -257,6 +257,19 @@ export async function changeMessageStateOnChannel(
     return
   }
 
+  const current =
+    (found.attributes as { liked?: boolean; hidden?: boolean } | null) ?? {}
+  const newAttributes = {
+    liked: liked === undefined ? (current.liked ?? false) : liked,
+    hidden: hidden === undefined ? (current.hidden ?? false) : hidden,
+  }
+  await repository.updateMessageAttributes(
+    message.id,
+    conversation.workspaceId,
+    newAttributes,
+    found.createdAt,
+  )
+
   const { integration, ctx } = await resolveIntegrationContextFromContactInbox({
     workspaceId: conversation.workspaceId,
     contactInbox,

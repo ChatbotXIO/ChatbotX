@@ -29,6 +29,7 @@ import {
   setWebhookExecutionContext,
 } from "@chatbotx.io/events"
 import { messageEventTypeSchema } from "@chatbotx.io/flow-config"
+import type { MessengerAuthValue } from "@chatbotx.io/integration-messenger"
 import { RealtimeEventType } from "@chatbotx.io/partysocket-config"
 import type { IncomingAttachment } from "@chatbotx.io/sdk"
 import {
@@ -385,6 +386,27 @@ export const receiveComment = async (
     parentId = parentMessage?.id ?? null
   }
 
+  let attachments: IncomingAttachment[] = []
+  if (integrationType === "messenger") {
+    const ctx = await buildContext({
+      workspaceId: inbox.workspaceId,
+      integrationType,
+      integration: {
+        ...integrationRow,
+        auth: integrationRow.auth as MessengerAuthValue,
+      },
+    })
+    const result = await allIntegrations.messenger
+      ?.runAction("getCommentAttachment", {
+        ctx,
+        input: { commentId: commentData.commentId },
+      })
+      .catch(() => undefined)
+    if (result?.attachment) {
+      attachments = [result.attachment]
+    }
+  }
+
   const incomingMessage: IncomingMessage = {
     sourceId: commentData.commentId,
     messageType: messageTypes.enum.incoming,
@@ -392,6 +414,7 @@ export const receiveComment = async (
     contentType: contentTypes.enum.text,
     type: "comment",
     parentId,
+    attachments,
   }
 
   await saveAndBroadcastMessage({
@@ -400,6 +423,27 @@ export const receiveComment = async (
     conversation,
     incomingMessage,
   })
+
+  await integrationQueue.add(
+    IntegrationJobAction.processCommentAutomation,
+    {
+      type: IntegrationJobAction.processCommentAutomation,
+      data: {
+        integrationType,
+        integrationIdentifier,
+        workspaceId: inbox.workspaceId,
+        conversationId: conversation.id,
+        contactInboxId: contactInbox.id,
+        commentId: commentData.commentId,
+        postId: commentData.postId,
+        parentId: commentData.parentId,
+        fromId: commentData.fromId,
+        message: commentData.message,
+        createdTime: commentData.createdTime,
+      },
+    },
+    { jobId: `comment-auto-${commentData.commentId}` },
+  )
 }
 
 // When a commenter edits their comment, sync the new text to the DB

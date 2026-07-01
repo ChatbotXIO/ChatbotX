@@ -8,6 +8,7 @@ type DateTimePickerFieldProps<T extends FieldValues> = DateTimePickerProps & {
   label?: string
   required?: boolean
   description?: string
+  descriptionType?: "inline" | "tooltip"
   formItemClassName?: string
   dateTimeFormat?: string
   saveFormat?: "formatted" | "iso"
@@ -24,6 +25,7 @@ export function DatePickerField<T extends FieldValues>(
     name,
     required,
     description,
+    descriptionType = "inline",
     formItemClassName,
     dateTimeFormat = "yyyy-MM-dd",
     ...rest
@@ -32,6 +34,7 @@ export function DatePickerField<T extends FieldValues>(
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}
       name={name}
@@ -82,6 +85,7 @@ export function DateTimePickerField<T extends FieldValues>(
     name,
     required,
     description,
+    descriptionType = "inline",
     formItemClassName,
     dateTimeFormat = "yyyy-MM-dd HH:mm:ss",
     saveFormat = "formatted",
@@ -91,6 +95,7 @@ export function DateTimePickerField<T extends FieldValues>(
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       formItemClassName={formItemClassName}
       label={label}
       name={name}

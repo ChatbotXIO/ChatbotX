@@ -9,6 +9,7 @@ type CheckboxGroupFieldProps<T extends FieldValues> = {
   label?: string
   required?: boolean
   description?: string
+  descriptionType?: "inline" | "tooltip"
   options: {
     value: string
     label: string
@@ -21,11 +22,13 @@ export function CheckboxGroupField<T extends FieldValues>({
   label,
   required,
   description,
+  descriptionType = "inline",
   options,
 }: CheckboxGroupFieldProps<T>) {
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

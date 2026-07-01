@@ -2865,7 +2865,104 @@
   },
   "facebookCommentAutomation": {
     "title": "Tự động hóa bình luận Facebook",
-    "description": "Tự động hóa bình luận Facebook cho các liên hệ của bạn."
+    "description": "Tự động hóa bình luận Facebook cho các liên hệ của bạn.",
+    "create": "Tạo tự động hóa",
+    "replies": "Phản hồi",
+    "activated": "Đã kích hoạt tự động hóa",
+    "deactivated": "Đã tắt tự động hóa",
+    "trackCommentsOn": "Theo dõi bình luận trên",
+    "trackCommentsOnDescription": "Áp dụng tự động hóa cho tất cả bài viết trên trang, hoặc chỉ các bài viết cụ thể bạn chọn.",
+    "privateReply": "Trả lời riêng tư (inbox)",
+    "privateReplyDescription": "Gửi tin nhắn riêng vào inbox của người comment. Chọn AI Agent, mẫu văn bản cố định (hỗ trợ spintax), chatbot flow, hoặc tắt.",
+    "publicReply": "Trả lời công khai bình luận",
+    "publicReplyDescription": "Phản hồi công khai trực tiếp dưới bình luận. Hỗ trợ tối đa 10 mẫu văn bản (hỗ trợ spintax), AI Agent, chatbot flow, hoặc không phản hồi.",
+    "replyMessage": "Nội dung trả lời",
+    "replyMessagePlaceholder": "Nhập nội dung trả lời...",
+    "includeKeywordsType": "Trả lời cho",
+    "includeKeywordsTypeDescription": "Chọn loại bình luận nào sẽ kích hoạt tự động hóa này.",
+    "includeKeywords": "Từ khóa cần khớp",
+    "excludeKeywords": "Loại trừ bình luận có từ khóa",
+    "excludeKeywordsDescription": "Bình luận chứa bất kỳ từ khóa nào trong danh sách này sẽ bị bỏ qua bởi cả inbox và phản hồi công khai.",
+    "keywordsPlaceholder": "Nhập và nhấn Enter...",
+    "replyAfter": "Trả lời sau",
+    "replyAfterValue": "Giá trị",
+    "schedule": {
+      "title": "Cài đặt khung giờ hoạt động",
+      "startTime": "Giờ bắt đầu",
+      "endTime": "Giờ kết thúc",
+      "alwaysRun": "Luôn luôn chạy",
+      "save": "Lưu",
+      "invalidTimeRange": "Giờ kết thúc phải sau giờ bắt đầu",
+      "timeRequired": "Vui lòng chọn cả giờ bắt đầu và giờ kết thúc"
+    },
+    "card": {
+      "targeting": "Nhắm mục tiêu & Trả lời",
+      "filters": "Bộ lọc & Tùy chọn",
+      "replyTiming": "Thời điểm trả lời",
+      "hideComments": "Ẩn bình luận"
+    },
+    "postType": {
+      "all": "Tất cả bài viết",
+      "published": "Bài viết đã đăng",
+      "ads": "Bài viết quảng cáo",
+      "reels": "Reels",
+      "specificPosts": "Bài viết cụ thể"
+    },
+    "replyType": {
+      "text": "Tin nhắn văn bản",
+      "flow": "Flow",
+      "AIAgent": "AI Agent",
+      "none": "Không trả lời"
+    },
+    "keywordsType": {
+      "all": "Tất cả bình luận",
+      "equal": "Khớp chính xác",
+      "contain": "Chứa"
+    },
+    "replyAfterType": {
+      "immediately": "Ngay lập tức",
+      "seconds": "Sau X giây",
+      "minutes": "Sau X phút",
+      "hours": "Sau X giờ",
+      "randomWithin3Minutes": "Ngẫu nhiên trong 3 phút",
+      "randomWithin5Minutes": "Ngẫu nhiên trong 5 phút",
+      "randomWithin10Minutes": "Ngẫu nhiên trong 10 phút",
+      "randomWithin20Minutes": "Ngẫu nhiên trong 20 phút",
+      "randomWithin30Minutes": "Ngẫu nhiên trong 30 phút",
+      "randomWithin60Minutes": "Ngẫu nhiên trong 60 phút"
+    },
+    "options": {
+      "replyToNewContactsOnly": "Chỉ trả lời liên hệ mới",
+      "replyToNewContactsOnlyDescription": "Chỉ tự động phản hồi với người chưa từng là liên hệ trong workspace của bạn.",
+      "replyOncePerUserPerPost": "Chỉ trả lời một lần mỗi người mỗi bài",
+      "replyOncePerUserPerPostDescription": "Mỗi người dùng chỉ nhận tối đa một phản hồi tự động cho mỗi bài viết.",
+      "likeUserComment": "Thích bình luận của người dùng",
+      "likeUserCommentDescription": "Tự động thả like vào bình luận của người comment.",
+      "replyToUsersWhoCommentedOnOtherPosts": "Trả lời người đã bình luận bài khác",
+      "replyToUsersWhoCommentedOnOtherPostsDescription": "Tiếp tục phản hồi với những người đã comment ở các bài viết khác của bạn.",
+      "ignoreCommentReplies": "Không trả lời các reply bình luận",
+      "ignoreCommentRepliesDescription": "Bỏ qua tự động hóa với các bình luận là reply vào comment khác (không phải comment gốc).",
+      "trackUserTags": "Theo dõi khi người dùng tag người khác",
+      "trackUserTagsDescription": "Kích hoạt tự động hóa khi người dùng tag hoặc mention người khác trong bình luận."
+    },
+    "hideComments": {
+      "all": "Ẩn tất cả bình luận",
+      "hasPhoneNumber": "Chứa số điện thoại",
+      "hasImage": "Chứa ảnh",
+      "hasVideo": "Chứa video",
+      "hasLink": "Chứa liên kết",
+      "hasKeywords": "Chứa từ khóa",
+      "keywords": "Từ khóa",
+      "showCommentsAfter": "Hiện bình luận sau"
+    },
+    "showCommentsAfter": {
+      "none": "Không bao giờ"
+    },
+    "selectPosts": "Chọn bài viết",
+    "chooseSpecificPosts": "Chọn bài viết...",
+    "postIdTab": "Post ID",
+    "postIdPlaceholder": "Nhập ID bài viết, mỗi dòng một ID...",
+    "noPostsFound": "Không tìm thấy bài viết"
   },
   "facebookLeadAdsAutomation": {
     "title": "Tự động hóa Facebook Lead Ads",

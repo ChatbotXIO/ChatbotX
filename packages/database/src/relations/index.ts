@@ -43,6 +43,8 @@ import { tenantRelations } from "./enterprise/tenant"
 import { tenantHelpItemRelations } from "./enterprise/tenant-help-item"
 import { userQuotaRelations } from "./enterprise/user-quota"
 import { errorLogRelations } from "./error-log"
+import { fbCommentAutomationRelations } from "./fb-comment-automation"
+import { fbCommentAutomationReplyRelations } from "./fb-comment-automation-reply"
 import { fileRelations } from "./file"
 import { flowRelations } from "./flow"
 import { flowAnalyticsSessionRelations } from "./flow-analytics-session"
@@ -147,6 +149,8 @@ export const relations = {
   ...emailTopicRelations,
   ...analyticsEmailTopicRelations,
   ...errorLogRelations,
+  ...fbCommentAutomationRelations,
+  ...fbCommentAutomationReplyRelations,
   ...auditLogRelations,
   ...sessionRelations,
   ...spreadsheetRelations,

@@ -77,9 +77,24 @@ export function MessageList() {
       activeConversationId ?? "",
     ),
     {
-      onSuccess: ({ data }) => {
-        if (data?.messageId && data.attributes) {
-          updateMessageAttributes(data.messageId, data.attributes)
+      onSuccess: ({ data, input }) => {
+        if (data?.messageId) {
+          const current = messages.find((m) => m.id === data.messageId)
+          const currentAttrs =
+            (current?.attributes as {
+              liked?: boolean
+              hidden?: boolean
+            } | null) ?? {}
+          updateMessageAttributes(data.messageId, {
+            liked:
+              input.liked === undefined
+                ? (currentAttrs.liked ?? false)
+                : input.liked,
+            hidden:
+              input.hidden === undefined
+                ? (currentAttrs.hidden ?? false)
+                : input.hidden,
+          })
         }
       },
       onError: ({ error }) => {

@@ -4,6 +4,7 @@ import {
   type CommentHandlers,
 } from "@chatbotx.io/sdk"
 import { sendComment as sendCommentApi } from "../../../apis/comment"
+import { mapToChannelError } from "../../../lib/error-mapper"
 import type { MessengerAuthValue } from "../../../schema"
 
 export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
@@ -26,11 +27,15 @@ export const sendComment: CommentHandlers<MessengerAuthValue>["sendComment"] =
       return { messageIds: [] }
     }
 
-    const result = await sendCommentApi(
-      ctx.auth,
-      replyToCommentId,
-      message.text,
-      attachmentUrl,
-    )
-    return { messageIds: result.id ? [result.id] : [] }
+    try {
+      const result = await sendCommentApi(
+        ctx.auth,
+        replyToCommentId,
+        message.text,
+        attachmentUrl,
+      )
+      return { messageIds: result.id ? [result.id] : [] }
+    } catch (error) {
+      throw mapToChannelError(error)
+    }
   }

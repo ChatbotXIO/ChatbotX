@@ -58,6 +58,7 @@ export type ComboboxFieldProps<T extends FieldValues> = {
   required?: boolean
   placeholder?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
   options: SelectOption[]
   className?: string
   side?: PopoverContentProps["side"]
@@ -73,6 +74,7 @@ export function ComboboxField<T extends FieldValues>({
   required,
   placeholder,
   description,
+  descriptionType = "inline",
   options,
   side,
   triggerValueChange,
@@ -95,6 +97,7 @@ export function ComboboxField<T extends FieldValues>({
   return (
     <FormFieldWrapper<T>
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}

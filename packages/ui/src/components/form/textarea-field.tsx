@@ -7,6 +7,7 @@ type TextareaFieldProps<T extends FieldValues> = ComponentProps<"textarea"> & {
   name: FieldPath<T>
   label?: string
   description?: string
+  descriptionType?: "inline" | "tooltip"
 }
 
 export function TextareaField<T extends FieldValues>(
@@ -18,6 +19,7 @@ export function TextareaField<T extends FieldValues>(
     required,
     placeholder,
     description,
+    descriptionType = "inline",
     className,
     ...rest
   } = props
@@ -25,6 +27,7 @@ export function TextareaField<T extends FieldValues>(
   return (
     <FormFieldWrapper
       description={description}
+      descriptionType={descriptionType}
       label={label}
       name={name}
       required={required}
