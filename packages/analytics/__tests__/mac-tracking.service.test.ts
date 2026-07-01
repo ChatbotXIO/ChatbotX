@@ -526,6 +526,39 @@ describe("MacTrackingService.claimNewActiveContact", () => {
     )
   })
 
+  test("also records the paired hourly presence row for a brand-new contact", async () => {
+    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([
+      { workspaceMacId: "wm-1", count: 1 },
+    ])
+    const tx = {} as never
+
+    await newService().claimNewActiveContact(input, tx)
+
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledTimes(1)
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledWith(
+      [
+        {
+          workspaceId: WORKSPACE_ID,
+          contactId: "c-1",
+          contactInboxId: "ci-1",
+          inboxId: "ib-1",
+          hourBucket: new Date("2026-05-01T10:00:00.000Z"),
+        },
+      ],
+      tx,
+    )
+  })
+
+  test("still records the hourly presence row when the monthly row already exists (dedup)", async () => {
+    macRepository.upsertMonthlyPresence.mockResolvedValueOnce([])
+
+    const result = await newService().claimNewActiveContact(input, {} as never)
+
+    expect(result).toEqual({ counted: false })
+    expect(macRepository.addWorkspaceMacCount).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).toHaveBeenCalledTimes(1)
+  })
+
   test("reports not counted when the presence row already exists (dedup)", async () => {
     macRepository.upsertMonthlyPresence.mockResolvedValueOnce([])
 
@@ -542,6 +575,7 @@ describe("MacTrackingService.claimNewActiveContact", () => {
 
     expect(result).toEqual({ counted: false })
     expect(macRepository.upsertMonthlyPresence).not.toHaveBeenCalled()
+    expect(macRepository.upsertHourlyPresence).not.toHaveBeenCalled()
   })
 })
 

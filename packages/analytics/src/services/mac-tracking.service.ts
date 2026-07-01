@@ -178,10 +178,11 @@ export class MacTrackingService {
    * Synchronously claim one monthly-active-contact slot for a *brand-new*
    * contact at creation time, inside the caller's transaction. This is the
    * write-time half of MAC enforcement: it records the same
-   * `ContactActiveMonthly` presence row and `WorkspaceMac` rollup that the
-   * async `trackMessageIn`/`trackMessageOut` path would, so a later
-   * `message:received`/`message:sent` event for this same contact dedups via
-   * `onConflictDoNothing` and does NOT double-count.
+   * `ContactActiveMonthly` + `ContactActiveHourly` presence rows and
+   * `WorkspaceMac` rollup that the async `trackMessageIn`/`trackMessageOut`
+   * (+ hourly) path would, so a later `message:received`/`message:sent`
+   * event for this same contact dedups via `onConflictDoNothing` and does
+   * NOT double-count.
    *
    * Returns `{ counted: true }` only when a presence row was newly inserted.
    * Because the contact (and its `contactInbox`) is brand-new, a conflict
@@ -218,12 +219,13 @@ export class MacTrackingService {
 
   /**
    * Batch variant of {@link claimNewActiveContact} for bulk creation (e.g.
-   * contact import): records the `ContactActiveMonthly` presence rows + the
-   * `WorkspaceMac` rollup for many brand-new contacts of one workspace in a
-   * single round-trip, inside the caller's transaction. Returns the number of
-   * presence rows newly inserted (`onConflictDoNothing` dedups any already
-   * active this period). Keeps the import-created contacts in the same ledger
-   * the quota reconcile derives `macUsed` from.
+   * contact import): records the `ContactActiveMonthly` + `ContactActiveHourly`
+   * presence rows and the `WorkspaceMac` rollup for many brand-new contacts of
+   * one workspace in a single round-trip, inside the caller's transaction.
+   * Returns the number of monthly presence rows newly inserted
+   * (`onConflictDoNothing` dedups any already active this period). Keeps the
+   * import-created contacts in the same ledger the quota reconcile derives
+   * `macUsed` from.
    */
   async claimNewActiveContacts(
     input: {
@@ -272,6 +274,18 @@ export class MacTrackingService {
       })),
       tx,
     )
+
+    await macRepository.upsertHourlyPresence(
+      input.contacts.map((contact) => ({
+        workspaceId: input.workspaceId,
+        contactId: contact.contactId,
+        contactInboxId: contact.contactInboxId,
+        inboxId: input.inboxId,
+        hourBucket,
+      })),
+      tx,
+    )
+
     if (deltas.length === 0) {
       return { counted: 0 }
     }
