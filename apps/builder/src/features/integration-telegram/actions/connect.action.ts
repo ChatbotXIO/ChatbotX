@@ -13,8 +13,8 @@ import type { TelegramAuthValue } from "@chatbotx.io/integration-telegram"
 import { createId } from "@chatbotx.io/utils"
 import { redirect } from "next/navigation"
 import { integrations } from "@/integration"
-import { getOriginUrlFromHeader } from "@/lib/domain"
 import { logger } from "@/lib/log"
+import { buildBrokerCallbackUrl } from "@/lib/oauth-broker"
 import { authActionClient } from "@/lib/safe-action"
 import {
   type ConnectTelegramRequest,
@@ -88,11 +88,9 @@ export const connectTelegramAction = authActionClient
           })
 
           // Register webhook URL with Telegram
-          const originUrl = await getOriginUrlFromHeader()
-          const webhookUrl = new URL(
+          const webhookUrl = buildBrokerCallbackUrl(
             `/integrations/telegram/webhook?botId=${botData.id}`,
-            originUrl,
-          ).toString()
+          )
           await integrations.telegram.runAction("registerWebhook", {
             botToken,
             webhookUrl,
