@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl"
 import { BrandIcon } from "@/components/brand-icon"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { isCloud } from "@/env"
 import { authClient } from "@/lib/auth/auth-client"
 
 /**
@@ -44,7 +45,7 @@ export function AdminSidebar({
       url: "/admin/platform-credentials",
       icon: Grid2x2PlusIcon,
     },
-    ...(showEnterpriseItems
+    ...(showEnterpriseItems && !isCloud()
       ? [
           {
             title: t("platformBranding.title"),
@@ -56,6 +57,10 @@ export function AdminSidebar({
             url: "/admin/email-templates",
             icon: MailIcon,
           },
+        ]
+      : []),
+    ...(showEnterpriseItems
+      ? [
           {
             title: t("platformAdmin.helpItems.title"),
             url: "/admin/help-items",
