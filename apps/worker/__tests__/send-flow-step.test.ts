@@ -380,6 +380,54 @@ describe("sendFlowStep", () => {
     )
   })
 
+  test("forwards and persists quick replies on the carrier message", async () => {
+    const quickReplies = [
+      {
+        id: "qr-1",
+        label: "Yes",
+        buttonType: null,
+        beforeStep: null,
+        steps: [],
+      },
+    ]
+    const stepWithButtons = {
+      ...sendTextStep,
+      buttons: [
+        {
+          id: "btn-1",
+          label: "Existing",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ],
+    }
+
+    await sendFlowStep({
+      ...baseParams,
+      step: stepWithButtons,
+      quickReplies,
+    } as SendFlowStepData & { quickReplies: typeof quickReplies })
+
+    expect(mockSendFlowStepToChannel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        quickReplies,
+      }),
+    )
+    expect(mockRepositoryCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentAttributes: expect.objectContaining({
+          payload: expect.objectContaining({
+            buttons: expect.arrayContaining([
+              expect.objectContaining({ id: "btn-1", label: "Existing" }),
+              expect.objectContaining({ id: "qr-1", label: "Yes" }),
+            ]),
+          }),
+        }),
+      }),
+    )
+  })
+
   test("calls repository.createWithAttachments() for step with url (sendImage)", async () => {
     await sendFlowStep({ ...baseParams, step: sendImageStep })
 

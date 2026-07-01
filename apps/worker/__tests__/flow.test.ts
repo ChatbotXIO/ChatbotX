@@ -1,6 +1,7 @@
 import type { FlowVersionModel } from "@chatbotx.io/database/types"
 import type {
   BaseStepSchema,
+  ButtonStepProps,
   EdgeSchema,
   FlowNode,
 } from "@chatbotx.io/flow-config"
@@ -103,6 +104,10 @@ function makeStep(
   states: BaseStepSchema["states"] = [],
 ): BaseStepSchema {
   return { id: "step-1", stepType: stepType as never, states } as BaseStepSchema
+}
+
+function makeQuickReply(id = "qr-1", label = "Yes"): ButtonStepProps {
+  return { id, label, buttonType: null, beforeStep: null, steps: [] }
 }
 
 function mockSpy(obj: unknown, name: string): Mock {
@@ -416,7 +421,10 @@ describe("runStepsAndQuickReplies — default edge enqueues a new job (Part 1)",
 })
 
 describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
-  beforeEach(() => integrationQueueAdd.mockClear())
+  beforeEach(() => {
+    chatQueueAdd.mockClear()
+    integrationQueueAdd.mockClear()
+  })
 
   test("runs only the first step and enqueues a sendFlow job for the next step", async () => {
     const step1 = { ...makeStep("sendText"), id: "step-1" }
@@ -543,6 +551,114 @@ describe("runStepsAndQuickReplies — per-step re-dispatch", () => {
 
     expect(result?.status).toBe("retry")
     expect(integrationQueueAdd).not.toHaveBeenCalled()
+  })
+
+  test("attaches quick replies to the current carrier step without synthesizing sendQuickReply", async () => {
+    const quickReplies = [makeQuickReply()]
+    const step1 = { ...makeStep("sendText"), id: "step-1", text: "Choose" }
+    const props = {
+      ...makeBaseProps(),
+      details: { steps: [step1], quickReplies },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      {
+        data: { step: { stepType: string }; quickReplies?: ButtonStepProps[] }
+      },
+    ]
+    expect(job.data.step.stepType).toBe("sendText")
+    expect(job.data.quickReplies).toEqual(quickReplies)
+  })
+
+  test("uses the active channel when selecting the quick reply carrier", async () => {
+    const quickReplies = [makeQuickReply()]
+    const textStep = {
+      ...makeStep("sendText"),
+      id: "step-1",
+      text: "Choose",
+      buttons: [],
+    }
+    const imageStep = {
+      ...makeStep("sendImage"),
+      id: "step-2",
+      url: "https://example.com/image.png",
+      buttons: [],
+    }
+    const props = {
+      ...makeBaseProps(),
+      contactInbox: {
+        ...makeContactInbox(),
+        channel: "tiktok",
+      },
+      details: { steps: [textStep, imageStep], quickReplies },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { step: { id: string }; quickReplies?: ButtonStepProps[] } },
+    ]
+    expect(job.data.step.id).toBe("step-1")
+    expect(job.data.quickReplies).toEqual(quickReplies)
+    expect(integrationQueueAdd).toHaveBeenCalledOnce()
+    const [, nextJob] = integrationQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { startFromStepId: string } },
+    ]
+    expect(nextJob.data.startFromStepId).toBe("step-2")
+  })
+
+  test("warns and skips quick replies when the active channel has no carrier", async () => {
+    const { logger } = await import("../src/lib/logger")
+    const quickReplies = [makeQuickReply()]
+    const stepWithButtons = {
+      ...makeStep("sendText"),
+      id: "step-1",
+      text: "Choose",
+      buttons: [
+        {
+          id: "btn-1",
+          label: "Existing",
+          buttonType: null,
+          beforeStep: null,
+          steps: [],
+        },
+      ],
+    }
+    const props = {
+      ...makeBaseProps(),
+      contactInbox: {
+        ...makeContactInbox(),
+        channel: "messenger",
+      },
+      details: { steps: [stepWithButtons], quickReplies },
+      triggerNextNode: false,
+    }
+
+    await runStepsAndQuickReplies(props)
+
+    expect(chatQueueAdd).toHaveBeenCalledOnce()
+    const [, job] = chatQueueAdd.mock.calls[0] as unknown as [
+      string,
+      { data: { quickReplies?: ButtonStepProps[] } },
+    ]
+    expect(job.data.quickReplies).toBeUndefined()
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "messenger",
+        flowId: "flow-1",
+        targetNodeId: "node-1",
+      }),
+      expect.stringContaining("no attachable carrier"),
+    )
   })
 
   test("executes quickReplies and next-node dispatch on the final step", async () => {

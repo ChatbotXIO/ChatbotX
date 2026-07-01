@@ -95,6 +95,7 @@ export async function sendFlowMessage(
     step,
     trackingContext,
     metadata,
+    quickReplies,
     sendFrom,
   } = props
   await chatQueue.add(ChatJobAction.sendFlowMessage, {
@@ -106,6 +107,7 @@ export async function sendFlowMessage(
       step,
       trackingContext,
       metadata,
+      quickReplies,
       sendFrom,
     },
   })

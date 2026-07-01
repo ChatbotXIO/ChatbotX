@@ -5,6 +5,7 @@ import {
 } from "@chatbotx.io/flow-config"
 import type { SendFlowStepProps } from "@chatbotx.io/sdk"
 import { uploadAttachment } from "../../../api/message"
+import { MAX_BUTTONS } from "../../../constants"
 import { logger } from "../../../lib/logger"
 import type { ZaloAuthValue } from "../../../schema/definition"
 import type { MessageTemplate } from "../../../schema/webhook"
@@ -33,12 +34,19 @@ export async function* convertFlowStepImage(
       throw new Error("Failed to upload image: No attachment ID received")
     }
 
-    const buttons =
+    const buttonsToSend =
       step.stepType === stepTypes.enum.sendImage
+        ? [...step.buttons, ...(props.data.quickReplies ?? [])]
+        : []
+    if (buttonsToSend.length > MAX_BUTTONS) {
+      throw new Error(`Zalo template buttons support at most ${MAX_BUTTONS}`)
+    }
+    const buttons =
+      buttonsToSend.length > 0
         ? await convertZaloButtons({
             flowId: props.data.flowId,
             flowVersionId: props.data.flowVersionId,
-            buttons: step.buttons,
+            buttons: buttonsToSend,
             metadata: props.data.metadata,
             contactInboxId: props.data.contact.id,
           })

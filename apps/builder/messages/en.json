@@ -1506,6 +1506,9 @@
   },
   "flows": {
     "title": "Flows",
+    "quickReplies": {
+      "requiresTextCarrier": "Quick replies require a text message in this node."
+    },
     "aiGenerateText": {
       "label": "{name}: Generate Text"
     },

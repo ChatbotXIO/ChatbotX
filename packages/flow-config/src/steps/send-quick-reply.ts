@@ -17,7 +17,7 @@ export type SendQuickReplyStepSchema = z.infer<typeof sendQuickReplyStepSchema>
 export const sendQuickReplyStepDefaultFn = (
   props: Partial<SendQuickReplyStepSchema> = {},
 ): SendQuickReplyStepSchema => ({
-  message: "Please select an option",
+  message: "",
   buttons: [],
   ...props,
   id: createId(),

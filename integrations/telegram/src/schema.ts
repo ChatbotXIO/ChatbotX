@@ -146,6 +146,7 @@ export type TelegramSendVideoRequest = {
   chat_id: number | string
   video: string
   caption?: string
+  reply_markup?: TelegramInlineKeyboardMarkup
 }
 
 export type TelegramSendChatActionRequest = {

@@ -1,19 +1,8 @@
-import {
-  encodeButtonPayload,
-  extractMetadata,
-  type SendTextStepSchema,
-} from "@chatbotx.io/flow-config"
+import type { SendTextStepSchema } from "@chatbotx.io/flow-config"
 import type { MessageHandlers } from "@chatbotx.io/sdk"
-import { chunk } from "remeda"
-import {
-  ActionButtons,
-  Body,
-  Button,
-  Interactive,
-  Text,
-} from "whatsapp-api-js/messages"
+import { Text } from "whatsapp-api-js/messages"
 import type { WhatsappAuthValue } from "../../../schema"
-import { MAX_BUTTONS } from "./shared"
+import { buildWhatsappButtonMessages } from "./shared"
 
 export function* convertFlowStepText(
   props: Parameters<
@@ -23,30 +12,19 @@ export function* convertFlowStepText(
   const {
     data: { step },
   } = props
-  if (step.buttons.length === 0) {
+  const buttons = [...step.buttons, ...(props.data.quickReplies ?? [])]
+  if (buttons.length === 0) {
     yield new Text(step.text)
-  } else {
-    const chunks = chunk(step.buttons, MAX_BUTTONS)
+    return
+  }
 
-    for (const c1 of chunks) {
-      const buttons = c1.map((button) => {
-        const buttonId = encodeButtonPayload({
-          flowId: props.data.flowId,
-          flowVersionId: props.data.flowVersionId,
-          buttonId: button.id,
-          broadcastId: extractMetadata("broadcastId", props.data.metadata),
-          sequenceStepId: extractMetadata(
-            "sequenceStepId",
-            props.data.metadata,
-          ),
-        })
-        return new Button(buttonId, button.label)
-      })
-
-      yield new Interactive(
-        new ActionButtons(...(buttons as [Button, ...Button[]])),
-        new Body(step.text),
-      )
-    }
+  for (const message of buildWhatsappButtonMessages({
+    flowId: props.data.flowId,
+    flowVersionId: props.data.flowVersionId,
+    buttons,
+    metadata: props.data.metadata,
+    bodyText: step.text,
+  })) {
+    yield message
   }
 }
