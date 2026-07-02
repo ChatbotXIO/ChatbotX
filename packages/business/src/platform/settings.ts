@@ -12,6 +12,8 @@ import { hasEnterpriseFeatures } from "../user/entitlements"
 import { workspaceService } from "../workspace/service"
 import { deriveUrls } from "./derive-urls"
 
+const TRAILING_SLASH_RE = /\/$/
+
 export type EmailTemplate = { subject?: string; body?: string }
 
 export type TenantSettings = {
@@ -64,13 +66,36 @@ const getDefaultSettings = async (): Promise<TenantSettings> => {
   return buildDefaults(helpItems)
 }
 
+/**
+ * Re-anchor the URL-derived settings to a white-label custom domain.
+ * The env defaults key every URL off `NEXT_PUBLIC_BUILDER_URL`; on a custom
+ * domain those must instead point at the tenant's own host so that public
+ * artifacts (inbox links, ws, fallback brand assets) resolve on the branded
+ * domain. White-label domains are always served over HTTPS in production.
+ */
+const applyCustomDomain = (
+  defaults: TenantSettings,
+  domain: string,
+  storageBaseUrl?: string,
+): TenantSettings => {
+  const derived = deriveUrls(`https://${domain}`, storageBaseUrl)
+  return {
+    ...defaults,
+    appUrl: derived.appUrl,
+    wsUrl: derived.wsUrl,
+    storageUrl: derived.storageUrl,
+  }
+}
+
 const applyTenantSetting = (
   defaults: TenantSettings,
   setting: TenantModel,
   helpItems: TenantHelpItemModel[],
   enterpriseFeaturesEnabled: boolean,
 ): TenantSettings => {
-  const storageUrl = setting.storageUrl ?? defaults.storageUrl
+  const storageUrl = setting.storageUrl
+    ? `${setting.storageUrl.replace(TRAILING_SLASH_RE, "")}/`
+    : defaults.storageUrl
   return {
     ...defaults,
     storageUrl,
@@ -188,5 +213,15 @@ export const resolveTenantSettingsByDomain = async (
     getDefaultSettings(),
     tenantHelpItemService.listByTenant(tenant.id),
   ])
-  return applyTenantSetting(defaults, tenant, helpItems, true)
+  const env = integrationContextEnv()
+  return applyTenantSetting(
+    applyCustomDomain(
+      defaults,
+      customDomain.domain,
+      env.NEXT_PUBLIC_STORAGE_URL,
+    ),
+    tenant,
+    helpItems,
+    true,
+  )
 }

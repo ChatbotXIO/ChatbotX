@@ -19,7 +19,6 @@
     "@hookform/resolvers": "^5.2.2",
     "@orpc/server": "^1.14.0",
     "@t3-oss/env-nextjs": "^0.13.11",
-    "@types/node": "^24.10.4",
     "date-fns": "^4.1.0",
     "ky": "^2.0.2",
     "lucide-react": "^1.14.0",
