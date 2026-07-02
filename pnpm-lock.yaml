@@ -1639,9 +1639,6 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: ^0.13.11
         version: 0.13.11(typescript@5.9.3)(zod@4.4.3)
-      '@types/node':
-        specifier: 24.x
-        version: 24.13.1
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -1673,6 +1670,9 @@ importers:
       '@chatbotx.io/vitest-config':
         specifier: workspace:*
         version: link:../vitest-config
+      '@types/node':
+        specifier: 24.x
+        version: 24.13.1
       '@types/react':
         specifier: 19.2.14
         version: 19.2.14
