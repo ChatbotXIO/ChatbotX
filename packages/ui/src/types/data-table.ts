@@ -12,6 +12,14 @@ declare module "@tanstack/react-table" {
     range?: [number, number]
     unit?: string
     icon?: React.FC<React.SVGProps<SVGSVGElement>>
+    /**
+     * Overrides the URL query-param key used to persist this column's filter
+     * value. Defaults to the column id. Set this when the column id needs to
+     * stay aligned with a server field for sorting (e.g. a DB column name)
+     * while the filter should be persisted under a different query param
+     * (e.g. a broader search field the server expects).
+     */
+    filterKey?: string
   }
 }
 

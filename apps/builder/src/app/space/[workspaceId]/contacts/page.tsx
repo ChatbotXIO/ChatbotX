@@ -22,7 +22,9 @@ export default async function ContactsPage(props: {
 
   const t = await getTranslations()
   const searchParams = await props.searchParams
-  const { data: search } = listContactsRequest.safeParse(searchParams)
+  const { data: search } = listContactsRequest
+    .omit({ workspaceId: true })
+    .safeParse(searchParams)
 
   const promises = Promise.all([
     listContactsRSC({

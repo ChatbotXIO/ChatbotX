@@ -64,6 +64,12 @@ interface UseDataTableProps<TData>
   startTransition?: React.TransitionStartFunction
 }
 
+function getColumnFilterKey<TData>(
+  column: UseDataTableProps<TData>["columns"][number],
+) {
+  return column.meta?.filterKey ?? column.id ?? ""
+}
+
 export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   const {
     columns,
@@ -178,13 +184,15 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     return filterableColumns.reduce<
       Record<string, Parser<string> | Parser<string[]>>
     >((acc, column) => {
+      const filterKey = getColumnFilterKey(column)
+
       if (column.meta?.options) {
-        acc[column.id ?? ""] = parseAsArrayOf(
+        acc[filterKey] = parseAsArrayOf(
           parseAsString,
           ARRAY_SEPARATOR,
         ).withOptions(queryStateOptions)
       } else {
-        acc[column.id ?? ""] = parseAsString.withOptions(queryStateOptions)
+        acc[filterKey] = parseAsString.withOptions(queryStateOptions)
       }
       return acc
     }, {})
@@ -203,9 +211,19 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   const initialColumnFilters: ColumnFiltersState = React.useMemo(() => {
     if (enableAdvancedFilter) return []
 
+    const columnIdsByFilterKey = new Map(
+      filterableColumns.map((column) => [
+        getColumnFilterKey(column),
+        column.id ?? "",
+      ]),
+    )
+
     return Object.entries(filterValues).reduce<ColumnFiltersState>(
       (filters, [key, value]) => {
         if (value !== null) {
+          const columnId = columnIdsByFilterKey.get(key)
+          if (!columnId) return filters
+
           const processedValue = Array.isArray(value)
             ? value
             : typeof value === "string" && /[^a-zA-Z0-9]/.test(value)
@@ -213,7 +231,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
               : [value]
 
           filters.push({
-            id: key,
+            id: columnId,
             value: processedValue,
           })
         }
@@ -221,7 +239,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
       },
       [],
     )
-  }, [filterValues, enableAdvancedFilter])
+  }, [filterValues, filterableColumns, enableAdvancedFilter])
 
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(initialColumnFilters)
@@ -239,15 +257,23 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
         const filterUpdates = next.reduce<
           Record<string, string | string[] | null>
         >((acc, filter) => {
-          if (filterableColumns.find((column) => column.id === filter.id)) {
-            acc[filter.id] = filter.value as string | string[]
+          const column = filterableColumns.find(
+            (filterableColumn) => filterableColumn.id === filter.id,
+          )
+
+          if (column) {
+            acc[getColumnFilterKey(column)] = filter.value as string | string[]
           }
           return acc
         }, {})
 
         for (const prevFilter of prev) {
           if (!next.some((filter) => filter.id === prevFilter.id)) {
-            filterUpdates[prevFilter.id] = null
+            const column = filterableColumns.find(
+              (filterableColumn) => filterableColumn.id === prevFilter.id,
+            )
+            filterUpdates[column ? getColumnFilterKey(column) : prevFilter.id] =
+              null
           }
         }
 

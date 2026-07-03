@@ -12,6 +12,19 @@ import type {
   ListContactsResponse,
 } from "../schemas/query"
 
+/**
+ * Matches the client's default sort (`contacts-table.tsx` initialState).
+ * `sort` is dropped from the URL whenever it equals that default
+ * (`clearOnDefault: true`), so requests with no `sort` param must still
+ * resolve to this same order instead of skipping ORDER BY entirely.
+ */
+const DEFAULT_ORDER_BY = { createdAt: "desc" } as const
+
+export function resolveOrderBy(input: ListContactsRequest) {
+  const orderBy = parseOrderByAsObject(contactModel, input)
+  return Object.keys(orderBy).length > 0 ? orderBy : DEFAULT_ORDER_BY
+}
+
 export async function listContacts(
   input: ListContactsRequest,
 ): Promise<ListContactsResponse> {
@@ -31,7 +44,7 @@ async function queryContacts(
   const where = generateWhere(input)
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(contactModel, input)
+  const orderBy = resolveOrderBy(input)
 
   const [data, totalRows] = await Promise.all([
     db.query.contactModel.findMany({
@@ -71,7 +84,7 @@ export async function listContactsRSC(
   const where = generateWhere(input)
 
   const pagination = getPaginationWithDefaults(input)
-  const orderBy = parseOrderByAsObject(contactModel, input)
+  const orderBy = resolveOrderBy(input)
 
   const [data, totalRows] = await Promise.all([
     db.query.contactModel.findMany({

@@ -107,8 +107,8 @@ export function ContactsTable({
         enableHiding: false,
       },
       {
-        id: "keyword",
-        accessorKey: "keyword",
+        id: "fullName",
+        accessorKey: "fullName",
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -122,6 +122,11 @@ export function ContactsTable({
           label: t("fields.name.label"),
           placeholder: t("fields.name.placeholder"),
           variant: "text",
+          // The column id ("fullName") matches the DB column so sorting
+          // works directly, but the filter must persist under the server's
+          // "keyword" query param — it searches name, email, and phone, not
+          // just fullName.
+          filterKey: "keyword",
         },
         enableColumnFilter: true,
         enableHiding: false,
